@@ -368,7 +368,14 @@ function CRM({ user }: { user: User }) {
             </button>
           ))}
         </div>
-        <div className="flex-1 overflow-x-auto p-4 custom-scrollbar">
+        <div 
+          className="flex-1 overflow-x-auto p-4 custom-scrollbar"
+          onWheel={(e) => {
+            if (e.deltaY !== 0) {
+              e.currentTarget.scrollLeft += e.deltaY;
+            }
+          }}
+        >
           <div className="flex space-x-3 min-w-max h-full items-start">
           {columns.map(col => {
             const leadsInCol = filteredLeads.filter(l => funnel === 'commercial' ? l.commercialStatus === col : l.operationStatus === col);
@@ -381,7 +388,7 @@ function CRM({ user }: { user: User }) {
                   </div>
                   <span className="bg-gray-800 text-gray-300 text-[10px] py-0.5 px-2 rounded-full font-medium border border-gray-700 shrink-0">{leadsInCol.length}</span>
                 </div>
-                <div className="flex-1 p-2 space-y-2 overflow-y-auto min-h-[150px] custom-scrollbar">
+                <div className="flex-1 p-2 space-y-2 overflow-y-auto min-h-[150px] custom-scrollbar" onWheel={(e) => e.stopPropagation()}>
                   {leadsInCol.map(lead => {
                     const isLate = lead.nextContactDate && lead.nextContactDate < today;
                     const isToday = lead.nextContactDate === today;
