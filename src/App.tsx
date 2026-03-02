@@ -214,8 +214,9 @@ function CRM({ user }: { user: User }) {
       });
       setLeads(loadedLeads);
       setLoading(false);
-    }, (error) => {
+    }, (error: any) => {
       console.error("Error fetching leads:", error);
+      alert(`Erro ao carregar dados do banco: ${error.message}\n\nVerifique se o Firestore Database foi criado no painel do Firebase e se as Regras (Rules) permitem leitura/escrita.`);
       setLoading(false);
     });
 
@@ -239,7 +240,10 @@ function CRM({ user }: { user: User }) {
     setIsModalOpen(false); setEditingLead(null);
     try { 
       await setDoc(doc(db, 'users', user.uid, 'leads', lead.id), lead);
-    } catch (error) { console.error(error); }
+    } catch (error: any) { 
+      console.error(error);
+      alert(`Erro ao salvar cliente: ${error.message}\n\nVerifique se o Firestore Database está ativado no seu projeto Firebase.`);
+    }
   };
 
   const handleDeleteLead = async (leadId: string) => {
@@ -247,8 +251,9 @@ function CRM({ user }: { user: User }) {
     setEditingLead(null);
     try {
       await deleteDoc(doc(db, 'users', user.uid, 'leads', leadId));
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      alert(`Erro ao excluir: ${error.message}`);
     }
   };
 
@@ -275,7 +280,10 @@ function CRM({ user }: { user: User }) {
     updates.history = [...lead.history, { date: Date.now(), action: actionText }];
     try { 
       await setDoc(doc(db, 'users', user.uid, 'leads', leadId), { ...lead, ...updates });
-    } catch (error) { console.error(error); }
+    } catch (error: any) { 
+      console.error(error);
+      alert(`Erro ao mover card: ${error.message}`);
+    }
   };
 
   const handlePayIndication = async (leadId: string) => {
