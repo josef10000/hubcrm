@@ -50,8 +50,18 @@ export default function Auth() {
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (err: any) {
-      console.error(err);
-      setError('Erro ao fazer login com o Google.');
+      console.error("Google Auth Error:", err);
+      if (err.code === 'auth/unauthorized-domain') {
+        setError('Domínio não autorizado. Adicione a URL atual nos "Domínios Autorizados" do Firebase.');
+      } else if (err.code === 'auth/operation-not-allowed') {
+        setError('Login com Google não está ativado no Firebase Console.');
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        setError('O pop-up de login foi fechado antes de concluir.');
+      } else if (err.code === 'auth/popup-blocked') {
+        setError('O pop-up foi bloqueado pelo navegador. Permita pop-ups para este site.');
+      } else {
+        setError(`Erro: ${err.message || 'Falha ao fazer login com o Google.'}`);
+      }
       setLoading(false);
     }
   };

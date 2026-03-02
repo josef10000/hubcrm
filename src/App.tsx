@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   LayoutDashboard, Users, Plus, X, DollarSign, CheckCircle, Clock, 
   MapPin, Phone, Tag, Menu, Building2, FileText, Briefcase, AlignLeft,
-  Search, BarChart3, Calendar, Paperclip, Copy, MessageCircle, Trash2, Snowflake, LogOut
+  Search, BarChart3, Calendar, Paperclip, Copy, MessageCircle, Trash2, Snowflake, LogOut, Globe
 } from 'lucide-react';
 import { auth, db } from './lib/firebase';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
@@ -22,7 +22,7 @@ interface Lead {
   origin: Origin; indicatorName?: string; indicatorPix?: string;
   commercialStatus: CommercialStatus; operationStatus?: OperationStatus;
   indicationPaymentStatus?: 'Pendente' | 'Pago'; createdAt: number;
-  serviceType?: ServiceType; dealValue?: number; clientData?: string; notes?: string;
+  serviceType?: ServiceType; dealValue?: number; isRecurring?: boolean; clientData?: string; notes?: string; deliveryLink?: string;
   nextContactDate?: string; history: LeadHistory[]; files: LeadFile[];
 }
 
@@ -32,7 +32,7 @@ const OPERATION_COLUMNS: OperationStatus[] = ['Aguardar Dados', 'Criar/Verificar
 const STORAGE_KEY = 'crm_leads_v3';
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-function LeadModal({ isOpen, onClose, onSave, initialData }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Lead>) => void, initialData: Lead | null }) {
+function LeadModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Lead>) => void, onDelete?: (id: string) => void, initialData: Lead | null }) {
   const [formData, setFormData] = useState<Partial<Lead>>({ origin: 'Prospecção', serviceType: 'Google Meu Negócio', history: [], files: [] });
   const [activeTab, setActiveTab] = useState<'basic'|'operation'|'history'>('basic');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -104,6 +104,10 @@ function LeadModal({ isOpen, onClose, onSave, initialData }: { isOpen: boolean, 
                   </select>
                 </div>
                 <div><label className="block text-sm font-medium text-gray-300 mb-1">Valor do Fechamento (R$)</label><input type="number" name="dealValue" value={formData.dealValue || ''} onChange={handleChange} placeholder="Ex: 1500" className="w-full px-4 py-2 bg-gray-950 border border-gray-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
+                <div className="flex items-center mt-6">
+                  <input type="checkbox" id="isRecurring" name="isRecurring" checked={formData.isRecurring || false} onChange={(e) => setFormData(prev => ({ ...prev, isRecurring: e.target.checked }))} className="w-4 h-4 text-blue-600 bg-gray-900 border-gray-700 rounded focus:ring-blue-500 focus:ring-2" />
+                  <label htmlFor="isRecurring" className="ml-2 text-sm font-medium text-gray-300">Receita Recorrente (Mensalidade)</label>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">Origem</label>
                   <select name="origin" value={formData.origin || 'Prospecção'} onChange={handleChange} className="w-full px-4 py-2 bg-gray-950 border border-gray-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
@@ -130,6 +134,10 @@ function LeadModal({ isOpen, onClose, onSave, initialData }: { isOpen: boolean, 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center"><FileText size={16} className="mr-2 text-gray-400" />Anotações</label>
                   <textarea name="notes" value={formData.notes || ''} onChange={handleChange} rows={5} placeholder="Observações..." className="w-full px-4 py-3 bg-gray-950 border border-gray-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none custom-scrollbar resize-none" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center"><Globe size={16} className="mr-2 text-emerald-400" />Link do App/Site Entregue</label>
+                  <input type="url" name="deliveryLink" value={formData.deliveryLink || ''} onChange={handleChange} placeholder="https://..." className="w-full px-4 py-2 bg-gray-950 border border-gray-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                 </div>
               </div>
               
@@ -170,9 +178,14 @@ function LeadModal({ isOpen, onClose, onSave, initialData }: { isOpen: boolean, 
             </div>
           )}
           
-          <div className="pt-6 border-t border-gray-800 flex justify-end space-x-3 mt-auto">
-            <button type="button" onClick={onClose} className="px-5 py-2 text-gray-400 hover:bg-gray-800 rounded-lg font-medium">Cancelar</button>
-            <button type="submit" className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium shadow-sm">Salvar Dados</button>
+          <div className="pt-6 border-t border-gray-800 flex justify-between items-center mt-auto">
+            {initialData && onDelete ? (
+              <button type="button" onClick={() => { if(window.confirm('Tem certeza que deseja excluir este cliente?')) onDelete(initialData.id); }} className="px-4 py-2 text-rose-400 hover:bg-rose-500/10 rounded-lg font-medium flex items-center transition-colors"><Trash2 size={16} className="mr-2"/> Excluir</button>
+            ) : <div></div>}
+            <div className="flex space-x-3">
+              <button type="button" onClick={onClose} className="px-5 py-2 text-gray-400 hover:bg-gray-800 rounded-lg font-medium">Cancelar</button>
+              <button type="submit" className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium shadow-sm">Salvar Dados</button>
+            </div>
           </div>
         </form>
       </div>
@@ -219,7 +232,7 @@ function CRM({ user }: { user: User }) {
       origin: leadData.origin as Origin || 'Prospecção', indicatorName: leadData.indicatorName, indicatorPix: leadData.indicatorPix,
       commercialStatus: leadData.commercialStatus || 'Prospecção (Frios)', operationStatus: leadData.operationStatus,
       indicationPaymentStatus: leadData.indicationPaymentStatus, createdAt: leadData.createdAt || Date.now(),
-      serviceType: leadData.serviceType, dealValue: leadData.dealValue, clientData: leadData.clientData, notes: leadData.notes,
+      serviceType: leadData.serviceType, dealValue: leadData.dealValue, isRecurring: leadData.isRecurring, clientData: leadData.clientData, notes: leadData.notes, deliveryLink: leadData.deliveryLink,
       nextContactDate: leadData.nextContactDate, history: leadData.history || [], files: leadData.files || []
     };
 
@@ -227,6 +240,16 @@ function CRM({ user }: { user: User }) {
     try { 
       await setDoc(doc(db, 'users', user.uid, 'leads', lead.id), lead);
     } catch (error) { console.error(error); }
+  };
+
+  const handleDeleteLead = async (leadId: string) => {
+    setIsModalOpen(false);
+    setEditingLead(null);
+    try {
+      await deleteDoc(doc(db, 'users', user.uid, 'leads', leadId));
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const handleMoveLead = async (leadId: string, newStatus: string) => {
@@ -366,6 +389,7 @@ function CRM({ user }: { user: User }) {
                           <div className="flex space-x-2 text-gray-500">
                             {lead.whatsapp && <button type="button" onClick={(e) => { e.stopPropagation(); openWhatsAppTemplate(lead); }} className="hover:text-emerald-400 transition-colors p-1 -ml-1"><MessageCircle size={14} /></button>}
                             {lead.googleMapsLink && <a href={lead.googleMapsLink} target="_blank" rel="noreferrer" className="hover:text-blue-400 transition-colors p-1" onClick={e => e.stopPropagation()}><MapPin size={14} /></a>}
+                            {lead.deliveryLink && <a href={lead.deliveryLink} target="_blank" rel="noreferrer" className="hover:text-emerald-400 transition-colors p-1" onClick={e => e.stopPropagation()} title="Acessar App/Site Entregue"><Globe size={14} /></a>}
                             {lead.clientData && <div className="text-blue-400 p-1" title="Possui dados da operação"><AlignLeft size={14} /></div>}
                             {lead.files?.length > 0 && <div className="text-gray-400 p-1" title="Possui arquivos"><Paperclip size={14} /></div>}
                           </div>
@@ -431,7 +455,8 @@ function CRM({ user }: { user: User }) {
 
   const renderAnalytics = () => {
     const totalPipeline = leads.filter(l => l.commercialStatus !== 'Ganho' && l.commercialStatus !== 'Perdido').reduce((acc, l) => acc + (l.dealValue || 0), 0);
-    const totalWonValue = leads.filter(l => l.commercialStatus === 'Ganho').reduce((acc, l) => acc + (l.dealValue || 0), 0);
+    const totalWonValue = leads.filter(l => l.commercialStatus === 'Ganho' && !l.isRecurring).reduce((acc, l) => acc + (l.dealValue || 0), 0);
+    const mrr = leads.filter(l => l.commercialStatus === 'Ganho' && l.isRecurring).reduce((acc, l) => acc + (l.dealValue || 0), 0);
     
     const totalLeads = leads.length;
     const totalWon = leads.filter(l => l.commercialStatus === 'Ganho').length;
@@ -448,7 +473,12 @@ function CRM({ user }: { user: User }) {
       <div className="p-6 max-w-6xl mx-auto w-full overflow-y-auto custom-scrollbar bg-gray-950">
         <h2 className="text-2xl font-bold text-gray-100 mb-6">Dashboard Analytics</h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+          <div className="bg-gray-900 p-6 rounded-2xl border border-gray-800">
+            <p className="text-gray-400 text-sm font-medium mb-1">MRR (Recorrente)</p>
+            <p className="text-3xl font-bold text-purple-400">R$ {mrr.toLocaleString('pt-BR')}</p>
+            <p className="text-xs text-gray-500 mt-2">Receita Mensal Recorrente</p>
+          </div>
           <div className="bg-gray-900 p-6 rounded-2xl border border-gray-800">
             <p className="text-gray-400 text-sm font-medium mb-1">Taxa de Conversão</p>
             <p className="text-3xl font-bold text-blue-400">{conversionRate}%</p>
@@ -459,7 +489,7 @@ function CRM({ user }: { user: User }) {
             <p className="text-3xl font-bold text-yellow-500">R$ {totalPipeline.toLocaleString('pt-BR')}</p>
           </div>
           <div className="bg-gray-900 p-6 rounded-2xl border border-gray-800">
-            <p className="text-gray-400 text-sm font-medium mb-1">Faturamento Fechado</p>
+            <p className="text-gray-400 text-sm font-medium mb-1">Faturamento Único</p>
             <p className="text-3xl font-bold text-emerald-400">R$ {totalWonValue.toLocaleString('pt-BR')}</p>
           </div>
           <div className="bg-gray-900 p-6 rounded-2xl border border-gray-800">
@@ -575,7 +605,7 @@ function CRM({ user }: { user: User }) {
         )}
       </main>
 
-      <LeadModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSaveLead} initialData={editingLead} />
+      <LeadModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSaveLead} onDelete={handleDeleteLead} initialData={editingLead} />
       {sidebarOpen && <div className="fixed inset-0 bg-black/80 z-10 md:hidden backdrop-blur-sm" onClick={() => setSidebarOpen(false)}></div>}
     </div>
   );
