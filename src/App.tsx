@@ -237,11 +237,14 @@ function CRM({ user }: { user: User }) {
       nextContactDate: leadData.nextContactDate, history: leadData.history || [], files: leadData.files || []
     };
 
+    // Remove undefined values as Firestore does not support them
+    const cleanLead = Object.fromEntries(Object.entries(lead).filter(([_, v]) => v !== undefined));
+
     setIsModalOpen(false); setEditingLead(null);
     try { 
-      await setDoc(doc(db, 'users', user.uid, 'leads', lead.id), lead);
+      await setDoc(doc(db, 'users', user.uid, 'leads', lead.id), cleanLead);
     } catch (error: any) { 
-      console.error(error);
+      console.error("Save Error:", error);
       alert(`Erro ao salvar cliente: ${error.message}\n\nVerifique se o Firestore Database está ativado no seu projeto Firebase.`);
     }
   };
@@ -278,10 +281,14 @@ function CRM({ user }: { user: User }) {
     }
 
     updates.history = [...lead.history, { date: Date.now(), action: actionText }];
+    
+    const updatedLead = { ...lead, ...updates };
+    const cleanLead = Object.fromEntries(Object.entries(updatedLead).filter(([_, v]) => v !== undefined));
+
     try { 
-      await setDoc(doc(db, 'users', user.uid, 'leads', leadId), { ...lead, ...updates });
+      await setDoc(doc(db, 'users', user.uid, 'leads', leadId), cleanLead);
     } catch (error: any) { 
-      console.error(error);
+      console.error("Move Error:", error);
       alert(`Erro ao mover card: ${error.message}`);
     }
   };
@@ -289,9 +296,16 @@ function CRM({ user }: { user: User }) {
   const handlePayIndication = async (leadId: string) => {
     const lead = leads.find(l => l.id === leadId);
     if (!lead) return;
+    
+    const updatedLead = { ...lead, indicationPaymentStatus: 'Pago' };
+    const cleanLead = Object.fromEntries(Object.entries(updatedLead).filter(([_, v]) => v !== undefined));
+
     try { 
-      await setDoc(doc(db, 'users', user.uid, 'leads', leadId), { ...lead, indicationPaymentStatus: 'Pago' });
-    } catch (error) { console.error(error); }
+      await setDoc(doc(db, 'users', user.uid, 'leads', leadId), cleanLead);
+    } catch (error: any) { 
+      console.error("Pay Error:", error);
+      alert(`Erro ao atualizar pagamento: ${error.message}`);
+    }
   };
 
   const copyPix = (pix: string) => {
