@@ -22,6 +22,8 @@ interface Client {
   siteLink?: string;
   status: SiteStatus;
   createdAt: number;
+  niche?: string;
+  notes?: string;
 }
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -110,6 +112,16 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
             </div>
 
             <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Nicho / Área de Atuação</label>
+              <input type="text" name="niche" value={formData.niche || ''} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" placeholder="Ex: Advogado, Clínica, E-commerce..." />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Anotações e Credenciais</label>
+              <textarea name="notes" value={formData.notes || ''} onChange={handleChange} rows={3} className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500 custom-scrollbar" placeholder="Anotações importantes, links de referência, acessos..."></textarea>
+            </div>
+
+            <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">Link do Site (Opcional)</label>
               <input type="url" name="siteLink" value={formData.siteLink || ''} onChange={handleChange} placeholder="https://..." className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" />
             </div>
@@ -170,6 +182,8 @@ function CRM({ user }: { user: User }) {
       plan: clientData.plan as PlanType || 'Padrão',
       status: clientData.status as SiteStatus || 'Em Desenvolvimento',
       siteLink: clientData.siteLink,
+      niche: clientData.niche,
+      notes: clientData.notes,
       createdAt: clientData.createdAt || Date.now(),
     };
 
@@ -199,7 +213,8 @@ function CRM({ user }: { user: User }) {
   const filteredClients = useMemo(() => {
     let result = clients.filter(c => {
       const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                            c.whatsapp.includes(searchTerm);
+                            c.whatsapp.includes(searchTerm) ||
+                            (c.niche && c.niche.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchesStatus = filterStatus === 'Todos' || c.status === filterStatus;
       return matchesSearch && matchesStatus;
     });
@@ -227,19 +242,22 @@ function CRM({ user }: { user: User }) {
           {/* Quick Filters & Sort */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <div className="flex bg-white/5 backdrop-blur-xl border border-white/10 p-1 rounded-2xl overflow-x-auto max-w-full custom-scrollbar">
-              {['Todos', 'Em Desenvolvimento', 'Ativo', 'Cancelado'].map((status) => (
-                <button
-                  key={status}
-                  onClick={() => setFilterStatus(status as any)}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
-                    filterStatus === status 
-                      ? 'bg-white/10 text-white shadow-sm' 
-                      : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
-                  }`}
-                >
-                  {status}
-                </button>
-              ))}
+              {['Todos', 'Em Desenvolvimento', 'Ativo', 'Cancelado'].map((status) => {
+                const count = status === 'Todos' ? clients.length : clients.filter(c => c.status === status).length;
+                return (
+                  <button
+                    key={status}
+                    onClick={() => setFilterStatus(status as any)}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
+                      filterStatus === status 
+                        ? 'bg-white/10 text-white shadow-sm' 
+                        : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+                    }`}
+                  >
+                    {status} <span className="ml-1 opacity-60 text-xs">({count})</span>
+                  </button>
+                );
+              })}
             </div>
             
             <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-xl border border-white/10 p-1 rounded-2xl">
@@ -275,6 +293,13 @@ function CRM({ user }: { user: User }) {
                     <Tag size={16} className="mr-3 text-orange-400 opacity-80" />
                     Plano {client.plan} <span className="ml-2 text-xs opacity-60">(R$ {client.plan === 'Profissional' ? '120' : '80'})</span>
                   </div>
+                  
+                  {client.niche && (
+                    <div className="flex items-center text-gray-300 text-sm">
+                      <Briefcase size={16} className="mr-3 text-orange-400 opacity-80 shrink-0" />
+                      <span className="truncate">{client.niche}</span>
+                    </div>
+                  )}
                   
                   {client.siteLink && (
                     <div className="flex items-center text-gray-300 text-sm">
@@ -332,6 +357,29 @@ function CRM({ user }: { user: User }) {
       { name: 'Cancelado', value: clients.filter(c => c.status === 'Cancelado').length, color: '#ef4444' }
     ];
 
+    const now = Date.now();
+    const oneWeek = 7 * 24 * 60 * 60 * 1000;
+    const thisWeekCount = clients.filter(c => now - c.createdAt <= oneWeek).length;
+    const lastWeekCount = clients.filter(c => (now - c.createdAt > oneWeek) && (now - c.createdAt <= 2 * oneWeek)).length;
+    
+    let weeklyGrowth = 0;
+    if (lastWeekCount > 0) {
+      weeklyGrowth = Math.round(((thisWeekCount - lastWeekCount) / lastWeekCount) * 100);
+    } else if (thisWeekCount > 0) {
+      weeklyGrowth = 100;
+    }
+
+    const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const currentYear = new Date().getFullYear();
+    const monthlyData = months.map(m => ({ name: m, value: 0 }));
+    
+    clients.forEach(c => {
+      const d = new Date(c.createdAt);
+      if (d.getFullYear() === currentYear) {
+        monthlyData[d.getMonth()].value += 1;
+      }
+    });
+
     return (
       <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10">
         <div className="max-w-7xl mx-auto">
@@ -358,10 +406,10 @@ function CRM({ user }: { user: User }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white/10 backdrop-blur-2xl border border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
               <h3 className="text-lg font-semibold text-white mb-6">Distribuição por Plano</h3>
-              <div className="h-64">
+              <div className="h-48">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={planData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                    <Pie data={planData} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={5} dataKey="value">
                       {planData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
@@ -385,7 +433,7 @@ function CRM({ user }: { user: User }) {
 
             <div className="bg-white/10 backdrop-blur-2xl border border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
               <h3 className="text-lg font-semibold text-white mb-6">Status dos Clientes</h3>
-              <div className="h-64">
+              <div className="h-48">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={statusData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
                     <XAxis type="number" hide />
@@ -394,7 +442,7 @@ function CRM({ user }: { user: User }) {
                       cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                       contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
                     />
-                    <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={24}>
+                    <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={20}>
                       {statusData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
@@ -402,6 +450,39 @@ function CRM({ user }: { user: User }) {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+            <div className="lg:col-span-2 bg-white/10 backdrop-blur-2xl border border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
+              <h3 className="text-lg font-semibold text-white mb-6">Aquisição de Clientes ({currentYear})</h3>
+              <div className="h-56">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} allowDecimals={false} />
+                    <Tooltip 
+                      cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                      contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                    />
+                    <Bar dataKey="value" fill="#f97316" radius={[4, 4, 0, 0]} barSize={30} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-2xl border border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] flex flex-col justify-center">
+              <h3 className="text-lg font-semibold text-white mb-2">Aquisição Semanal</h3>
+              <p className="text-gray-400 text-sm mb-6">Novos clientes nos últimos 7 dias</p>
+              
+              <div className="flex items-end space-x-4 mb-4">
+                <span className="text-6xl font-bold text-white">{thisWeekCount}</span>
+                <div className={`flex items-center pb-2 ${weeklyGrowth >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {weeklyGrowth >= 0 ? <ArrowUpRight size={20} className="mr-1" /> : <ArrowUpRight size={20} className="mr-1 rotate-90" />}
+                  <span className="font-semibold">{Math.abs(weeklyGrowth)}%</span>
+                </div>
+              </div>
+              <p className="text-sm text-gray-500">vs. {lastWeekCount} na semana anterior</p>
             </div>
           </div>
         </div>
