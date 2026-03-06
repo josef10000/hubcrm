@@ -419,7 +419,7 @@ function CRM({ user }: { user: User }) {
       <aside className={`w-64 bg-black/40 backdrop-blur-3xl border-r border-white/10 flex flex-col transition-all duration-300 z-30 ${sidebarOpen ? 'translate-x-0 absolute inset-y-0 left-0' : '-translate-x-full absolute md:relative md:translate-x-0'}`}>
         <div className="p-6 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <img src="https://i.imgur.com/2H9UPAW.png" alt="Hub central Logo" className="h-8 w-auto object-contain drop-shadow-lg" referrerPolicy="no-referrer" />
+            <img src="https://i.imgur.com/2H9UPAW.png" alt="Hub central Logo" className="h-40 w-auto object-contain drop-shadow-lg" referrerPolicy="no-referrer" />
             <h1 className="text-xl font-bold tracking-tight text-white">Hub central</h1>
           </div>
           <button className="md:hidden text-gray-500 hover:text-white" onClick={() => setSidebarOpen(false)}><X size={20} /></button>
