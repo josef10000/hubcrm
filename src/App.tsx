@@ -418,11 +418,11 @@ function CRM({ user }: { user: User }) {
 
       <aside className={`w-64 bg-black/40 backdrop-blur-3xl border-r border-white/10 flex flex-col transition-all duration-300 z-30 ${sidebarOpen ? 'translate-x-0 absolute inset-y-0 left-0' : '-translate-x-full absolute md:relative md:translate-x-0'}`}>
         <div className="p-6 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <img src="https://i.imgur.com/2H9UPAW.png" alt="Hub central Logo" className="h-40 w-auto object-contain drop-shadow-lg" referrerPolicy="no-referrer" />
-            <h1 className="text-xl font-bold tracking-tight text-white">Hub central</h1>
+          <div className="flex items-center space-x-2">
+            <img src="https://i.imgur.com/2H9UPAW.png" alt="Hub central Logo" className="h-20 w-auto object-contain drop-shadow-lg" referrerPolicy="no-referrer" />
+            <h1 className="text-xl font-bold tracking-tight text-white whitespace-nowrap">Hub central</h1>
           </div>
-          <button className="md:hidden text-gray-500 hover:text-white" onClick={() => setSidebarOpen(false)}><X size={20} /></button>
+          <button className="md:hidden text-gray-500 hover:text-white shrink-0 ml-2" onClick={() => setSidebarOpen(false)}><X size={20} /></button>
         </div>
         <nav className="flex-1 px-4 py-6 space-y-2">
           <button onClick={() => { setView('dashboard'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'dashboard' ? 'bg-white/10 text-white shadow-sm border border-white/10' : 'text-gray-400 hover:bg-white/5 hover:text-white border border-transparent'}`}><LayoutDashboard size={20} /><span className="font-medium">Dashboard</span></button>
