@@ -151,7 +151,7 @@ function CRM({ user }: { user: User }) {
       setLoading(false);
     }, (error: any) => {
       console.error("Error fetching clients:", error);
-      alert(`Erro ao carregar dados do banco: ${error.message}`);
+      alert(`Erro ao carregar dados do banco: ${error.message}\n\nVerifique se o Firestore Database foi criado no painel do Firebase e se as Regras (Rules) permitem leitura/escrita.`);
       setLoading(false);
     });
 
