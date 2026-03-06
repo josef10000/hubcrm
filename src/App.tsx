@@ -9,41 +9,29 @@ import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { collection, doc, setDoc, onSnapshot, deleteDoc } from 'firebase/firestore';
 import Auth from './components/Auth';
 
-type Origin = 'Prospecção' | 'Tráfego Pago' | 'Indicação';
-type CommercialStatus = 'Prospecção (Frios)' | 'Contacto Inicial' | 'Em Negociação' | 'Proposta Enviada' | 'Follow-up' | 'Ganho' | 'Perdido';
-type OperationStatus = 'Aguardar Dados' | 'Criar/Verificar GMN' | 'Otimização do Perfil' | 'Configurar App/Site' | 'Validação' | 'Concluído';
-type ServiceType = 'Google Meu Negócio' | 'Criação de Site' | 'GMN + Site' | 'Outro';
+type PlanType = 'Padrão' | 'Profissional';
+type SiteStatus = 'Em Desenvolvimento' | 'Ativo' | 'Cancelado';
 
-interface LeadHistory { date: number; action: string; }
-interface LeadFile { name: string; data: string; }
-
-interface Lead {
-  id: string; companyName: string; niche: string; whatsapp: string; googleMapsLink: string;
-  origin: Origin; indicatorName?: string; indicatorPix?: string;
-  commercialStatus: CommercialStatus; operationStatus?: OperationStatus;
-  indicationPaymentStatus?: 'Pendente' | 'Pago'; createdAt: number;
-  serviceType?: ServiceType; dealValue?: number; isRecurring?: boolean; clientData?: string; notes?: string; deliveryLink?: string;
-  nextContactDate?: string; history: LeadHistory[]; files: LeadFile[];
+interface Client {
+  id: string; 
+  name: string; 
+  whatsapp: string; 
+  plan: PlanType;
+  siteLink?: string;
+  status: SiteStatus;
+  createdAt: number;
 }
-
-const COMMERCIAL_COLUMNS: CommercialStatus[] = ['Prospecção (Frios)', 'Contacto Inicial', 'Em Negociação', 'Proposta Enviada', 'Follow-up', 'Ganho', 'Perdido'];
-const OPERATION_COLUMNS: OperationStatus[] = ['Aguardar Dados', 'Criar/Verificar GMN', 'Otimização do Perfil', 'Configurar App/Site', 'Validação', 'Concluído'];
-
-const STORAGE_KEY = 'crm_leads_v3';
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-function LeadModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Lead>) => void, onDelete?: (id: string) => void, initialData: Lead | null }) {
-  const [formData, setFormData] = useState<Partial<Lead>>({ origin: 'Prospecção', serviceType: 'Google Meu Negócio', history: [], files: [] });
-  const [activeTab, setActiveTab] = useState<'basic'|'operation'|'history'>('basic');
-  const fileInputRef = useRef<HTMLInputElement>(null);
+function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, onDelete?: (id: string) => void, initialData: Client | null }) {
+  const [formData, setFormData] = useState<Partial<Client>>({ plan: 'Padrão', status: 'Em Desenvolvimento' });
 
   useEffect(() => {
     if (initialData) {
       setFormData(initialData);
     } else {
-      setFormData({ origin: 'Prospecção', commercialStatus: 'Prospecção (Frios)', serviceType: 'Google Meu Negócio', history: [{ date: Date.now(), action: 'Lead criado' }], files: [] });
+      setFormData({ plan: 'Padrão', status: 'Em Desenvolvimento' });
     }
-    setActiveTab('basic');
   }, [initialData, isOpen]);
 
   if (!isOpen) return null;
@@ -55,136 +43,85 @@ function LeadModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpen:
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: name === 'dealValue' ? Number(value) : value }));
-  };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({
-          ...prev,
-          files: [...(prev.files || []), { name: file.name, data: reader.result as string }]
-        }));
-      };
-      reader.readAsDataURL(file);
+    
+    if (name === 'whatsapp') {
+      // Auto-format whatsapp: (99) 99999-9999
+      let v = value.replace(/\D/g, '');
+      if (v.length > 11) v = v.substring(0, 11);
+      if (v.length > 2) v = `(${v.substring(0, 2)}) ${v.substring(2)}`;
+      if (v.length > 10) v = `${v.substring(0, 10)}-${v.substring(10)}`;
+      setFormData(prev => ({ ...prev, [name]: v }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-      <div className="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col border border-gray-800">
-        <div className="flex justify-between items-center p-6 border-b border-gray-800">
-          <h2 className="text-xl font-semibold text-gray-100">{initialData ? 'Detalhes do Cliente' : 'Novo Cliente'}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-200"><X size={24} /></button>
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-md">
+      <div className="bg-white/10 backdrop-blur-3xl rounded-3xl shadow-2xl w-full max-w-lg flex flex-col border border-white/20 overflow-hidden">
+        <div className="flex justify-between items-center p-6 border-b border-white/10 bg-white/5">
+          <h2 className="text-xl font-semibold text-white">{initialData ? 'Detalhes do Cliente' : 'Novo Cliente'}</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors"><X size={24} /></button>
         </div>
         
-        <div className="flex border-b border-gray-800 px-6 pt-2 overflow-x-auto custom-scrollbar">
-          <button type="button" onClick={() => setActiveTab('basic')} className={`px-4 py-3 font-medium text-sm border-b-2 whitespace-nowrap ${activeTab === 'basic' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-400 hover:text-gray-200'}`}>Informações Básicas</button>
-          <button type="button" onClick={() => setActiveTab('operation')} className={`px-4 py-3 font-medium text-sm border-b-2 whitespace-nowrap ${activeTab === 'operation' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-400 hover:text-gray-200'}`}>Operação & Arquivos</button>
-          {initialData && <button type="button" onClick={() => setActiveTab('history')} className={`px-4 py-3 font-medium text-sm border-b-2 whitespace-nowrap ${activeTab === 'history' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-400 hover:text-gray-200'}`}>Histórico</button>}
-        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Nome do Cliente/Empresa *</label>
+              <input required type="text" name="name" value={formData.name || ''} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" placeholder="Ex: João Silva" />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">WhatsApp *</label>
+              <input required type="text" name="whatsapp" value={formData.whatsapp || ''} onChange={handleChange} placeholder="(11) 99999-9999" className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" />
+            </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
-          {activeTab === 'basic' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div><label className="block text-sm font-medium text-gray-300 mb-1">Nome da Empresa *</label><input required type="text" name="companyName" value={formData.companyName || ''} onChange={handleChange} className="w-full px-4 py-2 bg-gray-950 border border-gray-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-                <div><label className="block text-sm font-medium text-gray-300 mb-1">Nicho de Atuação</label><input type="text" name="niche" value={formData.niche || ''} onChange={handleChange} className="w-full px-4 py-2 bg-gray-950 border border-gray-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-                <div><label className="block text-sm font-medium text-gray-300 mb-1">WhatsApp do Decisor</label><input type="text" name="whatsapp" value={formData.whatsapp || ''} onChange={handleChange} placeholder="Ex: 11999999999" className="w-full px-4 py-2 bg-gray-950 border border-gray-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-                <div><label className="block text-sm font-medium text-gray-300 mb-1">Link do Google Maps</label><input type="url" name="googleMapsLink" value={formData.googleMapsLink || ''} onChange={handleChange} className="w-full px-4 py-2 bg-gray-950 border border-gray-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-                <div><label className="block text-sm font-medium text-gray-300 mb-1">Próximo Contato</label><input type="date" name="nextContactDate" value={formData.nextContactDate || ''} onChange={handleChange} className="w-full px-4 py-2 bg-gray-950 border border-gray-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" style={{colorScheme: 'dark'}} /></div>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Tipo de Serviço</label>
-                  <select name="serviceType" value={formData.serviceType || 'Google Meu Negócio'} onChange={handleChange} className="w-full px-4 py-2 bg-gray-950 border border-gray-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                    <option value="Google Meu Negócio">Google Meu Negócio</option><option value="Criação de Site">Criação de Site</option><option value="GMN + Site">GMN + Site</option><option value="Outro">Outro</option>
-                  </select>
-                </div>
-                <div><label className="block text-sm font-medium text-gray-300 mb-1">Valor do Fechamento (R$)</label><input type="number" name="dealValue" value={formData.dealValue || ''} onChange={handleChange} placeholder="Ex: 1500" className="w-full px-4 py-2 bg-gray-950 border border-gray-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-                <div className="flex items-center mt-6">
-                  <input type="checkbox" id="isRecurring" name="isRecurring" checked={formData.isRecurring || false} onChange={(e) => setFormData(prev => ({ ...prev, isRecurring: e.target.checked }))} className="w-4 h-4 text-blue-600 bg-gray-900 border-gray-700 rounded focus:ring-blue-500 focus:ring-2" />
-                  <label htmlFor="isRecurring" className="ml-2 text-sm font-medium text-gray-300">Receita Recorrente (Mensalidade)</label>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Origem</label>
-                  <select name="origin" value={formData.origin || 'Prospecção'} onChange={handleChange} className="w-full px-4 py-2 bg-gray-950 border border-gray-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                    <option value="Prospecção">Prospecção</option><option value="Tráfego Pago">Tráfego Pago</option><option value="Indicação">Indicação</option>
-                  </select>
-                </div>
-                {formData.origin === 'Indicação' && (
-                  <div className="p-4 bg-blue-900/20 rounded-xl space-y-4 border border-blue-800/50">
-                    <div><label className="block text-sm font-medium text-blue-300 mb-1">Nome do Indicador *</label><input required type="text" name="indicatorName" value={formData.indicatorName || ''} onChange={handleChange} className="w-full px-4 py-2 bg-gray-950 border border-blue-800/50 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-                    <div><label className="block text-sm font-medium text-blue-300 mb-1">Chave PIX do Indicador *</label><input required type="text" name="indicatorPix" value={formData.indicatorPix || ''} onChange={handleChange} className="w-full px-4 py-2 bg-gray-950 border border-blue-800/50 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-                  </div>
-                )}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Plano *</label>
+              <div className="grid grid-cols-2 gap-3">
+                <button 
+                  type="button" 
+                  onClick={() => setFormData(prev => ({ ...prev, plan: 'Padrão' }))}
+                  className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Padrão' ? 'bg-orange-500/20 border-orange-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-white/10 text-gray-400 hover:bg-white/5'}`}
+                >
+                  <div className="font-semibold mb-1">Padrão</div>
+                  <div className="text-sm opacity-80">R$ 80/mês</div>
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => setFormData(prev => ({ ...prev, plan: 'Profissional' }))}
+                  className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Profissional' ? 'bg-orange-500/20 border-orange-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-white/10 text-gray-400 hover:bg-white/5'}`}
+                >
+                  <div className="font-semibold mb-1">Profissional</div>
+                  <div className="text-sm opacity-80">R$ 120/mês</div>
+                </button>
               </div>
             </div>
-          )}
 
-          {activeTab === 'operation' && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center"><AlignLeft size={16} className="mr-2 text-blue-400" />Dados do Cliente</label>
-                  <textarea name="clientData" value={formData.clientData || ''} onChange={handleChange} rows={5} placeholder="Acessos, links..." className="w-full px-4 py-3 bg-gray-950 border border-gray-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none custom-scrollbar resize-none" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center"><FileText size={16} className="mr-2 text-gray-400" />Anotações</label>
-                  <textarea name="notes" value={formData.notes || ''} onChange={handleChange} rows={5} placeholder="Observações..." className="w-full px-4 py-3 bg-gray-950 border border-gray-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none custom-scrollbar resize-none" />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center"><Globe size={16} className="mr-2 text-emerald-400" />Link do App/Site Entregue</label>
-                  <input type="url" name="deliveryLink" value={formData.deliveryLink || ''} onChange={handleChange} placeholder="https://..." className="w-full px-4 py-2 bg-gray-950 border border-gray-800 text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center"><Paperclip size={16} className="mr-2 text-blue-400" />Arquivos Anexos</label>
-                  <div className="bg-gray-950 border border-gray-800 rounded-lg p-3 space-y-2">
-                    {formData.files?.map((f, i) => (
-                      <div key={i} className="flex items-center justify-between bg-gray-900 p-2 rounded border border-gray-800">
-                        <span className="text-xs text-gray-300 truncate max-w-[200px]">{f.name}</span>
-                        <button type="button" onClick={() => setFormData(prev => ({...prev, files: prev.files?.filter((_, idx) => idx !== i)}))} className="text-red-400 hover:text-red-300"><Trash2 size={14}/></button>
-                      </div>
-                    ))}
-                    <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
-                    <button type="button" onClick={() => fileInputRef.current?.click()} className="w-full py-2 border border-dashed border-gray-700 text-gray-400 rounded hover:bg-gray-900 hover:text-gray-300 text-sm transition-colors">
-                      + Anexar Arquivo
-                    </button>
-                  </div>
-                </div>
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Status</label>
+              <select name="status" value={formData.status || 'Em Desenvolvimento'} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all appearance-none">
+                <option value="Em Desenvolvimento" className="bg-gray-900">🟡 Em Desenvolvimento</option>
+                <option value="Ativo" className="bg-gray-900">🟢 Ativo</option>
+                <option value="Cancelado" className="bg-gray-900">🔴 Cancelado</option>
+              </select>
             </div>
-          )}
 
-          {activeTab === 'history' && (
-            <div className="space-y-4">
-              {formData.history?.slice().reverse().map((h, i) => (
-                <div key={i} className="flex space-x-3">
-                  <div className="flex flex-col items-center">
-                    <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5"></div>
-                    {i !== formData.history!.length - 1 && <div className="w-px h-full bg-gray-800 my-1"></div>}
-                  </div>
-                  <div className="pb-4">
-                    <p className="text-sm text-gray-200">{h.action}</p>
-                    <p className="text-xs text-gray-500">{new Date(h.date).toLocaleString('pt-BR')}</p>
-                  </div>
-                </div>
-              ))}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Link do Site (Opcional)</label>
+              <input type="url" name="siteLink" value={formData.siteLink || ''} onChange={handleChange} placeholder="https://..." className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" />
             </div>
-          )}
-          
-          <div className="pt-6 border-t border-gray-800 flex justify-between items-center mt-auto">
+          </div>
+
+          <div className="flex justify-between items-center pt-4 border-t border-white/10">
             {initialData && onDelete ? (
-              <button type="button" onClick={() => { if(window.confirm('Tem certeza que deseja excluir este cliente?')) onDelete(initialData.id); }} className="px-4 py-2 text-rose-400 hover:bg-rose-500/10 rounded-lg font-medium flex items-center transition-colors"><Trash2 size={16} className="mr-2"/> Excluir</button>
+              <button type="button" onClick={() => onDelete(initialData.id)} className="text-red-400 hover:text-red-300 hover:bg-red-400/10 px-4 py-2 rounded-lg transition-colors flex items-center">
+                <Trash2 size={18} className="mr-2" /> Excluir
+              </button>
             ) : <div></div>}
             <div className="flex space-x-3">
-              <button type="button" onClick={onClose} className="px-5 py-2 text-gray-400 hover:bg-gray-800 rounded-lg font-medium">Cancelar</button>
-              <button type="submit" className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium shadow-sm">Salvar Dados</button>
+              <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:bg-white/10 transition-colors">Cancelar</button>
+              <button type="submit" className="px-5 py-2.5 rounded-xl text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/20 transition-all hover:scale-105 active:scale-95">Salvar Cliente</button>
             </div>
           </div>
         </form>
@@ -194,15 +131,13 @@ function LeadModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpen:
 }
 
 function CRM({ user }: { user: User }) {
-  const [leads, setLeads] = useState<Lead[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<'dashboard' | 'indications' | 'analytics'>('dashboard');
-  const [funnel, setFunnel] = useState<'commercial' | 'operation'>('commercial');
+  const [view, setView] = useState<'dashboard' | 'analytics'>('dashboard');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingLead, setEditingLead] = useState<Lead | null>(null);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [quickFilter, setQuickFilter] = useState<'Todos' | 'GMN' | 'Site' | 'Indicações'>('Todos');
 
   useEffect(() => {
     setLoading(true);
@@ -579,8 +514,8 @@ function CRM({ user }: { user: User }) {
       <aside className={`w-64 bg-gray-950 border-r border-gray-800 flex flex-col transition-all duration-300 z-20 ${sidebarOpen ? 'translate-x-0 absolute inset-y-0 left-0' : '-translate-x-full absolute md:relative md:translate-x-0'}`}>
         <div className="p-6 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/20"><Building2 size={18} className="text-white" /></div>
-            <h1 className="text-xl font-bold tracking-tight text-gray-100">GMN CRM</h1>
+            <img src="https://i.imgur.com/2H9UPAW.png" alt="Hub central Logo" className="h-8 w-auto object-contain" referrerPolicy="no-referrer" />
+            <h1 className="text-xl font-bold tracking-tight text-gray-100">Hub central</h1>
           </div>
           <button className="md:hidden text-gray-500 hover:text-gray-300" onClick={() => setSidebarOpen(false)}><X size={20} /></button>
         </div>
