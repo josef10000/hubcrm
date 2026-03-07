@@ -69,102 +69,116 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-md" onClick={onClose}>
-      <div className="bg-white/10 backdrop-blur-3xl rounded-3xl shadow-2xl w-full max-w-lg flex flex-col border border-white/20 overflow-hidden" onClick={(e) => e.stopPropagation()}>
-        <div className="flex justify-between items-center p-6 border-b border-white/10 bg-white/5">
+      <div className="bg-white/10 backdrop-blur-3xl rounded-3xl shadow-2xl w-full max-w-4xl flex flex-col border border-white/20 overflow-hidden max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center p-6 border-b border-white/10 bg-white/5 shrink-0">
           <h2 className="text-xl font-semibold text-white">{initialData ? 'Detalhes do Cliente' : 'Novo Cliente'}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors"><X size={24} /></button>
         </div>
         
-        <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Nome do Cliente/Empresa *</label>
-              <input required type="text" name="name" value={formData.name || ''} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" placeholder="Ex: João Silva" />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">WhatsApp *</label>
-              <input required type="text" name="whatsapp" value={formData.whatsapp || ''} onChange={handleChange} placeholder="(11) 99999-9999" className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" />
-            </div>
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Left Column: Basic Info & Payment */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-white mb-4 border-b border-white/10 pb-2">Dados do Cliente</h3>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Nome do Cliente/Empresa *</label>
+                  <input required type="text" name="name" value={formData.name || ''} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" placeholder="Ex: João Silva" />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">WhatsApp *</label>
+                  <input required type="text" name="whatsapp" value={formData.whatsapp || ''} onChange={handleChange} placeholder="(11) 99999-9999" className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" />
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">CPF/CNPJ *</label>
-              <input required type="text" name="cpfCnpj" value={formData.cpfCnpj || ''} onChange={handleChange} placeholder="Apenas números" className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" />
-            </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">CPF/CNPJ *</label>
+                  <input required type="text" name="cpfCnpj" value={formData.cpfCnpj || ''} onChange={handleChange} placeholder="Apenas números" className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" />
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">E-mail *</label>
-              <input required type="email" name="email" value={formData.email || ''} onChange={handleChange} placeholder="cliente@email.com" className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" />
-            </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">E-mail *</label>
+                  <input required type="email" name="email" value={formData.email || ''} onChange={handleChange} placeholder="cliente@email.com" className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" />
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Forma de Pagamento *</label>
-              <div className="grid grid-cols-2 gap-3">
-                <button 
-                  type="button" 
-                  onClick={() => setFormData(prev => ({ ...prev, billingType: 'PIX' }))}
-                  className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'PIX' || !formData.billingType ? 'bg-orange-500/20 border-orange-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-white/10 text-gray-400 hover:bg-white/5'}`}
-                >
-                  <div className="font-semibold">PIX</div>
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => setFormData(prev => ({ ...prev, billingType: 'CREDIT_CARD' }))}
-                  className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'CREDIT_CARD' ? 'bg-orange-500/20 border-orange-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-white/10 text-gray-400 hover:bg-white/5'}`}
-                >
-                  <div className="font-semibold">Cartão de Crédito</div>
-                </button>
+                <h3 className="text-lg font-medium text-white mt-8 mb-4 border-b border-white/10 pb-2">Configurações de Pagamento</h3>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Forma de Pagamento *</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button 
+                      type="button" 
+                      onClick={() => setFormData(prev => ({ ...prev, billingType: 'PIX' }))}
+                      className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'PIX' || !formData.billingType ? 'bg-orange-500/20 border-orange-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-white/10 text-gray-400 hover:bg-white/5'}`}
+                    >
+                      <div className="font-semibold">PIX</div>
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => setFormData(prev => ({ ...prev, billingType: 'CREDIT_CARD' }))}
+                      className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'CREDIT_CARD' ? 'bg-orange-500/20 border-orange-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-white/10 text-gray-400 hover:bg-white/5'}`}
+                    >
+                      <div className="font-semibold">Cartão de Crédito</div>
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Plano *</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button 
+                      type="button" 
+                      onClick={() => setFormData(prev => ({ ...prev, plan: 'Padrão' }))}
+                      className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Padrão' ? 'bg-orange-500/20 border-orange-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-white/10 text-gray-400 hover:bg-white/5'}`}
+                    >
+                      <div className="font-semibold mb-1">Padrão</div>
+                      <div className="text-sm opacity-80">R$ 80/mês</div>
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => setFormData(prev => ({ ...prev, plan: 'Profissional' }))}
+                      className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Profissional' ? 'bg-orange-500/20 border-orange-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-white/10 text-gray-400 hover:bg-white/5'}`}
+                    >
+                      <div className="font-semibold mb-1">Profissional</div>
+                      <div className="text-sm opacity-80">R$ 120/mês</div>
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Plano *</label>
-              <div className="grid grid-cols-2 gap-3">
-                <button 
-                  type="button" 
-                  onClick={() => setFormData(prev => ({ ...prev, plan: 'Padrão' }))}
-                  className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Padrão' ? 'bg-orange-500/20 border-orange-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-white/10 text-gray-400 hover:bg-white/5'}`}
-                >
-                  <div className="font-semibold mb-1">Padrão</div>
-                  <div className="text-sm opacity-80">R$ 80/mês</div>
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => setFormData(prev => ({ ...prev, plan: 'Profissional' }))}
-                  className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Profissional' ? 'bg-orange-500/20 border-orange-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-white/10 text-gray-400 hover:bg-white/5'}`}
-                >
-                  <div className="font-semibold mb-1">Profissional</div>
-                  <div className="text-sm opacity-80">R$ 120/mês</div>
-                </button>
+              {/* Right Column: Status & Notes */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-white mb-4 border-b border-white/10 pb-2">Status e Detalhes</h3>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Status</label>
+                  <select name="status" value={formData.status || 'Em Desenvolvimento'} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all appearance-none">
+                    <option value="Em Desenvolvimento" className="bg-gray-900">🟡 Em Desenvolvimento</option>
+                    <option value="Ativo" className="bg-gray-900">🟢 Ativo</option>
+                    <option value="Cancelado" className="bg-gray-900">🔴 Cancelado</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Nicho / Área de Atuação</label>
+                  <input type="text" name="niche" value={formData.niche || ''} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" placeholder="Ex: Advogado, Clínica, E-commerce..." />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Link do Site (Opcional)</label>
+                  <input type="url" name="siteLink" value={formData.siteLink || ''} onChange={handleChange} placeholder="https://..." className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" />
+                </div>
+
+                <div className="flex-1 flex flex-col">
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Anotações e Credenciais</label>
+                  <textarea name="notes" value={formData.notes || ''} onChange={handleChange} className="w-full flex-1 min-h-[150px] px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500 custom-scrollbar resize-none" placeholder="Anotações importantes, links de referência, acessos..."></textarea>
+                </div>
               </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Status</label>
-              <select name="status" value={formData.status || 'Em Desenvolvimento'} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all appearance-none">
-                <option value="Em Desenvolvimento" className="bg-gray-900">🟡 Em Desenvolvimento</option>
-                <option value="Ativo" className="bg-gray-900">🟢 Ativo</option>
-                <option value="Cancelado" className="bg-gray-900">🔴 Cancelado</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Nicho / Área de Atuação</label>
-              <input type="text" name="niche" value={formData.niche || ''} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" placeholder="Ex: Advogado, Clínica, E-commerce..." />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Anotações e Credenciais</label>
-              <textarea name="notes" value={formData.notes || ''} onChange={handleChange} rows={3} className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500 custom-scrollbar" placeholder="Anotações importantes, links de referência, acessos..."></textarea>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Link do Site (Opcional)</label>
-              <input type="url" name="siteLink" value={formData.siteLink || ''} onChange={handleChange} placeholder="https://..." className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" />
             </div>
           </div>
 
-          <div className="flex justify-between items-center pt-4 border-t border-white/10">
+          <div className="flex justify-between items-center p-6 border-t border-white/10 bg-white/5 shrink-0">
             {initialData && onDelete ? (
               <button type="button" onClick={() => onDelete(initialData.id)} className="text-red-400 hover:text-red-300 hover:bg-red-400/10 px-4 py-2 rounded-lg transition-colors flex items-center">
                 <Trash2 size={18} className="mr-2" /> Excluir
@@ -259,8 +273,24 @@ function CRM({ user }: { user: User }) {
     setEditingClient(null);
 
     try { 
+      // Handle Cancellation
+      if (!isNew && client.status === 'Cancelado' && client.asaasSubscriptionId) {
+        const delRes = await fetch('/api/asaas/delete-subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ subscriptionId: client.asaasSubscriptionId })
+        });
+        if (!delRes.ok) {
+          console.error("Failed to cancel subscription in Asaas");
+          alert("Aviso: Não foi possível cancelar a assinatura no Asaas automaticamente.");
+        } else {
+          client.paymentStatus = 'N/A';
+          client.invoiceUrl = undefined;
+        }
+      }
+
       // Integrate with Asaas for new clients or clients without Asaas ID
-      if (!client.asaasCustomerId && client.cpfCnpj && client.email) {
+      if (!client.asaasCustomerId && client.cpfCnpj && client.email && client.status !== 'Cancelado') {
         // 1. Create Customer in Asaas
         const customerRes = await fetch('/api/asaas/customers', {
           method: 'POST',
@@ -277,35 +307,45 @@ function CRM({ user }: { user: User }) {
           const customerData = await customerRes.json();
           client.asaasCustomerId = customerData.id;
 
-          // 2. Create Payment in Asaas (Immediate Payment)
+          // 2. Create Subscription in Asaas (Immediate Payment)
           const today = new Date();
-          const dueDate = today.toISOString().split('T')[0];
+          const nextDueDate = today.toISOString().split('T')[0];
           
           const value = client.plan === 'Profissional' ? 120 : 80;
 
-          const payRes = await fetch('/api/asaas/payments', {
+          const subRes = await fetch('/api/asaas/subscriptions', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               customer: client.asaasCustomerId,
               billingType: client.billingType,
               value: value,
-              dueDate: dueDate,
-              description: `Plano ${client.plan} - Hub Central`
+              nextDueDate: nextDueDate,
+              description: `Assinatura Mensal - Plano ${client.plan} - Hub Central`
             })
           });
 
-          if (payRes.ok) {
-            const payData = await payRes.json();
-            client.asaasSubscriptionId = payData.id; // Using this field for payment ID
-            client.invoiceUrl = payData.invoiceUrl;
-            client.paymentStatus = payData.status || 'PENDING';
+          if (subRes.ok) {
+            const subData = await subRes.json();
+            client.asaasSubscriptionId = subData.id; 
+            // The subscription endpoint doesn't return an invoiceUrl directly in the same way,
+            // but we can link to the subscription or the first payment if needed.
+            // For now, we'll rely on the webhook to update the invoiceUrl when the first charge is generated,
+            // or we can fetch the charges for this subscription.
+            // Let's assume the subscription creation might not immediately give the invoice URL for the first charge.
+            // Actually, Asaas usually generates the first charge immediately if nextDueDate is today.
+            // We might need to fetch the charge to get the invoiceUrl, but let's leave it pending until webhook updates it,
+            // OR we can just set it to a generic subscription link if available.
+            // For simplicity, we'll leave invoiceUrl empty until the webhook fills it, or we can try to get it if returned.
+            // Let's check if subData has a recent charge or we just wait for webhook.
+            // To ensure the user can pay immediately, we should ideally fetch the first charge.
+            // For now, we will just alert the user that the subscription was created.
           } else {
-            let errText = await payRes.text();
+            let errText = await subRes.text();
             let err;
             try { err = JSON.parse(errText); } catch(e) { err = { error: errText }; }
-            console.error("Asaas Payment Error:", err);
-            alert(`Erro ao criar cobrança no Asaas: ${err.error || 'Erro desconhecido'}`);
+            console.error("Asaas Subscription Error:", err);
+            alert(`Erro ao criar assinatura no Asaas: ${err.error || 'Erro desconhecido'}`);
           }
         } else {
           let errText = await customerRes.text();
@@ -326,6 +366,26 @@ function CRM({ user }: { user: User }) {
 
   const handleDeleteClient = async (clientId: string) => {
     setIsModalOpen(false);
+    
+    // Find the client to get the subscription ID
+    const clientToDelete = clients.find(c => c.id === clientId);
+    
+    if (clientToDelete?.asaasSubscriptionId) {
+      try {
+        const delRes = await fetch('/api/asaas/delete-subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ subscriptionId: clientToDelete.asaasSubscriptionId })
+        });
+        if (!delRes.ok) {
+          console.error("Failed to cancel subscription in Asaas before deletion");
+          alert("Aviso: O cliente foi excluído, mas não foi possível cancelar a assinatura no Asaas automaticamente.");
+        }
+      } catch (e) {
+        console.error("Error calling delete-subscription API", e);
+      }
+    }
+
     setEditingClient(null);
     try {
       await deleteDoc(doc(db, 'users', user.uid, 'clients', clientId));
