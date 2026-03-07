@@ -30,6 +30,7 @@ interface Client {
   asaasSubscriptionId?: string;
   invoiceUrl?: string;
   paymentStatus?: 'PENDING' | 'RECEIVED' | 'OVERDUE' | 'N/A';
+  billingType?: 'PIX' | 'CREDIT_CARD' | 'BOLETO';
 }
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -94,6 +95,26 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">E-mail *</label>
               <input required type="email" name="email" value={formData.email || ''} onChange={handleChange} placeholder="cliente@email.com" className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Forma de Pagamento *</label>
+              <div className="grid grid-cols-2 gap-3">
+                <button 
+                  type="button" 
+                  onClick={() => setFormData(prev => ({ ...prev, billingType: 'PIX' }))}
+                  className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'PIX' || !formData.billingType ? 'bg-orange-500/20 border-orange-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-white/10 text-gray-400 hover:bg-white/5'}`}
+                >
+                  <div className="font-semibold">PIX</div>
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => setFormData(prev => ({ ...prev, billingType: 'CREDIT_CARD' }))}
+                  className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'CREDIT_CARD' ? 'bg-orange-500/20 border-orange-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-white/10 text-gray-400 hover:bg-white/5'}`}
+                >
+                  <div className="font-semibold">Cartão de Crédito</div>
+                </button>
+              </div>
             </div>
 
             <div>
@@ -231,6 +252,7 @@ function CRM({ user }: { user: User }) {
       asaasSubscriptionId: clientData.asaasSubscriptionId,
       invoiceUrl: clientData.invoiceUrl,
       paymentStatus: clientData.paymentStatus || 'PENDING',
+      billingType: clientData.billingType || 'PIX',
     };
 
     setIsModalOpen(false); 
@@ -255,10 +277,9 @@ function CRM({ user }: { user: User }) {
           const customerData = await customerRes.json();
           client.asaasCustomerId = customerData.id;
 
-          // 2. Create Payment in Asaas
-          const nextMonth = new Date();
-          nextMonth.setMonth(nextMonth.getMonth() + 1);
-          const dueDate = nextMonth.toISOString().split('T')[0];
+          // 2. Create Payment in Asaas (Immediate Payment)
+          const today = new Date();
+          const dueDate = today.toISOString().split('T')[0];
           
           const value = client.plan === 'Profissional' ? 120 : 80;
 
@@ -267,6 +288,7 @@ function CRM({ user }: { user: User }) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               customer: client.asaasCustomerId,
+              billingType: client.billingType,
               value: value,
               dueDate: dueDate,
               description: `Plano ${client.plan} - Hub Central`
@@ -278,9 +300,17 @@ function CRM({ user }: { user: User }) {
             client.asaasSubscriptionId = payData.id; // Using this field for payment ID
             client.invoiceUrl = payData.invoiceUrl;
             client.paymentStatus = payData.status || 'PENDING';
+          } else {
+            let errText = await payRes.text();
+            let err;
+            try { err = JSON.parse(errText); } catch(e) { err = { error: errText }; }
+            console.error("Asaas Payment Error:", err);
+            alert(`Erro ao criar cobrança no Asaas: ${err.error || 'Erro desconhecido'}`);
           }
         } else {
-          const err = await customerRes.json();
+          let errText = await customerRes.text();
+          let err;
+          try { err = JSON.parse(errText); } catch(e) { err = { error: errText }; }
           console.error("Asaas Customer Error:", err);
           alert(`Erro ao criar cliente no Asaas: ${err.error || 'Erro desconhecido'}`);
         }

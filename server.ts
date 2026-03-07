@@ -50,10 +50,10 @@ app.post("/api/asaas/customers", async (req, res) => {
 // Create Payment
 app.post("/api/asaas/payments", async (req, res) => {
   try {
-    const { customer, value, description, dueDate } = req.body;
+    const { customer, billingType, value, description, dueDate } = req.body;
     const data = await asaasRequest("/payments", "POST", {
       customer,
-      billingType: "PIX",
+      billingType: billingType || "PIX",
       value,
       dueDate,
       description
