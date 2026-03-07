@@ -197,6 +197,8 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
 
 function CRM({ user }: { user: User }) {
   const [clients, setClients] = useState<Client[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const clientsPerPage = 9;
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [view, setView] = useState<'dashboard' | 'analytics'>('dashboard');
@@ -419,7 +421,17 @@ function CRM({ user }: { user: User }) {
     return result;
   }, [clients, searchTerm, filterStatus, sortBy]);
 
+  // Reset to page 1 when search term changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterStatus, sortBy]);
+
   const renderDashboard = () => {
+    const indexOfLastClient = currentPage * clientsPerPage;
+    const indexOfFirstClient = indexOfLastClient - clientsPerPage;
+    const currentClients = filteredClients.slice(indexOfFirstClient, indexOfLastClient);
+    const totalPages = Math.ceil(filteredClients.length / clientsPerPage);
+
     return (
       <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10">
         <div className="max-w-7xl mx-auto">
@@ -432,7 +444,7 @@ function CRM({ user }: { user: User }) {
                 return (
                   <button
                     key={status}
-                    onClick={() => setFilterStatus(status as any)}
+                    onClick={() => { setFilterStatus(status as any); setCurrentPage(1); }}
                     className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
                       filterStatus === status 
                         ? 'bg-white/10 text-white shadow-sm' 
@@ -452,8 +464,8 @@ function CRM({ user }: { user: User }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredClients.map(client => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {currentClients.map(client => (
               <div key={client.id} onClick={() => { setEditingClient(client); setIsModalOpen(true); }} className="bg-white/10 backdrop-blur-2xl border border-white/20 p-6 rounded-3xl cursor-pointer hover:bg-white/[0.15] transition-all group relative overflow-hidden shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] hover:shadow-[0_8px_32px_0_rgba(249,115,22,0.15)] hover:-translate-y-1 flex flex-col h-full">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-amber-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 
@@ -544,6 +556,51 @@ function CRM({ user }: { user: User }) {
               </div>
             )}
           </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center space-x-2 mt-8 mb-4">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                  currentPage === 1 
+                    ? 'bg-white/5 text-gray-500 cursor-not-allowed' 
+                    : 'bg-white/10 text-white hover:bg-white/20'
+                }`}
+              >
+                Anterior
+              </button>
+              
+              <div className="flex space-x-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`w-10 h-10 rounded-xl text-sm font-medium transition-all flex items-center justify-center ${
+                      currentPage === page 
+                        ? 'bg-orange-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.5)]' 
+                        : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                  currentPage === totalPages 
+                    ? 'bg-white/5 text-gray-500 cursor-not-allowed' 
+                    : 'bg-white/10 text-white hover:bg-white/20'
+                }`}
+              >
+                Próxima
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
