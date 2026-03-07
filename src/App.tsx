@@ -5,7 +5,7 @@ import {
   Search, BarChart3, Calendar, Paperclip, Copy, MessageCircle, Trash2, Snowflake, LogOut, Globe,
   Filter, ArrowDownAZ, ArrowUpRight
 } from 'lucide-react';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid } from 'recharts';
 import { auth, db } from './lib/firebase';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { collection, doc, setDoc, onSnapshot, deleteDoc } from 'firebase/firestore';
@@ -552,8 +552,13 @@ function CRM({ user }: { user: User }) {
   const renderAnalytics = () => {
     const totalClients = clients.length;
     const activeClients = clients.filter(c => c.status === 'Ativo').length;
-    const mrr = clients.filter(c => c.status === 'Ativo').reduce((acc, c) => acc + (c.plan === 'Profissional' ? 120 : 80), 0);
+    const activeClientsList = clients.filter(c => c.status === 'Ativo');
+    const mrr = activeClientsList.reduce((acc, c) => acc + (c.plan === 'Profissional' ? 120 : 80), 0);
     
+    const overdueClients = clients.filter(c => c.paymentStatus === 'OVERDUE');
+    const overdueAmount = overdueClients.reduce((acc, c) => acc + (c.plan === 'Profissional' ? 120 : 80), 0);
+    const overdueRate = activeClients > 0 ? ((overdueClients.length / activeClients) * 100).toFixed(1) : '0.0';
+
     const planData = [
       { name: 'Padrão', value: clients.filter(c => c.plan === 'Padrão').length, color: '#f97316' },
       { name: 'Profissional', value: clients.filter(c => c.plan === 'Profissional').length, color: '#f59e0b' }
@@ -563,6 +568,11 @@ function CRM({ user }: { user: User }) {
       { name: 'Em Desenvolvimento', value: clients.filter(c => c.status === 'Em Desenvolvimento').length, color: '#eab308' },
       { name: 'Ativo', value: activeClients, color: '#10b981' },
       { name: 'Cancelado', value: clients.filter(c => c.status === 'Cancelado').length, color: '#ef4444' }
+    ];
+
+    const paymentMethodData = [
+      { name: 'PIX', value: clients.filter(c => c.billingType === 'PIX' || !c.billingType).length, color: '#10b981' },
+      { name: 'Cartão', value: clients.filter(c => c.billingType === 'CREDIT_CARD').length, color: '#3b82f6' }
     ];
 
     const now = Date.now();
@@ -579,21 +589,33 @@ function CRM({ user }: { user: User }) {
 
     const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
     const currentYear = new Date().getFullYear();
-    const monthlyData = months.map(m => ({ name: m, value: 0 }));
-    
-    clients.forEach(c => {
-      const d = new Date(c.createdAt);
-      if (d.getFullYear() === currentYear) {
-        monthlyData[d.getMonth()].value += 1;
-      }
+    const currentMonth = new Date().getMonth();
+
+    const monthlyData = months.map((m, i) => {
+      const monthClients = clients.filter(c => {
+        const d = new Date(c.createdAt);
+        return d.getFullYear() === currentYear && d.getMonth() === i;
+      });
+      
+      const mrrUpToThisMonth = activeClientsList.filter(c => {
+        const d = new Date(c.createdAt);
+        return d.getFullYear() < currentYear || (d.getFullYear() === currentYear && d.getMonth() <= i);
+      }).reduce((acc, c) => acc + (c.plan === 'Profissional' ? 120 : 80), 0);
+
+      return { 
+        name: m, 
+        novos: monthClients.length,
+        mrr: i <= currentMonth ? mrrUpToThisMonth : null
+      };
     });
 
     return (
       <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-2xl font-bold text-white mb-8">Analytics</h2>
+          <h2 className="text-2xl font-bold text-white mb-8">Dashboard Financeiro</h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Top Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div className="bg-white/10 backdrop-blur-2xl border border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
               <p className="text-gray-400 text-sm font-medium mb-2">Total de Clientes</p>
               <p className="text-4xl font-bold text-white">{totalClients}</p>
@@ -609,9 +631,65 @@ function CRM({ user }: { user: User }) {
               <p className="text-gray-400 text-sm font-medium mb-2">MRR (Recorrente)</p>
               <p className="text-4xl font-bold text-orange-400">R$ {mrr.toLocaleString('pt-BR')}</p>
             </div>
+
+            <div className="bg-white/10 backdrop-blur-2xl border border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
+              <p className="text-gray-400 text-sm font-medium mb-2">Inadimplência (Atrasados)</p>
+              <div className="flex items-end gap-3">
+                <p className="text-4xl font-bold text-red-400">R$ {overdueAmount.toLocaleString('pt-BR')}</p>
+                <span className="text-sm text-red-400/80 mb-1 font-medium">({overdueRate}%)</span>
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Main Charts Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div className="bg-white/10 backdrop-blur-2xl border border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
+              <h3 className="text-lg font-semibold text-white mb-6">Crescimento do MRR ({currentYear})</h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={monthlyData.filter(d => d.mrr !== null)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorMrr" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#f97316" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} tickFormatter={(value) => `R$${value}`} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                      itemStyle={{ color: '#fff' }}
+                      formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR')}`, 'MRR']}
+                    />
+                    <Area type="monotone" dataKey="mrr" stroke="#f97316" strokeWidth={3} fillOpacity={1} fill="url(#colorMrr)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-2xl border border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
+              <h3 className="text-lg font-semibold text-white mb-6">Aquisição de Clientes ({currentYear})</h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} allowDecimals={false} />
+                    <Tooltip 
+                      cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                      contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                      formatter={(value: number) => [value, 'Novos Clientes']}
+                    />
+                    <Bar dataKey="novos" fill="#10b981" radius={[4, 4, 0, 0]} barSize={30} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white/10 backdrop-blur-2xl border border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
               <h3 className="text-lg font-semibold text-white mb-6">Distribuição por Plano</h3>
               <div className="h-48">
@@ -659,38 +737,32 @@ function CRM({ user }: { user: User }) {
                 </ResponsiveContainer>
               </div>
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-            <div className="lg:col-span-2 bg-white/10 backdrop-blur-2xl border border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
-              <h3 className="text-lg font-semibold text-white mb-6">Aquisição de Clientes ({currentYear})</h3>
-              <div className="h-56">
+            <div className="bg-white/10 backdrop-blur-2xl border border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
+              <h3 className="text-lg font-semibold text-white mb-6">Formas de Pagamento</h3>
+              <div className="h-48">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} allowDecimals={false} />
+                  <PieChart>
+                    <Pie data={paymentMethodData} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={5} dataKey="value">
+                      {paymentMethodData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
                     <Tooltip 
-                      cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                       contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                      itemStyle={{ color: '#fff' }}
                     />
-                    <Bar dataKey="value" fill="#f97316" radius={[4, 4, 0, 0]} barSize={30} />
-                  </BarChart>
+                  </PieChart>
                 </ResponsiveContainer>
               </div>
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-2xl border border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] flex flex-col justify-center">
-              <h3 className="text-lg font-semibold text-white mb-2">Aquisição Semanal</h3>
-              <p className="text-gray-400 text-sm mb-6">Novos clientes nos últimos 7 dias</p>
-              
-              <div className="flex items-end space-x-4 mb-4">
-                <span className="text-6xl font-bold text-white">{thisWeekCount}</span>
-                <div className={`flex items-center pb-2 ${weeklyGrowth >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {weeklyGrowth >= 0 ? <ArrowUpRight size={20} className="mr-1" /> : <ArrowUpRight size={20} className="mr-1 rotate-90" />}
-                  <span className="font-semibold">{Math.abs(weeklyGrowth)}%</span>
-                </div>
+              <div className="flex justify-center gap-4 mt-4">
+                {paymentMethodData.map(method => (
+                  <div key={method.name} className="flex items-center text-sm text-gray-300">
+                    <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: method.color }}></div>
+                    {method.name} ({method.value})
+                  </div>
+                ))}
               </div>
-              <p className="text-sm text-gray-500">vs. {lastWeekCount} na semana anterior</p>
             </div>
           </div>
         </div>
