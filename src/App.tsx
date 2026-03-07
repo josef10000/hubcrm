@@ -61,8 +61,8 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-md">
-      <div className="bg-white/10 backdrop-blur-3xl rounded-3xl shadow-2xl w-full max-w-lg flex flex-col border border-white/20 overflow-hidden">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-md" onClick={onClose}>
+      <div className="bg-white/10 backdrop-blur-3xl rounded-3xl shadow-2xl w-full max-w-lg flex flex-col border border-white/20 overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center p-6 border-b border-white/10 bg-white/5">
           <h2 className="text-xl font-semibold text-white">{initialData ? 'Detalhes do Cliente' : 'Novo Cliente'}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors"><X size={24} /></button>
