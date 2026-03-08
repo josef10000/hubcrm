@@ -71,7 +71,7 @@ app.get("/api/asaas/subscriptions/:id", async (req, res) => {
     const data = await asaasRequest(`/subscriptions/${id}`, "GET");
     
     // Also get the latest payment for this subscription to check if it's paid
-    const paymentsData = await asaasRequest(`/subscriptions/${id}/payments`, "GET");
+    const paymentsData = await asaasRequest(`/payments?subscription=${id}`, "GET");
     
     res.json({
       subscription: data,
