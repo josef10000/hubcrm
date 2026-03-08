@@ -313,7 +313,15 @@ function CRM({ user }: { user: User }) {
             const subscription = data.subscription;
             
             if (payments.length > 0) {
-              const latestPayment = payments[0];
+              let targetPayment = payments.find((p: any) => p.status === 'OVERDUE');
+              if (!targetPayment) {
+                targetPayment = payments.find((p: any) => p.status === 'PENDING');
+              }
+              if (!targetPayment) {
+                targetPayment = [...payments].sort((a: any, b: any) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime())[0];
+              }
+              
+              const latestPayment = targetPayment;
               const status = latestPayment.status;
               
               let newPaymentStatus: 'PENDING' | 'RECEIVED' | 'OVERDUE' | 'N/A' = 'PENDING';

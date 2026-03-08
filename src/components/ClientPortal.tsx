@@ -23,7 +23,45 @@ export default function ClientPortal() {
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-          setClient(docSnap.data());
+          const clientData = docSnap.data();
+          
+          if (clientData.asaasSubscriptionId) {
+            try {
+              const res = await fetch(`/api/asaas/subscriptions/${clientData.asaasSubscriptionId}`);
+              if (res.ok) {
+                const data = await res.json();
+                const payments = data.payments || [];
+                const subscription = data.subscription;
+                
+                if (payments.length > 0) {
+                  let targetPayment = payments.find((p: any) => p.status === 'OVERDUE');
+                  if (!targetPayment) {
+                    targetPayment = payments.find((p: any) => p.status === 'PENDING');
+                  }
+                  if (!targetPayment) {
+                    targetPayment = [...payments].sort((a: any, b: any) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime())[0];
+                  }
+                  
+                  const status = targetPayment.status;
+                  
+                  let newPaymentStatus = 'PENDING';
+                  if (status === 'RECEIVED' || status === 'CONFIRMED') {
+                    newPaymentStatus = 'RECEIVED';
+                  } else if (status === 'OVERDUE') {
+                    newPaymentStatus = 'OVERDUE';
+                  }
+                  
+                  clientData.paymentStatus = newPaymentStatus;
+                  clientData.invoiceUrl = targetPayment.invoiceUrl || clientData.invoiceUrl;
+                  clientData.nextDueDate = subscription?.nextDueDate || clientData.nextDueDate;
+                }
+              }
+            } catch (e) {
+              console.error("Error fetching real-time Asaas data:", e);
+            }
+          }
+          
+          setClient(clientData);
         } else {
           setError("Cliente não encontrado.");
         }
@@ -103,7 +141,7 @@ export default function ClientPortal() {
               <span className="font-medium">{client.status}</span>
             </div>
 
-            {client.siteLink && (
+            {client.siteLink && client.status === 'Ativo' && (
               <div className="mt-4">
                 <p className="text-sm text-gray-400 mb-2">Link do seu site:</p>
                 <a 
@@ -142,7 +180,7 @@ export default function ClientPortal() {
               </div>
             )}
 
-            {client.invoiceUrl ? (
+            {client.invoiceUrl && client.paymentStatus !== 'RECEIVED' ? (
               <a 
                 href={client.invoiceUrl}
                 target="_blank"
@@ -163,7 +201,7 @@ export default function ClientPortal() {
         <div className="mt-12 text-center">
           <p className="text-gray-400 text-sm mb-4">Precisa de ajuda com seu site ou fatura?</p>
           <a 
-            href="https://wa.me/5511999999999" // Replace with actual support number if available
+            href="https://wa.me/5511952924208"
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center gap-2 text-orange-400 hover:text-orange-300 transition-colors font-medium"
