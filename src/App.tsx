@@ -12,7 +12,7 @@ import { collection, doc, setDoc, onSnapshot, deleteDoc } from 'firebase/firesto
 import Auth from './components/Auth';
 
 type PlanType = 'Padrão' | 'Profissional';
-type SiteStatus = 'Em Desenvolvimento' | 'Ativo' | 'Cancelado';
+type SiteStatus = 'Em Desenvolvimento' | 'Ativo' | 'Inadimplente' | 'Cancelado';
 
 interface Client {
   id: string; 
@@ -30,6 +30,7 @@ interface Client {
   asaasSubscriptionId?: string;
   invoiceUrl?: string;
   paymentStatus?: 'PENDING' | 'RECEIVED' | 'OVERDUE' | 'N/A';
+  nextDueDate?: string;
   billingType?: 'PIX' | 'CREDIT_CARD' | 'BOLETO';
 }
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -60,6 +61,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
       if (res.ok) {
         const data = await res.json();
         const payments = data.payments || [];
+        const subscription = data.subscription;
         
         // Find the most recent payment
         if (payments.length > 0) {
@@ -74,12 +76,16 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
             newSiteStatus = 'Ativo';
           } else if (status === 'OVERDUE') {
             newPaymentStatus = 'OVERDUE';
+            newSiteStatus = 'Inadimplente';
           }
+          
+          const nextDueDate = subscription?.nextDueDate || formData.nextDueDate;
           
           setFormData(prev => ({
             ...prev,
             paymentStatus: newPaymentStatus,
             status: newSiteStatus,
+            nextDueDate: nextDueDate,
             invoiceUrl: latestPayment.invoiceUrl || prev.invoiceUrl
           }));
         }
@@ -206,7 +212,10 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                   <label className="block text-sm font-medium text-gray-300 mb-1">Status</label>
                   <div className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl flex items-center justify-between">
                     <span className="flex items-center">
-                      {formData.status === 'Ativo' ? '🟢 Ativo' : formData.status === 'Cancelado' ? '🔴 Cancelado' : '🟡 Em Desenvolvimento'}
+                      {formData.status === 'Ativo' ? '🟢 Ativo' : 
+                       formData.status === 'Cancelado' ? '⚫ Cancelado' : 
+                       formData.status === 'Inadimplente' ? '🔴 Inadimplente' : 
+                       '🟡 Em Desenvolvimento'}
                     </span>
                     {isCheckingPayment && <span className="text-xs text-gray-400 animate-pulse">Verificando pagamento...</span>}
                   </div>
@@ -301,6 +310,7 @@ function CRM({ user }: { user: User }) {
           if (res.ok) {
             const data = await res.json();
             const payments = data.payments || [];
+            const subscription = data.subscription;
             
             if (payments.length > 0) {
               const latestPayment = payments[0];
@@ -314,13 +324,17 @@ function CRM({ user }: { user: User }) {
                 newSiteStatus = 'Ativo';
               } else if (status === 'OVERDUE') {
                 newPaymentStatus = 'OVERDUE';
+                newSiteStatus = 'Inadimplente';
               }
               
-              if (newPaymentStatus !== client.paymentStatus || newSiteStatus !== client.status || (latestPayment.invoiceUrl && latestPayment.invoiceUrl !== client.invoiceUrl)) {
+              const nextDueDate = subscription?.nextDueDate || client.nextDueDate;
+              
+              if (newPaymentStatus !== client.paymentStatus || newSiteStatus !== client.status || nextDueDate !== client.nextDueDate || (latestPayment.invoiceUrl && latestPayment.invoiceUrl !== client.invoiceUrl)) {
                 const updatedClient = {
                   ...client,
                   paymentStatus: newPaymentStatus,
                   status: newSiteStatus,
+                  nextDueDate: nextDueDate,
                   invoiceUrl: latestPayment.invoiceUrl || client.invoiceUrl
                 };
                 
@@ -410,6 +424,7 @@ function CRM({ user }: { user: User }) {
       asaasCustomerId: clientData.asaasCustomerId,
       asaasSubscriptionId: clientData.asaasSubscriptionId,
       invoiceUrl: clientData.invoiceUrl,
+      nextDueDate: clientData.nextDueDate,
       paymentStatus: clientData.paymentStatus || 'PENDING',
       billingType: clientData.billingType || 'PIX',
     };
@@ -473,6 +488,7 @@ function CRM({ user }: { user: User }) {
           if (subRes.ok) {
             const subData = await subRes.json();
             client.asaasSubscriptionId = subData.id; 
+            client.nextDueDate = nextDueDate;
             
             // Fetch the first payment to get the invoice URL
             try {
@@ -583,7 +599,7 @@ function CRM({ user }: { user: User }) {
           {/* Quick Filters & Sort */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <div className="flex bg-white/5 backdrop-blur-xl border border-white/10 p-1 rounded-2xl overflow-x-auto max-w-full custom-scrollbar">
-              {['Todos', 'Em Desenvolvimento', 'Ativo', 'Cancelado'].map((status) => {
+              {['Todos', 'Em Desenvolvimento', 'Ativo', 'Inadimplente', 'Cancelado'].map((status) => {
                 const count = status === 'Todos' ? clients.length : clients.filter(c => c.status === status).length;
                 return (
                   <button
@@ -628,7 +644,8 @@ function CRM({ user }: { user: User }) {
                   <div className="flex flex-col items-end space-y-2">
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap backdrop-blur-md ${
                       client.status === 'Ativo' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 
-                      client.status === 'Cancelado' ? 'bg-red-500/20 text-red-300 border border-red-500/30' : 
+                      client.status === 'Cancelado' ? 'bg-zinc-500/20 text-zinc-300 border border-zinc-500/30' : 
+                      client.status === 'Inadimplente' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 
                       'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
                     }`}>
                       {client.status}
@@ -655,6 +672,13 @@ function CRM({ user }: { user: User }) {
                     <Tag size={16} className="mr-3 text-orange-400 opacity-80" />
                     Plano {client.plan} <span className="ml-2 text-xs opacity-60">(R$ {client.plan === 'Profissional' ? '120' : '80'})</span>
                   </div>
+                  
+                  {client.nextDueDate && client.status !== 'Cancelado' && (
+                    <div className="flex items-center text-gray-300 text-sm">
+                      <Calendar size={16} className="mr-3 text-orange-400 opacity-80" />
+                      Vencimento: {new Date(client.nextDueDate + 'T12:00:00Z').toLocaleDateString('pt-BR')}
+                    </div>
+                  )}
                   
                   {client.niche && (
                     <div className="flex items-center text-gray-300 text-sm">
@@ -778,6 +802,7 @@ function CRM({ user }: { user: User }) {
     const statusData = [
       { name: 'Em Desenvolvimento', value: clients.filter(c => c.status === 'Em Desenvolvimento').length, color: '#eab308' },
       { name: 'Ativo', value: activeClients, color: '#10b981' },
+      { name: 'Inadimplente', value: clients.filter(c => c.status === 'Inadimplente').length, color: '#f43f5e' },
       { name: 'Cancelado', value: clients.filter(c => c.status === 'Cancelado').length, color: '#ef4444' }
     ];
 
