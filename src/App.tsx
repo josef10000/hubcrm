@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, Plus, X, DollarSign, CheckCircle, Clock, 
   MapPin, Phone, Tag, Menu, Building2, FileText, Briefcase, AlignLeft,
   Search, BarChart3, Calendar, Paperclip, Copy, MessageCircle, Trash2, Snowflake, LogOut, Globe,
-  Filter, ArrowDownAZ, ArrowUpRight
+  Filter, ArrowDownAZ, ArrowUpRight, RefreshCw
 } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid } from 'recharts';
 import { auth, db } from './lib/firebase';
@@ -36,20 +36,71 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, onDelete?: (id: string) => void, initialData: Client | null }) {
   const [formData, setFormData] = useState<Partial<Client>>({ plan: 'Padrão', status: 'Em Desenvolvimento' });
+  const [isCheckingPayment, setIsCheckingPayment] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   useEffect(() => {
     if (initialData) {
       setFormData(initialData);
+      
+      // Check payment status from Asaas if subscription exists and not cancelled
+      if (initialData.asaasSubscriptionId && initialData.status !== 'Cancelado' && isOpen) {
+        checkPaymentStatus(initialData.asaasSubscriptionId);
+      }
     } else {
       setFormData({ plan: 'Padrão', status: 'Em Desenvolvimento' });
     }
+    setShowCancelConfirm(false);
   }, [initialData, isOpen]);
+
+  const checkPaymentStatus = async (subscriptionId: string) => {
+    setIsCheckingPayment(true);
+    try {
+      const res = await fetch(`/api/asaas/subscriptions/${subscriptionId}`);
+      if (res.ok) {
+        const data = await res.json();
+        const payments = data.payments || [];
+        
+        // Find the most recent payment
+        if (payments.length > 0) {
+          const latestPayment = payments[0];
+          const status = latestPayment.status;
+          
+          let newPaymentStatus: 'PENDING' | 'RECEIVED' | 'OVERDUE' | 'N/A' = 'PENDING';
+          let newSiteStatus: SiteStatus = formData.status || 'Em Desenvolvimento';
+          
+          if (status === 'RECEIVED' || status === 'CONFIRMED') {
+            newPaymentStatus = 'RECEIVED';
+            newSiteStatus = 'Ativo';
+          } else if (status === 'OVERDUE') {
+            newPaymentStatus = 'OVERDUE';
+          }
+          
+          setFormData(prev => ({
+            ...prev,
+            paymentStatus: newPaymentStatus,
+            status: newSiteStatus,
+            invoiceUrl: latestPayment.invoiceUrl || prev.invoiceUrl
+          }));
+        }
+      }
+    } catch (error) {
+      console.error("Error checking payment status:", error);
+    } finally {
+      setIsCheckingPayment(false);
+    }
+  };
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave(formData);
+  };
+
+  const handleCancelSubscription = () => {
+    setFormData(prev => ({ ...prev, status: 'Cancelado' }));
+    onSave({ ...formData, status: 'Cancelado' });
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -153,11 +204,12 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">Status</label>
-                  <select name="status" value={formData.status || 'Em Desenvolvimento'} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all appearance-none">
-                    <option value="Em Desenvolvimento" className="bg-gray-900">🟡 Em Desenvolvimento</option>
-                    <option value="Ativo" className="bg-gray-900">🟢 Ativo</option>
-                    <option value="Cancelado" className="bg-gray-900">🔴 Cancelado</option>
-                  </select>
+                  <div className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl flex items-center justify-between">
+                    <span className="flex items-center">
+                      {formData.status === 'Ativo' ? '🟢 Ativo' : formData.status === 'Cancelado' ? '🔴 Cancelado' : '🟡 Em Desenvolvimento'}
+                    </span>
+                    {isCheckingPayment && <span className="text-xs text-gray-400 animate-pulse">Verificando pagamento...</span>}
+                  </div>
                 </div>
 
                 <div>
@@ -179,11 +231,18 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
           </div>
 
           <div className="flex justify-between items-center p-6 border-t border-white/10 bg-white/5 shrink-0">
-            {initialData && onDelete ? (
-              <button type="button" onClick={() => onDelete(initialData.id)} className="text-red-400 hover:text-red-300 hover:bg-red-400/10 px-4 py-2 rounded-lg transition-colors flex items-center">
-                <Trash2 size={18} className="mr-2" /> Excluir
-              </button>
-            ) : <div></div>}
+            <div className="flex space-x-2">
+              {initialData && onDelete ? (
+                <button type="button" onClick={() => onDelete(initialData.id)} className="text-red-400 hover:text-red-300 hover:bg-red-400/10 px-4 py-2 rounded-lg transition-colors flex items-center text-sm font-medium">
+                  <Trash2 size={18} className="mr-2" /> Excluir
+                </button>
+              ) : null}
+              {initialData && initialData.status !== 'Cancelado' ? (
+                <button type="button" onClick={() => setShowCancelConfirm(true)} className="text-orange-400 hover:text-orange-300 hover:bg-orange-400/10 px-4 py-2 rounded-lg transition-colors flex items-center text-sm font-medium">
+                  Cancelar Assinatura
+                </button>
+              ) : null}
+            </div>
             <div className="flex space-x-3">
               <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-300 hover:bg-white/10 transition-colors">Cancelar</button>
               <button type="submit" className="px-5 py-2.5 rounded-xl text-sm font-medium bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/20 transition-all hover:scale-105 active:scale-95">Salvar Cliente</button>
@@ -191,6 +250,33 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
           </div>
         </form>
       </div>
+
+      {showCancelConfirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#1a1c23] border border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+            <h3 className="text-xl font-bold text-white mb-2">Cancelar Assinatura?</h3>
+            <p className="text-gray-400 text-sm mb-6">
+              Tem certeza que deseja cancelar a assinatura deste cliente? Esta ação não pode ser desfeita e o status será alterado para Cancelado.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button 
+                type="button" 
+                onClick={() => setShowCancelConfirm(false)} 
+                className="px-4 py-2 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 transition-all"
+              >
+                Voltar
+              </button>
+              <button 
+                type="button" 
+                onClick={handleCancelSubscription} 
+                className="px-4 py-2 rounded-xl text-sm font-medium bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/20 transition-all"
+              >
+                Sim, Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -200,7 +286,64 @@ function CRM({ user }: { user: User }) {
   const [currentPage, setCurrentPage] = useState(1);
   const clientsPerPage = 9;
   const [loading, setLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const syncPayments = async () => {
+    setIsSyncing(true);
+    try {
+      const clientsToSync = clients.filter(c => c.asaasSubscriptionId && c.status !== 'Cancelado');
+      let updatedCount = 0;
+      
+      for (const client of clientsToSync) {
+        try {
+          const res = await fetch(`/api/asaas/subscriptions/${client.asaasSubscriptionId}`);
+          if (res.ok) {
+            const data = await res.json();
+            const payments = data.payments || [];
+            
+            if (payments.length > 0) {
+              const latestPayment = payments[0];
+              const status = latestPayment.status;
+              
+              let newPaymentStatus: 'PENDING' | 'RECEIVED' | 'OVERDUE' | 'N/A' = 'PENDING';
+              let newSiteStatus: SiteStatus = client.status;
+              
+              if (status === 'RECEIVED' || status === 'CONFIRMED') {
+                newPaymentStatus = 'RECEIVED';
+                newSiteStatus = 'Ativo';
+              } else if (status === 'OVERDUE') {
+                newPaymentStatus = 'OVERDUE';
+              }
+              
+              if (newPaymentStatus !== client.paymentStatus || newSiteStatus !== client.status || (latestPayment.invoiceUrl && latestPayment.invoiceUrl !== client.invoiceUrl)) {
+                const updatedClient = {
+                  ...client,
+                  paymentStatus: newPaymentStatus,
+                  status: newSiteStatus,
+                  invoiceUrl: latestPayment.invoiceUrl || client.invoiceUrl
+                };
+                
+                await setDoc(doc(db, 'users', user.uid, 'clients', client.id), updatedClient);
+                updatedCount++;
+              }
+            }
+          }
+        } catch (e) {
+          console.error(`Error syncing client ${client.name}`, e);
+        }
+      }
+      
+      if (updatedCount > 0) {
+        // The onSnapshot listener will automatically update the UI
+        console.log(`Synced ${updatedCount} clients`);
+      }
+    } catch (error) {
+      console.error("Error syncing payments:", error);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
   const [view, setView] = useState<'dashboard' | 'analytics'>('dashboard');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
@@ -330,18 +473,19 @@ function CRM({ user }: { user: User }) {
           if (subRes.ok) {
             const subData = await subRes.json();
             client.asaasSubscriptionId = subData.id; 
-            // The subscription endpoint doesn't return an invoiceUrl directly in the same way,
-            // but we can link to the subscription or the first payment if needed.
-            // For now, we'll rely on the webhook to update the invoiceUrl when the first charge is generated,
-            // or we can fetch the charges for this subscription.
-            // Let's assume the subscription creation might not immediately give the invoice URL for the first charge.
-            // Actually, Asaas usually generates the first charge immediately if nextDueDate is today.
-            // We might need to fetch the charge to get the invoiceUrl, but let's leave it pending until webhook updates it,
-            // OR we can just set it to a generic subscription link if available.
-            // For simplicity, we'll leave invoiceUrl empty until the webhook fills it, or we can try to get it if returned.
-            // Let's check if subData has a recent charge or we just wait for webhook.
-            // To ensure the user can pay immediately, we should ideally fetch the first charge.
-            // For now, we will just alert the user that the subscription was created.
+            
+            // Fetch the first payment to get the invoice URL
+            try {
+              const checkRes = await fetch(`/api/asaas/subscriptions/${subData.id}`);
+              if (checkRes.ok) {
+                const checkData = await checkRes.json();
+                if (checkData.payments && checkData.payments.length > 0) {
+                  client.invoiceUrl = checkData.payments[0].invoiceUrl;
+                }
+              }
+            } catch (e) {
+              console.error("Error fetching initial invoice URL", e);
+            }
           } else {
             let errText = await subRes.text();
             let err;
@@ -458,6 +602,16 @@ function CRM({ user }: { user: User }) {
             </div>
             
             <div className="flex items-center space-x-2 bg-white/5 backdrop-blur-xl border border-white/10 p-1 rounded-2xl">
+              <button 
+                onClick={syncPayments} 
+                disabled={isSyncing}
+                className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${isSyncing ? 'text-orange-400 bg-white/5' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+                title="Sincronizar pagamentos com Asaas"
+              >
+                <RefreshCw size={16} className={`mr-2 ${isSyncing ? 'animate-spin' : ''}`}/> 
+                <span className="hidden sm:inline">Sincronizar</span>
+              </button>
+              <div className="w-px h-6 bg-white/10 mx-1"></div>
               <button onClick={() => setSortBy('recent')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${sortBy === 'recent' ? 'bg-white/10 text-white' : 'text-gray-400 hover:bg-white/5'}`}><Clock size={16} className="mr-2"/> Recentes</button>
               <button onClick={() => setSortBy('alphabetical')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${sortBy === 'alphabetical' ? 'bg-white/10 text-white' : 'text-gray-400 hover:bg-white/5'}`}><ArrowDownAZ size={16} className="mr-2"/> A-Z</button>
               <button onClick={() => setSortBy('value')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${sortBy === 'value' ? 'bg-white/10 text-white' : 'text-gray-400 hover:bg-white/5'}`}><DollarSign size={16} className="mr-2"/> Valor</button>

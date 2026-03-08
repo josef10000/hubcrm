@@ -64,6 +64,53 @@ app.post("/api/asaas/payments", async (req, res) => {
   }
 });
 
+// Get Subscription Status
+app.get("/api/asaas/subscriptions/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const data = await asaasRequest(`/subscriptions/${id}`, "GET");
+    
+    // Also get the latest payment for this subscription to check if it's paid
+    const paymentsData = await asaasRequest(`/subscriptions/${id}/payments`, "GET");
+    
+    res.json({
+      subscription: data,
+      payments: paymentsData.data || []
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Create Subscription
+app.post("/api/asaas/subscriptions", async (req, res) => {
+  try {
+    const { customer, billingType, value, nextDueDate, description } = req.body;
+    const data = await asaasRequest("/subscriptions", "POST", {
+      customer,
+      billingType: billingType || "PIX",
+      value,
+      nextDueDate,
+      description,
+      cycle: "MONTHLY"
+    });
+    res.json(data);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete Subscription
+app.post("/api/asaas/delete-subscription", async (req, res) => {
+  try {
+    const { subscriptionId } = req.body;
+    const data = await asaasRequest(`/subscriptions/${subscriptionId}`, "DELETE");
+    res.json(data);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Webhook to receive payment updates from Asaas
 app.post("/api/asaas/webhook", async (req, res) => {
   try {
