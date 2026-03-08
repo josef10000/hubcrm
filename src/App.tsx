@@ -720,6 +720,18 @@ function CRM({ user }: { user: User }) {
                     <MessageCircle size={18} className="mr-2" />
                     WhatsApp
                   </a>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const url = `${window.location.origin}/cliente/${user.uid}/${client.id}`;
+                      navigator.clipboard.writeText(url);
+                      alert('Link do Portal copiado para a área de transferência!');
+                    }}
+                    className="flex items-center justify-center w-full py-2.5 rounded-xl bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 border border-orange-500/30 transition-colors text-sm font-medium"
+                  >
+                    <Copy size={18} className="mr-2" />
+                    Link do Portal
+                  </button>
                 </div>
               </div>
             ))}
@@ -794,6 +806,40 @@ function CRM({ user }: { user: User }) {
     const overdueAmount = overdueClients.reduce((acc, c) => acc + (c.plan === 'Profissional' ? 120 : 80), 0);
     const overdueRate = activeClients > 0 ? ((overdueClients.length / activeClients) * 100).toFixed(1) : '0.0';
 
+    const canceledClients = clients.filter(c => c.status === 'Cancelado').length;
+    const churnRate = totalClients > 0 ? ((canceledClients / totalClients) * 100).toFixed(1) : '0.0';
+
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0);
+    
+    let cash7Days = 0;
+    let cash15Days = 0;
+    let cash30Days = 0;
+
+    clients.forEach(c => {
+      if (c.status === 'Ativo' && c.nextDueDate) {
+        // Asaas nextDueDate is YYYY-MM-DD
+        const [year, month, day] = c.nextDueDate.split('-');
+        const dueDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        dueDate.setHours(0, 0, 0, 0);
+        
+        const diffTime = dueDate.getTime() - todayDate.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        const value = c.plan === 'Profissional' ? 120 : 80;
+
+        if (diffDays >= 0 && diffDays <= 7) cash7Days += value;
+        if (diffDays >= 0 && diffDays <= 15) cash15Days += value;
+        if (diffDays >= 0 && diffDays <= 30) cash30Days += value;
+      }
+    });
+
+    const cashFlowData = [
+      { name: '7 dias', value: cash7Days },
+      { name: '15 dias', value: cash15Days },
+      { name: '30 dias', value: cash30Days },
+    ];
+
     const planData = [
       { name: 'Padrão', value: clients.filter(c => c.plan === 'Padrão').length, color: '#f97316' },
       { name: 'Profissional', value: clients.filter(c => c.plan === 'Profissional').length, color: '#f59e0b' }
@@ -851,7 +897,7 @@ function CRM({ user }: { user: User }) {
           <h2 className="text-2xl font-bold text-white mb-8">Dashboard Financeiro</h2>
           
           {/* Top Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
             <div className="bg-white/10 backdrop-blur-2xl border border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
               <p className="text-gray-400 text-sm font-medium mb-2">Total de Clientes</p>
               <p className="text-4xl font-bold text-white">{totalClients}</p>
@@ -873,6 +919,14 @@ function CRM({ user }: { user: User }) {
               <div className="flex items-end gap-3">
                 <p className="text-4xl font-bold text-red-400">R$ {overdueAmount.toLocaleString('pt-BR')}</p>
                 <span className="text-sm text-red-400/80 mb-1 font-medium">({overdueRate}%)</span>
+              </div>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-2xl border border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
+              <p className="text-gray-400 text-sm font-medium mb-2">Taxa de Churn</p>
+              <div className="flex items-end gap-3">
+                <p className="text-4xl font-bold text-gray-300">{churnRate}%</p>
+                <span className="text-sm text-gray-400 mb-1 font-medium">({canceledClients} cancelados)</span>
               </div>
             </div>
           </div>
@@ -925,7 +979,26 @@ function CRM({ user }: { user: User }) {
           </div>
 
           {/* Bottom Row */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="bg-white/10 backdrop-blur-2xl border border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
+              <h3 className="text-lg font-semibold text-white mb-6">Projeção de Caixa</h3>
+              <div className="h-48">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={cashFlowData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} tickFormatter={(value) => `R$${value}`} />
+                    <Tooltip 
+                      cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                      contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                      formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR')}`, 'Receita Prevista']}
+                    />
+                    <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={30} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
             <div className="bg-white/10 backdrop-blur-2xl border border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
               <h3 className="text-lg font-semibold text-white mb-6">Distribuição por Plano</h3>
               <div className="h-48">
@@ -1079,7 +1152,7 @@ function CRM({ user }: { user: User }) {
   );
 }
 
-export default function App() {
+function Dashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -1138,4 +1211,18 @@ export default function App() {
   }
 
   return <CRM user={user} />;
+}
+
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import ClientPortal from './components/ClientPortal';
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/cliente/:userId/:clientId" element={<ClientPortal />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
