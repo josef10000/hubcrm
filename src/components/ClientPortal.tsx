@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Globe, CreditCard, CheckCircle, Clock, AlertCircle, ExternalLink } from 'lucide-react';
+import { Globe, CreditCard, CheckCircle, Clock, AlertCircle, ExternalLink, FileText } from 'lucide-react';
 
 export default function ClientPortal() {
   const { userId, clientId } = useParams<{ userId: string; clientId: string }>();
   const [client, setClient] = useState<any>(null);
+  const [paymentsHistory, setPaymentsHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,6 +34,8 @@ export default function ClientPortal() {
                 const payments = data.payments || [];
                 const subscription = data.subscription;
                 
+                setPaymentsHistory(payments);
+
                 if (payments.length > 0) {
                   let targetPayment = payments.find((p: any) => p.status === 'OVERDUE');
                   if (!targetPayment) {
@@ -196,6 +199,64 @@ export default function ClientPortal() {
             )}
           </div>
         </div>
+
+        {/* Payment History Card */}
+        {paymentsHistory.length > 0 && (
+          <div className="mt-6 bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
+            <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-orange-400" />
+              Histórico de Pagamentos
+            </h2>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-white/10 text-gray-400 text-sm">
+                    <th className="pb-3 font-medium">Vencimento</th>
+                    <th className="pb-3 font-medium">Valor</th>
+                    <th className="pb-3 font-medium">Status</th>
+                    <th className="pb-3 font-medium text-right">Comprovante</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paymentsHistory.map((payment: any) => (
+                    <tr key={payment.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                      <td className="py-4 text-sm">
+                        {new Date(payment.dueDate + 'T12:00:00').toLocaleDateString('pt-BR')}
+                      </td>
+                      <td className="py-4 text-sm font-medium">
+                        R$ {payment.value.toFixed(2).replace('.', ',')}
+                      </td>
+                      <td className="py-4">
+                        <span className={`px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wider ${
+                          payment.status === 'RECEIVED' || payment.status === 'CONFIRMED' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                          payment.status === 'OVERDUE' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
+                          'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                        }`}>
+                          {payment.status === 'RECEIVED' || payment.status === 'CONFIRMED' ? 'PAGO' :
+                           payment.status === 'OVERDUE' ? 'VENCIDO' : 'PENDENTE'}
+                        </span>
+                      </td>
+                      <td className="py-4 text-right">
+                        {payment.invoiceUrl && (
+                          <a 
+                            href={payment.invoiceUrl} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 text-sm text-orange-400 hover:text-orange-300 transition-colors"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                            <span className="hidden sm:inline">Acessar</span>
+                          </a>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         {/* Support Footer */}
         <div className="mt-12 text-center">

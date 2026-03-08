@@ -3,13 +3,14 @@ import {
   LayoutDashboard, Users, Plus, X, DollarSign, CheckCircle, Clock, 
   MapPin, Phone, Tag, Menu, Building2, FileText, Briefcase, AlignLeft,
   Search, BarChart3, Calendar, Paperclip, Copy, MessageCircle, Trash2, Snowflake, LogOut, Globe,
-  Filter, ArrowDownAZ, ArrowUpRight, RefreshCw
+  Filter, ArrowDownAZ, ArrowUpRight, RefreshCw, Download
 } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid } from 'recharts';
 import { auth, db } from './lib/firebase';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { collection, doc, setDoc, onSnapshot, deleteDoc } from 'firebase/firestore';
 import Auth from './components/Auth';
+import { toast } from 'sonner';
 
 type PlanType = 'Padrão' | 'Profissional';
 type SiteStatus = 'Em Desenvolvimento' | 'Ativo' | 'Inadimplente' | 'Cancelado';
@@ -450,7 +451,7 @@ function CRM({ user }: { user: User }) {
         });
         if (!delRes.ok) {
           console.error("Failed to cancel subscription in Asaas");
-          alert("Aviso: Não foi possível cancelar a assinatura no Asaas automaticamente.");
+          toast.error("Aviso: Não foi possível cancelar a assinatura no Asaas automaticamente.");
         } else {
           client.paymentStatus = 'N/A';
           client.invoiceUrl = undefined;
@@ -515,14 +516,14 @@ function CRM({ user }: { user: User }) {
             let err;
             try { err = JSON.parse(errText); } catch(e) { err = { error: errText }; }
             console.error("Asaas Subscription Error:", err);
-            alert(`Erro ao criar assinatura no Asaas: ${err.error || 'Erro desconhecido'}`);
+            toast.error(`Erro ao criar assinatura no Asaas: ${err.error || 'Erro desconhecido'}`);
           }
         } else {
           let errText = await customerRes.text();
           let err;
           try { err = JSON.parse(errText); } catch(e) { err = { error: errText }; }
           console.error("Asaas Customer Error:", err);
-          alert(`Erro ao criar cliente no Asaas: ${err.error || 'Erro desconhecido'}`);
+          toast.error(`Erro ao criar cliente no Asaas: ${err.error || 'Erro desconhecido'}`);
         }
       }
 
@@ -530,7 +531,7 @@ function CRM({ user }: { user: User }) {
       await setDoc(doc(db, 'users', user.uid, 'clients', client.id), cleanClient);
     } catch (error: any) { 
       console.error("Save Error:", error);
-      alert(`Erro ao salvar cliente: ${error.message}`);
+      toast.error(`Erro ao salvar cliente: ${error.message}`);
     }
   };
 
@@ -549,7 +550,7 @@ function CRM({ user }: { user: User }) {
         });
         if (!delRes.ok) {
           console.error("Failed to cancel subscription in Asaas before deletion");
-          alert("Aviso: O cliente foi excluído, mas não foi possível cancelar a assinatura no Asaas automaticamente.");
+          toast.error("Aviso: O cliente foi excluído, mas não foi possível cancelar a assinatura no Asaas automaticamente.");
         }
       } catch (e) {
         console.error("Error calling delete-subscription API", e);
@@ -561,7 +562,7 @@ function CRM({ user }: { user: User }) {
       await deleteDoc(doc(db, 'users', user.uid, 'clients', clientId));
     } catch (error: any) {
       console.error(error);
-      alert(`Erro ao excluir: ${error.message}`);
+      toast.error(`Erro ao excluir: ${error.message}`);
     }
   };
 
@@ -569,6 +570,7 @@ function CRM({ user }: { user: User }) {
     let result = clients.filter(c => {
       const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                             c.whatsapp.includes(searchTerm) ||
+                            (c.cpfCnpj && c.cpfCnpj.includes(searchTerm)) ||
                             (c.niche && c.niche.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchesStatus = filterStatus === 'Todos' || c.status === filterStatus;
       return matchesSearch && matchesStatus;
@@ -589,6 +591,34 @@ function CRM({ user }: { user: User }) {
     return result;
   }, [clients, searchTerm, filterStatus, sortBy]);
 
+  const handleExportCSV = () => {
+    const headers = ['Nome', 'WhatsApp', 'CPF/CNPJ', 'Email', 'Plano', 'Status', 'Status Pagamento', 'Vencimento'];
+    const csvContent = [
+      headers.join(','),
+      ...filteredClients.map(c => [
+        `"${c.name}"`,
+        `"${c.whatsapp}"`,
+        `"${c.cpfCnpj || ''}"`,
+        `"${c.email || ''}"`,
+        `"${c.plan}"`,
+        `"${c.status}"`,
+        `"${c.paymentStatus || 'N/A'}"`,
+        `"${c.nextDueDate ? new Date(c.nextDueDate).toLocaleDateString('pt-BR') : ''}"`
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `clientes_hub_central_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Lista de clientes exportada com sucesso!');
+  };
+
   // Reset to page 1 when search term changes
   useEffect(() => {
     setCurrentPage(1);
@@ -600,10 +630,67 @@ function CRM({ user }: { user: User }) {
     const currentClients = filteredClients.slice(indexOfFirstClient, indexOfLastClient);
     const totalPages = Math.ceil(filteredClients.length / clientsPerPage);
 
+    // Calculate Metrics
+    const activeClients = clients.filter(c => c.status === 'Ativo').length;
+    const mrr = clients.filter(c => c.status === 'Ativo' || c.status === 'Inadimplente').reduce((acc, c) => acc + (c.plan === 'Profissional' ? 120 : 80), 0);
+    const overdueAmount = clients.filter(c => c.status === 'Inadimplente').reduce((acc, c) => acc + (c.plan === 'Profissional' ? 120 : 80), 0);
+    
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    const expectedThisMonth = clients.filter(c => {
+      if (c.status === 'Cancelado') return false;
+      if (!c.nextDueDate) return true; // Assume it's due if no date
+      const dueDate = new Date(c.nextDueDate);
+      return dueDate.getMonth() === currentMonth && dueDate.getFullYear() === currentYear;
+    }).reduce((acc, c) => acc + (c.plan === 'Profissional' ? 120 : 80), 0);
+
     return (
       <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10">
         <div className="max-w-7xl mx-auto">
           
+          {/* Metrics Dashboard */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-5 rounded-2xl flex items-center shadow-lg">
+              <div className="p-3 bg-emerald-500/20 text-emerald-400 rounded-xl mr-4">
+                <Users size={24} />
+              </div>
+              <div>
+                <p className="text-sm text-gray-400 font-medium">Clientes Ativos</p>
+                <h3 className="text-2xl font-bold text-white">{activeClients}</h3>
+              </div>
+            </div>
+            
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-5 rounded-2xl flex items-center shadow-lg">
+              <div className="p-3 bg-blue-500/20 text-blue-400 rounded-xl mr-4">
+                <BarChart3 size={24} />
+              </div>
+              <div>
+                <p className="text-sm text-gray-400 font-medium">MRR (Recorrente)</p>
+                <h3 className="text-2xl font-bold text-white">R$ {mrr.toFixed(2).replace('.', ',')}</h3>
+              </div>
+            </div>
+
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-5 rounded-2xl flex items-center shadow-lg">
+              <div className="p-3 bg-red-500/20 text-red-400 rounded-xl mr-4">
+                <DollarSign size={24} />
+              </div>
+              <div>
+                <p className="text-sm text-gray-400 font-medium">Inadimplência</p>
+                <h3 className="text-2xl font-bold text-white">R$ {overdueAmount.toFixed(2).replace('.', ',')}</h3>
+              </div>
+            </div>
+
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-5 rounded-2xl flex items-center shadow-lg">
+              <div className="p-3 bg-orange-500/20 text-orange-400 rounded-xl mr-4">
+                <Calendar size={24} />
+              </div>
+              <div>
+                <p className="text-sm text-gray-400 font-medium">A Receber (Mês)</p>
+                <h3 className="text-2xl font-bold text-white">R$ {expectedThisMonth.toFixed(2).replace('.', ',')}</h3>
+              </div>
+            </div>
+          </div>
+
           {/* Quick Filters & Sort */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <div className="flex bg-white/5 backdrop-blur-xl border border-white/10 p-1 rounded-2xl overflow-x-auto max-w-full custom-scrollbar">
@@ -733,7 +820,7 @@ function CRM({ user }: { user: User }) {
                       e.stopPropagation();
                       const url = `${window.location.origin}/cliente/${user.uid}/${client.id}`;
                       navigator.clipboard.writeText(url);
-                      alert('Link do Portal copiado para a área de transferência!');
+                      toast.success('Link do Portal copiado para a área de transferência!');
                     }}
                     className="flex items-center justify-center w-full py-2.5 rounded-xl bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 border border-orange-500/30 transition-colors text-sm font-medium"
                   >
@@ -1136,7 +1223,15 @@ function CRM({ user }: { user: User }) {
             )}
             {view === 'analytics' && <h2 className="text-xl font-semibold text-white">Métricas</h2>}
           </div>
-          <button onClick={() => { setEditingClient(null); setIsModalOpen(true); }} className="flex items-center space-x-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-5 py-3 rounded-2xl transition-all font-medium shadow-[0_0_20px_rgba(249,115,22,0.3)] hover:shadow-[0_0_25px_rgba(249,115,22,0.5)] hover:scale-105 active:scale-95 shrink-0"><Plus size={18} /><span className="hidden sm:inline">Novo Cliente</span></button>
+          <div className="flex items-center gap-3">
+            {view === 'dashboard' && (
+              <button onClick={handleExportCSV} className="hidden sm:flex items-center space-x-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white px-4 py-3 rounded-2xl transition-all font-medium shrink-0" title="Exportar para CSV">
+                <Download size={18} />
+                <span>Exportar</span>
+              </button>
+            )}
+            <button onClick={() => { setEditingClient(null); setIsModalOpen(true); }} className="flex items-center space-x-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-5 py-3 rounded-2xl transition-all font-medium shadow-[0_0_20px_rgba(249,115,22,0.3)] hover:shadow-[0_0_25px_rgba(249,115,22,0.5)] hover:scale-105 active:scale-95 shrink-0"><Plus size={18} /><span className="hidden sm:inline">Novo Cliente</span></button>
+          </div>
         </header>
 
         {loading ? <div className="flex-1 flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div></div> : (
@@ -1223,10 +1318,12 @@ function Dashboard() {
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ClientPortal from './components/ClientPortal';
+import { Toaster } from 'sonner';
 
 export default function App() {
   return (
     <BrowserRouter>
+      <Toaster position="top-right" theme="dark" />
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/cliente/:userId/:clientId" element={<ClientPortal />} />
