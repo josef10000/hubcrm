@@ -605,14 +605,19 @@ function CRM({ user }: { user: User }) {
       // Integrate with Asaas for new clients or clients without Asaas ID
       if (!client.asaasCustomerId && client.cpfCnpj && client.email && client.status !== 'Cancelado') {
         // 1. Create Customer in Asaas
+        const phoneClean = client.whatsapp ? client.whatsapp.replace(/\D/g, '') : '';
+        const isMobile = phoneClean.length === 11;
+        const isLandline = phoneClean.length === 10;
+        
         const customerRes = await fetch('/api/asaas/customers', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             name: client.name,
-            cpfCnpj: client.cpfCnpj.replace(/\D/g, ''),
+            cpfCnpj: client.cpfCnpj ? client.cpfCnpj.replace(/\D/g, '') : '',
             email: client.email,
-            phone: client.whatsapp.replace(/\D/g, '')
+            mobilePhone: isMobile ? phoneClean : undefined,
+            phone: isLandline ? phoneClean : undefined
           })
         });
         
@@ -1068,7 +1073,7 @@ function CRM({ user }: { user: User }) {
                     </div>
                   )}
                   <a 
-                    href={`https://wa.me/55${client.whatsapp.replace(/\D/g, '')}?text=Olá ${client.name}, tudo bem? Aqui é do Hub central.`}
+                    href={`https://wa.me/55${(client.whatsapp || '').replace(/\D/g, '')}?text=Olá ${client.name}, tudo bem? Aqui é do Hub central.`}
                     target="_blank"
                     rel="noreferrer"
                     onClick={e => e.stopPropagation()}
