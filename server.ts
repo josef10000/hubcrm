@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 
 // Asaas API Key from environment variable or fallback to the provided one for testing
-const ASAAS_API_KEY = process.env.ASAAS_API_KEY || "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6Ojk1YjA2OWFjLTNiZDMtNDhiNi1hYWZlLWIwZjY0Mjk5ZDBiYjo6JGFhY2hfOTJlNzdkMTctYmFmYS00YjgwLTg5ZTctMGY0NGY5NGI3MTQx";
+const ASAAS_API_KEY = process.env.ASAAS_API_KEY || "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmIzNjAwYThlLTI4MzYtNGE0OS1iY2I3LWE2MjY0ZGM0NDIyYTo6JGFhY2hfMTA2NDIzZWItZDg5NC00MTIzLTllNGEtNDU0NjExMzVjYzFi";
 const ASAAS_API_URL = "https://api.asaas.com/v3";
 
 // Helper to make Asaas requests

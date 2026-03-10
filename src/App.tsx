@@ -3,12 +3,13 @@ import {
   LayoutDashboard, Users, Plus, X, DollarSign, CheckCircle, Clock, 
   MapPin, Phone, Tag, Menu, Building2, FileText, Briefcase, AlignLeft,
   Search, BarChart3, Calendar, Paperclip, Copy, MessageCircle, Trash2, Snowflake, LogOut, Globe,
-  Filter, ArrowDownAZ, ArrowUpRight, RefreshCw, Download
+  Filter, ArrowDownAZ, ArrowUpRight, RefreshCw, Download, Upload, Link as LinkIcon, AlertTriangle, TrendingDown, TrendingUp
 } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid } from 'recharts';
-import { auth, db } from './lib/firebase';
+import { auth, db, storage } from './lib/firebase';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { collection, doc, setDoc, onSnapshot, deleteDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import Auth from './components/Auth';
 import { toast } from 'sonner';
 
@@ -19,6 +20,14 @@ interface ClientLog {
   id: string;
   text: string;
   date: number;
+}
+
+interface ClientAttachment {
+  id: string;
+  name: string;
+  url: string;
+  type: string;
+  createdAt: number;
 }
 
 interface Client {
@@ -32,6 +41,7 @@ interface Client {
   niche?: string;
   notes?: string;
   logs?: ClientLog[];
+  attachments?: ClientAttachment[];
   cpfCnpj?: string;
   email?: string;
   asaasCustomerId?: string;
@@ -41,14 +51,68 @@ interface Client {
   nextDueDate?: string;
   billingType?: 'PIX' | 'CREDIT_CARD' | 'BOLETO';
 }
+
+interface Expense {
+  id: string;
+  description: string;
+  amount: number;
+  date: number;
+  category: string;
+}
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, onDelete?: (id: string) => void, initialData: Client | null }) {
   const [formData, setFormData] = useState<Partial<Client>>({ plan: 'Padrão', status: 'Em Desenvolvimento' });
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [activeTab, setActiveTab] = useState<'details' | 'history'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'history' | 'attachments'>('details');
   const [newLogText, setNewLogText] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !initialData?.id || !auth.currentUser) return;
+    
+    setIsUploading(true);
+    try {
+      const fileId = crypto.randomUUID();
+      const storageRef = ref(storage, `users/${auth.currentUser.uid}/clients/${initialData.id}/attachments/${fileId}_${file.name}`);
+      
+      // Add a timeout to prevent hanging if Firebase Storage is not enabled
+      const uploadPromise = uploadBytes(storageRef, file);
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('TIMEOUT')), 15000); // 15 seconds timeout
+      });
+      
+      await Promise.race([uploadPromise, timeoutPromise]);
+      const url = await getDownloadURL(storageRef);
+      
+      const newAttachment: ClientAttachment = {
+        id: fileId,
+        name: file.name,
+        url,
+        type: file.type,
+        createdAt: Date.now()
+      };
+      
+      setFormData(prev => ({
+        ...prev,
+        attachments: [newAttachment, ...(prev.attachments || [])]
+      }));
+      toast.success('Arquivo anexado com sucesso!');
+    } catch (error: any) {
+      console.error("Error uploading file:", error);
+      if (error.message === 'TIMEOUT') {
+        toast.error('O upload demorou muito. Verifique se o Firebase Storage está ativado no seu projeto.');
+      } else {
+        toast.error('Erro ao fazer upload do arquivo. Verifique as regras do Firebase Storage.');
+      }
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   useEffect(() => {
     if (initialData) {
@@ -155,6 +219,13 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                   className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-white/10 text-white shadow-sm' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
                 >
                   Histórico
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setActiveTab('attachments')}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'attachments' ? 'bg-white/10 text-white shadow-sm' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                >
+                  Anexos
                 </button>
               </div>
             )}
@@ -268,7 +339,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                   </div>
                 </div>
               </div>
-            ) : (
+            ) : activeTab === 'history' ? (
               <div className="flex flex-col h-full">
                 <div className="mb-6">
                   <h3 className="text-lg font-medium text-white mb-2 border-b border-white/10 pb-2">Adicionar Anotação</h3>
@@ -326,6 +397,80 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                           >
                             <Trash2 size={16} />
                           </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col h-full">
+                <div className="mb-6">
+                  <h3 className="text-lg font-medium text-white mb-2 border-b border-white/10 pb-2">Adicionar Anexo</h3>
+                  <div className="flex items-center justify-center w-full">
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-white/10 border-dashed rounded-xl cursor-pointer bg-black/20 hover:bg-white/5 transition-all">
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        {isUploading ? (
+                          <RefreshCw className="w-8 h-8 mb-3 text-orange-500 animate-spin" />
+                        ) : (
+                          <Upload className="w-8 h-8 mb-3 text-gray-400" />
+                        )}
+                        <p className="mb-2 text-sm text-gray-400">
+                          <span className="font-semibold text-orange-500">Clique para fazer upload</span> ou arraste e solte
+                        </p>
+                        <p className="text-xs text-gray-500">PDF, Imagens, Documentos</p>
+                      </div>
+                      <input 
+                        ref={fileInputRef}
+                        type="file" 
+                        className="hidden" 
+                        onChange={handleFileUpload}
+                        disabled={isUploading}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto">
+                  <h3 className="text-lg font-medium text-white mb-4 border-b border-white/10 pb-2">Arquivos Anexados</h3>
+                  {(!formData.attachments || formData.attachments.length === 0) ? (
+                    <div className="text-center py-8 text-gray-500">
+                      Nenhum arquivo anexado para este cliente.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {formData.attachments.map(file => (
+                        <div key={file.id} className="bg-black/20 border border-white/5 p-4 rounded-xl flex items-start justify-between group">
+                          <div className="flex items-start space-x-3 overflow-hidden">
+                            <div className="p-2 bg-white/5 rounded-lg shrink-0">
+                              <FileText size={20} className="text-orange-400" />
+                            </div>
+                            <div className="overflow-hidden">
+                              <p className="text-sm font-medium text-gray-200 truncate" title={file.name}>{file.name}</p>
+                              <p className="text-xs text-gray-500 mt-1">{new Date(file.createdAt).toLocaleDateString('pt-BR')}</p>
+                            </div>
+                          </div>
+                          <div className="flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                            <a 
+                              href={file.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                              title="Baixar/Visualizar"
+                            >
+                              <Download size={16} />
+                            </a>
+                            <button 
+                              type="button"
+                              onClick={() => {
+                                setFormData(prev => ({ ...prev, attachments: prev.attachments?.filter(a => a.id !== file.id) }));
+                              }}
+                              className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                              title="Excluir"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -462,7 +607,7 @@ function CRM({ user }: { user: User }) {
       setIsSyncing(false);
     }
   };
-  const [view, setView] = useState<'dashboard' | 'analytics' | 'support'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'analytics' | 'support' | 'finance'>('dashboard');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -470,6 +615,8 @@ function CRM({ user }: { user: User }) {
   const [filterStatus, setFilterStatus] = useState<SiteStatus | 'Todos'>('Todos');
   const [sortBy, setSortBy] = useState<'recent' | 'alphabetical' | 'value'>('recent');
   const [supportRequests, setSupportRequests] = useState<any[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [newExpense, setNewExpense] = useState<Partial<Expense>>({ category: 'Ferramentas' });
 
   useEffect(() => {
     setLoading(true);
@@ -477,6 +624,7 @@ function CRM({ user }: { user: User }) {
     let timeoutId: NodeJS.Timeout;
     let unsubscribeClients: () => void = () => {};
     let unsubscribeRequests: () => void = () => {};
+    let unsubscribeExpenses: () => void = () => {};
 
     try {
       const clientsRef = collection(db, 'users', user.uid, 'clients');
@@ -509,6 +657,15 @@ function CRM({ user }: { user: User }) {
         setSupportRequests(loadedRequests);
       });
 
+      const expensesRef = collection(db, 'users', user.uid, 'expenses');
+      unsubscribeExpenses = onSnapshot(expensesRef, (snapshot) => {
+        const loadedExpenses: Expense[] = [];
+        snapshot.forEach((doc) => {
+          loadedExpenses.push(doc.data() as Expense);
+        });
+        setExpenses(loadedExpenses.sort((a, b) => b.date - a.date));
+      });
+
       timeoutId = setTimeout(() => {
         console.warn("Firestore initialization timed out.");
         setLoading(false);
@@ -524,6 +681,7 @@ function CRM({ user }: { user: User }) {
     return () => {
       unsubscribeClients();
       unsubscribeRequests();
+      unsubscribeExpenses();
       clearTimeout(timeoutId);
     };
   }, [user.uid]);
@@ -778,10 +936,46 @@ function CRM({ user }: { user: User }) {
       
     const COLORS = ['#f97316', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#f43f5e'];
 
+    const overdueClients = clients.filter(c => c.status === 'Inadimplente' || c.paymentStatus === 'OVERDUE');
+
     return (
       <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10">
         <div className="max-w-7xl mx-auto">
           
+          {/* Overdue Alert Panel */}
+          {overdueClients.length > 0 && (
+            <div className="mb-8 bg-red-500/10 border border-red-500/30 rounded-2xl p-5 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center">
+                <div className="p-3 bg-red-500/20 text-red-400 rounded-xl mr-4 shrink-0">
+                  <AlertTriangle size={24} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Atenção: {overdueClients.length} cliente(s) inadimplente(s)</h3>
+                  <p className="text-sm text-red-200/80">Verifique a situação e envie um lembrete de cobrança.</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {overdueClients.slice(0, 3).map(c => (
+                  <button 
+                    key={c.id} 
+                    onClick={() => { setEditingClient(c); setIsModalOpen(true); }}
+                    className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-300 text-sm rounded-lg transition-colors flex items-center"
+                  >
+                    {c.name.split(' ')[0]}
+                  </button>
+                ))}
+                {overdueClients.length > 3 && (
+                  <button 
+                    onClick={() => { setFilterStatus('Inadimplente'); setView('dashboard'); }}
+                    className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 text-sm rounded-lg transition-colors"
+                  >
+                    + {overdueClients.length - 3}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Metrics Dashboard */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-5 rounded-2xl flex items-center shadow-lg">
@@ -976,16 +1170,29 @@ function CRM({ user }: { user: User }) {
 
                 <div className="mt-6 pt-4 border-t border-white/10 flex flex-col gap-2">
                   {client.invoiceUrl && (
-                    <a 
-                      href={client.invoiceUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      onClick={e => e.stopPropagation()}
-                      className="flex items-center justify-center w-full py-2.5 rounded-xl bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 border border-blue-500/30 transition-colors text-sm font-medium"
-                    >
-                      <DollarSign size={18} className="mr-2" />
-                      Ver Fatura
-                    </a>
+                    <div className="flex gap-2">
+                      <a 
+                        href={client.invoiceUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={e => e.stopPropagation()}
+                        className="flex-1 flex items-center justify-center py-2.5 rounded-xl bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 border border-blue-500/30 transition-colors text-sm font-medium"
+                      >
+                        <DollarSign size={18} className="mr-2" />
+                        Ver Fatura
+                      </a>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigator.clipboard.writeText(client.invoiceUrl!);
+                          toast.success('Link de pagamento copiado!');
+                        }}
+                        className="flex items-center justify-center px-3 rounded-xl bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 border border-blue-500/30 transition-colors"
+                        title="Copiar Link de Pagamento"
+                      >
+                        <LinkIcon size={18} />
+                      </button>
+                    </div>
                   )}
                   <a 
                     href={`https://wa.me/55${client.whatsapp.replace(/\D/g, '')}?text=Olá ${client.name}, tudo bem? Aqui é do Hub central.`}
@@ -1356,6 +1563,159 @@ function CRM({ user }: { user: User }) {
     );
   };
 
+  const renderFinance = () => {
+    const totalMRR = clients.filter(c => c.status === 'Ativo' || c.status === 'Inadimplente').reduce((acc, c) => acc + (c.plan === 'Profissional' ? 120 : 80), 0);
+    const totalExpenses = expenses.reduce((acc, e) => acc + e.amount, 0);
+    const netProfit = totalMRR - totalExpenses;
+
+    const handleAddExpense = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!newExpense.description || !newExpense.amount || !newExpense.date) return;
+
+      try {
+        const expenseId = crypto.randomUUID();
+        const expense: Expense = {
+          id: expenseId,
+          description: newExpense.description,
+          amount: Number(newExpense.amount),
+          date: new Date(newExpense.date).getTime(),
+          category: newExpense.category || 'Ferramentas'
+        };
+
+        await setDoc(doc(db, 'users', user.uid, 'expenses', expenseId), expense);
+        setNewExpense({ category: 'Ferramentas' });
+        toast.success('Despesa adicionada com sucesso!');
+      } catch (error) {
+        console.error("Error adding expense:", error);
+        toast.error('Erro ao adicionar despesa.');
+      }
+    };
+
+    const handleDeleteExpense = async (id: string) => {
+      try {
+        await deleteDoc(doc(db, 'users', user.uid, 'expenses', id));
+        toast.success('Despesa removida!');
+      } catch (error) {
+        console.error("Error deleting expense:", error);
+        toast.error('Erro ao remover despesa.');
+      }
+    };
+
+    return (
+      <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10">
+        <div className="max-w-7xl mx-auto">
+          
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-3xl shadow-lg">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-gray-400 font-medium">Receita (MRR)</h3>
+                <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg"><TrendingUp size={20} /></div>
+              </div>
+              <p className="text-3xl font-bold text-white">R$ {totalMRR.toFixed(2).replace('.', ',')}</p>
+            </div>
+            
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-3xl shadow-lg">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-gray-400 font-medium">Despesas</h3>
+                <div className="p-2 bg-red-500/20 text-red-400 rounded-lg"><TrendingDown size={20} /></div>
+              </div>
+              <p className="text-3xl font-bold text-white">R$ {totalExpenses.toFixed(2).replace('.', ',')}</p>
+            </div>
+
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-3xl shadow-lg">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-gray-400 font-medium">Lucro Líquido</h3>
+                <div className="p-2 bg-blue-500/20 text-blue-400 rounded-lg"><DollarSign size={20} /></div>
+              </div>
+              <p className={`text-3xl font-bold ${netProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                R$ {netProfit.toFixed(2).replace('.', ',')}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1">
+              <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-3xl shadow-lg">
+                <h3 className="text-lg font-semibold text-white mb-6">Nova Despesa</h3>
+                <form onSubmit={handleAddExpense} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Descrição</label>
+                    <input required type="text" value={newExpense.description || ''} onChange={e => setNewExpense({...newExpense, description: e.target.value})} className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all" placeholder="Ex: Hospedagem AWS" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Valor (R$)</label>
+                    <input required type="number" step="0.01" value={newExpense.amount || ''} onChange={e => setNewExpense({...newExpense, amount: e.target.value})} className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all" placeholder="0.00" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Data</label>
+                    <input required type="date" value={newExpense.date || ''} onChange={e => setNewExpense({...newExpense, date: e.target.value})} className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Categoria</label>
+                    <select value={newExpense.category || 'Ferramentas'} onChange={e => setNewExpense({...newExpense, category: e.target.value})} className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all">
+                      <option value="Ferramentas">Ferramentas / Software</option>
+                      <option value="Infraestrutura">Infraestrutura / Hospedagem</option>
+                      <option value="Impostos">Impostos / Taxas</option>
+                      <option value="Marketing">Marketing / Anúncios</option>
+                      <option value="Outros">Outros</option>
+                    </select>
+                  </div>
+                  <button type="submit" className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-medium transition-all shadow-lg shadow-orange-500/20">
+                    Adicionar Despesa
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <div className="lg:col-span-2">
+              <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-3xl shadow-lg h-full">
+                <h3 className="text-lg font-semibold text-white mb-6">Histórico de Despesas</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-white/10 text-gray-400 text-sm">
+                        <th className="pb-3 font-medium">Data</th>
+                        <th className="pb-3 font-medium">Descrição</th>
+                        <th className="pb-3 font-medium">Categoria</th>
+                        <th className="pb-3 font-medium text-right">Valor</th>
+                        <th className="pb-3 font-medium text-right">Ação</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {expenses.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="py-8 text-center text-gray-500">Nenhuma despesa registrada.</td>
+                        </tr>
+                      ) : (
+                        expenses.map(expense => (
+                          <tr key={expense.id} className="border-b border-white/5 hover:bg-white/5 transition-colors group">
+                            <td className="py-4 text-gray-300 text-sm">{new Date(expense.date).toLocaleDateString('pt-BR')}</td>
+                            <td className="py-4 text-white font-medium">{expense.description}</td>
+                            <td className="py-4 text-gray-400 text-sm">
+                              <span className="px-2 py-1 bg-white/5 rounded-md border border-white/5">{expense.category}</span>
+                            </td>
+                            <td className="py-4 text-red-400 font-medium text-right">
+                              - R$ {expense.amount.toFixed(2).replace('.', ',')}
+                            </td>
+                            <td className="py-4 text-right">
+                              <button onClick={() => handleDeleteExpense(expense.id)} className="text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1">
+                                <Trash2 size={18} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderSupport = () => {
     return (
       <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10">
@@ -1467,6 +1827,7 @@ function CRM({ user }: { user: User }) {
               </span>
             )}
           </button>
+          <button onClick={() => { setView('finance'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'finance' ? 'bg-white/10 text-white shadow-sm border border-white/10' : 'text-gray-400 hover:bg-white/5 hover:text-white border border-transparent'}`}><DollarSign size={20} /><span className="font-medium">Financeiro</span></button>
         </nav>
         <div className="p-4 border-t border-white/10">
           <div className="flex items-center justify-between px-4 py-3 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10">
@@ -1498,6 +1859,7 @@ function CRM({ user }: { user: User }) {
             )}
             {view === 'analytics' && <h2 className="text-xl font-semibold text-white">Métricas</h2>}
             {view === 'support' && <h2 className="text-xl font-semibold text-white">Chamados</h2>}
+            {view === 'finance' && <h2 className="text-xl font-semibold text-white">Controle Financeiro</h2>}
           </div>
           <div className="flex items-center gap-3">
             {view === 'dashboard' && (
@@ -1522,6 +1884,7 @@ function CRM({ user }: { user: User }) {
           ) : (
             view === 'dashboard' ? renderDashboard() : 
             view === 'analytics' ? renderAnalytics() : 
+            view === 'finance' ? renderFinance() :
             renderSupport()
           )
         )}
