@@ -605,6 +605,7 @@ function CRM({ user }: { user: User }) {
   const [sortBy, setSortBy] = useState<'recent' | 'alphabetical' | 'value'>('recent');
   const [supportRequests, setSupportRequests] = useState<any[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [newExpense, setNewExpense] = useState<Partial<Expense>>({ category: 'Ferramentas' });
 
   useEffect(() => {
     setLoading(true);
@@ -1555,8 +1556,6 @@ function CRM({ user }: { user: User }) {
     const totalMRR = clients.filter(c => c.status === 'Ativo' || c.status === 'Inadimplente').reduce((acc, c) => acc + (c.plan === 'Profissional' ? 120 : 80), 0);
     const totalExpenses = expenses.reduce((acc, e) => acc + e.amount, 0);
     const netProfit = totalMRR - totalExpenses;
-
-    const [newExpense, setNewExpense] = useState<Partial<Expense>>({ category: 'Ferramentas' });
 
     const handleAddExpense = async (e: React.FormEvent) => {
       e.preventDefault();
