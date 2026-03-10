@@ -65,54 +65,8 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
   const [formData, setFormData] = useState<Partial<Client>>({ plan: 'Padrão', status: 'Em Desenvolvimento' });
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [activeTab, setActiveTab] = useState<'details' | 'history' | 'attachments'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'history'>('details');
   const [newLogText, setNewLogText] = useState('');
-  const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !initialData?.id || !auth.currentUser) return;
-    
-    setIsUploading(true);
-    try {
-      const fileId = crypto.randomUUID();
-      const storageRef = ref(storage, `users/${auth.currentUser.uid}/clients/${initialData.id}/attachments/${fileId}_${file.name}`);
-      
-      // Add a timeout to prevent hanging if Firebase Storage is not enabled
-      const uploadPromise = uploadBytes(storageRef, file);
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('TIMEOUT')), 15000); // 15 seconds timeout
-      });
-      
-      await Promise.race([uploadPromise, timeoutPromise]);
-      const url = await getDownloadURL(storageRef);
-      
-      const newAttachment: ClientAttachment = {
-        id: fileId,
-        name: file.name,
-        url,
-        type: file.type,
-        createdAt: Date.now()
-      };
-      
-      setFormData(prev => ({
-        ...prev,
-        attachments: [newAttachment, ...(prev.attachments || [])]
-      }));
-      toast.success('Arquivo anexado com sucesso!');
-    } catch (error: any) {
-      console.error("Error uploading file:", error);
-      if (error.message === 'TIMEOUT') {
-        toast.error('O upload demorou muito. Verifique se o Firebase Storage está ativado no seu projeto.');
-      } else {
-        toast.error('Erro ao fazer upload do arquivo. Verifique as regras do Firebase Storage.');
-      }
-    } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
 
   useEffect(() => {
     if (initialData) {
@@ -219,13 +173,6 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                   className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-white/10 text-white shadow-sm' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
                 >
                   Histórico
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => setActiveTab('attachments')}
-                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'attachments' ? 'bg-white/10 text-white shadow-sm' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                >
-                  Anexos
                 </button>
               </div>
             )}
@@ -339,7 +286,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                   </div>
                 </div>
               </div>
-            ) : activeTab === 'history' ? (
+            ) : (
               <div className="flex flex-col h-full">
                 <div className="mb-6">
                   <h3 className="text-lg font-medium text-white mb-2 border-b border-white/10 pb-2">Adicionar Anotação</h3>
@@ -397,80 +344,6 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                           >
                             <Trash2 size={16} />
                           </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col h-full">
-                <div className="mb-6">
-                  <h3 className="text-lg font-medium text-white mb-2 border-b border-white/10 pb-2">Adicionar Anexo</h3>
-                  <div className="flex items-center justify-center w-full">
-                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-white/10 border-dashed rounded-xl cursor-pointer bg-black/20 hover:bg-white/5 transition-all">
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        {isUploading ? (
-                          <RefreshCw className="w-8 h-8 mb-3 text-orange-500 animate-spin" />
-                        ) : (
-                          <Upload className="w-8 h-8 mb-3 text-gray-400" />
-                        )}
-                        <p className="mb-2 text-sm text-gray-400">
-                          <span className="font-semibold text-orange-500">Clique para fazer upload</span> ou arraste e solte
-                        </p>
-                        <p className="text-xs text-gray-500">PDF, Imagens, Documentos</p>
-                      </div>
-                      <input 
-                        ref={fileInputRef}
-                        type="file" 
-                        className="hidden" 
-                        onChange={handleFileUpload}
-                        disabled={isUploading}
-                      />
-                    </label>
-                  </div>
-                </div>
-
-                <div className="flex-1 overflow-y-auto">
-                  <h3 className="text-lg font-medium text-white mb-4 border-b border-white/10 pb-2">Arquivos Anexados</h3>
-                  {(!formData.attachments || formData.attachments.length === 0) ? (
-                    <div className="text-center py-8 text-gray-500">
-                      Nenhum arquivo anexado para este cliente.
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {formData.attachments.map(file => (
-                        <div key={file.id} className="bg-black/20 border border-white/5 p-4 rounded-xl flex items-start justify-between group">
-                          <div className="flex items-start space-x-3 overflow-hidden">
-                            <div className="p-2 bg-white/5 rounded-lg shrink-0">
-                              <FileText size={20} className="text-orange-400" />
-                            </div>
-                            <div className="overflow-hidden">
-                              <p className="text-sm font-medium text-gray-200 truncate" title={file.name}>{file.name}</p>
-                              <p className="text-xs text-gray-500 mt-1">{new Date(file.createdAt).toLocaleDateString('pt-BR')}</p>
-                            </div>
-                          </div>
-                          <div className="flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                            <a 
-                              href={file.url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                              title="Baixar/Visualizar"
-                            >
-                              <Download size={16} />
-                            </a>
-                            <button 
-                              type="button"
-                              onClick={() => {
-                                setFormData(prev => ({ ...prev, attachments: prev.attachments?.filter(a => a.id !== file.id) }));
-                              }}
-                              className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
-                              title="Excluir"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
                         </div>
                       ))}
                     </div>

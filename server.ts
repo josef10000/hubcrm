@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 
 // Asaas API Key from environment variable or fallback to the provided one for testing
-const ASAAS_API_KEY = process.env.ASAAS_API_KEY || "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmIzNjAwYThlLTI4MzYtNGE0OS1iY2I3LWE2MjY0ZGM0NDIyYTo6JGFhY2hfMTA2NDIzZWItZDg5NC00MTIzLTllNGEtNDU0NjExMzVjYzFi";
+const ASAAS_API_KEY = process.env.ASAAS_API_KEY || "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmE1ODk0OGI1LWU5NDMtNGU0NS1iNTA4LWU2ZDgzMjI3ODA4ZTo6JGFhY2hfNWZkNzE0MzYtMzU1ZC00ZjI4LTg1NDEtY2M0Mzc5YWE5NTJk";
 const ASAAS_API_URL = "https://api.asaas.com/v3";
 
 // Helper to make Asaas requests
@@ -25,7 +25,8 @@ const asaasRequest = async (endpoint: string, method: string, body?: any) => {
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     console.error(`Asaas API Error [${method} ${endpoint}]:`, errorData);
-    throw new Error(`Asaas API Error: ${response.statusText}`);
+    const errorMessage = errorData.errors?.[0]?.description || response.statusText;
+    throw new Error(errorMessage);
   }
 
   return response.json();
