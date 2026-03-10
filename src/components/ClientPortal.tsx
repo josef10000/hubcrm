@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Globe, CreditCard, CheckCircle, Clock, AlertCircle, ExternalLink, FileText } from 'lucide-react';
+import { Globe, CreditCard, CheckCircle, Clock, AlertCircle, ExternalLink, FileText, MessageSquare, Send } from 'lucide-react';
+import { toast, Toaster } from 'sonner';
 
 export default function ClientPortal() {
   const { userId, clientId } = useParams<{ userId: string; clientId: string }>();
@@ -10,6 +11,32 @@ export default function ClientPortal() {
   const [paymentsHistory, setPaymentsHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  const [requestMessage, setRequestMessage] = useState('');
+  const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
+
+  const handleSubmitRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!requestMessage.trim() || !userId || !clientId) return;
+
+    setIsSubmittingRequest(true);
+    try {
+      await addDoc(collection(db, 'users', userId, 'supportRequests'), {
+        clientId,
+        clientName: client.name,
+        message: requestMessage,
+        status: 'pending',
+        createdAt: serverTimestamp()
+      });
+      toast.success('Solicitação enviada com sucesso! Entraremos em contato em breve.');
+      setRequestMessage('');
+    } catch (err) {
+      console.error("Error submitting request:", err);
+      toast.error('Erro ao enviar solicitação. Tente novamente mais tarde.');
+    } finally {
+      setIsSubmittingRequest(false);
+    }
+  };
 
   useEffect(() => {
     const fetchClientData = async () => {
@@ -258,9 +285,47 @@ export default function ClientPortal() {
           </div>
         )}
 
+        {/* Support Request Form */}
+        <div className="mt-6 bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
+          <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
+            <MessageSquare className="w-5 h-5 text-orange-400" />
+            Solicitar Suporte ou Alteração
+          </h2>
+          <p className="text-gray-400 text-sm mb-6">Precisa de alguma mudança no site ou ajuda com algo? Envie sua solicitação abaixo.</p>
+          
+          <form onSubmit={handleSubmitRequest}>
+            <textarea 
+              value={requestMessage}
+              onChange={(e) => setRequestMessage(e.target.value)}
+              placeholder="Descreva o que você precisa..."
+              className="w-full min-h-[120px] px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500 custom-scrollbar resize-none mb-4"
+              required
+            ></textarea>
+            <div className="flex justify-end">
+              <button 
+                type="submit" 
+                disabled={isSubmittingRequest || !requestMessage.trim()}
+                className="flex items-center space-x-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl transition-all font-medium shadow-[0_0_20px_rgba(249,115,22,0.3)] hover:shadow-[0_0_25px_rgba(249,115,22,0.5)]"
+              >
+                {isSubmittingRequest ? (
+                  <span className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Enviando...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <Send className="w-4 h-4" />
+                    Enviar Solicitação
+                  </span>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+
         {/* Support Footer */}
         <div className="mt-12 text-center">
-          <p className="text-gray-400 text-sm mb-4">Precisa de ajuda com seu site ou fatura?</p>
+          <p className="text-gray-400 text-sm mb-4">Prefere falar pelo WhatsApp?</p>
           <a 
             href="https://wa.me/5511952924208"
             target="_blank"
@@ -271,6 +336,7 @@ export default function ClientPortal() {
           </a>
         </div>
       </div>
+      <Toaster theme="dark" position="top-right" />
     </div>
   );
 }

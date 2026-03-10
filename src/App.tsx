@@ -15,6 +15,12 @@ import { toast } from 'sonner';
 type PlanType = 'Padrão' | 'Profissional';
 type SiteStatus = 'Em Desenvolvimento' | 'Ativo' | 'Inadimplente' | 'Cancelado';
 
+interface ClientLog {
+  id: string;
+  text: string;
+  date: number;
+}
+
 interface Client {
   id: string; 
   name: string; 
@@ -25,6 +31,7 @@ interface Client {
   createdAt: number;
   niche?: string;
   notes?: string;
+  logs?: ClientLog[];
   cpfCnpj?: string;
   email?: string;
   asaasCustomerId?: string;
@@ -40,6 +47,8 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
   const [formData, setFormData] = useState<Partial<Client>>({ plan: 'Padrão', status: 'Em Desenvolvimento' });
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [activeTab, setActiveTab] = useState<'details' | 'history'>('details');
+  const [newLogText, setNewLogText] = useState('');
 
   useEffect(() => {
     if (initialData) {
@@ -129,115 +138,201 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-md" onClick={onClose}>
       <div className="bg-white/10 backdrop-blur-3xl rounded-3xl shadow-2xl w-full max-w-4xl flex flex-col border border-white/20 overflow-hidden max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center p-6 border-b border-white/10 bg-white/5 shrink-0">
-          <h2 className="text-xl font-semibold text-white">{initialData ? 'Detalhes do Cliente' : 'Novo Cliente'}</h2>
+          <div className="flex items-center space-x-6">
+            <h2 className="text-xl font-semibold text-white">{initialData ? 'Detalhes do Cliente' : 'Novo Cliente'}</h2>
+            {initialData && (
+              <div className="flex space-x-2 bg-black/20 p-1 rounded-xl border border-white/5">
+                <button 
+                  type="button"
+                  onClick={() => setActiveTab('details')}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'details' ? 'bg-white/10 text-white shadow-sm' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                >
+                  Dados
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setActiveTab('history')}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-white/10 text-white shadow-sm' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                >
+                  Histórico
+                </button>
+              </div>
+            )}
+          </div>
           <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors"><X size={24} /></button>
         </div>
         
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
           <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Left Column: Basic Info & Payment */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium text-white mb-4 border-b border-white/10 pb-2">Dados do Cliente</h3>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Nome do Cliente/Empresa *</label>
-                  <input required type="text" name="name" value={formData.name || ''} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" placeholder="Ex: João Silva" />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">WhatsApp *</label>
-                  <input required type="text" name="whatsapp" value={formData.whatsapp || ''} onChange={handleChange} placeholder="(11) 99999-9999" className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" />
-                </div>
+            {activeTab === 'details' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Left Column: Basic Info & Payment */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium text-white mb-4 border-b border-white/10 pb-2">Dados do Cliente</h3>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Nome do Cliente/Empresa *</label>
+                    <input required type="text" name="name" value={formData.name || ''} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" placeholder="Ex: João Silva" />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">WhatsApp *</label>
+                    <input required type="text" name="whatsapp" value={formData.whatsapp || ''} onChange={handleChange} placeholder="(11) 99999-9999" className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" />
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">CPF/CNPJ *</label>
-                  <input required type="text" name="cpfCnpj" value={formData.cpfCnpj || ''} onChange={handleChange} placeholder="Apenas números" className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" />
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">CPF/CNPJ *</label>
+                    <input required type="text" name="cpfCnpj" value={formData.cpfCnpj || ''} onChange={handleChange} placeholder="Apenas números" className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" />
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">E-mail *</label>
-                  <input required type="email" name="email" value={formData.email || ''} onChange={handleChange} placeholder="cliente@email.com" className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" />
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">E-mail *</label>
+                    <input required type="email" name="email" value={formData.email || ''} onChange={handleChange} placeholder="cliente@email.com" className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" />
+                  </div>
 
-                <h3 className="text-lg font-medium text-white mt-8 mb-4 border-b border-white/10 pb-2">Configurações de Pagamento</h3>
+                  <h3 className="text-lg font-medium text-white mt-8 mb-4 border-b border-white/10 pb-2">Configurações de Pagamento</h3>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Forma de Pagamento *</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button 
-                      type="button" 
-                      onClick={() => setFormData(prev => ({ ...prev, billingType: 'PIX' }))}
-                      className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'PIX' || !formData.billingType ? 'bg-orange-500/20 border-orange-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-white/10 text-gray-400 hover:bg-white/5'}`}
-                    >
-                      <div className="font-semibold">PIX</div>
-                    </button>
-                    <button 
-                      type="button" 
-                      onClick={() => setFormData(prev => ({ ...prev, billingType: 'CREDIT_CARD' }))}
-                      className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'CREDIT_CARD' ? 'bg-orange-500/20 border-orange-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-white/10 text-gray-400 hover:bg-white/5'}`}
-                    >
-                      <div className="font-semibold">Cartão de Crédito</div>
-                    </button>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Forma de Pagamento *</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button 
+                        type="button" 
+                        onClick={() => setFormData(prev => ({ ...prev, billingType: 'PIX' }))}
+                        className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'PIX' || !formData.billingType ? 'bg-orange-500/20 border-orange-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-white/10 text-gray-400 hover:bg-white/5'}`}
+                      >
+                        <div className="font-semibold">PIX</div>
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={() => setFormData(prev => ({ ...prev, billingType: 'CREDIT_CARD' }))}
+                        className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'CREDIT_CARD' ? 'bg-orange-500/20 border-orange-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-white/10 text-gray-400 hover:bg-white/5'}`}
+                      >
+                        <div className="font-semibold">Cartão de Crédito</div>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Plano *</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button 
+                        type="button" 
+                        onClick={() => setFormData(prev => ({ ...prev, plan: 'Padrão' }))}
+                        className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Padrão' ? 'bg-orange-500/20 border-orange-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-white/10 text-gray-400 hover:bg-white/5'}`}
+                      >
+                        <div className="font-semibold mb-1">Padrão</div>
+                        <div className="text-sm opacity-80">R$ 80/mês</div>
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={() => setFormData(prev => ({ ...prev, plan: 'Profissional' }))}
+                        className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Profissional' ? 'bg-orange-500/20 border-orange-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-white/10 text-gray-400 hover:bg-white/5'}`}
+                      >
+                        <div className="font-semibold mb-1">Profissional</div>
+                        <div className="text-sm opacity-80">R$ 120/mês</div>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Plano *</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button 
-                      type="button" 
-                      onClick={() => setFormData(prev => ({ ...prev, plan: 'Padrão' }))}
-                      className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Padrão' ? 'bg-orange-500/20 border-orange-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-white/10 text-gray-400 hover:bg-white/5'}`}
-                    >
-                      <div className="font-semibold mb-1">Padrão</div>
-                      <div className="text-sm opacity-80">R$ 80/mês</div>
-                    </button>
-                    <button 
-                      type="button" 
-                      onClick={() => setFormData(prev => ({ ...prev, plan: 'Profissional' }))}
-                      className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Profissional' ? 'bg-orange-500/20 border-orange-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-white/10 text-gray-400 hover:bg-white/5'}`}
-                    >
-                      <div className="font-semibold mb-1">Profissional</div>
-                      <div className="text-sm opacity-80">R$ 120/mês</div>
-                    </button>
+                {/* Right Column: Status & Notes */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium text-white mb-4 border-b border-white/10 pb-2">Status e Detalhes</h3>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Status</label>
+                    <div className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl flex items-center justify-between">
+                      <span className="flex items-center">
+                        {formData.status === 'Ativo' ? '🟢 Ativo' : 
+                         formData.status === 'Cancelado' ? '⚫ Cancelado' : 
+                         formData.status === 'Inadimplente' ? '🔴 Inadimplente' : 
+                         '🟡 Em Desenvolvimento'}
+                      </span>
+                      {isCheckingPayment && <span className="text-xs text-gray-400 animate-pulse">Verificando pagamento...</span>}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Nicho / Área de Atuação</label>
+                    <input type="text" name="niche" value={formData.niche || ''} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" placeholder="Ex: Advogado, Clínica, E-commerce..." />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Link do Site (Opcional)</label>
+                    <input type="url" name="siteLink" value={formData.siteLink || ''} onChange={handleChange} placeholder="https://..." className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" />
+                  </div>
+
+                  <div className="flex-1 flex flex-col">
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Anotações e Credenciais</label>
+                    <textarea name="notes" value={formData.notes || ''} onChange={handleChange} className="w-full flex-1 min-h-[150px] px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500 custom-scrollbar resize-none" placeholder="Anotações importantes, links de referência, acessos..."></textarea>
                   </div>
                 </div>
               </div>
-
-              {/* Right Column: Status & Notes */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium text-white mb-4 border-b border-white/10 pb-2">Status e Detalhes</h3>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Status</label>
-                  <div className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl flex items-center justify-between">
-                    <span className="flex items-center">
-                      {formData.status === 'Ativo' ? '🟢 Ativo' : 
-                       formData.status === 'Cancelado' ? '⚫ Cancelado' : 
-                       formData.status === 'Inadimplente' ? '🔴 Inadimplente' : 
-                       '🟡 Em Desenvolvimento'}
-                    </span>
-                    {isCheckingPayment && <span className="text-xs text-gray-400 animate-pulse">Verificando pagamento...</span>}
+            ) : (
+              <div className="flex flex-col h-full">
+                <div className="mb-6">
+                  <h3 className="text-lg font-medium text-white mb-2 border-b border-white/10 pb-2">Adicionar Anotação</h3>
+                  <div className="flex gap-3">
+                    <input 
+                      type="text" 
+                      value={newLogText} 
+                      onChange={(e) => setNewLogText(e.target.value)} 
+                      placeholder="Descreva a interação, alteração ou nota..." 
+                      className="flex-1 px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && newLogText.trim()) {
+                          e.preventDefault();
+                          const newLog = { id: crypto.randomUUID(), text: newLogText.trim(), date: Date.now() };
+                          setFormData(prev => ({ ...prev, logs: [newLog, ...(prev.logs || [])] }));
+                          setNewLogText('');
+                        }
+                      }}
+                    />
+                    <button 
+                      type="button"
+                      disabled={!newLogText.trim()}
+                      onClick={() => {
+                        if (newLogText.trim()) {
+                          const newLog = { id: crypto.randomUUID(), text: newLogText.trim(), date: Date.now() };
+                          setFormData(prev => ({ ...prev, logs: [newLog, ...(prev.logs || [])] }));
+                          setNewLogText('');
+                        }
+                      }}
+                      className="px-6 py-3 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white rounded-xl font-medium transition-all"
+                    >
+                      Adicionar
+                    </button>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Nicho / Área de Atuação</label>
-                  <input type="text" name="niche" value={formData.niche || ''} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" placeholder="Ex: Advogado, Clínica, E-commerce..." />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Link do Site (Opcional)</label>
-                  <input type="url" name="siteLink" value={formData.siteLink || ''} onChange={handleChange} placeholder="https://..." className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" />
-                </div>
-
-                <div className="flex-1 flex flex-col">
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Anotações e Credenciais</label>
-                  <textarea name="notes" value={formData.notes || ''} onChange={handleChange} className="w-full flex-1 min-h-[150px] px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500 custom-scrollbar resize-none" placeholder="Anotações importantes, links de referência, acessos..."></textarea>
+                <div className="flex-1 overflow-y-auto">
+                  <h3 className="text-lg font-medium text-white mb-4 border-b border-white/10 pb-2">Histórico</h3>
+                  {(!formData.logs || formData.logs.length === 0) ? (
+                    <div className="text-center py-8 text-gray-500">
+                      Nenhuma anotação registrada para este cliente.
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {formData.logs.map(log => (
+                        <div key={log.id} className="bg-black/20 border border-white/5 p-4 rounded-xl relative group">
+                          <p className="text-gray-200 text-sm mb-2">{log.text}</p>
+                          <p className="text-xs text-gray-500">{new Date(log.date).toLocaleString('pt-BR')}</p>
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              setFormData(prev => ({ ...prev, logs: prev.logs?.filter(l => l.id !== log.id) }));
+                            }}
+                            className="absolute top-3 right-3 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           <div className="flex justify-between items-center p-6 border-t border-white/10 bg-white/5 shrink-0">
@@ -367,23 +462,25 @@ function CRM({ user }: { user: User }) {
       setIsSyncing(false);
     }
   };
-  const [view, setView] = useState<'dashboard' | 'analytics'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'analytics' | 'support'>('dashboard');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<SiteStatus | 'Todos'>('Todos');
   const [sortBy, setSortBy] = useState<'recent' | 'alphabetical' | 'value'>('recent');
+  const [supportRequests, setSupportRequests] = useState<any[]>([]);
 
   useEffect(() => {
     setLoading(true);
     setErrorMsg(null);
     let timeoutId: NodeJS.Timeout;
-    let unsubscribe: () => void = () => {};
+    let unsubscribeClients: () => void = () => {};
+    let unsubscribeRequests: () => void = () => {};
 
     try {
       const clientsRef = collection(db, 'users', user.uid, 'clients');
-      unsubscribe = onSnapshot(clientsRef, (snapshot) => {
+      unsubscribeClients = onSnapshot(clientsRef, (snapshot) => {
         const loadedClients: Client[] = [];
         snapshot.forEach((doc) => {
           loadedClients.push(doc.data() as Client);
@@ -396,6 +493,20 @@ function CRM({ user }: { user: User }) {
         setErrorMsg(`Erro ao carregar dados do banco: ${error.message}`);
         setLoading(false);
         clearTimeout(timeoutId);
+      });
+
+      const requestsRef = collection(db, 'users', user.uid, 'supportRequests');
+      unsubscribeRequests = onSnapshot(requestsRef, (snapshot) => {
+        const loadedRequests: any[] = [];
+        snapshot.forEach((doc) => {
+          loadedRequests.push({ id: doc.id, ...doc.data() });
+        });
+        loadedRequests.sort((a, b) => {
+          const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+          const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+          return timeB - timeA;
+        });
+        setSupportRequests(loadedRequests);
       });
 
       timeoutId = setTimeout(() => {
@@ -411,7 +522,8 @@ function CRM({ user }: { user: User }) {
     }
 
     return () => {
-      unsubscribe();
+      unsubscribeClients();
+      unsubscribeRequests();
       clearTimeout(timeoutId);
     };
   }, [user.uid]);
@@ -427,6 +539,7 @@ function CRM({ user }: { user: User }) {
       siteLink: clientData.siteLink,
       niche: clientData.niche,
       notes: clientData.notes,
+      logs: clientData.logs,
       createdAt: clientData.createdAt || Date.now(),
       cpfCnpj: clientData.cpfCnpj,
       email: clientData.email,
@@ -644,6 +757,27 @@ function CRM({ user }: { user: User }) {
       return dueDate.getMonth() === currentMonth && dueDate.getFullYear() === currentYear;
     }).reduce((acc, c) => acc + (c.plan === 'Profissional' ? 120 : 80), 0);
 
+    // Chart Data
+    const statusData = [
+      { name: 'Em Dev', value: clients.filter(c => c.status === 'Em Desenvolvimento').length, color: '#eab308' },
+      { name: 'Ativo', value: clients.filter(c => c.status === 'Ativo').length, color: '#10b981' },
+      { name: 'Inadimplente', value: clients.filter(c => c.status === 'Inadimplente').length, color: '#ef4444' },
+      { name: 'Cancelado', value: clients.filter(c => c.status === 'Cancelado').length, color: '#6b7280' },
+    ];
+
+    const nicheCounts = clients.reduce((acc, c) => {
+      const niche = c.niche || 'Outros';
+      acc[niche] = (acc[niche] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    const nicheData = Object.entries(nicheCounts)
+      .map(([name, value]) => ({ name, value: Number(value) }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5); // Top 5 niches
+      
+    const COLORS = ['#f97316', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#f43f5e'];
+
     return (
       <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10">
         <div className="max-w-7xl mx-auto">
@@ -687,6 +821,54 @@ function CRM({ user }: { user: User }) {
               <div>
                 <p className="text-sm text-gray-400 font-medium">A Receber (Mês)</p>
                 <h3 className="text-2xl font-bold text-white">R$ {expectedThisMonth.toFixed(2).replace('.', ',')}</h3>
+              </div>
+            </div>
+          </div>
+
+          {/* Charts Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-5 rounded-2xl shadow-lg">
+              <h3 className="text-lg font-medium text-white mb-4">Clientes por Status</h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={statusData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                    <XAxis dataKey="name" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
+                    <Tooltip cursor={{fill: '#ffffff05'}} contentStyle={{backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px'}} />
+                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                      {statusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-5 rounded-2xl shadow-lg">
+              <h3 className="text-lg font-medium text-white mb-4">Top Nichos</h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={nicheData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      labelLine={false}
+                    >
+                      {nicheData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px'}} />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
             </div>
           </div>
@@ -1174,6 +1356,88 @@ function CRM({ user }: { user: User }) {
     );
   };
 
+  const renderSupport = () => {
+    return (
+      <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-2">Chamados de Suporte</h2>
+              <p className="text-gray-400">Gerencie as solicitações feitas pelos clientes no Portal.</p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {supportRequests.length === 0 ? (
+              <div className="text-center py-12 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl">
+                <MessageCircle className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-white mb-2">Nenhum chamado aberto</h3>
+                <p className="text-gray-400">Seus clientes ainda não enviaram nenhuma solicitação.</p>
+              </div>
+            ) : (
+              supportRequests.map((req) => (
+                <div key={req.id} className={`bg-white/5 backdrop-blur-xl border ${req.status === 'concluido' ? 'border-emerald-500/30 opacity-70' : 'border-white/10'} p-6 rounded-3xl shadow-lg transition-all`}>
+                  <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-lg font-semibold text-white">{req.clientName}</h3>
+                        <span className={`px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wider ${
+                          req.status === 'concluido' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
+                        }`}>
+                          {req.status === 'concluido' ? 'Concluído' : 'Pendente'}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-400 mb-4">
+                        Enviado em: {req.createdAt?.toDate ? req.createdAt.toDate().toLocaleString('pt-BR') : 'Data desconhecida'}
+                      </p>
+                      <div className="bg-black/20 p-4 rounded-xl border border-white/5 text-gray-200 whitespace-pre-wrap">
+                        {req.message}
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2 shrink-0 w-full sm:w-auto">
+                      {req.status !== 'concluido' && (
+                        <button 
+                          onClick={async () => {
+                            try {
+                              await setDoc(doc(db, 'users', user.uid, 'supportRequests', req.id), { status: 'concluido' }, { merge: true });
+                              toast.success('Chamado marcado como concluído!');
+                            } catch (e) {
+                              toast.error('Erro ao atualizar chamado.');
+                            }
+                          }}
+                          className="flex items-center justify-center space-x-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-4 py-2 rounded-xl transition-all font-medium"
+                        >
+                          <CheckCircle size={18} />
+                          <span>Concluir</span>
+                        </button>
+                      )}
+                      <button 
+                        onClick={async () => {
+                          if (window.confirm('Tem certeza que deseja excluir este chamado?')) {
+                            try {
+                              await deleteDoc(doc(db, 'users', user.uid, 'supportRequests', req.id));
+                              toast.success('Chamado excluído!');
+                            } catch (e) {
+                              toast.error('Erro ao excluir chamado.');
+                            }
+                          }
+                        }}
+                        className="flex items-center justify-center space-x-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-4 py-2 rounded-xl transition-all font-medium"
+                      >
+                        <Trash2 size={18} />
+                        <span>Excluir</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex h-screen bg-[#0a0a0a] font-sans overflow-hidden text-gray-100 relative">
       {/* Liquid Glass Background Orbs */}
@@ -1192,6 +1456,17 @@ function CRM({ user }: { user: User }) {
         <nav className="flex-1 px-4 py-6 space-y-2">
           <button onClick={() => { setView('dashboard'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'dashboard' ? 'bg-white/10 text-white shadow-sm border border-white/10' : 'text-gray-400 hover:bg-white/5 hover:text-white border border-transparent'}`}><LayoutDashboard size={20} /><span className="font-medium">Dashboard</span></button>
           <button onClick={() => { setView('analytics'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'analytics' ? 'bg-white/10 text-white shadow-sm border border-white/10' : 'text-gray-400 hover:bg-white/5 hover:text-white border border-transparent'}`}><BarChart3 size={20} /><span className="font-medium">Analytics</span></button>
+          <button onClick={() => { setView('support'); setSidebarOpen(false); }} className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all ${view === 'support' ? 'bg-white/10 text-white shadow-sm border border-white/10' : 'text-gray-400 hover:bg-white/5 hover:text-white border border-transparent'}`}>
+            <div className="flex items-center space-x-3">
+              <MessageCircle size={20} />
+              <span className="font-medium">Chamados</span>
+            </div>
+            {supportRequests.filter(r => r.status === 'pending').length > 0 && (
+              <span className="bg-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                {supportRequests.filter(r => r.status === 'pending').length}
+              </span>
+            )}
+          </button>
         </nav>
         <div className="p-4 border-t border-white/10">
           <div className="flex items-center justify-between px-4 py-3 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10">
@@ -1222,6 +1497,7 @@ function CRM({ user }: { user: User }) {
               </div>
             )}
             {view === 'analytics' && <h2 className="text-xl font-semibold text-white">Métricas</h2>}
+            {view === 'support' && <h2 className="text-xl font-semibold text-white">Chamados</h2>}
           </div>
           <div className="flex items-center gap-3">
             {view === 'dashboard' && (
@@ -1244,7 +1520,9 @@ function CRM({ user }: { user: User }) {
               </div>
             </div>
           ) : (
-            view === 'dashboard' ? renderDashboard() : renderAnalytics()
+            view === 'dashboard' ? renderDashboard() : 
+            view === 'analytics' ? renderAnalytics() : 
+            renderSupport()
           )
         )}
       </main>
