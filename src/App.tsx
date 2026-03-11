@@ -78,6 +78,26 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
   const [activeTab, setActiveTab] = useState<'details' | 'history'>('details');
   const [newLogText, setNewLogText] = useState('');
 
+  const getNextPaymentDateText = () => {
+    if (!formData.recurringPaymentDay) return null;
+    
+    const firstPaymentDate = formData.firstPaymentDate || new Date().toISOString().split('T')[0];
+    const firstDateObj = new Date(firstPaymentDate + 'T12:00:00Z');
+    let nextSubDate = new Date(firstDateObj.getFullYear(), firstDateObj.getMonth(), formData.recurringPaymentDay, 12, 0, 0);
+    
+    if (nextSubDate.getTime() <= firstDateObj.getTime()) {
+      nextSubDate.setMonth(nextSubDate.getMonth() + 1);
+    }
+
+    const diffTime = nextSubDate.getTime() - firstDateObj.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+    if (diffDays < 15) {
+      nextSubDate.setMonth(nextSubDate.getMonth() + 1);
+    }
+    
+    return `A 2ª cobrança será em: ${nextSubDate.toLocaleDateString('pt-BR')}`;
+  };
+
   useEffect(() => {
     if (initialData) {
       setFormData(initialData);
@@ -245,7 +265,13 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                         placeholder="Ex: 15" 
                         className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" 
                       />
-                      <p className="text-xs text-gray-500 mt-1">Opcional. Se vazio, será o mesmo dia do primeiro pagamento.</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {getNextPaymentDateText() ? (
+                          <span className="text-orange-500 dark:text-orange-400 font-medium">{getNextPaymentDateText()}</span>
+                        ) : (
+                          "Opcional. Se vazio, será o mesmo dia do primeiro pagamento."
+                        )}
+                      </p>
                     </div>
                   </div>
 
@@ -449,21 +475,29 @@ function CRM({ user }: { user: User }) {
   const clientsPerPage = 9;
   const [loading, setLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
   const syncPayments = async () => {
     setIsSyncing(true);
     try {
-      const clientsToSync = clients.filter(c => c.asaasSubscriptionId && c.status !== 'Cancelado');
+      const clientsToSync = clients.filter(c => c.asaasCustomerId && c.status !== 'Cancelado');
       let updatedCount = 0;
       
       for (const client of clientsToSync) {
         try {
-          const res = await fetch(`/api/asaas/subscriptions/${client.asaasSubscriptionId}`);
-          if (res.ok) {
-            const data = await res.json();
-            const payments = data.payments || [];
-            const subscription = data.subscription;
+          // Fetch all payments for this customer
+          const paymentsRes = await fetch(`/api/asaas/payments?customer=${client.asaasCustomerId}`);
+          
+          let subscription = null;
+          if (client.asaasSubscriptionId) {
+            const subRes = await fetch(`/api/asaas/subscriptions/${client.asaasSubscriptionId}`);
+            if (subRes.ok) {
+              const subData = await subRes.json();
+              subscription = subData.subscription;
+            }
+          }
+
+          if (paymentsRes.ok) {
+            const paymentsData = await paymentsRes.json();
+            const payments = paymentsData.data || [];
             
             if (payments.length > 0) {
               let targetPayment = payments.find((p: any) => p.status === 'OVERDUE');
@@ -488,7 +522,10 @@ function CRM({ user }: { user: User }) {
                 newSiteStatus = 'Inadimplente';
               }
               
-              const nextDueDate = subscription?.nextDueDate || client.nextDueDate;
+              // Use the target payment's due date if it's pending/overdue, otherwise use subscription's next due date
+              const nextDueDate = (status === 'PENDING' || status === 'OVERDUE') 
+                ? latestPayment.dueDate 
+                : (subscription?.nextDueDate || client.nextDueDate);
               
               if (newPaymentStatus !== client.paymentStatus || newSiteStatus !== client.status || nextDueDate !== client.nextDueDate || (latestPayment.invoiceUrl && latestPayment.invoiceUrl !== client.invoiceUrl)) {
                 const updatedClient = {
@@ -505,7 +542,7 @@ function CRM({ user }: { user: User }) {
             }
           }
         } catch (e) {
-          console.error(`Error syncing client ${client.name}`, e);
+          console.error(`Error syncing client ${client.name}:`, e);
         }
       }
       
@@ -761,8 +798,13 @@ function CRM({ user }: { user: User }) {
 
             // B. Create subscription for future payments
             const firstDateObj = new Date(firstPaymentDate + 'T12:00:00Z');
-            let nextSubDate = new Date(firstDateObj.getFullYear(), firstDateObj.getMonth() + 1, client.recurringPaymentDay, 12, 0, 0);
+            let nextSubDate = new Date(firstDateObj.getFullYear(), firstDateObj.getMonth(), client.recurringPaymentDay, 12, 0, 0);
             
+            // If the day has already passed in the current month, move to next month
+            if (nextSubDate.getTime() <= firstDateObj.getTime()) {
+              nextSubDate.setMonth(nextSubDate.getMonth() + 1);
+            }
+
             // If the next date is less than 15 days away, push it to the next month
             const diffTime = nextSubDate.getTime() - firstDateObj.getTime();
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
@@ -1152,7 +1194,7 @@ function CRM({ user }: { user: User }) {
           {dashboardMode === 'list' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {currentClients.map(client => (
-                <div key={client.id} onClick={() => { setEditingClient(client); setIsModalOpen(true); }} className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl cursor-pointer hover:bg-gray-200 dark:bg-white/[0.15] transition-all group relative overflow-hidden shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] hover:shadow-[0_8px_32px_0_rgba(249,115,22,0.15)] hover:-translate-y-1 flex flex-col h-full">
+                <div key={client.id} onClick={() => { setEditingClient(client); setIsModalOpen(true); }} className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl cursor-pointer hover:bg-gray-100 dark:hover:bg-white/[0.15] transition-all group relative overflow-hidden shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] hover:shadow-[0_8px_32px_0_rgba(249,115,22,0.15)] hover:-translate-y-1 flex flex-col h-full">
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-primary-400 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   
                   <div className="flex justify-between items-start mb-4">
@@ -1302,7 +1344,7 @@ function CRM({ user }: { user: User }) {
                     </div>
                     <div className="flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2 pb-2">
                       {columnClients.map(client => (
-                        <div key={client.id} onClick={() => { setEditingClient(client); setIsModalOpen(true); }} className="bg-gray-200 dark:bg-white/10 border border-gray-200 dark:border-white/10 p-4 rounded-xl cursor-pointer hover:bg-gray-200 dark:bg-white/[0.15] transition-all group relative">
+                        <div key={client.id} onClick={() => { setEditingClient(client); setIsModalOpen(true); }} className="bg-gray-200 dark:bg-white/10 border border-gray-200 dark:border-white/10 p-4 rounded-xl cursor-pointer hover:bg-gray-100 dark:hover:bg-white/[0.15] transition-all group relative">
                           <h4 className="font-bold text-gray-900 dark:text-white mb-2">{client.name}</h4>
                           <div className="flex items-center text-gray-500 dark:text-gray-400 text-xs mb-2">
                             <Phone size={12} className="mr-2 text-orange-400" />
