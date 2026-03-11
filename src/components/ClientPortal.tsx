@@ -53,13 +53,22 @@ export default function ClientPortal() {
         if (docSnap.exists()) {
           const clientData = docSnap.data();
           
-          if (clientData.asaasSubscriptionId) {
+          if (clientData.asaasCustomerId) {
             try {
-              const res = await fetch(`/api/asaas/subscriptions/${clientData.asaasSubscriptionId}`);
-              if (res.ok) {
-                const data = await res.json();
-                const payments = data.payments || [];
-                const subscription = data.subscription;
+              const paymentsRes = await fetch(`/api/asaas/payments?customer=${clientData.asaasCustomerId}`);
+              
+              let subscription = null;
+              if (clientData.asaasSubscriptionId) {
+                const subRes = await fetch(`/api/asaas/subscriptions/${clientData.asaasSubscriptionId}`);
+                if (subRes.ok) {
+                  const subData = await subRes.json();
+                  subscription = subData.subscription;
+                }
+              }
+
+              if (paymentsRes.ok) {
+                const paymentsData = await paymentsRes.json();
+                const payments = paymentsData.data || [];
                 
                 setPaymentsHistory(payments);
 
@@ -83,6 +92,8 @@ export default function ClientPortal() {
                   
                   clientData.paymentStatus = newPaymentStatus;
                   clientData.invoiceUrl = targetPayment.invoiceUrl || clientData.invoiceUrl;
+                  
+                  clientData.currentDueDate = (status === 'PENDING' || status === 'OVERDUE') ? targetPayment.dueDate : null;
                   clientData.nextDueDate = subscription?.nextDueDate || clientData.nextDueDate;
                 }
               }
@@ -201,9 +212,18 @@ export default function ClientPortal() {
               <p className="text-xl font-medium">{client.plan}</p>
             </div>
 
+            {client.currentDueDate && (
+              <div className="mb-4 p-4 bg-orange-500/10 border border-orange-500/20 rounded-xl">
+                <p className="text-sm text-orange-400 font-medium mb-1">Fatura Atual (Pendente)</p>
+                <p className="text-lg font-bold text-white">
+                  Vencimento: {new Date(client.currentDueDate + 'T12:00:00').toLocaleDateString('pt-BR')}
+                </p>
+              </div>
+            )}
+
             {client.nextDueDate && (
-              <div className="mb-8">
-                <p className="text-sm text-gray-400 mb-1">Vencimento</p>
+              <div className="mb-8 p-4 bg-white/5 border border-white/10 rounded-xl">
+                <p className="text-sm text-gray-400 mb-1">Próxima Assinatura</p>
                 <p className="text-lg font-medium">
                   {new Date(client.nextDueDate + 'T12:00:00').toLocaleDateString('pt-BR')}
                 </p>
