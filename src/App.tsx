@@ -475,6 +475,8 @@ function CRM({ user }: { user: User }) {
   const clientsPerPage = 9;
   const [loading, setLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
   const syncPayments = async () => {
     setIsSyncing(true);
     try {
