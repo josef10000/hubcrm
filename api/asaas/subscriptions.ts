@@ -10,7 +10,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { customer, billingType, value, nextDueDate, description } = req.body;
     const data = await asaasRequest("/subscriptions", "POST", {
       customer,
-      billingType: billingType || "PIX",
+      billingType: billingType || "UNDEFINED",
       value,
       nextDueDate,
       description,

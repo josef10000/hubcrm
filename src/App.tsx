@@ -57,7 +57,7 @@ interface Client {
   invoiceUrl?: string;
   paymentStatus?: 'PENDING' | 'RECEIVED' | 'OVERDUE' | 'N/A';
   nextDueDate?: string;
-  billingType?: 'PIX' | 'CREDIT_CARD' | 'BOLETO';
+  billingType?: 'PIX' | 'CREDIT_CARD' | 'BOLETO' | 'UNDEFINED';
   firstPaymentDate?: string;
   recurringPaymentDay?: number;
 }
@@ -277,20 +277,27 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
 
                   <div className="mt-6">
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Forma de Pagamento *</label>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-3 gap-3">
+                      <button 
+                        type="button" 
+                        onClick={() => setFormData(prev => ({ ...prev, billingType: 'UNDEFINED' }))}
+                        className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'UNDEFINED' || !formData.billingType ? 'bg-orange-500/20 border-orange-500 text-gray-900 dark:text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5'}`}
+                      >
+                        <div className="font-semibold text-sm">Cliente Escolhe</div>
+                      </button>
                       <button 
                         type="button" 
                         onClick={() => setFormData(prev => ({ ...prev, billingType: 'PIX' }))}
-                        className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'PIX' || !formData.billingType ? 'bg-orange-500/20 border-orange-500 text-gray-900 dark:text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5'}`}
+                        className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'PIX' ? 'bg-orange-500/20 border-orange-500 text-gray-900 dark:text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5'}`}
                       >
-                        <div className="font-semibold">PIX</div>
+                        <div className="font-semibold text-sm">Apenas PIX</div>
                       </button>
                       <button 
                         type="button" 
                         onClick={() => setFormData(prev => ({ ...prev, billingType: 'CREDIT_CARD' }))}
                         className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'CREDIT_CARD' ? 'bg-orange-500/20 border-orange-500 text-gray-900 dark:text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5'}`}
                       >
-                        <div className="font-semibold">Cartão de Crédito</div>
+                        <div className="font-semibold text-sm">Apenas Cartão</div>
                       </button>
                     </div>
                   </div>
@@ -691,7 +698,7 @@ function CRM({ user }: { user: User }) {
       invoiceUrl: clientData.invoiceUrl,
       nextDueDate: clientData.nextDueDate,
       paymentStatus: clientData.paymentStatus || 'PENDING',
-      billingType: clientData.billingType || 'PIX',
+      billingType: clientData.billingType || 'UNDEFINED',
       firstPaymentDate: clientData.firstPaymentDate,
       recurringPaymentDay: clientData.recurringPaymentDay,
     };
@@ -701,8 +708,8 @@ function CRM({ user }: { user: User }) {
 
     try { 
       // Handle Update Subscription Due Date
-      if (!isNew && client.asaasSubscriptionId && editingClient && editingClient.recurringPaymentDay !== client.recurringPaymentDay) {
-        if (client.recurringPaymentDay) {
+      if (!isNew && client.asaasSubscriptionId && editingClient && (editingClient.recurringPaymentDay !== client.recurringPaymentDay || editingClient.billingType !== client.billingType)) {
+        if (client.recurringPaymentDay && editingClient.recurringPaymentDay !== client.recurringPaymentDay) {
           const today = new Date();
           let nextSubDate = new Date(today.getFullYear(), today.getMonth(), client.recurringPaymentDay, 12, 0, 0);
           
@@ -717,7 +724,8 @@ function CRM({ user }: { user: User }) {
             body: JSON.stringify({
               subscriptionId: client.asaasSubscriptionId,
               nextDueDate: nextSubDateStr,
-              updatePendingPayments: true
+              updatePendingPayments: true,
+              billingType: client.billingType
             })
           });
           if (!updateRes.ok) {
@@ -725,6 +733,20 @@ function CRM({ user }: { user: User }) {
             toast.error("Aviso: Não foi possível atualizar a data de vencimento no Asaas.");
           } else {
             client.nextDueDate = nextSubDateStr;
+          }
+        } else if (editingClient.billingType !== client.billingType) {
+          const updateRes = await fetch('/api/asaas/update-subscription', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              subscriptionId: client.asaasSubscriptionId,
+              updatePendingPayments: true,
+              billingType: client.billingType
+            })
+          });
+          if (!updateRes.ok) {
+            console.error("Failed to update subscription billing type in Asaas");
+            toast.error("Aviso: Não foi possível atualizar a forma de pagamento no Asaas.");
           }
         }
       }
@@ -1481,8 +1503,9 @@ function CRM({ user }: { user: User }) {
     ];
 
     const paymentMethodData = [
-      { name: 'PIX', value: clients.filter(c => c.billingType === 'PIX' || !c.billingType).length, color: '#10b981' },
-      { name: 'Cartão', value: clients.filter(c => c.billingType === 'CREDIT_CARD').length, color: '#3b82f6' }
+      { name: 'PIX', value: clients.filter(c => c.billingType === 'PIX').length, color: '#10b981' },
+      { name: 'Cartão', value: clients.filter(c => c.billingType === 'CREDIT_CARD').length, color: '#3b82f6' },
+      { name: 'Cliente Escolhe', value: clients.filter(c => c.billingType === 'UNDEFINED' || !c.billingType).length, color: '#f59e0b' }
     ];
 
     const now = Date.now();
