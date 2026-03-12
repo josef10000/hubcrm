@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { doc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, addDoc, collection, serverTimestamp, onSnapshot, query, where, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Globe, CreditCard, CheckCircle, Clock, AlertCircle, ExternalLink, FileText, MessageSquare, Send } from 'lucide-react';
+import { Globe, CreditCard, CheckCircle, Clock, AlertCircle, ExternalLink, FileText, MessageSquare, Send, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
 
 export default function ClientPortal() {
@@ -13,7 +13,11 @@ export default function ClientPortal() {
   const [error, setError] = useState<string | null>(null);
   
   const [requestMessage, setRequestMessage] = useState('');
+  const [requestCategory, setRequestCategory] = useState('Suporte Técnico');
   const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [clientRequests, setClientRequests] = useState<any[]>([]);
+  const [expandedRequest, setExpandedRequest] = useState<string | null>(null);
 
   const handleSubmitRequest = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,12 +28,14 @@ export default function ClientPortal() {
       await addDoc(collection(db, 'users', userId, 'supportRequests'), {
         clientId,
         clientName: client.name,
+        category: requestCategory,
         message: requestMessage,
-        status: 'pending',
+        status: 'aberto',
         createdAt: serverTimestamp()
       });
-      toast.success('Solicitação enviada com sucesso! Entraremos em contato em breve.');
       setRequestMessage('');
+      setRequestCategory('Suporte Técnico');
+      setShowSuccessModal(true);
     } catch (err) {
       console.error("Error submitting request:", err);
       toast.error('Erro ao enviar solicitação. Tente novamente mais tarde.');
@@ -45,6 +51,23 @@ export default function ClientPortal() {
         setLoading(false);
         return;
       }
+
+      // Fetch Support Requests History
+      const requestsRef = collection(db, 'users', userId, 'supportRequests');
+      const q = query(requestsRef, where('clientId', '==', clientId));
+      
+      const unsubscribeRequests = onSnapshot(q, (snapshot) => {
+        const loadedRequests: any[] = [];
+        snapshot.forEach((doc) => {
+          loadedRequests.push({ id: doc.id, ...doc.data() });
+        });
+        loadedRequests.sort((a, b) => {
+          const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+          const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+          return timeB - timeA; // Descending
+        });
+        setClientRequests(loadedRequests);
+      });
 
       try {
         const docRef = doc(db, 'users', userId, 'clients', clientId);
@@ -161,8 +184,50 @@ export default function ClientPortal() {
     }
   };
 
+  const getRequestStatusBadge = (status: string) => {
+    switch (status) {
+      case 'concluido':
+        return <span className="px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Concluído</span>;
+      case 'em_analise':
+        return <span className="px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-blue-500/20 text-blue-400 border border-blue-500/30">Em Análise</span>;
+      case 'aberto':
+      default:
+        return <span className="px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">Aberto / Na Fila</span>;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white p-6 md:p-12 font-sans selection:bg-primary-500/30">
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#141414] border border-white/10 p-8 rounded-3xl max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in duration-300">
+            <button 
+              onClick={() => setShowSuccessModal(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="w-8 h-8 text-emerald-400" />
+            </div>
+            <h3 className="text-2xl font-bold text-center mb-4 text-white">Chamado aberto com sucesso! 🚀</h3>
+            <p className="text-gray-400 text-center mb-8 leading-relaxed">
+              Recebemos sua solicitação e nossa equipe fará a verificação em até <strong className="text-white">24 horas úteis</strong>. Você pode acompanhar o status logo abaixo no seu histórico.
+            </p>
+            <button 
+              onClick={() => {
+                setShowSuccessModal(false);
+                document.getElementById('historico-chamados')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="w-full py-4 bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-xl transition-colors shadow-lg shadow-primary-500/20"
+            >
+              Entendi, obrigado!
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="flex flex-col items-center text-center mb-12">
@@ -318,10 +383,24 @@ export default function ClientPortal() {
           <p className="text-gray-400 text-sm mb-6">Precisa de alguma mudança no site ou ajuda com algo? Envie sua solicitação abaixo.</p>
           
           <form onSubmit={handleSubmitRequest}>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-400 mb-2">Categoria do Chamado</label>
+              <select 
+                value={requestCategory}
+                onChange={(e) => setRequestCategory(e.target.value)}
+                className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all appearance-none"
+              >
+                <option value="Suporte Técnico">Suporte Técnico</option>
+                <option value="Dúvida Financeira">Dúvida Financeira</option>
+                <option value="Solicitação de Alteração">Solicitação de Alteração</option>
+                <option value="Outros">Outros</option>
+              </select>
+            </div>
+            
             <textarea 
               value={requestMessage}
               onChange={(e) => setRequestMessage(e.target.value)}
-              placeholder="Descreva o que você precisa..."
+              placeholder="Descreva o que você precisa em detalhes..."
               className="w-full min-h-[120px] px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500 custom-scrollbar resize-none mb-4"
               required
             ></textarea>
@@ -346,6 +425,58 @@ export default function ClientPortal() {
             </div>
           </form>
         </div>
+
+        {/* Support Request History */}
+        {clientRequests.length > 0 && (
+          <div id="historico-chamados" className="mt-6 bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
+            <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
+              <Clock className="w-5 h-5 text-primary-400" />
+              Histórico de Chamados
+            </h2>
+            
+            <div className="space-y-4">
+              {clientRequests.map((req) => (
+                <div key={req.id} className="bg-black/20 border border-white/5 rounded-2xl overflow-hidden transition-all">
+                  <div 
+                    className="p-5 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-white/5 transition-colors"
+                    onClick={() => setExpandedRequest(expandedRequest === req.id ? null : req.id)}
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        {getRequestStatusBadge(req.status)}
+                        <span className="text-sm font-medium text-gray-300">{req.category || 'Suporte'}</span>
+                      </div>
+                      <p className="text-white font-medium line-clamp-1">{req.message}</p>
+                      <p className="text-xs text-gray-500 mt-2">
+                        {req.createdAt?.toDate ? new Date(req.createdAt.toDate()).toLocaleString('pt-BR') : 'Recente'}
+                      </p>
+                    </div>
+                    <div className="shrink-0 text-gray-500">
+                      {expandedRequest === req.id ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                    </div>
+                  </div>
+                  
+                  {expandedRequest === req.id && (
+                    <div className="p-5 border-t border-white/5 bg-black/40">
+                      <div className="mb-4">
+                        <p className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-2">Sua Solicitação</p>
+                        <p className="text-gray-300 whitespace-pre-wrap text-sm leading-relaxed">{req.message}</p>
+                      </div>
+                      
+                      {req.reply && (
+                        <div className="mt-4 p-4 bg-primary-500/10 border border-primary-500/20 rounded-xl relative">
+                          <div className="absolute -left-2 top-6 w-4 h-4 bg-primary-500/20 rotate-45 border-l border-b border-primary-500/20"></div>
+                          <p className="text-xs text-primary-400 uppercase tracking-wider font-bold mb-2">Resposta da Equipe</p>
+                          <p className="text-white whitespace-pre-wrap text-sm leading-relaxed">{req.reply}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Support Footer */}
         <div className="mt-12 text-center">
