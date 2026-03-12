@@ -124,7 +124,7 @@ export default function ClientPortal() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mb-4"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mb-4"></div>
         <p className="text-gray-400 text-sm">Carregando seu portal...</p>
       </div>
     );
@@ -162,11 +162,11 @@ export default function ClientPortal() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white p-6 md:p-12 font-sans selection:bg-orange-500/30">
+    <div className="min-h-screen bg-[#0a0a0a] text-white p-6 md:p-12 font-sans selection:bg-primary-500/30">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="flex flex-col items-center text-center mb-12">
-          <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-orange-500/20">
+          <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-primary-500/20">
             <Globe className="w-10 h-10 text-white" />
           </div>
           <h1 className="text-3xl font-bold mb-2">Olá, {client.name.split(' ')[0]}!</h1>
@@ -177,7 +177,7 @@ export default function ClientPortal() {
           {/* Status Card */}
           <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
             <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
-              <Globe className="w-5 h-5 text-orange-400" />
+              <Globe className="w-5 h-5 text-primary-400" />
               Status do Projeto
             </h2>
             
@@ -193,7 +193,7 @@ export default function ClientPortal() {
                   href={client.siteLink.startsWith('http') ? client.siteLink : `https://${client.siteLink}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center gap-2 text-orange-400 hover:text-orange-300 transition-colors"
+                  className="flex items-center gap-2 text-primary-400 hover:text-primary-300 transition-colors"
                 >
                   {client.siteLink}
                   <ExternalLink className="w-4 h-4" />
@@ -204,10 +204,10 @@ export default function ClientPortal() {
 
           {/* Finance Card */}
           <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl relative overflow-hidden">
-            <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-orange-500/10 rounded-full blur-3xl"></div>
+            <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-primary-500/10 rounded-full blur-3xl"></div>
             
             <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-orange-400" />
+              <CreditCard className="w-5 h-5 text-primary-400" />
               Fatura Atual
             </h2>
 
@@ -217,8 +217,8 @@ export default function ClientPortal() {
             </div>
 
             {client.currentDueDate && (
-              <div className="mb-4 p-4 bg-orange-500/10 border border-orange-500/20 rounded-xl">
-                <p className="text-sm text-orange-400 font-medium mb-1">Fatura Atual (Pendente)</p>
+              <div className="mb-4 p-4 bg-primary-500/10 border border-primary-500/20 rounded-xl">
+                <p className="text-sm text-primary-400 font-medium mb-1">Fatura Atual (Pendente)</p>
                 <p className="text-lg font-bold text-white">
                   Vencimento: {new Date(client.currentDueDate + 'T12:00:00').toLocaleDateString('pt-BR')}
                 </p>
@@ -239,7 +239,7 @@ export default function ClientPortal() {
                 href={client.invoiceUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center justify-center w-full py-4 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-medium transition-colors shadow-lg shadow-orange-500/20"
+                className="flex items-center justify-center w-full py-4 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-medium transition-colors shadow-lg shadow-primary-500/20"
               >
                 Pagar via PIX ou Cartão
               </a>
@@ -255,7 +255,7 @@ export default function ClientPortal() {
         {paymentsHistory.length > 0 && (
           <div className="mt-6 bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
             <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-orange-400" />
+              <FileText className="w-5 h-5 text-primary-400" />
               Histórico de Pagamentos
             </h2>
             
@@ -294,7 +294,7 @@ export default function ClientPortal() {
                             href={payment.invoiceUrl} 
                             target="_blank" 
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-sm text-orange-400 hover:text-orange-300 transition-colors"
+                            className="inline-flex items-center gap-1 text-sm text-primary-400 hover:text-primary-300 transition-colors"
                           >
                             <ExternalLink className="w-4 h-4" />
                             <span className="hidden sm:inline">Acessar</span>
@@ -312,7 +312,7 @@ export default function ClientPortal() {
         {/* Support Request Form */}
         <div className="mt-6 bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
           <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-orange-400" />
+            <MessageSquare className="w-5 h-5 text-primary-400" />
             Solicitar Suporte ou Alteração
           </h2>
           <p className="text-gray-400 text-sm mb-6">Precisa de alguma mudança no site ou ajuda com algo? Envie sua solicitação abaixo.</p>
@@ -322,14 +322,14 @@ export default function ClientPortal() {
               value={requestMessage}
               onChange={(e) => setRequestMessage(e.target.value)}
               placeholder="Descreva o que você precisa..."
-              className="w-full min-h-[120px] px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500 custom-scrollbar resize-none mb-4"
+              className="w-full min-h-[120px] px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500 custom-scrollbar resize-none mb-4"
               required
             ></textarea>
             <div className="flex justify-end">
               <button 
                 type="submit" 
                 disabled={isSubmittingRequest || !requestMessage.trim()}
-                className="flex items-center space-x-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl transition-all font-medium shadow-[0_0_20px_rgba(249,115,22,0.3)] hover:shadow-[0_0_25px_rgba(249,115,22,0.5)]"
+                className="flex items-center space-x-2 bg-gradient-to-r from-primary-500 to-primary-400 hover:from-primary-600 hover:to-primary-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl transition-all font-medium shadow-xl shadow-primary-500/30 hover:shadow-2xl shadow-primary-500/50"
               >
                 {isSubmittingRequest ? (
                   <span className="flex items-center gap-2">
@@ -354,7 +354,7 @@ export default function ClientPortal() {
             href="https://wa.me/5511952924208"
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-2 text-orange-400 hover:text-orange-300 transition-colors font-medium"
+            className="inline-flex items-center gap-2 text-primary-400 hover:text-primary-300 transition-colors font-medium"
           >
             Falar com o Suporte
           </a>

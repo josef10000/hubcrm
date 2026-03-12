@@ -225,17 +225,17 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">WhatsApp *</label>
-                    <input required type="text" name="whatsapp" value={formData.whatsapp || ''} onChange={handleChange} placeholder="(11) 99999-9999" className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" />
+                    <input required type="text" name="whatsapp" value={formData.whatsapp || ''} onChange={handleChange} placeholder="(11) 99999-9999" className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">CPF/CNPJ *</label>
-                    <input required type="text" name="cpfCnpj" value={formData.cpfCnpj || ''} onChange={handleChange} placeholder="Apenas números" className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" />
+                    <input required type="text" name="cpfCnpj" value={formData.cpfCnpj || ''} onChange={handleChange} placeholder="Apenas números" className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">E-mail *</label>
-                    <input required type="email" name="email" value={formData.email || ''} onChange={handleChange} placeholder="cliente@email.com" className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" />
+                    <input required type="email" name="email" value={formData.email || ''} onChange={handleChange} placeholder="cliente@email.com" className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
                   </div>
 
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mt-8 mb-4 border-b border-gray-200 dark:border-white/10 pb-2">Configurações de Pagamento</h3>
@@ -248,7 +248,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                         name="firstPaymentDate" 
                         value={formData.firstPaymentDate || new Date().toISOString().split('T')[0]} 
                         onChange={handleChange} 
-                        className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all" 
+                        className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all" 
                       />
                       <p className="text-xs text-gray-500 mt-1">Data da primeira cobrança (padrão: hoje)</p>
                     </div>
@@ -263,11 +263,11 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                         value={formData.recurringPaymentDay || ''} 
                         onChange={(e) => setFormData(prev => ({ ...prev, recurringPaymentDay: e.target.value ? parseInt(e.target.value) : undefined }))} 
                         placeholder="Ex: 15" 
-                        className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" 
+                        className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" 
                       />
                       <p className="text-xs text-gray-500 mt-1">
                         {getNextPaymentDateText() ? (
-                          <span className="text-orange-500 dark:text-orange-400 font-medium">{getNextPaymentDateText()}</span>
+                          <span className="text-primary-500 dark:text-primary-400 font-medium">{getNextPaymentDateText()}</span>
                         ) : (
                           "Opcional. Se vazio, será o mesmo dia do primeiro pagamento."
                         )}
@@ -281,21 +281,21 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                       <button 
                         type="button" 
                         onClick={() => setFormData(prev => ({ ...prev, billingType: 'UNDEFINED' }))}
-                        className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'UNDEFINED' || !formData.billingType ? 'bg-orange-500/20 border-orange-500 text-gray-900 dark:text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5'}`}
+                        className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'UNDEFINED' || !formData.billingType ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5'}`}
                       >
                         <div className="font-semibold text-sm">Cliente Escolhe</div>
                       </button>
                       <button 
                         type="button" 
                         onClick={() => setFormData(prev => ({ ...prev, billingType: 'PIX' }))}
-                        className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'PIX' ? 'bg-orange-500/20 border-orange-500 text-gray-900 dark:text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5'}`}
+                        className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'PIX' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5'}`}
                       >
                         <div className="font-semibold text-sm">Apenas PIX</div>
                       </button>
                       <button 
                         type="button" 
                         onClick={() => setFormData(prev => ({ ...prev, billingType: 'CREDIT_CARD' }))}
-                        className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'CREDIT_CARD' ? 'bg-orange-500/20 border-orange-500 text-gray-900 dark:text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5'}`}
+                        className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'CREDIT_CARD' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5'}`}
                       >
                         <div className="font-semibold text-sm">Apenas Cartão</div>
                       </button>
@@ -308,7 +308,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                       <button 
                         type="button" 
                         onClick={() => setFormData(prev => ({ ...prev, plan: 'Padrão' }))}
-                        className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Padrão' ? 'bg-orange-500/20 border-orange-500 text-gray-900 dark:text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5'}`}
+                        className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Padrão' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5'}`}
                       >
                         <div className="font-semibold mb-1">Padrão</div>
                         <div className="text-sm opacity-80">R$ 80/mês</div>
@@ -316,7 +316,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                       <button 
                         type="button" 
                         onClick={() => setFormData(prev => ({ ...prev, plan: 'Profissional' }))}
-                        className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Profissional' ? 'bg-orange-500/20 border-orange-500 text-gray-900 dark:text-white shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5'}`}
+                        className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Profissional' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5'}`}
                       >
                         <div className="font-semibold mb-1">Profissional</div>
                         <div className="text-sm opacity-80">R$ 120/mês</div>
@@ -344,17 +344,17 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
 
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Nicho / Área de Atuação</label>
-                    <input type="text" name="niche" value={formData.niche || ''} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" placeholder="Ex: Advogado, Clínica, E-commerce..." />
+                    <input type="text" name="niche" value={formData.niche || ''} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" placeholder="Ex: Advogado, Clínica, E-commerce..." />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Link do Site (Opcional)</label>
-                    <input type="url" name="siteLink" value={formData.siteLink || ''} onChange={handleChange} placeholder="https://..." className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500" />
+                    <input type="url" name="siteLink" value={formData.siteLink || ''} onChange={handleChange} placeholder="https://..." className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
                   </div>
 
                   <div className="flex-1 flex flex-col">
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Anotações e Credenciais</label>
-                    <textarea name="notes" value={formData.notes || ''} onChange={handleChange} className="w-full flex-1 min-h-[150px] px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500 custom-scrollbar resize-none" placeholder="Anotações importantes, links de referência, acessos..."></textarea>
+                    <textarea name="notes" value={formData.notes || ''} onChange={handleChange} className="w-full flex-1 min-h-[150px] px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500 custom-scrollbar resize-none" placeholder="Anotações importantes, links de referência, acessos..."></textarea>
                   </div>
                 </div>
               </div>
@@ -368,7 +368,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                       value={newLogText} 
                       onChange={(e) => setNewLogText(e.target.value)} 
                       placeholder="Descreva a interação, alteração ou nota..." 
-                      className="flex-1 px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all placeholder-gray-500"
+                      className="flex-1 px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && newLogText.trim()) {
                           e.preventDefault();
@@ -388,7 +388,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                           setNewLogText('');
                         }
                       }}
-                      className="px-6 py-3 bg-orange-500 hover:bg-primary-600 disabled:opacity-50 text-gray-900 dark:text-white rounded-xl font-medium transition-all"
+                      className="px-6 py-3 bg-primary-500 hover:bg-primary-600 disabled:opacity-50 text-gray-900 dark:text-white rounded-xl font-medium transition-all"
                     >
                       Adicionar
                     </button>
@@ -433,14 +433,14 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                 </button>
               ) : null}
               {initialData && initialData.status !== 'Cancelado' ? (
-                <button type="button" onClick={() => setShowCancelConfirm(true)} className="text-orange-400 hover:text-orange-300 hover:bg-orange-400/10 px-4 py-2 rounded-lg transition-colors flex items-center text-sm font-medium">
+                <button type="button" onClick={() => setShowCancelConfirm(true)} className="text-primary-400 hover:text-primary-300 hover:bg-primary-400/10 px-4 py-2 rounded-lg transition-colors flex items-center text-sm font-medium">
                   Cancelar Assinatura
                 </button>
               ) : null}
             </div>
             <div className="flex space-x-3">
               <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:bg-white/10 transition-colors">Cancelar</button>
-              <button type="submit" className="px-5 py-2.5 rounded-xl text-sm font-medium bg-orange-500 hover:bg-orange-600 text-gray-900 dark:text-white shadow-lg shadow-orange-500/20 transition-all hover:scale-105 active:scale-95">Salvar Cliente</button>
+              <button type="submit" className="px-5 py-2.5 rounded-xl text-sm font-medium bg-primary-500 hover:bg-primary-600 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20 transition-all hover:scale-105 active:scale-95">Salvar Cliente</button>
             </div>
           </div>
         </form>
@@ -1161,7 +1161,7 @@ function CRM({ user }: { user: User }) {
             </div>
 
             <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-5 rounded-2xl flex items-center shadow-lg">
-              <div className="p-3 bg-orange-500/20 text-orange-400 rounded-xl mr-4">
+              <div className="p-3 bg-primary-500/20 text-primary-400 rounded-xl mr-4">
                 <Calendar size={24} />
               </div>
               <div>
@@ -1244,7 +1244,7 @@ function CRM({ user }: { user: User }) {
               <button 
                 onClick={syncPayments} 
                 disabled={isSyncing}
-                className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${isSyncing ? 'text-orange-400 bg-gray-100 dark:bg-white/5' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5 hover:text-gray-900 dark:text-white'}`}
+                className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${isSyncing ? 'text-primary-400 bg-gray-100 dark:bg-white/5' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5 hover:text-gray-900 dark:text-white'}`}
                 title="Sincronizar pagamentos com Asaas"
               >
                 <RefreshCw size={16} className={`mr-2 ${isSyncing ? 'animate-spin' : ''}`}/> 
@@ -1264,7 +1264,7 @@ function CRM({ user }: { user: User }) {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {currentClients.map(client => (
                 <div key={client.id} onClick={() => { setEditingClient(client); setIsModalOpen(true); }} className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl cursor-pointer hover:bg-gray-100 dark:hover:bg-white/[0.15] transition-all group relative overflow-hidden shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] hover:shadow-[0_8px_32px_0_rgba(249,115,22,0.15)] hover:-translate-y-1 flex flex-col h-full">
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-primary-400 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-500 to-primary-400 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   
                   <div className="flex justify-between items-start mb-4">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate pr-4">{client.name}</h3>
@@ -1281,7 +1281,7 @@ function CRM({ user }: { user: User }) {
                         <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
                           client.paymentStatus === 'RECEIVED' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
                           client.paymentStatus === 'OVERDUE' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
-                          'bg-orange-500/20 text-orange-400 border border-orange-500/30'
+                          'bg-primary-500/20 text-primary-400 border border-primary-500/30'
                         }`}>
                           {client.paymentStatus === 'RECEIVED' ? 'Pago' : client.paymentStatus === 'OVERDUE' ? 'Atrasado' : 'Pendente'}
                         </span>
@@ -1291,32 +1291,32 @@ function CRM({ user }: { user: User }) {
                   
                   <div className="space-y-3 flex-1">
                     <div className="flex items-center text-gray-600 dark:text-gray-300 text-sm">
-                      <Phone size={16} className="mr-3 text-orange-400 opacity-80" />
+                      <Phone size={16} className="mr-3 text-primary-400 opacity-80" />
                       {client.whatsapp}
                     </div>
                     
                     <div className="flex items-center text-gray-600 dark:text-gray-300 text-sm">
-                      <Tag size={16} className="mr-3 text-orange-400 opacity-80" />
+                      <Tag size={16} className="mr-3 text-primary-400 opacity-80" />
                       Plano {client.plan} <span className="ml-2 text-xs opacity-60">(R$ {client.plan === 'Profissional' ? '120' : '80'})</span>
                     </div>
                     
                     {client.nextDueDate && client.status !== 'Cancelado' && (
                       <div className="flex items-center text-gray-600 dark:text-gray-300 text-sm">
-                        <Calendar size={16} className="mr-3 text-orange-400 opacity-80" />
+                        <Calendar size={16} className="mr-3 text-primary-400 opacity-80" />
                         Vencimento: {new Date(client.nextDueDate + 'T12:00:00Z').toLocaleDateString('pt-BR')}
                       </div>
                     )}
                     
                     {client.niche && (
                       <div className="flex items-center text-gray-600 dark:text-gray-300 text-sm">
-                        <Briefcase size={16} className="mr-3 text-orange-400 opacity-80 shrink-0" />
+                        <Briefcase size={16} className="mr-3 text-primary-400 opacity-80 shrink-0" />
                         <span className="truncate">{client.niche}</span>
                       </div>
                     )}
                     
                     {client.siteLink && (
                       <div className="flex items-center text-gray-600 dark:text-gray-300 text-sm">
-                        <Globe size={16} className="mr-3 text-orange-400 opacity-80" />
+                        <Globe size={16} className="mr-3 text-primary-400 opacity-80" />
                         <a href={client.siteLink} target="_blank" rel="noreferrer" className="text-blue-400 hover:text-blue-300 hover:underline truncate" onClick={e => e.stopPropagation()}>
                           {client.siteLink}
                         </a>
@@ -1382,7 +1382,7 @@ function CRM({ user }: { user: User }) {
                         navigator.clipboard.writeText(url);
                         toast.success('Link do Portal copiado para a área de transferência!');
                       }}
-                      className="flex items-center justify-center w-full py-2.5 rounded-xl bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 border border-orange-500/30 transition-colors text-sm font-medium"
+                      className="flex items-center justify-center w-full py-2.5 rounded-xl bg-primary-500/20 text-primary-400 hover:bg-primary-500/30 border border-primary-500/30 transition-colors text-sm font-medium"
                     >
                       <Copy size={18} className="mr-2" />
                       Link do Portal
@@ -1416,14 +1416,14 @@ function CRM({ user }: { user: User }) {
                         <div key={client.id} onClick={() => { setEditingClient(client); setIsModalOpen(true); }} className="bg-gray-200 dark:bg-white/10 border border-gray-200 dark:border-white/10 p-4 rounded-xl cursor-pointer hover:bg-gray-100 dark:hover:bg-white/[0.15] transition-all group relative">
                           <h4 className="font-bold text-gray-900 dark:text-white mb-2">{client.name}</h4>
                           <div className="flex items-center text-gray-500 dark:text-gray-400 text-xs mb-2">
-                            <Phone size={12} className="mr-2 text-orange-400" />
+                            <Phone size={12} className="mr-2 text-primary-400" />
                             {client.whatsapp}
                           </div>
                           {client.paymentStatus && client.paymentStatus !== 'N/A' && (
                             <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
                               client.paymentStatus === 'RECEIVED' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
                               client.paymentStatus === 'OVERDUE' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
-                              'bg-orange-500/20 text-orange-400 border border-orange-500/30'
+                              'bg-primary-500/20 text-primary-400 border border-primary-500/30'
                             }`}>
                               {client.paymentStatus === 'RECEIVED' ? 'Pago' : client.paymentStatus === 'OVERDUE' ? 'Atrasado' : 'Pendente'}
                             </span>
@@ -1464,7 +1464,7 @@ function CRM({ user }: { user: User }) {
                     onClick={() => setCurrentPage(page)}
                     className={`w-10 h-10 rounded-xl text-sm font-medium transition-all flex items-center justify-center ${
                       currentPage === page 
-                        ? 'bg-orange-500 text-gray-900 dark:text-white shadow-[0_0_15px_rgba(249,115,22,0.5)]' 
+                        ? 'bg-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/50' 
                         : 'bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:bg-white/10 hover:text-gray-900 dark:text-white'
                     }`}
                   >
@@ -1605,9 +1605,9 @@ function CRM({ user }: { user: User }) {
             </div>
             
             <div className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] relative overflow-hidden">
-              <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-orange-500/20 rounded-full blur-3xl"></div>
+              <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-primary-500/20 rounded-full blur-3xl"></div>
               <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2">MRR (Recorrente)</p>
-              <p className="text-4xl font-bold text-orange-400">R$ {mrr.toLocaleString('pt-BR')}</p>
+              <p className="text-4xl font-bold text-primary-400">R$ {mrr.toLocaleString('pt-BR')}</p>
             </div>
 
             <div className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
@@ -1852,19 +1852,19 @@ function CRM({ user }: { user: User }) {
                 <form onSubmit={handleAddExpense} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Descrição</label>
-                    <input required type="text" value={newExpense.description || ''} onChange={e => setNewExpense({...newExpense, description: e.target.value})} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all" placeholder="Ex: Hospedagem AWS" />
+                    <input required type="text" value={newExpense.description || ''} onChange={e => setNewExpense({...newExpense, description: e.target.value})} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all" placeholder="Ex: Hospedagem AWS" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Valor (R$)</label>
-                    <input required type="number" step="0.01" value={newExpense.amount || ''} onChange={e => setNewExpense({...newExpense, amount: e.target.value})} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all" placeholder="0.00" />
+                    <input required type="number" step="0.01" value={newExpense.amount || ''} onChange={e => setNewExpense({...newExpense, amount: e.target.value})} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all" placeholder="0.00" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Data</label>
-                    <input required type="date" value={newExpense.date || ''} onChange={e => setNewExpense({...newExpense, date: e.target.value})} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all" />
+                    <input required type="date" value={newExpense.date || ''} onChange={e => setNewExpense({...newExpense, date: e.target.value})} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Categoria</label>
-                    <select value={newExpense.category || 'Ferramentas'} onChange={e => setNewExpense({...newExpense, category: e.target.value})} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition-all">
+                    <select value={newExpense.category || 'Ferramentas'} onChange={e => setNewExpense({...newExpense, category: e.target.value})} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all">
                       <option value="Ferramentas">Ferramentas / Software</option>
                       <option value="Infraestrutura">Infraestrutura / Hospedagem</option>
                       <option value="Impostos">Impostos / Taxas</option>
@@ -1872,7 +1872,7 @@ function CRM({ user }: { user: User }) {
                       <option value="Outros">Outros</option>
                     </select>
                   </div>
-                  <button type="submit" className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-gray-900 dark:text-white rounded-xl font-medium transition-all shadow-lg shadow-orange-500/20">
+                  <button type="submit" className="w-full py-3 bg-primary-500 hover:bg-primary-600 text-gray-900 dark:text-white rounded-xl font-medium transition-all shadow-lg shadow-primary-500/20">
                     Adicionar Despesa
                   </button>
                 </form>
@@ -1954,7 +1954,7 @@ function CRM({ user }: { user: User }) {
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{req.clientName}</h3>
                         <span className={`px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wider ${
-                          req.status === 'concluido' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
+                          req.status === 'concluido' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
                         }`}>
                           {req.status === 'concluido' ? 'Concluído' : 'Pendente'}
                         </span>
@@ -2074,8 +2074,8 @@ function CRM({ user }: { user: User }) {
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-[#0a0a0a] font-sans overflow-hidden text-gray-900 dark:text-gray-100 relative">
       {/* Liquid Glass Background Orbs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] bg-orange-600/20 rounded-full blur-[120px] pointer-events-none mix-blend-screen"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] bg-amber-600/20 rounded-full blur-[120px] pointer-events-none mix-blend-screen"></div>
+      <div className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] bg-primary-600/20 rounded-full blur-[120px] pointer-events-none mix-blend-screen"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] bg-primary-600/20 rounded-full blur-[120px] pointer-events-none mix-blend-screen"></div>
       <div className="absolute top-[40%] left-[60%] w-[30vw] h-[30vw] bg-purple-600/10 rounded-full blur-[100px] pointer-events-none mix-blend-screen"></div>
 
       <aside className={`w-64 bg-gray-900/20 dark:bg-black/40 backdrop-blur-3xl border-r border-gray-200 dark:border-white/10 flex flex-col transition-all duration-300 z-30 ${sidebarOpen ? 'translate-x-0 absolute inset-y-0 left-0' : '-translate-x-full absolute md:relative md:translate-x-0'}`}>
@@ -2106,7 +2106,7 @@ function CRM({ user }: { user: User }) {
         <div className="p-4 border-t border-gray-200 dark:border-white/10">
           <div className="flex items-center justify-between px-4 py-3 bg-gray-100 dark:bg-white/5 backdrop-blur-xl rounded-2xl border border-gray-200 dark:border-white/10">
             <div className="flex items-center space-x-3 overflow-hidden">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-gray-900 dark:text-white font-bold shrink-0 shadow-lg shadow-orange-500/20">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center text-gray-900 dark:text-white font-bold shrink-0 shadow-lg shadow-primary-500/20">
                 {user.email?.[0].toUpperCase() || 'U'}
               </div>
               <div className="truncate">
@@ -2128,7 +2128,7 @@ function CRM({ user }: { user: User }) {
             {view === 'dashboard' && (
               <div className="flex items-center w-full max-w-xl relative">
                 <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
-                <input type="text" placeholder="Buscar por Nome, CPF, E-mail ou Status..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full bg-white/80 dark:bg-zinc-900/50 backdrop-blur-xl border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-2xl pl-12 pr-4 py-3 focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all placeholder-gray-500 shadow-inner" />
+                <input type="text" placeholder="Buscar por Nome, CPF, E-mail ou Status..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full bg-white/80 dark:bg-zinc-900/50 backdrop-blur-xl border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-2xl pl-12 pr-4 py-3 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/50 transition-all placeholder-gray-500 shadow-inner" />
               </div>
             )}
             {view === 'analytics' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Métricas</h2>}
@@ -2143,7 +2143,7 @@ function CRM({ user }: { user: User }) {
                 <span>Exportar</span>
               </button>
             )}
-            <button onClick={() => { setEditingClient(null); setIsModalOpen(true); }} className="flex items-center space-x-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-gray-900 dark:text-white px-5 py-3 rounded-2xl transition-all font-medium shadow-[0_0_20px_rgba(249,115,22,0.3)] hover:shadow-[0_0_25px_rgba(249,115,22,0.5)] hover:scale-105 active:scale-95 shrink-0"><Plus size={18} /><span className="hidden sm:inline">Novo Cliente</span></button>
+            <button onClick={() => { setEditingClient(null); setIsModalOpen(true); }} className="flex items-center space-x-2 bg-gradient-to-r from-primary-500 to-primary-400 hover:from-primary-600 hover:to-primary-600 text-gray-900 dark:text-white px-5 py-3 rounded-2xl transition-all font-medium shadow-xl shadow-primary-500/30 hover:shadow-2xl shadow-primary-500/50 hover:scale-105 active:scale-95 shrink-0"><Plus size={18} /><span className="hidden sm:inline">Novo Cliente</span></button>
           </div>
         </header>
 
@@ -2230,7 +2230,7 @@ function Dashboard() {
   }, []);
 
   if (authLoading) {
-    return <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] flex flex-col items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mb-4"></div><p className="text-gray-500 dark:text-gray-400 text-sm">Carregando autenticação...</p></div>;
+    return <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] flex flex-col items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mb-4"></div><p className="text-gray-500 dark:text-gray-400 text-sm">Carregando autenticação...</p></div>;
   }
 
   if (authError) {
