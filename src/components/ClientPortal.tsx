@@ -73,11 +73,15 @@ export default function ClientPortal() {
                 setPaymentsHistory(payments);
 
                 if (payments.length > 0) {
-                  let targetPayment = payments.find((p: any) => p.status === 'OVERDUE');
+                  // Sort payments by due date ascending to get the earliest one
+                  const sortedPayments = [...payments].sort((a: any, b: any) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+                  
+                  let targetPayment = sortedPayments.find((p: any) => p.status === 'OVERDUE');
                   if (!targetPayment) {
-                    targetPayment = payments.find((p: any) => p.status === 'PENDING');
+                    targetPayment = sortedPayments.find((p: any) => p.status === 'PENDING');
                   }
                   if (!targetPayment) {
+                    // If no overdue or pending, get the most recent payment (descending)
                     targetPayment = [...payments].sort((a: any, b: any) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime())[0];
                   }
                   

@@ -752,18 +752,41 @@ function CRM({ user }: { user: User }) {
       }
 
       // Handle Cancellation
-      if (!isNew && client.status === 'Cancelado' && client.asaasSubscriptionId) {
-        const delRes = await fetch('/api/asaas/delete-subscription', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ subscriptionId: client.asaasSubscriptionId })
-        });
-        if (!delRes.ok) {
-          console.error("Failed to cancel subscription in Asaas");
-          toast.error("Aviso: Não foi possível cancelar a assinatura no Asaas automaticamente.");
-        } else {
-          client.paymentStatus = 'N/A';
-          client.invoiceUrl = undefined;
+      if (!isNew && client.status === 'Cancelado' && client.asaasCustomerId) {
+        // Cancel subscription if exists
+        if (client.asaasSubscriptionId) {
+          const delRes = await fetch('/api/asaas/delete-subscription', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subscriptionId: client.asaasSubscriptionId })
+          });
+          if (!delRes.ok) {
+            console.error("Failed to cancel subscription in Asaas");
+            toast.error("Aviso: Não foi possível cancelar a assinatura no Asaas automaticamente.");
+          } else {
+            client.paymentStatus = 'N/A';
+            client.invoiceUrl = undefined;
+          }
+        }
+
+        // Cancel pending/overdue single charges
+        try {
+          const paymentsRes = await fetch(`/api/asaas/payments?customer=${client.asaasCustomerId}`);
+          if (paymentsRes.ok) {
+            const paymentsData = await paymentsRes.json();
+            const payments = paymentsData.data || [];
+            for (const payment of payments) {
+              if (payment.status === 'PENDING' || payment.status === 'OVERDUE') {
+                await fetch('/api/asaas/delete-payment', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ paymentId: payment.id })
+                });
+              }
+            }
+          }
+        } catch (e) {
+          console.error("Error cancelling pending payments", e);
         }
       }
 
@@ -919,19 +942,41 @@ function CRM({ user }: { user: User }) {
     // Find the client to get the subscription ID
     const clientToDelete = clients.find(c => c.id === clientId);
     
-    if (clientToDelete?.asaasSubscriptionId) {
+    if (clientToDelete?.asaasCustomerId) {
+      if (clientToDelete.asaasSubscriptionId) {
+        try {
+          const delRes = await fetch('/api/asaas/delete-subscription', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subscriptionId: clientToDelete.asaasSubscriptionId })
+          });
+          if (!delRes.ok) {
+            console.error("Failed to cancel subscription in Asaas before deletion");
+            toast.error("Aviso: O cliente foi excluído, mas não foi possível cancelar a assinatura no Asaas automaticamente.");
+          }
+        } catch (e) {
+          console.error("Error calling delete-subscription API", e);
+        }
+      }
+
+      // Cancel pending/overdue single charges
       try {
-        const delRes = await fetch('/api/asaas/delete-subscription', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ subscriptionId: clientToDelete.asaasSubscriptionId })
-        });
-        if (!delRes.ok) {
-          console.error("Failed to cancel subscription in Asaas before deletion");
-          toast.error("Aviso: O cliente foi excluído, mas não foi possível cancelar a assinatura no Asaas automaticamente.");
+        const paymentsRes = await fetch(`/api/asaas/payments?customer=${clientToDelete.asaasCustomerId}`);
+        if (paymentsRes.ok) {
+          const paymentsData = await paymentsRes.json();
+          const payments = paymentsData.data || [];
+          for (const payment of payments) {
+            if (payment.status === 'PENDING' || payment.status === 'OVERDUE') {
+              await fetch('/api/asaas/delete-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ paymentId: payment.id })
+              });
+            }
+          }
         }
       } catch (e) {
-        console.error("Error calling delete-subscription API", e);
+        console.error("Error cancelling pending payments before deletion", e);
       }
     }
 
