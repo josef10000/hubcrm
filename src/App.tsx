@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, Plus, X, DollarSign, CheckCircle, Clock, 
   MapPin, Phone, Tag, Menu, Building2, FileText, Briefcase, AlignLeft,
   Search, BarChart3, Calendar, Paperclip, Copy, MessageCircle, Trash2, Snowflake, LogOut, Globe,
-  Filter, ArrowDownAZ, ArrowUpRight, RefreshCw, Download, Upload, Link as LinkIcon, AlertTriangle, TrendingDown, TrendingUp, Settings
+  Filter, ArrowDownAZ, ArrowUpRight, RefreshCw, Download, Upload, Link as LinkIcon, AlertTriangle, TrendingDown, TrendingUp, Settings, MessageSquare
 } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid } from 'recharts';
 import { auth, db, storage } from './lib/firebase';
@@ -1955,15 +1955,11 @@ function CRM({ user }: { user: User }) {
                     <div className="flex-1 w-full">
                       <div className="flex flex-wrap items-center gap-3 mb-2">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{req.clientName}</h3>
-                        <span className={`px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wider ${
-                          req.status === 'concluido' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 
-                          req.status === 'em_analise' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
-                          'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
-                        }`}>
+                        <span className="px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-primary-500/20 text-primary-600 dark:text-primary-400 border border-primary-500/30">
                           {req.status === 'concluido' ? 'Concluído' : req.status === 'em_analise' ? 'Em Análise' : 'Aberto'}
                         </span>
                         {req.category && (
-                          <span className="px-2 py-1 rounded-md text-xs font-medium bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-white/10">
+                          <span className="px-2 py-1 rounded-md text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20">
                             {req.category}
                           </span>
                         )}
@@ -2035,7 +2031,7 @@ function CRM({ user }: { user: User }) {
                               toast.error('Erro ao atualizar chamado.');
                             }
                           }}
-                          className="flex items-center justify-center space-x-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 dark:text-blue-400 border border-blue-500/30 px-4 py-2 rounded-xl transition-all font-medium"
+                          className="flex items-center justify-center space-x-2 bg-primary-500/10 hover:bg-primary-500/20 text-primary-600 dark:text-primary-400 border border-primary-500/30 px-4 py-2 rounded-xl transition-all font-medium"
                         >
                           <Clock size={18} />
                           <span>Analisar</span>
@@ -2048,7 +2044,7 @@ function CRM({ user }: { user: User }) {
                             setReplyingTo(replyingTo === req.id ? null : req.id);
                             setReplyMessage(req.reply || '');
                           }}
-                          className="flex items-center justify-center space-x-2 bg-gray-200 dark:bg-white/10 hover:bg-gray-300 dark:hover:bg-white/20 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-white/10 px-4 py-2 rounded-xl transition-all font-medium"
+                          className="flex items-center justify-center space-x-2 bg-primary-500/10 hover:bg-primary-500/20 text-primary-600 dark:text-primary-400 border border-primary-500/30 px-4 py-2 rounded-xl transition-all font-medium"
                         >
                           <MessageSquare size={18} />
                           <span>Responder</span>
@@ -2065,7 +2061,7 @@ function CRM({ user }: { user: User }) {
                               toast.error('Erro ao atualizar chamado.');
                             }
                           }}
-                          className="flex items-center justify-center space-x-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-4 py-2 rounded-xl transition-all font-medium"
+                          className="flex items-center justify-center space-x-2 bg-primary-500/10 hover:bg-primary-500/20 text-primary-600 dark:text-primary-400 border border-primary-500/30 px-4 py-2 rounded-xl transition-all font-medium"
                         >
                           <CheckCircle size={18} />
                           <span>Concluir</span>

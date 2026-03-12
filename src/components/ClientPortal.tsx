@@ -201,7 +201,7 @@ export default function ClientPortal() {
       {/* Success Modal */}
       {showSuccessModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#141414] border border-white/10 p-8 rounded-3xl max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in duration-300">
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in duration-300">
             <button 
               onClick={() => setShowSuccessModal(false)}
               className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"
@@ -390,10 +390,10 @@ export default function ClientPortal() {
                 onChange={(e) => setRequestCategory(e.target.value)}
                 className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all appearance-none"
               >
-                <option value="Suporte Técnico">Suporte Técnico</option>
-                <option value="Dúvida Financeira">Dúvida Financeira</option>
-                <option value="Solicitação de Alteração">Solicitação de Alteração</option>
-                <option value="Outros">Outros</option>
+                <option value="Suporte Técnico" className="bg-[#141414] text-white">Suporte Técnico</option>
+                <option value="Dúvida Financeira" className="bg-[#141414] text-white">Dúvida Financeira</option>
+                <option value="Solicitação de Alteração" className="bg-[#141414] text-white">Solicitação de Alteração</option>
+                <option value="Outros" className="bg-[#141414] text-white">Outros</option>
               </select>
             </div>
             
