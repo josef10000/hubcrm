@@ -3,13 +3,12 @@ import {
   LayoutDashboard, Users, Plus, X, DollarSign, CheckCircle, Clock, 
   MapPin, Phone, Tag, Menu, Building2, FileText, Briefcase, AlignLeft,
   Search, BarChart3, Calendar, Paperclip, Copy, MessageCircle, Trash2, Snowflake, LogOut, Globe,
-  Filter, ArrowDownAZ, ArrowUpRight, RefreshCw, Download, Upload, Link as LinkIcon, AlertTriangle, TrendingDown, TrendingUp, Settings, MessageSquare, FolderOpen
+  Filter, ArrowDownAZ, ArrowUpRight, RefreshCw, Download, Link as LinkIcon, AlertTriangle, TrendingDown, TrendingUp, Settings, MessageSquare
 } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid } from 'recharts';
-import { auth, db, storage } from './lib/firebase';
+import { auth, db } from './lib/firebase';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { collection, doc, setDoc, onSnapshot, deleteDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import Auth from './components/Auth';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -71,11 +70,11 @@ interface Expense {
 }
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, clientFiles, isUploadingFile, onUploadFile, onDeleteFile }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, onDelete?: (id: string) => void, initialData: Client | null, clientFiles?: any[], isUploadingFile?: boolean, onUploadFile?: (e: React.ChangeEvent<HTMLInputElement>) => void, onDeleteFile?: (id: string, url: string) => void }) {
+function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, onDelete?: (id: string) => void, initialData: Client | null }) {
   const [formData, setFormData] = useState<Partial<Client>>({ plan: 'Padrão', status: 'Em Desenvolvimento' });
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [activeTab, setActiveTab] = useState<'details' | 'history' | 'files'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'history'>('details');
   const [newLogText, setNewLogText] = useState('');
 
   const getNextPaymentDateText = () => {
@@ -203,13 +202,6 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, clientFil
                   className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:bg-white/5'}`}
                 >
                   Histórico
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => setActiveTab('files')}
-                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'files' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:bg-white/5'}`}
-                >
-                  Arquivos
                 </button>
               </div>
             )}
@@ -365,7 +357,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, clientFil
                   </div>
                 </div>
               </div>
-            ) : activeTab === 'history' ? (
+            ) : (
               <div className="flex flex-col h-full">
                 <div className="mb-6">
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2 border-b border-gray-200 dark:border-white/10 pb-2">Adicionar Anotação</h3>
@@ -423,88 +415,6 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, clientFil
                           >
                             <Trash2 size={16} />
                           </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col h-full">
-                <div className="mb-6 flex justify-between items-center border-b border-gray-200 dark:border-white/10 pb-4">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">Cofre de Arquivos</h3>
-                  <div className="relative">
-                    <input 
-                      type="file" 
-                      id="admin-file-upload" 
-                      className="hidden" 
-                      onChange={onUploadFile}
-                      disabled={isUploadingFile}
-                    />
-                    <label 
-                      htmlFor="admin-file-upload" 
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer ${
-                        isUploadingFile 
-                          ? 'bg-gray-200 dark:bg-white/5 text-gray-400 cursor-not-allowed border border-gray-300 dark:border-white/10' 
-                          : 'bg-primary-500 hover:bg-primary-600 text-white shadow-lg shadow-primary-500/20'
-                      }`}
-                    >
-                      {isUploadingFile ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          <span>Enviando...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Upload size={16} />
-                          <span>Enviar Arquivo</span>
-                        </>
-                      )}
-                    </label>
-                  </div>
-                </div>
-                
-                <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
-                  {(!clientFiles || clientFiles.length === 0) ? (
-                    <div className="text-center py-12 bg-black/20 rounded-2xl border border-white/5 border-dashed">
-                      <FolderOpen className="w-12 h-12 text-gray-500 mx-auto mb-3 opacity-50" />
-                      <p className="text-gray-400 text-sm">Nenhum arquivo neste cofre.</p>
-                      <p className="text-gray-500 text-xs mt-1">Envie contratos, imagens ou documentos.</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {clientFiles.map(file => (
-                        <div key={file.id} className="bg-black/20 border border-white/5 p-4 rounded-2xl flex items-center justify-between group hover:bg-white/5 transition-colors">
-                          <div className="flex items-center gap-3 overflow-hidden">
-                            <div className="w-10 h-10 rounded-xl bg-primary-500/20 flex items-center justify-center flex-shrink-0">
-                              <FileText className="w-5 h-5 text-primary-400" />
-                            </div>
-                            <div className="overflow-hidden">
-                              <p className="text-sm font-medium text-gray-900 dark:text-white truncate" title={file.name}>{file.name}</p>
-                              <p className="text-xs text-gray-500">
-                                {file.uploadedAt?.toDate().toLocaleDateString('pt-BR')} • {(file.size / 1024 / 1024).toFixed(2)} MB • {file.uploadedBy === 'client' ? 'Cliente' : 'Admin'}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1 flex-shrink-0">
-                            <a 
-                              href={file.url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="p-2 text-gray-400 hover:text-primary-500 hover:bg-primary-500/10 rounded-lg transition-colors"
-                              title="Baixar Arquivo"
-                            >
-                              <Download size={16} />
-                            </a>
-                            <button 
-                              type="button"
-                              onClick={() => onDeleteFile && onDeleteFile(file.id, file.url)}
-                              className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
-                              title="Excluir Arquivo"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
                         </div>
                       ))}
                     </div>
@@ -658,8 +568,6 @@ function CRM({ user }: { user: User }) {
   const [dashboardMode, setDashboardMode] = useState<'list' | 'kanban'>('list');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
-  const [clientFiles, setClientFiles] = useState<any[]>([]);
-  const [isUploadingFile, setIsUploadingFile] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<SiteStatus | 'Todos'>('Todos');
@@ -761,63 +669,6 @@ function CRM({ user }: { user: User }) {
       clearTimeout(timeoutId);
     };
   }, [user.uid]);
-
-  const handleUploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user || !editingClient?.id) return;
-
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error('O arquivo deve ter no máximo 10MB.');
-      return;
-    }
-
-    setIsUploadingFile(true);
-    try {
-      const fileRef = ref(storage, `users/${user.uid}/clients/${editingClient.id}/files/${Date.now()}_${file.name}`);
-      await uploadBytes(fileRef, file);
-      const downloadURL = await getDownloadURL(fileRef);
-
-      await setDoc(doc(collection(db, 'users', user.uid, 'clients', editingClient.id, 'files')), {
-        name: file.name,
-        url: downloadURL,
-        size: file.size,
-        type: file.type,
-        uploadedAt: new Date(),
-        uploadedBy: 'admin'
-      });
-      
-      toast.success('Arquivo enviado com sucesso!');
-    } catch (err) {
-      console.error("Error uploading file:", err);
-      toast.error('Erro ao enviar arquivo.');
-    } finally {
-      setIsUploadingFile(false);
-      e.target.value = '';
-    }
-  };
-
-  const handleDeleteFile = async (fileId: string, fileUrl: string) => {
-    if (!user || !editingClient?.id) return;
-    
-    try {
-      // Delete from Firestore
-      await deleteDoc(doc(db, 'users', user.uid, 'clients', editingClient.id, 'files', fileId));
-      
-      // Delete from Storage
-      try {
-        const fileRef = ref(storage, fileUrl);
-        await deleteObject(fileRef);
-      } catch (storageErr) {
-        console.error("Error deleting file from storage:", storageErr);
-        // We still consider it a success if it's removed from Firestore
-      }
-      
-      toast.success('Arquivo removido.');
-    } catch (err) {
-      console.error("Error deleting file:", err);
-      toast.error('Erro ao remover arquivo.');
-    }
-  };
 
   const handleSaveClient = async (clientData: Partial<Client>) => {
     try {
@@ -1191,30 +1042,6 @@ function CRM({ user }: { user: User }) {
     document.body.removeChild(link);
     toast.success('Lista de clientes exportada com sucesso!');
   };
-
-  // Fetch client files when modal opens
-  useEffect(() => {
-    if (!user || !isModalOpen || !editingClient?.id) {
-      setClientFiles([]);
-      return;
-    }
-
-    const filesRef = collection(db, 'users', user.uid, 'clients', editingClient.id, 'files');
-    const unsubscribe = onSnapshot(filesRef, (snapshot) => {
-      const loadedFiles: any[] = [];
-      snapshot.forEach((doc) => {
-        loadedFiles.push({ id: doc.id, ...doc.data() });
-      });
-      loadedFiles.sort((a, b) => {
-        const timeA = a.uploadedAt?.toMillis ? a.uploadedAt.toMillis() : 0;
-        const timeB = b.uploadedAt?.toMillis ? b.uploadedAt.toMillis() : 0;
-        return timeB - timeA;
-      });
-      setClientFiles(loadedFiles);
-    });
-
-    return () => unsubscribe();
-  }, [user, isModalOpen, editingClient?.id]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -2479,10 +2306,6 @@ function CRM({ user }: { user: User }) {
         onSave={handleSaveClient} 
         onDelete={handleDeleteClient} 
         initialData={editingClient} 
-        clientFiles={clientFiles}
-        isUploadingFile={isUploadingFile}
-        onUploadFile={handleUploadFile}
-        onDeleteFile={handleDeleteFile}
       />
       {sidebarOpen && <div className="fixed inset-0 bg-black/60 z-20 md:hidden backdrop-blur-md" onClick={() => setSidebarOpen(false)}></div>}
     </div>

@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { doc, getDoc, addDoc, collection, serverTimestamp, onSnapshot, query, where, orderBy, deleteDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { db, storage } from '../lib/firebase';
-import { Globe, CreditCard, CheckCircle, Clock, AlertCircle, ExternalLink, FileText, MessageSquare, Send, X, ChevronDown, ChevronUp, Upload, Download, Trash2, FolderOpen } from 'lucide-react';
+import { db } from '../lib/firebase';
+import { Globe, CreditCard, CheckCircle, Clock, AlertCircle, ExternalLink, FileText, MessageSquare, Send, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
 
 export default function ClientPortal() {
@@ -19,55 +18,6 @@ export default function ClientPortal() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [clientRequests, setClientRequests] = useState<any[]>([]);
   const [expandedRequest, setExpandedRequest] = useState<string | null>(null);
-  
-  // File Vault State
-  const [files, setFiles] = useState<any[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !userId || !clientId) return;
-
-    if (file.size > 10 * 1024 * 1024) { // 10MB limit
-      toast.error('O arquivo deve ter no máximo 10MB.');
-      return;
-    }
-
-    setIsUploading(true);
-    setUploadProgress(10); // Fake initial progress
-
-    try {
-      // Upload to Storage
-      const fileRef = ref(storage, `users/${userId}/clients/${clientId}/files/${Date.now()}_${file.name}`);
-      await uploadBytes(fileRef, file);
-      setUploadProgress(50);
-
-      const downloadURL = await getDownloadURL(fileRef);
-      setUploadProgress(80);
-
-      // Save metadata to Firestore
-      await addDoc(collection(db, 'users', userId, 'clients', clientId, 'files'), {
-        name: file.name,
-        url: downloadURL,
-        size: file.size,
-        type: file.type,
-        uploadedAt: serverTimestamp(),
-        uploadedBy: 'client'
-      });
-      
-      setUploadProgress(100);
-      toast.success('Arquivo enviado com sucesso!');
-    } catch (err) {
-      console.error("Error uploading file:", err);
-      toast.error('Erro ao enviar arquivo. Tente novamente.');
-    } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
-      // Reset input
-      e.target.value = '';
-    }
-  };
 
   const handleSubmitRequest = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,21 +67,6 @@ export default function ClientPortal() {
           return timeB - timeA; // Descending
         });
         setClientRequests(loadedRequests);
-      });
-
-      // Fetch Files
-      const filesRef = collection(db, 'users', userId, 'clients', clientId, 'files');
-      const unsubscribeFiles = onSnapshot(filesRef, (snapshot) => {
-        const loadedFiles: any[] = [];
-        snapshot.forEach((doc) => {
-          loadedFiles.push({ id: doc.id, ...doc.data() });
-        });
-        loadedFiles.sort((a, b) => {
-          const timeA = a.uploadedAt?.toMillis ? a.uploadedAt.toMillis() : 0;
-          const timeB = b.uploadedAt?.toMillis ? b.uploadedAt.toMillis() : 0;
-          return timeB - timeA; // Descending
-        });
-        setFiles(loadedFiles);
       });
 
       try {
@@ -207,7 +142,6 @@ export default function ClientPortal() {
       
       return () => {
         unsubscribeRequests();
-        unsubscribeFiles();
       };
     };
 
@@ -497,80 +431,6 @@ export default function ClientPortal() {
               </button>
             </div>
           </form>
-        </div>
-
-        {/* File Vault */}
-        <div className="mt-6 bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <FolderOpen className="w-5 h-5 text-primary-400" />
-              Cofre de Arquivos
-            </h2>
-            <div className="relative">
-              <input 
-                type="file" 
-                id="file-upload" 
-                className="hidden" 
-                onChange={handleFileUpload}
-                disabled={isUploading}
-              />
-              <label 
-                htmlFor="file-upload" 
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer ${
-                  isUploading 
-                    ? 'bg-white/5 text-gray-400 cursor-not-allowed border border-white/10' 
-                    : 'bg-primary-500 hover:bg-primary-600 text-white shadow-lg shadow-primary-500/20'
-                }`}
-              >
-                {isUploading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    <span>Enviando...</span>
-                  </>
-                ) : (
-                  <>
-                    <Upload size={16} />
-                    <span>Enviar Arquivo</span>
-                  </>
-                )}
-              </label>
-            </div>
-          </div>
-          
-          {files.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {files.map(file => (
-                <div key={file.id} className="bg-black/20 border border-white/5 p-4 rounded-2xl flex items-center justify-between group hover:bg-white/5 transition-colors">
-                  <div className="flex items-center gap-3 overflow-hidden">
-                    <div className="w-10 h-10 rounded-xl bg-primary-500/20 flex items-center justify-center flex-shrink-0">
-                      <FileText className="w-5 h-5 text-primary-400" />
-                    </div>
-                    <div className="overflow-hidden">
-                      <p className="text-sm font-medium text-white truncate" title={file.name}>{file.name}</p>
-                      <p className="text-xs text-gray-400">
-                        {file.uploadedAt?.toDate().toLocaleDateString('pt-BR')} • {(file.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                    </div>
-                  </div>
-                  <a 
-                    href={file.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors flex-shrink-0"
-                    title="Baixar Arquivo"
-                  >
-                    <Download size={18} />
-                  </a>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 bg-black/20 rounded-2xl border border-white/5 border-dashed">
-              <FolderOpen className="w-12 h-12 text-gray-500 mx-auto mb-3 opacity-50" />
-              <p className="text-gray-400 text-sm">Nenhum arquivo no cofre ainda.</p>
-              <p className="text-gray-500 text-xs mt-1">Envie documentos, imagens ou comprovantes.</p>
-            </div>
-          )}
         </div>
 
         {/* Support Request History */}
