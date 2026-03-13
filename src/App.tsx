@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, Plus, X, DollarSign, CheckCircle, Clock, 
   MapPin, Phone, Tag, Menu, Building2, FileText, Briefcase, AlignLeft,
   Search, BarChart3, Calendar, Paperclip, Copy, MessageCircle, Trash2, Snowflake, LogOut, Globe,
-  Filter, ArrowDownAZ, ArrowUpRight, RefreshCw, Download, Upload, Link as LinkIcon, AlertTriangle, TrendingDown, TrendingUp, Settings, MessageSquare
+  Filter, ArrowDownAZ, ArrowUpRight, RefreshCw, Download, Upload, Link as LinkIcon, AlertTriangle, TrendingDown, TrendingUp, Settings, MessageSquare, FolderOpen
 } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid } from 'recharts';
 import { auth, db, storage } from './lib/firebase';
@@ -71,11 +71,11 @@ interface Expense {
 }
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, onDelete?: (id: string) => void, initialData: Client | null }) {
+function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, clientFiles, isUploadingFile, onUploadFile, onDeleteFile }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, onDelete?: (id: string) => void, initialData: Client | null, clientFiles?: any[], isUploadingFile?: boolean, onUploadFile?: (e: React.ChangeEvent<HTMLInputElement>) => void, onDeleteFile?: (id: string, url: string) => void }) {
   const [formData, setFormData] = useState<Partial<Client>>({ plan: 'Padrão', status: 'Em Desenvolvimento' });
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [activeTab, setActiveTab] = useState<'details' | 'history'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'history' | 'files'>('details');
   const [newLogText, setNewLogText] = useState('');
 
   const getNextPaymentDateText = () => {
@@ -203,6 +203,13 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                   className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:bg-white/5'}`}
                 >
                   Histórico
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setActiveTab('files')}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'files' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:bg-white/5'}`}
+                >
+                  Arquivos
                 </button>
               </div>
             )}
@@ -358,7 +365,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                   </div>
                 </div>
               </div>
-            ) : (
+            ) : activeTab === 'history' ? (
               <div className="flex flex-col h-full">
                 <div className="mb-6">
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2 border-b border-gray-200 dark:border-white/10 pb-2">Adicionar Anotação</h3>
@@ -416,6 +423,88 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                           >
                             <Trash2 size={16} />
                           </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col h-full">
+                <div className="mb-6 flex justify-between items-center border-b border-gray-200 dark:border-white/10 pb-4">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">Cofre de Arquivos</h3>
+                  <div className="relative">
+                    <input 
+                      type="file" 
+                      id="admin-file-upload" 
+                      className="hidden" 
+                      onChange={onUploadFile}
+                      disabled={isUploadingFile}
+                    />
+                    <label 
+                      htmlFor="admin-file-upload" 
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer ${
+                        isUploadingFile 
+                          ? 'bg-gray-200 dark:bg-white/5 text-gray-400 cursor-not-allowed border border-gray-300 dark:border-white/10' 
+                          : 'bg-primary-500 hover:bg-primary-600 text-white shadow-lg shadow-primary-500/20'
+                      }`}
+                    >
+                      {isUploadingFile ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <span>Enviando...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload size={16} />
+                          <span>Enviar Arquivo</span>
+                        </>
+                      )}
+                    </label>
+                  </div>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+                  {(!clientFiles || clientFiles.length === 0) ? (
+                    <div className="text-center py-12 bg-black/20 rounded-2xl border border-white/5 border-dashed">
+                      <FolderOpen className="w-12 h-12 text-gray-500 mx-auto mb-3 opacity-50" />
+                      <p className="text-gray-400 text-sm">Nenhum arquivo neste cofre.</p>
+                      <p className="text-gray-500 text-xs mt-1">Envie contratos, imagens ou documentos.</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {clientFiles.map(file => (
+                        <div key={file.id} className="bg-black/20 border border-white/5 p-4 rounded-2xl flex items-center justify-between group hover:bg-white/5 transition-colors">
+                          <div className="flex items-center gap-3 overflow-hidden">
+                            <div className="w-10 h-10 rounded-xl bg-primary-500/20 flex items-center justify-center flex-shrink-0">
+                              <FileText className="w-5 h-5 text-primary-400" />
+                            </div>
+                            <div className="overflow-hidden">
+                              <p className="text-sm font-medium text-gray-900 dark:text-white truncate" title={file.name}>{file.name}</p>
+                              <p className="text-xs text-gray-500">
+                                {file.uploadedAt?.toDate().toLocaleDateString('pt-BR')} • {(file.size / 1024 / 1024).toFixed(2)} MB • {file.uploadedBy === 'client' ? 'Cliente' : 'Admin'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <a 
+                              href={file.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="p-2 text-gray-400 hover:text-primary-500 hover:bg-primary-500/10 rounded-lg transition-colors"
+                              title="Baixar Arquivo"
+                            >
+                              <Download size={16} />
+                            </a>
+                            <button 
+                              type="button"
+                              onClick={() => onDeleteFile && onDeleteFile(file.id, file.url)}
+                              className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                              title="Excluir Arquivo"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -569,28 +658,30 @@ function CRM({ user }: { user: User }) {
   const [dashboardMode, setDashboardMode] = useState<'list' | 'kanban'>('list');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [clientFiles, setClientFiles] = useState<any[]>([]);
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<SiteStatus | 'Todos'>('Todos');
   const [sortBy, setSortBy] = useState<'recent' | 'alphabetical' | 'value'>('recent');
 
   // Theme State
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const saved = localStorage.getItem('theme-dark');
-    return saved ? JSON.parse(saved) : true;
-  });
   const [themeColor, setThemeColor] = useState(() => {
     return localStorage.getItem('theme-color') || 'orange';
   });
+  
+  // Churn Risk Setting
+  const [churnRiskDays, setChurnRiskDays] = useState(() => {
+    return parseInt(localStorage.getItem('churnRiskDays') || '15', 10);
+  });
 
   useEffect(() => {
-    localStorage.setItem('theme-dark', JSON.stringify(isDarkMode));
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
+    document.documentElement.classList.add('dark');
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('churnRiskDays', churnRiskDays.toString());
+  }, [churnRiskDays]);
 
   useEffect(() => {
     localStorage.setItem('theme-color', themeColor);
@@ -670,6 +761,63 @@ function CRM({ user }: { user: User }) {
       clearTimeout(timeoutId);
     };
   }, [user.uid]);
+
+  const handleUploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user || !editingClient?.id) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('O arquivo deve ter no máximo 10MB.');
+      return;
+    }
+
+    setIsUploadingFile(true);
+    try {
+      const fileRef = ref(storage, `users/${user.uid}/clients/${editingClient.id}/files/${Date.now()}_${file.name}`);
+      await uploadBytes(fileRef, file);
+      const downloadURL = await getDownloadURL(fileRef);
+
+      await setDoc(doc(collection(db, 'users', user.uid, 'clients', editingClient.id, 'files')), {
+        name: file.name,
+        url: downloadURL,
+        size: file.size,
+        type: file.type,
+        uploadedAt: new Date(),
+        uploadedBy: 'admin'
+      });
+      
+      toast.success('Arquivo enviado com sucesso!');
+    } catch (err) {
+      console.error("Error uploading file:", err);
+      toast.error('Erro ao enviar arquivo.');
+    } finally {
+      setIsUploadingFile(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleDeleteFile = async (fileId: string, fileUrl: string) => {
+    if (!user || !editingClient?.id) return;
+    
+    try {
+      // Delete from Firestore
+      await deleteDoc(doc(db, 'users', user.uid, 'clients', editingClient.id, 'files', fileId));
+      
+      // Delete from Storage
+      try {
+        const fileRef = ref(storage, fileUrl);
+        await deleteObject(fileRef);
+      } catch (storageErr) {
+        console.error("Error deleting file from storage:", storageErr);
+        // We still consider it a success if it's removed from Firestore
+      }
+      
+      toast.success('Arquivo removido.');
+    } catch (err) {
+      console.error("Error deleting file:", err);
+      toast.error('Erro ao remover arquivo.');
+    }
+  };
 
   const handleSaveClient = async (clientData: Partial<Client>) => {
     try {
@@ -1044,10 +1192,45 @@ function CRM({ user }: { user: User }) {
     toast.success('Lista de clientes exportada com sucesso!');
   };
 
-  // Reset to page 1 when search term changes
+  // Fetch client files when modal opens
+  useEffect(() => {
+    if (!user || !isModalOpen || !editingClient?.id) {
+      setClientFiles([]);
+      return;
+    }
+
+    const filesRef = collection(db, 'users', user.uid, 'clients', editingClient.id, 'files');
+    const unsubscribe = onSnapshot(filesRef, (snapshot) => {
+      const loadedFiles: any[] = [];
+      snapshot.forEach((doc) => {
+        loadedFiles.push({ id: doc.id, ...doc.data() });
+      });
+      loadedFiles.sort((a, b) => {
+        const timeA = a.uploadedAt?.toMillis ? a.uploadedAt.toMillis() : 0;
+        const timeB = b.uploadedAt?.toMillis ? b.uploadedAt.toMillis() : 0;
+        return timeB - timeA;
+      });
+      setClientFiles(loadedFiles);
+    });
+
+    return () => unsubscribe();
+  }, [user, isModalOpen, editingClient?.id]);
+
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, filterStatus, sortBy]);
+
+  const isChurnRisk = (client: Client) => {
+    if (client.status === 'Cancelado') return false;
+    if (client.paymentStatus === 'OVERDUE' && client.nextDueDate) {
+      const dueDate = new Date(client.nextDueDate);
+      const today = new Date();
+      const diffTime = today.getTime() - dueDate.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays >= churnRiskDays;
+    }
+    return false;
+  };
 
   const renderDashboard = () => {
     const indexOfLastClient = currentPage * clientsPerPage;
@@ -1232,7 +1415,7 @@ function CRM({ user }: { user: User }) {
                     onClick={() => { setFilterStatus(status as any); setCurrentPage(1); }}
                     className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
                       filterStatus === status 
-                        ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' 
+                        ? 'bg-primary-500 text-white shadow-sm' 
                         : 'text-gray-500 dark:text-gray-400 hover:text-gray-200 hover:bg-gray-100 dark:bg-white/5'
                     }`}
                   >
@@ -1269,7 +1452,15 @@ function CRM({ user }: { user: User }) {
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-500 to-primary-400 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   
                   <div className="flex justify-between items-start mb-4">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate pr-4">{client.name}</h3>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate pr-4 flex items-center gap-2">
+                      {client.name}
+                      {isChurnRisk(client) && (
+                        <span title={`Fatura atrasada há mais de ${churnRiskDays} dias`} className="animate-pulse bg-red-500/20 text-red-500 border border-red-500/30 px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider flex items-center gap-1">
+                          <AlertTriangle size={10} />
+                          Risco Churn
+                        </span>
+                      )}
+                    </h3>
                     <div className="flex flex-col items-end space-y-2">
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap backdrop-blur-md ${
                         client.status === 'Ativo' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 
@@ -1416,7 +1607,15 @@ function CRM({ user }: { user: User }) {
                     <div className="flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2 pb-2">
                       {columnClients.map(client => (
                         <div key={client.id} onClick={() => { setEditingClient(client); setIsModalOpen(true); }} className="bg-gray-200 dark:bg-white/10 border border-gray-200 dark:border-white/10 p-4 rounded-xl cursor-pointer hover:bg-gray-100 dark:hover:bg-white/[0.15] transition-all group relative">
-                          <h4 className="font-bold text-gray-900 dark:text-white mb-2">{client.name}</h4>
+                          <h4 className="font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2 flex-wrap">
+                            {client.name}
+                            {isChurnRisk(client) && (
+                              <span title={`Fatura atrasada há mais de ${churnRiskDays} dias`} className="animate-pulse bg-red-500/20 text-red-500 border border-red-500/30 px-1.5 py-0.5 rounded-full text-[9px] uppercase font-bold tracking-wider flex items-center gap-1">
+                                <AlertTriangle size={8} />
+                                Risco
+                              </span>
+                            )}
+                          </h4>
                           <div className="flex items-center text-gray-500 dark:text-gray-400 text-xs mb-2">
                             <Phone size={12} className="mr-2 text-primary-400" />
                             {client.whatsapp}
@@ -1867,11 +2066,11 @@ function CRM({ user }: { user: User }) {
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Categoria</label>
                     <select value={newExpense.category || 'Ferramentas'} onChange={e => setNewExpense({...newExpense, category: e.target.value})} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all">
-                      <option value="Ferramentas">Ferramentas / Software</option>
-                      <option value="Infraestrutura">Infraestrutura / Hospedagem</option>
-                      <option value="Impostos">Impostos / Taxas</option>
-                      <option value="Marketing">Marketing / Anúncios</option>
-                      <option value="Outros">Outros</option>
+                      <option value="Ferramentas" className="bg-[#030712] text-white">Ferramentas / Software</option>
+                      <option value="Infraestrutura" className="bg-[#030712] text-white">Infraestrutura / Hospedagem</option>
+                      <option value="Impostos" className="bg-[#030712] text-white">Impostos / Taxas</option>
+                      <option value="Marketing" className="bg-[#030712] text-white">Marketing / Anúncios</option>
+                      <option value="Outros" className="bg-[#030712] text-white">Outros</option>
                     </select>
                   </div>
                   <button type="submit" className="w-full py-3 bg-primary-500 hover:bg-primary-600 text-gray-900 dark:text-white rounded-xl font-medium transition-all shadow-lg shadow-primary-500/20">
@@ -1954,28 +2153,28 @@ function CRM({ user }: { user: User }) {
                   <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                     <div className="flex-1 w-full">
                       <div className="flex flex-wrap items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{req.clientName}</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{String(req.clientName || 'Cliente Desconhecido')}</h3>
                         <span className="px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-primary-500/20 text-primary-600 dark:text-primary-400 border border-primary-500/30">
                           {req.status === 'concluido' ? 'Concluído' : req.status === 'em_analise' ? 'Em Análise' : 'Aberto'}
                         </span>
                         {req.category && (
                           <span className="px-2 py-1 rounded-md text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20">
-                            {req.category}
+                            {String(req.category)}
                           </span>
                         )}
                       </div>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                        Enviado em: {req.createdAt?.toDate ? req.createdAt.toDate().toLocaleString('pt-BR') : 'Data desconhecida'}
+                        Enviado em: {req.createdAt && typeof req.createdAt.toDate === 'function' ? req.createdAt.toDate().toLocaleString('pt-BR') : 'Data desconhecida'}
                       </p>
                       <div className="bg-white dark:bg-black/20 p-4 rounded-xl border border-gray-200 dark:border-white/5 text-gray-700 dark:text-gray-200 whitespace-pre-wrap mb-4">
-                        {req.message}
+                        {String(req.message || '')}
                       </div>
 
                       {req.reply && (
                         <div className="bg-primary-500/10 p-4 rounded-xl border border-primary-500/20 text-gray-900 dark:text-white whitespace-pre-wrap mb-4 relative">
                           <div className="absolute -top-2 left-6 w-4 h-4 bg-primary-500/10 rotate-45 border-l border-t border-primary-500/20"></div>
                           <p className="text-xs text-primary-500 dark:text-primary-400 font-bold uppercase tracking-wider mb-2">Sua Resposta</p>
-                          {req.reply}
+                          {String(req.reply)}
                         </div>
                       )}
 
@@ -2115,18 +2314,23 @@ function CRM({ user }: { user: User }) {
             </h3>
             
             <div className="space-y-8">
-              {/* Dark Mode Toggle */}
+              {/* Churn Risk Setting */}
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-gray-900 dark:text-white font-medium mb-1">Modo Escuro</h4>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Alternar entre tema claro e escuro</p>
+                  <h4 className="text-gray-900 dark:text-white font-medium mb-1">Risco de Cancelamento (Churn)</h4>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Dias de atraso na fatura para alertar risco</p>
                 </div>
-                <button 
-                  onClick={() => setIsDarkMode(!isDarkMode)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${isDarkMode ? 'bg-primary-500' : 'bg-gray-300 dark:bg-gray-600'}`}
-                >
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isDarkMode ? 'translate-x-6' : 'translate-x-1'}`} />
-                </button>
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="number" 
+                    min="1" 
+                    max="90"
+                    value={churnRiskDays}
+                    onChange={(e) => setChurnRiskDays(parseInt(e.target.value) || 15)}
+                    className="w-20 px-3 py-2 bg-white dark:bg-black/20 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none text-center"
+                  />
+                  <span className="text-sm text-gray-500 dark:text-gray-400">dias</span>
+                </div>
               </div>
 
               <div className="h-px bg-gray-200 dark:bg-white/10 w-full"></div>
@@ -2171,9 +2375,9 @@ function CRM({ user }: { user: User }) {
           <button className="md:hidden text-gray-500 hover:text-gray-900 dark:text-white shrink-0 ml-2" onClick={() => setSidebarOpen(false)}><X size={20} /></button>
         </div>
         <nav className="flex-1 px-4 py-6 space-y-2">
-          <button onClick={() => { setView('dashboard'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'dashboard' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm border border-gray-200 dark:border-white/10' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><LayoutDashboard size={20} /><span className="font-medium">Dashboard</span></button>
-          <button onClick={() => { setView('analytics'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'analytics' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm border border-gray-200 dark:border-white/10' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><BarChart3 size={20} /><span className="font-medium">Analytics</span></button>
-          <button onClick={() => { setView('support'); setSidebarOpen(false); }} className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all ${view === 'support' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm border border-gray-200 dark:border-white/10' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}>
+          <button onClick={() => { setView('dashboard'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'dashboard' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><LayoutDashboard size={20} /><span className="font-medium">Dashboard</span></button>
+          <button onClick={() => { setView('analytics'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'analytics' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><BarChart3 size={20} /><span className="font-medium">Analytics</span></button>
+          <button onClick={() => { setView('support'); setSidebarOpen(false); }} className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all ${view === 'support' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}>
             <div className="flex items-center space-x-3">
               <MessageCircle size={20} />
               <span className="font-medium">Chamados</span>
@@ -2184,8 +2388,8 @@ function CRM({ user }: { user: User }) {
               </span>
             )}
           </button>
-          <button onClick={() => { setView('finance'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'finance' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm border border-gray-200 dark:border-white/10' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><DollarSign size={20} /><span className="font-medium">Financeiro</span></button>
-          <button onClick={() => { setView('settings'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'settings' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm border border-gray-200 dark:border-white/10' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><Settings size={20} /><span className="font-medium">Configurações</span></button>
+          <button onClick={() => { setView('finance'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'finance' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><DollarSign size={20} /><span className="font-medium">Financeiro</span></button>
+          <button onClick={() => { setView('settings'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'settings' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><Settings size={20} /><span className="font-medium">Configurações</span></button>
         </nav>
         <div className="p-4 border-t border-gray-200 dark:border-white/10">
           <div className="flex items-center justify-between px-4 py-3 bg-gray-100 dark:bg-white/5 backdrop-blur-xl rounded-2xl border border-gray-200 dark:border-white/10">
@@ -2269,7 +2473,17 @@ function CRM({ user }: { user: User }) {
         )}
       </main>
 
-      <ClientModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSaveClient} onDelete={handleDeleteClient} initialData={editingClient} />
+      <ClientModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSave={handleSaveClient} 
+        onDelete={handleDeleteClient} 
+        initialData={editingClient} 
+        clientFiles={clientFiles}
+        isUploadingFile={isUploadingFile}
+        onUploadFile={handleUploadFile}
+        onDeleteFile={handleDeleteFile}
+      />
       {sidebarOpen && <div className="fixed inset-0 bg-black/60 z-20 md:hidden backdrop-blur-md" onClick={() => setSidebarOpen(false)}></div>}
     </div>
   );
