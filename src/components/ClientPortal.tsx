@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { doc, getDoc, addDoc, collection, serverTimestamp, onSnapshot, query, where, orderBy, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, addDoc, collection, serverTimestamp, onSnapshot, query, where, orderBy, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Globe, CreditCard, CheckCircle, Clock, AlertCircle, ExternalLink, FileText, MessageSquare, Send, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
@@ -377,6 +377,50 @@ export default function ClientPortal() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {/* Project Stages */}
+        {client.stages && client.stages.length > 0 && (
+          <div className="mt-6 bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
+            <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-primary-400" />
+              Progresso do Projeto
+            </h2>
+            <div className="space-y-4">
+              {client.stages.map((stage: any, index: number) => (
+                <div key={stage.id} className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${stage.completed ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-black/20 border-white/5'}`}>
+                  <div className="flex items-center gap-4">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0 ${stage.completed ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-gray-400'}`}>
+                      {stage.completed ? <CheckCircle size={20} /> : index + 1}
+                    </div>
+                    <div>
+                      <h3 className={`font-medium ${stage.completed ? 'text-emerald-400' : 'text-white'}`}>{stage.name}</h3>
+                      {stage.approvedAt && <p className="text-xs text-emerald-500/70 mt-1">Aprovado em: {new Date(stage.approvedAt).toLocaleString('pt-BR')}</p>}
+                    </div>
+                  </div>
+                  {!stage.completed && index === client.stages.findIndex((s: any) => !s.completed) && (
+                    <button
+                      onClick={async () => {
+                        if (!userId || !clientId) return;
+                        try {
+                          const newStages = [...client.stages];
+                          newStages[index].completed = true;
+                          newStages[index].approvedAt = Date.now();
+                          await updateDoc(doc(db, 'users', userId, 'clients', clientId), { stages: newStages });
+                          toast.success('Etapa aprovada com sucesso!');
+                        } catch (err) {
+                          toast.error('Erro ao aprovar etapa.');
+                        }
+                      }}
+                      className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-sm font-medium transition-colors shadow-lg shadow-primary-500/20"
+                    >
+                      Aprovar Etapa
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         )}

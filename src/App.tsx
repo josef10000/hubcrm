@@ -37,6 +37,22 @@ interface ClientAttachment {
   createdAt: number;
 }
 
+interface ClientStage {
+  id: string;
+  name: string;
+  completed: boolean;
+  approvedAt?: number | null;
+}
+
+interface ClientCredential {
+  id: string;
+  url: string;
+  username: string;
+  password?: string;
+  notes?: string;
+  createdAt: number;
+}
+
 interface Client {
   id: string; 
   name: string; 
@@ -49,6 +65,7 @@ interface Client {
   notes?: string;
   logs?: ClientLog[];
   attachments?: ClientAttachment[];
+  stages?: ClientStage[];
   cpfCnpj?: string;
   email?: string;
   asaasCustomerId?: string;
@@ -74,8 +91,23 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
   const [formData, setFormData] = useState<Partial<Client>>({ plan: 'Padrão', status: 'Em Desenvolvimento' });
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [activeTab, setActiveTab] = useState<'details' | 'history'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'history' | 'stages' | 'credentials'>('details');
   const [newLogText, setNewLogText] = useState('');
+  const [credentials, setCredentials] = useState<ClientCredential[]>([]);
+  const [newCredential, setNewCredential] = useState<Partial<ClientCredential>>({});
+  const [showNewCredential, setShowNewCredential] = useState(false);
+
+  useEffect(() => {
+    if (initialData?.id && activeTab === 'credentials' && auth.currentUser) {
+      const credsRef = collection(db, 'users', auth.currentUser.uid, 'clients', initialData.id, 'credentials');
+      const unsubscribe = onSnapshot(credsRef, (snapshot) => {
+        const loaded: ClientCredential[] = [];
+        snapshot.forEach(doc => loaded.push({ id: doc.id, ...doc.data() } as ClientCredential));
+        setCredentials(loaded.sort((a, b) => b.createdAt - a.createdAt));
+      });
+      return () => unsubscribe();
+    }
+  }, [initialData?.id, activeTab]);
 
   const getNextPaymentDateText = () => {
     if (!formData.recurringPaymentDay) return null;
@@ -202,6 +234,20 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                   className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:bg-white/5'}`}
                 >
                   Histórico
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setActiveTab('stages')}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'stages' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:bg-white/5'}`}
+                >
+                  Etapas
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setActiveTab('credentials')}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'credentials' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:bg-white/5'}`}
+                >
+                  Credenciais
                 </button>
               </div>
             )}
@@ -357,7 +403,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                   </div>
                 </div>
               </div>
-            ) : (
+            ) : activeTab === 'history' ? (
               <div className="flex flex-col h-full">
                 <div className="mb-6">
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2 border-b border-gray-200 dark:border-white/10 pb-2">Adicionar Anotação</h3>
@@ -421,7 +467,134 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                   )}
                 </div>
               </div>
-            )}
+            ) : activeTab === 'stages' ? (
+              <div className="flex flex-col h-full">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 border-b border-gray-200 dark:border-white/10 pb-2">Etapas do Projeto</h3>
+                <div className="space-y-4">
+                  {formData.stages?.map((stage, index) => (
+                    <div key={stage.id} className="flex items-center justify-between p-4 bg-black/20 border border-white/5 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${stage.completed ? 'bg-green-500/20 text-green-500' : 'bg-primary-500/20 text-primary-500'}`}>
+                          {stage.completed ? <CheckCircle size={16} /> : index + 1}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">{stage.name}</p>
+                          {stage.approvedAt && <p className="text-xs text-gray-500">Aprovado em: {new Date(stage.approvedAt).toLocaleString('pt-BR')}</p>}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newStages = [...(formData.stages || [])];
+                          newStages[index].completed = !newStages[index].completed;
+                          if (!newStages[index].completed) newStages[index].approvedAt = null;
+                          setFormData(prev => ({ ...prev, stages: newStages }));
+                        }}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${stage.completed ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20' : 'bg-gray-200 dark:bg-white/5 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-white/10'}`}
+                      >
+                        {stage.completed ? 'Concluído' : 'Marcar Concluído'}
+                      </button>
+                    </div>
+                  ))}
+                  {(!formData.stages || formData.stages.length === 0) && (
+                    <div className="text-center py-8 text-gray-500">
+                      Nenhuma etapa definida para este cliente.
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : activeTab === 'credentials' ? (
+              <div className="flex flex-col h-full">
+                <div className="flex justify-between items-center mb-4 border-b border-gray-200 dark:border-white/10 pb-2">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">Cofre de Credenciais</h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowNewCredential(true)}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors text-sm font-medium"
+                  >
+                    <Plus size={16} />
+                    Nova Credencial
+                  </button>
+                </div>
+
+                {showNewCredential && (
+                  <div className="bg-black/20 border border-white/5 p-4 rounded-xl mb-6 space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">URL / Serviço</label>
+                      <input type="text" value={newCredential.url || ''} onChange={e => setNewCredential({...newCredential, url: e.target.value})} className="w-full px-3 py-2 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary-500 outline-none" placeholder="ex: Hostinger, WordPress..." />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Usuário</label>
+                        <input type="text" value={newCredential.username || ''} onChange={e => setNewCredential({...newCredential, username: e.target.value})} className="w-full px-3 py-2 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary-500 outline-none" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Senha</label>
+                        <input type="password" value={newCredential.password || ''} onChange={e => setNewCredential({...newCredential, password: e.target.value})} className="w-full px-3 py-2 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary-500 outline-none" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Notas (Opcional)</label>
+                      <input type="text" value={newCredential.notes || ''} onChange={e => setNewCredential({...newCredential, notes: e.target.value})} className="w-full px-3 py-2 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary-500 outline-none" />
+                    </div>
+                    <div className="flex justify-end gap-2 pt-2">
+                      <button type="button" onClick={() => setShowNewCredential(false)} className="px-3 py-1.5 text-sm text-gray-400 hover:text-white">Cancelar</button>
+                      <button type="button" onClick={async () => {
+                        if (!initialData?.id || !auth.currentUser || !newCredential.url || !newCredential.username) return;
+                        try {
+                          const credRef = doc(collection(db, 'users', auth.currentUser.uid, 'clients', initialData.id, 'credentials'));
+                          await setDoc(credRef, { ...newCredential, id: credRef.id, createdAt: Date.now() });
+                          setNewCredential({});
+                          setShowNewCredential(false);
+                          toast.success('Credencial salva!');
+                        } catch (err) {
+                          toast.error('Erro ao salvar credencial.');
+                        }
+                      }} className="px-3 py-1.5 bg-primary-500 text-white rounded-lg text-sm font-medium">Salvar</button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  {credentials.map(cred => (
+                    <div key={cred.id} className="bg-black/20 border border-white/5 p-4 rounded-xl relative group">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-medium text-gray-900 dark:text-white">{cred.url}</h4>
+                        <button type="button" onClick={async () => {
+                          if (!initialData?.id || !auth.currentUser) return;
+                          await deleteDoc(doc(db, 'users', auth.currentUser.uid, 'clients', initialData.id, 'credentials', cred.id));
+                          toast.success('Credencial excluída!');
+                        }} className="text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-500 block text-xs">Usuário</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-300">{cred.username}</span>
+                            <button type="button" onClick={() => { navigator.clipboard.writeText(cred.username); toast.success('Copiado!'); }} className="text-gray-500 hover:text-primary-400"><Copy size={14} /></button>
+                          </div>
+                        </div>
+                        {cred.password && (
+                          <div>
+                            <span className="text-gray-500 block text-xs">Senha</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-300">••••••••</span>
+                              <button type="button" onClick={() => { navigator.clipboard.writeText(cred.password!); toast.success('Copiado!'); }} className="text-gray-500 hover:text-primary-400"><Copy size={14} /></button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      {cred.notes && <p className="text-xs text-gray-500 mt-3 pt-3 border-t border-white/5">{cred.notes}</p>}
+                    </div>
+                  ))}
+                  {credentials.length === 0 && !showNewCredential && (
+                    <div className="text-center py-8 text-gray-500">Nenhuma credencial salva.</div>
+                  )}
+                </div>
+              </div>
+            ) : null}
           </div>
 
           <div className="flex justify-between items-center p-6 border-t border-gray-200 dark:border-white/10 bg-gray-100 dark:bg-white/5 shrink-0">
@@ -583,6 +756,25 @@ function CRM({ user }: { user: User }) {
     return parseInt(localStorage.getItem('churnRiskDays') || '15', 10);
   });
 
+  const [defaultStages, setDefaultStages] = useState<{id: string, name: string}[]>([
+    { id: '1', name: 'Briefing' },
+    { id: '2', name: 'Design UI' },
+    { id: '3', name: 'Desenvolvimento' },
+    { id: '4', name: 'Revisão' },
+    { id: '5', name: 'Publicação' }
+  ]);
+
+  useEffect(() => {
+    if (!user) return;
+    const settingsRef = doc(db, 'users', user.uid, 'settings', 'preferences');
+    const unsubscribe = onSnapshot(settingsRef, (docSnap) => {
+      if (docSnap.exists() && docSnap.data().defaultStages) {
+        setDefaultStages(docSnap.data().defaultStages);
+      }
+    });
+    return () => unsubscribe();
+  }, [user]);
+
   useEffect(() => {
     document.documentElement.classList.add('dark');
   }, []);
@@ -691,6 +883,7 @@ function CRM({ user }: { user: User }) {
       niche: clientData.niche,
       notes: clientData.notes,
       logs: clientData.logs,
+      stages: clientData.stages || (isNew ? defaultStages.map(s => ({ ...s, completed: false, approvedAt: null })) : undefined),
       createdAt: clientData.createdAt || Date.now(),
       cpfCnpj: clientData.cpfCnpj,
       email: clientData.email,
@@ -2178,6 +2371,70 @@ function CRM({ user }: { user: User }) {
                     </button>
                   ))}
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-lg mb-8">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
+              <CheckCircle className="mr-2 text-primary-500" size={20} />
+              Etapas do Projeto
+            </h3>
+            
+            <div className="space-y-4">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Defina as etapas padrão que aparecerão para novos clientes.</p>
+              {defaultStages.map((stage, index) => (
+                <div key={stage.id} className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-primary-500/20 text-primary-500 flex items-center justify-center font-bold text-sm shrink-0">
+                    {index + 1}
+                  </div>
+                  <input
+                    type="text"
+                    value={stage.name}
+                    onChange={(e) => {
+                      const newStages = [...defaultStages];
+                      newStages[index].name = e.target.value;
+                      setDefaultStages(newStages);
+                    }}
+                    className="flex-1 px-4 py-2 bg-white dark:bg-black/20 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none"
+                  />
+                  <button
+                    onClick={() => {
+                      const newStages = defaultStages.filter(s => s.id !== stage.id);
+                      setDefaultStages(newStages);
+                    }}
+                    className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              ))}
+              <div className="flex gap-3 mt-4">
+                <button
+                  onClick={() => {
+                    const newStages = [...defaultStages, { id: crypto.randomUUID(), name: 'Nova Etapa' }];
+                    setDefaultStages(newStages);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-white/5 hover:bg-gray-300 dark:hover:bg-white/10 text-gray-900 dark:text-white rounded-xl transition-colors text-sm font-medium"
+                >
+                  <Plus size={16} />
+                  Adicionar Etapa
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!auth.currentUser) return;
+                    try {
+                      await setDoc(doc(db, 'users', auth.currentUser.uid, 'settings', 'preferences'), { defaultStages }, { merge: true });
+                      toast.success('Etapas salvas com sucesso!');
+                    } catch (error) {
+                      toast.error('Erro ao salvar etapas.');
+                    }
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-xl transition-colors text-sm font-medium shadow-lg shadow-primary-500/20"
+                >
+                  <CheckCircle size={16} />
+                  Salvar Etapas
+                </button>
               </div>
             </div>
           </div>
