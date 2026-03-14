@@ -10,6 +10,7 @@ import { auth, db } from './lib/firebase';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { collection, doc, setDoc, onSnapshot, deleteDoc } from 'firebase/firestore';
 import Auth from './components/Auth';
+import CalendarView from './components/CalendarView';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -20,16 +21,16 @@ const clientSchema = z.object({
   whatsapp: z.string().refine(val => !val || val.replace(/\D/g, '').length >= 10, "WhatsApp deve ter pelo menos 10 dígitos").optional().or(z.literal('')),
 });
 
-type PlanType = 'Padrão' | 'Profissional';
-type SiteStatus = 'Em Desenvolvimento' | 'Ativo' | 'Inadimplente' | 'Cancelado';
+export type PlanType = 'Padrão' | 'Profissional';
+export type SiteStatus = 'Em Desenvolvimento' | 'Ativo' | 'Inadimplente' | 'Cancelado';
 
-interface ClientLog {
+export interface ClientLog {
   id: string;
   text: string;
   date: number;
 }
 
-interface ClientAttachment {
+export interface ClientAttachment {
   id: string;
   name: string;
   url: string;
@@ -37,7 +38,7 @@ interface ClientAttachment {
   createdAt: number;
 }
 
-interface ClientStage {
+export interface ClientStage {
   id: string;
   name: string;
   completed: boolean;
@@ -46,7 +47,7 @@ interface ClientStage {
   description?: string;
 }
 
-interface ClientCredential {
+export interface ClientCredential {
   id: string;
   url: string;
   username: string;
@@ -55,7 +56,7 @@ interface ClientCredential {
   createdAt: number;
 }
 
-interface Client {
+export interface Client {
   id: string; 
   name: string; 
   whatsapp: string; 
@@ -78,6 +79,7 @@ interface Client {
   billingType?: 'PIX' | 'CREDIT_CARD' | 'BOLETO' | 'UNDEFINED';
   firstPaymentDate?: string;
   recurringPaymentDay?: number;
+  deliveryDate?: string;
 }
 
 interface Expense {
@@ -387,6 +389,18 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                       </span>
                       {isCheckingPayment && <span className="text-xs text-gray-500 dark:text-gray-400 animate-pulse">Verificando pagamento...</span>}
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Data Prevista de Entrega</label>
+                    <input 
+                      type="date" 
+                      name="deliveryDate" 
+                      value={formData.deliveryDate || ''} 
+                      onChange={handleChange} 
+                      className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all" 
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Data em que o site deve ser entregue ao cliente</p>
                   </div>
 
                   <div>
@@ -765,7 +779,7 @@ function CRM({ user }: { user: User }) {
       setIsSyncing(false);
     }
   };
-  const [view, setView] = useState<'dashboard' | 'analytics' | 'support' | 'finance' | 'settings'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'analytics' | 'support' | 'finance' | 'settings' | 'calendar'>('dashboard');
   const [dashboardMode, setDashboardMode] = useState<'list' | 'kanban'>('list');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
@@ -2500,6 +2514,7 @@ function CRM({ user }: { user: User }) {
               </span>
             )}
           </button>
+          <button onClick={() => { setView('calendar'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'calendar' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><Calendar size={20} /><span className="font-medium">Agenda</span></button>
           <button onClick={() => { setView('finance'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'finance' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><DollarSign size={20} /><span className="font-medium">Financeiro</span></button>
           <button onClick={() => { setView('settings'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'settings' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><Settings size={20} /><span className="font-medium">Configurações</span></button>
         </nav>
@@ -2532,6 +2547,7 @@ function CRM({ user }: { user: User }) {
               </div>
             )}
             {view === 'analytics' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Métricas</h2>}
+            {view === 'calendar' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Agenda Central</h2>}
             {view === 'support' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Chamados</h2>}
             {view === 'finance' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Controle Financeiro</h2>}
             {view === 'settings' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Configurações</h2>}
@@ -2578,6 +2594,7 @@ function CRM({ user }: { user: User }) {
           ) : (
             view === 'dashboard' ? renderDashboard() : 
             view === 'analytics' ? renderAnalytics() : 
+            view === 'calendar' ? <CalendarView clients={clients} onClientClick={(client) => { setEditingClient(client); setIsModalOpen(true); }} /> :
             view === 'finance' ? renderFinance() :
             view === 'settings' ? renderSettings() :
             renderSupport()
