@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { CheckCircle, Globe, Building2, Mail, Phone, User as UserIcon, FileText } from 'lucide-react';
+import { CheckCircle, Globe, Building2, Mail, Phone, User as UserIcon, FileText, Upload, Image as ImageIcon, X } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
 
 export default function OnboardingForm() {
@@ -35,7 +35,8 @@ export default function OnboardingForm() {
           setQuestions([
             { id: '1', text: 'Qual o nome da sua empresa?', type: 'text', required: true },
             { id: '2', text: 'Descreva brevemente o seu negócio', type: 'textarea', required: true },
-            { id: '3', text: 'Quais são as suas cores preferidas?', type: 'text', required: false }
+            { id: '3', text: 'Quais são as suas cores preferidas?', type: 'text', required: false },
+            { id: '4', text: 'Logo da Empresa (Opcional)', type: 'file', required: false }
           ]);
         }
 
@@ -285,6 +286,57 @@ export default function OnboardingForm() {
                           <option key={i} value={opt.trim()} className="bg-zinc-900">{opt.trim()}</option>
                         ))}
                       </select>
+                    )}
+
+                    {q.type === 'file' && (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-center w-full">
+                          <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-white/10 border-dashed rounded-xl cursor-pointer bg-black/20 hover:bg-black/30 transition-all">
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                              <Upload className="w-8 h-8 text-gray-500 mb-2" />
+                              <p className="text-sm text-gray-500">
+                                <span className="font-semibold">Clique para enviar</span> ou arraste
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1">PNG, JPG ou SVG (Máx. 2MB)</p>
+                            </div>
+                            <input 
+                              type="file" 
+                              className="hidden" 
+                              accept="image/*"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  if (file.size > 2 * 1024 * 1024) {
+                                    toast.error('O arquivo deve ter no máximo 2MB');
+                                    return;
+                                  }
+                                  const reader = new FileReader();
+                                  reader.onloadend = () => {
+                                    setAnswers({...answers, [q.id]: reader.result as string});
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                            />
+                          </label>
+                        </div>
+                        {answers[q.id] && (
+                          <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-white/10">
+                            <img src={answers[q.id]} alt="Preview" className="w-full h-full object-cover" />
+                            <button 
+                              type="button"
+                              onClick={() => {
+                                const newAnswers = {...answers};
+                                delete newAnswers[q.id];
+                                setAnswers(newAnswers);
+                              }}
+                              className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition-colors"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 ))}

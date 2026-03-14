@@ -86,7 +86,7 @@ export interface Client {
 export interface OnboardingQuestion {
   id: string;
   text: string;
-  type: 'text' | 'textarea' | 'select';
+  type: 'text' | 'textarea' | 'select' | 'file';
   options?: string;
   required: boolean;
 }
@@ -689,7 +689,26 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                       return (
                         <div key={questionId} className="bg-black/20 border border-white/5 p-4 rounded-xl">
                           <h4 className="font-medium text-gray-900 dark:text-white mb-2 text-sm opacity-80">{questionText}</h4>
-                          <p className="text-gray-300 whitespace-pre-wrap">{String(answer)}</p>
+                          {question?.type === 'file' && typeof answer === 'string' && answer.startsWith('data:image') ? (
+                            <div className="mt-2">
+                              <img 
+                                src={answer} 
+                                alt="Attachment" 
+                                className="max-w-full h-auto rounded-lg border border-white/10 max-h-64 object-contain"
+                                referrerPolicy="no-referrer"
+                              />
+                              <a 
+                                href={answer} 
+                                download={`attachment-${questionId}`}
+                                className="inline-flex items-center gap-2 mt-2 text-xs text-primary-500 hover:text-primary-400 font-medium"
+                              >
+                                <Download size={12} />
+                                Baixar Imagem
+                              </a>
+                            </div>
+                          ) : (
+                            <p className="text-gray-300 whitespace-pre-wrap">{String(answer)}</p>
+                          )}
                         </div>
                       );
                     })}
@@ -877,7 +896,8 @@ function CRM({ user }: { user: User }) {
   const [onboardingQuestions, setOnboardingQuestions] = useState<OnboardingQuestion[]>([
     { id: '1', text: 'Qual o nome da sua empresa?', type: 'text', required: true },
     { id: '2', text: 'Descreva brevemente o seu negócio', type: 'textarea', required: true },
-    { id: '3', text: 'Quais são as suas cores preferidas?', type: 'text', required: false }
+    { id: '3', text: 'Quais são as suas cores preferidas?', type: 'text', required: false },
+    { id: '4', text: 'Logo da Empresa (Opcional)', type: 'file', required: false }
   ]);
 
   useEffect(() => {
@@ -2593,6 +2613,7 @@ function CRM({ user }: { user: User }) {
                           <option value="text">Texto Curto</option>
                           <option value="textarea">Texto Longo</option>
                           <option value="select">Múltipla Escolha</option>
+                          <option value="file">Upload de Arquivo (Logo/Imagens)</option>
                         </select>
                         
                         <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
