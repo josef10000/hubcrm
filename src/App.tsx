@@ -937,6 +937,7 @@ function CRM({ user }: { user: User }) {
       billingType: clientData.billingType || 'UNDEFINED',
       firstPaymentDate: clientData.firstPaymentDate,
       recurringPaymentDay: clientData.recurringPaymentDay,
+      deliveryDate: clientData.deliveryDate,
     };
 
     setIsModalOpen(false); 

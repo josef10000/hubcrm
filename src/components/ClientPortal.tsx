@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { doc, getDoc, addDoc, collection, serverTimestamp, onSnapshot, query, where, orderBy, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Globe, CreditCard, CheckCircle, Clock, AlertCircle, ExternalLink, FileText, MessageSquare, Send, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Globe, CreditCard, CheckCircle, Clock, AlertCircle, ExternalLink, FileText, MessageSquare, Send, X, ChevronDown, ChevronUp, Calendar } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
 
 export default function ClientPortal() {
@@ -257,6 +257,18 @@ export default function ClientPortal() {
               {getStatusIcon(client.status)}
               <span className="font-medium">{client.status}</span>
             </div>
+
+            {client.deliveryDate && client.status !== 'Ativo' && client.status !== 'Cancelado' && (
+              <div className="mt-2 mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                <p className="text-sm text-blue-400 font-medium mb-1 flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  Data Prevista de Entrega
+                </p>
+                <p className="text-lg font-bold text-white">
+                  {new Date(client.deliveryDate + 'T12:00:00').toLocaleDateString('pt-BR')}
+                </p>
+              </div>
+            )}
 
             {client.siteLink && client.status === 'Ativo' && (
               <div className="mt-4">
