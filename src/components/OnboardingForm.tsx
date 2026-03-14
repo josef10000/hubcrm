@@ -23,6 +23,9 @@ export default function OnboardingForm() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
   useEffect(() => {
+    // Force dark mode for onboarding form
+    document.documentElement.classList.add('dark');
+    
     const fetchData = async () => {
       if (!userId) return;
       try {
@@ -110,8 +113,8 @@ export default function OnboardingForm() {
 
   if (!clientId || clientNotFound) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4 font-sans text-gray-100">
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl max-w-md w-full text-center shadow-2xl">
+      <div className="min-h-screen bg-black flex items-center justify-center p-4 font-sans text-gray-100">
+        <div className="bg-zinc-900/50 backdrop-blur-xl border border-white/10 p-8 rounded-3xl max-w-md w-full text-center shadow-2xl">
           <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <Globe className="w-10 h-10 text-red-500" />
           </div>
@@ -128,14 +131,14 @@ export default function OnboardingForm() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4 font-sans text-gray-100">
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl max-w-md w-full text-center shadow-2xl">
+      <div className="min-h-screen bg-black flex items-center justify-center p-4 font-sans text-gray-100">
+        <div className="bg-zinc-900/50 backdrop-blur-xl border border-white/10 p-8 rounded-3xl max-w-md w-full text-center shadow-2xl">
           <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle className="w-10 h-10 text-emerald-500" />
           </div>
           <h2 className="text-2xl font-bold text-white mb-4">Tudo certo!</h2>
           <p className="text-gray-400 mb-8">
-            Recebemos suas informações com sucesso. Em breve entraremos em contato para dar andamento ao seu projeto.
+            ReceBemos suas informações com sucesso. Em breve entraremos em contato para dar andamento ao seu projeto.
           </p>
         </div>
       </div>
@@ -143,12 +146,12 @@ export default function OnboardingForm() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] py-12 px-4 sm:px-6 lg:px-8 font-sans text-gray-100 relative overflow-hidden">
+    <div className="min-h-screen bg-black py-12 px-4 sm:px-6 lg:px-8 font-sans text-gray-100 relative overflow-hidden">
       <Toaster theme="dark" position="top-right" />
       
       {/* Background Glows */}
-      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-primary-500/20 rounded-full blur-[120px] pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-primary-600/20 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-primary-500/10 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-primary-600/10 rounded-full blur-[120px] pointer-events-none"></div>
 
       <div className="max-w-3xl mx-auto relative z-10">
         <div className="text-center mb-12">
@@ -163,7 +166,7 @@ export default function OnboardingForm() {
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Basic Info Section */}
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
+          <div className="bg-zinc-900/50 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
             <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
               <UserIcon className="w-5 h-5 text-primary-500" />
               Seus Dados
@@ -181,7 +184,7 @@ export default function OnboardingForm() {
                     required
                     value={basicData.name}
                     onChange={(e) => setBasicData({...basicData, name: e.target.value})}
-                    className="block w-full pl-10 bg-black/20 border border-white/10 rounded-xl py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none"
+                    className="block w-full pl-10 bg-black/40 border border-white/10 rounded-xl py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none"
                     placeholder="Sua Empresa Ltda"
                   />
                 </div>
@@ -198,7 +201,7 @@ export default function OnboardingForm() {
                     required
                     value={basicData.email}
                     onChange={(e) => setBasicData({...basicData, email: e.target.value})}
-                    className="block w-full pl-10 bg-black/20 border border-white/10 rounded-xl py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none"
+                    className="block w-full pl-10 bg-black/40 border border-white/10 rounded-xl py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none"
                     placeholder="contato@empresa.com"
                   />
                 </div>
@@ -215,7 +218,7 @@ export default function OnboardingForm() {
                     required
                     value={basicData.whatsapp}
                     onChange={(e) => setBasicData({...basicData, whatsapp: e.target.value})}
-                    className="block w-full pl-10 bg-black/20 border border-white/10 rounded-xl py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none"
+                    className="block w-full pl-10 bg-black/40 border border-white/10 rounded-xl py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none"
                     placeholder="(00) 00000-0000"
                   />
                 </div>
@@ -231,7 +234,7 @@ export default function OnboardingForm() {
                     type="text"
                     value={basicData.cpfCnpj}
                     onChange={(e) => setBasicData({...basicData, cpfCnpj: e.target.value})}
-                    className="block w-full pl-10 bg-black/20 border border-white/10 rounded-xl py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none"
+                    className="block w-full pl-10 bg-black/40 border border-white/10 rounded-xl py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none"
                     placeholder="000.000.000-00"
                   />
                 </div>
@@ -241,7 +244,7 @@ export default function OnboardingForm() {
 
           {/* Dynamic Questions Section */}
           {questions.length > 0 && (
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
+            <div className="bg-zinc-900/50 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
               <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
                 <FileText className="w-5 h-5 text-primary-500" />
                 Sobre o Projeto
@@ -260,7 +263,7 @@ export default function OnboardingForm() {
                         required={q.required}
                         value={answers[q.id] || ''}
                         onChange={(e) => setAnswers({...answers, [q.id]: e.target.value})}
-                        className="block w-full px-4 bg-black/20 border border-white/10 rounded-xl py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none"
+                        className="block w-full px-4 bg-black/40 border border-white/10 rounded-xl py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none"
                       />
                     )}
 
@@ -270,7 +273,7 @@ export default function OnboardingForm() {
                         rows={4}
                         value={answers[q.id] || ''}
                         onChange={(e) => setAnswers({...answers, [q.id]: e.target.value})}
-                        className="block w-full px-4 bg-black/20 border border-white/10 rounded-xl py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none resize-none"
+                        className="block w-full px-4 bg-black/40 border border-white/10 rounded-xl py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none resize-none"
                       />
                     )}
 
@@ -279,7 +282,7 @@ export default function OnboardingForm() {
                         required={q.required}
                         value={answers[q.id] || ''}
                         onChange={(e) => setAnswers({...answers, [q.id]: e.target.value})}
-                        className="block w-full px-4 bg-black/20 border border-white/10 rounded-xl py-3 text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none appearance-none"
+                        className="block w-full px-4 bg-black/40 border border-white/10 rounded-xl py-3 text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none appearance-none"
                       >
                         <option value="" disabled>Selecione uma opção</option>
                         {q.options?.split(',').map((opt: string, i: number) => (
@@ -291,7 +294,7 @@ export default function OnboardingForm() {
                     {q.type === 'file' && (
                       <div className="space-y-4">
                         <div className="flex items-center justify-center w-full">
-                          <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-white/10 border-dashed rounded-xl cursor-pointer bg-black/20 hover:bg-black/30 transition-all">
+                          <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-white/10 border-dashed rounded-xl cursor-pointer bg-black/40 hover:bg-black/50 transition-all">
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
                               <Upload className="w-8 h-8 text-gray-500 mb-2" />
                               <p className="text-sm text-gray-500">

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   LayoutDashboard, Users, Plus, X, DollarSign, CheckCircle, Clock, 
   MapPin, Phone, Tag, Menu, Building2, FileText, Briefcase, AlignLeft,
-  Search, BarChart3, Calendar, Paperclip, Copy, MessageCircle, Trash2, Snowflake, LogOut, Globe,
+  Search, BarChart3, Calendar, Paperclip, Copy, MessageCircle, Trash2, Snowflake, LogOut, Globe, Image as ImageIcon,
   Filter, ArrowDownAZ, ArrowUpRight, RefreshCw, Download, Link as LinkIcon, AlertTriangle, TrendingDown, TrendingUp, Settings, MessageSquare
 } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid } from 'recharts';
@@ -2514,7 +2514,7 @@ function CRM({ user }: { user: User }) {
             </div>
           </div>
 
-          <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-lg mb-8">
+          <div className="bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-lg mb-8">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
               <CheckCircle className="mr-2 text-primary-500" size={20} />
               Etapas do Projeto
@@ -2535,7 +2535,7 @@ function CRM({ user }: { user: User }) {
                       newStages[index].name = e.target.value;
                       setDefaultStages(newStages);
                     }}
-                    className="flex-1 px-4 py-2 bg-white dark:bg-black/20 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none"
+                    className="flex-1 px-4 py-2 bg-black/40 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none"
                   />
                   <button
                     onClick={() => {
@@ -2578,7 +2578,7 @@ function CRM({ user }: { user: User }) {
             </div>
           </div>
 
-          <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-lg mb-8">
+          <div className="bg-black/20 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-lg mb-8">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
               <FileText className="mr-2 text-primary-500" size={20} />
               Formulário de Onboarding
@@ -2586,7 +2586,7 @@ function CRM({ user }: { user: User }) {
             
             <div className="space-y-4">
               {onboardingQuestions.map((question, index) => (
-                <div key={question.id} className="flex flex-col gap-3 p-4 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl">
+                <div key={question.id} className="flex flex-col gap-3 p-4 bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 space-y-3">
                       <input
@@ -2608,12 +2608,12 @@ function CRM({ user }: { user: User }) {
                             newQ[index].type = e.target.value as any;
                             setOnboardingQuestions(newQ);
                           }}
-                          className="px-3 py-1.5 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-lg text-sm outline-none"
+                          className="px-3 py-1.5 bg-black/40 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-lg text-sm outline-none"
                         >
-                          <option value="text">Texto Curto</option>
-                          <option value="textarea">Texto Longo</option>
-                          <option value="select">Múltipla Escolha</option>
-                          <option value="file">Upload de Arquivo (Logo/Imagens)</option>
+                          <option value="text" className="bg-zinc-900">Texto Curto</option>
+                          <option value="textarea" className="bg-zinc-900">Texto Longo</option>
+                          <option value="select" className="bg-zinc-900">Múltipla Escolha</option>
+                          <option value="file" className="bg-zinc-900">Anexo de Arquivo (Logo/Imagens)</option>
                         </select>
                         
                         <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
@@ -2641,7 +2641,7 @@ function CRM({ user }: { user: User }) {
                             newQ[index].options = e.target.value;
                             setOnboardingQuestions(newQ);
                           }}
-                          className="w-full px-4 py-2 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-lg text-sm outline-none"
+                          className="w-full px-4 py-2 bg-black/40 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-lg text-sm outline-none"
                         />
                       )}
                     </div>
@@ -2664,10 +2664,22 @@ function CRM({ user }: { user: User }) {
                     const newQ = [...onboardingQuestions, { id: crypto.randomUUID(), text: '', type: 'text', required: false }];
                     setOnboardingQuestions(newQ as OnboardingQuestion[]);
                   }}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-white/5 hover:bg-gray-300 dark:hover:bg-white/10 text-gray-900 dark:text-white rounded-xl transition-colors text-sm font-medium"
+                  className="flex items-center gap-2 px-4 py-2 bg-black/40 hover:bg-black/60 border border-white/10 text-gray-900 dark:text-white rounded-xl transition-colors text-sm font-medium"
                 >
                   <Plus size={16} />
                   Adicionar Pergunta
+                </button>
+
+                <button
+                  onClick={() => {
+                    const newQ = [...onboardingQuestions, { id: crypto.randomUUID(), text: 'Logo da Empresa', type: 'file', required: false }];
+                    setOnboardingQuestions(newQ as OnboardingQuestion[]);
+                    toast.success('Pergunta de Logo adicionada!');
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-primary-500/20 hover:bg-primary-500/30 border border-primary-500/30 text-primary-400 rounded-xl transition-colors text-sm font-medium"
+                >
+                  <ImageIcon size={16} />
+                  Adicionar Pedido de Logo
                 </button>
                 <button
                   onClick={async () => {
