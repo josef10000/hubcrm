@@ -100,7 +100,7 @@ interface Expense {
 }
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, onDelete?: (id: string) => void, initialData: Client | null }) {
+function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardingQuestions }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, onDelete?: (id: string) => void, initialData: Client | null, onboardingQuestions: OnboardingQuestion[] }) {
   const [formData, setFormData] = useState<Partial<Client>>({ plan: 'Padrão', status: 'Em Desenvolvimento' });
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -262,15 +262,13 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                 >
                   Credenciais
                 </button>
-                {formData.onboardingAnswers && (
-                  <button 
-                    type="button"
-                    onClick={() => setActiveTab('onboarding')}
-                    className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'onboarding' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:bg-white/5'}`}
-                  >
-                    Briefing
-                  </button>
-                )}
+                <button 
+                  type="button"
+                  onClick={() => setActiveTab('onboarding')}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'onboarding' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:bg-white/5'}`}
+                >
+                  Briefing
+                </button>
               </div>
             )}
           </div>
@@ -677,24 +675,34 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                   )}
                 </div>
               </div>
-            ) : activeTab === 'onboarding' && formData.onboardingAnswers ? (
+            ) : activeTab === 'onboarding' ? (
               <div className="flex flex-col h-full">
                 <div className="mb-4 border-b border-gray-200 dark:border-white/10 pb-2">
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white">Respostas do Briefing</h3>
                   <p className="text-sm text-gray-500 mt-1">Informações preenchidas pelo cliente no formulário de onboarding.</p>
                 </div>
-                <div className="flex-1 overflow-y-auto pr-2 space-y-6 custom-scrollbar">
-                  {Object.entries(formData.onboardingAnswers).map(([questionId, answer]) => {
-                    const question = onboardingQuestions.find(q => q.id === questionId);
-                    const questionText = question ? question.text : questionId;
-                    return (
-                      <div key={questionId} className="bg-black/20 border border-white/5 p-4 rounded-xl">
-                        <h4 className="font-medium text-gray-900 dark:text-white mb-2 text-sm opacity-80">{questionText}</h4>
-                        <p className="text-gray-300 whitespace-pre-wrap">{String(answer)}</p>
-                      </div>
-                    );
-                  })}
-                </div>
+                {formData.onboardingAnswers ? (
+                  <div className="flex-1 overflow-y-auto pr-2 space-y-6 custom-scrollbar">
+                    {Object.entries(formData.onboardingAnswers).map(([questionId, answer]) => {
+                      const question = onboardingQuestions.find(q => q.id === questionId);
+                      const questionText = question ? question.text : questionId;
+                      return (
+                        <div key={questionId} className="bg-black/20 border border-white/5 p-4 rounded-xl">
+                          <h4 className="font-medium text-gray-900 dark:text-white mb-2 text-sm opacity-80">{questionText}</h4>
+                          <p className="text-gray-300 whitespace-pre-wrap">{String(answer)}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
+                    <div className="w-16 h-16 bg-gray-200 dark:bg-white/5 rounded-full flex items-center justify-center mb-4">
+                      <FileText className="text-gray-400" size={32} />
+                    </div>
+                    <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Aguardando Respostas</h4>
+                    <p className="text-gray-500 max-w-xs">O cliente ainda não preencheu o formulário de briefing enviado.</p>
+                  </div>
+                )}
               </div>
             ) : null}
           </div>
@@ -2557,34 +2565,6 @@ function CRM({ user }: { user: User }) {
             </h3>
             
             <div className="space-y-4">
-              <div className="mb-6 bg-white dark:bg-black/20 p-4 rounded-xl border border-gray-200 dark:border-white/10">
-                <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                  Personalize as perguntas do formulário público de briefing. Compartilhe este link com seus clientes:
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-500 dark:text-gray-400 truncate select-all">
-                    {window.location.origin}/onboarding/{user?.uid}
-                  </div>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(`${window.location.origin}/onboarding/${user?.uid}`);
-                      toast.success('Link copiado!');
-                    }}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors text-sm font-medium shrink-0 shadow-lg shadow-primary-500/20"
-                  >
-                    <Copy size={16} /> Copiar Link
-                  </button>
-                  <a
-                    href={`/onboarding/${user?.uid}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-2 px-4 py-2.5 bg-gray-200 dark:bg-white/10 hover:bg-gray-300 dark:hover:bg-white/20 text-gray-900 dark:text-white rounded-lg transition-colors text-sm font-medium shrink-0"
-                  >
-                    <Globe size={16} /> Abrir
-                  </a>
-                </div>
-              </div>
-              
               {onboardingQuestions.map((question, index) => (
                 <div key={question.id} className="flex flex-col gap-3 p-4 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl">
                   <div className="flex items-start justify-between gap-3">
@@ -2814,6 +2794,7 @@ function CRM({ user }: { user: User }) {
         onSave={handleSaveClient} 
         onDelete={handleDeleteClient} 
         initialData={editingClient} 
+        onboardingQuestions={onboardingQuestions}
       />
       {sidebarOpen && <div className="fixed inset-0 bg-black/60 z-20 md:hidden backdrop-blur-md" onClick={() => setSidebarOpen(false)}></div>}
     </div>

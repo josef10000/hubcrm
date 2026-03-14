@@ -8,6 +8,7 @@ import { toast, Toaster } from 'sonner';
 export default function OnboardingForm() {
   const { userId, clientId } = useParams<{ userId: string, clientId?: string }>();
   const [loading, setLoading] = useState(true);
+  const [clientNotFound, setClientNotFound] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [questions, setQuestions] = useState<any[]>([]);
@@ -52,6 +53,8 @@ export default function OnboardingForm() {
             if (data.onboardingAnswers) {
               setAnswers(data.onboardingAnswers);
             }
+          } else {
+            setClientNotFound(true);
           }
         }
       } catch (error) {
@@ -86,22 +89,8 @@ export default function OnboardingForm() {
           cpfCnpj: basicData.cpfCnpj,
           onboardingAnswers: answers
         });
-      } else {
-        const newClientId = crypto.randomUUID();
-        const newClient = {
-          id: newClientId,
-          name: basicData.name,
-          email: basicData.email,
-          whatsapp: basicData.whatsapp,
-          cpfCnpj: basicData.cpfCnpj,
-          plan: 'Padrão',
-          status: 'Em Desenvolvimento',
-          createdAt: Date.now(),
-          onboardingAnswers: answers
-        };
-        await setDoc(doc(db, 'users', userId, 'clients', newClientId), newClient);
+        setSuccess(true);
       }
-      setSuccess(true);
     } catch (error) {
       console.error("Error submitting onboarding:", error);
       toast.error('Erro ao enviar formulário. Tente novamente.');
@@ -114,6 +103,24 @@ export default function OnboardingForm() {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+      </div>
+    );
+  }
+
+  if (!clientId || clientNotFound) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4 font-sans text-gray-100">
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl max-w-md w-full text-center shadow-2xl">
+          <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Globe className="w-10 h-10 text-red-500" />
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-4">Link Inválido</h2>
+          <p className="text-gray-400 mb-8">
+            {clientNotFound 
+              ? "O link acessado não é válido ou o cliente não foi encontrado." 
+              : "Este formulário só pode ser acessado através de um link específico enviado pelo seu consultor."}
+          </p>
+        </div>
       </div>
     );
   }
