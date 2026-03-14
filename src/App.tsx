@@ -80,6 +80,15 @@ export interface Client {
   firstPaymentDate?: string;
   recurringPaymentDay?: number;
   deliveryDate?: string;
+  onboardingAnswers?: Record<string, string>;
+}
+
+export interface OnboardingQuestion {
+  id: string;
+  text: string;
+  type: 'text' | 'textarea' | 'select';
+  options?: string;
+  required: boolean;
 }
 
 interface Expense {
@@ -95,7 +104,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
   const [formData, setFormData] = useState<Partial<Client>>({ plan: 'Padrão', status: 'Em Desenvolvimento' });
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [activeTab, setActiveTab] = useState<'details' | 'history' | 'stages' | 'credentials'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'history' | 'stages' | 'credentials' | 'onboarding'>('details');
   const [newLogText, setNewLogText] = useState('');
   const [credentials, setCredentials] = useState<ClientCredential[]>([]);
   const [newCredential, setNewCredential] = useState<Partial<ClientCredential>>({});
@@ -253,6 +262,15 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                 >
                   Credenciais
                 </button>
+                {formData.onboardingAnswers && (
+                  <button 
+                    type="button"
+                    onClick={() => setActiveTab('onboarding')}
+                    className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'onboarding' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:bg-white/5'}`}
+                  >
+                    Briefing
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -412,6 +430,29 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Link do Site (Opcional)</label>
                     <input type="url" name="siteLink" value={formData.siteLink || ''} onChange={handleChange} placeholder="https://..." className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
                   </div>
+
+                  {initialData && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Link de Briefing do Cliente</label>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 rounded-xl text-sm truncate select-all">
+                          {window.location.origin}/onboarding/{auth.currentUser?.uid}/{initialData.id}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(`${window.location.origin}/onboarding/${auth.currentUser?.uid}/${initialData.id}`);
+                            toast.success('Link copiado!');
+                          }}
+                          className="p-3 bg-gray-200 dark:bg-white/10 hover:bg-gray-300 dark:hover:bg-white/20 text-gray-900 dark:text-white rounded-xl transition-colors shrink-0"
+                          title="Copiar Link"
+                        >
+                          <Copy size={18} />
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">Envie este link para o cliente preencher o briefing. As respostas atualizarão este cadastro.</p>
+                    </div>
+                  )}
 
                   <div className="flex-1 flex flex-col">
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Anotações e Credenciais</label>
@@ -636,6 +677,25 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpe
                   )}
                 </div>
               </div>
+            ) : activeTab === 'onboarding' && formData.onboardingAnswers ? (
+              <div className="flex flex-col h-full">
+                <div className="mb-4 border-b border-gray-200 dark:border-white/10 pb-2">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">Respostas do Briefing</h3>
+                  <p className="text-sm text-gray-500 mt-1">Informações preenchidas pelo cliente no formulário de onboarding.</p>
+                </div>
+                <div className="flex-1 overflow-y-auto pr-2 space-y-6 custom-scrollbar">
+                  {Object.entries(formData.onboardingAnswers).map(([questionId, answer]) => {
+                    const question = onboardingQuestions.find(q => q.id === questionId);
+                    const questionText = question ? question.text : questionId;
+                    return (
+                      <div key={questionId} className="bg-black/20 border border-white/5 p-4 rounded-xl">
+                        <h4 className="font-medium text-gray-900 dark:text-white mb-2 text-sm opacity-80">{questionText}</h4>
+                        <p className="text-gray-300 whitespace-pre-wrap">{String(answer)}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             ) : null}
           </div>
 
@@ -806,12 +866,20 @@ function CRM({ user }: { user: User }) {
     { id: '5', name: 'Publicação' }
   ]);
 
+  const [onboardingQuestions, setOnboardingQuestions] = useState<OnboardingQuestion[]>([
+    { id: '1', text: 'Qual o nome da sua empresa?', type: 'text', required: true },
+    { id: '2', text: 'Descreva brevemente o seu negócio', type: 'textarea', required: true },
+    { id: '3', text: 'Quais são as suas cores preferidas?', type: 'text', required: false }
+  ]);
+
   useEffect(() => {
     if (!user) return;
     const settingsRef = doc(db, 'users', user.uid, 'settings', 'preferences');
     const unsubscribe = onSnapshot(settingsRef, (docSnap) => {
-      if (docSnap.exists() && docSnap.data().defaultStages) {
-        setDefaultStages(docSnap.data().defaultStages);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.defaultStages) setDefaultStages(data.defaultStages);
+        if (data.onboardingQuestions) setOnboardingQuestions(data.onboardingQuestions);
       }
     });
     return () => unsubscribe();
@@ -2481,6 +2549,143 @@ function CRM({ user }: { user: User }) {
               </div>
             </div>
           </div>
+
+          <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-lg mb-8">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
+              <FileText className="mr-2 text-primary-500" size={20} />
+              Formulário de Onboarding
+            </h3>
+            
+            <div className="space-y-4">
+              <div className="mb-6 bg-white dark:bg-black/20 p-4 rounded-xl border border-gray-200 dark:border-white/10">
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+                  Personalize as perguntas do formulário público de briefing. Compartilhe este link com seus clientes:
+                </p>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-500 dark:text-gray-400 truncate select-all">
+                    {window.location.origin}/onboarding/{user?.uid}
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/onboarding/${user?.uid}`);
+                      toast.success('Link copiado!');
+                    }}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors text-sm font-medium shrink-0 shadow-lg shadow-primary-500/20"
+                  >
+                    <Copy size={16} /> Copiar Link
+                  </button>
+                  <a
+                    href={`/onboarding/${user?.uid}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2 px-4 py-2.5 bg-gray-200 dark:bg-white/10 hover:bg-gray-300 dark:hover:bg-white/20 text-gray-900 dark:text-white rounded-lg transition-colors text-sm font-medium shrink-0"
+                  >
+                    <Globe size={16} /> Abrir
+                  </a>
+                </div>
+              </div>
+              
+              {onboardingQuestions.map((question, index) => (
+                <div key={question.id} className="flex flex-col gap-3 p-4 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 space-y-3">
+                      <input
+                        type="text"
+                        value={question.text}
+                        placeholder="Pergunta"
+                        onChange={(e) => {
+                          const newQ = [...onboardingQuestions];
+                          newQ[index].text = e.target.value;
+                          setOnboardingQuestions(newQ);
+                        }}
+                        className="w-full px-4 py-2 bg-transparent border-b border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:border-primary-500 outline-none"
+                      />
+                      <div className="flex items-center gap-4">
+                        <select
+                          value={question.type}
+                          onChange={(e) => {
+                            const newQ = [...onboardingQuestions];
+                            newQ[index].type = e.target.value as any;
+                            setOnboardingQuestions(newQ);
+                          }}
+                          className="px-3 py-1.5 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-lg text-sm outline-none"
+                        >
+                          <option value="text">Texto Curto</option>
+                          <option value="textarea">Texto Longo</option>
+                          <option value="select">Múltipla Escolha</option>
+                        </select>
+                        
+                        <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={question.required}
+                            onChange={(e) => {
+                              const newQ = [...onboardingQuestions];
+                              newQ[index].required = e.target.checked;
+                              setOnboardingQuestions(newQ);
+                            }}
+                            className="rounded border-gray-300 text-primary-500 focus:ring-primary-500"
+                          />
+                          Obrigatório
+                        </label>
+                      </div>
+                      
+                      {question.type === 'select' && (
+                        <input
+                          type="text"
+                          value={question.options || ''}
+                          placeholder="Opções separadas por vírgula (ex: Azul, Verde, Vermelho)"
+                          onChange={(e) => {
+                            const newQ = [...onboardingQuestions];
+                            newQ[index].options = e.target.value;
+                            setOnboardingQuestions(newQ);
+                          }}
+                          className="w-full px-4 py-2 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-lg text-sm outline-none"
+                        />
+                      )}
+                    </div>
+                    <button
+                      onClick={() => {
+                        const newQ = onboardingQuestions.filter(q => q.id !== question.id);
+                        setOnboardingQuestions(newQ);
+                      }}
+                      className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              
+              <div className="flex gap-3 mt-4">
+                <button
+                  onClick={() => {
+                    const newQ = [...onboardingQuestions, { id: crypto.randomUUID(), text: '', type: 'text', required: false }];
+                    setOnboardingQuestions(newQ as OnboardingQuestion[]);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-white/5 hover:bg-gray-300 dark:hover:bg-white/10 text-gray-900 dark:text-white rounded-xl transition-colors text-sm font-medium"
+                >
+                  <Plus size={16} />
+                  Adicionar Pergunta
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!auth.currentUser) return;
+                    try {
+                      await setDoc(doc(db, 'users', auth.currentUser.uid, 'settings', 'preferences'), { onboardingQuestions }, { merge: true });
+                      toast.success('Formulário salvo com sucesso!');
+                    } catch (error) {
+                      toast.error('Erro ao salvar formulário.');
+                    }
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-xl transition-colors text-sm font-medium shadow-lg shadow-primary-500/20"
+                >
+                  <CheckCircle size={16} />
+                  Salvar Formulário
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -2678,6 +2883,7 @@ function Dashboard() {
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ClientPortal from './components/ClientPortal';
+import OnboardingForm from './components/OnboardingForm';
 import { Toaster } from 'sonner';
 
 export default function App() {
@@ -2687,6 +2893,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/cliente/:userId/:clientId" element={<ClientPortal />} />
+        <Route path="/onboarding/:userId" element={<OnboardingForm />} />
+        <Route path="/onboarding/:userId/:clientId" element={<OnboardingForm />} />
       </Routes>
     </BrowserRouter>
   );
