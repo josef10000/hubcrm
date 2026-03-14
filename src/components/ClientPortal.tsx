@@ -389,38 +389,58 @@ export default function ClientPortal() {
               Progresso do Projeto
             </h2>
             <div className="space-y-4">
-              {client.stages.map((stage: any, index: number) => (
-                <div key={stage.id} className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${stage.completed ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-black/20 border-white/5'}`}>
-                  <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0 ${stage.completed ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-gray-400'}`}>
-                      {stage.completed ? <CheckCircle size={20} /> : index + 1}
+              {client.stages.map((stage: any, index: number) => {
+                const isCurrent = !stage.completed && index === client.stages.findIndex((s: any) => !s.completed);
+                return (
+                  <div key={stage.id} className={`flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-2xl border transition-all gap-4 ${stage.completed ? 'bg-emerald-500/10 border-emerald-500/20' : isCurrent ? 'bg-primary-500/10 border-primary-500/30 shadow-[0_0_15px_rgba(242,125,38,0.1)]' : 'bg-black/20 border-white/5'}`}>
+                    <div className="flex items-start gap-4">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0 mt-0.5 ${stage.completed ? 'bg-emerald-500/20 text-emerald-400' : isCurrent ? 'bg-primary-500/20 text-primary-400' : 'bg-white/5 text-gray-400'}`}>
+                        {stage.completed ? <CheckCircle size={20} /> : index + 1}
+                      </div>
+                      <div>
+                        <h3 className={`font-medium text-lg ${stage.completed ? 'text-emerald-400' : isCurrent ? 'text-primary-400' : 'text-white'}`}>{stage.name}</h3>
+                        {stage.description && <p className="text-sm text-gray-400 mt-1 leading-relaxed">{stage.description}</p>}
+                        {stage.approvedAt && <p className="text-xs text-emerald-500/70 mt-2 font-medium">Aprovado em: {new Date(stage.approvedAt).toLocaleString('pt-BR')}</p>}
+                      </div>
                     </div>
-                    <div>
-                      <h3 className={`font-medium ${stage.completed ? 'text-emerald-400' : 'text-white'}`}>{stage.name}</h3>
-                      {stage.approvedAt && <p className="text-xs text-emerald-500/70 mt-1">Aprovado em: {new Date(stage.approvedAt).toLocaleString('pt-BR')}</p>}
+                    
+                    <div className="flex flex-wrap items-center gap-3 sm:ml-14 mt-2 sm:mt-0">
+                      {stage.link && (
+                        <a 
+                          href={stage.link}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-2 ${stage.completed ? 'bg-white/5 text-gray-300 hover:bg-white/10' : 'bg-white/10 text-white hover:bg-white/20'}`}
+                        >
+                          <ExternalLink size={16} />
+                          Ver Material
+                        </a>
+                      )}
+                      
+                      {isCurrent && (
+                        <button
+                          onClick={async () => {
+                            if (!userId || !clientId) return;
+                            try {
+                              const newStages = [...client.stages];
+                              newStages[index].completed = true;
+                              newStages[index].approvedAt = Date.now();
+                              await updateDoc(doc(db, 'users', userId, 'clients', clientId), { stages: newStages });
+                              toast.success('Etapa aprovada com sucesso!');
+                            } catch (err) {
+                              toast.error('Erro ao aprovar etapa.');
+                            }
+                          }}
+                          className="px-5 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-sm font-medium transition-all shadow-lg shadow-primary-500/20 hover:scale-105 active:scale-95 flex items-center gap-2"
+                        >
+                          <CheckCircle size={16} />
+                          Aprovar Etapa
+                        </button>
+                      )}
                     </div>
                   </div>
-                  {!stage.completed && index === client.stages.findIndex((s: any) => !s.completed) && (
-                    <button
-                      onClick={async () => {
-                        if (!userId || !clientId) return;
-                        try {
-                          const newStages = [...client.stages];
-                          newStages[index].completed = true;
-                          newStages[index].approvedAt = Date.now();
-                          await updateDoc(doc(db, 'users', userId, 'clients', clientId), { stages: newStages });
-                          toast.success('Etapa aprovada com sucesso!');
-                        } catch (err) {
-                          toast.error('Erro ao aprovar etapa.');
-                        }
-                      }}
-                      className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-sm font-medium transition-colors shadow-lg shadow-primary-500/20"
-                    >
-                      Aprovar Etapa
-                    </button>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
