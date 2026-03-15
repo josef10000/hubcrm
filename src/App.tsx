@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   LayoutDashboard, Users, Plus, X, DollarSign, CheckCircle, Clock, 
   MapPin, Phone, Tag, Menu, Building2, FileText, Briefcase, AlignLeft,
-  Search, BarChart3, Calendar, Paperclip, Copy, MessageCircle, Trash2, Snowflake, LogOut, Globe, Image as ImageIcon,
+  Search, BarChart3, Calendar, Paperclip, Copy, MessageCircle, Trash2, Snowflake, LogOut, Globe, Image as ImageIcon, Sparkles, Wand2,
   Filter, ArrowDownAZ, ArrowUpRight, RefreshCw, Download, Link as LinkIcon, AlertTriangle, TrendingDown, TrendingUp, Settings, MessageSquare
 } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid } from 'recharts';
@@ -109,6 +109,25 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
   const [credentials, setCredentials] = useState<ClientCredential[]>([]);
   const [newCredential, setNewCredential] = useState<Partial<ClientCredential>>({});
   const [showNewCredential, setShowNewCredential] = useState(false);
+  const [showPromptModal, setShowPromptModal] = useState(false);
+
+  const generateGPTPrompt = () => {
+    if (!formData.onboardingAnswers) return "";
+
+    let prompt = "Aja como um especialista em Copywriting e Web Design. Com base nas respostas do briefing abaixo, gere um prompt detalhado para a criação de uma Landing Page de alta conversão:\n\n";
+    
+    Object.entries(formData.onboardingAnswers).forEach(([questionId, answer]) => {
+      const question = onboardingQuestions.find(q => q.id === questionId);
+      const questionText = question ? question.text : questionId;
+      if (question?.type === 'file') {
+        prompt += `[${questionText}]: (Arquivo Anexado)\n`;
+      } else {
+        prompt += `[${questionText}]: ${answer}\n`;
+      }
+    });
+
+    return prompt;
+  };
 
   useEffect(() => {
     if (initialData?.id && activeTab === 'credentials' && auth.currentUser) {
@@ -237,35 +256,35 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                 <button 
                   type="button"
                   onClick={() => setActiveTab('details')}
-                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'details' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:bg-white/5'}`}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'details' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
                 >
                   Dados
                 </button>
                 <button 
                   type="button"
                   onClick={() => setActiveTab('history')}
-                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:bg-white/5'}`}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
                 >
                   Histórico
                 </button>
                 <button 
                   type="button"
                   onClick={() => setActiveTab('stages')}
-                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'stages' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:bg-white/5'}`}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'stages' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
                 >
                   Etapas
                 </button>
                 <button 
                   type="button"
                   onClick={() => setActiveTab('credentials')}
-                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'credentials' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:bg-white/5'}`}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'credentials' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
                 >
                   Credenciais
                 </button>
                 <button 
                   type="button"
                   onClick={() => setActiveTab('onboarding')}
-                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'onboarding' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:bg-white/5'}`}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'onboarding' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
                 >
                   Briefing
                 </button>
@@ -346,21 +365,21 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                       <button 
                         type="button" 
                         onClick={() => setFormData(prev => ({ ...prev, billingType: 'UNDEFINED' }))}
-                        className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'UNDEFINED' || !formData.billingType ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5'}`}
+                        className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'UNDEFINED' || !formData.billingType ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
                       >
                         <div className="font-semibold text-sm">Cliente Escolhe</div>
                       </button>
                       <button 
                         type="button" 
                         onClick={() => setFormData(prev => ({ ...prev, billingType: 'PIX' }))}
-                        className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'PIX' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5'}`}
+                        className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'PIX' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
                       >
                         <div className="font-semibold text-sm">Apenas PIX</div>
                       </button>
                       <button 
                         type="button" 
                         onClick={() => setFormData(prev => ({ ...prev, billingType: 'CREDIT_CARD' }))}
-                        className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'CREDIT_CARD' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5'}`}
+                        className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'CREDIT_CARD' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
                       >
                         <div className="font-semibold text-sm">Apenas Cartão</div>
                       </button>
@@ -373,7 +392,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                       <button 
                         type="button" 
                         onClick={() => setFormData(prev => ({ ...prev, plan: 'Padrão' }))}
-                        className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Padrão' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5'}`}
+                        className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Padrão' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
                       >
                         <div className="font-semibold mb-1">Padrão</div>
                         <div className="text-sm opacity-80">R$ 80/mês</div>
@@ -381,7 +400,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                       <button 
                         type="button" 
                         onClick={() => setFormData(prev => ({ ...prev, plan: 'Profissional' }))}
-                        className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Profissional' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5'}`}
+                        className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Profissional' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
                       >
                         <div className="font-semibold mb-1">Profissional</div>
                         <div className="text-sm opacity-80">R$ 120/mês</div>
@@ -677,9 +696,21 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
               </div>
             ) : activeTab === 'onboarding' ? (
               <div className="flex flex-col h-full">
-                <div className="mb-4 border-b border-gray-200 dark:border-white/10 pb-2">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">Respostas do Briefing</h3>
-                  <p className="text-sm text-gray-500 mt-1">Informações preenchidas pelo cliente no formulário de onboarding.</p>
+                <div className="mb-4 border-b border-gray-200 dark:border-white/10 pb-2 flex justify-between items-end">
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">Respostas do Briefing</h3>
+                    <p className="text-sm text-gray-500 mt-1">Informações preenchidas pelo cliente no formulário de onboarding.</p>
+                  </div>
+                  {formData.onboardingAnswers && (
+                    <button
+                      type="button"
+                      onClick={() => setShowPromptModal(true)}
+                      className="flex items-center gap-2 px-3 py-1.5 bg-primary-500/10 hover:bg-primary-500/20 text-primary-500 rounded-lg text-xs font-bold transition-all border border-primary-500/20"
+                    >
+                      <Sparkles size={14} />
+                      Gerar Prompt GPT
+                    </button>
+                  )}
                 </div>
                 {formData.onboardingAnswers ? (
                   <div className="flex-1 overflow-y-auto pr-2 space-y-6 custom-scrollbar">
@@ -758,7 +789,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
               <button 
                 type="button" 
                 onClick={() => setShowCancelConfirm(false)} 
-                className="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:bg-white/5 transition-all"
+                className="px-4 py-2 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 transition-all"
               >
                 Voltar
               </button>
@@ -768,6 +799,52 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                 className="px-4 py-2 rounded-xl text-sm font-medium bg-red-500 hover:bg-red-600 text-gray-900 dark:text-white shadow-lg shadow-red-500/20 transition-all"
               >
                 Sim, Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showPromptModal && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="bg-[#1a1c23] border border-white/10 rounded-3xl p-8 max-w-2xl w-full shadow-2xl flex flex-col max-h-[90vh]">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary-500/20 rounded-xl">
+                  <Wand2 className="text-primary-500" size={24} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">Prompt para GPT</h3>
+                  <p className="text-sm text-gray-400">Copie este texto e cole no seu GPT personalizado.</p>
+                </div>
+              </div>
+              <button onClick={() => setShowPromptModal(false)} className="p-2 hover:bg-white/5 rounded-xl transition-colors text-gray-400">
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto bg-black/40 border border-white/5 rounded-2xl p-6 custom-scrollbar mb-6">
+              <pre className="text-gray-300 text-sm whitespace-pre-wrap font-sans leading-relaxed">
+                {generateGPTPrompt()}
+              </pre>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setShowPromptModal(false)}
+                className="px-6 py-3 rounded-2xl text-sm font-medium text-gray-400 hover:bg-white/5 transition-all"
+              >
+                Fechar
+              </button>
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText(generateGPTPrompt());
+                  toast.success("Prompt copiado com sucesso!");
+                }}
+                className="flex items-center gap-2 px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-2xl text-sm font-bold shadow-lg shadow-primary-500/20 transition-all hover:scale-105 active:scale-95"
+              >
+                <Copy size={18} />
+                Copiar Prompt
               </button>
             </div>
           </div>
@@ -1575,7 +1652,7 @@ function CRM({ user }: { user: User }) {
                     className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
                       filterStatus === status 
                         ? 'bg-primary-500 text-white shadow-sm' 
-                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-200 hover:bg-gray-100 dark:bg-white/5'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'
                     }`}
                   >
                     {status} <span className="ml-1 opacity-60 text-xs">({count})</span>
@@ -1588,26 +1665,26 @@ function CRM({ user }: { user: User }) {
               <button 
                 onClick={syncPayments} 
                 disabled={isSyncing}
-                className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${isSyncing ? 'text-primary-400 bg-gray-100 dark:bg-white/5' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5 hover:text-gray-900 dark:text-white'}`}
+                className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${isSyncing ? 'text-primary-400 bg-gray-100 dark:bg-white/5' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:text-white'}`}
                 title="Sincronizar pagamentos com Asaas"
               >
                 <RefreshCw size={16} className={`mr-2 ${isSyncing ? 'animate-spin' : ''}`}/> 
                 <span className="hidden sm:inline">Sincronizar</span>
               </button>
               <div className="w-px h-6 bg-gray-200 dark:bg-white/10 mx-1"></div>
-              <button onClick={() => setDashboardMode('list')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${dashboardMode === 'list' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5'}`}><AlignLeft size={16} className="mr-2"/> Lista</button>
-              <button onClick={() => setDashboardMode('kanban')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${dashboardMode === 'kanban' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5'}`}><LayoutDashboard size={16} className="mr-2"/> Kanban</button>
+              <button onClick={() => setDashboardMode('list')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${dashboardMode === 'list' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}><AlignLeft size={16} className="mr-2"/> Lista</button>
+              <button onClick={() => setDashboardMode('kanban')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${dashboardMode === 'kanban' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}><LayoutDashboard size={16} className="mr-2"/> Kanban</button>
               <div className="w-px h-6 bg-gray-200 dark:bg-white/10 mx-1"></div>
-              <button onClick={() => setSortBy('recent')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${sortBy === 'recent' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5'}`}><Clock size={16} className="mr-2"/> Recentes</button>
-              <button onClick={() => setSortBy('alphabetical')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${sortBy === 'alphabetical' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5'}`}><ArrowDownAZ size={16} className="mr-2"/> A-Z</button>
-              <button onClick={() => setSortBy('value')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${sortBy === 'value' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5'}`}><DollarSign size={16} className="mr-2"/> Valor</button>
+              <button onClick={() => setSortBy('recent')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${sortBy === 'recent' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}><Clock size={16} className="mr-2"/> Recentes</button>
+              <button onClick={() => setSortBy('alphabetical')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${sortBy === 'alphabetical' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}><ArrowDownAZ size={16} className="mr-2"/> A-Z</button>
+              <button onClick={() => setSortBy('value')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${sortBy === 'value' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}><DollarSign size={16} className="mr-2"/> Valor</button>
             </div>
           </div>
 
           {dashboardMode === 'list' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {currentClients.map(client => (
-                <div key={client.id} onClick={() => { setEditingClient(client); setIsModalOpen(true); }} className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl cursor-pointer hover:bg-gray-100 dark:hover:bg-white/[0.15] transition-all group relative overflow-hidden shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] hover:shadow-[0_8px_32px_0_rgba(249,115,22,0.15)] hover:-translate-y-1 flex flex-col h-full">
+                <div key={client.id} onClick={() => { setEditingClient(client); setIsModalOpen(true); }} className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl cursor-pointer hover:bg-gray-100 dark:hover:bg-primary-500/20 transition-all group relative overflow-hidden shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] hover:shadow-[0_8px_32px_0_rgba(249,115,22,0.15)] hover:-translate-y-1 flex flex-col h-full">
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-500 to-primary-400 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   
                   <div className="flex justify-between items-start mb-4">
@@ -1765,7 +1842,7 @@ function CRM({ user }: { user: User }) {
                     </div>
                     <div className="flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2 pb-2">
                       {columnClients.map(client => (
-                        <div key={client.id} onClick={() => { setEditingClient(client); setIsModalOpen(true); }} className="bg-gray-200 dark:bg-white/10 border border-gray-200 dark:border-white/10 p-4 rounded-xl cursor-pointer hover:bg-gray-100 dark:hover:bg-white/[0.15] transition-all group relative">
+                        <div key={client.id} onClick={() => { setEditingClient(client); setIsModalOpen(true); }} className="bg-gray-200 dark:bg-white/10 border border-gray-200 dark:border-white/10 p-4 rounded-xl cursor-pointer hover:bg-gray-100 dark:hover:bg-primary-500/20 transition-all group relative">
                           <h4 className="font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2 flex-wrap">
                             {client.name}
                             {isChurnRisk(client) && (
@@ -2260,7 +2337,7 @@ function CRM({ user }: { user: User }) {
                         </tr>
                       ) : (
                         expenses.map(expense => (
-                          <tr key={expense.id} className="border-b border-white/5 hover:bg-gray-100 dark:bg-white/5 transition-colors group">
+                          <tr key={expense.id} className="border-b border-white/5 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 transition-colors group">
                             <td className="py-4 text-gray-600 dark:text-gray-300 text-sm">{new Date(expense.date).toLocaleDateString('pt-BR')}</td>
                             <td className="py-4 text-gray-900 dark:text-white font-medium">{expense.description}</td>
                             <td className="py-4 text-gray-500 dark:text-gray-400 text-sm">
@@ -2720,9 +2797,9 @@ function CRM({ user }: { user: User }) {
           <button className="md:hidden text-gray-500 hover:text-gray-900 dark:text-white shrink-0 ml-2" onClick={() => setSidebarOpen(false)}><X size={20} /></button>
         </div>
         <nav className="flex-1 px-4 py-6 space-y-2">
-          <button onClick={() => { setView('dashboard'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'dashboard' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><LayoutDashboard size={20} /><span className="font-medium">Dashboard</span></button>
-          <button onClick={() => { setView('analytics'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'analytics' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><BarChart3 size={20} /><span className="font-medium">Analytics</span></button>
-          <button onClick={() => { setView('support'); setSidebarOpen(false); }} className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all ${view === 'support' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}>
+          <button onClick={() => { setView('dashboard'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'dashboard' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><LayoutDashboard size={20} /><span className="font-medium">Dashboard</span></button>
+          <button onClick={() => { setView('analytics'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'analytics' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><BarChart3 size={20} /><span className="font-medium">Analytics</span></button>
+          <button onClick={() => { setView('support'); setSidebarOpen(false); }} className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all ${view === 'support' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}>
             <div className="flex items-center space-x-3">
               <MessageCircle size={20} />
               <span className="font-medium">Chamados</span>
@@ -2733,9 +2810,9 @@ function CRM({ user }: { user: User }) {
               </span>
             )}
           </button>
-          <button onClick={() => { setView('calendar'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'calendar' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><Calendar size={20} /><span className="font-medium">Agenda</span></button>
-          <button onClick={() => { setView('finance'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'finance' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><DollarSign size={20} /><span className="font-medium">Financeiro</span></button>
-          <button onClick={() => { setView('settings'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'settings' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><Settings size={20} /><span className="font-medium">Configurações</span></button>
+          <button onClick={() => { setView('calendar'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'calendar' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><Calendar size={20} /><span className="font-medium">Agenda</span></button>
+          <button onClick={() => { setView('finance'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'finance' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><DollarSign size={20} /><span className="font-medium">Financeiro</span></button>
+          <button onClick={() => { setView('settings'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'settings' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><Settings size={20} /><span className="font-medium">Configurações</span></button>
         </nav>
         <div className="p-4 border-t border-gray-200 dark:border-white/10">
           <div className="flex items-center justify-between px-4 py-3 bg-gray-100 dark:bg-white/5 backdrop-blur-xl rounded-2xl border border-gray-200 dark:border-white/10">

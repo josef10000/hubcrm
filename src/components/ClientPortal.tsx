@@ -422,7 +422,7 @@ export default function ClientPortal() {
                           href={stage.link}
                           target="_blank"
                           rel="noreferrer"
-                          className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-2 ${stage.completed ? 'bg-white/5 text-gray-300 hover:bg-white/10' : 'bg-white/10 text-white hover:bg-white/20'}`}
+                          className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-2 ${stage.completed ? 'bg-white/5 text-gray-300 hover:bg-primary-500/20' : 'bg-white/10 text-white hover:bg-primary-500/30'}`}
                         >
                           <ExternalLink size={16} />
                           Ver Material

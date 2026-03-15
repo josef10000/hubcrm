@@ -127,7 +127,7 @@ export default function CalendarView({ clients, onClientClick }: CalendarViewPro
               className={`flex-1 sm:flex-none flex items-center justify-center space-x-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
                 mode === 'finance' 
                   ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/10'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-primary-500/20'
               }`}
             >
               <DollarSign size={18} />
@@ -138,7 +138,7 @@ export default function CalendarView({ clients, onClientClick }: CalendarViewPro
               className={`flex-1 sm:flex-none flex items-center justify-center space-x-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
                 mode === 'production' 
                   ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30' 
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/10'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-primary-500/20'
               }`}
             >
               <Package size={18} />
@@ -150,19 +150,19 @@ export default function CalendarView({ clients, onClientClick }: CalendarViewPro
           <div className="flex items-center space-x-2 bg-gray-100 dark:bg-white/5 p-1.5 rounded-xl">
             <button 
               onClick={prevMonth}
-              className="p-2 rounded-lg hover:bg-white dark:hover:bg-[#1a1a1a] text-gray-600 dark:text-gray-300 shadow-sm transition-all"
+              className="p-2 rounded-lg hover:bg-white dark:hover:bg-primary-500/20 text-gray-600 dark:text-gray-300 shadow-sm transition-all"
             >
               <ChevronLeft size={20} />
             </button>
             <button 
               onClick={() => setCurrentDate(new Date())}
-              className="px-4 py-2 text-sm font-bold rounded-lg hover:bg-white dark:hover:bg-[#1a1a1a] text-gray-700 dark:text-gray-200 shadow-sm transition-all"
+              className="px-4 py-2 text-sm font-bold rounded-lg hover:bg-white dark:hover:bg-primary-500/20 text-gray-700 dark:text-gray-200 shadow-sm transition-all"
             >
               Hoje
             </button>
             <button 
               onClick={nextMonth}
-              className="p-2 rounded-lg hover:bg-white dark:hover:bg-[#1a1a1a] text-gray-600 dark:text-gray-300 shadow-sm transition-all"
+              className="p-2 rounded-lg hover:bg-white dark:hover:bg-primary-500/20 text-gray-600 dark:text-gray-300 shadow-sm transition-all"
             >
               <ChevronRight size={20} />
             </button>
