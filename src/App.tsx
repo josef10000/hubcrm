@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   LayoutDashboard, Users, Plus, X, DollarSign, CheckCircle, Clock, 
   MapPin, Phone, Tag, Menu, Building2, FileText, Briefcase, AlignLeft,
-  Search, BarChart3, Calendar, Paperclip, Copy, MessageCircle, Trash2, Snowflake, LogOut, Globe, Image as ImageIcon, Sparkles, Wand2,
+  Search, BarChart3, Calendar, Paperclip, Copy, MessageCircle, Trash2, Snowflake, LogOut, Globe, Image as ImageIcon, Sparkles, Wand2, Star,
   Filter, ArrowDownAZ, ArrowUpRight, RefreshCw, Download, Link as LinkIcon, AlertTriangle, TrendingDown, TrendingUp, Settings, MessageSquare
 } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid } from 'recharts';
@@ -475,6 +475,37 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Anotações e Credenciais</label>
                     <textarea name="notes" value={formData.notes || ''} onChange={handleChange} className="w-full flex-1 min-h-[150px] px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500 custom-scrollbar resize-none" placeholder="Anotações importantes, links de referência, acessos..."></textarea>
                   </div>
+
+                  {formData.npsScore !== undefined && (
+                    <div className="mt-6 p-4 bg-primary-500/10 border border-primary-500/20 rounded-xl">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Star className="text-primary-500" size={18} />
+                        <h4 className="font-bold text-gray-900 dark:text-white text-sm">Avaliação NPS</h4>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold ${
+                          formData.npsScore >= 9 ? 'bg-emerald-500/20 text-emerald-500' :
+                          formData.npsScore >= 7 ? 'bg-yellow-500/20 text-yellow-500' :
+                          'bg-red-500/20 text-red-500'
+                        }`}>
+                          {formData.npsScore}
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-900 dark:text-white font-medium">
+                            {formData.npsScore >= 9 ? 'Promotor' : formData.npsScore >= 7 ? 'Passivo' : 'Detrator'}
+                          </p>
+                          {formData.npsComment && (
+                            <p className="text-xs text-gray-500 italic mt-1 leading-relaxed">"{formData.npsComment}"</p>
+                          )}
+                          {formData.npsSubmittedAt && (
+                            <p className="text-[10px] text-gray-400 mt-1">
+                              Recebido em: {new Date(formData.npsSubmittedAt.toMillis ? formData.npsSubmittedAt.toMillis() : formData.npsSubmittedAt).toLocaleDateString('pt-BR')}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : activeTab === 'history' ? (

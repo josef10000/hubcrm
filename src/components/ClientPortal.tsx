@@ -18,6 +18,31 @@ export default function ClientPortal() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [clientRequests, setClientRequests] = useState<any[]>([]);
   const [expandedRequest, setExpandedRequest] = useState<string | null>(null);
+  
+  const [npsScore, setNpsScore] = useState<number | null>(null);
+  const [npsComment, setNpsComment] = useState('');
+  const [isSubmittingNPS, setIsSubmittingNPS] = useState(false);
+  const [npsSubmitted, setNpsSubmitted] = useState(false);
+
+  const handleNPSSubmit = async () => {
+    if (npsScore === null || !userId || !clientId) return;
+    
+    setIsSubmittingNPS(true);
+    try {
+      await updateDoc(doc(db, 'users', userId, 'clients', clientId), {
+        npsScore,
+        npsComment,
+        npsSubmittedAt: serverTimestamp()
+      });
+      setNpsSubmitted(true);
+      toast.success('Obrigado pelo seu feedback! Isso nos ajuda a crescer.');
+    } catch (err) {
+      console.error("Error submitting NPS:", err);
+      toast.error('Erro ao enviar feedback.');
+    } finally {
+      setIsSubmittingNPS(false);
+    }
+  };
 
   const handleSubmitRequest = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,109 +70,103 @@ export default function ClientPortal() {
   };
 
   useEffect(() => {
-    const fetchClientData = async () => {
-      if (!userId || !clientId) {
-        setError("Link inválido.");
-        setLoading(false);
-        return;
-      }
+    if (!userId || !clientId) {
+      setError("Link inválido.");
+      setLoading(false);
+      return;
+    }
 
-      // Fetch Support Requests History
-      const requestsRef = collection(db, 'users', userId, 'supportRequests');
-      const q = query(requestsRef, where('clientId', '==', clientId));
-      
-      const unsubscribeRequests = onSnapshot(q, (snapshot) => {
-        const loadedRequests: any[] = [];
-        snapshot.forEach((doc) => {
-          loadedRequests.push({ id: doc.id, ...doc.data() });
-        });
-        loadedRequests.sort((a, b) => {
-          const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
-          const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
-          return timeB - timeA; // Descending
-        });
-        setClientRequests(loadedRequests);
+    // Fetch Support Requests History
+    const requestsRef = collection(db, 'users', userId, 'supportRequests');
+    const q = query(requestsRef, where('clientId', '==', clientId));
+    
+    const unsubscribeRequests = onSnapshot(q, (snapshot) => {
+      const loadedRequests: any[] = [];
+      snapshot.forEach((doc) => {
+        loadedRequests.push({ id: doc.id, ...doc.data() });
       });
+      loadedRequests.sort((a, b) => {
+        const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+        const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+        return timeB - timeA; // Descending
+      });
+      setClientRequests(loadedRequests);
+    });
 
-      try {
-        const docRef = doc(db, 'users', userId, 'clients', clientId);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          const clientData = docSnap.data();
-          
-          if (clientData.asaasCustomerId) {
-            try {
-              const paymentsRes = await fetch(`/api/asaas/payments?customer=${clientData.asaasCustomerId}`);
-              
-              let subscription = null;
-              if (clientData.asaasSubscriptionId) {
-                const subRes = await fetch(`/api/asaas/subscriptions/${clientData.asaasSubscriptionId}`);
-                if (subRes.ok) {
-                  const subData = await subRes.json();
-                  subscription = subData.subscription;
-                }
+    // Fetch Client Data
+    const docRef = doc(db, 'users', userId, 'clients', clientId);
+    const unsubscribeClient = onSnapshot(docRef, async (docSnap) => {
+      if (docSnap.exists()) {
+        const clientData = docSnap.data();
+        
+        if (clientData.asaasCustomerId) {
+          try {
+            const paymentsRes = await fetch(`/api/asaas/payments?customer=${clientData.asaasCustomerId}`);
+            
+            let subscription = null;
+            if (clientData.asaasSubscriptionId) {
+              const subRes = await fetch(`/api/asaas/subscriptions/${clientData.asaasSubscriptionId}`);
+              if (subRes.ok) {
+                const subData = await subRes.json();
+                subscription = subData.subscription;
               }
-
-              if (paymentsRes.ok) {
-                const paymentsData = await paymentsRes.json();
-                const payments = paymentsData.data || [];
-                
-                setPaymentsHistory(payments);
-
-                if (payments.length > 0) {
-                  // Sort payments by due date ascending to get the earliest one
-                  const sortedPayments = [...payments].sort((a: any, b: any) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
-                  
-                  let targetPayment = sortedPayments.find((p: any) => p.status === 'OVERDUE');
-                  if (!targetPayment) {
-                    targetPayment = sortedPayments.find((p: any) => p.status === 'PENDING');
-                  }
-                  if (!targetPayment) {
-                    // If no overdue or pending, get the most recent payment (descending)
-                    targetPayment = [...payments].sort((a: any, b: any) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime())[0];
-                  }
-                  
-                  const status = targetPayment.status;
-                  
-                  let newPaymentStatus = 'PENDING';
-                  if (status === 'RECEIVED' || status === 'CONFIRMED') {
-                    newPaymentStatus = 'RECEIVED';
-                  } else if (status === 'OVERDUE') {
-                    newPaymentStatus = 'OVERDUE';
-                  }
-                  
-                  clientData.paymentStatus = newPaymentStatus;
-                  clientData.invoiceUrl = targetPayment.invoiceUrl || clientData.invoiceUrl;
-                  
-                  clientData.currentDueDate = (status === 'PENDING' || status === 'OVERDUE') ? targetPayment.dueDate : null;
-                  clientData.nextDueDate = subscription?.nextDueDate || clientData.nextDueDate;
-                }
-              }
-            } catch (e) {
-              console.error("Error fetching real-time Asaas data:", e);
             }
+
+            if (paymentsRes.ok) {
+              const paymentsData = await paymentsRes.json();
+              const payments = paymentsData.data || [];
+              
+              setPaymentsHistory(payments);
+
+              if (payments.length > 0) {
+                // Sort payments by due date ascending to get the earliest one
+                const sortedPayments = [...payments].sort((a: any, b: any) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+                
+                let targetPayment = sortedPayments.find((p: any) => p.status === 'OVERDUE');
+                if (!targetPayment) {
+                  targetPayment = sortedPayments.find((p: any) => p.status === 'PENDING');
+                }
+                if (!targetPayment) {
+                  // If no overdue or pending, get the most recent payment (descending)
+                  targetPayment = [...payments].sort((a: any, b: any) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime())[0];
+                }
+                
+                const status = targetPayment.status;
+                
+                let newPaymentStatus = 'PENDING';
+                if (status === 'RECEIVED' || status === 'CONFIRMED') {
+                  newPaymentStatus = 'RECEIVED';
+                } else if (status === 'OVERDUE') {
+                  newPaymentStatus = 'OVERDUE';
+                }
+                
+                clientData.paymentStatus = newPaymentStatus;
+                clientData.invoiceUrl = targetPayment.invoiceUrl || clientData.invoiceUrl;
+                
+                clientData.currentDueDate = (status === 'PENDING' || status === 'OVERDUE') ? targetPayment.dueDate : null;
+                clientData.nextDueDate = subscription?.nextDueDate || clientData.nextDueDate;
+              }
+            }
+          } catch (e) {
+            console.error("Error fetching real-time Asaas data:", e);
           }
-          
-          setClient(clientData);
-        } else {
-          setError("Cliente não encontrado.");
         }
-      } catch (err: any) {
-        console.error("Error fetching client:", err);
-        setError("Não foi possível carregar os dados. Verifique se o link está correto.");
-      } finally {
+        
+        setClient(clientData);
+        setLoading(false);
+      } else {
+        setError("Cliente não encontrado.");
         setLoading(false);
       }
-      
-      return () => {
-        unsubscribeRequests();
-      };
-    };
+    }, (err) => {
+      console.error("Error fetching client:", err);
+      setError("Não foi possível carregar os dados.");
+      setLoading(false);
+    });
 
-    const cleanup = fetchClientData();
     return () => {
-      cleanup.then(unsub => unsub && unsub());
+      unsubscribeRequests();
+      unsubscribeClient();
     };
   }, [userId, clientId]);
 
@@ -393,8 +412,8 @@ export default function ClientPortal() {
           </div>
         )}
 
-        {/* Project Stages */}
-        {client.stages && client.stages.length > 0 && (
+        {/* Project Stages - Only show if not all are completed */}
+        {client.stages && client.stages.length > 0 && !client.stages.every((s: any) => s.completed) && (
           <div className="mt-6 bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
             <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-primary-400" />
@@ -454,6 +473,71 @@ export default function ClientPortal() {
                 );
               })}
             </div>
+          </div>
+        )}
+
+        {/* NPS Survey - Automatic when project is finished */}
+        {client.stages && client.stages.length > 0 && client.stages.every((s: any) => s.completed) && !client.npsScore && !npsSubmitted && (
+          <div className="mt-6 bg-gradient-to-br from-primary-500/20 to-primary-600/5 backdrop-blur-xl border border-primary-500/30 p-8 rounded-3xl shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-primary-500 rounded-2xl flex items-center justify-center shadow-lg shadow-primary-500/20">
+                <Send className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white">Projeto Concluído! 🥳</h2>
+                <p className="text-gray-400 text-sm">Como foi sua experiência conosco?</p>
+              </div>
+            </div>
+
+            <p className="text-gray-300 mb-6 leading-relaxed">
+              Ficamos muito felizes em entregar seu projeto! De 0 a 10, qual a probabilidade de você nos recomendar a um amigo ou colega?
+            </p>
+
+            <div className="flex flex-wrap justify-center gap-2 mb-8">
+              {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((score) => (
+                <button
+                  key={score}
+                  onClick={() => setNpsScore(score)}
+                  className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl border font-bold transition-all flex items-center justify-center ${
+                    npsScore === score 
+                      ? 'bg-primary-500 border-primary-500 text-white scale-110 shadow-lg shadow-primary-500/30' 
+                      : 'bg-white/5 border-white/10 text-gray-400 hover:border-primary-500/50 hover:text-primary-400'
+                  }`}
+                >
+                  {score}
+                </button>
+              ))}
+            </div>
+
+            {npsScore !== null && (
+              <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                <label className="block text-sm font-medium text-gray-400 mb-2">O que mais você gostaria de nos dizer? (Opcional)</label>
+                <textarea 
+                  value={npsComment}
+                  onChange={(e) => setNpsComment(e.target.value)}
+                  placeholder="Seu feedback nos ajuda a melhorar..."
+                  className="w-full min-h-[100px] px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500 custom-scrollbar resize-none mb-4"
+                ></textarea>
+                
+                <button
+                  onClick={handleNPSSubmit}
+                  disabled={isSubmittingNPS}
+                  className="w-full py-4 bg-primary-500 hover:bg-primary-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-primary-500/20 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+                >
+                  {isSubmittingNPS ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      Enviar Avaliação
+                      <CheckCircle size={18} />
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
