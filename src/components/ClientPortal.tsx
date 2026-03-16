@@ -570,11 +570,11 @@ export default function ClientPortal() {
             <p className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-2">Seu Link de Indicação</p>
             <div className="flex items-center gap-3">
               <div className="flex-1 bg-white/5 px-4 py-3 rounded-xl text-emerald-400 font-mono text-sm truncate">
-                {`${window.location.origin}/onboarding/${userId}/${clientId}?ref=${clientId}`}
+                {`${window.location.origin}/onboarding/${userId}?ref=${clientId}`}
               </div>
               <button 
                 onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/onboarding/${userId}/${clientId}?ref=${clientId}`);
+                  navigator.clipboard.writeText(`${window.location.origin}/onboarding/${userId}?ref=${clientId}`);
                   toast.success('Link de indicação copiado!');
                 }}
                 className="p-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-all shadow-lg shadow-emerald-500/20"

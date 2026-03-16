@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { CheckCircle, Globe, Building2, Mail, Phone, User as UserIcon, FileText, Upload, Image as ImageIcon, X } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
@@ -19,7 +19,8 @@ export default function OnboardingForm() {
     name: '',
     email: '',
     whatsapp: '',
-    cpfCnpj: ''
+    cpfCnpj: '',
+    plan: 'Padrão'
   });
   
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -97,6 +98,35 @@ export default function OnboardingForm() {
           referredBy: referralId || null
         });
         setSuccess(true);
+      } else if (referralId) {
+        // Create new client from referral
+        const newClientRef = doc(collection(db, 'users', userId, 'clients'));
+        const newClientId = newClientRef.id;
+        
+        await setDoc(newClientRef, {
+          id: newClientId,
+          name: basicData.name,
+          email: basicData.email,
+          whatsapp: basicData.whatsapp,
+          cpfCnpj: basicData.cpfCnpj,
+          plan: basicData.plan,
+          status: 'Em Desenvolvimento',
+          createdAt: Date.now(),
+          onboardingAnswers: answers,
+          referredBy: referralId
+        });
+
+        // Create referral record
+        const referralRef = doc(collection(db, 'users', userId, 'referrals'));
+        await setDoc(referralRef, {
+          id: referralRef.id,
+          referrerId: referralId,
+          referredClientId: newClientId,
+          status: 'pending',
+          createdAt: Date.now()
+        });
+
+        setSuccess(true);
       }
     } catch (error) {
       console.error("Error submitting onboarding:", error);
@@ -114,7 +144,7 @@ export default function OnboardingForm() {
     );
   }
 
-  if (!clientId || clientNotFound) {
+  if (!clientId && !referralId) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4 font-sans text-gray-100">
         <div className="bg-zinc-900/50 backdrop-blur-xl border border-white/10 p-8 rounded-3xl max-w-md w-full text-center shadow-2xl">
@@ -123,9 +153,23 @@ export default function OnboardingForm() {
           </div>
           <h2 className="text-2xl font-bold text-white mb-4">Link Inválido</h2>
           <p className="text-gray-400 mb-8">
-            {clientNotFound 
-              ? "O link acessado não é válido ou o cliente não foi encontrado." 
-              : "Este formulário só pode ser acessado através de um link específico enviado pelo seu consultor."}
+            Este formulário só pode ser acessado através de um link específico enviado pelo seu consultor ou através de uma indicação.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (clientId && clientNotFound) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center p-4 font-sans text-gray-100">
+        <div className="bg-zinc-900/50 backdrop-blur-xl border border-white/10 p-8 rounded-3xl max-w-md w-full text-center shadow-2xl">
+          <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Globe className="w-10 h-10 text-red-500" />
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-4">Cliente não encontrado</h2>
+          <p className="text-gray-400 mb-8">
+            O link acessado não é válido ou o cliente não foi encontrado em nossa base de dados.
           </p>
         </div>
       </div>
@@ -242,6 +286,30 @@ export default function OnboardingForm() {
                   />
                 </div>
               </div>
+
+              {!clientId && referralId && (
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Plano Desejado *</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setBasicData({...basicData, plan: 'Padrão'})}
+                      className={`p-4 rounded-2xl border transition-all text-left ${basicData.plan === 'Padrão' ? 'bg-primary-500/20 border-primary-500 text-white shadow-lg shadow-primary-500/20' : 'bg-black/40 border-white/10 text-gray-400 hover:border-white/20'}`}
+                    >
+                      <p className="font-bold text-lg">Plano Padrão</p>
+                      <p className="text-xs opacity-70">Ideal para pequenos negócios</p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBasicData({...basicData, plan: 'Profissional'})}
+                      className={`p-4 rounded-2xl border transition-all text-left ${basicData.plan === 'Profissional' ? 'bg-primary-500/20 border-primary-500 text-white shadow-lg shadow-primary-500/20' : 'bg-black/40 border-white/10 text-gray-400 hover:border-white/20'}`}
+                    >
+                      <p className="font-bold text-lg">Plano Profissional</p>
+                      <p className="text-xs opacity-70">Para quem busca o máximo de performance</p>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
