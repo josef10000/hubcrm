@@ -558,6 +558,45 @@ export default function ClientPortal() {
           </p>
 
           <div className="bg-black/20 border border-white/5 rounded-2xl p-4 mb-6">
+            <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-4">Seu Progresso de Parceiro</h4>
+            {(() => {
+              const count = client?.referralCount || 0;
+              const getTier = (c: number) => {
+                if (c >= 6) return { name: 'Ouro', color: 'text-yellow-400', bg: 'bg-yellow-400/10', border: 'border-yellow-400/20', icon: '🏆', next: null, benefit: 'Suporte Prioritário' };
+                if (c >= 3) return { name: 'Prata', color: 'text-slate-300', bg: 'bg-slate-300/10', border: 'border-slate-300/20', icon: '🥈', next: 6, benefit: 'Selo de Parceiro' };
+                return { name: 'Bronze', color: 'text-orange-400', bg: 'bg-orange-400/10', border: 'border-orange-400/20', icon: '🥉', next: 3, benefit: 'Membro' };
+              };
+              const tier = getTier(count);
+              const progress = tier.next ? (count / tier.next) * 100 : 100;
+
+              return (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{tier.icon}</span>
+                      <div>
+                        <p className={`font-bold ${tier.color}`}>Nível {tier.name}</p>
+                        <p className="text-[10px] text-gray-500 uppercase tracking-tighter">{tier.benefit}</p>
+                      </div>
+                    </div>
+                    {tier.next && (
+                      <p className="text-xs text-gray-500">
+                        {tier.next - count} para o nível {tier.name === 'Bronze' ? 'Prata' : 'Ouro'}
+                      </p>
+                    )}
+                  </div>
+                  <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full transition-all duration-1000 ${tier.name === 'Ouro' ? 'bg-yellow-400' : tier.name === 'Prata' ? 'bg-slate-300' : 'bg-orange-400'}`}
+                      style={{ width: `${progress}%` }}
+                    ></div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+
+          <div className="bg-black/20 border border-white/5 rounded-2xl p-4 mb-6">
             <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">Regras do Programa</h4>
             <ul className="text-xs text-gray-400 space-y-1 list-disc pl-4">
               <li>Limite de <span className="text-white font-medium">2 indicações premiadas</span> por mês.</li>
@@ -596,7 +635,15 @@ export default function ClientPortal() {
             <div className="bg-white/5 p-4 rounded-2xl border border-white/5 text-center">
               <p className="text-xs text-gray-500 uppercase mb-1">Próximo Desconto</p>
               <p className="text-2xl font-bold text-primary-400">
-                {client?.referralBalance >= 80 ? '100%' : client?.referralBalance >= 40 ? '50%' : '0%'}
+                R$ {client?.referralBalance || 0}
+              </p>
+              <p className="text-[10px] text-gray-500 mt-1">
+                {(() => {
+                  const planPrice = client?.plan === 'Profissional' ? 150 : 80;
+                  const discount = client?.referralBalance || 0;
+                  const percent = Math.min(100, Math.round((discount / planPrice) * 100));
+                  return `${percent}% da mensalidade`;
+                })()}
               </p>
             </div>
           </div>

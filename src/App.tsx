@@ -1117,6 +1117,12 @@ function ReferralsView({ clients, user }: { clients: Client[], user: User }) {
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Bônus Totais Gerados</p>
             <p className="text-3xl font-bold text-emerald-500">R$ {filteredReferrals.reduce((acc, r) => acc + (r.bonusAmount || 0), 0).toFixed(2).replace('.', ',')}</p>
           </div>
+          <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl shadow-lg">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Parceiros Ouro/Prata</p>
+            <p className="text-3xl font-bold text-yellow-500">
+              {clients.filter(c => (c.referralCount || 0) >= 3).length}
+            </p>
+          </div>
         </div>
 
         <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl shadow-lg overflow-hidden">
@@ -1125,6 +1131,7 @@ function ReferralsView({ clients, user }: { clients: Client[], user: User }) {
               <thead className="bg-gray-200 dark:bg-white/5 text-gray-500 dark:text-gray-400 text-sm uppercase tracking-wider">
                 <tr>
                   <th className="px-6 py-4 font-medium">Quem Indicou</th>
+                  <th className="px-6 py-4 font-medium">Nível</th>
                   <th className="px-6 py-4 font-medium">Indicado</th>
                   <th className="px-6 py-4 font-medium">Data</th>
                   <th className="px-6 py-4 font-medium">Bônus</th>
@@ -1146,6 +1153,21 @@ function ReferralsView({ clients, user }: { clients: Client[], user: User }) {
                         <td className="px-6 py-4">
                           <p className="text-gray-900 dark:text-white font-medium">{referrer?.name || 'Desconhecido'}</p>
                           <p className="text-xs text-gray-500">{referrer?.whatsapp}</p>
+                        </td>
+                        <td className="px-6 py-4">
+                          {referrer && (
+                            <div className="flex items-center gap-1">
+                              {(() => {
+                                const count = referrer.referralCount || 0;
+                                if (count >= 6) return <span title="Ouro" className="text-lg">🏆</span>;
+                                if (count >= 3) return <span title="Prata" className="text-lg">🥈</span>;
+                                return <span title="Bronze" className="text-lg">🥉</span>;
+                              })()}
+                              <span className="text-[10px] font-bold uppercase text-gray-500">
+                                {referrer.referralCount >= 6 ? 'Ouro' : referrer.referralCount >= 3 ? 'Prata' : 'Bronze'}
+                              </span>
+                            </div>
+                          )}
                         </td>
                         <td className="px-6 py-4">
                           <p className="text-gray-900 dark:text-white font-medium">{referred?.name || 'Novo Cliente'}</p>
@@ -1448,9 +1470,6 @@ function CRM({ user }: { user: User }) {
       deliveryDate: clientData.deliveryDate,
     };
 
-    setIsModalOpen(false); 
-    setEditingClient(null);
-
     try { 
       // Handle Update Subscription Due Date
       if (!isNew && client.asaasSubscriptionId && editingClient && (editingClient.recurringPaymentDay !== client.recurringPaymentDay || editingClient.billingType !== client.billingType)) {
@@ -1711,6 +1730,9 @@ function CRM({ user }: { user: User }) {
 
       const cleanClient = Object.fromEntries(Object.entries(client).filter(([_, v]) => v !== undefined));
       await setDoc(doc(db, 'users', user.uid, 'clients', client.id), cleanClient);
+      
+      setIsModalOpen(false); 
+      setEditingClient(null);
     } catch (error: any) { 
       console.error("Save Error:", error);
       toast.error(`Erro ao salvar cliente: ${error.message}`);
