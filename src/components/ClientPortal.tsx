@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { doc, getDoc, addDoc, collection, serverTimestamp, onSnapshot, query, where, orderBy, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Globe, CreditCard, CheckCircle, Clock, AlertCircle, ExternalLink, FileText, MessageSquare, Send, X, ChevronDown, ChevronUp, Calendar, Users, Copy } from 'lucide-react';
+import { Globe, CreditCard, CheckCircle, Clock, AlertCircle, ExternalLink, FileText, MessageSquare, Send, X, ChevronDown, ChevronUp, Calendar, Users, Copy, HelpCircle, Search } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
 
 export default function ClientPortal() {
@@ -23,6 +23,43 @@ export default function ClientPortal() {
   const [npsComment, setNpsComment] = useState('');
   const [isSubmittingNPS, setIsSubmittingNPS] = useState(false);
   const [npsSubmitted, setNpsSubmitted] = useState(false);
+
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFaq, setActiveFaq] = useState<string | null>(null);
+
+  const faqData = [
+    {
+      category: 'Financeiro',
+      questions: [
+        { q: 'Como acesso minha fatura ou boleto?', a: 'Você pode acessar sua fatura atual clicando no botão "Pagar Mensalidade" aqui no portal. Ele te levará diretamente para o ambiente seguro do Asaas, onde você pode gerar o código PIX ou pagar via Cartão de Crédito.' },
+        { q: 'Quais são as formas de pagamento aceitas?', a: 'Aceitamos PIX (compensação imediata), Cartão de Crédito (recorrente) e Cartão de Débito.' },
+        { q: 'Já paguei, mas o status ainda aparece como "Pendente". O que fazer?', a: 'Pagamentos via PIX são atualizados em poucos minutos. No Cartão de Crédito ou Débito, o processamento pode levar até 24h. Se após esse prazo o status não mudar, envie uma mensagem pelo formulário de suporte abaixo.' }
+      ]
+    },
+    {
+      category: 'Meu Site',
+      questions: [
+        { q: 'Como solicito uma alteração no meu site?', a: 'Use o formulário "Solicitar Suporte ou Alteração" no final desta página. Descreva o que precisa ser mudado e nossa equipe receberá sua solicitação imediatamente.' },
+        { q: 'Quanto tempo demora para meu site ficar pronto?', a: 'A entrega do site é agendada individualmente. Trabalhamos com uma estimativa de entrega em 3 dias úteis após o recebimento de todo o conteúdo, mas este prazo é uma previsão e pode variar conforme a demanda e complexidade.' },
+        { q: 'Como acesso meu e-mail profissional?', a: 'Assim que seu site for lançado, enviaremos os dados de acesso e as instruções de configuração diretamente para o seu WhatsApp.' }
+      ]
+    },
+    {
+      category: 'Programa de Indicações',
+      questions: [
+        { q: 'Como funciona o bônus de R$ 40,00?', a: 'Para cada amigo que fechar um projeto conosco através do seu link, você ganha R$ 40,00 de desconto na sua próxima mensalidade. O bônus é validado assim que o seu indicado realizar o primeiro pagamento.' },
+        { q: 'O que são os níveis Bronze, Prata e Ouro?', a: 'São níveis de reconhecimento! Bronze é o nível inicial. Prata (3+ indicações) te dá o selo de Parceiro Oficial. Ouro (6+ indicações) te torna um Embaixador com suporte prioritário.' },
+        { q: 'Existe um limite para os bônus?', a: 'Sim, você pode acumular bônus de até 2 indicações premiadas por mês. Indicações excedentes contam para o seu nível de Parceiro (Tier), mas o desconto financeiro é limitado a 2 por fatura.' }
+      ]
+    },
+    {
+      category: 'Suporte Geral',
+      questions: [
+        { q: 'Qual o horário de atendimento?', a: 'Nosso suporte funciona de segunda a sexta, das 09h às 18h. Chamados abertos fora desse horário ou em feriados serão respondidos no próximo dia útil.' }
+      ]
+    }
+  ];
 
   const handleNPSSubmit = async () => {
     if (npsScore === null || !userId || !clientId) return;
@@ -650,7 +687,7 @@ export default function ClientPortal() {
         </div>
 
         {/* Support Request Form */}
-        <div className="mt-6 bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
+        <div className="mt-6 bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl" id="support-form">
           <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-primary-400" />
             Solicitar Suporte ou Alteração
@@ -766,6 +803,106 @@ export default function ClientPortal() {
           </a>
         </div>
       </div>
+
+      {/* Help Widget */}
+      <div className="fixed bottom-6 right-6 z-[100]">
+        {isHelpOpen ? (
+          <div className="bg-gray-900 border border-white/10 w-80 sm:w-96 rounded-3xl shadow-2xl flex flex-col max-h-[600px] overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+            <div className="p-6 bg-primary-600 text-white flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-lg">Central de Ajuda</h3>
+                <p className="text-xs text-primary-100">Como podemos te ajudar hoje?</p>
+              </div>
+              <button 
+                onClick={() => setIsHelpOpen(false)}
+                className="p-2 hover:bg-white/10 rounded-full transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-4 border-b border-white/5">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                <input 
+                  type="text"
+                  placeholder="Pesquisar dúvidas..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-white focus:ring-2 focus:ring-primary-500 outline-none"
+                />
+              </div>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-4">
+              {faqData.map((category) => {
+                const filteredQuestions = category.questions.filter(q => 
+                  q.q.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                  q.a.toLowerCase().includes(searchQuery.toLowerCase())
+                );
+                
+                if (filteredQuestions.length === 0) return null;
+                
+                return (
+                  <div key={category.category}>
+                    <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 px-2">
+                      {category.category}
+                    </h4>
+                    <div className="space-y-1">
+                      {filteredQuestions.map((item, idx) => (
+                        <div key={idx} className="bg-white/5 rounded-xl overflow-hidden">
+                          <button 
+                            onClick={() => setActiveFaq(activeFaq === `${category.category}-${idx}` ? null : `${category.category}-${idx}`)}
+                            className="w-full px-4 py-3 text-left hover:bg-white/5 transition-colors flex items-center justify-between gap-3"
+                          >
+                            <span className="text-sm text-gray-200">{item.q}</span>
+                            {activeFaq === `${category.category}-${idx}` ? <ChevronUp size={14} className="text-gray-500 shrink-0" /> : <ChevronDown size={14} className="text-gray-500 shrink-0" />}
+                          </button>
+                          {activeFaq === `${category.category}-${idx}` && (
+                            <div className="px-4 py-3 bg-black/20 border-t border-white/5">
+                              <p className="text-xs text-gray-400 leading-relaxed">{item.a}</p>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+              
+              {searchQuery && faqData.every(c => c.questions.filter(q => q.q.toLowerCase().includes(searchQuery.toLowerCase()) || q.a.toLowerCase().includes(searchQuery.toLowerCase())).length === 0) && (
+                <div className="text-center py-8">
+                  <p className="text-sm text-gray-500">Nenhuma dúvida encontrada.</p>
+                </div>
+              )}
+            </div>
+            
+            <div className="p-4 bg-white/5 border-t border-white/10 text-center">
+              <p className="text-[10px] text-gray-500 mb-2">Ainda precisa de ajuda?</p>
+              <button 
+                onClick={() => {
+                  setIsHelpOpen(false);
+                  document.getElementById('support-form')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="text-xs text-primary-400 font-bold hover:underline"
+              >
+                Falar com um especialista
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button 
+            onClick={() => setIsHelpOpen(true)}
+            className="w-14 h-14 bg-primary-600 hover:bg-primary-700 text-white rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 group relative"
+          >
+            <HelpCircle size={28} />
+            <span className="absolute right-full mr-4 bg-gray-900 text-white text-xs px-3 py-2 rounded-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-white/10 shadow-xl">
+              Central de Ajuda
+            </span>
+          </button>
+        )}
+      </div>
+
       <Toaster theme="dark" position="top-right" />
     </div>
   );
