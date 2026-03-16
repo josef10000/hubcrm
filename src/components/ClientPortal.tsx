@@ -43,7 +43,7 @@ export default function ClientPortal() {
         { q: 'Como solicito uma alteração no meu site?', a: 'Use o formulário "Solicitar Suporte ou Alteração" no final desta página. Descreva o que precisa ser mudado e nossa equipe receberá sua solicitação imediatamente.' },
         { q: 'Quanto tempo demora para meu site ficar pronto?', a: 'A entrega do site é agendada individualmente. Trabalhamos com uma estimativa de entrega em 3 dias úteis após o recebimento de todo o conteúdo, mas este prazo é uma previsão e pode variar conforme a demanda e complexidade.' },
         { q: 'Posso mudar meu plano?', a: 'Sim! Você pode migrar do plano Padrão para o Profissional a qualquer momento. No entanto, não realizamos a migração inversa (do Profissional para o Padrão).' },
-        { q: 'O que preciso para mudar para o plano Profissional?', a: 'Para o plano Profissional, é necessário adquirir um domínio próprio. Recomendamos a compra através do site registro.br.com.br. Após a compra, basta nos enviar os dados de acesso e nós cuidaremos de toda a migração e configuração para você.' }
+        { q: 'O que preciso para mudar para o plano Profissional?', a: 'Para o plano Profissional, é necessário adquirir um domínio próprio (ex: seunome.com.br). Recomendamos a compra através do site oficial registro.br (https://registro.br/). Após a compra, basta nos enviar os dados de acesso e nós cuidaremos de toda a migração e configuração para você.' }
       ]
     },
     {
