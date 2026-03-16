@@ -8,7 +8,7 @@ import {
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid } from 'recharts';
 import { auth, db } from './lib/firebase';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
-import { collection, doc, setDoc, onSnapshot, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, onSnapshot, deleteDoc, updateDoc, query, where, getDocs } from 'firebase/firestore';
 import Auth from './components/Auth';
 import CalendarView from './components/CalendarView';
 import { toast } from 'sonner';
@@ -418,7 +418,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                         className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Profissional' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
                       >
                         <div className="font-semibold mb-1">Profissional</div>
-                        <div className="text-sm opacity-80">R$ 120/mês</div>
+                        <div className="text-sm opacity-80">R$ 150/mês</div>
                       </button>
                     </div>
                   </div>
@@ -1086,6 +1086,15 @@ function ReferralsView({ clients, user }: { clients: Client[], user: User }) {
     }
   };
 
+  const filteredReferrals = referrals.filter(ref => {
+    if (ref.status === 'cancelled') return false;
+    const referred = clients.find(c => c.id === ref.referredClientId);
+    // If we can't find the client, we might want to show it or not. 
+    // Usually, if it's in referrals, it should exist.
+    // The user specifically said "Those who were canceled should no longer appear there."
+    return referred && referred.status !== 'Cancelado';
+  });
+
   if (loading) return <div className="flex-1 flex items-center justify-center"><RefreshCw className="animate-spin text-primary-500" /></div>;
 
   return (
@@ -1098,15 +1107,15 @@ function ReferralsView({ clients, user }: { clients: Client[], user: User }) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl shadow-lg">
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Total de Indicações</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white">{referrals.length}</p>
+            <p className="text-3xl font-bold text-gray-900 dark:text-white">{filteredReferrals.length}</p>
           </div>
           <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl shadow-lg">
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Aguardando Confirmação</p>
-            <p className="text-3xl font-bold text-yellow-500">{referrals.filter(r => r.status === 'pending').length}</p>
+            <p className="text-3xl font-bold text-yellow-500">{filteredReferrals.filter(r => r.status === 'pending').length}</p>
           </div>
           <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl shadow-lg">
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Bônus Totais Gerados</p>
-            <p className="text-3xl font-bold text-emerald-500">R$ {referrals.reduce((acc, r) => acc + (r.bonusAmount || 0), 0).toFixed(2).replace('.', ',')}</p>
+            <p className="text-3xl font-bold text-emerald-500">R$ {filteredReferrals.reduce((acc, r) => acc + (r.bonusAmount || 0), 0).toFixed(2).replace('.', ',')}</p>
           </div>
         </div>
 
@@ -1124,12 +1133,12 @@ function ReferralsView({ clients, user }: { clients: Client[], user: User }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-white/5">
-                {referrals.length === 0 ? (
+                {filteredReferrals.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500">Nenhuma indicação registrada ainda.</td>
+                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">Nenhuma indicação registrada ainda.</td>
                   </tr>
                 ) : (
-                  referrals.map((ref) => {
+                  filteredReferrals.map((ref) => {
                     const referrer = clients.find(c => c.id === ref.referrerId);
                     const referred = clients.find(c => c.id === ref.referredClientId);
                     return (
@@ -1488,9 +1497,44 @@ function CRM({ user }: { user: User }) {
       }
 
       // Handle Cancellation
-      if (!isNew && client.status === 'Cancelado' && client.asaasCustomerId) {
-        // Cancel subscription if exists
-        if (client.asaasSubscriptionId) {
+      if (!isNew && client.status === 'Cancelado') {
+        // Handle Referral Revocation
+        if (editingClient && editingClient.referredBy) {
+          const referrer = clients.find(c => c.id === editingClient.referredBy);
+          if (referrer) {
+            const referralsRef = collection(db, 'users', user.uid, 'referrals');
+            const q = query(referralsRef, where('referredClientId', '==', client.id));
+            const querySnapshot = await getDocs(q);
+            
+            if (!querySnapshot.empty) {
+              const referralDoc = querySnapshot.docs[0];
+              const referralData = referralDoc.data();
+              
+              if (referralData.status === 'confirmed' || referralData.status === 'applied') {
+                const bonusToRevoke = referralData.bonusAmount || 0;
+                
+                // Update referrer balance
+                const newBalance = Math.max(0, (referrer.referralBalance || 0) - bonusToRevoke);
+                const newCount = Math.max(0, (referrer.referralCount || 0) - 1);
+                
+                await updateDoc(doc(db, 'users', user.uid, 'clients', referrer.id), {
+                  referralBalance: newBalance,
+                  referralCount: newCount
+                });
+                
+                // Mark referral as cancelled
+                await updateDoc(referralDoc.ref, {
+                  status: 'cancelled',
+                  bonusAmount: 0
+                });
+              }
+            }
+          }
+        }
+
+        if (client.asaasCustomerId) {
+          // Cancel subscription if exists
+          if (client.asaasSubscriptionId) {
           const delRes = await fetch('/api/asaas/delete-subscription', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1525,6 +1569,7 @@ function CRM({ user }: { user: User }) {
           console.error("Error cancelling pending payments", e);
         }
       }
+    }
 
       // Integrate with Asaas for new clients or clients without Asaas ID
       if (!client.asaasCustomerId && client.cpfCnpj && client.email && client.status !== 'Cancelado') {
@@ -1552,7 +1597,7 @@ function CRM({ user }: { user: User }) {
           // 2. Create Subscription in Asaas
           const today = new Date();
           const firstPaymentDate = client.firstPaymentDate || today.toISOString().split('T')[0];
-          const value = client.plan === 'Profissional' ? 120 : 80;
+          const value = client.plan === 'Profissional' ? 150 : 80;
 
           if (client.recurringPaymentDay) {
             // Strategy 1: Single charge for first payment + Subscription for recurring
@@ -1739,8 +1784,8 @@ function CRM({ user }: { user: User }) {
       if (sortBy === 'alphabetical') {
         return a.name.localeCompare(b.name);
       } else if (sortBy === 'value') {
-        const valA = a.plan === 'Profissional' ? 120 : 80;
-        const valB = b.plan === 'Profissional' ? 120 : 80;
+        const valA = a.plan === 'Profissional' ? 150 : 80;
+        const valB = b.plan === 'Profissional' ? 150 : 80;
         return valB - valA;
       } else {
         return b.createdAt - a.createdAt;
@@ -1802,8 +1847,8 @@ function CRM({ user }: { user: User }) {
 
     // Calculate Metrics
     const activeClients = clients.filter(c => c.status === 'Ativo').length;
-    const mrr = clients.filter(c => c.status === 'Ativo' || c.status === 'Inadimplente').reduce((acc, c) => acc + (c.plan === 'Profissional' ? 120 : 80), 0);
-    const overdueAmount = clients.filter(c => c.status === 'Inadimplente').reduce((acc, c) => acc + (c.plan === 'Profissional' ? 120 : 80), 0);
+    const mrr = clients.filter(c => c.status === 'Ativo' || c.status === 'Inadimplente').reduce((acc, c) => acc + (c.plan === 'Profissional' ? 150 : 80), 0);
+    const overdueAmount = clients.filter(c => c.status === 'Inadimplente').reduce((acc, c) => acc + (c.plan === 'Profissional' ? 150 : 80), 0);
     
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
@@ -1812,7 +1857,7 @@ function CRM({ user }: { user: User }) {
       if (!c.nextDueDate) return true; // Assume it's due if no date
       const dueDate = new Date(c.nextDueDate);
       return dueDate.getMonth() === currentMonth && dueDate.getFullYear() === currentYear;
-    }).reduce((acc, c) => acc + (c.plan === 'Profissional' ? 120 : 80), 0);
+    }).reduce((acc, c) => acc + (c.plan === 'Profissional' ? 150 : 80), 0);
 
     // Chart Data
     const statusData = [
@@ -2052,7 +2097,7 @@ function CRM({ user }: { user: User }) {
                     
                     <div className="flex items-center text-gray-600 dark:text-gray-300 text-sm">
                       <Tag size={16} className="mr-3 text-primary-400 opacity-80" />
-                      Plano {client.plan} <span className="ml-2 text-xs opacity-60">(R$ {client.plan === 'Profissional' ? '120' : '80'})</span>
+                      Plano {client.plan} <span className="ml-2 text-xs opacity-60">(R$ {client.plan === 'Profissional' ? '150' : '80'})</span>
                     </div>
                     
                     {client.nextDueDate && client.status !== 'Cancelado' && (
@@ -2118,7 +2163,7 @@ function CRM({ user }: { user: User }) {
                       </a>
                       {client.invoiceUrl && (
                         <a 
-                          href={`https://wa.me/55${(client.whatsapp || '').replace(/\D/g, '')}?text=Olá ${client.name}, sua fatura de R$ ${client.plan === 'Profissional' ? '120,00' : '80,00'} vence dia ${client.nextDueDate ? new Date(client.nextDueDate).toLocaleDateString('pt-BR') : ''}. Segue o link para pagamento via PIX: ${client.invoiceUrl}`}
+                          href={`https://wa.me/55${(client.whatsapp || '').replace(/\D/g, '')}?text=Olá ${client.name}, sua fatura de R$ ${client.plan === 'Profissional' ? '150,00' : '80,00'} vence dia ${client.nextDueDate ? new Date(client.nextDueDate).toLocaleDateString('pt-BR') : ''}. Segue o link para pagamento via PIX: ${client.invoiceUrl}`}
                           target="_blank"
                           rel="noreferrer"
                           onClick={e => e.stopPropagation()}
@@ -2258,10 +2303,10 @@ function CRM({ user }: { user: User }) {
     const totalClients = clients.length;
     const activeClients = clients.filter(c => c.status === 'Ativo').length;
     const activeClientsList = clients.filter(c => c.status === 'Ativo');
-    const mrr = activeClientsList.reduce((acc, c) => acc + (c.plan === 'Profissional' ? 120 : 80), 0);
+    const mrr = activeClientsList.reduce((acc, c) => acc + (c.plan === 'Profissional' ? 150 : 80), 0);
     
     const overdueClients = clients.filter(c => c.paymentStatus === 'OVERDUE');
-    const overdueAmount = overdueClients.reduce((acc, c) => acc + (c.plan === 'Profissional' ? 120 : 80), 0);
+    const overdueAmount = overdueClients.reduce((acc, c) => acc + (c.plan === 'Profissional' ? 150 : 80), 0);
     const overdueRate = activeClients > 0 ? ((overdueClients.length / activeClients) * 100).toFixed(1) : '0.0';
 
     const canceledClients = clients.filter(c => c.status === 'Cancelado').length;
@@ -2284,7 +2329,7 @@ function CRM({ user }: { user: User }) {
         const diffTime = dueDate.getTime() - todayDate.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         
-        const value = c.plan === 'Profissional' ? 120 : 80;
+        const value = c.plan === 'Profissional' ? 150 : 80;
 
         if (diffDays >= 0 && diffDays <= 7) cash7Days += value;
         if (diffDays >= 0 && diffDays <= 15) cash15Days += value;
@@ -2341,7 +2386,7 @@ function CRM({ user }: { user: User }) {
       const mrrUpToThisMonth = activeClientsList.filter(c => {
         const d = new Date(c.createdAt);
         return d.getFullYear() < currentYear || (d.getFullYear() === currentYear && d.getMonth() <= i);
-      }).reduce((acc, c) => acc + (c.plan === 'Profissional' ? 120 : 80), 0);
+      }).reduce((acc, c) => acc + (c.plan === 'Profissional' ? 150 : 80), 0);
 
       return { 
         name: m, 
@@ -2539,7 +2584,7 @@ function CRM({ user }: { user: User }) {
   };
 
   const renderFinance = () => {
-    const totalMRR = clients.filter(c => c.status === 'Ativo' || c.status === 'Inadimplente').reduce((acc, c) => acc + (c.plan === 'Profissional' ? 120 : 80), 0);
+    const totalMRR = clients.filter(c => c.status === 'Ativo' || c.status === 'Inadimplente').reduce((acc, c) => acc + (c.plan === 'Profissional' ? 150 : 80), 0);
     const totalExpenses = expenses.reduce((acc, e) => acc + e.amount, 0);
     const netProfit = totalMRR - totalExpenses;
 

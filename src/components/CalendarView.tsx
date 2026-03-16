@@ -20,7 +20,7 @@ interface CalendarViewProps {
 type CalendarMode = 'finance' | 'production';
 
 const getPlanPrice = (plan?: string) => {
-  if (plan === 'Profissional') return 120;
+  if (plan === 'Profissional') return 150;
   if (plan === 'Padrão') return 80;
   return 0;
 };
