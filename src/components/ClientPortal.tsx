@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { doc, getDoc, addDoc, collection, serverTimestamp, onSnapshot, query, where, orderBy, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Globe, CreditCard, CheckCircle, Clock, AlertCircle, ExternalLink, FileText, MessageSquare, Send, X, ChevronDown, ChevronUp, Calendar } from 'lucide-react';
+import { Globe, CreditCard, CheckCircle, Clock, AlertCircle, ExternalLink, FileText, MessageSquare, Send, X, ChevronDown, ChevronUp, Calendar, Users, Copy } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
 
 export default function ClientPortal() {
@@ -540,6 +540,67 @@ export default function ClientPortal() {
             )}
           </div>
         )}
+
+        {/* Referral Program - Indique e Ganhe */}
+        <div className="mt-6 bg-gradient-to-br from-emerald-500/20 to-emerald-600/5 backdrop-blur-xl border border-emerald-500/30 p-8 rounded-3xl shadow-2xl">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
+              <Users className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white">Indique e Ganhe! 💸</h2>
+              <p className="text-gray-400 text-sm">Ganhe descontos na sua mensalidade</p>
+            </div>
+          </div>
+
+          <p className="text-gray-300 mb-6 leading-relaxed">
+            Indique um amigo para criar o site com a gente. Quando ele fechar o projeto e pagar a primeira mensalidade, você ganha um bônus de <span className="text-emerald-400 font-bold">R$ 40,00</span> na sua próxima fatura!
+          </p>
+
+          <div className="bg-black/20 border border-white/5 rounded-2xl p-4 mb-6">
+            <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">Regras do Programa</h4>
+            <ul className="text-xs text-gray-400 space-y-1 list-disc pl-4">
+              <li>Limite de <span className="text-white font-medium">2 indicações premiadas</span> por mês.</li>
+              <li>Bônus de <span className="text-white font-medium">R$ 40</span> por indicação elegível.</li>
+              <li>O bônus é aplicado após o primeiro pagamento do indicado.</li>
+            </ul>
+          </div>
+
+          <div className="bg-black/40 border border-white/10 rounded-2xl p-4 mb-6">
+            <p className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-2">Seu Link de Indicação</p>
+            <div className="flex items-center gap-3">
+              <div className="flex-1 bg-white/5 px-4 py-3 rounded-xl text-emerald-400 font-mono text-sm truncate">
+                {`${window.location.origin}/onboarding/${userId}/${clientId}?ref=${clientId}`}
+              </div>
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/onboarding/${userId}/${clientId}?ref=${clientId}`);
+                  toast.success('Link de indicação copiado!');
+                }}
+                className="p-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-all shadow-lg shadow-emerald-500/20"
+              >
+                <Copy size={20} />
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-white/5 p-4 rounded-2xl border border-white/5 text-center">
+              <p className="text-xs text-gray-500 uppercase mb-1">Indicações</p>
+              <p className="text-2xl font-bold text-white">{client?.referralCount || 0}</p>
+            </div>
+            <div className="bg-white/5 p-4 rounded-2xl border border-white/5 text-center">
+              <p className="text-xs text-gray-500 uppercase mb-1">Bônus Acumulado</p>
+              <p className="text-2xl font-bold text-emerald-400">R$ {client?.referralBalance || 0}</p>
+            </div>
+            <div className="bg-white/5 p-4 rounded-2xl border border-white/5 text-center">
+              <p className="text-xs text-gray-500 uppercase mb-1">Próximo Desconto</p>
+              <p className="text-2xl font-bold text-primary-400">
+                {client?.referralBalance >= 80 ? '100%' : client?.referralBalance >= 40 ? '50%' : '0%'}
+              </p>
+            </div>
+          </div>
+        </div>
 
         {/* Support Request Form */}
         <div className="mt-6 bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">

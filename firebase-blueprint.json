@@ -1,0 +1,80 @@
+{
+  "entities": {
+    "Client": {
+      "title": "Client",
+      "description": "A client of the agency",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "plan": { "type": "string", "enum": ["Padrão", "Profissional"] },
+        "status": { "type": "string", "enum": ["Em Desenvolvimento", "Ativo", "Inadimplente", "Cancelado"] },
+        "referralCode": { "type": "string", "description": "Unique code for referrals" },
+        "referredBy": { "type": "string", "description": "ID of the client who referred this one" },
+        "referralBalance": { "type": "number", "description": "Accumulated credit from referrals" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["name", "whatsapp", "plan", "status", "createdAt"]
+    },
+    "Referral": {
+      "title": "Referral",
+      "description": "A referral record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "referrerId": { "type": "string", "description": "ID of the client who made the referral" },
+        "referredClientId": { "type": "string", "description": "ID of the new client" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "applied"] },
+        "bonusAmount": { "type": "number" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["referrerId", "referredClientId", "status", "createdAt"]
+    },
+    "SupportRequest": {
+      "title": "SupportRequest",
+      "description": "A support request from a client",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "clientId": { "type": "string" },
+        "message": { "type": "string" },
+        "category": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "in-progress", "completed"] },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["clientId", "message", "category", "status", "createdAt"]
+    },
+    "Expense": {
+      "title": "Expense",
+      "description": "An expense record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "description": { "type": "string" },
+        "amount": { "type": "number" },
+        "date": { "type": "number" },
+        "category": { "type": "string" }
+      },
+      "required": ["description", "amount", "date", "category"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/clients/{clientId}": {
+      "schema": "Client",
+      "description": "Clients managed by the user"
+    },
+    "/users/{userId}/referrals/{referralId}": {
+      "schema": "Referral",
+      "description": "Referrals managed by the user"
+    },
+    "/users/{userId}/supportRequests/{requestId}": {
+      "schema": "SupportRequest",
+      "description": "Support requests managed by the user"
+    },
+    "/users/{userId}/expenses/{expenseId}": {
+      "schema": "Expense",
+      "description": "Expenses managed by the user"
+    }
+  }
+}

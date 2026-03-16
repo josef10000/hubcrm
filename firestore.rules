@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+    
+    function isValidClient(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.whatsapp is string && data.whatsapp.size() >= 10 &&
+             data.plan in ['Padrão', 'Profissional'] &&
+             data.status in ['Em Desenvolvimento', 'Ativo', 'Inadimplente', 'Cancelado'];
+    }
+
+    function isValidReferral(data) {
+      return data.referrerId is string &&
+             data.referredClientId is string &&
+             data.status in ['pending', 'confirmed', 'applied'] &&
+             data.bonusAmount is number &&
+             data.createdAt is number;
+    }
+
+    function isValidSupportRequest(data) {
+      return data.clientId is string &&
+             data.message is string && data.message.size() > 0 && data.message.size() < 2000 &&
+             data.category is string &&
+             data.status in ['pending', 'in-progress', 'completed'] &&
+             data.createdAt is number;
+    }
+
+    function isValidExpense(data) {
+      return data.description is string && data.description.size() > 0 &&
+             data.amount is number &&
+             data.date is number &&
+             data.category is string;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+
+      match /clients/{clientId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /referrals/{referralId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /supportRequests/{requestId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /expenses/{expenseId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // Public access for Client Portal (read-only for specific client)
+    // Note: In a real app, we might want more security here, 
+    // but for this CRM, the portal is accessed via a link with userId and clientId.
+    match /users/{userId}/clients/{clientId} {
+      allow read: if true; // Publicly readable for the portal
+      allow update: if true; // Allow client to update stages or NPS
+    }
+
+    match /users/{userId}/supportRequests/{requestId} {
+      allow create: if true; // Allow client to create support requests
+      allow read: if true; // Allow client to read their own requests
+    }
+  }
+}

@@ -8,7 +8,7 @@ import {
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid } from 'recharts';
 import { auth, db } from './lib/firebase';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
-import { collection, doc, setDoc, onSnapshot, deleteDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, onSnapshot, deleteDoc, updateDoc } from 'firebase/firestore';
 import Auth from './components/Auth';
 import CalendarView from './components/CalendarView';
 import { toast } from 'sonner';
@@ -81,6 +81,14 @@ export interface Client {
   recurringPaymentDay?: number;
   deliveryDate?: string;
   onboardingAnswers?: Record<string, string>;
+  referralCode?: string;
+  referredBy?: string;
+  referralBalance?: number;
+  referralCount?: number;
+  referralsByMonth?: Record<string, number>;
+  npsScore?: number;
+  npsComment?: string;
+  npsSubmittedAt?: any;
 }
 
 export interface OnboardingQuestion {
@@ -100,7 +108,7 @@ interface Expense {
 }
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardingQuestions }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, onDelete?: (id: string) => void, initialData: Client | null, onboardingQuestions: OnboardingQuestion[] }) {
+function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardingQuestions, user }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, onDelete?: (id: string) => void, initialData: Client | null, onboardingQuestions: OnboardingQuestion[], user: User }) {
   const [formData, setFormData] = useState<Partial<Client>>({ plan: 'Padrão', status: 'Em Desenvolvimento' });
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -287,6 +295,13 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                   className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'onboarding' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
                 >
                   Briefing
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setActiveTab('referrals')}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === 'referrals' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
+                >
+                  Indicações
                 </button>
               </div>
             )}
@@ -785,6 +800,128 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                   </div>
                 )}
               </div>
+            ) : activeTab === 'referrals' && initialData ? (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-black/20 p-6 rounded-2xl border border-white/5">
+                    <h4 className="text-sm font-medium text-gray-400 mb-4 uppercase tracking-wider">Status do Programa</h4>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-300">Total de Indicações:</span>
+                        <span className="text-white font-bold">{initialData.referralCount || 0}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-300">Bônus Acumulado:</span>
+                        <span className="text-emerald-400 font-bold">R$ {(initialData.referralBalance || 0).toFixed(2).replace('.', ',')}</span>
+                      </div>
+                      <div className="pt-4 border-t border-white/5">
+                        <p className="text-[10px] text-gray-500 uppercase font-bold mb-2">Regras Atuais:</p>
+                        <ul className="text-[10px] text-gray-400 space-y-1 list-disc pl-4">
+                          <li>Máx. 2 indicações premiadas/mês</li>
+                          <li>Bônus: R$ 40 por indicação</li>
+                        </ul>
+                      </div>
+                      <div className="pt-4 border-t border-white/5">
+                        <p className="text-xs text-gray-500 mb-2">Link de Indicação do Cliente:</p>
+                        <div className="flex items-center gap-2 bg-black/40 p-2 rounded-lg border border-white/5">
+                          <code className="text-[10px] text-primary-400 truncate flex-1">
+                            {`${window.location.origin}/onboarding/${user.uid}?ref=${initialData.id}`}
+                          </code>
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(`${window.location.origin}/onboarding/${user.uid}?ref=${initialData.id}`);
+                              toast.success('Link copiado!');
+                            }}
+                            className="p-1 hover:bg-white/10 rounded transition-colors text-gray-400"
+                          >
+                            <Copy size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-black/20 p-6 rounded-2xl border border-white/5">
+                    <h4 className="text-sm font-medium text-gray-400 mb-4 uppercase tracking-wider">Ações Rápidas</h4>
+                    <div className="space-y-3">
+                      <button 
+                        type="button"
+                        onClick={async () => {
+                          if (!initialData.asaasCustomerId) {
+                            toast.error('Cliente não possui ID do Asaas.');
+                            return;
+                          }
+
+                          try {
+                            // 1. Fetch pending payments from Asaas
+                            const res = await fetch(`/api/asaas/payments?customer=${initialData.asaasCustomerId}`);
+                            if (!res.ok) throw new Error('Failed to fetch payments');
+                            const data = await res.json();
+                            const pendingPayment = data.data.find((p: any) => p.status === 'PENDING' || p.status === 'OVERDUE');
+
+                            if (!pendingPayment) {
+                              toast.error('Nenhuma fatura pendente encontrada para este cliente.');
+                              return;
+                            }
+
+                            // 2. Apply bonus
+                            const bonusToApply = Math.min(initialData.referralBalance || 0, pendingPayment.value);
+                            
+                            if (bonusToApply >= pendingPayment.value) {
+                              // Mark as paid in cash
+                              const receiveRes = await fetch('/api/asaas/receive-in-cash', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ paymentId: pendingPayment.id })
+                              });
+                              if (!receiveRes.ok) throw new Error('Failed to mark as paid');
+                            } else {
+                              // Edit value
+                              const editRes = await fetch('/api/asaas/edit-payment', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ 
+                                  paymentId: pendingPayment.id,
+                                  value: pendingPayment.value - bonusToApply
+                                })
+                              });
+                              if (!editRes.ok) throw new Error('Failed to edit payment');
+                            }
+
+                            // 3. Update client balance in Firestore
+                            await updateDoc(doc(db, 'users', user.uid, 'clients', initialData.id), {
+                              referralBalance: (initialData.referralBalance || 0) - bonusToApply
+                            });
+
+                            toast.success('Bônus aplicado com sucesso na fatura do Asaas!');
+                          } catch (err) {
+                            console.error("Error applying bonus:", err);
+                            toast.error('Erro ao aplicar bônus no Asaas.');
+                          }
+                        }}
+                        disabled={!initialData.referralBalance || initialData.referralBalance <= 0}
+                        className="w-full flex items-center justify-center gap-2 py-3 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 rounded-xl border border-emerald-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                      >
+                        <DollarSign size={18} />
+                        Aplicar Bônus no Asaas
+                      </button>
+                      <p className="text-[10px] text-gray-500 text-center">
+                        Isso irá editar a fatura pendente no Asaas subtraindo o bônus disponível.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-black/20 rounded-2xl border border-white/5 overflow-hidden">
+                  <h4 className="text-sm font-medium text-gray-400 p-4 bg-white/5 border-b border-white/5 uppercase tracking-wider">Histórico de Indicações</h4>
+                  <div className="p-4">
+                    <p className="text-sm text-gray-500 text-center py-8">
+                      Consulte a aba principal de "Indicações" para ver a lista completa de todos os clientes.
+                    </p>
+                  </div>
+                </div>
+              </div>
             ) : null}
           </div>
 
@@ -885,6 +1022,164 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
   );
 }
 
+function ReferralsView({ clients, user }: { clients: Client[], user: User }) {
+  const [referrals, setReferrals] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const referralsRef = collection(db, 'users', user.uid, 'referrals');
+    const unsubscribe = onSnapshot(referralsRef, (snapshot) => {
+      const loadedReferrals = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setReferrals(loadedReferrals);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, [user.uid]);
+
+  const handleConfirmReferral = async (referral: any) => {
+    try {
+      // 2. Update referrer's balance
+      const referrer = clients.find(c => c.id === referral.referrerId);
+      let bonusAmount = 0;
+
+      if (referrer) {
+        const now = new Date();
+        const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        const currentMonthCount = (referrer.referralsByMonth?.[monthKey] || 0);
+
+        if (currentMonthCount < 2) {
+          // Rule: Max 2 eligible referrals per month
+          // Fixed R$ 40 bonus per referral for all plans
+          bonusAmount = 40;
+        }
+
+        const newBalance = (referrer.referralBalance || 0) + bonusAmount;
+        const newCount = (referrer.referralCount || 0) + 1;
+        const newReferralsByMonth = {
+          ...(referrer.referralsByMonth || {}),
+          [monthKey]: currentMonthCount + 1
+        };
+
+        await updateDoc(doc(db, 'users', user.uid, 'clients', referrer.id), {
+          referralBalance: newBalance,
+          referralCount: newCount,
+          referralsByMonth: newReferralsByMonth
+        });
+      }
+
+      // 1. Update referral status and store bonus amount
+      await updateDoc(doc(db, 'users', user.uid, 'referrals', referral.id), {
+        status: 'confirmed',
+        bonusAmount: bonusAmount
+      });
+
+      if (bonusAmount > 0) {
+        toast.success(`Indicação confirmada! Bônus de R$ ${bonusAmount} aplicado.`);
+      } else if (referrer) {
+        toast.info('Indicação confirmada! Limite mensal de bônus atingido (máx. 2 por mês).');
+      } else {
+        toast.success('Indicação confirmada!');
+      }
+    } catch (err) {
+      console.error("Error confirming referral:", err);
+      toast.error('Erro ao confirmar indicação.');
+    }
+  };
+
+  if (loading) return <div className="flex-1 flex items-center justify-center"><RefreshCw className="animate-spin text-primary-500" /></div>;
+
+  return (
+    <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Programa de Indicações</h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl shadow-lg">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Total de Indicações</p>
+            <p className="text-3xl font-bold text-gray-900 dark:text-white">{referrals.length}</p>
+          </div>
+          <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl shadow-lg">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Aguardando Confirmação</p>
+            <p className="text-3xl font-bold text-yellow-500">{referrals.filter(r => r.status === 'pending').length}</p>
+          </div>
+          <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl shadow-lg">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Bônus Totais Gerados</p>
+            <p className="text-3xl font-bold text-emerald-500">R$ {referrals.reduce((acc, r) => acc + (r.bonusAmount || 0), 0).toFixed(2).replace('.', ',')}</p>
+          </div>
+        </div>
+
+        <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl shadow-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-gray-200 dark:bg-white/5 text-gray-500 dark:text-gray-400 text-sm uppercase tracking-wider">
+                <tr>
+                  <th className="px-6 py-4 font-medium">Quem Indicou</th>
+                  <th className="px-6 py-4 font-medium">Indicado</th>
+                  <th className="px-6 py-4 font-medium">Data</th>
+                  <th className="px-6 py-4 font-medium">Bônus</th>
+                  <th className="px-6 py-4 font-medium">Status</th>
+                  <th className="px-6 py-4 font-medium text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-white/5">
+                {referrals.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500">Nenhuma indicação registrada ainda.</td>
+                  </tr>
+                ) : (
+                  referrals.map((ref) => {
+                    const referrer = clients.find(c => c.id === ref.referrerId);
+                    const referred = clients.find(c => c.id === ref.referredClientId);
+                    return (
+                      <tr key={ref.id} className="hover:bg-gray-200 dark:hover:bg-white/5 transition-colors">
+                        <td className="px-6 py-4">
+                          <p className="text-gray-900 dark:text-white font-medium">{referrer?.name || 'Desconhecido'}</p>
+                          <p className="text-xs text-gray-500">{referrer?.whatsapp}</p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="text-gray-900 dark:text-white font-medium">{referred?.name || 'Novo Cliente'}</p>
+                          <p className="text-xs text-gray-500">{referred?.whatsapp}</p>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                          {new Date(ref.createdAt).toLocaleDateString('pt-BR')}
+                        </td>
+                        <td className="px-6 py-4 text-sm font-medium text-emerald-500">
+                          {ref.bonusAmount ? `R$ ${ref.bonusAmount.toFixed(2).replace('.', ',')}` : '-'}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            ref.status === 'confirmed' ? 'bg-emerald-500/20 text-emerald-400' :
+                            ref.status === 'applied' ? 'bg-blue-500/20 text-blue-400' :
+                            'bg-yellow-500/20 text-yellow-400'
+                          }`}>
+                            {ref.status === 'confirmed' ? 'Confirmado' : ref.status === 'applied' ? 'Aplicado' : 'Pendente'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          {ref.status === 'pending' && (
+                            <button 
+                              onClick={() => handleConfirmReferral(ref)}
+                              className="text-emerald-500 hover:text-emerald-400 text-sm font-medium"
+                            >
+                              Confirmar
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CRM({ user }: { user: User }) {
   const [clients, setClients] = useState<Client[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -974,7 +1269,7 @@ function CRM({ user }: { user: User }) {
       setIsSyncing(false);
     }
   };
-  const [view, setView] = useState<'dashboard' | 'analytics' | 'support' | 'finance' | 'settings' | 'calendar'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'analytics' | 'support' | 'finance' | 'settings' | 'calendar' | 'referrals'>('dashboard');
   const [dashboardMode, setDashboardMode] = useState<'list' | 'kanban'>('list');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
@@ -2843,6 +3138,7 @@ function CRM({ user }: { user: User }) {
           </button>
           <button onClick={() => { setView('calendar'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'calendar' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><Calendar size={20} /><span className="font-medium">Agenda</span></button>
           <button onClick={() => { setView('finance'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'finance' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><DollarSign size={20} /><span className="font-medium">Financeiro</span></button>
+          <button onClick={() => { setView('referrals'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'referrals' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><Users size={20} /><span className="font-medium">Indicações</span></button>
           <button onClick={() => { setView('settings'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'settings' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><Settings size={20} /><span className="font-medium">Configurações</span></button>
         </nav>
         <div className="p-4 border-t border-gray-200 dark:border-white/10">
@@ -2878,6 +3174,7 @@ function CRM({ user }: { user: User }) {
             {view === 'support' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Chamados</h2>}
             {view === 'finance' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Controle Financeiro</h2>}
             {view === 'settings' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Configurações</h2>}
+            {view === 'referrals' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Programa de Indicações</h2>}
           </div>
           <div className="flex items-center gap-3">
             {view === 'dashboard' && (
@@ -2923,6 +3220,7 @@ function CRM({ user }: { user: User }) {
             view === 'analytics' ? renderAnalytics() : 
             view === 'calendar' ? <CalendarView clients={clients} onClientClick={(client) => { setEditingClient(client); setIsModalOpen(true); }} /> :
             view === 'finance' ? renderFinance() :
+            view === 'referrals' ? <ReferralsView clients={clients} user={user} /> :
             view === 'settings' ? renderSettings() :
             renderSupport()
           )
@@ -2936,6 +3234,7 @@ function CRM({ user }: { user: User }) {
         onDelete={handleDeleteClient} 
         initialData={editingClient} 
         onboardingQuestions={onboardingQuestions}
+        user={user}
       />
       {sidebarOpen && <div className="fixed inset-0 bg-black/60 z-20 md:hidden backdrop-blur-md" onClick={() => setSidebarOpen(false)}></div>}
     </div>

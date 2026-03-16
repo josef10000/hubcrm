@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { CheckCircle, Globe, Building2, Mail, Phone, User as UserIcon, FileText, Upload, Image as ImageIcon, X } from 'lucide-react';
@@ -7,6 +7,8 @@ import { toast, Toaster } from 'sonner';
 
 export default function OnboardingForm() {
   const { userId, clientId } = useParams<{ userId: string, clientId?: string }>();
+  const [searchParams] = useSearchParams();
+  const referralId = searchParams.get('ref');
   const [loading, setLoading] = useState(true);
   const [clientNotFound, setClientNotFound] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -91,7 +93,8 @@ export default function OnboardingForm() {
           email: basicData.email,
           whatsapp: basicData.whatsapp,
           cpfCnpj: basicData.cpfCnpj,
-          onboardingAnswers: answers
+          onboardingAnswers: answers,
+          referredBy: referralId || null
         });
         setSuccess(true);
       }
