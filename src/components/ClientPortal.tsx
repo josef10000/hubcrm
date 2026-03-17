@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { doc, getDoc, addDoc, collection, serverTimestamp, onSnapshot, query, where, orderBy, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Globe, CreditCard, CheckCircle, Clock, AlertCircle, ExternalLink, FileText, MessageSquare, Send, X, ChevronDown, ChevronUp, Calendar, Users, Copy, HelpCircle, Search } from 'lucide-react';
+import { Globe, CreditCard, CheckCircle, Clock, AlertCircle, ExternalLink, FileText, MessageSquare, Send, X, ChevronDown, ChevronUp, Calendar, Users, Copy, HelpCircle, Search, ShoppingCart } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
 
 export default function ClientPortal() {
@@ -27,6 +27,9 @@ export default function ClientPortal() {
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFaq, setActiveFaq] = useState<string | null>(null);
+
+  const [globalAnnouncement, setGlobalAnnouncement] = useState<{title: string, message: string, type: string, isActive: boolean} | null>(null);
+  const [services, setServices] = useState<any[]>([]);
 
   const faqData = [
     {
@@ -131,6 +134,30 @@ export default function ClientPortal() {
       setClientRequests(loadedRequests);
     });
 
+    // Fetch Global Announcement
+    const globalRef = doc(db, 'users', userId, 'settings', 'global');
+    const unsubscribeGlobal = onSnapshot(globalRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.announcement && data.announcement.isActive) {
+          setGlobalAnnouncement(data.announcement);
+        } else {
+          setGlobalAnnouncement(null);
+        }
+      }
+    });
+
+    // Fetch Services
+    const servicesRef = collection(db, 'users', userId, 'services');
+    const qServices = query(servicesRef, where('isActive', '==', true));
+    const unsubscribeServices = onSnapshot(qServices, (snapshot) => {
+      const loadedServices: any[] = [];
+      snapshot.forEach((doc) => {
+        loadedServices.push({ id: doc.id, ...doc.data() });
+      });
+      setServices(loadedServices.sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0)));
+    });
+
     // Fetch Client Data
     const docRef = doc(db, 'users', userId, 'clients', clientId);
     const unsubscribeClient = onSnapshot(docRef, async (docSnap) => {
@@ -205,6 +232,8 @@ export default function ClientPortal() {
     return () => {
       unsubscribeRequests();
       unsubscribeClient();
+      unsubscribeGlobal();
+      unsubscribeServices();
     };
   }, [userId, clientId]);
 
@@ -262,6 +291,28 @@ export default function ClientPortal() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white p-6 md:p-12 font-sans selection:bg-primary-500/30">
+      {globalAnnouncement && (
+        <div className={`mb-8 p-4 rounded-2xl border flex items-start gap-4 shadow-lg animate-in fade-in slide-in-from-top-4 duration-500 ${
+          globalAnnouncement.type === 'info' ? 'bg-blue-500/10 border-blue-500/30 text-blue-100' :
+          globalAnnouncement.type === 'warning' ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-100' :
+          globalAnnouncement.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-100' :
+          'bg-primary-500/10 border-primary-500/30 text-primary-100'
+        }`}>
+          <div className={`p-2 rounded-xl shrink-0 ${
+            globalAnnouncement.type === 'info' ? 'bg-blue-500/20 text-blue-400' :
+            globalAnnouncement.type === 'warning' ? 'bg-yellow-500/20 text-yellow-400' :
+            globalAnnouncement.type === 'success' ? 'bg-emerald-500/20 text-emerald-400' :
+            'bg-primary-500/20 text-primary-400'
+          }`}>
+            <AlertCircle className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-lg mb-1">{globalAnnouncement.title}</h3>
+            <p className="text-sm opacity-90 leading-relaxed whitespace-pre-wrap">{globalAnnouncement.message}</p>
+          </div>
+        </div>
+      )}
+
       {/* Success Modal */}
       {showSuccessModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
@@ -686,6 +737,48 @@ export default function ClientPortal() {
             </div>
           </div>
         </div>
+
+        {/* Services Showcase (Upsell) */}
+        {services.length > 0 && (
+          <div className="mt-6 bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
+            <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
+              <ShoppingCart className="w-5 h-5 text-primary-400" />
+              Serviços Adicionais
+            </h2>
+            <p className="text-gray-400 text-sm mb-6">Turbine seu site com nossos serviços extras recomendados.</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {services.map(service => (
+                <div key={service.id} className={`p-5 rounded-2xl border flex flex-col h-full transition-all hover:-translate-y-1 hover:shadow-xl ${service.isPinned ? 'bg-primary-500/10 border-primary-500/30' : 'bg-white/5 border-white/10'}`}>
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between mb-3">
+                      <h3 className="font-semibold text-white text-lg">{service.title}</h3>
+                      {service.isPinned && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-primary-500/20 text-primary-400 border border-primary-500/30">
+                          Recomendado
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-400 mb-4">{service.description}</p>
+                  </div>
+                  <div className="mt-auto pt-4 border-t border-white/10 flex items-center justify-between">
+                    <span className="font-semibold text-white">{service.price}</span>
+                    <button 
+                      onClick={() => {
+                        setRequestCategory('Outros');
+                        setRequestMessage(`Olá! Gostaria de saber mais sobre o serviço: ${service.title}.`);
+                        document.getElementById('support-form')?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-xl transition-colors"
+                    >
+                      Solicitar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Support Request Form */}
         <div className="mt-6 bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl" id="support-form">

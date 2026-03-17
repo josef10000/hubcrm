@@ -3,7 +3,8 @@ import {
   LayoutDashboard, Users, Plus, X, DollarSign, CheckCircle, Clock, 
   MapPin, Phone, Tag, Menu, Building2, FileText, Briefcase, AlignLeft,
   Search, BarChart3, Calendar, Paperclip, Copy, MessageCircle, Trash2, Snowflake, LogOut, Globe, Image as ImageIcon, Sparkles, Wand2, Star,
-  Filter, ArrowDownAZ, ArrowUpRight, RefreshCw, Download, Link as LinkIcon, AlertTriangle, TrendingDown, TrendingUp, Settings, MessageSquare
+  Filter, ArrowDownAZ, ArrowUpRight, RefreshCw, Download, Link as LinkIcon, AlertTriangle, TrendingDown, TrendingUp, Settings, MessageSquare,
+  Megaphone, Pin, ShoppingCart, Eye, EyeOff
 } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid } from 'recharts';
 import { auth, db } from './lib/firebase';
@@ -1300,7 +1301,7 @@ function CRM({ user }: { user: User }) {
       setIsSyncing(false);
     }
   };
-  const [view, setView] = useState<'dashboard' | 'analytics' | 'support' | 'finance' | 'settings' | 'calendar' | 'referrals'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'analytics' | 'support' | 'finance' | 'settings' | 'calendar' | 'referrals' | 'marketing'>('dashboard');
   const [dashboardMode, setDashboardMode] = useState<'list' | 'kanban'>('list');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
@@ -1365,6 +1366,32 @@ function CRM({ user }: { user: User }) {
   const [replyMessage, setReplyMessage] = useState('');
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [newExpense, setNewExpense] = useState<Partial<Expense>>({ category: 'Ferramentas' });
+
+  const [globalAnnouncement, setGlobalAnnouncement] = useState<{title: string, message: string, type: string, isActive: boolean}>({ title: '', message: '', type: 'info', isActive: false });
+  const [services, setServices] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    const globalRef = doc(db, 'users', user.uid, 'settings', 'global');
+    const unsubGlobal = onSnapshot(globalRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.announcement) setGlobalAnnouncement(data.announcement);
+      }
+    });
+
+    const servicesRef = collection(db, 'users', user.uid, 'services');
+    const unsubServices = onSnapshot(servicesRef, (snapshot) => {
+      const loadedServices: any[] = [];
+      snapshot.forEach(doc => loadedServices.push({ id: doc.id, ...doc.data() }));
+      setServices(loadedServices.sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0)));
+    });
+
+    return () => {
+      unsubGlobal();
+      unsubServices();
+    };
+  }, [user]);
 
   useEffect(() => {
     setLoading(true);
@@ -2922,6 +2949,220 @@ function CRM({ user }: { user: User }) {
     );
   };
 
+  const renderMarketing = () => {
+    const handleSaveAnnouncement = async () => {
+      try {
+        await setDoc(doc(db, 'users', user.uid, 'settings', 'global'), {
+          announcement: globalAnnouncement
+        }, { merge: true });
+        toast.success('Aviso global atualizado com sucesso!');
+      } catch (err) {
+        toast.error('Erro ao atualizar aviso.');
+      }
+    };
+
+    const handleAddService = async () => {
+      try {
+        await setDoc(doc(collection(db, 'users', user.uid, 'services')), {
+          title: 'Novo Serviço',
+          description: 'Descrição do serviço...',
+          price: 'R$ 0,00',
+          icon: 'Star',
+          isActive: false,
+          isPinned: false,
+          createdAt: Date.now()
+        });
+        toast.success('Serviço adicionado!');
+      } catch (err) {
+        toast.error('Erro ao adicionar serviço.');
+      }
+    };
+
+    const handleUpdateService = async (id: string, updates: any) => {
+      try {
+        await updateDoc(doc(db, 'users', user.uid, 'services', id), updates);
+        toast.success('Serviço atualizado!');
+      } catch (err) {
+        toast.error('Erro ao atualizar serviço.');
+      }
+    };
+
+    const handleDeleteService = async (id: string) => {
+      if (!window.confirm('Tem certeza que deseja excluir este serviço?')) return;
+      try {
+        await deleteDoc(doc(db, 'users', user.uid, 'services', id));
+        toast.success('Serviço excluído!');
+      } catch (err) {
+        toast.error('Erro ao excluir serviço.');
+      }
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="bg-white dark:bg-[#111111] p-6 rounded-3xl border border-gray-200 dark:border-white/10 shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <Megaphone className="w-5 h-5 text-primary-500" />
+            Aviso Global (Portal do Cliente)
+          </h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+            Este aviso aparecerá no topo do portal de todos os seus clientes. Use para comunicar recessos, novos serviços ou atualizações importantes.
+          </p>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
+              <div>
+                <p className="font-medium text-gray-900 dark:text-white">Status do Aviso</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Ativar ou desativar o aviso no portal</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="sr-only peer"
+                  checked={globalAnnouncement.isActive}
+                  onChange={(e) => setGlobalAnnouncement({...globalAnnouncement, isActive: e.target.checked})}
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-500"></div>
+              </label>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Título do Aviso</label>
+                <input 
+                  type="text" 
+                  value={globalAnnouncement.title}
+                  onChange={(e) => setGlobalAnnouncement({...globalAnnouncement, title: e.target.value})}
+                  className="w-full px-4 py-2 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
+                  placeholder="Ex: Recesso de Fim de Ano"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo de Aviso</label>
+                <select 
+                  value={globalAnnouncement.type}
+                  onChange={(e) => setGlobalAnnouncement({...globalAnnouncement, type: e.target.value})}
+                  className="w-full px-4 py-2 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
+                >
+                  <option value="info">Informativo (Azul)</option>
+                  <option value="warning">Atenção (Amarelo)</option>
+                  <option value="success">Novidade/Sucesso (Verde)</option>
+                  <option value="new_feature">Lançamento (Primária)</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mensagem</label>
+              <textarea 
+                value={globalAnnouncement.message}
+                onChange={(e) => setGlobalAnnouncement({...globalAnnouncement, message: e.target.value})}
+                className="w-full px-4 py-2 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none min-h-[100px] resize-none"
+                placeholder="Detalhes do aviso..."
+              />
+            </div>
+
+            <div className="flex justify-end">
+              <button 
+                onClick={handleSaveAnnouncement}
+                className="px-6 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-medium transition-colors"
+              >
+                Salvar Aviso
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#111111] p-6 rounded-3xl border border-gray-200 dark:border-white/10 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <ShoppingCart className="w-5 h-5 text-primary-500" />
+                Vitrine de Serviços (Upsell)
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Gerencie os serviços adicionais que aparecem no portal do cliente.
+              </p>
+            </div>
+            <button 
+              onClick={handleAddService}
+              className="flex items-center gap-2 px-4 py-2 bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 rounded-xl font-medium transition-colors"
+            >
+              <Plus size={18} />
+              Novo Serviço
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            {services.map(service => (
+              <div key={service.id} className={`p-4 rounded-2xl border transition-all ${service.isPinned ? 'bg-primary-500/5 border-primary-500/30' : 'bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-white/10'}`}>
+                <div className="flex flex-col md:flex-row md:items-center gap-4">
+                  <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Título do Serviço</label>
+                      <input 
+                        type="text" 
+                        value={service.title}
+                        onChange={(e) => handleUpdateService(service.id, { title: e.target.value })}
+                        className="w-full px-3 py-1.5 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-1 focus:ring-primary-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Preço (Ex: R$ 150,00 ou Sob Consulta)</label>
+                      <input 
+                        type="text" 
+                        value={service.price}
+                        onChange={(e) => handleUpdateService(service.id, { price: e.target.value })}
+                        className="w-full px-3 py-1.5 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-1 focus:ring-primary-500 outline-none"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Descrição Curta</label>
+                      <input 
+                        type="text" 
+                        value={service.description}
+                        onChange={(e) => handleUpdateService(service.id, { description: e.target.value })}
+                        className="w-full px-3 py-1.5 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-1 focus:ring-primary-500 outline-none"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button 
+                      onClick={() => handleUpdateService(service.id, { isPinned: !service.isPinned })}
+                      className={`p-2 rounded-lg transition-colors ${service.isPinned ? 'bg-primary-500/20 text-primary-500' : 'bg-gray-200 dark:bg-white/10 text-gray-500 dark:text-gray-400 hover:text-primary-500'}`}
+                      title={service.isPinned ? "Desafixar" : "Fixar no topo"}
+                    >
+                      <Pin size={18} />
+                    </button>
+                    <button 
+                      onClick={() => handleUpdateService(service.id, { isActive: !service.isActive })}
+                      className={`p-2 rounded-lg transition-colors ${service.isActive ? 'bg-emerald-500/20 text-emerald-500' : 'bg-gray-200 dark:bg-white/10 text-gray-500 dark:text-gray-400 hover:text-emerald-500'}`}
+                      title={service.isActive ? "Ocultar do portal" : "Mostrar no portal"}
+                    >
+                      {service.isActive ? <Eye size={18} /> : <EyeOff size={18} />}
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteService(service.id)}
+                      className="p-2 rounded-lg bg-gray-200 dark:bg-white/10 text-gray-500 dark:text-gray-400 hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                      title="Excluir serviço"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {services.length === 0 && (
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                Nenhum serviço cadastrado. Clique em "Novo Serviço" para começar.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderSettings = () => {
     const themes = [
       { id: 'orange', name: 'Laranja (Padrão)', color: 'bg-orange-500' },
@@ -3206,6 +3447,7 @@ function CRM({ user }: { user: User }) {
           <button onClick={() => { setView('calendar'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'calendar' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><Calendar size={20} /><span className="font-medium">Agenda</span></button>
           <button onClick={() => { setView('finance'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'finance' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><DollarSign size={20} /><span className="font-medium">Financeiro</span></button>
           <button onClick={() => { setView('referrals'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'referrals' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><Users size={20} /><span className="font-medium">Indicações</span></button>
+          <button onClick={() => { setView('marketing'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'marketing' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><Megaphone size={20} /><span className="font-medium">Avisos & Serviços</span></button>
           <button onClick={() => { setView('settings'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'settings' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><Settings size={20} /><span className="font-medium">Configurações</span></button>
         </nav>
         <div className="p-4 border-t border-gray-200 dark:border-white/10">
@@ -3242,6 +3484,7 @@ function CRM({ user }: { user: User }) {
             {view === 'finance' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Controle Financeiro</h2>}
             {view === 'settings' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Configurações</h2>}
             {view === 'referrals' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Programa de Indicações</h2>}
+            {view === 'marketing' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Avisos & Serviços</h2>}
           </div>
           <div className="flex items-center gap-3">
             {view === 'dashboard' && (
@@ -3288,6 +3531,7 @@ function CRM({ user }: { user: User }) {
             view === 'calendar' ? <CalendarView clients={clients} onClientClick={(client) => { setEditingClient(client); setIsModalOpen(true); }} /> :
             view === 'finance' ? renderFinance() :
             view === 'referrals' ? <ReferralsView clients={clients} user={user} /> :
+            view === 'marketing' ? renderMarketing() :
             view === 'settings' ? renderSettings() :
             renderSupport()
           )
