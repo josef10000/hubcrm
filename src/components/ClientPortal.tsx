@@ -743,48 +743,6 @@ export default function ClientPortal() {
           </div>
         </div>
 
-        {/* Services Showcase (Upsell) */}
-        {services.length > 0 && (
-          <div className="mt-6 bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
-            <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
-              <ShoppingCart className="w-5 h-5 text-primary-400" />
-              Serviços Adicionais
-            </h2>
-            <p className="text-gray-400 text-sm mb-6">Turbine seu site com nossos serviços extras recomendados.</p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {services.map(service => (
-                <div key={service.id} className={`p-5 rounded-2xl border flex flex-col h-full transition-all hover:-translate-y-1 hover:shadow-xl ${service.isPinned ? 'bg-primary-500/10 border-primary-500/30' : 'bg-white/5 border-white/10'}`}>
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between mb-3">
-                      <h3 className="font-semibold text-white text-lg">{service.title}</h3>
-                      {service.isPinned && (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-primary-500/20 text-primary-400 border border-primary-500/30">
-                          Recomendado
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-400 mb-4">{service.description}</p>
-                  </div>
-                  <div className="mt-auto pt-4 border-t border-white/10 flex items-center justify-between">
-                    <span className="font-semibold text-white">{service.price}</span>
-                    <button 
-                      onClick={() => {
-                        setRequestCategory('Outros');
-                        setRequestMessage(`Olá! Gostaria de saber mais sobre o serviço: ${service.title}.`);
-                        document.getElementById('support-form')?.scrollIntoView({ behavior: 'smooth' });
-                      }}
-                      className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-xl transition-colors"
-                    >
-                      Solicitar
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Support Request Form */}
         <div className="mt-6 bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl" id="support-form">
           <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">

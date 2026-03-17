@@ -3023,42 +3023,6 @@ function CRM({ user }: { user: User }) {
       }
     };
 
-    const handleAddService = async () => {
-      try {
-        await addDoc(collection(db, 'users', user.uid, 'services'), {
-          title: 'Novo Serviço',
-          description: 'Descrição do serviço...',
-          price: 'R$ 0,00',
-          icon: 'Star',
-          isActive: false,
-          isPinned: false,
-          createdAt: Date.now()
-        });
-        toast.success('Serviço adicionado!');
-      } catch (err) {
-        toast.error('Erro ao adicionar serviço.');
-      }
-    };
-
-    const handleUpdateService = async (id: string, updates: any) => {
-      try {
-        await updateDoc(doc(db, 'users', user.uid, 'services', id), updates);
-        toast.success('Serviço atualizado!');
-      } catch (err) {
-        toast.error('Erro ao atualizar serviço.');
-      }
-    };
-
-    const handleDeleteService = async (id: string) => {
-      if (!window.confirm('Tem certeza que deseja excluir este serviço?')) return;
-      try {
-        await deleteDoc(doc(db, 'users', user.uid, 'services', id));
-        toast.success('Serviço excluído!');
-      } catch (err) {
-        toast.error('Erro ao excluir serviço.');
-      }
-    };
-
     return (
       <div className="space-y-6">
         <div className="bg-white dark:bg-[#111111] p-6 rounded-3xl border border-gray-200 dark:border-white/10 shadow-sm">
@@ -3131,106 +3095,6 @@ function CRM({ user }: { user: User }) {
                 Salvar Aviso
               </button>
             </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-[#111111] p-6 rounded-3xl border border-gray-200 dark:border-white/10 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <ShoppingCart className="w-5 h-5 text-primary-500" />
-                Vitrine de Serviços (Upsell)
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Gerencie os serviços adicionais que aparecem no portal do cliente.
-              </p>
-            </div>
-            <button 
-              onClick={handleAddService}
-              className="flex items-center gap-2 px-4 py-2 bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 rounded-xl font-medium transition-colors"
-            >
-              <Plus size={18} />
-              Novo Serviço
-            </button>
-          </div>
-
-          <div className="space-y-4">
-            {services.map(service => (
-              <div key={service.id} className={`p-4 rounded-2xl border transition-all ${service.isPinned ? 'bg-primary-500/5 border-primary-500/30' : 'bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-white/10'}`}>
-                <div className="flex flex-col md:flex-row md:items-center gap-4">
-                  <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Título do Serviço</label>
-                      <input 
-                        type="text" 
-                        defaultValue={service.title}
-                        onBlur={(e) => {
-                          if (e.target.value !== service.title) {
-                            handleUpdateService(service.id, { title: e.target.value });
-                          }
-                        }}
-                        className="w-full px-3 py-1.5 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-1 focus:ring-primary-500 outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Preço (Ex: R$ 150,00 ou Sob Consulta)</label>
-                      <input 
-                        type="text" 
-                        defaultValue={service.price}
-                        onBlur={(e) => {
-                          if (e.target.value !== service.price) {
-                            handleUpdateService(service.id, { price: e.target.value });
-                          }
-                        }}
-                        className="w-full px-3 py-1.5 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-1 focus:ring-primary-500 outline-none"
-                      />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Descrição Curta</label>
-                      <input 
-                        type="text" 
-                        defaultValue={service.description}
-                        onBlur={(e) => {
-                          if (e.target.value !== service.description) {
-                            handleUpdateService(service.id, { description: e.target.value });
-                          }
-                        }}
-                        className="w-full px-3 py-1.5 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-1 focus:ring-primary-500 outline-none"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button 
-                      onClick={() => handleUpdateService(service.id, { isPinned: !service.isPinned })}
-                      className={`p-2 rounded-lg transition-colors ${service.isPinned ? 'bg-primary-500/20 text-primary-500' : 'bg-gray-200 dark:bg-white/10 text-gray-500 dark:text-gray-400 hover:text-primary-500'}`}
-                      title={service.isPinned ? "Desafixar" : "Fixar no topo"}
-                    >
-                      <Pin size={18} />
-                    </button>
-                    <button 
-                      onClick={() => handleUpdateService(service.id, { isActive: !service.isActive })}
-                      className={`p-2 rounded-lg transition-colors ${service.isActive ? 'bg-emerald-500/20 text-emerald-500' : 'bg-gray-200 dark:bg-white/10 text-gray-500 dark:text-gray-400 hover:text-emerald-500'}`}
-                      title={service.isActive ? "Ocultar do portal" : "Mostrar no portal"}
-                    >
-                      {service.isActive ? <Eye size={18} /> : <EyeOff size={18} />}
-                    </button>
-                    <button 
-                      onClick={() => handleDeleteService(service.id)}
-                      className="p-2 rounded-lg bg-gray-200 dark:bg-white/10 text-gray-500 dark:text-gray-400 hover:text-red-500 hover:bg-red-500/10 transition-colors"
-                      title="Excluir serviço"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {services.length === 0 && (
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                Nenhum serviço cadastrado. Clique em "Novo Serviço" para começar.
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -3521,7 +3385,7 @@ function CRM({ user }: { user: User }) {
           <button onClick={() => { setView('calendar'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'calendar' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><Calendar size={20} /><span className="font-medium">Agenda</span></button>
           <button onClick={() => { setView('finance'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'finance' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><DollarSign size={20} /><span className="font-medium">Financeiro</span></button>
           <button onClick={() => { setView('referrals'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'referrals' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><Users size={20} /><span className="font-medium">Indicações</span></button>
-          <button onClick={() => { setView('marketing'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'marketing' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><Megaphone size={20} /><span className="font-medium">Avisos & Serviços</span></button>
+          <button onClick={() => { setView('marketing'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'marketing' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><Megaphone size={20} /><span className="font-medium">Avisos</span></button>
           <button onClick={() => { setView('settings'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'settings' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:text-white border border-transparent'}`}><Settings size={20} /><span className="font-medium">Configurações</span></button>
         </nav>
         <div className="p-4 border-t border-gray-200 dark:border-white/10">
@@ -3558,7 +3422,7 @@ function CRM({ user }: { user: User }) {
             {view === 'finance' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Controle Financeiro</h2>}
             {view === 'settings' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Configurações</h2>}
             {view === 'referrals' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Programa de Indicações</h2>}
-            {view === 'marketing' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Avisos & Serviços</h2>}
+            {view === 'marketing' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Avisos</h2>}
           </div>
           <div className="flex items-center gap-3">
             {view === 'dashboard' && (
