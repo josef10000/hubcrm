@@ -78,6 +78,7 @@ export interface Client {
   paymentStatus?: 'PENDING' | 'RECEIVED' | 'OVERDUE' | 'N/A';
   nextDueDate?: string;
   billingType?: 'PIX' | 'CREDIT_CARD' | 'BOLETO' | 'UNDEFINED';
+  billingCycle?: 'MONTHLY' | 'YEARLY';
   firstPaymentDate?: string;
   recurringPaymentDay?: number;
   deliveryDate?: string;
@@ -376,6 +377,26 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                   </div>
 
                   <div className="mt-6">
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Ciclo de Cobrança *</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button 
+                        type="button" 
+                        onClick={() => setFormData(prev => ({ ...prev, billingCycle: 'MONTHLY' }))}
+                        className={`p-4 rounded-xl border text-center transition-all ${formData.billingCycle === 'MONTHLY' || !formData.billingCycle ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
+                      >
+                        <div className="font-semibold text-sm">Mensal</div>
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={() => setFormData(prev => ({ ...prev, billingCycle: 'YEARLY' }))}
+                        className={`p-4 rounded-xl border text-center transition-all ${formData.billingCycle === 'YEARLY' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
+                      >
+                        <div className="font-semibold text-sm">Anual</div>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mt-6">
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Forma de Pagamento *</label>
                     <div className="grid grid-cols-3 gap-3">
                       <button 
@@ -411,7 +432,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                         className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Padrão' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
                       >
                         <div className="font-semibold mb-1">Padrão</div>
-                        <div className="text-sm opacity-80">R$ 80/mês</div>
+                        <div className="text-sm opacity-80">{formData.billingCycle === 'YEARLY' ? 'R$ 80/mês' : 'R$ 100/mês'}</div>
                       </button>
                       <button 
                         type="button" 
@@ -419,7 +440,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                         className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Profissional' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
                       >
                         <div className="font-semibold mb-1">Profissional</div>
-                        <div className="text-sm opacity-80">R$ 150/mês</div>
+                        <div className="text-sm opacity-80">{formData.billingCycle === 'YEARLY' ? 'R$ 150/mês' : 'R$ 180/mês'}</div>
                       </button>
                     </div>
                   </div>
@@ -1492,6 +1513,7 @@ function CRM({ user }: { user: User }) {
       nextDueDate: clientData.nextDueDate,
       paymentStatus: clientData.paymentStatus || 'PENDING',
       billingType: clientData.billingType || 'UNDEFINED',
+      billingCycle: clientData.billingCycle || 'MONTHLY',
       firstPaymentDate: clientData.firstPaymentDate,
       recurringPaymentDay: clientData.recurringPaymentDay,
       deliveryDate: clientData.deliveryDate,
@@ -1499,7 +1521,7 @@ function CRM({ user }: { user: User }) {
 
     try { 
       // Handle Update Subscription Due Date
-      if (!isNew && client.asaasSubscriptionId && editingClient && (editingClient.recurringPaymentDay !== client.recurringPaymentDay || editingClient.billingType !== client.billingType)) {
+      if (!isNew && client.asaasSubscriptionId && editingClient && (editingClient.recurringPaymentDay !== client.recurringPaymentDay || editingClient.billingType !== client.billingType || editingClient.billingCycle !== client.billingCycle)) {
         if (client.recurringPaymentDay && editingClient.recurringPaymentDay !== client.recurringPaymentDay) {
           const today = new Date();
           let nextSubDate = new Date(today.getFullYear(), today.getMonth(), client.recurringPaymentDay, 12, 0, 0);
@@ -1516,7 +1538,9 @@ function CRM({ user }: { user: User }) {
               subscriptionId: client.asaasSubscriptionId,
               nextDueDate: nextSubDateStr,
               updatePendingPayments: true,
-              billingType: client.billingType
+              billingType: client.billingType,
+              cycle: 'MONTHLY',
+              description: `Assinatura ${client.billingCycle === 'YEARLY' ? 'Anual' : 'Mensal'} - Plano ${client.plan} - Hub Central`
             })
           });
           if (!updateRes.ok) {
@@ -1525,19 +1549,21 @@ function CRM({ user }: { user: User }) {
           } else {
             client.nextDueDate = nextSubDateStr;
           }
-        } else if (editingClient.billingType !== client.billingType) {
+        } else if (editingClient.billingType !== client.billingType || editingClient.billingCycle !== client.billingCycle) {
           const updateRes = await fetch('/api/asaas/update-subscription', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               subscriptionId: client.asaasSubscriptionId,
               updatePendingPayments: true,
-              billingType: client.billingType
+              billingType: client.billingType,
+              cycle: 'MONTHLY',
+              description: `Assinatura ${client.billingCycle === 'YEARLY' ? 'Anual' : 'Mensal'} - Plano ${client.plan} - Hub Central`
             })
           });
           if (!updateRes.ok) {
             console.error("Failed to update subscription billing type in Asaas");
-            toast.error("Aviso: Não foi possível atualizar a forma de pagamento no Asaas.");
+            toast.error("Aviso: Não foi possível atualizar a assinatura no Asaas.");
           }
         }
       }
@@ -1643,7 +1669,10 @@ function CRM({ user }: { user: User }) {
           // 2. Create Subscription in Asaas
           const today = new Date();
           const firstPaymentDate = client.firstPaymentDate || today.toISOString().split('T')[0];
-          const value = client.plan === 'Profissional' ? 150 : 80;
+          let value = client.plan === 'Profissional' ? 180 : 100;
+          if (client.billingCycle === 'YEARLY') {
+            value = client.plan === 'Profissional' ? 150 : 80; // 2 months discount for yearly, divided by 12
+          }
 
           if (client.recurringPaymentDay) {
             // Strategy 1: Single charge for first payment + Subscription for recurring
@@ -1693,9 +1722,10 @@ function CRM({ user }: { user: User }) {
               body: JSON.stringify({
                 customer: client.asaasCustomerId,
                 billingType: client.billingType,
+                cycle: 'MONTHLY',
                 value: value,
                 nextDueDate: nextSubDateStr,
-                description: `Assinatura Mensal - Plano ${client.plan} - Hub Central`
+                description: `Assinatura ${client.billingCycle === 'YEARLY' ? 'Anual' : 'Mensal'} - Plano ${client.plan} - Hub Central`
               })
             });
 
@@ -1715,9 +1745,10 @@ function CRM({ user }: { user: User }) {
               body: JSON.stringify({
                 customer: client.asaasCustomerId,
                 billingType: client.billingType,
+                cycle: 'MONTHLY',
                 value: value,
                 nextDueDate: firstPaymentDate,
-                description: `Assinatura Mensal - Plano ${client.plan} - Hub Central`
+                description: `Assinatura ${client.billingCycle === 'YEARLY' ? 'Anual' : 'Mensal'} - Plano ${client.plan} - Hub Central`
               })
             });
 
@@ -1833,8 +1864,10 @@ function CRM({ user }: { user: User }) {
       if (sortBy === 'alphabetical') {
         return a.name.localeCompare(b.name);
       } else if (sortBy === 'value') {
-        const valA = a.plan === 'Profissional' ? 150 : 80;
-        const valB = b.plan === 'Profissional' ? 150 : 80;
+        let valA = a.plan === 'Profissional' ? 180 : 100;
+        if (a.billingCycle === 'YEARLY') valA = a.plan === 'Profissional' ? 150 : 80;
+        let valB = b.plan === 'Profissional' ? 180 : 100;
+        if (b.billingCycle === 'YEARLY') valB = b.plan === 'Profissional' ? 150 : 80;
         return valB - valA;
       } else {
         return b.createdAt - a.createdAt;
@@ -1896,8 +1929,16 @@ function CRM({ user }: { user: User }) {
 
     // Calculate Metrics
     const activeClients = clients.filter(c => c.status === 'Ativo').length;
-    const mrr = clients.filter(c => c.status === 'Ativo' || c.status === 'Inadimplente').reduce((acc, c) => acc + (c.plan === 'Profissional' ? 150 : 80), 0);
-    const overdueAmount = clients.filter(c => c.status === 'Inadimplente').reduce((acc, c) => acc + (c.plan === 'Profissional' ? 150 : 80), 0);
+    const mrr = clients.filter(c => c.status === 'Ativo' || c.status === 'Inadimplente').reduce((acc, c) => {
+      let val = c.plan === 'Profissional' ? 180 : 100;
+      if (c.billingCycle === 'YEARLY') val = c.plan === 'Profissional' ? 150 : 80;
+      return acc + val;
+    }, 0);
+    const overdueAmount = clients.filter(c => c.status === 'Inadimplente').reduce((acc, c) => {
+      let val = c.plan === 'Profissional' ? 180 : 100;
+      if (c.billingCycle === 'YEARLY') val = c.plan === 'Profissional' ? 150 : 80;
+      return acc + val;
+    }, 0);
     
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
@@ -1906,7 +1947,11 @@ function CRM({ user }: { user: User }) {
       if (!c.nextDueDate) return true; // Assume it's due if no date
       const dueDate = new Date(c.nextDueDate);
       return dueDate.getMonth() === currentMonth && dueDate.getFullYear() === currentYear;
-    }).reduce((acc, c) => acc + (c.plan === 'Profissional' ? 150 : 80), 0);
+    }).reduce((acc, c) => {
+      let val = c.plan === 'Profissional' ? 180 : 100;
+      if (c.billingCycle === 'YEARLY') val = c.plan === 'Profissional' ? 150 : 80;
+      return acc + val;
+    }, 0);
 
     // Chart Data
     const statusData = [
@@ -2146,7 +2191,7 @@ function CRM({ user }: { user: User }) {
                     
                     <div className="flex items-center text-gray-600 dark:text-gray-300 text-sm">
                       <Tag size={16} className="mr-3 text-primary-400 opacity-80" />
-                      Plano {client.plan} <span className="ml-2 text-xs opacity-60">(R$ {client.plan === 'Profissional' ? '150' : '80'})</span>
+                      Plano {client.plan} <span className="ml-2 text-xs opacity-60">(R$ {client.plan === 'Profissional' ? (client.billingCycle === 'YEARLY' ? '150' : '180') : (client.billingCycle === 'YEARLY' ? '80' : '100')})</span>
                     </div>
                     
                     {client.nextDueDate && client.status !== 'Cancelado' && (
@@ -2212,7 +2257,7 @@ function CRM({ user }: { user: User }) {
                       </a>
                       {client.invoiceUrl && (
                         <a 
-                          href={`https://wa.me/55${(client.whatsapp || '').replace(/\D/g, '')}?text=Olá ${client.name}, sua fatura de R$ ${client.plan === 'Profissional' ? '150,00' : '80,00'} vence dia ${client.nextDueDate ? new Date(client.nextDueDate).toLocaleDateString('pt-BR') : ''}. Segue o link para pagamento via PIX: ${client.invoiceUrl}`}
+                          href={`https://wa.me/55${(client.whatsapp || '').replace(/\D/g, '')}?text=Olá ${client.name}, sua fatura de R$ ${client.plan === 'Profissional' ? (client.billingCycle === 'YEARLY' ? '150,00' : '180,00') : (client.billingCycle === 'YEARLY' ? '80,00' : '100,00')} vence dia ${client.nextDueDate ? new Date(client.nextDueDate).toLocaleDateString('pt-BR') : ''}. Segue o link para pagamento via PIX: ${client.invoiceUrl}`}
                           target="_blank"
                           rel="noreferrer"
                           onClick={e => e.stopPropagation()}
@@ -2352,10 +2397,18 @@ function CRM({ user }: { user: User }) {
     const totalClients = clients.length;
     const activeClients = clients.filter(c => c.status === 'Ativo').length;
     const activeClientsList = clients.filter(c => c.status === 'Ativo');
-    const mrr = activeClientsList.reduce((acc, c) => acc + (c.plan === 'Profissional' ? 150 : 80), 0);
+    const mrr = activeClientsList.reduce((acc, c) => {
+      let val = c.plan === 'Profissional' ? 180 : 100;
+      if (c.billingCycle === 'YEARLY') val = c.plan === 'Profissional' ? 150 : 80;
+      return acc + val;
+    }, 0);
     
     const overdueClients = clients.filter(c => c.paymentStatus === 'OVERDUE');
-    const overdueAmount = overdueClients.reduce((acc, c) => acc + (c.plan === 'Profissional' ? 150 : 80), 0);
+    const overdueAmount = overdueClients.reduce((acc, c) => {
+      let val = c.plan === 'Profissional' ? 180 : 100;
+      if (c.billingCycle === 'YEARLY') val = c.plan === 'Profissional' ? 150 : 80;
+      return acc + val;
+    }, 0);
     const overdueRate = activeClients > 0 ? ((overdueClients.length / activeClients) * 100).toFixed(1) : '0.0';
 
     const canceledClients = clients.filter(c => c.status === 'Cancelado').length;
@@ -2378,7 +2431,8 @@ function CRM({ user }: { user: User }) {
         const diffTime = dueDate.getTime() - todayDate.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         
-        const value = c.plan === 'Profissional' ? 150 : 80;
+        let value = c.plan === 'Profissional' ? 180 : 100;
+        if (c.billingCycle === 'YEARLY') value = c.plan === 'Profissional' ? 150 : 80;
 
         if (diffDays >= 0 && diffDays <= 7) cash7Days += value;
         if (diffDays >= 0 && diffDays <= 15) cash15Days += value;
@@ -2435,7 +2489,11 @@ function CRM({ user }: { user: User }) {
       const mrrUpToThisMonth = activeClientsList.filter(c => {
         const d = new Date(c.createdAt);
         return d.getFullYear() < currentYear || (d.getFullYear() === currentYear && d.getMonth() <= i);
-      }).reduce((acc, c) => acc + (c.plan === 'Profissional' ? 150 : 80), 0);
+      }).reduce((acc, c) => {
+        let val = c.plan === 'Profissional' ? 180 : 100;
+        if (c.billingCycle === 'YEARLY') val = c.plan === 'Profissional' ? 150 : 80;
+        return acc + val;
+      }, 0);
 
       return { 
         name: m, 
@@ -2633,7 +2691,11 @@ function CRM({ user }: { user: User }) {
   };
 
   const renderFinance = () => {
-    const totalMRR = clients.filter(c => c.status === 'Ativo' || c.status === 'Inadimplente').reduce((acc, c) => acc + (c.plan === 'Profissional' ? 150 : 80), 0);
+    const totalMRR = clients.filter(c => c.status === 'Ativo' || c.status === 'Inadimplente').reduce((acc, c) => {
+      let val = c.plan === 'Profissional' ? 180 : 100;
+      if (c.billingCycle === 'YEARLY') val = c.plan === 'Profissional' ? 150 : 80;
+      return acc + val;
+    }, 0);
     const totalExpenses = expenses.reduce((acc, e) => acc + e.amount, 0);
     const netProfit = totalMRR - totalExpenses;
 

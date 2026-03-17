@@ -19,9 +19,9 @@ interface CalendarViewProps {
 
 type CalendarMode = 'finance' | 'production';
 
-const getPlanPrice = (plan?: string) => {
-  if (plan === 'Profissional') return 150;
-  if (plan === 'Padrão') return 80;
+const getPlanPrice = (plan?: string, billingCycle?: string) => {
+  if (plan === 'Profissional') return billingCycle === 'YEARLY' ? 150 : 180;
+  if (plan === 'Padrão') return billingCycle === 'YEARLY' ? 80 : 100;
   return 0;
 };
 
@@ -53,8 +53,8 @@ export default function CalendarView({ clients, onClientClick }: CalendarViewPro
     if (dayEvents.length === 0) return null;
 
     if (mode === 'finance') {
-      const expected = dayEvents.reduce((acc, c) => acc + getPlanPrice(c.plan), 0);
-      const paid = dayEvents.reduce((acc, c) => acc + (c.paymentStatus === 'RECEIVED' ? getPlanPrice(c.plan) : 0), 0);
+      const expected = dayEvents.reduce((acc, c) => acc + getPlanPrice(c.plan, c.billingCycle), 0);
+      const paid = dayEvents.reduce((acc, c) => acc + (c.paymentStatus === 'RECEIVED' ? getPlanPrice(c.plan, c.billingCycle) : 0), 0);
       const percentage = expected > 0 ? Math.round((paid / expected) * 100) : 0;
 
       return (
@@ -261,7 +261,7 @@ export default function CalendarView({ clients, onClientClick }: CalendarViewPro
                     
                     {mode === 'finance' ? (
                       <div className="text-right">
-                        <div className="font-bold text-gray-900 dark:text-white text-lg">R$ {getPlanPrice(client.plan).toFixed(2)}</div>
+                        <div className="font-bold text-gray-900 dark:text-white text-lg">R$ {getPlanPrice(client.plan, client.billingCycle).toFixed(2)}</div>
                         <div className={`text-xs font-bold px-2.5 py-1 rounded-md inline-block mt-1 ${client.paymentStatus === 'RECEIVED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : client.paymentStatus === 'OVERDUE' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}`}>
                           {client.paymentStatus === 'RECEIVED' ? 'Pago' : client.paymentStatus === 'OVERDUE' ? 'Atrasado' : 'Pendente'}
                         </div>

@@ -728,10 +728,13 @@ export default function ClientPortal() {
               </p>
               <p className="text-[10px] text-gray-500 mt-1">
                 {(() => {
-                  const planPrice = client?.plan === 'Profissional' ? 150 : 80;
+                  let planPrice = client?.plan === 'Profissional' ? 180 : 100;
+                  if (client?.billingCycle === 'YEARLY') {
+                    planPrice = client?.plan === 'Profissional' ? 1800 : 960;
+                  }
                   const discount = client?.referralBalance || 0;
                   const percent = Math.min(100, Math.round((discount / planPrice) * 100));
-                  return `${percent}% da mensalidade`;
+                  return `${percent}% da assinatura`;
                 })()}
               </p>
             </div>
