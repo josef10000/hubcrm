@@ -9,7 +9,7 @@ import {
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid } from 'recharts';
 import { auth, db } from './lib/firebase';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
-import { collection, doc, setDoc, onSnapshot, deleteDoc, updateDoc, query, where, getDocs } from 'firebase/firestore';
+import { collection, doc, setDoc, onSnapshot, deleteDoc, updateDoc, query, where, getDocs, addDoc } from 'firebase/firestore';
 import Auth from './components/Auth';
 import CalendarView from './components/CalendarView';
 import { toast } from 'sonner';
@@ -3025,7 +3025,7 @@ function CRM({ user }: { user: User }) {
 
     const handleAddService = async () => {
       try {
-        await setDoc(doc(collection(db, 'users', user.uid, 'services')), {
+        await addDoc(collection(db, 'users', user.uid, 'services'), {
           title: 'Novo Serviço',
           description: 'Descrição do serviço...',
           price: 'R$ 0,00',
@@ -3163,8 +3163,12 @@ function CRM({ user }: { user: User }) {
                       <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Título do Serviço</label>
                       <input 
                         type="text" 
-                        value={service.title}
-                        onChange={(e) => handleUpdateService(service.id, { title: e.target.value })}
+                        defaultValue={service.title}
+                        onBlur={(e) => {
+                          if (e.target.value !== service.title) {
+                            handleUpdateService(service.id, { title: e.target.value });
+                          }
+                        }}
                         className="w-full px-3 py-1.5 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-1 focus:ring-primary-500 outline-none"
                       />
                     </div>
@@ -3172,8 +3176,12 @@ function CRM({ user }: { user: User }) {
                       <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Preço (Ex: R$ 150,00 ou Sob Consulta)</label>
                       <input 
                         type="text" 
-                        value={service.price}
-                        onChange={(e) => handleUpdateService(service.id, { price: e.target.value })}
+                        defaultValue={service.price}
+                        onBlur={(e) => {
+                          if (e.target.value !== service.price) {
+                            handleUpdateService(service.id, { price: e.target.value });
+                          }
+                        }}
                         className="w-full px-3 py-1.5 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-1 focus:ring-primary-500 outline-none"
                       />
                     </div>
@@ -3181,8 +3189,12 @@ function CRM({ user }: { user: User }) {
                       <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Descrição Curta</label>
                       <input 
                         type="text" 
-                        value={service.description}
-                        onChange={(e) => handleUpdateService(service.id, { description: e.target.value })}
+                        defaultValue={service.description}
+                        onBlur={(e) => {
+                          if (e.target.value !== service.description) {
+                            handleUpdateService(service.id, { description: e.target.value });
+                          }
+                        }}
                         className="w-full px-3 py-1.5 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-1 focus:ring-primary-500 outline-none"
                       />
                     </div>

@@ -149,11 +149,13 @@ export default function ClientPortal() {
 
     // Fetch Services
     const servicesRef = collection(db, 'users', userId, 'services');
-    const qServices = query(servicesRef, where('isActive', '==', true));
-    const unsubscribeServices = onSnapshot(qServices, (snapshot) => {
+    const unsubscribeServices = onSnapshot(servicesRef, (snapshot) => {
       const loadedServices: any[] = [];
       snapshot.forEach((doc) => {
-        loadedServices.push({ id: doc.id, ...doc.data() });
+        const data = doc.data();
+        if (data.isActive) {
+          loadedServices.push({ id: doc.id, ...data });
+        }
       });
       setServices(loadedServices.sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0)));
     });

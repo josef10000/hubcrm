@@ -76,19 +76,33 @@ service cloud.firestore {
       match /expenses/{expenseId} {
         allow read, write: if isOwner(userId);
       }
+
+      match /services/{serviceId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /settings/{settingId} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
-    // Public access for Client Portal (read-only for specific client)
-    // Note: In a real app, we might want more security here, 
-    // but for this CRM, the portal is accessed via a link with userId and clientId.
+    // Public access for Client Portal
     match /users/{userId}/clients/{clientId} {
-      allow read: if true; // Publicly readable for the portal
-      allow update: if true; // Allow client to update stages or NPS
+      allow read: if true;
+      allow update: if true;
+    }
+
+    match /users/{userId}/services/{serviceId} {
+      allow read: if true;
+    }
+
+    match /users/{userId}/settings/global {
+      allow read: if true;
     }
 
     match /users/{userId}/supportRequests/{requestId} {
-      allow create: if true; // Allow client to create support requests
-      allow read: if true; // Allow client to read their own requests
+      allow create: if true;
+      allow read: if true;
     }
   }
 }
