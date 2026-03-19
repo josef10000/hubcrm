@@ -7,7 +7,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { name, description, endDate, value, billingType, chargeType, maxInstallmentCount, installmentCount, customer, dueDateLimitDays } = req.body;
+    const { name, description, endDate, value, billingType, chargeType, maxInstallmentCount, customer, dueDateLimitDays } = req.body;
     
     // Create a Payment Link in Asaas
     const payload: any = {
@@ -25,13 +25,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (billingType && billingType !== "UNDEFINED") {
       payload.billingType = billingType;
       if (billingType === 'CREDIT_CARD') {
-        payload.creditCardInstallmentConfiguration = {
-          maxInstallmentCount: maxInstallmentCount || 12,
-        };
-        // If a fixed installment count is provided, enforce it
-        if (installmentCount) {
-          payload.installmentCount = installmentCount;
-        }
+        payload.chargeType = 'INSTALLMENT';
+        payload.maxInstallmentCount = maxInstallmentCount || 12;
       }
     }
 

@@ -1839,9 +1839,6 @@ function CRM({ user }: { user: User }) {
             // The annual price (monthlyValue) already includes the setup for the combo
             const totalComboValue = monthlyValue;
             
-            const count = client.comboInstallments || 12;
-            const installmentValue = (totalComboValue / count).toFixed(2);
-
             const paymentRes = await fetch('/api/asaas/payment-links', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -1850,9 +1847,8 @@ function CRM({ user }: { user: User }) {
                 description: `Acesso anual ao Plano ${client.plan} com taxa de setup inclusa.`,
                 value: totalComboValue,
                 billingType: 'CREDIT_CARD', // Explicitly set to CREDIT_CARD to enable installments
-                installmentCount: count, // Fixed installment count
-                chargeType: 'DETACHED', // One-time payment
-                maxInstallmentCount: 12,
+                chargeType: 'INSTALLMENT', // Allow client to choose installments
+                maxInstallmentCount: 12, // Max installments
                 dueDateLimitDays: 3, // 3 business days for payment due date
                 customer: client.asaasCustomerId,
                 endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Link valid for 7 days
@@ -1868,7 +1864,7 @@ function CRM({ user }: { user: User }) {
               const renewalDate = new Date(firstPaymentDate + 'T12:00:00Z');
               renewalDate.setFullYear(renewalDate.getFullYear() + 1);
               client.comboRenewalDate = renewalDate.toISOString().split('T')[0];
-              toast.success(`Combo criado em ${count}x de R$ ${installmentValue}!`);
+              toast.success("Combo criado com sucesso! O cliente pode escolher o parcelamento no checkout.");
             } else {
               const errorData = await paymentRes.json();
               toast.error(`Erro ao criar link de pagamento: ${errorData.error || 'Erro desconhecido'}`);
