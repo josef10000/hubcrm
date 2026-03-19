@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { doc, getDoc, addDoc, collection, serverTimestamp, onSnapshot, query, where, orderBy, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { getPlanPrice, getSetupPrice } from '../App';
 import { Globe, CreditCard, CheckCircle, Clock, AlertCircle, ExternalLink, FileText, MessageSquare, Send, X, ChevronDown, ChevronUp, Calendar, Users, Copy, HelpCircle, Search, ShoppingCart } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
 
@@ -730,13 +731,7 @@ export default function ClientPortal() {
               </p>
               <p className="text-[10px] text-gray-500 mt-1">
                 {(() => {
-                  let planPrice = 147;
-                  if (client?.plan === 'Profissional') planPrice = 397;
-                  if (client?.plan === 'Autoridade') planPrice = 997;
-                  
-                  if (client?.billingCycle === 'YEARLY') {
-                    planPrice = planPrice * 10;
-                  }
+                  const planPrice = getPlanPrice(client?.plan, client?.billingCycle);
                   const discount = client?.referralBalance || 0;
                   const percent = Math.min(100, Math.round((discount / planPrice) * 100));
                   return `${percent}% da assinatura`;
@@ -762,9 +757,9 @@ export default function ClientPortal() {
                 <p className="text-xs text-gray-400 leading-relaxed">Para produtores menores e prestadores de serviços técnicos.</p>
               </div>
               <div className="mb-6">
-                <p className="text-xs text-gray-500 mb-1">Setup: R$ 500</p>
+                <p className="text-xs text-gray-500 mb-1">Setup: R$ {getSetupPrice('Essencial').toLocaleString('pt-BR')}</p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-bold text-white">R$ 147</span>
+                  <span className="text-2xl font-bold text-white">R$ {getPlanPrice('Essencial').toLocaleString('pt-BR')}</span>
                   <span className="text-gray-500 text-sm">/mês</span>
                 </div>
               </div>
@@ -810,9 +805,9 @@ export default function ClientPortal() {
                 <p className="text-xs text-gray-400 leading-relaxed">Para empresas agro, corretoras e consultorias.</p>
               </div>
               <div className="mb-6">
-                <p className="text-xs text-gray-500 mb-1">Setup: R$ 2.500</p>
+                <p className="text-xs text-gray-500 mb-1">Setup: R$ {getSetupPrice('Profissional').toLocaleString('pt-BR')}</p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-bold text-white">R$ 397</span>
+                  <span className="text-2xl font-bold text-white">R$ {getPlanPrice('Profissional').toLocaleString('pt-BR')}</span>
                   <span className="text-gray-500 text-sm">/mês</span>
                 </div>
               </div>
@@ -860,9 +855,9 @@ export default function ClientPortal() {
                 <p className="text-xs text-gray-400 leading-relaxed">Para grandes operações e agtechs.</p>
               </div>
               <div className="mb-6">
-                <p className="text-xs text-gray-500 mb-1">Setup: R$ 7.500</p>
+                <p className="text-xs text-gray-500 mb-1">Setup: R$ {getSetupPrice('Autoridade').toLocaleString('pt-BR')}</p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-bold text-white">R$ 997</span>
+                  <span className="text-2xl font-bold text-white">R$ {getPlanPrice('Autoridade').toLocaleString('pt-BR')}</span>
                   <span className="text-gray-500 text-sm">/mês</span>
                 </div>
               </div>

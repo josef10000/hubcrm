@@ -110,6 +110,21 @@ interface Expense {
 }
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+export const getPlanPrice = (plan?: string, billingCycle?: string) => {
+  let price = 147;
+  if (plan === 'Profissional') price = 397;
+  if (plan === 'Autoridade') price = 997;
+  
+  if (billingCycle === 'YEARLY') return price * 10;
+  return price;
+};
+
+export const getSetupPrice = (plan?: string) => {
+  if (plan === 'Profissional') return 2500;
+  if (plan === 'Autoridade') return 7500;
+  return 500;
+};
+
 function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardingQuestions, user }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, onDelete?: (id: string) => void, initialData: Client | null, onboardingQuestions: OnboardingQuestion[], user: User }) {
   const [formData, setFormData] = useState<Partial<Client>>({ plan: 'Essencial', status: 'Em Desenvolvimento' });
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
@@ -432,8 +447,8 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                         className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Essencial' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
                       >
                         <div className="font-semibold mb-1">Essencial</div>
-                        <div className="text-xs opacity-80">Setup: R$ 500</div>
-                        <div className="text-sm font-bold mt-1">R$ 147/mês</div>
+                        <div className="text-xs opacity-80">Setup: R$ {getSetupPrice('Essencial').toLocaleString('pt-BR')}</div>
+                        <div className="text-sm font-bold mt-1">R$ {getPlanPrice('Essencial').toLocaleString('pt-BR')}/mês</div>
                       </button>
                       <button 
                         type="button" 
@@ -441,8 +456,8 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                         className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Profissional' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
                       >
                         <div className="font-semibold mb-1">Profissional</div>
-                        <div className="text-xs opacity-80">Setup: R$ 2.500</div>
-                        <div className="text-sm font-bold mt-1">R$ 397/mês</div>
+                        <div className="text-xs opacity-80">Setup: R$ {getSetupPrice('Profissional').toLocaleString('pt-BR')}</div>
+                        <div className="text-sm font-bold mt-1">R$ {getPlanPrice('Profissional').toLocaleString('pt-BR')}/mês</div>
                       </button>
                       <button 
                         type="button" 
@@ -450,8 +465,8 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                         className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Autoridade' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
                       >
                         <div className="font-semibold mb-1">Autoridade</div>
-                        <div className="text-xs opacity-80">Setup: R$ 7.500</div>
-                        <div className="text-sm font-bold mt-1">R$ 997/mês</div>
+                        <div className="text-xs opacity-80">Setup: R$ {getSetupPrice('Autoridade').toLocaleString('pt-BR')}</div>
+                        <div className="text-sm font-bold mt-1">R$ {getPlanPrice('Autoridade').toLocaleString('pt-BR')}/mês</div>
                       </button>
                     </div>
                   </div>
@@ -1531,8 +1546,16 @@ function CRM({ user }: { user: User }) {
     };
 
     try { 
-      // Handle Update Subscription Due Date
-      if (!isNew && client.asaasSubscriptionId && editingClient && (editingClient.recurringPaymentDay !== client.recurringPaymentDay || editingClient.billingType !== client.billingType || editingClient.billingCycle !== client.billingCycle)) {
+      // Handle Update Subscription
+      if (!isNew && client.asaasSubscriptionId && editingClient && (
+          editingClient.recurringPaymentDay !== client.recurringPaymentDay || 
+          editingClient.billingType !== client.billingType || 
+          editingClient.billingCycle !== client.billingCycle ||
+          editingClient.plan !== client.plan
+      )) {
+        let monthlyValue = getPlanPrice(client.plan, client.billingCycle);
+
+        let nextSubDateStr = client.nextDueDate;
         if (client.recurringPaymentDay && editingClient.recurringPaymentDay !== client.recurringPaymentDay) {
           const today = new Date();
           let nextSubDate = new Date(today.getFullYear(), today.getMonth(), client.recurringPaymentDay, 12, 0, 0);
@@ -1540,42 +1563,27 @@ function CRM({ user }: { user: User }) {
           if (nextSubDate.getTime() < today.getTime()) {
             nextSubDate.setMonth(nextSubDate.getMonth() + 1);
           }
-          const nextSubDateStr = nextSubDate.toISOString().split('T')[0];
+          nextSubDateStr = nextSubDate.toISOString().split('T')[0];
+        }
 
-          const updateRes = await fetch('/api/asaas/update-subscription', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              subscriptionId: client.asaasSubscriptionId,
-              nextDueDate: nextSubDateStr,
-              updatePendingPayments: true,
-              billingType: client.billingType,
-              cycle: 'MONTHLY',
-              description: `Assinatura ${client.billingCycle === 'YEARLY' ? 'Anual' : 'Mensal'} - Plano ${client.plan} - Hub Central`
-            })
-          });
-          if (!updateRes.ok) {
-            console.error("Failed to update subscription in Asaas");
-            toast.error("Aviso: Não foi possível atualizar a data de vencimento no Asaas.");
-          } else {
-            client.nextDueDate = nextSubDateStr;
-          }
-        } else if (editingClient.billingType !== client.billingType || editingClient.billingCycle !== client.billingCycle) {
-          const updateRes = await fetch('/api/asaas/update-subscription', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              subscriptionId: client.asaasSubscriptionId,
-              updatePendingPayments: true,
-              billingType: client.billingType,
-              cycle: 'MONTHLY',
-              description: `Assinatura ${client.billingCycle === 'YEARLY' ? 'Anual' : 'Mensal'} - Plano ${client.plan} - Hub Central`
-            })
-          });
-          if (!updateRes.ok) {
-            console.error("Failed to update subscription billing type in Asaas");
-            toast.error("Aviso: Não foi possível atualizar a assinatura no Asaas.");
-          }
+        const updateRes = await fetch('/api/asaas/update-subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            subscriptionId: client.asaasSubscriptionId,
+            ...(nextSubDateStr ? { nextDueDate: nextSubDateStr } : {}),
+            updatePendingPayments: true,
+            billingType: client.billingType,
+            cycle: client.billingCycle === 'YEARLY' ? 'YEARLY' : 'MONTHLY',
+            value: monthlyValue,
+            description: `Assinatura ${client.billingCycle === 'YEARLY' ? 'Anual' : 'Mensal'} - Plano ${client.plan} - Hub Central`
+          })
+        });
+        if (!updateRes.ok) {
+          console.error("Failed to update subscription in Asaas");
+          toast.error("Aviso: Não foi possível atualizar a assinatura no Asaas.");
+        } else {
+          if (nextSubDateStr) client.nextDueDate = nextSubDateStr;
         }
       }
 
@@ -1680,39 +1688,38 @@ function CRM({ user }: { user: User }) {
           // 2. Create Subscription in Asaas
           const today = new Date();
           const firstPaymentDate = client.firstPaymentDate || today.toISOString().split('T')[0];
-          let value = client.plan === 'Profissional' ? 180 : 100;
-          if (client.billingCycle === 'YEARLY') {
-            value = client.plan === 'Profissional' ? 150 : 80; // 2 months discount for yearly, divided by 12
+          
+          let monthlyValue = getPlanPrice(client.plan, client.billingCycle);
+          let setupValue = getSetupPrice(client.plan);
+
+          // A. Create single charge for first payment (Setup Fee)
+          const paymentRes = await fetch('/api/asaas/payments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              customer: client.asaasCustomerId,
+              billingType: client.billingType,
+              value: setupValue,
+              dueDate: firstPaymentDate,
+              description: `Taxa de Adesão - Plano ${client.plan} - Hub Central`
+            })
+          });
+
+          if (paymentRes.ok) {
+            const paymentData = await paymentRes.json();
+            client.invoiceUrl = paymentData.invoiceUrl;
+            client.nextDueDate = firstPaymentDate;
+          } else {
+            console.error("Failed to create initial payment", await paymentRes.text());
+            toast.error("Erro ao criar taxa de adesão no Asaas.");
           }
 
+          // B. Create subscription for future payments
+          const firstDateObj = new Date(firstPaymentDate + 'T12:00:00Z');
+          let nextSubDate = new Date(firstDateObj);
+          
           if (client.recurringPaymentDay) {
-            // Strategy 1: Single charge for first payment + Subscription for recurring
-            
-            // A. Create single charge for first payment
-            const paymentRes = await fetch('/api/asaas/payments', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                customer: client.asaasCustomerId,
-                billingType: client.billingType,
-                value: value,
-                dueDate: firstPaymentDate,
-                description: `Primeira Mensalidade - Plano ${client.plan} - Hub Central`
-              })
-            });
-
-            if (paymentRes.ok) {
-              const paymentData = await paymentRes.json();
-              client.invoiceUrl = paymentData.invoiceUrl;
-              client.nextDueDate = firstPaymentDate;
-            } else {
-              console.error("Failed to create initial payment", await paymentRes.text());
-              toast.error("Erro ao criar primeira cobrança no Asaas.");
-            }
-
-            // B. Create subscription for future payments
-            const firstDateObj = new Date(firstPaymentDate + 'T12:00:00Z');
-            let nextSubDate = new Date(firstDateObj.getFullYear(), firstDateObj.getMonth(), client.recurringPaymentDay, 12, 0, 0);
+            nextSubDate = new Date(firstDateObj.getFullYear(), firstDateObj.getMonth(), client.recurringPaymentDay, 12, 0, 0);
             
             // If the day has already passed in the current month, move to next month
             if (nextSubDate.getTime() <= firstDateObj.getTime()) {
@@ -1725,68 +1732,35 @@ function CRM({ user }: { user: User }) {
             if (diffDays < 15) {
               nextSubDate.setMonth(nextSubDate.getMonth() + 1);
             }
-            const nextSubDateStr = nextSubDate.toISOString().split('T')[0];
-
-            const subRes = await fetch('/api/asaas/subscriptions', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                customer: client.asaasCustomerId,
-                billingType: client.billingType,
-                cycle: 'MONTHLY',
-                value: value,
-                nextDueDate: nextSubDateStr,
-                description: `Assinatura ${client.billingCycle === 'YEARLY' ? 'Anual' : 'Mensal'} - Plano ${client.plan} - Hub Central`
-              })
-            });
-
-            if (subRes.ok) {
-              const subData = await subRes.json();
-              client.asaasSubscriptionId = subData.id;
-            } else {
-              console.error("Failed to create subscription", await subRes.text());
-              toast.error("Erro ao criar assinatura recorrente no Asaas.");
-            }
-
           } else {
-            // Strategy 2: Just create a subscription starting on firstPaymentDate
-            const subRes = await fetch('/api/asaas/subscriptions', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                customer: client.asaasCustomerId,
-                billingType: client.billingType,
-                cycle: 'MONTHLY',
-                value: value,
-                nextDueDate: firstPaymentDate,
-                description: `Assinatura ${client.billingCycle === 'YEARLY' ? 'Anual' : 'Mensal'} - Plano ${client.plan} - Hub Central`
-              })
-            });
+            // Default: 1 month after first payment
+            nextSubDate.setMonth(nextSubDate.getMonth() + 1);
+          }
+          
+          const nextSubDateStr = nextSubDate.toISOString().split('T')[0];
 
-            if (subRes.ok) {
-              const subData = await subRes.json();
-              client.asaasSubscriptionId = subData.id; 
-              client.nextDueDate = firstPaymentDate;
-              
-              // Fetch the first payment to get the invoice URL
-              try {
-                const checkRes = await fetch(`/api/asaas/subscriptions/${subData.id}`);
-                if (checkRes.ok) {
-                  const checkData = await checkRes.json();
-                  if (checkData.payments && checkData.payments.length > 0) {
-                    client.invoiceUrl = checkData.payments[0].invoiceUrl;
-                  }
-                }
-              } catch (e) {
-                console.error("Error fetching initial invoice URL", e);
-              }
-            } else {
-              let errText = await subRes.text();
-              let err;
-              try { err = JSON.parse(errText); } catch(e) { err = { error: errText }; }
-              console.error("Asaas Subscription Error:", err);
-              toast.error(`Erro ao criar assinatura no Asaas: ${err.error || 'Erro desconhecido'}`);
-            }
+          const subRes = await fetch('/api/asaas/subscriptions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              customer: client.asaasCustomerId,
+              billingType: client.billingType,
+              cycle: client.billingCycle === 'YEARLY' ? 'YEARLY' : 'MONTHLY',
+              value: monthlyValue,
+              nextDueDate: nextSubDateStr,
+              description: `Assinatura ${client.billingCycle === 'YEARLY' ? 'Anual' : 'Mensal'} - Plano ${client.plan} - Hub Central`
+            })
+          });
+
+          if (subRes.ok) {
+            const subData = await subRes.json();
+            client.asaasSubscriptionId = subData.id;
+          } else {
+            let errText = await subRes.text();
+            let err;
+            try { err = JSON.parse(errText); } catch(e) { err = { error: errText }; }
+            console.error("Asaas Subscription Error:", err);
+            toast.error(`Erro ao criar assinatura no Asaas: ${err.error || 'Erro desconhecido'}`);
           }
         } else {
           let errText = await customerRes.text();
@@ -1875,10 +1849,8 @@ function CRM({ user }: { user: User }) {
       if (sortBy === 'alphabetical') {
         return a.name.localeCompare(b.name);
       } else if (sortBy === 'value') {
-        let valA = a.plan === 'Profissional' ? 180 : 100;
-        if (a.billingCycle === 'YEARLY') valA = a.plan === 'Profissional' ? 150 : 80;
-        let valB = b.plan === 'Profissional' ? 180 : 100;
-        if (b.billingCycle === 'YEARLY') valB = b.plan === 'Profissional' ? 150 : 80;
+        let valA = getPlanPrice(a.plan, a.billingCycle);
+        let valB = getPlanPrice(b.plan, b.billingCycle);
         return valB - valA;
       } else {
         return b.createdAt - a.createdAt;
@@ -1941,14 +1913,10 @@ function CRM({ user }: { user: User }) {
     // Calculate Metrics
     const activeClients = clients.filter(c => c.status === 'Ativo').length;
     const mrr = clients.filter(c => c.status === 'Ativo' || c.status === 'Inadimplente').reduce((acc, c) => {
-      let val = c.plan === 'Profissional' ? 180 : 100;
-      if (c.billingCycle === 'YEARLY') val = c.plan === 'Profissional' ? 150 : 80;
-      return acc + val;
+      return acc + getPlanPrice(c.plan, c.billingCycle);
     }, 0);
     const overdueAmount = clients.filter(c => c.status === 'Inadimplente').reduce((acc, c) => {
-      let val = c.plan === 'Profissional' ? 180 : 100;
-      if (c.billingCycle === 'YEARLY') val = c.plan === 'Profissional' ? 150 : 80;
-      return acc + val;
+      return acc + getPlanPrice(c.plan, c.billingCycle);
     }, 0);
     
     const currentMonth = new Date().getMonth();
@@ -1959,9 +1927,7 @@ function CRM({ user }: { user: User }) {
       const dueDate = new Date(c.nextDueDate);
       return dueDate.getMonth() === currentMonth && dueDate.getFullYear() === currentYear;
     }).reduce((acc, c) => {
-      let val = c.plan === 'Profissional' ? 180 : 100;
-      if (c.billingCycle === 'YEARLY') val = c.plan === 'Profissional' ? 150 : 80;
-      return acc + val;
+      return acc + getPlanPrice(c.plan, c.billingCycle);
     }, 0);
 
     // Chart Data
@@ -2202,7 +2168,7 @@ function CRM({ user }: { user: User }) {
                     
                     <div className="flex items-center text-gray-600 dark:text-gray-300 text-sm">
                       <Tag size={16} className="mr-3 text-primary-400 opacity-80" />
-                      Plano {client.plan} <span className="ml-2 text-xs opacity-60">(R$ {client.plan === 'Profissional' ? (client.billingCycle === 'YEARLY' ? '150' : '180') : (client.billingCycle === 'YEARLY' ? '80' : '100')})</span>
+                      Plano {client.plan} <span className="ml-2 text-xs opacity-60">(R$ {getPlanPrice(client.plan, client.billingCycle).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span>
                     </div>
                     
                     {client.nextDueDate && client.status !== 'Cancelado' && (
@@ -2268,7 +2234,7 @@ function CRM({ user }: { user: User }) {
                       </a>
                       {client.invoiceUrl && (
                         <a 
-                          href={`https://wa.me/55${(client.whatsapp || '').replace(/\D/g, '')}?text=Olá ${client.name}, sua fatura de R$ ${client.plan === 'Profissional' ? (client.billingCycle === 'YEARLY' ? '150,00' : '180,00') : (client.billingCycle === 'YEARLY' ? '80,00' : '100,00')} vence dia ${client.nextDueDate ? new Date(client.nextDueDate).toLocaleDateString('pt-BR') : ''}. Segue o link para pagamento via PIX: ${client.invoiceUrl}`}
+                          href={`https://wa.me/55${(client.whatsapp || '').replace(/\D/g, '')}?text=Olá ${client.name}, sua fatura de R$ ${getPlanPrice(client.plan, client.billingCycle).toFixed(2).replace('.', ',')} vence dia ${client.nextDueDate ? new Date(client.nextDueDate).toLocaleDateString('pt-BR') : ''}. Segue o link para pagamento via PIX: ${client.invoiceUrl}`}
                           target="_blank"
                           rel="noreferrer"
                           onClick={e => e.stopPropagation()}
@@ -2409,16 +2375,12 @@ function CRM({ user }: { user: User }) {
     const activeClients = clients.filter(c => c.status === 'Ativo').length;
     const activeClientsList = clients.filter(c => c.status === 'Ativo');
     const mrr = activeClientsList.reduce((acc, c) => {
-      let val = c.plan === 'Profissional' ? 180 : 100;
-      if (c.billingCycle === 'YEARLY') val = c.plan === 'Profissional' ? 150 : 80;
-      return acc + val;
+      return acc + getPlanPrice(c.plan, c.billingCycle);
     }, 0);
     
     const overdueClients = clients.filter(c => c.paymentStatus === 'OVERDUE');
     const overdueAmount = overdueClients.reduce((acc, c) => {
-      let val = c.plan === 'Profissional' ? 180 : 100;
-      if (c.billingCycle === 'YEARLY') val = c.plan === 'Profissional' ? 150 : 80;
-      return acc + val;
+      return acc + getPlanPrice(c.plan, c.billingCycle);
     }, 0);
     const overdueRate = activeClients > 0 ? ((overdueClients.length / activeClients) * 100).toFixed(1) : '0.0';
 
@@ -2442,10 +2404,7 @@ function CRM({ user }: { user: User }) {
         const diffTime = dueDate.getTime() - todayDate.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         
-        let value = 0;
-        if (c.plan === 'Essencial') value = 147;
-        else if (c.plan === 'Profissional') value = 397;
-        else if (c.plan === 'Autoridade') value = 997;
+        let value = getPlanPrice(c.plan, c.billingCycle);
 
         if (diffDays >= 0 && diffDays <= 7) cash7Days += value;
         if (diffDays >= 0 && diffDays <= 15) cash15Days += value;
@@ -2504,9 +2463,7 @@ function CRM({ user }: { user: User }) {
         const d = new Date(c.createdAt);
         return d.getFullYear() < currentYear || (d.getFullYear() === currentYear && d.getMonth() <= i);
       }).reduce((acc, c) => {
-        let val = c.plan === 'Profissional' ? 180 : 100;
-        if (c.billingCycle === 'YEARLY') val = c.plan === 'Profissional' ? 150 : 80;
-        return acc + val;
+        return acc + getPlanPrice(c.plan, c.billingCycle);
       }, 0);
 
       return { 
@@ -2706,9 +2663,7 @@ function CRM({ user }: { user: User }) {
 
   const renderFinance = () => {
     const totalMRR = clients.filter(c => c.status === 'Ativo' || c.status === 'Inadimplente').reduce((acc, c) => {
-      let val = c.plan === 'Profissional' ? 180 : 100;
-      if (c.billingCycle === 'YEARLY') val = c.plan === 'Profissional' ? 150 : 80;
-      return acc + val;
+      return acc + getPlanPrice(c.plan, c.billingCycle);
     }, 0);
     const totalExpenses = expenses.reduce((acc, e) => acc + e.amount, 0);
     const netProfit = totalMRR - totalExpenses;

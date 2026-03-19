@@ -7,7 +7,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { subscriptionId, nextDueDate, value, updatePendingPayments, billingType } = req.body;
+    const { subscriptionId, nextDueDate, value, updatePendingPayments, billingType, cycle, description } = req.body;
     
     if (!subscriptionId) {
       return res.status(400).json({ error: 'Subscription ID is required' });
@@ -18,6 +18,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (value) payload.value = value;
     if (updatePendingPayments !== undefined) payload.updatePendingPayments = updatePendingPayments;
     if (billingType) payload.billingType = billingType;
+    if (cycle) payload.cycle = cycle;
+    if (description) payload.description = description;
 
     const data = await asaasRequest(`/subscriptions/${subscriptionId}`, "POST", payload);
     return res.status(200).json(data);
