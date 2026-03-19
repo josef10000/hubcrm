@@ -501,7 +501,18 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                               <span className="text-[10px] text-gray-400 uppercase font-bold">Valor Total do Combo</span>
                               <span className="text-sm font-bold text-emerald-400">R$ {getPlanPrice(formData.plan, 'YEARLY').toLocaleString('pt-BR')}</span>
                             </div>
-                            <p className="text-[10px] text-emerald-400 font-medium">O cliente poderá escolher o parcelamento diretamente na fatura do Asaas.</p>
+                            <div className="mb-2">
+                              <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Parcelas</label>
+                              <input 
+                                type="number" 
+                                min="1" 
+                                max="12" 
+                                value={formData.comboInstallments || 12} 
+                                onChange={(e) => setFormData(prev => ({ ...prev, comboInstallments: parseInt(e.target.value) }))}
+                                className="w-full px-3 py-2 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                              />
+                            </div>
+                            <p className="text-[10px] text-emerald-400 font-medium">O cliente receberá o link de pagamento já parcelado em {formData.comboInstallments || 12}x.</p>
                           </div>
                         )}
                       </div>
@@ -1828,18 +1839,8 @@ function CRM({ user }: { user: User }) {
             // The annual price (monthlyValue) already includes the setup for the combo
             const totalComboValue = monthlyValue;
             
-            // Ask for installment count
-            const installmentCount = prompt("Quantas vezes deseja parcelar? (1 a 12)", "12");
-            if (!installmentCount) return; // Cancelled
-            
-            const count = parseInt(installmentCount);
-            if (isNaN(count) || count < 1 || count > 12) {
-              toast.error("Número de parcelas inválido (1 a 12).");
-              return;
-            }
-
+            const count = client.comboInstallments || 12;
             const installmentValue = (totalComboValue / count).toFixed(2);
-            if (!confirm(`Confirmar parcelamento em ${count}x de R$ ${installmentValue}?`)) return;
 
             const paymentRes = await fetch('/api/asaas/payment-links', {
               method: 'POST',
