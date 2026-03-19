@@ -27,7 +27,7 @@ service cloud.firestore {
     function isValidClient(data) {
       return data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
              data.whatsapp is string && data.whatsapp.size() >= 10 &&
-             data.plan in ['Padrão', 'Profissional'] &&
+             data.plan in ['Essencial', 'Profissional', 'Autoridade'] &&
              data.status in ['Em Desenvolvimento', 'Ativo', 'Inadimplente', 'Cancelado'];
     }
 

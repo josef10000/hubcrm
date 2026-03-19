@@ -8,7 +8,7 @@
         "id": { "type": "string" },
         "name": { "type": "string" },
         "whatsapp": { "type": "string" },
-        "plan": { "type": "string", "enum": ["Padrão", "Profissional"] },
+        "plan": { "type": "string", "enum": ["Essencial", "Profissional", "Autoridade"] },
         "status": { "type": "string", "enum": ["Em Desenvolvimento", "Ativo", "Inadimplente", "Cancelado"] },
         "referralCode": { "type": "string", "description": "Unique code for referrals" },
         "referredBy": { "type": "string", "description": "ID of the client who referred this one" },

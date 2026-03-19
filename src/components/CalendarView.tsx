@@ -20,9 +20,12 @@ interface CalendarViewProps {
 type CalendarMode = 'finance' | 'production';
 
 const getPlanPrice = (plan?: string, billingCycle?: string) => {
-  if (plan === 'Profissional') return billingCycle === 'YEARLY' ? 150 : 180;
-  if (plan === 'Padrão') return billingCycle === 'YEARLY' ? 80 : 100;
-  return 0;
+  let price = 147;
+  if (plan === 'Profissional') price = 397;
+  if (plan === 'Autoridade') price = 997;
+  
+  if (billingCycle === 'YEARLY') return price * 10;
+  return price;
 };
 
 export default function CalendarView({ clients, onClientClick }: CalendarViewProps) {

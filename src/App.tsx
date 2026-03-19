@@ -22,7 +22,7 @@ const clientSchema = z.object({
   whatsapp: z.string().refine(val => !val || val.replace(/\D/g, '').length >= 10, "WhatsApp deve ter pelo menos 10 dígitos").optional().or(z.literal('')),
 });
 
-export type PlanType = 'Padrão' | 'Profissional';
+export type PlanType = 'Essencial' | 'Profissional' | 'Autoridade';
 export type SiteStatus = 'Em Desenvolvimento' | 'Ativo' | 'Inadimplente' | 'Cancelado';
 
 export interface ClientLog {
@@ -111,7 +111,7 @@ interface Expense {
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardingQuestions, user }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, onDelete?: (id: string) => void, initialData: Client | null, onboardingQuestions: OnboardingQuestion[], user: User }) {
-  const [formData, setFormData] = useState<Partial<Client>>({ plan: 'Padrão', status: 'Em Desenvolvimento' });
+  const [formData, setFormData] = useState<Partial<Client>>({ plan: 'Essencial', status: 'Em Desenvolvimento' });
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [activeTab, setActiveTab] = useState<'details' | 'history' | 'stages' | 'credentials' | 'onboarding'>('details');
@@ -180,7 +180,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
         checkPaymentStatus(initialData.asaasSubscriptionId);
       }
     } else {
-      setFormData({ plan: 'Padrão', status: 'Em Desenvolvimento' });
+      setFormData({ plan: 'Essencial', status: 'Em Desenvolvimento' });
     }
     setShowCancelConfirm(false);
   }, [initialData, isOpen]);
@@ -425,14 +425,15 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
 
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Plano *</label>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-3 gap-3">
                       <button 
                         type="button" 
-                        onClick={() => setFormData(prev => ({ ...prev, plan: 'Padrão' }))}
-                        className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Padrão' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
+                        onClick={() => setFormData(prev => ({ ...prev, plan: 'Essencial' }))}
+                        className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Essencial' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
                       >
-                        <div className="font-semibold mb-1">Padrão</div>
-                        <div className="text-sm opacity-80">{formData.billingCycle === 'YEARLY' ? 'R$ 80/mês' : 'R$ 100/mês'}</div>
+                        <div className="font-semibold mb-1">Essencial</div>
+                        <div className="text-xs opacity-80">Setup: R$ 500</div>
+                        <div className="text-sm font-bold mt-1">R$ 147/mês</div>
                       </button>
                       <button 
                         type="button" 
@@ -440,7 +441,17 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                         className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Profissional' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
                       >
                         <div className="font-semibold mb-1">Profissional</div>
-                        <div className="text-sm opacity-80">{formData.billingCycle === 'YEARLY' ? 'R$ 150/mês' : 'R$ 180/mês'}</div>
+                        <div className="text-xs opacity-80">Setup: R$ 2.500</div>
+                        <div className="text-sm font-bold mt-1">R$ 397/mês</div>
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={() => setFormData(prev => ({ ...prev, plan: 'Autoridade' }))}
+                        className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Autoridade' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
+                      >
+                        <div className="font-semibold mb-1">Autoridade</div>
+                        <div className="text-xs opacity-80">Setup: R$ 7.500</div>
+                        <div className="text-sm font-bold mt-1">R$ 997/mês</div>
                       </button>
                     </div>
                   </div>
@@ -1497,7 +1508,7 @@ function CRM({ user }: { user: User }) {
       id: clientData.id || crypto.randomUUID(),
       name: clientData.name || '',
       whatsapp: clientData.whatsapp || '',
-      plan: clientData.plan as PlanType || 'Padrão',
+      plan: clientData.plan as PlanType || 'Essencial',
       status: clientData.status as SiteStatus || 'Em Desenvolvimento',
       siteLink: clientData.siteLink,
       niche: clientData.niche,
@@ -2431,8 +2442,10 @@ function CRM({ user }: { user: User }) {
         const diffTime = dueDate.getTime() - todayDate.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         
-        let value = c.plan === 'Profissional' ? 180 : 100;
-        if (c.billingCycle === 'YEARLY') value = c.plan === 'Profissional' ? 150 : 80;
+        let value = 0;
+        if (c.plan === 'Essencial') value = 147;
+        else if (c.plan === 'Profissional') value = 397;
+        else if (c.plan === 'Autoridade') value = 997;
 
         if (diffDays >= 0 && diffDays <= 7) cash7Days += value;
         if (diffDays >= 0 && diffDays <= 15) cash15Days += value;
@@ -2447,8 +2460,9 @@ function CRM({ user }: { user: User }) {
     ];
 
     const planData = [
-      { name: 'Padrão', value: clients.filter(c => c.plan === 'Padrão').length, color: '#f97316' },
-      { name: 'Profissional', value: clients.filter(c => c.plan === 'Profissional').length, color: '#f59e0b' }
+      { name: 'Essencial', value: clients.filter(c => c.plan === 'Essencial').length, color: '#f97316' },
+      { name: 'Profissional', value: clients.filter(c => c.plan === 'Profissional').length, color: '#3b82f6' },
+      { name: 'Autoridade', value: clients.filter(c => c.plan === 'Autoridade').length, color: '#8b5cf6' }
     ];
 
     const statusData = [
@@ -3103,7 +3117,7 @@ function CRM({ user }: { user: User }) {
 
   const renderSettings = () => {
     const themes = [
-      { id: 'orange', name: 'Laranja (Padrão)', color: 'bg-orange-500' },
+      { id: 'orange', name: 'Laranja (Original)', color: 'bg-orange-500' },
       { id: 'blue', name: 'Azul', color: 'bg-blue-500' },
       { id: 'green', name: 'Verde', color: 'bg-green-500' },
       { id: 'purple', name: 'Roxo', color: 'bg-purple-500' },

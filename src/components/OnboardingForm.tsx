@@ -20,7 +20,7 @@ export default function OnboardingForm() {
     email: '',
     whatsapp: '',
     cpfCnpj: '',
-    plan: 'Padrão'
+    plan: 'Essencial'
   });
   
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -290,13 +290,13 @@ export default function OnboardingForm() {
               {!clientId && referralId && (
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-300 mb-2">Plano Desejado *</label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <button
                       type="button"
-                      onClick={() => setBasicData({...basicData, plan: 'Padrão'})}
-                      className={`p-4 rounded-2xl border transition-all text-left ${basicData.plan === 'Padrão' ? 'bg-primary-500/20 border-primary-500 text-white shadow-lg shadow-primary-500/20' : 'bg-black/40 border-white/10 text-gray-400 hover:border-white/20'}`}
+                      onClick={() => setBasicData({...basicData, plan: 'Essencial'})}
+                      className={`p-4 rounded-2xl border transition-all text-left ${basicData.plan === 'Essencial' ? 'bg-primary-500/20 border-primary-500 text-white shadow-lg shadow-primary-500/20' : 'bg-black/40 border-white/10 text-gray-400 hover:border-white/20'}`}
                     >
-                      <p className="font-bold text-lg">Plano Padrão</p>
+                      <p className="font-bold text-lg">Essencial</p>
                       <p className="text-xs opacity-70">Ideal para pequenos negócios</p>
                     </button>
                     <button
@@ -304,8 +304,16 @@ export default function OnboardingForm() {
                       onClick={() => setBasicData({...basicData, plan: 'Profissional'})}
                       className={`p-4 rounded-2xl border transition-all text-left ${basicData.plan === 'Profissional' ? 'bg-primary-500/20 border-primary-500 text-white shadow-lg shadow-primary-500/20' : 'bg-black/40 border-white/10 text-gray-400 hover:border-white/20'}`}
                     >
-                      <p className="font-bold text-lg">Plano Profissional</p>
-                      <p className="text-xs opacity-70">Para quem busca o máximo de performance</p>
+                      <p className="font-bold text-lg">Profissional</p>
+                      <p className="text-xs opacity-70">Para quem busca autoridade</p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBasicData({...basicData, plan: 'Autoridade'})}
+                      className={`p-4 rounded-2xl border transition-all text-left ${basicData.plan === 'Autoridade' ? 'bg-primary-500/20 border-primary-500 text-white shadow-lg shadow-primary-500/20' : 'bg-black/40 border-white/10 text-gray-400 hover:border-white/20'}`}
+                    >
+                      <p className="font-bold text-lg">Autoridade</p>
+                      <p className="text-xs opacity-70">Máxima performance e design</p>
                     </button>
                   </div>
                 </div>

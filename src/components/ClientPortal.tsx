@@ -45,8 +45,8 @@ export default function ClientPortal() {
       questions: [
         { q: 'Como solicito uma alteração no meu site?', a: 'Use o formulário "Solicitar Suporte ou Alteração" no final desta página. Descreva o que precisa ser mudado e nossa equipe receberá sua solicitação imediatamente.' },
         { q: 'Quanto tempo demora para meu site ficar pronto?', a: 'A entrega do site é agendada individualmente. Trabalhamos com uma estimativa de entrega em 3 dias úteis após o recebimento de todo o conteúdo, mas este prazo é uma previsão e pode variar conforme a demanda e complexidade.' },
-        { q: 'Posso mudar meu plano?', a: 'Sim! Você pode migrar do plano Padrão para o Profissional a qualquer momento. No entanto, não realizamos a migração inversa (do Profissional para o Padrão).' },
-        { q: 'O que preciso para mudar para o plano Profissional?', a: 'Para o plano Profissional, é necessário adquirir um domínio próprio (ex: seunome.com.br). Recomendamos a compra através do site oficial registro.br (https://registro.br/). Após a compra, basta nos enviar os dados de acesso e nós cuidaremos de toda a migração e configuração para você.' }
+        { q: 'Posso mudar meu plano?', a: 'Sim! Você pode migrar entre os planos Essencial, Profissional e Autoridade a qualquer momento. Para migrar, basta entrar em contato com nosso suporte.' },
+        { q: 'O que preciso para mudar para o plano Profissional ou Autoridade?', a: 'Para os planos Profissional e Autoridade, é necessário adquirir um domínio próprio (ex: seunome.com.br). Recomendamos a compra através do site oficial registro.br (https://registro.br/). Após a compra, basta nos enviar os dados de acesso e nós cuidaremos de toda a migração e configuração para você.' }
       ]
     },
     {
@@ -730,15 +730,176 @@ export default function ClientPortal() {
               </p>
               <p className="text-[10px] text-gray-500 mt-1">
                 {(() => {
-                  let planPrice = client?.plan === 'Profissional' ? 180 : 100;
+                  let planPrice = 147;
+                  if (client?.plan === 'Profissional') planPrice = 397;
+                  if (client?.plan === 'Autoridade') planPrice = 997;
+                  
                   if (client?.billingCycle === 'YEARLY') {
-                    planPrice = client?.plan === 'Profissional' ? 1800 : 960;
+                    planPrice = planPrice * 10;
                   }
                   const discount = client?.referralBalance || 0;
                   const percent = Math.min(100, Math.round((discount / planPrice) * 100));
                   return `${percent}% da assinatura`;
                 })()}
               </p>
+            </div>
+          </div>
+        </div>
+        
+        {/* Planos Disponíveis */}
+        <div className="mt-6 bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
+          <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
+            <ShoppingCart className="w-5 h-5 text-primary-400" />
+            Planos e Upgrades
+          </h2>
+          <p className="text-gray-400 text-sm mb-6">Conheça nossas opções para escalar o seu negócio digital.</p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Essencial */}
+            <div className={`p-6 rounded-2xl border flex flex-col h-full transition-all ${client.plan === 'Essencial' ? 'bg-primary-500/10 border-primary-500/30 ring-1 ring-primary-500/50' : 'bg-white/5 border-white/10 opacity-80 hover:opacity-100'}`}>
+              <div className="mb-4">
+                <h3 className="text-xl font-bold text-white mb-1">Essencial</h3>
+                <p className="text-xs text-gray-400 leading-relaxed">Para produtores menores e prestadores de serviços técnicos.</p>
+              </div>
+              <div className="mb-6">
+                <p className="text-xs text-gray-500 mb-1">Setup: R$ 500</p>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl font-bold text-white">R$ 147</span>
+                  <span className="text-gray-500 text-sm">/mês</span>
+                </div>
+              </div>
+              <ul className="space-y-3 mb-8 flex-1">
+                {[
+                  'Criação de Site Corporativo (One Page Premium)',
+                  'Fluxo de contato rápido via WhatsApp',
+                  'Adaptado para leitura no Campo (Celulares)',
+                  'Hospedagem robusta e rápida inclusa',
+                  'Suporte corporativo via WhatsApp'
+                ].map((f, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-gray-300">
+                    <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              {client.plan === 'Essencial' ? (
+                <div className="w-full py-3 text-center rounded-xl bg-emerald-500/20 text-emerald-400 font-bold text-sm border border-emerald-500/30">
+                  Seu Plano Atual
+                </div>
+              ) : (
+                <button 
+                  onClick={() => {
+                    setRequestCategory('Solicitação de Alteração');
+                    setRequestMessage('Olá! Gostaria de migrar para o plano Essencial.');
+                    document.getElementById('support-form')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="w-full py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium text-sm transition-all border border-white/10"
+                >
+                  Selecionar Essencial
+                </button>
+              )}
+            </div>
+
+            {/* Profissional */}
+            <div className={`p-6 rounded-2xl border flex flex-col h-full transition-all relative ${client.plan === 'Profissional' ? 'bg-primary-500/10 border-primary-500/30 ring-1 ring-primary-500/50' : 'bg-white/5 border-white/10 opacity-80 hover:opacity-100'}`}>
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary-500 text-white text-[10px] font-bold rounded-full uppercase tracking-wider">
+                Mais Popular
+              </div>
+              <div className="mb-4">
+                <h3 className="text-xl font-bold text-white mb-1">Profissional</h3>
+                <p className="text-xs text-gray-400 leading-relaxed">Para empresas agro, corretoras e consultorias.</p>
+              </div>
+              <div className="mb-6">
+                <p className="text-xs text-gray-500 mb-1">Setup: R$ 2.500</p>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl font-bold text-white">R$ 397</span>
+                  <span className="text-gray-500 text-sm">/mês</span>
+                </div>
+              </div>
+              <ul className="space-y-3 mb-8 flex-1">
+                <li className="flex items-start gap-2 text-xs text-primary-400 font-medium">
+                  <CheckCircle className="w-4 h-4 text-primary-400 shrink-0 mt-0.5" />
+                  Tudo do plano Essencial, mais:
+                </li>
+                {[
+                  'Site Multi-páginas Estruturado',
+                  'Copywriting persuasivo (Agro)',
+                  'Formulários avançados de cotação',
+                  'Domínio Oficial (.com.br)',
+                  'Otimização de SEO Local',
+                  'Atendimento prioritário'
+                ].map((f, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-gray-300">
+                    <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              {client.plan === 'Profissional' ? (
+                <div className="w-full py-3 text-center rounded-xl bg-emerald-500/20 text-emerald-400 font-bold text-sm border border-emerald-500/30">
+                  Seu Plano Atual
+                </div>
+              ) : (
+                <button 
+                  onClick={() => {
+                    setRequestCategory('Solicitação de Alteração');
+                    setRequestMessage('Olá! Gostaria de migrar para o plano Profissional.');
+                    document.getElementById('support-form')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="w-full py-3 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-bold text-sm transition-all shadow-lg shadow-primary-500/20"
+                >
+                  Selecionar Profissional
+                </button>
+              )}
+            </div>
+
+            {/* Autoridade */}
+            <div className={`p-6 rounded-2xl border flex flex-col h-full transition-all ${client.plan === 'Autoridade' ? 'bg-primary-500/10 border-primary-500/30 ring-1 ring-primary-500/50' : 'bg-white/5 border-white/10 opacity-80 hover:opacity-100'}`}>
+              <div className="mb-4">
+                <h3 className="text-xl font-bold text-white mb-1">Autoridade</h3>
+                <p className="text-xs text-gray-400 leading-relaxed">Para grandes operações e agtechs.</p>
+              </div>
+              <div className="mb-6">
+                <p className="text-xs text-gray-500 mb-1">Setup: R$ 7.500</p>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl font-bold text-white">R$ 997</span>
+                  <span className="text-gray-500 text-sm">/mês</span>
+                </div>
+              </div>
+              <ul className="space-y-3 mb-8 flex-1">
+                <li className="flex items-start gap-2 text-xs text-primary-400 font-medium">
+                  <CheckCircle className="w-4 h-4 text-primary-400 shrink-0 mt-0.5" />
+                  Tudo do plano Profissional, mais:
+                </li>
+                {[
+                  'Design Exclusivo Customizado',
+                  'Área de Blog/Notícias (Agro)',
+                  'Integração com CRMs (RD Station)',
+                  'Catálogo profundo de produtos',
+                  'Consultoria técnica trimestral'
+                ].map((f, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-gray-300">
+                    <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              {client.plan === 'Autoridade' ? (
+                <div className="w-full py-3 text-center rounded-xl bg-emerald-500/20 text-emerald-400 font-bold text-sm border border-emerald-500/30">
+                  Seu Plano Atual
+                </div>
+              ) : (
+                <button 
+                  onClick={() => {
+                    setRequestCategory('Solicitação de Alteração');
+                    setRequestMessage('Olá! Gostaria de saber mais sobre o plano Autoridade.');
+                    document.getElementById('support-form')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="w-full py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium text-sm transition-all border border-white/10"
+                >
+                  Falar com Consultor
+                </button>
+              )}
             </div>
           </div>
         </div>
