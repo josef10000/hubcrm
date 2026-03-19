@@ -25,6 +25,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (billingType && billingType !== "UNDEFINED") {
       payload.billingType = billingType;
+      if (billingType === 'CREDIT_CARD') {
+        payload.creditCardInstallmentConfiguration = {
+          maxInstallmentCount: maxInstallmentCount || 12,
+        };
+      }
     }
 
     const data = await asaasRequest("/paymentLinks", "POST", payload);
