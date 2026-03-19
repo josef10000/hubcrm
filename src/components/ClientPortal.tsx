@@ -209,7 +209,7 @@ export default function ClientPortal() {
                 }
                 
                 clientData.paymentStatus = newPaymentStatus;
-                clientData.invoiceUrl = targetPayment.invoiceUrl || clientData.invoiceUrl;
+                clientData.invoiceUrl = targetPayment.invoiceUrl || targetPayment.bankSlipUrl || clientData.invoiceUrl;
                 
                 clientData.currentDueDate = (status === 'PENDING' || status === 'OVERDUE') ? targetPayment.dueDate : null;
                 clientData.nextDueDate = subscription?.nextDueDate || clientData.nextDueDate;
@@ -779,9 +779,15 @@ export default function ClientPortal() {
               </div>
               <div className="mb-6">
                 <p className="text-xs text-gray-500 mb-1">Setup: R$ {getSetupPrice('Essencial').toLocaleString('pt-BR')}</p>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-bold text-white">R$ {getPlanPrice('Essencial', client.billingCycle).toLocaleString('pt-BR')}</span>
-                  <span className="text-gray-500 text-sm">{client.billingCycle === 'YEARLY' ? '/ano' : '/mês'}</span>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-xl font-bold text-white">R$ {getPlanPrice('Essencial', 'MONTHLY').toLocaleString('pt-BR')}</span>
+                    <span className="text-gray-500 text-[10px]">/mês</span>
+                  </div>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-lg font-bold text-emerald-400">R$ {getPlanPrice('Essencial', 'YEARLY').toLocaleString('pt-BR')}</span>
+                    <span className="text-gray-500 text-[10px]">/ano (Combo)</span>
+                  </div>
                 </div>
               </div>
               <ul className="space-y-3 mb-8 flex-1">
@@ -827,9 +833,15 @@ export default function ClientPortal() {
               </div>
               <div className="mb-6">
                 <p className="text-xs text-gray-500 mb-1">Setup: R$ {getSetupPrice('Profissional').toLocaleString('pt-BR')}</p>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-bold text-white">R$ {getPlanPrice('Profissional', client.billingCycle).toLocaleString('pt-BR')}</span>
-                  <span className="text-gray-500 text-sm">{client.billingCycle === 'YEARLY' ? '/ano' : '/mês'}</span>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-xl font-bold text-white">R$ {getPlanPrice('Profissional', 'MONTHLY').toLocaleString('pt-BR')}</span>
+                    <span className="text-gray-500 text-[10px]">/mês</span>
+                  </div>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-lg font-bold text-emerald-400">R$ {getPlanPrice('Profissional', 'YEARLY').toLocaleString('pt-BR')}</span>
+                    <span className="text-gray-500 text-[10px]">/ano (Combo)</span>
+                  </div>
                 </div>
               </div>
               <ul className="space-y-3 mb-8 flex-1">
@@ -877,9 +889,15 @@ export default function ClientPortal() {
               </div>
               <div className="mb-6">
                 <p className="text-xs text-gray-500 mb-1">Setup: R$ {getSetupPrice('Autoridade').toLocaleString('pt-BR')}</p>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-bold text-white">R$ {getPlanPrice('Autoridade', client.billingCycle).toLocaleString('pt-BR')}</span>
-                  <span className="text-gray-500 text-sm">{client.billingCycle === 'YEARLY' ? '/ano' : '/mês'}</span>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-xl font-bold text-white">R$ {getPlanPrice('Autoridade', 'MONTHLY').toLocaleString('pt-BR')}</span>
+                    <span className="text-gray-500 text-[10px]">/mês</span>
+                  </div>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-lg font-bold text-emerald-400">R$ {getPlanPrice('Autoridade', 'YEARLY').toLocaleString('pt-BR')}</span>
+                    <span className="text-gray-500 text-[10px]">/ano (Combo)</span>
+                  </div>
                 </div>
               </div>
               <ul className="space-y-3 mb-8 flex-1">

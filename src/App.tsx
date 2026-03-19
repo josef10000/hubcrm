@@ -497,16 +497,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                         
                         {formData.isCombo && (
                           <div className="mt-3 pt-3 border-t border-emerald-500/10">
-                            <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Parcelas Sugeridas</label>
-                            <select 
-                              value={formData.comboInstallments || 12}
-                              onChange={(e) => setFormData(prev => ({ ...prev, comboInstallments: parseInt(e.target.value) }))}
-                              className="w-full bg-black/40 border border-emerald-500/20 rounded-lg px-2 py-1 text-xs text-white outline-none"
-                            >
-                              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => (
-                                <option key={n} value={n}>{n}x</option>
-                              ))}
-                            </select>
+                            <p className="text-[10px] text-emerald-400 font-medium">O cliente poderá escolher o parcelamento diretamente na fatura do Asaas.</p>
                           </div>
                         )}
                       </div>
@@ -1837,13 +1828,12 @@ function CRM({ user }: { user: User }) {
                 value: totalComboValue,
                 dueDate: firstPaymentDate,
                 description: `Combo (Setup + Plano Anual) - Plano ${client.plan} - Hub Central`,
-                installmentCount: client.comboInstallments || 12
               })
             });
 
             if (paymentRes.ok) {
               const paymentData = await paymentRes.json();
-              client.invoiceUrl = paymentData.invoiceUrl;
+              client.invoiceUrl = paymentData.invoiceUrl || paymentData.bankSlipUrl;
               client.nextDueDate = firstPaymentDate;
               
               // Set renewal date to 1 year from now
@@ -1873,7 +1863,7 @@ function CRM({ user }: { user: User }) {
 
             if (paymentRes.ok) {
               const paymentData = await paymentRes.json();
-              client.invoiceUrl = paymentData.invoiceUrl;
+              client.invoiceUrl = paymentData.invoiceUrl || paymentData.bankSlipUrl;
               client.nextDueDate = firstPaymentDate;
             } else {
               console.error("Failed to create initial payment", await paymentRes.text());
