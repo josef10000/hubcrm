@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { doc, getDoc, addDoc, collection, serverTimestamp, onSnapshot, query, where, orderBy, deleteDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, getDocs, addDoc, collection, serverTimestamp, onSnapshot, query, where, orderBy, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { getPlanPrice, getSetupPrice } from '../App';
+import { getPlanPrice, getSetupPrice, calculateDiscount } from '../App';
 import { Globe, CreditCard, CheckCircle, Clock, AlertCircle, ExternalLink, FileText, MessageSquare, Send, X, ChevronDown, ChevronUp, Calendar, Users, Copy, HelpCircle, Search, ShoppingCart } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
 
@@ -53,9 +53,9 @@ export default function ClientPortal() {
     {
       category: 'Programa de Indicações',
       questions: [
-        { q: 'Como funciona o bônus de R$ 40,00?', a: 'Para cada amigo que fechar um projeto conosco através do seu link, você ganha R$ 40,00 de desconto na sua próxima mensalidade. O bônus é validado assim que o seu indicado realizar o primeiro pagamento.' },
+        { q: 'Como funciona o bônus de indicação?', a: 'Para cada amigo que fechar um projeto conosco através do seu link, você ganha R$ 100,00 de desconto na sua próxima mensalidade (se escolher o modelo de desconto) ou uma comissão em dinheiro (se escolher o modelo de comissão). O bônus é validado assim que o seu indicado realizar o primeiro pagamento.' },
         { q: 'O que são os níveis Bronze, Prata e Ouro?', a: 'São níveis de reconhecimento! Bronze é o nível inicial. Prata (3+ indicações) te dá o selo de Parceiro Oficial. Ouro (6+ indicações) te torna um Embaixador com suporte prioritário.' },
-        { q: 'Existe um limite para os bônus?', a: 'Sim, você pode acumular bônus de até 2 indicações premiadas por mês. Indicações excedentes contam para o seu nível de Parceiro (Tier), mas o desconto financeiro é limitado a 2 por fatura.' }
+        { q: 'Existe um limite para os bônus?', a: 'Não há limite para o número de indicações que você pode fazer! Quanto mais você indicar, mais bônus ou descontos você acumula. O desconto mensal é limitado a 50% do valor da sua mensalidade, mas o saldo excedente pode ser usado em faturas futuras ou convertido em comissão.' }
       ]
     },
     {
@@ -239,6 +239,46 @@ export default function ClientPortal() {
       unsubscribeServices();
     };
   }, [userId, clientId]);
+
+  const handleUpdateRewardType = async (type: 'commission' | 'discount') => {
+    if (!userId || !clientId || !client) return;
+    try {
+      let discount = 0;
+
+      const clientsRef = collection(db, 'users', userId, 'clients');
+      const q = query(clientsRef, where('referredBy', '==', clientId));
+      const querySnapshot = await getDocs(q);
+      const referredClients = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+      
+      if (type === 'discount') {
+        discount = calculateDiscount(client, referredClients);
+      }
+
+      // Update Asaas subscription if applicable
+      if (client.asaasSubscriptionId) {
+        const monthlyValue = getPlanPrice(client.plan, client.billingCycle) - discount;
+
+        await fetch('/api/asaas/update-subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            subscriptionId: client.asaasSubscriptionId,
+            updatePendingPayments: true,
+            value: monthlyValue
+          })
+        });
+      }
+
+      await updateDoc(doc(db, 'users', userId, 'clients', clientId), {
+        referralRewardType: type,
+        currentDiscount: discount
+      });
+      toast.success('Modelo de recompensa atualizado!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao atualizar modelo.');
+    }
+  };
 
   if (loading) {
     return (
@@ -641,60 +681,51 @@ export default function ClientPortal() {
             </div>
             <div>
               <h2 className="text-xl font-bold text-white">Indique e Ganhe! 💸</h2>
-              <p className="text-gray-400 text-sm">Ganhe descontos na sua mensalidade</p>
+              <p className="text-gray-400 text-sm">Escolha como quer ser recompensado</p>
             </div>
           </div>
 
           <p className="text-gray-300 mb-6 leading-relaxed">
-            Indique um amigo para criar o site com a gente. Quando ele fechar o projeto e pagar a primeira mensalidade, você ganha um bônus de <span className="text-emerald-400 font-bold">R$ 40,00</span> na sua próxima fatura!
+            Indique um amigo para criar o site com a gente. Você pode escolher: ou ganhar comissão quando indicar alguém, ou receber desconto mensal enquanto o cliente estiver ativo.
           </p>
 
           <div className="bg-black/20 border border-white/5 rounded-2xl p-4 mb-6">
-            <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-4">Seu Progresso de Parceiro</h4>
-            {(() => {
-              const count = client?.referralCount || 0;
-              const getTier = (c: number) => {
-                if (c >= 6) return { name: 'Ouro', color: 'text-yellow-400', bg: 'bg-yellow-400/10', border: 'border-yellow-400/20', icon: '🏆', next: null, benefit: 'Suporte Prioritário' };
-                if (c >= 3) return { name: 'Prata', color: 'text-slate-300', bg: 'bg-slate-300/10', border: 'border-slate-300/20', icon: '🥈', next: 6, benefit: 'Selo de Parceiro' };
-                return { name: 'Bronze', color: 'text-orange-400', bg: 'bg-orange-400/10', border: 'border-orange-400/20', icon: '🥉', next: 3, benefit: 'Membro' };
-              };
-              const tier = getTier(count);
-              const progress = tier.next ? (count / tier.next) * 100 : 100;
-
-              return (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{tier.icon}</span>
-                      <div>
-                        <p className={`font-bold ${tier.color}`}>Nível {tier.name}</p>
-                        <p className="text-[10px] text-gray-500 uppercase tracking-tighter">{tier.benefit}</p>
-                      </div>
-                    </div>
-                    {tier.next && (
-                      <p className="text-xs text-gray-500">
-                        {tier.next - count} para o nível {tier.name === 'Bronze' ? 'Prata' : 'Ouro'}
-                      </p>
-                    )}
+            <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-4">Escolha seu Modelo de Recompensa</h4>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <button
+                onClick={() => handleUpdateRewardType('commission')}
+                className={`flex-1 p-4 rounded-xl border text-left transition-all relative overflow-hidden ${client?.referralRewardType === 'commission' ? 'bg-emerald-500/20 border-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'}`}
+              >
+                {client?.referralRewardType === 'commission' && (
+                  <div className="absolute top-0 right-0 bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg">
+                    ATIVO
                   </div>
-                  <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full transition-all duration-1000 ${tier.name === 'Ouro' ? 'bg-yellow-400' : tier.name === 'Prata' ? 'bg-slate-300' : 'bg-orange-400'}`}
-                      style={{ width: `${progress}%` }}
-                    ></div>
+                )}
+                <div className={`font-bold mb-1 ${client?.referralRewardType === 'commission' ? 'text-emerald-400' : 'text-gray-300'}`}>Comissão (Dinheiro)</div>
+                <div className="text-xs opacity-80 mb-3">Pago após o cliente pagar. Pagamento único. Sem limite de indicações.</div>
+                <ul className="text-xs space-y-1.5 opacity-90">
+                  <li className="flex justify-between"><span>Plano Essencial:</span> <span className="font-bold text-emerald-400">R$ 100</span></li>
+                  <li className="flex justify-between"><span>Plano Profissional:</span> <span className="font-bold text-emerald-400">R$ 250</span></li>
+                  <li className="flex justify-between"><span>Plano Autoridade:</span> <span className="font-bold text-emerald-400">R$ 500</span></li>
+                </ul>
+              </button>
+              <button
+                onClick={() => handleUpdateRewardType('discount')}
+                className={`flex-1 p-4 rounded-xl border text-left transition-all relative overflow-hidden ${client?.referralRewardType === 'discount' || !client?.referralRewardType ? 'bg-emerald-500/20 border-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'}`}
+              >
+                {(client?.referralRewardType === 'discount' || !client?.referralRewardType) && (
+                  <div className="absolute top-0 right-0 bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg">
+                    ATIVO
                   </div>
-                </div>
-              );
-            })()}
-          </div>
-
-          <div className="bg-black/20 border border-white/5 rounded-2xl p-4 mb-6">
-            <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">Regras do Programa</h4>
-            <ul className="text-xs text-gray-400 space-y-1 list-disc pl-4">
-              <li>Limite de <span className="text-white font-medium">2 indicações premiadas</span> por mês.</li>
-              <li>Bônus de <span className="text-white font-medium">R$ 40</span> por indicação elegível.</li>
-              <li>O bônus é aplicado após o primeiro pagamento do indicado.</li>
-            </ul>
+                )}
+                <div className={`font-bold mb-1 ${client?.referralRewardType === 'discount' || !client?.referralRewardType ? 'text-emerald-400' : 'text-gray-300'}`}>Desconto Mensal</div>
+                <div className="text-xs opacity-80 mb-3">R$ 100 de desconto por indicação. Válido enquanto o cliente estiver ativo.</div>
+                <ul className="text-xs space-y-1.5 opacity-90">
+                  <li className="flex items-start gap-1"><CheckCircle size={12} className="mt-0.5 shrink-0 text-emerald-400" /> <span>Limitado a 50% da sua mensalidade</span></li>
+                  <li className="flex items-start gap-1"><CheckCircle size={12} className="mt-0.5 shrink-0 text-emerald-400" /> <span>O valor nunca será inferior ao limite mínimo</span></li>
+                </ul>
+              </button>
+            </div>
           </div>
 
           <div className="bg-black/40 border border-white/10 rounded-2xl p-4 mb-6">
@@ -715,27 +746,17 @@ export default function ClientPortal() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="bg-white/5 p-4 rounded-2xl border border-white/5 text-center">
-              <p className="text-xs text-gray-500 uppercase mb-1">Indicações</p>
+              <p className="text-xs text-gray-500 uppercase mb-1">Indicações (Total)</p>
               <p className="text-2xl font-bold text-white">{client?.referralCount || 0}</p>
             </div>
             <div className="bg-white/5 p-4 rounded-2xl border border-white/5 text-center">
-              <p className="text-xs text-gray-500 uppercase mb-1">Bônus Acumulado</p>
-              <p className="text-2xl font-bold text-emerald-400">R$ {client?.referralBalance || 0}</p>
-            </div>
-            <div className="bg-white/5 p-4 rounded-2xl border border-white/5 text-center">
-              <p className="text-xs text-gray-500 uppercase mb-1">Próximo Desconto</p>
-              <p className="text-2xl font-bold text-primary-400">
-                R$ {client?.referralBalance || 0}
+              <p className="text-xs text-gray-500 uppercase mb-1">
+                {client?.referralRewardType === 'commission' ? 'Bônus Acumulado' : 'Desconto Mensal Atual'}
               </p>
-              <p className="text-[10px] text-gray-500 mt-1">
-                {(() => {
-                  const planPrice = getPlanPrice(client?.plan, client?.billingCycle);
-                  const discount = client?.referralBalance || 0;
-                  const percent = Math.min(100, Math.round((discount / planPrice) * 100));
-                  return `${percent}% da assinatura`;
-                })()}
+              <p className="text-2xl font-bold text-emerald-400">
+                R$ {client?.referralRewardType === 'commission' ? (client?.referralBalance || 0) : (client?.currentDiscount || 0)}
               </p>
             </div>
           </div>
@@ -754,13 +775,13 @@ export default function ClientPortal() {
             <div className={`p-6 rounded-2xl border flex flex-col h-full transition-all ${client.plan === 'Essencial' ? 'bg-primary-500/10 border-primary-500/30 ring-1 ring-primary-500/50' : 'bg-white/5 border-white/10 opacity-80 hover:opacity-100'}`}>
               <div className="mb-4">
                 <h3 className="text-xl font-bold text-white mb-1">Essencial</h3>
-                <p className="text-xs text-gray-400 leading-relaxed">Para produtores menores e prestadores de serviços técnicos.</p>
+                <p className="text-xs text-gray-400 leading-relaxed">Ideal para quem precisa de uma presença digital profissional, simples e funcional, com foco em facilitar o contato com clientes.</p>
               </div>
               <div className="mb-6">
                 <p className="text-xs text-gray-500 mb-1">Setup: R$ {getSetupPrice('Essencial').toLocaleString('pt-BR')}</p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-bold text-white">R$ {getPlanPrice('Essencial').toLocaleString('pt-BR')}</span>
-                  <span className="text-gray-500 text-sm">/mês</span>
+                  <span className="text-2xl font-bold text-white">R$ {getPlanPrice('Essencial', client.billingCycle).toLocaleString('pt-BR')}</span>
+                  <span className="text-gray-500 text-sm">{client.billingCycle === 'YEARLY' ? '/ano' : '/mês'}</span>
                 </div>
               </div>
               <ul className="space-y-3 mb-8 flex-1">
@@ -802,13 +823,13 @@ export default function ClientPortal() {
               </div>
               <div className="mb-4">
                 <h3 className="text-xl font-bold text-white mb-1">Profissional</h3>
-                <p className="text-xs text-gray-400 leading-relaxed">Para empresas agro, corretoras e consultorias.</p>
+                <p className="text-xs text-gray-400 leading-relaxed">Indicado para empresas que querem transmitir mais autoridade, melhorar sua apresentação online e gerar contatos mais qualificados.</p>
               </div>
               <div className="mb-6">
                 <p className="text-xs text-gray-500 mb-1">Setup: R$ {getSetupPrice('Profissional').toLocaleString('pt-BR')}</p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-bold text-white">R$ {getPlanPrice('Profissional').toLocaleString('pt-BR')}</span>
-                  <span className="text-gray-500 text-sm">/mês</span>
+                  <span className="text-2xl font-bold text-white">R$ {getPlanPrice('Profissional', client.billingCycle).toLocaleString('pt-BR')}</span>
+                  <span className="text-gray-500 text-sm">{client.billingCycle === 'YEARLY' ? '/ano' : '/mês'}</span>
                 </div>
               </div>
               <ul className="space-y-3 mb-8 flex-1">
@@ -852,13 +873,13 @@ export default function ClientPortal() {
             <div className={`p-6 rounded-2xl border flex flex-col h-full transition-all ${client.plan === 'Autoridade' ? 'bg-primary-500/10 border-primary-500/30 ring-1 ring-primary-500/50' : 'bg-white/5 border-white/10 opacity-80 hover:opacity-100'}`}>
               <div className="mb-4">
                 <h3 className="text-xl font-bold text-white mb-1">Autoridade</h3>
-                <p className="text-xs text-gray-400 leading-relaxed">Para grandes operações e agtechs.</p>
+                <p className="text-xs text-gray-400 leading-relaxed">Para grandes operações que buscam máxima performance, design exclusivo e consultoria técnica.</p>
               </div>
               <div className="mb-6">
                 <p className="text-xs text-gray-500 mb-1">Setup: R$ {getSetupPrice('Autoridade').toLocaleString('pt-BR')}</p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-bold text-white">R$ {getPlanPrice('Autoridade').toLocaleString('pt-BR')}</span>
-                  <span className="text-gray-500 text-sm">/mês</span>
+                  <span className="text-2xl font-bold text-white">R$ {getPlanPrice('Autoridade', client.billingCycle).toLocaleString('pt-BR')}</span>
+                  <span className="text-gray-500 text-sm">{client.billingCycle === 'YEARLY' ? '/ano' : '/mês'}</span>
                 </div>
               </div>
               <ul className="space-y-3 mb-8 flex-1">

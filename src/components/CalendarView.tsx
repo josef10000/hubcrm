@@ -10,6 +10,7 @@ import {
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, DollarSign, Package, Calendar as CalendarIcon, X } from 'lucide-react';
+import { getPlanPrice } from '../App';
 import { Client } from '../App';
 
 interface CalendarViewProps {
@@ -18,15 +19,6 @@ interface CalendarViewProps {
 }
 
 type CalendarMode = 'finance' | 'production';
-
-const getPlanPrice = (plan?: string, billingCycle?: string) => {
-  let price = 147;
-  if (plan === 'Profissional') price = 397;
-  if (plan === 'Autoridade') price = 997;
-  
-  if (billingCycle === 'YEARLY') return price * 10;
-  return price;
-};
 
 export default function CalendarView({ clients, onClientClick }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());

@@ -88,6 +88,9 @@ export interface Client {
   referralBalance?: number;
   referralCount?: number;
   referralsByMonth?: Record<string, number>;
+  referralRewardType?: 'commission' | 'discount';
+  currentDiscount?: number;
+  referralConfirmed?: boolean;
   npsScore?: number;
   npsComment?: string;
   npsSubmittedAt?: any;
@@ -111,18 +114,69 @@ interface Expense {
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const getPlanPrice = (plan?: string, billingCycle?: string) => {
-  let price = 147;
-  if (plan === 'Profissional') price = 397;
-  if (plan === 'Autoridade') price = 997;
+  if (billingCycle === 'YEARLY') {
+    if (plan === 'Profissional') return 3573;
+    if (plan === 'Autoridade') return 8973;
+    return 1323; // Essencial
+  }
   
-  if (billingCycle === 'YEARLY') return price * 10;
-  return price;
+  if (plan === 'Profissional') return 397;
+  if (plan === 'Autoridade') return 997;
+  return 147; // Essencial
 };
 
 export const getSetupPrice = (plan?: string) => {
   if (plan === 'Profissional') return 2500;
   if (plan === 'Autoridade') return 7500;
-  return 500;
+  return 500; // Essencial
+};
+
+export const calculateDiscount = (client: Client, clientsList: Client[]) => {
+  if (!client || client.referralRewardType === 'commission') return 0;
+  
+  // Find active referred clients
+  const activeReferred = clientsList.filter(c => c.referredBy === client.id && c.status !== 'Cancelado' && c.referralConfirmed === true);
+  const discountAmount = activeReferred.length * 100;
+  
+  const basePrice = getPlanPrice(client.plan, client.billingCycle);
+  const maxDiscount = basePrice * 0.5; // 50% limit
+  
+  return Math.min(discountAmount, maxDiscount);
+};
+
+export const updateReferrerSubscription = async (referrerId: string, updatedClients: Client[]) => {
+  const referrer = updatedClients.find(c => c.id === referrerId);
+  if (!referrer || referrer.referralRewardType === 'commission') return;
+
+  const discount = calculateDiscount(referrer, updatedClients);
+  
+  try {
+    // Also save the current discount to Firestore for display
+    if (auth.currentUser) {
+      await updateDoc(doc(db, 'users', auth.currentUser.uid, 'clients', referrer.id), {
+        currentDiscount: discount
+      });
+    }
+
+    if (!referrer.asaasSubscriptionId) return;
+
+    const monthlyValue = getPlanPrice(referrer.plan, referrer.billingCycle) - discount;
+
+    const updateRes = await fetch('/api/asaas/update-subscription', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        subscriptionId: referrer.asaasSubscriptionId,
+        updatePendingPayments: true,
+        value: monthlyValue
+      })
+    });
+    if (!updateRes.ok) {
+      console.error("Failed to update referrer subscription in Asaas");
+    }
+  } catch (e) {
+    console.error("Error updating referrer subscription", e);
+  }
 };
 
 function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardingQuestions, user }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, onDelete?: (id: string) => void, initialData: Client | null, onboardingQuestions: OnboardingQuestion[], user: User }) {
@@ -448,7 +502,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                       >
                         <div className="font-semibold mb-1">Essencial</div>
                         <div className="text-xs opacity-80">Setup: R$ {getSetupPrice('Essencial').toLocaleString('pt-BR')}</div>
-                        <div className="text-sm font-bold mt-1">R$ {getPlanPrice('Essencial').toLocaleString('pt-BR')}/mês</div>
+                        <div className="text-sm font-bold mt-1">R$ {getPlanPrice('Essencial', formData.billingCycle).toLocaleString('pt-BR')}/{formData.billingCycle === 'YEARLY' ? 'ano' : 'mês'}</div>
                       </button>
                       <button 
                         type="button" 
@@ -457,7 +511,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                       >
                         <div className="font-semibold mb-1">Profissional</div>
                         <div className="text-xs opacity-80">Setup: R$ {getSetupPrice('Profissional').toLocaleString('pt-BR')}</div>
-                        <div className="text-sm font-bold mt-1">R$ {getPlanPrice('Profissional').toLocaleString('pt-BR')}/mês</div>
+                        <div className="text-sm font-bold mt-1">R$ {getPlanPrice('Profissional', formData.billingCycle).toLocaleString('pt-BR')}/{formData.billingCycle === 'YEARLY' ? 'ano' : 'mês'}</div>
                       </button>
                       <button 
                         type="button" 
@@ -466,7 +520,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                       >
                         <div className="font-semibold mb-1">Autoridade</div>
                         <div className="text-xs opacity-80">Setup: R$ {getSetupPrice('Autoridade').toLocaleString('pt-BR')}</div>
-                        <div className="text-sm font-bold mt-1">R$ {getPlanPrice('Autoridade').toLocaleString('pt-BR')}/mês</div>
+                        <div className="text-sm font-bold mt-1">R$ {getPlanPrice('Autoridade', formData.billingCycle).toLocaleString('pt-BR')}/{formData.billingCycle === 'YEARLY' ? 'ano' : 'mês'}</div>
                       </button>
                     </div>
                   </div>
@@ -865,8 +919,9 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                       <div className="pt-4 border-t border-white/5">
                         <p className="text-[10px] text-gray-500 uppercase font-bold mb-2">Regras Atuais:</p>
                         <ul className="text-[10px] text-gray-400 space-y-1 list-disc pl-4">
-                          <li>Máx. 2 indicações premiadas/mês</li>
-                          <li>Bônus: R$ 40 por indicação</li>
+                          <li>Essencial: R$ 100</li>
+                          <li>Profissional: R$ 250</li>
+                          <li>Autoridade: R$ 500</li>
                         </ul>
                       </div>
                       <div className="pt-4 border-t border-white/5">
@@ -1086,45 +1141,54 @@ function ReferralsView({ clients, user }: { clients: Client[], user: User }) {
 
   const handleConfirmReferral = async (referral: any) => {
     try {
-      // 2. Update referrer's balance
       const referrer = clients.find(c => c.id === referral.referrerId);
+      const referred = clients.find(c => c.id === referral.referredClientId);
       let bonusAmount = 0;
 
-      if (referrer) {
-        const now = new Date();
-        const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-        const currentMonthCount = (referrer.referralsByMonth?.[monthKey] || 0);
-
-        if (currentMonthCount < 2) {
-          // Rule: Max 2 eligible referrals per month
-          // Fixed R$ 40 bonus per referral for all plans
-          bonusAmount = 40;
+      if (referrer && referred) {
+        const rewardType = referrer.referralRewardType || 'discount';
+        
+        if (rewardType === 'commission') {
+          if (referred.plan === 'Essencial') {
+            bonusAmount = 100;
+          } else if (referred.plan === 'Profissional') {
+            bonusAmount = 250;
+          } else if (referred.plan === 'Autoridade') {
+            bonusAmount = 500;
+          } else {
+            bonusAmount = 100;
+          }
         }
 
         const newBalance = (referrer.referralBalance || 0) + bonusAmount;
         const newCount = (referrer.referralCount || 0) + 1;
-        const newReferralsByMonth = {
-          ...(referrer.referralsByMonth || {}),
-          [monthKey]: currentMonthCount + 1
-        };
 
         await updateDoc(doc(db, 'users', user.uid, 'clients', referrer.id), {
           referralBalance: newBalance,
-          referralCount: newCount,
-          referralsByMonth: newReferralsByMonth
+          referralCount: newCount
         });
+        
+        await updateDoc(doc(db, 'users', user.uid, 'clients', referred.id), {
+          referralConfirmed: true
+        });
+        
+        if (rewardType === 'discount') {
+          // Update referrer's subscription in Asaas
+          // We need to pass the updated clients list, so we map the current clients and update the referred client's status
+          const updatedClients = clients.map(c => c.id === referred.id ? { ...c, status: 'Ativo' as SiteStatus, referralConfirmed: true } : c);
+          await updateReferrerSubscription(referrer.id, updatedClients);
+        }
       }
 
-      // 1. Update referral status and store bonus amount
       await updateDoc(doc(db, 'users', user.uid, 'referrals', referral.id), {
         status: 'confirmed',
         bonusAmount: bonusAmount
       });
 
       if (bonusAmount > 0) {
-        toast.success(`Indicação confirmada! Bônus de R$ ${bonusAmount} aplicado.`);
-      } else if (referrer) {
-        toast.info('Indicação confirmada! Limite mensal de bônus atingido (máx. 2 por mês).');
+        toast.success(`Indicação confirmada! Comissão de R$ ${bonusAmount} adicionada ao saldo do parceiro.`);
+      } else if (referrer?.referralRewardType === 'discount' || !referrer?.referralRewardType) {
+        toast.success('Indicação confirmada! O desconto mensal será aplicado na próxima fatura do parceiro.');
       } else {
         toast.success('Indicação confirmada!');
       }
@@ -1520,6 +1584,7 @@ function CRM({ user }: { user: User }) {
 
     const isNew = !clientData.id;
     const client: Client = {
+      ...(editingClient || {}),
       id: clientData.id || crypto.randomUUID(),
       name: clientData.name || '',
       whatsapp: clientData.whatsapp || '',
@@ -1554,9 +1619,10 @@ function CRM({ user }: { user: User }) {
           editingClient.plan !== client.plan
       )) {
         let monthlyValue = getPlanPrice(client.plan, client.billingCycle);
+        monthlyValue -= calculateDiscount(client as Client, clients);
 
         let nextSubDateStr = client.nextDueDate;
-        if (client.recurringPaymentDay && editingClient.recurringPaymentDay !== client.recurringPaymentDay) {
+        if (editingClient.recurringPaymentDay !== client.recurringPaymentDay) {
           const today = new Date();
           let nextSubDate = new Date(today.getFullYear(), today.getMonth(), client.recurringPaymentDay, 12, 0, 0);
           
@@ -1618,6 +1684,11 @@ function CRM({ user }: { user: User }) {
                   status: 'cancelled',
                   bonusAmount: 0
                 });
+
+                if (referrer.referralRewardType === 'discount' || !referrer.referralRewardType) {
+                  const updatedClients = clients.map(c => c.id === client.id ? { ...c, status: 'Cancelado' as SiteStatus } : c);
+                  await updateReferrerSubscription(referrer.id, updatedClients);
+                }
               }
             }
           }
@@ -1690,6 +1761,7 @@ function CRM({ user }: { user: User }) {
           const firstPaymentDate = client.firstPaymentDate || today.toISOString().split('T')[0];
           
           let monthlyValue = getPlanPrice(client.plan, client.billingCycle);
+          monthlyValue -= calculateDiscount(client as Client, clients);
           let setupValue = getSetupPrice(client.plan);
 
           // A. Create single charge for first payment (Setup Fee)
