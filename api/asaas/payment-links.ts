@@ -11,18 +11,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     // Create a Payment Link in Asaas
     // This allows the client to choose the number of installments on the checkout page
-    const data = await asaasRequest("/paymentLinks", "POST", {
+    const payload: any = {
       name,
       description,
       endDate,
       value,
-      billingType: billingType || "UNDEFINED",
       chargeType: chargeType || "DETACHED", // DETACHED is for one-time payments
       maxInstallmentCount: maxInstallmentCount || 12, // Allow up to 12 installments
       dueDateLimitDays: dueDateLimitDays || 3, // Default to 3 business days for payment due date
       subscriptionCycle: null,
       customer
-    });
+    };
+
+    if (billingType && billingType !== "UNDEFINED") {
+      payload.billingType = billingType;
+    }
+
+    const data = await asaasRequest("/paymentLinks", "POST", payload);
     
     return res.status(200).json(data);
   } catch (error: any) {
