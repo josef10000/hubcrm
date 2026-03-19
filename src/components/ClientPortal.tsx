@@ -710,16 +710,27 @@ export default function ClientPortal() {
                 </ul>
               </button>
               <button
-                onClick={() => handleUpdateRewardType('discount')}
-                className={`flex-1 p-4 rounded-xl border text-left transition-all relative overflow-hidden ${client?.referralRewardType === 'discount' || !client?.referralRewardType ? 'bg-emerald-500/20 border-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'}`}
+                onClick={() => {
+                  if (client?.billingCycle === 'YEARLY' || client?.isCombo) {
+                    toast.error('O modelo de desconto mensal não está disponível para planos anuais ou combos.');
+                    return;
+                  }
+                  handleUpdateRewardType('discount');
+                }}
+                disabled={client?.billingCycle === 'YEARLY' || client?.isCombo}
+                className={`flex-1 p-4 rounded-xl border text-left transition-all relative overflow-hidden ${(client?.billingCycle === 'YEARLY' || client?.isCombo) ? 'opacity-50 cursor-not-allowed bg-white/5 border-white/5' : (client?.referralRewardType === 'discount' || !client?.referralRewardType ? 'bg-emerald-500/20 border-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10')}`}
               >
-                {(client?.referralRewardType === 'discount' || !client?.referralRewardType) && (
+                {(client?.referralRewardType === 'discount' || !client?.referralRewardType) && !(client?.billingCycle === 'YEARLY' || client?.isCombo) && (
                   <div className="absolute top-0 right-0 bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg">
                     ATIVO
                   </div>
                 )}
                 <div className={`font-bold mb-1 ${client?.referralRewardType === 'discount' || !client?.referralRewardType ? 'text-emerald-400' : 'text-gray-300'}`}>Desconto Mensal</div>
-                <div className="text-xs opacity-80 mb-3">R$ 100 de desconto por indicação. Válido enquanto o cliente estiver ativo.</div>
+                <div className="text-xs opacity-80 mb-3">
+                  {client?.billingCycle === 'YEARLY' || client?.isCombo 
+                    ? 'Indisponível para planos anuais.' 
+                    : 'R$ 100 de desconto por indicação. Válido enquanto o cliente estiver ativo.'}
+                </div>
                 <ul className="text-xs space-y-1.5 opacity-90">
                   <li className="flex items-start gap-1"><CheckCircle size={12} className="mt-0.5 shrink-0 text-emerald-400" /> <span>Limitado a 50% da sua mensalidade</span></li>
                   <li className="flex items-start gap-1"><CheckCircle size={12} className="mt-0.5 shrink-0 text-emerald-400" /> <span>O valor nunca será inferior ao limite mínimo</span></li>
@@ -778,15 +789,36 @@ export default function ClientPortal() {
                 <p className="text-xs text-gray-400 leading-relaxed">Ideal para quem precisa de uma presença digital profissional, simples e funcional, com foco em facilitar o contato com clientes.</p>
               </div>
               <div className="mb-6">
-                <p className="text-xs text-gray-500 mb-1">Setup: {client.billingCycle === 'YEARLY' ? 'Incluso no Combo' : `R$ ${getSetupPrice('Essencial').toLocaleString('pt-BR')}`}</p>
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-xl font-bold text-white">R$ {getPlanPrice('Essencial', 'MONTHLY').toLocaleString('pt-BR')}</span>
-                    <span className="text-gray-500 text-[10px]">/mês</span>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-gray-500 uppercase font-bold">Mensal</span>
+                    <div className="text-right">
+                      <div className="flex items-baseline justify-end gap-1">
+                        <span className="text-lg font-bold text-white">R$ {getPlanPrice('Essencial', 'MONTHLY').toLocaleString('pt-BR')}</span>
+                        <span className="text-gray-500 text-[9px]">/mês</span>
+                      </div>
+                      <p className="text-[9px] text-gray-500">+ Setup R$ {getSetupPrice('Essencial').toLocaleString('pt-BR')}</p>
+                    </div>
                   </div>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-lg font-bold text-emerald-400">R$ {getPlanPrice('Essencial', 'YEARLY').toLocaleString('pt-BR')}</span>
-                    <span className="text-gray-500 text-[10px]">/ano (Combo)</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-gray-500 uppercase font-bold">Anual</span>
+                    <div className="text-right">
+                      <div className="flex items-baseline justify-end gap-1">
+                        <span className="text-lg font-bold text-white">R$ {getPlanPrice('Essencial', 'YEARLY').toLocaleString('pt-BR')}</span>
+                        <span className="text-gray-500 text-[9px]">/ano</span>
+                      </div>
+                      <p className="text-[9px] text-gray-500">+ Setup R$ {getSetupPrice('Essencial').toLocaleString('pt-BR')}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                    <span className="text-[10px] text-emerald-400 uppercase font-bold">Combo Anual</span>
+                    <div className="text-right">
+                      <div className="flex items-baseline justify-end gap-1">
+                        <span className="text-lg font-bold text-emerald-400">R$ {getPlanPrice('Essencial', 'YEARLY').toLocaleString('pt-BR')}</span>
+                        <span className="text-gray-500 text-[9px]">/ano</span>
+                      </div>
+                      <p className="text-[9px] text-emerald-500/70">Setup Incluso (Grátis)</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -832,15 +864,36 @@ export default function ClientPortal() {
                 <p className="text-xs text-gray-400 leading-relaxed">Indicado para empresas que querem transmitir mais autoridade, melhorar sua apresentação online e gerar contatos mais qualificados.</p>
               </div>
               <div className="mb-6">
-                <p className="text-xs text-gray-500 mb-1">Setup: {client.billingCycle === 'YEARLY' ? 'Incluso no Combo' : `R$ ${getSetupPrice('Profissional').toLocaleString('pt-BR')}`}</p>
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-xl font-bold text-white">R$ {getPlanPrice('Profissional', 'MONTHLY').toLocaleString('pt-BR')}</span>
-                    <span className="text-gray-500 text-[10px]">/mês</span>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-gray-500 uppercase font-bold">Mensal</span>
+                    <div className="text-right">
+                      <div className="flex items-baseline justify-end gap-1">
+                        <span className="text-lg font-bold text-white">R$ {getPlanPrice('Profissional', 'MONTHLY').toLocaleString('pt-BR')}</span>
+                        <span className="text-gray-500 text-[9px]">/mês</span>
+                      </div>
+                      <p className="text-[9px] text-gray-500">+ Setup R$ {getSetupPrice('Profissional').toLocaleString('pt-BR')}</p>
+                    </div>
                   </div>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-lg font-bold text-emerald-400">R$ {getPlanPrice('Profissional', 'YEARLY').toLocaleString('pt-BR')}</span>
-                    <span className="text-gray-500 text-[10px]">/ano (Combo)</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-gray-500 uppercase font-bold">Anual</span>
+                    <div className="text-right">
+                      <div className="flex items-baseline justify-end gap-1">
+                        <span className="text-lg font-bold text-white">R$ {getPlanPrice('Profissional', 'YEARLY').toLocaleString('pt-BR')}</span>
+                        <span className="text-gray-500 text-[9px]">/ano</span>
+                      </div>
+                      <p className="text-[9px] text-gray-500">+ Setup R$ {getSetupPrice('Profissional').toLocaleString('pt-BR')}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                    <span className="text-[10px] text-emerald-400 uppercase font-bold">Combo Anual</span>
+                    <div className="text-right">
+                      <div className="flex items-baseline justify-end gap-1">
+                        <span className="text-lg font-bold text-emerald-400">R$ {getPlanPrice('Profissional', 'YEARLY').toLocaleString('pt-BR')}</span>
+                        <span className="text-gray-500 text-[9px]">/ano</span>
+                      </div>
+                      <p className="text-[9px] text-emerald-500/70">Setup Incluso (Grátis)</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -888,15 +941,36 @@ export default function ClientPortal() {
                 <p className="text-xs text-gray-400 leading-relaxed">Para grandes operações que buscam máxima performance, design exclusivo e consultoria técnica.</p>
               </div>
               <div className="mb-6">
-                <p className="text-xs text-gray-500 mb-1">Setup: {client.billingCycle === 'YEARLY' ? 'Incluso no Combo' : `R$ ${getSetupPrice('Autoridade').toLocaleString('pt-BR')}`}</p>
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-xl font-bold text-white">R$ {getPlanPrice('Autoridade', 'MONTHLY').toLocaleString('pt-BR')}</span>
-                    <span className="text-gray-500 text-[10px]">/mês</span>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-gray-500 uppercase font-bold">Mensal</span>
+                    <div className="text-right">
+                      <div className="flex items-baseline justify-end gap-1">
+                        <span className="text-lg font-bold text-white">R$ {getPlanPrice('Autoridade', 'MONTHLY').toLocaleString('pt-BR')}</span>
+                        <span className="text-gray-500 text-[9px]">/mês</span>
+                      </div>
+                      <p className="text-[9px] text-gray-500">+ Setup R$ {getSetupPrice('Autoridade').toLocaleString('pt-BR')}</p>
+                    </div>
                   </div>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-lg font-bold text-emerald-400">R$ {getPlanPrice('Autoridade', 'YEARLY').toLocaleString('pt-BR')}</span>
-                    <span className="text-gray-500 text-[10px]">/ano (Combo)</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-gray-500 uppercase font-bold">Anual</span>
+                    <div className="text-right">
+                      <div className="flex items-baseline justify-end gap-1">
+                        <span className="text-lg font-bold text-white">R$ {getPlanPrice('Autoridade', 'YEARLY').toLocaleString('pt-BR')}</span>
+                        <span className="text-gray-500 text-[9px]">/ano</span>
+                      </div>
+                      <p className="text-[9px] text-gray-500">+ Setup R$ {getSetupPrice('Autoridade').toLocaleString('pt-BR')}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                    <span className="text-[10px] text-emerald-400 uppercase font-bold">Combo Anual</span>
+                    <div className="text-right">
+                      <div className="flex items-baseline justify-end gap-1">
+                        <span className="text-lg font-bold text-emerald-400">R$ {getPlanPrice('Autoridade', 'YEARLY').toLocaleString('pt-BR')}</span>
+                        <span className="text-gray-500 text-[9px]">/ano</span>
+                      </div>
+                      <p className="text-[9px] text-emerald-500/70">Setup Incluso (Grátis)</p>
+                    </div>
                   </div>
                 </div>
               </div>

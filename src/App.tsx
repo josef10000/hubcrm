@@ -1664,6 +1664,9 @@ function CRM({ user }: { user: User }) {
       isCombo: clientData.isCombo,
       comboInstallments: clientData.comboInstallments,
       comboRenewalDate: clientData.comboRenewalDate,
+      referralRewardType: (clientData.billingCycle === 'YEARLY' || clientData.isCombo) 
+        ? 'commission' 
+        : (clientData.referralRewardType || (editingClient?.referralRewardType || 'discount')),
     };
 
     try { 
