@@ -1827,6 +1827,20 @@ function CRM({ user }: { user: User }) {
             // COMBO LOGIC: Setup + Annual in one parcelable payment link
             // The annual price (monthlyValue) already includes the setup for the combo
             const totalComboValue = monthlyValue;
+            
+            // Ask for installment count
+            const installmentCount = prompt("Quantas vezes deseja parcelar? (1 a 12)", "12");
+            if (!installmentCount) return; // Cancelled
+            
+            const count = parseInt(installmentCount);
+            if (isNaN(count) || count < 1 || count > 12) {
+              toast.error("Número de parcelas inválido (1 a 12).");
+              return;
+            }
+
+            const installmentValue = (totalComboValue / count).toFixed(2);
+            if (!confirm(`Confirmar parcelamento em ${count}x de R$ ${installmentValue}?`)) return;
+
             const paymentRes = await fetch('/api/asaas/payment-links', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -1835,6 +1849,7 @@ function CRM({ user }: { user: User }) {
                 description: `Acesso anual ao Plano ${client.plan} com taxa de setup inclusa.`,
                 value: totalComboValue,
                 billingType: 'CREDIT_CARD', // Explicitly set to CREDIT_CARD to enable installments
+                installmentCount: count, // Fixed installment count
                 chargeType: 'DETACHED', // One-time payment
                 maxInstallmentCount: 12,
                 dueDateLimitDays: 3, // 3 business days for payment due date
@@ -1852,7 +1867,7 @@ function CRM({ user }: { user: User }) {
               const renewalDate = new Date(firstPaymentDate + 'T12:00:00Z');
               renewalDate.setFullYear(renewalDate.getFullYear() + 1);
               client.comboRenewalDate = renewalDate.toISOString().split('T')[0];
-              toast.success("Combo criado com sucesso! O cliente pode parcelar no cartão.");
+              toast.success(`Combo criado em ${count}x de R$ ${installmentValue}!`);
             } else {
               const errorData = await paymentRes.json();
               toast.error(`Erro ao criar link de pagamento: ${errorData.error || 'Erro desconhecido'}`);
