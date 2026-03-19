@@ -1835,8 +1835,9 @@ function CRM({ user }: { user: User }) {
                 description: `Acesso anual ao Plano ${client.plan} com taxa de setup inclusa.`,
                 value: totalComboValue,
                 billingType: 'UNDEFINED', // Allows client to choose (Boleto, Pix, Card)
-                chargeType: 'DETACHED',
+                chargeType: 'DETACHED', // One-time payment
                 maxInstallmentCount: 12,
+                customer: client.asaasCustomerId,
                 endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Link valid for 7 days
               })
             });
@@ -1850,11 +1851,11 @@ function CRM({ user }: { user: User }) {
               const renewalDate = new Date(firstPaymentDate + 'T12:00:00Z');
               renewalDate.setFullYear(renewalDate.getFullYear() + 1);
               client.comboRenewalDate = renewalDate.toISOString().split('T')[0];
-              
               toast.success("Combo criado com sucesso! O cliente pode parcelar no cartão.");
             } else {
-              console.error("Failed to create combo payment", await paymentRes.text());
-              toast.error("Erro ao criar pagamento combo no Asaas.");
+              const errorData = await paymentRes.json();
+              toast.error(`Erro ao criar link de pagamento: ${errorData.error || 'Erro desconhecido'}`);
+              console.error("Payment Link Error:", errorData);
             }
           } else {
             // STANDARD LOGIC: Setup Fee + Subscription
