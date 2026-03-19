@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   LayoutDashboard, Users, Plus, X, DollarSign, CheckCircle, Clock, 
   MapPin, Phone, Tag, Menu, Building2, FileText, Briefcase, AlignLeft,
-  Search, BarChart3, Calendar, Paperclip, Copy, MessageCircle, Trash2, Snowflake, LogOut, Globe, Image as ImageIcon, Sparkles, Wand2, Star,
+  Search, BarChart3, Calendar, Paperclip, Copy, MessageCircle, Trash2, Snowflake, LogOut, Globe, Image as ImageIcon, Sparkles, Wand2, Star, Zap,
   Filter, ArrowDownAZ, ArrowUpRight, RefreshCw, Download, Link as LinkIcon, AlertTriangle, TrendingDown, TrendingUp, Settings, MessageSquare,
   Megaphone, Pin, ShoppingCart, Eye, EyeOff
 } from 'lucide-react';
@@ -94,6 +94,9 @@ export interface Client {
   npsScore?: number;
   npsComment?: string;
   npsSubmittedAt?: any;
+  isCombo?: boolean;
+  comboInstallments?: number;
+  comboRenewalDate?: string;
 }
 
 export interface OnboardingQuestion {
@@ -180,7 +183,12 @@ export const updateReferrerSubscription = async (referrerId: string, updatedClie
 };
 
 function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardingQuestions, user }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, onDelete?: (id: string) => void, initialData: Client | null, onboardingQuestions: OnboardingQuestion[], user: User }) {
-  const [formData, setFormData] = useState<Partial<Client>>({ plan: 'Essencial', status: 'Em Desenvolvimento' });
+  const [formData, setFormData] = useState<Partial<Client>>({ 
+    plan: 'Essencial', 
+    status: 'Em Desenvolvimento',
+    isCombo: false,
+    comboInstallments: 12
+  });
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [activeTab, setActiveTab] = useState<'details' | 'history' | 'stages' | 'credentials' | 'onboarding'>('details');
@@ -249,7 +257,12 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
         checkPaymentStatus(initialData.asaasSubscriptionId);
       }
     } else {
-      setFormData({ plan: 'Essencial', status: 'Em Desenvolvimento' });
+      setFormData({ 
+        plan: 'Essencial', 
+        status: 'Em Desenvolvimento',
+        isCombo: false,
+        comboInstallments: 12
+      });
     }
     setShowCancelConfirm(false);
   }, [initialData, isOpen]);
@@ -450,7 +463,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                     <div className="grid grid-cols-2 gap-3">
                       <button 
                         type="button" 
-                        onClick={() => setFormData(prev => ({ ...prev, billingCycle: 'MONTHLY' }))}
+                        onClick={() => setFormData(prev => ({ ...prev, billingCycle: 'MONTHLY', isCombo: false }))}
                         className={`p-4 rounded-xl border text-center transition-all ${formData.billingCycle === 'MONTHLY' || !formData.billingCycle ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
                       >
                         <div className="font-semibold text-sm">Mensal</div>
@@ -463,6 +476,41 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                         <div className="font-semibold text-sm">Anual</div>
                       </button>
                     </div>
+
+                    {formData.billingCycle === 'YEARLY' && (
+                      <div className="mt-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                        <label className="flex items-center justify-between cursor-pointer">
+                          <div>
+                            <span className="text-sm font-bold text-emerald-400">Pagamento Combo (Setup + Anual)</span>
+                            <p className="text-[10px] text-gray-400">Permite parcelar o valor total no cartão</p>
+                          </div>
+                          <div className="relative inline-flex items-center cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              className="sr-only peer"
+                              checked={formData.isCombo || false}
+                              onChange={(e) => setFormData(prev => ({ ...prev, isCombo: e.target.checked, billingType: e.target.checked ? 'CREDIT_CARD' : prev.billingType }))}
+                            />
+                            <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                          </div>
+                        </label>
+                        
+                        {formData.isCombo && (
+                          <div className="mt-3 pt-3 border-t border-emerald-500/10">
+                            <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Parcelas Sugeridas</label>
+                            <select 
+                              value={formData.comboInstallments || 12}
+                              onChange={(e) => setFormData(prev => ({ ...prev, comboInstallments: parseInt(e.target.value) }))}
+                              className="w-full bg-black/40 border border-emerald-500/20 rounded-lg px-2 py-1 text-xs text-white outline-none"
+                            >
+                              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => (
+                                <option key={n} value={n}>{n}x</option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div className="mt-6">
@@ -491,6 +539,16 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                       </button>
                     </div>
                   </div>
+
+                  {formData.isCombo && formData.comboRenewalDate && (
+                    <div className="mt-6 p-4 bg-purple-500/10 border border-purple-500/30 rounded-2xl flex items-center gap-3">
+                      <Zap size={20} className="text-purple-400" />
+                      <div>
+                        <p className="text-xs text-purple-300 font-medium uppercase tracking-wider">Renovação do Combo</p>
+                        <p className="text-sm text-white font-bold">{new Date(formData.comboRenewalDate + 'T12:00:00Z').toLocaleDateString('pt-BR')}</p>
+                      </div>
+                    </div>
+                  )}
 
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Plano *</label>
@@ -1608,6 +1666,9 @@ function CRM({ user }: { user: User }) {
       firstPaymentDate: clientData.firstPaymentDate,
       recurringPaymentDay: clientData.recurringPaymentDay,
       deliveryDate: clientData.deliveryDate,
+      isCombo: clientData.isCombo,
+      comboInstallments: clientData.comboInstallments,
+      comboRenewalDate: clientData.comboRenewalDate,
     };
 
     try { 
@@ -1764,75 +1825,106 @@ function CRM({ user }: { user: User }) {
           monthlyValue -= calculateDiscount(client as Client, clients);
           let setupValue = getSetupPrice(client.plan);
 
-          // A. Create single charge for first payment (Setup Fee)
-          const paymentRes = await fetch('/api/asaas/payments', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              customer: client.asaasCustomerId,
-              billingType: client.billingType,
-              value: setupValue,
-              dueDate: firstPaymentDate,
-              description: `Taxa de Adesão - Plano ${client.plan} - Hub Central`
-            })
-          });
+          if (client.isCombo) {
+            // COMBO LOGIC: Setup + Annual in one parcelable payment
+            const totalComboValue = setupValue + monthlyValue;
+            const paymentRes = await fetch('/api/asaas/payments', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                customer: client.asaasCustomerId,
+                billingType: 'CREDIT_CARD',
+                value: totalComboValue,
+                dueDate: firstPaymentDate,
+                description: `Combo (Setup + Plano Anual) - Plano ${client.plan} - Hub Central`,
+                installmentCount: client.comboInstallments || 12
+              })
+            });
 
-          if (paymentRes.ok) {
-            const paymentData = await paymentRes.json();
-            client.invoiceUrl = paymentData.invoiceUrl;
-            client.nextDueDate = firstPaymentDate;
+            if (paymentRes.ok) {
+              const paymentData = await paymentRes.json();
+              client.invoiceUrl = paymentData.invoiceUrl;
+              client.nextDueDate = firstPaymentDate;
+              
+              // Set renewal date to 1 year from now
+              const renewalDate = new Date(firstPaymentDate + 'T12:00:00Z');
+              renewalDate.setFullYear(renewalDate.getFullYear() + 1);
+              client.comboRenewalDate = renewalDate.toISOString().split('T')[0];
+              
+              toast.success("Combo criado com sucesso! O cliente pode parcelar no cartão.");
+            } else {
+              console.error("Failed to create combo payment", await paymentRes.text());
+              toast.error("Erro ao criar pagamento combo no Asaas.");
+            }
           } else {
-            console.error("Failed to create initial payment", await paymentRes.text());
-            toast.error("Erro ao criar taxa de adesão no Asaas.");
-          }
+            // STANDARD LOGIC: Setup Fee + Subscription
+            // A. Create single charge for first payment (Setup Fee)
+            const paymentRes = await fetch('/api/asaas/payments', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                customer: client.asaasCustomerId,
+                billingType: client.billingType,
+                value: setupValue,
+                dueDate: firstPaymentDate,
+                description: `Taxa de Adesão - Plano ${client.plan} - Hub Central`
+              })
+            });
 
-          // B. Create subscription for future payments
-          const firstDateObj = new Date(firstPaymentDate + 'T12:00:00Z');
-          let nextSubDate = new Date(firstDateObj);
-          
-          if (client.recurringPaymentDay) {
-            nextSubDate = new Date(firstDateObj.getFullYear(), firstDateObj.getMonth(), client.recurringPaymentDay, 12, 0, 0);
+            if (paymentRes.ok) {
+              const paymentData = await paymentRes.json();
+              client.invoiceUrl = paymentData.invoiceUrl;
+              client.nextDueDate = firstPaymentDate;
+            } else {
+              console.error("Failed to create initial payment", await paymentRes.text());
+              toast.error("Erro ao criar taxa de adesão no Asaas.");
+            }
+
+            // B. Create subscription for future payments
+            const firstDateObj = new Date(firstPaymentDate + 'T12:00:00Z');
+            let nextSubDate = new Date(firstDateObj);
             
-            // If the day has already passed in the current month, move to next month
-            if (nextSubDate.getTime() <= firstDateObj.getTime()) {
+            if (client.recurringPaymentDay) {
+              nextSubDate = new Date(firstDateObj.getFullYear(), firstDateObj.getMonth(), client.recurringPaymentDay, 12, 0, 0);
+              
+              if (nextSubDate.getTime() <= firstDateObj.getTime()) {
+                nextSubDate.setMonth(nextSubDate.getMonth() + 1);
+              }
+
+              const diffTime = nextSubDate.getTime() - firstDateObj.getTime();
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+              if (diffDays < 15) {
+                nextSubDate.setMonth(nextSubDate.getMonth() + 1);
+              }
+            } else {
               nextSubDate.setMonth(nextSubDate.getMonth() + 1);
             }
+            
+            const nextSubDateStr = nextSubDate.toISOString().split('T')[0];
 
-            // If the next date is less than 15 days away, push it to the next month
-            const diffTime = nextSubDate.getTime() - firstDateObj.getTime();
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-            if (diffDays < 15) {
-              nextSubDate.setMonth(nextSubDate.getMonth() + 1);
+            const subRes = await fetch('/api/asaas/subscriptions', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                customer: client.asaasCustomerId,
+                billingType: client.billingType,
+                cycle: client.billingCycle === 'YEARLY' ? 'YEARLY' : 'MONTHLY',
+                value: monthlyValue,
+                nextDueDate: nextSubDateStr,
+                description: `Assinatura ${client.billingCycle === 'YEARLY' ? 'Anual' : 'Mensal'} - Plano ${client.plan} - Hub Central`
+              })
+            });
+
+            if (subRes.ok) {
+              const subData = await subRes.json();
+              client.asaasSubscriptionId = subData.id;
+            } else {
+              let errText = await subRes.text();
+              let err;
+              try { err = JSON.parse(errText); } catch(e) { err = { error: errText }; }
+              console.error("Asaas Subscription Error:", err);
+              toast.error(`Erro ao criar assinatura no Asaas: ${err.error || 'Erro desconhecido'}`);
             }
-          } else {
-            // Default: 1 month after first payment
-            nextSubDate.setMonth(nextSubDate.getMonth() + 1);
-          }
-          
-          const nextSubDateStr = nextSubDate.toISOString().split('T')[0];
-
-          const subRes = await fetch('/api/asaas/subscriptions', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              customer: client.asaasCustomerId,
-              billingType: client.billingType,
-              cycle: client.billingCycle === 'YEARLY' ? 'YEARLY' : 'MONTHLY',
-              value: monthlyValue,
-              nextDueDate: nextSubDateStr,
-              description: `Assinatura ${client.billingCycle === 'YEARLY' ? 'Anual' : 'Mensal'} - Plano ${client.plan} - Hub Central`
-            })
-          });
-
-          if (subRes.ok) {
-            const subData = await subRes.json();
-            client.asaasSubscriptionId = subData.id;
-          } else {
-            let errText = await subRes.text();
-            let err;
-            try { err = JSON.parse(errText); } catch(e) { err = { error: errText }; }
-            console.error("Asaas Subscription Error:", err);
-            toast.error(`Erro ao criar assinatura no Asaas: ${err.error || 'Erro desconhecido'}`);
           }
         } else {
           let errText = await customerRes.text();
@@ -1976,6 +2068,16 @@ function CRM({ user }: { user: User }) {
     return false;
   };
 
+  const isComboNearRenewal = (client: Client) => {
+    if (!client.isCombo || !client.comboRenewalDate) return false;
+    const renewalDate = new Date(client.comboRenewalDate + 'T12:00:00Z');
+    const today = new Date();
+    const diffTime = renewalDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    // Alert if renewal is within 30 days
+    return diffDays <= 30 && diffDays >= -7;
+  };
+
   const renderDashboard = () => {
     const indexOfLastClient = currentPage * clientsPerPage;
     const indexOfFirstClient = indexOfLastClient - clientsPerPage;
@@ -2024,6 +2126,7 @@ function CRM({ user }: { user: User }) {
     const COLORS = ['#f97316', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#f43f5e'];
 
     const overdueClients = clients.filter(c => c.status === 'Inadimplente' || c.paymentStatus === 'OVERDUE');
+    const comboRenewalClients = clients.filter(c => isComboNearRenewal(c));
 
     return (
       <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10">
@@ -2031,7 +2134,7 @@ function CRM({ user }: { user: User }) {
           
           {/* Overdue Alert Panel */}
           {overdueClients.length > 0 && (
-            <div className="mb-8 bg-red-500/10 border border-red-500/30 rounded-2xl p-5 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="mb-4 bg-red-500/10 border border-red-500/30 rounded-2xl p-5 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center">
                 <div className="p-3 bg-red-500/20 text-red-400 rounded-xl mr-4 shrink-0">
                   <AlertTriangle size={24} />
@@ -2057,6 +2160,40 @@ function CRM({ user }: { user: User }) {
                     className="px-3 py-1.5 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 text-sm rounded-lg transition-colors"
                   >
                     + {overdueClients.length - 3}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Combo Renewal Alert Panel */}
+          {comboRenewalClients.length > 0 && (
+            <div className="mb-8 bg-purple-500/10 border border-purple-500/30 rounded-2xl p-5 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center">
+                <div className="p-3 bg-purple-500/20 text-purple-400 rounded-xl mr-4 shrink-0">
+                  <Zap size={24} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">Renovação de Combo: {comboRenewalClients.length} cliente(s)</h3>
+                  <p className="text-sm text-purple-200/80">Clientes com plano anual combo vencendo em breve. Entre em contato para renovar.</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {comboRenewalClients.slice(0, 3).map(c => (
+                  <button 
+                    key={c.id} 
+                    onClick={() => { setEditingClient(c); setIsModalOpen(true); }}
+                    className="px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 text-purple-300 text-sm rounded-lg transition-colors flex items-center"
+                  >
+                    {c.name.split(' ')[0]}
+                  </button>
+                ))}
+                {comboRenewalClients.length > 3 && (
+                  <button 
+                    onClick={() => { setView('dashboard'); }}
+                    className="px-3 py-1.5 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 text-sm rounded-lg transition-colors"
+                  >
+                    + {comboRenewalClients.length - 3}
                   </button>
                 )}
               </div>
@@ -2212,14 +2349,22 @@ function CRM({ user }: { user: User }) {
                       )}
                     </h3>
                     <div className="flex flex-col items-end space-y-2">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap backdrop-blur-md ${
-                        client.status === 'Ativo' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 
-                        client.status === 'Cancelado' ? 'bg-zinc-500/20 text-zinc-300 border border-zinc-500/30' : 
-                        client.status === 'Inadimplente' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 
-                        'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
-                      }`}>
-                        {client.status}
-                      </span>
+                      <div className="flex gap-2">
+                        {client.isCombo && (
+                          <span className="px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-1">
+                            <Zap size={10} />
+                            Combo
+                          </span>
+                        )}
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap backdrop-blur-md ${
+                          client.status === 'Ativo' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 
+                          client.status === 'Cancelado' ? 'bg-zinc-500/20 text-zinc-300 border border-zinc-500/30' : 
+                          client.status === 'Inadimplente' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 
+                          'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
+                        }`}>
+                          {client.status}
+                        </span>
+                      </div>
                       {client.paymentStatus && client.paymentStatus !== 'N/A' && (
                         <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
                           client.paymentStatus === 'RECEIVED' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
@@ -2247,6 +2392,13 @@ function CRM({ user }: { user: User }) {
                       <div className="flex items-center text-gray-600 dark:text-gray-300 text-sm">
                         <Calendar size={16} className="mr-3 text-primary-400 opacity-80" />
                         Vencimento: {new Date(client.nextDueDate + 'T12:00:00Z').toLocaleDateString('pt-BR')}
+                      </div>
+                    )}
+
+                    {client.isCombo && client.comboRenewalDate && (
+                      <div className="flex items-center text-purple-400 text-sm font-medium">
+                        <Clock size={16} className="mr-3 opacity-80" />
+                        Renovação: {new Date(client.comboRenewalDate + 'T12:00:00Z').toLocaleDateString('pt-BR')}
                       </div>
                     )}
                     
