@@ -333,8 +333,14 @@ export default function ClientPortal() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white p-6 md:p-12 font-sans selection:bg-primary-500/30">
-      {globalAnnouncement && (
+    <div className="min-h-screen bg-[#050505] text-white p-4 sm:p-6 md:p-12 font-sans selection:bg-primary-500/30">
+      {/* Background Decorative Elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary-500/5 rounded-full blur-[120px]"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/5 rounded-full blur-[120px]"></div>
+      </div>
+
+        {globalAnnouncement && (
         <div className={`mb-8 p-4 rounded-2xl border flex items-start gap-4 shadow-lg animate-in fade-in slide-in-from-top-4 duration-500 ${
           globalAnnouncement.type === 'info' ? 'bg-blue-500/10 border-blue-500/30 text-blue-100' :
           globalAnnouncement.type === 'warning' ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-100' :
@@ -386,84 +392,93 @@ export default function ClientPortal() {
         </div>
       )}
 
-      <div className="max-w-3xl mx-auto">
+      <div className="relative z-10 max-w-4xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col items-center text-center mb-12">
-          <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-primary-500/20">
-            <Globe className="w-10 h-10 text-white" />
+        <div className="flex flex-col items-center text-center mb-10 md:mb-16">
+          <div className="relative mb-6">
+            <div className="absolute inset-0 bg-primary-500/20 blur-2xl rounded-full"></div>
+            <div className="relative w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-3xl flex items-center justify-center shadow-2xl shadow-primary-500/20 transform hover:scale-105 transition-transform duration-300">
+              <Globe className="w-10 h-10 text-white" />
+            </div>
           </div>
-          <h1 className="text-3xl font-bold mb-2">Olá, {client.name.split(' ')[0]}!</h1>
-          <p className="text-gray-400">Bem-vindo ao seu Portal do Cliente</p>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2 tracking-tight">Olá, <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-primary-600">{client.name.split(' ')[0]}</span>!</h1>
+          <p className="text-gray-400 text-sm md:text-base">Bem-vindo ao seu Portal do Cliente exclusivo</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
           {/* Status Card */}
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
-            <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
-              <Globe className="w-5 h-5 text-primary-400" />
+          <div className="group bg-white/[0.03] backdrop-blur-2xl border border-white/10 p-6 md:p-8 rounded-[2rem] shadow-2xl hover:border-white/20 transition-all duration-300">
+            <h2 className="text-base md:text-lg font-semibold mb-6 flex items-center gap-2 text-gray-200">
+              <div className="p-1.5 bg-primary-500/10 rounded-lg">
+                <Globe className="w-4 h-4 md:w-5 md:h-5 text-primary-400" />
+              </div>
               Status do Projeto
             </h2>
             
-            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border ${getStatusColor(client.status)} mb-6`}>
+            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border ${getStatusColor(client.status)} mb-6 shadow-sm`}>
               {getStatusIcon(client.status)}
-              <span className="font-medium">{client.status}</span>
+              <span className="font-semibold text-sm">{client.status}</span>
             </div>
 
             {client.deliveryDate && client.status !== 'Ativo' && client.status !== 'Cancelado' && (
-              <div className="mt-2 mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
-                <p className="text-sm text-blue-400 font-medium mb-1 flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Data Prevista de Entrega
+              <div className="mt-2 mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl">
+                <p className="text-xs text-blue-400 font-bold uppercase tracking-wider mb-1 flex items-center gap-2">
+                  <Calendar className="w-3.5 h-3.5" />
+                  Previsão de Entrega
                 </p>
-                <p className="text-lg font-bold text-white">
+                <p className="text-xl font-black text-white">
                   {new Date(client.deliveryDate + 'T12:00:00').toLocaleDateString('pt-BR')}
                 </p>
               </div>
             )}
 
             {client.siteLink && client.status === 'Ativo' && (
-              <div className="mt-4">
-                <p className="text-sm text-gray-400 mb-2">Link do seu site:</p>
+              <div className="mt-4 p-4 bg-white/5 rounded-2xl border border-white/5">
+                <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-2">Link do seu site:</p>
                 <a 
                   href={client.siteLink.startsWith('http') ? client.siteLink : `https://${client.siteLink}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center gap-2 text-primary-400 hover:text-primary-300 transition-colors"
+                  className="flex items-center justify-between group/link"
                 >
-                  {client.siteLink}
-                  <ExternalLink className="w-4 h-4" />
+                  <span className="text-primary-400 font-medium truncate mr-2">{client.siteLink}</span>
+                  <div className="p-2 bg-primary-500/10 rounded-lg group-hover/link:bg-primary-500/20 transition-colors">
+                    <ExternalLink className="w-4 h-4 text-primary-400" />
+                  </div>
                 </a>
               </div>
             )}
           </div>
 
           {/* Finance Card */}
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl relative overflow-hidden">
-            <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-primary-500/10 rounded-full blur-3xl"></div>
+          <div className="group bg-white/[0.03] backdrop-blur-2xl border border-white/10 p-6 md:p-8 rounded-[2rem] shadow-2xl relative overflow-hidden hover:border-white/20 transition-all duration-300">
+            <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-primary-500/10 rounded-full blur-3xl group-hover:bg-primary-500/20 transition-colors duration-500"></div>
             
-            <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-primary-400" />
+            <h2 className="text-base md:text-lg font-semibold mb-6 flex items-center gap-2 text-gray-200">
+              <div className="p-1.5 bg-primary-500/10 rounded-lg">
+                <CreditCard className="w-4 h-4 md:w-5 md:h-5 text-primary-400" />
+              </div>
               Fatura Atual
             </h2>
 
             <div className="mb-6">
-              <p className="text-sm text-gray-400 mb-1">Plano contratado</p>
-              <p className="text-xl font-medium">{client.plan}</p>
+              <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Plano contratado</p>
+              <p className="text-xl font-bold text-white">{client.plan}</p>
             </div>
 
             {client.currentDueDate && (
-              <div className="mb-4 p-4 bg-primary-500/10 border border-primary-500/20 rounded-xl">
-                <p className="text-sm text-primary-400 font-medium mb-1">Fatura Atual (Pendente)</p>
-                <p className="text-lg font-bold text-white">
+              <div className="mb-4 p-4 bg-primary-500/10 border border-primary-500/20 rounded-2xl">
+                <p className="text-xs text-primary-400 font-bold uppercase tracking-wider mb-1">Fatura Pendente</p>
+                <p className="text-xl font-black text-white">
                   Vencimento: {new Date(client.currentDueDate + 'T12:00:00').toLocaleDateString('pt-BR')}
                 </p>
               </div>
             )}
 
             {client.nextDueDate && (
-              <div className="mb-8 p-4 bg-white/5 border border-white/10 rounded-xl">
-                <p className="text-sm text-gray-400 mb-1">Próxima Assinatura</p>
-                <p className="text-lg font-medium">
+              <div className="mb-8 p-4 bg-white/5 border border-white/10 rounded-2xl">
+                <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Próxima Renovação</p>
+                <p className="text-lg font-bold text-white/90">
                   {new Date(client.nextDueDate + 'T12:00:00').toLocaleDateString('pt-BR')}
                 </p>
               </div>
@@ -474,13 +489,13 @@ export default function ClientPortal() {
                 href={client.invoiceUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center justify-center w-full py-4 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-medium transition-colors shadow-lg shadow-primary-500/20"
+                className="flex items-center justify-center w-full py-4 rounded-2xl bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-bold transition-all shadow-lg shadow-primary-500/20 hover:shadow-primary-500/40 hover:-translate-y-0.5 active:translate-y-0"
               >
                 Pagar via PIX ou Cartão
               </a>
             ) : (
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10 text-center">
-                <p className="text-sm text-gray-400">Nenhuma fatura em aberto no momento.</p>
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-center">
+                <p className="text-sm text-gray-500 font-medium">Nenhuma fatura em aberto no momento.</p>
               </div>
             )}
           </div>
@@ -774,71 +789,83 @@ export default function ClientPortal() {
         </div>
         
         {/* Planos Disponíveis */}
-        <div className="mt-6 bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
-          <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
-            <ShoppingCart className="w-5 h-5 text-primary-400" />
-            Planos e Upgrades
-          </h2>
-          <p className="text-gray-400 text-sm mb-6">Conheça nossas opções para escalar o seu negócio digital.</p>
+        <div className="mt-8 bg-white/[0.03] backdrop-blur-2xl border border-white/10 p-6 md:p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/5 blur-[100px] -z-10 group-hover:bg-primary-500/10 transition-colors duration-700"></div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-500/10 border border-primary-500/20 mb-4">
+                <ShoppingCart className="w-3.5 h-3.5 text-primary-400" />
+                <span className="text-[10px] font-bold uppercase tracking-widest text-primary-400">Upgrade de Experiência</span>
+              </div>
+              <h2 className="text-3xl font-bold text-white tracking-tight">Planos e Upgrades</h2>
+              <p className="text-gray-400 text-sm mt-2 max-w-md">Conheça nossas opções para escalar o seu negócio digital com tecnologia de ponta.</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Essencial */}
-            <div className={`p-6 rounded-2xl border flex flex-col h-full transition-all ${client.plan === 'Essencial' ? 'bg-primary-500/10 border-primary-500/30 ring-1 ring-primary-500/50' : 'bg-white/5 border-white/10 opacity-80 hover:opacity-100'}`}>
-              <div className="mb-4">
-                <h3 className="text-xl font-bold text-white mb-1">Essencial</h3>
+            <div className={`p-8 rounded-[2rem] border flex flex-col h-full transition-all duration-500 relative group/card ${client.plan === 'Essencial' ? 'bg-primary-500/10 border-primary-500/30 ring-1 ring-primary-500/50 shadow-xl shadow-primary-500/10' : 'bg-white/[0.02] border-white/5 hover:border-white/20 hover:bg-white/[0.04]'}`}>
+              <div className="mb-6">
+                <h3 className="text-2xl font-bold text-white mb-2">Essencial</h3>
                 <p className="text-xs text-gray-400 leading-relaxed">Ideal para quem precisa de uma presença digital profissional, simples e funcional, com foco em facilitar o contato com clientes.</p>
               </div>
-              <div className="mb-6">
-                <div className="flex flex-col gap-2">
+              
+              <div className="space-y-4 mb-8">
+                <div className="p-4 rounded-2xl bg-black/20 border border-white/5 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-gray-500 uppercase font-bold">Mensal</span>
+                    <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Mensal</span>
                     <div className="text-right">
                       <div className="flex items-baseline justify-end gap-1">
-                        <span className="text-lg font-bold text-white">R$ {getPlanPrice('Essencial', 'MONTHLY').toLocaleString('pt-BR')}</span>
-                        <span className="text-gray-500 text-[9px]">/mês</span>
+                        <span className="text-xl font-bold text-white">R$ {getPlanPrice('Essencial', 'MONTHLY').toLocaleString('pt-BR')}</span>
+                        <span className="text-gray-500 text-[10px]">/mês</span>
                       </div>
-                      <p className="text-[9px] text-gray-500">+ Setup R$ {getSetupPrice('Essencial').toLocaleString('pt-BR')}</p>
                     </div>
                   </div>
+                  <div className="h-px bg-white/5 w-full"></div>
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-gray-500 uppercase font-bold">Anual</span>
+                    <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Anual</span>
                     <div className="text-right">
                       <div className="flex items-baseline justify-end gap-1">
-                        <span className="text-lg font-bold text-white">R$ {getPlanPrice('Essencial', 'YEARLY').toLocaleString('pt-BR')}</span>
-                        <span className="text-gray-500 text-[9px]">/ano</span>
+                        <span className="text-xl font-bold text-white">R$ {getPlanPrice('Essencial', 'YEARLY').toLocaleString('pt-BR')}</span>
+                        <span className="text-gray-500 text-[10px]">/ano</span>
                       </div>
-                      <p className="text-[9px] text-gray-500">+ Setup R$ {getSetupPrice('Essencial').toLocaleString('pt-BR')}</p>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
-                    <span className="text-[10px] text-emerald-400 uppercase font-bold">Combo Anual</span>
-                    <div className="text-right">
-                      <div className="flex items-baseline justify-end gap-1">
-                        <span className="text-lg font-bold text-emerald-400">R$ {getPlanPrice('Essencial', 'YEARLY').toLocaleString('pt-BR')}</span>
-                        <span className="text-gray-500 text-[9px]">/ano</span>
+                  <div className="p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20 mt-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-emerald-400 uppercase font-bold tracking-wider">Combo Anual</span>
+                      <div className="text-right">
+                        <div className="flex items-baseline justify-end gap-1">
+                          <span className="text-xl font-bold text-emerald-400">R$ {getPlanPrice('Essencial', 'YEARLY').toLocaleString('pt-BR')}</span>
+                        </div>
+                        <p className="text-[9px] text-emerald-500/70 font-medium">Setup Incluso (Grátis)</p>
                       </div>
-                      <p className="text-[9px] text-emerald-500/70">Setup Incluso (Grátis)</p>
                     </div>
                   </div>
                 </div>
               </div>
-              <ul className="space-y-3 mb-8 flex-1">
+
+              <ul className="space-y-4 mb-8 flex-1">
                 {[
-                  'Criação de Site Corporativo (One Page Premium)',
-                  'Fluxo de contato rápido via WhatsApp',
-                  'Adaptado para leitura no Campo (Celulares)',
-                  'Hospedagem robusta e rápida inclusa',
-                  'Suporte corporativo via WhatsApp'
+                  'Site Corporativo One Page',
+                  'Fluxo de contato WhatsApp',
+                  'Foco em Mobile (Celulares)',
+                  'Hospedagem Premium inclusa',
+                  'Suporte via WhatsApp'
                 ].map((f, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-gray-300">
-                    <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <li key={i} className="flex items-start gap-3 text-xs text-gray-300 group-hover/card:text-white transition-colors">
+                    <div className="p-0.5 rounded-full bg-emerald-500/20 mt-0.5">
+                      <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    </div>
                     {f}
                   </li>
                 ))}
               </ul>
+
               {client.plan === 'Essencial' ? (
-                <div className="w-full py-3 text-center rounded-xl bg-emerald-500/20 text-emerald-400 font-bold text-sm border border-emerald-500/30">
-                  Seu Plano Atual
+                <div className="w-full py-4 text-center rounded-2xl bg-emerald-500/10 text-emerald-400 font-bold text-sm border border-emerald-500/20 backdrop-blur-sm">
+                  Seu Plano Ativo
                 </div>
               ) : (
                 <button 
@@ -847,7 +874,7 @@ export default function ClientPortal() {
                     setRequestMessage('Olá! Gostaria de migrar para o plano Essencial.');
                     document.getElementById('support-form')?.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className="w-full py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium text-sm transition-all border border-white/10"
+                  className="w-full py-4 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold text-sm transition-all border border-white/10 hover:border-white/20 active:scale-[0.98]"
                 >
                   Selecionar Essencial
                 </button>
@@ -855,70 +882,78 @@ export default function ClientPortal() {
             </div>
 
             {/* Profissional */}
-            <div className={`p-6 rounded-2xl border flex flex-col h-full transition-all relative ${client.plan === 'Profissional' ? 'bg-primary-500/10 border-primary-500/30 ring-1 ring-primary-500/50' : 'bg-white/5 border-white/10 opacity-80 hover:opacity-100'}`}>
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary-500 text-white text-[10px] font-bold rounded-full uppercase tracking-wider">
+            <div className={`p-8 rounded-[2rem] border flex flex-col h-full transition-all duration-500 relative group/card ${client.plan === 'Profissional' ? 'bg-primary-500/10 border-primary-500/30 ring-1 ring-primary-500/50 shadow-xl shadow-primary-500/10' : 'bg-white/[0.02] border-white/5 hover:border-white/20 hover:bg-white/[0.04]'}`}>
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-gradient-to-r from-primary-600 to-primary-400 text-white text-[10px] font-black rounded-full uppercase tracking-[0.2em] shadow-lg shadow-primary-500/40 z-10">
                 Mais Popular
               </div>
-              <div className="mb-4">
-                <h3 className="text-xl font-bold text-white mb-1">Profissional</h3>
+              
+              <div className="mb-6">
+                <h3 className="text-2xl font-bold text-white mb-2">Profissional</h3>
                 <p className="text-xs text-gray-400 leading-relaxed">Indicado para empresas que querem transmitir mais autoridade, melhorar sua apresentação online e gerar contatos mais qualificados.</p>
               </div>
-              <div className="mb-6">
-                <div className="flex flex-col gap-2">
+              
+              <div className="space-y-4 mb-8">
+                <div className="p-4 rounded-2xl bg-black/20 border border-white/5 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-gray-500 uppercase font-bold">Mensal</span>
+                    <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Mensal</span>
                     <div className="text-right">
                       <div className="flex items-baseline justify-end gap-1">
-                        <span className="text-lg font-bold text-white">R$ {getPlanPrice('Profissional', 'MONTHLY').toLocaleString('pt-BR')}</span>
-                        <span className="text-gray-500 text-[9px]">/mês</span>
+                        <span className="text-xl font-bold text-white">R$ {getPlanPrice('Profissional', 'MONTHLY').toLocaleString('pt-BR')}</span>
+                        <span className="text-gray-500 text-[10px]">/mês</span>
                       </div>
-                      <p className="text-[9px] text-gray-500">+ Setup R$ {getSetupPrice('Profissional').toLocaleString('pt-BR')}</p>
                     </div>
                   </div>
+                  <div className="h-px bg-white/5 w-full"></div>
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-gray-500 uppercase font-bold">Anual</span>
+                    <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Anual</span>
                     <div className="text-right">
                       <div className="flex items-baseline justify-end gap-1">
-                        <span className="text-lg font-bold text-white">R$ {getPlanPrice('Profissional', 'YEARLY').toLocaleString('pt-BR')}</span>
-                        <span className="text-gray-500 text-[9px]">/ano</span>
+                        <span className="text-xl font-bold text-white">R$ {getPlanPrice('Profissional', 'YEARLY').toLocaleString('pt-BR')}</span>
+                        <span className="text-gray-500 text-[10px]">/ano</span>
                       </div>
-                      <p className="text-[9px] text-gray-500">+ Setup R$ {getSetupPrice('Profissional').toLocaleString('pt-BR')}</p>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
-                    <span className="text-[10px] text-emerald-400 uppercase font-bold">Combo Anual</span>
-                    <div className="text-right">
-                      <div className="flex items-baseline justify-end gap-1">
-                        <span className="text-lg font-bold text-emerald-400">R$ {getPlanPrice('Profissional', 'YEARLY').toLocaleString('pt-BR')}</span>
-                        <span className="text-gray-500 text-[9px]">/ano</span>
+                  <div className="p-3 bg-primary-500/10 rounded-xl border border-primary-500/20 mt-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-primary-400 uppercase font-bold tracking-wider">Combo Anual</span>
+                      <div className="text-right">
+                        <div className="flex items-baseline justify-end gap-1">
+                          <span className="text-xl font-bold text-primary-400">R$ {getPlanPrice('Profissional', 'YEARLY').toLocaleString('pt-BR')}</span>
+                        </div>
+                        <p className="text-[9px] text-primary-500/70 font-medium">Setup Incluso (Grátis)</p>
                       </div>
-                      <p className="text-[9px] text-emerald-500/70">Setup Incluso (Grátis)</p>
                     </div>
                   </div>
                 </div>
               </div>
-              <ul className="space-y-3 mb-8 flex-1">
-                <li className="flex items-start gap-2 text-xs text-primary-400 font-medium">
-                  <CheckCircle className="w-4 h-4 text-primary-400 shrink-0 mt-0.5" />
-                  Tudo do plano Essencial, mais:
+
+              <ul className="space-y-4 mb-8 flex-1">
+                <li className="flex items-start gap-3 text-xs text-primary-400 font-bold uppercase tracking-wider">
+                  <div className="p-0.5 rounded-full bg-primary-500/20">
+                    <CheckCircle className="w-3.5 h-3.5 text-primary-400 shrink-0" />
+                  </div>
+                  Tudo do Essencial, mais:
                 </li>
                 {[
                   'Site Multi-páginas Estruturado',
                   'Copywriting persuasivo (Agro)',
-                  'Formulários avançados de cotação',
+                  'Formulários de cotação',
                   'Domínio Oficial (.com.br)',
                   'Otimização de SEO Local',
                   'Atendimento prioritário'
                 ].map((f, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-gray-300">
-                    <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <li key={i} className="flex items-start gap-3 text-xs text-gray-300 group-hover/card:text-white transition-colors">
+                    <div className="p-0.5 rounded-full bg-emerald-500/20 mt-0.5">
+                      <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    </div>
                     {f}
                   </li>
                 ))}
               </ul>
+
               {client.plan === 'Profissional' ? (
-                <div className="w-full py-3 text-center rounded-xl bg-emerald-500/20 text-emerald-400 font-bold text-sm border border-emerald-500/30">
-                  Seu Plano Atual
+                <div className="w-full py-4 text-center rounded-2xl bg-emerald-500/10 text-emerald-400 font-bold text-sm border border-emerald-500/20 backdrop-blur-sm">
+                  Seu Plano Ativo
                 </div>
               ) : (
                 <button 
@@ -927,7 +962,7 @@ export default function ClientPortal() {
                     setRequestMessage('Olá! Gostaria de migrar para o plano Profissional.');
                     document.getElementById('support-form')?.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className="w-full py-3 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-bold text-sm transition-all shadow-lg shadow-primary-500/20"
+                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white font-bold text-sm transition-all shadow-xl shadow-primary-500/20 hover:shadow-primary-500/40 active:scale-[0.98]"
                 >
                   Selecionar Profissional
                 </button>
@@ -935,66 +970,73 @@ export default function ClientPortal() {
             </div>
 
             {/* Autoridade */}
-            <div className={`p-6 rounded-2xl border flex flex-col h-full transition-all ${client.plan === 'Autoridade' ? 'bg-primary-500/10 border-primary-500/30 ring-1 ring-primary-500/50' : 'bg-white/5 border-white/10 opacity-80 hover:opacity-100'}`}>
-              <div className="mb-4">
-                <h3 className="text-xl font-bold text-white mb-1">Autoridade</h3>
+            <div className={`p-8 rounded-[2rem] border flex flex-col h-full transition-all duration-500 relative group/card ${client.plan === 'Autoridade' ? 'bg-primary-500/10 border-primary-500/30 ring-1 ring-primary-500/50 shadow-xl shadow-primary-500/10' : 'bg-white/[0.02] border-white/5 hover:border-white/20 hover:bg-white/[0.04]'}`}>
+              <div className="mb-6">
+                <h3 className="text-2xl font-bold text-white mb-2">Autoridade</h3>
                 <p className="text-xs text-gray-400 leading-relaxed">Para grandes operações que buscam máxima performance, design exclusivo e consultoria técnica.</p>
               </div>
-              <div className="mb-6">
-                <div className="flex flex-col gap-2">
+              
+              <div className="space-y-4 mb-8">
+                <div className="p-4 rounded-2xl bg-black/20 border border-white/5 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-gray-500 uppercase font-bold">Mensal</span>
+                    <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Mensal</span>
                     <div className="text-right">
                       <div className="flex items-baseline justify-end gap-1">
-                        <span className="text-lg font-bold text-white">R$ {getPlanPrice('Autoridade', 'MONTHLY').toLocaleString('pt-BR')}</span>
-                        <span className="text-gray-500 text-[9px]">/mês</span>
+                        <span className="text-xl font-bold text-white">R$ {getPlanPrice('Autoridade', 'MONTHLY').toLocaleString('pt-BR')}</span>
+                        <span className="text-gray-500 text-[10px]">/mês</span>
                       </div>
-                      <p className="text-[9px] text-gray-500">+ Setup R$ {getSetupPrice('Autoridade').toLocaleString('pt-BR')}</p>
                     </div>
                   </div>
+                  <div className="h-px bg-white/5 w-full"></div>
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-gray-500 uppercase font-bold">Anual</span>
+                    <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Anual</span>
                     <div className="text-right">
                       <div className="flex items-baseline justify-end gap-1">
-                        <span className="text-lg font-bold text-white">R$ {getPlanPrice('Autoridade', 'YEARLY').toLocaleString('pt-BR')}</span>
-                        <span className="text-gray-500 text-[9px]">/ano</span>
+                        <span className="text-xl font-bold text-white">R$ {getPlanPrice('Autoridade', 'YEARLY').toLocaleString('pt-BR')}</span>
+                        <span className="text-gray-500 text-[10px]">/ano</span>
                       </div>
-                      <p className="text-[9px] text-gray-500">+ Setup R$ {getSetupPrice('Autoridade').toLocaleString('pt-BR')}</p>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
-                    <span className="text-[10px] text-emerald-400 uppercase font-bold">Combo Anual</span>
-                    <div className="text-right">
-                      <div className="flex items-baseline justify-end gap-1">
-                        <span className="text-lg font-bold text-emerald-400">R$ {getPlanPrice('Autoridade', 'YEARLY').toLocaleString('pt-BR')}</span>
-                        <span className="text-gray-500 text-[9px]">/ano</span>
+                  <div className="p-3 bg-blue-500/10 rounded-xl border border-blue-500/20 mt-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-blue-400 uppercase font-bold tracking-wider">Combo Anual</span>
+                      <div className="text-right">
+                        <div className="flex items-baseline justify-end gap-1">
+                          <span className="text-xl font-bold text-blue-400">R$ {getPlanPrice('Autoridade', 'YEARLY').toLocaleString('pt-BR')}</span>
+                        </div>
+                        <p className="text-[9px] text-blue-500/70 font-medium">Setup Incluso (Grátis)</p>
                       </div>
-                      <p className="text-[9px] text-emerald-500/70">Setup Incluso (Grátis)</p>
                     </div>
                   </div>
                 </div>
               </div>
-              <ul className="space-y-3 mb-8 flex-1">
-                <li className="flex items-start gap-2 text-xs text-primary-400 font-medium">
-                  <CheckCircle className="w-4 h-4 text-primary-400 shrink-0 mt-0.5" />
-                  Tudo do plano Profissional, mais:
+
+              <ul className="space-y-4 mb-8 flex-1">
+                <li className="flex items-start gap-3 text-xs text-primary-400 font-bold uppercase tracking-wider">
+                  <div className="p-0.5 rounded-full bg-primary-500/20">
+                    <CheckCircle className="w-3.5 h-3.5 text-primary-400 shrink-0" />
+                  </div>
+                  Tudo do Profissional, mais:
                 </li>
                 {[
                   'Design Exclusivo Customizado',
                   'Área de Blog/Notícias (Agro)',
-                  'Integração com CRMs (RD Station)',
+                  'Integração com CRMs',
                   'Catálogo profundo de produtos',
                   'Consultoria técnica trimestral'
                 ].map((f, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-gray-300">
-                    <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <li key={i} className="flex items-start gap-3 text-xs text-gray-300 group-hover/card:text-white transition-colors">
+                    <div className="p-0.5 rounded-full bg-emerald-500/20 mt-0.5">
+                      <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    </div>
                     {f}
                   </li>
                 ))}
               </ul>
+
               {client.plan === 'Autoridade' ? (
-                <div className="w-full py-3 text-center rounded-xl bg-emerald-500/20 text-emerald-400 font-bold text-sm border border-emerald-500/30">
-                  Seu Plano Atual
+                <div className="w-full py-4 text-center rounded-2xl bg-emerald-500/10 text-emerald-400 font-bold text-sm border border-emerald-500/20 backdrop-blur-sm">
+                  Seu Plano Ativo
                 </div>
               ) : (
                 <button 
@@ -1003,7 +1045,7 @@ export default function ClientPortal() {
                     setRequestMessage('Olá! Gostaria de saber mais sobre o plano Autoridade.');
                     document.getElementById('support-form')?.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className="w-full py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium text-sm transition-all border border-white/10"
+                  className="w-full py-4 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold text-sm transition-all border border-white/10 hover:border-white/20 active:scale-[0.98]"
                 >
                   Falar com Consultor
                 </button>
@@ -1013,51 +1055,81 @@ export default function ClientPortal() {
         </div>
 
         {/* Support Request Form */}
-        <div className="mt-6 bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl" id="support-form">
-          <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-primary-400" />
-            Solicitar Suporte ou Alteração
-          </h2>
-          <p className="text-gray-400 text-sm mb-6">Precisa de alguma mudança no site ou ajuda com algo? Envie sua solicitação abaixo.</p>
+        <div className="mt-8 bg-white/[0.03] backdrop-blur-2xl border border-white/10 p-6 md:p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden group" id="support-form">
+          <div className="absolute top-0 left-0 w-64 h-64 bg-primary-500/5 blur-[100px] -z-10 group-hover:bg-primary-500/10 transition-colors duration-700"></div>
           
-          <form onSubmit={handleSubmitRequest}>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-400 mb-2">Categoria do Chamado</label>
-              <select 
-                value={requestCategory}
-                onChange={(e) => setRequestCategory(e.target.value)}
-                className="w-full px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all"
-              >
-                <option value="Suporte Técnico" className="bg-[#0a0a0a] text-white">Suporte Técnico</option>
-                <option value="Dúvida Financeira" className="bg-[#0a0a0a] text-white">Dúvida Financeira</option>
-                <option value="Solicitação de Alteração" className="bg-[#0a0a0a] text-white">Solicitação de Alteração</option>
-                <option value="Outros" className="bg-[#0a0a0a] text-white">Outros</option>
-              </select>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-500/10 border border-primary-500/20 mb-4">
+                <MessageSquare className="w-3.5 h-3.5 text-primary-400" />
+                <span className="text-[10px] font-bold uppercase tracking-widest text-primary-400">Canal Direto</span>
+              </div>
+              <h2 className="text-3xl font-bold text-white tracking-tight">Solicitar Suporte</h2>
+              <p className="text-gray-400 text-sm mt-2 max-w-md">Precisa de alguma mudança no site ou ajuda com algo? Nossa equipe está pronta para ajudar.</p>
+            </div>
+          </div>
+          
+          <form onSubmit={handleSubmitRequest} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Categoria do Chamado</label>
+                <div className="relative group/select">
+                  <select 
+                    value={requestCategory}
+                    onChange={(e) => setRequestCategory(e.target.value)}
+                    className="w-full px-5 py-4 bg-black/40 border border-white/10 text-white rounded-2xl focus:ring-2 focus:ring-primary-500/50 outline-none transition-all appearance-none cursor-pointer hover:border-white/20"
+                  >
+                    <option value="Suporte Técnico" className="bg-[#0a0a0a] text-white">Suporte Técnico</option>
+                    <option value="Dúvida Financeira" className="bg-[#0a0a0a] text-white">Dúvida Financeira</option>
+                    <option value="Solicitação de Alteração" className="bg-[#0a0a0a] text-white">Solicitação de Alteração</option>
+                    <option value="Outros" className="bg-[#0a0a0a] text-white">Outros</option>
+                  </select>
+                  <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500 group-hover/select:text-white transition-colors">
+                    <ChevronDown size={18} />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="hidden md:flex items-center justify-center p-6 rounded-2xl bg-primary-500/5 border border-primary-500/10">
+                <div className="text-center">
+                  <p className="text-[10px] text-primary-400 font-bold uppercase tracking-wider mb-1">Tempo Médio de Resposta</p>
+                  <p className="text-xl font-bold text-white">Até 4 horas úteis</p>
+                </div>
+              </div>
             </div>
             
-            <textarea 
-              value={requestMessage}
-              onChange={(e) => setRequestMessage(e.target.value)}
-              placeholder="Descreva o que você precisa em detalhes..."
-              className="w-full min-h-[120px] px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500 custom-scrollbar resize-none mb-4"
-              required
-            ></textarea>
-            <div className="flex justify-end">
+            <div className="space-y-2">
+              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Descrição do Pedido</label>
+              <textarea 
+                value={requestMessage}
+                onChange={(e) => setRequestMessage(e.target.value)}
+                placeholder="Descreva o que você precisa em detalhes para que possamos ser mais assertivos..."
+                className="w-full min-h-[160px] px-5 py-4 bg-black/40 border border-white/10 text-white rounded-2xl focus:ring-2 focus:ring-primary-500/50 outline-none transition-all placeholder-gray-600 custom-scrollbar resize-none hover:border-white/20"
+                required
+              ></textarea>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+              <div className="flex items-center gap-2 text-gray-500 text-[10px] font-medium">
+                <AlertCircle size={14} className="text-primary-500" />
+                <span>Anexos podem ser enviados após a abertura do chamado via WhatsApp.</span>
+              </div>
+              
               <button 
                 type="submit" 
                 disabled={isSubmittingRequest || !requestMessage.trim()}
-                className="flex items-center space-x-2 bg-gradient-to-r from-primary-500 to-primary-400 hover:from-primary-600 hover:to-primary-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl transition-all font-medium shadow-xl shadow-primary-500/30 hover:shadow-2xl shadow-primary-500/50"
+                className="w-full sm:w-auto flex items-center justify-center space-x-3 bg-gradient-to-r from-primary-600 to-primary-400 hover:from-primary-500 hover:to-primary-300 disabled:opacity-50 disabled:cursor-not-allowed text-white px-10 py-4 rounded-2xl transition-all font-bold shadow-xl shadow-primary-500/20 hover:shadow-primary-500/40 active:scale-[0.98]"
               >
                 {isSubmittingRequest ? (
-                  <span className="flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Enviando...
-                  </span>
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white"></div>
+                    <span>Enviando...</span>
+                  </>
                 ) : (
-                  <span className="flex items-center gap-2">
+                  <>
                     <Send className="w-4 h-4" />
-                    Enviar Solicitação
-                  </span>
+                    <span>Enviar Solicitação</span>
+                  </>
                 )}
               </button>
             </div>
@@ -1066,48 +1138,92 @@ export default function ClientPortal() {
 
         {/* Support Request History */}
         {clientRequests.length > 0 && (
-          <div id="historico-chamados" className="mt-6 bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
-            <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-primary-400" />
-              Histórico de Chamados
-            </h2>
+          <div id="historico-chamados" className="mt-8 bg-white/[0.03] backdrop-blur-2xl border border-white/10 p-6 md:p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/5 blur-[100px] -z-10 group-hover:bg-primary-500/10 transition-colors duration-700"></div>
+            
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-500/10 border border-primary-500/20 mb-4">
+                  <Clock className="w-3.5 h-3.5 text-primary-400" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-primary-400">Linha do Tempo</span>
+                </div>
+                <h2 className="text-3xl font-bold text-white tracking-tight">Histórico de Chamados</h2>
+              </div>
+            </div>
             
             <div className="space-y-4">
               {clientRequests.map((req) => (
-                <div key={req.id} className="bg-black/20 border border-white/5 rounded-2xl overflow-hidden transition-all">
+                <div key={req.id} className={`group/item border transition-all duration-300 rounded-[1.5rem] overflow-hidden ${expandedRequest === req.id ? 'bg-white/[0.06] border-white/20 shadow-xl' : 'bg-black/20 border-white/5 hover:border-white/10'}`}>
                   <div 
-                    className="p-5 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-white/5 transition-colors"
+                    className="p-6 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                     onClick={() => setExpandedRequest(expandedRequest === req.id ? null : req.id)}
                   >
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
+                      <div className="flex flex-wrap items-center gap-3 mb-2">
                         {getRequestStatusBadge(req.status)}
-                        <span className="text-sm font-medium text-gray-300">{req.category || 'Suporte'}</span>
+                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{req.category || 'Suporte'}</span>
                       </div>
-                      <p className="text-white font-medium line-clamp-1">{req.message}</p>
-                      <p className="text-xs text-gray-500 mt-2">
-                        {req.createdAt?.toDate ? new Date(req.createdAt.toDate()).toLocaleString('pt-BR') : 'Recente'}
+                      <p className="text-sm text-white font-medium line-clamp-1 group-hover/item:text-primary-400 transition-colors">
+                        {req.message}
                       </p>
                     </div>
-                    <div className="shrink-0 text-gray-500">
-                      {expandedRequest === req.id ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                    
+                    <div className="flex items-center justify-between sm:justify-end gap-6">
+                      <div className="text-right">
+                        <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Aberto em</p>
+                        <p className="text-xs text-gray-300 font-mono">
+                          {req.createdAt?.toDate ? new Date(req.createdAt.toDate()).toLocaleDateString('pt-BR') : 'Recente'}
+                        </p>
+                      </div>
+                      <div className={`p-2 rounded-full transition-all duration-300 ${expandedRequest === req.id ? 'bg-primary-500 text-white rotate-180' : 'bg-white/5 text-gray-500 group-hover/item:bg-white/10 group-hover/item:text-white'}`}>
+                        <ChevronDown size={16} />
+                      </div>
                     </div>
                   </div>
                   
                   {expandedRequest === req.id && (
-                    <div className="p-5 border-t border-white/5 bg-black/40">
-                      <div className="mb-4">
-                        <p className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-2">Sua Solicitação</p>
-                        <p className="text-gray-300 whitespace-pre-wrap text-sm leading-relaxed">{req.message}</p>
-                      </div>
+                    <div className="px-6 pb-6 pt-2 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="h-px bg-white/10 w-full"></div>
                       
+                      <div className="space-y-2">
+                        <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Sua Solicitação</p>
+                        <div className="p-4 rounded-2xl bg-black/40 border border-white/5 text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">
+                          {req.message}
+                        </div>
+                      </div>
+
                       {req.reply && (
-                        <div className="mt-4 p-4 bg-primary-500/10 border border-primary-500/20 rounded-xl relative">
-                          <div className="absolute -left-2 top-6 w-4 h-4 bg-primary-500/20 rotate-45 border-l border-b border-primary-500/20"></div>
-                          <p className="text-xs text-primary-400 uppercase tracking-wider font-bold mb-2">Resposta da Equipe</p>
-                          <p className="text-white whitespace-pre-wrap text-sm leading-relaxed">{req.reply}</p>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse"></div>
+                            <p className="text-[10px] text-primary-400 uppercase font-bold tracking-widest">Resposta da Equipe</p>
+                          </div>
+                          <div className="p-5 rounded-2xl bg-primary-500/5 border border-primary-500/10 text-sm text-white leading-relaxed whitespace-pre-wrap relative">
+                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary-500/30 rounded-full"></div>
+                            {req.reply}
+                          </div>
                         </div>
                       )}
+
+                      <div className="flex items-center justify-between pt-2">
+                        <div className="flex items-center gap-4">
+                          <div className="text-center">
+                            <p className="text-[9px] text-gray-500 uppercase font-bold">ID do Chamado</p>
+                            <p className="text-[10px] text-gray-400 font-mono">#{req.id.slice(-6).toUpperCase()}</p>
+                          </div>
+                        </div>
+                        
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(`https://wa.me/5511952924208?text=Olá! Gostaria de falar sobre o chamado #${req.id.slice(-6).toUpperCase()}`, '_blank');
+                          }}
+                          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-bold transition-all border border-emerald-500/20"
+                        >
+                          <MessageSquare size={14} />
+                          Falar no WhatsApp
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1117,50 +1233,59 @@ export default function ClientPortal() {
         )}
 
         {/* Support Footer */}
-        <div className="mt-12 text-center">
-          <p className="text-gray-400 text-sm mb-4">Prefere falar pelo WhatsApp?</p>
-          <a 
-            href="https://wa.me/5511952924208"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-2 text-primary-400 hover:text-primary-300 transition-colors font-medium"
-          >
-            Falar com o Suporte
-          </a>
+        <div className="mt-16 pb-12 text-center">
+          <div className="inline-flex flex-col items-center p-6 sm:p-8 rounded-2xl sm:rounded-[2rem] bg-white/[0.02] border border-white/5 backdrop-blur-sm">
+            <div className="p-3 rounded-2xl bg-emerald-500/10 mb-4">
+              <MessageSquare className="w-6 h-6 text-emerald-400" />
+            </div>
+            <p className="text-gray-400 text-sm mb-4 max-w-xs">Prefere um atendimento mais direto? Nossa equipe está disponível no WhatsApp.</p>
+            <a 
+              href="https://wa.me/5511952924208"
+              target="_blank"
+              rel="noreferrer"
+              className="group flex items-center gap-3 bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-4 rounded-2xl transition-all font-bold shadow-xl shadow-emerald-500/20 hover:shadow-emerald-500/40 active:scale-[0.98]"
+            >
+              <span>Falar com o Suporte</span>
+              <ExternalLink size={18} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+            </a>
+          </div>
         </div>
       </div>
 
       {/* Help Widget */}
       <div className="fixed bottom-6 right-6 z-[100]">
         {isHelpOpen ? (
-          <div className="bg-gray-900 border border-white/10 w-80 sm:w-96 rounded-3xl shadow-2xl flex flex-col max-h-[600px] overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
-            <div className="p-6 bg-primary-600 text-white flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-lg">Central de Ajuda</h3>
-                <p className="text-xs text-primary-100">Como podemos te ajudar hoje?</p>
+          <div className="bg-[#0a0a0a] border border-white/10 w-[calc(100vw-3rem)] sm:w-96 rounded-[2.5rem] shadow-2xl flex flex-col max-h-[600px] overflow-hidden animate-in slide-in-from-bottom-4 duration-500 ring-1 ring-white/5">
+            <div className="p-6 sm:p-8 bg-gradient-to-br from-primary-600 to-primary-400 text-white relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-3xl rounded-full -mr-16 -mt-16"></div>
+              <div className="relative z-10 flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-xl tracking-tight">Central de Ajuda</h3>
+                  <p className="text-xs text-primary-100/80 mt-1">Como podemos te ajudar hoje?</p>
+                </div>
+                <button 
+                  onClick={() => setIsHelpOpen(false)}
+                  className="p-2.5 hover:bg-white/10 rounded-2xl transition-colors backdrop-blur-md border border-white/10"
+                >
+                  <X size={20} />
+                </button>
               </div>
-              <button 
-                onClick={() => setIsHelpOpen(false)}
-                className="p-2 hover:bg-white/10 rounded-full transition-colors"
-              >
-                <X size={20} />
-              </button>
             </div>
             
-            <div className="p-4 border-b border-white/5">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+            <div className="p-6 border-b border-white/5 bg-white/[0.02]">
+              <div className="relative group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-primary-400 transition-colors" size={18} />
                 <input 
                   type="text"
                   placeholder="Pesquisar dúvidas..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-white focus:ring-2 focus:ring-primary-500 outline-none"
+                  className="w-full bg-black/40 border border-white/10 rounded-2xl py-3.5 pl-12 pr-4 text-sm text-white focus:ring-2 focus:ring-primary-500/50 outline-none transition-all placeholder-gray-600"
                 />
               </div>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-4">
+            <div className="flex-1 overflow-y-auto p-6 sm:p-8 custom-scrollbar space-y-6 bg-white/[0.01]">
               {faqData.map((category) => {
                 const filteredQuestions = category.questions.filter(q => 
                   q.q.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -1170,23 +1295,26 @@ export default function ClientPortal() {
                 if (filteredQuestions.length === 0) return null;
                 
                 return (
-                  <div key={category.category}>
-                    <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 px-2">
+                  <div key={category.category} className="space-y-3">
+                    <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] px-2">
                       {category.category}
                     </h4>
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                       {filteredQuestions.map((item, idx) => (
-                        <div key={idx} className="bg-white/5 rounded-xl overflow-hidden">
+                        <div key={idx} className={`rounded-2xl border transition-all duration-300 ${activeFaq === `${category.category}-${idx}` ? 'bg-white/[0.06] border-white/10 shadow-lg' : 'bg-white/[0.02] border-white/5 hover:border-white/10'}`}>
                           <button 
                             onClick={() => setActiveFaq(activeFaq === `${category.category}-${idx}` ? null : `${category.category}-${idx}`)}
-                            className="w-full px-4 py-3 text-left hover:bg-white/5 transition-colors flex items-center justify-between gap-3"
+                            className="w-full px-5 py-4 text-left transition-colors flex items-center justify-between gap-4"
                           >
-                            <span className="text-sm text-gray-200">{item.q}</span>
-                            {activeFaq === `${category.category}-${idx}` ? <ChevronUp size={14} className="text-gray-500 shrink-0" /> : <ChevronDown size={14} className="text-gray-500 shrink-0" />}
+                            <span className={`text-sm font-medium transition-colors ${activeFaq === `${category.category}-${idx}` ? 'text-primary-400' : 'text-gray-300'}`}>{item.q}</span>
+                            <div className={`p-1 rounded-lg transition-all duration-300 ${activeFaq === `${category.category}-${idx}` ? 'bg-primary-500/20 text-primary-400 rotate-180' : 'bg-white/5 text-gray-500'}`}>
+                              <ChevronDown size={14} />
+                            </div>
                           </button>
                           {activeFaq === `${category.category}-${idx}` && (
-                            <div className="px-4 py-3 bg-black/20 border-t border-white/5">
-                              <p className="text-xs text-gray-400 leading-relaxed">{item.a}</p>
+                            <div className="px-5 pb-5 pt-1 animate-in fade-in slide-in-from-top-2 duration-300">
+                              <div className="h-px bg-white/5 w-full mb-4"></div>
+                              <p className="text-xs text-gray-400 leading-relaxed whitespace-pre-wrap">{item.a}</p>
                             </div>
                           )}
                         </div>
@@ -1197,33 +1325,36 @@ export default function ClientPortal() {
               })}
               
               {searchQuery && faqData.every(c => c.questions.filter(q => q.q.toLowerCase().includes(searchQuery.toLowerCase()) || q.a.toLowerCase().includes(searchQuery.toLowerCase())).length === 0) && (
-                <div className="text-center py-8">
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Search className="text-gray-600" size={24} />
+                  </div>
                   <p className="text-sm text-gray-500">Nenhuma dúvida encontrada.</p>
                 </div>
               )}
             </div>
             
-            <div className="p-4 bg-white/5 border-t border-white/10 text-center">
-              <p className="text-[10px] text-gray-500 mb-2">Ainda precisa de ajuda?</p>
-              <button 
-                onClick={() => {
-                  setIsHelpOpen(false);
-                  document.getElementById('support-form')?.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className="text-xs text-primary-400 font-bold hover:underline"
+            <div className="p-6 sm:p-8 bg-white/[0.02] border-t border-white/5">
+              <a 
+                href="https://wa.me/5511952924208"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center justify-center gap-3 w-full py-4 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-2xl text-sm font-bold transition-all border border-emerald-500/20"
               >
-                Falar com um especialista
-              </button>
+                <MessageSquare size={18} />
+                Ainda com dúvidas? WhatsApp
+              </a>
             </div>
           </div>
         ) : (
           <button 
             onClick={() => setIsHelpOpen(true)}
-            className="w-14 h-14 bg-primary-600 hover:bg-primary-700 text-white rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 group relative"
+            className="group relative p-5 bg-gradient-to-br from-primary-600 to-primary-400 text-white rounded-[2rem] shadow-2xl shadow-primary-500/40 hover:shadow-primary-500/60 transition-all hover:scale-110 active:scale-95"
           >
-            <HelpCircle size={28} />
-            <span className="absolute right-full mr-4 bg-gray-900 text-white text-xs px-3 py-2 rounded-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-white/10 shadow-xl">
-              Central de Ajuda
+            <div className="absolute inset-0 bg-white/20 rounded-[2rem] opacity-0 group-hover:opacity-100 transition-opacity blur-xl"></div>
+            <HelpCircle size={28} className="relative z-10" />
+            <span className="absolute right-full mr-4 top-1/2 -translate-y-1/2 px-4 py-2 bg-gray-900 text-white text-xs font-bold rounded-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0 pointer-events-none border border-white/10 shadow-2xl">
+              Como podemos ajudar?
             </span>
           </button>
         )}
