@@ -1837,6 +1837,7 @@ function CRM({ user }: { user: User }) {
                 billingType: 'UNDEFINED', // Allows client to choose (Boleto, Pix, Card)
                 chargeType: 'DETACHED', // One-time payment
                 maxInstallmentCount: 12,
+                dueDateLimitDays: 3, // 3 business days for payment due date
                 customer: client.asaasCustomerId,
                 endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Link valid for 7 days
               })
