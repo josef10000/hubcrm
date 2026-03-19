@@ -1824,24 +1824,26 @@ function CRM({ user }: { user: User }) {
           let setupValue = getSetupPrice(client.plan);
 
           if (client.isCombo) {
-            // COMBO LOGIC: Setup + Annual in one parcelable payment
+            // COMBO LOGIC: Setup + Annual in one parcelable payment link
             // The annual price (monthlyValue) already includes the setup for the combo
             const totalComboValue = monthlyValue;
-            const paymentRes = await fetch('/api/asaas/payments', {
+            const paymentRes = await fetch('/api/asaas/payment-links', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                customer: client.asaasCustomerId,
-                billingType: 'CREDIT_CARD',
+                name: `Combo (Setup + Plano Anual) - Plano ${client.plan}`,
+                description: `Acesso anual ao Plano ${client.plan} com taxa de setup inclusa.`,
                 value: totalComboValue,
-                dueDate: firstPaymentDate,
-                description: `Combo (Setup + Plano Anual) - Plano ${client.plan} - Hub Central`,
+                billingType: 'UNDEFINED', // Allows client to choose (Boleto, Pix, Card)
+                chargeType: 'DETACHED',
+                maxInstallmentCount: 12,
+                endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Link valid for 7 days
               })
             });
 
             if (paymentRes.ok) {
               const paymentData = await paymentRes.json();
-              client.invoiceUrl = paymentData.invoiceUrl || paymentData.bankSlipUrl;
+              client.invoiceUrl = paymentData.url; // Payment Link URL
               client.nextDueDate = firstPaymentDate;
               
               // Set renewal date to 1 year from now
