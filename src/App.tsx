@@ -501,18 +501,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                               <span className="text-[10px] text-gray-400 uppercase font-bold">Valor Total do Combo</span>
                               <span className="text-sm font-bold text-emerald-400">R$ {getPlanPrice(formData.plan, 'YEARLY').toLocaleString('pt-BR')}</span>
                             </div>
-                            <div className="mb-2">
-                              <label className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Parcelas</label>
-                              <input 
-                                type="number" 
-                                min="1" 
-                                max="12" 
-                                value={formData.comboInstallments || 12} 
-                                onChange={(e) => setFormData(prev => ({ ...prev, comboInstallments: parseInt(e.target.value) }))}
-                                className="w-full px-3 py-2 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
-                              />
-                            </div>
-                            <p className="text-[10px] text-emerald-400 font-medium">O cliente receberá o link de pagamento já parcelado em {formData.comboInstallments || 12}x.</p>
+                            <p className="text-[10px] text-emerald-400 font-medium">O cliente receberá o link de pagamento e poderá escolher o parcelamento em até 12x no checkout.</p>
                           </div>
                         )}
                       </div>
