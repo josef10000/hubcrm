@@ -1834,7 +1834,7 @@ function CRM({ user }: { user: User }) {
                 name: `Combo (Setup + Plano Anual) - Plano ${client.plan}`,
                 description: `Acesso anual ao Plano ${client.plan} com taxa de setup inclusa.`,
                 value: totalComboValue,
-                billingType: 'UNDEFINED', // Allows client to choose (Boleto, Pix, Card)
+                billingType: 'CREDIT_CARD', // Explicitly set to CREDIT_CARD to enable installments
                 chargeType: 'DETACHED', // One-time payment
                 maxInstallmentCount: 12,
                 dueDateLimitDays: 3, // 3 business days for payment due date
