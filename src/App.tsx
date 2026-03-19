@@ -497,6 +497,10 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                         
                         {formData.isCombo && (
                           <div className="mt-3 pt-3 border-t border-emerald-500/10">
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-[10px] text-gray-400 uppercase font-bold">Valor Total do Combo</span>
+                              <span className="text-sm font-bold text-emerald-400">R$ {getPlanPrice(formData.plan, 'YEARLY').toLocaleString('pt-BR')}</span>
+                            </div>
                             <p className="text-[10px] text-emerald-400 font-medium">O cliente poderá escolher o parcelamento diretamente na fatura do Asaas.</p>
                           </div>
                         )}
@@ -1818,7 +1822,8 @@ function CRM({ user }: { user: User }) {
 
           if (client.isCombo) {
             // COMBO LOGIC: Setup + Annual in one parcelable payment
-            const totalComboValue = setupValue + monthlyValue;
+            // The annual price (monthlyValue) already includes the setup for the combo
+            const totalComboValue = monthlyValue;
             const paymentRes = await fetch('/api/asaas/payments', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },

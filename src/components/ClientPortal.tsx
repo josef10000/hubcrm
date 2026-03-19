@@ -778,7 +778,7 @@ export default function ClientPortal() {
                 <p className="text-xs text-gray-400 leading-relaxed">Ideal para quem precisa de uma presença digital profissional, simples e funcional, com foco em facilitar o contato com clientes.</p>
               </div>
               <div className="mb-6">
-                <p className="text-xs text-gray-500 mb-1">Setup: R$ {getSetupPrice('Essencial').toLocaleString('pt-BR')}</p>
+                <p className="text-xs text-gray-500 mb-1">Setup: {client.billingCycle === 'YEARLY' ? 'Incluso no Combo' : `R$ ${getSetupPrice('Essencial').toLocaleString('pt-BR')}`}</p>
                 <div className="flex flex-col gap-1">
                   <div className="flex items-baseline gap-1">
                     <span className="text-xl font-bold text-white">R$ {getPlanPrice('Essencial', 'MONTHLY').toLocaleString('pt-BR')}</span>
@@ -832,7 +832,7 @@ export default function ClientPortal() {
                 <p className="text-xs text-gray-400 leading-relaxed">Indicado para empresas que querem transmitir mais autoridade, melhorar sua apresentação online e gerar contatos mais qualificados.</p>
               </div>
               <div className="mb-6">
-                <p className="text-xs text-gray-500 mb-1">Setup: R$ {getSetupPrice('Profissional').toLocaleString('pt-BR')}</p>
+                <p className="text-xs text-gray-500 mb-1">Setup: {client.billingCycle === 'YEARLY' ? 'Incluso no Combo' : `R$ ${getSetupPrice('Profissional').toLocaleString('pt-BR')}`}</p>
                 <div className="flex flex-col gap-1">
                   <div className="flex items-baseline gap-1">
                     <span className="text-xl font-bold text-white">R$ {getPlanPrice('Profissional', 'MONTHLY').toLocaleString('pt-BR')}</span>
@@ -888,7 +888,7 @@ export default function ClientPortal() {
                 <p className="text-xs text-gray-400 leading-relaxed">Para grandes operações que buscam máxima performance, design exclusivo e consultoria técnica.</p>
               </div>
               <div className="mb-6">
-                <p className="text-xs text-gray-500 mb-1">Setup: R$ {getSetupPrice('Autoridade').toLocaleString('pt-BR')}</p>
+                <p className="text-xs text-gray-500 mb-1">Setup: {client.billingCycle === 'YEARLY' ? 'Incluso no Combo' : `R$ ${getSetupPrice('Autoridade').toLocaleString('pt-BR')}`}</p>
                 <div className="flex flex-col gap-1">
                   <div className="flex items-baseline gap-1">
                     <span className="text-xl font-bold text-white">R$ {getPlanPrice('Autoridade', 'MONTHLY').toLocaleString('pt-BR')}</span>
