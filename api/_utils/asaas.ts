@@ -5,8 +5,8 @@ export const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
 export const ASAAS_API_URL = "https://api.asaas.com/v3";
 
 export async function asaasRequest(endpoint: string, method: string, body?: any) {
-  if (!ASAAS_API_KEY) {
-    throw new Error("ASAAS_API_KEY environment variable is not defined");
+  if (!ASAAS_API_KEY || ASAAS_API_KEY.trim() === "") {
+    throw new Error("ASAAS_API_KEY environment variable is not defined or is empty");
   }
 
   const response = await fetch(`${ASAAS_API_URL}${endpoint}`, {
@@ -14,6 +14,7 @@ export async function asaasRequest(endpoint: string, method: string, body?: any)
     headers: {
       "Content-Type": "application/json",
       "access_token": ASAAS_API_KEY,
+      "Authorization": `Bearer ${ASAAS_API_KEY}`,
       "User-Agent": "HubCentralCRM"
     },
     body: body ? JSON.stringify(body) : undefined
