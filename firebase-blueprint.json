@@ -54,9 +54,28 @@
         "description": { "type": "string" },
         "amount": { "type": "number" },
         "date": { "type": "number" },
-        "category": { "type": "string" }
+        "category": { "type": "string" },
+        "clientId": { "type": "string" }
       },
       "required": ["description", "amount", "date", "category"]
+    },
+    "Lead": {
+      "title": "Lead",
+      "description": "A potential client",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "email": { "type": "string" },
+        "niche": { "type": "string" },
+        "status": { "type": "string", "enum": ["Novo", "Em Contato", "Proposta Enviada", "Convertido", "Perdido"] },
+        "createdAt": { "type": "number" },
+        "notes": { "type": "string" },
+        "source": { "type": "string" },
+        "lastContact": { "type": "number" }
+      },
+      "required": ["name", "whatsapp", "status", "createdAt"]
     }
   },
   "firestore": {
@@ -75,6 +94,10 @@
     "/users/{userId}/expenses/{expenseId}": {
       "schema": "Expense",
       "description": "Expenses managed by the user"
+    },
+    "/users/{userId}/leads/{leadId}": {
+      "schema": "Lead",
+      "description": "Leads managed by the user"
     }
   }
 }

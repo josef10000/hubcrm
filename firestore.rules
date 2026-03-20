@@ -54,6 +54,13 @@ service cloud.firestore {
              data.category is string;
     }
 
+    function isValidLead(data) {
+      return data.name is string && data.name.size() > 0 &&
+             data.whatsapp is string && data.whatsapp.size() >= 10 &&
+             data.status in ['Novo', 'Em Contato', 'Proposta Enviada', 'Convertido', 'Perdido'] &&
+             data.createdAt is number;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -74,6 +81,10 @@ service cloud.firestore {
       }
 
       match /expenses/{expenseId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /leads/{leadId} {
         allow read, write: if isOwner(userId);
       }
 
