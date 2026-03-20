@@ -107,19 +107,6 @@ export interface OnboardingQuestion {
   required: boolean;
 }
 
-export interface Lead {
-  id: string;
-  name: string;
-  whatsapp: string;
-  email?: string;
-  niche?: string;
-  status: 'Novo' | 'Em Contato' | 'Proposta Enviada' | 'Convertido' | 'Perdido';
-  createdAt: number;
-  notes?: string;
-  source?: string;
-  lastContact?: number;
-}
-
 interface Expense {
   id: string;
   description: string;
@@ -129,40 +116,6 @@ interface Expense {
   clientId?: string;
 }
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-const PLANS: Record<string, { description: string, features: string[] }> = {
-  Essencial: {
-    description: "Ideal para quem precisa de uma presença digital profissional, simples e funcional, com foco em facilitar o contato com clientes.",
-    features: [
-      "Site Corporativo One Page",
-      "Fluxo de contato WhatsApp",
-      "Foco em Mobile (Celulares)",
-      "Hospedagem Premium inclusa",
-      "Suporte via WhatsApp"
-    ]
-  },
-  Profissional: {
-    description: "Indicado para empresas que querem transmitir mais autoridade, melhorar sua apresentação online e gerar contatos mais qualificados.",
-    features: [
-      "Site Multi-páginas Estruturado",
-      "Copywriting persuasivo (Agro)",
-      "Formulários de cotação",
-      "Domínio Oficial (.com.br)",
-      "Otimização de SEO Local",
-      "Atendimento prioritário"
-    ]
-  },
-  Autoridade: {
-    description: "Para grandes operações que buscam máxima performance, design exclusivo e consultoria técnica.",
-    features: [
-      "Design Exclusivo Customizado",
-      "Área de Blog/Notícias (Agro)",
-      "Integração com CRMs",
-      "Catálogo profundo de produtos",
-      "Consultoria técnica trimestral"
-    ]
-  }
-};
 
 export const getPlanPrice = (plan?: string, billingCycle?: string) => {
   if (billingCycle === 'YEARLY') {
@@ -229,159 +182,6 @@ export const updateReferrerSubscription = async (referrerId: string, updatedClie
     console.error("Error updating referrer subscription", e);
   }
 };
-
-function LeadModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Lead>) => void, onDelete?: (id: string) => void, initialData: Lead | null }) {
-  const [formData, setFormData] = useState<Partial<Lead>>({
-    name: '',
-    whatsapp: '',
-    email: '',
-    niche: '',
-    status: 'Novo',
-    notes: '',
-    source: ''
-  });
-
-  useEffect(() => {
-    if (initialData) {
-      setFormData(initialData);
-    } else {
-      setFormData({
-        name: '',
-        whatsapp: '',
-        email: '',
-        niche: '',
-        status: 'Novo',
-        notes: '',
-        source: ''
-      });
-    }
-  }, [initialData, isOpen]);
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-[#111111] w-full max-w-lg rounded-3xl border border-gray-200 dark:border-white/10 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-        <div className="p-6 border-b border-gray-200 dark:border-white/10 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <Users className="w-5 h-5 text-primary-500" />
-            {initialData ? 'Editar Lead' : 'Novo Lead'}
-          </h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-xl transition-colors">
-            <X size={20} className="text-gray-500" />
-          </button>
-        </div>
-
-        <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
-          <div className="grid grid-cols-1 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome Completo</label>
-              <input 
-                type="text" 
-                value={formData.name}
-                onChange={e => setFormData({...formData, name: e.target.value})}
-                className="w-full px-4 py-2 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
-                placeholder="Nome do lead"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">WhatsApp</label>
-                <input 
-                  type="text" 
-                  value={formData.whatsapp}
-                  onChange={e => setFormData({...formData, whatsapp: e.target.value})}
-                  className="w-full px-4 py-2 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
-                  placeholder="(00) 00000-0000"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nicho</label>
-                <input 
-                  type="text" 
-                  value={formData.niche}
-                  onChange={e => setFormData({...formData, niche: e.target.value})}
-                  className="w-full px-4 py-2 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
-                  placeholder="Ex: Estética"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">E-mail</label>
-              <input 
-                type="email" 
-                value={formData.email}
-                onChange={e => setFormData({...formData, email: e.target.value})}
-                className="w-full px-4 py-2 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
-                placeholder="email@exemplo.com"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
-                <select 
-                  value={formData.status}
-                  onChange={e => setFormData({...formData, status: e.target.value as any})}
-                  className="w-full px-4 py-2 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
-                >
-                  <option value="Novo" className="bg-[#0a0a0a]">Novo</option>
-                  <option value="Em Contato" className="bg-[#0a0a0a]">Em Contato</option>
-                  <option value="Proposta Enviada" className="bg-[#0a0a0a]">Proposta Enviada</option>
-                  <option value="Convertido" className="bg-[#0a0a0a]">Convertido</option>
-                  <option value="Perdido" className="bg-[#0a0a0a]">Perdido</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Origem</label>
-                <input 
-                  type="text" 
-                  value={formData.source}
-                  onChange={e => setFormData({...formData, source: e.target.value})}
-                  className="w-full px-4 py-2 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
-                  placeholder="Ex: Instagram"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Observações</label>
-              <textarea 
-                value={formData.notes}
-                onChange={e => setFormData({...formData, notes: e.target.value})}
-                className="w-full px-4 py-2 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none min-h-[100px] resize-none"
-                placeholder="Detalhes sobre o lead..."
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="p-6 border-t border-gray-200 dark:border-white/10 flex items-center justify-between gap-3 bg-gray-50 dark:bg-black/20">
-          {initialData && onDelete && (
-            <button 
-              onClick={() => onDelete(initialData.id)}
-              className="px-4 py-2 text-red-500 hover:bg-red-500/10 rounded-xl transition-colors flex items-center gap-2"
-            >
-              <Trash2 size={18} />
-              Excluir
-            </button>
-          )}
-          <div className="flex gap-3 ml-auto">
-            <button onClick={onClose} className="px-4 py-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5 rounded-xl transition-colors">Cancelar</button>
-            <button 
-              onClick={() => onSave(formData)}
-              className="px-6 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-medium transition-colors shadow-lg shadow-primary-500/20"
-            >
-              Salvar Lead
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardingQuestions, user }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, onDelete?: (id: string) => void, initialData: Client | null, onboardingQuestions: OnboardingQuestion[], user: User }) {
   const [formData, setFormData] = useState<Partial<Client>>({ 
@@ -702,7 +502,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                               <span className="text-[10px] text-gray-400 uppercase font-bold">Valor Total do Combo</span>
                               <span className="text-sm font-bold text-emerald-400">R$ {getPlanPrice(formData.plan, 'YEARLY').toLocaleString('pt-BR')}</span>
                             </div>
-                            <p className="text-[10px] text-emerald-400 font-medium">O cliente receberá o link de pagamento e poderá parcelar o valor total em até <span className="font-bold underline">12x sem juros</span> no cartão de crédito.</p>
+                            <p className="text-[10px] text-emerald-400 font-medium">O cliente receberá o link de pagamento e poderá escolher o parcelamento em até 12x no checkout.</p>
                           </div>
                         )}
                       </div>
@@ -768,36 +568,35 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
 
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Plano *</label>
-                    <div className="grid grid-cols-3 gap-3 mb-4">
-                      {['Essencial', 'Profissional', 'Autoridade'].map((planName) => (
-                        <button 
-                          key={planName}
-                          type="button" 
-                          onClick={() => setFormData(prev => ({ ...prev, plan: planName as any }))}
-                          className={`p-4 rounded-xl border text-left transition-all ${formData.plan === planName ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
-                        >
-                          <div className="font-semibold mb-1">{planName}</div>
-                          <div className="text-xs opacity-80">Setup: R$ {getSetupPrice(planName).toLocaleString('pt-BR')}</div>
-                          <div className="text-sm font-bold mt-1">R$ {getPlanPrice(planName, formData.billingCycle).toLocaleString('pt-BR')}/{formData.billingCycle === 'YEARLY' ? 'ano' : 'mês'}</div>
-                        </button>
-                      ))}
+                    <div className="grid grid-cols-3 gap-3">
+                      <button 
+                        type="button" 
+                        onClick={() => setFormData(prev => ({ ...prev, plan: 'Essencial' }))}
+                        className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Essencial' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
+                      >
+                        <div className="font-semibold mb-1">Essencial</div>
+                        <div className="text-xs opacity-80">Setup: R$ {getSetupPrice('Essencial').toLocaleString('pt-BR')}</div>
+                        <div className="text-sm font-bold mt-1">R$ {getPlanPrice('Essencial', formData.billingCycle).toLocaleString('pt-BR')}/{formData.billingCycle === 'YEARLY' ? 'ano' : 'mês'}</div>
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={() => setFormData(prev => ({ ...prev, plan: 'Profissional' }))}
+                        className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Profissional' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
+                      >
+                        <div className="font-semibold mb-1">Profissional</div>
+                        <div className="text-xs opacity-80">Setup: R$ {getSetupPrice('Profissional').toLocaleString('pt-BR')}</div>
+                        <div className="text-sm font-bold mt-1">R$ {getPlanPrice('Profissional', formData.billingCycle).toLocaleString('pt-BR')}/{formData.billingCycle === 'YEARLY' ? 'ano' : 'mês'}</div>
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={() => setFormData(prev => ({ ...prev, plan: 'Autoridade' }))}
+                        className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Autoridade' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
+                      >
+                        <div className="font-semibold mb-1">Autoridade</div>
+                        <div className="text-xs opacity-80">Setup: R$ {getSetupPrice('Autoridade').toLocaleString('pt-BR')}</div>
+                        <div className="text-sm font-bold mt-1">R$ {getPlanPrice('Autoridade', formData.billingCycle).toLocaleString('pt-BR')}/{formData.billingCycle === 'YEARLY' ? 'ano' : 'mês'}</div>
+                      </button>
                     </div>
-
-                    {formData.plan && PLANS[formData.plan as keyof typeof PLANS] && (
-                      <div className="p-4 bg-primary-500/5 border border-primary-500/10 rounded-2xl animate-in fade-in slide-in-from-top-2 duration-300">
-                        <p className="text-xs text-gray-400 mb-3 leading-relaxed">
-                          {PLANS[formData.plan as keyof typeof PLANS].description}
-                        </p>
-                        <ul className="grid grid-cols-1 gap-2">
-                          {PLANS[formData.plan as keyof typeof PLANS].features.map((feature, idx) => (
-                            <li key={idx} className="flex items-center gap-2 text-[10px] text-gray-500 dark:text-gray-400">
-                              <div className="w-1 h-1 rounded-full bg-primary-500" />
-                              {feature}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
                   </div>
                 </div>
 
@@ -1687,12 +1486,10 @@ function CRM({ user }: { user: User }) {
       setIsSyncing(false);
     }
   };
-  const [view, setView] = useState<'dashboard' | 'analytics' | 'support' | 'finance' | 'settings' | 'calendar' | 'referrals' | 'marketing' | 'leads' | 'projects'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'analytics' | 'support' | 'finance' | 'settings' | 'calendar' | 'referrals' | 'marketing'>('dashboard');
   const [dashboardMode, setDashboardMode] = useState<'list' | 'kanban'>('list');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
-  const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<SiteStatus | 'Todos'>('Todos');
@@ -1753,7 +1550,6 @@ function CRM({ user }: { user: User }) {
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyMessage, setReplyMessage] = useState('');
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [leads, setLeads] = useState<Lead[]>([]);
   const [newExpense, setNewExpense] = useState<Partial<Expense>>({ category: 'Ferramentas' });
 
   const [globalAnnouncement, setGlobalAnnouncement] = useState<{title: string, message: string, type: string, isActive: boolean}>({ title: '', message: '', type: 'info', isActive: false });
@@ -1789,7 +1585,6 @@ function CRM({ user }: { user: User }) {
     let unsubscribeClients: () => void = () => {};
     let unsubscribeRequests: () => void = () => {};
     let unsubscribeExpenses: () => void = () => {};
-    let unsubscribeLeads: () => void = () => {};
 
     try {
       const clientsRef = collection(db, 'users', user.uid, 'clients');
@@ -1831,15 +1626,6 @@ function CRM({ user }: { user: User }) {
         setExpenses(loadedExpenses.sort((a, b) => b.date - a.date));
       });
 
-      const leadsRef = collection(db, 'users', user.uid, 'leads');
-      unsubscribeLeads = onSnapshot(leadsRef, (snapshot) => {
-        const loadedLeads: Lead[] = [];
-        snapshot.forEach((doc) => {
-          loadedLeads.push({ id: doc.id, ...doc.data() } as Lead);
-        });
-        setLeads(loadedLeads.sort((a, b) => b.createdAt - a.createdAt));
-      });
-
       timeoutId = setTimeout(() => {
         console.warn("Firestore initialization timed out.");
         setLoading(false);
@@ -1856,49 +1642,9 @@ function CRM({ user }: { user: User }) {
       unsubscribeClients();
       unsubscribeRequests();
       unsubscribeExpenses();
-      unsubscribeLeads();
       clearTimeout(timeoutId);
     };
   }, [user.uid]);
-
-  const handleSaveLead = async (leadData: Partial<Lead>) => {
-    const isNew = !leadData.id;
-    const lead: Lead = {
-      ...(editingLead || {}),
-      id: leadData.id || crypto.randomUUID(),
-      name: leadData.name || '',
-      whatsapp: leadData.whatsapp || '',
-      email: leadData.email,
-      niche: leadData.niche,
-      status: leadData.status || 'Novo',
-      notes: leadData.notes,
-      source: leadData.source,
-      createdAt: leadData.createdAt || Date.now(),
-      lastContact: leadData.lastContact || Date.now()
-    };
-
-    try {
-      await setDoc(doc(db, 'users', user.uid, 'leads', lead.id), lead);
-      setIsLeadModalOpen(false);
-      setEditingLead(null);
-      toast.success(isNew ? 'Lead criado com sucesso!' : 'Lead atualizado com sucesso!');
-    } catch (error: any) {
-      console.error("Save Lead Error:", error);
-      toast.error(`Erro ao salvar lead: ${error.message}`);
-    }
-  };
-
-  const handleDeleteLead = async (leadId: string) => {
-    try {
-      await deleteDoc(doc(db, 'users', user.uid, 'leads', leadId));
-      setIsLeadModalOpen(false);
-      setEditingLead(null);
-      toast.success('Lead excluído com sucesso!');
-    } catch (error: any) {
-      console.error("Delete Lead Error:", error);
-      toast.error(`Erro ao excluir lead: ${error.message}`);
-    }
-  };
 
   const handleSaveClient = async (clientData: Partial<Client>) => {
     try {
@@ -3163,171 +2909,6 @@ function CRM({ user }: { user: User }) {
     );
   };
 
-  const renderLeads = () => {
-    const leadStatuses = ['Novo', 'Em Contato', 'Proposta Enviada', 'Convertido', 'Perdido'];
-    
-    return (
-      <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">CRM de Vendas (Leads)</h2>
-              <p className="text-gray-500 dark:text-gray-400">Gerencie seus potenciais clientes e pipeline de vendas.</p>
-            </div>
-            <button 
-              onClick={() => { setEditingLead(null); setIsLeadModalOpen(true); }}
-              className="flex items-center space-x-2 bg-primary-500 hover:bg-primary-600 text-white px-5 py-2.5 rounded-2xl transition-all font-medium shadow-lg shadow-primary-500/20"
-            >
-              <Plus size={18} />
-              <span>Novo Lead</span>
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 overflow-x-auto pb-4">
-            {leadStatuses.map(status => (
-              <div key={status} className="flex flex-col min-w-[280px]">
-                <div className="flex items-center justify-between mb-4 px-2">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${
-                      status === 'Novo' ? 'bg-blue-500' :
-                      status === 'Em Contato' ? 'bg-yellow-500' :
-                      status === 'Proposta Enviada' ? 'bg-purple-500' :
-                      status === 'Convertido' ? 'bg-emerald-500' : 'bg-red-500'
-                    }`} />
-                    <h3 className="font-semibold text-gray-900 dark:text-white">{status}</h3>
-                  </div>
-                  <span className="text-xs font-medium bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">
-                    {leads.filter(l => l.status === status).length}
-                  </span>
-                </div>
-
-                <div className="space-y-3">
-                  {leads.filter(l => l.status === status).map(lead => (
-                    <div 
-                      key={lead.id}
-                      onClick={() => { setEditingLead(lead); setIsLeadModalOpen(true); }}
-                      className="bg-white dark:bg-[#111111] p-4 rounded-2xl border border-gray-200 dark:border-white/10 shadow-sm hover:shadow-md transition-all cursor-pointer group"
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-medium text-gray-900 dark:text-white group-hover:text-primary-500 transition-colors">{lead.name}</h4>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                          <Phone size={12} className="mr-1.5" />
-                          {lead.whatsapp}
-                        </div>
-                        {lead.niche && (
-                          <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                            <Tag size={12} className="mr-1.5" />
-                            {lead.niche}
-                          </div>
-                        )}
-                        <div className="pt-2 flex items-center justify-between border-t border-gray-100 dark:border-white/5 mt-2">
-                          <span className="text-[10px] text-gray-400 uppercase tracking-wider">{lead.source || 'Direto'}</span>
-                          <span className="text-[10px] text-gray-400">{new Date(lead.createdAt).toLocaleDateString('pt-BR')}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {leads.filter(l => l.status === status).length === 0 && (
-                    <div className="border-2 border-dashed border-gray-200 dark:border-white/5 rounded-2xl p-8 flex flex-col items-center justify-center text-center">
-                      <p className="text-xs text-gray-400">Nenhum lead</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderProjects = () => {
-    const devClients = clients.filter(c => c.status === 'Em Desenvolvimento');
-    
-    return (
-      <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Gestão de Projetos</h2>
-              <p className="text-gray-500 dark:text-gray-400">Acompanhe o progresso dos sites em desenvolvimento.</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 overflow-x-auto pb-4">
-            {defaultStages.map(stage => (
-              <div key={stage.id} className="flex flex-col min-w-[280px]">
-                <div className="flex items-center justify-between mb-4 px-2">
-                  <h3 className="font-semibold text-gray-900 dark:text-white">{stage.name}</h3>
-                  <span className="text-xs font-medium bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">
-                    {devClients.filter(c => {
-                      const currentStageIndex = c.stages?.findIndex(s => !s.completed);
-                      const currentStage = currentStageIndex !== -1 ? c.stages?.[currentStageIndex!] : c.stages?.[c.stages.length - 1];
-                      return currentStage?.name === stage.name;
-                    }).length}
-                  </span>
-                </div>
-
-                <div className="space-y-3">
-                  {devClients.filter(c => {
-                    const currentStageIndex = c.stages?.findIndex(s => !s.completed);
-                    const currentStage = currentStageIndex !== -1 ? c.stages?.[currentStageIndex!] : c.stages?.[c.stages.length - 1];
-                    return currentStage?.name === stage.name;
-                  }).map(client => {
-                    const completedCount = client.stages?.filter(s => s.completed).length || 0;
-                    const totalCount = client.stages?.length || 1;
-                    const progress = (completedCount / totalCount) * 100;
-
-                    return (
-                      <div 
-                        key={client.id}
-                        onClick={() => { setEditingClient(client); setIsModalOpen(true); }}
-                        className="bg-white dark:bg-[#111111] p-4 rounded-2xl border border-gray-200 dark:border-white/10 shadow-sm hover:shadow-md transition-all cursor-pointer group"
-                      >
-                        <h4 className="font-medium text-gray-900 dark:text-white mb-2 group-hover:text-primary-500 transition-colors">{client.name}</h4>
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="text-gray-500 dark:text-gray-400">{client.plan}</span>
-                            <span className="font-medium text-primary-500">{Math.round(progress)}%</span>
-                          </div>
-                          <div className="w-full bg-gray-100 dark:bg-white/5 h-1.5 rounded-full overflow-hidden">
-                            <div 
-                              className="bg-primary-500 h-full transition-all duration-500" 
-                              style={{ width: `${progress}%` }}
-                            />
-                          </div>
-                          <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-white/5 mt-2">
-                            <span className="text-[10px] text-gray-400">{client.niche}</span>
-                            <div className="flex -space-x-2">
-                              {client.stages?.slice(0, 5).map((s, i) => (
-                                <div key={i} className={`w-4 h-4 rounded-full border-2 border-white dark:border-[#111111] ${s.completed ? 'bg-emerald-500' : 'bg-gray-200 dark:bg-gray-800'}`} />
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {devClients.filter(c => {
-                    const currentStageIndex = c.stages?.findIndex(s => !s.completed);
-                    const currentStage = currentStageIndex !== -1 ? c.stages?.[currentStageIndex!] : c.stages?.[c.stages.length - 1];
-                    return currentStage?.name === stage.name;
-                  }).length === 0 && (
-                    <div className="border-2 border-dashed border-gray-200 dark:border-white/5 rounded-2xl p-8 flex flex-col items-center justify-center text-center">
-                      <p className="text-xs text-gray-400">Nenhum projeto</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   const renderFinance = () => {
     const totalMRR = clients.filter(c => c.status === 'Ativo' || c.status === 'Inadimplente').reduce((acc, c) => {
       return acc + getPlanPrice(c.plan, c.billingCycle);
@@ -4061,8 +3642,6 @@ function CRM({ user }: { user: User }) {
         </div>
         <nav className="flex-1 px-4 py-6 space-y-2">
           <button onClick={() => { setView('dashboard'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'dashboard' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><LayoutDashboard size={20} /><span className="font-medium">Dashboard</span></button>
-          <button onClick={() => { setView('leads'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'leads' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><Users size={20} /><span className="font-medium">Leads (CRM)</span></button>
-          <button onClick={() => { setView('projects'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'projects' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><Briefcase size={20} /><span className="font-medium">Projetos</span></button>
           <button onClick={() => { setView('analytics'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'analytics' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><BarChart3 size={20} /><span className="font-medium">Analytics</span></button>
           <button onClick={() => { setView('support'); setSidebarOpen(false); }} className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all ${view === 'support' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}>
             <div className="flex items-center space-x-3">
@@ -4110,8 +3689,6 @@ function CRM({ user }: { user: User }) {
               </div>
             )}
             {view === 'analytics' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Métricas</h2>}
-            {view === 'leads' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">CRM de Vendas</h2>}
-            {view === 'projects' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Gestão de Projetos</h2>}
             {view === 'calendar' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Agenda Central</h2>}
             {view === 'support' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Chamados</h2>}
             {view === 'finance' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Gestão de Custos e Financeiro</h2>}
@@ -4126,11 +3703,7 @@ function CRM({ user }: { user: User }) {
                 <span>Exportar</span>
               </button>
             )}
-            {view === 'leads' ? (
-              <button onClick={() => { setEditingLead(null); setIsLeadModalOpen(true); }} className="flex items-center space-x-2 bg-gradient-to-r from-primary-500 to-primary-400 hover:from-primary-600 hover:to-primary-600 text-gray-900 dark:text-white px-5 py-3 rounded-2xl transition-all font-medium shadow-xl shadow-primary-500/30 hover:shadow-2xl shadow-primary-500/50 hover:scale-105 active:scale-95 shrink-0"><Plus size={18} /><span className="hidden sm:inline">Novo Lead</span></button>
-            ) : (
-              <button onClick={() => { setEditingClient(null); setIsModalOpen(true); }} className="flex items-center space-x-2 bg-gradient-to-r from-primary-500 to-primary-400 hover:from-primary-600 hover:to-primary-600 text-gray-900 dark:text-white px-5 py-3 rounded-2xl transition-all font-medium shadow-xl shadow-primary-500/30 hover:shadow-2xl shadow-primary-500/50 hover:scale-105 active:scale-95 shrink-0"><Plus size={18} /><span className="hidden sm:inline">Novo Cliente</span></button>
-            )}
+            <button onClick={() => { setEditingClient(null); setIsModalOpen(true); }} className="flex items-center space-x-2 bg-gradient-to-r from-primary-500 to-primary-400 hover:from-primary-600 hover:to-primary-600 text-gray-900 dark:text-white px-5 py-3 rounded-2xl transition-all font-medium shadow-xl shadow-primary-500/30 hover:shadow-2xl shadow-primary-500/50 hover:scale-105 active:scale-95 shrink-0"><Plus size={18} /><span className="hidden sm:inline">Novo Cliente</span></button>
           </div>
         </header>
 
@@ -4164,8 +3737,6 @@ function CRM({ user }: { user: User }) {
             </div>
           ) : (
             view === 'dashboard' ? renderDashboard() : 
-            view === 'leads' ? renderLeads() :
-            view === 'projects' ? renderProjects() :
             view === 'analytics' ? renderAnalytics() : 
             view === 'calendar' ? <CalendarView clients={clients} onClientClick={(client) => { setEditingClient(client); setIsModalOpen(true); }} /> :
             view === 'finance' ? renderFinance() :
@@ -4185,13 +3756,6 @@ function CRM({ user }: { user: User }) {
         initialData={editingClient} 
         onboardingQuestions={onboardingQuestions}
         user={user}
-      />
-      <LeadModal
-        isOpen={isLeadModalOpen}
-        onClose={() => setIsLeadModalOpen(false)}
-        onSave={handleSaveLead}
-        onDelete={handleDeleteLead}
-        initialData={editingLead}
       />
       {sidebarOpen && <div className="fixed inset-0 bg-black/60 z-20 md:hidden backdrop-blur-md" onClick={() => setSidebarOpen(false)}></div>}
     </div>
