@@ -7,6 +7,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    // Validate Asaas Webhook Token if configured
+    const webhookToken = process.env.ASAAS_WEBHOOK_TOKEN;
+    if (webhookToken) {
+      const receivedToken = req.headers['asaas-access-token'];
+      if (receivedToken !== webhookToken) {
+        console.error('Invalid webhook token received');
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+    }
+
     // Ensure body is parsed
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
     const { event, payment, subscription } = body;
@@ -29,11 +39,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const updates: any = {};
       if (event === 'PAYMENT_RECEIVED' || event === 'PAYMENT_CONFIRMED') {
-        updates.paymentStatus = 'Pago';
+        updates.paymentStatus = 'RECEIVED';
       } else if (event === 'PAYMENT_OVERDUE') {
-        updates.paymentStatus = 'Atrasado';
+        updates.paymentStatus = 'OVERDUE';
       } else if (event === 'PAYMENT_DELETED' || event === 'PAYMENT_REFUNDED') {
-        updates.paymentStatus = 'Pendente';
+        updates.paymentStatus = 'PENDING';
       }
 
       if (Object.keys(updates).length > 0) {
@@ -64,14 +74,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (event === 'SUBSCRIPTION_DELETED' || deleted) {
         updates.status = 'Cancelado';
-        updates.paymentStatus = 'Cancelado';
+        updates.paymentStatus = 'N/A';
       } else if (event === 'SUBSCRIPTION_INACTIVATED' || status === 'INACTIVE') {
-        updates.status = 'Inativo';
-        updates.paymentStatus = 'Pendente';
+        updates.status = 'Inadimplente';
+        updates.paymentStatus = 'OVERDUE';
       } else if (event === 'SUBSCRIPTION_CREATED' || event === 'SUBSCRIPTION_UPDATED') {
         // Only update if it's active
         if (status === 'ACTIVE') {
-          updates.paymentStatus = 'Ativo';
+          updates.status = 'Ativo';
         }
       }
 

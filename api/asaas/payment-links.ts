@@ -16,11 +16,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       endDate,
       value,
       chargeType: chargeType || "DETACHED", // DETACHED is for one-time payments
-      maxInstallmentCount: maxInstallmentCount || 12, // Allow up to 12 installments
       dueDateLimitDays: dueDateLimitDays || 3, // Default to 3 business days for payment due date
       subscriptionCycle: null,
       customer
     };
+
+    if (payload.chargeType === 'INSTALLMENT') {
+      payload.maxInstallmentCount = maxInstallmentCount || 12; // Allow up to 12 installments
+    }
 
     if (billingType && billingType !== "UNDEFINED") {
       payload.billingType = billingType;

@@ -7,14 +7,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { customer, billingType, value, nextDueDate, description } = req.body;
+    const { customer, billingType, value, nextDueDate, description, cycle } = req.body;
     const data = await asaasRequest("/subscriptions", "POST", {
       customer,
       billingType: billingType || "UNDEFINED",
       value,
       nextDueDate,
       description,
-      cycle: "MONTHLY"
+      cycle: cycle || "MONTHLY"
     });
     return res.status(200).json(data);
   } catch (error: any) {

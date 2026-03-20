@@ -95,7 +95,7 @@ export interface Client {
   npsComment?: string;
   npsSubmittedAt?: any;
   isCombo?: boolean;
-  comboInstallments?: number;
+  maxInstallments?: number;
   comboRenewalDate?: string;
 }
 
@@ -187,7 +187,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
     plan: 'Essencial', 
     status: 'Em Desenvolvimento',
     isCombo: false,
-    comboInstallments: 12
+    maxInstallments: 12
   });
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -261,7 +261,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
         plan: 'Essencial', 
         status: 'Em Desenvolvimento',
         isCombo: false,
-        comboInstallments: 12
+        maxInstallments: 12
       });
     }
     setShowCancelConfirm(false);
@@ -534,6 +534,26 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                       </button>
                     </div>
                   </div>
+
+                  {(formData.isCombo || formData.billingType === 'CREDIT_CARD' || formData.billingType === 'UNDEFINED' || !formData.billingType) && (
+                    <div className="mt-6">
+                      <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Máximo de Parcelas (Cartão de Crédito)</label>
+                      <select
+                        value={formData.maxInstallments || 12}
+                        onChange={(e) => setFormData(prev => ({ ...prev, maxInstallments: Number(e.target.value) }))}
+                        className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                      >
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(num => (
+                          <option key={num} value={num} className="bg-white dark:bg-gray-900">
+                            {num === 1 ? 'À vista (1x)' : `Até ${num}x`}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        O cliente poderá escolher no checkout parcelar em até {formData.maxInstallments || 12} vezes.
+                      </p>
+                    </div>
+                  )}
 
                   {formData.isCombo && formData.comboRenewalDate && (
                     <div className="mt-6 p-4 bg-purple-500/10 border border-purple-500/30 rounded-2xl flex items-center gap-3">
@@ -1662,7 +1682,7 @@ function CRM({ user }: { user: User }) {
       recurringPaymentDay: clientData.recurringPaymentDay,
       deliveryDate: clientData.deliveryDate,
       isCombo: clientData.isCombo,
-      comboInstallments: clientData.comboInstallments,
+      maxInstallments: clientData.maxInstallments,
       comboRenewalDate: clientData.comboRenewalDate,
       referralRewardType: (clientData.billingCycle === 'YEARLY' || clientData.isCombo) 
         ? 'commission' 
@@ -1835,9 +1855,9 @@ function CRM({ user }: { user: User }) {
                 name: `Combo (Setup + Plano Anual) - Plano ${client.plan}`,
                 description: `Acesso anual ao Plano ${client.plan} com taxa de setup inclusa.`,
                 value: totalComboValue,
-                billingType: 'CREDIT_CARD', // Explicitly set to CREDIT_CARD to enable installments
+                billingType: client.billingType || 'UNDEFINED',
                 chargeType: 'INSTALLMENT', // Allow client to choose installments
-                maxInstallmentCount: 12, // Max installments
+                maxInstallmentCount: client.maxInstallments || 12, // Max installments
                 dueDateLimitDays: 3, // 3 business days for payment due date
                 customer: client.asaasCustomerId,
                 endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Link valid for 7 days
