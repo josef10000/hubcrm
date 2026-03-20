@@ -15,173 +15,20 @@ import CalendarView from './components/CalendarView';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-const clientSchema = z.object({
-  name: z.string().min(3, "O nome deve ter pelo menos 3 caracteres"),
-  email: z.string().email("E-mail inválido").optional().or(z.literal('')),
-  cpfCnpj: z.string().refine(val => !val || val.replace(/\D/g, '').length === 11 || val.replace(/\D/g, '').length === 14, "CPF/CNPJ deve ter 11 ou 14 dígitos").optional().or(z.literal('')),
-  whatsapp: z.string().refine(val => !val || val.replace(/\D/g, '').length >= 10, "WhatsApp deve ter pelo menos 10 dígitos").optional().or(z.literal('')),
-});
+// ─── Extracted Modules ───────────────────────────────────────
+import type { PlanType, SiteStatus, Client, ClientLog, ClientAttachment, ClientStage, ClientCredential, OnboardingQuestion, Expense } from './types';
+import { getPlanPrice, getSetupPrice, calculateDiscount } from './services/pricing';
+import { updateReferrerSubscription } from './services/referrals';
+import { clientSchema } from './utils/validation';
+import { delay } from './utils/formatters';
 
-export type PlanType = 'Essencial' | 'Profissional' | 'Autoridade';
-export type SiteStatus = 'Em Desenvolvimento' | 'Ativo' | 'Inadimplente' | 'Cancelado';
+// Re-export for backward compatibility (other files may import from App.tsx)
+export type { PlanType, SiteStatus, Client, ClientLog, ClientAttachment, ClientStage, ClientCredential, OnboardingQuestion, Expense };
+export { getPlanPrice, getSetupPrice, calculateDiscount, updateReferrerSubscription };
 
-export interface ClientLog {
-  id: string;
-  text: string;
-  date: number;
-}
+// Types and logic are now imported from ./types, ./services, and ./utils above.
 
-export interface ClientAttachment {
-  id: string;
-  name: string;
-  url: string;
-  type: string;
-  createdAt: number;
-}
-
-export interface ClientStage {
-  id: string;
-  name: string;
-  completed: boolean;
-  approvedAt?: number | null;
-  link?: string;
-  description?: string;
-}
-
-export interface ClientCredential {
-  id: string;
-  url: string;
-  username: string;
-  password?: string;
-  notes?: string;
-  createdAt: number;
-}
-
-export interface Client {
-  id: string; 
-  name: string; 
-  whatsapp: string; 
-  plan: PlanType;
-  siteLink?: string;
-  status: SiteStatus;
-  createdAt: number;
-  niche?: string;
-  notes?: string;
-  logs?: ClientLog[];
-  attachments?: ClientAttachment[];
-  stages?: ClientStage[];
-  cpfCnpj?: string;
-  email?: string;
-  asaasCustomerId?: string;
-  asaasSubscriptionId?: string;
-  invoiceUrl?: string;
-  paymentStatus?: 'PENDING' | 'RECEIVED' | 'OVERDUE' | 'N/A';
-  nextDueDate?: string;
-  billingType?: 'PIX' | 'CREDIT_CARD' | 'BOLETO' | 'UNDEFINED';
-  billingCycle?: 'MONTHLY' | 'YEARLY';
-  firstPaymentDate?: string;
-  recurringPaymentDay?: number;
-  deliveryDate?: string;
-  onboardingAnswers?: Record<string, string>;
-  referralCode?: string;
-  referredBy?: string;
-  referralBalance?: number;
-  referralCount?: number;
-  referralsByMonth?: Record<string, number>;
-  referralRewardType?: 'commission' | 'discount';
-  currentDiscount?: number;
-  referralConfirmed?: boolean;
-  npsScore?: number;
-  npsComment?: string;
-  npsSubmittedAt?: any;
-  isCombo?: boolean;
-  maxInstallments?: number;
-  comboRenewalDate?: string;
-}
-
-export interface OnboardingQuestion {
-  id: string;
-  text: string;
-  type: 'text' | 'textarea' | 'select' | 'file';
-  options?: string;
-  required: boolean;
-}
-
-interface Expense {
-  id: string;
-  description: string;
-  amount: number;
-  date: number;
-  category: string;
-  clientId?: string;
-}
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-export const getPlanPrice = (plan?: string, billingCycle?: string) => {
-  if (billingCycle === 'YEARLY') {
-    if (plan === 'Profissional') return 3573;
-    if (plan === 'Autoridade') return 8973;
-    return 1323; // Essencial
-  }
-  
-  if (plan === 'Profissional') return 397;
-  if (plan === 'Autoridade') return 997;
-  return 147; // Essencial
-};
-
-export const getSetupPrice = (plan?: string) => {
-  if (plan === 'Profissional') return 2500;
-  if (plan === 'Autoridade') return 7500;
-  return 500; // Essencial
-};
-
-export const calculateDiscount = (client: Client, clientsList: Client[]) => {
-  if (!client || client.referralRewardType === 'commission') return 0;
-  
-  // Find active referred clients
-  const activeReferred = clientsList.filter(c => c.referredBy === client.id && c.status !== 'Cancelado' && c.referralConfirmed === true);
-  const discountAmount = activeReferred.length * 100;
-  
-  const basePrice = getPlanPrice(client.plan, client.billingCycle);
-  const maxDiscount = basePrice * 0.5; // 50% limit
-  
-  return Math.min(discountAmount, maxDiscount);
-};
-
-export const updateReferrerSubscription = async (referrerId: string, updatedClients: Client[]) => {
-  const referrer = updatedClients.find(c => c.id === referrerId);
-  if (!referrer || referrer.referralRewardType === 'commission') return;
-
-  const discount = calculateDiscount(referrer, updatedClients);
-  
-  try {
-    // Also save the current discount to Firestore for display
-    if (auth.currentUser) {
-      await updateDoc(doc(db, 'users', auth.currentUser.uid, 'clients', referrer.id), {
-        currentDiscount: discount
-      });
-    }
-
-    if (!referrer.asaasSubscriptionId) return;
-
-    const monthlyValue = getPlanPrice(referrer.plan, referrer.billingCycle) - discount;
-
-    const updateRes = await fetch('/api/asaas/update-subscription', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        subscriptionId: referrer.asaasSubscriptionId,
-        updatePendingPayments: true,
-        value: monthlyValue
-      })
-    });
-    if (!updateRes.ok) {
-      console.error("Failed to update referrer subscription in Asaas");
-    }
-  } catch (e) {
-    console.error("Error updating referrer subscription", e);
-  }
-};
+// Pricing, discount, and referral logic are now in ./services/pricing.ts and ./services/referrals.ts
 
 function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardingQuestions, user }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, onDelete?: (id: string) => void, initialData: Client | null, onboardingQuestions: OnboardingQuestion[], user: User }) {
   const [formData, setFormData] = useState<Partial<Client>>({ 

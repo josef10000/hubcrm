@@ -1,7 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { asaasRequest } from '../_utils/asaas.js';
+import { verifyAuth } from '../_utils/auth.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // GET is public (used by ClientPortal)
   if (req.method === 'GET') {
     try {
       const { customer } = req.query;
@@ -18,6 +20,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
+
+  // POST requires authentication
+  const uid = await verifyAuth(req, res);
+  if (!uid) return;
 
   try {
     const { customer, billingType, value, description, dueDate, installmentCount } = req.body;

@@ -1,10 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { asaasRequest } from '../_utils/asaas.js';
+import { verifyAuth } from '../_utils/auth.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
+
+  const uid = await verifyAuth(req, res);
+  if (!uid) return;
 
   try {
     const { customer, billingType, value, nextDueDate, description, cycle } = req.body;
