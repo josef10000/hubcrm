@@ -4,6 +4,7 @@ import { doc, getDoc, setDoc, updateDoc, collection } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { CheckCircle, Globe, Building2, Mail, Phone, User as UserIcon, FileText, Upload, Image as ImageIcon, X } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
+import { getPlanPrice, getSetupPrice } from '../App';
 
 export default function OnboardingForm() {
   const { userId, clientId } = useParams<{ userId: string, clientId?: string }>();
@@ -20,7 +21,8 @@ export default function OnboardingForm() {
     email: '',
     whatsapp: '',
     cpfCnpj: '',
-    plan: 'Essencial'
+    plan: 'Essencial',
+    billingCycle: 'MONTHLY'
   });
   
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -289,7 +291,25 @@ export default function OnboardingForm() {
 
               {!clientId && referralId && (
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Plano Desejado *</label>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                    <label className="block text-sm font-medium text-gray-300">Plano Desejado *</label>
+                    <div className="flex bg-black/40 p-1 rounded-xl border border-white/10 w-full sm:w-auto">
+                      <button
+                        type="button"
+                        onClick={() => setBasicData(prev => ({ ...prev, billingCycle: 'MONTHLY' }))}
+                        className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-medium transition-all ${basicData.billingCycle === 'MONTHLY' ? 'bg-primary-500 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                      >
+                        Mensal
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBasicData(prev => ({ ...prev, billingCycle: 'YEARLY' }))}
+                        className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-medium transition-all ${basicData.billingCycle === 'YEARLY' ? 'bg-primary-500 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                      >
+                        Anual
+                      </button>
+                    </div>
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <button
                       type="button"
@@ -297,7 +317,9 @@ export default function OnboardingForm() {
                       className={`p-4 rounded-2xl border transition-all text-left ${basicData.plan === 'Essencial' ? 'bg-primary-500/20 border-primary-500 text-white shadow-lg shadow-primary-500/20' : 'bg-black/40 border-white/10 text-gray-400 hover:border-white/20'}`}
                     >
                       <p className="font-bold text-lg">Essencial</p>
-                      <p className="text-xs opacity-70">Ideal para pequenos negócios</p>
+                      <p className="text-xs opacity-70 mb-3">Ideal para pequenos negócios</p>
+                      <div className="text-xs opacity-80">Setup: R$ {getSetupPrice('Essencial').toLocaleString('pt-BR')}</div>
+                      <div className="text-sm font-bold mt-1">R$ {getPlanPrice('Essencial', basicData.billingCycle).toLocaleString('pt-BR')}/{basicData.billingCycle === 'YEARLY' ? 'ano' : 'mês'}</div>
                     </button>
                     <button
                       type="button"
@@ -305,7 +327,9 @@ export default function OnboardingForm() {
                       className={`p-4 rounded-2xl border transition-all text-left ${basicData.plan === 'Profissional' ? 'bg-primary-500/20 border-primary-500 text-white shadow-lg shadow-primary-500/20' : 'bg-black/40 border-white/10 text-gray-400 hover:border-white/20'}`}
                     >
                       <p className="font-bold text-lg">Profissional</p>
-                      <p className="text-xs opacity-70">Para quem busca autoridade</p>
+                      <p className="text-xs opacity-70 mb-3">Para quem busca autoridade</p>
+                      <div className="text-xs opacity-80">Setup: R$ {getSetupPrice('Profissional').toLocaleString('pt-BR')}</div>
+                      <div className="text-sm font-bold mt-1">R$ {getPlanPrice('Profissional', basicData.billingCycle).toLocaleString('pt-BR')}/{basicData.billingCycle === 'YEARLY' ? 'ano' : 'mês'}</div>
                     </button>
                     <button
                       type="button"
@@ -313,7 +337,9 @@ export default function OnboardingForm() {
                       className={`p-4 rounded-2xl border transition-all text-left ${basicData.plan === 'Autoridade' ? 'bg-primary-500/20 border-primary-500 text-white shadow-lg shadow-primary-500/20' : 'bg-black/40 border-white/10 text-gray-400 hover:border-white/20'}`}
                     >
                       <p className="font-bold text-lg">Autoridade</p>
-                      <p className="text-xs opacity-70">Máxima performance e design</p>
+                      <p className="text-xs opacity-70 mb-3">Máxima performance e design</p>
+                      <div className="text-xs opacity-80">Setup: R$ {getSetupPrice('Autoridade').toLocaleString('pt-BR')}</div>
+                      <div className="text-sm font-bold mt-1">R$ {getPlanPrice('Autoridade', basicData.billingCycle).toLocaleString('pt-BR')}/{basicData.billingCycle === 'YEARLY' ? 'ano' : 'mês'}</div>
                     </button>
                   </div>
                 </div>

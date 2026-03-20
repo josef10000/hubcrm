@@ -113,6 +113,7 @@ interface Expense {
   amount: number;
   date: number;
   category: string;
+  clientId?: string;
 }
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -2926,7 +2927,8 @@ function CRM({ user }: { user: User }) {
           description: newExpense.description,
           amount: Number(newExpense.amount),
           date: new Date(newExpense.date).getTime(),
-          category: newExpense.category || 'Ferramentas'
+          category: newExpense.category || 'Ferramentas',
+          clientId: newExpense.clientId || undefined
         };
 
         await setDoc(doc(db, 'users', user.uid, 'expenses', expenseId), expense);
@@ -3007,6 +3009,15 @@ function CRM({ user }: { user: User }) {
                       <option value="Outros" className="bg-[#030712] text-white">Outros</option>
                     </select>
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Cliente (Opcional)</label>
+                    <select value={newExpense.clientId || ''} onChange={e => setNewExpense({...newExpense, clientId: e.target.value})} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all">
+                      <option value="" className="bg-[#030712] text-white">Nenhum (Custo Geral)</option>
+                      {clients.map(c => (
+                        <option key={c.id} value={c.id} className="bg-[#030712] text-white">{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
                   <button type="submit" className="w-full py-3 bg-primary-500 hover:bg-primary-600 text-gray-900 dark:text-white rounded-xl font-medium transition-all shadow-lg shadow-primary-500/20">
                     Adicionar Despesa
                   </button>
@@ -3024,6 +3035,7 @@ function CRM({ user }: { user: User }) {
                         <th className="pb-3 font-medium">Data</th>
                         <th className="pb-3 font-medium">Descrição</th>
                         <th className="pb-3 font-medium">Categoria</th>
+                        <th className="pb-3 font-medium">Cliente</th>
                         <th className="pb-3 font-medium text-right">Valor</th>
                         <th className="pb-3 font-medium text-right">Ação</th>
                       </tr>
@@ -3031,7 +3043,7 @@ function CRM({ user }: { user: User }) {
                     <tbody>
                       {expenses.length === 0 ? (
                         <tr>
-                          <td colSpan={5} className="py-8 text-center text-gray-500">Nenhuma despesa registrada.</td>
+                          <td colSpan={6} className="py-8 text-center text-gray-500">Nenhuma despesa registrada.</td>
                         </tr>
                       ) : (
                         expenses.map(expense => (
@@ -3040,6 +3052,9 @@ function CRM({ user }: { user: User }) {
                             <td className="py-4 text-gray-900 dark:text-white font-medium">{expense.description}</td>
                             <td className="py-4 text-gray-500 dark:text-gray-400 text-sm">
                               <span className="px-2 py-1 bg-gray-100 dark:bg-white/5 rounded-md border border-white/5">{expense.category}</span>
+                            </td>
+                            <td className="py-4 text-gray-500 dark:text-gray-400 text-sm">
+                              {expense.clientId ? clients.find(c => c.id === expense.clientId)?.name || 'Desconhecido' : '-'}
                             </td>
                             <td className="py-4 text-red-400 font-medium text-right">
                               - R$ {expense.amount.toFixed(2).replace('.', ',')}
@@ -3055,6 +3070,47 @@ function CRM({ user }: { user: User }) {
                     </tbody>
                   </table>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8">
+            <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl shadow-lg">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Custos e Margem por Cliente</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 text-sm">
+                      <th className="pb-3 font-medium">Cliente</th>
+                      <th className="pb-3 font-medium text-right">Receita (MRR)</th>
+                      <th className="pb-3 font-medium text-right">Custos</th>
+                      <th className="pb-3 font-medium text-right">Lucro</th>
+                      <th className="pb-3 font-medium text-right">Margem</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {clients.filter(c => c.status === 'Ativo' || expenses.some(e => e.clientId === c.id)).map(client => {
+                      const clientExpenses = expenses.filter(e => e.clientId === client.id).reduce((acc, e) => acc + e.amount, 0);
+                      const mrr = client.status === 'Ativo' ? getPlanPrice(client.plan, client.billingCycle) : 0;
+                      const profit = mrr - clientExpenses;
+                      const margin = mrr > 0 ? (profit / mrr) * 100 : 0;
+                      
+                      return (
+                        <tr key={client.id} className="border-b border-white/5 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 transition-colors group">
+                          <td className="py-4 text-gray-900 dark:text-white font-medium">{client.name}</td>
+                          <td className="py-4 text-emerald-400 font-medium text-right">R$ {mrr.toFixed(2).replace('.', ',')}</td>
+                          <td className="py-4 text-red-400 font-medium text-right">R$ {clientExpenses.toFixed(2).replace('.', ',')}</td>
+                          <td className={`py-4 font-medium text-right ${profit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>R$ {profit.toFixed(2).replace('.', ',')}</td>
+                          <td className="py-4 text-gray-500 dark:text-gray-400 text-sm text-right">
+                            <span className={`px-2 py-1 rounded-md border ${margin >= 50 ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : margin >= 20 ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+                              {margin.toFixed(1)}%
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -3599,7 +3655,7 @@ function CRM({ user }: { user: User }) {
             )}
           </button>
           <button onClick={() => { setView('calendar'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'calendar' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><Calendar size={20} /><span className="font-medium">Agenda</span></button>
-          <button onClick={() => { setView('finance'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'finance' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><DollarSign size={20} /><span className="font-medium">Financeiro</span></button>
+          <button onClick={() => { setView('finance'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'finance' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><DollarSign size={20} /><span className="font-medium">Gestão de Custos</span></button>
           <button onClick={() => { setView('referrals'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'referrals' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><Users size={20} /><span className="font-medium">Indicações</span></button>
           <button onClick={() => { setView('marketing'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'marketing' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><Megaphone size={20} /><span className="font-medium">Avisos</span></button>
           <button onClick={() => { setView('settings'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'settings' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><Settings size={20} /><span className="font-medium">Configurações</span></button>
@@ -3635,7 +3691,7 @@ function CRM({ user }: { user: User }) {
             {view === 'analytics' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Métricas</h2>}
             {view === 'calendar' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Agenda Central</h2>}
             {view === 'support' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Chamados</h2>}
-            {view === 'finance' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Controle Financeiro</h2>}
+            {view === 'finance' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Gestão de Custos e Financeiro</h2>}
             {view === 'settings' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Configurações</h2>}
             {view === 'referrals' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Programa de Indicações</h2>}
             {view === 'marketing' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Avisos</h2>}
