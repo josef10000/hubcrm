@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // Asaas API Key from environment variable
 export const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
-export const ASAAS_API_URL = "https://api.asaas.com/v3";
+export const ASAAS_API_URL = process.env.ASAAS_API_URL || "https://api.asaas.com/v3";
 
 export async function asaasRequest(endpoint: string, method: string, body?: any) {
   if (!ASAAS_API_KEY || ASAAS_API_KEY.trim() === "") {
