@@ -14,7 +14,6 @@ export async function asaasRequest(endpoint: string, method: string, body?: any)
     headers: {
       "Content-Type": "application/json",
       "access_token": ASAAS_API_KEY,
-      "Authorization": `Bearer ${ASAAS_API_KEY}`,
       "User-Agent": "HubCentralCRM"
     },
     body: body ? JSON.stringify(body) : undefined

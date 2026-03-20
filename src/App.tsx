@@ -30,6 +30,19 @@ export { getPlanPrice, getSetupPrice, calculateDiscount, updateReferrerSubscript
 
 // Pricing, discount, and referral logic are now in ./services/pricing.ts and ./services/referrals.ts
 
+// Helper to get headers with Firebase Auth token for API calls
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const user = auth.currentUser;
+  if (user) {
+    const token = await user.getIdToken();
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    };
+  }
+  return { 'Content-Type': 'application/json' };
+}
+
 function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardingQuestions, user }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, onDelete?: (id: string) => void, initialData: Client | null, onboardingQuestions: OnboardingQuestion[], user: User }) {
   const [formData, setFormData] = useState<Partial<Client>>({ 
     plan: 'Essencial', 
@@ -896,7 +909,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                               // Mark as paid in cash
                               const receiveRes = await fetch('/api/asaas/receive-in-cash', {
                                 method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
+                                headers: await getAuthHeaders(),
                                 body: JSON.stringify({ paymentId: pendingPayment.id })
                               });
                               if (!receiveRes.ok) throw new Error('Failed to mark as paid');
@@ -904,7 +917,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                               // Edit value
                               const editRes = await fetch('/api/asaas/edit-payment', {
                                 method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
+                                headers: await getAuthHeaders(),
                                 body: JSON.stringify({ 
                                   paymentId: pendingPayment.id,
                                   value: pendingPayment.value - bonusToApply
@@ -1561,7 +1574,7 @@ function CRM({ user }: { user: User }) {
 
         const updateRes = await fetch('/api/asaas/update-subscription', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: await getAuthHeaders(),
           body: JSON.stringify({
             subscriptionId: client.asaasSubscriptionId,
             ...(nextSubDateStr ? { nextDueDate: nextSubDateStr } : {}),
@@ -1626,7 +1639,7 @@ function CRM({ user }: { user: User }) {
           if (client.asaasSubscriptionId) {
           const delRes = await fetch('/api/asaas/delete-subscription', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: await getAuthHeaders(),
             body: JSON.stringify({ subscriptionId: client.asaasSubscriptionId })
           });
           if (!delRes.ok) {
@@ -1648,7 +1661,7 @@ function CRM({ user }: { user: User }) {
               if (payment.status === 'PENDING' || payment.status === 'OVERDUE') {
                 await fetch('/api/asaas/delete-payment', {
                   method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
+                  headers: await getAuthHeaders(),
                   body: JSON.stringify({ paymentId: payment.id })
                 });
               }
@@ -1669,7 +1682,7 @@ function CRM({ user }: { user: User }) {
         
         const customerRes = await fetch('/api/asaas/customers', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: await getAuthHeaders(),
           body: JSON.stringify({
             name: client.name,
             cpfCnpj: client.cpfCnpj ? client.cpfCnpj.replace(/\D/g, '') : '',
@@ -1698,7 +1711,7 @@ function CRM({ user }: { user: User }) {
             
             const paymentRes = await fetch('/api/asaas/payment-links', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: await getAuthHeaders(),
               body: JSON.stringify({
                 name: `Combo (Setup + Plano Anual) - Plano ${client.plan}`,
                 description: `Acesso anual ao Plano ${client.plan} com taxa de setup inclusa.`,
@@ -1732,7 +1745,7 @@ function CRM({ user }: { user: User }) {
             // A. Create single charge for first payment (Setup Fee)
             const paymentRes = await fetch('/api/asaas/payments', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: await getAuthHeaders(),
               body: JSON.stringify({
                 customer: client.asaasCustomerId,
                 billingType: client.billingType,
@@ -1775,7 +1788,7 @@ function CRM({ user }: { user: User }) {
 
             const subRes = await fetch('/api/asaas/subscriptions', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: await getAuthHeaders(),
               body: JSON.stringify({
                 customer: client.asaasCustomerId,
                 billingType: client.billingType,
@@ -1828,7 +1841,7 @@ function CRM({ user }: { user: User }) {
         try {
           const delRes = await fetch('/api/asaas/delete-subscription', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: await getAuthHeaders(),
             body: JSON.stringify({ subscriptionId: clientToDelete.asaasSubscriptionId })
           });
           if (!delRes.ok) {
@@ -1850,7 +1863,7 @@ function CRM({ user }: { user: User }) {
             if (payment.status === 'PENDING' || payment.status === 'OVERDUE') {
               await fetch('/api/asaas/delete-payment', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: await getAuthHeaders(),
                 body: JSON.stringify({ paymentId: payment.id })
               });
             }
