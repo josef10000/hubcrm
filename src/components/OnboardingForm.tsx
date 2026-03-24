@@ -314,32 +314,146 @@ export default function OnboardingForm() {
                     <button
                       type="button"
                       onClick={() => setBasicData({...basicData, plan: 'Essencial'})}
-                      className={`p-4 rounded-2xl border transition-all text-left ${basicData.plan === 'Essencial' ? 'bg-primary-500/20 border-primary-500 text-white shadow-lg shadow-primary-500/20' : 'bg-black/40 border-white/10 text-gray-400 hover:border-white/20'}`}
+                      className={`p-4 rounded-2xl border transition-all text-left flex flex-col h-full ${basicData.plan === 'Essencial' ? 'bg-primary-500/20 border-primary-500 text-white shadow-lg shadow-primary-500/20' : 'bg-black/40 border-white/10 text-gray-400 hover:border-white/20'}`}
                     >
-                      <p className="font-bold text-lg">Essencial</p>
-                      <p className="text-xs opacity-70 mb-3">Ideal para pequenos negócios</p>
-                      <div className="text-xs opacity-80">Setup: R$ {getSetupPrice('Essencial').toLocaleString('pt-BR')}</div>
-                      <div className="text-sm font-bold mt-1">R$ {getPlanPrice('Essencial', basicData.billingCycle).toLocaleString('pt-BR')}/{basicData.billingCycle === 'YEARLY' ? 'ano' : 'mês'}</div>
+                      <p className="font-bold text-lg">Ecossistema Essencial</p>
+                      <p className="text-xs opacity-70 mb-4">Ideal para negócios locais e prestadores de serviço que precisam de posicionamento profissional rápido.</p>
+                      
+                      <div className="p-3 rounded-xl bg-black/20 border border-white/5 space-y-2 mb-4 w-full">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Setup</span>
+                          <div className="text-right">
+                            <span className="text-sm font-bold text-white">R$ {getSetupPrice('Essencial').toLocaleString('pt-BR')}</span>
+                          </div>
+                        </div>
+                        <div className="h-px bg-white/5 w-full"></div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Mensal</span>
+                          <div className="text-right">
+                            <span className="text-sm font-bold text-white">R$ {getPlanPrice('Essencial', 'MONTHLY').toLocaleString('pt-BR')}</span>
+                          </div>
+                        </div>
+                        <div className="h-px bg-white/5 w-full"></div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Anual</span>
+                          <div className="text-right">
+                            <span className="text-sm font-bold text-white">R$ {getPlanPrice('Essencial', 'YEARLY').toLocaleString('pt-BR')}</span>
+                          </div>
+                        </div>
+                        <div className="p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20 mt-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] text-emerald-400 uppercase font-bold tracking-wider">Combo Anual</span>
+                            <div className="text-right">
+                              <span className="text-sm font-bold text-emerald-400">R$ {getPlanPrice('Essencial', 'YEARLY').toLocaleString('pt-BR')}</span>
+                              <p className="text-[9px] text-emerald-500/70 font-medium">Desconto de 3 meses</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <ul className="space-y-2 flex-1 w-full">
+                        {[
+                          'Design focado em conversão',
+                          'Otimização para mobile',
+                          'Hospedagem e segurança inclusas',
+                          'Suporte técnico mensal'
+                        ].map((f, i) => (
+                          <li key={i} className="flex items-start gap-2 text-xs text-gray-300">
+                            <div className="p-0.5 rounded-full bg-emerald-500/20 mt-0.5 shrink-0">
+                              <CheckCircle className="w-3 h-3 text-emerald-500" />
+                            </div>
+                            {f}
+                          </li>
+                        ))}
+                      </ul>
+                      
+                      <div className="mt-4 pt-4 border-t border-white/10 w-full">
+                        <div className="text-sm font-bold mt-1 text-primary-400">R$ {getPlanPrice('Essencial', basicData.billingCycle).toLocaleString('pt-BR')}/{basicData.billingCycle === 'YEARLY' ? 'ano' : 'mês'}</div>
+                        {basicData.billingCycle === 'YEARLY' && (
+                          <div className="text-[10px] text-emerald-400 mt-1 font-medium">
+                            Desconto de 3 meses (Setup + 9 parcelas)<br/>
+                            Em até 12x sem juros no cartão
+                          </div>
+                        )}
+                      </div>
                     </button>
                     <button
                       type="button"
                       onClick={() => setBasicData({...basicData, plan: 'Profissional'})}
-                      className={`p-4 rounded-2xl border transition-all text-left ${basicData.plan === 'Profissional' ? 'bg-primary-500/20 border-primary-500 text-white shadow-lg shadow-primary-500/20' : 'bg-black/40 border-white/10 text-gray-400 hover:border-white/20'}`}
+                      className={`p-4 rounded-2xl border transition-all text-left flex flex-col h-full relative ${basicData.plan === 'Profissional' ? 'bg-primary-500/20 border-primary-500 text-white shadow-lg shadow-primary-500/20' : 'bg-black/40 border-white/10 text-gray-400 hover:border-white/20'}`}
                     >
-                      <p className="font-bold text-lg">Profissional</p>
-                      <p className="text-xs opacity-70 mb-3">Para quem busca autoridade</p>
-                      <div className="text-xs opacity-80">Setup: R$ {getSetupPrice('Profissional').toLocaleString('pt-BR')}</div>
-                      <div className="text-sm font-bold mt-1">R$ {getPlanPrice('Profissional', basicData.billingCycle).toLocaleString('pt-BR')}/{basicData.billingCycle === 'YEARLY' ? 'ano' : 'mês'}</div>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setBasicData({...basicData, plan: 'Autoridade'})}
-                      className={`p-4 rounded-2xl border transition-all text-left ${basicData.plan === 'Autoridade' ? 'bg-primary-500/20 border-primary-500 text-white shadow-lg shadow-primary-500/20' : 'bg-black/40 border-white/10 text-gray-400 hover:border-white/20'}`}
-                    >
-                      <p className="font-bold text-lg">Autoridade</p>
-                      <p className="text-xs opacity-70 mb-3">Máxima performance e design</p>
-                      <div className="text-xs opacity-80">Setup: R$ {getSetupPrice('Autoridade').toLocaleString('pt-BR')}</div>
-                      <div className="text-sm font-bold mt-1">R$ {getPlanPrice('Autoridade', basicData.billingCycle).toLocaleString('pt-BR')}/{basicData.billingCycle === 'YEARLY' ? 'ano' : 'mês'}</div>
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-primary-600 to-primary-400 text-white text-[9px] font-black rounded-full uppercase tracking-[0.2em] shadow-lg shadow-primary-500/40 z-10">
+                        Mais Popular
+                      </div>
+                      <p className="font-bold text-lg mt-2">Profissional</p>
+                      <p className="text-xs opacity-70 mb-4">Indicado para empresas que querem transmitir mais autoridade, melhorar sua apresentação online e gerar contatos mais qualificados.</p>
+                      
+                      <div className="p-3 rounded-xl bg-black/20 border border-white/5 space-y-2 mb-4 w-full">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Setup</span>
+                          <div className="text-right">
+                            <span className="text-sm font-bold text-white">R$ {getSetupPrice('Profissional').toLocaleString('pt-BR')}</span>
+                          </div>
+                        </div>
+                        <div className="h-px bg-white/5 w-full"></div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Mensal</span>
+                          <div className="text-right">
+                            <span className="text-sm font-bold text-white">R$ {getPlanPrice('Profissional', 'MONTHLY').toLocaleString('pt-BR')}</span>
+                          </div>
+                        </div>
+                        <div className="h-px bg-white/5 w-full"></div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Anual</span>
+                          <div className="text-right">
+                            <span className="text-sm font-bold text-white">R$ {getPlanPrice('Profissional', 'YEARLY').toLocaleString('pt-BR')}</span>
+                          </div>
+                        </div>
+                        <div className="p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20 mt-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] text-emerald-400 uppercase font-bold tracking-wider">Combo Anual</span>
+                            <div className="text-right">
+                              <span className="text-sm font-bold text-emerald-400">R$ {getPlanPrice('Profissional', 'YEARLY').toLocaleString('pt-BR')}</span>
+                              <p className="text-[9px] text-emerald-500/70 font-medium">Desconto de 3 meses</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <ul className="space-y-2 flex-1 w-full">
+                        <li className="flex items-start gap-2 text-[10px] text-primary-400 font-bold uppercase tracking-wider mb-2">
+                          <div className="p-0.5 rounded-full bg-primary-500/20 shrink-0">
+                            <CheckCircle className="w-3 h-3 text-primary-400" />
+                          </div>
+                          Tudo do Ecossistema Essencial, mais:
+                        </li>
+                        {[
+                          'Site Multi-páginas Estruturado',
+                          'Copywriting persuasivo (Agro)',
+                          'Formulários de cotação',
+                          'Domínio Oficial (.com.br)',
+                          'Otimização de SEO Local',
+                          'Atendimento prioritário'
+                        ].map((f, i) => (
+                          <li key={i} className="flex items-start gap-2 text-xs text-gray-300">
+                            <div className="p-0.5 rounded-full bg-emerald-500/20 mt-0.5 shrink-0">
+                              <CheckCircle className="w-3 h-3 text-emerald-500" />
+                            </div>
+                            {f}
+                          </li>
+                        ))}
+                      </ul>
+
+                      <div className="mt-4 pt-4 border-t border-white/10 w-full">
+                        <div className="text-xs opacity-80">Setup: R$ {getSetupPrice('Profissional').toLocaleString('pt-BR')}</div>
+                        <div className="text-sm font-bold mt-1 text-primary-400">R$ {getPlanPrice('Profissional', basicData.billingCycle).toLocaleString('pt-BR')}/{basicData.billingCycle === 'YEARLY' ? 'ano' : 'mês'}</div>
+                        {basicData.billingCycle === 'YEARLY' && (
+                          <div className="text-[10px] text-emerald-400 mt-1 font-medium">
+                            Desconto de 3 meses (Setup + 9 parcelas)<br/>
+                            Em até 12x sem juros no cartão
+                          </div>
+                        )}
+                      </div>
                     </button>
                   </div>
                 </div>

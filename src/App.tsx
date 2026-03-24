@@ -7,7 +7,7 @@ import {
   Megaphone, Pin, ShoppingCart, Eye, EyeOff
 } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid } from 'recharts';
-import { auth, db } from './lib/firebase';
+import { auth, db, isFirebaseConfigured } from './lib/firebase';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { collection, doc, setDoc, onSnapshot, deleteDoc, updateDoc, query, where, getDocs, addDoc } from 'firebase/firestore';
 import Auth from './components/Auth';
@@ -22,7 +22,7 @@ const clientSchema = z.object({
   whatsapp: z.string().refine(val => !val || val.replace(/\D/g, '').length >= 10, "WhatsApp deve ter pelo menos 10 dígitos").optional().or(z.literal('')),
 });
 
-export type PlanType = 'Essencial' | 'Profissional' | 'Autoridade';
+export type PlanType = 'Essencial' | 'Profissional';
 export type SiteStatus = 'Em Desenvolvimento' | 'Ativo' | 'Inadimplente' | 'Cancelado';
 
 export interface ClientLog {
@@ -97,6 +97,7 @@ export interface Client {
   isCombo?: boolean;
   maxInstallments?: number;
   comboRenewalDate?: string;
+  leadSource?: 'Indicação' | 'Google Ads' | 'Tráfego Orgânico' | 'Prospecção Manual' | 'Instagram' | 'WhatsApp Direto' | 'Parceiro';
 }
 
 export interface OnboardingQuestion {
@@ -117,22 +118,20 @@ interface Expense {
 }
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-export const getPlanPrice = (plan?: string, billingCycle?: string) => {
-  if (billingCycle === 'YEARLY') {
-    if (plan === 'Profissional') return 3573;
-    if (plan === 'Autoridade') return 8973;
-    return 1323; // Essencial
-  }
-  
-  if (plan === 'Profissional') return 397;
-  if (plan === 'Autoridade') return 997;
-  return 147; // Essencial
+export const getSetupPrice = (plan?: string) => {
+  if (plan === 'Profissional') return 7500;
+  return 2500; // Essencial
 };
 
-export const getSetupPrice = (plan?: string) => {
-  if (plan === 'Profissional') return 2500;
-  if (plan === 'Autoridade') return 7500;
-  return 500; // Essencial
+export const getPlanPrice = (plan?: string, billingCycle?: string) => {
+  const monthlyPrice = plan === 'Profissional' ? 897 : 397;
+  
+  if (billingCycle === 'YEARLY') {
+    const setupPrice = getSetupPrice(plan);
+    return setupPrice + (monthlyPrice * 9);
+  }
+  
+  return monthlyPrice;
 };
 
 export const calculateDiscount = (client: Client, clientsList: Client[]) => {
@@ -422,6 +421,20 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                     <input required type="email" name="email" value={formData.email || ''} onChange={handleChange} placeholder="cliente@email.com" className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
                   </div>
 
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Origem do Lead *</label>
+                    <select required name="leadSource" value={formData.leadSource || ''} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all">
+                      <option value="">Selecione a origem</option>
+                      <option value="Indicação">Indicação</option>
+                      <option value="Google Ads">Google Ads</option>
+                      <option value="Tráfego Orgânico">Tráfego Orgânico</option>
+                      <option value="Prospecção Manual">Prospecção Manual</option>
+                      <option value="Instagram">Instagram</option>
+                      <option value="WhatsApp Direto">WhatsApp Direto</option>
+                      <option value="Parceiro">Parceiro</option>
+                    </select>
+                  </div>
+
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mt-8 mb-4 border-b border-gray-200 dark:border-white/10 pb-2">Configurações de Pagamento</h3>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -502,7 +515,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                               <span className="text-[10px] text-gray-400 uppercase font-bold">Valor Total do Combo</span>
                               <span className="text-sm font-bold text-emerald-400">R$ {getPlanPrice(formData.plan, 'YEARLY').toLocaleString('pt-BR')}</span>
                             </div>
-                            <p className="text-[10px] text-emerald-400 font-medium">O cliente receberá o link de pagamento e poderá escolher o parcelamento em até 12x no checkout.</p>
+                            <p className="text-[10px] text-emerald-400 font-medium">O cliente receberá o link de pagamento e poderá escolher o parcelamento em até 12x no checkout. O valor inclui o Setup + 9 parcelas (desconto de 3 meses).</p>
                           </div>
                         )}
                       </div>
@@ -574,7 +587,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                         onClick={() => setFormData(prev => ({ ...prev, plan: 'Essencial' }))}
                         className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Essencial' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
                       >
-                        <div className="font-semibold mb-1">Essencial</div>
+                        <div className="font-semibold mb-1">Ecossistema Essencial</div>
                         <div className="text-xs opacity-80">Setup: R$ {getSetupPrice('Essencial').toLocaleString('pt-BR')}</div>
                         <div className="text-sm font-bold mt-1">R$ {getPlanPrice('Essencial', formData.billingCycle).toLocaleString('pt-BR')}/{formData.billingCycle === 'YEARLY' ? 'ano' : 'mês'}</div>
                       </button>
@@ -586,15 +599,6 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                         <div className="font-semibold mb-1">Profissional</div>
                         <div className="text-xs opacity-80">Setup: R$ {getSetupPrice('Profissional').toLocaleString('pt-BR')}</div>
                         <div className="text-sm font-bold mt-1">R$ {getPlanPrice('Profissional', formData.billingCycle).toLocaleString('pt-BR')}/{formData.billingCycle === 'YEARLY' ? 'ano' : 'mês'}</div>
-                      </button>
-                      <button 
-                        type="button" 
-                        onClick={() => setFormData(prev => ({ ...prev, plan: 'Autoridade' }))}
-                        className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Autoridade' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
-                      >
-                        <div className="font-semibold mb-1">Autoridade</div>
-                        <div className="text-xs opacity-80">Setup: R$ {getSetupPrice('Autoridade').toLocaleString('pt-BR')}</div>
-                        <div className="text-sm font-bold mt-1">R$ {getPlanPrice('Autoridade', formData.billingCycle).toLocaleString('pt-BR')}/{formData.billingCycle === 'YEARLY' ? 'ano' : 'mês'}</div>
                       </button>
                     </div>
                   </div>
@@ -993,9 +997,8 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                       <div className="pt-4 border-t border-white/5">
                         <p className="text-[10px] text-gray-500 uppercase font-bold mb-2">Regras Atuais:</p>
                         <ul className="text-[10px] text-gray-400 space-y-1 list-disc pl-4">
-                          <li>Essencial: R$ 100</li>
+                          <li>Ecossistema Essencial: R$ 100</li>
                           <li>Profissional: R$ 250</li>
-                          <li>Autoridade: R$ 500</li>
                         </ul>
                       </div>
                       <div className="pt-4 border-t border-white/5">
@@ -1227,8 +1230,6 @@ function ReferralsView({ clients, user }: { clients: Client[], user: User }) {
             bonusAmount = 100;
           } else if (referred.plan === 'Profissional') {
             bonusAmount = 250;
-          } else if (referred.plan === 'Autoridade') {
-            bonusAmount = 500;
           } else {
             bonusAmount = 100;
           }
@@ -2632,11 +2633,90 @@ function CRM({ user }: { user: User }) {
     }, 0);
     const overdueRate = activeClients > 0 ? ((overdueClients.length / activeClients) * 100).toFixed(1) : '0.0';
 
-    const canceledClients = clients.filter(c => c.status === 'Cancelado').length;
+    const canceledClientsList = clients.filter(c => c.status === 'Cancelado');
+    const canceledClients = canceledClientsList.length;
     const churnRate = totalClients > 0 ? ((canceledClients / totalClients) * 100).toFixed(1) : '0.0';
 
     const todayDate = new Date();
     todayDate.setHours(0, 0, 0, 0);
+    const currentYear = todayDate.getFullYear();
+    const currentMonth = todayDate.getMonth();
+
+    // Novas Métricas Gerenciais
+    const ticketMedio = activeClients > 0 ? mrr / activeClients : 0;
+    
+    const novosClientesMesList = clients.filter(c => {
+      const d = new Date(c.createdAt);
+      return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+    });
+    const novosClientesMes = novosClientesMesList.length;
+    
+    const mrrNovo = novosClientesMesList.filter(c => c.status === 'Ativo').reduce((acc, c) => acc + getPlanPrice(c.plan, c.billingCycle), 0);
+    
+    // Assumindo cancelamentos do mês baseados em uma data de cancelamento (se não houver, usamos os criados no mês que cancelaram para simplificar, ou apenas 0 se não tivermos a data exata)
+    // Para ser mais preciso, precisaríamos de um campo canceledAt. Vamos simular com os que estão cancelados.
+    const mrrPerdido = canceledClientsList.reduce((acc, c) => acc + getPlanPrice(c.plan, c.billingCycle), 0); // Total histórico perdido
+    const mrrLiquido = mrrNovo - mrrPerdido; // Simplificado
+
+    const clientsWithDelivery = clients.filter(c => c.deliveryDate && c.createdAt);
+    const tempoMedioEntrega = clientsWithDelivery.length > 0 
+      ? clientsWithDelivery.reduce((acc, c) => {
+          const start = new Date(c.createdAt).getTime();
+          const end = new Date(c.deliveryDate!).getTime();
+          return acc + Math.max(0, (end - start) / (1000 * 60 * 60 * 24));
+        }, 0) / clientsWithDelivery.length
+      : 0;
+
+    const taxaBriefing = totalClients > 0 ? (clients.filter(c => c.onboardingAnswers && Object.keys(c.onboardingAnswers).length > 0).length / totalClients * 100).toFixed(1) : '0.0';
+    const taxaIndicacao = totalClients > 0 ? (clients.filter(c => c.referredBy).length / totalClients * 100).toFixed(1) : '0.0';
+    const taxaUpsell = totalClients > 0 ? (clients.filter(c => c.isCombo).length / totalClients * 100).toFixed(1) : '0.0';
+
+    // Cohorts
+    const cohortsMap: Record<string, { total: number, retained: number, mrr: number, channels: Record<string, number> }> = {};
+    clients.forEach(c => {
+      const d = new Date(c.createdAt);
+      const cohortKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      if (!cohortsMap[cohortKey]) {
+        cohortsMap[cohortKey] = { total: 0, retained: 0, mrr: 0, channels: {} };
+      }
+      cohortsMap[cohortKey].total++;
+      if (c.status === 'Ativo') {
+        cohortsMap[cohortKey].retained++;
+        cohortsMap[cohortKey].mrr += getPlanPrice(c.plan, c.billingCycle);
+      }
+      const source = c.leadSource || 'Desconhecido';
+      cohortsMap[cohortKey].channels[source] = (cohortsMap[cohortKey].channels[source] || 0) + 1;
+    });
+    const cohortsData = Object.entries(cohortsMap).sort((a, b) => a[0].localeCompare(b[0])).map(([key, data]) => {
+      const bestChannel = Object.entries(data.channels).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
+      return {
+        mes: key,
+        total: data.total,
+        retencao: data.total > 0 ? ((data.retained / data.total) * 100).toFixed(1) : '0.0',
+        mrr: data.mrr,
+        melhorCanal: bestChannel
+      };
+    });
+
+    // Origem do Lead
+    const leadSourcesMap: Record<string, { total: number, mrr: number, overdue: number, canceled: number }> = {};
+    clients.forEach(c => {
+      const source = c.leadSource || 'Desconhecido';
+      if (!leadSourcesMap[source]) {
+        leadSourcesMap[source] = { total: 0, mrr: 0, overdue: 0, canceled: 0 };
+      }
+      leadSourcesMap[source].total++;
+      if (c.status === 'Ativo') leadSourcesMap[source].mrr += getPlanPrice(c.plan, c.billingCycle);
+      if (c.paymentStatus === 'OVERDUE') leadSourcesMap[source].overdue++;
+      if (c.status === 'Cancelado') leadSourcesMap[source].canceled++;
+    });
+    const leadSourcesData = Object.entries(leadSourcesMap).sort((a, b) => b[1].total - a[1].total).map(([source, data]) => ({
+      source,
+      total: data.total,
+      mrr: data.mrr,
+      inadimplencia: data.total > 0 ? ((data.overdue / data.total) * 100).toFixed(1) : '0.0',
+      cancelamento: data.total > 0 ? ((data.canceled / data.total) * 100).toFixed(1) : '0.0'
+    }));
     
     let cash7Days = 0;
     let cash15Days = 0;
@@ -2668,8 +2748,7 @@ function CRM({ user }: { user: User }) {
 
     const planData = [
       { name: 'Essencial', value: clients.filter(c => c.plan === 'Essencial').length, color: '#f97316' },
-      { name: 'Profissional', value: clients.filter(c => c.plan === 'Profissional').length, color: '#3b82f6' },
-      { name: 'Autoridade', value: clients.filter(c => c.plan === 'Autoridade').length, color: '#8b5cf6' }
+      { name: 'Profissional', value: clients.filter(c => c.plan === 'Profissional').length, color: '#3b82f6' }
     ];
 
     const statusData = [
@@ -2698,8 +2777,6 @@ function CRM({ user }: { user: User }) {
     }
 
     const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth();
 
     const monthlyData = months.map((m, i) => {
       const monthClients = clients.filter(c => {
@@ -2809,7 +2886,7 @@ function CRM({ user }: { user: User }) {
           </div>
 
           {/* Bottom Row */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <div className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Projeção de Caixa</h3>
               <div className="h-48">
@@ -2901,6 +2978,148 @@ function CRM({ user }: { user: User }) {
                     {method.name} ({method.value})
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Visão Gerencial */}
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 mt-12">Visão Gerencial</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
+              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2">Ticket Médio</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">R$ {ticketMedio.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}</p>
+            </div>
+            <div className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
+              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2">Novos Clientes (Mês)</p>
+              <div className="flex items-end gap-3">
+                <p className="text-3xl font-bold text-emerald-400">{novosClientesMes}</p>
+                <span className="text-sm text-emerald-400/80 mb-1 font-medium">(+ R$ {mrrNovo.toLocaleString('pt-BR')})</span>
+              </div>
+            </div>
+            <div className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
+              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2">Cancelamentos (Total)</p>
+              <div className="flex items-end gap-3">
+                <p className="text-3xl font-bold text-red-400">{canceledClients}</p>
+                <span className="text-sm text-red-400/80 mb-1 font-medium">(- R$ {mrrPerdido.toLocaleString('pt-BR')})</span>
+              </div>
+            </div>
+            <div className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
+              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2">MRR Líquido (Mês)</p>
+              <p className={`text-3xl font-bold ${mrrLiquido >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {mrrLiquido >= 0 ? '+' : '-'} R$ {Math.abs(mrrLiquido).toLocaleString('pt-BR')}
+              </p>
+            </div>
+            <div className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
+              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2">Tempo Médio de Entrega</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{tempoMedioEntrega.toFixed(1)} dias</p>
+            </div>
+            <div className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
+              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2">Taxa de Briefing Concluído</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{taxaBriefing}%</p>
+            </div>
+            <div className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
+              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2">Taxa de Indicação</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{taxaIndicacao}%</p>
+            </div>
+            <div className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
+              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2">Upsell por Cliente (Combo)</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{taxaUpsell}%</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {/* Cohorts */}
+            <div className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] overflow-hidden">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Análise de Cohort (Turmas)</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-gray-300 dark:border-white/10">
+                      <th className="pb-3 text-sm font-medium text-gray-500 dark:text-gray-400">Mês de Entrada</th>
+                      <th className="pb-3 text-sm font-medium text-gray-500 dark:text-gray-400">Total</th>
+                      <th className="pb-3 text-sm font-medium text-gray-500 dark:text-gray-400">Retenção</th>
+                      <th className="pb-3 text-sm font-medium text-gray-500 dark:text-gray-400">MRR Gerado</th>
+                      <th className="pb-3 text-sm font-medium text-gray-500 dark:text-gray-400">Melhor Canal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cohortsData.map((cohort, idx) => (
+                      <tr key={idx} className="border-b border-gray-300/50 dark:border-white/5 last:border-0">
+                        <td className="py-3 text-sm text-gray-900 dark:text-white font-medium">{cohort.mes}</td>
+                        <td className="py-3 text-sm text-gray-600 dark:text-gray-300">{cohort.total}</td>
+                        <td className="py-3 text-sm text-gray-600 dark:text-gray-300">{cohort.retencao}%</td>
+                        <td className="py-3 text-sm text-emerald-600 dark:text-emerald-400">R$ {cohort.mrr.toLocaleString('pt-BR')}</td>
+                        <td className="py-3 text-sm text-gray-600 dark:text-gray-300">{cohort.melhorCanal}</td>
+                      </tr>
+                    ))}
+                    {cohortsData.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="py-4 text-center text-sm text-gray-500">Nenhum dado de cohort disponível.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Origem do Lead */}
+            <div className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] overflow-hidden">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Origem do Lead / Canais</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-gray-300 dark:border-white/10">
+                      <th className="pb-3 text-sm font-medium text-gray-500 dark:text-gray-400">Canal</th>
+                      <th className="pb-3 text-sm font-medium text-gray-500 dark:text-gray-400">Clientes</th>
+                      <th className="pb-3 text-sm font-medium text-gray-500 dark:text-gray-400">MRR</th>
+                      <th className="pb-3 text-sm font-medium text-gray-500 dark:text-gray-400">Inadimplência</th>
+                      <th className="pb-3 text-sm font-medium text-gray-500 dark:text-gray-400">Cancelamento</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {leadSourcesData.map((source, idx) => (
+                      <tr key={idx} className="border-b border-gray-300/50 dark:border-white/5 last:border-0">
+                        <td className="py-3 text-sm text-gray-900 dark:text-white font-medium">{source.source}</td>
+                        <td className="py-3 text-sm text-gray-600 dark:text-gray-300">{source.total}</td>
+                        <td className="py-3 text-sm text-emerald-600 dark:text-emerald-400">R$ {source.mrr.toLocaleString('pt-BR')}</td>
+                        <td className="py-3 text-sm text-red-600 dark:text-red-400">{source.inadimplencia}%</td>
+                        <td className="py-3 text-sm text-red-600 dark:text-red-400">{source.cancelamento}%</td>
+                      </tr>
+                    ))}
+                    {leadSourcesData.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="py-4 text-center text-sm text-gray-500">Nenhum dado de origem disponível.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          {/* Previsão de Caixa */}
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 mt-12">Previsão de Caixa (Forecast)</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
+              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2">Receita Prevista (30 dias)</p>
+              <p className="text-3xl font-bold text-primary-400">R$ {cash30Days.toLocaleString('pt-BR')}</p>
+            </div>
+            <div className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
+              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2">Receita Próxima (7 dias)</p>
+              <p className="text-3xl font-bold text-emerald-400">R$ {cash7Days.toLocaleString('pt-BR')}</p>
+            </div>
+            <div className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
+              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2">Cobranças em Risco</p>
+              <div className="flex items-end gap-3">
+                <p className="text-3xl font-bold text-red-400">R$ {overdueAmount.toLocaleString('pt-BR')}</p>
+                <span className="text-sm text-red-400/80 mb-1 font-medium">({overdueClients.length} clientes)</span>
+              </div>
+            </div>
+            <div className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
+              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2">Impacto de Cancelamentos</p>
+              <div className="flex items-end gap-3">
+                <p className="text-3xl font-bold text-red-400">R$ {mrrPerdido.toLocaleString('pt-BR')}</p>
+                <span className="text-sm text-red-400/80 mb-1 font-medium">({canceledClients} clientes)</span>
               </div>
             </div>
           </div>
@@ -3831,6 +4050,14 @@ import { Toaster } from 'sonner';
 export default function App() {
   return (
     <BrowserRouter>
+      {!isFirebaseConfigured && (
+        <div className="fixed top-0 left-0 right-0 z-[9999] bg-red-600 text-white p-4 text-center font-bold shadow-lg">
+          <div className="flex items-center justify-center gap-2">
+            <AlertTriangle size={20} />
+            <span>Firebase não configurado! Adicione as chaves no painel de Secrets do AI Studio.</span>
+          </div>
+        </div>
+      )}
       <Toaster position="top-right" theme="dark" />
       <Routes>
         <Route path="/" element={<Dashboard />} />

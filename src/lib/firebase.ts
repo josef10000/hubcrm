@@ -1,19 +1,20 @@
+/// <reference types="vite/client" />
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBOzaAsS1MWLq6vU50PfOBD1xoIFflDa8E",
-  authDomain: "gassistant-83242.firebaseapp.com",
-  projectId: "gassistant-83242",
-  storageBucket: "gassistant-83242.appspot.com",
-  messagingSenderId: "997841212210",
-  appId: "1:997841212210:web:ed242fa1d1db0b92587d2b"
-};
+import firebaseConfig from '../../firebase-applet-config.json';
 
-export const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const storage = getStorage(app);
+export const isFirebaseConfigured = !!firebaseConfig.apiKey && firebaseConfig.apiKey !== "SUA_API_KEY_AQUI";
+
+if (!isFirebaseConfigured) {
+  console.error("Firebase API Key is missing or using placeholder. Please update firebase-applet-config.json.");
+}
+
+// Initialize Firebase only if configured, otherwise export nulls/placeholders
+export const app = isFirebaseConfigured ? initializeApp(firebaseConfig) : null;
+export const auth = app ? getAuth(app) : ({} as any);
+export const db = app ? getFirestore(app) : ({} as any);
+export const storage = app ? getStorage(app) : ({} as any);
 export const googleProvider = new GoogleAuthProvider();
