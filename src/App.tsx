@@ -79,6 +79,8 @@ export interface Client {
   nextDueDate?: string;
   billingType?: 'PIX' | 'CREDIT_CARD' | 'BOLETO' | 'UNDEFINED';
   billingCycle?: 'MONTHLY' | 'YEARLY';
+  customSetupPrice?: number;
+  customMonthlyPrice?: number;
   firstPaymentDate?: string;
   recurringPaymentDay?: number;
   deliveryDate?: string;
@@ -118,16 +120,17 @@ interface Expense {
 }
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-export const getSetupPrice = (plan?: string) => {
+export const getSetupPrice = (plan?: string, customSetupPrice?: number) => {
+  if (customSetupPrice !== undefined && customSetupPrice !== null) return customSetupPrice;
   if (plan === 'Profissional') return 7500;
   return 2500; // Essencial
 };
 
-export const getPlanPrice = (plan?: string, billingCycle?: string) => {
-  const monthlyPrice = plan === 'Profissional' ? 897 : 397;
+export const getPlanPrice = (plan?: string, billingCycle?: string, customMonthlyPrice?: number, customSetupPrice?: number) => {
+  const monthlyPrice = customMonthlyPrice !== undefined && customMonthlyPrice !== null ? customMonthlyPrice : (plan === 'Profissional' ? 897 : 397);
   
   if (billingCycle === 'YEARLY') {
-    const setupPrice = getSetupPrice(plan);
+    const setupPrice = getSetupPrice(plan, customSetupPrice);
     return setupPrice + (monthlyPrice * 9);
   }
   
@@ -141,7 +144,7 @@ export const calculateDiscount = (client: Client, clientsList: Client[]) => {
   const activeReferred = clientsList.filter(c => c.referredBy === client.id && c.status !== 'Cancelado' && c.referralConfirmed === true);
   const discountAmount = activeReferred.length * 100;
   
-  const basePrice = getPlanPrice(client.plan, client.billingCycle);
+  const basePrice = getPlanPrice(client.plan, client.billingCycle, client.customMonthlyPrice, client.customSetupPrice);
   const maxDiscount = basePrice * 0.5; // 50% limit
   
   return Math.min(discountAmount, maxDiscount);
@@ -163,7 +166,7 @@ export const updateReferrerSubscription = async (referrerId: string, updatedClie
 
     if (!referrer.asaasSubscriptionId) return;
 
-    const monthlyValue = getPlanPrice(referrer.plan, referrer.billingCycle) - discount;
+    const monthlyValue = getPlanPrice(referrer.plan, referrer.billingCycle, referrer.customMonthlyPrice, referrer.customSetupPrice) - discount;
 
     const updateRes = await fetch('/api/asaas/update-subscription', {
       method: 'POST',
@@ -424,14 +427,14 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Origem do Lead *</label>
                     <select required name="leadSource" value={formData.leadSource || ''} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all">
-                      <option value="">Selecione a origem</option>
-                      <option value="Indicação">Indicação</option>
-                      <option value="Google Ads">Google Ads</option>
-                      <option value="Tráfego Orgânico">Tráfego Orgânico</option>
-                      <option value="Prospecção Manual">Prospecção Manual</option>
-                      <option value="Instagram">Instagram</option>
-                      <option value="WhatsApp Direto">WhatsApp Direto</option>
-                      <option value="Parceiro">Parceiro</option>
+                      <option value="" className="bg-[#030712] text-white">Selecione a origem</option>
+                      <option value="Indicação" className="bg-[#030712] text-white">Indicação</option>
+                      <option value="Google Ads" className="bg-[#030712] text-white">Google Ads</option>
+                      <option value="Tráfego Orgânico" className="bg-[#030712] text-white">Tráfego Orgânico</option>
+                      <option value="Prospecção Manual" className="bg-[#030712] text-white">Prospecção Manual</option>
+                      <option value="Instagram" className="bg-[#030712] text-white">Instagram</option>
+                      <option value="WhatsApp Direto" className="bg-[#030712] text-white">WhatsApp Direto</option>
+                      <option value="Parceiro" className="bg-[#030712] text-white">Parceiro</option>
                     </select>
                   </div>
 
@@ -513,7 +516,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                           <div className="mt-3 pt-3 border-t border-emerald-500/10">
                             <div className="flex justify-between items-center mb-2">
                               <span className="text-[10px] text-gray-400 uppercase font-bold">Valor Total do Combo</span>
-                              <span className="text-sm font-bold text-emerald-400">R$ {getPlanPrice(formData.plan, 'YEARLY').toLocaleString('pt-BR')}</span>
+                              <span className="text-sm font-bold text-emerald-400">R$ {getPlanPrice(formData.plan, 'YEARLY', formData.customMonthlyPrice, formData.customSetupPrice).toLocaleString('pt-BR')}</span>
                             </div>
                             <p className="text-[10px] text-emerald-400 font-medium">O cliente receberá o link de pagamento e poderá escolher o parcelamento em até 12x no checkout. O valor inclui o Setup + 9 parcelas (desconto de 3 meses).</p>
                           </div>
@@ -558,7 +561,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                         className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                       >
                         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(num => (
-                          <option key={num} value={num} className="bg-white dark:bg-gray-900">
+                          <option key={num} value={num} className="bg-white dark:bg-[#030712] text-gray-900 dark:text-white">
                             {num === 1 ? 'À vista (1x)' : `Até ${num}x`}
                           </option>
                         ))}
@@ -600,6 +603,33 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                         <div className="text-xs opacity-80">Setup: R$ {getSetupPrice('Profissional').toLocaleString('pt-BR')}</div>
                         <div className="text-sm font-bold mt-1">R$ {getPlanPrice('Profissional', formData.billingCycle).toLocaleString('pt-BR')}/{formData.billingCycle === 'YEARLY' ? 'ano' : 'mês'}</div>
                       </button>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 p-4 rounded-xl border border-gray-200 dark:border-white/10 bg-black/10 space-y-4">
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Preços Personalizados (Opcional)</h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Deixe em branco para usar os valores padrão do plano selecionado.</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Setup (R$)</label>
+                        <input 
+                          type="number" 
+                          value={formData.customSetupPrice || ''} 
+                          onChange={e => setFormData(prev => ({ ...prev, customSetupPrice: e.target.value ? Number(e.target.value) : undefined }))} 
+                          className="w-full px-3 py-2 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none"
+                          placeholder={`Padrão: ${getSetupPrice(formData.plan)}`}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Mensalidade (R$)</label>
+                        <input 
+                          type="number" 
+                          value={formData.customMonthlyPrice || ''} 
+                          onChange={e => setFormData(prev => ({ ...prev, customMonthlyPrice: e.target.value ? Number(e.target.value) : undefined }))} 
+                          className="w-full px-3 py-2 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none"
+                          placeholder={`Padrão: ${getPlanPrice(formData.plan, 'MONTHLY')}`}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1699,7 +1729,7 @@ function CRM({ user }: { user: User }) {
           editingClient.billingCycle !== client.billingCycle ||
           editingClient.plan !== client.plan
       )) {
-        let monthlyValue = getPlanPrice(client.plan, client.billingCycle);
+        let monthlyValue = getPlanPrice(client.plan, client.billingCycle, client.customMonthlyPrice, client.customSetupPrice);
         monthlyValue -= calculateDiscount(client as Client, clients);
 
         let nextSubDateStr = client.nextDueDate;
@@ -1841,9 +1871,9 @@ function CRM({ user }: { user: User }) {
           const today = new Date();
           const firstPaymentDate = client.firstPaymentDate || today.toISOString().split('T')[0];
           
-          let monthlyValue = getPlanPrice(client.plan, client.billingCycle);
+          let monthlyValue = getPlanPrice(client.plan, client.billingCycle, client.customMonthlyPrice, client.customSetupPrice);
           monthlyValue -= calculateDiscount(client as Client, clients);
-          let setupValue = getSetupPrice(client.plan);
+          let setupValue = getSetupPrice(client.plan, client.customSetupPrice);
 
           if (client.isCombo) {
             // COMBO LOGIC: Setup + Annual in one parcelable payment link
@@ -2038,8 +2068,8 @@ function CRM({ user }: { user: User }) {
       if (sortBy === 'alphabetical') {
         return a.name.localeCompare(b.name);
       } else if (sortBy === 'value') {
-        let valA = getPlanPrice(a.plan, a.billingCycle);
-        let valB = getPlanPrice(b.plan, b.billingCycle);
+        let valA = getPlanPrice(a.plan, a.billingCycle, a.customMonthlyPrice, a.customSetupPrice);
+        let valB = getPlanPrice(b.plan, b.billingCycle, b.customMonthlyPrice, b.customSetupPrice);
         return valB - valA;
       } else {
         return b.createdAt - a.createdAt;
@@ -2112,10 +2142,10 @@ function CRM({ user }: { user: User }) {
     // Calculate Metrics
     const activeClients = clients.filter(c => c.status === 'Ativo').length;
     const mrr = clients.filter(c => c.status === 'Ativo' || c.status === 'Inadimplente').reduce((acc, c) => {
-      return acc + getPlanPrice(c.plan, c.billingCycle);
+      return acc + getPlanPrice(c.plan, c.billingCycle, c.customMonthlyPrice, c.customSetupPrice);
     }, 0);
     const overdueAmount = clients.filter(c => c.status === 'Inadimplente').reduce((acc, c) => {
-      return acc + getPlanPrice(c.plan, c.billingCycle);
+      return acc + getPlanPrice(c.plan, c.billingCycle, c.customMonthlyPrice, c.customSetupPrice);
     }, 0);
     
     const currentMonth = new Date().getMonth();
@@ -2126,7 +2156,7 @@ function CRM({ user }: { user: User }) {
       const dueDate = new Date(c.nextDueDate);
       return dueDate.getMonth() === currentMonth && dueDate.getFullYear() === currentYear;
     }).reduce((acc, c) => {
-      return acc + getPlanPrice(c.plan, c.billingCycle);
+      return acc + getPlanPrice(c.plan, c.billingCycle, c.customMonthlyPrice, c.customSetupPrice);
     }, 0);
 
     // Chart Data
@@ -2410,7 +2440,7 @@ function CRM({ user }: { user: User }) {
                     
                     <div className="flex items-center text-gray-600 dark:text-gray-300 text-sm">
                       <Tag size={16} className="mr-3 text-primary-400 opacity-80" />
-                      Plano {client.plan} <span className="ml-2 text-xs opacity-60">(R$ {getPlanPrice(client.plan, client.billingCycle).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span>
+                      Plano {client.plan} <span className="ml-2 text-xs opacity-60">(R$ {getPlanPrice(client.plan, client.billingCycle, client.customMonthlyPrice, client.customSetupPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span>
                     </div>
                     
                     {client.nextDueDate && client.status !== 'Cancelado' && (
@@ -2483,7 +2513,7 @@ function CRM({ user }: { user: User }) {
                       </a>
                       {client.invoiceUrl && (
                         <a 
-                          href={`https://wa.me/55${(client.whatsapp || '').replace(/\D/g, '')}?text=Olá ${client.name}, sua fatura de R$ ${getPlanPrice(client.plan, client.billingCycle).toFixed(2).replace('.', ',')} vence dia ${client.nextDueDate ? new Date(client.nextDueDate).toLocaleDateString('pt-BR') : ''}. Segue o link para pagamento via PIX: ${client.invoiceUrl}`}
+                          href={`https://wa.me/55${(client.whatsapp || '').replace(/\D/g, '')}?text=Olá ${client.name}, sua fatura de R$ ${getPlanPrice(client.plan, client.billingCycle, client.customMonthlyPrice, client.customSetupPrice).toFixed(2).replace('.', ',')} vence dia ${client.nextDueDate ? new Date(client.nextDueDate).toLocaleDateString('pt-BR') : ''}. Segue o link para pagamento via PIX: ${client.invoiceUrl}`}
                           target="_blank"
                           rel="noreferrer"
                           onClick={e => e.stopPropagation()}
@@ -2624,12 +2654,12 @@ function CRM({ user }: { user: User }) {
     const activeClients = clients.filter(c => c.status === 'Ativo').length;
     const activeClientsList = clients.filter(c => c.status === 'Ativo');
     const mrr = activeClientsList.reduce((acc, c) => {
-      return acc + getPlanPrice(c.plan, c.billingCycle);
+      return acc + getPlanPrice(c.plan, c.billingCycle, c.customMonthlyPrice, c.customSetupPrice);
     }, 0);
     
     const overdueClients = clients.filter(c => c.paymentStatus === 'OVERDUE');
     const overdueAmount = overdueClients.reduce((acc, c) => {
-      return acc + getPlanPrice(c.plan, c.billingCycle);
+      return acc + getPlanPrice(c.plan, c.billingCycle, c.customMonthlyPrice, c.customSetupPrice);
     }, 0);
     const overdueRate = activeClients > 0 ? ((overdueClients.length / activeClients) * 100).toFixed(1) : '0.0';
 
@@ -2651,11 +2681,11 @@ function CRM({ user }: { user: User }) {
     });
     const novosClientesMes = novosClientesMesList.length;
     
-    const mrrNovo = novosClientesMesList.filter(c => c.status === 'Ativo').reduce((acc, c) => acc + getPlanPrice(c.plan, c.billingCycle), 0);
+    const mrrNovo = novosClientesMesList.filter(c => c.status === 'Ativo').reduce((acc, c) => acc + getPlanPrice(c.plan, c.billingCycle, c.customMonthlyPrice, c.customSetupPrice), 0);
     
     // Assumindo cancelamentos do mês baseados em uma data de cancelamento (se não houver, usamos os criados no mês que cancelaram para simplificar, ou apenas 0 se não tivermos a data exata)
     // Para ser mais preciso, precisaríamos de um campo canceledAt. Vamos simular com os que estão cancelados.
-    const mrrPerdido = canceledClientsList.reduce((acc, c) => acc + getPlanPrice(c.plan, c.billingCycle), 0); // Total histórico perdido
+    const mrrPerdido = canceledClientsList.reduce((acc, c) => acc + getPlanPrice(c.plan, c.billingCycle, c.customMonthlyPrice, c.customSetupPrice), 0); // Total histórico perdido
     const mrrLiquido = mrrNovo - mrrPerdido; // Simplificado
 
     const clientsWithDelivery = clients.filter(c => c.deliveryDate && c.createdAt);
@@ -2682,7 +2712,7 @@ function CRM({ user }: { user: User }) {
       cohortsMap[cohortKey].total++;
       if (c.status === 'Ativo') {
         cohortsMap[cohortKey].retained++;
-        cohortsMap[cohortKey].mrr += getPlanPrice(c.plan, c.billingCycle);
+        cohortsMap[cohortKey].mrr += getPlanPrice(c.plan, c.billingCycle, c.customMonthlyPrice, c.customSetupPrice);
       }
       const source = c.leadSource || 'Desconhecido';
       cohortsMap[cohortKey].channels[source] = (cohortsMap[cohortKey].channels[source] || 0) + 1;
@@ -2706,7 +2736,7 @@ function CRM({ user }: { user: User }) {
         leadSourcesMap[source] = { total: 0, mrr: 0, overdue: 0, canceled: 0 };
       }
       leadSourcesMap[source].total++;
-      if (c.status === 'Ativo') leadSourcesMap[source].mrr += getPlanPrice(c.plan, c.billingCycle);
+      if (c.status === 'Ativo') leadSourcesMap[source].mrr += getPlanPrice(c.plan, c.billingCycle, c.customMonthlyPrice, c.customSetupPrice);
       if (c.paymentStatus === 'OVERDUE') leadSourcesMap[source].overdue++;
       if (c.status === 'Cancelado') leadSourcesMap[source].canceled++;
     });
@@ -2732,7 +2762,7 @@ function CRM({ user }: { user: User }) {
         const diffTime = dueDate.getTime() - todayDate.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         
-        let value = getPlanPrice(c.plan, c.billingCycle);
+        let value = getPlanPrice(c.plan, c.billingCycle, c.customMonthlyPrice, c.customSetupPrice);
 
         if (diffDays >= 0 && diffDays <= 7) cash7Days += value;
         if (diffDays >= 0 && diffDays <= 15) cash15Days += value;
@@ -2788,7 +2818,7 @@ function CRM({ user }: { user: User }) {
         const d = new Date(c.createdAt);
         return d.getFullYear() < currentYear || (d.getFullYear() === currentYear && d.getMonth() <= i);
       }).reduce((acc, c) => {
-        return acc + getPlanPrice(c.plan, c.billingCycle);
+        return acc + getPlanPrice(c.plan, c.billingCycle, c.customMonthlyPrice, c.customSetupPrice);
       }, 0);
 
       return { 
@@ -3130,7 +3160,7 @@ function CRM({ user }: { user: User }) {
 
   const renderFinance = () => {
     const totalMRR = clients.filter(c => c.status === 'Ativo' || c.status === 'Inadimplente').reduce((acc, c) => {
-      return acc + getPlanPrice(c.plan, c.billingCycle);
+      return acc + getPlanPrice(c.plan, c.billingCycle, c.customMonthlyPrice, c.customSetupPrice);
     }, 0);
     const totalExpenses = expenses.reduce((acc, e) => acc + e.amount, 0);
     const netProfit = totalMRR - totalExpenses;
@@ -3310,7 +3340,7 @@ function CRM({ user }: { user: User }) {
                   <tbody>
                     {clients.filter(c => c.status === 'Ativo' || expenses.some(e => e.clientId === c.id)).map(client => {
                       const clientExpenses = expenses.filter(e => e.clientId === client.id).reduce((acc, e) => acc + e.amount, 0);
-                      const mrr = client.status === 'Ativo' ? getPlanPrice(client.plan, client.billingCycle) : 0;
+                      const mrr = client.status === 'Ativo' ? getPlanPrice(client.plan, client.billingCycle, client.customMonthlyPrice, client.customSetupPrice) : 0;
                       const profit = mrr - clientExpenses;
                       const margin = mrr > 0 ? (profit / mrr) * 100 : 0;
                       
@@ -3560,10 +3590,10 @@ function CRM({ user }: { user: User }) {
                   onChange={(e) => setGlobalAnnouncement({...globalAnnouncement, type: e.target.value})}
                   className="w-full px-4 py-2 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
                 >
-                  <option value="info" className="bg-[#0a0a0a] text-white">Informativo (Azul)</option>
-                  <option value="warning" className="bg-[#0a0a0a] text-white">Atenção (Amarelo)</option>
-                  <option value="success" className="bg-[#0a0a0a] text-white">Novidade/Sucesso (Verde)</option>
-                  <option value="new_feature" className="bg-[#0a0a0a] text-white">Lançamento (Primária)</option>
+                  <option value="info" className="bg-[#030712] text-white">Informativo (Azul)</option>
+                  <option value="warning" className="bg-[#030712] text-white">Atenção (Amarelo)</option>
+                  <option value="success" className="bg-[#030712] text-white">Novidade/Sucesso (Verde)</option>
+                  <option value="new_feature" className="bg-[#030712] text-white">Lançamento (Primária)</option>
                 </select>
               </div>
             </div>
@@ -3750,10 +3780,10 @@ function CRM({ user }: { user: User }) {
                           }}
                           className="px-3 py-1.5 bg-black/40 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-lg text-sm outline-none"
                         >
-                          <option value="text" className="bg-zinc-900">Texto Curto</option>
-                          <option value="textarea" className="bg-zinc-900">Texto Longo</option>
-                          <option value="select" className="bg-zinc-900">Múltipla Escolha</option>
-                          <option value="file" className="bg-zinc-900">Anexo de Arquivo (Logo/Imagens)</option>
+                          <option value="text" className="bg-[#030712] text-white">Texto Curto</option>
+                          <option value="textarea" className="bg-[#030712] text-white">Texto Longo</option>
+                          <option value="select" className="bg-[#030712] text-white">Múltipla Escolha</option>
+                          <option value="file" className="bg-[#030712] text-white">Anexo de Arquivo (Logo/Imagens)</option>
                         </select>
                         
                         <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">

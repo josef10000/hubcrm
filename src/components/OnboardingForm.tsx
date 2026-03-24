@@ -503,9 +503,9 @@ export default function OnboardingForm() {
                         onChange={(e) => setAnswers({...answers, [q.id]: e.target.value})}
                         className="block w-full px-4 bg-black/40 border border-white/10 rounded-xl py-3 text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none appearance-none"
                       >
-                        <option value="" disabled>Selecione uma opção</option>
+                        <option value="" disabled className="bg-[#030712] text-white">Selecione uma opção</option>
                         {q.options?.split(',').map((opt: string, i: number) => (
-                          <option key={i} value={opt.trim()} className="bg-zinc-900">{opt.trim()}</option>
+                          <option key={i} value={opt.trim()} className="bg-[#030712] text-white">{opt.trim()}</option>
                         ))}
                       </select>
                     )}

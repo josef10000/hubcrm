@@ -256,7 +256,7 @@ export default function ClientPortal() {
 
       // Update Asaas subscription if applicable
       if (client.asaasSubscriptionId) {
-        const monthlyValue = getPlanPrice(client.plan, client.billingCycle) - discount;
+        const monthlyValue = getPlanPrice(client.plan, client.billingCycle, client.customMonthlyPrice, client.customSetupPrice) - discount;
 
         await fetch('/api/asaas/update-subscription', {
           method: 'POST',
@@ -1008,10 +1008,10 @@ export default function ClientPortal() {
                     onChange={(e) => setRequestCategory(e.target.value)}
                     className="w-full px-5 py-4 bg-black/40 border border-white/10 text-white rounded-2xl focus:ring-2 focus:ring-primary-500/50 outline-none transition-all appearance-none cursor-pointer hover:border-white/20"
                   >
-                    <option value="Suporte Técnico" className="bg-[#0a0a0a] text-white">Suporte Técnico</option>
-                    <option value="Dúvida Financeira" className="bg-[#0a0a0a] text-white">Dúvida Financeira</option>
-                    <option value="Solicitação de Alteração" className="bg-[#0a0a0a] text-white">Solicitação de Alteração</option>
-                    <option value="Outros" className="bg-[#0a0a0a] text-white">Outros</option>
+                    <option value="Suporte Técnico" className="bg-[#030712] text-white">Suporte Técnico</option>
+                    <option value="Dúvida Financeira" className="bg-[#030712] text-white">Dúvida Financeira</option>
+                    <option value="Solicitação de Alteração" className="bg-[#030712] text-white">Solicitação de Alteração</option>
+                    <option value="Outros" className="bg-[#030712] text-white">Outros</option>
                   </select>
                   <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500 group-hover/select:text-white transition-colors">
                     <ChevronDown size={18} />
