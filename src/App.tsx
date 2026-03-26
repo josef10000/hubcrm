@@ -112,6 +112,8 @@ export interface Client {
   maxInstallments?: number;
   comboRenewalDate?: string;
   leadSource?: 'Indicação' | 'Google Ads' | 'Tráfego Orgânico' | 'Prospecção Manual' | 'Instagram' | 'WhatsApp Direto' | 'Parceiro';
+  customMonthlyPrice?: number;
+  customSetupPrice?: number;
 }
 
 export interface OnboardingQuestion {
@@ -134,25 +136,28 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const getSetupPrice = (plan?: string, client?: Partial<Client>) => {
   if (client && client.setupPrice !== undefined) return client.setupPrice;
+  if (client && client.customSetupPrice !== undefined) return client.customSetupPrice;
   if (plan === 'Profissional') return 7500;
   return 2500; // Essencial
 };
 
-export const getPlanPrice = (plan?: string, billingCycle?: string, client?: Partial<Client>) => {
-  if (client && client.planPrice !== undefined) {
-    if (billingCycle === 'YEARLY' && client.setupPrice !== undefined) {
-      return client.setupPrice + (client.planPrice * 9);
-    }
-    return client.planPrice;
+export const getPlanPrice = (plan?: string, billingCycle?: string, client?: Partial<Client> | number, customSetupPrice?: number) => {
+  let finalMonthlyPrice: number;
+  let finalSetupPrice: number;
+
+  if (typeof client === 'number') {
+    finalMonthlyPrice = client;
+    finalSetupPrice = customSetupPrice !== undefined ? customSetupPrice : getSetupPrice(plan);
+  } else {
+    finalMonthlyPrice = client?.customMonthlyPrice !== undefined ? client.customMonthlyPrice : (client?.planPrice !== undefined ? client.planPrice : (plan === 'Profissional' ? 897 : 397));
+    finalSetupPrice = client?.customSetupPrice !== undefined ? client.customSetupPrice : (client?.setupPrice !== undefined ? client.setupPrice : getSetupPrice(plan, client));
   }
-  const monthlyPrice = plan === 'Profissional' ? 897 : 397;
-  
+
   if (billingCycle === 'YEARLY') {
-    const setupPrice = getSetupPrice(plan, client);
-    return setupPrice + (monthlyPrice * 9);
+    return finalSetupPrice + (finalMonthlyPrice * 9);
   }
   
-  return monthlyPrice;
+  return finalMonthlyPrice;
 };
 
 export const calculateDiscount = (client: Client, clientsList: Client[]) => {
@@ -202,6 +207,58 @@ export const updateReferrerSubscription = async (referrerId: string, updatedClie
     console.error("Error updating referrer subscription", e);
   }
 };
+
+function ConfirmationModal({ 
+  isOpen, 
+  onClose, 
+  onConfirm, 
+  title, 
+  message, 
+  confirmText = "Confirmar", 
+  cancelText = "Cancelar",
+  variant = "danger"
+}: { 
+  isOpen: boolean, 
+  onClose: () => void, 
+  onConfirm: () => void, 
+  title: string, 
+  message: string,
+  confirmText?: string,
+  cancelText?: string,
+  variant?: 'danger' | 'primary'
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-white/10 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${variant === 'danger' ? 'bg-red-500/20 text-red-500' : 'bg-primary-500/20 text-primary-500'}`}>
+              <AlertTriangle size={20} />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">{title}</h3>
+          </div>
+          <p className="text-gray-600 dark:text-gray-400 mb-8">{message}</p>
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="flex-1 px-4 py-3 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-900 dark:text-white rounded-2xl transition-colors font-medium"
+            >
+              {cancelText}
+            </button>
+            <button
+              onClick={onConfirm}
+              className={`flex-1 px-4 py-3 text-white rounded-2xl transition-colors font-bold shadow-lg ${variant === 'danger' ? 'bg-red-500 hover:bg-red-600 shadow-red-500/20' : 'bg-primary-500 hover:bg-primary-600 shadow-primary-500/20'}`}
+            >
+              {confirmText}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function OfferModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Offer>) => void, onDelete?: (id: string) => void, initialData: Partial<Offer> | null }) {
   const [formData, setFormData] = useState<Partial<Offer>>({
@@ -1704,6 +1761,9 @@ function CRM({ user }: { user: User }) {
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
   const [editingOffer, setEditingOffer] = useState<Partial<Offer> | null>(null);
+  const [isDeleteOfferConfirmOpen, setIsDeleteOfferConfirmOpen] = useState(false);
+  const [offerToDelete, setOfferToDelete] = useState<string | null>(null);
+  const [lastDeletedOffer, setLastDeletedOffer] = useState<Offer | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<SiteStatus | 'Todos'>('Todos');
@@ -1921,12 +1981,54 @@ function CRM({ user }: { user: User }) {
 
   const handleDeleteOffer = async (offerId: string) => {
     if (!auth.currentUser) return;
+    const offerToBackup = offers.find(o => o.id === offerId);
     try {
       await deleteDoc(doc(db, 'users', auth.currentUser.uid, 'offers', offerId));
-      toast.success('Oferta excluída com sucesso!');
+      if (offerToBackup) setLastDeletedOffer(offerToBackup);
+      toast.success('Oferta excluída com sucesso!', {
+        action: {
+          label: 'Desfazer',
+          onClick: () => offerToBackup && undoDeleteOffer(offerToBackup)
+        }
+      });
+      setIsDeleteOfferConfirmOpen(false);
+      setOfferToDelete(null);
     } catch (error) {
       console.error("Error deleting offer:", error);
       toast.error('Erro ao excluir oferta');
+    }
+  };
+
+  const undoDeleteOffer = async (offer: Offer) => {
+    if (!auth.currentUser || !offer) return;
+    try {
+      await setDoc(doc(db, 'users', auth.currentUser.uid, 'offers', offer.id), offer);
+      setLastDeletedOffer(null);
+      toast.success('Oferta restaurada!');
+    } catch (error) {
+      console.error("Error undoing delete:", error);
+      toast.error('Erro ao restaurar oferta');
+    }
+  };
+
+  const restoreDefaultOffers = async () => {
+    if (!auth.currentUser) return;
+    try {
+      const defaultOffers: Offer[] = [
+        { id: Date.now().toString(36) + Math.random().toString(36).substring(2), name: 'Ecossistema Essencial', type: 'SUBSCRIPTION', price: 397, setupPrice: 2500, active: true, createdAt: Date.now() },
+        { id: Date.now().toString(36) + Math.random().toString(36).substring(2), name: 'Profissional', type: 'SUBSCRIPTION', price: 897, setupPrice: 7500, active: true, createdAt: Date.now() }
+      ];
+      for (const offer of defaultOffers) {
+        // Check if offer already exists by name to avoid duplicates
+        const exists = offers.some(o => o.name === offer.name);
+        if (!exists) {
+          await setDoc(doc(db, 'users', auth.currentUser.uid, 'offers', offer.id), offer);
+        }
+      }
+      toast.success('Ofertas padrão restauradas com sucesso!');
+    } catch (error) {
+      console.error("Error restoring default offers:", error);
+      toast.error('Erro ao restaurar ofertas padrão');
     }
   };
 
@@ -3977,7 +4079,7 @@ function CRM({ user }: { user: User }) {
                         <Edit2 size={18} />
                       </button>
                       <button 
-                        onClick={() => handleDeleteOffer(offer.id)}
+                        onClick={() => { setOfferToDelete(offer.id); setIsDeleteOfferConfirmOpen(true); }}
                         className="p-2 text-gray-500 hover:text-red-500 transition-colors rounded-lg hover:bg-red-500/10"
                         title="Excluir Oferta"
                       >
@@ -3988,13 +4090,20 @@ function CRM({ user }: { user: User }) {
                 ))}
               </div>
 
-              <div className="flex mt-6">
+              <div className="flex mt-6 gap-3">
                 <button
                   onClick={() => { setEditingOffer(null); setIsOfferModalOpen(true); }}
                   className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-primary-500 to-primary-400 hover:from-primary-600 hover:to-primary-600 text-gray-900 dark:text-white rounded-xl transition-all font-medium shadow-lg shadow-primary-500/20 hover:scale-105 active:scale-95"
                 >
                   <Plus size={18} />
                   Novo Produto
+                </button>
+                <button
+                  onClick={restoreDefaultOffers}
+                  className="flex items-center gap-2 px-5 py-3 bg-gray-200 dark:bg-white/5 hover:bg-gray-300 dark:hover:bg-white/10 text-gray-900 dark:text-white rounded-xl transition-all font-medium border border-gray-200 dark:border-white/10"
+                >
+                  <RefreshCw size={18} />
+                  Restaurar Padrões
                 </button>
               </div>
             </div>
@@ -4251,6 +4360,26 @@ function CRM({ user }: { user: User }) {
               </div>
             </div>
           </div>
+
+          <div className="bg-red-500/5 backdrop-blur-xl border border-red-500/20 rounded-3xl p-8 shadow-lg mb-8">
+            <h3 className="text-lg font-semibold text-red-500 mb-6 flex items-center">
+              <LogOut className="mr-2" size={20} />
+              Conta
+            </h3>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-900 dark:text-white font-medium">Sair do Sistema</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Encerre sua sessão atual com segurança</p>
+              </div>
+              <button
+                onClick={() => signOut(auth)}
+                className="flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-2xl transition-all font-bold shadow-lg shadow-red-500/20 active:scale-95"
+              >
+                <LogOut size={18} />
+                Sair da Conta
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -4303,9 +4432,6 @@ function CRM({ user }: { user: User }) {
                 <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
               </div>
             </div>
-            <button onClick={() => signOut(auth)} className="text-gray-500 dark:text-gray-400 hover:text-red-400 transition-colors p-1" title="Sair">
-              <LogOut size={18} />
-            </button>
           </div>
         </div>
       </aside>
@@ -4398,6 +4524,15 @@ function CRM({ user }: { user: User }) {
         onSave={handleSaveOffer}
         onDelete={handleDeleteOffer}
         initialData={editingOffer}
+      />
+      <ConfirmationModal
+        isOpen={isDeleteOfferConfirmOpen}
+        onClose={() => { setIsDeleteOfferConfirmOpen(false); setOfferToDelete(null); }}
+        onConfirm={() => offerToDelete && handleDeleteOffer(offerToDelete)}
+        title="Excluir Oferta"
+        message="Tem certeza que deseja excluir esta oferta? Esta ação não pode ser desfeita, mas você pode restaurar as ofertas padrão se necessário."
+        confirmText="Excluir"
+        cancelText="Cancelar"
       />
       {sidebarOpen && <div className="fixed inset-0 bg-black/60 z-20 md:hidden backdrop-blur-md" onClick={() => setSidebarOpen(false)}></div>}
     </div>
