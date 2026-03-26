@@ -22,7 +22,9 @@ export default function OnboardingForm() {
     whatsapp: '',
     cpfCnpj: '',
     plan: 'Essencial',
-    billingCycle: 'MONTHLY'
+    billingCycle: 'MONTHLY',
+    customSetupPrice: undefined as number | undefined,
+    customMonthlyPrice: undefined as number | undefined
   });
   
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -57,7 +59,11 @@ export default function OnboardingForm() {
               name: data.name || '',
               email: data.email || '',
               whatsapp: data.whatsapp || '',
-              cpfCnpj: data.cpfCnpj || ''
+              cpfCnpj: data.cpfCnpj || '',
+              plan: data.plan || 'Essencial',
+              billingCycle: data.billingCycle || 'MONTHLY',
+              customSetupPrice: data.customSetupPrice,
+              customMonthlyPrice: data.customMonthlyPrice
             });
             if (data.onboardingAnswers) {
               setAnswers(data.onboardingAnswers);
@@ -444,17 +450,76 @@ export default function OnboardingForm() {
                         ))}
                       </ul>
 
-                      <div className="mt-4 pt-4 border-t border-white/10 w-full">
-                        <div className="text-xs opacity-80">Setup: R$ {getSetupPrice('Profissional').toLocaleString('pt-BR')}</div>
-                        <div className="text-sm font-bold mt-1 text-primary-400">R$ {getPlanPrice('Profissional', basicData.billingCycle).toLocaleString('pt-BR')}/{basicData.billingCycle === 'YEARLY' ? 'ano' : 'mês'}</div>
-                        {basicData.billingCycle === 'YEARLY' && (
-                          <div className="text-[10px] text-emerald-400 mt-1 font-medium">
-                            Desconto de 3 meses (Setup + 9 parcelas)<br/>
-                            Em até 12x sem juros no cartão
+                        <div className="mt-4 pt-4 border-t border-white/10 w-full">
+                          <div className="text-xs opacity-80">Setup: R$ {getSetupPrice('Profissional').toLocaleString('pt-BR')}</div>
+                          <div className="text-sm font-bold mt-1 text-primary-400">
+                            R$ {getPlanPrice('Profissional', basicData.billingCycle).toLocaleString('pt-BR')}/{basicData.billingCycle === 'YEARLY' ? 'ano' : 'mês'}
                           </div>
-                        )}
-                      </div>
+                          {basicData.billingCycle === 'YEARLY' && (
+                            <div className="text-[10px] text-emerald-400 mt-1 font-medium">
+                              12x de R$ {(getPlanPrice('Profissional', 'YEARLY') / 12).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} sem juros<br/>
+                              Desconto de 3 meses (Setup + 9 parcelas)
+                            </div>
+                          )}
+                        </div>
                     </button>
+
+                    {/* Personalizado - Show if it's the current plan or if custom prices are set */}
+                    {(basicData.plan === 'Personalizado' || basicData.customMonthlyPrice !== undefined || basicData.customSetupPrice !== undefined) && (
+                      <button
+                        type="button"
+                        onClick={() => setBasicData({...basicData, plan: 'Personalizado'})}
+                        className={`p-4 rounded-2xl border transition-all text-left flex flex-col h-full relative ${basicData.plan === 'Personalizado' ? 'bg-primary-500/20 border-primary-500 text-white shadow-lg shadow-primary-500/20' : 'bg-black/40 border-white/10 text-gray-400 hover:border-white/20'}`}
+                      >
+                        <div className="absolute top-4 right-4">
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${basicData.plan === 'Personalizado' ? 'border-primary-500 bg-primary-500' : 'border-white/20'}`}>
+                            {basicData.plan === 'Personalizado' && <CheckCircle className="w-3 h-3 text-white" />}
+                          </div>
+                        </div>
+
+                        <p className="font-bold text-lg mt-2">Plano sob consulta</p>
+                        <p className="text-xs opacity-70 mb-4">Plano com condições especiais negociadas diretamente com nossa equipe. Ideal para agências ou projetos complexos.</p>
+                        
+                        <div className="p-3 rounded-xl bg-black/20 border border-white/5 space-y-2 mb-4 w-full">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Setup</span>
+                            <div className="text-right">
+                              <span className="text-sm font-bold text-white">Sob Consulta</span>
+                            </div>
+                          </div>
+                          <div className="h-px bg-white/5 w-full"></div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Mensal</span>
+                            <div className="text-right">
+                              <span className="text-sm font-bold text-white">Sob Consulta</span>
+                            </div>
+                          </div>
+                          <div className="h-px bg-white/5 w-full"></div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Anual</span>
+                            <div className="text-right">
+                              <span className="text-sm font-bold text-white">Sob Consulta</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <ul className="space-y-2 flex-1 w-full">
+                          <li className="flex items-start gap-2 text-xs text-gray-300">
+                            <div className="p-0.5 rounded-full bg-emerald-500/20 mt-0.5 shrink-0">
+                              <CheckCircle className="w-3 h-3 text-emerald-500" />
+                            </div>
+                            Recursos personalizados conforme contrato
+                          </li>
+                        </ul>
+
+                        <div className="mt-4 pt-4 border-t border-white/10 w-full">
+                          <div className="text-xs opacity-80">Setup: Sob Consulta</div>
+                          <div className="text-sm font-bold mt-1 text-primary-400">
+                            Sob Consulta
+                          </div>
+                        </div>
+                      </button>
+                    )}
                   </div>
                 </div>
               )}

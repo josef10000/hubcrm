@@ -4,7 +4,7 @@ import {
   MapPin, Phone, Tag, Menu, Building2, FileText, Briefcase, AlignLeft,
   Search, BarChart3, Calendar, Paperclip, Copy, MessageCircle, Trash2, Snowflake, LogOut, Globe, Image as ImageIcon, Sparkles, Wand2, Star, Zap,
   Filter, ArrowDownAZ, ArrowUpRight, RefreshCw, Download, Link as LinkIcon, AlertTriangle, TrendingDown, TrendingUp, Settings, MessageSquare,
-  Megaphone, Pin, ShoppingCart, Eye, EyeOff
+  Megaphone, Pin, ShoppingCart, Eye, EyeOff, Package, Edit2
 } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid } from 'recharts';
 import { auth, db, isFirebaseConfigured } from './lib/firebase';
@@ -22,7 +22,7 @@ const clientSchema = z.object({
   whatsapp: z.string().refine(val => !val || val.replace(/\D/g, '').length >= 10, "WhatsApp deve ter pelo menos 10 dígitos").optional().or(z.literal('')),
 });
 
-export type PlanType = 'Essencial' | 'Profissional';
+export type PlanType = string;
 export type SiteStatus = 'Em Desenvolvimento' | 'Ativo' | 'Inadimplente' | 'Cancelado';
 
 export interface ClientLog {
@@ -57,11 +57,25 @@ export interface ClientCredential {
   createdAt: number;
 }
 
+export interface Offer {
+  id: string;
+  name: string;
+  type: 'SUBSCRIPTION' | 'SINGLE';
+  price: number;
+  setupPrice?: number;
+  maxInstallments?: number;
+  active: boolean;
+  createdAt: number;
+}
+
 export interface Client {
   id: string; 
   name: string; 
   whatsapp: string; 
   plan: PlanType;
+  offerId?: string;
+  planPrice?: number;
+  setupPrice?: number;
   siteLink?: string;
   status: SiteStatus;
   createdAt: number;
@@ -79,8 +93,6 @@ export interface Client {
   nextDueDate?: string;
   billingType?: 'PIX' | 'CREDIT_CARD' | 'BOLETO' | 'UNDEFINED';
   billingCycle?: 'MONTHLY' | 'YEARLY';
-  customSetupPrice?: number;
-  customMonthlyPrice?: number;
   firstPaymentDate?: string;
   recurringPaymentDay?: number;
   deliveryDate?: string;
@@ -120,17 +132,23 @@ interface Expense {
 }
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-export const getSetupPrice = (plan?: string, customSetupPrice?: number) => {
-  if (customSetupPrice !== undefined && customSetupPrice !== null) return customSetupPrice;
+export const getSetupPrice = (plan?: string, client?: Partial<Client>) => {
+  if (client && client.setupPrice !== undefined) return client.setupPrice;
   if (plan === 'Profissional') return 7500;
   return 2500; // Essencial
 };
 
-export const getPlanPrice = (plan?: string, billingCycle?: string, customMonthlyPrice?: number, customSetupPrice?: number) => {
-  const monthlyPrice = customMonthlyPrice !== undefined && customMonthlyPrice !== null ? customMonthlyPrice : (plan === 'Profissional' ? 897 : 397);
+export const getPlanPrice = (plan?: string, billingCycle?: string, client?: Partial<Client>) => {
+  if (client && client.planPrice !== undefined) {
+    if (billingCycle === 'YEARLY' && client.setupPrice !== undefined) {
+      return client.setupPrice + (client.planPrice * 9);
+    }
+    return client.planPrice;
+  }
+  const monthlyPrice = plan === 'Profissional' ? 897 : 397;
   
   if (billingCycle === 'YEARLY') {
-    const setupPrice = getSetupPrice(plan, customSetupPrice);
+    const setupPrice = getSetupPrice(plan, client);
     return setupPrice + (monthlyPrice * 9);
   }
   
@@ -144,7 +162,7 @@ export const calculateDiscount = (client: Client, clientsList: Client[]) => {
   const activeReferred = clientsList.filter(c => c.referredBy === client.id && c.status !== 'Cancelado' && c.referralConfirmed === true);
   const discountAmount = activeReferred.length * 100;
   
-  const basePrice = getPlanPrice(client.plan, client.billingCycle, client.customMonthlyPrice, client.customSetupPrice);
+  const basePrice = getPlanPrice(client.plan, client.billingCycle, client);
   const maxDiscount = basePrice * 0.5; // 50% limit
   
   return Math.min(discountAmount, maxDiscount);
@@ -166,7 +184,7 @@ export const updateReferrerSubscription = async (referrerId: string, updatedClie
 
     if (!referrer.asaasSubscriptionId) return;
 
-    const monthlyValue = getPlanPrice(referrer.plan, referrer.billingCycle, referrer.customMonthlyPrice, referrer.customSetupPrice) - discount;
+    const monthlyValue = getPlanPrice(referrer.plan, referrer.billingCycle, referrer) - discount;
 
     const updateRes = await fetch('/api/asaas/update-subscription', {
       method: 'POST',
@@ -185,12 +203,179 @@ export const updateReferrerSubscription = async (referrerId: string, updatedClie
   }
 };
 
-function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardingQuestions, user }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, onDelete?: (id: string) => void, initialData: Client | null, onboardingQuestions: OnboardingQuestion[], user: User }) {
+function OfferModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Offer>) => void, onDelete?: (id: string) => void, initialData: Partial<Offer> | null }) {
+  const [formData, setFormData] = useState<Partial<Offer>>({
+    name: '',
+    type: 'SUBSCRIPTION',
+    price: 0,
+    setupPrice: 0,
+    maxInstallments: 12,
+    active: true,
+  });
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData(initialData);
+    } else {
+      setFormData({
+        name: '',
+        type: 'SUBSCRIPTION',
+        price: 0,
+        setupPrice: 0,
+        maxInstallments: 12,
+        active: true,
+      });
+    }
+  }, [initialData, isOpen]);
+
+  if (!isOpen) return null;
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'number' ? Number(value) : type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+    }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-[#111] w-full max-w-md rounded-3xl shadow-2xl border border-gray-200 dark:border-white/10 overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="p-6 border-b border-gray-200 dark:border-white/10 flex justify-between items-center bg-gray-50 dark:bg-white/5">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {initialData?.id ? 'Editar Oferta' : 'Nova Oferta'}
+          </h2>
+          <button onClick={onClose} className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white transition-colors"><X size={24} /></button>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+            <div>
+              <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Nome da Oferta *</label>
+              <input 
+                type="text" 
+                name="name" 
+                required
+                value={formData.name || ''} 
+                onChange={handleChange} 
+                className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all" 
+                placeholder="Ex: Plano Essencial"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Tipo *</label>
+              <select 
+                name="type" 
+                value={formData.type || 'SUBSCRIPTION'} 
+                onChange={handleChange} 
+                className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+              >
+                <option value="SUBSCRIPTION">Assinatura (Recorrente)</option>
+                <option value="SINGLE">Pagamento Único</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Preço do Plano/Oferta (R$) *</label>
+              <input 
+                type="number" 
+                name="price" 
+                required
+                min="0"
+                step="0.01"
+                value={formData.price || 0} 
+                onChange={handleChange} 
+                className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all" 
+              />
+            </div>
+
+            {formData.type === 'SUBSCRIPTION' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Taxa de Setup (R$)</label>
+                <input 
+                  type="number" 
+                  name="setupPrice" 
+                  min="0"
+                  step="0.01"
+                  value={formData.setupPrice || 0} 
+                  onChange={handleChange} 
+                  className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all" 
+                />
+                <p className="text-xs text-gray-500 mt-1">Deixe 0 se for apenas assinatura sem setup.</p>
+              </div>
+            )}
+
+            {formData.type === 'SINGLE' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Máximo de Parcelas</label>
+                <input 
+                  type="number" 
+                  name="maxInstallments" 
+                  min="1"
+                  max="12"
+                  value={formData.maxInstallments || 12} 
+                  onChange={handleChange} 
+                  className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all" 
+                />
+                <p className="text-xs text-gray-500 mt-1">O cliente poderá parcelar o pagamento único em até {formData.maxInstallments || 12} vezes.</p>
+              </div>
+            )}
+
+            <div className="flex items-center gap-3 mt-4">
+              <input 
+                type="checkbox" 
+                id="active"
+                name="active" 
+                checked={formData.active !== undefined ? formData.active : true} 
+                onChange={handleChange} 
+                className="w-5 h-5 rounded border-gray-300 text-primary-500 focus:ring-primary-500 bg-black/20"
+              />
+              <label htmlFor="active" className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                Oferta Ativa (Visível na criação de clientes)
+              </label>
+            </div>
+          </div>
+
+          <div className="p-6 border-t border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 flex justify-between items-center">
+            {initialData?.id && onDelete ? (
+              <button 
+                type="button" 
+                onClick={() => { onDelete(initialData.id!); onClose(); }} 
+                className="text-red-500 hover:text-red-600 font-medium px-4 py-2 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors"
+              >
+                Excluir
+              </button>
+            ) : <div></div>}
+            <div className="flex space-x-3">
+              <button type="button" onClick={onClose} className="px-6 py-3 rounded-xl border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors font-medium">Cancelar</button>
+              <button type="submit" className="px-6 py-3 rounded-xl bg-gradient-to-r from-primary-500 to-primary-400 hover:from-primary-600 hover:to-primary-600 text-gray-900 dark:text-white font-medium shadow-lg shadow-primary-500/30 transition-all hover:scale-105 active:scale-95">Salvar</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardingQuestions, user, offers }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, onDelete?: (id: string) => void, initialData: Client | null, onboardingQuestions: OnboardingQuestion[], user: User, offers: Offer[] }) {
+  const activeOffers = offers.filter(o => o.active);
+  const defaultOffer = activeOffers.length > 0 ? activeOffers[0] : null;
+
   const [formData, setFormData] = useState<Partial<Client>>({ 
-    plan: 'Essencial', 
+    plan: defaultOffer?.name || 'Essencial',
+    offerId: defaultOffer?.id,
+    planPrice: defaultOffer?.price ?? 397,
+    setupPrice: defaultOffer?.setupPrice ?? 2500,
     status: 'Em Desenvolvimento',
     isCombo: false,
-    maxInstallments: 12
+    maxInstallments: defaultOffer?.maxInstallments ?? 12,
+    billingType: 'CREDIT_CARD'
   });
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -200,6 +385,10 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
   const [newCredential, setNewCredential] = useState<Partial<ClientCredential>>({});
   const [showNewCredential, setShowNewCredential] = useState(false);
   const [showPromptModal, setShowPromptModal] = useState(false);
+
+  const selectedOffer = useMemo(() => {
+    return offers.find(o => o.id === formData.offerId) || offers.find(o => o.name === formData.plan);
+  }, [offers, formData.offerId, formData.plan]);
 
   const generateGPTPrompt = () => {
     if (!formData.onboardingAnswers) return "";
@@ -261,14 +450,18 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
       }
     } else {
       setFormData({ 
-        plan: 'Essencial', 
+        plan: defaultOffer?.name || 'Essencial',
+        offerId: defaultOffer?.id,
+        planPrice: defaultOffer?.price ?? 397,
+        setupPrice: defaultOffer?.setupPrice ?? 2500,
         status: 'Em Desenvolvimento',
         isCombo: false,
-        maxInstallments: 12
+        maxInstallments: defaultOffer?.maxInstallments ?? 12,
+        billingType: 'CREDIT_CARD'
       });
     }
     setShowCancelConfirm(false);
-  }, [initialData, isOpen]);
+  }, [initialData, isOpen, defaultOffer?.id]);
 
   const checkPaymentStatus = async (subscriptionId: string) => {
     setIsCheckingPayment(true);
@@ -317,6 +510,10 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.offerId && !formData.plan) {
+      toast.error("Por favor, selecione uma Oferta / Produto.");
+      return;
+    }
     onSave(formData);
   };
 
@@ -427,132 +624,172 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Origem do Lead *</label>
                     <select required name="leadSource" value={formData.leadSource || ''} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all">
-                      <option value="" className="bg-[#030712] text-white">Selecione a origem</option>
-                      <option value="Indicação" className="bg-[#030712] text-white">Indicação</option>
-                      <option value="Google Ads" className="bg-[#030712] text-white">Google Ads</option>
-                      <option value="Tráfego Orgânico" className="bg-[#030712] text-white">Tráfego Orgânico</option>
-                      <option value="Prospecção Manual" className="bg-[#030712] text-white">Prospecção Manual</option>
-                      <option value="Instagram" className="bg-[#030712] text-white">Instagram</option>
-                      <option value="WhatsApp Direto" className="bg-[#030712] text-white">WhatsApp Direto</option>
-                      <option value="Parceiro" className="bg-[#030712] text-white">Parceiro</option>
+                      <option value="">Selecione a origem</option>
+                      <option value="Indicação">Indicação</option>
+                      <option value="Google Ads">Google Ads</option>
+                      <option value="Tráfego Orgânico">Tráfego Orgânico</option>
+                      <option value="Prospecção Manual">Prospecção Manual</option>
+                      <option value="Instagram">Instagram</option>
+                      <option value="WhatsApp Direto">WhatsApp Direto</option>
+                      <option value="Parceiro">Parceiro</option>
                     </select>
                   </div>
 
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mt-8 mb-4 border-b border-gray-200 dark:border-white/10 pb-2">Configurações de Pagamento</h3>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Data do Primeiro Pagamento</label>
-                      <input 
-                        type="date" 
-                        name="firstPaymentDate" 
-                        value={formData.firstPaymentDate || new Date().toISOString().split('T')[0]} 
-                        onChange={handleChange} 
-                        className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all" 
-                      />
-                      <p className="text-xs text-gray-500 mt-1">Data da primeira cobrança (padrão: hoje)</p>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Dia de Vencimento (Próximos Meses)</label>
-                      <input 
-                        type="number" 
-                        min="1" 
-                        max="31" 
-                        name="recurringPaymentDay" 
-                        value={formData.recurringPaymentDay || ''} 
-                        onChange={(e) => setFormData(prev => ({ ...prev, recurringPaymentDay: e.target.value ? parseInt(e.target.value) : undefined }))} 
-                        placeholder="Ex: 15" 
-                        className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" 
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        {getNextPaymentDateText() ? (
-                          <span className="text-primary-500 dark:text-primary-400 font-medium">{getNextPaymentDateText()}</span>
-                        ) : (
-                          "Opcional. Se vazio, será o mesmo dia do primeiro pagamento."
-                        )}
-                      </p>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Oferta / Produto *</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto custom-scrollbar pr-2">
+                      {offers.filter(o => o.active).map(offer => (
+                        <button 
+                          key={offer.id}
+                          type="button" 
+                          onClick={() => setFormData(prev => ({ 
+                            ...prev, 
+                            offerId: offer.id,
+                            plan: offer.name,
+                            planPrice: offer.price,
+                            setupPrice: offer.setupPrice,
+                            maxInstallments: offer.maxInstallments || prev.maxInstallments,
+                            billingCycle: offer.type === 'SINGLE' ? undefined : (prev.billingCycle || 'MONTHLY')
+                          }))}
+                          className={`p-4 rounded-xl border text-left transition-all ${formData.offerId === offer.id || (!formData.offerId && formData.plan === offer.name) ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
+                        >
+                          <div className="font-semibold mb-1">{offer.name}</div>
+                          {offer.type === 'SUBSCRIPTION' ? (
+                            <>
+                              <div className="text-xs opacity-80">Setup: R$ {(offer.setupPrice || 0).toLocaleString('pt-BR')}</div>
+                              <div className="text-sm font-bold mt-1">R$ {(offer.price || 0).toLocaleString('pt-BR')}/mês</div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="text-xs opacity-80">Pagamento Único</div>
+                              <div className="text-sm font-bold mt-1">R$ {((offer.price || 0) + (offer.setupPrice || 0)).toLocaleString('pt-BR')}</div>
+                            </>
+                          )}
+                        </button>
+                      ))}
                     </div>
                   </div>
 
-                  <div className="mt-6">
-                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Ciclo de Cobrança *</label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button 
-                        type="button" 
-                        onClick={() => setFormData(prev => ({ ...prev, billingCycle: 'MONTHLY', isCombo: false }))}
-                        className={`p-4 rounded-xl border text-center transition-all ${formData.billingCycle === 'MONTHLY' || !formData.billingCycle ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
-                      >
-                        <div className="font-semibold text-sm">Mensal</div>
-                      </button>
-                      <button 
-                        type="button" 
-                        onClick={() => setFormData(prev => ({ ...prev, billingCycle: 'YEARLY' }))}
-                        className={`p-4 rounded-xl border text-center transition-all ${formData.billingCycle === 'YEARLY' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
-                      >
-                        <div className="font-semibold text-sm">Anual</div>
-                      </button>
-                    </div>
+                  {(!selectedOffer || selectedOffer.type === 'SUBSCRIPTION') && (
+                    <>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Data do Primeiro Pagamento</label>
+                          <input 
+                            type="date" 
+                            name="firstPaymentDate" 
+                            value={formData.firstPaymentDate || new Date().toISOString().split('T')[0]} 
+                            onChange={handleChange} 
+                            className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all" 
+                          />
+                          <p className="text-xs text-gray-500 mt-1">Data da primeira cobrança (padrão: hoje)</p>
+                        </div>
 
-                    {formData.billingCycle === 'YEARLY' && (
-                      <div className="mt-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-                        <label className="flex items-center justify-between cursor-pointer">
-                          <div>
-                            <span className="text-sm font-bold text-emerald-400">Pagamento Combo (Setup + Anual)</span>
-                            <p className="text-[10px] text-gray-400">Permite parcelar o valor total no cartão</p>
-                          </div>
-                          <div className="relative inline-flex items-center cursor-pointer">
-                            <input 
-                              type="checkbox" 
-                              className="sr-only peer"
-                              checked={formData.isCombo || false}
-                              onChange={(e) => setFormData(prev => ({ ...prev, isCombo: e.target.checked, billingType: e.target.checked ? 'CREDIT_CARD' : prev.billingType }))}
-                            />
-                            <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-                          </div>
-                        </label>
-                        
-                        {formData.isCombo && (
-                          <div className="mt-3 pt-3 border-t border-emerald-500/10">
-                            <div className="flex justify-between items-center mb-2">
-                              <span className="text-[10px] text-gray-400 uppercase font-bold">Valor Total do Combo</span>
-                              <span className="text-sm font-bold text-emerald-400">R$ {getPlanPrice(formData.plan, 'YEARLY', formData.customMonthlyPrice, formData.customSetupPrice).toLocaleString('pt-BR')}</span>
-                            </div>
-                            <p className="text-[10px] text-emerald-400 font-medium">O cliente receberá o link de pagamento e poderá escolher o parcelamento em até 12x no checkout. O valor inclui o Setup + 9 parcelas (desconto de 3 meses).</p>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Dia de Vencimento (Próximos Meses)</label>
+                          <input 
+                            type="number" 
+                            min="1" 
+                            max="31" 
+                            name="recurringPaymentDay" 
+                            value={formData.recurringPaymentDay || ''} 
+                            onChange={(e) => setFormData(prev => ({ ...prev, recurringPaymentDay: e.target.value ? parseInt(e.target.value) : undefined }))} 
+                            placeholder="Ex: 15" 
+                            className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" 
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            {getNextPaymentDateText() ? (
+                              <span className="text-primary-500 dark:text-primary-400 font-medium">{getNextPaymentDateText()}</span>
+                            ) : (
+                              "Opcional. Se vazio, será o mesmo dia do primeiro pagamento."
+                            )}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-6">
+                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Ciclo de Cobrança *</label>
+                        <div className="grid grid-cols-2 gap-3">
+                          <button 
+                            type="button" 
+                            onClick={() => setFormData(prev => ({ ...prev, billingCycle: 'MONTHLY', isCombo: false }))}
+                            className={`p-4 rounded-xl border text-center transition-all ${formData.billingCycle === 'MONTHLY' || !formData.billingCycle ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
+                          >
+                            <div className="font-semibold text-sm">Mensal</div>
+                          </button>
+                          <button 
+                            type="button" 
+                            onClick={() => setFormData(prev => ({ ...prev, billingCycle: 'YEARLY' }))}
+                            className={`p-4 rounded-xl border text-center transition-all ${formData.billingCycle === 'YEARLY' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
+                          >
+                            <div className="font-semibold text-sm">Anual</div>
+                          </button>
+                        </div>
+
+                        {formData.billingCycle === 'YEARLY' && (
+                          <div className="mt-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                            <label className="flex items-center justify-between cursor-pointer">
+                              <div>
+                                <span className="text-sm font-bold text-emerald-400">Pagamento Combo (Setup + Anual)</span>
+                                <p className="text-[10px] text-gray-400">Permite parcelar o valor total no cartão</p>
+                              </div>
+                              <div className="relative inline-flex items-center cursor-pointer">
+                                <input 
+                                  type="checkbox" 
+                                  className="sr-only peer"
+                                  checked={formData.isCombo || false}
+                                  onChange={(e) => setFormData(prev => ({ ...prev, isCombo: e.target.checked, billingType: e.target.checked ? 'CREDIT_CARD' : prev.billingType }))}
+                                />
+                                <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                              </div>
+                            </label>
+                            
+                            {formData.isCombo && (
+                              <div className="mt-3 pt-3 border-t border-emerald-500/10">
+                                <div className="flex justify-between items-center mb-2">
+                                  <span className="text-[10px] text-gray-400 uppercase font-bold">Valor Total do Combo</span>
+                                  <span className="text-sm font-bold text-emerald-400">R$ {getPlanPrice(formData.plan, 'YEARLY', formData).toLocaleString('pt-BR')}</span>
+                                </div>
+                                <p className="text-[10px] text-emerald-400 font-medium">O cliente receberá o link de pagamento e poderá escolher o parcelamento em até 12x no checkout. O valor inclui o Setup + 9 parcelas (desconto de 3 meses).</p>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
-                    )}
-                  </div>
+                    </>
+                  )}
 
                   <div className="mt-6">
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Forma de Pagamento *</label>
                     <div className="grid grid-cols-3 gap-3">
                       <button 
                         type="button" 
-                        onClick={() => setFormData(prev => ({ ...prev, billingType: 'UNDEFINED' }))}
-                        className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'UNDEFINED' || !formData.billingType ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
-                      >
-                        <div className="font-semibold text-sm">Cliente Escolhe</div>
-                      </button>
-                      <button 
-                        type="button" 
                         onClick={() => setFormData(prev => ({ ...prev, billingType: 'PIX' }))}
                         className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'PIX' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
                       >
-                        <div className="font-semibold text-sm">Apenas PIX</div>
+                        <div className="font-semibold text-[10px] uppercase tracking-wider">Apenas PIX</div>
                       </button>
                       <button 
                         type="button" 
                         onClick={() => setFormData(prev => ({ ...prev, billingType: 'CREDIT_CARD' }))}
                         className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'CREDIT_CARD' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
                       >
-                        <div className="font-semibold text-sm">Apenas Cartão</div>
+                        <div className="font-semibold text-[10px] uppercase tracking-wider">Apenas Cartão</div>
+                      </button>
+                      <button 
+                        type="button" 
+                        disabled={selectedOffer?.type === 'SINGLE'}
+                        onClick={() => setFormData(prev => ({ ...prev, billingType: undefined }))}
+                        className={`p-4 rounded-xl border text-center transition-all ${!formData.billingType ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'} ${selectedOffer?.type === 'SINGLE' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        <div className="font-semibold text-[10px] uppercase tracking-wider">Cliente Escolhe</div>
                       </button>
                     </div>
                   </div>
 
-                  {(formData.isCombo || formData.billingType === 'CREDIT_CARD' || formData.billingType === 'UNDEFINED' || !formData.billingType) && (
+                  {(formData.isCombo || selectedOffer?.type === 'SINGLE') && (formData.billingType === 'CREDIT_CARD' || !formData.billingType) && (
                     <div className="mt-6">
                       <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Máximo de Parcelas (Cartão de Crédito)</label>
                       <select
@@ -560,8 +797,8 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                         onChange={(e) => setFormData(prev => ({ ...prev, maxInstallments: Number(e.target.value) }))}
                         className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                       >
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(num => (
-                          <option key={num} value={num} className="bg-white dark:bg-[#030712] text-gray-900 dark:text-white">
+                        {Array.from({ length: selectedOffer?.maxInstallments || 12 }, (_, i) => i + 1).map(num => (
+                          <option key={num} value={num} className="bg-white dark:bg-gray-900">
                             {num === 1 ? 'À vista (1x)' : `Até ${num}x`}
                           </option>
                         ))}
@@ -581,57 +818,6 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                       </div>
                     </div>
                   )}
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Plano *</label>
-                    <div className="grid grid-cols-3 gap-3">
-                      <button 
-                        type="button" 
-                        onClick={() => setFormData(prev => ({ ...prev, plan: 'Essencial' }))}
-                        className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Essencial' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
-                      >
-                        <div className="font-semibold mb-1">Ecossistema Essencial</div>
-                        <div className="text-xs opacity-80">Setup: R$ {getSetupPrice('Essencial').toLocaleString('pt-BR')}</div>
-                        <div className="text-sm font-bold mt-1">R$ {getPlanPrice('Essencial', formData.billingCycle).toLocaleString('pt-BR')}/{formData.billingCycle === 'YEARLY' ? 'ano' : 'mês'}</div>
-                      </button>
-                      <button 
-                        type="button" 
-                        onClick={() => setFormData(prev => ({ ...prev, plan: 'Profissional' }))}
-                        className={`p-4 rounded-xl border text-left transition-all ${formData.plan === 'Profissional' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
-                      >
-                        <div className="font-semibold mb-1">Profissional</div>
-                        <div className="text-xs opacity-80">Setup: R$ {getSetupPrice('Profissional').toLocaleString('pt-BR')}</div>
-                        <div className="text-sm font-bold mt-1">R$ {getPlanPrice('Profissional', formData.billingCycle).toLocaleString('pt-BR')}/{formData.billingCycle === 'YEARLY' ? 'ano' : 'mês'}</div>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 p-4 rounded-xl border border-gray-200 dark:border-white/10 bg-black/10 space-y-4">
-                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Preços Personalizados (Opcional)</h4>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Deixe em branco para usar os valores padrão do plano selecionado.</p>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Setup (R$)</label>
-                        <input 
-                          type="number" 
-                          value={formData.customSetupPrice || ''} 
-                          onChange={e => setFormData(prev => ({ ...prev, customSetupPrice: e.target.value ? Number(e.target.value) : undefined }))} 
-                          className="w-full px-3 py-2 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none"
-                          placeholder={`Padrão: ${getSetupPrice(formData.plan)}`}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Mensalidade (R$)</label>
-                        <input 
-                          type="number" 
-                          value={formData.customMonthlyPrice || ''} 
-                          onChange={e => setFormData(prev => ({ ...prev, customMonthlyPrice: e.target.value ? Number(e.target.value) : undefined }))} 
-                          className="w-full px-3 py-2 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none"
-                          placeholder={`Padrão: ${getPlanPrice(formData.plan, 'MONTHLY')}`}
-                        />
-                      </div>
-                    </div>
-                  </div>
                 </div>
 
                 {/* Right Column: Status & Notes */}
@@ -747,7 +933,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && newLogText.trim()) {
                           e.preventDefault();
-                          const newLog = { id: crypto.randomUUID(), text: newLogText.trim(), date: Date.now() };
+                          const newLog = { id: Date.now().toString(36) + Math.random().toString(36).substring(2), text: newLogText.trim(), date: Date.now() };
                           setFormData(prev => ({ ...prev, logs: [newLog, ...(prev.logs || [])] }));
                           setNewLogText('');
                         }
@@ -758,7 +944,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                       disabled={!newLogText.trim()}
                       onClick={() => {
                         if (newLogText.trim()) {
-                          const newLog = { id: crypto.randomUUID(), text: newLogText.trim(), date: Date.now() };
+                          const newLog = { id: Date.now().toString(36) + Math.random().toString(36).substring(2), text: newLogText.trim(), date: Date.now() };
                           setFormData(prev => ({ ...prev, logs: [newLog, ...(prev.logs || [])] }));
                           setNewLogText('');
                         }
@@ -1027,8 +1213,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                       <div className="pt-4 border-t border-white/5">
                         <p className="text-[10px] text-gray-500 uppercase font-bold mb-2">Regras Atuais:</p>
                         <ul className="text-[10px] text-gray-400 space-y-1 list-disc pl-4">
-                          <li>Ecossistema Essencial: R$ 100</li>
-                          <li>Profissional: R$ 250</li>
+                          <li>Comissão: 25% do valor do plano</li>
                         </ul>
                       </div>
                       <div className="pt-4 border-t border-white/5">
@@ -1256,13 +1441,8 @@ function ReferralsView({ clients, user }: { clients: Client[], user: User }) {
         const rewardType = referrer.referralRewardType || 'discount';
         
         if (rewardType === 'commission') {
-          if (referred.plan === 'Essencial') {
-            bonusAmount = 100;
-          } else if (referred.plan === 'Profissional') {
-            bonusAmount = 250;
-          } else {
-            bonusAmount = 100;
-          }
+          const planPrice = getPlanPrice(referred.plan, referred.billingCycle, referred);
+          bonusAmount = planPrice * 0.25; // 25% commission
         }
 
         const newBalance = (referrer.referralBalance || 0) + bonusAmount;
@@ -1430,6 +1610,7 @@ function ReferralsView({ clients, user }: { clients: Client[], user: User }) {
 
 function CRM({ user }: { user: User }) {
   const [clients, setClients] = useState<Client[]>([]);
+  const [offers, setOffers] = useState<Offer[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const clientsPerPage = 9;
   const [loading, setLoading] = useState(true);
@@ -1517,10 +1698,12 @@ function CRM({ user }: { user: User }) {
       setIsSyncing(false);
     }
   };
-  const [view, setView] = useState<'dashboard' | 'analytics' | 'support' | 'finance' | 'settings' | 'calendar' | 'referrals' | 'marketing'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'analytics' | 'support' | 'finance' | 'settings' | 'calendar' | 'referrals' | 'marketing' | 'products'>('dashboard');
   const [dashboardMode, setDashboardMode] = useState<'list' | 'kanban'>('list');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
+  const [editingOffer, setEditingOffer] = useState<Partial<Offer> | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<SiteStatus | 'Todos'>('Todos');
@@ -1616,8 +1799,29 @@ function CRM({ user }: { user: User }) {
     let unsubscribeClients: () => void = () => {};
     let unsubscribeRequests: () => void = () => {};
     let unsubscribeExpenses: () => void = () => {};
+    let unsubscribeOffers: () => void = () => {};
 
     try {
+      const offersRef = collection(db, 'users', user.uid, 'offers');
+      unsubscribeOffers = onSnapshot(offersRef, async (snapshot) => {
+        if (snapshot.empty) {
+          // Seed initial offers
+          const defaultOffers: Offer[] = [
+            { id: Date.now().toString(36) + Math.random().toString(36).substring(2), name: 'Ecossistema Essencial', type: 'SUBSCRIPTION', price: 397, setupPrice: 2500, active: true, createdAt: Date.now() },
+            { id: Date.now().toString(36) + Math.random().toString(36).substring(2), name: 'Profissional', type: 'SUBSCRIPTION', price: 897, setupPrice: 7500, active: true, createdAt: Date.now() }
+          ];
+          for (const offer of defaultOffers) {
+            await setDoc(doc(db, 'users', user.uid, 'offers', offer.id), offer);
+          }
+        } else {
+          const loadedOffers: Offer[] = [];
+          snapshot.forEach((doc) => {
+            loadedOffers.push(doc.data() as Offer);
+          });
+          setOffers(loadedOffers.sort((a, b) => b.createdAt - a.createdAt));
+        }
+      });
+
       const clientsRef = collection(db, 'users', user.uid, 'clients');
       unsubscribeClients = onSnapshot(clientsRef, (snapshot) => {
         const loadedClients: Client[] = [];
@@ -1673,9 +1877,58 @@ function CRM({ user }: { user: User }) {
       unsubscribeClients();
       unsubscribeRequests();
       unsubscribeExpenses();
+      unsubscribeOffers();
       clearTimeout(timeoutId);
     };
   }, [user.uid]);
+
+  const handleSaveOffer = async (offerData: Partial<Offer>) => {
+    if (!auth.currentUser) return;
+    try {
+      if (!offerData.name || offerData.price === undefined) {
+        toast.error('Nome e preço são obrigatórios');
+        return;
+      }
+      
+      const isNew = !offerData.id;
+      const offerRef = isNew ? doc(collection(db, 'users', auth.currentUser.uid, 'offers')) : doc(db, 'users', auth.currentUser.uid, 'offers', offerData.id!);
+      const offerId = offerRef.id;
+      
+      const offerToSave: any = {
+        id: offerId,
+        name: offerData.name,
+        type: offerData.type || 'SUBSCRIPTION',
+        price: offerData.price,
+        active: offerData.active !== undefined ? offerData.active : true,
+        createdAt: isNew ? Date.now() : (offerData.createdAt || Date.now()),
+      };
+
+      if (offerData.setupPrice !== undefined) {
+        offerToSave.setupPrice = offerData.setupPrice;
+      }
+      if (offerData.maxInstallments !== undefined) {
+        offerToSave.maxInstallments = offerData.maxInstallments;
+      }
+
+      await setDoc(offerRef, offerToSave);
+      toast.success(isNew ? 'Oferta criada com sucesso!' : 'Oferta atualizada com sucesso!');
+      setIsOfferModalOpen(false);
+    } catch (error: any) {
+      console.error("Error saving offer:", error);
+      toast.error(`Erro ao salvar oferta: ${error.message || 'Erro desconhecido'}`);
+    }
+  };
+
+  const handleDeleteOffer = async (offerId: string) => {
+    if (!auth.currentUser) return;
+    try {
+      await deleteDoc(doc(db, 'users', auth.currentUser.uid, 'offers', offerId));
+      toast.success('Oferta excluída com sucesso!');
+    } catch (error) {
+      console.error("Error deleting offer:", error);
+      toast.error('Erro ao excluir oferta');
+    }
+  };
 
   const handleSaveClient = async (clientData: Partial<Client>) => {
     try {
@@ -1688,17 +1941,22 @@ function CRM({ user }: { user: User }) {
     }
 
     const isNew = !clientData.id;
+    const clientRef = isNew ? doc(collection(db, 'users', auth.currentUser!.uid, 'clients')) : doc(db, 'users', auth.currentUser!.uid, 'clients', clientData.id!);
     const client: Client = {
       ...(editingClient || {}),
-      id: clientData.id || crypto.randomUUID(),
+      id: clientRef.id,
       name: clientData.name || '',
       whatsapp: clientData.whatsapp || '',
-      plan: clientData.plan as PlanType || 'Essencial',
+      plan: clientData.plan as PlanType || '',
+      offerId: clientData.offerId,
+      planPrice: clientData.planPrice,
+      setupPrice: clientData.setupPrice,
       status: clientData.status as SiteStatus || 'Em Desenvolvimento',
       siteLink: clientData.siteLink,
       niche: clientData.niche,
       notes: clientData.notes,
       logs: clientData.logs,
+      leadSource: clientData.leadSource,
       stages: clientData.stages || (isNew ? defaultStages.map(s => ({ ...s, completed: false, approvedAt: null })) : undefined),
       createdAt: clientData.createdAt || Date.now(),
       cpfCnpj: clientData.cpfCnpj,
@@ -1708,7 +1966,7 @@ function CRM({ user }: { user: User }) {
       invoiceUrl: clientData.invoiceUrl,
       nextDueDate: clientData.nextDueDate,
       paymentStatus: clientData.paymentStatus || 'PENDING',
-      billingType: clientData.billingType || 'UNDEFINED',
+      billingType: clientData.billingType || 'CREDIT_CARD',
       billingCycle: clientData.billingCycle || 'MONTHLY',
       firstPaymentDate: clientData.firstPaymentDate,
       recurringPaymentDay: clientData.recurringPaymentDay,
@@ -1729,7 +1987,7 @@ function CRM({ user }: { user: User }) {
           editingClient.billingCycle !== client.billingCycle ||
           editingClient.plan !== client.plan
       )) {
-        let monthlyValue = getPlanPrice(client.plan, client.billingCycle, client.customMonthlyPrice, client.customSetupPrice);
+        let monthlyValue = getPlanPrice(client.plan, client.billingCycle, client);
         monthlyValue -= calculateDiscount(client as Client, clients);
 
         let nextSubDateStr = client.nextDueDate;
@@ -1871,25 +2129,30 @@ function CRM({ user }: { user: User }) {
           const today = new Date();
           const firstPaymentDate = client.firstPaymentDate || today.toISOString().split('T')[0];
           
-          let monthlyValue = getPlanPrice(client.plan, client.billingCycle, client.customMonthlyPrice, client.customSetupPrice);
+          let monthlyValue = getPlanPrice(client.plan, client.billingCycle, client);
           monthlyValue -= calculateDiscount(client as Client, clients);
-          let setupValue = getSetupPrice(client.plan, client.customSetupPrice);
+          let setupValue = getSetupPrice(client.plan, client);
 
-          if (client.isCombo) {
+          const selectedOffer = offers.find(o => o.id === client.offerId) || offers.find(o => o.name === client.plan);
+          const isSinglePayment = selectedOffer?.type === 'SINGLE';
+
+          if (client.isCombo || isSinglePayment) {
             // COMBO LOGIC: Setup + Annual in one parcelable payment link
-            // The annual price (monthlyValue) already includes the setup for the combo
-            const totalComboValue = monthlyValue;
+            // Or SINGLE PAYMENT LOGIC: One-time payment with installments
+            const totalValue = isSinglePayment ? Math.max(0, monthlyValue + (client.setupPrice || 0)) : monthlyValue;
+            const paymentName = isSinglePayment ? `Pagamento Único - ${client.plan}` : `Combo (Setup + Plano Anual) - Plano ${client.plan}`;
+            const paymentDesc = isSinglePayment ? `Pagamento referente à oferta ${client.plan}.` : `Acesso anual ao Plano ${client.plan} com taxa de setup inclusa.`;
             
             const paymentRes = await fetch('/api/asaas/payment-links', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                name: `Combo (Setup + Plano Anual) - Plano ${client.plan}`,
-                description: `Acesso anual ao Plano ${client.plan} com taxa de setup inclusa.`,
-                value: totalComboValue,
-                billingType: client.billingType || 'UNDEFINED',
-                chargeType: 'INSTALLMENT', // Allow client to choose installments
-                maxInstallmentCount: client.maxInstallments || 12, // Max installments
+                name: paymentName,
+                description: paymentDesc,
+                value: totalValue,
+                billingType: client.billingType || 'CREDIT_CARD',
+                chargeType: client.billingType === 'PIX' ? 'DETACHED' : 'INSTALLMENT', // Allow client to choose installments if credit card
+                ...(client.billingType !== 'PIX' ? { maxInstallmentCount: client.maxInstallments || 12 } : {}), // Max installments
                 dueDateLimitDays: 3, // 3 business days for payment due date
                 customer: client.asaasCustomerId,
                 endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Link valid for 7 days
@@ -1901,11 +2164,15 @@ function CRM({ user }: { user: User }) {
               client.invoiceUrl = paymentData.url; // Payment Link URL
               client.nextDueDate = firstPaymentDate;
               
-              // Set renewal date to 1 year from now
-              const renewalDate = new Date(firstPaymentDate + 'T12:00:00Z');
-              renewalDate.setFullYear(renewalDate.getFullYear() + 1);
-              client.comboRenewalDate = renewalDate.toISOString().split('T')[0];
-              toast.success("Combo criado com sucesso! O cliente pode escolher o parcelamento no checkout.");
+              if (client.isCombo) {
+                // Set renewal date to 1 year from now
+                const renewalDate = new Date(firstPaymentDate + 'T12:00:00Z');
+                renewalDate.setFullYear(renewalDate.getFullYear() + 1);
+                client.comboRenewalDate = renewalDate.toISOString().split('T')[0];
+                toast.success("Combo criado com sucesso! O cliente pode escolher o parcelamento no checkout.");
+              } else {
+                toast.success("Link de pagamento criado com sucesso! O cliente pode escolher o parcelamento no checkout.");
+              }
             } else {
               const errorData = await paymentRes.json();
               toast.error(`Erro ao criar link de pagamento: ${errorData.error || 'Erro desconhecido'}`);
@@ -1913,72 +2180,101 @@ function CRM({ user }: { user: User }) {
             }
           } else {
             // STANDARD LOGIC: Setup Fee + Subscription
-            // A. Create single charge for first payment (Setup Fee)
-            const paymentRes = await fetch('/api/asaas/payments', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                customer: client.asaasCustomerId,
-                billingType: client.billingType,
-                value: setupValue,
-                dueDate: firstPaymentDate,
-                description: `Taxa de Adesão - Plano ${client.plan} - Hub Central`
-              })
-            });
+            if (setupValue > 0) {
+              // A. Create single charge for first payment (Setup Fee)
+              const paymentRes = await fetch('/api/asaas/payments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  customer: client.asaasCustomerId,
+                  billingType: client.billingType,
+                  value: setupValue,
+                  dueDate: firstPaymentDate,
+                  description: `Taxa de Adesão - Plano ${client.plan} - Hub Central`
+                })
+              });
 
-            if (paymentRes.ok) {
-              const paymentData = await paymentRes.json();
-              client.invoiceUrl = paymentData.invoiceUrl || paymentData.bankSlipUrl;
-              client.nextDueDate = firstPaymentDate;
-            } else {
-              console.error("Failed to create initial payment", await paymentRes.text());
-              toast.error("Erro ao criar taxa de adesão no Asaas.");
-            }
+              if (paymentRes.ok) {
+                const paymentData = await paymentRes.json();
+                client.invoiceUrl = paymentData.invoiceUrl || paymentData.bankSlipUrl;
+                client.nextDueDate = firstPaymentDate;
+              } else {
+                console.error("Failed to create initial payment", await paymentRes.text());
+                toast.error("Erro ao criar taxa de adesão no Asaas.");
+              }
 
-            // B. Create subscription for future payments
-            const firstDateObj = new Date(firstPaymentDate + 'T12:00:00Z');
-            let nextSubDate = new Date(firstDateObj);
-            
-            if (client.recurringPaymentDay) {
-              nextSubDate = new Date(firstDateObj.getFullYear(), firstDateObj.getMonth(), client.recurringPaymentDay, 12, 0, 0);
+              // B. Create subscription for future payments
+              const firstDateObj = new Date(firstPaymentDate + 'T12:00:00Z');
+              let nextSubDate = new Date(firstDateObj);
               
-              if (nextSubDate.getTime() <= firstDateObj.getTime()) {
+              if (client.recurringPaymentDay) {
+                nextSubDate = new Date(firstDateObj.getFullYear(), firstDateObj.getMonth(), client.recurringPaymentDay, 12, 0, 0);
+                
+                if (nextSubDate.getTime() <= firstDateObj.getTime()) {
+                  nextSubDate.setMonth(nextSubDate.getMonth() + 1);
+                }
+
+                const diffTime = nextSubDate.getTime() - firstDateObj.getTime();
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                if (diffDays < 15) {
+                  nextSubDate.setMonth(nextSubDate.getMonth() + 1);
+                }
+              } else {
                 nextSubDate.setMonth(nextSubDate.getMonth() + 1);
               }
+              
+              const nextSubDateStr = nextSubDate.toISOString().split('T')[0];
 
-              const diffTime = nextSubDate.getTime() - firstDateObj.getTime();
-              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-              if (diffDays < 15) {
-                nextSubDate.setMonth(nextSubDate.getMonth() + 1);
+              const subRes = await fetch('/api/asaas/subscriptions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  customer: client.asaasCustomerId,
+                  billingType: client.billingType,
+                  cycle: client.billingCycle === 'YEARLY' ? 'YEARLY' : 'MONTHLY',
+                  value: monthlyValue,
+                  nextDueDate: nextSubDateStr,
+                  description: `Assinatura ${client.billingCycle === 'YEARLY' ? 'Anual' : 'Mensal'} - Plano ${client.plan} - Hub Central`
+                })
+              });
+
+              if (subRes.ok) {
+                const subData = await subRes.json();
+                client.asaasSubscriptionId = subData.id;
+              } else {
+                let errText = await subRes.text();
+                let err;
+                try { err = JSON.parse(errText); } catch(e) { err = { error: errText }; }
+                console.error("Asaas Subscription Error:", err);
+                toast.error(`Erro ao criar assinatura no Asaas: ${err.error || 'Erro desconhecido'}`);
               }
             } else {
-              nextSubDate.setMonth(nextSubDate.getMonth() + 1);
-            }
-            
-            const nextSubDateStr = nextSubDate.toISOString().split('T')[0];
+              // No setup fee, just create the subscription starting on firstPaymentDate
+              const subRes = await fetch('/api/asaas/subscriptions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  customer: client.asaasCustomerId,
+                  billingType: client.billingType,
+                  cycle: client.billingCycle === 'YEARLY' ? 'YEARLY' : 'MONTHLY',
+                  value: monthlyValue,
+                  nextDueDate: firstPaymentDate,
+                  description: `Assinatura ${client.billingCycle === 'YEARLY' ? 'Anual' : 'Mensal'} - Plano ${client.plan} - Hub Central`
+                })
+              });
 
-            const subRes = await fetch('/api/asaas/subscriptions', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                customer: client.asaasCustomerId,
-                billingType: client.billingType,
-                cycle: client.billingCycle === 'YEARLY' ? 'YEARLY' : 'MONTHLY',
-                value: monthlyValue,
-                nextDueDate: nextSubDateStr,
-                description: `Assinatura ${client.billingCycle === 'YEARLY' ? 'Anual' : 'Mensal'} - Plano ${client.plan} - Hub Central`
-              })
-            });
-
-            if (subRes.ok) {
-              const subData = await subRes.json();
-              client.asaasSubscriptionId = subData.id;
-            } else {
-              let errText = await subRes.text();
-              let err;
-              try { err = JSON.parse(errText); } catch(e) { err = { error: errText }; }
-              console.error("Asaas Subscription Error:", err);
-              toast.error(`Erro ao criar assinatura no Asaas: ${err.error || 'Erro desconhecido'}`);
+              if (subRes.ok) {
+                const subData = await subRes.json();
+                client.asaasSubscriptionId = subData.id;
+                client.nextDueDate = firstPaymentDate;
+                toast.success("Assinatura criada com sucesso!");
+              } else {
+                let errText = await subRes.text();
+                let err;
+                try { err = JSON.parse(errText); } catch(e) { err = { error: errText }; }
+                console.error("Asaas Subscription Error:", err);
+                toast.error(`Erro ao criar assinatura no Asaas: ${err.error || 'Erro desconhecido'}`);
+              }
             }
           }
         } else {
@@ -2068,8 +2364,8 @@ function CRM({ user }: { user: User }) {
       if (sortBy === 'alphabetical') {
         return a.name.localeCompare(b.name);
       } else if (sortBy === 'value') {
-        let valA = getPlanPrice(a.plan, a.billingCycle, a.customMonthlyPrice, a.customSetupPrice);
-        let valB = getPlanPrice(b.plan, b.billingCycle, b.customMonthlyPrice, b.customSetupPrice);
+        let valA = getPlanPrice(a.plan, a.billingCycle, a);
+        let valB = getPlanPrice(b.plan, b.billingCycle, b);
         return valB - valA;
       } else {
         return b.createdAt - a.createdAt;
@@ -2142,10 +2438,10 @@ function CRM({ user }: { user: User }) {
     // Calculate Metrics
     const activeClients = clients.filter(c => c.status === 'Ativo').length;
     const mrr = clients.filter(c => c.status === 'Ativo' || c.status === 'Inadimplente').reduce((acc, c) => {
-      return acc + getPlanPrice(c.plan, c.billingCycle, c.customMonthlyPrice, c.customSetupPrice);
+      return acc + getPlanPrice(c.plan, c.billingCycle, c);
     }, 0);
     const overdueAmount = clients.filter(c => c.status === 'Inadimplente').reduce((acc, c) => {
-      return acc + getPlanPrice(c.plan, c.billingCycle, c.customMonthlyPrice, c.customSetupPrice);
+      return acc + getPlanPrice(c.plan, c.billingCycle, c);
     }, 0);
     
     const currentMonth = new Date().getMonth();
@@ -2156,7 +2452,7 @@ function CRM({ user }: { user: User }) {
       const dueDate = new Date(c.nextDueDate);
       return dueDate.getMonth() === currentMonth && dueDate.getFullYear() === currentYear;
     }).reduce((acc, c) => {
-      return acc + getPlanPrice(c.plan, c.billingCycle, c.customMonthlyPrice, c.customSetupPrice);
+      return acc + getPlanPrice(c.plan, c.billingCycle, c);
     }, 0);
 
     // Chart Data
@@ -2440,7 +2736,7 @@ function CRM({ user }: { user: User }) {
                     
                     <div className="flex items-center text-gray-600 dark:text-gray-300 text-sm">
                       <Tag size={16} className="mr-3 text-primary-400 opacity-80" />
-                      Plano {client.plan} <span className="ml-2 text-xs opacity-60">(R$ {getPlanPrice(client.plan, client.billingCycle, client.customMonthlyPrice, client.customSetupPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span>
+                      Plano {client.plan} <span className="ml-2 text-xs opacity-60">(R$ {getPlanPrice(client.plan, client.billingCycle, client).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span>
                     </div>
                     
                     {client.nextDueDate && client.status !== 'Cancelado' && (
@@ -2513,7 +2809,7 @@ function CRM({ user }: { user: User }) {
                       </a>
                       {client.invoiceUrl && (
                         <a 
-                          href={`https://wa.me/55${(client.whatsapp || '').replace(/\D/g, '')}?text=Olá ${client.name}, sua fatura de R$ ${getPlanPrice(client.plan, client.billingCycle, client.customMonthlyPrice, client.customSetupPrice).toFixed(2).replace('.', ',')} vence dia ${client.nextDueDate ? new Date(client.nextDueDate).toLocaleDateString('pt-BR') : ''}. Segue o link para pagamento via PIX: ${client.invoiceUrl}`}
+                          href={`https://wa.me/55${(client.whatsapp || '').replace(/\D/g, '')}?text=Olá ${client.name}, sua fatura de R$ ${getPlanPrice(client.plan, client.billingCycle, client).toFixed(2).replace('.', ',')} vence dia ${client.nextDueDate ? new Date(client.nextDueDate).toLocaleDateString('pt-BR') : ''}. Segue o link para pagamento via PIX: ${client.invoiceUrl}`}
                           target="_blank"
                           rel="noreferrer"
                           onClick={e => e.stopPropagation()}
@@ -2654,12 +2950,12 @@ function CRM({ user }: { user: User }) {
     const activeClients = clients.filter(c => c.status === 'Ativo').length;
     const activeClientsList = clients.filter(c => c.status === 'Ativo');
     const mrr = activeClientsList.reduce((acc, c) => {
-      return acc + getPlanPrice(c.plan, c.billingCycle, c.customMonthlyPrice, c.customSetupPrice);
+      return acc + getPlanPrice(c.plan, c.billingCycle, c);
     }, 0);
     
     const overdueClients = clients.filter(c => c.paymentStatus === 'OVERDUE');
     const overdueAmount = overdueClients.reduce((acc, c) => {
-      return acc + getPlanPrice(c.plan, c.billingCycle, c.customMonthlyPrice, c.customSetupPrice);
+      return acc + getPlanPrice(c.plan, c.billingCycle, c);
     }, 0);
     const overdueRate = activeClients > 0 ? ((overdueClients.length / activeClients) * 100).toFixed(1) : '0.0';
 
@@ -2681,11 +2977,11 @@ function CRM({ user }: { user: User }) {
     });
     const novosClientesMes = novosClientesMesList.length;
     
-    const mrrNovo = novosClientesMesList.filter(c => c.status === 'Ativo').reduce((acc, c) => acc + getPlanPrice(c.plan, c.billingCycle, c.customMonthlyPrice, c.customSetupPrice), 0);
+    const mrrNovo = novosClientesMesList.filter(c => c.status === 'Ativo').reduce((acc, c) => acc + getPlanPrice(c.plan, c.billingCycle, c), 0);
     
     // Assumindo cancelamentos do mês baseados em uma data de cancelamento (se não houver, usamos os criados no mês que cancelaram para simplificar, ou apenas 0 se não tivermos a data exata)
     // Para ser mais preciso, precisaríamos de um campo canceledAt. Vamos simular com os que estão cancelados.
-    const mrrPerdido = canceledClientsList.reduce((acc, c) => acc + getPlanPrice(c.plan, c.billingCycle, c.customMonthlyPrice, c.customSetupPrice), 0); // Total histórico perdido
+    const mrrPerdido = canceledClientsList.reduce((acc, c) => acc + getPlanPrice(c.plan, c.billingCycle, c), 0); // Total histórico perdido
     const mrrLiquido = mrrNovo - mrrPerdido; // Simplificado
 
     const clientsWithDelivery = clients.filter(c => c.deliveryDate && c.createdAt);
@@ -2712,7 +3008,7 @@ function CRM({ user }: { user: User }) {
       cohortsMap[cohortKey].total++;
       if (c.status === 'Ativo') {
         cohortsMap[cohortKey].retained++;
-        cohortsMap[cohortKey].mrr += getPlanPrice(c.plan, c.billingCycle, c.customMonthlyPrice, c.customSetupPrice);
+        cohortsMap[cohortKey].mrr += getPlanPrice(c.plan, c.billingCycle, c);
       }
       const source = c.leadSource || 'Desconhecido';
       cohortsMap[cohortKey].channels[source] = (cohortsMap[cohortKey].channels[source] || 0) + 1;
@@ -2736,7 +3032,7 @@ function CRM({ user }: { user: User }) {
         leadSourcesMap[source] = { total: 0, mrr: 0, overdue: 0, canceled: 0 };
       }
       leadSourcesMap[source].total++;
-      if (c.status === 'Ativo') leadSourcesMap[source].mrr += getPlanPrice(c.plan, c.billingCycle, c.customMonthlyPrice, c.customSetupPrice);
+      if (c.status === 'Ativo') leadSourcesMap[source].mrr += getPlanPrice(c.plan, c.billingCycle, c);
       if (c.paymentStatus === 'OVERDUE') leadSourcesMap[source].overdue++;
       if (c.status === 'Cancelado') leadSourcesMap[source].canceled++;
     });
@@ -2762,7 +3058,7 @@ function CRM({ user }: { user: User }) {
         const diffTime = dueDate.getTime() - todayDate.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         
-        let value = getPlanPrice(c.plan, c.billingCycle, c.customMonthlyPrice, c.customSetupPrice);
+        let value = getPlanPrice(c.plan, c.billingCycle, c);
 
         if (diffDays >= 0 && diffDays <= 7) cash7Days += value;
         if (diffDays >= 0 && diffDays <= 15) cash15Days += value;
@@ -2776,10 +3072,19 @@ function CRM({ user }: { user: User }) {
       { name: '30 dias', value: cash30Days },
     ];
 
-    const planData = [
-      { name: 'Essencial', value: clients.filter(c => c.plan === 'Essencial').length, color: '#f97316' },
-      { name: 'Profissional', value: clients.filter(c => c.plan === 'Profissional').length, color: '#3b82f6' }
-    ];
+    const planCounts: Record<string, number> = {};
+    clients.forEach(c => {
+      if (c.plan) {
+        planCounts[c.plan] = (planCounts[c.plan] || 0) + 1;
+      }
+    });
+    
+    const colors = ['#f97316', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899'];
+    const planData = Object.entries(planCounts).map(([name, value], index) => ({
+      name,
+      value,
+      color: colors[index % colors.length]
+    }));
 
     const statusData = [
       { name: 'Em Desenvolvimento', value: clients.filter(c => c.status === 'Em Desenvolvimento').length, color: '#eab308' },
@@ -2790,8 +3095,7 @@ function CRM({ user }: { user: User }) {
 
     const paymentMethodData = [
       { name: 'PIX', value: clients.filter(c => c.billingType === 'PIX').length, color: '#10b981' },
-      { name: 'Cartão', value: clients.filter(c => c.billingType === 'CREDIT_CARD').length, color: '#3b82f6' },
-      { name: 'Cliente Escolhe', value: clients.filter(c => c.billingType === 'UNDEFINED' || !c.billingType).length, color: '#f59e0b' }
+      { name: 'Cartão', value: clients.filter(c => c.billingType === 'CREDIT_CARD' || !c.billingType).length, color: '#3b82f6' }
     ];
 
     const now = Date.now();
@@ -2818,7 +3122,7 @@ function CRM({ user }: { user: User }) {
         const d = new Date(c.createdAt);
         return d.getFullYear() < currentYear || (d.getFullYear() === currentYear && d.getMonth() <= i);
       }).reduce((acc, c) => {
-        return acc + getPlanPrice(c.plan, c.billingCycle, c.customMonthlyPrice, c.customSetupPrice);
+        return acc + getPlanPrice(c.plan, c.billingCycle, c);
       }, 0);
 
       return { 
@@ -3160,7 +3464,7 @@ function CRM({ user }: { user: User }) {
 
   const renderFinance = () => {
     const totalMRR = clients.filter(c => c.status === 'Ativo' || c.status === 'Inadimplente').reduce((acc, c) => {
-      return acc + getPlanPrice(c.plan, c.billingCycle, c.customMonthlyPrice, c.customSetupPrice);
+      return acc + getPlanPrice(c.plan, c.billingCycle, c);
     }, 0);
     const totalExpenses = expenses.reduce((acc, e) => acc + e.amount, 0);
     const netProfit = totalMRR - totalExpenses;
@@ -3170,7 +3474,7 @@ function CRM({ user }: { user: User }) {
       if (!newExpense.description || !newExpense.amount || !newExpense.date) return;
 
       try {
-        const expenseId = crypto.randomUUID();
+        const expenseId = Date.now().toString(36) + Math.random().toString(36).substring(2);
         const expense: Expense = {
           id: expenseId,
           description: newExpense.description,
@@ -3340,7 +3644,7 @@ function CRM({ user }: { user: User }) {
                   <tbody>
                     {clients.filter(c => c.status === 'Ativo' || expenses.some(e => e.clientId === c.id)).map(client => {
                       const clientExpenses = expenses.filter(e => e.clientId === client.id).reduce((acc, e) => acc + e.amount, 0);
-                      const mrr = client.status === 'Ativo' ? getPlanPrice(client.plan, client.billingCycle, client.customMonthlyPrice, client.customSetupPrice) : 0;
+                      const mrr = client.status === 'Ativo' ? getPlanPrice(client.plan, client.billingCycle, client) : 0;
                       const profit = mrr - clientExpenses;
                       const margin = mrr > 0 ? (profit / mrr) * 100 : 0;
                       
@@ -3590,10 +3894,10 @@ function CRM({ user }: { user: User }) {
                   onChange={(e) => setGlobalAnnouncement({...globalAnnouncement, type: e.target.value})}
                   className="w-full px-4 py-2 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
                 >
-                  <option value="info" className="bg-[#030712] text-white">Informativo (Azul)</option>
-                  <option value="warning" className="bg-[#030712] text-white">Atenção (Amarelo)</option>
-                  <option value="success" className="bg-[#030712] text-white">Novidade/Sucesso (Verde)</option>
-                  <option value="new_feature" className="bg-[#030712] text-white">Lançamento (Primária)</option>
+                  <option value="info" className="bg-[#0a0a0a] text-white">Informativo (Azul)</option>
+                  <option value="warning" className="bg-[#0a0a0a] text-white">Atenção (Amarelo)</option>
+                  <option value="success" className="bg-[#0a0a0a] text-white">Novidade/Sucesso (Verde)</option>
+                  <option value="new_feature" className="bg-[#0a0a0a] text-white">Lançamento (Primária)</option>
                 </select>
               </div>
             </div>
@@ -3615,6 +3919,84 @@ function CRM({ user }: { user: User }) {
               >
                 Salvar Aviso
               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderProducts = () => {
+    return (
+      <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-black/20 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-lg mb-8">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
+              <Package className="mr-2 text-primary-500" size={20} />
+              Ofertas e Produtos
+            </h3>
+            
+            <div className="space-y-4">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Gerencie as ofertas disponíveis para seus clientes. Elas aparecerão na hora de criar um novo cliente.</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {offers.map((offer) => (
+                  <div key={offer.id} className="bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 rounded-2xl p-5 flex flex-col justify-between hover:border-primary-500/50 transition-colors">
+                    <div>
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-bold text-gray-900 dark:text-white text-lg">{offer.name}</h4>
+                        <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md ${offer.active ? 'bg-emerald-500/20 text-emerald-500' : 'bg-gray-500/20 text-gray-500'}`}>
+                          {offer.active ? 'Ativa' : 'Inativa'}
+                        </span>
+                      </div>
+                      <div className="space-y-1 mb-4">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <span className="font-medium">Tipo:</span> {offer.type === 'SUBSCRIPTION' ? 'Assinatura' : 'Pagamento Único'}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <span className="font-medium">Preço:</span> R$ {(offer.price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                        {offer.type === 'SUBSCRIPTION' && offer.setupPrice !== undefined && offer.setupPrice > 0 && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            <span className="font-medium">Setup:</span> R$ {(offer.setupPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </p>
+                        )}
+                        {offer.type === 'SINGLE' && offer.maxInstallments && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            <span className="font-medium">Parcelamento:</span> Até {offer.maxInstallments}x
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2 pt-4 border-t border-gray-100 dark:border-white/5">
+                      <button 
+                        onClick={() => { setEditingOffer(offer); setIsOfferModalOpen(true); }}
+                        className="p-2 text-gray-500 hover:text-primary-500 transition-colors rounded-lg hover:bg-primary-500/10"
+                        title="Editar Oferta"
+                      >
+                        <Edit2 size={18} />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteOffer(offer.id)}
+                        className="p-2 text-gray-500 hover:text-red-500 transition-colors rounded-lg hover:bg-red-500/10"
+                        title="Excluir Oferta"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex mt-6">
+                <button
+                  onClick={() => { setEditingOffer(null); setIsOfferModalOpen(true); }}
+                  className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-primary-500 to-primary-400 hover:from-primary-600 hover:to-primary-600 text-gray-900 dark:text-white rounded-xl transition-all font-medium shadow-lg shadow-primary-500/20 hover:scale-105 active:scale-95"
+                >
+                  <Plus size={18} />
+                  Novo Produto
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -3721,7 +4103,7 @@ function CRM({ user }: { user: User }) {
               <div className="flex gap-3 mt-4">
                 <button
                   onClick={() => {
-                    const newStages = [...defaultStages, { id: crypto.randomUUID(), name: 'Nova Etapa' }];
+                    const newStages = [...defaultStages, { id: Date.now().toString(36) + Math.random().toString(36).substring(2), name: 'Nova Etapa' }];
                     setDefaultStages(newStages);
                   }}
                   className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-white/5 hover:bg-gray-300 dark:hover:bg-white/10 text-gray-900 dark:text-white rounded-xl transition-colors text-sm font-medium"
@@ -3780,10 +4162,10 @@ function CRM({ user }: { user: User }) {
                           }}
                           className="px-3 py-1.5 bg-black/40 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-lg text-sm outline-none"
                         >
-                          <option value="text" className="bg-[#030712] text-white">Texto Curto</option>
-                          <option value="textarea" className="bg-[#030712] text-white">Texto Longo</option>
-                          <option value="select" className="bg-[#030712] text-white">Múltipla Escolha</option>
-                          <option value="file" className="bg-[#030712] text-white">Anexo de Arquivo (Logo/Imagens)</option>
+                          <option value="text" className="bg-zinc-900">Texto Curto</option>
+                          <option value="textarea" className="bg-zinc-900">Texto Longo</option>
+                          <option value="select" className="bg-zinc-900">Múltipla Escolha</option>
+                          <option value="file" className="bg-zinc-900">Anexo de Arquivo (Logo/Imagens)</option>
                         </select>
                         
                         <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
@@ -3831,7 +4213,7 @@ function CRM({ user }: { user: User }) {
               <div className="flex gap-3 mt-4">
                 <button
                   onClick={() => {
-                    const newQ = [...onboardingQuestions, { id: crypto.randomUUID(), text: '', type: 'text', required: false }];
+                    const newQ = [...onboardingQuestions, { id: Date.now().toString(36) + Math.random().toString(36).substring(2), text: '', type: 'text', required: false }];
                     setOnboardingQuestions(newQ as OnboardingQuestion[]);
                   }}
                   className="flex items-center gap-2 px-4 py-2 bg-black/40 hover:bg-black/60 border border-white/10 text-gray-900 dark:text-white rounded-xl transition-colors text-sm font-medium"
@@ -3842,7 +4224,7 @@ function CRM({ user }: { user: User }) {
 
                 <button
                   onClick={() => {
-                    const newQ = [...onboardingQuestions, { id: crypto.randomUUID(), text: 'Logo da Empresa', type: 'file', required: false }];
+                    const newQ = [...onboardingQuestions, { id: Date.now().toString(36) + Math.random().toString(36).substring(2), text: 'Logo da Empresa', type: 'file', required: false }];
                     setOnboardingQuestions(newQ as OnboardingQuestion[]);
                     toast.success('Pergunta de Logo adicionada!');
                   }}
@@ -3907,6 +4289,7 @@ function CRM({ user }: { user: User }) {
           <button onClick={() => { setView('finance'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'finance' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><DollarSign size={20} /><span className="font-medium">Gestão de Custos</span></button>
           <button onClick={() => { setView('referrals'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'referrals' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><Users size={20} /><span className="font-medium">Indicações</span></button>
           <button onClick={() => { setView('marketing'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'marketing' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><Megaphone size={20} /><span className="font-medium">Avisos</span></button>
+          <button onClick={() => { setView('products'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'products' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><Package size={20} /><span className="font-medium">Produtos</span></button>
           <button onClick={() => { setView('settings'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'settings' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><Settings size={20} /><span className="font-medium">Configurações</span></button>
         </nav>
         <div className="p-4 border-t border-gray-200 dark:border-white/10">
@@ -3944,6 +4327,7 @@ function CRM({ user }: { user: User }) {
             {view === 'settings' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Configurações</h2>}
             {view === 'referrals' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Programa de Indicações</h2>}
             {view === 'marketing' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Avisos</h2>}
+            {view === 'products' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Produtos</h2>}
           </div>
           <div className="flex items-center gap-3">
             {view === 'dashboard' && (
@@ -3991,6 +4375,7 @@ function CRM({ user }: { user: User }) {
             view === 'finance' ? renderFinance() :
             view === 'referrals' ? <ReferralsView clients={clients} user={user} /> :
             view === 'marketing' ? renderMarketing() :
+            view === 'products' ? renderProducts() :
             view === 'settings' ? renderSettings() :
             renderSupport()
           )
@@ -4005,6 +4390,14 @@ function CRM({ user }: { user: User }) {
         initialData={editingClient} 
         onboardingQuestions={onboardingQuestions}
         user={user}
+        offers={offers}
+      />
+      <OfferModal
+        isOpen={isOfferModalOpen}
+        onClose={() => setIsOfferModalOpen(false)}
+        onSave={handleSaveOffer}
+        onDelete={handleDeleteOffer}
+        initialData={editingOffer}
       />
       {sidebarOpen && <div className="fixed inset-0 bg-black/60 z-20 md:hidden backdrop-blur-md" onClick={() => setSidebarOpen(false)}></div>}
     </div>

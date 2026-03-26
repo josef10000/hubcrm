@@ -31,6 +31,7 @@ export default function ClientPortal() {
 
   const [globalAnnouncement, setGlobalAnnouncement] = useState<{title: string, message: string, type: string, isActive: boolean} | null>(null);
   const [services, setServices] = useState<any[]>([]);
+  const [offers, setOffers] = useState<any[]>([]);
 
   const faqData = [
     {
@@ -161,6 +162,19 @@ export default function ClientPortal() {
       setServices(loadedServices.sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0)));
     });
 
+    // Fetch Offers
+    const offersRef = collection(db, 'users', userId, 'offers');
+    const unsubscribeOffers = onSnapshot(offersRef, (snapshot) => {
+      const loadedOffers: any[] = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.active) {
+          loadedOffers.push({ id: doc.id, ...data });
+        }
+      });
+      setOffers(loadedOffers);
+    });
+
     // Fetch Client Data
     const docRef = doc(db, 'users', userId, 'clients', clientId);
     const unsubscribeClient = onSnapshot(docRef, async (docSnap) => {
@@ -237,6 +251,7 @@ export default function ClientPortal() {
       unsubscribeClient();
       unsubscribeGlobal();
       unsubscribeServices();
+      unsubscribeOffers();
     };
   }, [userId, clientId]);
 
@@ -803,183 +818,156 @@ export default function ClientPortal() {
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Essencial */}
-            <div className={`p-8 rounded-[2rem] border flex flex-col h-full transition-all duration-500 relative group/card ${client.plan === 'Essencial' ? 'bg-emerald-500/10 border-emerald-500/30 ring-1 ring-emerald-500/50 shadow-xl shadow-emerald-500/10' : 'bg-white/[0.02] border-white/5 hover:border-white/20 hover:bg-white/[0.04]'}`}>
-              <div className="mb-6">
-                <h3 className="text-2xl font-bold text-white mb-2">Ecossistema Essencial</h3>
-                <p className="text-xs text-gray-400 leading-relaxed">Ideal para negócios locais e prestadores de serviço que precisam de posicionamento profissional rápido.</p>
-              </div>
-              
-              <div className="space-y-4 mb-8">
-                <div className="p-4 rounded-2xl bg-black/20 border border-white/5 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Setup</span>
-                    <div className="text-right">
-                      <span className="text-sm font-bold text-white">R$ {getSetupPrice('Essencial').toLocaleString('pt-BR')}</span>
-                    </div>
+            {offers.map((offer) => {
+              const isCurrentPlan = client.offerId === offer.id || client.plan === offer.name;
+              return (
+                <div 
+                  key={offer.id}
+                  className={`p-8 rounded-[2rem] border flex flex-col h-full transition-all duration-500 relative group/card ${
+                    isCurrentPlan 
+                      ? 'bg-emerald-500/10 border-emerald-500/30 ring-1 ring-emerald-500/50 shadow-xl shadow-emerald-500/10' 
+                      : 'bg-white/[0.02] border-white/5 hover:border-white/20 hover:bg-white/[0.04]'
+                  }`}
+                >
+                  <div className="mb-6">
+                    <h3 className="text-2xl font-bold text-white mb-2">{offer.name}</h3>
+                    <p className="text-xs text-gray-400 leading-relaxed">
+                      {offer.type === 'SUBSCRIPTION' ? 'Plano de assinatura recorrente.' : 'Pagamento único para o seu projeto.'}
+                    </p>
                   </div>
-                  <div className="h-px bg-white/5 w-full"></div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Mensal</span>
-                    <div className="text-right">
-                      <div className="flex items-baseline justify-end gap-1">
-                        <span className="text-xl font-bold text-white">R$ {getPlanPrice('Essencial', 'MONTHLY').toLocaleString('pt-BR')}</span>
-                        <span className="text-gray-500 text-[10px]">/mês</span>
+                  
+                  <div className="space-y-4 mb-8">
+                    <div className="p-4 rounded-2xl bg-black/20 border border-white/5 space-y-3">
+                      {offer.setupPrice > 0 && (
+                        <>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Setup</span>
+                            <div className="text-right">
+                              <span className="text-sm font-bold text-white">R$ {offer.setupPrice.toLocaleString('pt-BR')}</span>
+                            </div>
+                          </div>
+                          <div className="h-px bg-white/5 w-full"></div>
+                        </>
+                      )}
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">
+                          {offer.type === 'SUBSCRIPTION' ? 'Mensal' : 'Total'}
+                        </span>
+                        <div className="text-right">
+                          <div className="flex items-baseline justify-end gap-1">
+                            <span className="text-xl font-bold text-white">R$ {(offer.price || 0).toLocaleString('pt-BR')}</span>
+                            {offer.type === 'SUBSCRIPTION' && <span className="text-gray-500 text-[10px]">/mês</span>}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <div className="h-px bg-white/5 w-full"></div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Anual</span>
-                    <div className="text-right">
-                      <div className="flex items-baseline justify-end gap-1">
-                        <span className="text-xl font-bold text-white">R$ {getPlanPrice('Essencial', 'YEARLY').toLocaleString('pt-BR')}</span>
-                        <span className="text-gray-500 text-[10px]">/ano</span>
-                      </div>
+
+                  <ul className="space-y-4 mb-8 flex-1">
+                    {offer.description?.split('\n').map((feature: string, i: number) => (
+                      <li key={i} className="flex items-start gap-3 text-xs text-gray-300 group-hover/card:text-white transition-colors">
+                        <div className="p-0.5 rounded-full bg-emerald-500/20 mt-0.5">
+                          <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                        </div>
+                        {feature}
+                      </li>
+                    )) || (
+                      <li className="flex items-start gap-3 text-xs text-gray-300 italic opacity-50">
+                        Consulte detalhes com nosso suporte.
+                      </li>
+                    )}
+                  </ul>
+
+                  {isCurrentPlan ? (
+                    <div className="w-full py-4 text-center rounded-2xl bg-emerald-500/10 text-emerald-400 font-bold text-sm border border-emerald-500/20 backdrop-blur-sm">
+                      Seu Plano Ativo
                     </div>
-                  </div>
-                  <div className="p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20 mt-2">
+                  ) : (
+                    <button 
+                      onClick={() => {
+                        setRequestCategory('Upgrade de Plano');
+                        setRequestMessage(`Olá! Gostaria de migrar para o plano: ${offer.name}`);
+                        document.getElementById('suporte')?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      className="w-full py-4 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold text-sm transition-all border border-white/10 hover:border-white/20 active:scale-[0.98]"
+                    >
+                      Solicitar Upgrade
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Personalizado (Show if active or if custom prices are set) */}
+            {(client.plan === 'Personalizado' || client.customMonthlyPrice !== undefined || client.customSetupPrice !== undefined) && (
+              <div className={`p-8 rounded-[2rem] border flex flex-col h-full transition-all duration-500 relative group/card ${client.plan === 'Personalizado' ? 'bg-primary-500/10 border-primary-500/30 ring-1 ring-primary-500/50 shadow-xl shadow-primary-500/10' : 'bg-white/[0.02] border-white/10 hover:border-white/20'}`}>
+                <div className="mb-6">
+                  <h3 className="text-2xl font-bold text-white mb-2">Plano sob consulta</h3>
+                  <p className="text-xs text-gray-400 leading-relaxed">Plano com condições especiais negociadas diretamente com nossa equipe. Ideal para agências ou projetos complexos.</p>
+                </div>
+                
+                <div className="space-y-4 mb-8">
+                  <div className="p-4 rounded-2xl bg-black/20 border border-white/5 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] text-emerald-400 uppercase font-bold tracking-wider">Combo Anual</span>
+                      <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Setup</span>
+                      <div className="text-right">
+                        <span className="text-sm font-bold text-white">Sob Consulta</span>
+                      </div>
+                    </div>
+                    <div className="h-px bg-white/5 w-full"></div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Mensal</span>
                       <div className="text-right">
                         <div className="flex items-baseline justify-end gap-1">
-                          <span className="text-xl font-bold text-emerald-400">R$ {getPlanPrice('Essencial', 'YEARLY').toLocaleString('pt-BR')}</span>
+                          <span className="text-xl font-bold text-white">Sob Consulta</span>
                         </div>
-                        <p className="text-[9px] text-emerald-500/70 font-medium">Desconto de 3 meses</p>
+                      </div>
+                    </div>
+                    <div className="h-px bg-white/5 w-full"></div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Anual</span>
+                      <div className="text-right">
+                        <div className="flex items-baseline justify-end gap-1">
+                          <span className="text-xl font-bold text-white">Sob Consulta</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <ul className="space-y-4 mb-8 flex-1">
-                {[
-                  'Design focado em conversão',
-                  'Otimização para mobile',
-                  'Hospedagem e segurança inclusas',
-                  'Suporte técnico mensal'
-                ].map((f, i) => (
-                  <li key={i} className="flex items-start gap-3 text-xs text-gray-300 group-hover/card:text-white transition-colors">
+                <ul className="space-y-4 mb-8 flex-1">
+                  <li className="flex items-start gap-3 text-xs text-gray-300">
                     <div className="p-0.5 rounded-full bg-emerald-500/20 mt-0.5">
                       <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                     </div>
-                    {f}
+                    Recursos personalizados conforme contrato
                   </li>
-                ))}
-              </ul>
-
-              {client.plan === 'Essencial' ? (
-                <div className="w-full py-4 text-center rounded-2xl bg-emerald-500/10 text-emerald-400 font-bold text-sm border border-emerald-500/20 backdrop-blur-sm">
-                  Seu Plano Ativo
-                </div>
-              ) : (
-                <button 
-                  onClick={() => {
-                    setRequestCategory('Solicitação de Alteração');
-                    setRequestMessage('Olá! Gostaria de migrar para o plano Ecossistema Essencial.');
-                    document.getElementById('support-form')?.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                  className="w-full py-4 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold text-sm transition-all border border-white/10 hover:border-white/20 active:scale-[0.98]"
-                >
-                  Quero o Plano Essencial
-                </button>
-              )}
-            </div>
-
-            {/* Profissional */}
-            <div className={`p-8 rounded-[2rem] border flex flex-col h-full transition-all duration-500 relative group/card ${client.plan === 'Profissional' ? 'bg-primary-500/10 border-primary-500/30 ring-1 ring-primary-500/50 shadow-xl shadow-primary-500/10' : 'bg-white/[0.02] border-white/5 hover:border-white/20 hover:bg-white/[0.04]'}`}>
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-gradient-to-r from-primary-600 to-primary-400 text-white text-[10px] font-black rounded-full uppercase tracking-[0.2em] shadow-lg shadow-primary-500/40 z-10">
-                Mais Popular
-              </div>
-              
-              <div className="mb-6">
-                <h3 className="text-2xl font-bold text-white mb-2">Profissional</h3>
-                <p className="text-xs text-gray-400 leading-relaxed">Indicado para empresas que querem transmitir mais autoridade, melhorar sua apresentação online e gerar contatos mais qualificados.</p>
-              </div>
-              
-              <div className="space-y-4 mb-8">
-                <div className="p-4 rounded-2xl bg-black/20 border border-white/5 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Setup</span>
-                    <div className="text-right">
-                      <span className="text-sm font-bold text-white">R$ {getSetupPrice('Profissional').toLocaleString('pt-BR')}</span>
-                    </div>
-                  </div>
-                  <div className="h-px bg-white/5 w-full"></div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Mensal</span>
-                    <div className="text-right">
-                      <div className="flex items-baseline justify-end gap-1">
-                        <span className="text-xl font-bold text-white">R$ {getPlanPrice('Profissional', 'MONTHLY').toLocaleString('pt-BR')}</span>
-                        <span className="text-gray-500 text-[10px]">/mês</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="h-px bg-white/5 w-full"></div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Anual</span>
-                    <div className="text-right">
-                      <div className="flex items-baseline justify-end gap-1">
-                        <span className="text-xl font-bold text-white">R$ {getPlanPrice('Profissional', 'YEARLY').toLocaleString('pt-BR')}</span>
-                        <span className="text-gray-500 text-[10px]">/ano</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-3 bg-primary-500/10 rounded-xl border border-primary-500/20 mt-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] text-primary-400 uppercase font-bold tracking-wider">Combo Anual</span>
-                      <div className="text-right">
-                        <div className="flex items-baseline justify-end gap-1">
-                          <span className="text-xl font-bold text-primary-400">R$ {getPlanPrice('Profissional', 'YEARLY').toLocaleString('pt-BR')}</span>
-                        </div>
-                        <p className="text-[9px] text-primary-500/70 font-medium">Desconto de 3 meses</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <ul className="space-y-4 mb-8 flex-1">
-                <li className="flex items-start gap-3 text-xs text-primary-400 font-bold uppercase tracking-wider">
-                  <div className="p-0.5 rounded-full bg-primary-500/20">
-                    <CheckCircle className="w-3.5 h-3.5 text-primary-400 shrink-0" />
-                  </div>
-                  Tudo do Ecossistema Essencial, mais:
-                </li>
-                {[
-                  'Site Multi-páginas Estruturado',
-                  'Copywriting persuasivo (Agro)',
-                  'Formulários de cotação',
-                  'Domínio Oficial (.com.br)',
-                  'Otimização de SEO Local',
-                  'Atendimento prioritário'
-                ].map((f, i) => (
-                  <li key={i} className="flex items-start gap-3 text-xs text-gray-300 group-hover/card:text-white transition-colors">
+                  <li className="flex items-start gap-3 text-xs text-gray-300">
                     <div className="p-0.5 rounded-full bg-emerald-500/20 mt-0.5">
                       <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                     </div>
-                    {f}
+                    Suporte prioritário dedicado
                   </li>
-                ))}
-              </ul>
+                </ul>
 
-              {client.plan === 'Profissional' ? (
-                <div className="w-full py-4 text-center rounded-2xl bg-emerald-500/10 text-emerald-400 font-bold text-sm border border-emerald-500/20 backdrop-blur-sm">
-                  Seu Plano Ativo
-                </div>
-              ) : (
-                <button 
-                  onClick={() => {
-                    setRequestCategory('Solicitação de Alteração');
-                    setRequestMessage('Olá! Gostaria de migrar para o plano Profissional.');
-                    document.getElementById('support-form')?.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white font-bold text-sm transition-all shadow-xl shadow-primary-500/20 hover:shadow-primary-500/40 active:scale-[0.98]"
-                >
-                  Selecionar Profissional
-                </button>
-              )}
-            </div>
+                {client.plan === 'Personalizado' ? (
+                  <div className="w-full py-4 text-center rounded-2xl bg-emerald-500/10 text-emerald-400 font-bold text-sm border border-emerald-500/20 backdrop-blur-sm">
+                    Seu Plano Ativo
+                  </div>
+                ) : (
+                  <button 
+                    onClick={() => {
+                      setRequestCategory('Solicitação de Alteração');
+                      setRequestMessage('Olá! Gostaria de saber mais sobre o Plano sob consulta.');
+                      document.getElementById('support-form')?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="w-full py-4 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold text-sm transition-all border border-white/10"
+                  >
+                    Entrar em Contato
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

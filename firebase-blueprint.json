@@ -55,12 +55,32 @@
         "date": { "type": "number" }
       },
       "required": ["id", "description", "amount", "category", "date"]
+    },
+    "Offer": {
+      "title": "Offer",
+      "description": "Product or service offer",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["SUBSCRIPTION", "SINGLE"] },
+        "price": { "type": "number" },
+        "setupPrice": { "type": "number" },
+        "maxInstallments": { "type": "number" },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["id", "name", "type", "price", "active", "createdAt"]
     }
   },
   "firestore": {
     "/users/{userId}": {
       "schema": "User",
       "description": "User profile document"
+    },
+    "/users/{userId}/offers/{offerId}": {
+      "schema": "Offer",
+      "description": "Offers managed by the user"
     },
     "/users/{userId}/clients/{clientId}": {
       "schema": "Client",

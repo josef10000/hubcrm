@@ -9,9 +9,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { name, cpfCnpj, email, phone, mobilePhone } = req.body;
     
+    if (!name || name.length < 3) {
+      return res.status(400).json({ error: 'O nome deve ter pelo menos 3 caracteres' });
+    }
+
+    // First, try to find an existing customer with this CPF/CNPJ
+    if (cpfCnpj) {
+      const cleanCpfCnpj = cpfCnpj.replace(/\D/g, '');
+      if (cleanCpfCnpj.length === 11 || cleanCpfCnpj.length === 14) {
+        try {
+          const existingCustomers = await asaasRequest(`/customers?cpfCnpj=${cleanCpfCnpj}`, "GET");
+          if (existingCustomers.data && existingCustomers.data.length > 0) {
+            // Customer already exists, return the first one
+            return res.status(200).json(existingCustomers.data[0]);
+          }
+        } catch (e) {
+          console.error("Error checking existing customer:", e);
+          // Continue to try creating if check fails
+        }
+      }
+    }
+
     const payload: any = {
       name,
-      cpfCnpj,
+      cpfCnpj: cpfCnpj ? cpfCnpj.replace(/\D/g, '') : undefined,
       email,
     };
     
@@ -21,6 +42,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const data = await asaasRequest("/customers", "POST", payload);
     return res.status(200).json(data);
   } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    console.error("Asaas Customer API Error:", error);
+    const status = error.status || 500;
+    return res.status(status).json({ 
+      error: error.message || 'Erro interno ao processar cliente no Asaas' 
+    });
   }
 }
