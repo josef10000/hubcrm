@@ -65,15 +65,17 @@ export default function MonitoringView({ clients }: { clients: Client[] }) {
         }),
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        throw new Error('Falha ao criar monitor');
+        throw new Error(data.error || 'Falha ao criar monitor');
       }
       
       toast.success(`Monitoramento ativado para ${client.name}`);
       await fetchMonitors();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error('Erro ao criar monitoramento');
+      toast.error(`Erro: ${error.message}`);
     } finally {
       setSyncing(false);
     }
