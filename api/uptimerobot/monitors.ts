@@ -4,9 +4,8 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export default async function handler(req: Request, res: Response) {
-  // Tenta pegar a chave das variáveis de ambiente (Secrets do AI Studio)
-  // Se não encontrar, usa a chave que você forneceu no chat como fallback
-  const apiKey = process.env.UPTIMEROBOT_API_KEY || 'u3398071-c2c9b600a697ee37dc357e18';
+  // Puxa a chave diretamente das variáveis de ambiente (Vercel, AI Studio, etc)
+  const apiKey = process.env.UPTIMEROBOT_API_KEY;
   console.log('API Key loaded:', apiKey ? 'Yes' : 'No');
 
   if (!apiKey) {
