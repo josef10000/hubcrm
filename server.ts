@@ -1,12 +1,15 @@
-import 'dotenv/config';
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import dotenv from 'dotenv';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Load .env file explicitly
+dotenv.config({ path: path.resolve(__dirname, '.env.local') });
 
 async function startServer() {
   const app = express();

@@ -4,7 +4,10 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export default async function handler(req: Request, res: Response) {
-  const apiKey = process.env.UPTIMEROBOT_API_KEY;
+  // Tenta pegar a chave das variáveis de ambiente (Secrets do AI Studio)
+  // Se não encontrar, usa a chave que você forneceu no chat como fallback
+  const apiKey = process.env.UPTIMEROBOT_API_KEY || 'u3398071-c2c9b600a697ee37dc357e18';
+  console.log('API Key loaded:', apiKey ? 'Yes' : 'No');
 
   if (!apiKey) {
     return res.status(500).json({ error: 'UPTIMEROBOT_API_KEY is not configured in environment variables.' });
