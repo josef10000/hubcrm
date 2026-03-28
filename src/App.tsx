@@ -12,6 +12,7 @@ import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { collection, doc, setDoc, onSnapshot, deleteDoc, updateDoc, query, where, getDocs, addDoc } from 'firebase/firestore';
 import Auth from './components/Auth';
 import CalendarView from './components/CalendarView';
+import MonitoringView from './components/MonitoringView';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -1755,7 +1756,7 @@ function CRM({ user }: { user: User }) {
       setIsSyncing(false);
     }
   };
-  const [view, setView] = useState<'dashboard' | 'analytics' | 'support' | 'finance' | 'settings' | 'calendar' | 'referrals' | 'marketing' | 'products'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'analytics' | 'support' | 'finance' | 'settings' | 'calendar' | 'referrals' | 'marketing' | 'products' | 'monitoring'>('dashboard');
   const [dashboardMode, setDashboardMode] = useState<'list' | 'kanban'>('list');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
@@ -4419,6 +4420,7 @@ function CRM({ user }: { user: User }) {
           <button onClick={() => { setView('referrals'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'referrals' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><Users size={20} /><span className="font-medium">Indicações</span></button>
           <button onClick={() => { setView('marketing'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'marketing' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><Megaphone size={20} /><span className="font-medium">Avisos</span></button>
           <button onClick={() => { setView('products'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'products' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><Package size={20} /><span className="font-medium">Produtos</span></button>
+          <button onClick={() => { setView('monitoring'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'monitoring' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><Globe size={20} /><span className="font-medium">Monitoramento</span></button>
           <button onClick={() => { setView('settings'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'settings' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><Settings size={20} /><span className="font-medium">Configurações</span></button>
         </nav>
         <div className="p-4 border-t border-gray-200 dark:border-white/10">
@@ -4454,6 +4456,7 @@ function CRM({ user }: { user: User }) {
             {view === 'referrals' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Programa de Indicações</h2>}
             {view === 'marketing' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Avisos</h2>}
             {view === 'products' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Produtos</h2>}
+            {view === 'monitoring' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Monitoramento de Sites</h2>}
           </div>
           <div className="flex items-center gap-3">
             {view === 'dashboard' && (
@@ -4502,6 +4505,7 @@ function CRM({ user }: { user: User }) {
             view === 'referrals' ? <ReferralsView clients={clients} user={user} /> :
             view === 'marketing' ? renderMarketing() :
             view === 'products' ? renderProducts() :
+            view === 'monitoring' ? <MonitoringView clients={clients} /> :
             view === 'settings' ? renderSettings() :
             renderSupport()
           )
