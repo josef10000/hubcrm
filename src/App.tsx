@@ -2444,6 +2444,29 @@ function CRM({ user }: { user: User }) {
       }
     }
 
+    // Delete UptimeRobot monitor if exists
+    if (clientToDelete?.siteLink) {
+      try {
+        const monitorsRes = await fetch('/api/uptimerobot/monitors');
+        if (monitorsRes.ok) {
+          const monitors = await monitorsRes.json();
+          const clientUrl = clientToDelete.siteLink.replace(/^https?:\/\//, '').replace(/\/$/, '');
+          const monitorToDelete = monitors.find((m: any) => m.url.includes(clientUrl));
+          
+          if (monitorToDelete) {
+            await fetch('/api/uptimerobot/monitors', {
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: monitorToDelete.id })
+            });
+            console.log("Monitor deleted from UptimeRobot");
+          }
+        }
+      } catch (e) {
+        console.error("Error deleting monitor from UptimeRobot", e);
+      }
+    }
+
     setEditingClient(null);
     try {
       await deleteDoc(doc(db, 'users', user.uid, 'clients', clientId));
