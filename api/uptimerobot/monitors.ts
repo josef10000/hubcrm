@@ -1,4 +1,7 @@
 import { Request, Response } from 'express';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 export default async function handler(req: Request, res: Response) {
   const apiKey = process.env.UPTIMEROBOT_API_KEY;
