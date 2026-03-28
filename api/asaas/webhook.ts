@@ -7,14 +7,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Validate Asaas Webhook Token if configured
+    // Validate Asaas Webhook Token (MANDATORY)
     const webhookToken = process.env.ASAAS_WEBHOOK_TOKEN;
-    if (webhookToken) {
-      const receivedToken = req.headers['asaas-access-token'];
-      if (receivedToken !== webhookToken) {
-        console.error('Invalid webhook token received');
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
+    if (!webhookToken) {
+      console.error('CRITICAL: ASAAS_WEBHOOK_TOKEN is not configured — rejecting all webhooks');
+      return res.status(500).json({ error: 'Webhook not configured' });
+    }
+    const receivedToken = req.headers['asaas-access-token'];
+    if (receivedToken !== webhookToken) {
+      console.error('Invalid webhook token received');
+      return res.status(401).json({ error: 'Unauthorized' });
     }
 
     // Ensure body is parsed
@@ -98,6 +100,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ received: true });
   } catch (error: any) {
     console.error('Webhook Error:', error);
-    return res.status(200).json({ received: true, error: error.message });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 }

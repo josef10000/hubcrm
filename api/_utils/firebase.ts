@@ -11,8 +11,7 @@ function initializeFirebase() {
   try {
     const serviceAccountStr = process.env.FIREBASE_SERVICE_ACCOUNT;
     if (!serviceAccountStr) {
-      console.warn('FIREBASE_SERVICE_ACCOUNT environment variable is missing.');
-      return;
+      throw new Error('CRITICAL: FIREBASE_SERVICE_ACCOUNT environment variable is missing. Server cannot start without Firebase credentials.');
     }
 
     let serviceAccount;

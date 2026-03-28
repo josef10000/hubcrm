@@ -114,6 +114,6 @@ export default async function handler(req: Request, res: Response) {
     }
   } catch (error: any) {
     console.error('UptimeRobot API Error:', error);
-    return res.status(500).json({ error: error.message || 'Internal Server Error' });
+    return res.status(500).json({ error: 'Erro interno ao acessar UptimeRobot' });
   }
 }
