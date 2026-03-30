@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   format, 
   addMonths, 
@@ -9,7 +9,7 @@ import {
   isToday
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, DollarSign, Package, Calendar as CalendarIcon, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, DollarSign, Package, Calendar as CalendarIcon, X, AlertTriangle } from 'lucide-react';
 import { getPlanPrice } from '../App';
 import { Client } from '../App';
 
@@ -20,10 +20,28 @@ interface CalendarViewProps {
 
 type CalendarMode = 'finance' | 'production';
 
+interface Holiday {
+  date: string;
+  name: string;
+  type: string;
+}
+
 export default function CalendarView({ clients, onClientClick }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [mode, setMode] = useState<CalendarMode>('finance');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [holidays, setHolidays] = useState<Holiday[]>([]);
+
+  // Fetch holidays from BrasilAPI when year changes
+  useEffect(() => {
+    const year = currentDate.getFullYear();
+    fetch(`https://brasilapi.com.br/api/feriados/v1/${year}`)
+      .then(r => r.json())
+      .then((data: Holiday[]) => {
+        if (Array.isArray(data)) setHolidays(data);
+      })
+      .catch(() => setHolidays([]));
+  }, [currentDate.getFullYear()]);
 
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
@@ -42,6 +60,11 @@ export default function CalendarView({ clients, onClientClick }: CalendarViewPro
         return client.deliveryDate === dayString;
       }
     });
+  };
+
+  const getHolidayForDay = (day: Date): Holiday | undefined => {
+    const dayStr = format(day, 'yyyy-MM-dd');
+    return holidays.find(h => h.date === dayStr);
   };
 
   const renderDaySummary = (day: Date, dayEvents: Client[]) => {
@@ -68,6 +91,12 @@ export default function CalendarView({ clients, onClientClick }: CalendarViewPro
           <div className="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mt-0.5">
             <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${percentage}%` }} />
           </div>
+          {getHolidayForDay(day) && (
+            <div className="flex items-center gap-1 mt-1 text-[10px] text-amber-600 dark:text-amber-400 font-medium">
+              <AlertTriangle size={10} />
+              <span>Feriado!</span>
+            </div>
+          )}
         </div>
       );
     } else {
@@ -207,6 +236,14 @@ export default function CalendarView({ clients, onClientClick }: CalendarViewPro
                   }`}>
                     {format(day, 'd')}
                   </span>
+                  {(() => {
+                    const holiday = getHolidayForDay(day);
+                    return holiday ? (
+                      <span className="text-[9px] font-bold text-red-500 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded-md truncate max-w-[90px]" title={holiday.name}>
+                        🏖️ {holiday.name}
+                      </span>
+                    ) : null;
+                  })()}
                 </div>
                 
                 <div className="flex-1 flex flex-col justify-center">

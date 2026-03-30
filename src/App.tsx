@@ -4,7 +4,7 @@ import {
   MapPin, Phone, Tag, Menu, Building2, FileText, Briefcase, AlignLeft,
   Search, BarChart3, Calendar, Paperclip, Copy, MessageCircle, Trash2, Snowflake, LogOut, Globe, Image as ImageIcon, Sparkles, Wand2, Star, Zap,
   Filter, ArrowDownAZ, ArrowUpRight, RefreshCw, Download, Link as LinkIcon, AlertTriangle, TrendingDown, TrendingUp, Settings, MessageSquare,
-  Megaphone, Pin, ShoppingCart, Eye, EyeOff, Package, Edit2
+  Megaphone, Pin, ShoppingCart, Eye, EyeOff, Package, Edit2, Map as MapIcon, Loader2
 } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, CartesianGrid } from 'recharts';
 import { auth, db, isFirebaseConfigured } from './lib/firebase';
@@ -13,6 +13,7 @@ import { collection, doc, setDoc, onSnapshot, deleteDoc, updateDoc, query, where
 import Auth from './components/Auth';
 import CalendarView from './components/CalendarView';
 import MonitoringView from './components/MonitoringView';
+import ClientMapView from './components/ClientMapView';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -115,6 +116,11 @@ export interface Client {
   leadSource?: 'Indicação' | 'Google Ads' | 'Tráfego Orgânico' | 'Prospecção Manual' | 'Instagram' | 'WhatsApp Direto' | 'Parceiro';
   customMonthlyPrice?: number;
   customSetupPrice?: number;
+  cep?: string;
+  endereco?: string;
+  bairro?: string;
+  cidade?: string;
+  estado?: string;
 }
 
 export interface OnboardingQuestion {
@@ -438,6 +444,8 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [activeTab, setActiveTab] = useState<'details' | 'history' | 'stages' | 'credentials' | 'onboarding'>('details');
+  const [cepLoading, setCepLoading] = useState(false);
+  const [cpfCnpjStatus, setCpfCnpjStatus] = useState<'idle' | 'valid' | 'invalid' | 'loading'>('idle');
   const [newLogText, setNewLogText] = useState('');
   const [credentials, setCredentials] = useState<ClientCredential[]>([]);
   const [newCredential, setNewCredential] = useState<Partial<ClientCredential>>({});
@@ -580,6 +588,67 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
     onSave({ ...formData, status: 'Cancelado' });
   };
 
+  // --- ViaCEP auto-fill ---
+  const fetchCep = async (cep: string) => {
+    const digits = cep.replace(/\D/g, '');
+    if (digits.length !== 8) return;
+    setCepLoading(true);
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
+      const data = await res.json();
+      if (!data.erro) {
+        setFormData(prev => ({
+          ...prev,
+          endereco: data.logradouro || prev.endereco || '',
+          bairro: data.bairro || prev.bairro || '',
+          cidade: data.localidade || prev.cidade || '',
+          estado: data.uf || prev.estado || '',
+        }));
+        toast.success('Endereço preenchido automaticamente!');
+      } else {
+        toast.error('CEP não encontrado.');
+      }
+    } catch { toast.error('Erro ao buscar CEP.'); }
+    finally { setCepLoading(false); }
+  };
+
+  // --- CPF/CNPJ validation ---
+  const validateCpf = (cpf: string): boolean => {
+    const d = cpf.replace(/\D/g, '');
+    if (d.length !== 11 || /^(\d)\1+$/.test(d)) return false;
+    let sum = 0;
+    for (let i = 0; i < 9; i++) sum += parseInt(d[i]) * (10 - i);
+    let check = 11 - (sum % 11);
+    if (check >= 10) check = 0;
+    if (parseInt(d[9]) !== check) return false;
+    sum = 0;
+    for (let i = 0; i < 10; i++) sum += parseInt(d[i]) * (11 - i);
+    check = 11 - (sum % 11);
+    if (check >= 10) check = 0;
+    return parseInt(d[10]) === check;
+  };
+
+  const handleCpfCnpjBlur = async () => {
+    const raw = (formData.cpfCnpj || '').replace(/\D/g, '');
+    if (!raw) { setCpfCnpjStatus('idle'); return; }
+    if (raw.length === 11) {
+      setCpfCnpjStatus(validateCpf(raw) ? 'valid' : 'invalid');
+    } else if (raw.length === 14) {
+      setCpfCnpjStatus('loading');
+      try {
+        const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${raw}`);
+        if (res.ok) {
+          const data = await res.json();
+          setCpfCnpjStatus('valid');
+          if (data.razao_social && !formData.name) {
+            setFormData(prev => ({ ...prev, name: data.razao_social }));
+            toast.success(`Razão social preenchida: ${data.razao_social}`);
+          }
+        } else { setCpfCnpjStatus('invalid'); }
+      } catch { setCpfCnpjStatus('invalid'); }
+    } else { setCpfCnpjStatus('invalid'); }
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
@@ -590,6 +659,27 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
       if (v.length > 2) v = `(${v.substring(0, 2)}) ${v.substring(2)}`;
       if (v.length > 10) v = `${v.substring(0, 10)}-${v.substring(10)}`;
       setFormData(prev => ({ ...prev, [name]: v }));
+    } else if (name === 'cpfCnpj') {
+      // Auto-format CPF: 999.999.999-99 or CNPJ: 99.999.999/9999-99
+      let v = value.replace(/\D/g, '');
+      if (v.length <= 11) {
+        if (v.length > 9) v = v.substring(0, 3) + '.' + v.substring(3, 6) + '.' + v.substring(6, 9) + '-' + v.substring(9, 11);
+        else if (v.length > 6) v = v.substring(0, 3) + '.' + v.substring(3, 6) + '.' + v.substring(6);
+        else if (v.length > 3) v = v.substring(0, 3) + '.' + v.substring(3);
+      } else {
+        v = v.substring(0, 14);
+        v = v.substring(0, 2) + '.' + v.substring(2, 5) + '.' + v.substring(5, 8) + '/' + v.substring(8, 12) + '-' + v.substring(12);
+      }
+      setFormData(prev => ({ ...prev, [name]: v }));
+      setCpfCnpjStatus('idle');
+    } else if (name === 'cep') {
+      // Auto-format CEP: 99999-999
+      let v = value.replace(/\D/g, '');
+      if (v.length > 8) v = v.substring(0, 8);
+      if (v.length > 5) v = v.substring(0, 5) + '-' + v.substring(5);
+      setFormData(prev => ({ ...prev, [name]: v }));
+      // Auto-fetch when 8 digits
+      if (v.replace(/\D/g, '').length === 8) fetchCep(v);
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -671,12 +761,44 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
 
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">CPF/CNPJ *</label>
-                    <input required type="text" name="cpfCnpj" value={formData.cpfCnpj || ''} onChange={handleChange} placeholder="Apenas números" className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
+                    <div className="relative">
+                      <input required type="text" name="cpfCnpj" value={formData.cpfCnpj || ''} onChange={handleChange} onBlur={handleCpfCnpjBlur} placeholder="999.999.999-99" className={`w-full px-4 py-3 pr-10 bg-black/20 border text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500 ${cpfCnpjStatus === 'valid' ? 'border-emerald-500' : cpfCnpjStatus === 'invalid' ? 'border-red-500' : 'border-gray-200 dark:border-white/10'}`} />
+                      {cpfCnpjStatus === 'loading' && <Loader2 size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 animate-spin" />}
+                      {cpfCnpjStatus === 'valid' && <CheckCircle size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500" />}
+                      {cpfCnpjStatus === 'invalid' && <X size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500" />}
+                    </div>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">E-mail *</label>
                     <input required type="email" name="email" value={formData.email || ''} onChange={handleChange} placeholder="cliente@email.com" className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
+                  </div>
+
+                  {/* --- Endereço (ViaCEP) --- */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">CEP</label>
+                    <div className="relative">
+                      <input type="text" name="cep" value={formData.cep || ''} onChange={handleChange} placeholder="00000-000" className="w-full px-4 py-3 pr-10 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
+                      {cepLoading && <Loader2 size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-primary-400 animate-spin" />}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Endereço</label>
+                    <input type="text" name="endereco" value={formData.endereco || ''} onChange={handleChange} placeholder="Rua, Avenida..." className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Bairro</label>
+                      <input type="text" name="bairro" value={formData.bairro || ''} onChange={handleChange} placeholder="Bairro" className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Cidade</label>
+                      <input type="text" name="cidade" value={formData.cidade || ''} onChange={handleChange} placeholder="Cidade" className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">UF</label>
+                      <input type="text" name="estado" value={formData.estado || ''} onChange={handleChange} placeholder="UF" maxLength={2} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
+                    </div>
                   </div>
 
                   <div>
@@ -1756,7 +1878,7 @@ function CRM({ user }: { user: User }) {
       setIsSyncing(false);
     }
   };
-  const [view, setView] = useState<'dashboard' | 'analytics' | 'support' | 'finance' | 'settings' | 'calendar' | 'referrals' | 'marketing' | 'products' | 'monitoring'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'analytics' | 'support' | 'finance' | 'settings' | 'calendar' | 'referrals' | 'marketing' | 'products' | 'monitoring' | 'map'>('dashboard');
   const [dashboardMode, setDashboardMode] = useState<'list' | 'kanban'>('list');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
@@ -4444,6 +4566,7 @@ function CRM({ user }: { user: User }) {
           <button onClick={() => { setView('marketing'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'marketing' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><Megaphone size={20} /><span className="font-medium">Avisos</span></button>
           <button onClick={() => { setView('products'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'products' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><Package size={20} /><span className="font-medium">Produtos</span></button>
           <button onClick={() => { setView('monitoring'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'monitoring' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><Globe size={20} /><span className="font-medium">Monitoramento</span></button>
+          <button onClick={() => { setView('map'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'map' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><MapIcon size={20} /><span className="font-medium">Mapa</span></button>
           <button onClick={() => { setView('settings'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'settings' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><Settings size={20} /><span className="font-medium">Configurações</span></button>
         </nav>
         <div className="p-4 border-t border-gray-200 dark:border-white/10">
@@ -4480,6 +4603,7 @@ function CRM({ user }: { user: User }) {
             {view === 'marketing' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Avisos</h2>}
             {view === 'products' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Produtos</h2>}
             {view === 'monitoring' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Monitoramento de Sites</h2>}
+            {view === 'map' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Mapa de Clientes</h2>}
           </div>
           <div className="flex items-center gap-3">
             {view === 'dashboard' && (
@@ -4529,6 +4653,7 @@ function CRM({ user }: { user: User }) {
             view === 'marketing' ? renderMarketing() :
             view === 'products' ? renderProducts() :
             view === 'monitoring' ? <MonitoringView clients={clients} /> :
+            view === 'map' ? <ClientMapView clients={clients} onClientClick={(client) => { setEditingClient(client); setIsModalOpen(true); }} /> :
             view === 'settings' ? renderSettings() :
             renderSupport()
           )
