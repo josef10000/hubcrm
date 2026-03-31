@@ -885,9 +885,7 @@ export default function ClientPortal() {
                   ) : (
                     <button 
                       onClick={() => {
-                        setRequestCategory('Upgrade de Plano');
-                        setRequestMessage(`Olá! Gostaria de migrar para o plano: ${offer.name}`);
-                        document.getElementById('suporte')?.scrollIntoView({ behavior: 'smooth' });
+                        window.open(`https://wa.me/5511952924208?text=Olá! Gostaria de mais informações sobre o upgrade para o plano: ${offer.name}`, '_blank');
                       }}
                       className="w-full py-4 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold text-sm transition-all border border-white/10 hover:border-white/20 active:scale-[0.98]"
                     >
@@ -957,9 +955,7 @@ export default function ClientPortal() {
                 ) : (
                   <button 
                     onClick={() => {
-                      setRequestCategory('Solicitação de Alteração');
-                      setRequestMessage('Olá! Gostaria de saber mais sobre o Plano sob consulta.');
-                      document.getElementById('support-form')?.scrollIntoView({ behavior: 'smooth' });
+                      window.open(`https://wa.me/5511952924208?text=Olá! Gostaria de saber mais sobre o Plano sob consulta e como ele funciona.`, '_blank');
                     }}
                     className="w-full py-4 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold text-sm transition-all border border-white/10"
                   >
