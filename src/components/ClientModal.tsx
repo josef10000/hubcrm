@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
-  X, DollarSign, CheckCircle, Clock, MapPin, Phone, Tag, Building2, FileText, Briefcase, AlignLeft,
+  X, Plus, DollarSign, CheckCircle, Clock, MapPin, Phone, Tag, Building2, FileText, Briefcase, AlignLeft,
   Paperclip, Copy, MessageCircle, Trash2, Snowflake, Globe, Image as ImageIcon, Sparkles, Wand2, Star, Zap,
-  RefreshCw, Link as LinkIcon, AlertTriangle, TrendingDown, Eye, EyeOff, Edit2, Loader2
+  RefreshCw, Link as LinkIcon, AlertTriangle, TrendingDown, Eye, EyeOff, Edit2, Loader2, Download
 } from 'lucide-react';
 import { auth, db } from '../lib/firebase';
-import { collection, doc, setDoc, onSnapshot, deleteDoc, addDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, onSnapshot, deleteDoc, addDoc, updateDoc } from 'firebase/firestore';
 import { User } from 'firebase/auth';
 import { toast } from 'sonner';
 import { Client, ClientLog, ClientCredential, ClientStage, OnboardingQuestion, Offer, SiteStatus } from '../types';
