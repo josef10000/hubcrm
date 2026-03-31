@@ -19,7 +19,8 @@ export const getPlanPrice = (plan?: string, billingCycle?: string, client?: Part
     finalMonthlyPrice = client;
     finalSetupPrice = customSetupPrice !== undefined ? customSetupPrice : getSetupPrice(plan);
   } else {
-    finalMonthlyPrice = client?.customMonthlyPrice !== undefined ? client.customMonthlyPrice : (client?.planPrice !== undefined ? client.planPrice : (plan === 'Profissional' ? 897 : 397));
+    // Priority: customMonthlyPrice > planPrice > fallback by plan name > 0
+    finalMonthlyPrice = client?.customMonthlyPrice !== undefined ? client.customMonthlyPrice : (client?.planPrice !== undefined ? client.planPrice : (plan === 'Profissional' ? 897 : plan === 'Ecossistema Essencial' ? 397 : 0));
     finalSetupPrice = client?.customSetupPrice !== undefined ? client.customSetupPrice : (client?.setupPrice !== undefined ? client.setupPrice : getSetupPrice(plan, client));
   }
 
