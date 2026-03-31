@@ -20,18 +20,49 @@ const STATUS_COLORS: Record<string, string> = {
   'Cancelado': '#6b7280',
 };
 
-function createColorIcon(color: string) {
+function createColorIcon(color: string, name: string) {
+  const initial = name ? name.charAt(0).toUpperCase() : '';
+  const isDark = color === '#000000' || color === '#1a1a1a' || color === '#6b7280'; // Simplistic check
   return L.divIcon({
-    className: '',
-    html: `<div style="
-      width: 28px; height: 28px; border-radius: 50%;
-      background: ${color}; border: 3px solid white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      display: flex; align-items: center; justify-content: center;
-    "></div>`,
-    iconSize: [28, 28],
-    iconAnchor: [14, 14],
-    popupAnchor: [0, -16],
+    className: 'custom-map-marker',
+    html: `
+      <div style="
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transition: transform 0.2s;
+      " class="hover:scale-110">
+        <div style="
+          width: 44px; 
+          height: 44px; 
+          border-radius: 50%;
+          background: ${color}; 
+          border: 3px solid white;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+          display: flex; 
+          align-items: center; 
+          justify-content: center;
+          color: white;
+          font-weight: 800;
+          font-size: 18px;
+          z-index: 2;
+          text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        ">${initial}</div>
+        <div style="
+          width: 0;
+          height: 0;
+          border-left: 10px solid transparent;
+          border-right: 10px solid transparent;
+          border-top: 14px solid ${color};
+          margin-top: -3px;
+          z-index: 1;
+          filter: drop-shadow(0 4px 4px rgba(0,0,0,0.3));
+        "></div>
+      </div>
+    `,
+    iconSize: [44, 55],
+    iconAnchor: [22, 55],
+    popupAnchor: [0, -55],
   });
 }
 
@@ -101,7 +132,7 @@ export default function ClientMapView({ clients, onClientClick }: ClientMapViewP
         const coords = geoCache[cepKey];
         if (coords) {
           const color = STATUS_COLORS[client.status || ''] || '#6b7280';
-          const icon = createColorIcon(color);
+          const icon = createColorIcon(color, client.name);
 
           const marker = L.marker([coords.lat, coords.lng], { icon })
             .addTo(map)
@@ -109,7 +140,9 @@ export default function ClientMapView({ clients, onClientClick }: ClientMapViewP
               <div style="font-family: system-ui; min-width: 180px;">
                 <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px;">${client.name}</div>
                 <div style="font-size: 12px; color: #666; margin-bottom: 2px;">📋 ${client.plan} • <span style="color: ${color}; font-weight: 600;">${client.status}</span></div>
-                ${client.cidade ? `<div style="font-size: 12px; color: #888;">📍 ${client.cidade}/${client.estado}</div>` : ''}
+                ${client.endereco ? `<div style="font-size: 12px; color: #888; margin-bottom: 2px;">📍 ${client.endereco}${client.bairro ? `, ${client.bairro}` : ''}</div>` : ''}
+                ${client.cidade ? `<div style="font-size: 12px; color: #888; margin-bottom: 2px;">🏙️ ${client.cidade}/${client.estado}</div>` : ''}
+                ${client.cep ? `<div style="font-size: 11px; color: #aaa; margin-bottom: 2px;">CEP: ${client.cep}</div>` : ''}
                 ${client.whatsapp ? `<div style="font-size: 12px; color: #888;">📱 ${client.whatsapp}</div>` : ''}
               </div>
             `);
