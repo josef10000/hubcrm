@@ -70,15 +70,59 @@ function createColorIcon(color: string, name: string) {
 async function geocodeCep(cep: string): Promise<{ lat: number; lng: number } | null> {
   const digits = cep.replace(/\D/g, '');
   if (digits.length !== 8) return null;
+  
   try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?postalcode=${digits}&country=BR&format=json&limit=1`, {
+    // 1. Tentar Brasil API (frequentemente retorna coordenadas exatas)
+    const brasilApiRes = await fetch(`https://brasilapi.com.br/api/cep/v2/${digits}`);
+    if (brasilApiRes.ok) {
+      const data = await brasilApiRes.json();
+      if (data.location?.coordinates?.latitude && data.location?.coordinates?.longitude) {
+        return {
+          lat: parseFloat(data.location.coordinates.latitude),
+          lng: parseFloat(data.location.coordinates.longitude)
+        };
+      }
+      
+      // Se tivermos o endereço mas não coordenadas, buscar no Nominatim por logradouro e cidade
+      if (data.street && data.city) {
+        const addressQuery = encodeURIComponent(`${data.street}, ${data.city}, ${data.state}, Brasil`);
+        const nomRes = await fetch(`https://nominatim.openstreetmap.org/search?q=${addressQuery}&format=json&limit=1`, {
+          headers: { 'Accept-Language': 'pt-BR' },
+        });
+        const nomData = await nomRes.json();
+        if (nomData && nomData.length > 0) {
+          return { lat: parseFloat(nomData[0].lat), lng: parseFloat(nomData[0].lon) };
+        }
+      }
+    }
+
+    // 2. Fallback: ViaCEP + Nominatim (caso Brasil API falhe em encontrar a rua)
+    const viaCepRes = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
+    if (viaCepRes.ok) {
+      const viaCepData = await viaCepRes.json();
+      if (!viaCepData.erro && viaCepData.logradouro && viaCepData.localidade) {
+         const addressQuery = encodeURIComponent(`${viaCepData.logradouro}, ${viaCepData.localidade}, ${viaCepData.uf}, Brasil`);
+         const nomRes = await fetch(`https://nominatim.openstreetmap.org/search?q=${addressQuery}&format=json&limit=1`, {
+          headers: { 'Accept-Language': 'pt-BR' },
+         });
+         const nomData = await nomRes.json();
+         if (nomData && nomData.length > 0) {
+           return { lat: parseFloat(nomData[0].lat), lng: parseFloat(nomData[0].lon) };
+         }
+      }
+    }
+
+    // 3. Fallback absoluto: Nominatim apenas pelo CEP
+    const nomRes = await fetch(`https://nominatim.openstreetmap.org/search?postalcode=${digits}&country=BR&format=json&limit=1`, {
       headers: { 'Accept-Language': 'pt-BR' },
     });
-    const data = await res.json();
-    if (data.length > 0) {
-      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    const nomData = await nomRes.json();
+    if (nomData && nomData.length > 0) {
+      return { lat: parseFloat(nomData[0].lat), lng: parseFloat(nomData[0].lon) };
     }
-  } catch {}
+  } catch (error) {
+    console.error("Erro no geocoding do CEP:", error);
+  }
   return null;
 }
 
