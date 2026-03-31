@@ -113,6 +113,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
       });
     }
     setShowCancelConfirm(false);
+    setActiveTab('details');
   }, [initialData, isOpen, defaultOffer?.id]);
 
   const checkPaymentStatus = async (subscriptionId: string) => {
