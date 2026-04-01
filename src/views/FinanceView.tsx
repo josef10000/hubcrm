@@ -23,6 +23,20 @@ export default function FinanceView() {
   const totalExpenses = expenses.reduce((acc, e) => acc + e.amount, 0);
   const netProfit = totalMRR - totalExpenses;
 
+  // Calculo de Saúde do Orçamento (Mês Atual)
+  const currentMonthSpent = transactions.filter(t => 
+    t.type === 'EXPENSE' && 
+    new Date(t.date).getMonth() === new Date().getMonth() &&
+    new Date(t.date).getFullYear() === new Date().getFullYear()
+  ).reduce((acc, t) => acc + t.amount, 0);
+  
+  const totalBudget = budgets.filter(b => 
+    b.year === new Date().getFullYear() && 
+    b.month === new Date().getMonth()
+  ).reduce((acc, b) => acc + b.amount, 0);
+
+  const budgetHealth = totalBudget > 0 ? (currentMonthSpent / totalBudget) * 100 : 0;
+
   const handleAddExpense = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newExpense.description || !newExpense.amount || !newExpense.date || !user) return;
@@ -149,6 +163,9 @@ export default function FinanceView() {
               <div className="p-2 bg-red-500/20 text-red-400 rounded-lg"><TrendingDown size={20} /></div>
             </div>
             <p className="text-3xl font-bold text-gray-900 dark:text-white">R$ {totalExpenses.toFixed(2).replace('.', ',')}</p>
+            <div className={`mt-2 text-xs font-medium px-2 py-1 rounded-lg inline-block ${budgetHealth > 100 ? 'bg-red-500/20 text-red-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+              {totalBudget > 0 ? `${budgetHealth.toFixed(0)}% do orçamento consumido` : 'Sem orçamento planejado'}
+            </div>
           </div>
 
           <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl shadow-lg">
