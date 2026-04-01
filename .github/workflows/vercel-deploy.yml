@@ -2,7 +2,7 @@ name: Vercel Preview Deployment
 
 on:
   push:
-    branches-not: [ "main" ]
+    branches-ignore: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
