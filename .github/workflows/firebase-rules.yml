@@ -1,0 +1,21 @@
+name: Deploy Regras de Seguranca Firestore
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'firestore.rules'
+
+jobs:
+  deploy_rules:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy ao Firebase Database
+        uses: w9jds/firebase-action@master
+        with:
+          args: deploy --only firestore:rules
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
