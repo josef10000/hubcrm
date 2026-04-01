@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TrendingUp, TrendingDown, DollarSign, Trash2, PieChart, Activity, Target } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Trash2, PieChart, Activity, Target, Tag } from 'lucide-react';
 import { useCRM } from '../contexts/CRMContext';
 import { getPlanPrice } from '../helpers';
 import { db } from '../lib/firebase';
@@ -11,10 +11,11 @@ import DREChart from '../components/finance/DREChart';
 import CashFlowProjected from '../components/finance/CashFlowProjected';
 import BudgetPanel from '../components/finance/BudgetPanel';
 import BankReconciliation from '../components/finance/BankReconciliation';
+import CategoryManager from '../components/finance/CategoryManager';
 
 export default function FinanceView() {
   const { clients, expenses, newExpense, setNewExpense, user } = useCRM();
-  const [activeTab, setActiveTab] = useState<'resumo' | 'dre' | 'fluxo' | 'orcamento' | 'conciliacao'>('resumo');
+  const [activeTab, setActiveTab] = useState<'resumo' | 'dre' | 'fluxo' | 'orcamento' | 'conciliacao' | 'categorias'>('resumo');
 
   const totalMRR = clients.filter(c => c.status === 'Ativo' || c.status === 'Inadimplente').reduce((acc, c) => {
     return acc + getPlanPrice(c.plan, c.billingCycle, c);
@@ -96,6 +97,13 @@ export default function FinanceView() {
           >
             <Activity size={18} />
             Conciliação OFX
+          </button>
+          <button
+            onClick={() => setActiveTab('categorias')}
+            className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${activeTab === 'categorias' ? 'bg-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10'}`}
+          >
+            <Tag size={18} />
+            Categorias
           </button>
         </div>
 
@@ -278,6 +286,10 @@ export default function FinanceView() {
         ) : activeTab === 'conciliacao' ? (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <BankReconciliation />
+          </div>
+        ) : activeTab === 'categorias' ? (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <CategoryManager />
           </div>
         ) : null}
 

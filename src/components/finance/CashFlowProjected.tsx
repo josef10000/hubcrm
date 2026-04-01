@@ -144,13 +144,77 @@ export default function CashFlowProjected() {
       </div>
 
       <div className="bg-white dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl shadow-lg p-6">
-         {/* Espaço reservado para o Gráfico de Barras Duplo e Linha de Saldo usando Recharts ou Chart.js futuramente */}
-         <div className="flex flex-col items-center justify-center py-10 text-center">
-            <Clock size={40} className="text-gray-300 dark:text-white/20 mb-4" />
-            <h3 className="text-lg font-bold text-gray-800 dark:text-white">Gráfico de Projeção Interativo</h3>
-            <p className="text-gray-500 dark:text-gray-400 text-sm mt-2 max-w-md">
-              A biblioteca gráfica avançada (ex: Recharts) pode ser instalada nesta visão para exibir visualmente a queima de caixa e os "vales" vermelhos do saldo.
-            </p>
+         <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-6">Gráfico de Projeção Interativo</h3>
+         <div className="relative h-64 flex items-end justify-between gap-2 overflow-x-auto pb-6 mt-8">
+            {projectedData.length > 0 && (() => {
+               // Find max value to scale the chart (comparing both absolute amounts)
+               const maxAbsValue = Math.max(...projectedData.map(d => Math.max(d.inflow, d.outflow, Math.abs(d.projectedBalance))));
+               // Avoid division by zero
+               const scale = maxAbsValue === 0 ? 1 : maxAbsValue;
+
+               return projectedData.map((data, index) => {
+                 const inflowH = (data.inflow / scale) * 100;
+                 const outflowH = (data.outflow / scale) * 100;
+                 
+                 // Linha do saldo pode ser negativa, vamos colocá-la num sistema de balão suspenso ou ponto
+                 // Para saldo projetado, vamos fazer um mini-badge "flutuando" acima das barras
+                 const balancePos = (Math.abs(data.projectedBalance) / scale) * 100;
+
+                 return (
+                   <div key={index} className="flex flex-col items-center justify-end w-full min-w-[60px] group relative h-full">
+                     {/* Tooltip Hover */}
+                     <div className="absolute top-[-40px] opacity-0 group-hover:opacity-100 transition-opacity bg-black/80 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap z-20 pointer-events-none shadow-xl border border-white/10">
+                       <p className="font-bold border-b border-white/20 pb-1 mb-1">{data.label}</p>
+                       <p className="text-emerald-400">Entradas: R$ {data.inflow.toFixed(2)}</p>
+                       <p className="text-red-400">Saídas: R$ {data.outflow.toFixed(2)}</p>
+                       <p className={`font-bold mt-1 ${data.projectedBalance < 0 ? 'text-red-500' : 'text-blue-400'}`}>
+                         Saldo Final: R$ {data.projectedBalance.toFixed(2)}
+                       </p>
+                     </div>
+
+                     {/* Floating Balance Point */}
+                     <div 
+                        className={`absolute w-3 h-3 rounded-full shadow-lg z-10 transition-all duration-700 ${data.projectedBalance < 0 ? 'bg-red-500' : 'bg-blue-500'}`}
+                        style={{ bottom: `${Math.min(balancePos, 100)}%`, marginBottom: '16px' }}
+                     >
+                        {/* Connecting line to previous point visually difficult to do pure HTML without SVG, so we just use points */}
+                        <div className={`absolute left-4 opacity-0 group-hover:opacity-100 text-[10px] font-bold px-1 rounded -translate-y-1/2 ${data.projectedBalance < 0 ? 'text-red-500 bg-red-500/10' : 'text-blue-500 bg-blue-500/10'}`}>
+                          R$ {data.projectedBalance.toFixed(0)}
+                        </div>
+                     </div>
+
+                     {/* Bar Container */}
+                     <div className="flex items-end justify-center w-full gap-1 h-full z-0 px-1">
+                        {/* Inflow Bar */}
+                        <div 
+                          className="w-1/2 bg-emerald-500/80 hover:bg-emerald-400 rounded-t-sm transition-all duration-700" 
+                          style={{ height: `${inflowH}%` }}
+                        />
+                        {/* Outflow Bar */}
+                        <div 
+                          className="w-1/2 bg-red-400/80 hover:bg-red-400 rounded-t-sm transition-all duration-700" 
+                          style={{ height: `${outflowH}%` }}
+                        />
+                     </div>
+                     
+                     <div className="absolute -bottom-6 text-xs text-center text-gray-500 dark:text-gray-400 w-full truncate">
+                       {data.label}
+                     </div>
+                   </div>
+                 );
+               });
+            })()}
+         </div>
+         <div className="flex items-center justify-center gap-6 mt-8 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-white/5 pt-4">
+           <div className="flex items-center gap-2">
+             <div className="w-3 h-3 rounded-sm bg-emerald-500/80"></div> Receitas Previstas
+           </div>
+           <div className="flex items-center gap-2">
+             <div className="w-3 h-3 rounded-sm bg-red-400/80"></div> Despesas Agendadas
+           </div>
+           <div className="flex items-center gap-2">
+             <div className="w-3 h-3 rounded-full bg-blue-500"></div> Saldo Projetado
+           </div>
          </div>
       </div>
     </div>
