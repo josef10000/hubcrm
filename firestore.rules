@@ -89,6 +89,18 @@ service cloud.firestore {
         allow read, write: if isOwner(userId);
       }
 
+      match /transactions/{transactionId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /transactionCategories/{categoryId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /budgets/{budgetId} {
+        allow read, write: if isOwner(userId);
+      }
+
       match /leads/{leadId} {
         allow read, write: if isOwner(userId);
       }
@@ -111,21 +123,25 @@ service cloud.firestore {
     // Only specific fields can be updated by portal visitors.
     // ===============================================================
     match /users/{userId}/clients/{clientId} {
-      allow read: if true;
+      allow get: if true;
+      allow list: if false;
       allow update: if request.resource.data.diff(resource.data).affectedKeys()
         .hasOnly(['npsScore', 'npsComment', 'npsSubmittedAt', 'stages', 'referralRewardType', 'currentDiscount']);
     }
 
     match /users/{userId}/services/{serviceId} {
-      allow read: if true;
+      allow get: if true;
+      allow list: if false;
     }
 
     match /users/{userId}/offers/{offerId} {
-      allow read: if true;
+      allow get: if true;
+      allow list: if false;
     }
 
     match /users/{userId}/settings/global {
-      allow read: if true;
+      allow get: if true;
+      allow list: if false;
     }
 
     match /users/{userId}/supportRequests/{requestId} {
@@ -133,7 +149,8 @@ service cloud.firestore {
         && request.resource.data.message is string
         && request.resource.data.message.size() > 0
         && request.resource.data.message.size() < 2000;
-      allow read: if true;
+      allow get: if true;
+      allow list: if false;
     }
   }
 }
