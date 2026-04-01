@@ -14,7 +14,7 @@ import BankReconciliation from '../components/finance/BankReconciliation';
 import CategoryManager from '../components/finance/CategoryManager';
 
 export default function FinanceView() {
-  const { clients, expenses, newExpense, setNewExpense, user } = useCRM();
+  const { clients, expenses, newExpense, setNewExpense, user, transactionCategories } = useCRM();
   const [activeTab, setActiveTab] = useState<'resumo' | 'dre' | 'fluxo' | 'orcamento' | 'conciliacao' | 'categorias'>('resumo');
 
   const totalMRR = clients.filter(c => c.status === 'Ativo' || c.status === 'Inadimplente').reduce((acc, c) => {
@@ -156,12 +156,21 @@ export default function FinanceView() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Categoria</label>
-                  <select value={newExpense.category || 'Ferramentas'} onChange={e => setNewExpense({...newExpense, category: e.target.value})} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all">
-                    <option value="Ferramentas" className="bg-[#030712] text-white">Ferramentas / Software</option>
-                    <option value="Infraestrutura" className="bg-[#030712] text-white">Infraestrutura / Hospedagem</option>
-                    <option value="Impostos" className="bg-[#030712] text-white">Impostos / Taxas</option>
-                    <option value="Marketing" className="bg-[#030712] text-white">Marketing / Anúncios</option>
-                    <option value="Outros" className="bg-[#030712] text-white">Outros</option>
+                  <select value={newExpense.category || ''} onChange={e => setNewExpense({...newExpense, category: e.target.value})} className="w-full px-4 py-3 bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all">
+                    <option value="" disabled className="bg-white dark:bg-[#030712]">Selecione uma categoria...</option>
+                    {transactionCategories.filter(c => c.type === 'EXPENSE').length > 0 ? (
+                      transactionCategories.filter(c => c.type === 'EXPENSE').map(cat => (
+                        <option key={cat.id} value={cat.name} className="bg-white dark:bg-[#030712] text-gray-900 dark:text-white">{cat.name}</option>
+                      ))
+                    ) : (
+                      <>
+                        <option value="Ferramentas" className="bg-white dark:bg-[#030712] text-gray-900 dark:text-white">Ferramentas / Software</option>
+                        <option value="Infraestrutura" className="bg-white dark:bg-[#030712] text-gray-900 dark:text-white">Infraestrutura / Hospedagem</option>
+                        <option value="Impostos" className="bg-white dark:bg-[#030712] text-gray-900 dark:text-white">Impostos / Taxas</option>
+                        <option value="Marketing" className="bg-white dark:bg-[#030712] text-gray-900 dark:text-white">Marketing / Anúncios</option>
+                        <option value="Outros" className="bg-white dark:bg-[#030712] text-gray-900 dark:text-white">Outros</option>
+                      </>
+                    )}
                   </select>
                 </div>
                 <div>
