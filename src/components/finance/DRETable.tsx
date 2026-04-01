@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useCRM } from '../../contexts/CRMContext';
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import { Transaction, TransactionCategory } from '../../types';
 
 export default function DRETable() {
   const { transactions, transactionCategories } = useCRM();

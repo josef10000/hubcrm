@@ -5,7 +5,7 @@ import { getPlanPrice } from '../helpers';
 import { db } from '../lib/firebase';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
-import { Expense } from '../types';
+import { Expense, Transaction, Budget, TransactionCategory } from '../types';
 import DRETable from '../components/finance/DRETable';
 import DREChart from '../components/finance/DREChart';
 import CashFlowProjected from '../components/finance/CashFlowProjected';

@@ -4,7 +4,7 @@ import { collection, doc, setDoc, deleteDoc, onSnapshot, updateDoc, query, where
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { auth, db } from '../lib/firebase';
-import { Client, Offer, OnboardingQuestion, Expense, PlanType, SiteStatus, clientSchema } from '../types';
+import { Client, Offer, OnboardingQuestion, Expense, PlanType, SiteStatus, clientSchema, Transaction, TransactionCategory, Budget } from '../types';
 import { getPlanPrice, getSetupPrice, calculateDiscount, updateReferrerSubscription } from '../helpers';
 
 // ─── View Type ──────────────────────────────────────────────────────────────────
@@ -21,9 +21,9 @@ interface CRMContextType {
   filteredClients: Client[];
   supportRequests: any[];
   expenses: Expense[];
-  transactions: import('../types').Transaction[];
-  transactionCategories: import('../types').TransactionCategory[];
-  budgets: import('../types').Budget[];
+  transactions: Transaction[];
+  transactionCategories: TransactionCategory[];
+  budgets: Budget[];
   services: any[];
 
   // Loading / Error
@@ -175,9 +175,9 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
 
   // ---- Finance ----
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [transactions, setTransactions] = useState<import('../types').Transaction[]>([]);
-  const [transactionCategories, setTransactionCategories] = useState<import('../types').TransactionCategory[]>([]);
-  const [budgets, setBudgets] = useState<import('../types').Budget[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactionCategories, setTransactionCategories] = useState<TransactionCategory[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
   const [newExpense, setNewExpense] = useState<Partial<Expense>>({ category: 'Ferramentas' });
 
   // ---- Marketing ----
@@ -314,22 +314,22 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
 
       const transactionsRef = collection(db, 'users', user.uid, 'transactions');
       const unsubscribeTransactions = onSnapshot(transactionsRef, (snapshot) => {
-        const loaded: import('../types').Transaction[] = [];
-        snapshot.forEach((d) => loaded.push(d.data() as import('../types').Transaction));
+        const loaded: Transaction[] = [];
+        snapshot.forEach((d) => loaded.push(d.data() as Transaction));
         setTransactions(loaded.sort((a, b) => b.date - a.date));
       });
 
       const categoriesRef = collection(db, 'users', user.uid, 'transactionCategories');
       const unsubscribeCategories = onSnapshot(categoriesRef, (snapshot) => {
-        const loaded: import('../types').TransactionCategory[] = [];
-        snapshot.forEach((d) => loaded.push(d.data() as import('../types').TransactionCategory));
+        const loaded: TransactionCategory[] = [];
+        snapshot.forEach((d) => loaded.push(d.data() as TransactionCategory));
         setTransactionCategories(loaded);
       });
 
       const budgetsRef = collection(db, 'users', user.uid, 'budgets');
       const unsubscribeBudgets = onSnapshot(budgetsRef, (snapshot) => {
-        const loaded: import('../types').Budget[] = [];
-        snapshot.forEach((d) => loaded.push(d.data() as import('../types').Budget));
+        const loaded: Budget[] = [];
+        snapshot.forEach((d) => loaded.push(d.data() as Budget));
         setBudgets(loaded);
       });
 
