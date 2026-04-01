@@ -134,3 +134,39 @@ export interface Expense {
   category: string;
   clientId?: string;
 }
+
+export type TransactionType = 'INCOME' | 'EXPENSE';
+export type TransactionStatus = 'PENDING' | 'PAID' | 'OVERDUE' | 'CANCELLED';
+
+export interface TransactionCategory {
+  id: string;
+  name: string;
+  type: TransactionType;
+  color?: string;
+  isCustom?: boolean;
+}
+
+export interface Transaction {
+  id: string;
+  description: string;
+  amount: number;
+  date: number; // Data de Emissão/Competência
+  paymentDate?: number; // Data de Pagamento/Caixa real
+  type: TransactionType;
+  status: TransactionStatus;
+  categoryId: string;
+  clientId?: string;
+  bankAccountId?: string; // Para conta bancária (ex: Inter vs Itaú vs PagSeguro)
+  referenceId?: string; // Útil para cruzar com Asaas ou OFX
+  recurring?: boolean;
+  notes?: string;
+}
+
+export interface Budget {
+  id: string;
+  categoryId: string;
+  amount: number;
+  period: 'MONTHLY' | 'YEARLY';
+  year: number;
+  month?: number;
+}

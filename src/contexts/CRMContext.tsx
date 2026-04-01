@@ -21,6 +21,8 @@ interface CRMContextType {
   filteredClients: Client[];
   supportRequests: any[];
   expenses: Expense[];
+  transactions: import('../types').Transaction[];
+  transactionCategories: import('../types').TransactionCategory[];
   services: any[];
 
   // Loading / Error
@@ -172,6 +174,8 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
 
   // ---- Finance ----
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [transactions, setTransactions] = useState<import('../types').Transaction[]>([]);
+  const [transactionCategories, setTransactionCategories] = useState<import('../types').TransactionCategory[]>([]);
   const [newExpense, setNewExpense] = useState<Partial<Expense>>({ category: 'Ferramentas' });
 
   // ---- Marketing ----
@@ -306,6 +310,20 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
         setExpenses(loadedExpenses.sort((a, b) => b.date - a.date));
       });
 
+      const transactionsRef = collection(db, 'users', user.uid, 'transactions');
+      const unsubscribeTransactions = onSnapshot(transactionsRef, (snapshot) => {
+        const loaded: import('../types').Transaction[] = [];
+        snapshot.forEach((d) => loaded.push(d.data() as import('../types').Transaction));
+        setTransactions(loaded.sort((a, b) => b.date - a.date));
+      });
+
+      const categoriesRef = collection(db, 'users', user.uid, 'transactionCategories');
+      const unsubscribeCategories = onSnapshot(categoriesRef, (snapshot) => {
+        const loaded: import('../types').TransactionCategory[] = [];
+        snapshot.forEach((d) => loaded.push(d.data() as import('../types').TransactionCategory));
+        setTransactionCategories(loaded);
+      });
+
       timeoutId = setTimeout(() => {
         console.warn('Firestore initialization timed out.');
         setLoading(false);
@@ -322,6 +340,8 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
       unsubscribeRequests();
       unsubscribeExpenses();
       unsubscribeOffers();
+      if (typeof unsubscribeTransactions === 'function') unsubscribeTransactions();
+      if (typeof unsubscribeCategories === 'function') unsubscribeCategories();
       clearTimeout(timeoutId);
     };
   }, [user.uid]);
@@ -890,7 +910,7 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
 
   const value: CRMContextType = {
     user,
-    clients, offers, filteredClients, supportRequests, expenses, services,
+    clients, offers, filteredClients, supportRequests, expenses, transactions, transactionCategories, services,
     loading, errorMsg, isSyncing,
     currentPage, setCurrentPage, clientsPerPage,
     view, setView, dashboardMode, setDashboardMode, sidebarOpen, setSidebarOpen,
