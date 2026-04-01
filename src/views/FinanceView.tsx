@@ -14,7 +14,7 @@ import BankReconciliation from '../components/finance/BankReconciliation';
 import CategoryManager from '../components/finance/CategoryManager';
 
 export default function FinanceView() {
-  const { clients, expenses, newExpense, setNewExpense, user, transactionCategories } = useCRM();
+  const { clients, expenses, newExpense, setNewExpense, user, transactionCategories, budgets, transactions } = useCRM();
   const [activeTab, setActiveTab] = useState<'resumo' | 'dre' | 'fluxo' | 'orcamento' | 'conciliacao' | 'categorias'>('resumo');
 
   const totalMRR = clients.filter(c => c.status === 'Ativo' || c.status === 'Inadimplente').reduce((acc, c) => {
@@ -28,6 +28,31 @@ export default function FinanceView() {
     if (!newExpense.description || !newExpense.amount || !newExpense.date || !user) return;
 
     try {
+      // 1. Budget Security Check
+      const selectedCat = transactionCategories.find(c => c.name === (newExpense.category || 'Ferramentas'));
+      if (selectedCat) {
+        const currentYear = new Date().getFullYear();
+        const currentMonth = new Date().getMonth();
+        
+        // Calculate current spending for this category this month
+        const monthlySpent = transactions.filter(t => 
+          t.categoryId === selectedCat.id && 
+          t.type === 'EXPENSE' &&
+          new Date(t.date).getFullYear() === currentYear &&
+          new Date(t.date).getMonth() === currentMonth
+        ).reduce((acc, t) => acc + t.amount, 0);
+
+        // Find limit
+        const limit = budgets.find(b => b.categoryId === selectedCat.id && b.year === currentYear && b.month === currentMonth)?.amount;
+        
+        if (limit && (monthlySpent + Number(newExpense.amount)) > limit) {
+          toast.warning(`Alerta: Esta despesa excede o orçamento de R$ ${limit.toFixed(2)} para ${selectedCat.name}.`, {
+            duration: 6000,
+            position: 'top-center'
+          });
+        }
+      }
+
       const expenseId = Date.now().toString(36) + Math.random().toString(36).substring(2);
       const expense: Expense = {
         id: expenseId,

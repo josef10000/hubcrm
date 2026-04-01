@@ -23,6 +23,7 @@ interface CRMContextType {
   expenses: Expense[];
   transactions: import('../types').Transaction[];
   transactionCategories: import('../types').TransactionCategory[];
+  budgets: import('../types').Budget[];
   services: any[];
 
   // Loading / Error
@@ -176,6 +177,7 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [transactions, setTransactions] = useState<import('../types').Transaction[]>([]);
   const [transactionCategories, setTransactionCategories] = useState<import('../types').TransactionCategory[]>([]);
+  const [budgets, setBudgets] = useState<import('../types').Budget[]>([]);
   const [newExpense, setNewExpense] = useState<Partial<Expense>>({ category: 'Ferramentas' });
 
   // ---- Marketing ----
@@ -324,6 +326,13 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
         setTransactionCategories(loaded);
       });
 
+      const budgetsRef = collection(db, 'users', user.uid, 'budgets');
+      const unsubscribeBudgets = onSnapshot(budgetsRef, (snapshot) => {
+        const loaded: import('../types').Budget[] = [];
+        snapshot.forEach((d) => loaded.push(d.data() as import('../types').Budget));
+        setBudgets(loaded);
+      });
+
       timeoutId = setTimeout(() => {
         console.warn('Firestore initialization timed out.');
         setLoading(false);
@@ -342,6 +351,7 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
       unsubscribeOffers();
       if (typeof unsubscribeTransactions === 'function') unsubscribeTransactions();
       if (typeof unsubscribeCategories === 'function') unsubscribeCategories();
+      if (typeof unsubscribeBudgets === 'function') unsubscribeBudgets();
       clearTimeout(timeoutId);
     };
   }, [user.uid]);
@@ -910,7 +920,7 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
 
   const value: CRMContextType = {
     user,
-    clients, offers, filteredClients, supportRequests, expenses, transactions, transactionCategories, services,
+    clients, offers, filteredClients, supportRequests, expenses, transactions, transactionCategories, budgets, services,
     loading, errorMsg, isSyncing,
     currentPage, setCurrentPage, clientsPerPage,
     view, setView, dashboardMode, setDashboardMode, sidebarOpen, setSidebarOpen,
