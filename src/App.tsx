@@ -39,6 +39,7 @@ import { CRMProvider, useCRM, CRMView } from './contexts/CRMContext';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ClientPortal from './components/ClientPortal';
 import OnboardingForm from './components/OnboardingForm';
+import ContractSignView from './views/ContractSignView';
 import { Toaster } from 'sonner';
 
 function CRMInner() {
@@ -287,6 +288,7 @@ export default function App() {
         <Route path="/cliente/:userId/:clientId" element={<ClientPortal />} />
         <Route path="/onboarding/:userId" element={<OnboardingForm />} />
         <Route path="/onboarding/:userId/:clientId" element={<OnboardingForm />} />
+        <Route path="/contrato/:userId/:clientId/:contractId" element={<ContractSignView />} />
       </Routes>
     </BrowserRouter>
   );

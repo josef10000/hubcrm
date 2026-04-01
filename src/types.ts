@@ -42,6 +42,17 @@ export interface ClientCredential {
   createdAt: number;
 }
 
+export interface ClientContract {
+  id: string;
+  type: 'pdf' | 'text';
+  content: string;
+  status: 'pending' | 'signed';
+  createdAt: number;
+  signedAt?: number;
+  signedIp?: string;
+  signedUserAgent?: string;
+}
+
 export interface Offer {
   id: string;
   name: string;
@@ -69,6 +80,7 @@ export interface Client {
   logs?: ClientLog[];
   attachments?: ClientAttachment[];
   stages?: ClientStage[];
+  contracts?: ClientContract[];
   cpfCnpj?: string;
   email?: string;
   asaasCustomerId?: string;

@@ -16,7 +16,9 @@ export default function SettingsView() {
     defaultStages, 
     setDefaultStages, 
     onboardingQuestions, 
-    setOnboardingQuestions 
+    setOnboardingQuestions,
+    defaultContractText,
+    setDefaultContractText
   } = useCRM();
 
   const themes = [
@@ -259,6 +261,40 @@ export default function SettingsView() {
               >
                 <CheckCircle size={16} />
                 Salvar Formulário
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-black/20 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-lg mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
+            <FileText className="mr-2 text-primary-500" size={20} />
+            Texto do Contrato Padrão
+          </h3>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              Defina o texto que será carregado nativamente como base na geração de novos contratos.
+            </p>
+            <textarea
+              value={defaultContractText}
+              onChange={(e) => setDefaultContractText(e.target.value)}
+              className="w-full h-64 px-4 py-3 bg-white dark:bg-black/40 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none resize-y custom-scrollbar text-sm font-mono leading-relaxed"
+              placeholder="Digite as cláusulas do seu contrato aqui..."
+            />
+            <div className="flex gap-3 justify-end mt-4">
+              <button
+                onClick={async () => {
+                  try {
+                    await setDoc(doc(db, 'users', auth.currentUser!.uid, 'settings', 'preferences'), { defaultContractText }, { merge: true });
+                    toast.success('Contrato padrão salvo com sucesso!');
+                  } catch (error) {
+                    toast.error('Erro ao salvar contrato padrão.');
+                  }
+                }}
+                className="flex items-center gap-2 px-6 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-xl transition-colors text-sm font-medium shadow-lg shadow-primary-500/20"
+              >
+                <CheckCircle size={16} />
+                Salvar Contrato Padrão
               </button>
             </div>
           </div>

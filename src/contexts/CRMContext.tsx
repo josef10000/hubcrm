@@ -76,6 +76,8 @@ interface CRMContextType {
   setDefaultStages: (stages: { id: string; name: string }[]) => void;
   onboardingQuestions: OnboardingQuestion[];
   setOnboardingQuestions: (questions: OnboardingQuestion[]) => void;
+  defaultContractText: string;
+  setDefaultContractText: (text: string) => void;
 
   // Support
   replyingTo: string | null;
@@ -161,6 +163,7 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
     { id: '3', text: 'Quais são as suas cores preferidas?', type: 'text', required: false },
     { id: '4', text: 'Logo da Empresa (Opcional)', type: 'file', required: false },
   ]);
+  const [defaultContractText, setDefaultContractText] = useState<string>('CONTRATO DE PRESTAÇÃO DE SERVIÇOS\n\n1. OBJETO DO CONTRATO\nO presente instrumento tem como objeto a prestação de serviços digitais acordados entre as partes no plano ou projeto selecionado.\n\n2. PRAZOS E ENTREGAS\nAs entregas serão realizadas conforme cronograma acordado.\n\n3. PAGAMENTOS E CANCELAMENTOS\nEm caso de suspensão de pagamento, o serviço será suspenso após X dias. Cancelamentos devem ser notificados antecipadamente.');
 
   // ---- Support ----
   const [supportRequests, setSupportRequests] = useState<any[]>([]);
@@ -208,6 +211,7 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
         const data = docSnap.data();
         if (data.defaultStages) setDefaultStages(data.defaultStages);
         if (data.onboardingQuestions) setOnboardingQuestions(data.onboardingQuestions);
+        if (data.defaultContractText !== undefined) setDefaultContractText(data.defaultContractText);
       }
     });
     return () => unsubscribe();
@@ -897,6 +901,7 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
     themeColor, setThemeColor,
     churnRiskDays, setChurnRiskDays, defaultStages, setDefaultStages,
     onboardingQuestions, setOnboardingQuestions,
+    defaultContractText, setDefaultContractText,
     replyingTo, setReplyingTo, replyMessage, setReplyMessage,
     newExpense, setNewExpense,
     globalAnnouncement, setGlobalAnnouncement,
