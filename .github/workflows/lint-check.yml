@@ -18,7 +18,5 @@ jobs:
           cache: 'npm'
       - name: Instalar Dependências
         run: npm ci
-      - name: Checar Tipagem TypeScript
-        run: npx tsc --noEmit
-      - name: Checar Lint (ESLint)
+      - name: Checar Tipagem e Sintaxe
         run: npm run lint

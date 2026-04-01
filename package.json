@@ -36,6 +36,9 @@
   "devDependencies": {
     "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/recharts": "^2.15.2",
     "@vercel/node": "^5.6.11",
     "autoprefixer": "^10.4.21",
     "tailwindcss": "^4.1.14",
