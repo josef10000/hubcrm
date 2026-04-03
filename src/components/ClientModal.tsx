@@ -32,7 +32,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
   });
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [activeTab, setActiveTab] = useState<'details' | 'history' | 'stages' | 'credentials' | 'onboarding' | 'contracts'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'history' | 'stages' | 'credentials' | 'onboarding' | 'contracts' | 'referrals'>('details');
   const [cepLoading, setCepLoading] = useState(false);
   const [cpfCnpjStatus, setCpfCnpjStatus] = useState<'idle' | 'valid' | 'invalid' | 'loading'>('idle');
   const [newLogText, setNewLogText] = useState('');

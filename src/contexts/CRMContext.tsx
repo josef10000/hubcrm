@@ -256,6 +256,9 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
     let unsubscribeRequests: () => void = () => {};
     let unsubscribeExpenses: () => void = () => {};
     let unsubscribeOffers: () => void = () => {};
+    let unsubscribeTransactions: () => void = () => {};
+    let unsubscribeCategories: () => void = () => {};
+    let unsubscribeBudgets: () => void = () => {};
 
     try {
       const offersRef = collection(db, 'users', user.uid, 'offers');
@@ -313,21 +316,21 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
       });
 
       const transactionsRef = collection(db, 'users', user.uid, 'transactions');
-      const unsubscribeTransactions = onSnapshot(transactionsRef, (snapshot) => {
+      unsubscribeTransactions = onSnapshot(transactionsRef, (snapshot) => {
         const loaded: Transaction[] = [];
         snapshot.forEach((d) => loaded.push(d.data() as Transaction));
         setTransactions(loaded.sort((a, b) => b.date - a.date));
       });
 
       const categoriesRef = collection(db, 'users', user.uid, 'transactionCategories');
-      const unsubscribeCategories = onSnapshot(categoriesRef, (snapshot) => {
+      unsubscribeCategories = onSnapshot(categoriesRef, (snapshot) => {
         const loaded: TransactionCategory[] = [];
         snapshot.forEach((d) => loaded.push(d.data() as TransactionCategory));
         setTransactionCategories(loaded);
       });
 
       const budgetsRef = collection(db, 'users', user.uid, 'budgets');
-      const unsubscribeBudgets = onSnapshot(budgetsRef, (snapshot) => {
+      unsubscribeBudgets = onSnapshot(budgetsRef, (snapshot) => {
         const loaded: Budget[] = [];
         snapshot.forEach((d) => loaded.push(d.data() as Budget));
         setBudgets(loaded);
@@ -354,6 +357,7 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
       if (typeof unsubscribeBudgets === 'function') unsubscribeBudgets();
       clearTimeout(timeoutId);
     };
+
   }, [user.uid]);
 
   // Reset pagination on filter change

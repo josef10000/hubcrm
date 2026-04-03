@@ -4,8 +4,8 @@ import { collection, doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { User } from 'firebase/auth';
 import { db } from '../lib/firebase';
 import { toast } from 'sonner';
-import { Client } from '../types';
-import { getPlanPrice } from '../helpers';
+import { Client, SiteStatus } from '../types';
+import { getPlanPrice, updateReferrerSubscription } from '../helpers';
 
 export default
 function ReferralsView({ clients, user }: { clients: Client[], user: User }) {
