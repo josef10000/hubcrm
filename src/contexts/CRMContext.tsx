@@ -33,7 +33,7 @@ interface CRMContextType {
 
   // Pagination
   currentPage: number;
-  setCurrentPage: (page: number) => void;
+  setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
   clientsPerPage: number;
 
   // Navigation

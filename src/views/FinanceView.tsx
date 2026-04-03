@@ -190,11 +190,11 @@ export default function FinanceView() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Valor (R$)</label>
-                  <input required type="number" step="0.01" value={newExpense.amount || ''} onChange={e => setNewExpense({...newExpense, amount: e.target.value})} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all" placeholder="0.00" />
+                  <input required type="number" step="0.01" value={newExpense.amount?.toString() || ''} onChange={e => setNewExpense({...newExpense, amount: Number(e.target.value)})} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all" placeholder="0.00" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Data</label>
-                  <input required type="date" value={newExpense.date || ''} onChange={e => setNewExpense({...newExpense, date: e.target.value})} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all" />
+                  <input required type="date" value={newExpense.date ? new Date(newExpense.date).toISOString().split('T')[0] : ''} onChange={e => setNewExpense({...newExpense, date: e.target.value ? new Date(e.target.value).getTime() : undefined})} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Categoria</label>

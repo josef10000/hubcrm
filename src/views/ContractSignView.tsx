@@ -73,7 +73,7 @@ export default function ContractSignView() {
       const newLog: ClientLog = {
         id: Date.now().toString(36),
         text: `Contrato assinado digitalmente pelo cliente sob o IP ${ipAddress}.`,
-        createdAt: timestamp
+        date: timestamp
       };
 
       const clientRef = doc(db, 'users', userId!, 'clients', clientId!);
