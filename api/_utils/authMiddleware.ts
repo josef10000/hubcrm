@@ -1,5 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import * as admin from 'firebase-admin';
+// firebase-admin is CommonJS; handle both ESM default and namespace imports
+import adminImport from 'firebase-admin';
+const admin = (adminImport as any).default || adminImport;
 
 // ── Rate Limiting (in-memory, per-IP) ────────────────────────────────────────
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -30,6 +32,31 @@ setInterval(() => {
     if (now > entry.resetAt) rateLimitMap.delete(ip);
   }
 }, 5 * 60_000);
+
+// ── Firebase Admin Initialization ───────────────────────────────────────────
+function getFirebaseAdmin() {
+  // Defensive: admin.apps may be undefined depending on how the module loaded
+  const apps = admin.apps ?? [];
+  if (apps.length === 0) {
+    const serviceAccountStr = process.env.FIREBASE_SERVICE_ACCOUNT;
+    if (!serviceAccountStr) {
+      throw new Error('FIREBASE_SERVICE_ACCOUNT_MISSING');
+    }
+
+    let serviceAccount;
+    try {
+      serviceAccount = JSON.parse(serviceAccountStr);
+    } catch {
+      try {
+        serviceAccount = JSON.parse(Buffer.from(serviceAccountStr, 'base64').toString());
+      } catch {
+        throw new Error('FIREBASE_SERVICE_ACCOUNT_PARSE_ERROR');
+      }
+    }
+    admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+  }
+  return admin;
+}
 
 // ── Auth Middleware ─────────────────────────────────────────────────────────
 export interface AuthenticatedRequest extends VercelRequest {
@@ -68,49 +95,33 @@ export async function verifyAuth(
   }
 
   try {
-    // Ensure Firebase Admin is initialized
-    if (admin.apps.length === 0) {
-      const serviceAccountStr = process.env.FIREBASE_SERVICE_ACCOUNT;
-      if (!serviceAccountStr) {
-        console.error('FIREBASE_SERVICE_ACCOUNT is missing');
-        res.status(500).json({ error: 'Configuração de autenticação faltando no servidor' });
-        return null;
-      }
-
-      let serviceAccount;
-      try {
-        serviceAccount = JSON.parse(serviceAccountStr);
-      } catch {
-        try {
-          serviceAccount = JSON.parse(Buffer.from(serviceAccountStr, 'base64').toString());
-        } catch (e) {
-          console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT');
-          res.status(500).json({ error: 'Erro ao processar credenciais de autenticação' });
-          return null;
-        }
-      }
-      admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
-    }
-
-    const decoded = await admin.auth().verifyIdToken(idToken);
+    const firebaseAdmin = getFirebaseAdmin();
+    const decoded = await firebaseAdmin.auth().verifyIdToken(idToken);
     req.uid = decoded.uid;
     return decoded.uid;
   } catch (error: any) {
     console.error('Auth verification failed:', error.message, error.code);
     
-    // Check for specific error types
+    // Handle initialization errors as 500
+    if (error.message === 'FIREBASE_SERVICE_ACCOUNT_MISSING') {
+      res.status(500).json({ error: 'Configuração de autenticação faltando no servidor' });
+      return null;
+    }
+    if (error.message === 'FIREBASE_SERVICE_ACCOUNT_PARSE_ERROR') {
+      res.status(500).json({ error: 'Erro ao processar credenciais do servidor' });
+      return null;
+    }
+    
+    // Auth token errors
     let userMessage = 'Token de autenticação expirado ou inválido';
     if (error.code === 'auth/id-token-expired') userMessage = 'Sua sessão expirou. Recarregue a página.';
-    if (error.code === 'auth/argument-error') userMessage = 'Erro técnico na autenticação (Argument Error).';
+    if (error.code === 'auth/argument-error') userMessage = 'Erro técnico na autenticação.';
     
     res.status(401).json({ 
       error: userMessage,
       details: error.message,
-      code: error.code,
-      timestamp: new Date().toISOString()
+      code: error.code
     });
     return null;
   }
 }
-
-

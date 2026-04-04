@@ -1,9 +1,12 @@
-import * as admin from 'firebase-admin';
+// firebase-admin is CommonJS; handle both ESM default and namespace imports
+import adminImport from 'firebase-admin';
+const admin = (adminImport as any).default || adminImport;
 
 let isInitialized = false;
 
 function initializeFirebase() {
-  if (admin.apps.length > 0) {
+  const apps = admin.apps ?? [];
+  if (apps.length > 0) {
     isInitialized = true;
     return;
   }
@@ -11,14 +14,13 @@ function initializeFirebase() {
   try {
     const serviceAccountStr = process.env.FIREBASE_SERVICE_ACCOUNT;
     if (!serviceAccountStr) {
-      throw new Error('CRITICAL: FIREBASE_SERVICE_ACCOUNT environment variable is missing. Server cannot start without Firebase credentials.');
+      throw new Error('CRITICAL: FIREBASE_SERVICE_ACCOUNT environment variable is missing.');
     }
 
     let serviceAccount;
     try {
       serviceAccount = JSON.parse(serviceAccountStr);
     } catch (e) {
-      // If it's not JSON, maybe it's base64 encoded
       try {
         serviceAccount = JSON.parse(Buffer.from(serviceAccountStr, 'base64').toString());
       } catch (e2) {
@@ -40,10 +42,9 @@ function initializeFirebase() {
 initializeFirebase();
 
 // Export a proxy for db that ensures initialization and handles errors gracefully
-export const db = new Proxy({} as admin.firestore.Firestore, {
+export const db = new Proxy({} as FirebaseFirestore.Firestore, {
   get(target, prop) {
     if (!isInitialized) {
-      // Try to initialize again in case it was a transient failure or env vars weren't ready
       initializeFirebase();
     }
 
