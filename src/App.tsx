@@ -1,22 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
-  LayoutDashboard, Users, Plus, X, DollarSign, CheckCircle, Clock, 
-  MapPin, Phone, Tag, Menu, Building2, FileText, Briefcase, AlignLeft,
-  Search, BarChart3, Calendar, Paperclip, Copy, MessageCircle, Trash2, Snowflake, LogOut, Globe, Image as ImageIcon, Sparkles, Wand2, Star, Zap,
-  Filter, ArrowDownAZ, ArrowUpRight, RefreshCw, Download, Link as LinkIcon, AlertTriangle, TrendingDown, TrendingUp, Settings, MessageSquare,
-  Megaphone, Pin, ShoppingCart, Eye, EyeOff, Package, Edit2, Map as MapIcon, Loader2, Target
+  LayoutDashboard, Users, Plus, X, DollarSign,
+  Search, BarChart3, Calendar, MessageCircle, Globe,
+  Download, AlertTriangle, Settings,
+  Megaphone, Package, Map as MapIcon, Target, Menu
 } from 'lucide-react';
 import { auth, db, isFirebaseConfigured } from './lib/firebase';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
-import { collection, doc, setDoc, onSnapshot, deleteDoc, updateDoc, query, where, getDocs, addDoc } from 'firebase/firestore';
 import Auth from './components/Auth';
 import CalendarView from './components/CalendarView';
 import MonitoringView from './components/MonitoringView';
 import ClientMapView from './components/ClientMapView';
 import { toast } from 'sonner';
-import { z } from 'zod';
-import { clientSchema, Client, Offer, ClientLog, ClientAttachment, ClientStage, ClientCredential, OnboardingQuestion, Expense, PlanType, SiteStatus } from './types';
-import { delay, getSetupPrice, getPlanPrice, calculateDiscount, updateReferrerSubscription } from './helpers';
+import { Client, Offer, OnboardingQuestion, Expense, PlanType, SiteStatus, ClientLog, ClientAttachment, ClientStage, ClientCredential } from './types';
+import { clientSchema } from './types';
+import { getSetupPrice, getPlanPrice, calculateDiscount, updateReferrerSubscription } from './helpers';
 
 export type { PlanType, SiteStatus, ClientLog, ClientAttachment, ClientStage, ClientCredential, Offer, Client, OnboardingQuestion, Expense } from './types';
 export { clientSchema } from './types';
@@ -26,6 +24,7 @@ import ConfirmationModal from './components/ConfirmationModal';
 import OfferModal from './components/OfferModal';
 import ClientModal from './components/ClientModal';
 import ReferralsView from './components/ReferralsView';
+import NavItem from './components/NavItem';
 
 import DashboardView from './views/DashboardView';
 import AnalyticsView from './views/AnalyticsView';
@@ -43,6 +42,22 @@ import OnboardingForm from './components/OnboardingForm';
 import ContractSignView from './views/ContractSignView';
 import { Toaster } from 'sonner';
 
+// ── Navigation Config ──
+const navItems: { icon: any; label: string; view: CRMView }[] = [
+  { icon: LayoutDashboard, label: 'Dashboard', view: 'dashboard' },
+  { icon: Target, label: 'Pipeline', view: 'leads' },
+  { icon: BarChart3, label: 'Analytics', view: 'analytics' },
+  { icon: MessageCircle, label: 'Chamados', view: 'support' },
+  { icon: Calendar, label: 'Agenda', view: 'calendar' },
+  { icon: DollarSign, label: 'Gestão de Custos', view: 'finance' },
+  { icon: Users, label: 'Indicações', view: 'referrals' },
+  { icon: Megaphone, label: 'Avisos', view: 'marketing' },
+  { icon: Package, label: 'Produtos', view: 'products' },
+  { icon: Globe, label: 'Monitoramento', view: 'monitoring' },
+  { icon: MapIcon, label: 'Mapa', view: 'map' },
+  { icon: Settings, label: 'Configurações', view: 'settings' },
+];
+
 function CRMInner() {
   const {
     user, clients, offers, supportRequests, loading, errorMsg,
@@ -54,6 +69,10 @@ function CRMInner() {
     handleSaveClient, handleDeleteClient,
     handleSaveOffer, handleDeleteOffer, handleExportCSV
   } = useCRM();
+
+  const openTicketCount = useMemo(() => supportRequests.filter(r => r.status === 'aberto' || r.status === 'em_analise').length, [supportRequests]);
+
+  const handleNavClick = (v: CRMView) => { setView(v); setSidebarOpen(false); };
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-[#0a0a0a] font-sans overflow-hidden text-gray-900 dark:text-gray-100 relative">
@@ -70,28 +89,17 @@ function CRMInner() {
           <button className="md:hidden text-gray-500 hover:text-gray-900 dark:text-white shrink-0 ml-2" onClick={() => setSidebarOpen(false)}><X size={20} /></button>
         </div>
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
-          <button onClick={() => { setView('dashboard'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'dashboard' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><LayoutDashboard size={20} /><span className="font-medium">Dashboard</span></button>
-          <button onClick={() => { setView('leads'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'leads' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><Target size={20} /><span className="font-medium">Pipeline</span></button>
-          <button onClick={() => { setView('analytics'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'analytics' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><BarChart3 size={20} /><span className="font-medium">Analytics</span></button>
-          <button onClick={() => { setView('support'); setSidebarOpen(false); }} className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all ${view === 'support' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}>
-            <div className="flex items-center space-x-3">
-              <MessageCircle size={20} />
-              <span className="font-medium">Chamados</span>
-            </div>
-            {supportRequests.filter(r => r.status === 'aberto' || r.status === 'em_analise').length > 0 && (
-              <span className="bg-primary-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                {supportRequests.filter(r => r.status === 'aberto' || r.status === 'em_analise').length}
-              </span>
-            )}
-          </button>
-          <button onClick={() => { setView('calendar'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'calendar' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><Calendar size={20} /><span className="font-medium">Agenda</span></button>
-          <button onClick={() => { setView('finance'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'finance' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><DollarSign size={20} /><span className="font-medium">Gestão de Custos</span></button>
-          <button onClick={() => { setView('referrals'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'referrals' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><Users size={20} /><span className="font-medium">Indicações</span></button>
-          <button onClick={() => { setView('marketing'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'marketing' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><Megaphone size={20} /><span className="font-medium">Avisos</span></button>
-          <button onClick={() => { setView('products'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'products' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><Package size={20} /><span className="font-medium">Produtos</span></button>
-          <button onClick={() => { setView('monitoring'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'monitoring' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><Globe size={20} /><span className="font-medium">Monitoramento</span></button>
-          <button onClick={() => { setView('map'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'map' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><MapIcon size={20} /><span className="font-medium">Mapa</span></button>
-          <button onClick={() => { setView('settings'); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-2xl transition-all ${view === 'settings' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'}`}><Settings size={20} /><span className="font-medium">Configurações</span></button>
+          {navItems.map(item => (
+            <NavItem
+              key={item.view}
+              icon={item.icon}
+              label={item.label}
+              view={item.view}
+              activeView={view}
+              onClick={handleNavClick}
+              badge={item.view === 'support' ? openTicketCount : undefined}
+            />
+          ))}
         </nav>
         <div className="p-4 border-t border-gray-200 dark:border-white/10">
           <div className="flex items-center justify-between px-4 py-3 bg-gray-100 dark:bg-white/5 backdrop-blur-xl rounded-2xl border border-gray-200 dark:border-white/10">
