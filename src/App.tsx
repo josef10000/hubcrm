@@ -60,7 +60,7 @@ const navItems: { icon: any; label: string; view: CRMView }[] = [
 
 function CRMInner() {
   const {
-    user, clients, offers, supportRequests, loading, errorMsg,
+    user, clients, leads, activeLeadsCount, offers, supportRequests, loading, errorMsg,
     view, setView, sidebarOpen, setSidebarOpen,
     isModalOpen, setIsModalOpen, editingClient, setEditingClient,
     isOfferModalOpen, setIsOfferModalOpen, editingOffer, setEditingOffer,
@@ -97,7 +97,7 @@ function CRMInner() {
               view={item.view}
               activeView={view}
               onClick={handleNavClick}
-              badge={item.view === 'support' ? openTicketCount : undefined}
+              badge={item.view === 'leads' ? activeLeadsCount : item.view === 'support' ? openTicketCount : undefined}
             />
           ))}
         </nav>

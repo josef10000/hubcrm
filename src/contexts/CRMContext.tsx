@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
 import { collection, doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Client, Offer, OnboardingQuestion, Expense, PlanType, SiteStatus, Transaction, TransactionCategory, Budget } from '../types';
+import { Client, Offer, OnboardingQuestion, Expense, PlanType, SiteStatus, Transaction, TransactionCategory, Budget, Lead } from '../types';
 
 // ── Hooks ──
 import { useSettings } from '../hooks/useSettings';
@@ -20,6 +20,7 @@ interface CRMContextType {
 
   // Core Data
   clients: Client[];
+  leads: Lead[];
   offers: Offer[];
   filteredClients: Client[];
   supportRequests: any[];
@@ -28,6 +29,7 @@ interface CRMContextType {
   transactionCategories: TransactionCategory[];
   budgets: Budget[];
   services: any[];
+  activeLeadsCount: number;
 
   // Loading / Error
   loading: boolean;
@@ -127,6 +129,7 @@ export function useCRM() {
 export function CRMProvider({ user, children }: { user: User; children: React.ReactNode }) {
   // ── Local UI State ──
   const [clients, setClients] = useState<Client[]>([]);
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const clientsPerPage = 9;
@@ -173,6 +176,7 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
     setErrorMsg(null);
     let timeoutId: NodeJS.Timeout;
     let unsubscribeClients: () => void = () => {};
+    let unsubscribeLeads: () => void = () => {};
     let unsubscribeRequests: () => void = () => {};
     let unsubscribeOffers: () => void = () => {};
 
@@ -212,6 +216,13 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
         }
       );
 
+      const leadsRef = collection(db, 'users', user.uid, 'leads');
+      unsubscribeLeads = onSnapshot(leadsRef, (snapshot) => {
+        const loaded: Lead[] = [];
+        snapshot.forEach((d) => loaded.push({ id: d.id, ...d.data() } as Lead));
+        setLeads(loaded.sort((a, b) => b.createdAt - a.createdAt));
+      });
+
       const requestsRef = collection(db, 'users', user.uid, 'supportRequests');
       unsubscribeRequests = onSnapshot(requestsRef, (snapshot) => {
         const loadedRequests: any[] = [];
@@ -240,6 +251,7 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
 
       return () => {
         unsubscribeClients();
+        unsubscribeLeads();
         unsubscribeRequests();
         unsubscribeOffers();
         unsubServices();
@@ -260,7 +272,8 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
   // ═══ Context Value ═══
   const value: CRMContextType = {
     user,
-    clients, offers, filteredClients: clientActions.filteredClients, supportRequests,
+    clients, leads, offers, filteredClients: clientActions.filteredClients, supportRequests,
+    activeLeadsCount: leads.filter(l => !['Convertido', 'Perdido'].includes(l.status)).length,
     expenses: finance.expenses, transactions: finance.transactions,
     transactionCategories: finance.transactionCategories, budgets: finance.budgets, services,
     loading, errorMsg, isSyncing: clientActions.isSyncing,

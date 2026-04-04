@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
-import { db, auth } from '../lib/firebase';
+import React, { useState } from 'react';
+import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { useCRM } from '../contexts/CRMContext';
+import { db } from '../lib/firebase';
 import { Lead, LeadStatus } from '../types';
 import { Users, Plus, Phone, Mail, DollarSign, Trash2, X, ChevronDown, TrendingUp, Target, UserPlus, ArrowRight, GripVertical, Search, Filter } from 'lucide-react';
 import { toast } from 'sonner';
@@ -30,7 +31,7 @@ interface LeadFormData {
 const emptyForm: LeadFormData = { name: '', whatsapp: '', email: '', leadSource: '', estimatedValue: '', notes: '', plan: '', niche: '' };
 
 export default function LeadsView() {
-  const [leads, setLeads] = useState<Lead[]>([]);
+  const { user, leads } = useCRM();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<LeadFormData>(emptyForm);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
@@ -38,25 +39,12 @@ export default function LeadsView() {
   const [dragOverColumn, setDragOverColumn] = useState<LeadStatus | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterSource, setFilterSource] = useState('all');
-  const user = auth.currentUser;
-
-  useEffect(() => {
-    if (!user) return;
-    const leadsRef = collection(db, 'users', user.uid, 'leads');
-    const unsub = onSnapshot(leadsRef, (snapshot) => {
-      const loaded: Lead[] = [];
-      snapshot.forEach((d) => loaded.push({ id: d.id, ...d.data() } as Lead));
-      loaded.sort((a, b) => b.createdAt - a.createdAt);
-      setLeads(loaded);
-    });
-    return () => unsub();
-  }, [user]);
-
   const filteredLeads = leads.filter(l => {
     const matchesSearch = !searchTerm || l.name.toLowerCase().includes(searchTerm.toLowerCase()) || l.whatsapp.includes(searchTerm);
     const matchesSource = filterSource === 'all' || l.leadSource === filterSource;
     return matchesSearch && matchesSource;
   });
+
 
   const handleSave = async () => {
     if (!user || !formData.name.trim()) { toast.error('Nome é obrigatório'); return; }
@@ -213,7 +201,7 @@ export default function LeadsView() {
       <div className="flex-1 overflow-x-auto pb-4">
         <div className="flex gap-4 min-w-max h-full">
           {LEAD_COLUMNS.map((col) => {
-            const columnLeads = filteredLeads.filter(l => l.status === col.status);
+            const columnLeads = filteredLeads.filter(l => l.status.toLowerCase() === col.status.toLowerCase());
             const isOver = dragOverColumn === col.status;
             return (
               <div
