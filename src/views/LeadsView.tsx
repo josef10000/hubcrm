@@ -32,6 +32,7 @@ const emptyForm: LeadFormData = { name: '', whatsapp: '', email: '', leadSource:
 
 export default function LeadsView() {
   const { user, leads } = useCRM();
+  console.log('Current Leads (Diagnostic):', leads);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<LeadFormData>(emptyForm);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
@@ -108,6 +109,27 @@ export default function LeadsView() {
     setIsModalOpen(true);
   };
 
+ const handleCleanup = async () => {
+    if (!user || !leads.length) return;
+    const validStatuses = LEAD_COLUMNS.map(c => c.status.toLowerCase());
+    const ghostLeads = leads.filter(l => !l.status || !validStatuses.includes(l.status.toLowerCase()));
+    
+    if (ghostLeads.length === 0) {
+      toast.info('Nenhum lead fantasma encontrado.');
+      return;
+    }
+
+    if (!confirm(`Encotrados ${ghostLeads.length} leads fantasmas. Deseja excluí-los permanentemente?`)) return;
+
+    try {
+      const deletePromises = ghostLeads.map(l => deleteDoc(doc(db, 'users', user.uid, 'leads', l.id)));
+      await Promise.all(deletePromises);
+      toast.success(`${ghostLeads.length} leads fantasmas removidos!`);
+    } catch (e: any) {
+      toast.error(`Erro na limpeza: ${e.message}`);
+    }
+  };
+
   const closeModal = () => { setIsModalOpen(false); setEditingLead(null); setFormData(emptyForm); };
 
   // ── Metrics ──
@@ -151,6 +173,12 @@ export default function LeadsView() {
             <span className="text-xs text-gray-500 uppercase font-bold tracking-wider">Leads Ativos</span>
           </div>
           <p className="text-2xl font-bold text-white">{activeLeads.length}</p>
+          <button 
+            onClick={handleCleanup}
+            className="mt-2 text-[10px] text-blue-400 hover:text-blue-300 underline font-medium"
+          >
+            Sincronizar Banco
+          </button>
         </div>
         <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-4 hover:border-emerald-500/30 transition-colors">
           <div className="flex items-center gap-2 mb-2">
