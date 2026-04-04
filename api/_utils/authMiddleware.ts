@@ -71,23 +71,46 @@ export async function verifyAuth(
     // Ensure Firebase Admin is initialized
     if (admin.apps.length === 0) {
       const serviceAccountStr = process.env.FIREBASE_SERVICE_ACCOUNT;
-      if (serviceAccountStr) {
-        let serviceAccount;
-        try {
-          serviceAccount = JSON.parse(serviceAccountStr);
-        } catch {
-          serviceAccount = JSON.parse(Buffer.from(serviceAccountStr, 'base64').toString());
-        }
-        admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+      if (!serviceAccountStr) {
+        console.error('FIREBASE_SERVICE_ACCOUNT is missing');
+        res.status(500).json({ error: 'Configuração de autenticação faltando no servidor' });
+        return null;
       }
+
+      let serviceAccount;
+      try {
+        serviceAccount = JSON.parse(serviceAccountStr);
+      } catch {
+        try {
+          serviceAccount = JSON.parse(Buffer.from(serviceAccountStr, 'base64').toString());
+        } catch (e) {
+          console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT');
+          res.status(500).json({ error: 'Erro ao processar credenciais de autenticação' });
+          return null;
+        }
+      }
+      admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
     }
 
     const decoded = await admin.auth().verifyIdToken(idToken);
     req.uid = decoded.uid;
     return decoded.uid;
   } catch (error: any) {
-    console.error('Auth verification failed:', error.message);
-    res.status(401).json({ error: 'Token de autenticação expirado ou inválido' });
+    console.error('Auth verification failed:', error.message, error.code);
+    
+    // Check for specific error types
+    let userMessage = 'Token de autenticação expirado ou inválido';
+    if (error.code === 'auth/id-token-expired') userMessage = 'Sua sessão expirou. Recarregue a página.';
+    if (error.code === 'auth/argument-error') userMessage = 'Erro técnico na autenticação (Argument Error).';
+    
+    res.status(401).json({ 
+      error: userMessage,
+      details: error.message,
+      code: error.code,
+      timestamp: new Date().toISOString()
+    });
     return null;
   }
 }
+
+

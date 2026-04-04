@@ -412,7 +412,8 @@ export function useClients(opts: UseClientsOptions) {
           let err;
           try { err = JSON.parse(errText); } catch (e) { err = { error: errText }; }
           console.error('Asaas Customer Error:', err);
-          toast.error(`Erro ao criar cliente no Asaas: ${err.error || 'Erro desconhecido'}`);
+          const errDetail = err.details ? ` (${err.details})` : (err.code ? ` [${err.code}]` : '');
+          toast.error(`Erro ao criar cliente no Asaas: ${err.error || 'Erro desconhecido'}${errDetail}`);
         }
       }
 
