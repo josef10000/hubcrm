@@ -1,0 +1,93 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import * as admin from 'firebase-admin';
+
+// ── Rate Limiting (in-memory, per-IP) ────────────────────────────────────────
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_MAX = 30; // max requests
+const RATE_LIMIT_WINDOW_MS = 60_000; // per 1 minute
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+
+  if (entry.count >= RATE_LIMIT_MAX) {
+    return false;
+  }
+
+  entry.count++;
+  return true;
+}
+
+// Clean up stale entries every 5 minutes to prevent memory leak
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of rateLimitMap.entries()) {
+    if (now > entry.resetAt) rateLimitMap.delete(ip);
+  }
+}, 5 * 60_000);
+
+// ── Auth Middleware ─────────────────────────────────────────────────────────
+export interface AuthenticatedRequest extends VercelRequest {
+  uid?: string;
+}
+
+/**
+ * Verifies Firebase ID token from Authorization header.
+ * Returns the decoded UID or sends an error response and returns null.
+ */
+export async function verifyAuth(
+  req: AuthenticatedRequest,
+  res: VercelResponse
+): Promise<string | null> {
+  // Rate limiting
+  const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() 
+    || req.headers['x-real-ip'] as string 
+    || 'unknown';
+
+  if (!checkRateLimit(ip)) {
+    res.status(429).json({ error: 'Muitas requisições. Tente novamente em 1 minuto.' });
+    return null;
+  }
+
+  // Extract Bearer token
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    res.status(401).json({ error: 'Token de autenticação não fornecido' });
+    return null;
+  }
+
+  const idToken = authHeader.split('Bearer ')[1];
+  if (!idToken) {
+    res.status(401).json({ error: 'Token de autenticação inválido' });
+    return null;
+  }
+
+  try {
+    // Ensure Firebase Admin is initialized
+    if (admin.apps.length === 0) {
+      const serviceAccountStr = process.env.FIREBASE_SERVICE_ACCOUNT;
+      if (serviceAccountStr) {
+        let serviceAccount;
+        try {
+          serviceAccount = JSON.parse(serviceAccountStr);
+        } catch {
+          serviceAccount = JSON.parse(Buffer.from(serviceAccountStr, 'base64').toString());
+        }
+        admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
+      }
+    }
+
+    const decoded = await admin.auth().verifyIdToken(idToken);
+    req.uid = decoded.uid;
+    return decoded.uid;
+  } catch (error: any) {
+    console.error('Auth verification failed:', error.message);
+    res.status(401).json({ error: 'Token de autenticação expirado ou inválido' });
+    return null;
+  }
+}

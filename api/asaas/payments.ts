@@ -1,7 +1,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { asaasRequest, safeErrorResponse } from '../_utils/asaas.js';
+import { verifyAuth } from '../_utils/authMiddleware.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Auth check
+  const uid = await verifyAuth(req, res);
+  if (!uid) return;
+
   if (req.method === 'GET') {
     try {
       const { customer } = req.query;

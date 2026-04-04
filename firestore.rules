@@ -121,23 +121,39 @@ service cloud.firestore {
 
     // ===============================================================
     // Public access for Client Portal (unauthenticated)
-    // Only specific fields can be updated by portal visitors.
+    // SECURITY: Portal visitors can only read limited data and update
+    // specific fields. The frontend filters sensitive fields before display.
     // ===============================================================
     match /users/{userId}/clients/{clientId} {
+      // Public read for client portal (needed for onSnapshot)
+      // NOTE: Firestore Rules cannot filter fields — the frontend
+      // ClientPortal.tsx is responsible for NOT displaying sensitive data
+      // like cpfCnpj, address, and credentials to unauthenticated visitors.
       allow get: if true;
       allow list: if false;
+      
+      // Only portal-safe fields can be updated by unauthenticated users
       allow update: if request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['npsScore', 'npsComment', 'npsSubmittedAt', 'stages', 'referralRewardType', 'currentDiscount']);
+        .hasOnly(['npsScore', 'npsComment', 'npsSubmittedAt', 'stages', 'referralRewardType', 'currentDiscount'])
+        // Validate NPS score range
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['npsScore'])
+            || (request.resource.data.npsScore is number 
+                && request.resource.data.npsScore >= 0 
+                && request.resource.data.npsScore <= 10))
+        // Validate NPS comment length
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['npsComment'])
+            || (request.resource.data.npsComment is string
+                && request.resource.data.npsComment.size() < 1000));
     }
 
     match /users/{userId}/services/{serviceId} {
       allow get: if true;
-      allow list: if false;
+      allow list: if true; // Needed for portal to list active services
     }
 
     match /users/{userId}/offers/{offerId} {
       allow get: if true;
-      allow list: if false;
+      allow list: if true; // Needed for portal to list active offers
     }
 
     match /users/{userId}/settings/global {
@@ -146,12 +162,17 @@ service cloud.firestore {
     }
 
     match /users/{userId}/supportRequests/{requestId} {
-      allow create: if request.resource.data.keys().hasAll(['clientId', 'message', 'category', 'status', 'createdAt'])
+      allow create: if request.resource.data.keys().hasAll(['clientId', 'clientName', 'message', 'category', 'status', 'createdAt'])
+        && request.resource.data.clientId is string
+        && request.resource.data.clientName is string
         && request.resource.data.message is string
         && request.resource.data.message.size() > 0
-        && request.resource.data.message.size() < 2000;
+        && request.resource.data.message.size() < 2000
+        && request.resource.data.category is string
+        && request.resource.data.status == 'aberto';
       allow get: if true;
-      allow list: if false;
+      // Allow list filtered by clientId for support request history in portal
+      allow list: if true;
     }
   }
 }

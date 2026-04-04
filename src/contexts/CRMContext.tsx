@@ -4,11 +4,12 @@ import { collection, doc, setDoc, deleteDoc, onSnapshot, updateDoc, query, where
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { auth, db } from '../lib/firebase';
+import { authFetch } from '../lib/authFetch';
 import { Client, Offer, OnboardingQuestion, Expense, PlanType, SiteStatus, clientSchema, Transaction, TransactionCategory, Budget } from '../types';
 import { getPlanPrice, getSetupPrice, calculateDiscount, updateReferrerSubscription } from '../helpers';
 
 // ─── View Type ──────────────────────────────────────────────────────────────────
-export type CRMView = 'dashboard' | 'analytics' | 'support' | 'finance' | 'settings' | 'calendar' | 'referrals' | 'marketing' | 'products' | 'monitoring' | 'map';
+export type CRMView = 'dashboard' | 'analytics' | 'support' | 'finance' | 'settings' | 'calendar' | 'referrals' | 'marketing' | 'products' | 'monitoring' | 'map' | 'leads';
 
 // ─── Context Type ───────────────────────────────────────────────────────────────
 interface CRMContextType {
@@ -397,10 +398,10 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
 
       for (const client of clientsToSync) {
         try {
-          const paymentsRes = await fetch(`/api/asaas/payments?customer=${client.asaasCustomerId}`);
+          const paymentsRes = await authFetch(`/api/asaas/payments?customer=${client.asaasCustomerId}`);
           let subscription = null;
           if (client.asaasSubscriptionId) {
-            const subRes = await fetch(`/api/asaas/subscriptions/${client.asaasSubscriptionId}`);
+            const subRes = await authFetch(`/api/asaas/subscriptions/${client.asaasSubscriptionId}`);
             if (subRes.ok) {
               const subData = await subRes.json();
               subscription = subData.subscription;
@@ -601,7 +602,7 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
           nextSubDateStr = nextSubDate.toISOString().split('T')[0];
         }
 
-        const updateRes = await fetch('/api/asaas/update-subscription', {
+        const updateRes = await authFetch('/api/asaas/update-subscription', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -650,7 +651,7 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
 
         if (client.asaasCustomerId) {
           if (client.asaasSubscriptionId) {
-            const delRes = await fetch('/api/asaas/delete-subscription', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscriptionId: client.asaasSubscriptionId }) });
+            const delRes = await authFetch('/api/asaas/delete-subscription', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscriptionId: client.asaasSubscriptionId }) });
             if (!delRes.ok) {
               console.error('Failed to cancel subscription in Asaas');
               toast.error('Aviso: Não foi possível cancelar a assinatura no Asaas automaticamente.');
@@ -660,13 +661,13 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
             }
           }
           try {
-            const paymentsRes = await fetch(`/api/asaas/payments?customer=${client.asaasCustomerId}`);
+            const paymentsRes = await authFetch(`/api/asaas/payments?customer=${client.asaasCustomerId}`);
             if (paymentsRes.ok) {
               const paymentsData = await paymentsRes.json();
               const payments = paymentsData.data || [];
               for (const payment of payments) {
                 if (payment.status === 'PENDING' || payment.status === 'OVERDUE') {
-                  await fetch('/api/asaas/delete-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: payment.id }) });
+                  await authFetch('/api/asaas/delete-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: payment.id }) });
                 }
               }
             }
@@ -682,7 +683,7 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
         const isMobile = phoneClean.length === 11;
         const isLandline = phoneClean.length === 10;
 
-        const customerRes = await fetch('/api/asaas/customers', {
+        const customerRes = await authFetch('/api/asaas/customers', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: client.name, cpfCnpj: client.cpfCnpj ? client.cpfCnpj.replace(/\D/g, '') : '', email: client.email, mobilePhone: isMobile ? phoneClean : undefined, phone: isLandline ? phoneClean : undefined }),
@@ -703,7 +704,7 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
             const totalValue = isSinglePayment ? Math.max(0, monthlyValue + (client.setupPrice || 0)) : monthlyValue;
             const paymentName = isSinglePayment ? `Pagamento Único - ${client.plan}` : `Combo (Setup + Plano Anual) - Plano ${client.plan}`;
             const paymentDesc = isSinglePayment ? `Pagamento referente à oferta ${client.plan}.` : `Acesso anual ao Plano ${client.plan} com taxa de setup inclusa.`;
-            const paymentRes = await fetch('/api/asaas/payment-links', {
+            const paymentRes = await authFetch('/api/asaas/payment-links', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -737,7 +738,7 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
             }
           } else {
             if (setupValue > 0) {
-              const paymentRes = await fetch('/api/asaas/payments', {
+              const paymentRes = await authFetch('/api/asaas/payments', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ customer: client.asaasCustomerId, billingType: client.billingType, value: setupValue, dueDate: firstPaymentDate, description: `Taxa de Adesão - Plano ${client.plan} - Hub Central` }),
@@ -764,7 +765,7 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
               }
               const nextSubDateStr = nextSubDate.toISOString().split('T')[0];
 
-              const subRes = await fetch('/api/asaas/subscriptions', {
+              const subRes = await authFetch('/api/asaas/subscriptions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ customer: client.asaasCustomerId, billingType: client.billingType, cycle: client.billingCycle === 'YEARLY' ? 'YEARLY' : 'MONTHLY', value: monthlyValue, nextDueDate: nextSubDateStr, description: `Assinatura ${client.billingCycle === 'YEARLY' ? 'Anual' : 'Mensal'} - Plano ${client.plan} - Hub Central` }),
@@ -780,7 +781,7 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
                 toast.error(`Erro ao criar assinatura no Asaas: ${err.error || 'Erro desconhecido'}`);
               }
             } else {
-              const subRes = await fetch('/api/asaas/subscriptions', {
+              const subRes = await authFetch('/api/asaas/subscriptions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ customer: client.asaasCustomerId, billingType: client.billingType, cycle: client.billingCycle === 'YEARLY' ? 'YEARLY' : 'MONTHLY', value: monthlyValue, nextDueDate: firstPaymentDate, description: `Assinatura ${client.billingCycle === 'YEARLY' ? 'Anual' : 'Mensal'} - Plano ${client.plan} - Hub Central` }),
@@ -825,7 +826,7 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
     if (clientToDelete?.asaasCustomerId) {
       if (clientToDelete.asaasSubscriptionId) {
         try {
-          const delRes = await fetch('/api/asaas/delete-subscription', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscriptionId: clientToDelete.asaasSubscriptionId }) });
+          const delRes = await authFetch('/api/asaas/delete-subscription', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscriptionId: clientToDelete.asaasSubscriptionId }) });
           if (!delRes.ok) {
             console.error('Failed to cancel subscription in Asaas before deletion');
             toast.error('Aviso: O cliente foi excluído, mas não foi possível cancelar a assinatura no Asaas automaticamente.');
@@ -835,13 +836,13 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
         }
       }
       try {
-        const paymentsRes = await fetch(`/api/asaas/payments?customer=${clientToDelete.asaasCustomerId}`);
+        const paymentsRes = await authFetch(`/api/asaas/payments?customer=${clientToDelete.asaasCustomerId}`);
         if (paymentsRes.ok) {
           const paymentsData = await paymentsRes.json();
           const payments = paymentsData.data || [];
           for (const payment of payments) {
             if (payment.status === 'PENDING' || payment.status === 'OVERDUE') {
-              await fetch('/api/asaas/delete-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: payment.id }) });
+              await authFetch('/api/asaas/delete-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: payment.id }) });
             }
           }
         }
@@ -852,13 +853,13 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
 
     if (clientToDelete?.siteLink) {
       try {
-        const monitorsRes = await fetch('/api/uptimerobot/monitors');
+        const monitorsRes = await authFetch('/api/uptimerobot/monitors');
         if (monitorsRes.ok) {
           const monitors = await monitorsRes.json();
           const clientUrl = clientToDelete.siteLink.replace(/^https?:\/\//, '').replace(/\/$/, '');
           const monitorToDelete = monitors.find((m: any) => m.url.includes(clientUrl));
           if (monitorToDelete) {
-            await fetch('/api/uptimerobot/monitors', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: monitorToDelete.id }) });
+            await authFetch('/api/uptimerobot/monitors', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: monitorToDelete.id }) });
             console.log('Monitor deleted from UptimeRobot');
           }
         }

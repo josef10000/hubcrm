@@ -1,5 +1,6 @@
 import { doc, updateDoc } from 'firebase/firestore';
 import { auth, db } from './lib/firebase';
+import { authFetch } from './lib/authFetch';
 import { Client } from './types';
 
 export const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -62,7 +63,7 @@ export const updateReferrerSubscription = async (referrerId: string, updatedClie
 
     const monthlyValue = getPlanPrice(referrer.plan, referrer.billingCycle, referrer) - discount;
 
-    const updateRes = await fetch('/api/asaas/update-subscription', {
+    const updateRes = await authFetch('/api/asaas/update-subscription', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

@@ -170,3 +170,36 @@ export interface Budget {
   year: number;
   month?: number;
 }
+
+export type LeadStatus = 'Novo' | 'Em Contato' | 'Proposta Enviada' | 'Negociação' | 'Convertido' | 'Perdido';
+
+export interface Lead {
+  id: string;
+  name: string;
+  whatsapp: string;
+  email?: string;
+  cpfCnpj?: string;
+  status: LeadStatus;
+  leadSource?: string;
+  estimatedValue?: number;
+  notes?: string;
+  plan?: PlanType;
+  niche?: string;
+  createdAt: number;
+  updatedAt?: number;
+  convertedClientId?: string;
+  lostReason?: string;
+}
+
+export interface SupportRequest {
+  id: string;
+  clientId: string;
+  clientName: string;
+  category: string;
+  message: string;
+  status: 'aberto' | 'em_analise' | 'concluido';
+  createdAt: any;
+  reply?: string;
+  repliedAt?: any;
+}
+
