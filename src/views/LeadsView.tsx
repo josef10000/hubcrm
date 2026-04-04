@@ -40,7 +40,7 @@ export default function LeadsView() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterSource, setFilterSource] = useState('all');
   const filteredLeads = leads.filter(l => {
-    const matchesSearch = !searchTerm || l.name.toLowerCase().includes(searchTerm.toLowerCase()) || l.whatsapp.includes(searchTerm);
+    const matchesSearch = !searchTerm || l.name?.toLowerCase().includes(searchTerm.toLowerCase()) || l.whatsapp?.includes(searchTerm);
     const matchesSource = filterSource === 'all' || l.leadSource === filterSource;
     return matchesSearch && matchesSource;
   });
@@ -111,11 +111,12 @@ export default function LeadsView() {
   const closeModal = () => { setIsModalOpen(false); setEditingLead(null); setFormData(emptyForm); };
 
   // ── Metrics ──
-  const activeLeads = leads.filter(l => !['Convertido', 'Perdido'].includes(l.status));
+  const activeLeads = leads.filter(l => !['Convertido', 'Perdido'].includes(l.status || ''));
   const convertedLeads = leads.filter(l => l.status === 'Convertido');
   const conversionRate = leads.length > 0 ? ((convertedLeads.length / leads.length) * 100).toFixed(1) : '0';
   const totalPipelineValue = activeLeads.reduce((sum, l) => sum + (l.estimatedValue || 0), 0);
   const thisMonthLeads = leads.filter(l => {
+    if (!l.createdAt) return false;
     const d = new Date(l.createdAt);
     const now = new Date();
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
@@ -201,7 +202,7 @@ export default function LeadsView() {
       <div className="flex-1 overflow-x-auto pb-4">
         <div className="flex gap-4 min-w-max h-full">
           {LEAD_COLUMNS.map((col) => {
-            const columnLeads = filteredLeads.filter(l => l.status.toLowerCase() === col.status.toLowerCase());
+            const columnLeads = filteredLeads.filter(l => l.status?.toLowerCase() === col.status.toLowerCase());
             const isOver = dragOverColumn === col.status;
             return (
               <div

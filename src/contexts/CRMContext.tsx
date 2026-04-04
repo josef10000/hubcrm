@@ -273,7 +273,7 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
   const value: CRMContextType = {
     user,
     clients, leads, offers, filteredClients: clientActions.filteredClients, supportRequests,
-    activeLeadsCount: leads.filter(l => !['Convertido', 'Perdido'].includes(l.status)).length,
+    activeLeadsCount: leads.filter(l => !['Convertido', 'Perdido'].includes(l.status || '')).length,
     expenses: finance.expenses, transactions: finance.transactions,
     transactionCategories: finance.transactionCategories, budgets: finance.budgets, services,
     loading, errorMsg, isSyncing: clientActions.isSyncing,
