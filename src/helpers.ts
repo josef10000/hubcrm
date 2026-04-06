@@ -6,26 +6,49 @@ import { Client } from './types';
 export const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const getSetupPrice = (plan?: string, client?: Partial<Client>) => {
-  if (client && client.setupPrice !== undefined) return client.setupPrice;
-  if (client && client.customSetupPrice !== undefined) return client.customSetupPrice;
+  if (client?.setupPrice !== undefined) return client.setupPrice;
+  if (client?.customSetupPrice !== undefined) return client.customSetupPrice;
+  
+  // Dynamic defaults based on common plans
   if (plan === 'Profissional') return 7500;
-  return 2500; // Essencial
+  if (plan === 'Ecossistema Essencial') return 2500;
+  
+  return 2500; // Final fallback
 };
 
 export const getPlanPrice = (plan?: string, billingCycle?: string, client?: Partial<Client> | number, customSetupPrice?: number) => {
-  let finalMonthlyPrice: number;
-  let finalSetupPrice: number;
+  let finalMonthlyPrice: number = 0;
+  let finalSetupPrice: number = 0;
 
   if (typeof client === 'number') {
     finalMonthlyPrice = client;
     finalSetupPrice = customSetupPrice !== undefined ? customSetupPrice : getSetupPrice(plan);
   } else {
-    // Priority: customMonthlyPrice > planPrice > fallback by plan name > 0
-    finalMonthlyPrice = client?.customMonthlyPrice !== undefined ? client.customMonthlyPrice : (client?.planPrice !== undefined ? client.planPrice : (plan === 'Profissional' ? 897 : plan === 'Ecossistema Essencial' ? 397 : 0));
-    finalSetupPrice = client?.customSetupPrice !== undefined ? client.customSetupPrice : (client?.setupPrice !== undefined ? client.setupPrice : getSetupPrice(plan, client));
+    // Priority 1: Explicit planPrice or customMonthlyPrice in client record
+    if (client?.customMonthlyPrice !== undefined) {
+      finalMonthlyPrice = client.customMonthlyPrice;
+    } else if (client?.planPrice !== undefined) {
+      finalMonthlyPrice = client.planPrice;
+    } else {
+      // Priority 2: Fallback to hardcoded defaults for standard plans
+      if (plan === 'Profissional') finalMonthlyPrice = 897;
+      else if (plan === 'Ecossistema Essencial') finalMonthlyPrice = 397;
+      else finalMonthlyPrice = 0;
+    }
+
+    // Priority 1: Explicit setupPrice in client record
+    if (client?.customSetupPrice !== undefined) {
+      finalSetupPrice = client.customSetupPrice;
+    } else if (client?.setupPrice !== undefined) {
+      finalSetupPrice = client.setupPrice;
+    } else {
+      finalSetupPrice = getSetupPrice(plan, client);
+    }
   }
 
+  // Calculate total based on billing cycle
   if (billingCycle === 'YEARLY') {
+    // Yearly discount: 12 months for the price of 9 + Setup
     return finalSetupPrice + (finalMonthlyPrice * 9);
   }
   
