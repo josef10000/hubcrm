@@ -15,40 +15,17 @@ interface UseClientsOptions {
   setEditingClient: (client: Client | null) => void;
   setIsModalOpen: (open: boolean) => void;
   defaultStages: { id: string; name: string }[];
-  searchTerm: string;
-  filterStatus: SiteStatus | 'Todos';
-  sortBy: 'recent' | 'alphabetical' | 'value';
   churnRiskDays: number;
 }
 
 export function useClients(opts: UseClientsOptions) {
   const {
     userId, clients, offers, editingClient, setEditingClient, setIsModalOpen,
-    defaultStages, searchTerm, filterStatus, sortBy, churnRiskDays,
+    defaultStages, churnRiskDays,
   } = opts;
 
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // ═══ Computed ═══
-  const filteredClients = useMemo(() => {
-    let result = clients.filter((c) => {
-      const matchesSearch =
-        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.whatsapp.includes(searchTerm) ||
-        (c.cpfCnpj && c.cpfCnpj.includes(searchTerm)) ||
-        (c.niche && c.niche.toLowerCase().includes(searchTerm.toLowerCase()));
-      const matchesStatus = filterStatus === 'Todos' || c.status === filterStatus;
-      return matchesSearch && matchesStatus;
-    });
-
-    result.sort((a, b) => {
-      if (sortBy === 'alphabetical') return a.name.localeCompare(b.name);
-      if (sortBy === 'value') return getPlanPrice(b.plan, b.billingCycle, b) - getPlanPrice(a.plan, a.billingCycle, a);
-      return b.createdAt - a.createdAt;
-    });
-
-    return result;
-  }, [clients, searchTerm, filterStatus, sortBy]);
 
   // ═══ Helpers ═══
   const isChurnRisk = useCallback((client: Client) => {
@@ -487,11 +464,11 @@ export function useClients(opts: UseClientsOptions) {
   };
 
   // ═══ Export CSV ═══
-  const handleExportCSV = () => {
+  const handleExportCSV = (dataToExport: Client[]) => {
     const headers = ['Nome', 'WhatsApp', 'CPF/CNPJ', 'Email', 'Plano', 'Status', 'Status Pagamento', 'Vencimento'];
     const csvContent = [
       headers.join(','),
-      ...filteredClients.map((c) =>
+      ...dataToExport.map((c) =>
         [`"${c.name}"`, `"${c.whatsapp}"`, `"${c.cpfCnpj || ''}"`, `"${c.email || ''}"`, `"${c.plan}"`, `"${c.status}"`, `"${c.paymentStatus || 'N/A'}"`, `"${c.nextDueDate ? new Date(c.nextDueDate).toLocaleDateString('pt-BR') : ''}"`].join(',')
       ),
     ].join('\n');
@@ -509,7 +486,6 @@ export function useClients(opts: UseClientsOptions) {
   };
 
   return {
-    filteredClients,
     isSyncing,
     handleSaveClient,
     handleDeleteClient,

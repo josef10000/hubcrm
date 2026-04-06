@@ -1,12 +1,14 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useCRM } from '../../contexts/CRMContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { AlertCircle, Target, TrendingDown, Edit2, Check } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { collection, doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { toast } from 'sonner';
 
 export default function BudgetPanel() {
-  const { transactions, transactionCategories, user } = useCRM();
+  const { user } = useAuth();
+  const { transactions, transactionCategories } = useCRM();
   const [budgets, setBudgets] = useState<Record<string, number>>({});
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState<string>('');

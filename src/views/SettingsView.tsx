@@ -1,6 +1,7 @@
 import React from 'react';
 import { Settings, CheckCircle, Trash2, Plus, FileText, Image as ImageIcon, LogOut } from 'lucide-react';
 import { useCRM } from '../contexts/CRMContext';
+import { useUI } from '../contexts/UIContext';
 import { auth, db } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
@@ -8,11 +9,10 @@ import { toast } from 'sonner';
 import { OnboardingQuestion } from '../types';
 
 export default function SettingsView() {
+  const { themeColor, setThemeColor } = useUI();
   const { 
     churnRiskDays, 
     setChurnRiskDays, 
-    themeColor, 
-    setThemeColor, 
     defaultStages, 
     setDefaultStages, 
     onboardingQuestions, 

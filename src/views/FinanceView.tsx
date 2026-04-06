@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { TrendingUp, TrendingDown, DollarSign, Trash2, PieChart, Activity, Target, Tag } from 'lucide-react';
 import { useCRM } from '../contexts/CRMContext';
+import { useAuth } from '../contexts/AuthContext';
 import { getPlanPrice } from '../helpers';
 import { db } from '../lib/firebase';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
@@ -14,7 +15,8 @@ import BankReconciliation from '../components/finance/BankReconciliation';
 import CategoryManager from '../components/finance/CategoryManager';
 
 export default function FinanceView() {
-  const { clients, expenses, newExpense, setNewExpense, user, transactionCategories, budgets, transactions } = useCRM();
+  const { user } = useAuth();
+  const { clients, expenses, newExpense, setNewExpense, transactionCategories, budgets, transactions } = useCRM();
   const [activeTab, setActiveTab] = useState<'resumo' | 'dre' | 'fluxo' | 'orcamento' | 'conciliacao' | 'categorias'>('resumo');
 
   const totalMRR = clients.filter(c => c.status === 'Ativo' || c.status === 'Inadimplente').reduce((acc, c) => {

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useCRM } from '../../contexts/CRMContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../lib/firebase';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { Plus, Trash2, Tag, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
@@ -7,7 +8,8 @@ import { toast } from 'sonner';
 import type { TransactionCategory, TransactionType } from '../../types';
 
 export default function CategoryManager() {
-  const { transactionCategories, user } = useCRM();
+  const { user } = useAuth();
+  const { transactionCategories } = useCRM();
   const [isAdding, setIsAdding] = useState(false);
   const [newName, setNewName] = useState('');
   const [newType, setNewType] = useState<TransactionType>('EXPENSE');

@@ -1,12 +1,14 @@
 import React from 'react';
 import { Megaphone } from 'lucide-react';
 import { useCRM } from '../contexts/CRMContext';
+import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
 
 export default function MarketingView() {
-  const { user, globalAnnouncement, setGlobalAnnouncement } = useCRM();
+  const { user } = useAuth();
+  const { globalAnnouncement, setGlobalAnnouncement } = useCRM();
 
   const handleSaveAnnouncement = async () => {
     if (!user) return;

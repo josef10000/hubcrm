@@ -1,12 +1,14 @@
 import React from 'react';
 import { MessageCircle, Clock, MessageSquare, CheckCircle, Trash2 } from 'lucide-react';
 import { useCRM } from '../contexts/CRMContext';
+import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
 
 export default function SupportView() {
-  const { user, supportRequests, replyingTo, setReplyingTo, replyMessage, setReplyMessage } = useCRM();
+  const { user } = useAuth();
+  const { supportRequests, replyingTo, setReplyingTo, replyMessage, setReplyMessage } = useCRM();
 
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10">

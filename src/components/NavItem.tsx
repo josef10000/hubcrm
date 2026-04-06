@@ -1,22 +1,23 @@
 import React from 'react';
 import { LucideIcon } from 'lucide-react';
-import { CRMView } from '../contexts/CRMContext';
+import { Link, useLocation } from 'react-router-dom';
 
 interface NavItemProps {
   icon: LucideIcon;
   label: string;
-  view: CRMView;
-  activeView: CRMView;
-  onClick: (view: CRMView) => void;
+  path: string;
+  onClick?: () => void;
   badge?: number;
 }
 
-export default function NavItem({ icon: Icon, label, view, activeView, onClick, badge }: NavItemProps) {
-  const isActive = activeView === view;
+export default function NavItem({ icon: Icon, label, path, onClick, badge }: NavItemProps) {
+  const location = useLocation();
+  const isActive = location.pathname === path;
 
   return (
-    <button
-      onClick={() => onClick(view)}
+    <Link
+      to={path}
+      onClick={onClick}
       className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all ${
         isActive
           ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30'
@@ -32,6 +33,6 @@ export default function NavItem({ icon: Icon, label, view, activeView, onClick, 
           {badge}
         </span>
       )}
-    </button>
+    </Link>
   );
 }

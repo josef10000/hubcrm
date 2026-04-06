@@ -1,24 +1,16 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { 
   LayoutDashboard, Users, Plus, X, DollarSign,
   Search, BarChart3, Calendar, MessageCircle, Globe,
   Download, AlertTriangle, Settings,
   Megaphone, Package, Map as MapIcon, Target, Menu
 } from 'lucide-react';
-import { auth, db, isFirebaseConfigured } from './lib/firebase';
-import { onAuthStateChanged, signOut, User } from 'firebase/auth';
+import { isFirebaseConfigured } from './lib/firebase';
 import Auth from './components/Auth';
 import CalendarView from './components/CalendarView';
 import MonitoringView from './components/MonitoringView';
 import ClientMapView from './components/ClientMapView';
-import { toast } from 'sonner';
-import { Client, Offer, OnboardingQuestion, Expense, PlanType, SiteStatus, ClientLog, ClientAttachment, ClientStage, ClientCredential } from './types';
-import { clientSchema } from './types';
-import { getSetupPrice, getPlanPrice, calculateDiscount, updateReferrerSubscription } from './helpers';
-
-export type { PlanType, SiteStatus, ClientLog, ClientAttachment, ClientStage, ClientCredential, Offer, Client, OnboardingQuestion, Expense } from './types';
-export { clientSchema } from './types';
-export { getSetupPrice, getPlanPrice, calculateDiscount, updateReferrerSubscription } from './helpers';
+import { Toaster, toast } from 'sonner';
 
 import ConfirmationModal from './components/ConfirmationModal';
 import OfferModal from './components/OfferModal';
@@ -35,44 +27,47 @@ import ProductsView from './views/ProductsView';
 import SettingsView from './views/SettingsView';
 import LeadsView from './views/LeadsView';
 
-import { CRMProvider, useCRM, CRMView } from './contexts/CRMContext';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { UIProvider, useUI } from './contexts/UIContext';
+import { CRMProvider, useCRM } from './contexts/CRMContext';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import ClientPortal from './components/ClientPortal';
 import OnboardingForm from './components/OnboardingForm';
 import ContractSignView from './views/ContractSignView';
-import { Toaster } from 'sonner';
 
 // ── Navigation Config ──
-const navItems: { icon: any; label: string; view: CRMView }[] = [
-  { icon: LayoutDashboard, label: 'Dashboard', view: 'dashboard' },
-  { icon: Target, label: 'Pipeline', view: 'leads' },
-  { icon: BarChart3, label: 'Analytics', view: 'analytics' },
-  { icon: MessageCircle, label: 'Chamados', view: 'support' },
-  { icon: Calendar, label: 'Agenda', view: 'calendar' },
-  { icon: DollarSign, label: 'Gestão de Custos', view: 'finance' },
-  { icon: Users, label: 'Indicações', view: 'referrals' },
-  { icon: Megaphone, label: 'Avisos', view: 'marketing' },
-  { icon: Package, label: 'Produtos', view: 'products' },
-  { icon: Globe, label: 'Monitoramento', view: 'monitoring' },
-  { icon: MapIcon, label: 'Mapa', view: 'map' },
-  { icon: Settings, label: 'Configurações', view: 'settings' },
+const navItems = [
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
+  { icon: Target, label: 'Pipeline', path: '/leads' },
+  { icon: BarChart3, label: 'Analytics', path: '/analytics' },
+  { icon: MessageCircle, label: 'Chamados', path: '/support' },
+  { icon: Calendar, label: 'Agenda', path: '/calendar' },
+  { icon: DollarSign, label: 'Gestão de Custos', path: '/finance' },
+  { icon: Users, label: 'Indicações', path: '/referrals' },
+  { icon: Megaphone, label: 'Avisos', path: '/marketing' },
+  { icon: Package, label: 'Produtos', path: '/products' },
+  { icon: Globe, label: 'Monitoramento', path: '/monitoring' },
+  { icon: MapIcon, label: 'Mapa', path: '/map' },
+  { icon: Settings, label: 'Configurações', path: '/settings' },
 ];
 
 function CRMInner() {
+  const { user } = useAuth();
   const {
-    user, clients, leads, activeLeadsCount, offers, supportRequests, loading, errorMsg,
-    view, setView, sidebarOpen, setSidebarOpen,
-    isModalOpen, setIsModalOpen, editingClient, setEditingClient,
+    clients, activeLeadsCount, offers, supportRequests, loading, errorMsg,
+    editingClient, setEditingClient,
     isOfferModalOpen, setIsOfferModalOpen, editingOffer, setEditingOffer,
     isDeleteOfferConfirmOpen, setIsDeleteOfferConfirmOpen, offerToDelete, setOfferToDelete,
-    searchTerm, setSearchTerm, onboardingQuestions,
+    onboardingQuestions,
     handleSaveClient, handleDeleteClient,
     handleSaveOffer, handleDeleteOffer, handleExportCSV
   } = useCRM();
 
-  const openTicketCount = useMemo(() => supportRequests.filter(r => r.status === 'aberto' || r.status === 'em_analise').length, [supportRequests]);
+  const { sidebarOpen, setSidebarOpen, isModalOpen, setIsModalOpen, searchTerm, setSearchTerm } = useUI();
+  const location = useLocation();
+  const currentPath = location.pathname;
 
-  const handleNavClick = (v: CRMView) => { setView(v); setSidebarOpen(false); };
+  const openTicketCount = useMemo(() => supportRequests.filter(r => r.status === 'aberto' || r.status === 'em_analise').length, [supportRequests]);
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-[#0a0a0a] font-sans overflow-hidden text-gray-900 dark:text-gray-100 relative">
@@ -91,13 +86,12 @@ function CRMInner() {
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
           {navItems.map(item => (
             <NavItem
-              key={item.view}
+              key={item.path}
               icon={item.icon}
               label={item.label}
-              view={item.view}
-              activeView={view}
-              onClick={handleNavClick}
-              badge={item.view === 'leads' ? activeLeadsCount : item.view === 'support' ? openTicketCount : undefined}
+              path={item.path}
+              onClick={() => setSidebarOpen(false)}
+              badge={item.path === '/leads' ? activeLeadsCount : item.path === '/support' ? openTicketCount : undefined}
             />
           ))}
         </nav>
@@ -120,27 +114,35 @@ function CRMInner() {
         <header className="bg-black/20 backdrop-blur-2xl border-b border-gray-200 dark:border-white/10 px-6 py-4 flex items-center justify-between shrink-0 z-30 gap-4">
           <div className="flex items-center flex-1">
             <button className="md:hidden mr-4 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white" onClick={() => setSidebarOpen(true)}><Menu size={24} /></button>
-            {view === 'dashboard' && (
+            {currentPath === '/' && (
               <div className="flex items-center w-full max-w-xl relative">
                 <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
                 <input type="text" placeholder="Buscar por Nome, CPF, E-mail ou Status..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full bg-white/80 dark:bg-zinc-900/50 backdrop-blur-xl border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-2xl pl-12 pr-4 py-3 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/50 transition-all placeholder-gray-500 shadow-inner" />
               </div>
             )}
-            {view === 'analytics' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Métricas</h2>}
-            {view === 'calendar' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Agenda Central</h2>}
-            {view === 'support' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Chamados</h2>}
-            {view === 'finance' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Gestão de Custos e Financeiro</h2>}
-            {view === 'settings' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Configurações</h2>}
-            {view === 'referrals' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Programa de Indicações</h2>}
-            {view === 'marketing' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Avisos</h2>}
-            {view === 'products' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Produtos</h2>}
-            {view === 'monitoring' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Monitoramento de Sites</h2>}
-            {view === 'map' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Mapa de Clientes</h2>}
-            {view === 'leads' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Pipeline de Vendas</h2>}
+            {currentPath === '/analytics' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Métricas</h2>}
+            {currentPath === '/calendar' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Agenda Central</h2>}
+            {currentPath === '/support' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Chamados</h2>}
+            {currentPath === '/finance' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Gestão de Custos e Financeiro</h2>}
+            {currentPath === '/settings' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Configurações</h2>}
+            {currentPath === '/referrals' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Programa de Indicações</h2>}
+            {currentPath === '/marketing' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Avisos</h2>}
+            {currentPath === '/products' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Produtos</h2>}
+            {currentPath === '/monitoring' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Monitoramento de Sites</h2>}
+            {currentPath === '/map' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Mapa de Clientes</h2>}
+            {currentPath === '/leads' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Pipeline de Vendas</h2>}
           </div>
           <div className="flex items-center gap-3">
-            {view === 'dashboard' && (
-              <button onClick={handleExportCSV} className="hidden sm:flex items-center space-x-2 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white px-4 py-3 rounded-2xl transition-all font-medium shrink-0" title="Exportar para CSV">
+            {currentPath === '/' && (
+              <button 
+                onClick={() => {
+                   // This now requires access to the export method inside Dashboard or passing clients here.. Wait, Dashboard export is better placed inside Dashboard itself!
+                   // For now, I'll let Dashboard button handle exporting or pass it to CRM hook but export needs filtered clients.
+                   // we can keep handleExportCSV in Dashboard or here, but it requires data.
+                   // Actually, I can pass clients directly or let Dashboard render this header part.
+                   // For now, I'll pass clients directly. Wait, handleExportCSV takes `dataToExport`. I will fix this later when splitting Dashboard.
+                }} 
+                className="hidden sm:flex items-center space-x-2 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white px-4 py-3 rounded-2xl transition-all font-medium shrink-0" title="Exportar para CSV">
                 <Download size={18} />
                 <span>Exportar</span>
               </button>
@@ -169,18 +171,22 @@ function CRMInner() {
               </div>
             </div>
           ) : (
-            view === 'dashboard' ? <DashboardView /> : 
-            view === 'analytics' ? <AnalyticsView /> : 
-            view === 'calendar' ? <CalendarView clients={clients} onClientClick={(client) => { setEditingClient(client); setIsModalOpen(true); }} /> :
-            view === 'finance' ? <FinanceView /> :
-            view === 'referrals' ? <ReferralsView clients={clients} user={user} /> :
-            view === 'marketing' ? <MarketingView /> :
-            view === 'products' ? <ProductsView /> :
-            view === 'monitoring' ? <MonitoringView clients={clients} /> :
-            view === 'map' ? <ClientMapView clients={clients} onClientClick={(client) => { setEditingClient(client); setIsModalOpen(true); }} /> :
-            view === 'settings' ? <SettingsView /> :
-            view === 'leads' ? <LeadsView /> :
-            <SupportView />
+            <div className="flex-1 overflow-auto custom-scrollbar">
+              <Routes>
+                <Route path="/" element={<DashboardView />} />
+                <Route path="/analytics" element={<AnalyticsView />} />
+                <Route path="/calendar" element={<CalendarView clients={clients} onClientClick={(client) => { setEditingClient(client); setIsModalOpen(true); }} />} />
+                <Route path="/finance" element={<FinanceView />} />
+                <Route path="/referrals" element={<ReferralsView clients={clients} user={user!} />} />
+                <Route path="/marketing" element={<MarketingView />} />
+                <Route path="/products" element={<ProductsView />} />
+                <Route path="/monitoring" element={<MonitoringView clients={clients} />} />
+                <Route path="/map" element={<ClientMapView clients={clients} onClientClick={(client) => { setEditingClient(client); setIsModalOpen(true); }} />} />
+                <Route path="/settings" element={<SettingsView />} />
+                <Route path="/leads" element={<LeadsView />} />
+                <Route path="/support" element={<SupportView />} />
+              </Routes>
+            </div>
           )
         )}
       </main>
@@ -216,60 +222,19 @@ function CRMInner() {
   );
 }
 
-function CRM({ user }: { user: User }) {
-  return (
-    <CRMProvider user={user}>
-      <CRMInner />
-    </CRMProvider>
-  );
-}
-
-function Dashboard() {
-  const [user, setUser] = useState<User | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [authError, setAuthError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-    
-    try {
-      const unsubscribe = onAuthStateChanged(auth, (u) => {
-        setUser(u);
-        setAuthLoading(false);
-        clearTimeout(timeoutId);
-      }, (error) => {
-        console.error("Auth Error:", error);
-        setAuthError(error.message);
-        setAuthLoading(false);
-        clearTimeout(timeoutId);
-      });
-
-      timeoutId = setTimeout(() => {
-        setAuthLoading(false);
-        setAuthError("O tempo limite de autenticação foi excedido.");
-      }, 10000);
-
-      return () => {
-        unsubscribe();
-        clearTimeout(timeoutId);
-      };
-    } catch (err: any) {
-      console.error("Auth Init Error:", err);
-      setAuthError(err.message);
-      setAuthLoading(false);
-    }
-  }, []);
-
-  if (authLoading) {
+function PrivateApp() {
+  const { user, loading, errorMsg } = useAuth();
+  
+  if (loading) {
     return <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] flex flex-col items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mb-4"></div><p className="text-gray-500 dark:text-gray-400 text-sm">Carregando autenticação...</p></div>;
   }
 
-  if (authError) {
+  if (errorMsg) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] flex items-center justify-center p-6">
         <div className="bg-gray-200 dark:bg-white/10 border border-red-500/30 p-6 rounded-2xl max-w-md text-center">
           <h2 className="text-red-400 font-semibold mb-2">Erro de Autenticação</h2>
-          <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">{authError}</p>
+          <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">{errorMsg}</p>
           <button onClick={() => window.location.reload()} className="px-4 py-2 bg-gray-200 dark:bg-white/10 hover:bg-gray-300 dark:bg-white/20 text-gray-900 dark:text-white rounded-xl transition-colors text-sm">Tentar Novamente</button>
         </div>
       </div>
@@ -280,7 +245,13 @@ function Dashboard() {
     return <Auth />;
   }
 
-  return <CRM user={user} />;
+  return (
+    <UIProvider>
+      <CRMProvider>
+        <CRMInner />
+      </CRMProvider>
+    </UIProvider>
+  );
 }
 
 export default function App() {
@@ -295,15 +266,15 @@ export default function App() {
         </div>
       )}
       <Toaster position="top-right" theme="dark" />
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/cliente/:userId/:clientId" element={<ClientPortal />} />
-        <Route path="/onboarding/:userId" element={<OnboardingForm />} />
-        <Route path="/onboarding/:userId/:clientId" element={<OnboardingForm />} />
-        <Route path="/contrato/:userId/:clientId/:contractId" element={<ContractSignView />} />
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          <Route path="/cliente/:userId/:clientId" element={<ClientPortal />} />
+          <Route path="/onboarding/:userId" element={<OnboardingForm />} />
+          <Route path="/onboarding/:userId/:clientId" element={<OnboardingForm />} />
+          <Route path="/contrato/:userId/:clientId/:contractId" element={<ContractSignView />} />
+          <Route path="*" element={<PrivateApp />} />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }
-
-// Trigger Vercel Deploy

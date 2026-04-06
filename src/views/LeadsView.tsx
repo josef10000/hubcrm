@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { useCRM } from '../contexts/CRMContext';
+import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
 import { Lead, LeadStatus } from '../types';
 import { Users, Plus, Phone, Mail, DollarSign, Trash2, X, ChevronDown, TrendingUp, Target, UserPlus, ArrowRight, GripVertical, Search, Filter } from 'lucide-react';
@@ -31,7 +32,8 @@ interface LeadFormData {
 const emptyForm: LeadFormData = { name: '', whatsapp: '', email: '', leadSource: '', estimatedValue: '', notes: '', plan: '', niche: '' };
 
 export default function LeadsView() {
-  const { user, leads } = useCRM();
+  const { user } = useAuth();
+  const { leads } = useCRM();
   console.log('Current Leads (Diagnostic):', leads);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<LeadFormData>(emptyForm);

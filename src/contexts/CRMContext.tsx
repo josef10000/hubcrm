@@ -1,28 +1,22 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User } from 'firebase/auth';
 import { collection, doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Client, Offer, OnboardingQuestion, Expense, PlanType, SiteStatus, Transaction, TransactionCategory, Budget, Lead } from '../types';
+import { Client, Offer, Expense, Transaction, TransactionCategory, Budget, Lead } from '../types';
+import { useAuth } from './AuthContext';
 
 // ── Hooks ──
 import { useSettings } from '../hooks/useSettings';
 import { useFinance } from '../hooks/useFinance';
 import { useOffers } from '../hooks/useOffers';
 import { useClients } from '../hooks/useClients';
-
-// ─── View Type ──────────────────────────────────────────────────────────────────
-export type CRMView = 'dashboard' | 'analytics' | 'support' | 'finance' | 'settings' | 'calendar' | 'referrals' | 'marketing' | 'products' | 'monitoring' | 'map' | 'leads';
+import { useUI } from './UIContext';
 
 // ─── Context Type ───────────────────────────────────────────────────────────────
 interface CRMContextType {
-  // Auth
-  user: User;
-
   // Core Data
   clients: Client[];
   leads: Lead[];
   offers: Offer[];
-  filteredClients: Client[];
   supportRequests: any[];
   expenses: Expense[];
   transactions: Transaction[];
@@ -36,26 +30,7 @@ interface CRMContextType {
   errorMsg: string | null;
   isSyncing: boolean;
 
-  // Pagination
-  currentPage: number;
-  setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
-  clientsPerPage: number;
-
-  // Navigation
-  view: CRMView;
-  setView: (view: CRMView) => void;
-  dashboardMode: 'list' | 'kanban';
-  setDashboardMode: (mode: 'list' | 'kanban') => void;
-  sidebarOpen: boolean;
-  setSidebarOpen: (open: boolean) => void;
-
-  // Client Modal
-  isModalOpen: boolean;
-  setIsModalOpen: (open: boolean) => void;
-  editingClient: Client | null;
-  setEditingClient: (client: Client | null) => void;
-
-  // Offer Modal
+  // Offer logic
   isOfferModalOpen: boolean;
   setIsOfferModalOpen: (open: boolean) => void;
   editingOffer: Partial<Offer> | null;
@@ -65,25 +40,17 @@ interface CRMContextType {
   offerToDelete: string | null;
   setOfferToDelete: (id: string | null) => void;
 
-  // Filters & Sort
-  searchTerm: string;
-  setSearchTerm: (term: string) => void;
-  filterStatus: SiteStatus | 'Todos';
-  setFilterStatus: (status: SiteStatus | 'Todos') => void;
-  sortBy: 'recent' | 'alphabetical' | 'value';
-  setSortBy: (sort: 'recent' | 'alphabetical' | 'value') => void;
-
-  // Theme
-  themeColor: string;
-  setThemeColor: (color: string) => void;
+  // Edit Client logic
+  editingClient: Client | null;
+  setEditingClient: (client: Client | null) => void;
 
   // Settings
   churnRiskDays: number;
   setChurnRiskDays: (days: number) => void;
   defaultStages: { id: string; name: string }[];
   setDefaultStages: (stages: { id: string; name: string }[]) => void;
-  onboardingQuestions: OnboardingQuestion[];
-  setOnboardingQuestions: (questions: OnboardingQuestion[]) => void;
+  onboardingQuestions: any[];
+  setOnboardingQuestions: (questions: any[]) => void;
   defaultContractText: string;
   setDefaultContractText: (text: string) => void;
 
@@ -107,7 +74,7 @@ interface CRMContextType {
   handleSaveOffer: (offerData: Partial<Offer>) => Promise<void>;
   handleDeleteOffer: (offerId: string) => Promise<void>;
   restoreDefaultOffers: () => Promise<void>;
-  handleExportCSV: () => void;
+  handleExportCSV: (dataToExport: Client[]) => void;
   syncPayments: () => Promise<void>;
 
   // Helpers
@@ -126,52 +93,44 @@ export function useCRM() {
 }
 
 // ─── Provider ───────────────────────────────────────────────────────────────────
-export function CRMProvider({ user, children }: { user: User; children: React.ReactNode }) {
-  // ── Local UI State ──
+export function CRMProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  const { setIsModalOpen } = useUI();
+
+  // ── Local Core Data State ──
   const [clients, setClients] = useState<Client[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const clientsPerPage = 9;
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const [view, setView] = useState<CRMView>('dashboard');
-  const [dashboardMode, setDashboardMode] = useState<'list' | 'kanban'>('list');
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState<SiteStatus | 'Todos'>('Todos');
-  const [sortBy, setSortBy] = useState<'recent' | 'alphabetical' | 'value'>('recent');
-
   const [supportRequests, setSupportRequests] = useState<any[]>([]);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyMessage, setReplyMessage] = useState('');
-
   const [services, setServices] = useState<any[]>([]);
 
   // ── Specialized Hooks ──
-  const settings = useSettings(user.uid);
-  const finance = useFinance(user.uid);
-  const offerActions = useOffers(user.uid, offers, setOffers);
+  const settings = user ? useSettings(user.uid) : ({} as any);
+  const finance = user ? useFinance(user.uid) : ({} as any);
+  const offerActions = useOffers(user?.uid || '', offers, setOffers);
   const clientActions = useClients({
-    userId: user.uid,
+    userId: user?.uid || '',
     clients,
     offers,
     editingClient,
     setEditingClient,
     setIsModalOpen,
-    defaultStages: settings.defaultStages,
-    searchTerm,
-    filterStatus,
-    sortBy,
-    churnRiskDays: settings.churnRiskDays,
+    defaultStages: settings.defaultStages || [],
+    churnRiskDays: settings.churnRiskDays || 7,
   });
 
   // ═══ Firestore Listeners (core data only) ═══
   useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setErrorMsg(null);
     let timeoutId: NodeJS.Timeout;
@@ -179,11 +138,12 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
     let unsubscribeLeads: () => void = () => {};
     let unsubscribeRequests: () => void = () => {};
     let unsubscribeOffers: () => void = () => {};
+    let unsubServices: () => void = () => {};
 
     try {
       const offersRef = collection(db, 'users', user.uid, 'offers');
       unsubscribeOffers = onSnapshot(offersRef, async (snapshot) => {
-        if (snapshot.empty) {
+        if (snapshot.empty && setOffers) {
           const defaultOffers: Offer[] = [
             { id: Date.now().toString(36) + Math.random().toString(36).substring(2), name: 'Ecossistema Essencial', type: 'SUBSCRIPTION', price: 397, setupPrice: 2500, active: true, createdAt: Date.now() },
             { id: Date.now().toString(36) + Math.random().toString(36).substring(2), name: 'Profissional', type: 'SUBSCRIPTION', price: 897, setupPrice: 7500, active: true, createdAt: Date.now() },
@@ -235,9 +195,8 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
         setSupportRequests(loadedRequests);
       });
 
-      // Services listener
       const servicesRef = collection(db, 'users', user.uid, 'services');
-      const unsubServices = onSnapshot(servicesRef, (snapshot) => {
+      unsubServices = onSnapshot(servicesRef, (snapshot) => {
         const loadedServices: any[] = [];
         snapshot.forEach((d) => loadedServices.push({ id: d.id, ...d.data() }));
         setServices(loadedServices.sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0)));
@@ -246,7 +205,7 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
       timeoutId = setTimeout(() => {
         console.warn('Firestore initialization timed out.');
         setLoading(false);
-        setErrorMsg('O tempo limite de conexão com o banco de dados foi excedido. Verifique sua conexão ou se o navegador está bloqueando o acesso.');
+        setErrorMsg('O tempo limite de conexão com o banco de dados foi excedido.');
       }, 10000);
 
       return () => {
@@ -262,37 +221,32 @@ export function CRMProvider({ user, children }: { user: User; children: React.Re
       setErrorMsg(err.message);
       setLoading(false);
     }
-  }, [user.uid]);
+  }, [user]);
 
-  // Reset pagination on filter change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, filterStatus, sortBy]);
-
-  // ═══ Context Value ═══
   const value: CRMContextType = {
-    user,
-    clients, leads, offers, filteredClients: clientActions.filteredClients, supportRequests,
+    clients, leads, offers, supportRequests,
     activeLeadsCount: leads.filter(l => !['Convertido', 'Perdido'].includes(l.status || '')).length,
-    expenses: finance.expenses, transactions: finance.transactions,
-    transactionCategories: finance.transactionCategories, budgets: finance.budgets, services,
+    expenses: finance?.expenses || [], transactions: finance?.transactions || [],
+    transactionCategories: finance?.transactionCategories || [], budgets: finance?.budgets || [], services,
     loading, errorMsg, isSyncing: clientActions.isSyncing,
-    currentPage, setCurrentPage, clientsPerPage,
-    view, setView, dashboardMode, setDashboardMode, sidebarOpen, setSidebarOpen,
-    isModalOpen, setIsModalOpen, editingClient, setEditingClient,
+    
+    editingClient, setEditingClient,
+    
     isOfferModalOpen: offerActions.isOfferModalOpen, setIsOfferModalOpen: offerActions.setIsOfferModalOpen,
     editingOffer: offerActions.editingOffer, setEditingOffer: offerActions.setEditingOffer,
     isDeleteOfferConfirmOpen: offerActions.isDeleteOfferConfirmOpen, setIsDeleteOfferConfirmOpen: offerActions.setIsDeleteOfferConfirmOpen,
     offerToDelete: offerActions.offerToDelete, setOfferToDelete: offerActions.setOfferToDelete,
-    searchTerm, setSearchTerm, filterStatus, setFilterStatus, sortBy, setSortBy,
-    themeColor: settings.themeColor, setThemeColor: settings.setThemeColor,
-    churnRiskDays: settings.churnRiskDays, setChurnRiskDays: settings.setChurnRiskDays,
-    defaultStages: settings.defaultStages, setDefaultStages: settings.setDefaultStages,
-    onboardingQuestions: settings.onboardingQuestions, setOnboardingQuestions: settings.setOnboardingQuestions,
-    defaultContractText: settings.defaultContractText, setDefaultContractText: settings.setDefaultContractText,
+    
+    churnRiskDays: settings?.churnRiskDays || 7, setChurnRiskDays: settings?.setChurnRiskDays || (() => {}),
+    defaultStages: settings?.defaultStages || [], setDefaultStages: settings?.setDefaultStages || (() => {}),
+    onboardingQuestions: settings?.onboardingQuestions || [], setOnboardingQuestions: settings?.setOnboardingQuestions || (() => {}),
+    defaultContractText: settings?.defaultContractText || '', setDefaultContractText: settings?.setDefaultContractText || (() => {}),
+    
     replyingTo, setReplyingTo, replyMessage, setReplyMessage,
-    newExpense: finance.newExpense, setNewExpense: finance.setNewExpense,
-    globalAnnouncement: settings.globalAnnouncement, setGlobalAnnouncement: settings.setGlobalAnnouncement,
+    newExpense: finance?.newExpense || {}, setNewExpense: finance?.setNewExpense || (() => {}),
+    globalAnnouncement: settings?.globalAnnouncement || { title: '', message: '', type: 'info', isActive: false }, 
+    setGlobalAnnouncement: settings?.setGlobalAnnouncement || (() => {}),
+    
     handleSaveClient: clientActions.handleSaveClient, handleDeleteClient: clientActions.handleDeleteClient,
     handleSaveOffer: offerActions.handleSaveOffer, handleDeleteOffer: offerActions.handleDeleteOffer,
     restoreDefaultOffers: offerActions.restoreDefaultOffers,

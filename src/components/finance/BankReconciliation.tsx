@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useCRM } from '../../contexts/CRMContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { parseOFX, OFXTransaction } from '../../lib/ofxParser';
 import { Upload, CheckCircle, PlusCircle, AlertCircle } from 'lucide-react';
 import { db } from '../../lib/firebase';
@@ -7,7 +8,8 @@ import { doc, setDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
 
 export default function BankReconciliation() {
-  const { transactions, transactionCategories, user } = useCRM();
+  const { user } = useAuth();
+  const { transactions, transactionCategories } = useCRM();
   const [ofxItems, setOfxItems] = useState<OFXTransaction[]>([]);
   const [isHovering, setIsHovering] = useState(false);
 
