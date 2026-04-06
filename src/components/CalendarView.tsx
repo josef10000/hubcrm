@@ -10,8 +10,8 @@ import {
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, DollarSign, Package, Calendar as CalendarIcon, X, AlertTriangle } from 'lucide-react';
-import { getPlanPrice } from '../App';
-import { Client } from '../App';
+import { getPlanPrice } from '../helpers';
+import { Client } from '../types';
 
 interface CalendarViewProps {
   clients: Client[];

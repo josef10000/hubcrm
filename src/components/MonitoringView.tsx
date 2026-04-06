@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Globe, CheckCircle, XCircle, AlertTriangle, RefreshCw, ExternalLink, Activity } from 'lucide-react';
-import { Client } from '../App';
+import { Client } from '../types';
 import { toast } from 'sonner';
 
 interface UptimeMonitor {

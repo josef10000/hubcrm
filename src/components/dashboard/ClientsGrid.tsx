@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, Clock, Phone, Tag, Briefcase, Globe, DollarSign, MessageCircle, Copy, Users, Link as LinkIcon, Zap } from 'lucide-react';
+import { AlertTriangle, Clock, Phone, Tag, Briefcase, Globe, DollarSign, MessageCircle, Copy, Users, Link as LinkIcon, Zap, Calendar } from 'lucide-react';
 import { Client } from '../../types';
 import { getPlanPrice } from '../../helpers';
 import { toast } from 'sonner';

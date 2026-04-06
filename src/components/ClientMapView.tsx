@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { MapPin, Loader2, Users } from 'lucide-react';
-import { Client } from '../App';
+import { Client } from '../types';
 
 declare const L: any;
 
