@@ -12,10 +12,10 @@ const REPLY_TO_EMAIL = 'contato@hubsymples.com.br';
  * TODO: Substitua os IDs abaixo pelos IDs reais obtidos no painel do Resend (Ex: tpl_V6X2...)
  */
 const TEMPLATE_IDS = {
-  BOAS_VINDAS: 're_placeholder_welcome', 
-  FATURA_EMITIDA: 're_placeholder_invoice_issued',
-  PAGAMENTO_RECEBIDO: 're_placeholder_payment_received',
-  AVISO_VENCIMENTO: 're_placeholder_due_warning'
+  BOAS_VINDAS: 'boas-vindas', 
+  FATURA_EMITIDA: 'nova-fatura-disponvel',
+  PAGAMENTO_RECEBIDO: 'pagamento-recebido',
+  AVISO_VENCIMENTO: 'fatura-vencimento'
 };
 
 export async function sendBoasVindasEmail(clientEmail: string, clientName: string) {
