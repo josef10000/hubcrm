@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { db } from '../_utils/firebase.js';
+import { sendPagamentoRecebidoEmail } from '../../src/services/emailService.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -52,6 +53,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const batch = db.batch();
         snapshot.docs.forEach(doc => {
           batch.update(doc.ref, updates);
+          
+          // Dispara email caso o pagamento tenha sido recebido/confirmado
+          if (event === 'PAYMENT_RECEIVED' || event === 'PAYMENT_CONFIRMED') {
+            const clientData = doc.data();
+            const clientEmail = clientData.email; // O email armazenado no Firebase
+            const clientName = clientData.name || clientData.razaoSocial || 'Cliente';
+            const paymentValue = paymentData.value || 0;
+            // Pega a data de pagamento (se não vier preenchida usa a atual)
+            const paymentDateStr = paymentData.paymentDate || new Date().toISOString().split('T')[0];
+            const dataFormatoBR = paymentDateStr.split('-').reverse().join('/');
+            const descricao = paymentData.description || 'Fatura Hub Symples';
+
+            if (clientEmail) {
+              // Disparamos o email sem bloquear o retorno do webhook
+              sendPagamentoRecebidoEmail(clientEmail, clientName, paymentValue, dataFormatoBR, descricao)
+                .catch((err) => console.error('Erro no envio de e-mail assíncrono (Pagamento Recebido):', err));
+            }
+          }
         });
         await batch.commit();
         console.log(`Updated ${snapshot.size} clients with status ${updates.paymentStatus}`);
