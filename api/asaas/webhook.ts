@@ -24,7 +24,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const expectedToken = cleanToken(webhookToken);
 
     if (receivedToken !== expectedToken) {
-      console.error(`Invalid webhook token mismatch. Expected: ${expectedToken.at(0)}...${expectedToken.at(-1)}, Received: ${receivedToken.at(0)}...${receivedToken.at(-1)}`);
+      const expectedCharFirst = expectedToken[0] || '?';
+      const expectedCharLast = expectedToken[expectedToken.length - 1] || '?';
+      const receivedCharFirst = receivedToken[0] || '?';
+      const receivedCharLast = receivedToken[receivedToken.length - 1] || '?';
+      
+      console.error(`Token Mismatch! 
+        Expected (Vercel): ${expectedCharFirst}...${expectedCharLast} (Length: ${expectedToken.length})
+        Received (Asaas): ${receivedCharFirst}...${receivedCharLast} (Length: ${receivedToken.length})`);
+        
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
