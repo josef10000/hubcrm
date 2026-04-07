@@ -26,7 +26,7 @@ export async function sendBoasVindasEmail(clientEmail: string, clientName: strin
     }
 
     // @ts-ignore - A propriedade 'template' pode não estar no tipo se o SDK estiver desatualizado localmente, mas a API aceita.
-    const data = await resend.emails.send({
+    const data = await (resend.emails.send as any)({
       from: FROM_EMAIL,
       to: [clientEmail],
       reply_to: REPLY_TO_EMAIL,
@@ -60,7 +60,7 @@ export async function sendFaturaEmitidaEmail(
     }
 
     // @ts-ignore
-    const data = await resend.emails.send({
+    const data = await (resend.emails.send as any)({
       from: FROM_EMAIL,
       to: [clientEmail],
       reply_to: REPLY_TO_EMAIL,
@@ -97,7 +97,7 @@ export async function sendPagamentoRecebidoEmail(
     }
 
     // @ts-ignore
-    const data = await resend.emails.send({
+    const data = await (resend.emails.send as any)({
       from: FROM_EMAIL,
       to: [clientEmail],
       reply_to: REPLY_TO_EMAIL,
@@ -134,7 +134,7 @@ export async function sendFaturaVencimentoEmail(
     }
 
     // @ts-ignore
-    const data = await resend.emails.send({
+    const data = await (resend.emails.send as any)({
       from: FROM_EMAIL,
       to: [clientEmail],
       reply_to: REPLY_TO_EMAIL,

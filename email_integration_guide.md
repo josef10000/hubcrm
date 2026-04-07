@@ -31,24 +31,28 @@ Para garantir a melhor entregabilidade e evitar conflitos de DNS:
 | **Fatura Emitida** | `sendFaturaEmitidaEmail` | `PAYMENT_CREATED` | **ATIVO** |
 | **Aviso de Vencimento** | `sendFaturaVencimentoEmail` | `PAYMENT_DUEDATE_WARNING` | **ATIVO*** |
 
+
 ---
 
 ## 4. Configuração de Templates (Dashboard Resend)
 
-Migramos o sistema para usar os **Templates do Resend**. Isso permite que você edite o visual dos e-mails diretamente no painel do Resend sem precisar mexer no código.
+O sistema está configurado para usar os **Templates do Resend**. Isso permite que você edite o visual dos e-mails diretamente no painel do Resend sem precisar mexer no código.
 
-### Como configurar os IDs:
-1. Vá até o arquivo [`src/services/emailService.ts`](file:///c:/Users/JoséFrazãodaSilvaNet/OneDrive%20-%2039985%20-%20DIGITAL%20TECH%20LTDA/Área%20de%20Trabalho/Clonecrm/hubcrm/src/services/emailService.ts).
-2. Localize o objeto `TEMPLATE_IDS`.
-3. Substitua os valores `re_placeholder_...` pelos IDs reais que aparecem no seu painel do Resend (ex: `tpl_V6X2...`).
+**Status dos Templates:**
 
-### Variáveis Sugeridas:
-Seus templates no Resend devem conter estas variáveis entre chaves triplas (ex: `{{{nome_do_cliente}}}`) para que os dados sejam preenchidos:
+- IDs reais vinculados no código: `boas-vindas`, `nova-fatura-disponvel`, `pagamento-recebido` e `fatura-vencimento`.
+
+### Variáveis Utilizadas:
+
+Seus templates no Resend devem conter estas variáveis entre chaves duplas ou triplas (conforme sua configuração no Resend) para que os dados sejam preenchidos:
+
 - `nome_do_cliente`
 - `valor_fatura` / `valor_pago`
 - `data_vencimento` / `data_pagamento`
 - `descricao_fatura`
 - `link_pagamento`
+
+---
 
 ---
 
