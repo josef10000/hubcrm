@@ -19,11 +19,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.error('CRITICAL: ASAAS_WEBHOOK_TOKEN environment variable is not configured — rejecting all webhooks');
       return res.status(500).json({ error: 'Webhook not configured — missing ASAAS_WEBHOOK_TOKEN' });
     }
-    const receivedToken = String(req.headers['asaas-access-token'] || '').trim();
-    const expectedToken = String(webhookToken).trim();
+    const cleanToken = (t: any) => String(t || '').replace(/["']/g, '').trim();
+    const receivedToken = cleanToken(req.headers['asaas-access-token']);
+    const expectedToken = cleanToken(webhookToken);
 
     if (receivedToken !== expectedToken) {
-      console.error('Invalid webhook token received (mismatch between header and environment variable)');
+      console.error(`Invalid webhook token mismatch. Expected: ${expectedToken.at(0)}...${expectedToken.at(-1)}, Received: ${receivedToken.at(0)}...${receivedToken.at(-1)}`);
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
