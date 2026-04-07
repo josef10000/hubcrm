@@ -45,29 +45,53 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const clientsRef = db.collectionGroup('clients');
 
     // --- EVENTOS DE CLIENTE (CUSTOMER) ---
+    // --- EVENTOS DE CLIENTE (CUSTOMER) ---
     if (event === 'CUSTOMER_CREATED') {
       const customerData = customer || body.customer;
       if (!customerData || !customerData.id) {
         return res.status(200).json({ received: true, ignored: true, reason: 'No customer data' });
       }
 
-      const snapshot = await clientsRef.where('asaasCustomerId', '==', customerData.id).get();
+      const asaasId = customerData.id;
+      const asaasEmail = customerData.email;
+
+      console.log(`Webhook: Processando CUSTOMER_CREATED para ${asaasEmail} (${asaasId})`);
+
+      // 1. Tenta por ID
+      let snapshot = await clientsRef.where('asaasCustomerId', '==', asaasId).get();
+      
+      // 2. Fallback por E-mail (evita race condition do frontend)
+      if (snapshot.empty && asaasEmail) {
+        console.log(`ID ${asaasId} não encontrado. Tentando fallback por e-mail: ${asaasEmail}`);
+        snapshot = await clientsRef.where('email', '==', asaasEmail).get();
+      }
 
       if (snapshot.empty) {
-        console.log('Client not found for Asaas customer:', customerData.id);
+        console.log('Client not found for Asaas customer by ID or Email:', asaasId, asaasEmail);
         return res.status(200).json({ received: true, notFound: true });
       }
 
-      snapshot.docs.forEach(doc => {
+      for (const doc of snapshot.docs) {
         const clientData = doc.data();
         const clientEmail = clientData.email;
         const clientName = clientData.name || clientData.razaoSocial || 'Cliente';
-        
-        if (clientEmail) {
-          sendBoasVindasEmail(clientEmail, clientName)
-            .catch((err) => console.error('Erro (Boas-vindas no CUSTOMER_CREATED):', err));
+
+        // 3. Verifica se já enviamos para este documento específico
+        if (clientEmail && !clientData.welcomeEmailSent) {
+          console.log(`Enviando Boas-vindas para ${clientEmail}`);
+          await sendBoasVindasEmail(clientEmail, clientName)
+            .then(() => {
+              // Marca como enviado e já garante o ID do Asaas no banco
+              doc.ref.update({ 
+                welcomeEmailSent: true,
+                asaasCustomerId: asaasId 
+              });
+            })
+            .catch((err) => console.error('Erro ao enviar Boas-vindas:', err));
+        } else {
+          console.log(`E-mail de boas-vindas já enviado ou flag ativa para ${clientEmail}`);
         }
-      });
+      }
     }
 
     // --- EVENTOS DE COBRANÇA (PAYMENT) ---
@@ -141,6 +165,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               description,
               customSubject
             ).catch((err) => console.error('Erro (Fatura Emitida):', err));
+
+            // FALLBACK FINAL: Se por acaso o webhhok de CUSTOMER_CREATED não enviou o Boas-vindas, enviamos agora.
+            if (clientEmail && !clientData.welcomeEmailSent) {
+              console.log(`Fallback: Enviando Boas-vindas via PAYMENT_CREATED para ${clientEmail}`);
+              sendBoasVindasEmail(clientEmail, clientName)
+                .then(() => {
+                   doc.ref.update({ welcomeEmailSent: true });
+                })
+                .catch((err) => console.error('Erro (Boas-vindas Fallback):', err));
+            }
           }
         }
 
