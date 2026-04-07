@@ -120,8 +120,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // 2. Nova Fatura Emitida
         if (event === 'PAYMENT_CREATED') {
           if (clientEmail) {
-            sendFaturaEmitidaEmail(clientEmail, clientName, paymentValue, dueDate, paymentLink, description)
-              .catch((err) => console.error('Erro (Fatura Emitida):', err));
+            // Lógica para definir o assunto baseado na descrição/tipo
+            let customSubject = 'Nova Fatura Emitida - Hub Symples';
+            const lowerDesc = description.toLowerCase();
+            
+            if (lowerDesc.includes('adesão') || lowerDesc.includes('setup') || lowerDesc.includes('entrada')) {
+              customSubject = 'Sua Fatura de Adesão - Hub Symples';
+            } else if (paymentData.subscription) {
+              customSubject = 'Sua Fatura de Mensalidade - Hub Symples';
+            } else {
+              customSubject = 'Sua Fatura - Hub Symples';
+            }
+
+            sendFaturaEmitidaEmail(
+              clientEmail, 
+              clientName, 
+              paymentValue, 
+              dueDate, 
+              paymentLink, 
+              description,
+              customSubject
+            ).catch((err) => console.error('Erro (Fatura Emitida):', err));
           }
         }
 

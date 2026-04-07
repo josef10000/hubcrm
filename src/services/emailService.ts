@@ -52,19 +52,22 @@ export async function sendFaturaEmitidaEmail(
   valor: string | number, 
   vencimento: string, 
   linkPagamento: string, 
-  descricao: string
+  descricao: string,
+  customSubject?: string
 ) {
   try {
     if (TEMPLATE_IDS.FATURA_EMITIDA.includes('placeholder')) {
       console.warn('AVISO: Template ID de Fatura Emitida não configurado.');
     }
 
+    const subject = customSubject || 'Nova Fatura Emitida - Hub Symples';
+
     // @ts-ignore
     const data = await (resend.emails.send as any)({
       from: FROM_EMAIL,
       to: [clientEmail],
       reply_to: REPLY_TO_EMAIL,
-      subject: 'Nova Fatura Emitida - Hub Symples',
+      subject: subject,
       template: {
         id: TEMPLATE_IDS.FATURA_EMITIDA,
         variables: {
