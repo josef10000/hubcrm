@@ -24,36 +24,41 @@ Para garantir a melhor entregabilidade e evitar conflitos de DNS:
 
 ## 3. Status das Automações
 
-Todas as automações solicitadas foram implementadas e estão ativas no Webhook.
-
 | Tipo de E-mail | Função no Código | Gatilho Automático (Webhook) | Status |
 | :--- | :--- | :--- | :--- |
-| **Boas-Vindas** | `sendBoasVindasEmail` | `SUBSCRIPTION_CREATED` | **ATIVO** |
+| **Boas-Vindas** | `sendBoasVindasEmail` | `CUSTOMER_CREATED` | **ATIVO** |
 | **Confirmação de Pagamento** | `sendPagamentoRecebidoEmail` | `PAYMENT_RECEIVED` / `CONFIRMED` | **ATIVO** |
 | **Fatura Emitida** | `sendFaturaEmitidaEmail` | `PAYMENT_CREATED` | **ATIVO** |
 | **Aviso de Vencimento** | `sendFaturaVencimentoEmail` | `PAYMENT_DUEDATE_WARNING` | **ATIVO*** |
 
-*\* O Aviso de Vencimento depende da configuração de "Webhook de Gestão de Cobrança" no painel do Asaas.*
+---
+
+## 4. Configuração de Templates (Dashboard Resend)
+
+Migramos o sistema para usar os **Templates do Resend**. Isso permite que você edite o visual dos e-mails diretamente no painel do Resend sem precisar mexer no código.
+
+### Como configurar os IDs:
+1. Vá até o arquivo [`src/services/emailService.ts`](file:///c:/Users/JoséFrazãodaSilvaNet/OneDrive%20-%2039985%20-%20DIGITAL%20TECH%20LTDA/Área%20de%20Trabalho/Clonecrm/hubcrm/src/services/emailService.ts).
+2. Localize o objeto `TEMPLATE_IDS`.
+3. Substitua os valores `re_placeholder_...` pelos IDs reais que aparecem no seu painel do Resend (ex: `tpl_V6X2...`).
+
+### Variáveis Sugeridas:
+Seus templates no Resend devem conter estas variáveis entre chaves triplas (ex: `{{{nome_do_cliente}}}`) para que os dados sejam preenchidos:
+- `nome_do_cliente`
+- `valor_fatura` / `valor_pago`
+- `data_vencimento` / `data_pagamento`
+- `descricao_fatura`
+- `link_pagamento`
 
 ---
 
-## 4. Onde estão os Templates?
+## 5. Resposta: "Por que não recebi o e-mail de criação?"
 
-Os templates HTML estão localizados diretamente no arquivo `src/services/emailService.ts`. 
+**Correção Realizada:**
+Anteriormente, o gatilho estava configurado para a criação da *assinatura*. Agora, mudei para o evento **`CUSTOMER_CREATED`**. 
 
-> **DICA:** Você pode substituir o conteúdo da variável `htmlTemplate` dentro de cada função pelo HTML final (com design premium) que desejar. O código já está preparado para substituir variáveis como `{{nome_do_cliente}}`, `{{valor_fatura}}`, etc.
-
----
-
-## 5. Resposta: "Se eu criar um cliente agora, ele recebe e-mail?"
-
-**Não automaticamente ainda.**
-
-### Por quê?
-Atualmente, o código no Webhook do Asaas (`api/asaas/webhook.ts`) está configurado para reagir apenas a eventos de **Pagamento**. O evento de criação de assinatura (`SUBSCRIPTION_CREATED`) apenas atualiza o status do cliente no banco de dados, mas não dispara a função `sendBoasVindasEmail`.
-
-### Como ativar o e-mail de Boas-Vindas?
-Para que o cliente receba o e-mail assim que for criado, precisamos adicionar a chamada da função `sendBoasVindasEmail` dentro do bloco `SUBSCRIPTION_CREATED` no webhook ou no fluxo de criação manual do cliente no frontend.
+**O que isso muda?**
+Assim que o cliente é registrado no Asaas (geralmente o primeiro passo no CRM), o e-mail de Boas-vindas é disparado imediatamente, garantindo que o cliente receba a mensagem mesmo que ocorra algum atraso na geração da cobrança ou assinatura.
 
 ---
 

@@ -27,11 +27,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Ensure body is parsed
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
-    const { event, payment, subscription } = body;
+    const { event, payment, subscription, customer } = body;
     
-    console.log("Asaas Webhook Received:", event, payment?.id || subscription?.id);
+    console.log("Asaas Webhook Received:", event, payment?.id || subscription?.id || customer?.id);
     
     const clientsRef = db.collectionGroup('clients');
+
+    // --- EVENTOS DE CLIENTE (CUSTOMER) ---
+    if (event === 'CUSTOMER_CREATED') {
+      const customerData = customer || body.customer;
+      if (!customerData || !customerData.id) {
+        return res.status(200).json({ received: true, ignored: true, reason: 'No customer data' });
+      }
+
+      const snapshot = await clientsRef.where('asaasCustomerId', '==', customerData.id).get();
+
+      if (snapshot.empty) {
+        console.log('Client not found for Asaas customer:', customerData.id);
+        return res.status(200).json({ received: true, notFound: true });
+      }
+
+      snapshot.docs.forEach(doc => {
+        const clientData = doc.data();
+        const clientEmail = clientData.email;
+        const clientName = clientData.name || clientData.razaoSocial || 'Cliente';
+        
+        if (clientEmail) {
+          sendBoasVindasEmail(clientEmail, clientName)
+            .catch((err) => console.error('Erro (Boas-vindas no CUSTOMER_CREATED):', err));
+        }
+      });
+    }
 
     // --- EVENTOS DE COBRANÇA (PAYMENT) ---
     if (event && event.startsWith('PAYMENT_')) {
@@ -139,16 +165,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           batch.update(doc.ref, updates);
         }
 
-        // 4. Boas-vindas (Quando a assinatura é criada)
-        if (event === 'SUBSCRIPTION_CREATED') {
-          const clientData = doc.data();
-          const clientEmail = clientData.email;
-          const clientName = clientData.name || clientData.razaoSocial || 'Cliente';
-          if (clientEmail) {
-            sendBoasVindasEmail(clientEmail, clientName)
-              .catch((err) => console.error('Erro (Boas-vindas):', err));
-          }
-        }
+        // Removido disparo de boas-vindas daqui pois agora é feito no CUSTOMER_CREATED
       });
 
       if (Object.keys(updates).length > 0) {
@@ -158,6 +175,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     return res.status(200).json({ received: true });
+
   } catch (error: any) {
     console.error('Webhook Error:', error);
     return res.status(500).json({ error: 'Internal server error' });

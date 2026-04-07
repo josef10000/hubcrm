@@ -7,23 +7,36 @@ export const resend = new Resend(apiKey);
 const FROM_EMAIL = 'Hub Symples <contato@contato.hubsymples.com.br>';
 const REPLY_TO_EMAIL = 'contato@hubsymples.com.br';
 
+/**
+ * IDS DOS TEMPLATES NO RESEND
+ * TODO: Substitua os IDs abaixo pelos IDs reais obtidos no painel do Resend (Ex: tpl_V6X2...)
+ */
+const TEMPLATE_IDS = {
+  BOAS_VINDAS: 're_placeholder_welcome', 
+  FATURA_EMITIDA: 're_placeholder_invoice_issued',
+  PAGAMENTO_RECEBIDO: 're_placeholder_payment_received',
+  AVISO_VENCIMENTO: 're_placeholder_due_warning'
+};
+
 export async function sendBoasVindasEmail(clientEmail: string, clientName: string) {
-  // TODO: Cole seu HTML gigante de Boas Vindas aqui em htmlTemplate
-  let htmlTemplate = `
-    <h1>Bem-vindo, {{nome_do_cliente}}</h1>
-    <p>Obrigado por se juntar a nós.</p>
-  `;
-
-  // Substitui as tags usando replaceAll (para trocar todas as ocorrências)
-  htmlTemplate = htmlTemplate.replaceAll('{{nome_do_cliente}}', clientName);
-
   try {
+    // Se o template ID for o placeholder, avisa no log
+    if (TEMPLATE_IDS.BOAS_VINDAS.includes('placeholder')) {
+      console.warn('AVISO: Template ID de Boas-Vindas não configurado. O e-mail não será enviado corretamente.');
+    }
+
+    // @ts-ignore - A propriedade 'template' pode não estar no tipo se o SDK estiver desatualizado localmente, mas a API aceita.
     const data = await resend.emails.send({
       from: FROM_EMAIL,
       to: [clientEmail],
       reply_to: REPLY_TO_EMAIL,
       subject: 'Bem-vindo ao Hub Symples!',
-      html: htmlTemplate,
+      template: {
+        id: TEMPLATE_IDS.BOAS_VINDAS,
+        variables: {
+          nome_do_cliente: clientName,
+        },
+      },
     });
     console.log('Email Boas Vindas enviado:', data);
     return data;
@@ -41,29 +54,27 @@ export async function sendFaturaEmitidaEmail(
   linkPagamento: string, 
   descricao: string
 ) {
-  // TODO: Cole seu HTML gigante de Fatura Emitida aqui em htmlTemplate
-  let htmlTemplate = `
-    <h1>Fatura Emitida, {{nome_do_cliente}}</h1>
-    <p>Sua fatura no valor de R$ {{valor_fatura}} vence no dia {{data_vencimento}}.</p>
-    <p>Descrição: {{descricao_fatura}}</p>
-    <p><a href="{{link_pagamento}}">Pagar Agora</a></p>
-  `;
-
-  // Substitui as tags usando replaceAll
-  htmlTemplate = htmlTemplate
-    .replaceAll('{{nome_do_cliente}}', clientName)
-    .replaceAll('{{valor_fatura}}', String(valor))
-    .replaceAll('{{data_vencimento}}', vencimento)
-    .replaceAll('{{descricao_fatura}}', descricao)
-    .replaceAll('{{link_pagamento}}', linkPagamento);
-
   try {
+    if (TEMPLATE_IDS.FATURA_EMITIDA.includes('placeholder')) {
+      console.warn('AVISO: Template ID de Fatura Emitida não configurado.');
+    }
+
+    // @ts-ignore
     const data = await resend.emails.send({
       from: FROM_EMAIL,
       to: [clientEmail],
       reply_to: REPLY_TO_EMAIL,
       subject: 'Nova Fatura Emitida - Hub Symples',
-      html: htmlTemplate,
+      template: {
+        id: TEMPLATE_IDS.FATURA_EMITIDA,
+        variables: {
+          nome_do_cliente: clientName,
+          valor_fatura: String(valor),
+          data_vencimento: vencimento,
+          descricao_fatura: descricao,
+          link_pagamento: linkPagamento
+        },
+      },
     });
     console.log('Email Fatura Emitida enviado:', data);
     return data;
@@ -80,27 +91,26 @@ export async function sendPagamentoRecebidoEmail(
   dataPagamento: string, 
   descricao: string
 ) {
-  // TODO: Cole seu HTML gigante de Pagamento Recebido aqui em htmlTemplate
-  let htmlTemplate = `
-    <h1>Pagamento Confirmado, {{nome_do_cliente}}</h1>
-    <p>Recebemos o pagamento da sua fatura ({{descricao_fatura}}) no valor de R$ {{valor_pago}} no dia {{data_pagamento}}.</p>
-    <p>Obrigado!</p>
-  `;
-
-  // Substitui as tags usando replaceAll
-  htmlTemplate = htmlTemplate
-    .replaceAll('{{nome_do_cliente}}', clientName)
-    .replaceAll('{{valor_pago}}', String(valor))
-    .replaceAll('{{data_pagamento}}', dataPagamento)
-    .replaceAll('{{descricao_fatura}}', descricao);
-
   try {
+    if (TEMPLATE_IDS.PAGAMENTO_RECEBIDO.includes('placeholder')) {
+      console.warn('AVISO: Template ID de Pagamento Recebido não configurado.');
+    }
+
+    // @ts-ignore
     const data = await resend.emails.send({
       from: FROM_EMAIL,
       to: [clientEmail],
       reply_to: REPLY_TO_EMAIL,
       subject: 'Pagamento Confirmado - Hub Symples',
-      html: htmlTemplate,
+      template: {
+        id: TEMPLATE_IDS.PAGAMENTO_RECEBIDO,
+        variables: {
+          nome_do_cliente: clientName,
+          valor_pago: String(valor),
+          data_pagamento: dataPagamento,
+          descricao_fatura: descricao
+        },
+      },
     });
     console.log('Email Pagamento Confirmado enviado:', data);
     return data;
@@ -118,28 +128,27 @@ export async function sendFaturaVencimentoEmail(
   linkPagamento: string, 
   descricao: string
 ) {
-  // TODO: Cole seu HTML gigante de Aviso de Vencimento aqui em htmlTemplate
-  let htmlTemplate = `
-    <h1>Aviso de Vencimento, {{nome_do_cliente}}</h1>
-    <p>Lembramos que sua fatura ({{descricao_fatura}}) no valor de R$ {{valor_fatura}} vence dia {{data_vencimento}}.</p>
-    <p><a href="{{link_pagamento}}">Pagar Agora</a></p>
-  `;
-
-  // Substitui as tags usando replaceAll
-  htmlTemplate = htmlTemplate
-    .replaceAll('{{nome_do_cliente}}', clientName)
-    .replaceAll('{{valor_fatura}}', String(valor))
-    .replaceAll('{{data_vencimento}}', vencimento)
-    .replaceAll('{{descricao_fatura}}', descricao)
-    .replaceAll('{{link_pagamento}}', linkPagamento);
-
   try {
+    if (TEMPLATE_IDS.AVISO_VENCIMENTO.includes('placeholder')) {
+      console.warn('AVISO: Template ID de Aviso de Vencimento não configurado.');
+    }
+
+    // @ts-ignore
     const data = await resend.emails.send({
       from: FROM_EMAIL,
       to: [clientEmail],
       reply_to: REPLY_TO_EMAIL,
       subject: 'Aviso de Vencimento - Hub Symples',
-      html: htmlTemplate,
+      template: {
+        id: TEMPLATE_IDS.AVISO_VENCIMENTO,
+        variables: {
+          nome_do_cliente: clientName,
+          valor_fatura: String(valor),
+          data_vencimento: vencimento,
+          descricao_fatura: descricao,
+          link_pagamento: linkPagamento
+        },
+      },
     });
     console.log('Email Fatura Vencimento enviado:', data);
     return data;
@@ -148,3 +157,4 @@ export async function sendFaturaVencimentoEmail(
     throw error;
   }
 }
+
