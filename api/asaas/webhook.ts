@@ -121,12 +121,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const today = new Date();
             const dueDateObj = paymentData.dueDate ? new Date(paymentData.dueDate + 'T12:00:00Z') : new Date();
             const diffDays = Math.ceil((dueDateObj.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+            
+            const lowerDesc = pDesc.toLowerCase();
 
             if (diffDays > 15 && (paymentData.subscription || lowerDesc.includes('assinatura') || lowerDesc.includes('mensalidade'))) {
                console.log(`[DEBUG] Ignorando e-mail de Fatura (Mensalidade) pois o vencimento é daqui a ${diffDays} dias.`);
             } else {
                let subject = 'Sua Fatura - Hub Symples';
-               const lowerDesc = pDesc.toLowerCase();
                
                if (lowerDesc.includes('adesão') || lowerDesc.includes('setup') || lowerDesc.includes('ativação')) {
                  subject = 'Sua Fatura de Adesão - Hub Symples';
