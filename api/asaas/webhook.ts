@@ -111,8 +111,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const updates: any = {};
       if (event === 'PAYMENT_RECEIVED' || event === 'PAYMENT_CONFIRMED') {
         updates.paymentStatus = 'RECEIVED';
+        // REGRA: Só fica Ativo quando o Asaas confirma qualquer pagamento (Adesão ou Mensalidade)
+        updates.status = 'Ativo';
+        console.log(`Webhook: Identificado pagamento confirmado. Movendo cliente para Ativo.`);
       } else if (event === 'PAYMENT_OVERDUE') {
         updates.paymentStatus = 'OVERDUE';
+        updates.status = 'Inadimplente';
       } else if (event === 'PAYMENT_DELETED' || event === 'PAYMENT_REFUNDED') {
         updates.paymentStatus = 'PENDING';
       }
@@ -203,7 +207,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const snapshot = await clientsRef.where('asaasCustomerId', '==', subData.customer).get();
 
       if (snapshot.empty) {
-        console.log('Client not found for Asaas customer:', subData.customer);
+        console.log(`Webhook: Cliente NÃO encontrado para Assinatura do cliente Asaas: ${subData.customer}`);
         return res.status(200).json({ received: true, notFound: true });
       }
 
@@ -217,11 +221,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       } else if (event === 'SUBSCRIPTION_INACTIVATED' || status === 'INACTIVE') {
         updates.status = 'Inadimplente';
         updates.paymentStatus = 'OVERDUE';
-      } else if (event === 'SUBSCRIPTION_CREATED' || event === 'SUBSCRIPTION_UPDATED') {
-        if (status === 'ACTIVE') {
-          updates.status = 'Ativo';
-        }
       }
+      // A mudança para Ativo foi removida daqui e movida para o evento de pagamento (PAYMENT_RECEIVED)
 
       const batch = db.batch();
       snapshot.docs.forEach(doc => {

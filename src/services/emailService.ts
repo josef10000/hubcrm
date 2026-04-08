@@ -38,7 +38,7 @@ export async function sendBoasVindasEmail(clientEmail: string, clientName: strin
         },
       },
     });
-    console.log('Email Boas Vindas enviado:', data);
+    console.log(`Email Boas Vindas enviado com sucesso! ID: ${(data as any).id || (data as any).data?.id}`);
     return data;
   } catch (error) {
     console.error('Erro ao enviar email Boas Vindas:', error);
@@ -79,7 +79,7 @@ export async function sendFaturaEmitidaEmail(
         },
       },
     });
-    console.log('Email Fatura Emitida enviado:', data);
+    console.log(`Email Fatura Emitida enviado com sucesso! Assunto: ${subject}, ID: ${(data as any).id || (data as any).data?.id}`);
     return data;
   } catch (error) {
     console.error('Erro ao enviar email Fatura Emitida:', error);
