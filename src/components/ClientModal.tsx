@@ -207,6 +207,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
   };
 
   // ─── Tab Buttons ───
+  const tabButtons = [
     { key: 'details', label: 'Dados' },
     { key: 'history', label: 'Histórico' },
     { key: 'stages', label: 'Etapas' },
@@ -428,8 +429,6 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                         </div>
                       </div>
                     )}
-
-                    </div>
                   </div>
 
                 {/* Right Column: Status & Notes */}
