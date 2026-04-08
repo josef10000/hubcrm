@@ -6,6 +6,7 @@ import {
   sendFaturaEmitidaEmail, 
   sendFaturaVencimentoEmail 
 } from '../../src/services/emailService.js';
+import { logEmailHistory } from '../_utils/emailLogger.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Auth check
@@ -41,43 +42,63 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     let result;
+    let subject = '';
+    let type: 'WELCOME' | 'INVOICE' | 'OVERDUE' | 'RECEIPT' = 'WELCOME';
+
     switch (emailType) {
       case 'WELCOME':
+        type = 'WELCOME';
+        subject = 'Bem-vindo ao Hub central';
         result = await sendBoasVindasEmail(clientData.email, clientData.name);
         break;
       case 'INVOICE':
+        type = 'INVOICE';
         if (!clientData.invoiceUrl) {
           return res.status(400).json({ error: 'No invoice URL available for this client' });
         }
         const valor = clientData.planPrice || 0;
         const vencimento = clientData.nextDueDate ? clientData.nextDueDate.split('-').reverse().join('/') : 'A combinar';
+        subject = `Fatura - Plano ${clientData.plan}`;
         result = await sendFaturaEmitidaEmail(
           clientData.email,
           clientData.name,
           valor,
           vencimento,
           clientData.invoiceUrl,
-          `Fatura - Plano ${clientData.plan}`
+          `Fatura - Plano ${clientData.plan}`,
+          subject
         );
         break;
       case 'OVERDUE':
+        type = 'OVERDUE';
         if (!clientData.invoiceUrl) {
           return res.status(400).json({ error: 'No invoice URL available for this client' });
         }
         const v = clientData.planPrice || 0;
         const ven = clientData.nextDueDate ? clientData.nextDueDate.split('-').reverse().join('/') : 'A combinar';
+        subject = `Cobrança de Atraso - Plano ${clientData.plan}`;
         result = await sendFaturaVencimentoEmail(
           clientData.email,
           clientData.name,
           v,
           ven,
           clientData.invoiceUrl,
-          `Cobrança de Atraso - Plano ${clientData.plan}`
+          `Cobrança de Atraso - Plano ${clientData.plan}`,
+          subject
         );
         break;
       default:
         return res.status(400).json({ error: 'Invalid email type' });
     }
+
+    // Log to history
+    await logEmailHistory(userId, clientId, {
+      type,
+      status: 'sent',
+      sentAt: Date.now(),
+      recipient: clientData.email,
+      subject
+    });
 
     return res.status(200).json({ success: true, result });
   } catch (error: any) {

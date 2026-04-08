@@ -29,6 +29,7 @@ interface CRMContextType {
   loading: boolean;
   errorMsg: string | null;
   isSyncing: boolean;
+  isEmailLoading: string | null;
 
   // Offer logic
   isOfferModalOpen: boolean;
@@ -76,6 +77,7 @@ interface CRMContextType {
   restoreDefaultOffers: () => Promise<void>;
   handleExportCSV: (dataToExport: Client[]) => void;
   syncPayments: () => Promise<void>;
+  triggerManualEmail: (clientId: string, emailType: 'WELCOME' | 'INVOICE' | 'OVERDUE') => Promise<boolean>;
 
   // Helpers
   isChurnRisk: (client: Client) => boolean;
@@ -251,6 +253,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     handleSaveOffer: offerActions.handleSaveOffer, handleDeleteOffer: offerActions.handleDeleteOffer,
     restoreDefaultOffers: offerActions.restoreDefaultOffers,
     handleExportCSV: clientActions.handleExportCSV, syncPayments: clientActions.syncPayments,
+    triggerManualEmail: clientActions.triggerManualEmail, isEmailLoading: clientActions.isEmailLoading,
     isChurnRisk: clientActions.isChurnRisk, isComboNearRenewal: clientActions.isComboNearRenewal,
   };
 

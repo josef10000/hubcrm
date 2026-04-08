@@ -6,6 +6,7 @@ import {
   sendFaturaEmitidaEmail, 
   sendFaturaVencimentoEmail 
 } from '../../src/services/emailService.js';
+import { logEmailHistory } from '../_utils/emailLogger.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -131,6 +132,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (wasWelcomeSent) {
           console.log(`[EMAIL] Enviando Boas-vindas para: ${clientData.email}`);
           await sendBoasVindasEmail(clientData.email, clientData.name || 'Cliente')
+            .then(() => {
+              const userId = doc.ref.parent.parent?.id;
+              if (userId) logEmailHistory(userId, doc.id, {
+                type: 'WELCOME',
+                status: 'sent',
+                sentAt: Date.now(),
+                recipient: clientData.email,
+                subject: 'Bem-vindo ao Hub central'
+              });
+            })
             .catch(err => console.error('Erro Boas-vindas:', err));
         }
       }
@@ -176,6 +187,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (wasWelcomeSent) {
           console.log(`[EMAIL] Fallback: Enviando Boas-vindas atrasado para: ${clientData.email}`);
           await sendBoasVindasEmail(clientData.email, clientData.name || 'Cliente')
+            .then(() => {
+              const userId = doc.ref.parent.parent?.id;
+              if (userId) logEmailHistory(userId, doc.id, {
+                type: 'WELCOME',
+                status: 'sent',
+                sentAt: Date.now(),
+                recipient: clientData.email,
+                subject: 'Bem-vindo ao Hub central (Fallback)'
+              });
+            })
             .catch(err => console.error('Erro Boas-vindas (Fallback):', err));
         }
 
@@ -220,6 +241,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                }
 
                await sendFaturaEmitidaEmail(clientData.email, clientData.name || 'Cliente', pValue, pDueDate, pLink, pDesc, subject)
+                 .then(() => {
+                   const userId = doc.ref.parent.parent?.id;
+                   if (userId) logEmailHistory(userId, doc.id, {
+                     type: 'INVOICE',
+                     status: 'sent',
+                     sentAt: Date.now(),
+                     recipient: clientData.email,
+                     subject: subject
+                   });
+                 })
                  .catch(e => console.error('Erro Fatura Emitida:', e));
             }
           }
@@ -244,6 +275,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           } else {
             const pDate = (paymentData.paymentDate || new Date().toISOString().split('T')[0]).split('-').reverse().join('/');
             await sendPagamentoRecebidoEmail(clientData.email, clientData.name || 'Cliente', pValue, pDate, pDesc)
+              .then(() => {
+                const userId = doc.ref.parent.parent?.id;
+                if (userId) logEmailHistory(userId, doc.id, {
+                  type: 'RECEIPT',
+                  status: 'sent',
+                  sentAt: Date.now(),
+                  recipient: clientData.email,
+                  subject: 'Pagamento Recebido - Hub central'
+                });
+              })
               .catch(e => console.error('Erro Pagamento Recebido:', e));
           }
         }

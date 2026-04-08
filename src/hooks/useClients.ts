@@ -28,7 +28,7 @@ export function useClients(opts: UseClientsOptions) {
   const [isEmailLoading, setIsEmailLoading] = useState<string | null>(null);
 
   const triggerManualEmail = async (clientId: string, emailType: 'WELCOME' | 'INVOICE' | 'OVERDUE') => {
-    setIsEmailLoading(`${clientId}_${emailType}`);
+    setIsEmailLoading(`${clientId}:${emailType}`);
     try {
       const res = await authFetch('/api/email/manual-trigger', {
         method: 'POST',
@@ -195,6 +195,7 @@ export function useClients(opts: UseClientsOptions) {
       isCombo: clientData.isCombo,
       maxInstallments: clientData.maxInstallments,
       comboRenewalDate: clientData.comboRenewalDate,
+      asaasNotificationsEnabled: clientData.asaasNotificationsEnabled || false,
       referralRewardType: clientData.billingCycle === 'YEARLY' || clientData.isCombo ? 'commission' : clientData.referralRewardType || editingClient?.referralRewardType || 'discount',
     };
 
@@ -204,7 +205,10 @@ export function useClients(opts: UseClientsOptions) {
         authFetch('/api/asaas/update-customer', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ asaasCustomerId: client.asaasCustomerId, notificationDisabled: true }),
+          body: JSON.stringify({ 
+            asaasCustomerId: client.asaasCustomerId, 
+            notificationDisabled: client.asaasNotificationsEnabled === true ? false : true 
+          }),
         }).catch(err => console.error('Error auto-updating customer notifications:', err));
       }
 
@@ -311,7 +315,8 @@ export function useClients(opts: UseClientsOptions) {
             cpfCnpj: client.cpfCnpj ? client.cpfCnpj.replace(/\D/g, '') : '', 
             email: client.email, 
             mobilePhone: isMobile ? phoneClean : undefined, 
-            phone: isLandline ? phoneClean : undefined 
+            phone: isLandline ? phoneClean : undefined,
+            asaasNotificationsEnabled: client.asaasNotificationsEnabled
           }),
         });
 

@@ -18,19 +18,21 @@ const TEMPLATE_IDS = {
   AVISO_VENCIMENTO: 'fatura-vencimento'
 };
 
-export async function sendBoasVindasEmail(clientEmail: string, clientName: string) {
+export async function sendBoasVindasEmail(clientEmail: string, clientName: string, customSubject?: string) {
   try {
     // Se o template ID for o placeholder, avisa no log
     if (TEMPLATE_IDS.BOAS_VINDAS.includes('placeholder')) {
       console.warn('AVISO: Template ID de Boas-Vindas não configurado. O e-mail não será enviado corretamente.');
     }
 
+    const subject = customSubject || 'Bem-vindo ao Hub Symples!';
+
     // @ts-ignore - A propriedade 'template' pode não estar no tipo se o SDK estiver desatualizado localmente, mas a API aceita.
     const data = await (resend.emails.send as any)({
       from: FROM_EMAIL,
       to: [clientEmail],
       reply_to: REPLY_TO_EMAIL,
-      subject: 'Bem-vindo ao Hub Symples!',
+      subject: subject,
       template: {
         id: TEMPLATE_IDS.BOAS_VINDAS,
         variables: {
@@ -38,7 +40,7 @@ export async function sendBoasVindasEmail(clientEmail: string, clientName: strin
         },
       },
     });
-    console.log(`Email Boas Vindas enviado com sucesso! ID: ${(data as any).id || (data as any).data?.id}`);
+    console.log(`Email Boas Vindas enviado com sucesso! Assunto: ${subject}, ID: ${(data as any).id || (data as any).data?.id}`);
     return data;
   } catch (error) {
     console.error('Erro ao enviar email Boas Vindas:', error);
@@ -92,19 +94,22 @@ export async function sendPagamentoRecebidoEmail(
   clientName: string, 
   valor: string | number, 
   dataPagamento: string, 
-  descricao: string
+  descricao: string,
+  customSubject?: string
 ) {
   try {
     if (TEMPLATE_IDS.PAGAMENTO_RECEBIDO.includes('placeholder')) {
       console.warn('AVISO: Template ID de Pagamento Recebido não configurado.');
     }
 
+    const subject = customSubject || 'Pagamento Confirmado - Hub Symples';
+
     // @ts-ignore
     const data = await (resend.emails.send as any)({
       from: FROM_EMAIL,
       to: [clientEmail],
       reply_to: REPLY_TO_EMAIL,
-      subject: 'Pagamento Confirmado - Hub Symples',
+      subject: subject,
       template: {
         id: TEMPLATE_IDS.PAGAMENTO_RECEBIDO,
         variables: {
@@ -115,7 +120,7 @@ export async function sendPagamentoRecebidoEmail(
         },
       },
     });
-    console.log('Email Pagamento Confirmado enviado:', data);
+    console.log(`Email Pagamento Confirmado enviado com sucesso! Assunto: ${subject}, ID: ${(data as any).id || (data as any).data?.id}`);
     return data;
   } catch (error) {
     console.error('Erro ao enviar email Pagamento Recebido:', error);
@@ -129,19 +134,22 @@ export async function sendFaturaVencimentoEmail(
   valor: string | number, 
   vencimento: string, 
   linkPagamento: string, 
-  descricao: string
+  descricao: string,
+  customSubject?: string
 ) {
   try {
     if (TEMPLATE_IDS.AVISO_VENCIMENTO.includes('placeholder')) {
       console.warn('AVISO: Template ID de Aviso de Vencimento não configurado.');
     }
 
+    const subject = customSubject || 'Aviso de Vencimento - Hub Symples';
+
     // @ts-ignore
     const data = await (resend.emails.send as any)({
       from: FROM_EMAIL,
       to: [clientEmail],
       reply_to: REPLY_TO_EMAIL,
-      subject: 'Aviso de Vencimento - Hub Symples',
+      subject: subject,
       template: {
         id: TEMPLATE_IDS.AVISO_VENCIMENTO,
         variables: {
@@ -153,7 +161,7 @@ export async function sendFaturaVencimentoEmail(
         },
       },
     });
-    console.log('Email Fatura Vencimento enviado:', data);
+    console.log(`Email Fatura Vencimento enviado com sucesso! Assunto: ${subject}, ID: ${(data as any).id || (data as any).data?.id}`);
     return data;
   } catch (error) {
     console.error('Erro ao enviar email Fatura Vencimento:', error);

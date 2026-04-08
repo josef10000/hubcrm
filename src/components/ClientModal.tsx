@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   X, Plus, DollarSign, CheckCircle, Clock, MapPin, Phone, Tag, Building2, FileText, Briefcase, AlignLeft,
   Paperclip, Copy, MessageCircle, Trash2, Snowflake, Globe, Image as ImageIcon, Sparkles, Wand2, Star, Zap,
-  RefreshCw, Link as LinkIcon, AlertTriangle, TrendingDown, Eye, EyeOff, Edit2, Loader2, Download, FileSignature, FileUp
+  RefreshCw, Link as LinkIcon, AlertTriangle, TrendingDown, Eye, EyeOff, Edit2, Loader2, Download, FileSignature, FileUp, Mail, Bell, BellOff
 } from 'lucide-react';
 import { auth, db, storage } from '../lib/firebase';
 import { collection, doc, setDoc, onSnapshot, deleteDoc, addDoc, updateDoc } from 'firebase/firestore';
@@ -20,6 +20,7 @@ import CredentialsTab from './client-modal/CredentialsTab';
 import OnboardingTab from './client-modal/OnboardingTab';
 import ReferralsTab from './client-modal/ReferralsTab';
 import ContractsTab from './client-modal/ContractsTab';
+import EmailsTab from './client-modal/EmailsTab';
 
 export default
 function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardingQuestions, user, offers }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, onDelete?: (id: string) => void, initialData: Client | null, onboardingQuestions: OnboardingQuestion[], user: User, offers: Offer[] }) {
@@ -39,7 +40,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
   });
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [activeTab, setActiveTab] = useState<'details' | 'history' | 'stages' | 'credentials' | 'onboarding' | 'contracts' | 'referrals'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'history' | 'stages' | 'credentials' | 'onboarding' | 'contracts' | 'referrals' | 'emails'>('details');
   const [cepLoading, setCepLoading] = useState(false);
   const [cpfCnpjStatus, setCpfCnpjStatus] = useState<'idle' | 'valid' | 'invalid' | 'loading'>('idle');
   const [newLogText, setNewLogText] = useState('');
@@ -209,6 +210,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
   // ─── Tab Buttons ───
   const tabButtons = [
     { key: 'details', label: 'Dados' },
+    { key: 'emails', label: 'E-mails' },
     { key: 'history', label: 'Histórico' },
     { key: 'stages', label: 'Etapas' },
     { key: 'credentials', label: 'Credenciais' },
@@ -420,16 +422,32 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                     </div>
                   )}
 
-                  {formData.isCombo && formData.comboRenewalDate && (
-                    <div className="mt-6 p-4 bg-purple-500/10 border border-purple-500/30 rounded-2xl flex items-center gap-3">
-                      <Zap size={20} className="text-purple-400" />
-                      <div>
-                        <p className="text-xs text-purple-300 font-medium uppercase tracking-wider">Renovação do Combo</p>
-                        <p className="text-sm text-white font-bold">{new Date(formData.comboRenewalDate + 'T12:00:00Z').toLocaleDateString('pt-BR')}</p>
+                    {formData.isCombo && formData.comboRenewalDate && (
+                      <div className="mt-6 p-4 bg-purple-500/10 border border-purple-500/30 rounded-2xl flex items-center gap-3">
+                        <Zap size={20} className="text-purple-400" />
+                        <div>
+                          <p className="text-xs text-purple-300 font-medium uppercase tracking-wider">Renovação do Combo</p>
+                          <p className="text-sm text-white font-bold">{new Date(formData.comboRenewalDate + 'T12:00:00Z').toLocaleDateString('pt-BR')}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="mt-8 p-4 bg-gray-900/40 border border-gray-200 dark:border-white/10 rounded-2xl">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          {formData.asaasNotificationsEnabled ? <Bell className="text-primary-500" size={20} /> : <BellOff className="text-gray-500" size={20} />}
+                          <div>
+                            <span className="text-sm font-bold text-gray-900 dark:text-white">Notificações Nativas Asaas</span>
+                            <p className="text-[10px] text-gray-500 dark:text-gray-400">Quando ativado, o Asaas enviará e-mails e avisos próprios ao cliente além dos nossos.</p>
+                          </div>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input type="checkbox" className="sr-only peer" checked={formData.asaasNotificationsEnabled || false} onChange={(e) => setFormData(prev => ({ ...prev, asaasNotificationsEnabled: e.target.checked }))} />
+                          <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
+                        </label>
                       </div>
                     </div>
-                  )}
-                </div>
+                  </div>
 
                 {/* Right Column: Status & Notes */}
                 <div className="space-y-4">
@@ -514,6 +532,8 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
               <ReferralsTab client={initialData} user={user} />
             ) : activeTab === 'contracts' && initialData ? (
               <ContractsTab client={initialData} user={user} formData={formData} setFormData={setFormData} defaultContractText={defaultContractText} />
+            ) : activeTab === 'emails' && initialData ? (
+              <EmailsTab client={initialData} />
             ) : null}
           </div>
 

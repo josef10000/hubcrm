@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const clientSchema = z.object({
   name: z.string().min(3, "O nome deve ter pelo menos 3 caracteres"),
-  email: z.string().email("E-mail inválido").optional().or(z.literal('')),
+  email: z.string().email("E-mail é obrigatório para notificações e faturamento").min(1, "E-mail é obrigatório"),
   cpfCnpj: z.string().refine(val => !val || val.replace(/\D/g, '').length === 11 || val.replace(/\D/g, '').length === 14, "CPF/CNPJ deve ter 11 ou 14 dígitos").optional().or(z.literal('')),
   whatsapp: z.string().refine(val => !val || val.replace(/\D/g, '').length >= 10, "WhatsApp deve ter pelo menos 10 dígitos").optional().or(z.literal('')),
 });
@@ -14,6 +14,15 @@ export interface ClientLog {
   id: string;
   text: string;
   date: number;
+}
+
+export interface EmailHistoryEntry {
+  id: string;
+  type: 'WELCOME' | 'INVOICE' | 'OVERDUE' | 'RECEIPT';
+  status: 'sent' | 'failed';
+  sentAt: number;
+  recipient: string;
+  subject: string;
 }
 
 export interface ClientAttachment {
@@ -116,6 +125,8 @@ export interface Client {
   bairro?: string;
   cidade?: string;
   estado?: string;
+  asaasNotificationsEnabled?: boolean;
+  emailHistory?: EmailHistoryEntry[];
 }
 
 export interface OnboardingQuestion {
