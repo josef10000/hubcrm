@@ -1,7 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-// firebase-admin is CommonJS; handle both ESM default and namespace imports
-import adminImport from 'firebase-admin';
-const admin = (adminImport as any).default || adminImport;
+import { getFirebaseAdmin } from './firebase';
 
 // ── Rate Limiting (in-memory, per-IP) ────────────────────────────────────────
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -26,36 +24,13 @@ function checkRateLimit(ip: string): boolean {
 }
 
 // Clean up stale entries every 5 minutes to prevent memory leak
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, entry] of rateLimitMap.entries()) {
-    if (now > entry.resetAt) rateLimitMap.delete(ip);
-  }
-}, 5 * 60_000);
-
-// ── Firebase Admin Initialization ───────────────────────────────────────────
-function getFirebaseAdmin() {
-  // Defensive: admin.apps may be undefined depending on how the module loaded
-  const apps = admin.apps ?? [];
-  if (apps.length === 0) {
-    const serviceAccountStr = process.env.FIREBASE_SERVICE_ACCOUNT;
-    if (!serviceAccountStr) {
-      throw new Error('FIREBASE_SERVICE_ACCOUNT_MISSING');
+if (typeof setInterval !== 'undefined') {
+  setInterval(() => {
+    const now = Date.now();
+    for (const [ip, entry] of rateLimitMap.entries()) {
+      if (now > entry.resetAt) rateLimitMap.delete(ip);
     }
-
-    let serviceAccount;
-    try {
-      serviceAccount = JSON.parse(serviceAccountStr);
-    } catch {
-      try {
-        serviceAccount = JSON.parse(Buffer.from(serviceAccountStr, 'base64').toString());
-      } catch {
-        throw new Error('FIREBASE_SERVICE_ACCOUNT_PARSE_ERROR');
-      }
-    }
-    admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
-  }
-  return admin;
+  }, 5 * 60_000);
 }
 
 // ── Auth Middleware ─────────────────────────────────────────────────────────
