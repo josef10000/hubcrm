@@ -78,6 +78,7 @@ interface CRMContextType {
   handleExportCSV: (dataToExport: Client[]) => void;
   syncPayments: () => Promise<void>;
   triggerManualEmail: (clientId: string, emailType: 'WELCOME' | 'INVOICE' | 'OVERDUE') => Promise<boolean>;
+  toggleAsaasNotifications: (clientId: string, enabled: boolean) => Promise<void>;
 
   // Helpers
   isChurnRisk: (client: Client) => boolean;
@@ -254,6 +255,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     restoreDefaultOffers: offerActions.restoreDefaultOffers,
     handleExportCSV: clientActions.handleExportCSV, syncPayments: clientActions.syncPayments,
     triggerManualEmail: clientActions.triggerManualEmail, isEmailLoading: clientActions.isEmailLoading,
+    toggleAsaasNotifications: clientActions.toggleAsaasNotifications,
     isChurnRisk: clientActions.isChurnRisk, isComboNearRenewal: clientActions.isComboNearRenewal,
   };
 

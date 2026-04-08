@@ -20,7 +20,6 @@ import CredentialsTab from './client-modal/CredentialsTab';
 import OnboardingTab from './client-modal/OnboardingTab';
 import ReferralsTab from './client-modal/ReferralsTab';
 import ContractsTab from './client-modal/ContractsTab';
-import EmailsTab from './client-modal/EmailsTab';
 
 export default
 function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardingQuestions, user, offers }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, onDelete?: (id: string) => void, initialData: Client | null, onboardingQuestions: OnboardingQuestion[], user: User, offers: Offer[] }) {
@@ -208,9 +207,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
   };
 
   // ─── Tab Buttons ───
-  const tabButtons = [
     { key: 'details', label: 'Dados' },
-    { key: 'emails', label: 'E-mails' },
     { key: 'history', label: 'Histórico' },
     { key: 'stages', label: 'Etapas' },
     { key: 'credentials', label: 'Credenciais' },
@@ -432,20 +429,6 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                       </div>
                     )}
 
-                    <div className="mt-8 p-4 bg-gray-900/40 border border-gray-200 dark:border-white/10 rounded-2xl">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          {formData.asaasNotificationsEnabled ? <Bell className="text-primary-500" size={20} /> : <BellOff className="text-gray-500" size={20} />}
-                          <div>
-                            <span className="text-sm font-bold text-gray-900 dark:text-white">Notificações Nativas Asaas</span>
-                            <p className="text-[10px] text-gray-500 dark:text-gray-400">Quando ativado, o Asaas enviará e-mails e avisos próprios ao cliente além dos nossos.</p>
-                          </div>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input type="checkbox" className="sr-only peer" checked={formData.asaasNotificationsEnabled || false} onChange={(e) => setFormData(prev => ({ ...prev, asaasNotificationsEnabled: e.target.checked }))} />
-                          <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
-                        </label>
-                      </div>
                     </div>
                   </div>
 
@@ -532,8 +515,6 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
               <ReferralsTab client={initialData} user={user} />
             ) : activeTab === 'contracts' && initialData ? (
               <ContractsTab client={initialData} user={user} formData={formData} setFormData={setFormData} defaultContractText={defaultContractText} />
-            ) : activeTab === 'emails' && initialData ? (
-              <EmailsTab client={initialData} />
             ) : null}
           </div>
 

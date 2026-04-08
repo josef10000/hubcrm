@@ -554,6 +554,35 @@ export function useClients(opts: UseClientsOptions) {
     toast.success('Lista de clientes exportada com sucesso!');
   };
 
+  const toggleAsaasNotifications = async (clientId: string, enabled: boolean) => {
+    const client = clients.find(c => c.id === clientId);
+    if (!client) return;
+
+    try {
+      // Update in Firestore
+      await updateDoc(doc(db, 'users', userId, 'clients', clientId), {
+        asaasNotificationsEnabled: enabled
+      });
+
+      // Update in Asaas API if customer ID exists
+      if (client.asaasCustomerId) {
+        await authFetch('/api/asaas/update-customer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            asaasCustomerId: client.asaasCustomerId, 
+            notificationDisabled: !enabled 
+          }),
+        });
+      }
+      
+      toast.success(`Notificações do Asaas ${enabled ? 'ativadas' : 'desativadas'}`);
+    } catch (error: any) {
+      console.error('Error toggling notifications:', error);
+      toast.error('Erro ao atualizar configurações de notificação');
+    }
+  };
+
   return {
     isSyncing,
     handleSaveClient,
@@ -561,6 +590,7 @@ export function useClients(opts: UseClientsOptions) {
     handleExportCSV,
     triggerManualEmail,
     isEmailLoading,
+    toggleAsaasNotifications,
     syncPayments,
     isChurnRisk,
     isComboNearRenewal,

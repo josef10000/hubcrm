@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, Plus, X, DollarSign,
   Search, BarChart3, Calendar, MessageCircle, Globe,
   Download, AlertTriangle, Settings,
-  Megaphone, Package, Map as MapIcon, Target, Menu
+  Megaphone, Package, Map as MapIcon, Target, Menu, Bell
 } from 'lucide-react';
 import { isFirebaseConfigured } from './lib/firebase';
 import Auth from './components/Auth';
@@ -26,6 +26,7 @@ import MarketingView from './views/MarketingView';
 import ProductsView from './views/ProductsView';
 import SettingsView from './views/SettingsView';
 import LeadsView from './views/LeadsView';
+import NotificationsView from './views/NotificationsView';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { UIProvider, useUI } from './contexts/UIContext';
@@ -39,6 +40,7 @@ import ContractSignView from './views/ContractSignView';
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
   { icon: Target, label: 'Pipeline', path: '/leads' },
+  { icon: Bell, label: 'Notificações', path: '/notifications' },
   { icon: BarChart3, label: 'Analytics', path: '/analytics' },
   { icon: MessageCircle, label: 'Chamados', path: '/support' },
   { icon: Calendar, label: 'Agenda', path: '/calendar' },
@@ -131,6 +133,7 @@ function CRMInner() {
             {currentPath === '/monitoring' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Monitoramento de Sites</h2>}
             {currentPath === '/map' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Mapa de Clientes</h2>}
             {currentPath === '/leads' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Pipeline de Vendas</h2>}
+            {currentPath === '/notifications' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Central de Notificações</h2>}
           </div>
           <div className="flex items-center gap-3">
             {currentPath === '/' && (
@@ -185,6 +188,7 @@ function CRMInner() {
                 <Route path="/settings" element={<SettingsView />} />
                 <Route path="/leads" element={<LeadsView />} />
                 <Route path="/support" element={<SupportView />} />
+                <Route path="/notifications" element={<NotificationsView />} />
               </Routes>
             </div>
           )
