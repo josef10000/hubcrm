@@ -25,6 +25,32 @@ export function useClients(opts: UseClientsOptions) {
   } = opts;
 
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isEmailLoading, setIsEmailLoading] = useState<string | null>(null);
+
+  const triggerManualEmail = async (clientId: string, emailType: 'WELCOME' | 'INVOICE' | 'OVERDUE') => {
+    setIsEmailLoading(`${clientId}_${emailType}`);
+    try {
+      const res = await authFetch('/api/email/manual-trigger', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, clientId, emailType }),
+      });
+      if (res.ok) {
+        toast.success(`E-mail ${emailType} enviado com sucesso!`);
+        return true;
+      } else {
+        const err = await res.json();
+        toast.error(`Erro ao enviar e-mail: ${err.error || 'Erro desconhecido'}`);
+        return false;
+      }
+    } catch (e: any) {
+      console.error('Error triggering manual email:', e);
+      toast.error('Erro ao conectar com o serviço de e-mail.');
+      return false;
+    } finally {
+      setIsEmailLoading(null);
+    }
+  };
 
 
   // ═══ Helpers ═══
@@ -173,6 +199,15 @@ export function useClients(opts: UseClientsOptions) {
     };
 
     try {
+      // Ensure Asaas notifications are disabled for existing customers
+      if (client.asaasCustomerId && !isNew) {
+        authFetch('/api/asaas/update-customer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ asaasCustomerId: client.asaasCustomerId, notificationDisabled: true }),
+        }).catch(err => console.error('Error auto-updating customer notifications:', err));
+      }
+
       // Handle Update Subscription
       if (!isNew && client.asaasSubscriptionId && editingClient && (editingClient.recurringPaymentDay !== client.recurringPaymentDay || editingClient.billingType !== client.billingType || editingClient.billingCycle !== client.billingCycle || editingClient.plan !== client.plan)) {
         let monthlyValue = getPlanPrice(client.plan, client.billingCycle, client);
@@ -519,6 +554,8 @@ export function useClients(opts: UseClientsOptions) {
     handleSaveClient,
     handleDeleteClient,
     handleExportCSV,
+    triggerManualEmail,
+    isEmailLoading,
     syncPayments,
     isChurnRisk,
     isComboNearRenewal,

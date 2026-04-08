@@ -108,6 +108,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           const freshSnap = await t.get(doc.ref as any);
           const freshData = (freshSnap as any).data();
           if (freshData && !freshData.welcomeEmailSent) {
+            // Verifica tipo de oferta para pular boas-vindas automáticas
+            if (freshData.offerId) {
+              const userId = doc.ref.parent.parent?.id;
+              if (userId) {
+                const offerSnap = await t.get(db.collection('users').doc(userId).collection('offers').doc(freshData.offerId));
+                const offerData = (offerSnap as any).data();
+                if (offerData?.type === 'SINGLE') {
+                  console.log(`[DEBUG] Pulando e-mail de boas-vindas automático (Oferta SINGLE).`);
+                  t.update(doc.ref, { welcomeEmailSent: true, asaasCustomerId: customerData.id }); // Marca como enviado para não tentar de novo
+                  return false;
+                }
+              }
+            }
+            
             t.update(doc.ref, { welcomeEmailSent: true, asaasCustomerId: customerData.id });
             return true;
           }
