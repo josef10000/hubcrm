@@ -1,6 +1,8 @@
-import { db } from './firebase.js';
-import adminImport from 'firebase-admin';
-const admin = (adminImport as any).default || adminImport;
+import { db } from './firebase';
+import * as adminNamespace from 'firebase-admin';
+
+// Handle common interop issues with firebase-admin in ESM/Vercel
+const admin = (adminNamespace as any).default || adminNamespace;
 
 export interface EmailLogData {
   type: 'WELCOME' | 'INVOICE' | 'OVERDUE' | 'RECEIPT';

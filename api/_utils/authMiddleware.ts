@@ -75,15 +75,16 @@ export async function verifyAuth(
     req.uid = decoded.uid;
     return decoded.uid;
   } catch (error: any) {
-    console.error('Auth verification failed:', error.message, error.code);
+    console.error('[AuthMiddleware] Verification failed:', error.message);
     
-    // Handle initialization errors as 500
-    if (error.message === 'FIREBASE_SERVICE_ACCOUNT_MISSING') {
-      res.status(500).json({ error: 'Configuração de autenticação faltando no servidor' });
-      return null;
-    }
-    if (error.message === 'FIREBASE_SERVICE_ACCOUNT_PARSE_ERROR') {
-      res.status(500).json({ error: 'Erro ao processar credenciais do servidor' });
+    // Explicitly handle initialization errors to return 500 instead of crashing Vercel
+    if (error.message === 'FIREBASE_SERVICE_ACCOUNT_MISSING' || 
+        error.message === 'FIREBASE_SERVICE_ACCOUNT_PARSE_ERROR' ||
+        error.message.includes('initialization error')) {
+      res.status(500).json({ 
+        error: 'Erro de configuração no servidor de autenticação',
+        details: 'O serviço de autenticação não pôde ser inicializado. Verifique as variáveis de ambiente.'
+      });
       return null;
     }
     

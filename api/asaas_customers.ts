@@ -5,7 +5,7 @@ import updateCustomerHandler from './_logic/asaas/update-customer';
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { action } = req.query;
-    console.log(`[API] asaas_customers: action=${action}, method=${req.method}`);
+    console.log(`[API] asaas_customers: action=${action}, method=${req.method}, body=${JSON.stringify(req.body).substring(0, 100)}...`);
     
     if (action === 'update-customer') {
       return await updateCustomerHandler(req, res);
