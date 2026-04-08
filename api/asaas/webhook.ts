@@ -75,11 +75,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         for (const doc of snapshot.docs) {
           const clientData = doc.data();
-          // REGRA: Boas-vindas agora é enviado APENAS aqui.
-          if (!clientData.welcomeEmailSent) {
+          
+          // Transação Atômica para Boas-Vindas
+          const wasWelcomeSent = await db.runTransaction(async (t) => {
+            const freshSnap = await t.get(doc.ref);
+            const freshData = freshSnap.data();
+            if (freshData && !freshData.welcomeEmailSent) {
+              t.update(doc.ref, { welcomeEmailSent: true, asaasCustomerId: customerData.id });
+              return true;
+            }
+            return false;
+          });
+
+          if (wasWelcomeSent) {
             console.log(`[EMAIL] Enviando Boas-vindas para: ${clientData.email}`);
             await sendBoasVindasEmail(clientData.email, clientData.name || 'Cliente')
-              .then(() => doc.ref.update({ welcomeEmailSent: true, asaasCustomerId: customerData.id }))
               .catch(err => console.error('Erro Boas-vindas:', err));
           }
         }
@@ -110,6 +120,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           const pLink = paymentData.invoiceUrl || paymentData.bankSlipUrl || '';
           const pDueDate = paymentData.dueDate ? paymentData.dueDate.split('-').reverse().join('/') : '';
           const pDesc = paymentData.description || 'Fatura Hub Symples';
+
+          // SAFETY NET: Boas-vindas via PAYMENT_CREATED caso o CUSTOMER_CREATED tenha falhado no timing
+          const wasWelcomeSent = await db.runTransaction(async (t) => {
+            const freshSnap = await t.get(doc.ref);
+            const freshData = freshSnap.data();
+            if (freshData && !freshData.welcomeEmailSent) {
+              t.update(doc.ref, { welcomeEmailSent: true });
+              return true;
+            }
+            return false;
+          });
+
+          if (wasWelcomeSent) {
+            console.log(`[EMAIL] Fallback: Enviando Boas-vindas atrasado para: ${clientData.email}`);
+            await sendBoasVindasEmail(clientData.email, clientData.name || 'Cliente')
+              .catch(err => console.error('Erro Boas-vindas (Fallback):', err));
+          }
 
           // 1. Nova Fatura (Criada ou Link de Pagamento)
           if (event === 'PAYMENT_CREATED') {

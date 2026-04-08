@@ -276,6 +276,12 @@ export function useClients(opts: UseClientsOptions) {
         if (customerRes.ok) {
           const customerData = await customerRes.json();
           client.asaasCustomerId = customerData.id;
+          
+          // PRÉ-SALVAMENTO: Salva no banco IMEDIATAMENTE após pegar o ID do Asaas.
+          // Isso elimina o "Race Condition" porque o Webhook do Asaas não será mais rápido que o CRM.
+          const cleanClientForPreSave = Object.fromEntries(Object.entries(client).filter(([_, v]) => v !== undefined));
+          await setDoc(doc(db, 'users', userId, 'clients', client.id), cleanClientForPreSave);
+
           const today = new Date();
           const firstPaymentDate = client.firstPaymentDate || today.toISOString().split('T')[0];
           let monthlyValue = getPlanPrice(client.plan, client.billingCycle, client);
