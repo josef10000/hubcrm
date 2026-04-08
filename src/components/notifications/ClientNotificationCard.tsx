@@ -133,7 +133,7 @@ export default function ClientNotificationCard({ client }: ClientNotificationCar
                       </div>
                       <div>
                         <p className="text-[10px] font-bold text-gray-700 dark:text-gray-300 truncate max-w-[120px]">{log.subject}</p>
-                        <p className="text-[8px] text-gray-500 uppercase">{new Date(log.sentAt).toLocaleDateString('pt-BR')} • {new Date(log.sentAt).toLocaleTimeString('pt-BR', { hour: '2-8', minute: '2-digit' })}</p>
+                        <p className="text-[8px] text-gray-500 uppercase">{new Date(log.sentAt).toLocaleDateString('pt-BR')} • {new Date(log.sentAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
                       </div>
                     </div>
                   </div>
