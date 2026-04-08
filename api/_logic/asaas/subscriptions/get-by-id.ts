@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { asaasRequest, safeErrorResponse } from '../../../../_utils/asaas';
-import { verifyAuth } from '../../../../_utils/authMiddleware';
+import { asaasRequest, safeErrorResponse } from '../../../_utils/asaas';
+import { verifyAuth } from '../../../_utils/authMiddleware';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Auth check

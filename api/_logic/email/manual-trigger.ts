@@ -5,7 +5,7 @@ import {
   sendBoasVindasEmail, 
   sendFaturaEmitidaEmail, 
   sendFaturaVencimentoEmail 
-} from '../../src/services/emailService';
+} from '../../../src/services/emailService';
 import { logEmailHistory } from '../../_utils/emailLogger';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
