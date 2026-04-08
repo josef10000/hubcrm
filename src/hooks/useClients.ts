@@ -338,21 +338,37 @@ export function useClients(opts: UseClientsOptions) {
 
               const firstDateObj = new Date(firstPaymentDate + 'T12:00:00Z');
               let nextSubDate = new Date(firstDateObj);
+              
+              // Se houver setup, a cobrança da assinatura DEVE ser no mês seguinte
+              nextSubDate.setMonth(nextSubDate.getMonth() + 1);
+              
+              // Se o usuário escolheu um dia específico de pagamento, ajustamos para esse dia no mês seguinte
               if (client.recurringPaymentDay) {
-                nextSubDate = new Date(firstDateObj.getFullYear(), firstDateObj.getMonth(), client.recurringPaymentDay, 12, 0, 0);
-                if (nextSubDate.getTime() <= firstDateObj.getTime()) nextSubDate.setMonth(nextSubDate.getMonth() + 1);
+                const targetDay = client.recurringPaymentDay;
+                nextSubDate.setDate(targetDay);
+                
+                // Se ao ajustar o dia, a data recuar para antes da data de adesão + 20 dias, jogamos mais um mês
+                // Isso evita que se o cara assinar dia 10 e o dia de vcto for dia 15, ele pague 5 dias depois.
                 const diffTime = nextSubDate.getTime() - firstDateObj.getTime();
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                if (diffDays < 15) nextSubDate.setMonth(nextSubDate.getMonth() + 1);
-              } else {
-                nextSubDate.setMonth(nextSubDate.getMonth() + 1);
+                if (diffDays < 20) {
+                  nextSubDate.setMonth(nextSubDate.getMonth() + 1);
+                }
               }
+              
               const nextSubDateStr = nextSubDate.toISOString().split('T')[0];
 
               const subRes = await authFetch('/api/asaas/subscriptions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ customer: client.asaasCustomerId, billingType: client.billingType, cycle: client.billingCycle === 'YEARLY' ? 'YEARLY' : 'MONTHLY', value: monthlyValue, nextDueDate: nextSubDateStr, description: `Assinatura ${client.billingCycle === 'YEARLY' ? 'Anual' : 'Mensal'} - Plano ${client.plan} - Hub Central` }),
+                body: JSON.stringify({ 
+                  customer: client.asaasCustomerId, 
+                  billingType: client.billingType, 
+                  cycle: client.billingCycle === 'YEARLY' ? 'YEARLY' : 'MONTHLY', 
+                  value: monthlyValue, 
+                  nextDueDate: nextSubDateStr, 
+                  description: `Assinatura ${client.billingCycle === 'YEARLY' ? 'Anual' : 'Mensal'} - Plano ${client.plan} - Hub Central` 
+                }),
               });
               if (subRes.ok) {
                 const subData = await subRes.json();

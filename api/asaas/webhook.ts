@@ -39,47 +39,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     async function findClient(asaasId: string, asaasEmail?: string) {
       console.log(`[DEBUG] Buscando cliente AsaasID: ${asaasId} | Email: ${asaasEmail}`);
       
-      // 1. Tenta por ID
       let snapshot = await clientsRef.where('asaasCustomerId', '==', asaasId).get();
       
-      // 2. Fallback por E-mail (Múltiplas variações para evitar erro de Case-Sensitive)
       if (snapshot.empty && asaasEmail) {
         const variations = [
           asaasEmail.toLowerCase().trim(),
           asaasEmail.trim(),
-          asaasEmail // Original
+          asaasEmail 
         ];
-        
-        // Remove duplicatas
         const uniqueVariations = [...new Set(variations)];
-
         for (const emailVar of uniqueVariations) {
-          console.log(`[DEBUG] Tentando busca por variação de e-mail: ${emailVar}`);
           snapshot = await clientsRef.where('email', '==', emailVar).get();
-          if (!snapshot.empty) {
-            console.log(`[SUCESSO] Cliente encontrado usando variação: ${emailVar}`);
-            break; 
-          }
+          if (!snapshot.empty) break; 
         }
       }
       return snapshot;
     }
 
-    // --- EVENTO: CUSTOMER_CREATED ---
+    // --- EVENTO: CUSTOMER_CREATED (Boas-vindas Único) ---
     if (event === 'CUSTOMER_CREATED') {
       const customerData = customer || body.customer;
       if (customerData?.id) {
         const snapshot = await findClient(customerData.id, customerData.email);
-        
-        if (snapshot.empty) {
-          console.warn(`[WF] Cliente não encontrado para CUSTOMER_CREATED: ${customerData.email}`);
-          return res.status(200).json({ received: true, notFound: true });
-        }
+        if (snapshot.empty) return res.status(200).json({ received: true });
 
         for (const doc of snapshot.docs) {
           const clientData = doc.data();
+          // REGRA: Boas-vindas agora é enviado APENAS aqui.
           if (!clientData.welcomeEmailSent) {
-            console.log(`[EMAIL] Disparando Boas-vindas para: ${clientData.email}`);
+            console.log(`[EMAIL] Enviando Boas-vindas para: ${clientData.email}`);
             await sendBoasVindasEmail(clientData.email, clientData.name || 'Cliente')
               .then(() => doc.ref.update({ welcomeEmailSent: true, asaasCustomerId: customerData.id }))
               .catch(err => console.error('Erro Boas-vindas:', err));
@@ -88,17 +76,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // --- EVENTOS: PAYMENT_ (Cobrancas) ---
+    // --- EVENTOS DE COBRANÇA (PAYMENT) ---
     if (event && event.startsWith('PAYMENT_')) {
       const paymentData = payment || body.payment;
       if (paymentData?.customer) {
-        // Buscamos o cliente (ID ou Email se disponível nos dados do pagamento do Asaas nem sempre vem o email, mas podemos tentar)
         const snapshot = await findClient(paymentData.customer);
-
-        if (snapshot.empty) {
-          console.error(`[FALHA] Pagamento ignorado. Cliente ${paymentData.customer} não existe no Firestore.`);
-          return res.status(200).json({ received: true, notFound: true });
-        }
+        if (snapshot.empty) return res.status(200).json({ received: true });
 
         const updates: any = {};
         if (event === 'PAYMENT_RECEIVED' || event === 'PAYMENT_CONFIRMED') {
@@ -118,31 +101,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           const pDueDate = paymentData.dueDate ? paymentData.dueDate.split('-').reverse().join('/') : '';
           const pDesc = paymentData.description || 'Fatura Hub Symples';
 
-          // Envio de E-mails de Pagamento
+          // 1. Nova Fatura (Criada ou Link de Pagamento)
           if (event === 'PAYMENT_CREATED') {
-            // Se ainda não recebeu Boas-vindas, envia agora (fallback)
-            if (!clientData.welcomeEmailSent) {
-               console.log(`[EMAIL] Boas-vindas atrasado via PAYMENT_CREATED para ${clientData.email}`);
-               await sendBoasVindasEmail(clientData.email, clientData.name || 'Cliente')
-                .then(() => doc.ref.update({ welcomeEmailSent: true }))
-                .catch(e => console.error(e));
+            console.log(`[DEBUG] Processando PAYMENT_CREATED para ${clientData.email}. Descrição: ${pDesc}`);
+            
+            let subject = 'Sua Fatura - Hub Symples';
+            const lowerDesc = pDesc.toLowerCase();
+            
+            if (lowerDesc.includes('adesão') || lowerDesc.includes('setup') || lowerDesc.includes('ativação')) {
+              subject = 'Sua Fatura de Adesão - Hub Symples';
+            } else if (paymentData.subscription || lowerDesc.includes('assinatura') || lowerDesc.includes('mensalidade')) {
+              subject = 'Sua Fatura de Mensalidade - Hub Symples';
+            } else if (lowerDesc.includes('único') || lowerDesc.includes('compra')) {
+               subject = 'Sua Fatura de Compra - Hub Symples';
             }
 
-            let subject = pDesc.toLowerCase().includes('adesão') ? 'Sua Fatura de Adesão - Hub Symples' : 'Sua Fatura - Hub Symples';
             await sendFaturaEmitidaEmail(clientData.email, clientData.name || 'Cliente', pValue, pDueDate, pLink, pDesc, subject)
-              .catch(e => console.error('Erro Fatura:', e));
+              .catch(e => console.error('Erro Fatura Emitida:', e));
+            
+            // REMOVIDO: Fallback de Boas-vindas daqui para evitar duplicidade.
           }
 
+          // 2. Pagamento Confirmado
           if (event === 'PAYMENT_RECEIVED' || event === 'PAYMENT_CONFIRMED') {
             const pDate = (paymentData.paymentDate || new Date().toISOString().split('T')[0]).split('-').reverse().join('/');
             await sendPagamentoRecebidoEmail(clientData.email, clientData.name || 'Cliente', pValue, pDate, pDesc)
-              .catch(e => console.error('Erro Recebido:', e));
+              .catch(e => console.error('Erro Pagamento Recebido:', e));
           }
         }
       }
     }
 
-    // --- EVENTOS: SUBSCRIPTION_ (Assinaturas) ---
+    // --- EVENTOS DE ASSINATURA (SUBSCRIPTION) ---
     if (event && event.startsWith('SUBSCRIPTION_')) {
       const subData = subscription || body.subscription;
       if (subData?.customer) {
