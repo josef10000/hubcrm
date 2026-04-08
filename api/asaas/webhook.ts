@@ -78,8 +78,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           
           // Transação Atômica para Boas-Vindas
           const wasWelcomeSent = await db.runTransaction(async (t) => {
-            const freshSnap = await t.get(doc.ref);
-            const freshData = freshSnap.data();
+            const freshSnap = await t.get(doc.ref as any);
+            const freshData = (freshSnap as any).data();
             if (freshData && !freshData.welcomeEmailSent) {
               t.update(doc.ref, { welcomeEmailSent: true, asaasCustomerId: customerData.id });
               return true;
@@ -123,8 +123,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
           // SAFETY NET: Boas-vindas via PAYMENT_CREATED caso o CUSTOMER_CREATED tenha falhado no timing
           const wasWelcomeSent = await db.runTransaction(async (t) => {
-            const freshSnap = await t.get(doc.ref);
-            const freshData = freshSnap.data();
+            const freshSnap = await t.get(doc.ref as any);
+            const freshData = (freshSnap as any).data();
             if (freshData && !freshData.welcomeEmailSent) {
               t.update(doc.ref, { welcomeEmailSent: true });
               return true;
