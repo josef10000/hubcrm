@@ -183,11 +183,11 @@ export default function ClientPortal() {
         
         if (clientData.asaasCustomerId) {
           try {
-            const paymentsRes = await fetch(`/api/asaas/payments?customer=${clientData.asaasCustomerId}`);
+            const paymentsRes = await fetch(`/api/asaas_payments?customer=${clientData.asaasCustomerId}`);
             
             let subscription = null;
             if (clientData.asaasSubscriptionId) {
-              const subRes = await fetch(`/api/asaas/subscriptions/${clientData.asaasSubscriptionId}`);
+              const subRes = await fetch(`/api/asaas_subscriptions/${clientData.asaasSubscriptionId}`);
               if (subRes.ok) {
                 const subData = await subRes.json();
                 subscription = subData.subscription;
@@ -273,7 +273,7 @@ export default function ClientPortal() {
       if (client.asaasSubscriptionId) {
         const monthlyValue = getPlanPrice(client.plan, client.billingCycle, client.customMonthlyPrice, client.customSetupPrice) - discount;
 
-        await fetch('/api/asaas/update-subscription', {
+        await fetch('/api/asaas_subscriptions?action=update-subscription', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

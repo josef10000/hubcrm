@@ -20,7 +20,7 @@ export default function ReferralsTab({ client, user }: ReferralsTabProps) {
     }
 
     try {
-      const res = await authFetch(`/api/asaas/payments?customer=${client.asaasCustomerId}`);
+      const res = await authFetch(`/api/asaas_payments?customer=${client.asaasCustomerId}`);
       if (!res.ok) throw new Error('Failed to fetch payments');
       const data = await res.json();
       const pendingPayment = data.data.find((p: any) => p.status === 'PENDING' || p.status === 'OVERDUE');
@@ -33,14 +33,14 @@ export default function ReferralsTab({ client, user }: ReferralsTabProps) {
       const bonusToApply = Math.min(client.referralBalance || 0, pendingPayment.value);
       
       if (bonusToApply >= pendingPayment.value) {
-        const receiveRes = await authFetch('/api/asaas/receive-in-cash', {
+        const receiveRes = await authFetch('/api/asaas_payments?action=receive-in-cash', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ paymentId: pendingPayment.id })
         });
         if (!receiveRes.ok) throw new Error('Failed to mark as paid');
       } else {
-        const editRes = await authFetch('/api/asaas/edit-payment', {
+        const editRes = await authFetch('/api/asaas_payments?action=edit-payment', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 

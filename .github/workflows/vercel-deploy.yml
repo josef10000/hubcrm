@@ -7,6 +7,7 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
 jobs:
   deploy:
@@ -24,8 +25,7 @@ jobs:
         run: npm install --global vercel@latest
         
       - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment=production
         
       - name: Deploy to Vercel (Remote Build)
-        run: |
-          vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} --archive=tgz
+        run: vercel deploy --prod --archive=tgz
