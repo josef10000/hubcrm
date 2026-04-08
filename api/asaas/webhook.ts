@@ -29,35 +29,61 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
-    const { event, payment, subscription, customer } = body;
+    const { event, payment, subscription, customer: customerDataInBody } = body;
+    const eventID = body.id;
     
-    console.log(`[ASAAS WEBHOOK] Evento: ${event} | EventID: ${body.id}`);
+    console.log(`[ASAAS WEBHOOK] Evento: ${event} | EventID: ${eventID}`);
+
+    // --- IDEMPOTÊNCIA GLOBAL EXTERNA ---
+    // Evita processar o MESMO webhook (mesmo ID do Asaas) duas vezes.
+    if (eventID) {
+      const eventRef = db.collection('webhookEvents').doc(eventID);
+      const wasProcessed = await db.runTransaction(async (t) => {
+        const snap = await t.get(eventRef);
+        if (snap.exists) return true;
+        t.set(eventRef, { processedAt: new Date().toISOString(), event: event });
+        return false;
+      });
+      if (wasProcessed) {
+        console.log(`[DEBUG] Webhook ${eventID} já foi processado anteriormente. Abortando.`);
+        return res.status(200).json({ received: true, duplicate: true });
+      }
+    }
 
     const clientsRef = db.collectionGroup('clients');
 
     // Função auxiliar para buscar cliente com retry e fallback por e-mail
     async function findClient(asaasId: string, asaasEmail?: string, retries = 3) {
+      // Tenta primeiro pelo externalReference se disponível no payload
+      const externalRef = body.customer?.externalReference || body.externalReference;
+      
       for (let i = 0; i < retries; i++) {
-        console.log(`[DEBUG] Buscando cliente AsaasID: ${asaasId} | Email: ${asaasEmail} (Tentativa ${i+1}/${retries})`);
+        console.log(`[DEBUG] Buscando cliente AsaasID: ${asaasId} | Ref: ${externalRef} (Tentativa ${i+1}/${retries})`);
         
-        let snapshot = await clientsRef.where('asaasCustomerId', '==', asaasId).get();
+        // 1. Prioridade: ID Interno (externalReference)
+        if (externalRef) {
+          const snapRef = await clientsRef.where('id', '==', externalRef).limit(1).get();
+          if (!snapRef.empty) return snapRef;
+        }
+
+        // 2. Segunda: asaasCustomerId
+        let snapshot = await clientsRef.where('asaasCustomerId', '==', asaasId).limit(1).get();
         
+        // 3. Terceira: Email (Fallback) - SEMPRE LIMITANDO A 1 PARA EVITAR SPAM
         if (snapshot.empty && asaasEmail) {
           const variations = [
             asaasEmail.toLowerCase().trim(),
-            asaasEmail.trim(),
-            asaasEmail 
+            asaasEmail.trim()
           ];
           const uniqueVariations = [...new Set(variations)];
           for (const emailVar of uniqueVariations) {
-            snapshot = await clientsRef.where('email', '==', emailVar).get();
+            snapshot = await clientsRef.where('email', '==', emailVar).limit(1).get();
             if (!snapshot.empty) break; 
           }
         }
         
         if (!snapshot.empty) return snapshot;
 
-        // Se falhou e ainda tem tentativas, aguarda antes de tentar novamente (soluciona o delay do banco vs Asaas)
         if (i < retries - 1) {
           console.log(`[DEBUG] Cliente não encontrado. Aguardando 2.5s antes da próxima tentativa...`);
           await new Promise(resolve => setTimeout(resolve, 2500));
@@ -68,30 +94,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // --- EVENTO: CUSTOMER_CREATED (Boas-vindas Único) ---
     if (event === 'CUSTOMER_CREATED') {
-      const customerData = customer || body.customer;
+      const customerData = customerDataInBody || body.customer;
       if (customerData?.id) {
         const snapshot = await findClient(customerData.id, customerData.email);
         if (snapshot.empty) return res.status(200).json({ received: true });
 
-        for (const doc of snapshot.docs) {
-          const clientData = doc.data();
-          
-          // Transação Atômica para Boas-Vindas
-          const wasWelcomeSent = await db.runTransaction(async (t) => {
-            const freshSnap = await t.get(doc.ref as any);
-            const freshData = (freshSnap as any).data();
-            if (freshData && !freshData.welcomeEmailSent) {
-              t.update(doc.ref, { welcomeEmailSent: true, asaasCustomerId: customerData.id });
-              return true;
-            }
-            return false;
-          });
-
-          if (wasWelcomeSent) {
-            console.log(`[EMAIL] Enviando Boas-vindas para: ${clientData.email}`);
-            await sendBoasVindasEmail(clientData.email, clientData.name || 'Cliente')
-              .catch(err => console.error('Erro Boas-vindas:', err));
+        // Processa apenas o primeiro (limit(1) já garante isso, mas forçamos aqui)
+        const doc = snapshot.docs[0];
+        const clientData = doc.data();
+        
+        // Transação Atômica para Boas-Vindas (Idempotência Local)
+        const wasWelcomeSent = await db.runTransaction(async (t) => {
+          const freshSnap = await t.get(doc.ref as any);
+          const freshData = (freshSnap as any).data();
+          if (freshData && !freshData.welcomeEmailSent) {
+            t.update(doc.ref, { welcomeEmailSent: true, asaasCustomerId: customerData.id });
+            return true;
           }
+          return false;
+        });
+
+        if (wasWelcomeSent) {
+          console.log(`[EMAIL] Enviando Boas-vindas para: ${clientData.email}`);
+          await sendBoasVindasEmail(clientData.email, clientData.name || 'Cliente')
+            .catch(err => console.error('Erro Boas-vindas:', err));
         }
       }
     }
@@ -112,39 +138,54 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           updates.status = 'Inadimplente';
         }
 
-        for (const doc of snapshot.docs) {
-          if (Object.keys(updates).length > 0) await doc.ref.update(updates);
-          
-          const clientData = doc.data();
-          const pValue = paymentData.value || 0;
-          const pLink = paymentData.invoiceUrl || paymentData.bankSlipUrl || '';
-          const pDueDate = paymentData.dueDate ? paymentData.dueDate.split('-').reverse().join('/') : '';
-          const pDesc = paymentData.description || 'Fatura Hub Symples';
+        // Apenas o primeiro doc
+        const doc = snapshot.docs[0];
+        if (Object.keys(updates).length > 0) await doc.ref.update(updates);
+        
+        const clientData = doc.data();
+        const pValue = paymentData.value || 0;
+        const pLink = paymentData.invoiceUrl || paymentData.bankSlipUrl || '';
+        const pDueDate = paymentData.dueDate ? paymentData.dueDate.split('-').reverse().join('/') : '';
+        const pDesc = paymentData.description || 'Fatura Hub Symples';
 
-          // SAFETY NET: Boas-vindas via PAYMENT_CREATED caso o CUSTOMER_CREATED tenha falhado no timing
-          const wasWelcomeSent = await db.runTransaction(async (t) => {
+        // SAFETY NET: Boas-vindas via PAYMENT_CREATED caso o CUSTOMER_CREATED tenha falhado no timing
+        const wasWelcomeSent = await db.runTransaction(async (t) => {
+          const freshSnap = await t.get(doc.ref as any);
+          const freshData = (freshSnap as any).data();
+          if (freshData && !freshData.welcomeEmailSent) {
+            t.update(doc.ref, { welcomeEmailSent: true });
+            return true;
+          }
+          return false;
+        });
+
+        if (wasWelcomeSent) {
+          console.log(`[EMAIL] Fallback: Enviando Boas-vindas atrasado para: ${clientData.email}`);
+          await sendBoasVindasEmail(clientData.email, clientData.name || 'Cliente')
+            .catch(err => console.error('Erro Boas-vindas (Fallback):', err));
+        }
+
+        // 1. Nova Fatura (Criada ou Link de Pagamento)
+        if (event === 'PAYMENT_CREATED') {
+          console.log(`[DEBUG] Processando PAYMENT_CREATED para ${clientData.email}. Descrição: ${pDesc}`);
+          
+          const eventKey = `PAYMENT_CREATED_${paymentData.id}`;
+          const wasEventHandled = await db.runTransaction(async (t) => {
             const freshSnap = await t.get(doc.ref as any);
             const freshData = (freshSnap as any).data();
-            if (freshData && !freshData.welcomeEmailSent) {
-              t.update(doc.ref, { welcomeEmailSent: true });
+            const sentEvents = freshData.sentEvents || [];
+            if (!sentEvents.includes(eventKey)) {
+              t.update(doc.ref, { sentEvents: [...sentEvents, eventKey] });
               return true;
             }
             return false;
           });
 
-          if (wasWelcomeSent) {
-            console.log(`[EMAIL] Fallback: Enviando Boas-vindas atrasado para: ${clientData.email}`);
-            await sendBoasVindasEmail(clientData.email, clientData.name || 'Cliente')
-              .catch(err => console.error('Erro Boas-vindas (Fallback):', err));
-          }
-
-          // 1. Nova Fatura (Criada ou Link de Pagamento)
-          if (event === 'PAYMENT_CREATED') {
-            console.log(`[DEBUG] Processando PAYMENT_CREATED para ${clientData.email}. Descrição: ${pDesc}`);
-            
+          if (!wasEventHandled) {
+            console.log(`[DEBUG] Anti-Spam: Ignorando Fatura Emitida para ${paymentData.id} - E-mail já enviado anteriormente.`);
+          } else {
             // REGRA ANTI-DUPLICIDADE DE ASSINATURA + SETUP:
-            // Se a data de vencimento for maior que 15 dias, não enviamos o e-mail de "Nova Fatura".
-            // Isso impede que a mensalidade do mês que vem chegue junto com a adesão de hoje.
+            // Impede disparos simultâneos de setup + mensalidade se vierem juntos.
             const today = new Date();
             const dueDateObj = paymentData.dueDate ? new Date(paymentData.dueDate + 'T12:00:00Z') : new Date();
             const diffDays = Math.ceil((dueDateObj.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
@@ -168,9 +209,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                  .catch(e => console.error('Erro Fatura Emitida:', e));
             }
           }
+        }
 
-          // 2. Pagamento Confirmado
-          if (event === 'PAYMENT_RECEIVED' || event === 'PAYMENT_CONFIRMED') {
+        // 2. Pagamento Confirmado
+        if (event === 'PAYMENT_RECEIVED' || event === 'PAYMENT_CONFIRMED') {
+          const eventKey = `PAYMENT_RECEIVED_${paymentData.id}`;
+          const wasEventHandled = await db.runTransaction(async (t) => {
+            const freshSnap = await t.get(doc.ref as any);
+            const freshData = (freshSnap as any).data();
+            const sentEvents = freshData.sentEvents || [];
+            if (!sentEvents.includes(eventKey)) {
+              t.update(doc.ref, { sentEvents: [...sentEvents, eventKey] });
+              return true;
+            }
+            return false;
+          });
+
+          if (!wasEventHandled) {
+            console.log(`[DEBUG] Anti-Spam: Ignorando Pagamento Confirmado para ${paymentData.id} - E-mail já enviado anteriormente.`);
+          } else {
             const pDate = (paymentData.paymentDate || new Date().toISOString().split('T')[0]).split('-').reverse().join('/');
             await sendPagamentoRecebidoEmail(clientData.email, clientData.name || 'Cliente', pValue, pDate, pDesc)
               .catch(e => console.error('Erro Pagamento Recebido:', e));
@@ -186,12 +243,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const snapshot = await findClient(subData.customer);
         if (snapshot.empty) return res.status(200).json({ received: true });
 
+        const doc = snapshot.docs[0];
         const updates: any = {};
         if (event === 'SUBSCRIPTION_DELETED') updates.status = 'Cancelado';
         
-        for (const doc of snapshot.docs) {
-          if (Object.keys(updates).length > 0) await doc.ref.update(updates);
-        }
+        if (Object.keys(updates).length > 0) await doc.ref.update(updates);
       }
     }
 

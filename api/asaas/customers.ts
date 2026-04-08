@@ -12,7 +12,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { name, cpfCnpj, email, phone, mobilePhone } = req.body;
+    const { id, name, cpfCnpj, email, phone, mobilePhone } = req.body;
     
     if (!name || name.length < 3) {
       return res.status(400).json({ error: 'O nome deve ter pelo menos 3 caracteres' });
@@ -39,6 +39,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       name,
       cpfCnpj: cpfCnpj ? cpfCnpj.replace(/\D/g, '') : undefined,
       email,
+      externalReference: id,
+      observations: `UserID: ${uid}`
     };
     
     if (phone) payload.phone = phone;

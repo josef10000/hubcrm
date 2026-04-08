@@ -101,7 +101,7 @@ export function useClients(opts: UseClientsOptions) {
                   nextDueDate: nextDueDate,
                   invoiceUrl: latestPayment.invoiceUrl || client.invoiceUrl,
                 };
-                await setDoc(doc(db, 'users', userId, 'clients', client.id), updatedClient);
+                await setDoc(doc(db, 'users', userId, 'clients', client.id), updatedClient, { merge: true });
                 updatedCount++;
               }
             }
@@ -270,7 +270,14 @@ export function useClients(opts: UseClientsOptions) {
         const customerRes = await authFetch('/api/asaas/customers', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: client.name, cpfCnpj: client.cpfCnpj ? client.cpfCnpj.replace(/\D/g, '') : '', email: client.email, mobilePhone: isMobile ? phoneClean : undefined, phone: isLandline ? phoneClean : undefined }),
+          body: JSON.stringify({ 
+            id: client.id,
+            name: client.name, 
+            cpfCnpj: client.cpfCnpj ? client.cpfCnpj.replace(/\D/g, '') : '', 
+            email: client.email, 
+            mobilePhone: isMobile ? phoneClean : undefined, 
+            phone: isLandline ? phoneClean : undefined 
+          }),
         });
 
         if (customerRes.ok) {
@@ -280,7 +287,7 @@ export function useClients(opts: UseClientsOptions) {
           // PRÉ-SALVAMENTO: Salva no banco IMEDIATAMENTE após pegar o ID do Asaas.
           // Isso elimina o "Race Condition" porque o Webhook do Asaas não será mais rápido que o CRM.
           const cleanClientForPreSave = Object.fromEntries(Object.entries(client).filter(([_, v]) => v !== undefined));
-          await setDoc(doc(db, 'users', userId, 'clients', client.id), cleanClientForPreSave);
+          await setDoc(doc(db, 'users', userId, 'clients', client.id), cleanClientForPreSave, { merge: true });
 
           const today = new Date();
           const firstPaymentDate = client.firstPaymentDate || today.toISOString().split('T')[0];
@@ -417,7 +424,7 @@ export function useClients(opts: UseClientsOptions) {
       }
 
       const cleanClient = Object.fromEntries(Object.entries(client).filter(([_, v]) => v !== undefined));
-      await setDoc(doc(db, 'users', userId, 'clients', client.id), cleanClient);
+      await setDoc(doc(db, 'users', userId, 'clients', client.id), cleanClient, { merge: true });
       setIsModalOpen(false);
       setEditingClient(null);
     } catch (error: any) {
