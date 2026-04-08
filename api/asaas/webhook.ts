@@ -13,237 +13,143 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Validate Asaas Webhook Token (MANDATORY)
     const webhookToken = process.env.ASAAS_WEBHOOK_TOKEN;
     if (!webhookToken) {
-      console.error('CRITICAL: ASAAS_WEBHOOK_TOKEN environment variable is not configured — rejecting all webhooks');
-      return res.status(500).json({ error: 'Webhook not configured — missing ASAAS_WEBHOOK_TOKEN' });
+      console.error('CRITICAL: ASAAS_WEBHOOK_TOKEN not configured');
+      return res.status(500).json({ error: 'Webhook not configured' });
     }
+
     const cleanToken = (t: any) => String(t || '').replace(/["']/g, '').trim();
     const receivedToken = cleanToken(req.headers['asaas-access-token']);
     const expectedToken = cleanToken(webhookToken);
 
     if (receivedToken !== expectedToken) {
-      const expectedCharFirst = expectedToken[0] || '?';
-      const expectedCharLast = expectedToken[expectedToken.length - 1] || '?';
-      const receivedCharFirst = receivedToken[0] || '?';
-      const receivedCharLast = receivedToken[receivedToken.length - 1] || '?';
-      
-      console.error(`Token Mismatch! 
-        Expected (Vercel): ${expectedCharFirst}...${expectedCharLast} (Length: ${expectedToken.length})
-        Received (Asaas): ${receivedCharFirst}...${receivedCharLast} (Length: ${receivedToken.length})`);
-        
+      console.error(`Token Mismatch!`);
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    // Ensure body is parsed
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
     const { event, payment, subscription, customer } = body;
     
-    console.log("Asaas Webhook Received:", event, payment?.id || subscription?.id || customer?.id);
-    
+    console.log(`[ASAAS WEBHOOK] Evento: ${event} | EventID: ${body.id}`);
+
     const clientsRef = db.collectionGroup('clients');
 
-    // --- EVENTOS DE CLIENTE (CUSTOMER) ---
-    // --- EVENTOS DE CLIENTE (CUSTOMER) ---
-    if (event === 'CUSTOMER_CREATED') {
-      const customerData = customer || body.customer;
-      if (!customerData || !customerData.id) {
-        return res.status(200).json({ received: true, ignored: true, reason: 'No customer data' });
-      }
-
-      const asaasId = customerData.id;
-      const asaasEmail = customerData.email;
-
-      console.log(`Webhook: Processando CUSTOMER_CREATED para ${asaasEmail} (${asaasId})`);
-
+    // Função auxiliar para buscar cliente com fallback por e-mail
+    async function findClient(asaasId: string, asaasEmail?: string) {
+      console.log(`[DEBUG] Buscando cliente AsaasID: ${asaasId} | Email: ${asaasEmail}`);
+      
       // 1. Tenta por ID
       let snapshot = await clientsRef.where('asaasCustomerId', '==', asaasId).get();
       
-      // 2. Fallback por E-mail (evita race condition do frontend)
+      // 2. Fallback por E-mail (Normalizado)
       if (snapshot.empty && asaasEmail) {
-        console.log(`ID ${asaasId} não encontrado. Tentando fallback por e-mail: ${asaasEmail}`);
-        snapshot = await clientsRef.where('email', '==', asaasEmail).get();
+        const emailLower = asaasEmail.toLowerCase().trim();
+        snapshot = await clientsRef.where('email', '==', emailLower).get();
+        if (snapshot.empty) {
+          snapshot = await clientsRef.where('email', '==', asaasEmail.trim()).get();
+        }
       }
+      return snapshot;
+    }
 
-      if (snapshot.empty) {
-        console.log('Client not found for Asaas customer by ID or Email:', asaasId, asaasEmail);
-        return res.status(200).json({ received: true, notFound: true });
-      }
+    // --- EVENTO: CUSTOMER_CREATED ---
+    if (event === 'CUSTOMER_CREATED') {
+      const customerData = customer || body.customer;
+      if (customerData?.id) {
+        const snapshot = await findClient(customerData.id, customerData.email);
+        
+        if (snapshot.empty) {
+          console.warn(`[WF] Cliente não encontrado para CUSTOMER_CREATED: ${customerData.email}`);
+          return res.status(200).json({ received: true, notFound: true });
+        }
 
-      for (const doc of snapshot.docs) {
-        const clientData = doc.data();
-        const clientEmail = clientData.email;
-        const clientName = clientData.name || clientData.razaoSocial || 'Cliente';
-
-        // 3. Verifica se já enviamos para este documento específico
-        if (clientEmail && !clientData.welcomeEmailSent) {
-          console.log(`Enviando Boas-vindas para ${clientEmail}`);
-          await sendBoasVindasEmail(clientEmail, clientName)
-            .then(() => {
-              // Marca como enviado e já garante o ID do Asaas no banco
-              doc.ref.update({ 
-                welcomeEmailSent: true,
-                asaasCustomerId: asaasId 
-              });
-            })
-            .catch((err) => console.error('Erro ao enviar Boas-vindas:', err));
-        } else {
-          console.log(`E-mail de boas-vindas já enviado ou flag ativa para ${clientEmail}`);
+        for (const doc of snapshot.docs) {
+          const clientData = doc.data();
+          if (!clientData.welcomeEmailSent) {
+            console.log(`[EMAIL] Disparando Boas-vindas para: ${clientData.email}`);
+            await sendBoasVindasEmail(clientData.email, clientData.name || 'Cliente')
+              .then(() => doc.ref.update({ welcomeEmailSent: true, asaasCustomerId: customerData.id }))
+              .catch(err => console.error('Erro Boas-vindas:', err));
+          }
         }
       }
     }
 
-    // --- EVENTOS DE COBRANÇA (PAYMENT) ---
+    // --- EVENTOS: PAYMENT_ (Cobrancas) ---
     if (event && event.startsWith('PAYMENT_')) {
       const paymentData = payment || body.payment;
-      if (!paymentData || !paymentData.customer) {
-        return res.status(200).json({ received: true, ignored: true, reason: 'No payment or customer data' });
-      }
+      if (paymentData?.customer) {
+        // Buscamos o cliente (ID ou Email se disponível nos dados do pagamento do Asaas nem sempre vem o email, mas podemos tentar)
+        const snapshot = await findClient(paymentData.customer);
 
-      const snapshot = await clientsRef.where('asaasCustomerId', '==', paymentData.customer).get();
-
-      if (snapshot.empty) {
-        console.log('Client not found for Asaas customer:', paymentData.customer);
-        return res.status(200).json({ received: true, notFound: true });
-      }
-
-      const updates: any = {};
-      if (event === 'PAYMENT_RECEIVED' || event === 'PAYMENT_CONFIRMED') {
-        updates.paymentStatus = 'RECEIVED';
-        // REGRA: Só fica Ativo quando o Asaas confirma qualquer pagamento (Adesão ou Mensalidade)
-        updates.status = 'Ativo';
-        console.log(`Webhook: Identificado pagamento confirmado. Movendo cliente para Ativo.`);
-      } else if (event === 'PAYMENT_OVERDUE') {
-        updates.paymentStatus = 'OVERDUE';
-        updates.status = 'Inadimplente';
-      } else if (event === 'PAYMENT_DELETED' || event === 'PAYMENT_REFUNDED') {
-        updates.paymentStatus = 'PENDING';
-      }
-
-      const batch = db.batch();
-      snapshot.docs.forEach(doc => {
-        if (Object.keys(updates).length > 0) {
-          batch.update(doc.ref, updates);
+        if (snapshot.empty) {
+          console.error(`[FALHA] Pagamento ignorado. Cliente ${paymentData.customer} não existe no Firestore.`);
+          return res.status(200).json({ received: true, notFound: true });
         }
-        
-        const clientData = doc.data();
-        const clientEmail = clientData.email;
-        const clientName = clientData.name || clientData.razaoSocial || 'Cliente';
-        const paymentValue = paymentData.value || 0;
-        const dueDate = paymentData.dueDate ? paymentData.dueDate.split('-').reverse().join('/') : '';
-        const paymentLink = paymentData.invoiceUrl || paymentData.bankSlipUrl || '';
-        const description = paymentData.description || 'Fatura Hub Symples';
 
-        // 1. Pagamento Confirmado
+        const updates: any = {};
         if (event === 'PAYMENT_RECEIVED' || event === 'PAYMENT_CONFIRMED') {
-          const paymentDateStr = paymentData.paymentDate || new Date().toISOString().split('T')[0];
-          const dataFormatoBR = paymentDateStr.split('-').reverse().join('/');
-          if (clientEmail) {
-            sendPagamentoRecebidoEmail(clientEmail, clientName, paymentValue, dataFormatoBR, description)
-              .catch((err) => console.error('Erro (Pagamento Recebido):', err));
-          }
+          updates.paymentStatus = 'RECEIVED';
+          updates.status = 'Ativo';
+        } else if (event === 'PAYMENT_OVERDUE') {
+          updates.paymentStatus = 'OVERDUE';
+          updates.status = 'Inadimplente';
         }
 
-        // 2. Nova Fatura Emitida
-        if (event === 'PAYMENT_CREATED') {
-          if (clientEmail) {
-            // Lógica para definir o assunto baseado na descrição/tipo
-            let customSubject = 'Nova Fatura Emitida - Hub Symples';
-            const lowerDesc = description.toLowerCase();
-            
-            if (lowerDesc.includes('adesão') || lowerDesc.includes('setup') || lowerDesc.includes('entrada')) {
-              customSubject = 'Sua Fatura de Adesão - Hub Symples';
-            } else if (paymentData.subscription) {
-              customSubject = 'Sua Fatura de Mensalidade - Hub Symples';
-            } else {
-              customSubject = 'Sua Fatura - Hub Symples';
+        for (const doc of snapshot.docs) {
+          if (Object.keys(updates).length > 0) await doc.ref.update(updates);
+          
+          const clientData = doc.data();
+          const pValue = paymentData.value || 0;
+          const pLink = paymentData.invoiceUrl || paymentData.bankSlipUrl || '';
+          const pDueDate = paymentData.dueDate ? paymentData.dueDate.split('-').reverse().join('/') : '';
+          const pDesc = paymentData.description || 'Fatura Hub Symples';
+
+          // Envio de E-mails de Pagamento
+          if (event === 'PAYMENT_CREATED') {
+            // Se ainda não recebeu Boas-vindas, envia agora (fallback)
+            if (!clientData.welcomeEmailSent) {
+               console.log(`[EMAIL] Boas-vindas atrasado via PAYMENT_CREATED para ${clientData.email}`);
+               sendBoasVindasEmail(clientData.email, clientData.name || 'Cliente')
+                .then(() => doc.ref.update({ welcomeEmailSent: true }))
+                .catch(e => console.error(e));
             }
 
-            sendFaturaEmitidaEmail(
-              clientEmail, 
-              clientName, 
-              paymentValue, 
-              dueDate, 
-              paymentLink, 
-              description,
-              customSubject
-            ).catch((err) => console.error('Erro (Fatura Emitida):', err));
+            let subject = pDesc.toLowerCase().includes('adesão') ? 'Sua Fatura de Adesão - Hub Symples' : 'Sua Fatura - Hub Symples';
+            await sendFaturaEmitidaEmail(clientData.email, clientData.name || 'Cliente', pValue, pDueDate, pLink, pDesc, subject)
+              .catch(e => console.error('Erro Fatura:', e));
+          }
 
-            // FALLBACK FINAL: Se por acaso o webhhok de CUSTOMER_CREATED não enviou o Boas-vindas, enviamos agora.
-            if (clientEmail && !clientData.welcomeEmailSent) {
-              console.log(`Fallback: Enviando Boas-vindas via PAYMENT_CREATED para ${clientEmail}`);
-              sendBoasVindasEmail(clientEmail, clientName)
-                .then(() => {
-                   doc.ref.update({ welcomeEmailSent: true });
-                })
-                .catch((err) => console.error('Erro (Boas-vindas Fallback):', err));
-            }
+          if (event === 'PAYMENT_RECEIVED' || event === 'PAYMENT_CONFIRMED') {
+            const pDate = (paymentData.paymentDate || new Date().toISOString().split('T')[0]).split('-').reverse().join('/');
+            await sendPagamentoRecebidoEmail(clientData.email, clientData.name || 'Cliente', pValue, pDate, pDesc)
+              .catch(e => console.error('Erro Recebido:', e));
           }
         }
-
-        // 3. Aviso de Vencimento (Falta 1 dia ou configurado no Asaas)
-        if (event === 'PAYMENT_DUEDATE_WARNING') {
-          if (clientEmail) {
-            sendFaturaVencimentoEmail(clientEmail, clientName, paymentValue, dueDate, paymentLink, description)
-              .catch((err) => console.error('Erro (Aviso Vencimento):', err));
-          }
-        }
-      });
-      
-      if (Object.keys(updates).length > 0) {
-        await batch.commit();
-        console.log(`Updated ${snapshot.size} clients with status ${updates.paymentStatus}`);
       }
-    } 
-    
-    // --- EVENTOS DE ASSINATURA (SUBSCRIPTION) ---
-    else if (event && event.startsWith('SUBSCRIPTION_')) {
+    }
+
+    // --- EVENTOS: SUBSCRIPTION_ (Assinaturas) ---
+    if (event && event.startsWith('SUBSCRIPTION_')) {
       const subData = subscription || body.subscription;
-      if (!subData || !subData.customer) {
-        return res.status(200).json({ received: true, ignored: true, reason: 'No subscription or customer data' });
-      }
+      if (subData?.customer) {
+        const snapshot = await findClient(subData.customer);
+        if (snapshot.empty) return res.status(200).json({ received: true });
 
-      const snapshot = await clientsRef.where('asaasCustomerId', '==', subData.customer).get();
-
-      if (snapshot.empty) {
-        console.log(`Webhook: Cliente NÃO encontrado para Assinatura do cliente Asaas: ${subData.customer}`);
-        return res.status(200).json({ received: true, notFound: true });
-      }
-
-      const status = subData.status ?? null;
-      const deleted = Boolean(subData.deleted);
-      const updates: any = {};
-
-      if (event === 'SUBSCRIPTION_DELETED' || deleted) {
-        updates.status = 'Cancelado';
-        updates.paymentStatus = 'N/A';
-      } else if (event === 'SUBSCRIPTION_INACTIVATED' || status === 'INACTIVE') {
-        updates.status = 'Inadimplente';
-        updates.paymentStatus = 'OVERDUE';
-      }
-      // A mudança para Ativo foi removida daqui e movida para o evento de pagamento (PAYMENT_RECEIVED)
-
-      const batch = db.batch();
-      snapshot.docs.forEach(doc => {
-        if (Object.keys(updates).length > 0) {
-          batch.update(doc.ref, updates);
+        const updates: any = {};
+        if (event === 'SUBSCRIPTION_DELETED') updates.status = 'Cancelado';
+        
+        for (const doc of snapshot.docs) {
+          if (Object.keys(updates).length > 0) await doc.ref.update(updates);
         }
-
-        // Removido disparo de boas-vindas daqui pois agora é feito no CUSTOMER_CREATED
-      });
-
-      if (Object.keys(updates).length > 0) {
-        await batch.commit();
-        console.log(`Updated ${snapshot.size} clients with subscription updates`);
       }
     }
 
     return res.status(200).json({ received: true });
 
   } catch (error: any) {
-    console.error('Webhook Error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    console.error('CRITICAL Webhook Error:', error);
+    return res.status(500).json({ error: 'Internal error' });
   }
 }
-
