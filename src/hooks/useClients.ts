@@ -150,7 +150,7 @@ export function useClients(opts: UseClientsOptions) {
       stages: clientData.stages || (isNew ? defaultStages.map((s) => ({ ...s, completed: false, approvedAt: null })) : undefined),
       createdAt: clientData.createdAt || Date.now(),
       cpfCnpj: clientData.cpfCnpj,
-      email: clientData.email,
+      email: clientData.email ? clientData.email.toLowerCase().trim() : undefined,
       cep: clientData.cep,
       endereco: clientData.endereco,
       bairro: clientData.bairro,

@@ -42,12 +42,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // 1. Tenta por ID
       let snapshot = await clientsRef.where('asaasCustomerId', '==', asaasId).get();
       
-      // 2. Fallback por E-mail (Normalizado)
+      // 2. Fallback por E-mail (Múltiplas variações para evitar erro de Case-Sensitive)
       if (snapshot.empty && asaasEmail) {
-        const emailLower = asaasEmail.toLowerCase().trim();
-        snapshot = await clientsRef.where('email', '==', emailLower).get();
-        if (snapshot.empty) {
-          snapshot = await clientsRef.where('email', '==', asaasEmail.trim()).get();
+        const variations = [
+          asaasEmail.toLowerCase().trim(),
+          asaasEmail.trim(),
+          asaasEmail // Original
+        ];
+        
+        // Remove duplicatas
+        const uniqueVariations = [...new Set(variations)];
+
+        for (const emailVar of uniqueVariations) {
+          console.log(`[DEBUG] Tentando busca por variação de e-mail: ${emailVar}`);
+          snapshot = await clientsRef.where('email', '==', emailVar).get();
+          if (!snapshot.empty) {
+            console.log(`[SUCESSO] Cliente encontrado usando variação: ${emailVar}`);
+            break; 
+          }
         }
       }
       return snapshot;
