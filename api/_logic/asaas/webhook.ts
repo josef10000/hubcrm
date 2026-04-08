@@ -1,12 +1,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { db } from '../_utils/firebase.js';
+import { db } from '../../../_utils/firebase';
 import { 
   sendPagamentoRecebidoEmail, 
   sendBoasVindasEmail, 
   sendFaturaEmitidaEmail, 
   sendFaturaVencimentoEmail 
-} from '../../src/services/emailService.js';
-import { logEmailHistory } from '../_utils/emailLogger.js';
+} from '../../../src/services/emailService';
+import { logEmailHistory } from '../../../_utils/emailLogger';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {

@@ -1,9 +1,9 @@
-import { Request, Response } from 'express';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-export default async function handler(req: Request, res: Response) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Puxa a chave diretamente das variáveis de ambiente (Vercel, AI Studio, etc)
   const apiKey = process.env.UPTIMEROBOT_API_KEY;
   console.log('API Key loaded:', apiKey ? 'Yes' : 'No');
