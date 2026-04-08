@@ -1,4 +1,4 @@
-import { db } from './firebase';
+import { db } from './firebase.js';
 import * as adminNamespace from 'firebase-admin';
 
 // Handle common interop issues with firebase-admin in ESM/Vercel

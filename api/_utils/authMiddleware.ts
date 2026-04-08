@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getFirebaseAdmin } from './firebase';
+import { getFirebaseAdmin } from './firebase.js';
 
 // ── Rate Limiting (in-memory, per-IP) ────────────────────────────────────────
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();

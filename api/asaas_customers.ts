@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import customersHandler from './_logic/asaas/customers';
-import updateCustomerHandler from './_logic/asaas/update-customer';
+import customersHandler from './_logic/asaas/customers.js';
+import updateCustomerHandler from './_logic/asaas/update-customer.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
