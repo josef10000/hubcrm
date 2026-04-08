@@ -111,7 +111,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             // Se ainda não recebeu Boas-vindas, envia agora (fallback)
             if (!clientData.welcomeEmailSent) {
                console.log(`[EMAIL] Boas-vindas atrasado via PAYMENT_CREATED para ${clientData.email}`);
-               sendBoasVindasEmail(clientData.email, clientData.name || 'Cliente')
+               await sendBoasVindasEmail(clientData.email, clientData.name || 'Cliente')
                 .then(() => doc.ref.update({ welcomeEmailSent: true }))
                 .catch(e => console.error(e));
             }
