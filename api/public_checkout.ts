@@ -71,6 +71,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 4. Create Charge in Asaas
     let checkoutUrl = '';
+    let currentPaymentId = '';
     
     // Yearly Subscription becomes a Single Payment as requested
     if (offer.type === 'SUBSCRIPTION' && !isYearly) {
@@ -87,6 +88,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const payments = await asaasRequest(`/subscriptions/${subscription.id}/payments`, "GET");
       if (payments.data && payments.data.length > 0) {
         checkoutUrl = payments.data[0].invoiceUrl;
+        currentPaymentId = payments.data[0].id;
       } else {
         checkoutUrl = subscription.paymentLink || '';
       }
@@ -101,6 +103,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         observations: isYearly ? `Pagamento Único Anual com 15% de desconto. CRM User: ${userId}` : `Checkout Público`
       });
       checkoutUrl = payment.invoiceUrl;
+      currentPaymentId = payment.id;
     }
 
     // 5. Register Lead in CRM
@@ -112,7 +115,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       name: clientData.name,
       email: clientData.email,
       whatsapp: clientData.whatsapp,
-      asaasId: asaasCustomer.id,
+      asaasCustomerId: asaasCustomer.id,
       status: 'Pendente',
       plan: offer.name + (isYearly ? ' (Anual)' : ''),
       offerId: clientData.offerId,
@@ -140,9 +143,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         `Sua fatura está pronta - ${offer.name}`
       );
       console.log(`[PublicCheckout] Automation: Welcome/Invoice email sent to ${clientData.email}`);
+      
+      // Marcar evento como enviado para o webhook não duplicar
+      if (currentPaymentId) {
+        const eventKey = `PAYMENT_CREATED_${currentPaymentId}`;
+        await clientRef.update({
+          sentEvents: [eventKey],
+          welcomeEmailSent: true // Também marcamos boas-vindas como enviado
+        });
+      }
     } catch (emailErr) {
       console.error('[PublicCheckout] Email Automation Error:', emailErr);
-      // Don't fail the whole request if email fails, as client and charge are already created
     }
 
     return res.status(200).json({ checkoutUrl });
