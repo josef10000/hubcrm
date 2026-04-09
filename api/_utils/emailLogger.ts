@@ -5,7 +5,7 @@ import * as adminNamespace from 'firebase-admin';
 const admin = (adminNamespace as any).default || adminNamespace;
 
 export interface EmailLogData {
-  type: 'WELCOME' | 'INVOICE' | 'OVERDUE' | 'RECEIPT';
+  type: 'WELCOME' | 'INVOICE' | 'OVERDUE' | 'RECEIPT' | 'WELCOME_SUBSCRIPTION' | 'WELCOME_LINK';
   status: 'sent' | 'failed';
   sentAt: number;
   recipient: string;
