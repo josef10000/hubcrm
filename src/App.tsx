@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { 
+import {
   LayoutDashboard, Users, Plus, X, DollarSign,
   Search, BarChart3, Calendar, MessageCircle, Globe,
   Download, AlertTriangle, Settings,
@@ -137,14 +137,14 @@ function CRMInner() {
           </div>
           <div className="flex items-center gap-3">
             {currentPath === '/' && (
-              <button 
+              <button
                 onClick={() => {
-                   // This now requires access to the export method inside Dashboard or passing clients here.. Wait, Dashboard export is better placed inside Dashboard itself!
-                   // For now, I'll let Dashboard button handle exporting or pass it to CRM hook but export needs filtered clients.
-                   // we can keep handleExportCSV in Dashboard or here, but it requires data.
-                   // Actually, I can pass clients directly or let Dashboard render this header part.
-                   // For now, I'll pass clients directly. Wait, handleExportCSV takes `dataToExport`. I will fix this later when splitting Dashboard.
-                }} 
+                  // This now requires access to the export method inside Dashboard or passing clients here.. Wait, Dashboard export is better placed inside Dashboard itself!
+                  // For now, I'll let Dashboard button handle exporting or pass it to CRM hook but export needs filtered clients.
+                  // we can keep handleExportCSV in Dashboard or here, but it requires data.
+                  // Actually, I can pass clients directly or let Dashboard render this header part.
+                  // For now, I'll pass clients directly. Wait, handleExportCSV takes `dataToExport`. I will fix this later when splitting Dashboard.
+                }}
                 className="hidden sm:flex items-center space-x-2 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white px-4 py-3 rounded-2xl transition-all font-medium shrink-0" title="Exportar para CSV">
                 <Download size={18} />
                 <span>Exportar</span>
@@ -195,12 +195,12 @@ function CRMInner() {
         )}
       </main>
 
-      <ClientModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onSave={handleSaveClient} 
-        onDelete={handleDeleteClient} 
-        initialData={editingClient} 
+      <ClientModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSaveClient}
+        onDelete={handleDeleteClient}
+        initialData={editingClient}
         onboardingQuestions={onboardingQuestions}
         user={user!}
         offers={offers}
@@ -228,7 +228,7 @@ function CRMInner() {
 
 function PrivateApp() {
   const { user, loading, errorMsg } = useAuth();
-  
+
   if (loading) {
     return <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] flex flex-col items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mb-4"></div><p className="text-gray-500 dark:text-gray-400 text-sm">Carregando autenticação...</p></div>;
   }

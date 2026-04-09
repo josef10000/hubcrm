@@ -137,11 +137,11 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     setErrorMsg(null);
     let timeoutId: NodeJS.Timeout;
-    let unsubscribeClients: () => void = () => {};
-    let unsubscribeLeads: () => void = () => {};
-    let unsubscribeRequests: () => void = () => {};
-    let unsubscribeOffers: () => void = () => {};
-    let unsubServices: () => void = () => {};
+    let unsubscribeClients: () => void = () => { };
+    let unsubscribeLeads: () => void = () => { };
+    let unsubscribeRequests: () => void = () => { };
+    let unsubscribeOffers: () => void = () => { };
+    let unsubServices: () => void = () => { };
 
     try {
       const offersRef = collection(db, 'users', user.uid, 'offers');
@@ -232,24 +232,24 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     expenses: finance?.expenses || [], transactions: finance?.transactions || [],
     transactionCategories: finance?.transactionCategories || [], budgets: finance?.budgets || [], services,
     loading, errorMsg, isSyncing: clientActions.isSyncing,
-    
+
     editingClient, setEditingClient,
-    
+
     isOfferModalOpen: offerActions.isOfferModalOpen, setIsOfferModalOpen: offerActions.setIsOfferModalOpen,
     editingOffer: offerActions.editingOffer, setEditingOffer: offerActions.setEditingOffer,
     isDeleteOfferConfirmOpen: offerActions.isDeleteOfferConfirmOpen, setIsDeleteOfferConfirmOpen: offerActions.setIsDeleteOfferConfirmOpen,
     offerToDelete: offerActions.offerToDelete, setOfferToDelete: offerActions.setOfferToDelete,
-    
-    churnRiskDays: settings?.churnRiskDays || 7, setChurnRiskDays: settings?.setChurnRiskDays || (() => {}),
-    defaultStages: settings?.defaultStages || [], setDefaultStages: settings?.setDefaultStages || (() => {}),
-    onboardingQuestions: settings?.onboardingQuestions || [], setOnboardingQuestions: settings?.setOnboardingQuestions || (() => {}),
-    defaultContractText: settings?.defaultContractText || '', setDefaultContractText: settings?.setDefaultContractText || (() => {}),
-    
+
+    churnRiskDays: settings?.churnRiskDays || 7, setChurnRiskDays: settings?.setChurnRiskDays || (() => { }),
+    defaultStages: settings?.defaultStages || [], setDefaultStages: settings?.setDefaultStages || (() => { }),
+    onboardingQuestions: settings?.onboardingQuestions || [], setOnboardingQuestions: settings?.setOnboardingQuestions || (() => { }),
+    defaultContractText: settings?.defaultContractText || '', setDefaultContractText: settings?.setDefaultContractText || (() => { }),
+
     replyingTo, setReplyingTo, replyMessage, setReplyMessage,
-    newExpense: finance?.newExpense || {}, setNewExpense: finance?.setNewExpense || (() => {}),
-    globalAnnouncement: settings?.globalAnnouncement || { title: '', message: '', type: 'info', isActive: false }, 
-    setGlobalAnnouncement: settings?.setGlobalAnnouncement || (() => {}),
-    
+    newExpense: finance?.newExpense || {}, setNewExpense: finance?.setNewExpense || (() => { }),
+    globalAnnouncement: settings?.globalAnnouncement || { title: '', message: '', type: 'info', isActive: false },
+    setGlobalAnnouncement: settings?.setGlobalAnnouncement || (() => { }),
+
     handleSaveClient: clientActions.handleSaveClient, handleDeleteClient: clientActions.handleDeleteClient,
     handleSaveOffer: offerActions.handleSaveOffer, handleDeleteOffer: offerActions.handleDeleteOffer,
     restoreDefaultOffers: offerActions.restoreDefaultOffers,

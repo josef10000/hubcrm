@@ -10,12 +10,12 @@ import { OnboardingQuestion } from '../types';
 
 export default function SettingsView() {
   const { themeColor, setThemeColor } = useUI();
-  const { 
-    churnRiskDays, 
-    setChurnRiskDays, 
-    defaultStages, 
-    setDefaultStages, 
-    onboardingQuestions, 
+  const {
+    churnRiskDays,
+    setChurnRiskDays,
+    defaultStages,
+    setDefaultStages,
+    onboardingQuestions,
     setOnboardingQuestions,
     defaultContractText,
     setDefaultContractText
@@ -33,13 +33,13 @@ export default function SettingsView() {
     <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10">
       <div className="max-w-3xl mx-auto">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">Configurações</h2>
-        
+
         <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-lg mb-8">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
             <Settings className="mr-2 text-primary-500" size={20} />
             Aparência
           </h3>
-          
+
           <div className="space-y-8">
             <div className="flex items-center justify-between">
               <div>
@@ -47,9 +47,9 @@ export default function SettingsView() {
                 <p className="text-sm text-gray-500 dark:text-gray-400">Dias de atraso na fatura para alertar risco</p>
               </div>
               <div className="flex items-center gap-2">
-                <input 
-                  type="number" 
-                  min="1" 
+                <input
+                  type="number"
+                  min="1"
                   max="90"
                   value={churnRiskDays}
                   onChange={(e) => setChurnRiskDays(parseInt(e.target.value) || 15)}
@@ -85,7 +85,7 @@ export default function SettingsView() {
             <CheckCircle className="mr-2 text-primary-500" size={20} />
             Etapas do Projeto
           </h3>
-          
+
           <div className="space-y-4">
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Defina as etapas padrão que aparecerão para novos clientes.</p>
             {defaultStages.map((stage, index) => (
@@ -149,7 +149,7 @@ export default function SettingsView() {
             <FileText className="mr-2 text-primary-500" size={20} />
             Formulário de Onboarding
           </h3>
-          
+
           <div className="space-y-4">
             {onboardingQuestions.map((question, index) => (
               <div key={question.id} className="flex flex-col gap-3 p-4 bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl">
@@ -181,7 +181,7 @@ export default function SettingsView() {
                         <option value="select" className="bg-zinc-900">Múltipla Escolha</option>
                         <option value="file" className="bg-zinc-900">Anexo de Arquivo (Logo/Imagens)</option>
                       </select>
-                      
+
                       <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
                         <input
                           type="checkbox"
@@ -196,7 +196,7 @@ export default function SettingsView() {
                         Obrigatório
                       </label>
                     </div>
-                    
+
                     {question.type === 'select' && (
                       <input
                         type="text"
@@ -223,7 +223,7 @@ export default function SettingsView() {
                 </div>
               </div>
             ))}
-            
+
             <div className="flex gap-3 mt-4">
               <button
                 onClick={() => {
