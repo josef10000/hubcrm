@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '../lib/firebase';
-import { CheckCircle, Globe, Building2, Mail, Phone, User as UserIcon, FileText, Check, ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
+import { db, storage } from '../lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { CheckCircle, Globe, Building2, Mail, Phone, User as UserIcon, FileText, Check, ArrowRight, ArrowLeft, Loader2, Upload } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
 import { Offer } from '../types';
 
@@ -25,6 +26,24 @@ export default function PublicCheckoutPage() {
   });
   
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [uploadingFile, setUploadingFile] = useState<string | null>(null);
+
+  const handleFileUpload = async (questionId: string, file: File) => {
+    if (!userId) return;
+    setUploadingFile(questionId);
+    try {
+      const storageRef = ref(storage, `users/${userId}/checkouts/${Date.now()}_${file.name}`);
+      const snapshot = await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      setAnswers(prev => ({ ...prev, [questionId]: downloadURL }));
+      toast.success('Arquivo enviado com sucesso!');
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error('Erro ao enviar arquivo.');
+    } finally {
+      setUploadingFile(null);
+    }
+  };
 
   useEffect(() => {
     // Force dark mode
@@ -250,6 +269,51 @@ export default function PublicCheckoutPage() {
                         <option value="">Selecione...</option>
                         {q.options?.split(',').map((opt: string) => <option key={opt} value={opt.trim()}>{opt.trim()}</option>)}
                       </select>
+                    ) : q.type === 'file' ? (
+                      <div className="flex flex-col gap-2">
+                        {answers[q.id] ? (
+                          <div className="flex items-center gap-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                            <CheckCircle className="text-emerald-500 w-5 h-5 flex-shrink-0" />
+                            <span className="text-emerald-400 text-sm truncate flex-1">Arquivo subido com sucesso</span>
+                            <button 
+                              onClick={() => setAnswers({...answers, [q.id]: ''})}
+                              className="text-gray-400 hover:text-white transition-colors"
+                            >
+                              Remover
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="relative group">
+                            <input
+                              type="file"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleFileUpload(q.id, file);
+                              }}
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                              disabled={uploadingFile === q.id}
+                            />
+                            <div className={`w-full px-4 py-6 border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center gap-3 transition-all ${uploadingFile === q.id ? 'bg-orange-500/5 border-orange-500/50' : 'bg-black/40 group-hover:border-white/20'}`}>
+                              {uploadingFile === q.id ? (
+                                <>
+                                  <Loader2 className="animate-spin text-orange-500" size={24} />
+                                  <span className="text-sm text-gray-400">Subindo arquivo...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <div className="p-3 bg-white/5 rounded-full group-hover:bg-white/10 transition-colors">
+                                    <Upload className="text-gray-400 group-hover:text-white" size={24} />
+                                  </div>
+                                  <div className="text-center">
+                                    <span className="text-sm text-white font-medium">Clique para escolher o arquivo</span>
+                                    <p className="text-xs text-gray-500 mt-1">Imagens (.jpg, .png) ou PDF</p>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     ) : (
                       <input
                         type="text"

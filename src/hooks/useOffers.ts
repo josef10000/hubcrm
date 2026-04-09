@@ -27,6 +27,8 @@ export function useOffers(userId: string, offers: Offer[], setOffers: React.Disp
         type: offerData.type || 'SUBSCRIPTION',
         price: offerData.price,
         active: offerData.active !== undefined ? offerData.active : true,
+        displayContext: offerData.displayContext || 'PORTAL',
+        order: offerData.order !== undefined ? offerData.order : 0,
         createdAt: isNew ? Date.now() : offerData.createdAt || Date.now(),
       };
       if (offerData.setupPrice !== undefined) offerToSave.setupPrice = offerData.setupPrice;
