@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { db } from '../../_utils/firebase.js';
 import { 
   sendPagamentoRecebidoEmail, 
-  sendBoasVindasEmail, 
+  sendBoasVindasSubscriptionEmail, 
   sendFaturaEmitidaEmail, 
   sendFaturaVencimentoEmail 
 } from '../../../src/services/emailService.js';
@@ -104,46 +104,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const doc = snapshot.docs[0];
         const clientData = doc.data();
         
-        // Transação Atômica para Boas-Vindas (Idempotência Local)
-        const wasWelcomeSent = await db.runTransaction(async (t) => {
+        // Transação Atômica para apenas registrar o AsaasID (Boas-Vindas agora é no pagamento)
+        await db.runTransaction(async (t) => {
           const freshSnap = await t.get(doc.ref as any);
           const freshData = (freshSnap as any).data();
-          if (freshData && !freshData.welcomeEmailSent) {
-            // Verifica tipo de oferta para pular boas-vindas automáticas
-            if (freshData.offerId) {
-              const userId = doc.ref.parent.parent?.id;
-              if (userId) {
-                const offerSnap = await t.get(db.collection('users').doc(userId).collection('offers').doc(freshData.offerId));
-                const offerData = (offerSnap as any).data();
-                if (offerData?.type === 'SINGLE') {
-                  console.log(`[DEBUG] Pulando e-mail de boas-vindas automático (Oferta SINGLE).`);
-                  t.update(doc.ref, { welcomeEmailSent: true, asaasCustomerId: customerData.id }); // Marca como enviado para não tentar de novo
-                  return false;
-                }
-              }
-            }
-            
-            t.update(doc.ref, { welcomeEmailSent: true, asaasCustomerId: customerData.id });
-            return true;
+          if (freshData && !freshData.asaasCustomerId) {
+            t.update(doc.ref, { asaasCustomerId: customerData.id });
           }
-          return false;
+          return true;
         });
-
-        if (wasWelcomeSent) {
-          console.log(`[EMAIL] Enviando Boas-vindas para: ${clientData.email}`);
-          await sendBoasVindasEmail(clientData.email, clientData.name || 'Cliente')
-            .then(() => {
-              const userId = doc.ref.parent.parent?.id;
-              if (userId) logEmailHistory(userId, doc.id, {
-                type: 'WELCOME',
-                status: 'sent',
-                sentAt: Date.now(),
-                recipient: clientData.email,
-                subject: 'Bem-vindo ao Hub central'
-              });
-            })
-            .catch(err => console.error('Erro Boas-vindas:', err));
-        }
+        console.log(`[ASAAS] Cliente vinculado: ${clientData.email}`);
       }
     }
 
@@ -173,11 +143,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const pDueDate = paymentData.dueDate ? paymentData.dueDate.split('-').reverse().join('/') : '';
         const pDesc = paymentData.description || 'Fatura Hub Symples';
 
-        // SAFETY NET: Boas-vindas via PAYMENT_CREATED caso o CUSTOMER_CREATED tenha falhado no timing
+        // --- LÓGICA DE BOAS-VINDAS UNIFICADO (No Primeiro Pagamento) ---
         const wasWelcomeSent = await db.runTransaction(async (t) => {
           const freshSnap = await t.get(doc.ref as any);
           const freshData = (freshSnap as any).data();
-          if (freshData && !freshData.welcomeEmailSent) {
+          if (freshData && !freshData.welcomeEmailSent && (event === 'PAYMENT_CREATED' || event === 'PAYMENT_CONFIRMED')) {
             t.update(doc.ref, { welcomeEmailSent: true });
             return true;
           }
@@ -185,19 +155,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
 
         if (wasWelcomeSent) {
-          console.log(`[EMAIL] Fallback: Enviando Boas-vindas atrasado para: ${clientData.email}`);
-          await sendBoasVindasEmail(clientData.email, clientData.name || 'Cliente')
+          console.log(`[EMAIL] Enviando Boas-vindas Unificado (Template novo) para: ${clientData.email}`);
+          await sendBoasVindasSubscriptionEmail(
+            clientData.email, 
+            clientData.name || 'Cliente',
+            pValue,
+            pDueDate,
+            pLink
+          )
             .then(() => {
               const userId = doc.ref.parent.parent?.id;
               if (userId) logEmailHistory(userId, doc.id, {
-                type: 'WELCOME',
+                type: 'WELCOME_SUBSCRIPTION',
                 status: 'sent',
                 sentAt: Date.now(),
                 recipient: clientData.email,
-                subject: 'Bem-vindo ao Hub central (Fallback)'
+                subject: 'Bem-vindo ao Hub Symples - Seu plano está pronto!'
               });
             })
-            .catch(err => console.error('Erro Boas-vindas (Fallback):', err));
+            .catch(err => console.error('Erro Boas-vindas Unificado:', err));
+          
+          // Se já enviamos o boas-vindas unificado, não precisamos enviar a fatura separada abaixo se for o MESMO link
+          // mas por segurança e para evitar bugs de timing, deixamos o fluxo de fatura seguir se for um evento novo.
         }
 
         // 1. Nova Fatura (Criada ou Link de Pagamento)
@@ -231,27 +210,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                console.log(`[DEBUG] Ignorando e-mail de Fatura (Mensalidade) pois o vencimento é daqui a ${diffDays} dias.`);
             } else {
                let subject = 'Sua Fatura - Hub Symples';
+               let isSetup = false;
                
                if (lowerDesc.includes('adesão') || lowerDesc.includes('setup') || lowerDesc.includes('ativação')) {
                  subject = 'Sua Fatura de Adesão - Hub Symples';
+                 isSetup = true;
                } else if (paymentData.subscription || lowerDesc.includes('assinatura') || lowerDesc.includes('mensalidade')) {
                  subject = 'Sua Fatura de Mensalidade - Hub Symples';
                } else if (lowerDesc.includes('único') || lowerDesc.includes('compra')) {
                   subject = 'Sua Fatura de Compra - Hub Symples';
                }
 
-               await sendFaturaEmitidaEmail(clientData.email, clientData.name || 'Cliente', pValue, pDueDate, pLink, pDesc, subject)
-                 .then(() => {
-                   const userId = doc.ref.parent.parent?.id;
-                   if (userId) logEmailHistory(userId, doc.id, {
-                     type: 'INVOICE',
-                     status: 'sent',
-                     sentAt: Date.now(),
-                     recipient: clientData.email,
-                     subject: subject
-                   });
-                 })
-                 .catch(e => console.error('Erro Fatura Emitida:', e));
+               // TRAVA DE SEGURANÇA: Só envia e-mail de Fatura de Adesão/Setup se o valor for > 0
+               if (isSetup && pValue <= 0) {
+                 console.log(`[DEBUG] Ignorando e-mail de Adesão para ${clientData.email} pois o valor é R$ ${pValue}.`);
+               } else {
+                 await sendFaturaEmitidaEmail(clientData.email, clientData.name || 'Cliente', pValue, pDueDate, pLink, pDesc, subject)
+                   .then(() => {
+                     const userId = doc.ref.parent.parent?.id;
+                     if (userId) logEmailHistory(userId, doc.id, {
+                       type: 'INVOICE',
+                       status: 'sent',
+                       sentAt: Date.now(),
+                       recipient: clientData.email,
+                       subject: subject
+                     });
+                   })
+                   .catch(e => console.error('Erro Fatura Emitida:', e));
+               }
             }
           }
         }

@@ -27,7 +27,7 @@ export function useClients(opts: UseClientsOptions) {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isEmailLoading, setIsEmailLoading] = useState<string | null>(null);
 
-  const triggerManualEmail = async (clientId: string, emailType: 'WELCOME' | 'INVOICE' | 'OVERDUE') => {
+  const triggerManualEmail = async (clientId: string, emailType: 'WELCOME' | 'INVOICE' | 'OVERDUE' | 'WELCOME_SUBSCRIPTION' | 'WELCOME_LINK') => {
     setIsEmailLoading(`${clientId}:${emailType}`);
     try {
       const res = await authFetch('/api/email', {

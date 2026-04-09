@@ -81,7 +81,7 @@ interface CRMContextType {
   restoreDefaultOffers: () => Promise<void>;
   handleExportCSV: (dataToExport: Client[]) => void;
   syncPayments: () => Promise<void>;
-  triggerManualEmail: (clientId: string, emailType: 'WELCOME' | 'INVOICE' | 'OVERDUE') => Promise<boolean>;
+  triggerManualEmail: (clientId: string, emailType: 'WELCOME' | 'INVOICE' | 'OVERDUE' | 'WELCOME_SUBSCRIPTION' | 'WELCOME_LINK') => Promise<boolean>;
   toggleAsaasNotifications: (clientId: string, enabled: boolean) => Promise<void>;
 
   // Helpers

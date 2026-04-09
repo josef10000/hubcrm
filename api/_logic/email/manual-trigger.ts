@@ -2,7 +2,9 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { db } from '../../_utils/firebase.js';
 import { verifyAuth } from '../../_utils/authMiddleware.js';
 import { 
-  sendBoasVindasEmail, 
+import { 
+  sendBoasVindasSubscriptionEmail,
+  sendBoasVindasLinkEmail,
   sendFaturaEmitidaEmail, 
   sendFaturaVencimentoEmail 
 } from '../../../src/services/emailService.js';
@@ -46,10 +48,47 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let type: 'WELCOME' | 'INVOICE' | 'OVERDUE' | 'RECEIPT' = 'WELCOME';
 
     switch (emailType) {
+      case 'WELCOME_SUBSCRIPTION':
+        type = 'WELCOME_SUBSCRIPTION';
+        subject = 'Bem-vindo ao Hub Symples - Seu plano está pronto!';
+        const valSub = clientData.planPrice || 0;
+        const dueSub = clientData.nextDueDate ? clientData.nextDueDate.split('-').reverse().join('/') : 'A combinar';
+        const linkSub = clientData.invoiceUrl || '';
+        if (!linkSub) return res.status(400).json({ error: 'Nenhuma fatura/link disponível para este cliente' });
+        
+        result = await sendBoasVindasSubscriptionEmail(
+          clientData.email, 
+          clientData.name,
+          valSub,
+          dueSub,
+          linkSub,
+          subject
+        );
+        break;
+
+      case 'WELCOME_LINK':
+        type = 'WELCOME_LINK';
+        subject = 'Sua Fatura - Hub Symples';
+        const valLink = clientData.planPrice || 0;
+        const dueLink = clientData.nextDueDate ? clientData.nextDueDate.split('-').reverse().join('/') : 'A combinar';
+        const linkL = clientData.invoiceUrl || '';
+        if (!linkL) return res.status(400).json({ error: 'Nenhum link de pagamento disponível para este cliente' });
+
+        result = await sendBoasVindasLinkEmail(
+          clientData.email, 
+          clientData.name,
+          valLink,
+          dueLink,
+          linkL,
+          subject
+        );
+        break;
+
       case 'WELCOME':
+        // Legado / Fallback - Aposentado mas mantido para não quebrar chamadas antigas
         type = 'WELCOME';
         subject = 'Bem-vindo ao Hub central';
-        result = await sendBoasVindasEmail(clientData.email, clientData.name);
+        result = await sendBoasVindasLinkEmail(clientData.email, clientData.name, 0, 'A combinar', '', subject);
         break;
       case 'INVOICE':
         type = 'INVOICE';

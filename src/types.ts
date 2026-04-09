@@ -18,7 +18,7 @@ export interface ClientLog {
 
 export interface EmailHistoryEntry {
   id: string;
-  type: 'WELCOME' | 'INVOICE' | 'OVERDUE' | 'RECEIPT';
+  type: 'WELCOME' | 'INVOICE' | 'OVERDUE' | 'RECEIPT' | 'WELCOME_SUBSCRIPTION' | 'WELCOME_LINK';
   status: 'sent' | 'failed';
   sentAt: number;
   recipient: string;

@@ -12,11 +12,11 @@ export default function ClientNotificationCard({ client }: ClientNotificationCar
   const { triggerManualEmail, isEmailLoading, toggleAsaasNotifications } = useCRM();
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
-  const handleSendEmail = async (type: 'WELCOME' | 'INVOICE' | 'OVERDUE') => {
+  const handleSendEmail = async (type: 'WELCOME' | 'INVOICE' | 'OVERDUE' | 'WELCOME_SUBSCRIPTION' | 'WELCOME_LINK') => {
     try {
       const success = await triggerManualEmail(client.id, type);
       if (success) {
-        toast.success(`E-mail de ${type === 'WELCOME' ? 'Boas-vindas' : type === 'INVOICE' ? 'Fatura' : 'Atraso'} enviado com sucesso!`);
+        toast.success(`E-mail enviado com sucesso!`);
       }
     } catch (error: any) {
       toast.error(error.message || 'Erro ao disparar e-mail');
@@ -25,11 +25,18 @@ export default function ClientNotificationCard({ client }: ClientNotificationCar
 
   const emailOptions = [
     {
-      type: 'WELCOME' as const,
-      title: 'Boas-vindas',
+      type: 'WELCOME_SUBSCRIPTION' as const,
+      title: 'Vindas (Assin.)',
       icon: UserCheck,
-      color: 'text-primary-500',
-      bgColor: 'bg-primary-500/10',
+      color: 'text-blue-500',
+      bgColor: 'bg-blue-500/10',
+    },
+    {
+      type: 'WELCOME_LINK' as const,
+      title: 'Vindas (Link)',
+      icon: Send,
+      color: 'text-emerald-500',
+      bgColor: 'bg-emerald-500/10',
     },
     {
       type: 'INVOICE' as const,
@@ -79,7 +86,7 @@ export default function ClientNotificationCard({ client }: ClientNotificationCar
 
       {/* Ações Rápidas */}
       <div className="p-5">
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           {emailOptions.map((opt) => {
             const isLoading = isEmailLoading === `${client.id}:${opt.type}`;
             return (

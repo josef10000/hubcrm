@@ -40,7 +40,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       cpfCnpj: cpfCnpj ? cpfCnpj.replace(/\D/g, '') : undefined,
       email,
       externalReference: id,
-      notificationDisabled: asaasNotificationsEnabled === true ? false : true,
+      notificationDisabled: asaasNotificationsEnabled === false ? true : false,
       observations: `UserID: ${uid}`
     };
     
