@@ -66,6 +66,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       value = offer.price * 12 * 0.85; 
     }
 
+    const setupPrice = offer.setupPrice || 0;
+    const total = (offer.type === 'SUBSCRIPTION' && !isYearly) ? value : (value + setupPrice);
+
     // 4. Create Charge in Asaas
     let checkoutUrl = '';
     
@@ -89,9 +92,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     } else {
       // Single Payment OR Yearly One-Time Payment
-      const setupPrice = offer.setupPrice || 0;
-      const total = value + setupPrice;
-      
       const payment = await asaasRequest("/payments", "POST", {
         customer: asaasCustomer.id,
         billingType: "UNDEFINED",
