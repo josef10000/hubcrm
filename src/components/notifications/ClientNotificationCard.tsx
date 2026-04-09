@@ -88,17 +88,24 @@ export default function ClientNotificationCard({ client }: ClientNotificationCar
       <div className="p-5">
         <div className="grid grid-cols-2 gap-2">
           {emailOptions.map((opt) => {
-            const isLoading = isEmailLoading === `${client.id}:${opt.type}`;
+            const isSubscriptionClient = !!client.asaasSubscriptionId;
+            const isLinkBlocked = opt.type === 'WELCOME_LINK' && isSubscriptionClient;
+            const isSubscriptionBlocked = opt.type === 'WELCOME_SUBSCRIPTION' && !isSubscriptionClient;
+            const isManualDisabled = isLinkBlocked || isSubscriptionBlocked;
+
             return (
               <button
                 key={opt.type}
                 onClick={() => handleSendEmail(opt.type)}
-                disabled={!!isEmailLoading}
-                className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all hover:scale-[1.05] active:scale-95 group/btn ${
+                disabled={!!isEmailLoading || isManualDisabled}
+                className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all active:scale-95 group/btn ${
                   isLoading 
                   ? 'bg-gray-100 dark:bg-white/5 border-gray-200 dark:border-white/10 opacity-50' 
-                  : 'bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-white/10 hover:border-primary-500/50 hover:bg-white dark:hover:bg-white/10 shadow-sm'
+                  : isManualDisabled
+                  ? 'bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-white/10 opacity-30 cursor-not-allowed grayscale'
+                  : 'bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-white/10 hover:border-primary-500/50 hover:bg-white dark:hover:bg-white/10 shadow-sm hover:scale-[1.05]'
                 }`}
+                title={isLinkBlocked ? "Este cliente possui assinatura ativa" : isSubscriptionBlocked ? "Este cliente não possui assinatura ativa" : ""}
               >
                 {isLoading ? (
                   <Loader2 size={16} className="animate-spin text-primary-500 mb-1" />
