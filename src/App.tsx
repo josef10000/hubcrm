@@ -35,6 +35,7 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import ClientPortal from './components/ClientPortal';
 import OnboardingForm from './components/OnboardingForm';
 import ContractSignView from './views/ContractSignView';
+import PublicCheckoutPage from './components/PublicCheckoutPage';
 
 // ── Navigation Config ──
 const navItems = [
@@ -276,6 +277,7 @@ export default function App() {
           <Route path="/onboarding/:userId" element={<OnboardingForm />} />
           <Route path="/onboarding/:userId/:clientId" element={<OnboardingForm />} />
           <Route path="/contrato/:userId/:clientId/:contractId" element={<ContractSignView />} />
+          <Route path="/contratar/:userId" element={<PublicCheckoutPage />} />
           <Route path="*" element={<PrivateApp />} />
         </Routes>
       </AuthProvider>

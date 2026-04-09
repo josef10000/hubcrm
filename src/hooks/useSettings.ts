@@ -24,6 +24,9 @@ export function useSettings(userId: string) {
   ]);
   const [defaultContractText, setDefaultContractText] = useState<string>('CONTRATO DE PRESTAÇÃO DE SERVIÇOS\n\n1. OBJETO DO CONTRATO\nO presente instrumento tem como objeto a prestação de serviços digitais acordados entre as partes no plano ou projeto selecionado.\n\n2. PRAZOS E ENTREGAS\nAs entregas serão realizadas conforme cronograma acordado.\n\n3. PAGAMENTOS E CANCELAMENTOS\nEm caso de suspensão de pagamento, o serviço será suspenso após X dias. Cancelamentos devem ser notificados antecipadamente.');
 
+  const [checkoutTitle, setCheckoutTitle] = useState('Nossa Proposta Comercial');
+  const [checkoutDescription, setCheckoutDescription] = useState('Preencha os dados abaixo para iniciar sua jornada conosco.');
+
   // ── Marketing ──
   const [globalAnnouncement, setGlobalAnnouncement] = useState<{ title: string; message: string; type: string; isActive: boolean }>({
     title: '', message: '', type: 'info', isActive: false,
@@ -58,6 +61,8 @@ export function useSettings(userId: string) {
         if (data.defaultStages) setDefaultStages(data.defaultStages);
         if (data.onboardingQuestions) setOnboardingQuestions(data.onboardingQuestions);
         if (data.defaultContractText !== undefined) setDefaultContractText(data.defaultContractText);
+        if (data.checkoutTitle) setCheckoutTitle(data.checkoutTitle);
+        if (data.checkoutDescription) setCheckoutDescription(data.checkoutDescription);
       }
     });
     return () => unsubscribe();
@@ -83,5 +88,7 @@ export function useSettings(userId: string) {
     onboardingQuestions, setOnboardingQuestions,
     defaultContractText, setDefaultContractText,
     globalAnnouncement, setGlobalAnnouncement,
+    checkoutTitle, setCheckoutTitle,
+    checkoutDescription, setCheckoutDescription,
   };
 }

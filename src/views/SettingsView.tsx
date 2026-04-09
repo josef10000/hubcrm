@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, CheckCircle, Trash2, Plus, FileText, Image as ImageIcon, LogOut } from 'lucide-react';
+import { Settings, CheckCircle, Trash2, Plus, FileText, Image as ImageIcon, LogOut, Copy, Globe } from 'lucide-react';
 import { useCRM } from '../contexts/CRMContext';
 import { useUI } from '../contexts/UIContext';
 import { auth, db } from '../lib/firebase';
@@ -18,7 +18,11 @@ export default function SettingsView() {
     onboardingQuestions,
     setOnboardingQuestions,
     defaultContractText,
-    setDefaultContractText
+    setDefaultContractText,
+    checkoutTitle,
+    setCheckoutTitle,
+    checkoutDescription,
+    setCheckoutDescription
   } = useCRM();
 
   const themes = [
@@ -295,6 +299,84 @@ export default function SettingsView() {
               >
                 <CheckCircle size={16} />
                 Salvar Contrato Padrão
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-black/20 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-lg mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
+            <Globe className="mr-2 text-primary-500" size={20} />
+            Página de Checkout
+          </h3>
+          <div className="space-y-6">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Configure como sua página de vendas pública aparece para seus futuros clientes.
+            </p>
+            
+            <div className="grid grid-cols-1 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Título da Página</label>
+                <input
+                  type="text"
+                  value={checkoutTitle}
+                  onChange={(e) => setCheckoutTitle(e.target.value)}
+                  className="w-full px-4 py-2 bg-white dark:bg-black/40 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none"
+                  placeholder="Ex: Nossa Proposta Comercial"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Descrição / Subtítulo</label>
+                <textarea
+                  value={checkoutDescription}
+                  onChange={(e) => setCheckoutDescription(e.target.value)}
+                  className="w-full h-24 px-4 py-2 bg-white dark:bg-black/40 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none resize-none"
+                  placeholder="Breve texto explicativo abaixo do título"
+                />
+              </div>
+            </div>
+
+            <div className="p-4 bg-primary-500/5 border border-primary-500/20 rounded-2xl">
+              <label className="block text-xs font-bold text-primary-500 uppercase tracking-wider mb-2">Seu Link Público</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={`${window.location.origin}/contratar/${auth.currentUser?.uid}`}
+                  className="flex-1 bg-transparent border-none text-sm text-gray-600 dark:text-gray-300 outline-none"
+                />
+                <button
+                  onClick={() => {
+                    const url = `${window.location.origin}/contratar/${auth.currentUser?.uid}`;
+                    navigator.clipboard.writeText(url);
+                    toast.success('Link copiado para a área de transferência!');
+                  }}
+                  className="p-2 text-primary-500 hover:bg-primary-500/10 rounded-lg transition-colors"
+                  title="Copiar Link"
+                >
+                  <Copy size={18} />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-4">
+              <button
+                onClick={async () => {
+                  try {
+                    await setDoc(doc(db, 'users', auth.currentUser!.uid, 'settings', 'preferences'), { 
+                      checkoutTitle, 
+                      checkoutDescription 
+                    }, { merge: true });
+                    toast.success('Configurações de checkout salvas!');
+                  } catch (error) {
+                    toast.error('Erro ao salvar configurações.');
+                  }
+                }}
+                className="flex items-center gap-2 px-6 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-xl transition-colors text-sm font-medium shadow-lg shadow-primary-500/20"
+              >
+                <CheckCircle size={16} />
+                Salvar Configurações
               </button>
             </div>
           </div>

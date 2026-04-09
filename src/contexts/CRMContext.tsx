@@ -54,6 +54,10 @@ interface CRMContextType {
   setOnboardingQuestions: (questions: any[]) => void;
   defaultContractText: string;
   setDefaultContractText: (text: string) => void;
+  checkoutTitle: string;
+  setCheckoutTitle: (title: string) => void;
+  checkoutDescription: string;
+  setCheckoutDescription: (desc: string) => void;
 
   // Support
   replyingTo: string | null;
@@ -148,8 +152,8 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       unsubscribeOffers = onSnapshot(offersRef, async (snapshot) => {
         if (snapshot.empty && setOffers) {
           const defaultOffers: Offer[] = [
-            { id: Date.now().toString(36) + Math.random().toString(36).substring(2), name: 'Ecossistema Essencial', type: 'SUBSCRIPTION', price: 397, setupPrice: 2500, active: true, createdAt: Date.now() },
-            { id: Date.now().toString(36) + Math.random().toString(36).substring(2), name: 'Profissional', type: 'SUBSCRIPTION', price: 897, setupPrice: 7500, active: true, createdAt: Date.now() },
+            { id: Date.now().toString(36) + Math.random().toString(36).substring(2), name: 'Ecossistema Essencial', type: 'SUBSCRIPTION', price: 397, setupPrice: 2500, active: true, displayContext: 'PORTAL', createdAt: Date.now() },
+            { id: Date.now().toString(36) + Math.random().toString(36).substring(2), name: 'Profissional', type: 'SUBSCRIPTION', price: 897, setupPrice: 7500, active: true, displayContext: 'PORTAL', createdAt: Date.now() },
           ];
           for (const offer of defaultOffers) {
             await setDoc(doc(db, 'users', user.uid, 'offers', offer.id), offer);
@@ -157,7 +161,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         } else {
           const loadedOffers: Offer[] = [];
           snapshot.forEach((d) => loadedOffers.push(d.data() as Offer));
-          setOffers(loadedOffers.sort((a, b) => b.createdAt - a.createdAt));
+          setOffers(loadedOffers.sort((a, b) => (a.order || 0) - (b.order || 0) || b.createdAt - a.createdAt));
         }
       });
 
@@ -244,6 +248,8 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     defaultStages: settings?.defaultStages || [], setDefaultStages: settings?.setDefaultStages || (() => { }),
     onboardingQuestions: settings?.onboardingQuestions || [], setOnboardingQuestions: settings?.setOnboardingQuestions || (() => { }),
     defaultContractText: settings?.defaultContractText || '', setDefaultContractText: settings?.setDefaultContractText || (() => { }),
+    checkoutTitle: settings?.checkoutTitle || '', setCheckoutTitle: settings?.setCheckoutTitle || (() => { }),
+    checkoutDescription: settings?.checkoutDescription || '', setCheckoutDescription: settings?.setCheckoutDescription || (() => { }),
 
     replyingTo, setReplyingTo, replyMessage, setReplyMessage,
     newExpense: finance?.newExpense || {}, setNewExpense: finance?.setNewExpense || (() => { }),

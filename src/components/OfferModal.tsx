@@ -81,6 +81,21 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
             </div>
 
             <div>
+              <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Contexto de Exibição *</label>
+              <select 
+                name="displayContext" 
+                value={formData.displayContext || 'PORTAL'} 
+                onChange={handleChange} 
+                className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+              >
+                <option value="PORTAL">Apenas CRM (Manual)</option>
+                <option value="CHECKOUT">Apenas Página de Checkout</option>
+                <option value="BOTH">Ambos (CRM e Checkout)</option>
+              </select>
+              <p className="text-xs text-gray-500 mt-1">Define onde este produto ficará visível para venda.</p>
+            </div>
+
+            <div>
               <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Preço do Plano/Oferta (R$) *</label>
               <input 
                 type="number" 
@@ -125,6 +140,19 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
                 <p className="text-xs text-gray-500 mt-1">O cliente poderá parcelar o pagamento único em até {formData.maxInstallments || 12} vezes.</p>
               </div>
             )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Ordem de Exibição (1, 2, 3...)</label>
+              <input 
+                type="number" 
+                name="order" 
+                value={formData.order || 0} 
+                onChange={handleChange} 
+                className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                placeholder="1"
+              />
+              <p className="text-xs text-gray-500 mt-1">Produtos com menor número aparecem primeiro na página de vendas.</p>
+            </div>
 
             <div className="flex items-center gap-3 mt-4">
               <input 

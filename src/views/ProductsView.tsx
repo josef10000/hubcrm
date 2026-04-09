@@ -39,6 +39,17 @@ export default function ProductsView() {
                         <span className="font-medium">Tipo:</span> {offer.type === 'SUBSCRIPTION' ? 'Assinatura' : 'Pagamento Único'}
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <span className="font-medium">Exibição:</span> {
+                          offer.displayContext === 'CHECKOUT' ? 'Apenas Checkout' : 
+                          offer.displayContext === 'BOTH' ? 'CRM e Checkout' : 'Apenas CRM (Manual)'
+                        }
+                      </p>
+                      {offer.order !== undefined && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <span className="font-medium">Ordem de Exibição:</span> {offer.order}
+                        </p>
+                      )}
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         <span className="font-medium">Preço:</span> R$ {(offer.price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </p>
                       {offer.type === 'SUBSCRIPTION' && offer.setupPrice !== undefined && offer.setupPrice > 0 && (
