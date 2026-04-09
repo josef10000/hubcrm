@@ -170,7 +170,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         clientsRef,
         (snapshot) => {
           const loadedClients: Client[] = [];
-          snapshot.forEach((d) => loadedClients.push(d.data() as Client));
+          snapshot.forEach((d) => loadedClients.push({ id: d.id, ...d.data() } as Client));
           setClients(loadedClients);
           setLoading(false);
           clearTimeout(timeoutId);

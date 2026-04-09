@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { db } from './_utils/firebase.js';
 import { asaasRequest, safeErrorResponse } from './_utils/asaas.js';
+import { sendFaturaEmitidaEmail } from '../src/services/emailService.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS preflight
@@ -107,6 +108,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const annualNote = isYearly ? "\n[OBS: Plano Anual - Validade: 12 meses (Renovação Manual)]" : "";
     
     await clientRef.set({
+      id: clientRef.id,
       name: clientData.name,
       email: clientData.email,
       whatsapp: clientData.whatsapp,
@@ -120,8 +122,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       createdAt: Date.now(),
       lastUpdate: Date.now(),
       convertedVia: 'Public Checkout',
-      billingCycle: clientData.billingCycle || 'MONTHLY'
+      billingCycle: clientData.billingCycle || 'MONTHLY',
+      invoiceUrl: checkoutUrl,
+      nextDueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0]
     });
+
+    // 6. Send Email Automation
+    try {
+      const vencimento = new Date(Date.now() + 86400000).toLocaleDateString('pt-BR');
+      await sendFaturaEmitidaEmail(
+        clientData.email,
+        clientData.name,
+        total,
+        vencimento,
+        checkoutUrl,
+        `Plano ${offer.name}`,
+        `Sua fatura está pronta - ${offer.name}`
+      );
+      console.log(`[PublicCheckout] Automation: Welcome/Invoice email sent to ${clientData.email}`);
+    } catch (emailErr) {
+      console.error('[PublicCheckout] Email Automation Error:', emailErr);
+      // Don't fail the whole request if email fails, as client and charge are already created
+    }
 
     return res.status(200).json({ checkoutUrl });
 
