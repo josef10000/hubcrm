@@ -97,8 +97,8 @@ export default function PublicCheckoutPage() {
 
   const validateStep = () => {
     if (step === 1) {
-      if (!clientData.name || !clientData.email || !clientData.whatsapp) {
-        toast.error('Preencha os campos obrigatórios.');
+      if (!clientData.name || !clientData.email || !clientData.whatsapp || !clientData.cpfCnpj) {
+        toast.error('Preencha os campos obrigatórios (Nome, E-mail, WhatsApp e CPF/CNPJ).');
         return false;
       }
     }
@@ -235,6 +235,20 @@ export default function PublicCheckoutPage() {
                       onChange={(e) => setClientData({...clientData, whatsapp: e.target.value})}
                       className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all"
                       placeholder="(00) 00000-0000"
+                    />
+                  </div>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">CPF ou CNPJ *</label>
+                  <div className="relative">
+                    <FileText className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+                    <input
+                      type="text"
+                      required
+                      value={clientData.cpfCnpj}
+                      onChange={(e) => setClientData({...clientData, cpfCnpj: e.target.value})}
+                      className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all"
+                      placeholder="Somente números"
                     />
                   </div>
                 </div>
