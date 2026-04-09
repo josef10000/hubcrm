@@ -337,7 +337,7 @@ export default function PublicCheckoutPage() {
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {offers.length > 0 ? (
-                    {offers.map((offer) => {
+                    offers.map((offer) => {
                       const isYearly = clientData.billingCycle === 'YEARLY' && offer.type === 'SUBSCRIPTION';
                       const displayPrice = isYearly ? (offer.price * 12 * 0.85) : offer.price;
                       
@@ -377,7 +377,7 @@ export default function PublicCheckoutPage() {
                           {clientData.offerId === offer.id && <div className="absolute top-4 right-4 text-orange-500"><Check size={20} /></div>}
                         </button>
                       );
-                    })}
+                    })
                 ) : (
                   <div className="md:col-span-2 p-8 text-center bg-white/5 rounded-2xl border border-dashed border-white/10">
                     <p className="text-gray-400">Nenhum plano disponível no momento.</p>
