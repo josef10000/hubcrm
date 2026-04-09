@@ -2,7 +2,6 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { db } from '../../_utils/firebase.js';
 import { verifyAuth } from '../../_utils/authMiddleware.js';
 import { 
-import { 
   sendBoasVindasSubscriptionEmail,
   sendBoasVindasLinkEmail,
   sendFaturaEmitidaEmail, 
@@ -45,7 +44,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     let result;
     let subject = '';
-    let type: 'WELCOME' | 'INVOICE' | 'OVERDUE' | 'RECEIPT' = 'WELCOME';
+    let type: 'WELCOME' | 'INVOICE' | 'OVERDUE' | 'RECEIPT' | 'WELCOME_SUBSCRIPTION' | 'WELCOME_LINK' = 'WELCOME';
 
     switch (emailType) {
       case 'WELCOME_SUBSCRIPTION':
