@@ -40,7 +40,7 @@ export async function asaasRequest(endpoint: string, method: string, body?: any)
       const errorData = await response.json().catch(() => ({}));
       const detailedMessage = errorData.errors?.[0]?.description || response.statusText;
       console.error(`Asaas API Error [${method} ${endpoint}]:`, errorData);
-      throw new AsaasApiError(response.status, detailedMessage);
+      throw new AsaasApiError(response.status, detailedMessage, detailedMessage);
     }
 
     return response.json();
