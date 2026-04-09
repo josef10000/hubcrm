@@ -144,6 +144,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const pDesc = paymentData.description || 'Fatura Hub Symples';
 
         // --- LÓGICA DE BOAS-VINDAS UNIFICADO (No Primeiro Pagamento) ---
+        let skipInvoiceEmail = false;
         const wasWelcomeSent = await db.runTransaction(async (t) => {
           const freshSnap = await t.get(doc.ref as any);
           const freshData = (freshSnap as any).data();
@@ -156,6 +157,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         if (wasWelcomeSent) {
           console.log(`[EMAIL] Enviando Boas-vindas Unificado (Template novo) para: ${clientData.email}`);
+          skipInvoiceEmail = true;
           await sendBoasVindasSubscriptionEmail(
             clientData.email, 
             clientData.name || 'Cliente',
@@ -221,8 +223,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                   subject = 'Sua Fatura de Compra - Hub Symples';
                }
 
-               // TRAVA DE SEGURANÇA: Só envia e-mail de Fatura de Adesão/Setup se o valor for > 0
-               if (isSetup && pValue <= 0) {
+               // TRAVA DE SEGURANÇA: Só envia e-mail de Fatura de Adesão/Setup se o valor for > 0 
+               // E se não tivermos acabado de enviar o e-mail de Boas-vindas unificado.
+               if (skipInvoiceEmail) {
+                 console.log(`[DEBUG] Ignorando e-mail de Fatura para ${clientData.email} pois o Boas-vindas unificado já foi enviado.`);
+               } else if (isSetup && pValue <= 0) {
                  console.log(`[DEBUG] Ignorando e-mail de Adesão para ${clientData.email} pois o valor é R$ ${pValue}.`);
                } else {
                  await sendFaturaEmitidaEmail(clientData.email, clientData.name || 'Cliente', pValue, pDueDate, pLink, pDesc, subject)
