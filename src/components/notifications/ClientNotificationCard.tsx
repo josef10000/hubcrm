@@ -92,6 +92,7 @@ export default function ClientNotificationCard({ client }: ClientNotificationCar
             const isLinkBlocked = opt.type === 'WELCOME_LINK' && isSubscriptionClient;
             const isSubscriptionBlocked = opt.type === 'WELCOME_SUBSCRIPTION' && !isSubscriptionClient;
             const isManualDisabled = isLinkBlocked || isSubscriptionBlocked;
+            const isLoading = isEmailLoading === `${client.id}:${opt.type}`;
 
             return (
               <button
