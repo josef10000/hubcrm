@@ -1,36 +1,46 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getFirebaseAdmin } from './firebase.js';
+import { Redis } from '@upstash/redis';
 
-// ── Rate Limiting (in-memory, per-IP) ────────────────────────────────────────
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT_MAX = 30; // max requests
-const RATE_LIMIT_WINDOW_MS = 60_000; // per 1 minute
+// ── Rate Limiting (via Upstash Redis Serverless) ────────────────────────────
+const RATE_LIMIT_MAX = 30; // máximo de requisições permitidas
+const RATE_LIMIT_WINDOW_SEC = 60; // janela de tempo de 1 minuto
 
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
+// Inicializa a conexão com o banco de dados que a Vercel integrou
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL || '',
+  token: process.env.UPSTASH_REDIS_REST_TOKEN || '',
+});
 
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+async function checkRateLimit(ip: string): Promise<boolean> {
+  // Se estiver rodando no computador local sem o .env atualizado, permite passar para não travar seus testes
+  if (!process.env.UPSTASH_REDIS_REST_URL) {
+    console.warn('[Upstash] Variáveis do Redis não encontradas. Rate limit ignorado no ambiente local.');
     return true;
   }
 
-  if (entry.count >= RATE_LIMIT_MAX) {
-    return false;
-  }
+  try {
+    const key = `ratelimit:${ip}`;
+    
+    // Incrementa o contador de acessos desse IP na nuvem
+    const currentCount = await redis.incr(key);
 
-  entry.count++;
-  return true;
-}
-
-// Clean up stale entries every 5 minutes to prevent memory leak
-if (typeof setInterval !== 'undefined') {
-  setInterval(() => {
-    const now = Date.now();
-    for (const [ip, entry] of rateLimitMap.entries()) {
-      if (now > entry.resetAt) rateLimitMap.delete(ip);
+    // Se for o primeiro acesso, programa a chave para se auto-destruir em 60 segundos
+    if (currentCount === 1) {
+      await redis.expire(key, RATE_LIMIT_WINDOW_SEC);
     }
-  }, 5 * 60_000);
+
+    // Se passou do limite, bloqueia
+    if (currentCount > RATE_LIMIT_MAX) {
+      return false; 
+    }
+
+    return true; 
+  } catch (error) {
+    console.error('[Upstash] Erro no rate limit:', error);
+    // Se o banco Upstash cair por algum motivo externo, permitimos o acesso para o CRM não travar
+    return true; 
+  }
 }
 
 // ── Auth Middleware ─────────────────────────────────────────────────────────
@@ -46,12 +56,13 @@ export async function verifyAuth(
   req: AuthenticatedRequest,
   res: VercelResponse
 ): Promise<string | null> {
-  // Rate limiting
+  // Captura o IP do usuário
   const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() 
     || req.headers['x-real-ip'] as string 
     || 'unknown';
 
-  if (!checkRateLimit(ip)) {
+  // Consulta o Upstash (usando await, pois agora é uma chamada de rede)
+  if (!(await checkRateLimit(ip))) {
     res.status(429).json({ error: 'Muitas requisições. Tente novamente em 1 minuto.' });
     return null;
   }
