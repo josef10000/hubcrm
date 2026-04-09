@@ -125,6 +125,18 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
               </div>
             )}
 
+            <div>
+              <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Descrição da Oferta (Opcional)</label>
+              <textarea 
+                name="description" 
+                value={formData.description || ''} 
+                onChange={handleChange as any} 
+                className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all h-24 resize-none" 
+                placeholder="Ex: Entrega em 5 dias, Suporte Grátis..."
+              />
+              <p className="text-xs text-gray-500 mt-1">Esta descrição aparecerá nos cards da página de checkout.</p>
+            </div>
+
             {formData.type === 'SINGLE' && (
               <div>
                 <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Máximo de Parcelas</label>

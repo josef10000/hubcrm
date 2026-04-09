@@ -69,6 +69,7 @@ export interface Offer {
   price: number;
   setupPrice?: number;
   maxInstallments?: number;
+  description?: string;
   order?: number;
   displayContext?: 'CHECKOUT' | 'PORTAL' | 'BOTH';
   active: boolean;

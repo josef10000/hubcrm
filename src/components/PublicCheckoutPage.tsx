@@ -337,26 +337,47 @@ export default function PublicCheckoutPage() {
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {offers.length > 0 ? (
-                  offers.map((offer) => (
-                    <button
-                      key={offer.id}
-                      onClick={() => setClientData({...clientData, offerId: offer.id, plan: offer.name })}
-                      className={`p-6 rounded-2xl border transition-all text-left flex flex-col relative ${clientData.offerId === offer.id ? 'bg-orange-500/10 border-orange-500 shadow-lg shadow-orange-500/20' : 'bg-black/40 border-white/10 hover:border-white/20'}`}
-                    >
-                      <p className="font-bold text-xl mb-2">{offer.name}</p>
-                      <p className="text-xs text-gray-400 mb-4 flex-1">
-                        {offer.type === 'SUBSCRIPTION' ? 'Assinatura Mensal' : 'Pagamento Único'}
-                      </p>
-                      <div className="mt-4">
-                        <span className="text-2xl font-bold text-white">R$ {offer.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                        {offer.type === 'SUBSCRIPTION' && <span className="text-gray-500 text-sm"> /mês</span>}
-                      </div>
-                      {offer.setupPrice ? (
-                        <p className="text-xs text-orange-400 mt-2">+ R$ {offer.setupPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} de setup</p>
-                      ) : null}
-                      {clientData.offerId === offer.id && <div className="absolute top-4 right-4 text-orange-500"><Check size={20} /></div>}
-                    </button>
-                  ))
+                    {offers.map((offer) => {
+                      const isYearly = clientData.billingCycle === 'YEARLY' && offer.type === 'SUBSCRIPTION';
+                      const displayPrice = isYearly ? (offer.price * 12 * 0.85) : offer.price;
+                      
+                      return (
+                        <button
+                          key={offer.id}
+                          onClick={() => setClientData({...clientData, offerId: offer.id, plan: offer.name })}
+                          className={`p-6 rounded-2xl border transition-all text-left flex flex-col relative ${clientData.offerId === offer.id ? 'bg-orange-500/10 border-orange-500 shadow-lg shadow-orange-500/20' : 'bg-black/40 border-white/10 hover:border-white/20'}`}
+                        >
+                          <p className="font-bold text-xl mb-1">{offer.name}</p>
+                          <p className="text-xs text-gray-400 mb-3">
+                            {offer.type === 'SUBSCRIPTION' 
+                              ? (isYearly ? 'Pagamento Único (Anual)' : 'Assinatura Mensal') 
+                              : 'Pagamento Único'}
+                          </p>
+                          
+                          {offer.description && (
+                            <p className="text-xs text-gray-500 mb-4 line-clamp-3 italic">
+                              "{offer.description}"
+                            </p>
+                          )}
+                          
+                          <div className="mt-auto">
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-2xl font-bold text-white">
+                                R$ {displayPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              </span>
+                              {offer.type === 'SUBSCRIPTION' && !isYearly && <span className="text-gray-500 text-xs">/mês</span>}
+                              {isYearly && <span className="text-orange-500 text-[10px] font-bold ml-1">-15% OFF</span>}
+                            </div>
+                            
+                            {offer.setupPrice ? (
+                              <p className="text-[10px] text-orange-400/80 mt-1">+ R$ {offer.setupPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} de setup</p>
+                            ) : null}
+                          </div>
+                          
+                          {clientData.offerId === offer.id && <div className="absolute top-4 right-4 text-orange-500"><Check size={20} /></div>}
+                        </button>
+                      );
+                    })}
                 ) : (
                   <div className="md:col-span-2 p-8 text-center bg-white/5 rounded-2xl border border-dashed border-white/10">
                     <p className="text-gray-400">Nenhum plano disponível no momento.</p>

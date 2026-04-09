@@ -57,66 +57,70 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // 3. Calculate Final Price
-    // Applying 15% discount for yearly billing on subscriptions
+    const isYearly = clientData.billingCycle === 'YEARLY' && offer.type === 'SUBSCRIPTION';
     let value = offer.price;
     let cycle = 'MONTHLY';
     
-    if (offer.type === 'SUBSCRIPTION' && clientData.billingCycle === 'YEARLY') {
+    if (isYearly) {
       value = offer.price * 12 * 0.85; 
-      cycle = 'YEARLY';
     }
 
     // 4. Create Charge in Asaas
     let checkoutUrl = '';
     
-    if (offer.type === 'SUBSCRIPTION') {
+    // Yearly Subscription becomes a Single Payment as requested
+    if (offer.type === 'SUBSCRIPTION' && !isYearly) {
       const subscription = await asaasRequest("/subscriptions", "POST", {
         customer: asaasCustomer.id,
-        billingType: "UNDEFINED", // Let client choose (Boleto, Cartão, PIX)
+        billingType: "UNDEFINED",
         value: value,
-        nextDueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0], // Tomorrow
+        nextDueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
         cycle: cycle,
         description: `Assinatura: ${offer.name}`,
         observations: `Referência: ${offer.id}`
       });
 
-      // Fetch the first installment/payment
       const payments = await asaasRequest(`/subscriptions/${subscription.id}/payments`, "GET");
       if (payments.data && payments.data.length > 0) {
         checkoutUrl = payments.data[0].invoiceUrl;
       } else {
-        // Fallback or handle case where invoice is not generated yet
         checkoutUrl = subscription.paymentLink || '';
       }
     } else {
-      // Single Payment
-      const total = offer.price + (offer.setupPrice || 0);
+      // Single Payment OR Yearly One-Time Payment
+      const setupPrice = offer.setupPrice || 0;
+      const total = value + setupPrice;
+      
       const payment = await asaasRequest("/payments", "POST", {
         customer: asaasCustomer.id,
         billingType: "UNDEFINED",
         value: total,
         dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-        description: `Compra: ${offer.name}`,
-        observations: `Checkout Público`
+        description: isYearly ? `Plano Anual: ${offer.name} (12 meses)` : `Compra: ${offer.name}`,
+        observations: isYearly ? `Pagamento Único Anual com 15% de desconto. CRM User: ${userId}` : `Checkout Público`
       });
       checkoutUrl = payment.invoiceUrl;
     }
 
     // 5. Register Lead in CRM
     const clientRef = db.collection('users').doc(userId).collection('clients').doc();
+    const annualNote = isYearly ? "\n[OBS: Plano Anual - Validade: 12 meses (Renovação Manual)]" : "";
+    
     await clientRef.set({
       name: clientData.name,
       email: clientData.email,
       whatsapp: clientData.whatsapp,
       asaasId: asaasCustomer.id,
       status: 'Pendente',
-      plan: offer.name,
+      plan: offer.name + (isYearly ? ' (Anual)' : ''),
       offerId: clientData.offerId,
       onboardingAnswers: briefingAnswers,
+      notes: (briefingAnswers ? "Respostas do Briefing registradas." : "") + annualNote,
       onboardingCompleted: true,
       createdAt: Date.now(),
       lastUpdate: Date.now(),
-      convertedVia: 'Public Checkout'
+      convertedVia: 'Public Checkout',
+      billingCycle: clientData.billingCycle || 'MONTHLY'
     });
 
     return res.status(200).json({ checkoutUrl });
