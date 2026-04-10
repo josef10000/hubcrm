@@ -1,110 +1,160 @@
 # Hub Central - Ecossistema Completo de Gestão e Onboarding
 
-<div align="center">
-  <img src="https://i.imgur.com/EFBaYb5.png" alt="Hub Central Logo" width="300" />
-  <p><em>By Hub Symples - Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.</em></p>
-  
-  <p>
-    <img src="https://img.shields.io/badge/Version-1.5.0-orange" alt="Version" />
-    <img src="https://img.shields.io/badge/License-MIT-blue" alt="License" />
-    <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react" alt="React" />
-    <img src="https://img.shields.io/badge/Tailwind-4.0-38B2AC?logo=tailwind-css" alt="Tailwind" />
-  </p>
-</div>
+**Hub Symples** — Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/josef10000/hubcrm/blob/main/LICENSE)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)
 
 ---
 
-## 🚀 A Visão do Projeto
+## Visão do Projeto
 
-O **Hub Symples** não é apenas um CRM; é um ecossistema ponta a ponta projetado para empresas que buscam profissionalismo e escala. Ele cobre desde a prospecção inicial (Leads), passa por um processo de onboarding automatizado com contrato e pagamento, e termina em um Portal do Cliente robusto com suporte, indicadores de satisfação e programa de recompensas.
+O **Hub Central** não é apenas um CRM. É um ecossistema **ponta a ponta** projetado para agências, SaaS e prestadores de serviço que precisam de profissionalismo e escala.
 
-## 🛠️ Módulos de Alta Performance
+Ele cobre desde a captação de leads, passando por onboarding automatizado com assinatura digital e pagamento recorrente, até um Portal do Cliente self-service completo.
 
-### 🏗️ 1. Funil de Vendas & CRM
-Gestão intuitiva de leads com status dinâmicos. Acompanhe a jornada do prospect até a conversão definitiva.
-- **Status Customizáveis**: Adapte as etapas do funil ao seu processo comercial.
-- **Conversão Direta**: Transforme leads em clientes com um clique, sincronizando dados financeiros.
+### Principais Módulos
 
-### 💳 2. Checkout Público & Onboarding Automatizado
-O "Power Checkout" permite que o cliente se auto-cadastre e inicie o projeto imediatamente.
-- **Multi-Etapas**: Fluxo otimizado (Dados -> Briefing -> Contrato -> Pagamento).
-- **Assinatura Digital**: Sistema integrado de aceite de contrato baseado em IP e carimbo de data/hora.
-- **Coleta Multimídia**: Upload múltiplo de logos e ativos do site diretamente no onboarding.
-- **Automação de Planos**: Integração profunda com Asaas para criação de assinaturas (In-App).
+### 1. Funil de Vendas & CRM
+- Gestão de leads com status dinâmicos e customizáveis
+- Conversão de lead → cliente com um clique (sincronização automática com Asaas)
+- Pipeline visual (Kanban)
 
-### 🖥️ 3. Portal do Cliente (Self-Service)
-Uma área exclusiva para cada cliente, acessível via link único, aumentando a transparência e fidelidade.
-- **Timeline de Projeto**: Barra de progresso visual das etapas (Design, Dev, Revisão, etc).
-- **Central de Pagamentos**: Histórico completo de faturas, links de boleto/PIX e status em tempo real.
-- **Support & Ticket**: Sistema de abertura de chamados com histórico de conversas.
-- **Satisfação (NPS)**: Pesquisa automática de satisfação após a conclusão do projeto.
-- **Referral Program**: Sistema "Indique e Ganhe" com bônus acumulados ou descontos automáticos na assinatura.
+### 2. Checkout Público & Onboarding Automatizado ("Power Checkout")
+- Fluxo multi-etapa: Dados → Briefing → Contrato → Pagamento
+- **Assinatura digital** com registro de IP + carimbo de data/hora
+- Upload múltiplo de logos e ativos do cliente
+- Criação automática de assinaturas recorrentes no Asaas
+- Automação completa de boas-vindas via Resend
 
-### 📈 4. Finanças & Business Intelligence
-Painel completo para controle de caixa e saúde do negócio (Churn, LTV, ROI).
-- **Fluxo de Caixa**: Gestão de entradas (pagamentos Asaas) e saídas (despesas operacionais).
-- **Orçamentos & Metas**: Visualize se o faturamento está atingindo o Break Even ou batendo recordes.
+### 3. Portal do Cliente (Self-Service)
+- Timeline visual de progresso do projeto
+- Central de pagamentos com histórico completo (boleto, PIX, cartão)
+- Sistema de tickets de suporte
+- Pesquisa automática de satisfação (NPS)
+- Programa de indicação ("Indique e Ganhe")
 
-### 🛰️ 5. Monitoramento de Serviços (Uptime API)
-Integração nativa para monitoramento de infraestrutura.
-- **Real-time Status**: Verifique se os sites e serviços dos clientes estão online.
-- **Dashboard de Latência**: Métricas de tempo de resposta integradas diretamente no CRM.
-- **Powered by UptimeRobot**: Sincronização automática via API para monitoramento 24/7.
+### 4. Finanças & Business Intelligence
+- Fluxo de caixa integrado com Asaas
+- Métricas de Churn, LTV, ROI e Break Even
+- Dashboard financeiro completo
 
-### 📧 6. Automação de Comunicação (Resend)
-Sistema de notificações transacionais que mantém o cliente informado sem esforço manual.
-- **Boas-vindas Inteligente**: Envio com link de pagamento e boas-vindas logo após o setup.
-- **Alertas de Faturas**: Notificações de pagamento recebido, fatura emitida e avisos de atraso.
-- **Gatilhos Manuais**: Central de notificações para disparar e-mails específicos de suporte ou financeiro com um clique.
+### 5. Monitoramento de Serviços
+- Integração nativa com **UptimeRobot**
+- Status em tempo real de sites e serviços dos clientes
+- Dashboard de latência e uptime
 
-## ⚙️ Stack Tecnológica & Arquitetura
+### 6. Automação de Comunicação
+- Integração com **Resend** (e-mails transacionais)
+- Gatilhos automáticos e manuais
+- Alertas de faturas, atrasos e onboarding
 
-- **Arquitetura Multi-Tenant**: Isolamento total de dados por organização via subcoleções estruturadas no Firestore. Cada empresa possui seu próprio contexto de dados, configurações e portais.
-- **Frontend**: React 19 (Hooks, Context API) utilizando Vite como build tool.
-- **Estilização**: Tailwind CSS 4.0 para uma interface moderna, responsiva e performática.
-- **Backend (Serverless)**: Vercel Functions rodando lógica em Node.js e TypeScript.
-- **Database**: Firebase Firestore (NoSQL) para persistência escalável e em tempo real.
-- **Segurança & Rate Limit**: Upstash Redis garantindo a integridade dos endpoints de pagamento.
-- **Providers**: Asaas (Pagamentos), Resend (Transactional Emails), UptimeRobot (Monitoring).
+---
+
+## 🛠️ Stack Tecnológica
+
+| Camada              | Tecnologia                                      |
+|---------------------|-------------------------------------------------|
+| **Frontend**        | React 19 + TypeScript + Vite + Context API      |
+| **Estilização**     | Tailwind CSS 4.0                                |
+| **Backend**         | Vercel Serverless Functions (Node.js + TS)      |
+| **Banco de Dados**  | Firebase Firestore (NoSQL) + Realtime           |
+| **Autenticação**    | Firebase Auth                                   |
+| **Rate Limiting**   | Upstash Redis                                   |
+| **Pagamentos**      | Asaas (clientes, assinaturas, webhooks)         |
+| **E-mails**         | Resend                                          |
+| **Monitoramento**   | UptimeRobot API                                 |
+| **Deploy**          | Vercel                                          |
+| **Testes**          | Vitest                                          |
+
+**Arquitetura**: Multi-tenant completa com isolamento de dados por organização (empresa/tenant) via Firestore.
+
+---
 
 ## 🔐 Segurança & Controle de Acesso (RBAC)
 
-O ecossistema utiliza um sistema de permissões granulado para garantir que cada membro da equipe acesse apenas o necessário:
+Sistema de permissões granulares (Role-Based Access Control):
 
-- **👑 Administrador**: Controle total sobre a organização, finanças, configurações globais e gestão de equipe.
-- **💼 Gerente**: Acesso administrativo completo, incluindo gestão de produtos e leads.
-- **🛠️ Suporte Técnico**: Focado na execução técnica e criação de sites. Acesso a **Produtos**, Clientes, Monitoramento, Mapa e Agenda, sem acesso ao Pipeline de Vendas.
-- **🤝 Vendedor**: Gestão de leads próprios e agora com acesso à criação de **Produtos** para agilizar o fechamento de propostas.
-- **👁️ Só Leitura**: Permite auditoria completa do sistema sem permissão para criar, editar ou excluir registros.
+- **Administrador** — Controle total (finanças, configurações, gestão de equipe)
+- **Gerente** — Acesso administrativo completo (produtos, leads, relatórios)
+- **Suporte Técnico** — Produtos, Clientes, Monitoramento, Mapa, Agenda (sem acesso ao pipeline de vendas)
+- **Vendedor** — Leads próprios + criação de Produtos para agilizar propostas
+- **Só Leitura** — Auditoria completa (sem criar/editar/excluir)
 
-## 🔨 Configuração e Instalação
-
-### Pré-requisitos
-- Node.js instalado (v18 recomendada).
-- Git para controle de versão.
-
-### Passos Rápidos
-1. Clone este repositório:
-   ```bash
-   git clone https://github.com/josef10000/hubcrm.git
-   ```
-2. Instale as dependências:
-   ```bash
-   npm install
-   ```
-3. Configure o arquivo `.env`:
-   Use o `.env.example` como base e preencha as chaves do Firebase, Asaas, Resend e Upstash.
-
-4. Acesse o ambiente de dev:
-   ```bash
-   npm run dev
-   ```
-
-## 📄 Licença
-
-Este projeto é open-source sob a [Licença MIT](LICENSE) em nome de **Hub Symples**.
+**Recursos implementados**:
+- Convites para equipe com detecção automática de "ghost invites"
+- Remoção de membros com opção de limpeza de dados
+- Restrições baseadas em roles no frontend e backend
+- Arquitetura multi-tenant com isolamento por `empresaId`
 
 ---
+
+## 🚀 Como rodar localmente
+
+### Pré-requisitos
+- Node.js ≥ 20 (recomendado)
+- Conta Firebase (Firestore + Auth)
+- Chaves API: Asaas, Resend, Upstash Redis, UptimeRobot (opcional)
+
+### Passos
+
+```bash
+# 1. Clone o repositório
+git clone https://github.com/josef10000/hubcrm.git
+cd hubcrm
+
+# 2. Instale as dependências
+npm install
+
+# 3. Configure as variáveis de ambiente
+cp .env.example .env.local
+# Edite o .env.local com suas chaves
+Variáveis principais (veja .env.example):
+
+Firebase config (VITE_FIREBASE_*)
+VITE_ASAAS_API_KEY
+VITE_RESEND_API_KEY
+VITE_UPSTASH_REDIS_URL
+
+Bash# 4. Rode em desenvolvimento
+npm run dev
+Acesse: http://localhost:5173
+
+Configuração do Firebase
+
+Regras de segurança estão em firestore.rules
+Índices em firestore.indexes.json
+Recomendação forte: revise as rules antes de produção para garantir isolamento multi-tenant e RBAC
+
+
+Roadmap (principais próximos passos)
+
+ Notificações push (Firebase Cloud Messaging)
+ Relatórios avançados com gráficos
+ Integração WhatsApp Business API
+ Dark mode completo
+ Exportação de dados (PDF/Excel)
+ Melhoria nas regras de segurança com Custom Claims
+
+
+Contribuindo
+Contribuições são bem-vindas!
+
+Faça um fork do projeto
+Crie uma branch para sua feature (git checkout -b feature/nova-funcionalidade)
+Commit suas mudanças (git commit -m 'feat: adiciona ...')
+Push para a branch (git push origin feature/nova-funcionalidade)
+Abra um Pull Request
+
+Veja também o arquivo email_integration_guide.md para detalhes sobre automação de e-mails.
+
+Licença
+Este projeto está licenciado sob a Licença MIT — veja o arquivo LICENSE para mais detalhes.
+
+Feito com ❤️ no Brasil 🇧🇷
+Autor: José (josef10000)
+Quer ajudar? Abra uma Issue ou Pull Request!
 <div align="center">
   🚀 <strong>Hub Central</strong>: Modernidade, Automação e Foco em Resultados.
 </div>
