@@ -1,4 +1,5 @@
 {
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD . ':!*.md' ':!.gitignore' ':!.env.example' ':!LICENSE'",
   "rewrites": [
     { "source": "/api/asaas/webhook", "destination": "/api/asaas_webhook" },
     { "source": "/api/asaas/customers", "destination": "/api/asaas_customers?action=customers" },
