@@ -12,6 +12,17 @@ export default function AcceptInviteView() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [authTimeout, setAuthTimeout] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (authLoading) {
+        console.warn("[Invite] Auth loading took too long, showing fallback.");
+        setAuthTimeout(true);
+      }
+    }, 8000);
+    return () => clearTimeout(timer);
+  }, [authLoading]);
 
   const handleAccept = async () => {
     if (!user) {
@@ -63,7 +74,7 @@ export default function AcceptInviteView() {
     }
   }, [user, token]);
 
-  if (authLoading) {
+  if (authLoading && !authTimeout) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] flex flex-col items-center justify-center">
         <Loader2 className="animate-spin text-primary-500 mb-4" size={48} />
@@ -71,6 +82,9 @@ export default function AcceptInviteView() {
       </div>
     );
   }
+
+  // Se houver timeout ou demore demais, mostramos o botão mesmo assim (fallback)
+  // O handleAccept tratará se o user é null ou não logo em seguida.
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] flex flex-col items-center justify-center p-6 relative overflow-hidden">

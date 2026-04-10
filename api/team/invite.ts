@@ -54,7 +54,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 5. Enviar E-mail via Resend
     // O link aponta para uma rota que vamos criar no frontend: /convite/:token
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://hubcentral.vercel.app';
+    const protocol = req.headers['x-forwarded-proto'] || 'http';
+    const host = req.headers.host;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`;
     const inviteLink = `${baseUrl}/convite/${token}`;
     
     await sendTeamInviteEmail(email, collaboratorName, role, inviteLink);
