@@ -42,19 +42,19 @@ import PublicCheckoutPage from './components/PublicCheckoutPage';
 // ── Navigation Config ──
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-  { icon: Target, label: 'Pipeline', path: '/leads' },
+  { icon: Target, label: 'Pipeline', path: '/leads', roles: ['Administrador', 'Gerente', 'Vendedor'] },
   { icon: Bell, label: 'Notificações', path: '/notifications' },
-  { icon: BarChart3, label: 'Analytics', path: '/analytics' },
+  { icon: BarChart3, label: 'Analytics', path: '/analytics', roles: ['Administrador', 'Gerente'] },
   { icon: MessageCircle, label: 'Chamados', path: '/support' },
-  { icon: Calendar, label: 'Agenda', path: '/calendar' },
-  { icon: DollarSign, label: 'Gestão de Custos', path: '/finance' },
+  { icon: Calendar, label: 'Agenda', path: '/calendar', roles: ['Administrador', 'Gerente', 'Suporte Técnico'] },
+  { icon: DollarSign, label: 'Gestão de Custos', path: '/finance', roles: ['Administrador', 'Gerente'] },
   { icon: Users, label: 'Indicações', path: '/referrals' },
-  { icon: Megaphone, label: 'Avisos', path: '/marketing' },
-  { icon: Package, label: 'Produtos', path: '/products' },
-  { icon: Globe, label: 'Monitoramento', path: '/monitoring' },
-  { icon: MapIcon, label: 'Mapa', path: '/map' },
+  { icon: Megaphone, label: 'Avisos', path: '/marketing', roles: ['Administrador', 'Gerente'] },
+  { icon: Package, label: 'Produtos', path: '/products', roles: ['Administrador', 'Gerente', 'Vendedor'] },
+  { icon: Globe, label: 'Monitoramento', path: '/monitoring', roles: ['Administrador', 'Gerente', 'Suporte Técnico'] },
+  { icon: MapIcon, label: 'Mapa', path: '/map', roles: ['Administrador', 'Gerente', 'Suporte Técnico'] },
   { icon: Users, label: 'Equipe', path: '/team', roles: ['Administrador', 'Gerente'] },
-  { icon: Settings, label: 'Configurações', path: '/settings' },
+  { icon: Settings, label: 'Configurações', path: '/settings', roles: ['Administrador', 'Gerente'] },
 ];
 
 function CRMInner() {

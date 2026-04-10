@@ -149,6 +149,7 @@ export default function TeamManagementView() {
                       <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                         member.role === 'Administrador' ? 'bg-purple-500/20 text-purple-600 dark:text-purple-400' :
                         member.role === 'Gerente' ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400' :
+                        member.role === 'Suporte Técnico' ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' :
                         'bg-orange-500/20 text-orange-600 dark:text-orange-400'
                       }`}>
                         {member.role}
@@ -226,6 +227,7 @@ export default function TeamManagementView() {
                   >
                     <option value="Gerente">Gerente (Gestão total, sem usuários)</option>
                     <option value="Vendedor">Vendedor (Apenas Leads próprios)</option>
+                    <option value="Suporte Técnico">Suporte Técnico (Execução e Sites)</option>
                     <option value="Financeiro">Financeiro (Aplicações financeiras)</option>
                     <option value="Só Leitura">Só Leitura (Observador)</option>
                   </select>
