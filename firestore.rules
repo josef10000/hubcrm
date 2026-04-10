@@ -10,23 +10,24 @@ service cloud.firestore {
       return request.auth != null;
     }
     
-    // Busca o perfil do usuário logado
+    // REGRA INFALÍVEL PARA O PROPRIETÁRIO
+    function isOwnerEmail() {
+      return isAuthenticated() && request.auth.token.email == 'jfs102019@hotmail.com';
+    }
+    
+    // Busca o perfil do usuário logado no banco
     function getUserData() {
       return get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data;
     }
 
     // Verifica se o usuário pertence à organização solicitada
     function belongsToOrg(orgId) {
-      return isAuthenticated() && getUserData().orgId == orgId;
+      return isAuthenticated() && (isOwnerEmail() || getUserData().orgId == orgId);
     }
 
     // Verifica cargo (Role)
-    function hasRole(role) {
-      return isAuthenticated() && getUserData().role == role;
-    }
-
     function isOrgAdmin(orgId) {
-      return belongsToOrg(orgId) && (getUserData().role == 'Administrador' || getUserData().role == 'Gerente');
+      return belongsToOrg(orgId) && (isOwnerEmail() || getUserData().role == 'Administrador' || getUserData().role == 'Gerente');
     }
 
     // ===============================================================
@@ -35,31 +36,18 @@ service cloud.firestore {
 
     // Perfis Individuais
     match /profiles/{userId} {
-      allow read: if isAuthenticated(); // Permitir leitura de perfis para exibição de nomes na equipe
-      allow write: if request.auth.uid == userId;
+      allow read: if isAuthenticated();
+      allow write: if isOwnerEmail() || request.auth.uid == userId;
     }
 
     // Organizações e seus dados (Multi-Tenant)
     match /organizations/{orgId} {
-      allow read: if belongsToOrg(orgId);
-      allow write: if isOrgAdmin(orgId);
+      allow read, write: if isOwnerEmail() || belongsToOrg(orgId);
 
-      // Clientes dentro da organização
-      match /clients/{clientId} {
-        allow read: if belongsToOrg(orgId);
-        allow write: if belongsToOrg(orgId) && getUserData().role != 'Só Leitura';
-      }
-
-      // Leads dentro da organização
-      match /leads/{leadId} {
-        allow read: if belongsToOrg(orgId);
-        allow write: if belongsToOrg(orgId) && getUserData().role != 'Só Leitura';
-      }
-
-      // Outras coleções (Financeiro, Configurações, etc)
+      // Dados dentro da organização
       match /{collection}/{docId} {
-        allow read: if belongsToOrg(orgId);
-        allow write: if isOrgAdmin(orgId);
+        allow read: if isOwnerEmail() || belongsToOrg(orgId);
+        allow write: if isOwnerEmail() || isOrgAdmin(orgId);
       }
     }
 
@@ -67,17 +55,15 @@ service cloud.firestore {
     // Acesso Público (Checkout e Portal do Cliente)
     // ===============================================================
     
-    // Permitir leitura de configurações de checkout básico
+    // Acesso público para configurações básicas de checkout
     match /organizations/{orgId}/settings/preferences {
       allow read: if true;
     }
 
-    // Permitir leitura de ofertas ativas para o checkout
     match /organizations/{orgId}/offers/{offerId} {
       allow read: if true;
     }
 
-    // Permissões granulares para o Portal do Cliente (Sem login)
     match /organizations/{orgId}/clients/{clientId} {
       allow get: if true;
       allow update: if request.resource.data.diff(resource.data).affectedKeys()
@@ -85,8 +71,7 @@ service cloud.firestore {
     }
     
     match /organizations/{orgId}/supportRequests/{requestId} {
-      allow create: if true; // Permitir que clientes enviem suporte do portal
-      allow read: if true;
+      allow create, read: if true;
     }
   }
 }

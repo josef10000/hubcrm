@@ -82,14 +82,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // FALLBACK DE EMERGÊNCIA: Se for o proprietário, permite entrar mesmo com erro de banco
             if (u.email === 'jfs102019@hotmail.com') {
               console.warn("Using Memory-based Emergency Profile for Owner.");
-              setUserProfile({
+              const emergencyProfile = {
                 uid: u.uid,
                 email: u.email || '',
                 displayName: u.displayName || 'Proprietário',
                 orgId: u.uid,
-                role: 'Administrador',
+                role: 'Administrador' as const,
                 createdAt: Date.now()
-              });
+              };
+              setUserProfile(emergencyProfile);
+              
+              // Bootstrap em background: Tenta criar o perfil físico no banco agora que as regras permitem
+              setDoc(profileRef, emergencyProfile, { merge: true }).catch(e => console.error("Bootstrap failed:", e));
             } else {
               // Para outros usuários, se falhar o carregamento do perfil, mas o Auth existir, 
               // não travamos o app, apenas deixamos sem perfil (o CRMContext lidará com isso)
