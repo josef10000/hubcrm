@@ -17,7 +17,11 @@ export default function DashboardView() {
     clients,
     isChurnRisk,
     isComboNearRenewal,
-    userProfile
+    userProfile,
+    syncPayments,
+    isSyncing,
+    setEditingClient,
+    churnRiskDays
   } = useCRM();
 
   const {

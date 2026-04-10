@@ -613,7 +613,7 @@ export default function ClientPortal() {
                       {isCurrent && (
                         <button
                           onClick={async () => {
-                            if (!userId || !clientId) return;
+                            if (!orgId || !clientId) return;
                             try {
                               const newStages = [...client.stages];
                               newStages[index].completed = true;

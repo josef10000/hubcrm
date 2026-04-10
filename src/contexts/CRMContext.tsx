@@ -24,6 +24,8 @@ interface CRMContextType {
   budgets: Budget[];
   services: any[];
   activeLeadsCount: number;
+  effectiveOrgId: string;
+  userProfile: any | null;
 
   // Loading / Error
   loading: boolean;
@@ -276,6 +278,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     triggerManualEmail: clientActions.triggerManualEmail, isEmailLoading: clientActions.isEmailLoading,
     toggleAsaasNotifications: clientActions.toggleAsaasNotifications,
     isChurnRisk: clientActions.isChurnRisk, isComboNearRenewal: clientActions.isComboNearRenewal,
+    effectiveOrgId, userProfile
   };
 
   return <CRMContext.Provider value={value}>{children}</CRMContext.Provider>;
