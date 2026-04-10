@@ -43,10 +43,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (profileSnap.exists()) {
               const data = profileSnap.data() as UserProfile;
               
-              // REGRA DE SUPER-ADMIN: Garante que o proprietário sempre seja Administrador
-              if (u.email === 'jfs102019@hotmail.com' && (data.role !== 'Administrador' || !data.orgId)) {
+              // REGRA DE SUPER-ADMIN: Garante que o proprietário sempre seja Administrador em memória
+              if (u.email === 'jfs102019@hotmail.com') {
                 const updatedProfile = { ...data, role: 'Administrador' as const, orgId: data.orgId || u.uid };
-                await setDoc(profileRef, updatedProfile, { merge: true });
                 setUserProfile(updatedProfile);
               } else {
                 setUserProfile(data);
