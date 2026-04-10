@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { UserProfile } from '../types';
 
@@ -51,17 +51,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 setUserProfile(data);
               }
             } else {
-              // BOOTSTRAP: Criar perfil inicial e organização (Migração)
+              // --- BLOCO BOOTSTRAP / NOVO USUÁRIO ---
+              
+              // 1. Verificar se existe convite pendente para este e-mail
+              const invitesRef = query(collection(db, 'convites'), 
+                where('email', '==', u.email), 
+                where('status', '==', 'pending'),
+                limit(1)
+              );
+              
+              const inviteSnap = await getDocs(invitesRef);
+              
+              if (!inviteSnap.empty) {
+                console.log("[Auth] Convite detectado. Realizando auto-vínculo...");
+                const idToken = await u.getIdToken();
+                const acceptRes = await fetch('/api/team/accept', {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${idToken}`,
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({}) // Sem token, a API usa o e-mail
+                });
+                
+                if (acceptRes.ok) {
+                  const newProfileSnap = await getDoc(profileRef);
+                  if (newProfileSnap.exists()) {
+                    setUserProfile(newProfileSnap.data() as UserProfile);
+                    setLoading(false);
+                    return;
+                  }
+                }
+              }
+
+              // 2. Se não houver convite, cria como NOVO ADMINISTRADOR (Padrão)
               const newProfile: UserProfile = {
                 uid: u.uid,
                 email: u.email || '',
-                displayName: u.displayName || 'Administrador',
-                orgId: u.uid, // Por enquanto usamos o UID como OrgId padrão na migração
+                displayName: u.displayName || 'Usuário',
+                orgId: u.uid,
                 role: 'Administrador',
                 createdAt: Date.now()
               };
               
-              // Criar organização se não existir
+              // Criar organização inicial
               const orgRef = doc(db, 'organizations', u.uid);
               const orgSnap = await getDoc(orgRef);
               if (!orgSnap.exists()) {

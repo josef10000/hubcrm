@@ -13,14 +13,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const { token } = req.body;
+    let inviteRef;
+    let inviteSnap;
 
-    if (!token) {
-      return res.status(400).json({ error: 'Token de convite é obrigatório' });
+    if (token) {
+      inviteRef = db.collection('convites').doc(token);
+      inviteSnap = await inviteRef.get();
+    } else {
+      // Se não houver token, buscamos por e-mail do usuário logado (Auto-accept)
+      const adminAuth = getFirebaseAdmin().auth();
+      const user = await adminAuth.getUser(uid);
+      const email = user.email;
+
+      if (!email) {
+        return res.status(400).json({ error: 'E-mail do usuário não encontrado para auto-aceite' });
+      }
+
+      const invitesSnap = await db.collection('convites')
+        .where('email', '==', email)
+        .where('status', '==', 'pending')
+        .limit(1)
+        .get();
+
+      if (invitesSnap.empty) {
+        return res.status(404).json({ error: 'Nenhum convite pendente encontrado para este e-mail' });
+      }
+
+      inviteRef = invitesSnap.docs[0].ref;
+      inviteSnap = invitesSnap.docs[0];
     }
-
-    // 2. Verificar o convite no Firestore
-    const inviteRef = db.collection('convites').doc(token);
-    const inviteSnap = await inviteRef.get();
 
     if (!inviteSnap.exists) {
       return res.status(404).json({ error: 'Convite não encontrado ou inválido' });
@@ -29,11 +50,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const inviteData = inviteSnap.data()!;
 
     // 3. Validações de status e expiração
-    if (inviteData.status !== 'pending') {
-      return res.status(400).json({ error: 'Este convite já foi utilizado ou está expirado' });
+    if (inviteData.status !== 'pending' && inviteData.acceptedBy !== uid) {
+      return res.status(400).json({ error: 'Este convite já foi utilizado por outra pessoa ou expirou' });
     }
 
-    if (inviteData.expiresAt < Date.now()) {
+    if (inviteData.expiresAt < Date.now() && inviteData.status === 'pending') {
       await inviteRef.update({ status: 'expired' });
       return res.status(400).json({ error: 'Este convite expirou' });
     }
