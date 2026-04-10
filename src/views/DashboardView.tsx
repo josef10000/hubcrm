@@ -13,7 +13,8 @@ import ClientsGrid from '../components/dashboard/ClientsGrid';
 
 export default function DashboardView() {
   const { user } = useAuth();
-  
+  const { 
+    clients,
     isChurnRisk,
     isComboNearRenewal,
     userProfile
