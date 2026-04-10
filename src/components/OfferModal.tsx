@@ -6,22 +6,30 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
   const [formData, setFormData] = useState<Partial<Offer>>({
     name: '',
     type: 'SUBSCRIPTION',
+    displayContext: 'PORTAL',
     price: 0,
     setupPrice: 0,
     maxInstallments: 12,
+    order: 0,
+    description: '',
     active: true,
   });
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
+    setErrorMsg('');
     if (initialData) {
       setFormData(initialData);
     } else {
       setFormData({
         name: '',
         type: 'SUBSCRIPTION',
+        displayContext: 'PORTAL',
         price: 0,
         setupPrice: 0,
         maxInstallments: 12,
+        order: 0,
+        description: '',
         active: true,
       });
     }
@@ -29,16 +37,24 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
 
   if (!isOpen) return null;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
+    setErrorMsg('');
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'number' ? Number(value) : type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+      [name]: type === 'number' ? (value === '' ? '' : Number(value)) : type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
     }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validação de campos obrigatórios
+    if (!formData.name?.trim()) return setErrorMsg('Nome é obrigatório.');
+    if (!formData.description?.trim()) return setErrorMsg('Descrição é obrigatória.');
+    if (formData.price === undefined || formData.price === '') return setErrorMsg('Preço é obrigatório.');
+    if (formData.order === undefined || formData.order === '') return setErrorMsg('Ordem de exibição é obrigatória.');
+    
     onSave(formData);
   };
 
@@ -54,6 +70,12 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
         
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
           <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+            {errorMsg && (
+              <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-xl text-sm font-medium animate-in fade-in slide-in-from-top-2">
+                {errorMsg}
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Nome da Oferta *</label>
               <input 
@@ -71,6 +93,7 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
               <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Tipo *</label>
               <select 
                 name="type" 
+                required
                 value={formData.type || 'SUBSCRIPTION'} 
                 onChange={handleChange} 
                 className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all"
@@ -84,6 +107,7 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
               <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Contexto de Exibição *</label>
               <select 
                 name="displayContext" 
+                required
                 value={formData.displayContext || 'PORTAL'} 
                 onChange={handleChange} 
                 className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all"
@@ -95,76 +119,80 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
               <p className="text-xs text-gray-500 mt-1">Define onde este produto ficará visível para venda.</p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Preço do Plano/Oferta (R$) *</label>
-              <input 
-                type="number" 
-                name="price" 
-                required
-                min="0"
-                step="0.01"
-                value={formData.price || 0} 
-                onChange={handleChange} 
-                className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all" 
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Preço (R$) *</label>
+                <input 
+                  type="number" 
+                  name="price" 
+                  required
+                  min="0"
+                  step="0.01"
+                  value={formData.price} 
+                  onChange={handleChange} 
+                  className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Ordem (1, 2...) *</label>
+                <input 
+                  type="number" 
+                  name="order" 
+                  required
+                  value={formData.order} 
+                  onChange={handleChange} 
+                  className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                  placeholder="1"
+                />
+              </div>
             </div>
 
             {formData.type === 'SUBSCRIPTION' && (
               <div>
-                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Taxa de Setup (R$)</label>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Taxa de Setup (R$) *</label>
                 <input 
                   type="number" 
                   name="setupPrice" 
+                  required
                   min="0"
                   step="0.01"
-                  value={formData.setupPrice || 0} 
+                  value={formData.setupPrice} 
                   onChange={handleChange} 
                   className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all" 
                 />
-                <p className="text-xs text-gray-500 mt-1">Deixe 0 se for apenas assinatura sem setup.</p>
+                <p className="text-xs text-gray-500 mt-1">Coloque 0 se não houver taxa de setup.</p>
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Descrição da Oferta (Opcional)</label>
+              <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Descrição Crucial *</label>
               <textarea 
                 name="description" 
+                required
                 value={formData.description || ''} 
-                onChange={handleChange as any} 
+                onChange={handleChange} 
                 className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all h-24 resize-none" 
                 placeholder="Ex: Entrega em 5 dias, Suporte Grátis..."
               />
-              <p className="text-xs text-gray-500 mt-1">Esta descrição aparecerá nos cards da página de checkout.</p>
+              <p className="text-xs text-gray-500 mt-1">Detalhes vitais que aparecem no card do produto.</p>
             </div>
 
             {formData.type === 'SINGLE' && (
               <div>
-                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Máximo de Parcelas</label>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Máximo de Parcelas *</label>
                 <input 
                   type="number" 
                   name="maxInstallments" 
+                  required
                   min="1"
                   max="12"
-                  value={formData.maxInstallments || 12} 
+                  value={formData.maxInstallments} 
                   onChange={handleChange} 
                   className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all" 
                 />
-                <p className="text-xs text-gray-500 mt-1">O cliente poderá parcelar o pagamento único em até {formData.maxInstallments || 12} vezes.</p>
               </div>
             )}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Ordem de Exibição (1, 2, 3...)</label>
-              <input 
-                type="number" 
-                name="order" 
-                value={formData.order || 0} 
-                onChange={handleChange} 
-                className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all"
-                placeholder="1"
-              />
-              <p className="text-xs text-gray-500 mt-1">Produtos com menor número aparecem primeiro na página de vendas.</p>
-            </div>
 
             <div className="flex items-center gap-3 mt-4">
               <input 
@@ -172,7 +200,7 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
                 id="active"
                 name="active" 
                 checked={formData.active !== undefined ? formData.active : true} 
-                onChange={handleChange} 
+                onChange={handleChange as any} 
                 className="w-5 h-5 rounded border-gray-300 text-primary-500 focus:ring-primary-500 bg-black/20"
               />
               <label htmlFor="active" className="text-sm font-medium text-gray-600 dark:text-gray-300">
@@ -193,7 +221,7 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
             ) : <div></div>}
             <div className="flex space-x-3">
               <button type="button" onClick={onClose} className="px-6 py-3 rounded-xl border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors font-medium">Cancelar</button>
-              <button type="submit" className="px-6 py-3 rounded-xl bg-gradient-to-r from-primary-500 to-primary-400 hover:from-primary-600 hover:to-primary-600 text-gray-900 dark:text-white font-medium shadow-lg shadow-primary-500/30 transition-all hover:scale-105 active:scale-95">Salvar</button>
+              <button type="submit" className="px-6 py-3 rounded-xl bg-gradient-to-r from-primary-500 to-primary-400 hover:from-primary-600 hover:to-primary-600 text-gray-900 dark:text-white font-medium shadow-lg shadow-primary-500/30 transition-all hover:scale-105 active:scale-95">Salvar Produto</button>
             </div>
           </div>
         </form>
