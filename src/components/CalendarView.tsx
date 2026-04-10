@@ -28,104 +28,13 @@ interface Holiday {
 }
 
 export default function CalendarView({ clients, onClientClick, role }: CalendarViewProps) {
-  const isAtendimento = role === 'Atendimento';
+  const canSeeFinance = role === 'Administrador' || role === 'Gerente';
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [mode, setMode] = useState<CalendarMode>(isAtendimento ? 'production' : 'finance');
+  const [mode, setMode] = useState<CalendarMode>(canSeeFinance ? 'finance' : 'production');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
 
-  // Fetch holidays from BrasilAPI when year changes
-  useEffect(() => {
-    const year = currentDate.getFullYear();
-    fetch(`https://brasilapi.com.br/api/feriados/v1/${year}`)
-      .then(r => r.json())
-      .then((data: Holiday[]) => {
-        if (Array.isArray(data)) setHolidays(data);
-      })
-      .catch(() => setHolidays([]));
-  }, [currentDate.getFullYear()]);
-
-  const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
-  const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
-
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(monthStart);
-  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
-
-  // Get events for a specific day based on the current mode
-  const getEventsForDay = (day: Date) => {
-    const dayString = format(day, 'yyyy-MM-dd');
-    return clients.filter(client => {
-      if (mode === 'finance') {
-        return client.nextDueDate === dayString;
-      } else {
-        return client.deliveryDate === dayString;
-      }
-    });
-  };
-
-  const getHolidayForDay = (day: Date): Holiday | undefined => {
-    const dayStr = format(day, 'yyyy-MM-dd');
-    return holidays.find(h => h.date === dayStr);
-  };
-
-  const renderDaySummary = (day: Date, dayEvents: Client[]) => {
-    if (dayEvents.length === 0) return null;
-
-    if (mode === 'finance') {
-      const expected = dayEvents.reduce((acc, c) => acc + getPlanPrice(c.plan, c.billingCycle, c.customMonthlyPrice, c.customSetupPrice), 0);
-      const paid = dayEvents.reduce((acc, c) => acc + (c.paymentStatus === 'RECEIVED' ? getPlanPrice(c.plan, c.billingCycle, c.customMonthlyPrice, c.customSetupPrice) : 0), 0);
-      const percentage = expected > 0 ? Math.round((paid / expected) * 100) : 0;
-
-      return (
-        <div className="mt-2 flex flex-col gap-1.5 w-full">
-          <div className="text-xs font-bold text-primary-700 dark:text-primary-400 bg-primary-100 dark:bg-primary-900/30 px-2 py-1 rounded-md text-center">
-            {dayEvents.length} {dayEvents.length === 1 ? 'cobrança' : 'cobranças'}
-          </div>
-          <div className="text-[11px] font-medium text-gray-600 dark:text-gray-300 px-1 flex justify-between">
-            <span>Previsto:</span>
-            <span>R$ {expected.toFixed(2)}</span>
-          </div>
-          <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 px-1 flex justify-between">
-            <span>Pago:</span>
-            <span>{percentage}%</span>
-          </div>
-          <div className="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mt-0.5">
-            <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${percentage}%` }} />
-          </div>
-          {getHolidayForDay(day) && (
-            <div className="flex items-center gap-1 mt-1 text-[10px] text-amber-600 dark:text-amber-400 font-medium">
-              <AlertTriangle size={10} />
-              <span>Feriado!</span>
-            </div>
-          )}
-        </div>
-      );
-    } else {
-      const emDesenvolvimento = dayEvents.filter(c => c.status === 'Em Desenvolvimento').length;
-      const ativos = dayEvents.filter(c => c.status === 'Ativo').length;
-
-      return (
-        <div className="mt-2 flex flex-col gap-1.5 w-full">
-          <div className="text-xs font-bold text-blue-700 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded-md text-center">
-            {dayEvents.length} {dayEvents.length === 1 ? 'entrega' : 'entregas'}
-          </div>
-          {emDesenvolvimento > 0 && (
-            <div className="text-[11px] font-medium text-amber-600 dark:text-amber-400 px-1 flex justify-between">
-              <span>Em dev:</span>
-              <span>{emDesenvolvimento}</span>
-            </div>
-          )}
-          {ativos > 0 && (
-            <div className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 px-1 flex justify-between">
-              <span>Ativos:</span>
-              <span>{ativos}</span>
-            </div>
-          )}
-        </div>
-      );
-    }
-  };
+  // ... (código intermediário omitido para o replace se encontrar corretamente)
 
   return (
     <div className="h-full flex flex-col bg-white dark:bg-[#0a0a0a] rounded-3xl border border-gray-200 dark:border-white/10 overflow-hidden relative">
@@ -147,7 +56,7 @@ export default function CalendarView({ clients, onClientClick, role }: CalendarV
 
         <div className="flex flex-col sm:flex-row items-center gap-4">
           {/* Mode Toggle - Highly Visible */}
-          {!isAtendimento && (
+          {canSeeFinance && (
             <div className="flex bg-gray-100 dark:bg-white/5 p-1.5 rounded-xl w-full sm:w-auto">
               <button
                 onClick={() => setMode('finance')}

@@ -101,7 +101,7 @@ export default function DashboardView() {
           role={userProfile?.role}
         />
 
-        {userProfile?.role !== 'Atendimento' && (
+        {(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente') && (
           <FinancialCharts 
             statusData={statusData}
             nicheData={nicheData}

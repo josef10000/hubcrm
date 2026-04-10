@@ -16,10 +16,10 @@ export default function MetricsGrid({
   expectedThisMonth,
   role 
 }: MetricsGridProps) {
-  const isAtendimento = role === 'Atendimento';
+  const isFinancialRestricted = role !== 'Administrador' && role !== 'Gerente';
 
   return (
-    <div className={`grid grid-cols-1 sm:grid-cols-2 ${isAtendimento ? 'lg:grid-cols-1' : 'lg:grid-cols-4'} gap-4 mb-8`}>
+    <div className={`grid grid-cols-1 sm:grid-cols-2 ${isFinancialRestricted ? 'lg:grid-cols-1' : 'lg:grid-cols-4'} gap-4 mb-8`}>
       <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-5 rounded-2xl flex items-center shadow-lg hover:border-emerald-500/30 transition-colors">
         <div className="p-3 bg-emerald-500/20 text-emerald-400 rounded-xl mr-4">
           <Users size={24} />
@@ -30,7 +30,7 @@ export default function MetricsGrid({
         </div>
       </div>
       
-      {!isAtendimento && (
+      {!isFinancialRestricted && (
         <>
           <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-5 rounded-2xl flex items-center shadow-lg">
             <div className="p-3 bg-blue-500/20 text-blue-400 rounded-xl mr-4">
