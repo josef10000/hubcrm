@@ -1,8 +1,10 @@
 import React from 'react';
 import { Package, Edit2, Trash2, Plus, RefreshCw } from 'lucide-react';
 import { useCRM } from '../contexts/CRMContext';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function ProductsView() {
+  const { userProfile } = useAuth();
   const { 
     offers, 
     setEditingOffer, 
@@ -11,6 +13,8 @@ export default function ProductsView() {
     setIsDeleteOfferConfirmOpen, 
     restoreDefaultOffers 
   } = useCRM();
+
+  const canManageProducts = userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente';
 
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10">
@@ -22,7 +26,11 @@ export default function ProductsView() {
           </h3>
           
           <div className="space-y-4">
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Gerencie as ofertas disponíveis para seus clientes. Elas aparecerão na hora de criar um novo cliente.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              {canManageProducts 
+                ? 'Gerencie as ofertas disponíveis para seus clientes. Elas aparecerão na hora de criar um novo cliente.' 
+                : 'Visualize as ofertas disponíveis para seus clientes.'}
+            </p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {offers.map((offer) => (
@@ -64,42 +72,46 @@ export default function ProductsView() {
                       )}
                     </div>
                   </div>
-                  <div className="flex justify-end gap-2 pt-4 border-t border-gray-100 dark:border-white/5">
-                    <button 
-                      onClick={() => { setEditingOffer(offer); setIsOfferModalOpen(true); }}
-                      className="p-2 text-gray-500 hover:text-primary-500 transition-colors rounded-lg hover:bg-primary-500/10"
-                      title="Editar Oferta"
-                    >
-                      <Edit2 size={18} />
-                    </button>
-                    <button 
-                      onClick={() => { setOfferToDelete(offer.id); setIsDeleteOfferConfirmOpen(true); }}
-                      className="p-2 text-gray-500 hover:text-red-500 transition-colors rounded-lg hover:bg-red-500/10"
-                      title="Excluir Oferta"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
+                  {canManageProducts && (
+                    <div className="flex justify-end gap-2 pt-4 border-t border-gray-100 dark:border-white/5">
+                      <button 
+                        onClick={() => { setEditingOffer(offer); setIsOfferModalOpen(true); }}
+                        className="p-2 text-gray-500 hover:text-primary-500 transition-colors rounded-lg hover:bg-primary-500/10"
+                        title="Editar Oferta"
+                      >
+                        <Edit2 size={18} />
+                      </button>
+                      <button 
+                        onClick={() => { setOfferToDelete(offer.id); setIsDeleteOfferConfirmOpen(true); }}
+                        className="p-2 text-gray-500 hover:text-red-500 transition-colors rounded-lg hover:bg-red-500/10"
+                        title="Excluir Oferta"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
 
-            <div className="flex mt-6 gap-3">
-              <button
-                onClick={() => { setEditingOffer(null); setIsOfferModalOpen(true); }}
-                className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-primary-500 to-primary-400 hover:from-primary-600 hover:to-primary-600 text-gray-900 dark:text-white rounded-xl transition-all font-medium shadow-lg shadow-primary-500/20 hover:scale-105 active:scale-95"
-              >
-                <Plus size={18} />
-                Novo Produto
-              </button>
-              <button
-                onClick={restoreDefaultOffers}
-                className="flex items-center gap-2 px-5 py-3 bg-gray-200 dark:bg-white/5 hover:bg-gray-300 dark:hover:bg-white/10 text-gray-900 dark:text-white rounded-xl transition-all font-medium border border-gray-200 dark:border-white/10"
-              >
-                <RefreshCw size={18} />
-                Restaurar Padrões
-              </button>
-            </div>
+            {canManageProducts && (
+              <div className="flex mt-6 gap-3">
+                <button
+                  onClick={() => { setEditingOffer(null); setIsOfferModalOpen(true); }}
+                  className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-primary-500 to-primary-400 hover:from-primary-600 hover:to-primary-600 text-gray-900 dark:text-white rounded-xl transition-all font-medium shadow-lg shadow-primary-500/20 hover:scale-105 active:scale-95"
+                >
+                  <Plus size={18} />
+                  Novo Produto
+                </button>
+                <button
+                  onClick={restoreDefaultOffers}
+                  className="flex items-center gap-2 px-5 py-3 bg-gray-200 dark:bg-white/5 hover:bg-gray-300 dark:hover:bg-white/10 text-gray-900 dark:text-white rounded-xl transition-all font-medium border border-gray-200 dark:border-white/10"
+                >
+                  <RefreshCw size={18} />
+                  Restaurar Padrões
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
