@@ -1,113 +1,99 @@
-# HubCRM - Gestão de Clientes e Automação de Onboarding
+# Hub Symples - Ecossistema Completo de Gestão e Onboarding
 
 <div align="center">
-  <img src="https://i.imgur.com/2H9UPAW.png" alt="HubCRM Logo" width="300" />
-  <p><em>Sua solução completa para gestão de leads, clientes e faturamento automatizado.</em></p>
+  <img src="https://i.imgur.com/2H9UPAW.png" alt="Hub Symples Logo" width="300" />
+  <p><em>Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.</em></p>
+  
+  <p>
+    <img src="https://img.shields.io/badge/Version-1.5.0-orange" alt="Version" />
+    <img src="https://img.shields.io/badge/License-MIT-blue" alt="License" />
+    <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react" alt="React" />
+    <img src="https://img.shields.io/badge/Tailwind-4.0-38B2AC?logo=tailwind-css" alt="Tailwind" />
+  </p>
 </div>
 
 ---
 
-## 🚀 Sobre o Projeto
+## 🚀 A Visão do Projeto
 
-O **HubCRM** é uma plataforma robusta projetada para simplificar o ciclo de vida do cliente, desde a prospecção inicial até a entrega do projeto e faturamento recorrente. Integrado nativamente com **Asaas** e **Resend**, o sistema automatiza cobranças, notificações e o processo de onboarding, permitindo que você foque no que realmente importa: o crescimento do seu negócio.
+O **Hub Symples** não é apenas um CRM; é um ecossistema ponta a ponta projetado para empresas que buscam profissionalismo e escala. Ele cobre desde a prospecção inicial (Leads), passa por um processo de onboarding automatizado com contrato e pagamento, e termina em um Portal do Cliente robusto com suporte, indicadores de satisfação e programa de recompensas.
 
-## ✨ Principais Funcionalidades
+## 🛠️ Módulos de Alta Performance
 
-### 🛒 Checkout Público & Onboarding
-- **Página de Vendas Pública**: Link exclusivo para contratação direta de planos e serviços.
-- **Briefing Dinâmico**: Formulário de perguntas personalizável via painel administrativo.
-- **Coleta de Ativos**: Suporte para upload de logos e imagens do site durante o cadastro.
-- **Assinatura Digital**: Etapa de aceite de contrato integrada ao fluxo de pagamento, baseada em cláusulas customizáveis.
+### 🏗️ 1. Funil de Vendas & CRM
+Gestão intuitiva de leads com status dinâmicos. Acompanhe a jornada do prospect até a conversão definitiva.
+- **Status Customizáveis**: Adapte as etapas do funil ao seu processo comercial.
+- **Conversão Direta**: Transforme leads em clientes com um clique, sincronizando dados financeiros.
 
-### 💰 Gestão Financeira (Asaas)
-- **Integração Nativa**: Sincronização em tempo real com o Asaas para gestão de clientes, faturas e assinaturas.
-- **Cobranças Automáticas**: Suporte a pagamentos únicos, assinaturas mensais e planos anuais com desconto.
-- **Webhook Inteligente**: Processamento automatizado de eventos de pagamento (criação, confirmação, atraso).
+### 💳 2. Checkout Público & Onboarding Automatizado
+O "Power Checkout" permite que o cliente se auto-cadastre e inicie o projeto imediatamente.
+- **Multi-Etapas**: Fluxo otimizado (Dados -> Briefing -> Contrato -> Pagamento).
+- **Assinatura Digital**: Sistema integrado de aceite de contrato baseado em IP e carimbo de data/hora.
+- **Coleta Multimídia**: Upload múltiplo de logos e ativos do site diretamente no onboarding.
+- **Automação de Planos**: Integração profunda com Asaas para criação de assinaturas (In-App).
 
-### 📧 Automação de E-mails (Resend)
-- **Fluxos Transacionais**: Envio automático de e-mails de boas-vindas, faturas emitidas e avisos de vencimento.
-- **Gatilhos Manuais**: Possibilidade de disparar notificações específicas diretamente do card do cliente.
-- **Templates Profissionais**: Uso do Resend para entrega garantida e design elegante dos e-mails.
+### 🖥️ 3. Portal do Cliente (Self-Service)
+Uma área exclusiva para cada cliente, acessível via link único, aumentando a transparência e fidelidade.
+- **Timeline de Projeto**: Barra de progresso visual das etapas (Design, Dev, Revisão, etc).
+- **Central de Pagamentos**: Histórico completo de faturas, links de boleto/PIX e status em tempo real.
+- **Support & Ticket**: Sistema de abertura de chamados com histórico de conversas.
+- **Satisfação (NPS)**: Pesquisa automática de satisfação após a conclusão do projeto.
+- **Referral Program**: Sistema "Indique e Ganhe" com bônus acumulados ou descontos automáticos na assinatura.
 
-### 📊 Painel Administrativo
-- **Gestão de Leads**: Funil de vendas intuitivo para acompanhamento de prospecções.
-- **Monitoramento de Projetos**: Acompanhamento de etapas e entregas de cada cliente.
-- **Métricas Financeiras**: Gráficos de faturamento, churn e saúde financeira do negócio.
+### 📈 4. Finanças & Business Intelligence
+Painel completo para controle de caixa e saúde do negócio (Churn, LTV, ROI).
+- **Fluxo de Caixa**: Gestão de entradas (pagamentos Asaas) e saídas (despesas operacionais).
+- **Orçamentos & Metas**: Visualize se o faturamento está atingindo o Break Even ou batendo recordes.
 
-## 🛠️ Stack Técnica
+### 🛰️ 5. Monitoramento de Serviços (Uptime API)
+Integração nativa para monitoramento de infraestrutura.
+- **Real-time Status**: Verifique se os sites e serviços dos clientes estão online.
+- **Dashboard de Latência**: Métricas de tempo de resposta integradas diretamente no CRM.
+- **Powered by UptimeRobot**: Sincronização automática via API para monitoramento 24/7.
 
-- **Frontend**: React 19, Vite, Tailwind CSS, Lucide React, Framer Motion.
-- **Backend (Serverless)**: Vercel Functions (Node.js/TypeScript).
-- **Banco de Dados**: Firebase Firestore.
-- **Armazenamento**: Firebase Storage (para documentos e logos).
-- **Integrações**:
-  - **Asaas**: API de pagamentos e assinaturas.
-  - **Resend**: Serviço de e-mail transacional.
-  - **Upstash Redis**: Rate limiting e segurança da API.
+### 📧 6. Automação de Comunicação (Resend)
+Sistema de notificações transacionais que mantém o cliente informado sem esforço manual.
+- **Boas-vindas Inteligente**: Envio com link de pagamento e boas-vindas logo após o setup.
+- **Alertas de Faturas**: Notificações de pagamento recebido, fatura emitida e avisos de atraso.
+- **Gatilhos Manuais**: Central de notificações para disparar e-mails específicos de suporte ou financeiro com um clique.
 
-## ⚙️ Configuração Local
+## ⚙️ Stack Tecnológica & Arquitetura
+
+- **Frontend**: React 19 (Hooks, Context API) utilizando Vite como build tool.
+- **Estilização**: Tailwind CSS 4.0 para uma interface moderna, responsiva e performática.
+- **Backend (Serverless)**: Vercel Functions rodando lógica em Node.js e TypeScript.
+- **Database**: Firebase Firestore (NoSQL) para persistência escalável e em tempo real.
+- **Segurança & Rate Limit**: Upstash Redis garantindo a integridade dos endpoints de pagamento.
+- **Providers**: Asaas (Pagamentos), Resend (Transactional Emails), UptimeRobot (Monitoring).
+
+## 🔨 Configuração e Instalação
 
 ### Pré-requisitos
-- Node.js (v18+)
-- Conta no Firebase, Asaas e Resend.
+- Node.js instalado (v18 recomendada).
+- Git para controle de versão.
 
-### Instalação
-1. Clone o repositório:
+### Passos Rápidos
+1. Clone este repositório:
    ```bash
    git clone https://github.com/josef10000/hubcrm.git
-   cd hubcrm
    ```
-
 2. Instale as dependências:
    ```bash
    npm install
    ```
+3. Configure o arquivo `.env`:
+   Use o `.env.example` como base e preencha as chaves do Firebase, Asaas, Resend e Upstash.
 
-3. Configure as variáveis de ambiente:
-   Crie um arquivo `.env` baseado no `.env.example`:
-   ```env
-   # Firebase
-   VITE_FIREBASE_API_KEY=...
-   VITE_FIREBASE_AUTH_DOMAIN=...
-   VITE_FIREBASE_PROJECT_ID=...
-
-   # Asaas
-   ASAAS_API_KEY=...
-   ASAAS_WEBHOOK_TOKEN=...
-
-   # Resend
-   RESEND_API_KEY=...
-
-   # Upstash
-   UPSTASH_REDIS_REST_URL=...
-   UPSTASH_REDIS_REST_TOKEN=...
-   ```
-
-4. Execute o ambiente de desenvolvimento:
+4. Acesse o ambiente de dev:
    ```bash
    npm run dev
    ```
 
-## 📁 Estrutura de Pastas
-
-```text
-├── api/                # Cloud Functions (Vercel)
-│   ├── _logic/         # Lógica de negócio (Asaas, Email)
-│   └── _utils/         # Utilitários (Firebase Admin, Helpers)
-├── src/                # Frontend React
-│   ├── components/     # Componentes reutilizáveis
-│   ├── contexts/       # Contextos (Auth, CRM, UI)
-│   ├── hooks/          # Hooks personalizados
-│   ├── services/       # Clientes de API e Firebase
-│   └── views/          # Páginas principais
-└── public/             # Ativos estáticos
-```
-
 ## 📄 Licença
 
-Este projeto está licenciado sob a [Licença MIT](LICENSE).
+Este projeto é open-source sob a [Licença MIT](LICENSE) em nome de **Hub Symples**.
 
 ---
 <div align="center">
-  Desenvolvido com ❤️ para otimizar negócios.
+  🚀 <strong>Hub Symples</strong>: Modernidade, Automação e Foco em Resultados.
 </div>
