@@ -19,6 +19,10 @@ interface Invitation {
   expiresAt: number;
 }
 
+const Clock = (props: any) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+);
+
 export default function TeamManagementView() {
   const { user, userProfile } = useAuth();
   const [members, setMembers] = useState<Member[]>([]);
@@ -31,6 +35,12 @@ export default function TeamManagementView() {
   const [inviteName, setInviteName] = useState('');
   const [inviteRole, setInviteRole] = useState('Vendedor');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Remove member state
+  const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState<Member | null>(null);
+  const [deleteAllData, setDeleteAllData] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -89,6 +99,41 @@ export default function TeamManagementView() {
       toast.error('Erro ao processar convite');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+  
+  const handleRemoveMember = async () => {
+    if (!memberToRemove) return;
+    
+    setIsRemoving(true);
+    try {
+      const token = await user?.getIdToken();
+      const res = await fetch('/api/team/remove', {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          targetUid: memberToRemove.uid,
+          deleteAllData: deleteAllData
+        })
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        toast.success(deleteAllData ? 'Acesso cancelado e dados apagados com sucesso!' : 'Acesso cancelado com sucesso!');
+        setIsRemoveModalOpen(false);
+        setMemberToRemove(null);
+        setDeleteAllData(false);
+        fetchData();
+      } else {
+        toast.error(data.error || 'Erro ao remover membro');
+      }
+    } catch (error) {
+      toast.error('Erro ao processar remoção');
+    } finally {
+      setIsRemoving(false);
     }
   };
 
@@ -154,6 +199,15 @@ export default function TeamManagementView() {
                       }`}>
                         {member.role}
                       </span>
+                      {userProfile.role === 'Administrador' && member.uid !== user?.uid && (
+                        <button 
+                          onClick={() => { setMemberToRemove(member); setIsRemoveModalOpen(true); }}
+                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                          title="Remover Acesso"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -243,12 +297,58 @@ export default function TeamManagementView() {
             </div>
           </div>
         )}
+
+        {/* Remove Member Modal */}
+        {isRemoveModalOpen && memberToRemove && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-zinc-900 border border-red-500/20 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-white/10 flex items-center justify-between bg-red-500/10">
+                <h3 className="font-bold text-red-600 dark:text-red-400 flex items-center">
+                  <Trash2 size={20} className="mr-2" /> Cancelar Acesso
+                </h3>
+                <button onClick={() => setIsRemoveModalOpen(false)} className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"><X size={20} /></button>
+              </div>
+              
+              <div className="p-6 space-y-6">
+                <div className="text-center">
+                  <p className="text-gray-900 dark:text-white font-medium mb-1">Deseja remover o acesso de {memberToRemove.displayName}?</p>
+                  <p className="text-sm text-gray-500">Este usuário não poderá mais acessar o CRM.</p>
+                </div>
+
+                <div className="bg-gray-100 dark:bg-white/5 p-4 rounded-2xl border border-gray-200 dark:border-white/10">
+                  <label className="flex items-center space-x-3 cursor-pointer group">
+                    <div className="relative flex items-center">
+                      <input 
+                        type="checkbox" 
+                        checked={deleteAllData} 
+                        onChange={e => setDeleteAllData(e.target.checked)}
+                        className="w-5 h-5 rounded border-gray-300 text-red-600 focus:ring-red-500 bg-white/50 dark:bg-black/20"
+                      />
+                    </div>
+                    <span className="text-sm text-gray-700 dark:text-gray-300 font-medium group-hover:text-red-500 transition-colors">
+                      Apagar tudo o que ele fez (Leads e Clientes)
+                    </span>
+                  </label>
+                  {deleteAllData && (
+                    <p className="mt-2 text-[10px] text-red-400 font-bold uppercase tracking-widest leading-tight">⚠️ ATENÇÃO: Esta ação é irreversível e removerá todos os registros vinculados a este usuário.</p>
+                  )}
+                </div>
+
+                <div className="flex gap-3">
+                  <button type="button" onClick={() => setIsRemoveModalOpen(false)} className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 transition-all text-sm font-bold">Cancelar</button>
+                  <button 
+                    onClick={handleRemoveMember}
+                    disabled={isRemoving}
+                    className="flex-1 px-4 py-3 rounded-xl bg-red-600 text-white font-bold text-sm shadow-lg shadow-red-600/30 hover:shadow-red-600/50 disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {isRemoving ? <Loader2 size={18} className="animate-spin" /> : 'Confirmar Remoção'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
-
-// Reusing some lucide icons
-const Clock = (props: any) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-);
