@@ -1,178 +1,92 @@
 rules_version = '2';
-// Deploy automático via GitHub Actions (FIREBASE_SERVICE_ACCOUNT)
 service cloud.firestore {
   match /databases/{database}/documents {
+    
     // ===============================================================
-    // Helper Functions
+    // Funções de Ajuda (Helper Functions)
     // ===============================================================
+    
     function isAuthenticated() {
       return request.auth != null;
     }
     
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+    // Busca o perfil do usuário logado
+    function getUserData() {
+      return get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data;
     }
 
-    function hasOnlyAllowedFields(fields) {
-      return request.resource.data.keys().hasOnly(fields);
+    // Verifica se o usuário pertence à organização solicitada
+    function belongsToOrg(orgId) {
+      return isAuthenticated() && getUserData().orgId == orgId;
     }
 
-    function isValidEmail(email) {
-      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    // Verifica cargo (Role)
+    function hasRole(role) {
+      return isAuthenticated() && getUserData().role == role;
+    }
+
+    function isOrgAdmin(orgId) {
+      return belongsToOrg(orgId) && (getUserData().role == 'Administrador' || getUserData().role == 'Gerente');
     }
 
     // ===============================================================
-    // Domain Validators
+    // Regras por Coleção
+    // ===============================================================
+
+    // Perfis Individuais
+    match /profiles/{userId} {
+      allow read: if isAuthenticated(); // Permitir leitura de perfis para exibição de nomes na equipe
+      allow write: if request.auth.uid == userId;
+    }
+
+    // Organizações e seus dados (Multi-Tenant)
+    match /organizations/{orgId} {
+      allow read: if belongsToOrg(orgId);
+      allow write: if isOrgAdmin(orgId);
+
+      // Clientes dentro da organização
+      match /clients/{clientId} {
+        allow read: if belongsToOrg(orgId);
+        allow write: if belongsToOrg(orgId) && getUserData().role != 'Só Leitura';
+      }
+
+      // Leads dentro da organização
+      match /leads/{leadId} {
+        allow read: if belongsToOrg(orgId);
+        allow write: if belongsToOrg(orgId) && getUserData().role != 'Só Leitura';
+      }
+
+      // Outras coleções (Financeiro, Configurações, etc)
+      match /{collection}/{docId} {
+        allow read: if belongsToOrg(orgId);
+        allow write: if isOrgAdmin(orgId);
+      }
+    }
+
+    // ===============================================================
+    // Acesso Público (Checkout e Portal do Cliente)
     // ===============================================================
     
-    function isValidClient(data) {
-      return data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
-             data.whatsapp is string && data.whatsapp.size() >= 10 &&
-             data.plan in ['Essencial', 'Profissional'] &&
-             data.status in ['Em Desenvolvimento', 'Ativo', 'Inadimplente', 'Cancelado'];
+    // Permitir leitura de configurações de checkout básico
+    match /organizations/{orgId}/settings/preferences {
+      allow read: if true;
     }
 
-    function isValidReferral(data) {
-      return data.referrerId is string &&
-             data.referredClientId is string &&
-             data.status in ['pending', 'confirmed', 'applied'] &&
-             data.bonusAmount is number &&
-             data.createdAt is number;
+    // Permitir leitura de ofertas ativas para o checkout
+    match /organizations/{orgId}/offers/{offerId} {
+      allow read: if true;
     }
 
-    function isValidSupportRequest(data) {
-      return data.clientId is string &&
-             data.message is string && data.message.size() > 0 && data.message.size() < 2000 &&
-             data.category is string &&
-             data.status in ['pending', 'in-progress', 'completed'] &&
-             data.createdAt is number;
-    }
-
-    function isValidExpense(data) {
-      return data.description is string && data.description.size() > 0 &&
-             data.amount is number &&
-             data.date is number &&
-             data.category is string;
-    }
-
-    function isValidLead(data) {
-      return data.name is string && data.name.size() > 0 &&
-             data.whatsapp is string && data.whatsapp.size() >= 10 &&
-             data.status in ['Novo', 'Em Contato', 'Proposta Enviada', 'Convertido', 'Perdido'] &&
-             data.createdAt is number;
-    }
-
-    // ===============================================================
-    // Rules
-    // ===============================================================
-
-    function isAdmin() {
-      return isAuthenticated() &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
-
-    match /users/{userId} {
-      allow read, write: if isOwner(userId) || isAdmin();
-
-      match /clients/{clientId} {
-        allow read, write: if isOwner(userId);
-      }
-
-      match /referrals/{referralId} {
-        allow read, write: if isOwner(userId);
-      }
-
-      match /supportRequests/{requestId} {
-        allow read, write: if isOwner(userId);
-      }
-
-      match /expenses/{expenseId} {
-        allow read, write: if isOwner(userId);
-      }
-
-      match /transactions/{transactionId} {
-        allow read, write: if isOwner(userId);
-      }
-
-      match /transactionCategories/{categoryId} {
-        allow read, write: if isOwner(userId);
-      }
-
-      match /budgets/{budgetId} {
-        allow read, write: if isOwner(userId);
-      }
-
-      match /leads/{leadId} {
-        allow read, write: if isOwner(userId);
-      }
-
-      match /services/{serviceId} {
-        allow read, write: if isOwner(userId);
-      }
-
-      match /offers/{offerId} {
-        allow read, write: if isOwner(userId);
-      }
-
-      match /settings/{settingId} {
-        allow read, write: if isOwner(userId);
-      }
-    }
-
-    // ===============================================================
-    // Public access for Client Portal (unauthenticated)
-    // SECURITY: Portal visitors can only read limited data and update
-    // specific fields. The frontend filters sensitive fields before display.
-    // ===============================================================
-    match /users/{userId}/clients/{clientId} {
-      // Public read for client portal (needed for onSnapshot)
-      // NOTE: Firestore Rules cannot filter fields — the frontend
-      // ClientPortal.tsx is responsible for NOT displaying sensitive data
-      // like cpfCnpj, address, and credentials to unauthenticated visitors.
+    // Permissões granulares para o Portal do Cliente (Sem login)
+    match /organizations/{orgId}/clients/{clientId} {
       allow get: if true;
-      allow list: if false;
-      
-      // Only portal-safe fields can be updated by unauthenticated users
       allow update: if request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['npsScore', 'npsComment', 'npsSubmittedAt', 'stages', 'referralRewardType', 'currentDiscount'])
-        // Validate NPS score range
-        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['npsScore'])
-            || (request.resource.data.npsScore is number 
-                && request.resource.data.npsScore >= 0 
-                && request.resource.data.npsScore <= 10))
-        // Validate NPS comment length
-        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['npsComment'])
-            || (request.resource.data.npsComment is string
-                && request.resource.data.npsComment.size() < 1000));
+        .hasOnly(['npsScore', 'npsComment', 'npsSubmittedAt', 'stages', 'referralRewardType', 'currentDiscount']);
     }
-
-    match /users/{userId}/services/{serviceId} {
-      allow get: if true;
-      allow list: if true; // Needed for portal to list active services
-    }
-
-    match /users/{userId}/offers/{offerId} {
-      allow get: if true;
-      allow list: if true; // Needed for portal to list active offers
-    }
-
-    match /users/{userId}/settings/global {
-      allow get: if true;
-      allow list: if false;
-    }
-
-    match /users/{userId}/supportRequests/{requestId} {
-      allow create: if request.resource.data.keys().hasAll(['clientId', 'clientName', 'message', 'category', 'status', 'createdAt'])
-        && request.resource.data.clientId is string
-        && request.resource.data.clientName is string
-        && request.resource.data.message is string
-        && request.resource.data.message.size() > 0
-        && request.resource.data.message.size() < 2000
-        && request.resource.data.category is string
-        && request.resource.data.status == 'aberto';
-      allow get: if true;
-      // Allow list filtered by clientId for support request history in portal
-      allow list: if true;
+    
+    match /organizations/{orgId}/supportRequests/{requestId} {
+      allow create: if true; // Permitir que clientes enviem suporte do portal
+      allow read: if true;
     }
   }
 }
