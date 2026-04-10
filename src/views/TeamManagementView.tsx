@@ -41,6 +41,7 @@ export default function TeamManagementView() {
   const [memberToRemove, setMemberToRemove] = useState<Member | null>(null);
   const [deleteAllData, setDeleteAllData] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
+  const [isCancellingInvite, setIsCancellingInvite] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -99,6 +100,35 @@ export default function TeamManagementView() {
       toast.error('Erro ao processar convite');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleCancelInvite = async (inviteId: string) => {
+    if (!window.confirm('Deseja cancelar este convite pendente?')) return;
+    
+    setIsCancellingInvite(true);
+    try {
+      const token = await user?.getIdToken();
+      const res = await fetch('/api/team/cancel-invite', {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ inviteId })
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Convite cancelado com sucesso!');
+        fetchData();
+      } else {
+        toast.error(data.error || 'Erro ao cancelar convite');
+      }
+    } catch (error) {
+      toast.error('Erro de conexão');
+    } finally {
+      setIsCancellingInvite(false);
     }
   };
   
@@ -236,6 +266,16 @@ export default function TeamManagementView() {
                       <div className="flex items-center space-x-4">
                         <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-white/10 rounded-lg text-gray-500">{invite.role}</span>
                         <div className="text-xs text-orange-400 font-medium px-2 py-1 bg-orange-400/10 rounded-lg animate-pulse">Aguardando...</div>
+                        {userProfile.role === 'Administrador' && (
+                          <button 
+                            onClick={() => handleCancelInvite(invite.id)}
+                            disabled={isCancellingInvite}
+                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                            title="Cancelar Convite"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
