@@ -42,7 +42,7 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
     setErrorMsg('');
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'number' ? (value === '' ? '' : Number(value)) : type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+      [name]: type === 'number' ? (value === '' ? 0 : Number(value)) : type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
     }));
   };
 
@@ -52,8 +52,8 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
     // Validação de campos obrigatórios
     if (!formData.name?.trim()) return setErrorMsg('Nome é obrigatório.');
     if (!formData.description?.trim()) return setErrorMsg('Descrição é obrigatória.');
-    if (formData.price === undefined || formData.price === '') return setErrorMsg('Preço é obrigatório.');
-    if (formData.order === undefined || formData.order === '') return setErrorMsg('Ordem de exibição é obrigatória.');
+    if (formData.price === undefined || formData.price === null) return setErrorMsg('Preço é obrigatório.');
+    if (formData.order === undefined || formData.order === null) return setErrorMsg('Ordem de exibição é obrigatória.');
     
     onSave(formData);
   };
