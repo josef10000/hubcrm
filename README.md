@@ -1,7 +1,7 @@
 # Hub Symples - Ecossistema Completo de Gestão e Onboarding
 
 <div align="center">
-  <img src="https://i.imgur.com/2H9UPAW.png" alt="Hub Symples Logo" width="300" />
+  <img src="https://i.imgur.com/8gK9n7E.png" alt="Hub Symples Logo" width="300" />
   <p><em>Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.</em></p>
   
   <p>

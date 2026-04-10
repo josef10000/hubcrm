@@ -93,10 +93,10 @@ export default function Auth() {
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="flex justify-center">
-          <img src="https://i.imgur.com/2H9UPAW.png" alt="Hub central Logo" className="h-64 w-auto object-contain drop-shadow-2xl -mb-16" referrerPolicy="no-referrer" />
+          <img src="https://i.imgur.com/8gK9n7E.png" alt="Hub Symples Logo" className="h-64 w-auto object-contain drop-shadow-2xl -mb-16" referrerPolicy="no-referrer" />
         </div>
         <h2 className="text-center text-3xl font-extrabold text-white tracking-tight">
-          Hub central
+          Hub Symples
         </h2>
         <p className="mt-2 text-center text-sm text-gray-400">
           {mode === 'login' ? 'Acesso exclusivo para administração' : 
