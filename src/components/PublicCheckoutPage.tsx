@@ -375,7 +375,16 @@ export default function PublicCheckoutPage() {
                 Contrato de Prestação de Serviços
               </h2>
               <div className="bg-black/40 border border-white/10 rounded-2xl p-6 h-[400px] overflow-y-auto custom-scrollbar text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-mono italic">
-                {ownerSettings?.defaultContractText || "Texto do contrato sendo preparado..."}
+                {ownerSettings?.defaultContractText || `CONTRATO DE PRESTAÇÃO DE SERVIÇOS
+
+1. OBJETO DO CONTRATO
+O presente instrumento tem como objeto a prestação de serviços digitais acordados entre as partes no plano ou projeto selecionado.
+
+2. PRAZOS E ENTREGAS
+As entregas serão realizadas conforme cronograma acordado.
+
+3. PAGAMENTOS E CANCELAMENTOS
+Em caso de suspensão de pagamento, o serviço será suspenso após X dias. Cancelamentos devem ser notificados antecipadamente.`}
               </div>
               
               <div className="space-y-4 pt-4">
