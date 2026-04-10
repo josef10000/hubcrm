@@ -101,7 +101,7 @@ export function useCRM() {
 
 // ─── Provider ───────────────────────────────────────────────────────────────────
 export function CRMProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const { setIsModalOpen } = useUI();
 
   // ── Local Core Data State ──
@@ -118,11 +118,12 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   const [services, setServices] = useState<any[]>([]);
 
   // ── Specialized Hooks ──
-  const settings = user ? useSettings(user.uid) : ({} as any);
-  const finance = user ? useFinance(user.uid) : ({} as any);
-  const offerActions = useOffers(user?.uid || '', offers, setOffers);
+  const effectiveOrgId = userProfile?.orgId || user?.uid || '';
+  const settings = effectiveOrgId ? useSettings(effectiveOrgId) : ({} as any);
+  const finance = effectiveOrgId ? useFinance(effectiveOrgId) : ({} as any);
+  const offerActions = useOffers(effectiveOrgId, offers, setOffers);
   const clientActions = useClients({
-    userId: user?.uid || '',
+    userId: effectiveOrgId,
     clients,
     offers,
     editingClient,
@@ -134,7 +135,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
 
   // ═══ Firestore Listeners (core data only) ═══
   useEffect(() => {
-    if (!user) {
+    if (!effectiveOrgId) {
       setLoading(false);
       return;
     }
@@ -148,7 +149,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     let unsubServices: () => void = () => { };
 
     try {
-      const offersRef = collection(db, 'users', user.uid, 'offers');
+      const offersRef = collection(db, 'organizations', effectiveOrgId, 'offers');
       unsubscribeOffers = onSnapshot(offersRef, async (snapshot) => {
         if (snapshot.empty && setOffers) {
           const defaultOffers: Offer[] = [
@@ -156,7 +157,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
             { id: Date.now().toString(36) + Math.random().toString(36).substring(2), name: 'Profissional', type: 'SUBSCRIPTION', price: 897, setupPrice: 7500, active: true, displayContext: 'PORTAL', createdAt: Date.now() },
           ];
           for (const offer of defaultOffers) {
-            await setDoc(doc(db, 'users', user.uid, 'offers', offer.id), offer);
+            await setDoc(doc(db, 'organizations', effectiveOrgId, 'offers', offer.id), offer);
           }
         } else {
           const loadedOffers: Offer[] = [];
@@ -165,12 +166,18 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         }
       });
 
-      const clientsRef = collection(db, 'users', user.uid, 'clients');
+      const clientsRef = collection(db, 'organizations', effectiveOrgId, 'clients');
       unsubscribeClients = onSnapshot(
         clientsRef,
         (snapshot) => {
-          const loadedClients: Client[] = [];
+          let loadedClients: Client[] = [];
           snapshot.forEach((d) => loadedClients.push({ id: d.id, ...d.data() } as Client));
+          
+          // Filtro por cargo: Vendedor só vê o que está atribuído a ele
+          if (userProfile?.role === 'Vendedor') {
+            loadedClients = loadedClients.filter(c => c.assignedTo === user?.uid);
+          }
+          
           setClients(loadedClients);
           setLoading(false);
           clearTimeout(timeoutId);
@@ -183,14 +190,20 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         }
       );
 
-      const leadsRef = collection(db, 'users', user.uid, 'leads');
+      const leadsRef = collection(db, 'organizations', effectiveOrgId, 'leads');
       unsubscribeLeads = onSnapshot(leadsRef, (snapshot) => {
-        const loaded: Lead[] = [];
+        let loaded: Lead[] = [];
         snapshot.forEach((d) => loaded.push({ id: d.id, ...d.data() } as Lead));
+        
+        // Filtro por cargo: Vendedor só vê o que está atribuído a ele
+        if (userProfile?.role === 'Vendedor') {
+          loaded = loaded.filter(l => l.assignedTo === user?.uid);
+        }
+        
         setLeads(loaded.sort((a, b) => b.createdAt - a.createdAt));
       });
 
-      const requestsRef = collection(db, 'users', user.uid, 'supportRequests');
+      const requestsRef = collection(db, 'organizations', effectiveOrgId, 'supportRequests');
       unsubscribeRequests = onSnapshot(requestsRef, (snapshot) => {
         const loadedRequests: any[] = [];
         snapshot.forEach((d) => loadedRequests.push({ id: d.id, ...d.data() }));
@@ -202,7 +215,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         setSupportRequests(loadedRequests);
       });
 
-      const servicesRef = collection(db, 'users', user.uid, 'services');
+      const servicesRef = collection(db, 'organizations', effectiveOrgId, 'services');
       unsubServices = onSnapshot(servicesRef, (snapshot) => {
         const loadedServices: any[] = [];
         snapshot.forEach((d) => loadedServices.push({ id: d.id, ...d.data() }));
@@ -228,7 +241,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       setErrorMsg(err.message);
       setLoading(false);
     }
-  }, [user]);
+  }, [effectiveOrgId]);
 
   const value: CRMContextType = {
     clients, leads, offers, supportRequests,

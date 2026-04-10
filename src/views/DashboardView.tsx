@@ -14,14 +14,9 @@ import ClientsGrid from '../components/dashboard/ClientsGrid';
 export default function DashboardView() {
   const { user } = useAuth();
   
-  const {
-    clients,
-    setEditingClient,
-    isSyncing,
-    syncPayments,
-    churnRiskDays,
     isChurnRisk,
-    isComboNearRenewal
+    isComboNearRenewal,
+    userProfile
   } = useCRM();
 
   const {
@@ -128,16 +123,18 @@ export default function DashboardView() {
           </div>
           
           <div className="flex items-center space-x-2 bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-1 rounded-2xl">
-            <button 
-              onClick={syncPayments} 
-              disabled={isSyncing}
-              className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${isSyncing ? 'text-primary-400 bg-gray-100 dark:bg-white/5' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:text-white'}`}
-              title="Sincronizar pagamentos com Asaas"
-            >
-              <RefreshCw size={16} className={`mr-2 ${isSyncing ? 'animate-spin' : ''}`}/> 
-              <span className="hidden sm:inline">Sincronizar</span>
-            </button>
-            <div className="w-px h-6 bg-gray-200 dark:bg-white/10 mx-1"></div>
+            {(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente') && (
+              <button 
+                onClick={syncPayments} 
+                disabled={isSyncing}
+                className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${isSyncing ? 'text-primary-400 bg-gray-100 dark:bg-white/5' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:text-white'}`}
+                title="Sincronizar pagamentos com Asaas"
+              >
+                <RefreshCw size={16} className={`mr-2 ${isSyncing ? 'animate-spin' : ''}`}/> 
+                <span className="hidden sm:inline">Sincronizar</span>
+              </button>
+            )}
+            {(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente') && <div className="w-px h-6 bg-gray-200 dark:bg-white/10 mx-1"></div>}
             <button onClick={() => setDashboardMode('list')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${dashboardMode === 'list' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}><AlignLeft size={16} className="mr-2"/> Lista</button>
             <button onClick={() => setDashboardMode('kanban')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${dashboardMode === 'kanban' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}><LayoutDashboard size={16} className="mr-2"/> Kanban</button>
             <div className="w-px h-6 bg-gray-200 dark:bg-white/10 mx-1"></div>

@@ -19,10 +19,9 @@ export default function SettingsView() {
     setOnboardingQuestions,
     defaultContractText,
     setDefaultContractText,
-    checkoutTitle,
-    setCheckoutTitle,
     checkoutDescription,
-    setCheckoutDescription
+    setCheckoutDescription,
+    effectiveOrgId,
   } = useCRM();
 
   const themes = [
@@ -131,9 +130,9 @@ export default function SettingsView() {
               </button>
               <button
                 onClick={async () => {
-                  if (!auth.currentUser) return;
+                  if (!effectiveOrgId) return;
                   try {
-                    await setDoc(doc(db, 'users', auth.currentUser.uid, 'settings', 'preferences'), { defaultStages }, { merge: true });
+                    await setDoc(doc(db, 'organizations', effectiveOrgId, 'settings', 'preferences'), { defaultStages }, { merge: true });
                     toast.success('Etapas salvas com sucesso!');
                   } catch (error) {
                     toast.error('Erro ao salvar etapas.');
@@ -253,9 +252,9 @@ export default function SettingsView() {
               </button>
               <button
                 onClick={async () => {
-                  if (!auth.currentUser) return;
+                  if (!effectiveOrgId) return;
                   try {
-                    await setDoc(doc(db, 'users', auth.currentUser.uid, 'settings', 'preferences'), { onboardingQuestions }, { merge: true });
+                    await setDoc(doc(db, 'organizations', effectiveOrgId, 'settings', 'preferences'), { onboardingQuestions }, { merge: true });
                     toast.success('Formulário salvo com sucesso!');
                   } catch (error) {
                     toast.error('Erro ao salvar formulário.');
@@ -288,8 +287,9 @@ export default function SettingsView() {
             <div className="flex gap-3 justify-end mt-4">
               <button
                 onClick={async () => {
+                  if (!effectiveOrgId) return;
                   try {
-                    await setDoc(doc(db, 'users', auth.currentUser!.uid, 'settings', 'preferences'), { defaultContractText }, { merge: true });
+                    await setDoc(doc(db, 'organizations', effectiveOrgId, 'settings', 'preferences'), { defaultContractText }, { merge: true });
                     toast.success('Contrato padrão salvo com sucesso!');
                   } catch (error) {
                     toast.error('Erro ao salvar contrato padrão.');
@@ -343,12 +343,12 @@ export default function SettingsView() {
                 <input
                   type="text"
                   readOnly
-                  value={`${window.location.origin}/contratar/${auth.currentUser?.uid}`}
+                  value={`${window.location.origin}/contratar/${effectiveOrgId}`}
                   className="flex-1 bg-transparent border-none text-sm text-gray-600 dark:text-gray-300 outline-none"
                 />
                 <button
                   onClick={() => {
-                    const url = `${window.location.origin}/contratar/${auth.currentUser?.uid}`;
+                    const url = `${window.location.origin}/contratar/${effectiveOrgId}`;
                     navigator.clipboard.writeText(url);
                     toast.success('Link copiado para a área de transferência!');
                   }}
@@ -363,8 +363,9 @@ export default function SettingsView() {
             <div className="flex justify-end gap-3 mt-4">
               <button
                 onClick={async () => {
+                  if (!effectiveOrgId) return;
                   try {
-                    await setDoc(doc(db, 'users', auth.currentUser!.uid, 'settings', 'preferences'), { 
+                    await setDoc(doc(db, 'organizations', effectiveOrgId, 'settings', 'preferences'), { 
                       checkoutTitle, 
                       checkoutDescription 
                     }, { merge: true });

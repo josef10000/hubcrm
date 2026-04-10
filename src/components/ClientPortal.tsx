@@ -7,7 +7,7 @@ import { Globe, CreditCard, CheckCircle, Clock, AlertCircle, ExternalLink, FileT
 import { toast, Toaster } from 'sonner';
 
 export default function ClientPortal() {
-  const { userId, clientId } = useParams<{ userId: string; clientId: string }>();
+  const { orgId, clientId } = useParams<{ orgId: string; clientId: string }>();
   const [client, setClient] = useState<any>(null);
   const [paymentsHistory, setPaymentsHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,11 +68,11 @@ export default function ClientPortal() {
   ];
 
   const handleNPSSubmit = async () => {
-    if (npsScore === null || !userId || !clientId) return;
+    if (npsScore === null || !orgId || !clientId) return;
     
     setIsSubmittingNPS(true);
     try {
-      await updateDoc(doc(db, 'users', userId, 'clients', clientId), {
+      await updateDoc(doc(db, 'organizations', orgId, 'clients', clientId), {
         npsScore,
         npsComment,
         npsSubmittedAt: serverTimestamp()
@@ -89,11 +89,11 @@ export default function ClientPortal() {
 
   const handleSubmitRequest = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!requestMessage.trim() || !userId || !clientId) return;
+    if (!requestMessage.trim() || !orgId || !clientId) return;
 
     setIsSubmittingRequest(true);
     try {
-      await addDoc(collection(db, 'users', userId, 'supportRequests'), {
+      await addDoc(collection(db, 'organizations', orgId, 'supportRequests'), {
         clientId,
         clientName: client.name,
         category: requestCategory,
@@ -113,14 +113,14 @@ export default function ClientPortal() {
   };
 
   useEffect(() => {
-    if (!userId || !clientId) {
+    if (!orgId || !clientId) {
       setError("Link inválido.");
       setLoading(false);
       return;
     }
 
     // Fetch Support Requests History
-    const requestsRef = collection(db, 'users', userId, 'supportRequests');
+    const requestsRef = collection(db, 'organizations', orgId, 'supportRequests');
     const q = query(requestsRef, where('clientId', '==', clientId));
     
     const unsubscribeRequests = onSnapshot(q, (snapshot) => {
@@ -137,7 +137,7 @@ export default function ClientPortal() {
     });
 
     // Fetch Global Announcement
-    const globalRef = doc(db, 'users', userId, 'settings', 'global');
+    const globalRef = doc(db, 'organizations', orgId, 'settings', 'global');
     const unsubscribeGlobal = onSnapshot(globalRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
@@ -150,7 +150,7 @@ export default function ClientPortal() {
     });
 
     // Fetch Services
-    const servicesRef = collection(db, 'users', userId, 'services');
+    const servicesRef = collection(db, 'organizations', orgId, 'services');
     const unsubscribeServices = onSnapshot(servicesRef, (snapshot) => {
       const loadedServices: any[] = [];
       snapshot.forEach((doc) => {
@@ -163,7 +163,7 @@ export default function ClientPortal() {
     });
 
     // Fetch Offers
-    const offersRef = collection(db, 'users', userId, 'offers');
+    const offersRef = collection(db, 'organizations', orgId, 'offers');
     const unsubscribeOffers = onSnapshot(offersRef, (snapshot) => {
       const loadedOffers: any[] = [];
       snapshot.forEach((doc) => {
@@ -176,7 +176,7 @@ export default function ClientPortal() {
     });
 
     // Fetch Client Data
-    const docRef = doc(db, 'users', userId, 'clients', clientId);
+    const docRef = doc(db, 'organizations', orgId, 'clients', clientId);
     const unsubscribeClient = onSnapshot(docRef, async (docSnap) => {
       if (docSnap.exists()) {
         const clientData = docSnap.data();
@@ -253,14 +253,14 @@ export default function ClientPortal() {
       unsubscribeServices();
       unsubscribeOffers();
     };
-  }, [userId, clientId]);
+  }, [orgId, clientId]);
 
   const handleUpdateRewardType = async (type: 'commission' | 'discount') => {
-    if (!userId || !clientId || !client) return;
+    if (!orgId || !clientId || !client) return;
     try {
       let discount = 0;
 
-      const clientsRef = collection(db, 'users', userId, 'clients');
+      const clientsRef = collection(db, 'organizations', orgId, 'clients');
       const q = query(clientsRef, where('referredBy', '==', clientId));
       const querySnapshot = await getDocs(q);
       const referredClients = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
@@ -284,7 +284,7 @@ export default function ClientPortal() {
         });
       }
 
-      await updateDoc(doc(db, 'users', userId, 'clients', clientId), {
+      await updateDoc(doc(db, 'organizations', orgId, 'clients', clientId), {
         referralRewardType: type,
         currentDiscount: discount
       });
@@ -618,7 +618,7 @@ export default function ClientPortal() {
                               const newStages = [...client.stages];
                               newStages[index].completed = true;
                               newStages[index].approvedAt = Date.now();
-                              await updateDoc(doc(db, 'users', userId, 'clients', clientId), { stages: newStages });
+                              await updateDoc(doc(db, 'organizations', orgId, 'clients', clientId), { stages: newStages });
                               toast.success('Etapa aprovada com sucesso!');
                             } catch (err) {
                               toast.error('Erro ao aprovar etapa.');
@@ -772,11 +772,11 @@ export default function ClientPortal() {
             <p className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-2">Seu Link de Indicação</p>
             <div className="flex items-center gap-3">
               <div className="flex-1 bg-white/5 px-4 py-3 rounded-xl text-emerald-400 font-mono text-sm truncate">
-                {`${window.location.origin}/onboarding/${userId}?ref=${clientId}`}
+                {`${window.location.origin}/onboarding/${orgId}?ref=${clientId}`}
               </div>
               <button 
                 onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/onboarding/${userId}?ref=${clientId}`);
+                  navigator.clipboard.writeText(`${window.location.origin}/onboarding/${orgId}?ref=${clientId}`);
                   toast.success('Link de indicação copiado!');
                 }}
                 className="p-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-all shadow-lg shadow-emerald-500/20"

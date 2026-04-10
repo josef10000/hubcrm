@@ -127,7 +127,7 @@ export function useClients(opts: UseClientsOptions) {
                   nextDueDate: nextDueDate,
                   invoiceUrl: latestPayment.invoiceUrl || client.invoiceUrl,
                 };
-                await setDoc(doc(db, 'users', userId, 'clients', client.id), updatedClient, { merge: true });
+                await setDoc(doc(db, 'organizations', userId, 'clients', client.id), updatedClient, { merge: true });
                 updatedCount++;
               }
             }
@@ -157,9 +157,10 @@ export function useClients(opts: UseClientsOptions) {
     }
 
     const isNew = !clientData.id;
-    const clientRef = isNew ? doc(collection(db, 'users', auth.currentUser!.uid, 'clients')) : doc(db, 'users', auth.currentUser!.uid, 'clients', clientData.id!);
+    const clientRef = isNew ? doc(collection(db, 'organizations', userId, 'clients')) : doc(db, 'organizations', userId, 'clients', clientData.id!);
     const client: Client = {
       ...(editingClient || {}),
+      assignedTo: isNew ? (auth.currentUser?.uid || undefined) : (editingClient?.assignedTo || undefined),
       id: clientRef.id,
       name: clientData.name || '',
       whatsapp: clientData.whatsapp || '',
@@ -251,7 +252,7 @@ export function useClients(opts: UseClientsOptions) {
         if (editingClient && editingClient.referredBy) {
           const referrer = clients.find((c) => c.id === editingClient.referredBy);
           if (referrer) {
-            const referralsRef = collection(db, 'users', userId, 'referrals');
+            const referralsRef = collection(db, 'organizations', userId, 'referrals');
             const q = query(referralsRef, where('referredClientId', '==', client.id));
             const querySnapshot = await getDocs(q);
             if (!querySnapshot.empty) {
@@ -261,7 +262,7 @@ export function useClients(opts: UseClientsOptions) {
                 const bonusToRevoke = referralData.bonusAmount || 0;
                 const newBalance = Math.max(0, (referrer.referralBalance || 0) - bonusToRevoke);
                 const newCount = Math.max(0, (referrer.referralCount || 0) - 1);
-                await updateDoc(doc(db, 'users', userId, 'clients', referrer.id), { referralBalance: newBalance, referralCount: newCount });
+                await updateDoc(doc(db, 'organizations', userId, 'clients', referrer.id), { referralBalance: newBalance, referralCount: newCount });
                 await updateDoc(referralDoc.ref, { status: 'cancelled', bonusAmount: 0 });
                 if (referrer.referralRewardType === 'discount' || !referrer.referralRewardType) {
                   const updatedClients = clients.map((c) => (c.id === client.id ? ({ ...c, status: 'Cancelado' } as Client) : c));
@@ -327,7 +328,7 @@ export function useClients(opts: UseClientsOptions) {
           // PRÉ-SALVAMENTO: Salva no banco IMEDIATAMENTE após pegar o ID do Asaas.
           // Isso elimina o "Race Condition" porque o Webhook do Asaas não será mais rápido que o CRM.
           const cleanClientForPreSave = Object.fromEntries(Object.entries(client).filter(([_, v]) => v !== undefined));
-          await setDoc(doc(db, 'users', userId, 'clients', client.id), cleanClientForPreSave, { merge: true });
+          await setDoc(doc(db, 'organizations', userId, 'clients', client.id), cleanClientForPreSave, { merge: true });
 
           const today = new Date();
           const firstPaymentDate = client.firstPaymentDate || today.toISOString().split('T')[0];
@@ -464,7 +465,7 @@ export function useClients(opts: UseClientsOptions) {
       }
 
       const cleanClient = Object.fromEntries(Object.entries(client).filter(([_, v]) => v !== undefined));
-      await setDoc(doc(db, 'users', userId, 'clients', client.id), cleanClient, { merge: true });
+      await setDoc(doc(db, 'organizations', userId, 'clients', client.id), cleanClient, { merge: true });
       setIsModalOpen(false);
       setEditingClient(null);
     } catch (error: any) {
@@ -525,7 +526,7 @@ export function useClients(opts: UseClientsOptions) {
 
     setEditingClient(null);
     try {
-      await deleteDoc(doc(db, 'users', userId, 'clients', clientId));
+      await deleteDoc(doc(db, 'organizations', userId, 'clients', clientId));
     } catch (error: any) {
       console.error(error);
       toast.error(`Erro ao excluir: ${error.message}`);
@@ -560,7 +561,7 @@ export function useClients(opts: UseClientsOptions) {
 
     try {
       // Update in Firestore
-      await updateDoc(doc(db, 'users', userId, 'clients', clientId), {
+      await updateDoc(doc(db, 'organizations', userId, 'clients', clientId), {
         asaasNotificationsEnabled: enabled
       });
 

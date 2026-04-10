@@ -16,8 +16,19 @@ import CategoryManager from '../components/finance/CategoryManager';
 
 export default function FinanceView() {
   const { user } = useAuth();
-  const { clients, expenses, newExpense, setNewExpense, transactionCategories, budgets, transactions } = useCRM();
+  const { clients, expenses, newExpense, setNewExpense, transactionCategories, budgets, transactions, effectiveOrgId, userProfile } = useCRM();
   const [activeTab, setActiveTab] = useState<'resumo' | 'dre' | 'fluxo' | 'orcamento' | 'conciliacao' | 'categorias'>('resumo');
+
+  if (userProfile?.role === 'Vendedor') {
+    return (
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Acesso Restrito</h2>
+          <p className="text-gray-500 dark:text-gray-400">Você não tem permissão para acessar o módulo financeiro.</p>
+        </div>
+      </div>
+    );
+  }
 
   const totalMRR = clients.filter(c => c.status === 'Ativo' || c.status === 'Inadimplente').reduce((acc, c) => {
     return acc + getPlanPrice(c.plan, c.billingCycle, c);
@@ -41,7 +52,13 @@ export default function FinanceView() {
 
   const handleAddExpense = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newExpense.description || !newExpense.amount || !newExpense.date || !user) return;
+    if (!newExpense.description || !newExpense.amount || !newExpense.date || !effectiveOrgId) return;
+    
+    // Apenas Admins e Gerentes podem mexer no financeiro
+    if (userProfile?.role !== 'Administrador' && userProfile?.role !== 'Gerente') {
+      toast.error('Você não tem permissão para adicionar despesas.');
+      return;
+    }
 
     try {
       // 1. Budget Security Check
@@ -79,7 +96,7 @@ export default function FinanceView() {
         clientId: newExpense.clientId || undefined
       };
 
-      await setDoc(doc(db, 'users', user.uid, 'expenses', expenseId), expense);
+      await setDoc(doc(db, 'organizations', effectiveOrgId, 'expenses', expenseId), expense);
       setNewExpense({ category: 'Ferramentas' });
       toast.success('Despesa adicionada com sucesso!');
     } catch (error) {
@@ -89,9 +106,15 @@ export default function FinanceView() {
   };
 
   const handleDeleteExpense = async (id: string) => {
-    if (!user) return;
+    if (!effectiveOrgId) return;
+
+    if (userProfile?.role !== 'Administrador' && userProfile?.role !== 'Gerente') {
+      toast.error('Você não tem permissão para excluir despesas.');
+      return;
+    }
+
     try {
-      await deleteDoc(doc(db, 'users', user.uid, 'expenses', id));
+      await deleteDoc(doc(db, 'organizations', effectiveOrgId, 'expenses', id));
       toast.success('Despesa removida!');
     } catch (error) {
       console.error("Error deleting expense:", error);

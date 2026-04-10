@@ -33,8 +33,7 @@ const emptyForm: LeadFormData = { name: '', whatsapp: '', email: '', leadSource:
 
 export default function LeadsView() {
   const { user } = useAuth();
-  const { leads } = useCRM();
-  console.log('Current Leads (Diagnostic):', leads);
+  const { leads, effectiveOrgId, userProfile } = useCRM();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<LeadFormData>(emptyForm);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
@@ -62,17 +61,18 @@ export default function LeadsView() {
         plan: formData.plan || undefined,
         niche: formData.niche.trim() || undefined,
         updatedAt: Date.now(),
+        assignedTo: editingLead ? editingLead.assignedTo : (userProfile?.role === 'Vendedor' ? user?.uid : undefined)
       };
       // Clean undefined values
       Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
 
       if (editingLead) {
-        await updateDoc(doc(db, 'users', user.uid, 'leads', editingLead.id), payload);
+        await updateDoc(doc(db, 'organizations', effectiveOrgId!, 'leads', editingLead.id), payload);
         toast.success('Lead atualizado!');
       } else {
         payload.status = 'Novo';
         payload.createdAt = Date.now();
-        await addDoc(collection(db, 'users', user.uid, 'leads'), payload);
+        await addDoc(collection(db, 'organizations', effectiveOrgId!, 'leads'), payload);
         toast.success('Lead adicionado!');
       }
       closeModal();
@@ -82,19 +82,23 @@ export default function LeadsView() {
   };
 
   const handleDelete = async (leadId: string) => {
-    if (!user) return;
+    if (!effectiveOrgId) return;
+    if (userProfile?.role !== 'Administrador') {
+      toast.error('Apenas administradores podem excluir leads.');
+      return;
+    }
     if (!confirm('Excluir este lead permanentemente?')) return;
     try {
-      await deleteDoc(doc(db, 'users', user.uid, 'leads', leadId));
+      await deleteDoc(doc(db, 'organizations', effectiveOrgId, 'leads', leadId));
       toast.success('Lead excluído');
       closeModal();
     } catch (e: any) { toast.error(`Erro: ${e.message}`); }
   };
 
   const handleDrop = async (targetStatus: LeadStatus) => {
-    if (!draggedLead || !user || draggedLead.status === targetStatus) { setDraggedLead(null); setDragOverColumn(null); return; }
+    if (!draggedLead || !effectiveOrgId || draggedLead.status === targetStatus) { setDraggedLead(null); setDragOverColumn(null); return; }
     try {
-      await updateDoc(doc(db, 'users', user.uid, 'leads', draggedLead.id), { status: targetStatus, updatedAt: Date.now() });
+      await updateDoc(doc(db, 'organizations', effectiveOrgId, 'leads', draggedLead.id), { status: targetStatus, updatedAt: Date.now() });
       toast.success(`Lead movido para ${targetStatus}`);
     } catch (e: any) { toast.error(`Erro: ${e.message}`); }
     setDraggedLead(null);
@@ -111,8 +115,12 @@ export default function LeadsView() {
     setIsModalOpen(true);
   };
 
- const handleCleanup = async () => {
-    if (!user || !leads.length) return;
+  const handleCleanup = async () => {
+    if (!effectiveOrgId || !leads.length) return;
+    if (userProfile?.role !== 'Administrador') {
+      toast.error('Apenas administradores podem realizar limpeza do banco.');
+      return;
+    }
     const validStatuses = LEAD_COLUMNS.map(c => c.status.toLowerCase());
     const ghostLeads = leads.filter(l => !l.status || !validStatuses.includes(l.status.toLowerCase()));
     
@@ -124,7 +132,7 @@ export default function LeadsView() {
     if (!confirm(`Encotrados ${ghostLeads.length} leads fantasmas. Deseja excluí-los permanentemente?`)) return;
 
     try {
-      const deletePromises = ghostLeads.map(l => deleteDoc(doc(db, 'users', user.uid, 'leads', l.id)));
+      const deletePromises = ghostLeads.map(l => deleteDoc(doc(db, 'organizations', effectiveOrgId, 'leads', l.id)));
       await Promise.all(deletePromises);
       toast.success(`${ghostLeads.length} leads fantasmas removidos!`);
     } catch (e: any) {
@@ -369,7 +377,7 @@ export default function LeadsView() {
             </div>
 
             <div className="flex items-center justify-between mt-6">
-              {editingLead ? (
+              {editingLead && userProfile?.role === 'Administrador' ? (
                 <button onClick={() => handleDelete(editingLead.id)}
                   className="flex items-center gap-2 px-4 py-2 text-red-400 hover:bg-red-500/10 rounded-xl text-sm transition-colors">
                   <Trash2 className="w-4 h-4" /> Excluir

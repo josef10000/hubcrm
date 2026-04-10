@@ -131,6 +131,7 @@ export interface Client {
   estado?: string;
   asaasNotificationsEnabled?: boolean;
   emailHistory?: EmailHistoryEntry[];
+  assignedTo?: string;
 }
 
 export interface OnboardingQuestion {
@@ -204,6 +205,7 @@ export interface Lead {
   updatedAt?: number;
   convertedClientId?: string;
   lostReason?: string;
+  assignedTo?: string;
 }
 
 export interface SupportRequest {
@@ -216,5 +218,34 @@ export interface SupportRequest {
   createdAt: any;
   reply?: string;
   repliedAt?: any;
+}
+
+export type UserRole = 'Administrador' | 'Gerente' | 'Vendedor' | 'Financeiro' | 'Só Leitura';
+
+export interface UserProfile {
+  uid: string;
+  email: string;
+  displayName: string;
+  orgId: string;
+  role: UserRole;
+  createdAt: number;
+}
+
+export interface Organization {
+  id: string;
+  name: string;
+  adminId: string;
+  createdAt: number;
+}
+
+export interface Invitation {
+  id: string;
+  email: string;
+  orgId: string;
+  role: UserRole;
+  token: string;
+  status: 'pending' | 'accepted' | 'expired';
+  createdAt: number;
+  expiresAt: number;
 }
 

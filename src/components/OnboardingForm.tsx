@@ -7,7 +7,7 @@ import { toast, Toaster } from 'sonner';
 import { getPlanPrice, getSetupPrice } from '../helpers';
 
 export default function OnboardingForm() {
-  const { userId, clientId } = useParams<{ userId: string, clientId?: string }>();
+  const { orgId, clientId } = useParams<{ orgId: string, clientId?: string }>();
   const [searchParams] = useSearchParams();
   const referralId = searchParams.get('ref');
   const [loading, setLoading] = useState(true);
@@ -34,9 +34,9 @@ export default function OnboardingForm() {
     document.documentElement.classList.add('dark');
     
     const fetchData = async () => {
-      if (!userId) return;
+      if (!orgId) return;
       try {
-        const settingsRef = doc(db, 'users', userId, 'settings', 'preferences');
+        const settingsRef = doc(db, 'organizations', orgId, 'settings', 'preferences');
         const docSnap = await getDoc(settingsRef);
         if (docSnap.exists() && docSnap.data().onboardingQuestions) {
           setQuestions(docSnap.data().onboardingQuestions);
@@ -51,7 +51,7 @@ export default function OnboardingForm() {
         }
 
         if (clientId) {
-          const clientRef = doc(db, 'users', userId, 'clients', clientId);
+          const clientRef = doc(db, 'organizations', orgId, 'clients', clientId);
           const clientSnap = await getDoc(clientRef);
           if (clientSnap.exists()) {
             const data = clientSnap.data();
@@ -79,11 +79,11 @@ export default function OnboardingForm() {
       }
     };
     fetchData();
-  }, [userId, clientId]);
+  }, [orgId, clientId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userId) return;
+    if (!orgId) return;
     
     // Validate required dynamic questions
     for (const q of questions) {
@@ -96,7 +96,7 @@ export default function OnboardingForm() {
     setSubmitting(true);
     try {
       if (clientId) {
-        const clientRef = doc(db, 'users', userId, 'clients', clientId);
+        const clientRef = doc(db, 'organizations', orgId, 'clients', clientId);
         await updateDoc(clientRef, {
           name: basicData.name,
           email: basicData.email,
@@ -108,7 +108,7 @@ export default function OnboardingForm() {
         setSuccess(true);
       } else if (referralId) {
         // Create new client from referral
-        const newClientRef = doc(collection(db, 'users', userId, 'clients'));
+        const newClientRef = doc(collection(db, 'organizations', orgId, 'clients'));
         const newClientId = newClientRef.id;
         
         await setDoc(newClientRef, {
@@ -125,7 +125,7 @@ export default function OnboardingForm() {
         });
 
         // Create referral record
-        const referralRef = doc(collection(db, 'users', userId, 'referrals'));
+        const referralRef = doc(collection(db, 'organizations', orgId, 'referrals'));
         await setDoc(referralRef, {
           id: referralRef.id,
           referrerId: referralId,

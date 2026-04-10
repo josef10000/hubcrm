@@ -8,7 +8,7 @@ import { toast, Toaster } from 'sonner';
 import { Offer } from '../types';
 
 export default function PublicCheckoutPage() {
-  const { userId } = useParams<{ userId: string }>();
+  const { orgId } = useParams<{ orgId: string }>();
   const [loading, setLoading] = useState(true);
   const [ownerSettings, setOwnerSettings] = useState<any>(null);
   const [offers, setOffers] = useState<Offer[]>([]);
@@ -32,10 +32,10 @@ export default function PublicCheckoutPage() {
   const [uploadingFile, setUploadingFile] = useState<string | null>(null);
 
   const handleFileUpload = async (questionId: string, file: File) => {
-    if (!userId) return;
+    if (!orgId) return;
     setUploadingFile(questionId);
     try {
-      const storageRef = ref(storage, `users/${userId}/checkouts/${Date.now()}_${file.name}`);
+      const storageRef = ref(storage, `organizations/${orgId}/checkouts/${Date.now()}_${file.name}`);
       const snapshot = await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(snapshot.ref);
       
@@ -64,17 +64,17 @@ export default function PublicCheckoutPage() {
     document.documentElement.classList.add('dark');
     
     const fetchData = async () => {
-      if (!userId) return;
+      if (!orgId) return;
       try {
         // 1. Fetch Owner Settings
-        const settingsRef = doc(db, 'users', userId, 'settings', 'preferences');
+        const settingsRef = doc(db, 'organizations', orgId, 'settings', 'preferences');
         const docSnap = await getDoc(settingsRef);
         if (docSnap.exists()) {
           setOwnerSettings(docSnap.data());
         }
 
         // 2. Fetch Active Offers for Checkout
-        const offersRef = collection(db, 'users', userId, 'offers');
+        const offersRef = collection(db, 'organizations', orgId, 'offers');
         const q = query(
           offersRef, 
           where('active', '==', true),
@@ -107,7 +107,7 @@ export default function PublicCheckoutPage() {
       }
     };
     fetchData();
-  }, [userId]);
+  }, [orgId]);
 
   const validateStep = () => {
     if (step === 1) {
@@ -140,14 +140,14 @@ export default function PublicCheckoutPage() {
   };
 
   const handleSubmit = async () => {
-    if (!userId) return;
+    if (!orgId) return;
     setSubmitting(true);
     try {
       const response = await fetch('/api/public_checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId,
+          orgId,
           clientData,
           briefingAnswers: answers,
           contract: {

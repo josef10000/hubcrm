@@ -216,3 +216,51 @@ export async function sendFaturaVencimentoEmail(
   }
 }
 
+export async function sendTeamInviteEmail(
+  email: string,
+  collaboratorName: string,
+  role: string,
+  inviteLink: string,
+  customSubject?: string
+) {
+  try {
+    const subject = customSubject || `Você foi convidado para o Hub Central`;
+
+    // No futuro, se criar um template no Resend, mude para template: { id: ... }
+    const data = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [email],
+      reply_to: REPLY_TO_EMAIL,
+      subject: subject,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; color: #333;">
+          <h2 style="color: #f97316; margin-bottom: 20px;">Olá, ${collaboratorName}!</h2>
+          <p style="font-size: 16px; line-height: 1.6;">Você foi convidado para se juntar à nossa equipe no <strong>Hub Central</strong>.</p>
+          <p style="font-size: 16px; line-height: 1.6;">Seu cargo atribuído: <span style="background: #fff7ed; color: #c2410c; padding: 2px 8px; border-radius: 4px; font-weight: bold;">${role}</span></p>
+          <p style="font-size: 16px; line-height: 1.6; margin-top: 20px;">Clique no botão abaixo para concluir seu cadastro e acessar o sistema:</p>
+          
+          <div style="margin: 40px 0; text-align: center;">
+            <a href="${inviteLink}" style="background-color: #f97316; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block;">
+              Aceitar Convite e Acessar CRM
+            </a>
+          </div>
+          
+          <p style="font-size: 14px; color: #666; margin-top: 30px;">
+            Este link é exclusivo para o seu e-mail e expirará em breve.
+          </p>
+          
+          <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;" />
+          <p style="font-size: 12px; color: #999; text-align: center;">
+            <strong>Hub Symples</strong> - Ecossistema de Gestão e Onboarding
+          </p>
+        </div>
+      `
+    });
+    console.log(`Email de Convite enviado! ID: ${(data as any).id || (data as any).data?.id}`);
+    return data;
+  } catch (error) {
+    console.error('Erro ao enviar email de convite:', error);
+    throw error;
+  }
+}
+

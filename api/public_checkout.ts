@@ -17,15 +17,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { userId, clientData, briefingAnswers } = req.body;
+    const { orgId, clientData, briefingAnswers } = req.body;
 
-    if (!userId) return res.status(400).json({ error: 'ID do usuário é obrigatório' });
+    if (!orgId) return res.status(400).json({ error: 'ID da organização é obrigatório' });
     if (!clientData || !clientData.email || !clientData.offerId) {
       return res.status(400).json({ error: 'Dados do cliente incompletos' });
     }
 
     // 1. Fetch Offer from Firestore
-    const offerDoc = await db.collection('users').doc(userId).collection('offers').doc(clientData.offerId).get();
+    const offerDoc = await db.collection('organizations').doc(orgId).collection('offers').doc(clientData.offerId).get();
     
     if (!offerDoc.exists) {
       return res.status(404).json({ error: 'Oferta não encontrada ou inativa' });
@@ -53,7 +53,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         email: clientData.email,
         mobilePhone: clientData.whatsapp ? clientData.whatsapp.replace(/\D/g, '') : undefined,
         cpfCnpj: cleanCpfCnpj || undefined,
-        observations: `Lead vindo do Checkout Público. CRM User: ${userId}`
+        observations: `Lead vindo do Checkout Público. CRM Org: ${orgId}`
       });
     }
 
@@ -100,14 +100,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         value: total,
         dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
         description: isYearly ? `Plano Anual: ${offer.name} (12 meses)` : `Compra: ${offer.name}`,
-        observations: isYearly ? `Pagamento Único Anual com 15% de desconto. CRM User: ${userId}` : `Checkout Público`
+        observations: isYearly ? `Pagamento Único Anual com 15% de desconto. CRM Org: ${orgId}` : `Checkout Público`
       });
       checkoutUrl = payment.invoiceUrl;
       currentPaymentId = payment.id;
     }
 
     // 5. Register Lead in CRM
-    const clientRef = db.collection('users').doc(userId).collection('clients').doc();
+    const clientRef = db.collection('organizations').doc(orgId).collection('clients').doc();
     const annualNote = isYearly ? "\n[OBS: Plano Anual - Validade: 12 meses (Renovação Manual)]" : "";
     
     await clientRef.set({

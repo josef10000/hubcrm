@@ -13,28 +13,28 @@ export function useFinance(userId: string) {
   useEffect(() => {
     if (!userId) return;
 
-    const expensesRef = collection(db, 'users', userId, 'expenses');
+    const expensesRef = collection(db, 'organizations', userId, 'expenses');
     const unsubExpenses = onSnapshot(expensesRef, (snapshot) => {
       const loaded: Expense[] = [];
       snapshot.forEach((d) => loaded.push(d.data() as Expense));
       setExpenses(loaded.sort((a, b) => b.date - a.date));
     });
 
-    const transactionsRef = collection(db, 'users', userId, 'transactions');
+    const transactionsRef = collection(db, 'organizations', userId, 'transactions');
     const unsubTransactions = onSnapshot(transactionsRef, (snapshot) => {
       const loaded: Transaction[] = [];
       snapshot.forEach((d) => loaded.push(d.data() as Transaction));
       setTransactions(loaded.sort((a, b) => b.date - a.date));
     });
 
-    const categoriesRef = collection(db, 'users', userId, 'transactionCategories');
+    const categoriesRef = collection(db, 'organizations', userId, 'transactionCategories');
     const unsubCategories = onSnapshot(categoriesRef, (snapshot) => {
       const loaded: TransactionCategory[] = [];
       snapshot.forEach((d) => loaded.push(d.data() as TransactionCategory));
       setTransactionCategories(loaded);
     });
 
-    const budgetsRef = collection(db, 'users', userId, 'budgets');
+    const budgetsRef = collection(db, 'organizations', userId, 'budgets');
     const unsubBudgets = onSnapshot(budgetsRef, (snapshot) => {
       const loaded: Budget[] = [];
       snapshot.forEach((d) => loaded.push(d.data() as Budget));

@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, Plus, X, DollarSign,
   Search, BarChart3, Calendar, MessageCircle, Globe,
   Download, AlertTriangle, Settings,
-  Megaphone, Package, Map as MapIcon, Target, Menu, Bell
+  Megaphone, Package, Map as MapIcon, Target, Menu, Bell, Shield
 } from 'lucide-react';
 import { isFirebaseConfigured } from './lib/firebase';
 import Auth from './components/Auth';
@@ -27,6 +27,8 @@ import ProductsView from './views/ProductsView';
 import SettingsView from './views/SettingsView';
 import LeadsView from './views/LeadsView';
 import NotificationsView from './views/NotificationsView';
+import TeamManagementView from './views/TeamManagementView';
+import AcceptInviteView from './views/AcceptInviteView';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { UIProvider, useUI } from './contexts/UIContext';
@@ -51,11 +53,12 @@ const navItems = [
   { icon: Package, label: 'Produtos', path: '/products' },
   { icon: Globe, label: 'Monitoramento', path: '/monitoring' },
   { icon: MapIcon, label: 'Mapa', path: '/map' },
+  { icon: Users, label: 'Equipe', path: '/team', roles: ['Administrador', 'Gerente'] },
   { icon: Settings, label: 'Configurações', path: '/settings' },
 ];
 
 function CRMInner() {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const {
     clients, activeLeadsCount, offers, supportRequests, loading, errorMsg,
     editingClient, setEditingClient,
@@ -87,16 +90,18 @@ function CRMInner() {
           <button className="md:hidden text-gray-500 hover:text-gray-900 dark:text-white shrink-0 ml-2" onClick={() => setSidebarOpen(false)}><X size={20} /></button>
         </div>
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
-          {navItems.map(item => (
-            <NavItem
-              key={item.path}
-              icon={item.icon}
-              label={item.label}
-              path={item.path}
-              onClick={() => setSidebarOpen(false)}
-              badge={item.path === '/leads' ? activeLeadsCount : item.path === '/support' ? openTicketCount : undefined}
-            />
-          ))}
+          {navItems
+            .filter(item => !item.roles || (userProfile?.role && item.roles.includes(userProfile.role)))
+            .map(item => (
+              <NavItem
+                key={item.path}
+                icon={item.icon}
+                label={item.label}
+                path={item.path}
+                onClick={() => setSidebarOpen(false)}
+                badge={item.path === '/leads' ? activeLeadsCount : item.path === '/support' ? openTicketCount : undefined}
+              />
+            ))}
         </nav>
         <div className="p-4 border-t border-gray-200 dark:border-white/10">
           <div className="flex items-center justify-between px-4 py-3 bg-gray-100 dark:bg-white/5 backdrop-blur-xl rounded-2xl border border-gray-200 dark:border-white/10">
@@ -135,6 +140,7 @@ function CRMInner() {
             {currentPath === '/map' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Mapa de Clientes</h2>}
             {currentPath === '/leads' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Pipeline de Vendas</h2>}
             {currentPath === '/notifications' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Central de Notificações</h2>}
+            {currentPath === '/team' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Gestão de Equipe</h2>}
           </div>
           <div className="flex items-center gap-3">
             {currentPath === '/' && (
@@ -151,7 +157,12 @@ function CRMInner() {
                 <span>Exportar</span>
               </button>
             )}
-            <button onClick={() => { setEditingClient(null); setIsModalOpen(true); }} className="flex items-center space-x-2 bg-gradient-to-r from-primary-500 to-primary-400 hover:from-primary-600 hover:to-primary-600 text-gray-900 dark:text-white px-5 py-3 rounded-2xl transition-all font-medium shadow-xl shadow-primary-500/30 hover:shadow-2xl shadow-primary-500/50 hover:scale-105 active:scale-95 shrink-0"><Plus size={18} /><span className="hidden sm:inline">Novo Cliente</span></button>
+            {userProfile?.role !== 'Só Leitura' && (
+              <button onClick={() => { setEditingClient(null); setIsModalOpen(true); }} className="flex items-center space-x-2 bg-gradient-to-r from-primary-500 to-primary-400 hover:from-primary-600 hover:to-primary-600 text-gray-900 dark:text-white px-5 py-3 rounded-2xl transition-all font-medium shadow-xl shadow-primary-500/30 hover:shadow-2xl shadow-primary-500/50 hover:scale-105 active:scale-95 shrink-0">
+                <Plus size={18} />
+                <span className="hidden sm:inline">Novo Cliente</span>
+              </button>
+            )}
           </div>
         </header>
 
@@ -190,6 +201,7 @@ function CRMInner() {
                 <Route path="/leads" element={<LeadsView />} />
                 <Route path="/support" element={<SupportView />} />
                 <Route path="/notifications" element={<NotificationsView />} />
+                <Route path="/team" element={<TeamManagementView />} />
               </Routes>
             </div>
           )
@@ -273,11 +285,12 @@ export default function App() {
       <Toaster position="top-right" theme="dark" />
       <AuthProvider>
         <Routes>
-          <Route path="/cliente/:userId/:clientId" element={<ClientPortal />} />
-          <Route path="/onboarding/:userId" element={<OnboardingForm />} />
-          <Route path="/onboarding/:userId/:clientId" element={<OnboardingForm />} />
-          <Route path="/contrato/:userId/:clientId/:contractId" element={<ContractSignView />} />
-          <Route path="/contratar/:userId" element={<PublicCheckoutPage />} />
+          <Route path="/cliente/:orgId/:clientId" element={<ClientPortal />} />
+          <Route path="/onboarding/:orgId" element={<OnboardingForm />} />
+          <Route path="/onboarding/:orgId/:clientId" element={<OnboardingForm />} />
+          <Route path="/contrato/:orgId/:clientId/:contractId" element={<ContractSignView />} />
+          <Route path="/contratar/:orgId" element={<PublicCheckoutPage />} />
+          <Route path="/convite/:token" element={<AcceptInviteView />} />
           <Route path="*" element={<PrivateApp />} />
         </Routes>
       </AuthProvider>

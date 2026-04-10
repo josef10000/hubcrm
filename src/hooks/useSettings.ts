@@ -54,7 +54,7 @@ export function useSettings(userId: string) {
   // Settings listener
   useEffect(() => {
     if (!userId) return;
-    const settingsRef = doc(db, 'users', userId, 'settings', 'preferences');
+    const settingsRef = doc(db, 'organizations', userId, 'settings', 'preferences');
     const unsubscribe = onSnapshot(settingsRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
@@ -71,7 +71,7 @@ export function useSettings(userId: string) {
   // Global announcement listener
   useEffect(() => {
     if (!userId) return;
-    const globalRef = doc(db, 'users', userId, 'settings', 'global');
+    const globalRef = doc(db, 'organizations', userId, 'settings', 'global');
     const unsubGlobal = onSnapshot(globalRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();

@@ -1,9 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { auth, db } from '../lib/firebase';
+import { UserProfile } from '../types';
 
 interface AuthContextType {
   user: User | null;
+  userProfile: UserProfile | null;
   loading: boolean;
   errorMsg: string | null;
 }
@@ -20,6 +23,7 @@ export function useAuth() {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -27,8 +31,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let timeoutId: NodeJS.Timeout;
     
     try {
-      const unsubscribe = onAuthStateChanged(auth, (u) => {
+      const unsubscribe = onAuthStateChanged(auth, async (u) => {
         setUser(u);
+        
+        if (u) {
+          try {
+            // Buscar perfil do usuário
+            const profileRef = doc(db, 'profiles', u.uid);
+            const profileSnap = await getDoc(profileRef);
+            
+            if (profileSnap.exists()) {
+              setUserProfile(profileSnap.data() as UserProfile);
+            } else {
+              // BOOTSTRAP: Criar perfil inicial e organização (Migração)
+              const newProfile: UserProfile = {
+                uid: u.uid,
+                email: u.email || '',
+                displayName: u.displayName || 'Administrador',
+                orgId: u.uid, // Por enquanto usamos o UID como OrgId padrão na migração
+                role: 'Administrador',
+                createdAt: Date.now()
+              };
+              
+              // Criar organização se não existir
+              const orgRef = doc(db, 'organizations', u.uid);
+              const orgSnap = await getDoc(orgRef);
+              if (!orgSnap.exists()) {
+                await setDoc(orgRef, {
+                  id: u.uid,
+                  name: `Org ${u.displayName || u.email}`,
+                  adminId: u.uid,
+                  createdAt: Date.now()
+                });
+              }
+              
+              await setDoc(profileRef, newProfile);
+              setUserProfile(newProfile);
+            }
+          } catch (err: any) {
+            console.error("Profile Error:", err);
+            setErrorMsg("Erro ao carregar perfil do usuário.");
+          }
+        } else {
+          setUserProfile(null);
+        }
+        
         setLoading(false);
         clearTimeout(timeoutId);
       }, (error) => {
@@ -41,7 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       timeoutId = setTimeout(() => {
         setLoading(false);
         setErrorMsg("O tempo limite de autenticação foi excedido.");
-      }, 10000);
+      }, 15000);
 
       return () => {
         unsubscribe();
@@ -55,7 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, errorMsg }}>
+    <AuthContext.Provider value={{ user, userProfile, loading, errorMsg }}>
       {children}
     </AuthContext.Provider>
   );

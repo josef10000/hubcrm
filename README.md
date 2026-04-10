@@ -59,12 +59,22 @@ Sistema de notificações transacionais que mantém o cliente informado sem esfo
 
 ## ⚙️ Stack Tecnológica & Arquitetura
 
+- **Arquitetura Multi-Tenant**: Isolamento total de dados por organização via subcoleções estruturadas no Firestore. Cada empresa possui seu próprio contexto de dados, configurações e portais.
 - **Frontend**: React 19 (Hooks, Context API) utilizando Vite como build tool.
 - **Estilização**: Tailwind CSS 4.0 para uma interface moderna, responsiva e performática.
 - **Backend (Serverless)**: Vercel Functions rodando lógica em Node.js e TypeScript.
 - **Database**: Firebase Firestore (NoSQL) para persistência escalável e em tempo real.
 - **Segurança & Rate Limit**: Upstash Redis garantindo a integridade dos endpoints de pagamento.
 - **Providers**: Asaas (Pagamentos), Resend (Transactional Emails), UptimeRobot (Monitoring).
+
+## 🔐 Segurança & Controle de Acesso (RBAC)
+
+O ecossistema utiliza um sistema de permissões granulado para garantir que cada membro da equipe acesse apenas o necessário:
+
+- **👑 Administrador**: Controle total sobre a organização, finanças, configurações globais e gestão de equipe.
+- **💼 Gerente**: Acesso administrativo quase completo, exceto por configurações críticas de faturamento da plataforma.
+- **🤝 Vendedor**: Acesso restringe a visualização apenas aos leads atribuídos a si. Sem acesso ao módulo financeiro de custos.
+- **👁️ Só Leitura**: Permite auditoria completa do sistema sem permissão para criar, editar ou excluir registros.
 
 ## 🔨 Configuração e Instalação
 

@@ -12,6 +12,7 @@ import { authFetch } from '../lib/authFetch';
 import { Client, ClientLog, ClientCredential, ClientStage, OnboardingQuestion, Offer, SiteStatus, ClientContract } from '../types';
 import { getPlanPrice, getSetupPrice } from '../helpers';
 import { useCRM } from '../contexts/CRMContext';
+import { useAuth } from '../contexts/AuthContext';
 
 // ── Tab Components ──
 import HistoryTab from './client-modal/HistoryTab';
@@ -23,7 +24,8 @@ import ContractsTab from './client-modal/ContractsTab';
 
 export default
 function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardingQuestions, user, offers }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, onDelete?: (id: string) => void, initialData: Client | null, onboardingQuestions: OnboardingQuestion[], user: User, offers: Offer[] }) {
-  const { defaultContractText } = useCRM();
+  const { userProfile } = useAuth();
+  const { defaultContractText, effectiveOrgId } = useCRM();
   const activeOffers = offers.filter(o => o.active);
   const defaultOffer = activeOffers.length > 0 ? activeOffers[0] : null;
 
@@ -466,9 +468,9 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                       <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Link de Briefing do Cliente</label>
                       <div className="flex items-center gap-2">
                         <div className="flex-1 px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 rounded-xl text-sm truncate select-all">
-                          {window.location.origin}/onboarding/{auth.currentUser?.uid}/{initialData.id}
+                          {window.location.origin}/onboarding/{effectiveOrgId}/{initialData.id}
                         </div>
-                        <button type="button" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/onboarding/${auth.currentUser?.uid}/${initialData.id}`); toast.success('Link copiado!'); }}
+                        <button type="button" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/onboarding/${effectiveOrgId}/${initialData.id}`); toast.success('Link copiado!'); }}
                           className="p-3 bg-gray-200 dark:bg-white/10 hover:bg-gray-300 dark:hover:bg-white/20 text-gray-900 dark:text-white rounded-xl transition-colors shrink-0" title="Copiar Link">
                           <Copy size={18} />
                         </button>
@@ -519,12 +521,12 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
 
           <div className="flex justify-between items-center p-6 border-t border-gray-200 dark:border-white/10 bg-gray-100 dark:bg-white/5 shrink-0">
             <div className="flex space-x-2">
-              {initialData && onDelete ? (
+              {initialData && onDelete && (userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente') ? (
                 <button type="button" onClick={() => onDelete(initialData.id)} className="text-red-400 hover:text-red-300 hover:bg-red-400/10 px-4 py-2 rounded-lg transition-colors flex items-center text-sm font-medium">
                   <Trash2 size={18} className="mr-2" /> Excluir
                 </button>
               ) : null}
-              {initialData && initialData.status !== 'Cancelado' ? (
+              {initialData && initialData.status !== 'Cancelado' && (userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente') ? (
                 <button type="button" onClick={() => setShowCancelConfirm(true)} className="text-primary-400 hover:text-primary-300 hover:bg-primary-400/10 px-4 py-2 rounded-lg transition-colors flex items-center text-sm font-medium">
                   Cancelar Assinatura
                 </button>
@@ -532,7 +534,9 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
             </div>
             <div className="flex space-x-3">
               <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:bg-white/10 transition-colors">Cancelar</button>
-              <button type="submit" className="px-5 py-2.5 rounded-xl text-sm font-medium bg-primary-500 hover:bg-primary-600 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20 transition-all hover:scale-105 active:scale-95">Salvar Cliente</button>
+              {userProfile?.role !== 'Só Leitura' && (
+                <button type="submit" className="px-5 py-2.5 rounded-xl text-sm font-medium bg-primary-500 hover:bg-primary-600 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20 transition-all hover:scale-105 active:scale-95">Salvar Cliente</button>
+              )}
             </div>
           </div>
         </form>
