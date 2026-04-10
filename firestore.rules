@@ -55,23 +55,32 @@ service cloud.firestore {
     // Acesso Público (Checkout e Portal do Cliente)
     // ===============================================================
     
-    // Acesso público para configurações básicas de checkout
+    // Configurações de Branding e Preferências (Público para renderizar Checkout/Portal)
     match /organizations/{orgId}/settings/preferences {
       allow read: if true;
     }
 
+    // Ofertas e Planos Disponíveis (Público para o Checkout)
     match /organizations/{orgId}/offers/{offerId} {
       allow read: if true;
     }
 
+    // Portal do Cliente
     match /organizations/{orgId}/clients/{clientId} {
+      // Permite buscar um cliente específico pelo ID (chave de acesso do portal)
+      // Não permite listar (list) todos os clientes da empresa
       allow get: if true;
+      
+      // Permite que o cliente atualize apenas campos específicos de interação no portal
       allow update: if request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['npsScore', 'npsComment', 'npsSubmittedAt', 'stages', 'referralRewardType', 'currentDiscount']);
+        .hasOnly(['npsScore', 'npsComment', 'npsSubmittedAt', 'referralRewardType', 'currentDiscount', 'accessKey']);
     }
     
+    // Suporte (Portal do Cliente)
     match /organizations/{orgId}/supportRequests/{requestId} {
-      allow create, read: if true;
+      // Público pode criar chamados, mas apenas a equipe (ou via ID específico se implementado) pode ler
+      allow create: if true;
+      allow read: if belongsToOrg(orgId);
     }
   }
 }
