@@ -82,7 +82,7 @@ function CRMInner() {
         <div className="p-6 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <img src="https://i.imgur.com/EFBaYb5.png" alt="Hub Symples Logo" className="h-20 w-auto object-contain drop-shadow-lg" referrerPolicy="no-referrer" />
-            <h1 className="text-xl font-bold tracking-tight text-gray-900 dark:text-white whitespace-nowrap">Hub Symples</h1>
+            <h1 className="text-xl font-bold tracking-tight text-gray-900 dark:text-white whitespace-nowrap">Hub Central</h1>
           </div>
           <button className="md:hidden text-gray-500 hover:text-gray-900 dark:text-white shrink-0 ml-2" onClick={() => setSidebarOpen(false)}><X size={20} /></button>
         </div>

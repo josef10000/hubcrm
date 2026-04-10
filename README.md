@@ -1,8 +1,8 @@
-# Hub Symples - Ecossistema Completo de Gestão e Onboarding
+# Hub Central - Ecossistema Completo de Gestão e Onboarding
 
 <div align="center">
-  <img src="https://i.imgur.com/EFBaYb5.png" alt="Hub Symples Logo" width="300" />
-  <p><em>Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.</em></p>
+  <img src="https://i.imgur.com/EFBaYb5.png" alt="Hub Central Logo" width="300" />
+  <p><em>By Hub Symples - Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.</em></p>
   
   <p>
     <img src="https://img.shields.io/badge/Version-1.5.0-orange" alt="Version" />
@@ -95,5 +95,5 @@ Este projeto é open-source sob a [Licença MIT](LICENSE) em nome de **Hub Sympl
 
 ---
 <div align="center">
-  🚀 <strong>Hub Symples</strong>: Modernidade, Automação e Foco em Resultados.
+  🚀 <strong>Hub Central</strong>: Modernidade, Automação e Foco em Resultados.
 </div>

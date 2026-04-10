@@ -96,7 +96,7 @@ export default function Auth() {
           <img src="https://i.imgur.com/EFBaYb5.png" alt="Hub Symples Logo" className="h-64 w-auto object-contain drop-shadow-2xl -mb-16" referrerPolicy="no-referrer" />
         </div>
         <h2 className="text-center text-3xl font-extrabold text-white tracking-tight">
-          Hub Symples
+          Hub Central
         </h2>
         <p className="mt-2 text-center text-sm text-gray-400">
           {mode === 'login' ? 'Acesso exclusivo para administração' : 
