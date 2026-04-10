@@ -35,9 +35,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(u);
         
         if (u) {
+          const profileRef = doc(db, 'profiles', u.uid);
           try {
             // Buscar perfil do usuário
-            const profileRef = doc(db, 'profiles', u.uid);
             const profileSnap = await getDoc(profileRef);
             
             if (profileSnap.exists()) {
