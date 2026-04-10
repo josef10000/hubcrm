@@ -16,6 +16,7 @@ import { Client } from '../types';
 interface CalendarViewProps {
   clients: Client[];
   onClientClick: (client: Client) => void;
+  role?: string;
 }
 
 type CalendarMode = 'finance' | 'production';
@@ -26,9 +27,10 @@ interface Holiday {
   type: string;
 }
 
-export default function CalendarView({ clients, onClientClick }: CalendarViewProps) {
+export default function CalendarView({ clients, onClientClick, role }: CalendarViewProps) {
+  const isAtendimento = role === 'Atendimento';
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [mode, setMode] = useState<CalendarMode>('finance');
+  const [mode, setMode] = useState<CalendarMode>(isAtendimento ? 'production' : 'finance');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
 
@@ -145,30 +147,32 @@ export default function CalendarView({ clients, onClientClick }: CalendarViewPro
 
         <div className="flex flex-col sm:flex-row items-center gap-4">
           {/* Mode Toggle - Highly Visible */}
-          <div className="flex bg-gray-100 dark:bg-white/5 p-1.5 rounded-xl w-full sm:w-auto">
-            <button
-              onClick={() => setMode('finance')}
-              className={`flex-1 sm:flex-none flex items-center justify-center space-x-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                mode === 'finance' 
-                  ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-primary-500/20'
-              }`}
-            >
-              <DollarSign size={18} />
-              <span>Financeiro</span>
-            </button>
-            <button
-              onClick={() => setMode('production')}
-              className={`flex-1 sm:flex-none flex items-center justify-center space-x-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                mode === 'production' 
-                  ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30' 
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-primary-500/20'
-              }`}
-            >
-              <Package size={18} />
-              <span>Produção</span>
-            </button>
-          </div>
+          {!isAtendimento && (
+            <div className="flex bg-gray-100 dark:bg-white/5 p-1.5 rounded-xl w-full sm:w-auto">
+              <button
+                onClick={() => setMode('finance')}
+                className={`flex-1 sm:flex-none flex items-center justify-center space-x-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                  mode === 'finance' 
+                    ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-primary-500/20'
+                }`}
+              >
+                <DollarSign size={18} />
+                <span>Financeiro</span>
+              </button>
+              <button
+                onClick={() => setMode('production')}
+                className={`flex-1 sm:flex-none flex items-center justify-center space-x-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                  mode === 'production' 
+                    ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30' 
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-primary-500/20'
+                }`}
+              >
+                <Package size={18} />
+                <span>Produção</span>
+              </button>
+            </div>
+          )}
 
           {/* Month Navigation */}
           <div className="flex items-center space-x-2 bg-gray-100 dark:bg-white/5 p-1.5 rounded-xl">

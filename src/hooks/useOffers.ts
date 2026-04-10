@@ -12,14 +12,17 @@ export function useOffers(userId: string, offers: Offer[], setOffers: React.Disp
   const [lastDeletedOffer, setLastDeletedOffer] = useState<Offer | null>(null);
 
   const handleSaveOffer = async (offerData: Partial<Offer>) => {
-    if (!auth.currentUser) return;
+    if (!auth.currentUser || !userId) return;
     try {
       if (!offerData.name || offerData.price === undefined) {
         toast.error('Nome e preço são obrigatórios');
         return;
       }
       const isNew = !offerData.id;
-      const offerRef = isNew ? doc(collection(db, 'users', auth.currentUser.uid, 'offers')) : doc(db, 'users', auth.currentUser.uid, 'offers', offerData.id!);
+      const offerRef = isNew 
+        ? doc(collection(db, 'organizations', userId, 'offers')) 
+        : doc(db, 'organizations', userId, 'offers', offerData.id!);
+      
       const offerId = offerRef.id;
       const offerToSave: any = {
         id: offerId,
@@ -45,10 +48,10 @@ export function useOffers(userId: string, offers: Offer[], setOffers: React.Disp
   };
 
   const handleDeleteOffer = async (offerId: string) => {
-    if (!auth.currentUser) return;
+    if (!auth.currentUser || !userId) return;
     const offerToBackup = offers.find((o) => o.id === offerId);
     try {
-      await deleteDoc(doc(db, 'users', auth.currentUser.uid, 'offers', offerId));
+      await deleteDoc(doc(db, 'organizations', userId, 'offers', offerId));
       if (offerToBackup) setLastDeletedOffer(offerToBackup);
       toast.success('Oferta excluída com sucesso!', {
         action: { label: 'Desfazer', onClick: () => offerToBackup && undoDeleteOffer(offerToBackup) },
@@ -62,9 +65,9 @@ export function useOffers(userId: string, offers: Offer[], setOffers: React.Disp
   };
 
   const undoDeleteOffer = async (offer: Offer) => {
-    if (!auth.currentUser || !offer) return;
+    if (!auth.currentUser || !userId || !offer) return;
     try {
-      await setDoc(doc(db, 'users', auth.currentUser.uid, 'offers', offer.id), offer);
+      await setDoc(doc(db, 'organizations', userId, 'offers', offer.id), offer);
       setLastDeletedOffer(null);
       toast.success('Oferta restaurada!');
     } catch (error) {
@@ -74,15 +77,15 @@ export function useOffers(userId: string, offers: Offer[], setOffers: React.Disp
   };
 
   const restoreDefaultOffers = async () => {
-    if (!auth.currentUser) return;
+    if (!auth.currentUser || !userId) return;
     try {
       const defaultOffers: Offer[] = [
-        { id: Date.now().toString(36) + Math.random().toString(36).substring(2), name: 'Ecossistema Essencial', type: 'SUBSCRIPTION', price: 397, setupPrice: 2500, active: true, createdAt: Date.now() },
-        { id: Date.now().toString(36) + Math.random().toString(36).substring(2), name: 'Profissional', type: 'SUBSCRIPTION', price: 897, setupPrice: 7500, active: true, createdAt: Date.now() },
+        { id: Date.now().toString(36) + Math.random().toString(36).substring(2), name: 'Ecossistema Essencial', type: 'SUBSCRIPTION', price: 397, setupPrice: 2500, active: true, displayContext: 'PORTAL', createdAt: Date.now() },
+        { id: Date.now().toString(36) + Math.random().toString(36).substring(2), name: 'Profissional', type: 'SUBSCRIPTION', price: 897, setupPrice: 7500, active: true, displayContext: 'PORTAL', createdAt: Date.now() },
       ];
       for (const offer of defaultOffers) {
         const exists = offers.some((o) => o.name === offer.name);
-        if (!exists) await setDoc(doc(db, 'users', auth.currentUser!.uid, 'offers', offer.id), offer);
+        if (!exists) await setDoc(doc(db, 'organizations', userId, 'offers', offer.id), offer);
       }
       toast.success('Ofertas padrão restauradas com sucesso!');
     } catch (error) {

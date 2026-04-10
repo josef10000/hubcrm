@@ -196,7 +196,7 @@ function CRMInner() {
                 <Route path="/leads" element={<LeadsView />} />
                 <Route path="/support" element={<SupportView />} />
                 <Route path="/notifications" element={<NotificationsView />} />
-                <Route path="/calendar" element={<CalendarView clients={clients} onClientClick={(client) => { setEditingClient(client); setIsModalOpen(true); }} />} />
+                <Route path="/calendar" element={<CalendarView role={userProfile?.role} clients={clients} onClientClick={(client) => { setEditingClient(client); setIsModalOpen(true); }} />} />
                 <Route path="/referrals" element={<ReferralsView clients={clients} user={user!} />} />
                 <Route path="/products" element={<ProductsView />} />
                 <Route path="/monitoring" element={<MonitoringView clients={clients} />} />

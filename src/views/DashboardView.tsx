@@ -98,13 +98,16 @@ export default function DashboardView() {
           mrr={mrr}
           overdueAmount={overdueAmount}
           expectedThisMonth={expectedThisMonth}
+          role={userProfile?.role}
         />
 
-        <FinancialCharts 
-          statusData={statusData}
-          nicheData={nicheData}
-          COLORS={COLORS}
-        />
+        {userProfile?.role !== 'Atendimento' && (
+          <FinancialCharts 
+            statusData={statusData}
+            nicheData={nicheData}
+            COLORS={COLORS}
+          />
+        )}
 
         {/* Quick Filters & Sort */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
