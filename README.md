@@ -73,7 +73,7 @@ O ecossistema utiliza um sistema de permissões granulado para garantir que cada
 
 - **👑 Administrador**: Controle total sobre a organização, finanças, configurações globais e gestão de equipe.
 - **💼 Gerente**: Acesso administrativo completo, incluindo gestão de produtos e leads.
-- **🛠️ Suporte Técnico**: Focado na execução técnica e criação de sites. Acesso a Clientes, Monitoramento, Mapa e Agenda, sem acesso ao Pipeline de Vendas.
+- **🛠️ Suporte Técnico**: Focado na execução técnica e criação de sites. Acesso a **Produtos**, Clientes, Monitoramento, Mapa e Agenda, sem acesso ao Pipeline de Vendas.
 - **🤝 Vendedor**: Gestão de leads próprios e agora com acesso à criação de **Produtos** para agilizar o fechamento de propostas.
 - **👁️ Só Leitura**: Permite auditoria completa do sistema sem permissão para criar, editar ou excluir registros.
 

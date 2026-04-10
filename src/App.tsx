@@ -50,7 +50,7 @@ const navItems = [
   { icon: DollarSign, label: 'Gestão de Custos', path: '/finance', roles: ['Administrador', 'Gerente'] },
   { icon: Users, label: 'Indicações', path: '/referrals' },
   { icon: Megaphone, label: 'Avisos', path: '/marketing', roles: ['Administrador', 'Gerente'] },
-  { icon: Package, label: 'Produtos', path: '/products', roles: ['Administrador', 'Gerente', 'Vendedor'] },
+  { icon: Package, label: 'Produtos', path: '/products', roles: ['Administrador', 'Gerente', 'Vendedor', 'Suporte Técnico'] },
   { icon: Globe, label: 'Monitoramento', path: '/monitoring', roles: ['Administrador', 'Gerente', 'Suporte Técnico'] },
   { icon: MapIcon, label: 'Mapa', path: '/map', roles: ['Administrador', 'Gerente', 'Suporte Técnico'] },
   { icon: Users, label: 'Equipe', path: '/team', roles: ['Administrador', 'Gerente'] },
