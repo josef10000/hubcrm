@@ -105,7 +105,7 @@ O **HubCRM** é uma plataforma robusta projetada para simplificar o ciclo de vid
 
 ## 📄 Licença
 
-Este projeto é privado e de uso exclusivo da **Digital Tech LTDA**.
+Este projeto está licenciado sob a [Licença MIT](LICENSE).
 
 ---
 <div align="center">
