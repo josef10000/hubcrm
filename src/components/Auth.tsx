@@ -93,9 +93,9 @@ export default function Auth() {
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="flex justify-center">
-          <img src="https://i.imgur.com/EFBaYb5.png" alt="Hub Symples Logo" className="h-64 w-auto object-contain drop-shadow-2xl -mb-16" referrerPolicy="no-referrer" />
+          <img src="https://i.imgur.com/EFBaYb5.png" alt="Hub Central Logo" className="h-64 w-auto object-contain drop-shadow-2xl" referrerPolicy="no-referrer" />
         </div>
-        <h2 className="text-center text-3xl font-extrabold text-white tracking-tight">
+        <h2 className="text-center text-3xl font-extrabold text-white tracking-tight mt-4">
           Hub Central
         </h2>
         <p className="mt-2 text-center text-sm text-gray-400">
