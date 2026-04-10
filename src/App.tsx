@@ -42,17 +42,17 @@ import PublicCheckoutPage from './components/PublicCheckoutPage';
 // ── Navigation Config ──
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-  { icon: Target, label: 'Pipeline', path: '/leads', roles: ['Administrador', 'Gerente', 'Vendedor'] },
+  { icon: Target, label: 'Funil de Vendas', path: '/leads', roles: ['Administrador', 'Gerente', 'Vendedor'] },
   { icon: Bell, label: 'Notificações', path: '/notifications' },
   { icon: BarChart3, label: 'Analytics', path: '/analytics', roles: ['Administrador', 'Gerente'] },
   { icon: MessageCircle, label: 'Chamados', path: '/support' },
-  { icon: Calendar, label: 'Agenda', path: '/calendar', roles: ['Administrador', 'Gerente', 'Suporte Técnico'] },
+  { icon: Calendar, label: 'Agenda', path: '/calendar', roles: ['Administrador', 'Gerente', 'Atendimento'] },
   { icon: DollarSign, label: 'Gestão de Custos', path: '/finance', roles: ['Administrador', 'Gerente'] },
   { icon: Users, label: 'Indicações', path: '/referrals' },
   { icon: Megaphone, label: 'Avisos', path: '/marketing', roles: ['Administrador', 'Gerente'] },
-  { icon: Package, label: 'Produtos', path: '/products', roles: ['Administrador', 'Gerente', 'Vendedor', 'Suporte Técnico'] },
-  { icon: Globe, label: 'Monitoramento', path: '/monitoring', roles: ['Administrador', 'Gerente', 'Suporte Técnico'] },
-  { icon: MapIcon, label: 'Mapa', path: '/map', roles: ['Administrador', 'Gerente', 'Suporte Técnico'] },
+  { icon: Package, label: 'Produtos', path: '/products', roles: ['Administrador', 'Gerente', 'Vendedor', 'Atendimento'] },
+  { icon: Globe, label: 'Monitoramento', path: '/monitoring', roles: ['Administrador', 'Gerente', 'Atendimento'] },
+  { icon: MapIcon, label: 'Mapa', path: '/map', roles: ['Administrador', 'Gerente', 'Atendimento'] },
   { icon: Users, label: 'Equipe', path: '/team', roles: ['Administrador', 'Gerente'] },
   { icon: Settings, label: 'Configurações', path: '/settings', roles: ['Administrador', 'Gerente'] },
 ];
@@ -81,7 +81,10 @@ function CRMInner() {
       <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] bg-primary-600/20 rounded-full blur-[120px] pointer-events-none mix-blend-screen"></div>
       <div className="absolute top-[40%] left-[60%] w-[30vw] h-[30vw] bg-purple-600/10 rounded-full blur-[100px] pointer-events-none mix-blend-screen"></div>
 
-      <aside className={`w-64 bg-gray-900/20 dark:bg-black/40 backdrop-blur-3xl border-r border-gray-200 dark:border-white/10 flex flex-col transition-all duration-300 z-30 ${sidebarOpen ? 'translate-x-0 absolute inset-y-0 left-0' : '-translate-x-full absolute md:relative md:translate-x-0'}`}>
+      <aside 
+        translate="no"
+        className={`w-64 bg-gray-900/20 dark:bg-black/40 backdrop-blur-3xl border-r border-gray-200 dark:border-white/10 flex flex-col transition-all duration-300 z-30 ${sidebarOpen ? 'translate-x-0 absolute inset-y-0 left-0' : '-translate-x-full absolute md:relative md:translate-x-0'}`}
+      >
         <div className="p-6 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <img src="https://i.imgur.com/EFBaYb5.png" alt="Hub Symples Logo" className="h-12 w-auto object-contain drop-shadow-lg" referrerPolicy="no-referrer" />
@@ -138,8 +141,9 @@ function CRMInner() {
             {currentPath === '/products' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Produtos</h2>}
             {currentPath === '/monitoring' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Monitoramento de Sites</h2>}
             {currentPath === '/map' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Mapa de Clientes</h2>}
-            {currentPath === '/leads' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Pipeline de Vendas</h2>}
-            {currentPath === '/notifications' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Central de Notificações</h2>}
+            {currentPath === '/map' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Mapa de Clientes</h2>}
+            {currentPath === '/leads' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white" translate="no">Funil de Vendas</h2>}
+            {currentPath === '/notifications' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white" translate="no">Central de Avisos</h2>}
             {currentPath === '/team' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Gestão de Equipe</h2>}
           </div>
           <div className="flex items-center gap-3">
@@ -189,19 +193,26 @@ function CRMInner() {
             <div className="flex-1 overflow-auto custom-scrollbar">
               <Routes>
                 <Route path="/" element={<DashboardView />} />
-                <Route path="/analytics" element={<AnalyticsView />} />
-                <Route path="/calendar" element={<CalendarView clients={clients} onClientClick={(client) => { setEditingClient(client); setIsModalOpen(true); }} />} />
-                <Route path="/finance" element={<FinanceView />} />
-                <Route path="/referrals" element={<ReferralsView clients={clients} user={user!} />} />
-                <Route path="/marketing" element={<MarketingView />} />
-                <Route path="/products" element={<ProductsView />} />
-                <Route path="/monitoring" element={<MonitoringView clients={clients} />} />
-                <Route path="/map" element={<ClientMapView clients={clients} onClientClick={(client) => { setEditingClient(client); setIsModalOpen(true); }} />} />
-                <Route path="/settings" element={<SettingsView />} />
                 <Route path="/leads" element={<LeadsView />} />
                 <Route path="/support" element={<SupportView />} />
                 <Route path="/notifications" element={<NotificationsView />} />
-                <Route path="/team" element={<TeamManagementView />} />
+                <Route path="/calendar" element={<CalendarView clients={clients} onClientClick={(client) => { setEditingClient(client); setIsModalOpen(true); }} />} />
+                <Route path="/referrals" element={<ReferralsView clients={clients} user={user!} />} />
+                <Route path="/products" element={<ProductsView />} />
+                <Route path="/monitoring" element={<MonitoringView clients={clients} />} />
+                <Route path="/map" element={<ClientMapView clients={clients} onClientClick={(client) => { setEditingClient(client); setIsModalOpen(true); }} />} />
+                
+                {/* Rotas Protegidas de Administrador/Gerente */}
+                {(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente') ? (
+                  <>
+                    <Route path="/analytics" element={<AnalyticsView />} />
+                    <Route path="/finance" element={<FinanceView />} />
+                    <Route path="/marketing" element={<MarketingView />} />
+                    <Route path="/team" element={<TeamManagementView />} />
+                    <Route path="/settings" element={<SettingsView />} />
+                  </>
+                ) : null}
+                <Route path="*" element={<DashboardView />} />
               </Routes>
             </div>
           )

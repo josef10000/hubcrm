@@ -220,7 +220,7 @@ export interface SupportRequest {
   repliedAt?: any;
 }
 
-export type UserRole = 'Administrador' | 'Gerente' | 'Vendedor' | 'Financeiro' | 'Só Leitura';
+export type UserRole = 'Administrador' | 'Gerente' | 'Vendedor' | 'Financeiro' | 'Atendimento' | 'Só Leitura';
 
 export interface UserProfile {
   uid: string;
