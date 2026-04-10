@@ -25,6 +25,9 @@ export default function PublicCheckoutPage() {
     billingCycle: 'MONTHLY' as 'MONTHLY' | 'YEARLY'
   });
   
+  const [contractAccepted, setContractAccepted] = useState(false);
+  const [signatureName, setSignatureName] = useState('');
+  
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [uploadingFile, setUploadingFile] = useState<string | null>(null);
 
@@ -35,7 +38,18 @@ export default function PublicCheckoutPage() {
       const storageRef = ref(storage, `users/${userId}/checkouts/${Date.now()}_${file.name}`);
       const snapshot = await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(snapshot.ref);
-      setAnswers(prev => ({ ...prev, [questionId]: downloadURL }));
+      
+      // Se for a pergunta de Logo/Imagens, anexamos em vez de substituir
+      const isLogoQuestion = questionId.toLowerCase().includes('logo') || questionId.toLowerCase().includes('imagem');
+      
+      setAnswers(prev => {
+        const current = prev[questionId] || '';
+        if (isLogoQuestion && current) {
+          return { ...prev, [questionId]: `${current}, ${downloadURL}` };
+        }
+        return { ...prev, [questionId]: downloadURL };
+      });
+      
       toast.success('Arquivo enviado com sucesso!');
     } catch (error) {
       console.error("Upload error:", error);
@@ -111,6 +125,12 @@ export default function PublicCheckoutPage() {
       }
     }
     if (step === 3) {
+      if (!contractAccepted || !signatureName) {
+        toast.error('Você precisa aceitar os termos do contrato e preencher seu nome para continuar.');
+        return false;
+      }
+    }
+    if (step === 4) {
       if (!clientData.offerId) {
         toast.error('Por favor, selecione um plano para continuar.');
         return false;
@@ -129,7 +149,13 @@ export default function PublicCheckoutPage() {
         body: JSON.stringify({
           userId,
           clientData,
-          briefingAnswers: answers
+          briefingAnswers: answers,
+          contract: {
+            accepted: contractAccepted,
+            signatureName,
+            signedAt: new Date().toISOString(),
+            content: ownerSettings?.defaultContractText
+          }
         })
       });
 
@@ -178,12 +204,12 @@ export default function PublicCheckoutPage() {
 
         {/* Steps Indicator */}
         <div className="flex items-center justify-center gap-4 mb-12">
-          {[1, 2, 3].map((s) => (
+          {[1, 2, 3, 4].map((s) => (
             <div key={s} className="flex items-center gap-2">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${step >= s ? 'bg-orange-500 text-white' : 'bg-white/5 text-gray-500 border border-white/10'}`}>
                 {step > s ? <Check size={18} /> : s}
               </div>
-              {s < 3 && <div className={`w-8 h-px ${step > s ? 'bg-orange-500' : 'bg-white/10'}`} />}
+              {s < 4 && <div className={`w-8 h-px ${step > s ? 'bg-orange-500' : 'bg-white/10'}`} />}
             </div>
           ))}
         </div>
@@ -266,7 +292,7 @@ export default function PublicCheckoutPage() {
                 {(ownerSettings?.onboardingQuestions || []).map((q: any) => (
                   <div key={q.id}>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      {q.text} {q.required && <span className="text-orange-500">*</span>}
+                      {q.text.toLowerCase().includes('logo') ? 'Logo e Imagens do Site' : q.text} {q.required && <span className="text-orange-500">*</span>}
                     </label>
                     {q.type === 'textarea' ? (
                       <textarea
@@ -343,6 +369,45 @@ export default function PublicCheckoutPage() {
           )}
 
           {step === 3 && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+              <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-orange-500" />
+                Contrato de Prestação de Serviços
+              </h2>
+              <div className="bg-black/40 border border-white/10 rounded-2xl p-6 h-[400px] overflow-y-auto custom-scrollbar text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-mono italic">
+                {ownerSettings?.defaultContractText || "Texto do contrato sendo preparado..."}
+              </div>
+              
+              <div className="space-y-4 pt-4">
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Nome Completo (Assinatura Digital)</label>
+                    <input
+                      type="text"
+                      value={signatureName}
+                      onChange={(e) => setSignatureName(e.target.value)}
+                      className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all placeholder:text-gray-600"
+                      placeholder="Digite seu nome completo como assinatura"
+                    />
+                  </div>
+                </div>
+
+                <label className="flex items-center gap-3 p-4 bg-orange-500/5 border border-orange-500/20 rounded-xl cursor-pointer group transition-all hover:bg-orange-500/10 active:scale-[0.99]">
+                  <input
+                    type="checkbox"
+                    checked={contractAccepted}
+                    onChange={(e) => setContractAccepted(e.target.checked)}
+                    className="w-5 h-5 rounded border-white/10 text-orange-500 focus:ring-orange-500 bg-black/40"
+                  />
+                  <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
+                    Li e concordo integralmente com os termos do contrato acima citado.
+                  </span>
+                </label>
+              </div>
+            </div>
+          )}
+
+          {step === 4 && (
             <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
               <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
                 <CheckCircle className="w-5 h-5 text-orange-500" />
@@ -430,7 +495,7 @@ export default function PublicCheckoutPage() {
               </button>
             ) : <div />}
             
-            {step < 3 ? (
+            {step < 4 ? (
               <button
                 onClick={() => {
                   if (validateStep()) setStep(step + 1);

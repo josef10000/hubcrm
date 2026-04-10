@@ -120,7 +120,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       plan: offer.name + (isYearly ? ' (Anual)' : ''),
       offerId: clientData.offerId,
       onboardingAnswers: briefingAnswers,
-      notes: (briefingAnswers ? "Respostas do Briefing registradas." : "") + annualNote,
+      contracts: req.body.contract?.accepted ? [{
+        id: `signed_${Date.now()}`,
+        type: 'text',
+        content: req.body.contract.content,
+        status: 'signed',
+        createdAt: Date.now(),
+        signedAt: Date.now(),
+        signatureName: req.body.contract.signatureName
+      }] : [],
+      notes: (briefingAnswers ? "Respostas do Briefing registradas." : "") + 
+             (req.body.contract?.accepted ? "\n[Contrato assinado digitalmente]" : "") + annualNote,
       onboardingCompleted: true,
       createdAt: Date.now(),
       lastUpdate: Date.now(),

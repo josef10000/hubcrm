@@ -60,6 +60,7 @@ export interface ClientContract {
   signedAt?: number;
   signedIp?: string;
   signedUserAgent?: string;
+  signatureName?: string;
 }
 
 export interface Offer {
