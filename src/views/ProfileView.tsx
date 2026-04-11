@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ProfileView() {
   const { uid } = useParams();
-  const { user, userProfile: currentUserProfile } = useAuth();
+  const { user, userProfile: currentUserProfile, refreshProfile } = useAuth();
   const navigate = useNavigate();
   
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -151,6 +151,7 @@ export default function ProfileView() {
         toast.success('Perfil atualizado!');
         setProfile(prev => prev ? { ...prev, ...formData } : null);
         setIsEditing(false);
+        await refreshProfile();
       } else {
         console.warn('[Profile] Erro retornado pela API:', data.error);
         toast.error(data.error || 'Erro ao salvar no servidor');

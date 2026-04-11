@@ -9,6 +9,7 @@ interface AuthContextType {
   userProfile: UserProfile | null;
   loading: boolean;
   errorMsg: string | null;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -165,8 +166,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const refreshProfile = async () => {
+    if (!user) return;
+    try {
+      const profileRef = doc(db, 'profiles', user.uid);
+      const profileSnap = await getDoc(profileRef);
+      if (profileSnap.exists()) {
+        const data = profileSnap.data() as UserProfile;
+        // Garantir regra de super-admin
+        if (user.email === 'jfs102019@hotmail.com') {
+          setUserProfile({ ...data, role: 'Administrador', orgId: data.orgId || user.uid });
+        } else {
+          setUserProfile(data);
+        }
+      }
+    } catch (err) {
+      console.error("Error refreshing profile:", err);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, userProfile, loading, errorMsg }}>
+    <AuthContext.Provider value={{ user, userProfile, loading, errorMsg, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

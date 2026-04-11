@@ -118,7 +118,7 @@ function CRMInner() {
                 {userProfile?.photoURL ? (
                   <img src={userProfile.photoURL} alt={userProfile.displayName} className="w-full h-full object-cover" />
                 ) : (
-                  user?.email?.[0].toUpperCase() || 'U'
+                  (userProfile?.displayName || user?.displayName || user?.email || 'U')[0].toUpperCase()
                 )}
               </div>
               <div className="truncate">
