@@ -84,7 +84,7 @@ function CRMInner() {
       <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] bg-primary-600/20 rounded-full blur-[120px] pointer-events-none mix-blend-screen"></div>
       <div className="absolute top-[40%] left-[60%] w-[30vw] h-[30vw] bg-purple-600/10 rounded-full blur-[100px] pointer-events-none mix-blend-screen"></div>
 
-      {isBirthday && <BirthdayCelebration />}
+      {isBirthday && <BirthdayCelebration uid={user?.uid} />}
 
       <aside 
         translate="no"
@@ -126,7 +126,7 @@ function CRMInner() {
                   )}
                 </div>
                 {isBirthday && (
-                  <span className="absolute -top-1 -right-1 text-[10px] animate-bounce" title="Aniversariante do Dia! 🎉">🎉</span>
+                  <span className="absolute -top-3 -right-3 text-3xl animate-bounce pointer-events-none" title="Aniversariante do Dia! 🎉">🎉</span>
                 )}
               </div>
               <div className="truncate">
