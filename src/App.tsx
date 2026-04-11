@@ -34,7 +34,7 @@ import ProfileView from './views/ProfileView';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { UIProvider, useUI } from './contexts/UIContext';
 import { CRMProvider, useCRM } from './contexts/CRMContext';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import ClientPortal from './components/ClientPortal';
 import OnboardingForm from './components/OnboardingForm';
 import ContractSignView from './views/ContractSignView';
@@ -60,6 +60,7 @@ const navItems = [
 
 function CRMInner() {
   const { user, userProfile } = useAuth();
+  const navigate = useNavigate();
   const {
     clients, activeLeadsCount, offers, supportRequests, loading, errorMsg,
     editingClient, setEditingClient,

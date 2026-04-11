@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { adminDb } from '../../api/_lib/firebase-admin';
-import { verifyAuth } from '../../api/_lib/auth-middleware';
+import { adminDb } from '../_utils/firebase';
+import { verifyAuth } from '../_utils/authMiddleware';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -48,7 +48,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'Um usuário não pode ser o seu próprio superior' });
       }
       
-      // Validação básica de existência do superior (em background/opcional aqui para performance)
       const superiorProfile = await adminDb.collection('profiles').doc(profileData.reportsTo).get();
       if (!superiorProfile.exists) {
         return res.status(400).json({ error: 'Superior imediato não encontrado' });
