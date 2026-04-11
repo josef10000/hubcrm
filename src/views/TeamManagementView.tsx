@@ -3,6 +3,7 @@ import { Users, Mail, UserPlus, Shield, X, Check, Loader2, Trash2, GitGraph, Lis
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
+import { UserRole } from '../types';
 
 interface Member {
   uid: string;
