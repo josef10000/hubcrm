@@ -235,6 +235,13 @@ export type UserRole =
   | 'Gestor de Faturamento' 
   | 'Só Leitura';
 
+export interface OnboardingTask {
+  id: string;
+  task: string;
+  completed: boolean;
+  completedAt?: number;
+}
+
 export interface UserProfile {
   uid: string;
   email: string;
@@ -250,6 +257,8 @@ export interface UserProfile {
   linkedin?: string;
   reportsTo?: string; // UID do superior imediato
   birthDate?: string; // Formato YYYY-MM-DD
+  startDate?: string; // Data de contratação (YYYY-MM-DD)
+  onboardingTasks?: OnboardingTask[];
 }
 
 export interface Organization {

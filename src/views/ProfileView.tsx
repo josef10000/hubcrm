@@ -35,7 +35,8 @@ export default function ProfileView() {
     instagram: '',
     linkedin: '',
     photoURL: '',
-    birthDate: ''
+    birthDate: '',
+    startDate: ''
   });
 
   const isOwnProfile = user?.uid === uid;
@@ -61,7 +62,8 @@ export default function ProfileView() {
             instagram: data.instagram || '',
             linkedin: data.linkedin || '',
             photoURL: data.photoURL || '',
-            birthDate: data.birthDate || ''
+            birthDate: data.birthDate || '',
+            startDate: data.startDate || ''
           });
 
           // Buscar superior
@@ -375,6 +377,15 @@ export default function ProfileView() {
                         className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-500 outline-none"
                       />
                     </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Data de Contratação</label>
+                      <input 
+                        type="date" 
+                        value={formData.startDate}
+                        onChange={e => setFormData({...formData, startDate: e.target.value})}
+                        className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-500 outline-none"
+                      />
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -446,6 +457,12 @@ export default function ProfileView() {
                           <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                             <Cake size={16} className="mr-3 opacity-50" />
                             <span>Aniversário em: {new Date(profile.birthDate + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}</span>
+                          </div>
+                        )}
+                        {profile.startDate && (
+                          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                            <Calendar size={16} className="mr-3 opacity-50" />
+                            <span>Contratado em: {new Date(profile.startDate + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
                           </div>
                         )}
                       </div>

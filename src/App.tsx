@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, Plus, X, DollarSign,
   Search, BarChart3, Calendar, MessageCircle, Globe,
   Download, AlertTriangle, Settings,
-  Megaphone, Package, Map as MapIcon, Target, Menu, Bell, Shield
+  Megaphone, Package, Map as MapIcon, Target, Menu, Bell, Shield, HeartHandshake
 } from 'lucide-react';
 import { isFirebaseConfigured } from './lib/firebase';
 import Auth from './components/Auth';
@@ -28,6 +28,7 @@ import SettingsView from './views/SettingsView';
 import LeadsView from './views/LeadsView';
 import NotificationsView from './views/NotificationsView';
 import TeamManagementView from './views/TeamManagementView';
+import PeopleView from './views/PeopleView';
 import AcceptInviteView from './views/AcceptInviteView';
 import ProfileView from './views/ProfileView';
 import BirthdayCelebration from './components/BirthdayCelebration';
@@ -55,6 +56,7 @@ const navItems = [
   { icon: Package, label: 'Produtos', path: '/products', roles: ['Administrador', 'Gerente', 'SDR', 'Executive', 'Customer Success', 'Onboarding Specialist'] },
   { icon: Globe, label: 'Monitoramento', path: '/monitoring', roles: ['Administrador', 'Gerente', 'Suporte Técnico'] },
   { icon: MapIcon, label: 'Mapa', path: '/map' },
+  { icon: HeartHandshake, label: 'People', path: '/people', roles: ['Administrador', 'Gerente', 'People & Culture'] },
   { icon: Users, label: 'Equipe', path: '/team', roles: ['Administrador', 'Gerente', 'People & Culture'] },
   { icon: Settings, label: 'Configurações', path: '/settings' },
 ];
@@ -162,6 +164,7 @@ function CRMInner() {
             {currentPath === '/leads' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white" translate="no">Funil de Vendas</h2>}
             {currentPath === '/notifications' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white" translate="no">Central de Avisos</h2>}
             {currentPath === '/team' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Gestão de Equipe</h2>}
+            {currentPath === '/people' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">People & Culture</h2>}
           </div>
           <div className="flex items-center gap-3">
             {currentPath === '/' && (
@@ -224,6 +227,7 @@ function CRMInner() {
                 <Route path="/finance" element={(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || ['FinOps', 'Controladoria', 'Revenue Operations', 'Gestor de Faturamento'].includes(userProfile?.role || '')) ? <FinanceView /> : <DashboardView />} />
                 <Route path="/marketing" element={(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'Revenue Operations') ? <MarketingView /> : <DashboardView />} />
                 <Route path="/team" element={(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture') ? <TeamManagementView /> : <DashboardView />} />
+                <Route path="/people" element={(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture') ? <PeopleView /> : <DashboardView />} />
                 <Route path="/settings" element={<SettingsView />} />
                 <Route path="/profile/:uid" element={<ProfileView />} />
                 <Route path="*" element={<DashboardView />} />
