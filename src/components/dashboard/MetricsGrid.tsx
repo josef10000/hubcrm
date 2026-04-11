@@ -16,7 +16,9 @@ export default function MetricsGrid({
   expectedThisMonth,
   role 
 }: MetricsGridProps) {
-  const isFinancialRestricted = role !== 'Administrador' && role !== 'Gerente';
+  const isFinancialRestricted = role !== 'Administrador' && 
+                                role !== 'Gerente' && 
+                                !['FinOps', 'Controladoria', 'Revenue Operations', 'Gestor de Faturamento'].includes(role || '');
 
   return (
     <div className={`grid grid-cols-1 sm:grid-cols-2 ${isFinancialRestricted ? 'lg:grid-cols-1' : 'lg:grid-cols-4'} gap-4 mb-8`}>

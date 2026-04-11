@@ -101,7 +101,9 @@ export default function DashboardView() {
           role={userProfile?.role}
         />
 
-        {(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente') && (
+        {(userProfile?.role === 'Administrador' || 
+          userProfile?.role === 'Gerente' || 
+          ['FinOps', 'Controladoria', 'Revenue Operations', 'Gestor de Faturamento'].includes(userProfile?.role || '')) && (
           <FinancialCharts 
             statusData={statusData}
             nicheData={nicheData}
@@ -131,7 +133,9 @@ export default function DashboardView() {
           </div>
           
           <div className="flex items-center space-x-2 bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-1 rounded-2xl">
-            {(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente') && (
+            {(userProfile?.role === 'Administrador' || 
+              userProfile?.role === 'Gerente' || 
+              ['FinOps', 'Controladoria', 'Revenue Operations', 'Gestor de Faturamento'].includes(userProfile?.role || '')) && (
               <button 
                 onClick={syncPayments} 
                 disabled={isSyncing}
@@ -142,7 +146,9 @@ export default function DashboardView() {
                 <span className="hidden sm:inline">Sincronizar</span>
               </button>
             )}
-            {(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente') && <div className="w-px h-6 bg-gray-200 dark:bg-white/10 mx-1"></div>}
+            {(userProfile?.role === 'Administrador' || 
+              userProfile?.role === 'Gerente' || 
+              ['FinOps', 'Controladoria', 'Revenue Operations', 'Gestor de Faturamento'].includes(userProfile?.role || '')) && <div className="w-px h-6 bg-gray-200 dark:bg-white/10 mx-1"></div>}
             <button onClick={() => setDashboardMode('list')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${dashboardMode === 'list' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}><AlignLeft size={16} className="mr-2"/> Lista</button>
             <button onClick={() => setDashboardMode('kanban')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${dashboardMode === 'kanban' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}><LayoutDashboard size={16} className="mr-2"/> Kanban</button>
             <div className="w-px h-6 bg-gray-200 dark:bg-white/10 mx-1"></div>
