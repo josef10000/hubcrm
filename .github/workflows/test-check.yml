@@ -2,9 +2,21 @@ name: Test Check
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.env.example'
+      - 'ACCESS_POLICY.md'
+      - 'CONTRIBUTING.md'
+      - 'LICENSE'
   pull_request:
-    branches: [ main ]
+    branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.env.example'
+      - 'ACCESS_POLICY.md'
+      - 'CONTRIBUTING.md'
+      - 'LICENSE'
 
 jobs:
   test:

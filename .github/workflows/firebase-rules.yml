@@ -3,6 +3,20 @@ name: Deploy Regras de Seguranca Firestore
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.env.example'
+      - 'ACCESS_POLICY.md'
+      - 'CONTRIBUTING.md'
+      - 'LICENSE'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.env.example'
+      - 'ACCESS_POLICY.md'
+      - 'CONTRIBUTING.md'
+      - 'LICENSE'
     paths:
       - 'firestore.rules'
 

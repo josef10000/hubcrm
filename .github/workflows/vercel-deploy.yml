@@ -3,6 +3,20 @@ name: Vercel Production Deployment
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.env.example'
+      - 'ACCESS_POLICY.md'
+      - 'CONTRIBUTING.md'
+      - 'LICENSE'
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.env.example'
+      - 'ACCESS_POLICY.md'
+      - 'CONTRIBUTING.md'
+      - 'LICENSE'
   workflow_dispatch:
 
 env:
