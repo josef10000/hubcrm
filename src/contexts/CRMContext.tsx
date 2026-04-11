@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { collection, doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { collection, doc, setDoc, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Client, Offer, Expense, Transaction, TransactionCategory, Budget, Lead, UserProfile } from '../types';
 import { VacationPeriod } from '../types/people';
@@ -258,6 +258,8 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         unsubscribeRequests();
         unsubscribeOffers();
         unsubServices();
+        unsubProfiles();
+        unsubVacations();
         clearTimeout(timeoutId);
       };
     } catch (err: any) {

@@ -6,10 +6,11 @@ import {
   startOfMonth, 
   endOfMonth, 
   eachDayOfInterval, 
-  isToday
+  isToday,
+  parseISO
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, DollarSign, Package, Calendar as CalendarIcon, X, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, DollarSign, Package, Calendar as CalendarIcon, X, AlertTriangle, Users } from 'lucide-react';
 import { getPlanPrice } from '../helpers';
 import { Client, UserProfile } from '../types';
 import { VacationPeriod } from '../types/people';
@@ -77,7 +78,6 @@ export default function CalendarView({ clients, onClientClick, role }: CalendarV
     const dayAnniversaries = teamProfiles.filter(p => p.startDate && format(parseISO(p.startDate), 'MM-dd') === monthDayStr);
     
     return { vacations: dayVacations, anniversaries: dayAnniversaries };
-  };
   };
 
   const getHolidayForDay = (day: Date): Holiday | undefined => {

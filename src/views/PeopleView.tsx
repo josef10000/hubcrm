@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
-import { collection, query, where, onSnapshot, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, setDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { UserProfile, OnboardingTask } from '../types';
 import { format, differenceInYears, parseISO, isSameDay, addDays, isWithinInterval } from 'date-fns';
 import { useCRM } from '../contexts/CRMContext';
