@@ -26,6 +26,7 @@ import { toast } from 'sonner';
 type PeopleSubTab = 'dashboard' | 'onboarding' | 'development' | 'vacations';
 
 export default function PeopleView() {
+  const { userProfile } = useAuth();
   const [activeTab, setActiveTab] = useState<PeopleSubTab>('dashboard');
   const [selectedMember, setSelectedMember] = useState<UserProfile | null>(null);
   const [teamMembers, setTeamMembers] = useState<UserProfile[]>([]);

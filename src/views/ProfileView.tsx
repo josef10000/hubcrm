@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
   User as UserIcon, Mail, Phone, Instagram, Linkedin, 
   ChevronLeft, Edit3, Save, X, Briefcase, Info, 
-  Shield, Globe, MapPin, Loader2, Camera, Cake
+  Shield, Globe, MapPin, Loader2, Camera, Cake, Calendar
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
