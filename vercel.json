@@ -2,20 +2,32 @@
   "ignoreCommand": "git diff --quiet HEAD^ HEAD . ':!*.md' ':!.gitignore' ':!.env.example' ':!LICENSE'",
   "rewrites": [
     { "source": "/api/asaas/webhook", "destination": "/api/asaas_webhook" },
-    { "source": "/api/asaas/customers", "destination": "/api/asaas_customers?action=customers" },
-    { "source": "/api/asaas/create-customer", "destination": "/api/asaas_customers?action=create-customer" },
-    { "source": "/api/asaas/update-customer", "destination": "/api/asaas_customers?action=update-customer" },
-    { "source": "/api/asaas/payments", "destination": "/api/asaas_payments?action=payments" },
-    { "source": "/api/asaas/edit-payment", "destination": "/api/asaas_payments?action=edit-payment" },
-    { "source": "/api/asaas/delete-payment", "destination": "/api/asaas_payments?action=delete-payment" },
-    { "source": "/api/asaas/receive-in-cash", "destination": "/api/asaas_payments?action=receive-in-cash" },
-    { "source": "/api/asaas/payment-links", "destination": "/api/asaas_payments?action=payment-links" },
-    { "source": "/api/asaas/subscriptions", "destination": "/api/asaas_subscriptions?action=subscriptions" },
-    { "source": "/api/asaas/update-subscription", "destination": "/api/asaas_subscriptions?action=update-subscription" },
-    { "source": "/api/asaas/delete-subscription", "destination": "/api/asaas_subscriptions?action=delete-subscription" },
-    { "source": "/api/asaas/subscriptions/:id", "destination": "/api/asaas_subscriptions?id=:id" },
+    
+    { "source": "/api/asaas/customers", "destination": "/api/asaas_handler?action=customers" },
+    { "source": "/api/asaas/create-customer", "destination": "/api/asaas_handler?action=create-customer" },
+    { "source": "/api/asaas/update-customer", "destination": "/api/asaas_handler?action=update-customer" },
+    
+    { "source": "/api/asaas/payments", "destination": "/api/asaas_handler?action=payments" },
+    { "source": "/api/asaas/edit-payment", "destination": "/api/asaas_handler?action=edit-payment" },
+    { "source": "/api/asaas/delete-payment", "destination": "/api/asaas_handler?action=delete-payment" },
+    { "source": "/api/asaas/receive-in-cash", "destination": "/api/asaas_handler?action=receive-in-cash" },
+    { "source": "/api/asaas/payment-links", "destination": "/api/asaas_handler?action=payment-links" },
+    
+    { "source": "/api/asaas/subscriptions", "destination": "/api/asaas_handler?action=subscriptions" },
+    { "source": "/api/asaas/update-subscription", "destination": "/api/asaas_handler?action=update-subscription" },
+    { "source": "/api/asaas/delete-subscription", "destination": "/api/asaas_handler?action=delete-subscription" },
+    { "source": "/api/asaas/subscriptions/:id", "destination": "/api/asaas_handler?action=subscriptions&id=:id" },
+    
+    { "source": "/api/team/list", "destination": "/api/team_handler?action=list" },
+    { "source": "/api/team/invite", "destination": "/api/team_handler?action=invite" },
+    { "source": "/api/team/remove", "destination": "/api/team_handler?action=remove" },
+    { "source": "/api/team/accept", "destination": "/api/team_handler?action=accept" },
+    { "source": "/api/team/cancel-invite", "destination": "/api/team_handler?action=cancel-invite" },
+    { "source": "/api/team/update-profile", "destination": "/api/team_handler?action=update-profile" },
+
     { "source": "/api/email/manual-trigger", "destination": "/api/email" },
     { "source": "/api/uptimerobot/monitors", "destination": "/api/uptime" },
+    
     { "source": "/((?!api/.*).*)", "destination": "/index.html" }
   ]
 }
