@@ -5,7 +5,7 @@
   <p><em>By Hub Symples - Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.</em></p>
   
   <p>
-    <img src="https://img.shields.io/badge/Version-1.6.0-orange" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-1.7.0-orange" alt="Version" />
     <img src="https://img.shields.io/badge/License-MIT-blue" alt="License" />
     <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react" alt="React" />
     <img src="https://img.shields.io/badge/Tailwind-4.0-38B2AC?logo=tailwind-css" alt="Tailwind" />
@@ -54,6 +54,16 @@ Visualização clara e profissional da estrutura organizacional.
 - **Perfis Profissionais**: Páginas de perfil customizáveis com bio, cargo e links sociais.
 - **Reporting Lines**: Definição manual de superiores imediatos para controle de gestão.
 - **Segurança de Edição**: Regras rígidas que permitem edição apenas pelo próprio usuário ou administradores.
+
+### 🎨 8. Personalização & Cultura (Nível Premium)
+Experiência de uso elevada com foco no bem-estar e engajamento da equipe.
+- **Sistema de Temas Dinâmicos**: Aplicação de cores globais (Laranja, Azul, Roxo, etc.) que alteram toda a identidade do CRM instantaneamente.
+- **Celebração de Aniversários**: Detecção automática de aniversariantes com explosão de confetes 🎉, mensagens personalizadas e ícones festivos na barra lateral.
+- **Interface Viva**: Micro-animações com Framer Motion e feedback visual de alto nível.
+
+### 🗺️ 9. Democratização de Dados
+- **Mapa Global**: Acesso ao mapa de clientes liberado para todos os níveis da equipe, fomentando a visão estratégica.
+- **Configurações Granulares**: Acesso ao painel de configurações para todos, permitindo ajustes de aparência pessoal, mantendo seções críticas (financeiro/checkout) restritas a administradores.
 
 ---
 
@@ -110,18 +120,18 @@ O ecossistema utiliza um sistema de permissões granulado:
    ```
 3. Configure o arquivo `.env`:
    Copie o `.env.example` para `.env.local` e preencha as chaves do Firebase, Asaas, Resend e Upstash.
+   Copie o `.env.example` para `.env.local` e preencha as chaves:
+   ```env
+   VITE_FIREBASE_API_KEY= # Chave de acesso ao Firebase
+   VITE_ASAAS_API_KEY=    # Token de integração com Asaas
+   VITE_RESEND_API_KEY=   # Chave da API de e-mails
+   UPSTASH_REDIS_URL=     # URL do banco Redis para Rate Limiting
+   ```
 
 4. Acesse o ambiente de dev:
    ```bash
    npm run dev
    ```
-
-## 🚩 Roadmap (Próximos Passos)
-- [ ] Notificações push (Firebase Cloud Messaging)
-- [ ] Integarção WhatsApp Business API
-- [ ] Dark mode completo
-- [ ] Exportação de relatórios (PDF/Excel)
-- [ ] Custom Claims para segurança avançada
 
 ## 📄 Licença
 Este projeto é open-source sob a [Licença MIT](LICENSE).
