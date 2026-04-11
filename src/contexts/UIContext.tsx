@@ -59,7 +59,21 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
   const [currentPage, setCurrentPage] = useState(1);
   const clientsPerPage = 9;
   
-  const [themeColor, setThemeColor] = useState('#3b82f6'); // Base sync for settings
+  const [themeColor, setThemeColor] = useState(() => localStorage.getItem('hubcrm-theme') || 'orange');
+
+  // Aplicar tema dinamicamente
+  useEffect(() => {
+    const root = document.documentElement;
+    // Remover classes de tema anteriores
+    const themeClasses = Array.from(root.classList).filter(c => c.startsWith('theme-'));
+    themeClasses.forEach(c => root.classList.remove(c));
+    
+    // Adicionar nova classe de tema
+    root.classList.add(`theme-${themeColor}`);
+    
+    // Persistir preferência
+    localStorage.setItem('hubcrm-theme', themeColor);
+  }, [themeColor]);
 
   // Reset pagination on filter change
   useEffect(() => {

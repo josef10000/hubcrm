@@ -53,9 +53,9 @@ const navItems = [
   { icon: Megaphone, label: 'Avisos', path: '/marketing', roles: ['Administrador', 'Gerente'] },
   { icon: Package, label: 'Produtos', path: '/products', roles: ['Administrador', 'Gerente', 'Vendedor', 'Atendimento'] },
   { icon: Globe, label: 'Monitoramento', path: '/monitoring', roles: ['Administrador', 'Gerente', 'Atendimento'] },
-  { icon: MapIcon, label: 'Mapa', path: '/map', roles: ['Administrador', 'Gerente', 'Atendimento'] },
+  { icon: MapIcon, label: 'Mapa', path: '/map' },
   { icon: Users, label: 'Equipe', path: '/team', roles: ['Administrador', 'Gerente'] },
-  { icon: Settings, label: 'Configurações', path: '/settings', roles: ['Administrador', 'Gerente'] },
+  { icon: Settings, label: 'Configurações', path: '/settings' },
 ];
 
 function CRMInner() {
