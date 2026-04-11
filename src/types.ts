@@ -229,6 +229,13 @@ export interface UserProfile {
   orgId: string;
   role: UserRole;
   createdAt: number;
+  jobTitle?: string;
+  bio?: string;
+  photoURL?: string;
+  phoneNumber?: string;
+  instagram?: string;
+  linkedin?: string;
+  reportsTo?: string; // UID do superior imediato
 }
 
 export interface Organization {

@@ -29,6 +29,7 @@ import LeadsView from './views/LeadsView';
 import NotificationsView from './views/NotificationsView';
 import TeamManagementView from './views/TeamManagementView';
 import AcceptInviteView from './views/AcceptInviteView';
+import ProfileView from './views/ProfileView';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { UIProvider, useUI } from './contexts/UIContext';
@@ -107,14 +108,21 @@ function CRMInner() {
             ))}
         </nav>
         <div className="p-4 border-t border-gray-200 dark:border-white/10">
-          <div className="flex items-center justify-between px-4 py-3 bg-gray-100 dark:bg-white/5 backdrop-blur-xl rounded-2xl border border-gray-200 dark:border-white/10">
+          <div 
+            onClick={() => navigate(`/profile/${user?.uid}`)}
+            className="flex items-center justify-between px-4 py-3 bg-gray-100 dark:bg-white/5 backdrop-blur-xl rounded-2xl border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-200 dark:hover:bg-white/10 transition-all group"
+          >
             <div className="flex items-center space-x-3 overflow-hidden">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center text-gray-900 dark:text-white font-bold shrink-0 shadow-lg shadow-primary-500/20">
-                {user?.email?.[0].toUpperCase() || 'U'}
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center text-gray-900 dark:text-white font-bold shrink-0 shadow-lg shadow-primary-500/20 overflow-hidden">
+                {userProfile?.photoURL ? (
+                  <img src={userProfile.photoURL} alt={userProfile.displayName} className="w-full h-full object-cover" />
+                ) : (
+                  user?.email?.[0].toUpperCase() || 'U'
+                )}
               </div>
               <div className="truncate">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user?.displayName || 'Usuário'}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-primary-500 transition-colors">{userProfile?.displayName || user?.displayName || 'Usuário'}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{userProfile?.jobTitle || userProfile?.role || 'Membro'}</p>
               </div>
             </div>
           </div>
@@ -212,6 +220,7 @@ function CRMInner() {
                     <Route path="/settings" element={<SettingsView />} />
                   </>
                 ) : null}
+                <Route path="/profile/:uid" element={<ProfileView />} />
                 <Route path="*" element={<DashboardView />} />
               </Routes>
             </div>

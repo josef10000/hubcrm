@@ -5,7 +5,7 @@
   <p><em>By Hub Symples - Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.</em></p>
   
   <p>
-    <img src="https://img.shields.io/badge/Version-1.5.0-orange" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-1.6.0-orange" alt="Version" />
     <img src="https://img.shields.io/badge/License-MIT-blue" alt="License" />
     <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react" alt="React" />
     <img src="https://img.shields.io/badge/Tailwind-4.0-38B2AC?logo=tailwind-css" alt="Tailwind" />
@@ -48,6 +48,13 @@ Integração nativa com **UptimeRobot** para verificar status e latência dos si
 ### 📧 6. Automação de Comunicação
 Sistema de notificações transacionais via **Resend** (boas-vindas, alertas de faturas e avisos de atraso).
 
+### 👥 7. Gestão de Equipe & Hierarquia (Team Management)
+Visualização clara e profissional da estrutura organizacional.
+- **Organograma Dinâmico**: Visualização em árvore da hierarquia da empresa.
+- **Perfis Profissionais**: Páginas de perfil customizáveis com bio, cargo e links sociais.
+- **Reporting Lines**: Definição manual de superiores imediatos para controle de gestão.
+- **Segurança de Edição**: Regras rígidas que permitem edição apenas pelo próprio usuário ou administradores.
+
 ---
 
 ## ⚙️ Stack Tecnológica & Arquitetura
@@ -69,7 +76,7 @@ Sistema de notificações transacionais via **Resend** (boas-vindas, alertas de 
 
 ## 🏗️ Arquitetura de Dados (Firestore Schema)
 
-- `profiles/{userId}`: Dados globais do usuário (nome, e-mail, foto, **role**, **orgId**).
+- `profiles/{userId}`: Dados globais do usuário (nome, e-mail, foto, **role**, **orgId**, **jobTitle**, **reportsTo**).
 - `organizations/{orgId}`: Documento mestre da empresa.
   - `organizations/{orgId}/settings/preferences`: Configurações de branding e APIs.
   - `organizations/{orgId}/clients/{clientId}`: Base de clientes sincronizada.
