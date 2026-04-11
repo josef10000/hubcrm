@@ -92,6 +92,8 @@ export default function ProfileView() {
     const file = e.target.files?.[0];
     if (!file || !uid) return;
 
+    console.log('[Profile] Iniciando upload de foto:', file.name, file.size);
+
     // Validações básicas
     if (!file.type.startsWith('image/')) {
       toast.error('Por favor, selecione uma imagem válida');
@@ -105,21 +107,28 @@ export default function ProfileView() {
 
     setUploading(true);
     try {
+      console.log('[Profile] Criando referência no Storage...');
       const storageRef = ref(storage, `profiles/${uid}/avatar`);
+      
+      console.log('[Profile] Executando uploadBytes...');
       const snapshot = await uploadBytes(storageRef, file);
+      
+      console.log('[Profile] Obtendo URL de download...');
       const url = await getDownloadURL(snapshot.ref);
       
+      console.log('[Profile] Upload concluído com sucesso:', url);
       setFormData(prev => ({ ...prev, photoURL: url }));
       toast.success('Foto carregada! Não esqueça de salvar as alterações.');
     } catch (error: any) {
-      console.error('Upload error:', error);
-      toast.error('Erro ao fazer upload da imagem');
+      console.error('[Profile] Erro Crítico no Upload:', error);
+      toast.error(`Erro ao fazer upload: ${error.message || 'Verifique suas permissões de Storage'}`);
     } finally {
       setUploading(false);
     }
   };
 
   const handleSave = async () => {
+    console.log('[Profile] Iniciando salvamento do perfil...');
     setIsSaving(true);
     try {
       const token = await user?.getIdToken();
@@ -135,16 +144,20 @@ export default function ProfileView() {
         })
       });
 
+      console.log('[Profile] Resposta da API status:', res.status);
       const data = await res.json();
+      
       if (data.success) {
         toast.success('Perfil atualizado!');
         setProfile(prev => prev ? { ...prev, ...formData } : null);
         setIsEditing(false);
       } else {
-        toast.error(data.error || 'Erro ao salvar');
+        console.warn('[Profile] Erro retornado pela API:', data.error);
+        toast.error(data.error || 'Erro ao salvar no servidor');
       }
-    } catch (error) {
-      toast.error('Erro de conexão');
+    } catch (error: any) {
+      console.error('[Profile] Erro na requisição handleSave:', error);
+      toast.error(`Erro de conexão: ${error.message}`);
     } finally {
       setIsSaving(false);
     }
