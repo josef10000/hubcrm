@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   User as UserIcon, Mail, Phone, Instagram, Linkedin, 
@@ -6,8 +6,9 @@ import {
   Shield, Globe, MapPin, Loader2, Camera
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { db } from '../lib/firebase';
+import { db, storage } from '../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { UserProfile } from '../types';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -21,7 +22,10 @@ export default function ProfileView() {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [superior, setSuperior] = useState<UserProfile | null>(null);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -83,6 +87,37 @@ export default function ProfileView() {
 
     fetchProfile();
   }, [uid, navigate]);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !uid) return;
+
+    // Validações básicas
+    if (!file.type.startsWith('image/')) {
+      toast.error('Por favor, selecione uma imagem válida');
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('A imagem deve ter no máximo 2MB');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const storageRef = ref(storage, `profiles/${uid}/avatar`);
+      const snapshot = await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(snapshot.ref);
+      
+      setFormData(prev => ({ ...prev, photoURL: url }));
+      toast.success('Foto carregada! Não esqueça de salvar as alterações.');
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      toast.error('Erro ao fazer upload da imagem');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -173,7 +208,7 @@ export default function ProfileView() {
               className="bg-gray-100 dark:bg-black/40 backdrop-blur-3xl border border-gray-200 dark:border-white/10 rounded-3xl p-6 text-center shadow-xl"
             >
               <div className="relative inline-block mb-4">
-                <div className="w-32 h-32 rounded-full mx-auto bg-gradient-to-br from-primary-500 to-primary-400 p-1 shadow-2xl shadow-primary-500/20 overflow-hidden">
+                <div className="relative w-32 h-32 rounded-full mx-auto bg-gradient-to-br from-primary-500 to-primary-400 p-1 shadow-2xl shadow-primary-500/20 overflow-hidden group">
                   {formData.photoURL ? (
                     <img src={formData.photoURL} alt={profile.displayName} className="w-full h-full rounded-full object-cover" />
                   ) : (
@@ -181,11 +216,39 @@ export default function ProfileView() {
                       {profile.displayName?.[0] || 'U'}
                     </div>
                   )}
+
+                  {/* Upload Overlay */}
+                  <AnimatePresence>
+                    {uploading && (
+                      <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-full"
+                      >
+                        <Loader2 className="animate-spin text-white" size={24} />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
+                
                 {isEditing && (
-                  <button className="absolute bottom-1 right-1 bg-white dark:bg-zinc-800 p-2 rounded-full shadow-lg border border-gray-200 dark:border-white/10 text-primary-500 hover:scale-110 transition-transform">
-                    <Camera size={16} />
-                  </button>
+                  <>
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      className="hidden" 
+                      accept="image/*"
+                      onChange={handleFileChange}
+                    />
+                    <button 
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      className="absolute bottom-1 right-1 bg-white dark:bg-zinc-800 p-2 rounded-full shadow-lg border border-gray-200 dark:border-white/10 text-primary-500 hover:scale-110 transition-transform active:scale-95 disabled:opacity-50"
+                    >
+                      <Camera size={16} />
+                    </button>
+                  </>
                 )}
               </div>
               
