@@ -711,7 +711,7 @@ className="bg-gray-100 border-gray-200"
 Este projeto é distribuído sob a [Licença MIT](LICENSE).
 
 ```
-MIT License — Copyright (c) 2026 Hub Symples / Digital Tech LTDA
+MIT License — Copyright (c) 2026 Hub Symples LTDA
 ```
 
 ---
