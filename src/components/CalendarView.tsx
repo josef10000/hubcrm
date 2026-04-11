@@ -11,7 +11,9 @@ import {
 import { ptBR } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, DollarSign, Package, Calendar as CalendarIcon, X, AlertTriangle } from 'lucide-react';
 import { getPlanPrice } from '../helpers';
-import { Client } from '../types';
+import { Client, UserProfile } from '../types';
+import { VacationPeriod } from '../types/people';
+import { useCRM } from '../contexts/CRMContext';
 
 interface CalendarViewProps {
   clients: Client[];
@@ -19,7 +21,7 @@ interface CalendarViewProps {
   role?: string;
 }
 
-type CalendarMode = 'finance' | 'production';
+type CalendarMode = 'finance' | 'production' | 'people';
 
 interface Holiday {
   date: string;
@@ -28,7 +30,9 @@ interface Holiday {
 }
 
 export default function CalendarView({ clients, onClientClick, role }: CalendarViewProps) {
+  const { vacations, teamProfiles } = useCRM();
   const canSeeFinance = role === 'Administrador' || role === 'Gerente';
+  const canSeePeople = role === 'Administrador' || role === 'Gerente' || role === 'People & Culture';
   const [currentDate, setCurrentDate] = useState(new Date());
   const [mode, setMode] = useState<CalendarMode>(canSeeFinance ? 'finance' : 'production');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -55,13 +59,25 @@ export default function CalendarView({ clients, onClientClick, role }: CalendarV
   // Get events for a specific day based on the current mode
   const getEventsForDay = (day: Date) => {
     const dayString = format(day, 'yyyy-MM-dd');
-    return clients.filter(client => {
-      if (mode === 'finance') {
-        return client.nextDueDate === dayString;
-      } else {
-        return client.deliveryDate === dayString;
-      }
-    });
+    if (mode === 'finance') {
+      return clients.filter(client => client.nextDueDate === dayString);
+    } else if (mode === 'production') {
+      return clients.filter(client => client.deliveryDate === dayString);
+    } else {
+      // People Mode combine vacations and anniversaries
+      return []; // We handle this separately in render because they are different types
+    }
+  };
+
+  const getDayPeopleEvents = (day: Date) => {
+    const dayStr = format(day, 'yyyy-MM-dd');
+    const monthDayStr = format(day, 'MM-dd');
+    
+    const dayVacations = vacations.filter(v => v.status === 'Aprovado' && dayStr >= v.start && dayStr <= v.end);
+    const dayAnniversaries = teamProfiles.filter(p => p.startDate && format(parseISO(p.startDate), 'MM-dd') === monthDayStr);
+    
+    return { vacations: dayVacations, anniversaries: dayAnniversaries };
+  };
   };
 
   const getHolidayForDay = (day: Date): Holiday | undefined => {
@@ -101,7 +117,7 @@ export default function CalendarView({ clients, onClientClick, role }: CalendarV
           )}
         </div>
       );
-    } else {
+    } else if (mode === 'production') {
       const emDesenvolvimento = dayEvents.filter(c => c.status === 'Em Desenvolvimento').length;
       const ativos = dayEvents.filter(c => c.status === 'Ativo').length;
 
@@ -124,6 +140,30 @@ export default function CalendarView({ clients, onClientClick, role }: CalendarV
           )}
         </div>
       );
+    } else {
+      // People mode summary
+      const { vacations: dayVacations, anniversaries } = getDayPeopleEvents(day);
+      if (dayVacations.length === 0 && anniversaries.length === 0) return null;
+
+      return (
+        <div className="mt-2 flex flex-col gap-1 w-full">
+          {anniversaries.map((p, i) => (
+            <div key={`anniv-${i}`} className="text-[10px] font-bold text-pink-600 dark:text-pink-400 bg-pink-100 dark:bg-pink-900/30 px-1.5 py-0.5 rounded-md truncate">
+              🎂 {p.displayName.split(' ')[0]}
+            </div>
+          ))}
+          {dayVacations.map((v, i) => {
+             const user = teamProfiles.find(p => p.uid === v.userId);
+             const typeIcon = v.type === 'Férias' ? '🏖️' : '🏥';
+             const displayName = !canSeePeople && v.type !== 'Férias' ? 'Indisponível' : (user?.displayName.split(' ')[0] || 'Membro');
+             return (
+               <div key={`vac-${i}`} className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-1.5 py-0.5 rounded-md truncate">
+                 {typeIcon} {displayName}
+               </div>
+             );
+          })}
+        </div>
+      );
     }
   };
 
@@ -140,7 +180,7 @@ export default function CalendarView({ clients, onClientClick, role }: CalendarV
               {format(currentDate, 'MMMM yyyy', { locale: ptBR })}
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Visão geral de {mode === 'finance' ? 'recebimentos e cobranças' : 'entregas e produção'}
+              Visão geral de {mode === 'finance' ? 'recebimentos e cobranças' : mode === 'production' ? 'entregas e produção' : 'férias e aniversários da equipe'}
             </p>
           </div>
         </div>
@@ -171,6 +211,19 @@ export default function CalendarView({ clients, onClientClick, role }: CalendarV
                 <Package size={18} />
                 <span>Produção</span>
               </button>
+              {canSeePeople && (
+                <button
+                  onClick={() => setMode('people')}
+                  className={`flex-1 sm:flex-none flex items-center justify-center space-x-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                    mode === 'people' 
+                      ? 'bg-pink-500 text-white shadow-lg shadow-pink-500/30' 
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-primary-500/20'
+                  }`}
+                >
+                  <Users size={18} />
+                  <span>People</span>
+                </button>
+              )}
             </div>
           )}
 
@@ -217,8 +270,9 @@ export default function CalendarView({ clients, onClientClick, role }: CalendarV
           {/* Days of the month */}
           {daysInMonth.map(day => {
             const dayEvents = getEventsForDay(day);
+            const { vacations: dayVacations, anniversaries } = getDayPeopleEvents(day);
             const isCurrentDay = isToday(day);
-            const hasEvents = dayEvents.length > 0;
+            const hasEvents = mode === 'people' ? (dayVacations.length > 0 || anniversaries.length > 0) : dayEvents.length > 0;
             
             return (
               <div 

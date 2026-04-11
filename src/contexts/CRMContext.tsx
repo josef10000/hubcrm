@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { collection, doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Client, Offer, Expense, Transaction, TransactionCategory, Budget, Lead } from '../types';
+import { Client, Offer, Expense, Transaction, TransactionCategory, Budget, Lead, UserProfile } from '../types';
+import { VacationPeriod } from '../types/people';
 import { useAuth } from './AuthContext';
 
 // ── Hooks ──
@@ -23,6 +24,8 @@ interface CRMContextType {
   transactionCategories: TransactionCategory[];
   budgets: Budget[];
   services: any[];
+  vacations: VacationPeriod[];
+  teamProfiles: UserProfile[];
   activeLeadsCount: number;
   effectiveOrgId: string;
   userProfile: any | null;
@@ -110,6 +113,8 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   const [clients, setClients] = useState<Client[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
+  const [vacations, setVacations] = useState<VacationPeriod[]>([]);
+  const [teamProfiles, setTeamProfiles] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -224,6 +229,23 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         setServices(loadedServices.sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0)));
       });
 
+      // Listener para Perfis da Equipe (Aniversários e Gestão People)
+      const profilesRef = collection(db, 'profiles');
+      const qProfiles = query(profilesRef, where('orgId', '==', effectiveOrgId));
+      const unsubProfiles = onSnapshot(qProfiles, (snapshot) => {
+        const loaded: UserProfile[] = [];
+        snapshot.forEach((d) => loaded.push({ uid: d.id, ...d.data() } as UserProfile));
+        setTeamProfiles(loaded);
+      });
+
+      // Listener para Férias/Ausências
+      const vacationsRef = collection(db, 'organizations', effectiveOrgId, 'vacations');
+      const unsubVacations = onSnapshot(vacationsRef, (snapshot) => {
+        const loaded: VacationPeriod[] = [];
+        snapshot.forEach((d) => loaded.push({ id: d.id, ...d.data() } as VacationPeriod));
+        setVacations(loaded);
+      });
+
       timeoutId = setTimeout(() => {
         console.warn('Firestore initialization timed out.');
         setLoading(false);
@@ -278,7 +300,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     triggerManualEmail: clientActions.triggerManualEmail, isEmailLoading: clientActions.isEmailLoading,
     toggleAsaasNotifications: clientActions.toggleAsaasNotifications,
     isChurnRisk: clientActions.isChurnRisk, isComboNearRenewal: clientActions.isComboNearRenewal,
-    effectiveOrgId, userProfile
+    effectiveOrgId, userProfile, vacations, teamProfiles
   };
 
   return <CRMContext.Provider value={value}>{children}</CRMContext.Provider>;
