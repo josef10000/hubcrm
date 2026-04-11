@@ -6,9 +6,8 @@ import {
   Shield, Globe, MapPin, Loader2, Camera
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { db, storage } from '../lib/firebase';
+import { db } from '../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { UserProfile } from '../types';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -92,8 +91,6 @@ export default function ProfileView() {
     const file = e.target.files?.[0];
     if (!file || !uid) return;
 
-    console.log('[Profile] Iniciando upload de foto:', file.name, file.size);
-
     // Validações básicas
     if (!file.type.startsWith('image/')) {
       toast.error('Por favor, selecione uma imagem válida');
@@ -107,22 +104,25 @@ export default function ProfileView() {
 
     setUploading(true);
     try {
-      console.log('[Profile] Criando referência no Storage...');
-      const storageRef = ref(storage, `profiles/${uid}/avatar`);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setFormData(prev => ({ ...prev, photoURL: base64String }));
+        console.log('[Profile] Imagem convertida para Base64 com sucesso');
+        toast.success('Foto carregada! Clique em "Salvar Alterações" para confirmar.');
+        setUploading(false);
+      };
       
-      console.log('[Profile] Executando uploadBytes...');
-      const snapshot = await uploadBytes(storageRef, file);
-      
-      console.log('[Profile] Obtendo URL de download...');
-      const url = await getDownloadURL(snapshot.ref);
-      
-      console.log('[Profile] Upload concluído com sucesso:', url);
-      setFormData(prev => ({ ...prev, photoURL: url }));
-      toast.success('Foto carregada! Não esqueça de salvar as alterações.');
+      reader.onerror = () => {
+        console.error('[Profile] Erro ao ler arquivo com FileReader');
+        toast.error('Erro ao processar a imagem');
+        setUploading(false);
+      };
+
+      reader.readAsDataURL(file);
     } catch (error: any) {
-      console.error('[Profile] Erro Crítico no Upload:', error);
-      toast.error(`Erro ao fazer upload: ${error.message || 'Verifique suas permissões de Storage'}`);
-    } finally {
+      console.error('[Profile] Erro Crítico no processamento Base64:', error);
+      toast.error(`Erro ao processar imagem: ${error.message}`);
       setUploading(false);
     }
   };
