@@ -352,9 +352,14 @@ export default function TeamManagementView() {
                           </div>
                           <span className={`px-3 py-1 rounded-full text-[10px] font-bold tracking-tight uppercase ${
                             member.role === 'Administrador' ? 'bg-purple-500/20 text-purple-600 dark:text-purple-400' :
-                            member.role === 'Gerente' ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400' :
-                            member.role === 'Atendimento' ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' :
-                            'bg-orange-500/20 text-orange-600 dark:text-orange-400'
+                            member.role === 'Gerente' ? 'bg-zinc-500/20 text-zinc-600 dark:text-zinc-400' :
+                            member.role === 'People & Culture' ? 'bg-pink-500/20 text-pink-600 dark:text-pink-400' :
+                            member.role === 'Customer Success' ? 'bg-indigo-500/20 text-indigo-600 dark:text-indigo-400' :
+                            member.role === 'Suporte Técnico' ? 'bg-cyan-500/20 text-cyan-600 dark:text-cyan-400' :
+                            member.role === 'Onboarding Specialist' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400' :
+                            member.role === 'SDR' || member.role === 'Executive' ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' :
+                            member.role === 'FinOps' || member.role === 'Controladoria' || member.role === 'Revenue Operations' || member.role === 'Gestor de Faturamento' ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400' :
+                            'bg-gray-500/20 text-gray-600 dark:text-gray-400'
                           }`}>
                             {member.role}
                           </span>
@@ -468,9 +473,16 @@ export default function TeamManagementView() {
                   <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Cargo / Permissões</label>
                   <select value={inviteRole} onChange={e => setInviteRole(e.target.value)} className="w-full bg-gray-200/50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white">
                     <option value="Gerente">Gerente</option>
-                    <option value="Vendedor">Vendedor</option>
-                    <option value="Atendimento">Atendimento</option>
-                    <option value="Financeiro">Financeiro</option>
+                    <option value="People & Culture">People & Culture</option>
+                    <option value="Customer Success">Customer Success</option>
+                    <option value="Suporte Técnico">Suporte Técnico</option>
+                    <option value="Onboarding Specialist">Onboarding Specialist</option>
+                    <option value="SDR">SDR</option>
+                    <option value="Executive">Vendas (Executive)</option>
+                    <option value="FinOps">FinOps</option>
+                    <option value="Controladoria">Controladoria</option>
+                    <option value="Revenue Operations">Revenue Operations</option>
+                    <option value="Gestor de Faturamento">Gestor de Faturamento</option>
                     <option value="Só Leitura">Só Leitura</option>
                   </select>
                 </div>

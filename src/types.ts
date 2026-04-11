@@ -220,7 +220,20 @@ export interface SupportRequest {
   repliedAt?: any;
 }
 
-export type UserRole = 'Administrador' | 'Gerente' | 'Vendedor' | 'Financeiro' | 'Atendimento' | 'Só Leitura';
+export type UserRole = 
+  | 'Administrador' 
+  | 'Gerente' 
+  | 'People & Culture' 
+  | 'Customer Success' 
+  | 'Suporte Técnico' 
+  | 'Onboarding Specialist' 
+  | 'SDR' 
+  | 'Executive' 
+  | 'FinOps' 
+  | 'Controladoria' 
+  | 'Revenue Operations' 
+  | 'Gestor de Faturamento' 
+  | 'Só Leitura';
 
 export interface UserProfile {
   uid: string;

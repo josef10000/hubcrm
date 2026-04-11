@@ -1,71 +1,73 @@
-# 🛡️ Matriz de Acessos e Permissões - HubCRM
+# 🛡️ Matriz de Acessos e Permissões - Hub Central v1.7.0
 
-Este documento detalha o que cada cargo pode visualizar e quais ações pode realizar dentro da plataforma Hub Central.
-
----
-
-## 🔝 1. Administrador (Proprietário)
-*O nível mais alto de privilégio, projetado para o proprietário ou diretores.*
-
-| Área | Acesso | Descrição |
-| :--- | :---: | :--- |
-| **Dashboard** | ✅ Sim | Visão geral de todas as métricas da empresa. |
-| **Funil de Vendas** | ✅ Sim | Visualiza **todos** os leads e clientes da organização. |
-| **Equipe** | ✅ Sim | Gerencia membros (convites, remoção e alteração de cargos). |
-| **Analytics** | ✅ Sim | Acesso total a gráficos de performance e conversão. |
-| **Gestão de Custos** | ✅ Sim | Controle total de saídas, entradas e orçamentos. |
-| **Configurações** | ✅ Sim | Gerencia regras, onboarding, contratos e **aparência**. |
-| **Outros** | ✅ Sim | Notificações, Chamados, Agenda, Produtos, Monitoramento e Mapa. |
+Este documento detalha o que cada cargo pode visualizar e quais ações pode realizar dentro da plataforma. O HubCRM utiliza um sistema de **Controle de Acesso Baseado em Função (RBAC)** altamente granulado.
 
 ---
 
-## 🏅 2. Gerente
-*Autonomia total para operar o sistema e gerenciar a equipe.*
+## 🔝 1. Liderança e Gestão Master
 
-| Área | Acesso | Descrição |
-| :--- | :---: | :--- |
-| **Dashboard** | ✅ Sim | Visão geral das métricas da empresa. |
-| **Funil de Vendas** | ✅ Sim | Visualiza **todos** os leads e clientes da organização. |
-| **Equipe** | ✅ Sim | Pode gerenciar a equipe. |
-| **Analytics** | ✅ Sim | Acesso a dados de inteligência comercial. |
-| **Gestão de Custos** | ✅ Sim | Pode gerenciar o financeiro. |
-| **Configurações** | ✅ Sim | Gerencia regras, onboarding, equipe e **aparência**. |
-| **Outros** | ✅ Sim | Todos os módulos operais (Chamados, Agenda, Mapa, etc). |
+### **Administrador (Founder)** & **Gerente**
+*O nível mais alto de privilégio, com autonomia total sobre o ecossistema.*
+- **Visão**: Total (Mapa, Leads, Faturamento, Equipe).
+- **Poderes**: Convidar/Remover membros, alterar qualquer cargo, gerenciar configurações de checkout e financeira.
 
----
-
-## 💼 3. Vendedor
-*Focado na prospecção e fechamento, com visão restrita para privacidade.*
-
-| Área | Acesso | Descrição |
-| :--- | :---: | :--- |
-| **Funil de Vendas** | ✅ Sim | **RESTRIÇÃO**: Visualiza apenas os leads e clientes **atribuídos a ele**. |
-| **Produtos** | ✅ Sim | Consulta valores e disponibilidade para vendas. |
-| **Chamados** | ✅ Sim | Registra e resolve tickets de suporte. |
-| **Dashboard** | ✅ Sim | Visão simplificada. |
-| **Notificações** | ✅ Sim | Recebe alertas de mudanças em seus leads. |
-| **Mapa** | ✅ Sim | Visualiza a localização geográfica das operações. |
-| **Configurações** | ✅ Sim | **RESTRIÇÃO**: Apenas **Trocar Cores** e **Sair**. |
-| **Equipe** | ❌ Não | Não visualiza nem edita outros membros. |
-| **Analytics** | ❌ Não | Não visualiza métricas globais da empresa. |
+### **People & Culture** (RH Moderno)
+*Focado no bem-estar e organização do time.*
+- **Especialidade**: Gestão da aba **Equipe**, Aniversários e Organograma.
+- **Acessos**: Dashboard, Notificações, Mapa, Indicações e Configurações de Aparência.
+- **Restrição**: Não visualiza Gestão de Custos ou Analytics Financeiro.
 
 ---
 
-## 🎧 4. Atendimento
-*Focado na operação e acompanhamento logístico/vizinhança.*
+## 📈 2. Braço Comercial (Vendas)
 
-| Área | Acesso | Descrição |
-| :--- | :---: | :--- |
-| **Agenda Central** | ✅ Sim | Gerencia os compromissos e agendamentos globais. |
-| **Chamados** | ✅ Sim | Foco principal na resolução de demandas de clientes. |
-| **Monitoramento** | ✅ Sim | Visualiza o status de operações em tempo real. |
-| **Mapa** | ✅ Sim | Localização geográfica de clientes e operações. |
-| **Produtos** | ✅ Sim | Consulta de catálogo. |
-| **Configurações** | ✅ Sim | **RESTRIÇÃO**: Apenas **Trocar Cores** e **Sair**. |
-| **Funil de Vendas** | ❌ Não | **SEM ACESSO** às abas de leads ou prospecção ativa. |
-| **Configurações** | ❌ Não | Não altera regras do sistema. |
+### **SDR (Sales Development Rep)**
+*Qualificação de novos leads.*
+- **Foco**: Funil de Vendas (Prospects Iniciais) e Produtos.
+- **Restrição**: Visualiza apenas os leads atribuídos ou marcados como novos.
+
+### **Executive (Closer)**
+*Fechamento de propostas de alto valor.*
+- **Foco**: Funil de Vendas (Fase de Negociação/Fecho) e Catálogo de Produtos.
+- **Restrição**: Privacidade total — não enxerga leads de outros executivos.
 
 ---
 
-### 💡 Resumo Técnico de Visibilidade
-> **Privacidade de Dados**: O sistema está configurado para que usuários com o cargo **Vendedor** nunca vejam as vendas ou leads de outros colegas. Administradores e Gerentes mantêm a "Visão de Deus", enxergando toda a operação.
+## 🤝 3. Pós-Vendas e Operações
+
+### **Customer Success (CS)**
+*Garantir que o cliente atinja seus objetivos.*
+- **Acessos**: Mapa de Clientes, Agenda, Chamados e Produtos.
+- **Missão**: Monitorar a saúde da carteira e evitar churn.
+
+### **Onboarding Specialist**
+*Implementação técnica e briefing inicial.*
+- **Acessos**: Chamados (específicos de implementação), Agenda e Produtos.
+- **Missão**: Tirar o projeto do papel após o pagamento.
+
+### **Suporte Técnico**
+*Resolução de bugs e infraestrutura.*
+- **Foco**: **Monitoramento (Uptime)** e Chamados Técnicos.
+- **Acessos**: Agenda e Mapa para intervenções locais.
+
+---
+
+## 💰 4. Braço Financeiro & Operações de Receita
+
+### **FinOps / Controladoria / Revenue Ops**
+*Os guardiões da saúde financeira.*
+- **Acessos**: **Gestão de Custos**, Analytics Financeiro e Avisos.
+- **Financeiro**: Controle de recebíveisAsaas e despesas operacionais.
+- **Restrição**: Não acessam o Funil de Vendas ou Gestão de Pessoas (Equipe).
+
+---
+
+## 👁️ 5. Outros Perfis
+
+### **Só Leitura**
+- Acesso contemplativo ao Mapa e Dashboard básico. Não pode criar, editar ou apagar nenhum dado.
+
+---
+
+### 💡 Resumo de Segurança
+> **Acesso Universal**: Independentemente do cargo, todos têm acesso ao **Mapa de Clientes** e às **Configurações Pessoais** (para alteração de cores do sistema e saída), fomentando uma cultura de visão estratégica compartilhada.

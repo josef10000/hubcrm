@@ -44,18 +44,18 @@ import PublicCheckoutPage from './components/PublicCheckoutPage';
 // ── Navigation Config ──
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-  { icon: Target, label: 'Funil de Vendas', path: '/leads', roles: ['Administrador', 'Gerente', 'Vendedor'] },
+  { icon: Target, label: 'Funil de Vendas', path: '/leads', roles: ['Administrador', 'Gerente', 'SDR', 'Executive'] },
   { icon: Bell, label: 'Notificações', path: '/notifications' },
   { icon: BarChart3, label: 'Analytics', path: '/analytics', roles: ['Administrador', 'Gerente'] },
   { icon: MessageCircle, label: 'Chamados', path: '/support' },
-  { icon: Calendar, label: 'Agenda', path: '/calendar', roles: ['Administrador', 'Gerente', 'Atendimento'] },
-  { icon: DollarSign, label: 'Gestão de Custos', path: '/finance', roles: ['Administrador', 'Gerente'] },
+  { icon: Calendar, label: 'Agenda', path: '/calendar', roles: ['Administrador', 'Gerente', 'Customer Success', 'Suporte Técnico', 'Onboarding Specialist'] },
+  { icon: DollarSign, label: 'Gestão de Custos', path: '/finance', roles: ['Administrador', 'Gerente', 'FinOps', 'Controladoria', 'Revenue Operations', 'Gestor de Faturamento'] },
   { icon: Users, label: 'Indicações', path: '/referrals' },
-  { icon: Megaphone, label: 'Avisos', path: '/marketing', roles: ['Administrador', 'Gerente'] },
-  { icon: Package, label: 'Produtos', path: '/products', roles: ['Administrador', 'Gerente', 'Vendedor', 'Atendimento'] },
-  { icon: Globe, label: 'Monitoramento', path: '/monitoring', roles: ['Administrador', 'Gerente', 'Atendimento'] },
+  { icon: Megaphone, label: 'Avisos', path: '/marketing', roles: ['Administrador', 'Gerente', 'Revenue Operations'] },
+  { icon: Package, label: 'Produtos', path: '/products', roles: ['Administrador', 'Gerente', 'SDR', 'Executive', 'Customer Success', 'Onboarding Specialist'] },
+  { icon: Globe, label: 'Monitoramento', path: '/monitoring', roles: ['Administrador', 'Gerente', 'Suporte Técnico'] },
   { icon: MapIcon, label: 'Mapa', path: '/map' },
-  { icon: Users, label: 'Equipe', path: '/team', roles: ['Administrador', 'Gerente'] },
+  { icon: Users, label: 'Equipe', path: '/team', roles: ['Administrador', 'Gerente', 'People & Culture'] },
   { icon: Settings, label: 'Configurações', path: '/settings' },
 ];
 
@@ -219,16 +219,12 @@ function CRMInner() {
                 <Route path="/monitoring" element={<MonitoringView clients={clients} />} />
                 <Route path="/map" element={<ClientMapView clients={clients} onClientClick={(client) => { setEditingClient(client); setIsModalOpen(true); }} />} />
                 
-                {/* Rotas Protegidas de Administrador/Gerente */}
-                {(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente') ? (
-                  <>
-                    <Route path="/analytics" element={<AnalyticsView />} />
-                    <Route path="/finance" element={<FinanceView />} />
-                    <Route path="/marketing" element={<MarketingView />} />
-                    <Route path="/team" element={<TeamManagementView />} />
-                    <Route path="/settings" element={<SettingsView />} />
-                  </>
-                ) : null}
+                {/* Rotas Protegidas (Conforme Roles Definidas no navItems) */}
+                <Route path="/analytics" element={(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente') ? <AnalyticsView /> : <DashboardView />} />
+                <Route path="/finance" element={(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || ['FinOps', 'Controladoria', 'Revenue Operations', 'Gestor de Faturamento'].includes(userProfile?.role || '')) ? <FinanceView /> : <DashboardView />} />
+                <Route path="/marketing" element={(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'Revenue Operations') ? <MarketingView /> : <DashboardView />} />
+                <Route path="/team" element={(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture') ? <TeamManagementView /> : <DashboardView />} />
+                <Route path="/settings" element={<SettingsView />} />
                 <Route path="/profile/:uid" element={<ProfileView />} />
                 <Route path="*" element={<DashboardView />} />
               </Routes>
