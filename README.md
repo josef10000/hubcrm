@@ -779,7 +779,7 @@ npx vitest         # Modo desenvolvimento (watch)
 Este projeto é distribuído sob a [Licença MIT](LICENSE).
 
 ```
-MIT License — Copyright (c) 2026 Hub Symples / Digital Tech LTDA
+MIT License — Copyright (c) 2026 Hub Symples LTDA
 ```
 
 ---
