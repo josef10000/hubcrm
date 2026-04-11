@@ -61,7 +61,7 @@ export default function LeadsView() {
         plan: formData.plan || undefined,
         niche: formData.niche.trim() || undefined,
         updatedAt: Date.now(),
-        assignedTo: editingLead ? editingLead.assignedTo : (userProfile?.role === 'Vendedor' ? user?.uid : undefined)
+        assignedTo: editingLead ? editingLead.assignedTo : (userProfile?.role === 'SDR' || userProfile?.role === 'Executive' ? user?.uid : undefined)
       };
       // Clean undefined values
       Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);

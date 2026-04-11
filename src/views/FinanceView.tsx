@@ -19,7 +19,7 @@ export default function FinanceView() {
   const { clients, expenses, newExpense, setNewExpense, transactionCategories, budgets, transactions, effectiveOrgId, userProfile } = useCRM();
   const [activeTab, setActiveTab] = useState<'resumo' | 'dre' | 'fluxo' | 'orcamento' | 'conciliacao' | 'categorias'>('resumo');
 
-  if (userProfile?.role === 'Vendedor') {
+  if (userProfile?.role === 'SDR' || userProfile?.role === 'Executive') {
     return (
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="text-center">

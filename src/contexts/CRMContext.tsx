@@ -175,8 +175,8 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
           let loadedClients: Client[] = [];
           snapshot.forEach((d) => loadedClients.push({ id: d.id, ...d.data() } as Client));
           
-          // Filtro por cargo: Vendedor só vê o que está atribuído a ele
-          if (userProfile?.role === 'Vendedor') {
+          // Filtro por cargo: Equipe comercial só vê o que está atribuído a ela
+          if (userProfile?.role === 'SDR' || userProfile?.role === 'Executive') {
             loadedClients = loadedClients.filter(c => c.assignedTo === user?.uid);
           }
           
@@ -197,8 +197,8 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         let loaded: Lead[] = [];
         snapshot.forEach((d) => loaded.push({ id: d.id, ...d.data() } as Lead));
         
-        // Filtro por cargo: Vendedor só vê o que está atribuído a ele
-        if (userProfile?.role === 'Vendedor') {
+        // Filtro por cargo: Equipe comercial só vê o que está atribuído a ela
+        if (userProfile?.role === 'SDR' || userProfile?.role === 'Executive') {
           loaded = loaded.filter(l => l.assignedTo === user?.uid);
         }
         

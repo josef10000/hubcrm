@@ -88,7 +88,7 @@ export default function TeamManagementView() {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteName, setInviteName] = useState('');
-  const [inviteRole, setInviteRole] = useState('Vendedor');
+  const [inviteRole, setInviteRole] = useState<UserRole>('SDR');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Remove member state
