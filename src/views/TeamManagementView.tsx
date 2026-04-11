@@ -476,7 +476,7 @@ export default function TeamManagementView() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Cargo / Permissões</label>
-                  <select value={inviteRole} onChange={e => setInviteRole(e.target.value)} className="w-full bg-gray-200/50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white">
+                  <select value={inviteRole} onChange={e => setInviteRole(e.target.value as UserRole)} className="w-full bg-gray-200/50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white">
                     <option value="Gerente">Gerente</option>
                     <option value="People & Culture">People & Culture</option>
                     <option value="Customer Success">Customer Success</option>
