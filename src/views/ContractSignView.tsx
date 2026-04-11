@@ -162,7 +162,7 @@ export default function ContractSignView() {
               <h2 className="text-xl font-bold text-white mb-1"><span className="text-gray-400 font-normal">Contratante: </span>{client.name}</h2>
               {client.cpfCnpj && <p className="text-gray-500 font-mono">Documento: {client.cpfCnpj}</p>}
             </div>
-            <div className={`px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 ${contract.status === 'signed' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20' : 'bg-orange-500/20 text-orange-400 border border-orange-500/20'}`}>
+            <div className={`px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 ${contract.status === 'signed' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20' : 'bg-primary-500/20 text-primary-400 border border-primary-500/20'}`}>
               {contract.status === 'signed' ? <CheckCircle size={16} /> : <Clock size={16} />}
               {contract.status === 'signed' ? 'Documento Autenticado' : 'Aguardando Assinatura'}
             </div>

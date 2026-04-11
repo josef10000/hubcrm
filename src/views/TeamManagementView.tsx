@@ -14,6 +14,7 @@ interface Member {
   jobTitle?: string;
   photoURL?: string;
   reportsTo?: string;
+  birthDate?: string;
 }
 
 interface Invitation {
@@ -104,6 +105,7 @@ export default function TeamManagementView() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editJobTitle, setEditJobTitle] = useState('');
   const [editReportsTo, setEditReportsTo] = useState('');
+  const [editBirthDate, setEditBirthDate] = useState('');
 
   const fetchData = async () => {
     try {
@@ -211,7 +213,8 @@ export default function TeamManagementView() {
           targetUid: editingMember.uid,
           profileData: {
             jobTitle: editJobTitle,
-            reportsTo: editReportsTo || null
+            reportsTo: editReportsTo || null,
+            birthDate: editBirthDate || null
           }
         })
       });
@@ -321,7 +324,7 @@ export default function TeamManagementView() {
         ) : (
           viewMode === 'list' ? (
             <div className="space-y-8 animate-in fade-in duration-500">
-              <div className="bg-white/50 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl overflow-hidden shadow-xl">
+              <div className="bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl overflow-hidden shadow-xl">
                 <div className="px-6 py-4 border-b border-gray-200 dark:border-white/10 flex items-center bg-gray-50/50 dark:bg-white/5">
                   <Users size={20} className="text-primary-500 mr-2" />
                   <h2 className="font-bold text-gray-900 dark:text-white">Membros Ativos ({members.length})</h2>
@@ -371,6 +374,7 @@ export default function TeamManagementView() {
                                   setEditingMember(member); 
                                   setEditJobTitle(member.jobTitle || '');
                                   setEditReportsTo(member.reportsTo || '');
+                                  setEditBirthDate(member.birthDate || '');
                                   setIsEditModalOpen(true); 
                                 }}
                                 className="p-2 text-gray-400 hover:text-primary-500 hover:bg-primary-500/10 rounded-lg transition-all"
@@ -399,7 +403,7 @@ export default function TeamManagementView() {
               {invites.length > 0 && (
                 <div className="bg-white/30 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl overflow-hidden shadow-xl border-dashed animate-in slide-in-from-bottom duration-500">
                   <div className="px-6 py-4 border-b border-gray-200 dark:border-white/10 flex items-center bg-gray-50/50 dark:bg-white/5">
-                    <Mail size={20} className="text-orange-500 mr-2" />
+                    <Mail size={20} className="text-primary-500 mr-2" />
                     <h2 className="font-bold text-gray-900 dark:text-white">Convites Pendentes ({invites.length})</h2>
                   </div>
                   <div className="divide-y divide-gray-200 dark:divide-white/10">
@@ -527,6 +531,15 @@ export default function TeamManagementView() {
                       <option key={m.uid} value={m.uid}>{m.displayName}</option>
                     ))}
                   </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1 uppercase">Data de Nascimento (Opcional)</label>
+                  <input 
+                    type="date" 
+                    value={editBirthDate} 
+                    onChange={e => setEditBirthDate(e.target.value)} 
+                    className="w-full bg-black/40 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500" 
+                  />
                 </div>
                 <div className="pt-4 flex gap-3">
                   <button type="button" onClick={() => setIsEditModalOpen(false)} className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-gray-500 text-sm font-bold">Cancelar</button>

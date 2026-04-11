@@ -175,19 +175,19 @@ export default function PublicCheckoutPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <Loader2 className="animate-spin text-orange-500" size={48} />
+      <div className="min-h-screen bg-[#030712] flex items-center justify-center">
+        <Loader2 className="animate-spin text-primary-500" size={48} />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] py-12 px-4 sm:px-6 lg:px-8 font-sans text-gray-100 relative overflow-hidden">
+    <div className="min-h-screen bg-[#030712] py-12 px-4 sm:px-6 lg:px-8 font-sans text-gray-100 relative overflow-hidden">
       <Toaster theme="dark" position="top-right" />
       
       {/* Background Glows */}
-      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-orange-500/10 rounded-full blur-[120px] pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-orange-600/10 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-primary-500/10 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-primary-600/10 rounded-full blur-[120px] pointer-events-none"></div>
 
       <div className="max-w-5xl mx-auto relative z-10">
         <div className="text-center mb-12">
@@ -206,10 +206,10 @@ export default function PublicCheckoutPage() {
         <div className="flex items-center justify-center gap-4 mb-12">
           {[1, 2, 3, 4].map((s) => (
             <div key={s} className="flex items-center gap-2">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${step >= s ? 'bg-orange-500 text-white' : 'bg-white/5 text-gray-500 border border-white/10'}`}>
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${step >= s ? 'bg-primary-500 text-white' : 'bg-white/5 text-gray-500 border border-white/10'}`}>
                 {step > s ? <Check size={18} /> : s}
               </div>
-              {s < 4 && <div className={`w-8 h-px ${step > s ? 'bg-orange-500' : 'bg-white/10'}`} />}
+              {s < 4 && <div className={`w-8 h-px ${step > s ? 'bg-primary-500' : 'bg-white/10'}`} />}
             </div>
           ))}
         </div>
@@ -218,7 +218,7 @@ export default function PublicCheckoutPage() {
           {step === 1 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
-                <UserIcon className="w-5 h-5 text-orange-500" />
+                <UserIcon className="w-5 h-5 text-primary-500" />
                 Seus Dados
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -231,7 +231,7 @@ export default function PublicCheckoutPage() {
                       required
                       value={clientData.name}
                       onChange={(e) => setClientData({...clientData, name: e.target.value})}
-                      className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all"
+                      className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary-500 transition-all"
                       placeholder="Nome ou Razão Social"
                     />
                   </div>
@@ -245,7 +245,7 @@ export default function PublicCheckoutPage() {
                       required
                       value={clientData.email}
                       onChange={(e) => setClientData({...clientData, email: e.target.value})}
-                      className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all"
+                      className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary-500 transition-all"
                       placeholder="contato@exemplo.com"
                     />
                   </div>
@@ -259,7 +259,7 @@ export default function PublicCheckoutPage() {
                       required
                       value={clientData.whatsapp}
                       onChange={(e) => setClientData({...clientData, whatsapp: e.target.value})}
-                      className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all"
+                      className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary-500 transition-all"
                       placeholder="(00) 00000-0000"
                     />
                   </div>
@@ -273,7 +273,7 @@ export default function PublicCheckoutPage() {
                       required
                       value={clientData.cpfCnpj}
                       onChange={(e) => setClientData({...clientData, cpfCnpj: e.target.value})}
-                      className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all"
+                      className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary-500 transition-all"
                       placeholder="Somente números"
                     />
                   </div>
@@ -285,26 +285,26 @@ export default function PublicCheckoutPage() {
           {step === 2 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
               <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-orange-500" />
+                <FileText className="w-5 h-5 text-primary-500" />
                 Briefing do Projeto
               </h2>
               <div className="space-y-6">
                 {(ownerSettings?.onboardingQuestions || []).map((q: any) => (
                   <div key={q.id}>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      {q.text.toLowerCase().includes('logo') ? 'Logo e Imagens do Site' : q.text} {q.required && <span className="text-orange-500">*</span>}
+                      {q.text.toLowerCase().includes('logo') ? 'Logo e Imagens do Site' : q.text} {q.required && <span className="text-primary-500">*</span>}
                     </label>
                     {q.type === 'textarea' ? (
                       <textarea
                         value={answers[q.id] || ''}
                         onChange={(e) => setAnswers({...answers, [q.id]: e.target.value})}
-                        className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all h-32 resize-none"
+                        className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary-500 transition-all h-32 resize-none"
                       />
                     ) : q.type === 'select' ? (
                       <select
                         value={answers[q.id] || ''}
                         onChange={(e) => setAnswers({...answers, [q.id]: e.target.value})}
-                        className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all appearance-none"
+                        className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary-500 transition-all appearance-none"
                       >
                         <option value="">Selecione...</option>
                         {q.options?.split(',').map((opt: string) => <option key={opt} value={opt.trim()}>{opt.trim()}</option>)}
@@ -333,10 +333,10 @@ export default function PublicCheckoutPage() {
                               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                               disabled={uploadingFile === q.id}
                             />
-                            <div className={`w-full px-4 py-6 border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center gap-3 transition-all ${uploadingFile === q.id ? 'bg-orange-500/5 border-orange-500/50' : 'bg-black/40 group-hover:border-white/20'}`}>
+                            <div className={`w-full px-4 py-6 border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center gap-3 transition-all ${uploadingFile === q.id ? 'bg-primary-500/5 border-primary-500/50' : 'bg-black/40 group-hover:border-white/20'}`}>
                               {uploadingFile === q.id ? (
                                 <>
-                                  <Loader2 className="animate-spin text-orange-500" size={24} />
+                                  <Loader2 className="animate-spin text-primary-500" size={24} />
                                   <span className="text-sm text-gray-400">Subindo arquivo...</span>
                                 </>
                               ) : (
@@ -359,7 +359,7 @@ export default function PublicCheckoutPage() {
                         type="text"
                         value={answers[q.id] || ''}
                         onChange={(e) => setAnswers({...answers, [q.id]: e.target.value})}
-                        className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all"
+                        className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary-500 transition-all"
                       />
                     )}
                   </div>
@@ -371,7 +371,7 @@ export default function PublicCheckoutPage() {
           {step === 3 && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
               <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-orange-500" />
+                <FileText className="w-5 h-5 text-primary-500" />
                 Contrato de Prestação de Serviços
               </h2>
               <div className="bg-black/40 border border-white/10 rounded-2xl p-6 h-[400px] overflow-y-auto custom-scrollbar text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-mono italic">
@@ -395,18 +395,18 @@ Em caso de suspensão de pagamento, o serviço será suspenso após X dias. Canc
                       type="text"
                       value={signatureName}
                       onChange={(e) => setSignatureName(e.target.value)}
-                      className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-orange-500 transition-all placeholder:text-gray-600"
+                      className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary-500 transition-all placeholder:text-gray-600"
                       placeholder="Digite seu nome completo como assinatura"
                     />
                   </div>
                 </div>
 
-                <label className="flex items-center gap-3 p-4 bg-orange-500/5 border border-orange-500/20 rounded-xl cursor-pointer group transition-all hover:bg-orange-500/10 active:scale-[0.99]">
+                <label className="flex items-center gap-3 p-4 bg-primary-500/5 border border-primary-500/20 rounded-xl cursor-pointer group transition-all hover:bg-primary-500/10 active:scale-[0.99]">
                   <input
                     type="checkbox"
                     checked={contractAccepted}
                     onChange={(e) => setContractAccepted(e.target.checked)}
-                    className="w-5 h-5 rounded border-white/10 text-orange-500 focus:ring-orange-500 bg-black/40"
+                    className="w-5 h-5 rounded border-white/10 text-primary-500 focus:ring-primary-500 bg-black/40"
                   />
                   <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
                     Li e concordo integralmente com os termos do contrato acima citado.
@@ -419,7 +419,7 @@ Em caso de suspensão de pagamento, o serviço será suspenso após X dias. Canc
           {step === 4 && (
             <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
               <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-orange-500" />
+                <CheckCircle className="w-5 h-5 text-primary-500" />
                 Escolha sua Solução
               </h2>
               
@@ -433,7 +433,7 @@ Em caso de suspensão de pagamento, o serviço será suspenso após X dias. Canc
                         <button
                           key={offer.id}
                           onClick={() => setClientData({...clientData, offerId: offer.id, plan: offer.name })}
-                          className={`p-6 rounded-2xl border transition-all text-left flex flex-col relative ${clientData.offerId === offer.id ? 'bg-orange-500/10 border-orange-500 shadow-lg shadow-orange-500/20' : 'bg-black/40 border-white/10 hover:border-white/20'}`}
+                          className={`p-6 rounded-2xl border transition-all text-left flex flex-col relative ${clientData.offerId === offer.id ? 'bg-primary-500/10 border-primary-500 shadow-lg shadow-primary-500/20' : 'bg-black/40 border-white/10 hover:border-white/20'}`}
                         >
                           <p className="font-bold text-xl mb-1">{offer.name}</p>
                           <p className="text-xs text-gray-400 mb-3">
@@ -454,15 +454,15 @@ Em caso de suspensão de pagamento, o serviço será suspenso após X dias. Canc
                                 R$ {displayPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                               </span>
                               {offer.type === 'SUBSCRIPTION' && !isYearly && <span className="text-gray-500 text-xs">/mês</span>}
-                              {isYearly && <span className="text-orange-500 text-[10px] font-bold ml-1">-15% OFF</span>}
+                              {isYearly && <span className="text-primary-500 text-[10px] font-bold ml-1">-15% OFF</span>}
                             </div>
                             
                             {offer.setupPrice ? (
-                              <p className="text-[10px] text-orange-400/80 mt-1">+ R$ {offer.setupPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} de setup</p>
+                              <p className="text-[10px] text-primary-400/80 mt-1">+ R$ {offer.setupPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} de setup</p>
                             ) : null}
                           </div>
                           
-                          {clientData.offerId === offer.id && <div className="absolute top-4 right-4 text-orange-500"><Check size={20} /></div>}
+                          {clientData.offerId === offer.id && <div className="absolute top-4 right-4 text-primary-500"><Check size={20} /></div>}
                         </button>
                       );
                     })
@@ -477,13 +477,13 @@ Em caso de suspensão de pagamento, o serviço será suspenso após X dias. Canc
                 <div className="flex bg-black/40 p-1 rounded-xl border border-white/10 max-w-xs mx-auto">
                   <button
                     onClick={() => setClientData({...clientData, billingCycle: 'MONTHLY'})}
-                    className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${clientData.billingCycle === 'MONTHLY' ? 'bg-orange-500 text-white' : 'text-gray-400'}`}
+                    className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${clientData.billingCycle === 'MONTHLY' ? 'bg-primary-500 text-white' : 'text-gray-400'}`}
                   >
                     Mensal
                   </button>
                   <button
                     onClick={() => setClientData({...clientData, billingCycle: 'YEARLY'})}
-                    className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${clientData.billingCycle === 'YEARLY' ? 'bg-orange-500 text-white' : 'text-gray-400'}`}
+                    className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${clientData.billingCycle === 'YEARLY' ? 'bg-primary-500 text-white' : 'text-gray-400'}`}
                   >
                     Anual (-15%)
                   </button>
@@ -509,7 +509,7 @@ Em caso de suspensão de pagamento, o serviço será suspenso após X dias. Canc
                 onClick={() => {
                   if (validateStep()) setStep(step + 1);
                 }}
-                className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="bg-primary-500 hover:bg-primary-600 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
                 Continuar
                 <ArrowRight size={18} />
@@ -518,7 +518,7 @@ Em caso de suspensão de pagamento, o serviço será suspenso após X dias. Canc
               <button
                 onClick={handleSubmit}
                 disabled={submitting || offers.length === 0}
-                className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-10 py-3 rounded-xl font-bold flex items-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100"
+                className="bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-orange-700 text-white px-10 py-3 rounded-xl font-bold flex items-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100"
               >
                 {submitting ? (
                   <>

@@ -5,8 +5,8 @@
   <p><em>By Hub Symples - Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.</em></p>
   
   <p>
-    <img src="https://img.shields.io/badge/Version-1.7.0-orange" alt="Version" />
-    <img src="https://img.shields.io/badge/License-MIT-blue" alt="License" />
+    <img src="https://img.shields.io/badge/Version-1.8.0-black" alt="Version" />
+    <img src="https://img.shields.io/badge/Identity-Dark_Absolute-white" alt="Identity" />
     <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react" alt="React" />
     <img src="https://img.shields.io/badge/Tailwind-4.0-38B2AC?logo=tailwind-css" alt="Tailwind" />
   </p>
@@ -58,8 +58,8 @@ Visualização clara e profissional da estrutura organizacional.
 ### 🎨 8. Personalização & Cultura (Nível Premium)
 Experiência de uso elevada com foco no bem-estar e engajamento da equipe.
 - **Sistema de Temas Dinâmicos**: Aplicação de cores globais (Laranja, Azul, Roxo, etc.) que alteram toda a identidade do CRM instantaneamente.
-- **Celebração de Aniversários**: Detecção automática de aniversariantes com explosão de confetes 🎉, mensagens personalizadas e ícones festivos na barra lateral.
-- **Interface Viva**: Micro-animações com Framer Motion e feedback visual de alto nível.
+- **Celebração de Aniversários**: Detecção automática de aniversariantes com explosão de confetes 🎉, mensagens personalizadas e ícones festivos (chapeuzinhos) na barra lateral e dashboard.
+- **Interface Viva**: Experiência **Dark Absolute** (Preto Profundo) com micro-animações Framer Motion e feedback visual de alto nível.
 
 ### 🗺️ 9. Democratização de Dados
 - **Mapa Global**: Acesso ao mapa de clientes liberado para todos os níveis da equipe, fomentando a visão estratégica.

@@ -129,42 +129,42 @@ export default function FinanceView() {
         <div className="flex items-center gap-4 mb-8">
           <button
             onClick={() => setActiveTab('resumo')}
-            className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${activeTab === 'resumo' ? 'bg-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10'}`}
+            className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${activeTab === 'resumo' ? 'bg-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/40 dark:bg-zinc-950/5 text-gray-500 dark:text-gray-400 hover:bg-black/20 dark:hover:bg-zinc-950/10'}`}
           >
             <Activity size={18} />
             Resumo Operacional
           </button>
           <button
             onClick={() => setActiveTab('dre')}
-            className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${activeTab === 'dre' ? 'bg-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10'}`}
+            className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${activeTab === 'dre' ? 'bg-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/40 dark:bg-zinc-950/5 text-gray-500 dark:text-gray-400 hover:bg-black/20 dark:hover:bg-zinc-950/10'}`}
           >
             <PieChart size={18} />
             DRE Gerencial
           </button>
           <button
             onClick={() => setActiveTab('fluxo')}
-            className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${activeTab === 'fluxo' ? 'bg-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10'}`}
+            className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${activeTab === 'fluxo' ? 'bg-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/40 dark:bg-zinc-950/5 text-gray-500 dark:text-gray-400 hover:bg-black/20 dark:hover:bg-zinc-950/10'}`}
           >
             <TrendingUp size={18} />
             Fluxo de Caixa
           </button>
           <button
             onClick={() => setActiveTab('orcamento')}
-            className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${activeTab === 'orcamento' ? 'bg-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10'}`}
+            className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${activeTab === 'orcamento' ? 'bg-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/40 dark:bg-zinc-950/5 text-gray-500 dark:text-gray-400 hover:bg-black/20 dark:hover:bg-zinc-950/10'}`}
           >
             <Target size={18} />
             Orçamento (Budget)
           </button>
           <button
             onClick={() => setActiveTab('conciliacao')}
-            className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${activeTab === 'conciliacao' ? 'bg-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10'}`}
+            className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${activeTab === 'conciliacao' ? 'bg-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/40 dark:bg-zinc-950/5 text-gray-500 dark:text-gray-400 hover:bg-black/20 dark:hover:bg-zinc-950/10'}`}
           >
             <Activity size={18} />
             Conciliação OFX
           </button>
           <button
             onClick={() => setActiveTab('categorias')}
-            className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${activeTab === 'categorias' ? 'bg-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10'}`}
+            className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${activeTab === 'categorias' ? 'bg-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/40 dark:bg-zinc-950/5 text-gray-500 dark:text-gray-400 hover:bg-black/20 dark:hover:bg-zinc-950/10'}`}
           >
             <Tag size={18} />
             Categorias
@@ -174,7 +174,7 @@ export default function FinanceView() {
         {activeTab === 'resumo' ? (
           <>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-          <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl shadow-lg">
+          <div className="bg-black/40 dark:bg-zinc-950/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl shadow-lg">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-gray-500 dark:text-gray-400 font-medium">Receita (MRR)</h3>
               <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg"><TrendingUp size={20} /></div>
@@ -182,7 +182,7 @@ export default function FinanceView() {
             <p className="text-3xl font-bold text-gray-900 dark:text-white">R$ {totalMRR.toFixed(2).replace('.', ',')}</p>
           </div>
           
-          <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl shadow-lg">
+          <div className="bg-black/40 dark:bg-zinc-950/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl shadow-lg">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-gray-500 dark:text-gray-400 font-medium">Despesas</h3>
               <div className="p-2 bg-red-500/20 text-red-400 rounded-lg"><TrendingDown size={20} /></div>
@@ -193,7 +193,7 @@ export default function FinanceView() {
             </div>
           </div>
 
-          <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl shadow-lg">
+          <div className="bg-black/40 dark:bg-zinc-950/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl shadow-lg">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-gray-500 dark:text-gray-400 font-medium">Lucro Líquido</h3>
               <div className="p-2 bg-blue-500/20 text-blue-400 rounded-lg"><DollarSign size={20} /></div>
@@ -206,7 +206,7 @@ export default function FinanceView() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-1">
-            <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl shadow-lg">
+            <div className="bg-black/40 dark:bg-zinc-950/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl shadow-lg">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Nova Despesa</h3>
               <form onSubmit={handleAddExpense} className="space-y-4">
                 <div>
@@ -224,18 +224,18 @@ export default function FinanceView() {
                 <div>
                   <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Categoria</label>
                   <select value={newExpense.category || ''} onChange={e => setNewExpense({...newExpense, category: e.target.value})} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all">
-                    <option value="" disabled className="bg-white dark:bg-[#030712]">Selecione uma categoria...</option>
+                    <option value="" disabled className="bg-zinc-950 dark:bg-[#030712]">Selecione uma categoria...</option>
                     {transactionCategories.filter(c => c.type === 'EXPENSE').length > 0 ? (
                       transactionCategories.filter(c => c.type === 'EXPENSE').map(cat => (
-                        <option key={cat.id} value={cat.name} className="bg-white dark:bg-[#030712] text-gray-900 dark:text-white">{cat.name}</option>
+                        <option key={cat.id} value={cat.name} className="bg-zinc-950 dark:bg-[#030712] text-gray-900 dark:text-white">{cat.name}</option>
                       ))
                     ) : (
                       <>
-                        <option value="Ferramentas" className="bg-white dark:bg-[#030712] text-gray-900 dark:text-white">Ferramentas / Software</option>
-                        <option value="Infraestrutura" className="bg-white dark:bg-[#030712] text-gray-900 dark:text-white">Infraestrutura / Hospedagem</option>
-                        <option value="Impostos" className="bg-white dark:bg-[#030712] text-gray-900 dark:text-white">Impostos / Taxas</option>
-                        <option value="Marketing" className="bg-white dark:bg-[#030712] text-gray-900 dark:text-white">Marketing / Anúncios</option>
-                        <option value="Outros" className="bg-white dark:bg-[#030712] text-gray-900 dark:text-white">Outros</option>
+                        <option value="Ferramentas" className="bg-zinc-950 dark:bg-[#030712] text-gray-900 dark:text-white">Ferramentas / Software</option>
+                        <option value="Infraestrutura" className="bg-zinc-950 dark:bg-[#030712] text-gray-900 dark:text-white">Infraestrutura / Hospedagem</option>
+                        <option value="Impostos" className="bg-zinc-950 dark:bg-[#030712] text-gray-900 dark:text-white">Impostos / Taxas</option>
+                        <option value="Marketing" className="bg-zinc-950 dark:bg-[#030712] text-gray-900 dark:text-white">Marketing / Anúncios</option>
+                        <option value="Outros" className="bg-zinc-950 dark:bg-[#030712] text-gray-900 dark:text-white">Outros</option>
                       </>
                     )}
                   </select>
@@ -257,7 +257,7 @@ export default function FinanceView() {
           </div>
 
           <div className="lg:col-span-2">
-            <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl shadow-lg h-full">
+            <div className="bg-black/40 dark:bg-zinc-950/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl shadow-lg h-full">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Histórico de Despesas</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
@@ -278,11 +278,11 @@ export default function FinanceView() {
                       </tr>
                     ) : (
                       expenses.map(expense => (
-                        <tr key={expense.id} className="border-b border-white/5 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 transition-colors group">
+                        <tr key={expense.id} className="border-b border-white/5 hover:bg-black/40 dark:hover:bg-primary-500/20 dark:bg-zinc-950/5 transition-colors group">
                           <td className="py-4 text-gray-600 dark:text-gray-300 text-sm">{new Date(expense.date).toLocaleDateString('pt-BR')}</td>
                           <td className="py-4 text-gray-900 dark:text-white font-medium">{expense.description}</td>
                           <td className="py-4 text-gray-500 dark:text-gray-400 text-sm">
-                            <span className="px-2 py-1 bg-gray-100 dark:bg-white/5 rounded-md border border-white/5">{expense.category}</span>
+                            <span className="px-2 py-1 bg-black/40 dark:bg-zinc-950/5 rounded-md border border-white/5">{expense.category}</span>
                           </td>
                           <td className="py-4 text-gray-500 dark:text-gray-400 text-sm">
                             {expense.clientId ? clients.find(c => c.id === expense.clientId)?.name || 'Desconhecido' : '-'}
@@ -306,7 +306,7 @@ export default function FinanceView() {
         </div>
 
         <div className="mt-8">
-          <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl shadow-lg">
+          <div className="bg-black/40 dark:bg-zinc-950/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl shadow-lg">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Custos e Margem por Cliente</h3>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -327,7 +327,7 @@ export default function FinanceView() {
                     const margin = mrr > 0 ? (profit / mrr) * 100 : 0;
                     
                     return (
-                      <tr key={client.id} className="border-b border-white/5 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 transition-colors group">
+                      <tr key={client.id} className="border-b border-white/5 hover:bg-black/40 dark:hover:bg-primary-500/20 dark:bg-zinc-950/5 transition-colors group">
                         <td className="py-4 text-gray-900 dark:text-white font-medium">{client.name}</td>
                         <td className="py-4 text-emerald-400 font-medium text-right">R$ {mrr.toFixed(2).replace('.', ',')}</td>
                         <td className="py-4 text-red-400 font-medium text-right">R$ {clientExpenses.toFixed(2).replace('.', ',')}</td>

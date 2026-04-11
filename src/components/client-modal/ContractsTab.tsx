@@ -168,7 +168,7 @@ export default function ContractsTab({ client, user, formData, setFormData, defa
                     Contrato em {contract.type === 'pdf' ? 'PDF' : 'Texto Base'}
                   </h4>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${contract.status === 'signed' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-orange-500/20 text-orange-500'}`}>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${contract.status === 'signed' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-primary-500/20 text-primary-500'}`}>
                       {contract.status === 'signed' ? 'Assinado' : 'Pendente'}
                     </span>
                     <span className="text-xs text-gray-500">

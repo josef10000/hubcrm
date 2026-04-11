@@ -24,7 +24,7 @@ export default function MarketingView() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white dark:bg-[#111111] p-6 rounded-3xl border border-gray-200 dark:border-white/10 shadow-sm">
+      <div className="bg-black/40 dark:bg-[#111111] p-6 rounded-3xl border border-gray-200 dark:border-white/10 shadow-sm">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
           <Megaphone className="w-5 h-5 text-primary-500" />
           Aviso Global (Portal do Cliente)
@@ -34,7 +34,7 @@ export default function MarketingView() {
         </p>
 
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
+          <div className="flex items-center justify-between p-4 bg-white/5 dark:bg-black/40/5 rounded-2xl border border-gray-200 dark:border-white/10">
             <div>
               <p className="font-medium text-gray-900 dark:text-white">Status do Aviso</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">Ativar ou desativar o aviso no portal</p>
@@ -46,7 +46,7 @@ export default function MarketingView() {
                 checked={globalAnnouncement.isActive}
                 onChange={(e) => setGlobalAnnouncement({...globalAnnouncement, isActive: e.target.checked})}
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-500"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-black/40 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-500"></div>
             </label>
           </div>
 
@@ -57,7 +57,7 @@ export default function MarketingView() {
                 type="text" 
                 value={globalAnnouncement.title}
                 onChange={(e) => setGlobalAnnouncement({...globalAnnouncement, title: e.target.value})}
-                className="w-full px-4 py-2 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
+                className="w-full px-4 py-2 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
                 placeholder="Ex: Recesso de Fim de Ano"
               />
             </div>
@@ -66,7 +66,7 @@ export default function MarketingView() {
               <select 
                 value={globalAnnouncement.type}
                 onChange={(e) => setGlobalAnnouncement({...globalAnnouncement, type: e.target.value})}
-                className="w-full px-4 py-2 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
+                className="w-full px-4 py-2 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
               >
                 <option value="info" className="bg-[#0a0a0a] text-white">Informativo (Azul)</option>
                 <option value="warning" className="bg-[#0a0a0a] text-white">Atenção (Amarelo)</option>
@@ -81,7 +81,7 @@ export default function MarketingView() {
             <textarea 
               value={globalAnnouncement.message}
               onChange={(e) => setGlobalAnnouncement({...globalAnnouncement, message: e.target.value})}
-              className="w-full px-4 py-2 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none min-h-[100px] resize-none"
+              className="w-full px-4 py-2 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none min-h-[100px] resize-none"
               placeholder="Detalhes do aviso..."
             />
           </div>
