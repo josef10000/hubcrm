@@ -22,6 +22,52 @@
 
 ---
 
+<div align="center">
+  <h2>✨ Features em Destaque</h2>
+</div>
+
+<table>
+  <tr>
+    <td align="center" width="25%">
+      <br />🔄<br /><strong>Ciclo Completo</strong><br />
+      <sub>Do lead ao pós-venda, sem trocar de ferramenta</sub>
+    </td>
+    <td align="center" width="25%">
+      <br />💳<br /><strong>Power Checkout</strong><br />
+      <sub>Cliente se cadastra, paga e inicia o projeto sozinho</sub>
+    </td>
+    <td align="center" width="25%">
+      <br />🏢<br /><strong>Multi-Tenant</strong><br />
+      <sub>Uma instalação, infinitas organizações isoladas</sub>
+    </td>
+    <td align="center" width="25%">
+      <br />🎉<br /><strong>Gamificação</strong><br />
+      <sub>Confetes e celebrações automáticas de aniversário</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <br />🌑<br /><strong>Dark Absolute</strong><br />
+      <sub>Interface premium com 5 temas dinâmicos</sub>
+    </td>
+    <td align="center">
+      <br />📊<br /><strong>BI Financeiro</strong><br />
+      <sub>DRE, Fluxo de Caixa, Budget e Conciliação OFX</sub>
+    </td>
+    <td align="center">
+      <br />🔐<br /><strong>13 Cargos RBAC</strong><br />
+      <sub>Controle granular de quem vê e faz o quê</sub>
+    </td>
+    <td align="center">
+      <br />🚀<br /><strong>Zero Infra</strong><br />
+      <sub>100% serverless — Vercel + Firebase</sub>
+    </td>
+  </tr>
+</table>
+
+---
+
+
 ## 📋 Índice
 
 - [Visão Geral](#-visão-geral)
@@ -705,6 +751,28 @@ className="bg-gray-100 border-gray-200"
 - [ ] 🏷️ Sistema de tags e segmentação de clientes
 
 ---
+
+## 🧪 Testes Automatizados
+
+O projeto possui **49 testes unitários** distribuídos em 4 suites, cobrindo as áreas de maior risco do sistema (pagamentos, cobranças, contratos).
+
+| Suite | Arquivo | Testes | Cobertura |
+|---|---|---|---|
+| **Billing Logic** | `src/helpers.test.ts` | 10 | Preços, setup, descontos, referral |
+| **Asaas Webhook** | `api/__tests__/webhook.test.ts` | 11 | Token auth, idempotência, status, anti-spam e-mails |
+| **Public Checkout** | `api/__tests__/checkout.test.ts` | 15 | Validação de entrada, oferta, Asaas, Firestore, contrato |
+| **Asaas Utils** | `api/__tests__/asaas-utils.test.ts` | 13 | Request builder, error handling, sanitização |
+
+#### Executar testes:
+
+```bash
+npm test           # Executa todos (49 testes)
+npx vitest run     # Modo CI (sem watch)
+npx vitest         # Modo desenvolvimento (watch)
+```
+
+---
+
 
 ## 📄 Licença
 
