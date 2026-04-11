@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
   User as UserIcon, Mail, Phone, Instagram, Linkedin, 
   ChevronLeft, Edit3, Save, X, Briefcase, Info, 
-  Shield, Globe, MapPin, Loader2, Camera
+  Shield, Globe, MapPin, Loader2, Camera, Cake
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
@@ -34,7 +34,8 @@ export default function ProfileView() {
     phoneNumber: '',
     instagram: '',
     linkedin: '',
-    photoURL: ''
+    photoURL: '',
+    birthDate: ''
   });
 
   const isOwnProfile = user?.uid === uid;
@@ -59,7 +60,8 @@ export default function ProfileView() {
             phoneNumber: data.phoneNumber || '',
             instagram: data.instagram || '',
             linkedin: data.linkedin || '',
-            photoURL: data.photoURL || ''
+            photoURL: data.photoURL || '',
+            birthDate: data.birthDate || ''
           });
 
           // Buscar superior
@@ -365,6 +367,18 @@ export default function ProfileView() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Data de Nascimento (Opcional)</label>
+                      <input 
+                        type="date" 
+                        value={formData.birthDate}
+                        onChange={e => setFormData({...formData, birthDate: e.target.value})}
+                        className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-500 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
                       <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Instagram (@usuario)</label>
                       <input 
                         type="text" 
@@ -428,6 +442,12 @@ export default function ProfileView() {
                           <Globe size={16} className="mr-3 opacity-50" />
                           <span>Membro desde {new Date(profile.createdAt).toLocaleDateString()}</span>
                         </div>
+                        {profile.birthDate && (
+                          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                            <Cake size={16} className="mr-3 opacity-50" />
+                            <span>Aniversário em: {new Date(profile.birthDate + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                     

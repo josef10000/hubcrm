@@ -30,6 +30,7 @@ import NotificationsView from './views/NotificationsView';
 import TeamManagementView from './views/TeamManagementView';
 import AcceptInviteView from './views/AcceptInviteView';
 import ProfileView from './views/ProfileView';
+import BirthdayCelebration from './components/BirthdayCelebration';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { UIProvider, useUI } from './contexts/UIContext';
@@ -59,7 +60,7 @@ const navItems = [
 ];
 
 function CRMInner() {
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, isBirthday } = useAuth();
   const navigate = useNavigate();
   const {
     clients, activeLeadsCount, offers, supportRequests, loading, errorMsg,
@@ -82,6 +83,8 @@ function CRMInner() {
       <div className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] bg-primary-600/20 rounded-full blur-[120px] pointer-events-none mix-blend-screen"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] bg-primary-600/20 rounded-full blur-[120px] pointer-events-none mix-blend-screen"></div>
       <div className="absolute top-[40%] left-[60%] w-[30vw] h-[30vw] bg-purple-600/10 rounded-full blur-[100px] pointer-events-none mix-blend-screen"></div>
+
+      {isBirthday && <BirthdayCelebration />}
 
       <aside 
         translate="no"
@@ -114,11 +117,16 @@ function CRMInner() {
             className="flex items-center justify-between px-4 py-3 bg-gray-100 dark:bg-white/5 backdrop-blur-xl rounded-2xl border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-200 dark:hover:bg-white/10 transition-all group"
           >
             <div className="flex items-center space-x-3 overflow-hidden">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center text-gray-900 dark:text-white font-bold shrink-0 shadow-lg shadow-primary-500/20 overflow-hidden">
-                {userProfile?.photoURL ? (
-                  <img src={userProfile.photoURL} alt={userProfile.displayName} className="w-full h-full object-cover" />
-                ) : (
-                  (userProfile?.displayName || user?.displayName || user?.email || 'U')[0].toUpperCase()
+              <div className="relative">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center text-gray-900 dark:text-white font-bold shrink-0 shadow-lg shadow-primary-500/20 overflow-hidden">
+                  {userProfile?.photoURL ? (
+                    <img src={userProfile.photoURL} alt={userProfile.displayName} className="w-full h-full object-cover" />
+                  ) : (
+                    (userProfile?.displayName || user?.displayName || user?.email || 'U')[0].toUpperCase()
+                  )}
+                </div>
+                {isBirthday && (
+                  <span className="absolute -top-1 -right-1 text-[10px] animate-bounce" title="Aniversariante do Dia! 🎉">🎉</span>
                 )}
               </div>
               <div className="truncate">

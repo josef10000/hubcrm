@@ -10,6 +10,7 @@ interface AuthContextType {
   loading: boolean;
   errorMsg: string | null;
   refreshProfile: () => Promise<void>;
+  isBirthday: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -27,6 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isBirthday, setIsBirthday] = useState(false);
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
@@ -139,6 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         } else {
           setUserProfile(null);
+          setIsBirthday(false);
         }
         
         setLoading(false);
@@ -166,6 +169,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Verificar se hoje é aniversário
+  useEffect(() => {
+    if (userProfile?.birthDate) {
+      const today = new Date();
+      const birthDate = new Date(userProfile.birthDate + 'T00:00:00');
+      
+      const isToday = 
+        today.getDate() === birthDate.getDate() && 
+        today.getMonth() === birthDate.getMonth();
+      
+      setIsBirthday(isToday);
+      console.log(`[Auth] Verificação de aniversário: ${isToday ? '🎉 Hoje é seu dia!' : 'Não é hoje.'}`);
+    } else {
+      setIsBirthday(false);
+    }
+  }, [userProfile]);
+
   const refreshProfile = async () => {
     if (!user) return;
     try {
@@ -186,7 +206,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, userProfile, loading, errorMsg, refreshProfile }}>
+    <AuthContext.Provider value={{ user, userProfile, loading, errorMsg, refreshProfile, isBirthday }}>
       {children}
     </AuthContext.Provider>
   );

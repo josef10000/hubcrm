@@ -236,6 +236,7 @@ export interface UserProfile {
   instagram?: string;
   linkedin?: string;
   reportsTo?: string; // UID do superior imediato
+  birthDate?: string; // Formato YYYY-MM-DD
 }
 
 export interface Organization {
