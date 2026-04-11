@@ -26,8 +26,8 @@ import { toast } from 'sonner';
 type PeopleSubTab = 'dashboard' | 'onboarding' | 'development' | 'vacations';
 
 export default function PeopleView() {
-  const { user, userProfile } = useAuth();
   const [activeTab, setActiveTab] = useState<PeopleSubTab>('dashboard');
+  const [selectedMember, setSelectedMember] = useState<UserProfile | null>(null);
   const [teamMembers, setTeamMembers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -62,6 +62,43 @@ export default function PeopleView() {
     if (!member.startDate) return 'Data não definida';
     const years = differenceInYears(new Date(), parseISO(member.startDate));
     return years === 0 ? 'Menos de 1 ano' : `${years} ${years === 1 ? 'ano' : 'anos'}`;
+  };
+
+  const toggleTask = async (memberUid: string, taskId: string) => {
+    const member = teamMembers.find(m => m.uid === memberUid);
+    if (!member || !member.onboardingTasks) return;
+
+    const newTasks = member.onboardingTasks.map(t => 
+      t.id === taskId ? { ...t, completed: !t.completed, completedAt: !t.completed ? Date.now() : undefined } : t
+    );
+
+    try {
+      await updateDoc(doc(db, 'profiles', memberUid), {
+        onboardingTasks: newTasks
+      });
+      toast.success('Tarefa atualizada!');
+    } catch (error) {
+      toast.error('Erro ao atualizar tarefa.');
+    }
+  };
+
+  const assignDefaultTemplate = async (memberUid: string) => {
+    const defaultTasks: OnboardingTask[] = [
+      { id: '1', task: 'Configurar e-mail institucional', completed: false },
+      { id: '2', task: 'Acesso ao Slack/Discord/WhatsApp da equipe', completed: false },
+      { id: '3', task: 'Preencher dados no perfil do CRM', completed: false },
+      { id: '4', task: 'Treinamento sobre o produto/serviço', completed: false },
+      { id: '5', task: 'Assinar contrato de prestação de serviço', completed: false },
+    ];
+
+    try {
+      await updateDoc(doc(db, 'profiles', memberUid), {
+        onboardingTasks: defaultTasks
+      });
+      toast.success('Checklist padrão atribuído!');
+    } catch (error) {
+      toast.error('Erro ao atribuir checklist.');
+    }
   };
 
   return (
