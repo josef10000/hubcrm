@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { adminDb } from '../_utils/firebase';
+import { db as adminDb } from '../_utils/firebase';
 import { verifyAuth } from '../_utils/authMiddleware';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -8,18 +8,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const auth = await verifyAuth(req);
-    if (!auth) {
-      return res.status(401).json({ error: 'Não autorizado' });
+    const uid = await verifyAuth(req, res);
+    if (!uid) {
+      // res.status já foi enviado pelo verifyAuth
+      return;
     }
 
     const { targetUid, profileData } = req.body;
 
     // Apenas o próprio usuário ou um Administrador da mesma organização podem editar
-    const isEditingSelf = auth.uid === targetUid;
+    const isEditingSelf = uid === targetUid;
     
     // Buscar perfil de quem está editando e de quem será editado
-    const editorProfileRef = adminDb.collection('profiles').doc(auth.uid);
+    const editorProfileRef = adminDb.collection('profiles').doc(uid);
     const editorProfile = await editorProfileRef.get();
     
     if (!editorProfile.exists) {
@@ -43,7 +44,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Trava anti-ciclo para reportsTo
-    if (profileData.reportsTo) {
+    if (profileData && profileData.reportsTo) {
       if (profileData.reportsTo === targetUid) {
         return res.status(400).json({ error: 'Um usuário não pode ser o seu próprio superior' });
       }
