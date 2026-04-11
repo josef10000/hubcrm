@@ -223,7 +223,7 @@ export default function FinanceView() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Categoria</label>
-                  <select value={newExpense.category || ''} onChange={e => setNewExpense({...newExpense, category: e.target.value})} className="w-full px-4 py-3 bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all">
+                  <select value={newExpense.category || ''} onChange={e => setNewExpense({...newExpense, category: e.target.value})} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all">
                     <option value="" disabled className="bg-white dark:bg-[#030712]">Selecione uma categoria...</option>
                     {transactionCategories.filter(c => c.type === 'EXPENSE').length > 0 ? (
                       transactionCategories.filter(c => c.type === 'EXPENSE').map(cat => (

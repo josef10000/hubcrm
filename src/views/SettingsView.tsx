@@ -31,11 +31,11 @@ export default function SettingsView() {
   const isAdminOrGerente = userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente';
 
   const themes = [
-    { id: 'orange', name: 'Laranja (Original)', color: 'bg-orange-500' },
-    { id: 'blue', name: 'Azul', color: 'bg-blue-500' },
-    { id: 'green', name: 'Verde', color: 'bg-green-500' },
-    { id: 'purple', name: 'Roxo', color: 'bg-purple-500' },
-    { id: 'rose', name: 'Rosa', color: 'bg-rose-500' },
+    { id: 'orange', name: 'Laranja (Original)', color: 'bg-[#f97316]' },
+    { id: 'blue', name: 'Azul', color: 'bg-[#3b82f6]' },
+    { id: 'green', name: 'Verde', color: 'bg-[#22c55e]' },
+    { id: 'purple', name: 'Roxo', color: 'bg-[#a855f7]' },
+    { id: 'rose', name: 'Rosa', color: 'bg-[#f43f5e]' },
   ];
 
   return (
@@ -43,7 +43,7 @@ export default function SettingsView() {
       <div className="max-w-3xl mx-auto">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">Configurações</h2>
 
-        <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-lg mb-8">
+        <div className="bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-lg mb-8">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
             <Settings className="mr-2 text-primary-500" size={20} />
             Aparência

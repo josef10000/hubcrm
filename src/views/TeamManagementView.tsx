@@ -521,7 +521,7 @@ export default function TeamManagementView() {
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 uppercase">Superior Imediato</label>
-                  <select value={editReportsTo} onChange={e => setEditReportsTo(e.target.value)} className="w-full bg-gray-200/50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white">
+                  <select value={editReportsTo} onChange={e => setEditReportsTo(e.target.value)} className="w-full bg-black/40 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white">
                     <option value="">Ninguém (Root)</option>
                     {members.filter(m => m.uid !== editingMember.uid).map(m => (
                       <option key={m.uid} value={m.uid}>{m.displayName}</option>
