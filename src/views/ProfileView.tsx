@@ -8,7 +8,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, setDoc } from 'firebase/firestore';
+import { VacationPeriod } from '../types/people';
 import { UserProfile } from '../types';
 import { PDICategory } from '../types/people';
 import { toast } from 'sonner';
@@ -27,6 +28,14 @@ export default function ProfileView() {
   const [uploading, setUploading] = useState(false);
   const [superior, setSuperior] = useState<UserProfile | null>(null);
   const [activeTab, setActiveTab] = useState<'info' | 'pdi'>('info');
+  const [showVacationModal, setShowVacationModal] = useState(false);
+  const [newVacation, setNewVacation] = useState<Partial<VacationPeriod>>({
+    type: 'Férias',
+    status: 'Pendente',
+    start: '',
+    end: '',
+    reason: 'Férias'
+  });
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -161,6 +170,28 @@ export default function ProfileView() {
       setIsSaving(true); // Manter coerência com o original que setava true no finally também (bug original?)
       setIsSaving(false);
     }
+  const handleAddVacation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uid || !newVacation.start || !newVacation.end) {
+      toast.error('Preencha as datas!');
+      return;
+    }
+
+    try {
+      const orgId = currentUserProfile?.orgId || 'default';
+      const vRef = collection(db, 'organizations', orgId, 'vacations');
+      await setDoc(doc(vRef), {
+        ...newVacation,
+        userId: uid,
+        id: Date.now().toString(),
+        createdAt: Date.now()
+      });
+      setShowVacationModal(false);
+      toast.success('Solicitação de ausência enviada com sucesso!');
+    } catch (error) {
+      console.error(error);
+      toast.error('Erro ao enviar solicitação.');
+    }
   };
 
   if (loading) {
@@ -186,15 +217,26 @@ export default function ProfileView() {
             Voltar
           </button>
           
-          {canEdit && !isEditing && (
-            <button 
-              onClick={() => setIsEditing(true)}
-              className="px-6 py-2 rounded-2xl bg-primary-500 hover:bg-primary-600 text-white font-bold shadow-lg shadow-primary-500/20 active:scale-95 transition-all flex items-center gap-2"
-            >
-              <Edit3 size={18} />
-              Editar Perfil
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            {isOwnProfile && (
+              <button 
+                onClick={() => setShowVacationModal(true)}
+                className="px-6 py-2 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 font-bold border border-amber-500/20 transition-all flex items-center gap-2"
+              >
+                <Calendar size={18} />
+                Solicitar Ausência
+              </button>
+            )}
+            {canEdit && !isEditing && (
+              <button 
+                onClick={() => setIsEditing(true)}
+                className="px-6 py-2 rounded-2xl bg-primary-500 hover:bg-primary-600 text-white font-bold shadow-lg shadow-primary-500/20 active:scale-95 transition-all flex items-center gap-2"
+              >
+                <Edit3 size={18} />
+                Editar Perfil
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -504,6 +546,61 @@ export default function ProfileView() {
             </div>
           </div>
         </div>
+
+        {/* Modal de Nova Ausência */}
+        {showVacationModal && (
+           <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4" onClick={() => setShowVacationModal(false)}>
+              <div className="bg-white dark:bg-[#0a0a0a] rounded-[2.5rem] border border-gray-200 dark:border-white/10 w-full max-w-lg shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+                 <div className="p-8 border-b border-gray-100 dark:border-white/5 flex justify-between items-center">
+                    <h3 className="text-2xl font-bold">Solicitar Ausência</h3>
+                    <button onClick={() => setShowVacationModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full"><X /></button>
+                 </div>
+                 <form onSubmit={handleAddVacation} className="p-8 space-y-6">
+                    <div className="space-y-2">
+                       <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Tipo / Motivo</label>
+                       <select 
+                         required 
+                         className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-2xl focus:outline-none focus:border-primary-500 transition-all font-medium" 
+                         value={newVacation.reason || ''} 
+                         onChange={e => {
+                           const reason = e.target.value as any;
+                           const status = (reason === 'Falta' || reason === 'Motivo Médico') ? 'Informado' : 'Pendente';
+                           const type = reason === 'Férias' ? 'Férias' : 'Ausência';
+                           setNewVacation({...newVacation, reason, status, type});
+                         }}
+                       >
+                          <option value="Férias">Férias</option>
+                          <option value="Falta">Falta</option>
+                          <option value="Motivo Médico">Motivo Médico</option>
+                          <option value="Licença Maternidade/Paternidade">Licença</option>
+                          <option value="Outro">Outro Motivo</option>
+                       </select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                       <div className="space-y-2">
+                          <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Início</label>
+                          <input type="date" required className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-2xl focus:outline-none focus:border-primary-500 transition-all font-medium" value={newVacation.start} onChange={e => setNewVacation({...newVacation, start: e.target.value})} />
+                       </div>
+                       <div className="space-y-2">
+                          <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Retorno / Fim</label>
+                          <input type="date" required className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-2xl focus:outline-none focus:border-primary-500 transition-all font-medium" value={newVacation.end} onChange={e => setNewVacation({...newVacation, end: e.target.value})} />
+                       </div>
+                    </div>
+                    
+                    <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
+                      <p className="text-xs text-amber-600 font-medium">
+                        {newVacation.status === 'Informado' 
+                          ? 'Este tipo de ausência será registrado automaticamente como informado.' 
+                          : 'Sua solicitação de férias/licença será enviada para aprovação do gestor.'}
+                      </p>
+                    </div>
+
+                    <button type="submit" className="w-full bg-primary-500 hover:bg-primary-600 text-white p-5 rounded-2xl font-bold shadow-xl shadow-primary-500/20 transition-all">Enviar Solicitação</button>
+                 </form>
+              </div>
+           </div>
+        )}
       </div>
     </div>
   );

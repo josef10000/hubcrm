@@ -656,22 +656,34 @@ export default function PeopleView() {
                   {vacations.map(v => {
                      const user = teamProfiles.find(p => p.uid === v.userId);
                      return (
-                      <div key={v.id} className="p-6 bg-white dark:bg-white/5 border border-gray-100 dark:border-white/5 rounded-3xl shadow-sm">
+                      <div key={v.id} className="p-6 bg-white dark:bg-white/5 border border-gray-100 dark:border-white/5 rounded-3xl shadow-sm relative group/vac">
                          <div className="flex justify-between items-start mb-4">
-                            <span className="text-[10px] uppercase font-black text-gray-400">{v.type}</span>
-                            <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${v.status === 'Aprovado' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
-                               {v.status}
-                            </span>
+                            <div className="flex flex-col">
+                              <span className={`text-[10px] uppercase font-black ${v.reason === 'Motivo Médico' ? 'text-red-500' : v.reason === 'Falta' ? 'text-amber-500' : 'text-gray-400'}`}>
+                                {v.reason || v.type}
+                              </span>
+                              {v.reason && v.reason !== v.type && <span className="text-[9px] text-gray-400">{v.type}</span>}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${v.status === 'Aprovado' || v.status === 'Informado' ? 'bg-emerald-500/10 text-emerald-500' : v.status === 'Recusado' ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-500'}`}>
+                                 {v.status}
+                              </span>
+                              {(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture') && (
+                                <button onClick={() => deleteVacation(v.id)} className="opacity-0 group-hover/vac:opacity-100 p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg transition-all" title="Excluir Registro">
+                                  <Trash2 size={14} />
+                                </button>
+                              )}
+                            </div>
                          </div>
                          <p className="font-bold text-sm mb-4">{user?.displayName || 'Membro'}</p>
                          <div className="flex items-center justify-between text-xs py-3 border-t border-gray-100 dark:border-white/5">
-                            <div><span className="text-[10px] text-gray-400 block">De</span>{v.start}</div>
-                            <div><span className="text-[10px] text-gray-400 block text-right">Até</span>{v.end}</div>
+                            <div><span className="text-[10px] text-gray-400 block uppercase font-bold">Início</span>{v.start}</div>
+                            <div><span className="text-[10px] text-gray-400 block text-right uppercase font-bold">Retorno</span>{v.end}</div>
                          </div>
-                         {v.status === 'Pendente' && (userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente') && (
+                         {v.status === 'Pendente' && (userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture') && (
                            <div className="mt-4 flex gap-2">
-                              <button onClick={() => updateVacationStatus(v.id, 'Aprovado')} className="flex-1 py-2 bg-emerald-500 text-white rounded-xl text-xs font-bold">Aprovar</button>
-                              <button onClick={() => updateVacationStatus(v.id, 'Recusado')} className="flex-1 py-2 bg-red-500/10 text-red-500 rounded-xl text-xs font-bold">Recusar</button>
+                              <button onClick={() => updateVacationStatus(v.id, 'Aprovado')} className="flex-1 py-2 bg-emerald-500 text-white rounded-xl text-xs font-bold hover:bg-emerald-600 transition-colors">Aprovar</button>
+                              <button onClick={() => updateVacationStatus(v.id, 'Recusado')} className="flex-1 py-2 bg-red-500/10 text-red-500 rounded-xl text-xs font-bold hover:bg-red-500/20 transition-colors">Recusar</button>
                            </div>
                          )}
                       </div>
@@ -699,6 +711,29 @@ export default function PeopleView() {
                        </select>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
+                       <div className="space-y-2">
+                          <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Tipo / Motivo</label>
+                          <select 
+                            required 
+                            className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-2xl focus:outline-none focus:border-primary-500 transition-all font-medium" 
+                            value={newVacation.reason || ''} 
+                            onChange={e => {
+                              const reason = e.target.value as any;
+                              // Auto-aprovado se for falta ou médico (Informado)
+                              const status = (reason === 'Falta' || reason === 'Motivo Médico') ? 'Informado' : 'Pendente';
+                              // Mapear reason para type (Férias vs Ausência)
+                              const type = reason === 'Férias' ? 'Férias' : 'Ausência';
+                              setNewVacation({...newVacation, reason, status, type});
+                            }}
+                          >
+                             <option value="">Selecione...</option>
+                             <option value="Férias">Férias</option>
+                             <option value="Falta">Falta</option>
+                             <option value="Motivo Médico">Motivo Médico</option>
+                             <option value="Licença Maternidade/Paternidade">Licença</option>
+                             <option value="Outro">Outro Motivo</option>
+                          </select>
+                       </div>
                        <div className="space-y-2">
                           <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Início</label>
                           <input type="date" required className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-2xl focus:outline-none focus:border-primary-500 transition-all" value={newVacation.start} onChange={e => setNewVacation({...newVacation, start: e.target.value})} />
