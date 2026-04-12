@@ -6,7 +6,8 @@
   <p><em>By Hub Symples — Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.</em></p>
 
   <p>
-    <img src="https://img.shields.io/badge/Version-2.0.0--rc1-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-2.0.0-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Status-Production_Ready-22c55e?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge&labelColor=111111" alt="License" />
   </p>
@@ -121,9 +122,9 @@ Gestão intuitiva de leads com pipeline visual em **Kanban** ou **Lista**, atrib
 - **Atribuição Inteligente**: Cada lead pode ser atribuído a um SDR ou Executive específico.
 - **Conversão Direta**: Um clique transforma o lead em cliente ativo, sincronizando dados com Asaas automaticamente.
 - **Filtros e Busca**: Pesquisa em tempo real por nome, CPF, e-mail ou status.
-- **Timeline de Atividades**: Registro completo de interações (notas, chamadas, reuniões) e mudanças de status para cada lead.
-- **Lembretes de Follow-up**: Alertas visuais para leads estagnados com definição de data para próximo contato.
-- **Isolamento Comercial**: SDRs e Executives visualizam **apenas seus próprios leads**, garantindo privacidade total da carteira.
+- **Timeline de Atividades (Bussiness Intelligence)**: Histórico atômico dentro de cada lead. Registra Notas, Chamadas, Reuniões e mudanças de status com carimbo de data, hora e responsável.
+- **Lembretes de Follow-up (Sales Ops)**: Campo "Próximo Contato" com lógica de cores. Leads com follow-up atrasado brilham em vermelho no Kanban, enquanto próximos contatos aparecem em azul.
+- **Isolamento Comercial**: SDRs e Executives visualizam **apenas seus próprios leads**, enquanto Gerentes e Admins possuem visão global do pipeline.
 
 ---
 
@@ -179,10 +180,11 @@ Módulo financeiro completo com 6 sub-abas especializadas:
 | Sub-módulo | Descrição |
 |---|---|
 | **Resumo Operacional** | MRR, Despesas, Lucro e **Alertas de Inadimplência Crítica** |
-| **DRE Gerencial** | Demonstração de Resultados do Exercício com gráficos |
-| **Fluxo de Caixa Projetado** | Projeção futura de entradas e saídas |
-| **Orçamento (Budget)** | Planejamento orçamentário por categoria com alertas de estouro |
-| **Conciliação OFX** | Importação e reconciliação de extratos bancários |
+| **DRE Gerencial** | Demonstração de Resultados (Entradas vs Saídas) com gráficos de barras |
+| **Inadimplência Crítica** | Módulo de detecção imediata de clientes com faturas em atraso (OVERDUE) ou status devedor. |
+| **Fluxo de Caixa** | Projeção cronológica baseada no vencimento das assinaturas |
+| **Budget (Orçamento)** | Planejamento por categoria com indicadores de saúde orçamentária |
+| **Conciliação OFX** | Importação de extratos bancários para validação de saldo |
 | **Categorias** | Gerenciamento de categorias de receita e despesa |
 
 ---
@@ -197,11 +199,11 @@ Calendário integrado com prazos de entrega, datas de pagamento e eventos operac
 
 Sistema de atendimento profissional focado em SLAs e qualidade perceptível.
 
-- **Controle de Prioridades**: Chamados classificados como `Alta`, `Média` ou `Baixa` com SLAs automáticos.
-- **Monitoramento de SLA**: Indicadores temporais e alertas visuais para chamados próximos ao vencimento ou atrasados.
-- **Atribuição de Equipe**: Designação de responsáveis específicos para cada ticket.
-- **Dashboard de CSAT**: Monitoramento da percepção do cliente através de métricas de satisfação agregadas.
-- **Histórico Completo**: Log de todas as interações no chamado para auditoria e continuidade.
+- **Gestão de Prioridades**: Classificação dinâmica (`Alta`, `Média`, `Baixa`) que dita o tom e a velocidade do atendimento.
+- **Monitoramento de SLA (Service Level Agreement)**: Cálculo em tempo real de horas restantes para resposta. Tickets atrasados exibem animação *pulse* e tempo excedido.
+- **CSAT (Customer Satisfaction Score)**: Ciclo fechado de feedback. Após a conclusão, o cliente avalia o atendimento com estrelas e texto.
+- **Dashboard de Performance**: Visão agregada do CSAT médio da equipe e volume de chamados por prioridade.
+- **Atribuição Inteligente**: Designação centralizada de técnicos responsáveis por cada ticket.
 
 ---
 
@@ -676,7 +678,8 @@ hubcrm/
 │   │   ├── client-modal/       # Sub-componentes do modal
 │   │   ├── dashboard/          # Widgets do dashboard
 │   │   ├── finance/            # Sub-módulos financeiros
-│   │   └── notifications/      # Componentes de avisos
+│   │   ├── notifications/      # Componentes de avisos
+│   │   └── SupportSatisfactionModal.tsx # ⭐ Modal de CSAT (Novo)
 │   │
 │   ├── contexts/
 │   │   ├── AuthContext.tsx     # Estado de autenticação + birthday check
@@ -759,13 +762,12 @@ className="bg-gray-100 border-gray-200"
 - [x] Sistema de Temas Dinâmicos (Dark Absolute)
 - [x] CI/CD com GitHub Actions (5 pipelines)
 - [x] 🧬 Gestão de Ausências, Onboarding, PDI e eNPS
-- [x] 🎧 Suporte com SLA, CSAT e Atribuição de Técnicos
-- [x] 📈 Timeline de Vendas e Controle de Follow-up
-- [x] ⚠️ Alertas de Inadimplência Crítica no Financeiro
-- [ ] 📧 E-mail automático de aniversário para colaboradores
-- [ ] 📊 Dashboard de aniversariantes do mês
-- [ ] 🤖 Assistente inteligente via Gemini AI
-- [ ] 📱 App mobile (React Native / Expo)
+- [x] 🎧 Suporte com SLA, CSAT e Atribuição de Técnicos (Fase 2)
+- [x] 📈 Timeline de Vendas e Controle de Follow-up (Fase 2)
+- [x] ⚠️ Alertas de Inadimplência Crítica no Financeiro (Fase 2)
+- [ ] 🤖 Gemini AI: Analista Financeiro & Predição de Churn
+- [ ] 📱 Mobile experience via PWA / Capacitor
+- [ ] 📧 Automação de E-mails de Aniversário
 - [ ] 🔗 Integração WhatsApp Business API
 - [ ] 📊 Relatórios exportáveis em PDF
 - [ ] 🏷️ Sistema de tags e segmentação de clientes
