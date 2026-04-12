@@ -70,6 +70,8 @@ export default function PeopleView() {
   // eNPS
   const [enpsResults, setEnpsResults] = useState<any[]>([]);
   const [enpsScoreCalc, setEnpsScoreCalc] = useState<number | null>(null);
+  const [showClearEnpsConfirm, setShowClearEnpsConfirm] = useState(false);
+  const [isClearingEnps, setIsClearingEnps] = useState(false);
 
   useEffect(() => {
     if (!effectiveOrgId) return;
@@ -134,6 +136,22 @@ export default function PeopleView() {
     if (!member.startDate) return 'Data não definida';
     const years = differenceInYears(new Date(), parseISO(member.startDate));
     return years === 0 ? 'Menos de 1 ano' : `${years} ${years === 1 ? 'ano' : 'anos'}`;
+  };
+
+  const handleClearEnpsData = async () => {
+    if (!effectiveOrgId) return;
+    setIsClearingEnps(true);
+    try {
+      const promises = enpsResults.map(r => deleteDoc(doc(db, 'organizations', effectiveOrgId, 'enps_results', r.id)));
+      await Promise.all(promises);
+      setShowClearEnpsConfirm(false);
+      toast.success('Dados da pesquisa limpos com sucesso!');
+    } catch (error) {
+      console.error("Error clearing eNPS data:", error);
+      toast.error('Erro ao limpar dados.');
+    } finally {
+      setIsClearingEnps(false);
+    }
   };
 
   // --- LÓGICA DE ONBOARDING ---
@@ -773,6 +791,15 @@ export default function PeopleView() {
                   <h2 className="text-xl font-bold">Configurações de Clima (eNPS)</h2>
                   <p className="text-sm text-gray-500">Configure como e quando os colaboradores avaliam a empresa.</p>
                 </div>
+                {enpsResults.length > 0 && (
+                  <button 
+                    onClick={() => setShowClearEnpsConfirm(true)}
+                    className="ml-auto flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl transition-all text-xs font-bold"
+                  >
+                    <Trash2 size={14} />
+                    Limpar Dados Históricos
+                  </button>
+                )}
               </div>
 
               <div className="max-w-2xl space-y-8">
@@ -927,6 +954,36 @@ export default function PeopleView() {
                     </div>
                     <button type="submit" className="w-full bg-primary-500 hover:bg-primary-600 text-white p-5 rounded-2xl font-bold shadow-xl shadow-primary-500/20 transition-all">Enviar Solicitação</button>
                  </form>
+              </div>
+           </div>
+        )}
+
+        {/* Modal de Confirmação de Exclusão eNPS */}
+        {showClearEnpsConfirm && (
+           <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[110] flex items-center justify-center p-4" onClick={() => setShowClearEnpsConfirm(false)}>
+              <div className="bg-white dark:bg-[#0a0a0a] rounded-[2rem] border border-gray-200 dark:border-white/10 w-full max-w-sm shadow-2xl overflow-hidden p-8 text-center" onClick={e => e.stopPropagation()}>
+                 <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                   <AlertTriangle size={32} />
+                 </div>
+                 <h3 className="text-xl font-bold mb-2">Apagar todos os dados?</h3>
+                 <p className="text-sm text-gray-400 mb-8 leading-relaxed">
+                   Tem certeza que deseja apagar os dados da pesquisa atual? Esta ação é irreversível e removerá todas as notas e comentários.
+                 </p>
+                 <div className="flex gap-3">
+                   <button 
+                     onClick={() => setShowClearEnpsConfirm(false)}
+                     className="flex-1 px-6 py-3 rounded-xl border border-gray-200 dark:border-white/10 font-bold hover:bg-gray-50 dark:hover:bg-white/5 transition-all"
+                   >
+                     Cancelar
+                   </button>
+                   <button 
+                     onClick={handleClearEnpsData}
+                     disabled={isClearingEnps}
+                     className="flex-1 px-6 py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all flex items-center justify-center gap-2"
+                   >
+                     {isClearingEnps ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Confirmar'}
+                   </button>
+                 </div>
               </div>
            </div>
         )}

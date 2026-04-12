@@ -21,6 +21,12 @@ export default function EmployeeSurveyModal() {
     if (!userProfile) return false;
     if (!enpsQuestion) return false;
     
+    // New Rule: 30-day grace period for new collaborators
+    if (userProfile.createdAt) {
+      const daysInCompany = differenceInDays(new Date(), new Date(userProfile.createdAt));
+      if (daysInCompany < 30) return false;
+    }
+
     if (!userProfile.lastEnpsResponse) return true;
 
     const lastDate = (userProfile.lastEnpsResponse as any)?.toMillis ? 
