@@ -84,10 +84,10 @@ export function useClients(opts: UseClientsOptions) {
 
       for (const client of clientsToSync) {
         try {
-          const paymentsRes = await authFetch(`/api/asaas_payments?customer=${client.asaasCustomerId}`);
+          const paymentsRes = await authFetch(`/api/asaas/payments?customer=${client.asaasCustomerId}`);
           let subscription = null;
           if (client.asaasSubscriptionId) {
-            const subRes = await authFetch(`/api/asaas_subscriptions/${client.asaasSubscriptionId}`);
+            const subRes = await authFetch(`/api/asaas/subscriptions/${client.asaasSubscriptionId}`);
             if (subRes.ok) {
               const subData = await subRes.json();
               subscription = subData.subscription;
@@ -203,7 +203,7 @@ export function useClients(opts: UseClientsOptions) {
     try {
       // Ensure Asaas notifications are disabled for existing customers
       if (client.asaasCustomerId && !isNew) {
-        authFetch('/api/asaas_customers?action=update-customer', {
+        authFetch('/api/asaas/update-customer', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
@@ -226,7 +226,7 @@ export function useClients(opts: UseClientsOptions) {
           nextSubDateStr = nextSubDate.toISOString().split('T')[0];
         }
 
-        const updateRes = await authFetch('/api/asaas_subscriptions?action=update-subscription', {
+        const updateRes = await authFetch('/api/asaas/update-subscription', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -275,7 +275,7 @@ export function useClients(opts: UseClientsOptions) {
 
         if (client.asaasCustomerId) {
           if (client.asaasSubscriptionId) {
-            const delRes = await authFetch('/api/asaas_subscriptions?action=delete-subscription', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscriptionId: client.asaasSubscriptionId }) });
+            const delRes = await authFetch('/api/asaas/delete-subscription', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscriptionId: client.asaasSubscriptionId }) });
             if (!delRes.ok) {
               console.error('Failed to cancel subscription in Asaas');
               toast.error('Aviso: Não foi possível cancelar a assinatura no Asaas automaticamente.');
@@ -285,13 +285,13 @@ export function useClients(opts: UseClientsOptions) {
             }
           }
           try {
-            const paymentsRes = await authFetch(`/api/asaas_payments?customer=${client.asaasCustomerId}`);
+            const paymentsRes = await authFetch(`/api/asaas/payments?customer=${client.asaasCustomerId}`);
             if (paymentsRes.ok) {
               const paymentsData = await paymentsRes.json();
               const payments = paymentsData.data || [];
               for (const payment of payments) {
                 if (payment.status === 'PENDING' || payment.status === 'OVERDUE') {
-                  await authFetch('/api/asaas_payments?action=delete-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: payment.id }) });
+                  await authFetch('/api/asaas/delete-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: payment.id }) });
                 }
               }
             }
@@ -307,7 +307,7 @@ export function useClients(opts: UseClientsOptions) {
         const isMobile = phoneClean.length === 11;
         const isLandline = phoneClean.length === 10;
 
-        const customerRes = await authFetch('/api/asaas_customers', {
+        const customerRes = await authFetch('/api/asaas/customers', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
@@ -342,7 +342,7 @@ export function useClients(opts: UseClientsOptions) {
             const totalValue = isSinglePayment ? Math.max(0, monthlyValue + (client.setupPrice || 0)) : monthlyValue;
             const paymentName = isSinglePayment ? `Pagamento Único - ${client.plan}` : `Combo (Setup + Plano Anual) - Plano ${client.plan}`;
             const paymentDesc = isSinglePayment ? `Pagamento referente à oferta ${client.plan}.` : `Acesso anual ao Plano ${client.plan} com taxa de setup inclusa.`;
-            const paymentRes = await authFetch('/api/asaas_payments?action=payment-links', {
+            const paymentRes = await authFetch('/api/asaas/payment-links', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -376,7 +376,7 @@ export function useClients(opts: UseClientsOptions) {
             }
           } else {
             if (setupValue > 0) {
-              const paymentRes = await authFetch('/api/asaas_payments', {
+              const paymentRes = await authFetch('/api/asaas/payments', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ customer: client.asaasCustomerId, billingType: client.billingType, value: setupValue, dueDate: firstPaymentDate, description: `Taxa de Adesão - Plano ${client.plan} - Hub Central` }),
@@ -412,7 +412,7 @@ export function useClients(opts: UseClientsOptions) {
               
               const nextSubDateStr = nextSubDate.toISOString().split('T')[0];
 
-              const subRes = await authFetch('/api/asaas_subscriptions', {
+              const subRes = await authFetch('/api/asaas/subscriptions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
@@ -435,7 +435,7 @@ export function useClients(opts: UseClientsOptions) {
                 toast.error(`Erro ao criar assinatura no Asaas: ${err.error || 'Erro desconhecido'}`);
               }
             } else {
-              const subRes = await authFetch('/api/asaas_subscriptions', {
+              const subRes = await authFetch('/api/asaas/subscriptions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ customer: client.asaasCustomerId, billingType: client.billingType, cycle: client.billingCycle === 'YEARLY' ? 'YEARLY' : 'MONTHLY', value: monthlyValue, nextDueDate: firstPaymentDate, description: `Assinatura ${client.billingCycle === 'YEARLY' ? 'Anual' : 'Mensal'} - Plano ${client.plan} - Hub Central` }),
@@ -482,7 +482,7 @@ export function useClients(opts: UseClientsOptions) {
     if (clientToDelete?.asaasCustomerId) {
       if (clientToDelete.asaasSubscriptionId) {
         try {
-          const delRes = await authFetch('/api/asaas_subscriptions?action=delete-subscription', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscriptionId: clientToDelete.asaasSubscriptionId }) });
+          const delRes = await authFetch('/api/asaas/delete-subscription', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscriptionId: clientToDelete.asaasSubscriptionId }) });
           if (!delRes.ok) {
             console.error('Failed to cancel subscription in Asaas before deletion');
             toast.error('Aviso: O cliente foi excluído, mas não foi possível cancelar a assinatura no Asaas automaticamente.');
@@ -492,13 +492,13 @@ export function useClients(opts: UseClientsOptions) {
         }
       }
       try {
-        const paymentsRes = await authFetch(`/api/asaas_payments?customer=${clientToDelete.asaasCustomerId}`);
+        const paymentsRes = await authFetch(`/api/asaas/payments?customer=${clientToDelete.asaasCustomerId}`);
         if (paymentsRes.ok) {
           const paymentsData = await paymentsRes.json();
           const payments = paymentsData.data || [];
           for (const payment of payments) {
             if (payment.status === 'PENDING' || payment.status === 'OVERDUE') {
-              await authFetch('/api/asaas_payments?action=delete-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: payment.id }) });
+              await authFetch('/api/asaas/delete-payment', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ paymentId: payment.id }) });
             }
           }
         }
@@ -567,7 +567,7 @@ export function useClients(opts: UseClientsOptions) {
 
       // Update in Asaas API if customer ID exists
       if (client.asaasCustomerId) {
-        await authFetch('/api/asaas_customers?action=update-customer', {
+        await authFetch('/api/asaas/update-customer', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 

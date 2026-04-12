@@ -87,7 +87,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
   const checkPaymentStatus = async (subscriptionId: string) => {
     setIsCheckingPayment(true);
     try {
-      const res = await authFetch(`/api/asaas_subscriptions/${subscriptionId}`);
+      const res = await authFetch(`/api/asaas/subscriptions/${subscriptionId}`);
       if (res.ok) {
         const data = await res.json();
         const payments = data.payments || [];

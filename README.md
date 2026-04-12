@@ -435,7 +435,9 @@ firestore/
 
 Todas as funções rodam como **Vercel Serverless Functions** com proteção por autenticação Firebase e Rate Limiting via Upstash Redis.
 
-### Asaas (Pagamentos)
+### Asaas (Pagamentos — Standardized RESTful API)
+
+As rotas foram padronizadas para o formato `/api/asaas/...` com roteamento inteligente via `vercel.json` para o `asaas_handler.ts`.
 
 | Método | Endpoint | Descrição |
 |---|---|---|

@@ -86,7 +86,7 @@ export const updateReferrerSubscription = async (referrerId: string, updatedClie
 
     const monthlyValue = getPlanPrice(referrer.plan, referrer.billingCycle, referrer) - discount;
 
-    const updateRes = await authFetch('/api/asaas_subscriptions?action=update-subscription', {
+    const updateRes = await authFetch('/api/asaas/update-subscription', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
