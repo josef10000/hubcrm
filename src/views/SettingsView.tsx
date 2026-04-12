@@ -20,8 +20,6 @@ export default function SettingsView() {
     setOnboardingQuestions,
     defaultContractText,
     setDefaultContractText,
-    checkoutTitle,
-    setCheckoutTitle,
     checkoutDescription,
     setCheckoutDescription,
     effectiveOrgId,

@@ -27,6 +27,9 @@ export function useSettings(userId: string) {
   const [checkoutTitle, setCheckoutTitle] = useState('Nossa Proposta Comercial');
   const [checkoutDescription, setCheckoutDescription] = useState('Preencha os dados abaixo para iniciar sua jornada conosco.');
 
+  const [enpsQuestion, setEnpsQuestion] = useState('Em uma escala de 0 a 10, o quanto você recomendaria a Hub Symples como um ótimo lugar para trabalhar?');
+  const [enpsFrequency, setEnpsFrequency] = useState<'mensal' | 'trimestral' | 'semestral'>('mensal');
+
   // ── Marketing ──
   const [globalAnnouncement, setGlobalAnnouncement] = useState<{ title: string; message: string; type: string; isActive: boolean }>({
     title: '', message: '', type: 'info', isActive: false,
@@ -63,6 +66,8 @@ export function useSettings(userId: string) {
         if (data.defaultContractText !== undefined) setDefaultContractText(data.defaultContractText);
         if (data.checkoutTitle) setCheckoutTitle(data.checkoutTitle);
         if (data.checkoutDescription) setCheckoutDescription(data.checkoutDescription);
+        if (data.enpsQuestion) setEnpsQuestion(data.enpsQuestion);
+        if (data.enpsFrequency) setEnpsFrequency(data.enpsFrequency);
       }
     });
     return () => unsubscribe();
@@ -90,5 +95,7 @@ export function useSettings(userId: string) {
     globalAnnouncement, setGlobalAnnouncement,
     checkoutTitle, setCheckoutTitle,
     checkoutDescription, setCheckoutDescription,
+    enpsQuestion, setEnpsQuestion,
+    enpsFrequency, setEnpsFrequency,
   };
 }

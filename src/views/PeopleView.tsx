@@ -14,16 +14,15 @@ import {
   Sparkles,
   ChevronRight,
   UserPlus,
-  Plus,
-  X,
   PlusCircle,
   Trash2,
   ChevronDown,
-  AlertTriangle
+  AlertTriangle,
+  Settings
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
-import { collection, query, where, onSnapshot, doc, updateDoc, setDoc, deleteDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, setDoc, deleteDoc, arrayUnion, arrayRemove, orderBy } from 'firebase/firestore';
 import { UserProfile, OnboardingTask } from '../types';
 import { format, differenceInYears, parseISO, isSameDay, addDays, isWithinInterval } from 'date-fns';
 import { useCRM } from '../contexts/CRMContext';
@@ -31,7 +30,7 @@ import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { VacationPeriod, PDICategory, PDIAction } from '../types/people';
 
-type PeopleSubTab = 'dashboard' | 'onboarding' | 'development' | 'vacations';
+type PeopleSubTab = 'dashboard' | 'onboarding' | 'development' | 'vacations' | 'climate';
 
 export default function PeopleView() {
   const { userProfile } = useAuth();
@@ -40,7 +39,15 @@ export default function PeopleView() {
   const [teamMembers, setTeamMembers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const { vacations, teamProfiles, effectiveOrgId } = useCRM();
+  const { 
+    vacations, 
+    teamProfiles, 
+    effectiveOrgId,
+    enpsQuestion,
+    setEnpsQuestion,
+    enpsFrequency,
+    setEnpsFrequency
+  } = useCRM();
   const [showVacationModal, setShowVacationModal] = useState(false);
   const [newVacation, setNewVacation] = useState<Partial<VacationPeriod>>({
     type: 'Férias',
@@ -54,9 +61,39 @@ export default function PeopleView() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [vacationToDelete, setVacationToDelete] = useState<string | null>(null);
 
-  // Novos estados para o PDI
+  // PDI
   const [newCategoryTitle, setNewCategoryTitle] = useState('');
   const [newActionText, setNewActionText] = useState<{ [key: string]: string }>({});
+
+  // eNPS
+  const [enpsResults, setEnpsResults] = useState<any[]>([]);
+  const [enpsScoreCalc, setEnpsScoreCalc] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!effectiveOrgId) return;
+
+    const q = query(
+      collection(db, 'organizations', effectiveOrgId, 'enps_results'),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const results = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      setEnpsResults(results);
+
+      if (results.length > 0) {
+        const promoters = results.filter((r: any) => r.score >= 9).length;
+        const detractors = results.filter((r: any) => r.score <= 6).length;
+        const total = results.length;
+        const score = Math.round(((promoters - detractors) / total) * 100);
+        setEnpsScoreCalc(score);
+      } else {
+        setEnpsScoreCalc(null);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [effectiveOrgId]);
 
   useEffect(() => {
     if (!userProfile?.orgId) return;
@@ -372,6 +409,15 @@ export default function PeopleView() {
             <Calendar size={18} />
             <span>Ausências</span>
           </button>
+          {(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture') && (
+            <button 
+              onClick={() => setActiveTab('climate')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium ${activeTab === 'climate' ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+            >
+              <Smile size={18} />
+              <span>Clima</span>
+            </button>
+          )}
         </div>
 
         {/* Content Rendering */}
@@ -385,12 +431,21 @@ export default function PeopleView() {
                   <span className="text-xs font-bold text-primary-500 bg-primary-500/10 px-2 py-1 rounded-lg">Mês Atual</span>
                 </div>
                 <div className="flex flex-col items-center justify-center py-4 text-center">
-                  <div className="text-5xl font-black text-gray-900 dark:text-white mb-2">--</div>
-                  <div className="text-sm font-medium text-gray-500">Score eNPS (Aguardando Dados)</div>
-                  <div className="w-full h-2 bg-gray-200 dark:bg-white/10 rounded-full mt-6 overflow-hidden">
-                    <div className="h-full bg-primary-500 transition-all duration-1000" style={{ width: '0%' }}></div>
+                  <div className={`text-5xl font-black mb-2 ${enpsScoreCalc === null ? 'text-gray-400' : enpsScoreCalc >= 70 ? 'text-emerald-500' : enpsScoreCalc >= 30 ? 'text-yellow-500' : 'text-red-500'}`}>
+                    {enpsScoreCalc === null ? '--' : enpsScoreCalc}
                   </div>
-                  <p className="text-[10px] text-gray-400 mt-4">Os dados serão atualizados assim que as pesquisas mensais forem respondidas.</p>
+                  <div className="text-sm font-medium text-gray-500">
+                    {enpsScoreCalc === null ? 'Score eNPS (Aguardando Dados)' : 'Score eNPS Geral'}
+                  </div>
+                  <div className="w-full h-2 bg-gray-200 dark:bg-white/10 rounded-full mt-6 overflow-hidden">
+                    <div 
+                      className={`h-full transition-all duration-1000 ${enpsScoreCalc === null ? 'bg-gray-400' : enpsScoreCalc >= 70 ? 'bg-emerald-500' : enpsScoreCalc >= 30 ? 'bg-yellow-500' : 'bg-red-500'}`} 
+                      style={{ width: `${Math.max(0, Math.min(100, enpsScoreCalc !== null ? (enpsScoreCalc + 100) / 2 : 0))}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-[10px] text-gray-400 mt-4">
+                    {enpsScoreCalc === null ? 'Os dados serão atualizados assim que as pesquisas forem respondidas.' : `Baseado em ${enpsResults.length} respostas anônimas.`}
+                  </p>
                 </div>
               </div>
 
@@ -702,6 +757,116 @@ export default function PeopleView() {
                      );
                   })}
                </div>
+           {/* CLIMATE (eNPS) TAB */}
+          {activeTab === 'climate' && (
+            <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] p-8 shadow-xl animate-in slide-in-from-bottom duration-500">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="p-3 bg-primary-500/10 rounded-2xl text-primary-500">
+                  <Smile size={24} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold">Configurações de Clima (eNPS)</h2>
+                  <p className="text-sm text-gray-500">Configure como e quando os colaboradores avaliam a empresa.</p>
+                </div>
+              </div>
+
+              <div className="max-w-2xl space-y-8">
+                <div className="bg-white/30 dark:bg-white/5 border border-gray-100 dark:border-white/5 rounded-3xl p-6">
+                  <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
+                    <Settings className="text-primary-500" size={20} />
+                    Parâmetros da Pesquisa
+                  </h3>
+                  
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Pergunta da Pesquisa</label>
+                      <textarea
+                        value={enpsQuestion}
+                        onChange={(e) => setEnpsQuestion(e.target.value)}
+                        className="w-full h-24 px-4 py-3 bg-white dark:bg-black/40 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white rounded-2xl focus:ring-2 focus:ring-primary-500 outline-none resize-none transition-all"
+                        placeholder="Ex: Em uma escala de 0 a 10, o quanto você recomendaria trabalhar aqui?"
+                      />
+                      <p className="mt-2 text-[10px] text-gray-400 italic">As respostas são 100% anônimas para garantir a sinceridade dos feedbacks.</p>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Frequência de Disparo</label>
+                      <select
+                        value={enpsFrequency}
+                        onChange={(e) => setEnpsFrequency(e.target.value as any)}
+                        className="w-full px-4 py-3 bg-white dark:bg-black/40 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white rounded-2xl focus:ring-2 focus:ring-primary-500 outline-none appearance-none cursor-pointer transition-all"
+                      >
+                        <option value="mensal" className="bg-zinc-900">Mensal (Recomendado)</option>
+                        <option value="trimestral" className="bg-zinc-900">Trimestral</option>
+                        <option value="semestral" className="bg-zinc-900">Semestral</option>
+                      </select>
+                    </div>
+
+                    <div className="flex justify-end pt-4">
+                      <button
+                        onClick={async () => {
+                          if (!effectiveOrgId) return;
+                          try {
+                            await setDoc(doc(db, 'organizations', effectiveOrgId, 'settings', 'preferences'), { 
+                              enpsQuestion, 
+                              enpsFrequency 
+                            }, { merge: true });
+                            toast.success('Configurações de clima salvas com sucesso!');
+                          } catch (error) {
+                            toast.error('Erro ao salvar configurações.');
+                          }
+                        }}
+                        className="flex items-center gap-2 px-8 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-2xl transition-all font-bold shadow-lg shadow-primary-500/20 active:scale-95"
+                      >
+                        <CheckCircle2 size={18} />
+                        Salvar Configurações
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6 bg-primary-500/5 border border-primary-500/10 rounded-3xl">
+                  <h4 className="font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                    <Sparkles size={16} className="text-primary-500" />
+                    Dica de Especialista
+                  </h4>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                    Pesquisas mensais ajudam a detectar quedas de engajamento rapidamente. O anonimato é crucial: o sistema registra apenas QUE o colaborador respondeu (para controlar a periodicidade), mas nunca O QUE ele respondeu.
+                  </p>
+                </div>
+
+                {/* Resultados e Feedbacks */}
+                <div className="mt-12 bg-white/30 dark:bg-white/5 border border-gray-100 dark:border-white/5 rounded-3xl p-6">
+                  <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
+                    <MessageSquare className="text-primary-500" size={20} />
+                    Últimos Feedbacks e Comentários
+                  </h3>
+
+                  <div className="space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
+                    {enpsResults.filter(r => r.comment).length > 0 ? (
+                      enpsResults.filter(r => r.comment).map((result, idx) => (
+                        <div key={result.id || idx} className="p-4 bg-gray-100/50 dark:bg-white/5 border border-gray-100 dark:border-white/5 rounded-2xl animate-in fade-in slide-in-from-right duration-300" style={{ animationDelay: `${idx * 100}ms` }}>
+                          <div className="flex justify-between items-center mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className={`px-2 py-1 rounded-lg text-xs font-bold ${result.score >= 9 ? 'bg-emerald-500/10 text-emerald-500' : result.score >= 7 ? 'bg-yellow-500/10 text-yellow-500' : 'bg-red-500/10 text-red-500'}`}>
+                                Nota: {result.score}
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-gray-400">
+                              {result.createdAt?.toMillis ? format(result.createdAt.toMillis(), 'dd MMM yyyy', { locale: ptBR }) : 'Recentemente'}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed">"{result.comment}"</p>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-10 text-gray-500 italic text-sm">
+                        Nenhum comentário recebido ainda.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>

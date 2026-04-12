@@ -32,6 +32,7 @@ import PeopleView from './views/PeopleView';
 import AcceptInviteView from './views/AcceptInviteView';
 import ProfileView from './views/ProfileView';
 import BirthdayCelebration from './components/BirthdayCelebration';
+import EmployeeSurveyModal from './components/EmployeeSurveyModal';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { UIProvider, useUI } from './contexts/UIContext';
@@ -263,6 +264,7 @@ function CRMInner() {
         confirmText="Excluir"
         cancelText="Cancelar"
       />
+      <EmployeeSurveyModal />
       {sidebarOpen && <div className="fixed inset-0 bg-black/60 z-20 md:hidden backdrop-blur-md" onClick={() => setSidebarOpen(false)}></div>}
     </div>
   );

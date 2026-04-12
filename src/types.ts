@@ -261,6 +261,7 @@ export interface UserProfile {
   onboardingTasks?: OnboardingTask[];
   pdiCategories?: { id: string; title: string; actions: { id: string; description: string; completed: boolean; completedAt?: number; }[]; }[];
   onboardingTemplateId?: string;
+  lastEnpsResponse?: number; // Timestamp da última vez que respondeu à pesquisa de clima
 }
 
 export interface Organization {

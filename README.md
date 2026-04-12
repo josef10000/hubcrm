@@ -6,7 +6,7 @@
   <p><em>By Hub Symples — Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.</em></p>
 
   <p>
-    <img src="https://img.shields.io/badge/Version-1.8.0-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-1.9.0-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge&labelColor=111111" alt="License" />
   </p>
@@ -221,6 +221,7 @@ Módulo completo de People Management para escalar a cultura e produtividade da 
 - **Gestão de Ausências (Férias)**: Fluxo completo de solicitação, aprovação e controle de férias/folgas com log de status.
 - **Onboarding Checklists**: Gestão de tarefas de integração para novos talentos, com acompanhamento de progresso percentual.
 - **PDI (Plano de Desenvolvimento)**: Árvore de competências e trilha de carreira com categorias e ações de desenvolvimento.
+- **Pesquisa de Clima (eNPS)**: Sistema 100% anônimo para medir a lealdade e satisfação da equipe, com cálculo automático de promotores e detratores.
 - **Perfis Profissionais**: Página completa com foto, bio, cargo, contatos sociais e reporting lines.
 - **Sistema de Convites**: Convite por e-mail com link de aceite e expiração configurável (72h padrão).
 - **Edição Segura**: Apenas o próprio usuário ou Administradores podem editar perfis.
@@ -358,7 +359,8 @@ firestore/
 │   ├── jobTitle, bio, photoURL
 │   ├── phoneNumber, instagram, linkedin
 │   ├── reportsTo (UID do superior)
-│   └── birthDate (YYYY-MM-DD, opcional)
+│   ├── birthDate (YYYY-MM-DD, opcional)
+│   └── lastEnpsResponse (Timestamp da última participação)
 │
 ├── organizations/{orgId}
 │   ├── id, name, adminId, createdAt
@@ -404,8 +406,11 @@ firestore/
 │   ├── transactionCategories/{categoryId}
 │   │   └── Categorias de receita e despesa
 │   │
-│   └── supportRequests/{requestId}
-│       └── Chamados de suporte
+│   ├── supportRequests/{requestId}
+│   │   └── Chamados de suporte
+│   │
+│   └── enps_results/{resultId}
+│       └── Respostas anônimas de clima (score, comment)
 │
 └── convites/{inviteId}
     ├── email, orgId, role, token
@@ -744,7 +749,7 @@ className="bg-gray-100 border-gray-200"
 - [x] Celebração de Aniversários (Gamificação)
 - [x] Sistema de Temas Dinâmicos (Dark Absolute)
 - [x] CI/CD com GitHub Actions (5 pipelines)
-- [x] 🧬 Gestão de Ausências, Onboarding e PDI
+- [x] 🧬 Gestão de Ausências, Onboarding, PDI e eNPS
 - [ ] 📧 E-mail automático de aniversário para colaboradores
 - [ ] 📊 Dashboard de aniversariantes do mês
 - [ ] 🤖 Assistente inteligente via Gemini AI
@@ -791,7 +796,7 @@ MIT License — Copyright (c) 2026 Hub Symples LTDA
   <br />
   <img src="https://i.imgur.com/EFBaYb5.png" alt="Hub Central" width="80" />
   <br /><br />
-  <strong>Hub Central v1.8.5</strong>
+  <strong>Hub Central v1.9.0</strong>
   <br />
   <em>Modernidade · Automação · Resultados</em>
   <br /><br />
