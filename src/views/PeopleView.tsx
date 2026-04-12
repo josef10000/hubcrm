@@ -15,7 +15,10 @@ import {
   ChevronRight,
   UserPlus,
   Plus,
-  X
+  X,
+  PlusCircle,
+  Trash2,
+  ChevronDown
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
@@ -25,7 +28,7 @@ import { format, differenceInYears, parseISO, isSameDay, addDays, isWithinInterv
 import { useCRM } from '../contexts/CRMContext';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
-import { VacationPeriod } from '../types/people';
+import { VacationPeriod, PDICategory, PDIAction } from '../types/people';
 
 type PeopleSubTab = 'dashboard' | 'onboarding' | 'development' | 'vacations';
 
@@ -40,10 +43,15 @@ export default function PeopleView() {
   const [showVacationModal, setShowVacationModal] = useState(false);
   const [newVacation, setNewVacation] = useState<Partial<VacationPeriod>>({
     type: 'Férias',
+    reason: 'Férias',
     status: 'Pendente',
     start: format(new Date(), 'yyyy-MM-dd'),
     end: format(addDays(new Date(), 15), 'yyyy-MM-dd')
   });
+
+  // Novos estados para o PDI
+  const [newCategoryTitle, setNewCategoryTitle] = useState('');
+  const [newActionText, setNewActionText] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     if (!userProfile?.orgId) return;
@@ -57,10 +65,16 @@ export default function PeopleView() {
       const members = snapshot.docs.map(d => ({ uid: d.id, ...d.data() } as UserProfile));
       setTeamMembers(members);
       setLoading(false);
+      
+      // Se tivermos um membro selecionado, atualizamos os dados dele a partir da lista
+      if (selectedMember) {
+        const updated = members.find(m => m.uid === selectedMember.uid);
+        if (updated) setSelectedMember(updated);
+      }
     });
 
     return () => unsubscribe();
-  }, [userProfile?.orgId]);
+  }, [userProfile?.orgId, selectedMember?.uid]);
 
   const celebratesAnniversary = (member: UserProfile) => {
     if (!member.startDate) return false;
@@ -78,6 +92,7 @@ export default function PeopleView() {
     return years === 0 ? 'Menos de 1 ano' : `${years} ${years === 1 ? 'ano' : 'anos'}`;
   };
 
+  // --- LÓGICA DE ONBOARDING ---
   const toggleTask = async (memberUid: string, taskId: string) => {
     const member = teamMembers.find(m => m.uid === memberUid);
     if (!member || !member.onboardingTasks) return;
@@ -93,6 +108,35 @@ export default function PeopleView() {
       toast.success('Tarefa atualizada!');
     } catch (error) {
       toast.error('Erro ao atualizar tarefa.');
+    }
+  };
+
+  const addTaskToOnboarding = async (memberUid: string, taskDescription: string) => {
+    if (!taskDescription.trim()) return;
+    try {
+      const newTask: OnboardingTask = { id: Date.now().toString(), task: taskDescription, completed: false };
+      await updateDoc(doc(db, 'profiles', memberUid), {
+        onboardingTasks: arrayUnion(newTask)
+      });
+      toast.success('Tarefa adicionada!');
+    } catch (error) {
+      toast.error('Erro ao adicionar tarefa.');
+    }
+  };
+
+  const removeTaskFromOnboarding = async (memberUid: string, taskId: string) => {
+    const member = teamMembers.find(m => m.uid === memberUid);
+    if (!member || !member.onboardingTasks) return;
+    const taskToRemove = member.onboardingTasks.find(t => t.id === taskId);
+    if (!taskToRemove) return;
+
+    try {
+      await updateDoc(doc(db, 'profiles', memberUid), {
+        onboardingTasks: arrayRemove(taskToRemove)
+      });
+      toast.success('Tarefa removida!');
+    } catch (error) {
+      toast.error('Erro ao remover tarefa.');
     }
   };
 
@@ -115,6 +159,106 @@ export default function PeopleView() {
     }
   };
 
+  // --- LÓGICA DE PDI (DESENVOLVIMENTO) ---
+  const addPDICategory = async (memberUid: string) => {
+    if (!newCategoryTitle.trim()) return;
+    
+    const member = teamMembers.find(m => m.uid === memberUid);
+    const categories = member?.pdiCategories || [];
+    
+    const newCategory: PDICategory = {
+      id: Date.now().toString(),
+      title: newCategoryTitle,
+      actions: []
+    };
+
+    try {
+      await updateDoc(doc(db, 'profiles', memberUid), {
+        pdiCategories: [...categories, newCategory]
+      });
+      setNewCategoryTitle('');
+      toast.success('Nova categoria adicionada!');
+    } catch (error) {
+      toast.error('Erro ao adicionar categoria.');
+    }
+  };
+
+  const addPDIAction = async (memberUid: string, categoryId: string) => {
+    const text = newActionText[categoryId];
+    if (!text?.trim()) return;
+
+    const member = teamMembers.find(m => m.uid === memberUid);
+    if (!member?.pdiCategories) return;
+
+    const updatedCategories = member.pdiCategories.map(cat => {
+      if (cat.id === categoryId) {
+        const newAction: PDIAction = {
+          id: Date.now().toString(),
+          description: text,
+          completed: false
+        };
+        return { ...cat, actions: [...cat.actions, newAction] };
+      }
+      return cat;
+    });
+
+    try {
+      await updateDoc(doc(db, 'profiles', memberUid), {
+        pdiCategories: updatedCategories
+      });
+      setNewActionText(prev => ({ ...prev, [categoryId]: '' }));
+      toast.success('Ação adicionada ao PDI!');
+    } catch (error) {
+      toast.error('Erro ao adicionar ação.');
+    }
+  };
+
+  const togglePDIAction = async (memberUid: string, categoryId: string, actionId: string) => {
+    // Apenas gestores podem marcar como concluído
+    if (userProfile?.role !== 'Administrador' && userProfile?.role !== 'Gerente' && userProfile?.role !== 'People & Culture') {
+      toast.error('Apenas gestores podem validar o progresso do PDI.');
+      return;
+    }
+
+    const member = teamMembers.find(m => m.uid === memberUid);
+    if (!member?.pdiCategories) return;
+
+    const updatedCategories = member.pdiCategories.map(cat => {
+      if (cat.id === categoryId) {
+        const updatedActions = cat.actions.map(act => 
+          act.id === actionId ? { ...act, completed: !act.completed, completedAt: !act.completed ? Date.now() : undefined } : act
+        );
+        return { ...cat, actions: updatedActions };
+      }
+      return cat;
+    });
+
+    try {
+      await updateDoc(doc(db, 'profiles', memberUid), {
+        pdiCategories: updatedCategories
+      });
+    } catch (error) {
+      toast.error('Erro ao atualizar ação do PDI.');
+    }
+  };
+
+  const removePDICategory = async (memberUid: string, categoryId: string) => {
+    const member = teamMembers.find(m => m.uid === memberUid);
+    if (!member?.pdiCategories) return;
+
+    const updatedCategories = member.pdiCategories.filter(cat => cat.id !== categoryId);
+
+    try {
+      await updateDoc(doc(db, 'profiles', memberUid), {
+        pdiCategories: updatedCategories
+      });
+      toast.success('Categoria removida.');
+    } catch (error) {
+      toast.error('Erro ao remover categoria.');
+    }
+  };
+
+  // --- LÓGICA DE AUSÊNCIAS ---
   const handleAddVacation = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newVacation.userId || !newVacation.start || !newVacation.end) {
@@ -142,7 +286,21 @@ export default function PeopleView() {
       await updateDoc(vRef, { status });
       toast.success(`Solicitação ${status.toLowerCase()}!`);
     } catch (error) {
+      console.error(error);
       toast.error('Erro ao atualizar status.');
+    }
+  };
+
+  const deleteVacation = async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir este registro?')) return;
+    try {
+      const vRef = doc(db, 'organizations', effectiveOrgId, 'vacations', id);
+      // Aqui usamos deleteDoc importado ou apenas um status pra esconder, mas vamos excluir de verdade
+      const { deleteDoc } = await import('firebase/firestore');
+      await deleteDoc(vRef);
+      toast.success('Registro excluído com sucesso!');
+    } catch (error) {
+      toast.error('Erro ao excluir registro.');
     }
   };
 
@@ -216,10 +374,13 @@ export default function PeopleView() {
                 <div className="space-y-4">
                   {teamMembers.some(m => celebratesAnniversary(m)) ? (
                     teamMembers.filter(m => celebratesAnniversary(m)).map(m => (
-                      <div key={m.uid} className="flex items-center justify-between p-4 bg-primary-500/5 rounded-2xl border border-primary-500/10 scale-in-center">
+                      <div key={m.uid} className="flex items-center justify-between p-4 bg-primary-500/5 rounded-2xl border border-primary-500/10 scale-in-center overflow-hidden relative">
+                        <div className="absolute top-0 right-0 p-2 transform rotate-12 opacity-10">
+                           <Cake size={48} />
+                        </div>
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-white/10 overflow-hidden">
-                            {m.photoURL ? <img src={m.photoURL} alt="" /> : <div className="w-full h-full flex items-center justify-center font-bold">{m.displayName[0]}</div>}
+                          <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-white/10 overflow-hidden shrink-0">
+                            {m.photoURL ? <img src={m.photoURL} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-bold">{m.displayName[0]}</div>}
                           </div>
                           <div>
                             <p className="font-bold">Aniversário de Empresa: {m.displayName}</p>
@@ -286,7 +447,7 @@ export default function PeopleView() {
                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                   <div className="lg:col-span-1 border-r border-gray-100 dark:border-white/5 pr-4">
                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 font-black">Equipe</p>
-                     <div className="space-y-1">
+                     <div className="max-h-[500px] overflow-y-auto custom-scrollbar space-y-1">
                         {teamMembers.map(m => (
                           <button key={m.uid} onClick={() => setSelectedMember(m)} className={`w-full text-left p-3 rounded-xl transition-all ${selectedMember?.uid === m.uid ? 'bg-primary-500 text-white shadow-lg' : 'hover:bg-gray-100 dark:hover:bg-white/5 text-sm'}`}>
                             {m.displayName}
@@ -300,12 +461,38 @@ export default function PeopleView() {
                           <h3 className="text-xl font-bold mb-6">{selectedMember.displayName}</h3>
                           {selectedMember.onboardingTasks ? (
                              <div className="space-y-2">
-                                {selectedMember.onboardingTasks.map(t => (
-                                   <div key={t.id} onClick={() => toggleTask(selectedMember.uid, t.id)} className="flex items-center gap-3 p-4 bg-white/40 dark:bg-white/5 border border-gray-100 dark:border-white/5 rounded-2xl cursor-pointer hover:border-primary-500 transition-all">
-                                      {t.completed ? <CheckCircle2 className="text-emerald-500" /> : <Circle className="text-gray-300" />}
-                                      <span className={t.completed ? 'line-through opacity-40' : 'font-medium'}>{t.task}</span>
-                                   </div>
-                                ))}
+                                <div className="flex gap-2 mb-6">
+                                   <input 
+                                     id="new_onboarding_task"
+                                     type="text" 
+                                     placeholder="Nova tarefa de onboarding..." 
+                                     className="flex-1 bg-white/50 dark:bg-white/5 border border-gray-100 dark:border-white/5 px-4 py-3 rounded-2xl text-xs focus:outline-none focus:border-primary-500 transition-all"
+                                     onKeyPress={e => e.key === 'Enter' && addTaskToOnboarding(selectedMember.uid, (e.target as HTMLInputElement).value)}
+                                   />
+                                   <button 
+                                     onClick={() => {
+                                       const input = document.getElementById('new_onboarding_task') as HTMLInputElement;
+                                       addTaskToOnboarding(selectedMember.uid, input.value);
+                                       input.value = '';
+                                     }}
+                                     className="p-3 bg-primary-500 text-white rounded-2xl hover:bg-primary-600 shadow-lg shadow-primary-500/20 transition-all font-bold"
+                                   >
+                                     Adicionar
+                                   </button>
+                                </div>
+                                <div className="space-y-2">
+                                  {selectedMember.onboardingTasks.map(t => (
+                                     <div key={t.id} className="flex items-center group/task gap-3 p-4 bg-white/40 dark:bg-white/5 border border-gray-100 dark:border-white/5 rounded-2xl transition-all">
+                                        <div onClick={() => toggleTask(selectedMember.uid, t.id)} className="flex items-center flex-1 gap-3 cursor-pointer">
+                                          {t.completed ? <CheckCircle2 className="text-emerald-500" /> : <Circle className="text-gray-300" />}
+                                          <span className={t.completed ? 'line-through opacity-40' : 'font-medium'}>{t.task}</span>
+                                        </div>
+                                        <button onClick={() => removeTaskFromOnboarding(selectedMember.uid, t.id)} className="opacity-0 group-hover/task:opacity-100 p-2 text-red-500 hover:bg-red-500/10 rounded-xl transition-all">
+                                          <Trash2 size={16} />
+                                        </button>
+                                     </div>
+                                  ))}
+                                </div>
                              </div>
                           ) : (
                              <div className="text-center py-20 bg-gray-100/50 dark:bg-white/5 rounded-3xl border-2 border-dashed border-gray-200 dark:border-white/10">
@@ -323,6 +510,115 @@ export default function PeopleView() {
                   </div>
                </div>
             </div>
+          )}
+
+          {/* DEVELOPMENT (PDI) TAB */}
+          {activeTab === 'development' && (
+             <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] p-8 shadow-xl animate-in slide-in-from-bottom duration-500">
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="p-3 bg-indigo-500/10 rounded-2xl text-indigo-500">
+                    <Target size={24} />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold">Plano de Desenvolvimento (PDI)</h2>
+                    <p className="text-sm text-gray-500">Árvore de competências e trilha de carreira.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                  {/* Lista Lateral */}
+                  <div className="lg:col-span-1 border-r border-gray-100 dark:border-white/5 pr-4">
+                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 font-black">Equipe</p>
+                     <div className="max-h-[500px] overflow-y-auto custom-scrollbar space-y-1">
+                        {teamMembers.map(m => (
+                          <button key={m.uid} onClick={() => setSelectedMember(m)} className={`w-full text-left p-3 rounded-xl transition-all ${selectedMember?.uid === m.uid ? 'bg-primary-500 text-white shadow-lg' : 'hover:bg-gray-100 dark:hover:bg-white/5 text-sm'}`}>
+                            {m.displayName}
+                          </button>
+                        ))}
+                     </div>
+                  </div>
+
+                  {/* Conteúdo do PDI */}
+                  <div className="lg:col-span-3">
+                     {selectedMember ? (
+                       <div className="animate-in fade-in">
+                          <div className="flex justify-between items-center mb-8">
+                            <h3 className="text-xl font-bold">PDI: {selectedMember.displayName}</h3>
+                            <div className="flex gap-2">
+                              <div className="relative group">
+                                <input 
+                                  type="text" 
+                                  placeholder="Nova Categoria..." 
+                                  className="bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 px-4 py-2 rounded-xl text-xs focus:outline-none focus:border-primary-500 w-40"
+                                  value={newCategoryTitle}
+                                  onChange={e => setNewCategoryTitle(e.target.value)}
+                                  onKeyPress={e => e.key === 'Enter' && addPDICategory(selectedMember.uid)}
+                                />
+                                <button onClick={() => addPDICategory(selectedMember.uid)} className="absolute right-2 top-1.5 text-primary-500"><PlusCircle size={16} /></button>
+                              </div>
+                            </div>
+                          </div>
+
+                          {(selectedMember.pdiCategories || []).length > 0 ? (
+                            <div className="space-y-6">
+                               {selectedMember.pdiCategories!.map(cat => (
+                                 <div key={cat.id} className="bg-white/30 dark:bg-white/5 border border-gray-100 dark:border-white/5 rounded-3xl p-6 relative group/cat">
+                                    <div className="flex justify-between items-center mb-6">
+                                       <h4 className="font-bold flex items-center gap-2"><ChevronDown size={18} className="text-indigo-500" /> {cat.title}</h4>
+                                       <button onClick={() => removePDICategory(selectedMember.uid, cat.id)} className="opacity-0 group-hover/cat:opacity-100 p-1.5 hover:bg-red-500/10 text-red-500 rounded-lg transition-all"><Trash2 size={14} /></button>
+                                    </div>
+
+                                    <div className="space-y-3 mb-6">
+                                       {cat.actions.map(action => (
+                                         <div key={action.id} className="flex items-center gap-3 p-4 bg-white/50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/5 group/act">
+                                            <button 
+                                              onClick={() => togglePDIAction(selectedMember.uid, cat.id, action.id)}
+                                              className={`shrink-0 ${action.completed ? 'text-indigo-500' : 'text-gray-300 hover:text-indigo-400'} transition-all`}
+                                            >
+                                              {action.completed ? <CheckCircle2 size={22} /> : <Circle size={22} />}
+                                            </button>
+                                            <span className={`flex-1 text-sm ${action.completed ? 'line-through text-gray-400' : 'font-medium'}`}>{action.description}</span>
+                                            {action.completedAt && <span className="text-[10px] text-gray-400">{format(action.completedAt, 'dd/MM')}</span>}
+                                         </div>
+                                       ))}
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                       <input 
+                                          type="text" 
+                                          placeholder="Nova ação..." 
+                                          className="flex-1 bg-white/50 dark:bg-black/20 border border-gray-100 dark:border-white/10 px-4 py-3 rounded-2xl text-xs focus:outline-none focus:border-indigo-500 transition-all"
+                                          value={newActionText[cat.id] || ''}
+                                          onChange={e => setNewActionText(prev => ({ ...prev, [cat.id]: e.target.value }))}
+                                          onKeyPress={e => e.key === 'Enter' && addPDIAction(selectedMember.uid, cat.id)}
+                                       />
+                                       <button 
+                                          onClick={() => addPDIAction(selectedMember.uid, cat.id)}
+                                          className="p-3 bg-indigo-500 text-white rounded-2xl hover:bg-indigo-600 shadow-lg shadow-indigo-500/20 transition-all"
+                                       >
+                                          <Plus size={18} />
+                                       </button>
+                                    </div>
+                                 </div>
+                               ))}
+                            </div>
+                          ) : (
+                            <div className="text-center py-32 border-2 border-dashed border-gray-200 dark:border-white/10 rounded-[3rem] opacity-40">
+                               <Target size={48} className="mx-auto mb-4" />
+                               <p className="font-bold">Em construção...</p>
+                               <p className="text-sm">Crie a primeira categoria acima para iniciar o PDI.</p>
+                            </div>
+                          )}
+                       </div>
+                     ) : (
+                       <div className="h-40 flex flex-col items-center justify-center text-gray-400">
+                          <Target size={40} className="mb-2 opacity-20" />
+                          <p>Selecione alguém para gerir o desenvolvimento</p>
+                       </div>
+                     )}
+                  </div>
+                </div>
+             </div>
           )}
 
           {/* VACATIONS TAB */}
@@ -370,15 +666,6 @@ export default function PeopleView() {
                   })}
                </div>
             </div>
-          )}
-
-          {/* DEVELOPMENT TAB */}
-          {activeTab === 'development' && (
-             <div className="p-20 bg-white/20 dark:bg-white/5 backdrop-blur-3xl border border-gray-200 dark:border-white/10 rounded-[3rem] text-center">
-                <Clock size={48} className="mx-auto text-primary-500 mb-4" />
-                <h2 className="text-xl font-bold">Desenvolvimento (PDI)</h2>
-                <p className="text-gray-500 font-medium">Este módulo está sendo preparado para o próximo ciclo.</p>
-             </div>
           )}
         </div>
 

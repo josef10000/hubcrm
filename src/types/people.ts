@@ -13,8 +13,22 @@ export interface VacationPeriod {
   start: string; // YYYY-MM-DD
   end: string;   // YYYY-MM-DD
   type: 'Férias' | 'Licença' | 'Folga' | 'Outro';
-  status: 'Pendente' | 'Aprovado' | 'Recusado';
+  reason?: 'Férias' | 'Falta' | 'Motivo Médico' | 'Licença Maternidade/Paternidade' | 'Outro';
+  status: 'Pendente' | 'Aprovado' | 'Recusado' | 'Informado';
   createdAt: number;
+}
+
+export interface PDIAction {
+  id: string;
+  description: string;
+  completed: boolean;
+  completedAt?: number;
+}
+
+export interface PDICategory {
+  id: string;
+  title: string;
+  actions: PDIAction[];
 }
 
 export interface FeedbackNote {
@@ -40,6 +54,7 @@ export interface UserProfilePeople extends UserProfile {
   startDate?: string; // Data de contratação (YYYY-MM-DD)
   onboardingTasks?: OnboardingTask[];
   onboardingTemplateId?: string;
+  pdiCategories?: PDICategory[];
 }
 
 // Template global de onboarding
