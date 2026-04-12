@@ -114,6 +114,21 @@ export default function ClientPortal() {
       setIsSubmittingRequest(false);
     }
   };
+  
+  const handleConfirmResolution = async (requestId: string) => {
+    if (!orgId) return;
+    try {
+      await updateDoc(doc(db, 'organizations', orgId, 'supportRequests', requestId), {
+        status: 'concluido',
+        confirmedAt: serverTimestamp(),
+        pendingConfirmation: false
+      });
+      toast.success('Que bom que seu problema foi resolvido!');
+    } catch (err) {
+      console.error("Error confirming resolution:", err);
+      toast.error('Erro ao confirmar resolução.');
+    }
+  };
 
   useEffect(() => {
     if (!orgId || !clientId) {
@@ -349,6 +364,8 @@ export default function ClientPortal() {
     switch (status) {
       case 'concluido':
         return <span className="px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Concluído</span>;
+      case 'resolvido':
+        return <span className="px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-violet-500/20 text-violet-400 border border-violet-500/30">Resolvido</span>;
       case 'em_analise':
         return <span className="px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-blue-500/20 text-blue-400 border border-blue-500/30">Em Análise</span>;
       case 'aberto':
@@ -1124,6 +1141,34 @@ export default function ClientPortal() {
                           <div className="p-5 rounded-2xl bg-primary-500/5 border border-primary-500/10 text-sm text-white leading-relaxed whitespace-pre-wrap relative">
                             <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary-500/30 rounded-full"></div>
                             {req.reply}
+                          </div>
+                        </div>
+                      )}
+
+                      {req.status === 'resolvido' && (
+                        <div className="p-5 rounded-2xl bg-violet-500/10 border border-violet-500/20 text-center space-y-3 animate-pulse">
+                          <p className="text-sm text-violet-100/90 font-medium">Nossa equipe marcou este chamado como resolvido. O problema foi solucionado?</p>
+                          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleConfirmResolution(req.id);
+                              }}
+                              className="px-6 py-2.5 bg-violet-500 hover:bg-violet-600 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-violet-500/20 flex items-center justify-center gap-2"
+                            >
+                              <CheckCircle size={18} />
+                              Sim, Confirmar Solução
+                            </button>
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(`https://wa.me/5511952924208?text=Olá! O chamado #${req.id.slice(-6).toUpperCase()} ainda não foi resolvido. Preciso de mais ajuda.`, '_blank');
+                              }}
+                              className="px-6 py-2.5 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2"
+                            >
+                              <HelpCircle size={18} />
+                              Não, Ainda Preciso de Ajuda
+                            </button>
                           </div>
                         </div>
                       )}

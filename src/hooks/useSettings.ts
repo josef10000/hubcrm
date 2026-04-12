@@ -30,6 +30,9 @@ export function useSettings(userId: string) {
   const [enpsQuestion, setEnpsQuestion] = useState('Em uma escala de 0 a 10, o quanto você recomendaria a Hub Symples como um ótimo lugar para trabalhar?');
   const [enpsFrequency, setEnpsFrequency] = useState<'mensal' | 'trimestral' | 'semestral'>('mensal');
 
+  const [csatTitle, setCsatTitle] = useState('Como foi seu atendimento?');
+  const [csatQuestion, setCsatQuestion] = useState('Sua opinião é fundamental para melhorarmos nossos serviços. Como você avalia a resolução deste chamado?');
+
   // ── Marketing ──
   const [globalAnnouncement, setGlobalAnnouncement] = useState<{ title: string; message: string; type: string; isActive: boolean }>({
     title: '', message: '', type: 'info', isActive: false,
@@ -68,6 +71,8 @@ export function useSettings(userId: string) {
         if (data.checkoutDescription) setCheckoutDescription(data.checkoutDescription);
         if (data.enpsQuestion) setEnpsQuestion(data.enpsQuestion);
         if (data.enpsFrequency) setEnpsFrequency(data.enpsFrequency);
+        if (data.csatTitle) setCsatTitle(data.csatTitle);
+        if (data.csatQuestion) setCsatQuestion(data.csatQuestion);
       }
     });
     return () => unsubscribe();
@@ -97,5 +102,7 @@ export function useSettings(userId: string) {
     checkoutDescription, setCheckoutDescription,
     enpsQuestion, setEnpsQuestion,
     enpsFrequency, setEnpsFrequency,
+    csatTitle, setCsatTitle,
+    csatQuestion, setCsatQuestion,
   };
 }

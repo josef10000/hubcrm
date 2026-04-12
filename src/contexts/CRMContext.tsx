@@ -67,6 +67,10 @@ interface CRMContextType {
   setEnpsQuestion: (question: string) => void;
   enpsFrequency: string;
   setEnpsFrequency: (freq: 'mensal' | 'trimestral' | 'semestral') => void;
+  csatTitle: string;
+  setCsatTitle: (title: string) => void;
+  csatQuestion: string;
+  setCsatQuestion: (question: string) => void;
 
   // Support
   replyingTo: string | null;
@@ -295,6 +299,8 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     checkoutDescription: settings?.checkoutDescription || '', setCheckoutDescription: settings?.setCheckoutDescription || (() => { }),
     enpsQuestion: settings?.enpsQuestion || '', setEnpsQuestion: settings?.setEnpsQuestion || (() => { }),
     enpsFrequency: settings?.enpsFrequency || 'mensal', setEnpsFrequency: settings?.setEnpsFrequency || (() => { }),
+    csatTitle: settings?.csatTitle || '', setCsatTitle: settings?.setCsatTitle || (() => { }),
+    csatQuestion: settings?.csatQuestion || '', setCsatQuestion: settings?.setCsatQuestion || (() => { }),
 
     replyingTo, setReplyingTo, replyMessage, setReplyMessage,
     newExpense: finance?.newExpense || {}, setNewExpense: finance?.setNewExpense || (() => { }),

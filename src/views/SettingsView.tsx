@@ -24,6 +24,10 @@ export default function SettingsView() {
     setCheckoutTitle,
     checkoutDescription,
     setCheckoutDescription,
+    csatTitle,
+    setCsatTitle,
+    csatQuestion,
+    setCsatQuestion,
     effectiveOrgId,
   } = useCRM();
   const { userProfile } = useAuth();
@@ -368,6 +372,39 @@ export default function SettingsView() {
                   </div>
                 </div>
 
+            <div className="bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-lg mb-8">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
+                <Globe className="mr-2 text-primary-500" size={20} />
+                Pesquisa de Satisfação (CSAT)
+              </h3>
+
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Título da Pesquisa
+                  </label>
+                  <input
+                    type="text"
+                    value={csatTitle}
+                    onChange={(e) => setCsatTitle(e.target.value)}
+                    className="w-full px-4 py-3 bg-white dark:bg-black/20 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none"
+                    placeholder="Ex: Como foi seu atendimento?"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Pergunta de Feedback
+                  </label>
+                  <textarea
+                    value={csatQuestion}
+                    onChange={(e) => setCsatQuestion(e.target.value)}
+                    rows={3}
+                    className="w-full px-4 py-3 bg-white dark:bg-black/20 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none resize-none"
+                    placeholder="Ex: Sua opinião é fundamental..."
+                  />
+                </div>
+
                 <div className="flex justify-end gap-3 mt-4">
                   <button
                     onClick={async () => {
@@ -375,9 +412,11 @@ export default function SettingsView() {
                       try {
                         await setDoc(doc(db, 'organizations', effectiveOrgId, 'settings', 'preferences'), { 
                           checkoutTitle, 
-                          checkoutDescription 
+                          checkoutDescription,
+                          csatTitle,
+                          csatQuestion
                         }, { merge: true });
-                        toast.success('Configurações de checkout salvas!');
+                        toast.success('Configurações salvas!');
                       } catch (error) {
                         toast.error('Erro ao salvar configurações.');
                       }

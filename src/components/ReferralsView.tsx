@@ -3,24 +3,27 @@ import { RefreshCw, Users } from 'lucide-react';
 import { collection, doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { User } from 'firebase/auth';
 import { db } from '../lib/firebase';
+import { useCRM } from '../contexts/CRMContext';
 import { toast } from 'sonner';
 import { Client, SiteStatus } from '../types';
 import { getPlanPrice, updateReferrerSubscription } from '../helpers';
 
 export default
 function ReferralsView({ clients, user }: { clients: Client[], user: User }) {
+  const { effectiveOrgId } = useCRM();
   const [referrals, setReferrals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const referralsRef = collection(db, 'users', user.uid, 'referrals');
+    if (!effectiveOrgId) return;
+    const referralsRef = collection(db, 'organizations', effectiveOrgId, 'referrals');
     const unsubscribe = onSnapshot(referralsRef, (snapshot) => {
       const loadedReferrals = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setReferrals(loadedReferrals);
       setLoading(false);
     });
     return () => unsubscribe();
-  }, [user.uid]);
+  }, [effectiveOrgId]);
 
   const handleConfirmReferral = async (referral: any) => {
     try {
@@ -39,12 +42,12 @@ function ReferralsView({ clients, user }: { clients: Client[], user: User }) {
         const newBalance = (referrer.referralBalance || 0) + bonusAmount;
         const newCount = (referrer.referralCount || 0) + 1;
 
-        await updateDoc(doc(db, 'users', user.uid, 'clients', referrer.id), {
+        await updateDoc(doc(db, 'organizations', effectiveOrgId, 'clients', referrer.id), {
           referralBalance: newBalance,
           referralCount: newCount
         });
         
-        await updateDoc(doc(db, 'users', user.uid, 'clients', referred.id), {
+        await updateDoc(doc(db, 'organizations', effectiveOrgId, 'clients', referred.id), {
           referralConfirmed: true
         });
         
@@ -56,7 +59,7 @@ function ReferralsView({ clients, user }: { clients: Client[], user: User }) {
         }
       }
 
-      await updateDoc(doc(db, 'users', user.uid, 'referrals', referral.id), {
+      await updateDoc(doc(db, 'organizations', effectiveOrgId, 'referrals', referral.id), {
         status: 'confirmed',
         bonusAmount: bonusAmount
       });

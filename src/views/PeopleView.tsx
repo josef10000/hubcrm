@@ -20,7 +20,8 @@ import {
   AlertTriangle,
   Settings,
   Plus,
-  X
+  X,
+  Star
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
@@ -48,8 +49,15 @@ export default function PeopleView() {
     enpsQuestion,
     setEnpsQuestion,
     enpsFrequency,
-    setEnpsFrequency
+    setEnpsFrequency,
+    supportRequests
   } = useCRM();
+
+  // Métrica CSAT Geral
+  const ratedRequests = supportRequests.filter(req => req.status === 'concluido' && req.rating);
+  const csatScoreAvg = ratedRequests.length > 0 
+    ? (ratedRequests.reduce((acc, curr) => acc + curr.rating, 0) / ratedRequests.length).toFixed(1)
+    : null;
   const [showVacationModal, setShowVacationModal] = useState(false);
   const [newVacation, setNewVacation] = useState<Partial<VacationPeriod>>({
     type: 'Férias',
@@ -444,7 +452,7 @@ export default function PeopleView() {
         <div className="relative">
           {/* DASHBOARD TAB */}
           {activeTab === 'dashboard' && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in duration-500">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-in fade-in duration-500">
               <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-6 shadow-xl">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="font-bold flex items-center gap-2"><Smile className="text-yellow-500" /> Clima da Equipe</h3>
@@ -464,7 +472,34 @@ export default function PeopleView() {
                     ></div>
                   </div>
                   <p className="text-[10px] text-gray-400 mt-4">
-                    {enpsScoreCalc === null ? 'Os dados serão atualizados assim que as pesquisas forem respondidas.' : `Baseado em ${enpsResults.length} respostas anônimas.`}
+                    {enpsResults.length === 0 ? 'Os dados serão atualizados assim que as pesquisas forem respondidas.' : `Baseado em ${enpsResults.length} respostas anônimas.`}
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-6 shadow-xl">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="font-bold flex items-center gap-2"><Star className="text-amber-500" /> Satisfação (CSAT)</h3>
+                  <span className="text-xs font-bold text-amber-500 bg-amber-500/10 px-2 py-1 rounded-lg">Geral</span>
+                </div>
+                <div className="flex flex-col items-center justify-center py-4 text-center">
+                  <div className={`text-5xl font-black mb-2 ${csatScoreAvg === null ? 'text-gray-400' : Number(csatScoreAvg) >= 4.5 ? 'text-emerald-500' : Number(csatScoreAvg) >= 3.5 ? 'text-yellow-500' : 'text-red-500'}`}>
+                    {csatScoreAvg === null ? '--' : csatScoreAvg}
+                  </div>
+                  <div className="text-sm font-medium text-gray-500">
+                    {csatScoreAvg === null ? 'Média CSAT (Aguardando Dados)' : 'Média de Avaliações'}
+                  </div>
+                  <div className="flex gap-1 mt-6">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star 
+                        key={star} 
+                        size={20} 
+                        className={Number(csatScoreAvg) >= star ? 'fill-amber-500 text-amber-500' : 'text-gray-300 dark:text-white/10'} 
+                      />
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-gray-400 mt-4">
+                    {ratedRequests.length === 0 ? 'Nenhum chamado avaliado ainda.' : `Baseado em ${ratedRequests.length} atendimentos concluídos.`}
                   </p>
                 </div>
               </div>

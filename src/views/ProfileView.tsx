@@ -4,9 +4,10 @@ import {
   User as UserIcon, Mail, Phone, Instagram, Linkedin, 
   ChevronLeft, Edit3, Save, X, Briefcase, Info, 
   Shield, Globe, MapPin, Loader2, Camera, Cake, Calendar,
-  Target, ChevronDown, CheckCircle2, Circle
+  Target, ChevronDown, CheckCircle2, Circle, Star
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useCRM } from '../contexts/CRMContext';
 import { db } from '../lib/firebase';
 import { doc, getDoc, collection, setDoc } from 'firebase/firestore';
 import { VacationPeriod } from '../types/people';
@@ -19,7 +20,14 @@ import { format } from 'date-fns';
 export default function ProfileView() {
   const { uid } = useParams();
   const { user, userProfile: currentUserProfile, refreshProfile } = useAuth();
+  const { supportRequests } = useCRM();
   const navigate = useNavigate();
+
+  // Métrica CSAT Individual
+  const memberRatedRequests = supportRequests.filter(req => req.assignedTo === uid && req.status === 'concluido' && req.rating);
+  const csatAvg = memberRatedRequests.length > 0
+    ? (memberRatedRequests.reduce((acc, curr) => acc + (curr.rating || 0), 0) / memberRatedRequests.length).toFixed(1)
+    : null;
   
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -275,18 +283,28 @@ export default function ProfileView() {
               <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-1">{profile.displayName}</h2>
               <p className="text-sm font-bold text-primary-500 uppercase tracking-widest mb-4">{profile.jobTitle || profile.role}</p>
               
-              <div className="flex items-center justify-center space-x-3 grayscale opacity-30 hover:grayscale-0 hover:opacity-100 transition-all duration-500">
-                {profile.instagram && (
-                  <a href={`https://instagram.com/${profile.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="p-3 bg-white/5 rounded-2xl hover:bg-gradient-to-br from-purple-500 to-pink-500 text-gray-400 hover:text-white transition-all">
-                    <Instagram size={20} />
-                  </a>
-                )}
                 {profile.linkedin && (
                   <a href={profile.linkedin} target="_blank" rel="noopener noreferrer" className="p-3 bg-white/5 rounded-2xl hover:bg-[#0077b5] text-gray-400 hover:text-white transition-all">
                     <Linkedin size={20} />
                   </a>
                 )}
               </div>
+
+              {/* CSAT Individual */}
+              {csatAvg && (
+                <div className="mt-8 pt-8 border-t border-gray-100 dark:border-white/5">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-3">Média de Satisfação</p>
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star key={s} size={16} className={Number(csatAvg) >= s ? 'fill-amber-500 text-amber-500' : 'text-gray-300 dark:text-white/10'} />
+                      ))}
+                    </div>
+                    <span className="text-2xl font-black text-gray-900 dark:text-white">{csatAvg}</span>
+                    <p className="text-[10px] text-gray-500">Baseado em {memberRatedRequests.length} avaliações</p>
+                  </div>
+                </div>
+              )}
             </motion.div>
 
             {/* Superior Imediato */}

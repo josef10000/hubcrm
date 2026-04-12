@@ -86,10 +86,11 @@ export default function SupportView() {
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{String(req.clientName || 'Cliente Desconhecido')}</h3>
                       <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-widest border ${
                         req.status === 'concluido' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 
+                        req.status === 'resolvido' ? 'bg-violet-500/20 text-violet-400 border-violet-500/30' : 
                         req.status === 'em_analise' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 
                         'bg-red-500/20 text-red-400 border-red-500/30'
                       }`}>
-                        {req.status === 'concluido' ? 'Concluído' : req.status === 'em_analise' ? 'Em Análise' : 'Aberto'}
+                        {req.status === 'concluido' ? 'Concluído' : req.status === 'resolvido' ? 'Resolvido' : req.status === 'em_analise' ? 'Em Análise' : 'Aberto'}
                       </span>
                       {req.category && (
                         <span className="px-2 py-1 rounded-md text-xs font-medium bg-gray-500/10 text-gray-500 border border-gray-500/20">

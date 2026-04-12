@@ -767,6 +767,7 @@ className="bg-gray-100 border-gray-200"
 - [x] 🎧 Suporte com SLA, CSAT e Atribuição de Técnicos (Fase 2)
 - [x] 📈 Timeline de Vendas e Controle de Follow-up (Fase 2)
 - [x] ⚠️ Alertas de Inadimplência Crítica no Financeiro (Fase 2)
+- [x] ⚙️ Confirmação de Resolução pelo Cliente e CSAT Customizável (Fase 2)
 - [ ] 🤖 Gemini AI: Analista Financeiro & Predição de Churn
 - [ ] 📱 Mobile experience via PWA / Capacitor
 - [ ] 📧 Automação de E-mails de Aniversário
