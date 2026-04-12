@@ -55,8 +55,8 @@
       <sub>DRE, Fluxo de Caixa, Budget e Conciliação OFX</sub>
     </td>
     <td align="center">
-      <br />🔐<br /><strong>13 Cargos RBAC</strong><br />
-      <sub>Controle granular de quem vê e faz o quê</sub>
+      <br />🧬<br /><strong>People & Culture</strong><br />
+      <sub>Férias, Onboarding, PDI e Organograma</sub>
     </td>
     <td align="center">
       <br />🚀<br /><strong>Zero Infra</strong><br />
@@ -213,14 +213,16 @@ Sistema de notificações via **Resend SDK** com anti-spam inteligente:
 
 ---
 
-### 👥 9. Gestão de Equipe & Hierarquia
+### 👥 9. People & Culture — Gestão de Equipe & RH
 
-Módulo completo de People Management com RH moderno.
+Módulo completo de People Management para escalar a cultura e produtividade da equipe.
 
 - **Organograma Dinâmico**: Visualização em árvore da hierarquia real da empresa, com conexões visuais entre líder e liderados.
+- **Gestão de Ausências (Férias)**: Fluxo completo de solicitação, aprovação e controle de férias/folgas com log de status.
+- **Onboarding Checklists**: Gestão de tarefas de integração para novos talentos, com acompanhamento de progresso percentual.
+- **PDI (Plano de Desenvolvimento)**: Árvore de competências e trilha de carreira com categorias e ações de desenvolvimento.
+- **Perfis Profissionais**: Página completa com foto, bio, cargo, contatos sociais e reporting lines.
 - **Sistema de Convites**: Convite por e-mail com link de aceite e expiração configurável (72h padrão).
-- **Perfis Profissionais**: Página completa com foto, bio, cargo, telefone, Instagram, LinkedIn.
-- **Reporting Lines**: Definição de superior imediato para cada membro.
 - **Edição Segura**: Apenas o próprio usuário ou Administradores podem editar perfis.
 - **Remoção Granular**: Exclusão de membros com opção de deletar ou preservar dados históricos.
 
@@ -742,6 +744,7 @@ className="bg-gray-100 border-gray-200"
 - [x] Celebração de Aniversários (Gamificação)
 - [x] Sistema de Temas Dinâmicos (Dark Absolute)
 - [x] CI/CD com GitHub Actions (5 pipelines)
+- [x] 🧬 Gestão de Ausências, Onboarding e PDI
 - [ ] 📧 E-mail automático de aniversário para colaboradores
 - [ ] 📊 Dashboard de aniversariantes do mês
 - [ ] 🤖 Assistente inteligente via Gemini AI
@@ -788,7 +791,7 @@ MIT License — Copyright (c) 2026 Hub Symples LTDA
   <br />
   <img src="https://i.imgur.com/EFBaYb5.png" alt="Hub Central" width="80" />
   <br /><br />
-  <strong>Hub Central v1.8.0</strong>
+  <strong>Hub Central v1.8.5</strong>
   <br />
   <em>Modernidade · Automação · Resultados</em>
   <br /><br />
