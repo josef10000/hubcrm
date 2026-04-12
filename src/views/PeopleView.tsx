@@ -97,16 +97,29 @@ export default function PeopleView() {
     const member = teamMembers.find(m => m.uid === memberUid);
     if (!member || !member.onboardingTasks) return;
 
-    const newTasks = member.onboardingTasks.map(t => 
-      t.id === taskId ? { ...t, completed: !t.completed, completedAt: !t.completed ? Date.now() : undefined } : t
-    );
+    // Criar o novo estado das tarefas de forma imutável
+    const updatedTasks = member.onboardingTasks.map(t => {
+      if (t.id === taskId) {
+        const isNowCompleted = !t.completed;
+        return { 
+          ...t, 
+          completed: isNowCompleted, 
+          completedAt: isNowCompleted ? Date.now() : undefined 
+        };
+      }
+      return t;
+    });
 
     try {
-      await updateDoc(doc(db, 'profiles', memberUid), {
-        onboardingTasks: newTasks
+      // Atualizar o Firestore
+      const profileRef = doc(db, 'profiles', memberUid);
+      await updateDoc(profileRef, {
+        onboardingTasks: updatedTasks
       });
+      
       toast.success('Tarefa atualizada!');
     } catch (error) {
+      console.error('[Onboarding] Erro ao atualizar tarefa:', error);
       toast.error('Erro ao atualizar tarefa.');
     }
   };
