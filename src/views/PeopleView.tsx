@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
-import { collection, query, where, onSnapshot, doc, updateDoc, setDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, setDoc, deleteDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { UserProfile, OnboardingTask } from '../types';
 import { format, differenceInYears, parseISO, isSameDay, addDays, isWithinInterval } from 'date-fns';
 import { useCRM } from '../contexts/CRMContext';
@@ -104,7 +104,7 @@ export default function PeopleView() {
         return { 
           ...t, 
           completed: isNowCompleted, 
-          completedAt: isNowCompleted ? Date.now() : undefined 
+          completedAt: isNowCompleted ? Date.now() : null 
         };
       }
       return t;
@@ -239,7 +239,7 @@ export default function PeopleView() {
     const updatedCategories = member.pdiCategories.map(cat => {
       if (cat.id === categoryId) {
         const updatedActions = cat.actions.map(act => 
-          act.id === actionId ? { ...act, completed: !act.completed, completedAt: !act.completed ? Date.now() : undefined } : act
+          act.id === actionId ? { ...act, completed: !act.completed, completedAt: !act.completed ? Date.now() : null } : act
         );
         return { ...cat, actions: updatedActions };
       }
@@ -294,6 +294,7 @@ export default function PeopleView() {
   };
 
   const updateVacationStatus = async (id: string, status: 'Aprovado' | 'Recusado') => {
+    if (!effectiveOrgId) return;
     try {
       const vRef = doc(db, 'organizations', effectiveOrgId, 'vacations', id);
       await updateDoc(vRef, { status });
@@ -305,14 +306,13 @@ export default function PeopleView() {
   };
 
   const deleteVacation = async (id: string) => {
+    if (!effectiveOrgId) return;
     if (!confirm('Tem certeza que deseja excluir este registro?')) return;
     try {
-      const vRef = doc(db, 'organizations', effectiveOrgId, 'vacations', id);
-      // Aqui usamos deleteDoc importado ou apenas um status pra esconder, mas vamos excluir de verdade
-      const { deleteDoc } = await import('firebase/firestore');
-      await deleteDoc(vRef);
+      await deleteDoc(doc(db, 'organizations', effectiveOrgId, 'vacations', id));
       toast.success('Registro excluído com sucesso!');
     } catch (error) {
+      console.error('[Vacation] Erro ao excluir:', error);
       toast.error('Erro ao excluir registro.');
     }
   };

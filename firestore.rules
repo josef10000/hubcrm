@@ -27,7 +27,7 @@ service cloud.firestore {
 
     // Verifica cargo (Role)
     function isOrgAdmin(orgId) {
-      return belongsToOrg(orgId) && (isOwnerEmail() || getUserData().role == 'Administrador' || getUserData().role == 'Gerente');
+      return belongsToOrg(orgId) && (isOwnerEmail() || getUserData().role == 'Administrador' || getUserData().role == 'Gerente' || getUserData().role == 'People & Culture');
     }
 
     // ===============================================================
@@ -37,7 +37,7 @@ service cloud.firestore {
     // Perfis Individuais
     match /profiles/{userId} {
       allow read: if isAuthenticated();
-      allow write: if isOwnerEmail() || request.auth.uid == userId;
+      allow write: if isOwnerEmail() || request.auth.uid == userId || isOrgAdmin(getUserData().orgId);
     }
 
     // Organizações e seus dados (Multi-Tenant)
