@@ -757,7 +757,10 @@ export default function PeopleView() {
                      );
                   })}
                </div>
-           {/* CLIMATE (eNPS) TAB */}
+             </div>
+           )}
+
+          {/* CLIMATE (eNPS) TAB */}
           {activeTab === 'climate' && (
             <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] p-8 shadow-xl animate-in slide-in-from-bottom duration-500">
               <div className="flex items-center gap-3 mb-8">
