@@ -353,7 +353,6 @@ export default function LeadsView() {
                             R$ {lead.estimatedValue.toLocaleString('pt-BR')}
                           </span>
                         ) : <span />}
-                        )}
                       </div>
                       
                       {lead.nextFollowUp && (
