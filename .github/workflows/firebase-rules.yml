@@ -11,12 +11,6 @@ on:
       - 'LICENSE'
   pull_request:
     branches: [ "main" ]
-    paths-ignore:
-      - 'README.md'
-      - '.env.example'
-      - 'ACCESS_POLICY.md'
-      - 'CONTRIBUTING.md'
-      - 'LICENSE'
     paths:
       - 'firestore.rules'
 
