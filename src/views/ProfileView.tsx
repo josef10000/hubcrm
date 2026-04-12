@@ -181,11 +181,11 @@ export default function ProfileView() {
 
     try {
       const orgId = currentUserProfile?.orgId || 'default';
-      const vRef = collection(db, 'organizations', orgId, 'vacations');
-      await setDoc(doc(vRef), {
+      const vRef = doc(collection(db, 'organizations', orgId, 'vacations'));
+      await setDoc(vRef, {
         ...newVacation,
         userId: uid,
-        id: Date.now().toString(),
+        id: vRef.id,
         createdAt: Date.now()
       });
       setShowVacationModal(false);

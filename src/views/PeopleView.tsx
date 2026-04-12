@@ -18,7 +18,8 @@ import {
   X,
   PlusCircle,
   Trash2,
-  ChevronDown
+  ChevronDown,
+  AlertTriangle
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
@@ -48,6 +49,10 @@ export default function PeopleView() {
     start: format(new Date(), 'yyyy-MM-dd'),
     end: format(addDays(new Date(), 15), 'yyyy-MM-dd')
   });
+
+  // Novos estados para exclusão
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [vacationToDelete, setVacationToDelete] = useState<string | null>(null);
 
   // Novos estados para o PDI
   const [newCategoryTitle, setNewCategoryTitle] = useState('');
@@ -280,10 +285,10 @@ export default function PeopleView() {
     }
 
     try {
-      const vRef = collection(db, 'organizations', effectiveOrgId, 'vacations');
-      await setDoc(doc(vRef), {
+      const vRef = doc(collection(db, 'organizations', effectiveOrgId, 'vacations'));
+      await setDoc(vRef, {
         ...newVacation,
-        id: Date.now().toString(),
+        id: vRef.id,
         createdAt: Date.now()
       });
       setShowVacationModal(false);
@@ -306,11 +311,18 @@ export default function PeopleView() {
   };
 
   const deleteVacation = async (id: string) => {
-    if (!effectiveOrgId) return;
-    if (!confirm('Tem certeza que deseja excluir este registro?')) return;
+    setVacationToDelete(id);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteVacation = async () => {
+    if (!effectiveOrgId || !vacationToDelete) return;
+    
     try {
-      await deleteDoc(doc(db, 'organizations', effectiveOrgId, 'vacations', id));
+      await deleteDoc(doc(db, 'organizations', effectiveOrgId, 'vacations', vacationToDelete));
       toast.success('Registro excluído com sucesso!');
+      setShowDeleteConfirm(false);
+      setVacationToDelete(null);
     } catch (error) {
       console.error('[Vacation] Erro ao excluir:', error);
       toast.error('Erro ao excluir registro.');
@@ -745,6 +757,33 @@ export default function PeopleView() {
                     </div>
                     <button type="submit" className="w-full bg-primary-500 hover:bg-primary-600 text-white p-5 rounded-2xl font-bold shadow-xl shadow-primary-500/20 transition-all">Enviar Solicitação</button>
                  </form>
+              </div>
+           </div>
+        )}
+
+        {/* Modal de Confirmação de Exclusão */}
+        {showDeleteConfirm && (
+           <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[110] flex items-center justify-center p-4" onClick={() => setShowDeleteConfirm(false)}>
+              <div className="bg-white dark:bg-[#0a0a0a] rounded-[2rem] border border-gray-200 dark:border-white/10 w-full max-w-sm shadow-2xl overflow-hidden p-8 text-center" onClick={e => e.stopPropagation()}>
+                 <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                   <AlertTriangle size={32} />
+                 </div>
+                 <h3 className="text-xl font-bold mb-2">Excluir Registro?</h3>
+                 <p className="text-sm text-gray-500 mb-8">Esta ação não pode ser desfeita. O registro de ausência será removido permanentemente.</p>
+                 <div className="flex gap-3">
+                   <button 
+                     onClick={() => setShowDeleteConfirm(false)}
+                     className="flex-1 px-6 py-3 rounded-xl border border-gray-200 dark:border-white/10 font-bold hover:bg-gray-50 dark:hover:bg-white/5 transition-all"
+                   >
+                     Cancelar
+                   </button>
+                   <button 
+                     onClick={confirmDeleteVacation}
+                     className="flex-1 px-6 py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all"
+                   >
+                     Excluir
+                   </button>
+                 </div>
               </div>
            </div>
         )}

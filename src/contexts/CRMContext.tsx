@@ -242,7 +242,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       const vacationsRef = collection(db, 'organizations', effectiveOrgId, 'vacations');
       const unsubVacations = onSnapshot(vacationsRef, (snapshot) => {
         const loaded: VacationPeriod[] = [];
-        snapshot.forEach((d) => loaded.push({ id: d.id, ...d.data() } as VacationPeriod));
+        snapshot.forEach((d) => loaded.push({ ...d.data(), id: d.id } as VacationPeriod));
         setVacations(loaded);
       });
 
