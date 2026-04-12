@@ -1,5 +1,6 @@
 import React from 'react';
-import { MessageCircle, Clock, MessageSquare, CheckCircle, Trash2 } from 'lucide-react';
+import { MessageCircle, Clock, MessageSquare, CheckCircle, Trash2, Star, User, ArrowUp, ArrowDown, Minus, AlertCircle } from 'lucide-react';
+import { differenceInHours } from 'date-fns';
 import { useCRM } from '../contexts/CRMContext';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
@@ -8,16 +9,65 @@ import { toast } from 'sonner';
 
 export default function SupportView() {
   const { user } = useAuth();
-  const { supportRequests, replyingTo, setReplyingTo, replyMessage, setReplyMessage } = useCRM();
+  const { supportRequests, replyingTo, setReplyingTo, replyMessage, setReplyMessage, effectiveOrgId, teamProfiles } = useCRM();
+
+  const csatRequests = supportRequests.filter(r => r.csatScore);
+  const avgCsat = csatRequests.length > 0 
+    ? (csatRequests.reduce((acc, r) => acc + r.csatScore, 0) / csatRequests.length).toFixed(1)
+    : null;
+
+  const handleUpdateSupport = async (requestId: string, data: any) => {
+    if (!effectiveOrgId) return;
+    try {
+      await setDoc(doc(db, 'organizations', effectiveOrgId, 'supportRequests', requestId), data, { merge: true });
+      toast.success('Chamado atualizado!');
+    } catch (e) {
+      toast.error('Erro ao atualizar chamado.');
+    }
+  };
+
+  const getSlaStatus = (createdAt: any, priority?: string) => {
+    if (!createdAt) return null;
+    const date = createdAt.toDate ? createdAt.toDate() : new Date(createdAt);
+    const hoursPast = differenceInHours(new Date(), date);
+    
+    // SLA Definitions
+    const slaLimits = {
+      'alta': 4,
+      'media': 24,
+      'baixa': 72
+    };
+    
+    const limit = slaLimits[priority as keyof typeof slaLimits] || 24;
+    const remaining = limit - hoursPast;
+    
+    return {
+      remaining,
+      isOverdue: remaining < 0,
+      text: remaining < 0 ? `Atrasado ${Math.abs(remaining)}h` : `${remaining}h restantes`
+    };
+  };
 
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Chamados de Suporte</h2>
-            <p className="text-gray-500 dark:text-gray-400">Gerencie as solicitações feitas pelos clientes no Portal.</p>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Atendimento ao Cliente</h2>
+            <p className="text-gray-500 dark:text-gray-400">Gerencie solicitações, SLAs e satisfação dos clientes.</p>
           </div>
+          
+          {avgCsat && (
+            <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 px-6 rounded-2xl flex items-center gap-4 bg-gradient-to-br from-yellow-500/5 to-transparent">
+              <div className="p-3 bg-yellow-500/20 text-yellow-500 rounded-xl">
+                <Star size={24} fill="currentColor" />
+              </div>
+              <div>
+                <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Satisfação (CSAT)</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{avgCsat} <span className="text-sm font-normal text-gray-400">/ 5.0</span></p>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="space-y-4">
@@ -34,21 +84,86 @@ export default function SupportView() {
                   <div className="flex-1 w-full">
                     <div className="flex flex-wrap items-center gap-3 mb-2">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{String(req.clientName || 'Cliente Desconhecido')}</h3>
-                      <span className="px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-primary-500/20 text-primary-600 dark:text-primary-400 border border-primary-500/30">
+                      <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-widest border ${
+                        req.status === 'concluido' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 
+                        req.status === 'em_analise' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 
+                        'bg-red-500/20 text-red-400 border-red-500/30'
+                      }`}>
                         {req.status === 'concluido' ? 'Concluído' : req.status === 'em_analise' ? 'Em Análise' : 'Aberto'}
                       </span>
                       {req.category && (
-                        <span className="px-2 py-1 rounded-md text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20">
+                        <span className="px-2 py-1 rounded-md text-xs font-medium bg-gray-500/10 text-gray-500 border border-gray-500/20">
                           {String(req.category)}
                         </span>
+                      )}
+
+                      {/* Display Priority */}
+                      <div className="flex items-center gap-1.5 ml-2">
+                        <select 
+                          value={req.priority || 'baixa'}
+                          onChange={(e) => handleUpdateSupport(req.id, { priority: e.target.value })}
+                          className={`text-[10px] font-bold uppercase p-1 px-2 rounded-lg bg-black/20 border border-white/10 outline-none cursor-pointer ${
+                            req.priority === 'alta' ? 'text-red-400' : req.priority === 'media' ? 'text-amber-400' : 'text-blue-400'
+                          }`}
+                        >
+                          <option value="alta">Alta</option>
+                          <option value="media">Média</option>
+                          <option value="baixa">Baixa</option>
+                        </select>
+                      </div>
+
+                      {/* SLA Info */}
+                      {req.status !== 'concluido' && (
+                        <div className={`flex items-center gap-1.5 ml-auto text-[10px] font-bold px-3 py-1 rounded-full border ${
+                          getSlaStatus(req.createdAt, req.priority)?.isOverdue 
+                          ? 'bg-red-500/20 text-red-500 border-red-500/30 animate-pulse' 
+                          : 'bg-emerald-500/20 text-emerald-500 border-emerald-500/30'
+                        }`}>
+                          <Clock size={12} />
+                          {getSlaStatus(req.createdAt, req.priority)?.text}
+                        </div>
                       )}
                     </div>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                       Enviado em: {req.createdAt && typeof req.createdAt.toDate === 'function' ? req.createdAt.toDate().toLocaleString('pt-BR') : 'Data desconhecida'}
                     </p>
+
+                    {/* Assignment Selector */}
+                    <div className="flex items-center gap-2 mb-4 bg-black/20 p-2 rounded-xl border border-white/5 w-fit">
+                      <User size={14} className="text-gray-500" />
+                      <select 
+                        value={req.assignedTo || ''}
+                        onChange={(e) => {
+                          const staff = teamProfiles.find(p => p.uid === e.target.value);
+                          handleUpdateSupport(req.id, { 
+                            assignedTo: e.target.value,
+                            assignedName: staff?.displayName || 'Desconhecido'
+                          });
+                        }}
+                        className="text-xs bg-transparent border-none outline-none text-gray-300 cursor-pointer min-w-[150px]"
+                      >
+                        <option value="">Não atribuído</option>
+                        {teamProfiles.map(staff => (
+                          <option key={staff.uid} value={staff.uid} className="bg-[#0a0a0a]">{staff.displayName}</option>
+                        ))}
+                      </select>
+                    </div>
+
                     <div className="bg-white dark:bg-black/20 p-4 rounded-xl border border-gray-200 dark:border-white/5 text-gray-700 dark:text-gray-200 whitespace-pre-wrap mb-4">
                       {String(req.message || '')}
                     </div>
+
+                    {req.csatScore && (
+                      <div className="mb-4 p-4 bg-yellow-500/5 border border-yellow-500/20 rounded-2xl flex gap-4 items-start">
+                        <div className="p-2 bg-yellow-500/20 text-yellow-500 rounded-lg">
+                          <Star size={16} fill="currentColor" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-yellow-500 uppercase tracking-widest mb-1">Feedback do Cliente ({req.csatScore}/5)</p>
+                          <p className="text-sm text-gray-300 italic">"{req.csatComment || 'Sem comentários adicionais.'}"</p>
+                        </div>
+                      </div>
+                    )}
 
                     {req.reply && (
                       <div className="bg-primary-500/10 p-4 rounded-xl border border-primary-500/20 text-gray-900 dark:text-white whitespace-pre-wrap mb-4 relative">
@@ -79,10 +194,11 @@ export default function SupportView() {
                           <button
                             onClick={async () => {
                               if (!replyMessage.trim()) return;
-                              if (!user) return;
+                              if (!effectiveOrgId) return;
                               try {
-                                await setDoc(doc(db, 'users', user.uid, 'supportRequests', req.id), { 
+                                await setDoc(doc(db, 'organizations', effectiveOrgId, 'supportRequests', req.id), { 
                                   reply: replyMessage,
+                                  repliedAt: serverTimestamp(),
                                   status: req.status === 'aberto' ? 'em_analise' : req.status
                                 }, { merge: true });
                                 toast.success('Resposta enviada com sucesso!');
@@ -104,9 +220,9 @@ export default function SupportView() {
                     {req.status === 'aberto' && (
                       <button 
                         onClick={async () => {
-                          if (!user) return;
+                          if (!effectiveOrgId) return;
                           try {
-                            await setDoc(doc(db, 'users', user.uid, 'supportRequests', req.id), { status: 'em_analise' }, { merge: true });
+                            await setDoc(doc(db, 'organizations', effectiveOrgId, 'supportRequests', req.id), { status: 'em_analise' }, { merge: true });
                             toast.success('Chamado em análise!');
                           } catch (e) {
                             toast.error('Erro ao atualizar chamado.');
@@ -135,9 +251,9 @@ export default function SupportView() {
                     {req.status !== 'concluido' && (
                       <button 
                         onClick={async () => {
-                          if (!user) return;
+                          if (!effectiveOrgId) return;
                           try {
-                            await setDoc(doc(db, 'users', user.uid, 'supportRequests', req.id), { status: 'concluido' }, { merge: true });
+                            await setDoc(doc(db, 'organizations', effectiveOrgId, 'supportRequests', req.id), { status: 'concluido' }, { merge: true });
                             toast.success('Chamado marcado como concluído!');
                           } catch (e) {
                             toast.error('Erro ao atualizar chamado.');
@@ -151,10 +267,10 @@ export default function SupportView() {
                     )}
                     <button 
                       onClick={async () => {
-                        if (!user) return;
+                        if (!effectiveOrgId) return;
                         if (window.confirm('Tem certeza que deseja excluir este chamado?')) {
                           try {
-                            await deleteDoc(doc(db, 'users', user.uid, 'supportRequests', req.id));
+                            await deleteDoc(doc(db, 'organizations', effectiveOrgId, 'supportRequests', req.id));
                             toast.success('Chamado excluído!');
                           } catch (e) {
                             toast.error('Erro ao excluir chamado.');

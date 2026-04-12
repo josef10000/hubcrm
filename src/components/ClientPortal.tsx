@@ -3,8 +3,9 @@ import { useParams } from 'react-router-dom';
 import { doc, getDoc, getDocs, addDoc, collection, serverTimestamp, onSnapshot, query, where, orderBy, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { getPlanPrice, getSetupPrice, calculateDiscount } from '../helpers';
-import { Globe, CreditCard, CheckCircle, Clock, AlertCircle, ExternalLink, FileText, MessageSquare, Send, X, ChevronDown, ChevronUp, Calendar, Users, Copy, HelpCircle, Search, ShoppingCart } from 'lucide-react';
+import { Globe, CreditCard, CheckCircle, Clock, AlertCircle, ExternalLink, FileText, MessageSquare, Send, X, ChevronDown, ChevronUp, Calendar, Users, Copy, HelpCircle, Search, ShoppingCart, Star } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
+import SupportSatisfactionModal from './SupportSatisfactionModal';
 
 export default function ClientPortal() {
   const { orgId, clientId } = useParams<{ orgId: string; clientId: string }>();
@@ -28,6 +29,8 @@ export default function ClientPortal() {
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFaq, setActiveFaq] = useState<string | null>(null);
+  const [showCsatModal, setShowCsatModal] = useState(false);
+  const [pendingCsatRequestId, setPendingCsatRequestId] = useState<string | null>(null);
 
   const [globalAnnouncement, setGlobalAnnouncement] = useState<{title: string, message: string, type: string, isActive: boolean} | null>(null);
   const [services, setServices] = useState<any[]>([]);
@@ -134,6 +137,13 @@ export default function ClientPortal() {
         return timeB - timeA; // Descending
       });
       setClientRequests(loadedRequests);
+
+      // Check for completed requests without CSAT
+      const pendingCsat = loadedRequests.find(r => r.status === 'concluido' && !r.csatScore);
+      if (pendingCsat) {
+        setPendingCsatRequestId(pendingCsat.id);
+        setShowCsatModal(true);
+      }
     });
 
     // Fetch Global Announcement
@@ -1273,7 +1283,15 @@ export default function ClientPortal() {
         )}
       </div>
 
-      <Toaster theme="dark" position="top-right" />
+      {showCsatModal && pendingCsatRequestId && orgId && (
+        <SupportSatisfactionModal 
+          requestId={pendingCsatRequestId}
+          orgId={orgId}
+          onClose={() => setShowCsatModal(false)}
+        />
+      )}
+
+      <Toaster position="top-center" richColors />
     </div>
   );
 }

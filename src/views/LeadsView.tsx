@@ -3,8 +3,10 @@ import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestor
 import { useCRM } from '../contexts/CRMContext';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
-import { Lead, LeadStatus } from '../types';
-import { Users, Plus, Phone, Mail, DollarSign, Trash2, X, ChevronDown, TrendingUp, Target, UserPlus, ArrowRight, GripVertical, Search, Filter } from 'lucide-react';
+import { Lead, LeadStatus, LeadActivity } from '../types';
+import { Users, Plus, Phone, Mail, DollarSign, Trash2, X, ChevronDown, TrendingUp, Target, UserPlus, ArrowRight, GripVertical, Search, Filter, Calendar, History, MessageSquare, PhoneCall, UserCircle, Send } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 
 const LEAD_COLUMNS: { status: LeadStatus; label: string; color: string; bgColor: string }[] = [
@@ -27,9 +29,10 @@ interface LeadFormData {
   notes: string;
   plan: string;
   niche: string;
+  nextFollowUp: string;
 }
 
-const emptyForm: LeadFormData = { name: '', whatsapp: '', email: '', leadSource: '', estimatedValue: '', notes: '', plan: '', niche: '' };
+const emptyForm: LeadFormData = { name: '', whatsapp: '', email: '', leadSource: '', estimatedValue: '', notes: '', plan: '', niche: '', nextFollowUp: '' };
 
 export default function LeadsView() {
   const { user } = useAuth();
@@ -41,6 +44,9 @@ export default function LeadsView() {
   const [dragOverColumn, setDragOverColumn] = useState<LeadStatus | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterSource, setFilterSource] = useState('all');
+  const [activeTab, setActiveTab] = useState<'form' | 'timeline'>('form');
+  const [newActivityText, setNewActivityText] = useState('');
+  const [isSubmittingActivity, setIsSubmittingActivity] = useState(false);
   const filteredLeads = leads.filter(l => {
     const matchesSearch = !searchTerm || l.name?.toLowerCase().includes(searchTerm.toLowerCase()) || l.whatsapp?.includes(searchTerm);
     const matchesSource = filterSource === 'all' || l.leadSource === filterSource;
@@ -60,6 +66,7 @@ export default function LeadsView() {
         notes: formData.notes.trim() || undefined,
         plan: formData.plan || undefined,
         niche: formData.niche.trim() || undefined,
+        nextFollowUp: formData.nextFollowUp ? new Date(formData.nextFollowUp).getTime() : undefined,
         updatedAt: Date.now(),
         assignedTo: editingLead ? editingLead.assignedTo : (userProfile?.role === 'SDR' || userProfile?.role === 'Executive' ? user?.uid : undefined)
       };
@@ -72,6 +79,13 @@ export default function LeadsView() {
       } else {
         payload.status = 'Novo';
         payload.createdAt = Date.now();
+        payload.activities = [{
+          id: Math.random().toString(36).substring(2),
+          type: 'status_change',
+          text: 'Lead criado no sistema',
+          date: Date.now(),
+          userName: userProfile?.displayName || user?.email || 'Sistema'
+        }];
         await addDoc(collection(db, 'organizations', effectiveOrgId!, 'leads'), payload);
         toast.success('Lead adicionado!');
       }
@@ -98,7 +112,21 @@ export default function LeadsView() {
   const handleDrop = async (targetStatus: LeadStatus) => {
     if (!draggedLead || !effectiveOrgId || draggedLead.status === targetStatus) { setDraggedLead(null); setDragOverColumn(null); return; }
     try {
-      await updateDoc(doc(db, 'organizations', effectiveOrgId, 'leads', draggedLead.id), { status: targetStatus, updatedAt: Date.now() });
+      const newActivity: LeadActivity = {
+        id: Math.random().toString(36).substring(2),
+        type: 'status_change',
+        text: `Manteve conversão: mudou para ${targetStatus}`,
+        date: Date.now(),
+        userName: userProfile?.displayName || user?.email || 'Sistema'
+      };
+      
+      const updatedActivities = [...(draggedLead.activities || []), newActivity];
+
+      await updateDoc(doc(db, 'organizations', effectiveOrgId, 'leads', draggedLead.id), { 
+        status: targetStatus, 
+        updatedAt: Date.now(),
+        activities: updatedActivities
+      });
       toast.success(`Lead movido para ${targetStatus}`);
     } catch (e: any) { toast.error(`Erro: ${e.message}`); }
     setDraggedLead(null);
@@ -111,8 +139,35 @@ export default function LeadsView() {
       name: lead.name, whatsapp: lead.whatsapp, email: lead.email || '',
       leadSource: lead.leadSource || '', estimatedValue: lead.estimatedValue?.toString() || '',
       notes: lead.notes || '', plan: lead.plan || '', niche: lead.niche || '',
+      nextFollowUp: lead.nextFollowUp ? new Date(lead.nextFollowUp).toISOString().split('T')[0] : '',
     });
+    setActiveTab('form');
     setIsModalOpen(true);
+  };
+
+  const handleAddActivity = async (type: LeadActivity['type']) => {
+    if (!newActivityText.trim() || !editingLead || !effectiveOrgId) return;
+    setIsSubmittingActivity(true);
+    try {
+      const activity: LeadActivity = {
+        id: Math.random().toString(36).substring(2),
+        type,
+        text: newActivityText.trim(),
+        date: Date.now(),
+        userName: userProfile?.displayName || user?.email || 'Sistema'
+      };
+      const updatedActivities = [...(editingLead.activities || []), activity];
+      await updateDoc(doc(db, 'organizations', effectiveOrgId, 'leads', editingLead.id), {
+        activities: updatedActivities,
+        updatedAt: Date.now()
+      });
+      setNewActivityText('');
+      toast.success('Atividade registrada!');
+    } catch (e: any) {
+      toast.error('Erro ao registrar atividade.');
+    } finally {
+      setIsSubmittingActivity(false);
+    }
   };
 
   const handleCleanup = async () => {
@@ -298,12 +353,20 @@ export default function LeadsView() {
                             R$ {lead.estimatedValue.toLocaleString('pt-BR')}
                           </span>
                         ) : <span />}
-                        {lead.leadSource && (
-                          <span className="text-[10px] px-1.5 py-0.5 bg-white/5 rounded-md text-gray-500 uppercase tracking-wider">
-                            {lead.leadSource}
-                          </span>
                         )}
                       </div>
+                      
+                      {lead.nextFollowUp && (
+                        <div className={`mt-2 flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 rounded-lg border ${
+                          new Date(lead.nextFollowUp) < new Date() 
+                          ? 'bg-red-500/20 text-red-500 border-red-500/30' 
+                          : 'bg-blue-500/20 text-blue-500 border-blue-500/30'
+                        }`}>
+                          <Calendar size={12} />
+                          <span>{format(new Date(lead.nextFollowUp), "dd 'de' MMM", { locale: ptBR })}</span>
+                          {new Date(lead.nextFollowUp) < new Date() && <span className="uppercase ml-auto">Atrasado</span>}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -318,13 +381,30 @@ export default function LeadsView() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={closeModal}>
           <div className="bg-[#111] border border-white/10 rounded-3xl w-full max-w-lg p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-white">{editingLead ? 'Editar Lead' : 'Novo Lead'}</h2>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setActiveTab('form')}
+                  className={`text-lg font-bold transition-colors ${activeTab === 'form' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
+                >
+                  {editingLead ? 'Editar Lead' : 'Novo Lead'}
+                </button>
+                {editingLead && (
+                  <button
+                    onClick={() => setActiveTab('timeline')}
+                    className={`text-lg font-bold transition-colors flex items-center gap-2 ${activeTab === 'timeline' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
+                  >
+                    Linha do Tempo
+                    <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded-full">{editingLead.activities?.length || 0}</span>
+                  </button>
+                )}
+              </div>
               <button onClick={closeModal} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
                 <X className="w-5 h-5 text-gray-400" />
               </button>
             </div>
 
-            <div className="space-y-4">
+            {activeTab === 'form' ? (
+              <div className="space-y-4">
               <div>
                 <label className="block text-xs text-gray-400 font-medium mb-1.5">Nome *</label>
                 <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -370,27 +450,73 @@ export default function LeadsView() {
                 </div>
               </div>
               <div>
+                <label className="block text-xs text-gray-400 font-medium mb-1.5">Próximo Contato (Follow-up)</label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  <input type="date" value={formData.nextFollowUp} onChange={(e) => setFormData({ ...formData, nextFollowUp: e.target.value })}
+                    className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500/50 outline-none text-sm" />
+                </div>
+              </div>
+              <div>
                 <label className="block text-xs text-gray-400 font-medium mb-1.5">Observações</label>
                 <textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500/50 outline-none text-sm min-h-[80px] resize-none" placeholder="Anotações sobre o lead..." />
               </div>
             </div>
 
-            <div className="flex items-center justify-between mt-6">
-              {editingLead && userProfile?.role === 'Administrador' ? (
-                <button onClick={() => handleDelete(editingLead.id)}
-                  className="flex items-center gap-2 px-4 py-2 text-red-400 hover:bg-red-500/10 rounded-xl text-sm transition-colors">
-                  <Trash2 className="w-4 h-4" /> Excluir
-                </button>
-              ) : <span />}
-              <div className="flex gap-3">
-                <button onClick={closeModal} className="px-5 py-2.5 text-gray-400 hover:bg-white/5 rounded-xl text-sm transition-colors">Cancelar</button>
-                <button onClick={handleSave}
-                  className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-medium rounded-xl text-sm transition-all shadow-lg shadow-blue-500/20">
-                  {editingLead ? 'Salvar' : 'Adicionar'}
-                </button>
+            ) : (
+              <div className="flex flex-col h-[500px]">
+                <div className="flex-1 overflow-y-auto pr-2 space-y-4 mb-4 custom-scrollbar">
+                  {(!editingLead?.activities || editingLead.activities.length === 0) ? (
+                    <div className="text-center py-12 text-gray-600">
+                      <History className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                      <p>Nenhuma atividade registrada ainda.</p>
+                    </div>
+                  ) : (
+                    [...(editingLead.activities || [])].reverse().map((activity) => (
+                      <div key={activity.id} className="relative pl-8 pb-4 border-l border-white/5 last:pb-0">
+                        <div className="absolute left-[-5px] top-0 w-[9px] h-[9px] rounded-full bg-blue-500" />
+                        <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              {activity.type === 'call' && <PhoneCall className="w-3 h-3 text-blue-400" />}
+                              {activity.type === 'meeting' && <Users className="w-3 h-3 text-purple-400" />}
+                              {activity.type === 'status_change' && <ArrowRight className="w-3 h-3 text-emerald-400" />}
+                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{activity.userName}</span>
+                            </div>
+                            <span className="text-[10px] text-gray-500">{format(activity.date, "dd/MM HH:mm")}</span>
+                          </div>
+                          <p className="text-sm text-gray-300">{activity.text}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                  <textarea
+                    value={newActivityText}
+                    onChange={(e) => setNewActivityText(e.target.value)}
+                    placeholder="Registrar nova interação..."
+                    className="w-full bg-transparent text-sm text-white border-none outline-none resize-none mb-3 min-h-[60px]"
+                  />
+                  <div className="flex items-center justify-between">
+                    <div className="flex gap-2">
+                      <button onClick={() => handleAddActivity('note')} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 transition-colors" title="Anotação"><MessageSquare size={16} /></button>
+                      <button onClick={() => handleAddActivity('call')} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 transition-colors" title="Ligação"><PhoneCall size={16} /></button>
+                      <button onClick={() => handleAddActivity('meeting')} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 transition-colors" title="Reunião"><Users size={16} /></button>
+                    </div>
+                    <button
+                      onClick={() => handleAddActivity('note')}
+                      disabled={!newActivityText.trim() || isSubmittingActivity}
+                      className="px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-2"
+                    >
+                      <Send size={14} /> Registrar
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}

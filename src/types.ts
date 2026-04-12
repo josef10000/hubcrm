@@ -189,6 +189,14 @@ export interface Budget {
 
 export type LeadStatus = 'Novo' | 'Em Contato' | 'Proposta Enviada' | 'Negociação' | 'Convertido' | 'Perdido';
 
+export interface LeadActivity {
+  id: string;
+  type: 'note' | 'call' | 'message' | 'meeting' | 'status_change';
+  text: string;
+  date: number;
+  userName: string;
+}
+
 export interface Lead {
   id: string;
   name: string;
@@ -206,6 +214,8 @@ export interface Lead {
   convertedClientId?: string;
   lostReason?: string;
   assignedTo?: string;
+  activities?: LeadActivity[];
+  nextFollowUp?: number;
 }
 
 export interface SupportRequest {
@@ -216,8 +226,15 @@ export interface SupportRequest {
   message: string;
   status: 'aberto' | 'em_analise' | 'concluido';
   createdAt: any;
+  priority?: 'baixa' | 'media' | 'alta';
+  assignedTo?: string;
+  assignedName?: string;
   reply?: string;
   repliedAt?: any;
+  csatScore?: number;
+  csatComment?: string;
+  csatAt?: any;
+  slaDeadline?: any;
 }
 
 export type UserRole = 

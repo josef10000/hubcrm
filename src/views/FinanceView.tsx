@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TrendingUp, TrendingDown, DollarSign, Trash2, PieChart, Activity, Target, Tag } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Trash2, PieChart, Activity, Target, Tag, AlertTriangle } from 'lucide-react';
 import { useCRM } from '../contexts/CRMContext';
 import { useAuth } from '../contexts/AuthContext';
 import { getPlanPrice } from '../helpers';
@@ -35,6 +35,10 @@ export default function FinanceView() {
   }, 0);
   const totalExpenses = expenses.reduce((acc, e) => acc + e.amount, 0);
   const netProfit = totalMRR - totalExpenses;
+
+  // Cálculo de Inadimplência
+  const delinquentClients = clients.filter(c => c.status === 'Inadimplente' || c.paymentStatus === 'OVERDUE');
+  const totalOverdue = delinquentClients.reduce((acc, c) => acc + getPlanPrice(c.plan, c.billingCycle, c), 0);
 
   // Calculo de Saúde do Orçamento (Mês Atual)
   const currentMonthSpent = transactions.filter(t => 
@@ -203,6 +207,35 @@ export default function FinanceView() {
             </p>
           </div>
         </div>
+
+        {totalOverdue > 0 && (
+          <div className="mb-8 bg-red-500/10 border border-red-500/20 p-6 rounded-3xl animate-in fade-in slide-in-from-top-4">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-red-500/20 text-red-500 rounded-lg">
+                  <AlertTriangle size={24} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-red-500">Inadimplência Crítica</h3>
+                  <p className="text-xs text-red-400/70">Existem {delinquentClients.length} clientes com pagamentos atrasados.</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-red-400 uppercase font-black tracking-widest">Total em Atraso</p>
+                <p className="text-2xl font-black text-red-500">R$ {totalOverdue.toFixed(2).replace('.', ',')}</p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {delinquentClients.map(c => (
+                <div key={c.id} className="bg-red-500/10 border border-red-500/30 px-3 py-1 rounded-full text-[10px] font-bold text-red-400 uppercase flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                  {c.name}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-1">

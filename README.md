@@ -6,7 +6,7 @@
   <p><em>By Hub Symples — Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.</em></p>
 
   <p>
-    <img src="https://img.shields.io/badge/Version-1.9.0-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-2.0.0--rc1-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge&labelColor=111111" alt="License" />
   </p>
@@ -47,20 +47,20 @@
   </tr>
   <tr>
     <td align="center">
-      <br />🌑<br /><strong>Dark Absolute</strong><br />
-      <sub>Interface premium com 5 temas dinâmicos</sub>
+      <br />🎧<br /><strong>Gestão de Suporte</strong><br />
+      <sub>CSAT, SLA, Atribuição e Dashboard de Qualidade</sub>
     </td>
     <td align="center">
       <br />📊<br /><strong>BI Financeiro</strong><br />
-      <sub>DRE, Fluxo de Caixa, Budget e Conciliação OFX</sub>
+      <sub>DRE, Fluxo, Budget e Alertas de Inadimplência</sub>
     </td>
     <td align="center">
       <br />🧬<br /><strong>People & Culture</strong><br />
-      <sub>Férias, Onboarding, PDI e Organograma</sub>
+      <sub>Férias, Onboarding, PDI e eNPS Anônimo</sub>
     </td>
     <td align="center">
       <br />🚀<br /><strong>Zero Infra</strong><br />
-      <sub>100% serverless — Vercel + Firebase</sub>
+      <sub>Vercel + Firebase — Escala infinita</sub>
     </td>
   </tr>
 </table>
@@ -121,6 +121,8 @@ Gestão intuitiva de leads com pipeline visual em **Kanban** ou **Lista**, atrib
 - **Atribuição Inteligente**: Cada lead pode ser atribuído a um SDR ou Executive específico.
 - **Conversão Direta**: Um clique transforma o lead em cliente ativo, sincronizando dados com Asaas automaticamente.
 - **Filtros e Busca**: Pesquisa em tempo real por nome, CPF, e-mail ou status.
+- **Timeline de Atividades**: Registro completo de interações (notas, chamadas, reuniões) e mudanças de status para cada lead.
+- **Lembretes de Follow-up**: Alertas visuais para leads estagnados com definição de data para próximo contato.
 - **Isolamento Comercial**: SDRs e Executives visualizam **apenas seus próprios leads**, garantindo privacidade total da carteira.
 
 ---
@@ -153,7 +155,8 @@ Um fluxo de auto-atendimento completo que permite ao cliente se cadastrar, envia
 - **Central de Pagamentos**: Histórico completo de faturas com status em tempo real (Pago, Pendente, Vencido) + links diretos para PIX/Boleto.
 - **Central de Chamados**: Abertura e acompanhamento de tickets de suporte com histórico.
 - **Pesquisa NPS**: Indicador de satisfação com nota (0-10) e comentários do cliente.
-- **Programa de Indicações**: Sistema completo de referral marketing com geração de códigos, rastreamento e recompensas (comissão ou desconto).
+- **Programa de Indicações**: Sistema completo de referral marketing com geração de códigos, rastreamento e recompensas.
+- **Pesquisa CSAT Automática**: Ao concluir um chamado no suporte, o cliente é convidado a avaliar o atendimento (1-5 estrelas + comentário).
 - **Avisos Globais**: Comunicados configuráveis pelo admin exibidos no topo do portal (recesso, atualizações, novidades).
 
 ---
@@ -175,7 +178,7 @@ Módulo financeiro completo com 6 sub-abas especializadas:
 
 | Sub-módulo | Descrição |
 |---|---|
-| **Resumo Operacional** | Receita (MRR), Despesas, Lucro Líquido e Margem por Cliente |
+| **Resumo Operacional** | MRR, Despesas, Lucro e **Alertas de Inadimplência Crítica** |
 | **DRE Gerencial** | Demonstração de Resultados do Exercício com gráficos |
 | **Fluxo de Caixa Projetado** | Projeção futura de entradas e saídas |
 | **Orçamento (Budget)** | Planejamento orçamentário por categoria com alertas de estouro |
@@ -190,9 +193,15 @@ Calendário integrado com prazos de entrega, datas de pagamento e eventos operac
 
 ---
 
-### 🛰️ 7. Monitoramento de Serviços (Uptime)
+### 🎧 8. Gestão de Suporte de Elite (Support Desk)
 
-Painel de monitoramento com integração nativa ao **UptimeRobot**, exibindo status em tempo real, latência e histórico de disponibilidade de todos os sites da carteira.
+Sistema de atendimento profissional focado em SLAs e qualidade perceptível.
+
+- **Controle de Prioridades**: Chamados classificados como `Alta`, `Média` ou `Baixa` com SLAs automáticos.
+- **Monitoramento de SLA**: Indicadores temporais e alertas visuais para chamados próximos ao vencimento ou atrasados.
+- **Atribuição de Equipe**: Designação de responsáveis específicos para cada ticket.
+- **Dashboard de CSAT**: Monitoramento da percepção do cliente através de métricas de satisfação agregadas.
+- **Histórico Completo**: Log de todas as interações no chamado para auditoria e continuidade.
 
 ---
 
@@ -750,6 +759,9 @@ className="bg-gray-100 border-gray-200"
 - [x] Sistema de Temas Dinâmicos (Dark Absolute)
 - [x] CI/CD com GitHub Actions (5 pipelines)
 - [x] 🧬 Gestão de Ausências, Onboarding, PDI e eNPS
+- [x] 🎧 Suporte com SLA, CSAT e Atribuição de Técnicos
+- [x] 📈 Timeline de Vendas e Controle de Follow-up
+- [x] ⚠️ Alertas de Inadimplência Crítica no Financeiro
 - [ ] 📧 E-mail automático de aniversário para colaboradores
 - [ ] 📊 Dashboard de aniversariantes do mês
 - [ ] 🤖 Assistente inteligente via Gemini AI
@@ -796,7 +808,7 @@ MIT License — Copyright (c) 2026 Hub Symples LTDA
   <br />
   <img src="https://i.imgur.com/EFBaYb5.png" alt="Hub Central" width="80" />
   <br /><br />
-  <strong>Hub Central v1.9.0</strong>
+  <strong>Hub Central v2.0.0-rc1</strong>
   <br />
   <em>Modernidade · Automação · Resultados</em>
   <br /><br />
