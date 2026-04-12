@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { PDICategory } from './types/people';
 
 export const clientSchema = z.object({
   name: z.string().min(3, "O nome deve ter pelo menos 3 caracteres"),
@@ -260,7 +259,7 @@ export interface UserProfile {
   birthDate?: string; // Formato YYYY-MM-DD
   startDate?: string; // Data de contratação (YYYY-MM-DD)
   onboardingTasks?: OnboardingTask[];
-  pdiCategories?: PDICategory[];
+  pdiCategories?: { id: string; title: string; actions: { id: string; description: string; completed: boolean; completedAt?: number; }[]; }[];
   onboardingTemplateId?: string;
 }
 

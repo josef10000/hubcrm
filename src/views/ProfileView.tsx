@@ -170,6 +170,8 @@ export default function ProfileView() {
       setIsSaving(true); // Manter coerência com o original que setava true no finally também (bug original?)
       setIsSaving(false);
     }
+  };
+
   const handleAddVacation = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!uid || !newVacation.start || !newVacation.end) {
