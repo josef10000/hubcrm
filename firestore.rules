@@ -84,3 +84,4 @@ service cloud.firestore {
     }
   }
 }
+// Trigger deploy test to verify new GCP permissions
