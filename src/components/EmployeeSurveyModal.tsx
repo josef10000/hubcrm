@@ -23,9 +23,9 @@ export default function EmployeeSurveyModal() {
     
     if (!userProfile.lastEnpsResponse) return true;
 
-    const lastDate = userProfile.lastEnpsResponse.toMillis ? 
-      new Date(userProfile.lastEnpsResponse.toMillis()) : 
-      new Date(userProfile.lastEnpsResponse);
+    const lastDate = (userProfile.lastEnpsResponse as any)?.toMillis ? 
+      new Date((userProfile.lastEnpsResponse as any).toMillis()) : 
+      new Date(userProfile.lastEnpsResponse as any);
     
     const daysSinceLast = differenceInDays(new Date(), lastDate);
     

@@ -18,7 +18,9 @@ import {
   Trash2,
   ChevronDown,
   AlertTriangle,
-  Settings
+  Settings,
+  Plus,
+  X
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
