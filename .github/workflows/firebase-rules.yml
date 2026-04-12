@@ -2,24 +2,28 @@ name: Deploy Regras de Seguranca Firestore
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
     paths:
       - 'firestore.rules'
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
     paths:
       - 'firestore.rules'
 
 env:
+  # Garante compatibilidade com versões recentes do Node
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   deploy_rules:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Deploy ao Firebase Database
+      - name: Checkout do Código
+        uses: actions/checkout@v4
+
+      - name: Deploy Firestore Rules
         uses: w9jds/firebase-action@master
         with:
           args: deploy --only firestore:rules --project gassistant-83242
