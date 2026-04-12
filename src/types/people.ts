@@ -12,7 +12,7 @@ export interface VacationPeriod {
   userId: string;
   start: string; // YYYY-MM-DD
   end: string;   // YYYY-MM-DD
-  type: 'Férias' | 'Licença' | 'Folga' | 'Outro';
+  type: 'Férias' | 'Licença' | 'Folga' | 'Ausência' | 'Outro';
   reason?: 'Férias' | 'Falta' | 'Motivo Médico' | 'Licença Maternidade/Paternidade' | 'Outro';
   status: 'Pendente' | 'Aprovado' | 'Recusado' | 'Informado';
   createdAt: number;
