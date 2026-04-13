@@ -713,7 +713,7 @@ export default function ProfileView() {
                     </div>
                   </div>
 
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto overflow-y-auto max-h-[400px] custom-scrollbar pr-2">
                     <h4 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4">Histórico de Vendas Individual</h4>
                     <table className="w-full text-left border-collapse">
                       <thead>

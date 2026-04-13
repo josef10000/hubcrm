@@ -33,7 +33,7 @@ import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { VacationPeriod, PDICategory, PDIAction, UserProfilePeople } from '../types/people';
 import BroadcastTab from '../components/people/BroadcastTab';
-import MoodTracker from '../components/people/MoodTracker';
+
 import AssetManager from '../components/people/AssetManager';
 import SkillRadar from '../components/people/SkillRadar';
 import CareerTimeline from '../components/people/CareerTimeline';
@@ -481,9 +481,7 @@ export default function PeopleView() {
           {/* DASHBOARD TAB */}
           {activeTab === 'dashboard' && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-in fade-in duration-500">
-              <div className="md:col-span-1">
-                <MoodTracker />
-              </div>
+
               <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-6 shadow-xl">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="font-bold flex items-center gap-2 font-sans dark:text-white"><Smile className="text-yellow-500" /> Clima da Equipe</h3>
