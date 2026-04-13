@@ -42,6 +42,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Client has no email configured' });
     }
 
+    // Heurística para determinar qual valor exibir (Setup vs Mensalidade)
+    // Se o cliente ainda não está Ativo e existe Setup, mostramos o Setup.
+    const isSetupPhase = (clientData.status === 'Pendente' || clientData.status === 'Em Desenvolvimento') && (clientData.setupPrice || 0) > 0;
+    const currentValor = isSetupPhase ? (clientData.setupPrice || 0) : (clientData.planPrice || 0);
+
     let result;
     let subject = '';
     let type: 'WELCOME' | 'INVOICE' | 'OVERDUE' | 'RECEIPT' | 'WELCOME_SUBSCRIPTION' | 'WELCOME_LINK' = 'WELCOME';
@@ -50,7 +55,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'WELCOME_SUBSCRIPTION':
         type = 'WELCOME_SUBSCRIPTION';
         subject = 'Bem-vindo ao Hub Symples - Seu plano está pronto!';
-        const valSub = clientData.planPrice || 0;
+        const valSub = currentValor;
         const dueSub = clientData.nextDueDate ? clientData.nextDueDate.split('-').reverse().join('/') : 'A combinar';
         const linkSub = clientData.invoiceUrl || '';
         if (!linkSub) return res.status(400).json({ error: 'Nenhuma fatura/link disponível para este cliente' });
@@ -68,7 +73,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'WELCOME_LINK':
         type = 'WELCOME_LINK';
         subject = 'Sua Fatura - Hub Symples';
-        const valLink = clientData.planPrice || 0;
+        const valLink = currentValor;
         const dueLink = clientData.nextDueDate ? clientData.nextDueDate.split('-').reverse().join('/') : 'A combinar';
         const linkL = clientData.invoiceUrl || '';
         if (!linkL) return res.status(400).json({ error: 'Nenhum link de pagamento disponível para este cliente' });
@@ -94,7 +99,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (!clientData.invoiceUrl) {
           return res.status(400).json({ error: 'No invoice URL available for this client' });
         }
-        const valor = clientData.planPrice || 0;
+        const valor = currentValor;
         const vencimento = clientData.nextDueDate ? clientData.nextDueDate.split('-').reverse().join('/') : 'A combinar';
         subject = `Fatura - Plano ${clientData.plan}`;
         result = await sendFaturaEmitidaEmail(
@@ -112,7 +117,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (!clientData.invoiceUrl) {
           return res.status(400).json({ error: 'No invoice URL available for this client' });
         }
-        const v = clientData.planPrice || 0;
+        const v = currentValor;
         const ven = clientData.nextDueDate ? clientData.nextDueDate.split('-').reverse().join('/') : 'A combinar';
         subject = `Cobrança de Atraso - Plano ${clientData.plan}`;
         result = await sendFaturaVencimentoEmail(
