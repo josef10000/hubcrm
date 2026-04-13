@@ -89,8 +89,6 @@ export default function SupportView() {
               </div>
             </div>
           )}
-            </div>
-          )}
         </div>
 
         {/* SLA Summary Dashboard */}
@@ -106,7 +104,7 @@ export default function SupportView() {
           </div>
 
           <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-4 rounded-2xl">
-            <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-1">Vencendo Agora (<2h)</p>
+            <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-1">Vencendo Agora (&lt;2h)</p>
             <div className="flex items-center justify-between">
               <h3 className={`text-2xl font-bold ${slaMetrics.vencendoAgora > 0 ? 'text-amber-500' : 'text-gray-400'}`}>{slaMetrics.vencendoAgora}</h3>
               <div className={`p-2 rounded-lg ${slaMetrics.vencendoAgora > 0 ? 'bg-amber-500/20 text-amber-500' : 'bg-gray-500/10 text-gray-500'}`}>
@@ -116,7 +114,7 @@ export default function SupportView() {
           </div>
 
           <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-4 rounded-2xl">
-            <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-1">Em Alerta (<6h)</p>
+            <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-1">Em Alerta (&lt;6h)</p>
             <div className="flex items-center justify-between">
               <h3 className={`text-2xl font-bold ${slaMetrics.emAlerta > 0 ? 'text-blue-400' : 'text-gray-400'}`}>{slaMetrics.emAlerta}</h3>
               <div className={`p-2 rounded-lg ${slaMetrics.emAlerta > 0 ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-500/10 text-gray-500'}`}>
