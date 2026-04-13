@@ -9,7 +9,7 @@ interface BroadcastTabProps {
 }
 
 export default function BroadcastTab({ teamMembers }: BroadcastTabProps) {
-  const { userProfile } = useAuth();
+  const { userProfile, user } = useAuth();
   const [selectedUids, setSelectedUids] = useState<string[]>([]);
   const [hasButton, setHasButton] = useState(false);
   const [buttonUrl, setButtonUrl] = useState('');
@@ -56,10 +56,14 @@ export default function BroadcastTab({ teamMembers }: BroadcastTabProps) {
     setIsSending(true);
 
     try {
+      const idToken = await user?.getIdToken();
+      if (!idToken) throw new Error('Não autenticado');
+
       const response = await fetch('/api/team_handler?action=broadcast', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
         },
         body: JSON.stringify({
           uids: selectedUids,
