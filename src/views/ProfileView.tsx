@@ -419,34 +419,34 @@ export default function ProfileView() {
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-3xl border border-gray-200 dark:border-white/10 rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden">
               {/* Tabs */}
-              <div className="flex gap-4 mb-8">
+              <div className="flex gap-4 mb-8 overflow-x-auto custom-scrollbar pb-2">
                 <button 
                   onClick={() => setActiveTab('info')}
-                  className={`px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'info' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-500'}`}
+                  className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'info' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-500'}`}
                 >
                   Informações
                 </button>
                 <button 
                   onClick={() => setActiveTab('pdi')}
-                  className={`px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'pdi' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
+                  className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'pdi' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
                 >
                   Meu PDI
                 </button>
                 <button 
                   onClick={() => setActiveTab('inventory')}
-                  className={`px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'inventory' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
+                  className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'inventory' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
                 >
                   Ativos
                 </button>
                 <button 
                   onClick={() => setActiveTab('feedbacks')}
-                  className={`px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'feedbacks' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
+                  className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'feedbacks' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
                 >
                   Mural
                 </button>
                 <button 
                   onClick={() => setActiveTab('history')}
-                  className={`px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'history' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
+                  className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'history' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
                 >
                   Carreira
                 </button>
