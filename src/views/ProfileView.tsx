@@ -283,6 +283,7 @@ export default function ProfileView() {
               <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-1">{profile.displayName}</h2>
               <p className="text-sm font-bold text-primary-500 uppercase tracking-widest mb-4">{profile.jobTitle || profile.role}</p>
               
+              <div className="flex items-center justify-center gap-4 mb-8">
                 {profile.linkedin && (
                   <a href={profile.linkedin} target="_blank" rel="noopener noreferrer" className="p-3 bg-white/5 rounded-2xl hover:bg-[#0077b5] text-gray-400 hover:text-white transition-all">
                     <Linkedin size={20} />

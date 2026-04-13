@@ -371,6 +371,8 @@ export default function SettingsView() {
                     </button>
                   </div>
                 </div>
+              </div>
+            </div>
 
             <div className="bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-lg mb-8">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
