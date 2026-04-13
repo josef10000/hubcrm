@@ -202,6 +202,7 @@ Sistema de atendimento profissional focado em SLAs e qualidade perceptível.
 - **Gestão de Prioridades**: Classificação dinâmica (`Alta`, `Média`, `Baixa`) que dita o tom e a velocidade do atendimento.
 - **Monitoramento de SLA (Service Level Agreement)**: Cálculo em tempo real de horas restantes para resposta. Tickets atrasados exibem animação *pulse* e tempo excedido.
 - **CSAT (Customer Satisfaction Score)**: Ciclo fechado de feedback. Após a conclusão, o cliente avalia o atendimento com estrelas e texto.
+- **Visibilidade Restrita**: Métricas individuais de CSAT são visíveis apenas para Gestores e membros das equipes de Suporte e Sucesso do Cliente (ou cargos correlatos), protegendo a privacidade de performance de outras áreas.
 - **Dashboard de Performance**: Visão agregada do CSAT médio da equipe e volume de chamados por prioridade.
 - **Atribuição Inteligente**: Designação centralizada de técnicos responsáveis por cada ticket.
 
@@ -504,6 +505,7 @@ O Hub Central implementa **Role-Based Access Control (RBAC)** com 13 cargos espe
 ### Regras Especiais
 
 - **Super-Admin**: O e-mail proprietário é elevado automaticamente a `Administrador` em memória, independente do valor salvo no banco.
+- **Privacidade de Performance (CSAT)**: A média de satisfação individual nos perfis é exibida apenas se o usuário possuir roles de `Administrador`, `Gerente`, `Customer Success` ou `Suporte Técnico`, ou se o seu cargo contiver palavras-chave de atendimento (suporte, sucesso, etc).
 - **Firestore Rules**: Segurança server-side reforçada com funções `belongsToOrg()` e `isOrgAdmin()`.
 - **Configurações Universais**: Todos os cargos acessam Configurações para trocar tema e sair do sistema. Seções administrativas (etapas, checkout, contrato) são renderizadas condicionalmente apenas para Admin/Gerente.
 

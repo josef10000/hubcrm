@@ -54,9 +54,9 @@ export default function PeopleView() {
   } = useCRM();
 
   // Métrica CSAT Geral
-  const ratedRequests = supportRequests.filter(req => req.status === 'concluido' && req.rating);
+  const ratedRequests = supportRequests.filter(req => req.status === 'concluido' && req.csatScore);
   const csatScoreAvg = ratedRequests.length > 0 
-    ? (ratedRequests.reduce((acc, curr) => acc + curr.rating, 0) / ratedRequests.length).toFixed(1)
+    ? (ratedRequests.reduce((acc, curr) => acc + curr.csatScore, 0) / ratedRequests.length).toFixed(1)
     : null;
   const [showVacationModal, setShowVacationModal] = useState(false);
   const [newVacation, setNewVacation] = useState<Partial<VacationPeriod>>({

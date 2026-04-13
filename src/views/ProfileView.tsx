@@ -24,9 +24,9 @@ export default function ProfileView() {
   const navigate = useNavigate();
 
   // Métrica CSAT Individual
-  const memberRatedRequests = supportRequests.filter(req => req.assignedTo === uid && req.status === 'concluido' && req.rating);
+  const memberRatedRequests = supportRequests.filter(req => req.assignedTo === uid && req.status === 'concluido' && req.csatScore);
   const csatAvg = memberRatedRequests.length > 0
-    ? (memberRatedRequests.reduce((acc, curr) => acc + (curr.rating || 0), 0) / memberRatedRequests.length).toFixed(1)
+    ? (memberRatedRequests.reduce((acc, curr) => acc + (curr.csatScore || 0), 0) / memberRatedRequests.length).toFixed(1)
     : null;
   
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -291,21 +291,32 @@ export default function ProfileView() {
                 )}
               </div>
 
-              {/* CSAT Individual */}
-              {csatAvg && (
-                <div className="mt-8 pt-8 border-t border-gray-100 dark:border-white/5">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-3">Média de Satisfação</p>
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="flex gap-1">
-                      {[1, 2, 3, 4, 5].map((s) => (
-                        <Star key={s} size={16} className={Number(csatAvg) >= s ? 'fill-amber-500 text-amber-500' : 'text-gray-300 dark:text-white/10'} />
-                      ))}
+              {/* CSAT Individual - Visível apenas para gestão e atendimento */}
+              {(() => {
+                const showCSAT = 
+                  profile?.role === 'Administrador' || 
+                  profile?.role === 'Gerente' || 
+                  profile?.role === 'Customer Success' || 
+                  profile?.role === 'Suporte Técnico' || 
+                  ['suporte', 'atendimento', 'sucesso', 'support', 'success', 'service'].some(keyword => 
+                    profile?.jobTitle?.toLowerCase().includes(keyword)
+                  );
+
+                return showCSAT && csatAvg ? (
+                  <div className="mt-8 pt-8 border-t border-gray-100 dark:border-white/5">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-3">Média de Satisfação</p>
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="flex gap-1">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <Star key={s} size={16} className={Number(csatAvg) >= s ? 'fill-amber-500 text-amber-500' : 'text-gray-300 dark:text-white/10'} />
+                        ))}
+                      </div>
+                      <span className="text-2xl font-black text-gray-900 dark:text-white">{csatAvg}</span>
+                      <p className="text-[10px] text-gray-500">Baseado em {memberRatedRequests.length} avaliações</p>
                     </div>
-                    <span className="text-2xl font-black text-gray-900 dark:text-white">{csatAvg}</span>
-                    <p className="text-[10px] text-gray-500">Baseado em {memberRatedRequests.length} avaliações</p>
                   </div>
-                </div>
-              )}
+                ) : null;
+              })()}
             </motion.div>
 
             {/* Superior Imediato */}
