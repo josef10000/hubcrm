@@ -167,11 +167,16 @@ Um fluxo de auto-atendimento completo que permite ao cliente se cadastrar, envia
 
 Dashboard analítico completo para tomada de decisão baseada em dados.
 
+- **Health Score Automatizado (0-100)**: Cálculo multidimensional que avalia a saúde da conta em tempo real.
+  - **Lógica de Cálculo**:
+    - `40%` Status Operacional (Ativo/Desenvolvimento/Cancelado)
+    - `30%` Status Financeiro Sync (Integração direta com status Asaas)
+    - `30%` Engajamento (Progresso percentual de etapas e briefing)
+    - `Bonus/Penalty` NPS (Promotores ganham +10, Detratores perdem -20)
+- **Matriz de Risco Crítico**: Indicadores de cor (`Emerald` >= 80, `Amber` >= 50, `Rose` < 50) para detecção proativa de churn.
 - **KPIs em Tempo Real**: MRR, ARR, Churn Rate, LTV, CAC e taxa de conversão.
-- **Gráficos Interativos**: Charts em Recharts com filtros por período.
-- **Distribuição de Receita**: Análise por plano, canal de aquisição e status.
-- **Métricas de Saúde (Health Score)**: Score de 0-100 calculado automaticamente combinando status financeiro, progresso do projeto e NPS.
-- **Painel de Alerta**: Detecção precoce de clientes em risco de churn baseado em comportamento e pagamentos.
+- **Dashboard de Tendências**: Gráficos interativos em Recharts com filtros por período.
+- **Distribuição de Receita**: Análise granular por plano e canal de aquisição.
 
 ---
 
@@ -201,12 +206,15 @@ Calendário integrado com prazos de entrega, datas de pagamento e eventos operac
 
 Sistema de atendimento profissional focado em SLAs e qualidade perceptível.
 
-- **Gestão de Prioridades**: Classificação dinâmica (`Alta`, `Média`, `Baixa`) que dita o tom e a velocidade do atendimento.
-- **Monitoramento de SLA (Service Level Agreement)**: Cálculo em tempo real de horas restantes para resposta. Tickets atrasados exibem animação *pulse* e tempo excedido.
-- **CSAT (Customer Satisfaction Score)**: Ciclo fechado de feedback. Após a conclusão, o cliente avalia o atendimento com estrelas e texto.
-- **Visibilidade Restrita**: Métricas individuais de CSAT são visíveis apenas para Gestores e membros das equipes de Suporte e Sucesso do Cliente (ou cargos correlatos), protegendo a privacidade de performance de outras áreas.
-- **Dashboard de Performance**: Visão agregada do CSAT médio da equipe e volume de chamados por prioridade.
-- **Atribuição Inteligente**: Designação centralizada de técnicos responsáveis por cada ticket.
+- **Dashboard de SLA Tracker**: Painel executivo no topo da visão que categoriza chamados em 4 estados críticos:
+  - 🔴 **Atrasados**: Prazo de resposta expirado (Animação *Pulse*).
+  - 🟠 **Vencendo Agora**: Menos de 2 horas para o limite (Efeito *Glow*).
+  - 🔵 **Em Alerta**: Menos de 6 horas para o limite.
+  - 🟢 **No Prazo**: Dentro dos parâmetros contratuais.
+- **Ordenação por Prioridade de SLA**: Sistema inteligente que reorganiza a fila de atendimento priorizando tickets próximos do vencimento ou com maior urgência (`Alta` > `Média` > `Baixa`).
+- **Cálculo de SLA Dinâmico**: Lógica baseada em Horas Úteis com prazos diferenciados por prioridade.
+- **CSAT (Customer Satisfaction Score)**: Ciclo fechado de feedback. Após a conclusão, o cliente avalia o atendimento com estrelas (1-5) e feedback textual.
+- **Visibilidade Restrita de Performance**: Médias de satisfação individuais protegidas por RBAC, visíveis apenas para lideranças de CS/Suporte.
 
 ---
 
