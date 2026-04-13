@@ -157,10 +157,7 @@ Um fluxo de auto-atendimento completo que permite ao cliente se cadastrar, envia
 - **Timeline de Projeto**: Barra de progresso visual com etapas personalizáveis (Design, Desenvolvimento, Revisão, Deploy, etc.).
 - **Central de Pagamentos**: Histórico completo de faturas com status em tempo real (Pago, Pendente, Vencido) + links diretos para PIX/Boleto.
 - **Central de Chamados**: Abertura e acompanhamento de tickets de suporte com histórico.
-- **Pesquisa NPS (Net Promoter Score)**: Indicador de satisfação após chamados ou no portal. Emprega a escala clássica (0-10):
-  - 🟢 **Promotores (9 a 10)**: Ganham bônus de +10 no Health Score da conta.
-  - 🟡 **Neutros (7 a 8)**: Não afetam o score.
-  - 🔴 **Detratores (0 a 6)**: Aplicam penalidade grave de -20 no Health Score da conta.
+- **Pesquisa CSAT (Customer Satisfaction)**: Avaliação de satisfação do cliente disparada após a resolução de um chamado técnico, utilizando uma escala visual de 1 a 5 estrelas.
 - **Programa de Indicações**: Sistema completo de referral marketing com geração de códigos, rastreamento e recompensas.
 - **Pesquisa CSAT Automática**: Ao concluir um chamado no suporte, o cliente é convidado a avaliar o atendimento (1-5 estrelas + comentário).
 - **Avisos Globais**: Comunicados configuráveis pelo admin exibidos no topo do portal (recesso, atualizações, novidades).
@@ -176,7 +173,7 @@ Dashboard analítico completo para tomada de decisão baseada em dados.
     - `40 pontos`: Cliente "Ativo". (Desenvolvimento rende 30. Inadimplente/Cancelado rendem 0).
     - `30 pontos`: Pagamento Asaas "RECEIVED". (Pendente rende 15. Atrasado rende 0).
     - `30 pontos`: Rate percentual (`%`) de etapas concluídas no portal vs total de etapas.
-    - `Ajuste NPS`: Bônus/Penalidade dinâmica (até +10 para Promotores 9-10; até -20 para Detratores 0-6).
+    - `Ajuste CSAT / NPS Interno`: Bônus/Penalidade dinâmica extra baseada no histórico de feedbacks estruturados da conta.
 - **Matriz de Risco Crítico**: Indicadores de cor (`Emerald` >= 80, `Amber` >= 50, `Rose` < 50) para detecção proativa de churn.
 - **KPIs em Tempo Real**: MRR, ARR, Churn Rate, LTV, CAC e taxa de conversão.
 - **Análise de ROI por Oferta**: Módulo especializado que cruza o investimento em Ads (Meta/Google) com a receita direta gerada por cada produto, calculando lucratividade real e CAC.
@@ -251,7 +248,7 @@ Módulo completo de People Management para escalar a cultura e produtividade da 
 - **Gestão de Ausências (Férias)**: Fluxo completo de solicitação, aprovação e controle de férias/folgas com log de status.
 - **Onboarding Checklists**: Gestão de tarefas de integração para novos talentos, com acompanhamento de progresso percentual.
 - **PDI (Plano de Desenvolvimento)**: Árvore de competências e trilha de carreira com categorias e ações de desenvolvimento.
-- **Pesquisa de Clima (eNPS)**: Sistema 100% anônimo para medir a lealdade e satisfação da equipe, com cálculo automático de promotores e detratores.
+- **Pesquisa de Clima (eNPS)**: Pesquisa recorrente (ex: a cada 30 dias) baseada na escala clássica de 0 a 10 para medir o engajamento e satisfação interna da equipe. Classifica de forma 100% anônima os membros como Promotores (9-10), Neutros (7-8) ou Detratores (0-6).
 - **Perfis Profissionais**: Página completa com foto, bio, cargo, contatos sociais e reporting lines.
 - **Sistema de Convites**: Convite por e-mail com link de aceite e expiração configurável (72h padrão).
 - **Edição Segura**: Apenas o próprio usuário ou Administradores podem editar perfis.
