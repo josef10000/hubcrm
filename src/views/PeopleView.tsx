@@ -653,8 +653,10 @@ export default function PeopleView() {
                                  </button>
                                ))}
                              </div>
-                                                  {memberSubTab === 'overview' && (
-                             <div className="animate-in fade-in slide-in-from-right duration-300">
+                           </div>
+                           
+                           {memberSubTab === 'overview' && (
+                              <div className="animate-in fade-in slide-in-from-right duration-300">
                                 <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6 font-sans">Checklist de Onboarding</h4>
                                 {selectedMember.onboardingTasks ? (
                                    <div className="space-y-2">
