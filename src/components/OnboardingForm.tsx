@@ -5,6 +5,7 @@ import { db } from '../lib/firebase';
 import { CheckCircle, Globe, Building2, Mail, Phone, User as UserIcon, FileText, Upload, Image as ImageIcon, X } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
 import { getPlanPrice, getSetupPrice } from '../helpers';
+import { uploadImageToImgBB } from '../lib/imgbb';
 
 export default function OnboardingForm() {
   const { orgId, clientId } = useParams<{ orgId: string, clientId?: string }>();
@@ -593,15 +594,20 @@ export default function OnboardingForm() {
                               onChange={async (e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
-                                  if (file.size > 2 * 1024 * 1024) {
-                                    toast.error('O arquivo deve ter no máximo 2MB');
+                                  if (file.size > 10 * 1024 * 1024) {
+                                    toast.error('O arquivo deve ter no máximo 10MB');
                                     return;
                                   }
-                                  const reader = new FileReader();
-                                  reader.onloadend = () => {
-                                    setAnswers({...answers, [q.id]: reader.result as string});
-                                  };
-                                  reader.readAsDataURL(file);
+                                  
+                                  const toastId = toast.loading('Processando imagem...', { duration: Infinity });
+                                  
+                                  try {
+                                    const imageUrl = await uploadImageToImgBB(file);
+                                    setAnswers({...answers, [q.id]: imageUrl});
+                                    toast.success('Imagem anexada!', { id: toastId, duration: 3000 });
+                                  } catch (error: any) {
+                                    toast.error(`Erro no upload: ${error.message}`, { id: toastId, duration: 4000 });
+                                  }
                                 }
                               }}
                             />

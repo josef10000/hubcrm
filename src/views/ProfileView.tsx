@@ -9,7 +9,8 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { useCRM } from '../contexts/CRMContext';
 import { db } from '../lib/firebase';
-import { doc, getDoc, collection, setDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { uploadImageToImgBB } from '../lib/imgbb';
 import { VacationPeriod } from '../types/people';
 import { UserProfile } from '../types';
 import { PDICategory } from '../types/people';
@@ -192,22 +193,15 @@ export default function ProfileView() {
 
     setUploading(true);
     try {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setFormData(prev => ({ ...prev, photoURL: base64String }));
-        toast.success('Foto carregada! Clique em "Salvar Alterações" para confirmar.');
-        setUploading(false);
-      };
+      if (file.size > 10 * 1024 * 1024) throw new Error("A imagem deve ter no máximo 10MB");
       
-      reader.onerror = () => {
-        toast.error('Erro ao processar a imagem');
-        setUploading(false);
-      };
-
-      reader.readAsDataURL(file);
+      const imageUrl = await uploadImageToImgBB(file);
+      
+      setFormData(prev => ({ ...prev, photoURL: imageUrl }));
+      toast.success('Foto carregada! Clique em "Salvar Alterações" para confirmar.');
     } catch (error: any) {
       toast.error(`Erro ao processar imagem: ${error.message}`);
+    } finally {
       setUploading(false);
     }
   };
