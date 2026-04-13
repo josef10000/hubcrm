@@ -4,6 +4,7 @@ import { Client } from '../../types';
 import { getPlanPrice } from '../../helpers';
 import { toast } from 'sonner';
 import { calculateHealthScore, getHealthColor, getHealthLabel } from '../../helpers/healthCalculation';
+import { useCRM } from '../../contexts/CRMContext';
 
 
 interface ClientsGridProps {
@@ -27,6 +28,7 @@ export default function ClientsGrid({
   isChurnRisk,
   churnRiskDays
 }: ClientsGridProps) {
+  const { tags } = useCRM();
 
   if (dashboardMode === 'list') {
     return (
@@ -45,6 +47,29 @@ export default function ClientsGrid({
                   </span>
                 )}
               </h3>
+              
+              {client.tagIds && client.tagIds.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1 mb-2">
+                  {client.tagIds.map(tagId => {
+                    const tag = tags.find(t => t.id === tagId);
+                    if (!tag) return null;
+                    return (
+                      <span 
+                        key={tagId} 
+                        className="px-2 py-0.5 rounded-full text-[9px] font-bold border"
+                        style={{ 
+                          backgroundColor: tag.color + '20', 
+                          color: tag.color,
+                          borderColor: tag.color + '40'
+                        }}
+                      >
+                        {tag.name}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+
               <div className="flex flex-col items-end space-y-2">
                 {/* Health Score Indicator */}
                 <div 
@@ -231,6 +256,24 @@ export default function ClientsGrid({
                       </span>
                     )}
                   </h4>
+
+                  {client.tagIds && client.tagIds.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {client.tagIds.map(tagId => {
+                        const tag = tags.find(t => t.id === tagId);
+                        if (!tag) return null;
+                        return (
+                          <div 
+                            key={tagId} 
+                            className="w-2 h-2 rounded-full shadow-sm"
+                            style={{ backgroundColor: tag.color }}
+                            title={tag.name}
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
+
                   <div className="flex items-center text-gray-500 dark:text-gray-400 text-xs mb-2">
                     <Phone size={12} className="mr-2 text-primary-400" />
                     {client.whatsapp}

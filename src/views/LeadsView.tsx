@@ -4,7 +4,7 @@ import { useCRM } from '../contexts/CRMContext';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
 import { Lead, LeadStatus, LeadActivity } from '../types';
-import { Users, Plus, Phone, Mail, DollarSign, Trash2, X, ChevronDown, TrendingUp, Target, UserPlus, ArrowRight, GripVertical, Search, Filter, Calendar, History, MessageSquare, PhoneCall, UserCircle, Send } from 'lucide-react';
+import { Users, Plus, Phone, Mail, DollarSign, Trash2, X, ChevronDown, TrendingUp, Target, UserPlus, ArrowRight, GripVertical, Search, Filter, Calendar, History, MessageSquare, PhoneCall, UserCircle, Send, Tag as TagIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -31,17 +31,19 @@ interface LeadFormData {
   niche: string;
   nextFollowUp: string;
   assignedTo: string;
+  tagIds: string[];
 }
 
 const emptyForm: LeadFormData = { 
   name: '', whatsapp: '', email: '', leadSource: '', 
   estimatedValue: '', notes: '', plan: '', niche: '', 
-  nextFollowUp: '', assignedTo: '' 
+  nextFollowUp: '', assignedTo: '',
+  tagIds: []
 };
 
 export default function LeadsView() {
   const { user } = useAuth();
-  const { leads, effectiveOrgId, userProfile, teamProfiles } = useCRM();
+  const { leads, effectiveOrgId, userProfile, teamProfiles, tags } = useCRM();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<LeadFormData>(emptyForm);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
@@ -52,10 +54,12 @@ export default function LeadsView() {
   const [activeTab, setActiveTab] = useState<'form' | 'timeline'>('form');
   const [newActivityText, setNewActivityText] = useState('');
   const [isSubmittingActivity, setIsSubmittingActivity] = useState(false);
+  const [filterTag, setFilterTag] = useState('all');
   const filteredLeads = leads.filter(l => {
     const matchesSearch = !searchTerm || l.name?.toLowerCase().includes(searchTerm.toLowerCase()) || l.whatsapp?.includes(searchTerm);
     const matchesSource = filterSource === 'all' || l.leadSource === filterSource;
-    return matchesSearch && matchesSource;
+    const matchesTag = filterTag === 'all' || l.tagIds?.includes(filterTag);
+    return matchesSearch && matchesSource && matchesTag;
   });
 
 
@@ -75,7 +79,8 @@ export default function LeadsView() {
         updatedAt: Date.now(),
         assignedTo: (userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente') 
           ? (formData.assignedTo || user?.uid) 
-          : (user?.uid)
+          : (user?.uid),
+        tagIds: formData.tagIds
       };
       // Clean undefined values
       Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
@@ -148,6 +153,7 @@ export default function LeadsView() {
       notes: lead.notes || '', plan: lead.plan || '', niche: lead.niche || '',
       nextFollowUp: lead.nextFollowUp ? new Date(lead.nextFollowUp).toISOString().split('T')[0] : '',
       assignedTo: lead.assignedTo || '',
+      tagIds: lead.tagIds || []
     });
     setActiveTab('form');
     setIsModalOpen(true);
@@ -297,6 +303,17 @@ export default function LeadsView() {
           </select>
           <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
         </div>
+        <div className="relative">
+          <TagIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+          <select
+            value={filterTag} onChange={(e) => setFilterTag(e.target.value)}
+            className="pl-10 pr-8 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500/50 outline-none text-sm appearance-none cursor-pointer min-w-[180px]"
+          >
+            <option value="all">Todas as Tags</option>
+            {tags.map(tag => <option key={tag.id} value={tag.id}>{tag.name}</option>)}
+          </select>
+          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+        </div>
       </div>
 
       {/* Kanban Board */}
@@ -356,11 +373,24 @@ export default function LeadsView() {
                         </div>
                       )}
                       <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5">
-                        {lead.estimatedValue ? (
-                          <span className="text-xs font-semibold text-emerald-400">
-                            R$ {lead.estimatedValue.toLocaleString('pt-BR')}
-                          </span>
                         ) : <span />}
+                        
+                        {lead.tagIds && lead.tagIds.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {lead.tagIds.map(tagId => {
+                              const tag = tags.find(t => t.id === tagId);
+                              if (!tag) return null;
+                              return (
+                                <div 
+                                  key={tagId} 
+                                  className="w-2 h-2 rounded-full shadow-sm"
+                                  style={{ backgroundColor: tag.color }}
+                                  title={tag.name}
+                                />
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                       
                       {lead.nextFollowUp && (
@@ -494,6 +524,36 @@ export default function LeadsView() {
                     <span className="text-sm text-gray-400">Atribuído automaticamente a você</span>
                   </div>
                 )}
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 font-medium mb-1.5">Tags / Etiquetas</label>
+                <div className="flex flex-wrap gap-2">
+                  {tags.map(tag => {
+                    const isSelected = formData.tagIds.includes(tag.id);
+                    return (
+                      <button
+                        key={tag.id}
+                        onClick={() => {
+                          const newTags = isSelected
+                            ? formData.tagIds.filter(id => id !== tag.id)
+                            : [...formData.tagIds, tag.id];
+                          setFormData({ ...formData, tagIds: newTags });
+                        }}
+                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all border ${
+                          isSelected 
+                            ? 'bg-primary-500/20 text-white border-primary-500' 
+                            : 'bg-white/5 text-gray-500 border-white/10 hover:border-white/20'
+                        }`}
+                        style={isSelected ? { borderColor: tag.color, backgroundColor: tag.color + '20' } : {}}
+                      >
+                        {tag.name}
+                      </button>
+                    );
+                  })}
+                  {tags.length === 0 && (
+                    <p className="text-[10px] text-gray-600 italic">Cadastre tags nas configurações para segmentar.</p>
+                  )}
+                </div>
               </div>
               <div>
                 <label className="block text-xs text-gray-400 font-medium mb-1.5">Observações</label>

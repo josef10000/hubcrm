@@ -8,6 +8,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
 import { OnboardingQuestion } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import TagManager from '../components/settings/TagManager';
 
 export default function SettingsView() {
   const { themeColor, setThemeColor } = useUI();
@@ -92,6 +93,12 @@ export default function SettingsView() {
             </div>
           </div>
         </div>
+
+        {isAdminOrGerente && (
+          <div className="mb-8">
+            <TagManager />
+          </div>
+        )}
 
         {isAdminOrGerente && (
           <>

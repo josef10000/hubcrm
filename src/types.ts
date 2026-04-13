@@ -78,6 +78,13 @@ export interface Offer {
   createdAt: number;
 }
 
+export interface Tag {
+  id: string;
+  name: string;
+  color: string;
+  icon?: string;
+}
+
 export interface Client {
   id: string; 
   name: string; 
@@ -133,6 +140,7 @@ export interface Client {
   asaasNotificationsEnabled?: boolean;
   emailHistory?: EmailHistoryEntry[];
   assignedTo?: string;
+  tagIds?: string[];
 }
 
 export interface OnboardingQuestion {
@@ -219,6 +227,7 @@ export interface Lead {
   assignedTo?: string;
   activities?: LeadActivity[];
   nextFollowUp?: number;
+  tagIds?: string[];
 }
 
 export interface SupportRequest {

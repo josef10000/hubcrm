@@ -6,7 +6,8 @@ export function useFilteredClients(
   clients: Client[],
   searchTerm: string,
   filterStatus: SiteStatus | 'Todos',
-  sortBy: 'recent' | 'alphabetical' | 'value'
+  sortBy: 'recent' | 'alphabetical' | 'value',
+  filterTagId: string = 'all'
 ) {
   const deferredSearchTerm = useDeferredValue(searchTerm);
 
@@ -20,7 +21,8 @@ export function useFilteredClients(
         (c.niche && c.niche.toLowerCase().includes(searchLower));
         
       const matchesStatus = filterStatus === 'Todos' || c.status === filterStatus;
-      return matchesSearch && matchesStatus;
+      const matchesTag = filterTagId === 'all' || (c.tagIds || []).includes(filterTagId);
+      return matchesSearch && matchesStatus && matchesTag;
     });
 
     result.sort((a, b) => {
@@ -30,5 +32,5 @@ export function useFilteredClients(
     });
 
     return result;
-  }, [clients, deferredSearchTerm, filterStatus, sortBy]);
+  }, [clients, deferredSearchTerm, filterStatus, sortBy, filterTagId]);
 }

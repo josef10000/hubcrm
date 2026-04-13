@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, AlignLeft, RefreshCw, ArrowDownAZ, Clock } from 'lucide-react';
+import { LayoutDashboard, AlignLeft, RefreshCw, ArrowDownAZ, Clock, Tag as TagIcon, ChevronDown, Filter } from 'lucide-react';
 import { useCRM } from '../contexts/CRMContext';
 import { useUI } from '../contexts/UIContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -23,7 +23,8 @@ export default function DashboardView() {
     syncPayments,
     isSyncing,
     setEditingClient,
-    churnRiskDays
+    churnRiskDays,
+    tags
   } = useCRM();
 
   const {
@@ -34,8 +35,9 @@ export default function DashboardView() {
     sortBy, setSortBy,
     searchTerm
   } = useUI();
+  const [filterTagId, setFilterTagId] = React.useState('all');
 
-  const filteredClients = useFilteredClients(clients, searchTerm, filterStatus, sortBy);
+  const filteredClients = useFilteredClients(clients, searchTerm, filterStatus, sortBy, filterTagId);
 
   const indexOfLastClient = currentPage * clientsPerPage;
   const indexOfFirstClient = indexOfLastClient - clientsPerPage;
@@ -163,6 +165,21 @@ export default function DashboardView() {
             <div className="w-px h-6 bg-gray-200 dark:bg-white/10 mx-1"></div>
             <button onClick={() => setSortBy('recent')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${sortBy === 'recent' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}><Clock size={16} className="mr-2"/> Recentes</button>
             <button onClick={() => setSortBy('alphabetical')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${sortBy === 'alphabetical' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}><ArrowDownAZ size={16} className="mr-2"/> A-Z</button>
+            <div className="w-px h-6 bg-gray-200 dark:bg-white/10 mx-1"></div>
+            
+            <div className="relative">
+              <TagIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <select 
+                value={filterTagId}
+                onChange={(e) => setFilterTagId(e.target.value)}
+                className="pl-9 pr-6 py-2 bg-transparent text-sm text-gray-400 hover:text-white outline-none cursor-pointer appearance-none min-w-[120px]"
+              >
+                <option value="all" className="bg-gray-900">Todas as Tags</option>
+                {tags.map(tag => (
+                  <option key={tag.id} value={tag.id} className="bg-gray-900">{tag.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 

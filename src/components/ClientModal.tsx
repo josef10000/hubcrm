@@ -13,6 +13,7 @@ import { Client, ClientLog, ClientCredential, ClientStage, OnboardingQuestion, O
 import { getPlanPrice, getSetupPrice } from '../helpers';
 import { useCRM } from '../contexts/CRMContext';
 import { useAuth } from '../contexts/AuthContext';
+import { Tag as LucideTag } from 'lucide-react';
 
 // ── Tab Components ──
 import HistoryTab from './client-modal/HistoryTab';
@@ -25,7 +26,7 @@ import ContractsTab from './client-modal/ContractsTab';
 export default
 function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardingQuestions, user, offers }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, onDelete?: (id: string) => void, initialData: Client | null, onboardingQuestions: OnboardingQuestion[], user: User, offers: Offer[] }) {
   const { userProfile } = useAuth();
-  const { defaultContractText, effectiveOrgId } = useCRM();
+  const { defaultContractText, effectiveOrgId, tags } = useCRM();
   const activeOffers = offers.filter(o => o.active);
   const defaultOffer = activeOffers.length > 0 ? activeOffers[0] : null;
 
@@ -454,8 +455,41 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Nicho / Área de Atuação</label>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5">Nicho / Área de Atuação</label>
                     <input type="text" name="niche" value={formData.niche || ''} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" placeholder="Ex: Advogado, Clínica, E-commerce..." />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Tags / Etiquetas</label>
+                    <div className="flex flex-wrap gap-2">
+                      {tags.map(tag => {
+                        const isSelected = (formData.tagIds || []).includes(tag.id);
+                        return (
+                          <button
+                            key={tag.id}
+                            type="button"
+                            onClick={() => {
+                              const currentTags = formData.tagIds || [];
+                              const newTags = isSelected
+                                ? currentTags.filter(id => id !== tag.id)
+                                : [...currentTags, tag.id];
+                              setFormData({ ...formData, tagIds: newTags });
+                            }}
+                            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all border ${
+                              isSelected 
+                                ? 'bg-primary-500/20 text-white' 
+                                : 'bg-white/5 text-gray-500 border-white/5 hover:border-white/10'
+                            }`}
+                            style={isSelected ? { borderColor: tag.color, backgroundColor: tag.color + '20', color: tag.color } : {}}
+                          >
+                            {tag.name}
+                          </button>
+                        );
+                      })}
+                      {tags.length === 0 && (
+                        <p className="text-[10px] text-gray-500 italic">Cadastre tags nas configurações.</p>
+                      )}
+                    </div>
                   </div>
 
                   <div>

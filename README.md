@@ -7,7 +7,7 @@
 Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.
 
   <p>
-    <img src="https://img.shields.io/badge/Version-2.2.0-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-2.3.0-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Status-Production_Ready-22c55e?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge&labelColor=111111" alt="License" />
@@ -128,6 +128,16 @@ Gestão intuitiva de leads com pipeline visual em **Kanban** ou **Lista**, atrib
 - **Timeline de Atividades (Bussiness Intelligence)**: Histórico atômico dentro de cada lead. Registra Notas, Chamadas, Reuniões e mudanças de status com carimbo de data, hora e responsável.
 - **Lembretes de Follow-up (Sales Ops)**: Campo "Próximo Contato" com lógica de cores. Leads com follow-up atrasado brilham em vermelho no Kanban, enquanto próximos contatos aparecem em azul.
 - **Isolamento Comercial**: SDRs e Executives visualizam **apenas seus próprios leads**, enquanto Gerentes e Admins possuem visão global do pipeline.
+- **Segmentação por Etiquetas (Tags)**: Classificação granular de leads com cores personalizadas para identificar nichos, urgências ou origens específicas diretamente no Kanban.
+
+---
+
+### 📋 2. CRM & Gestão de Clientes Ativos
+
+Gestão centralizada da base de clientes com automação financeira e segmentação avançada.
+
+- **Segmentação Estratégica**: Sistema de etiquetas (Tags) unificado entre Funil e Dashboard para categorização de clientes (ex: VIP, Risco, Projeto Especial).
+- **Filtragem Dinâmica**: Dashboard com filtros em tempo real por Status, Tag e Ordenação.
 
 ---
 
@@ -793,7 +803,7 @@ className="bg-gray-100 border-gray-200"
 - [x] 💰 **FinOps Avançado**: Rentabilidade Real (Desconto de Comissões), ROI por Oferta e Gestão de Ads (Fase 2)
 - [x] 🔮 **Projeção de Fluxo de Caixa Inteligente** com capacidade de investimento em Ads (Fase 2)
 - [ ] 📧 Automação de E-mails de Aniversário
-- [ ] 🏷️ Sistema de tags e segmentação de clientes
+- [x] 🏷️ Sistema de tags e segmentação de clientes
 
 ---
 

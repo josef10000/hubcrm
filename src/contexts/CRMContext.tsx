@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { collection, doc, setDoc, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Client, Offer, Expense, Transaction, TransactionCategory, Budget, Lead, UserProfile, CommissionEntry } from '../types';
+import { Client, Offer, Expense, Transaction, TransactionCategory, Budget, Lead, UserProfile, CommissionEntry, Tag } from '../types';
 import { VacationPeriod } from '../types/people';
 import { useAuth } from './AuthContext';
 import { calculateCommissionForClient } from '../helpers/commissionCalculation';
@@ -29,6 +29,7 @@ interface CRMContextType {
   services: any[];
   vacations: VacationPeriod[];
   teamProfiles: UserProfile[];
+  tags: Tag[];
   activeLeadsCount: number;
   effectiveOrgId: string;
   userProfile: any | null;
@@ -130,6 +131,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   const [vacations, setVacations] = useState<VacationPeriod[]>([]);
   const [teamProfiles, setTeamProfiles] = useState<UserProfile[]>([]);
   const [commissions, setCommissions] = useState<CommissionEntry[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -169,6 +171,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     let unsubscribeRequests: () => void = () => { };
     let unsubscribeOffers: () => void = () => { };
     let unsubServices: () => void = () => { };
+    let unsubTags: () => void = () => { };
 
     try {
       const offersRef = collection(db, 'organizations', effectiveOrgId, 'offers');
@@ -269,6 +272,14 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         setCommissions(loaded.sort((a, b) => b.date - a.date));
       });
 
+      // Listener para Tags
+      const tagsRef = collection(db, 'organizations', effectiveOrgId, 'tags');
+      unsubTags = onSnapshot(tagsRef, (snapshot) => {
+        const loaded: Tag[] = [];
+        snapshot.forEach((d) => loaded.push({ ...d.data(), id: d.id } as Tag));
+        setTags(loaded.sort((a, b) => a.name.localeCompare(b.name)));
+      });
+
       timeoutId = setTimeout(() => {
         console.warn('Firestore initialization timed out.');
         setLoading(false);
@@ -284,6 +295,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         unsubProfiles();
         unsubVacations();
         unsubCommissions();
+        unsubTags();
         clearTimeout(timeoutId);
       };
     } catch (err: any) {
@@ -383,7 +395,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       }
     },
     isChurnRisk: clientActions.isChurnRisk, isComboNearRenewal: clientActions.isComboNearRenewal,
-    effectiveOrgId, userProfile, vacations, teamProfiles, commissions, offerActions
+    effectiveOrgId, userProfile, vacations, teamProfiles, commissions, tags, offerActions
   };
 
   return <CRMContext.Provider value={value}>{children}</CRMContext.Provider>;
