@@ -373,7 +373,6 @@ export default function LeadsView() {
                         </div>
                       )}
                       <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5">
-                        ) : <span />}
                         
                         {lead.tagIds && lead.tagIds.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-1">
