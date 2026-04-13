@@ -10,6 +10,8 @@ import AlertPanels from '../components/dashboard/AlertPanels';
 import MetricsGrid from '../components/dashboard/MetricsGrid';
 import FinancialCharts from '../components/dashboard/FinancialCharts';
 import ClientsGrid from '../components/dashboard/ClientsGrid';
+import { calculateHealthScore } from '../helpers/healthCalculation';
+
 
 export default function DashboardView() {
   const { user } = useAuth();
@@ -60,6 +62,11 @@ export default function DashboardView() {
     return acc + getPlanPrice(c.plan, c.billingCycle, c);
   }, 0);
 
+  const averageHealthScore = clients.length > 0
+    ? Math.round(clients.reduce((acc, c) => acc + calculateHealthScore(c), 0) / clients.length)
+    : 100;
+
+
   // Chart Data
   const statusData = [
     { name: 'Em Dev', value: clients.filter(c => c.status === 'Em Desenvolvimento').length, color: '#eab308' },
@@ -98,8 +105,10 @@ export default function DashboardView() {
           mrr={mrr}
           overdueAmount={overdueAmount}
           expectedThisMonth={expectedThisMonth}
+          averageHealthScore={averageHealthScore}
           role={userProfile?.role}
         />
+
 
         {(userProfile?.role === 'Administrador' || 
           userProfile?.role === 'Gerente' || 

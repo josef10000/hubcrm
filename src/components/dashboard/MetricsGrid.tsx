@@ -1,12 +1,15 @@
 import React from 'react';
-import { Users, BarChart3, DollarSign, Calendar } from 'lucide-react';
+import { Users, BarChart3, DollarSign, Calendar, Activity } from 'lucide-react';
+
 
 interface MetricsGridProps {
   activeClients: number;
   mrr: number;
   overdueAmount: number;
   expectedThisMonth: number;
+  averageHealthScore: number;
   role?: string;
+
 }
 
 export default function MetricsGrid({ 
@@ -14,7 +17,9 @@ export default function MetricsGrid({
   mrr, 
   overdueAmount, 
   expectedThisMonth,
+  averageHealthScore,
   role 
+
 }: MetricsGridProps) {
   const isFinancialRestricted = role !== 'Administrador' && 
                                 role !== 'Gerente' && 
@@ -31,6 +36,17 @@ export default function MetricsGrid({
           <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{activeClients}</h3>
         </div>
       </div>
+
+      <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-5 rounded-2xl flex items-center shadow-lg hover:border-primary-500/30 transition-colors cursor-help group">
+        <div className="p-3 bg-primary-500/20 text-primary-400 rounded-xl mr-4 group-hover:scale-110 transition-transform">
+          <Activity size={24} />
+        </div>
+        <div>
+          <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Saúde da Base</p>
+          <h3 className="text-2xl font-bold text-primary-400">{averageHealthScore}%</h3>
+        </div>
+      </div>
+
       
       {!isFinancialRestricted && (
         <>

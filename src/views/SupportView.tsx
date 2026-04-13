@@ -10,11 +10,32 @@ import { toast } from 'sonner';
 export default function SupportView() {
   const { user } = useAuth();
   const { supportRequests, replyingTo, setReplyingTo, replyMessage, setReplyMessage, effectiveOrgId, teamProfiles } = useCRM();
+  const [sortBy, setSortBy] = React.useState<'recent' | 'sla'>('recent');
+
 
   const csatRequests = supportRequests.filter(r => r.csatScore);
   const avgCsat = csatRequests.length > 0 
     ? (csatRequests.reduce((acc, r) => acc + r.csatScore, 0) / csatRequests.length).toFixed(1)
     : null;
+
+  // Monitoramento de SLA para o Resumo
+  const openRequests = supportRequests.filter(r => r.status !== 'concluido');
+  const slaMetrics = {
+    atrasados: 0,
+    vencendoAgora: 0, // < 2h
+    emAlerta: 0, // < 6h
+    noPrazo: 0
+  };
+
+  openRequests.forEach(req => {
+    const sla = getSlaStatus(req.createdAt, req.priority);
+    if (!sla) return;
+    if (sla.isOverdue) slaMetrics.atrasados++;
+    else if (sla.remaining < 2) slaMetrics.vencendoAgora++;
+    else if (sla.remaining < 6) slaMetrics.emAlerta++;
+    else slaMetrics.noPrazo++;
+  });
+
 
   const handleUpdateSupport = async (requestId: string, data: any) => {
     if (!effectiveOrgId) return;
@@ -68,7 +89,71 @@ export default function SupportView() {
               </div>
             </div>
           )}
+            </div>
+          )}
         </div>
+
+        {/* SLA Summary Dashboard */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-4 rounded-2xl">
+            <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-1">Atrasados</p>
+            <div className="flex items-center justify-between">
+              <h3 className={`text-2xl font-bold ${slaMetrics.atrasados > 0 ? 'text-red-500' : 'text-gray-400'}`}>{slaMetrics.atrasados}</h3>
+              <div className={`p-2 rounded-lg ${slaMetrics.atrasados > 0 ? 'bg-red-500/20 text-red-500' : 'bg-gray-500/10 text-gray-500'}`}>
+                <AlertCircle size={18} />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-4 rounded-2xl">
+            <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-1">Vencendo Agora (<2h)</p>
+            <div className="flex items-center justify-between">
+              <h3 className={`text-2xl font-bold ${slaMetrics.vencendoAgora > 0 ? 'text-amber-500' : 'text-gray-400'}`}>{slaMetrics.vencendoAgora}</h3>
+              <div className={`p-2 rounded-lg ${slaMetrics.vencendoAgora > 0 ? 'bg-amber-500/20 text-amber-500' : 'bg-gray-500/10 text-gray-500'}`}>
+                <Clock size={18} />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-4 rounded-2xl">
+            <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-1">Em Alerta (<6h)</p>
+            <div className="flex items-center justify-between">
+              <h3 className={`text-2xl font-bold ${slaMetrics.emAlerta > 0 ? 'text-blue-400' : 'text-gray-400'}`}>{slaMetrics.emAlerta}</h3>
+              <div className={`p-2 rounded-lg ${slaMetrics.emAlerta > 0 ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-500/10 text-gray-500'}`}>
+                <Clock size={18} />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-4 rounded-2xl">
+            <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-1">No Prazo</p>
+            <div className="flex items-center justify-between">
+              <h3 className="text-2xl font-bold text-emerald-500">{slaMetrics.noPrazo}</h3>
+              <div className="p-2 bg-emerald-500/20 text-emerald-500 rounded-lg">
+                <CheckCircle size={18} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Filters & Sorting */}
+        <div className="flex justify-end gap-2 mb-6">
+          <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-1 rounded-xl flex">
+            <button 
+              onClick={() => setSortBy('recent')}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${sortBy === 'recent' ? 'bg-primary-500 text-white' : 'text-gray-500 hover:text-white'}`}
+            >
+              Recentes
+            </button>
+            <button 
+              onClick={() => setSortBy('sla')}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${sortBy === 'sla' ? 'bg-primary-500 text-white' : 'text-gray-500 hover:text-white'}`}
+            >
+              Prioridade SLA
+            </button>
+          </div>
+        </div>
+
 
         <div className="space-y-4">
           {supportRequests.length === 0 ? (
@@ -78,7 +163,18 @@ export default function SupportView() {
               <p className="text-gray-500 dark:text-gray-400">Seus clientes ainda não enviaram nenhuma solicitação.</p>
             </div>
           ) : (
-            supportRequests.map((req) => (
+            [...supportRequests].sort((a, b) => {
+              if (sortBy === 'recent') return 0; // Already sorted by date in context
+              const slaA = getSlaStatus(a.createdAt, a.priority)?.remaining || 999;
+              const slaB = getSlaStatus(b.createdAt, b.priority)?.remaining || 999;
+              
+              // Concluidos sempre pro final
+              if (a.status === 'concluido' && b.status !== 'concluido') return 1;
+              if (a.status !== 'concluido' && b.status === 'concluido') return -1;
+              
+              return slaA - slaB;
+            }).map((req) => (
+
               <div key={req.id} className={`bg-gray-100 dark:bg-white/5 backdrop-blur-xl border ${req.status === 'concluido' ? 'border-emerald-500/30 opacity-70' : 'border-gray-200 dark:border-white/10'} p-6 rounded-3xl shadow-lg transition-all`}>
                 <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                   <div className="flex-1 w-full">
@@ -115,15 +211,21 @@ export default function SupportView() {
 
                       {/* SLA Info */}
                       {req.status !== 'concluido' && (
-                        <div className={`flex items-center gap-1.5 ml-auto text-[10px] font-bold px-3 py-1 rounded-full border ${
-                          getSlaStatus(req.createdAt, req.priority)?.isOverdue 
-                          ? 'bg-red-500/20 text-red-500 border-red-500/30 animate-pulse' 
-                          : 'bg-emerald-500/20 text-emerald-500 border-emerald-500/30'
+                        <div className={`flex items-center gap-1.5 ml-auto text-[10px] font-bold px-3 py-1 rounded-full border transition-all ${
+                          (() => {
+                            const sla = getSlaStatus(req.createdAt, req.priority);
+                            if (!sla) return '';
+                            if (sla.isOverdue) return 'bg-red-500/20 text-red-500 border-red-500/30 animate-pulse';
+                            if (sla.remaining < 2) return 'bg-amber-500/20 text-amber-500 border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.2)]';
+                            if (sla.remaining < 6) return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+                            return 'bg-emerald-500/20 text-emerald-500 border-emerald-500/30';
+                          })()
                         }`}>
                           <Clock size={12} />
                           {getSlaStatus(req.createdAt, req.priority)?.text}
                         </div>
                       )}
+
                     </div>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                       Enviado em: {req.createdAt && typeof req.createdAt.toDate === 'function' ? req.createdAt.toDate().toLocaleString('pt-BR') : 'Data desconhecida'}

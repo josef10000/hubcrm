@@ -106,7 +106,8 @@ Prospecção → Qualificação → Venda → Onboarding → Entrega → Suporte
 | 🔄 **Ciclo Completo** | Do lead ao pós-venda em uma única plataforma |
 | 🏢 **Multi-Tenant** | Isolamento total de dados por organização |
 | 💳 **Checkout Self-Service** | Cliente se auto-cadastra, paga e inicia o projeto |
-| 📊 **BI Financeiro** | DRE, Fluxo de Caixa Projetado e controle orçamentário |
+| 📊 **BI Financeiro & Health** | DRE, Fluxo e **Health Score (0-100)** automático por cliente |
+| 🎧 **SLA Tracker** | Monitoramento de prazos de suporte em tempo real com alertas |
 | 🎉 **Gamificação** | Celebração automática de aniversários com confetes |
 | 🌐 **100% Cloud-Native** | Zero infraestrutura para manter |
 
@@ -169,7 +170,8 @@ Dashboard analítico completo para tomada de decisão baseada em dados.
 - **KPIs em Tempo Real**: MRR, ARR, Churn Rate, LTV, CAC e taxa de conversão.
 - **Gráficos Interativos**: Charts em Recharts com filtros por período.
 - **Distribuição de Receita**: Análise por plano, canal de aquisição e status.
-- **Métricas de Saúde**: Indicadores visuais de alarme para detecção precoce de churn.
+- **Métricas de Saúde (Health Score)**: Score de 0-100 calculado automaticamente combinando status financeiro, progresso do projeto e NPS.
+- **Painel de Alerta**: Detecção precoce de clientes em risco de churn baseado em comportamento e pagamentos.
 
 ---
 
@@ -766,7 +768,8 @@ className="bg-gray-100 border-gray-200"
 - [x] Sistema de Temas Dinâmicos (Dark Absolute)
 - [x] CI/CD com GitHub Actions (5 pipelines)
 - [x] 🧬 Gestão de Ausências, Onboarding, PDI e eNPS
-- [x] 🎧 Suporte com SLA, CSAT e Atribuição de Técnicos (Fase 2)
+- [x] 🎧 Suporte com SLA Tracker, CSAT e Atribuição de Técnicos (Fase 2)
+- [x] 📈 Health Score Automatizado (Financeiro + Engajamento + NPS) (Fase 2)
 - [x] 📈 Timeline de Vendas e Controle de Follow-up (Fase 2)
 - [x] ⚠️ Alertas de Inadimplência Crítica no Financeiro (Fase 2)
 - [x] ⚙️ Confirmação de Resolução pelo Cliente e CSAT Customizável (Fase 2)

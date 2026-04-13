@@ -3,6 +3,8 @@ import { AlertTriangle, Clock, Phone, Tag, Briefcase, Globe, DollarSign, Message
 import { Client } from '../../types';
 import { getPlanPrice } from '../../helpers';
 import { toast } from 'sonner';
+import { calculateHealthScore, getHealthColor, getHealthLabel } from '../../helpers/healthCalculation';
+
 
 interface ClientsGridProps {
   currentClients: Client[];
@@ -44,7 +46,19 @@ export default function ClientsGrid({
                 )}
               </h3>
               <div className="flex flex-col items-end space-y-2">
+                {/* Health Score Indicator */}
+                <div 
+                  className="flex items-center gap-2 px-2 py-1 rounded-full bg-white/5 border border-white/10"
+                  title={`Health Score: ${calculateHealthScore(client)}/100 - ${getHealthLabel(calculateHealthScore(client))}`}
+                >
+                  <div className={`w-2 h-2 rounded-full animate-pulse ${getHealthColor(calculateHealthScore(client)).replace('text', 'bg')}`} />
+                  <span className={`text-[10px] font-bold ${getHealthColor(calculateHealthScore(client))}`}>
+                    {calculateHealthScore(client)}%
+                  </span>
+                </div>
+
                 <div className="flex gap-2">
+
                   {client.isCombo && (
                     <span className="px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-1">
                       <Zap size={10} />
@@ -230,7 +244,15 @@ export default function ClientsGrid({
                       {client.paymentStatus === 'RECEIVED' ? 'Pago' : client.paymentStatus === 'OVERDUE' ? 'Atrasado' : 'Pendente'}
                     </span>
                   )}
+                  {/* Kanban Health Score */}
+                  <div className="mt-2 flex items-center gap-1.5">
+                    <div className={`w-1.5 h-1.5 rounded-full ${getHealthColor(calculateHealthScore(client)).replace('text', 'bg')}`} />
+                    <span className={`text-[9px] font-bold uppercase tracking-wider ${getHealthColor(calculateHealthScore(client))}`}>
+                      Saúde: {calculateHealthScore(client)}%
+                    </span>
+                  </div>
                 </div>
+
               ))}
               {columnClients.length === 0 && (
                 <div className="text-center py-8 text-gray-500 text-sm border border-dashed border-gray-200 dark:border-white/10 rounded-xl">
