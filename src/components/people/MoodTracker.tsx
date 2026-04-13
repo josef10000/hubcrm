@@ -63,7 +63,7 @@ export default function MoodTracker() {
     return (
       <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="text-2xl animate-bounce">{todayMood?.emoji}</span>
+          <span className="text-2xl inline-block animate-bounce">{todayMood?.emoji}</span>
           <div>
             <p className="text-[10px] font-bold text-primary-500 uppercase tracking-widest">Termômetro de Hoje</p>
             <p className="text-xs text-gray-400">Energia registrada com sucesso.</p>
@@ -89,7 +89,7 @@ export default function MoodTracker() {
             className="flex-1 flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-white/10 transition-all group"
             title={mood.label}
           >
-            <span className="text-2xl group-hover:scale-125 transition-transform">{mood.emoji}</span>
+            <span className="text-2xl inline-block group-hover:scale-110 transition-transform origin-center">{mood.emoji}</span>
           </button>
         ))}
       </div>
