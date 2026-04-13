@@ -6,7 +6,7 @@
   <p><em>By Hub Symples — Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.</em></p>
 
   <p>
-    <img src="https://img.shields.io/badge/Version-2.0.0-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-2.2.0-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Status-Production_Ready-22c55e?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge&labelColor=111111" alt="License" />
@@ -194,6 +194,8 @@ Módulo financeiro completo com 6 sub-abas especializadas:
 | **Fluxo de Caixa** | Projeção cronológica baseada no vencimento das assinaturas |
 | **Orcamento (Budget)** | Planejamento por categoria com indicadores de saúde orçamentária |
 | **ROI por Oferta** | **Inteligência de Tráfego:** Performance de Ads (Investimento vs Retorno) por produto |
+| **Comissões** | Controle automático de comissões de SDRs e Closers com cálculo de repasse |
+| **Rentabilidade por Cliente** | Cálculo de lucro isolado por contrato, deduzindo custos diretos e comissões |
 | **Conciliação OFX** | Importação de extratos bancários para validação de saldo |
 | **Categorias** | Gerenciamento de categorias de receita e despesa |
 
