@@ -43,8 +43,8 @@ export default function MarketingView() {
               <input 
                 type="checkbox" 
                 className="sr-only peer"
-                checked={globalAnnouncement.isActive}
-                onChange={(e) => setGlobalAnnouncement({...globalAnnouncement, isActive: e.target.checked})}
+                checked={globalAnnouncement?.isActive || false}
+                onChange={(e) => setGlobalAnnouncement?.({...globalAnnouncement, isActive: e.target.checked})}
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-black/40 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-500"></div>
             </label>
@@ -55,8 +55,8 @@ export default function MarketingView() {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Título do Aviso</label>
               <input 
                 type="text" 
-                value={globalAnnouncement.title}
-                onChange={(e) => setGlobalAnnouncement({...globalAnnouncement, title: e.target.value})}
+                value={globalAnnouncement?.title || ''}
+                onChange={(e) => setGlobalAnnouncement?.({...globalAnnouncement, title: e.target.value})}
                 className="w-full px-4 py-2 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
                 placeholder="Ex: Recesso de Fim de Ano"
               />
@@ -64,8 +64,8 @@ export default function MarketingView() {
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo de Aviso</label>
               <select 
-                value={globalAnnouncement.type}
-                onChange={(e) => setGlobalAnnouncement({...globalAnnouncement, type: e.target.value})}
+                value={globalAnnouncement?.type || 'info'}
+                onChange={(e) => setGlobalAnnouncement?.({...globalAnnouncement, type: e.target.value})}
                 className="w-full px-4 py-2 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
               >
                 <option value="info" className="bg-[#0a0a0a] text-white">Informativo (Azul)</option>
@@ -79,8 +79,8 @@ export default function MarketingView() {
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mensagem</label>
             <textarea 
-              value={globalAnnouncement.message}
-              onChange={(e) => setGlobalAnnouncement({...globalAnnouncement, message: e.target.value})}
+              value={globalAnnouncement?.message || ''}
+              onChange={(e) => setGlobalAnnouncement?.({...globalAnnouncement, message: e.target.value})}
               className="w-full px-4 py-2 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none min-h-[100px] resize-none"
               placeholder="Detalhes do aviso..."
             />
