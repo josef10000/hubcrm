@@ -157,7 +157,10 @@ Um fluxo de auto-atendimento completo que permite ao cliente se cadastrar, envia
 - **Timeline de Projeto**: Barra de progresso visual com etapas personalizáveis (Design, Desenvolvimento, Revisão, Deploy, etc.).
 - **Central de Pagamentos**: Histórico completo de faturas com status em tempo real (Pago, Pendente, Vencido) + links diretos para PIX/Boleto.
 - **Central de Chamados**: Abertura e acompanhamento de tickets de suporte com histórico.
-- **Pesquisa NPS**: Indicador de satisfação com nota (0-10) e comentários do cliente.
+- **Pesquisa NPS (Net Promoter Score)**: Indicador de satisfação após chamados ou no portal. Emprega a escala clássica (0-10):
+  - 🟢 **Promotores (9 a 10)**: Ganham bônus de +10 no Health Score da conta.
+  - 🟡 **Neutros (7 a 8)**: Não afetam o score.
+  - 🔴 **Detratores (0 a 6)**: Aplicam penalidade grave de -20 no Health Score da conta.
 - **Programa de Indicações**: Sistema completo de referral marketing com geração de códigos, rastreamento e recompensas.
 - **Pesquisa CSAT Automática**: Ao concluir um chamado no suporte, o cliente é convidado a avaliar o atendimento (1-5 estrelas + comentário).
 - **Avisos Globais**: Comunicados configuráveis pelo admin exibidos no topo do portal (recesso, atualizações, novidades).
@@ -168,12 +171,12 @@ Um fluxo de auto-atendimento completo que permite ao cliente se cadastrar, envia
 
 Dashboard analítico completo para tomada de decisão baseada em dados.
 
-- **Health Score Automatizado (0-100)**: Cálculo multidimensional que avalia a saúde da conta em tempo real.
-  - **Lógica de Cálculo**:
-    - `40%` Status Operacional (Ativo/Desenvolvimento/Cancelado)
-    - `30%` Status Financeiro Sync (Integração direta com status Asaas)
-    - `30%` Engajamento (Progresso percentual de etapas e briefing)
-    - `Bonus/Penalty` NPS (Promotores ganham +10, Detratores perdem -20)
+- **Health Score Automatizado (0-100)**: Cálculo multidimensional que avalia a saúde temporal e financeira da conta em tempo real.
+  - **Lógica Matemática do Health Score**: Base zero que soma até 100 pontos baseados em estado de sucesso.
+    - `40 pontos`: Cliente "Ativo". (Desenvolvimento rende 30. Inadimplente/Cancelado rendem 0).
+    - `30 pontos`: Pagamento Asaas "RECEIVED". (Pendente rende 15. Atrasado rende 0).
+    - `30 pontos`: Rate percentual (`%`) de etapas concluídas no portal vs total de etapas.
+    - `Ajuste NPS`: Bônus/Penalidade dinâmica (até +10 para Promotores 9-10; até -20 para Detratores 0-6).
 - **Matriz de Risco Crítico**: Indicadores de cor (`Emerald` >= 80, `Amber` >= 50, `Rose` < 50) para detecção proativa de churn.
 - **KPIs em Tempo Real**: MRR, ARR, Churn Rate, LTV, CAC e taxa de conversão.
 - **Análise de ROI por Oferta**: Módulo especializado que cruza o investimento em Ads (Meta/Google) com a receita direta gerada por cada produto, calculando lucratividade real e CAC.
@@ -789,11 +792,7 @@ className="bg-gray-100 border-gray-200"
 - [x] ⚙️ Confirmação de Resolução pelo Cliente e CSAT Customizável (Fase 2)
 - [x] 💰 **FinOps Avançado**: Rentabilidade Real (Desconto de Comissões), ROI por Oferta e Gestão de Ads (Fase 2)
 - [x] 🔮 **Projeção de Fluxo de Caixa Inteligente** com capacidade de investimento em Ads (Fase 2)
-- [ ] 🤖 Gemini AI: Analista Financeiro & Predição de Churn
-- [ ] 📱 Mobile experience via PWA / Capacitor
 - [ ] 📧 Automação de E-mails de Aniversário
-- [ ] 🔗 Integração WhatsApp Business API
-- [ ] 📊 Relatórios exportáveis em PDF
 - [ ] 🏷️ Sistema de tags e segmentação de clientes
 
 ---
