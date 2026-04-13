@@ -77,16 +77,16 @@ export default function MoodTracker() {
     <motion.div 
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-primary-500/10 backdrop-blur-xl border border-primary-500/20 rounded-2xl p-4"
+      className="w-full bg-primary-500/10 backdrop-blur-xl border border-primary-500/20 rounded-2xl p-3 overflow-hidden"
     >
-      <p className="text-[10px] font-bold text-primary-500 uppercase tracking-widest mb-3 text-center">Como você está começando o dia?</p>
-      <div className="flex items-center justify-between gap-1">
+      <p className="text-[10px] font-bold text-primary-500 uppercase tracking-wider mb-3 text-center leading-relaxed">Como você está começando o dia?</p>
+      <div className="flex flex-wrap items-center justify-center gap-1">
         {MOODS.map((mood) => (
           <button
             key={mood.score}
             onClick={() => handleVote(mood)}
             disabled={loading}
-            className="flex-1 flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-white/10 transition-all group"
+            className="flex flex-col items-center gap-1 p-1 sm:p-2 rounded-xl hover:bg-white/10 transition-all group max-w-[40px] w-full"
             title={mood.label}
           >
             <span className="text-2xl inline-block group-hover:scale-110 transition-transform origin-center">{mood.emoji}</span>
