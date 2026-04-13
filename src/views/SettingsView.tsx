@@ -29,11 +29,42 @@ export default function SettingsView() {
     setCsatTitle,
     csatQuestion,
     setCsatQuestion,
+    softSkillsPool,
+    setSoftSkillsPool,
     effectiveOrgId,
   } = useCRM();
   const { userProfile } = useAuth();
+  
+  const [newSoftSkill, setNewSoftSkill] = React.useState('');
 
   const isAdminOrGerente = userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente';
+
+  const handleAddSoftSkill = async () => {
+    if (!newSoftSkill.trim()) return;
+    if (softSkillsPool.includes(newSoftSkill.trim())) {
+      toast.error('Esta habilidade já existe no pool.');
+      return;
+    }
+    
+    const updatedPool = [...softSkillsPool, newSoftSkill.trim()];
+    try {
+      await setDoc(doc(db, 'organizations', effectiveOrgId, 'settings', 'preferences'), { softSkillsPool: updatedPool }, { merge: true });
+      setNewSoftSkill('');
+      toast.success('Habilidade adicionada ao pool global!');
+    } catch (e) {
+      toast.error('Erro ao salvar no banco de dados.');
+    }
+  };
+
+  const handleRemoveSoftSkill = async (skill: string) => {
+    const updatedPool = softSkillsPool.filter(s => s !== skill);
+    try {
+      await setDoc(doc(db, 'organizations', effectiveOrgId, 'settings', 'preferences'), { softSkillsPool: updatedPool }, { merge: true });
+      toast.success('Habilidade removida do pool global.');
+    } catch (e) {
+      toast.error('Erro ao atualizar pool.');
+    }
+  };
 
   const themes = [
     { id: 'orange', name: 'Laranja (Original)', color: 'bg-[#f97316]' },
@@ -438,6 +469,55 @@ export default function SettingsView() {
                 </div>
               </div>
             </div>
+            
+            {isAdminOrGerente && (
+              <div className="bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-lg mb-8">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
+                  <Star className="mr-2 text-primary-500" size={20} />
+                  Matriz de Competências (Soft Skills)
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                  Gerencie o pool global de habilidades comportamentais que todos os colaboradores poderão avaliar em seus perfis.
+                </p>
+
+                <div className="flex gap-2 mb-6">
+                  <input
+                    type="text"
+                    value={newSoftSkill}
+                    onChange={(e) => setNewSoftSkill(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleAddSoftSkill()}
+                    className="flex-1 px-4 py-2 bg-white dark:bg-black/20 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none text-sm"
+                    placeholder="Nova soft skill... (Ex: Comunicação, Liderança)"
+                  />
+                  <button
+                    onClick={handleAddSoftSkill}
+                    className="p-2 bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition-colors shadow-lg shadow-primary-500/20"
+                  >
+                    <Plus size={20} />
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {softSkillsPool.map((skill) => (
+                    <div 
+                      key={skill}
+                      className="flex items-center gap-2 px-3 py-1.5 bg-primary-500/10 border border-primary-500/20 text-primary-500 rounded-lg text-xs font-bold animate-in fade-in zoom-in duration-300"
+                    >
+                      {skill}
+                      <button 
+                        onClick={() => handleRemoveSoftSkill(skill)}
+                        className="p-0.5 hover:bg-primary-500/20 rounded-md transition-colors"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  ))}
+                  {softSkillsPool.length === 0 && (
+                    <p className="text-xs text-gray-400 italic">Nenhuma soft skill cadastrada no pool global.</p>
+                  )}
+                </div>
+              </div>
+            )}
           </>
         )}
 

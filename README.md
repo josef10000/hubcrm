@@ -255,9 +255,10 @@ Sistema de notificações via **Resend SDK** com anti-spam inteligente:
 
 Módulo completo de People Management focado em retenção, felicidade e controle patrimonial da equipe.
 
-- **Matriz de Competências (Skill Radar Chart)**: Visualização 360º de Hard e Soft Skills com editor de níveis (1-5) integrado e persistência via API.
-- **Mood Tracker Diário**: Widget de check-in integrado no menu principal para monitoramento de bem-estar em tempo real.
-- **Gestão de Inventário & Ativos**: Controle patrimonial seguro com CRUD via backend, vinculando equipamentos por ID de série aos colaboradores.
+- **Matriz de Competências (Skill Radar Chart)**: Gestão 360º de habilidades. Soft Skills geridas globalmente pelo Admin e Hard Skills 100% customizáveis por colaborador.
+- **Ecossistema de Saúde & Dashboard**: Monitoramento diário de energia e humor com visualização agregada para liderança e alertas de bem-estar automáticos.
+- **Onboarding Inteligente**: Remoção automática da lista de talentos ativos assim que todas as tarefas de entrada são concluídas.
+- **Gestão de Inventário & Ativos**: Controle patrimonial seguro vinculado diretamente ao perfil do colaborador.
 - **Mural de Feedbacks & Kudos**: Reconhecimento com controle de privacidade (Público/Privado) e filtragem por RBAC.
 - **Timeline de Carreira**: Registro de marcos históricos (Hired, Promotion, Certification) gerenciado via backend.
 - **Férias & Ausências**: Fluxo de solicitação e aprovação de períodos de descanso com histórico de status.

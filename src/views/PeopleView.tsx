@@ -610,7 +610,11 @@ export default function PeopleView() {
               <div className="md:col-span-3 bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-6 shadow-xl">
                  <h3 className="font-bold flex items-center gap-2 mb-6"><Users className="text-blue-500" /> Talentos em Onboarding</h3>
                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                   {teamMembers.filter(m => (m.onboardingTasks?.length || 0) > 0).map(m => {
+                   {teamMembers.filter(m => {
+                     const total = m.onboardingTasks?.length || 0;
+                     const completed = m.onboardingTasks?.filter(t => t.completed).length || 0;
+                     return total > 0 && completed < total;
+                   }).map(m => {
                      const completed = m.onboardingTasks?.filter(t => t.completed).length || 0;
                      const total = m.onboardingTasks?.length || 0;
                      const percent = Math.round((completed / total) * 100);
@@ -789,6 +793,80 @@ export default function PeopleView() {
                     )}
                    </div>
 
+               <div className="md:col-span-4 bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-6 shadow-xl">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="font-bold flex items-center gap-2 font-sans dark:text-white"><Activity className="text-rose-500" /> Status Diário de Saúde da Equipe</h3>
+                    <span className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Acompanhamento em Tempo Real</span>
+                  </div>
+                  
+                  <div className="overflow-x-auto custom-scrollbar">
+                    <table className="w-full text-left border-separate border-spacing-y-2">
+                      <thead>
+                        <tr className="text-[10px] text-gray-400 uppercase font-black tracking-widest border-b border-gray-100 dark:border-white/5">
+                          <th className="pb-4 px-4 font-black">Colaborador</th>
+                          <th className="pb-4 px-4 font-black">Último Reporte</th>
+                          <th className="pb-4 px-4 font-black">Energia / Humor</th>
+                          <th className="pb-4 px-4 text-right font-black">Ação</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {teamMembers.sort((a,b) => {
+                          const lastA = a.moodLogs?.[a.moodLogs.length-1]?.timestamp || 0;
+                          const lastB = b.moodLogs?.[b.moodLogs.length-1]?.timestamp || 0;
+                          return lastB - lastA;
+                        }).map(m => {
+                          const lastLog = m.moodLogs?.[m.moodLogs.length - 1];
+                          const score = lastLog?.score || 0;
+                          const moodEmojis = ['😴', '😫', '😐', '🙂', '🔥'];
+                          
+                          return (
+                            <tr key={m.uid} className="group bg-white/30 dark:bg-white/5 border border-gray-100 dark:border-white/5 rounded-2xl overflow-hidden hover:bg-white/50 dark:hover:bg-white/10 transition-all">
+                              <td className="py-4 px-4 first:rounded-l-2xl">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-white/10 overflow-hidden shrink-0">
+                                    {m.photoURL ? <img src={m.photoURL} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-bold text-xs">{m.displayName[0]}</div>}
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-bold dark:text-white">{m.displayName}</p>
+                                    <p className="text-[10px] text-gray-400 font-medium">{m.jobTitle}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-4 px-4 text-xs text-gray-500 font-medium">
+                                {lastLog ? format(lastLog.timestamp, "dd/MM 'às' HH:mm", { locale: ptBR }) : 'Nenhum registro'}
+                              </td>
+                              <td className="py-4 px-4">
+                                {lastLog ? (
+                                  <div className="flex items-center gap-3">
+                                    <span className="text-lg grayscale-0 drop-shadow-sm">{moodEmojis[score - 1]}</span>
+                                    <div className="flex-1 min-w-[100px] h-1.5 bg-gray-100 dark:bg-black/20 rounded-full overflow-hidden">
+                                      <div 
+                                        className={`h-full transition-all duration-700 ${score <= 2 ? 'bg-rose-500' : score === 3 ? 'bg-amber-500' : 'bg-emerald-500'}`} 
+                                        style={{ width: `${(score / 5) * 100}%` }}
+                                      ></div>
+                                    </div>
+                                    <span className={`text-[10px] font-black ${score <= 2 ? 'text-rose-500' : score === 3 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                                      {score}/5
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <span className="text-[10px] text-gray-400 italic">Sem dados registrados</span>
+                                )}
+                              </td>
+                              <td className="py-4 px-4 text-right last:rounded-r-2xl">
+                                <button 
+                                  onClick={() => { setSelectedMember(m); setActiveTab('dashboard'); }}
+                                  className="text-[10px] font-black uppercase tracking-widest text-primary-500 hover:text-primary-600 px-4 py-2 bg-primary-500/10 rounded-xl transition-all active:scale-95"
+                                >
+                                  Ver Detalhes
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                </div>
             </div>
           )}
