@@ -37,6 +37,7 @@ export function useOffers(userId: string, offers: Offer[], setOffers: React.Disp
       };
       if (offerData.setupPrice !== undefined) offerToSave.setupPrice = offerData.setupPrice;
       if (offerData.maxInstallments !== undefined) offerToSave.maxInstallments = offerData.maxInstallments;
+      if (offerData.commissionValue !== undefined) offerToSave.commissionValue = offerData.commissionValue;
 
       await setDoc(offerRef, offerToSave);
       toast.success(isNew ? 'Oferta criada com sucesso!' : 'Oferta atualizada com sucesso!');

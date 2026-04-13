@@ -20,7 +20,10 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
   useEffect(() => {
     setErrorMsg('');
     if (initialData) {
-      setFormData(initialData);
+      setFormData({
+        ...initialData,
+        commissionValue: initialData.commissionValue || 0
+      });
     } else {
       setFormData({
         name: '',
