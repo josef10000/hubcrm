@@ -16,6 +16,28 @@ import { PDICategory } from '../types/people';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
+import MoodTracker from '../components/people/MoodTracker';
+import SkillRadarChart from '../components/people/SkillRadarChart';
+import CareerTimeline from '../components/people/CareerTimeline';
+import FeedbackMural from '../components/people/FeedbackMural';
+import InventorySection from '../components/people/InventorySection';
+import { 
+  Plus, 
+  Trash2, 
+  Heart, 
+  ShieldAlert, 
+  Tool, 
+  Award,
+  Box,
+  MessageCircle,
+  History,
+  X as XIcon
+} from 'lucide-react';
+import AddFeedbackModal from '../components/people/AddFeedbackModal';
+import AddAssetModal from '../components/people/AddAssetModal';
+import AddMilestoneModal from '../components/people/AddMilestoneModal';
+import EditSkillsModal from '../components/people/EditSkillsModal';
+import { updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 
 export default function ProfileView() {
   const { uid } = useParams();
@@ -35,9 +57,14 @@ export default function ProfileView() {
   const [isSaving, setIsSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [superior, setSuperior] = useState<UserProfile | null>(null);
-  const [activeTab, setActiveTab] = useState<'info' | 'pdi' | 'comissoes'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'pdi' | 'comissoes' | 'inventory' | 'feedbacks' | 'history'>('info');
   const { commissions } = useCRM();
   const [showVacationModal, setShowVacationModal] = useState(false);
+  const [showAddFeedbackModal, setShowAddFeedbackModal] = useState(false);
+  const [showAddAssetModal, setShowAddAssetModal] = useState(false);
+  const [showAddMilestoneModal, setShowAddMilestoneModal] = useState(false);
+  const [showEditSkillsModal, setShowEditSkillsModal] = useState(false);
+  
   const [newVacation, setNewVacation] = useState<Partial<VacationPeriod>>({
     type: 'Férias',
     status: 'Pendente',
@@ -112,6 +139,42 @@ export default function ProfileView() {
 
     fetchProfile();
   }, [uid, navigate]);
+
+  const handleRefresh = async () => {
+    if (!uid) return;
+    const docRef = doc(db, 'profiles', uid);
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      setProfile(snap.data() as UserProfile);
+    }
+  };
+
+  const handleRemoveAsset = async (assetId: string) => {
+    if (!profile || !uid) return;
+    if (!window.confirm('Deseja remover este equipamento deste colaborador?')) return;
+
+    try {
+      const token = await user?.getIdToken();
+      const res = await fetch(`/api/team_handler?action=remove-asset`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          targetUid: uid,
+          assetId
+        })
+      });
+
+      if (!res.ok) throw new Error('Falha ao remover equipamento');
+
+      toast.success('Equipamento removido');
+      handleRefresh();
+    } catch (error) {
+      toast.error('Erro ao remover equipamento');
+    }
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -250,6 +313,13 @@ export default function ProfileView() {
           </div>
         </div>
 
+        {/* Mood Tracker - Apenas para o próprio perfil */}
+        {isOwnProfile && (
+          <div className="max-w-2xl mx-auto mb-6">
+            <MoodTracker />
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column: Avatar & Basic Info */}
           <div className="lg:col-span-1 space-y-6">
@@ -362,14 +432,32 @@ export default function ProfileView() {
                 </button>
                 <button 
                   onClick={() => setActiveTab('pdi')}
-                  className={`px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'pdi' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-500'}`}
+                  className={`px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'pdi' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
                 >
                   Meu PDI
+                </button>
+                <button 
+                  onClick={() => setActiveTab('inventory')}
+                  className={`px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'inventory' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
+                >
+                  Ativos
+                </button>
+                <button 
+                  onClick={() => setActiveTab('feedbacks')}
+                  className={`px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'feedbacks' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
+                >
+                  Mural
+                </button>
+                <button 
+                  onClick={() => setActiveTab('history')}
+                  className={`px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'history' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
+                >
+                  Carreira
                 </button>
                 {(profile?.role === 'SDR' || profile?.role === 'Executive' || profile?.role === 'Administrador') && (
                   <button 
                     onClick={() => setActiveTab('comissoes')}
-                    className={`px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'comissoes' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-500'}`}
+                    className={`px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'comissoes' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
                   >
                     Comissões
                   </button>
@@ -549,6 +637,18 @@ export default function ProfileView() {
                     </div>
                   </div>
 
+                  <div className="mb-10 relative">
+                    <SkillRadarChart skills={profile.skills || { hard: [], soft: [] }} />
+                    {canEdit && (
+                      <button 
+                        onClick={() => setShowEditSkillsModal(true)}
+                        className="absolute top-0 right-0 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-bold uppercase tracking-widest text-primary-500 transition-all"
+                      >
+                        Atualizar Matriz
+                      </button>
+                    )}
+                  </div>
+
                   {(profile.pdiCategories || []).length > 0 ? (
                     <div className="space-y-6">
                       {profile.pdiCategories!.map(cat => (
@@ -657,6 +757,53 @@ export default function ProfileView() {
                   </div>
                 </div>
               )}
+
+              {activeTab === 'inventory' && (
+                <div className="animate-in slide-in-from-right duration-500">
+                  <InventorySection 
+                    inventory={profile.inventory || []} 
+                    isAdmin={isAdmin}
+                    onAdd={() => setShowAddAssetModal(true)}
+                    onRemove={handleRemoveAsset}
+                  />
+                </div>
+              )}
+
+              {activeTab === 'feedbacks' && (
+                <div className="animate-in slide-in-from-right duration-500">
+                  <div className="flex items-center justify-between mb-8">
+                    <h4 className="text-sm font-bold text-gray-500 uppercase tracking-widest">Mural de Feedbacks</h4>
+                    <button 
+                      onClick={() => setShowAddFeedbackModal(true)}
+                      className="px-4 py-2 bg-primary-500 text-white rounded-xl text-xs font-bold flex items-center gap-2"
+                    >
+                       <Plus size={14} /> Novo Feedback
+                    </button>
+                  </div>
+                  <FeedbackMural 
+                    feedbacks={profile.feedbacks || []} 
+                    currentUserProfile={currentUserProfile}
+                    profileOwnerId={uid!}
+                  />
+                </div>
+              )}
+
+              {activeTab === 'history' && (
+                <div className="animate-in slide-in-from-right duration-500">
+                  <div className="flex items-center justify-between mb-8">
+                    <h4 className="text-sm font-bold text-gray-500 uppercase tracking-widest">Linha do Tempo de Carreira</h4>
+                    {isAdmin && (
+                      <button 
+                        onClick={() => setShowAddMilestoneModal(true)}
+                        className="p-2 bg-primary-500/10 text-primary-500 rounded-xl hover:bg-primary-500/20 transition-all"
+                      >
+                        <Plus size={18} />
+                      </button>
+                    )}
+                  </div>
+                  <CareerTimeline milestones={profile.careerTimeline || []} />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -715,6 +862,36 @@ export default function ProfileView() {
               </div>
            </div>
         )}
+
+        <AddFeedbackModal 
+          isOpen={showAddFeedbackModal}
+          onClose={() => setShowAddFeedbackModal(false)}
+          targetUserId={uid!}
+          fromUser={currentUserProfile}
+          onSuccess={handleRefresh}
+        />
+
+        <AddAssetModal 
+          isOpen={showAddAssetModal}
+          onClose={() => setShowAddAssetModal(false)}
+          targetUserId={uid!}
+          onSuccess={handleRefresh}
+        />
+
+        <EditSkillsModal 
+          isOpen={showEditSkillsModal}
+          onClose={() => setShowEditSkillsModal(false)}
+          targetUserId={uid!}
+          initialSkills={profile.skills}
+          onSuccess={handleRefresh}
+        />
+
+        <AddMilestoneModal 
+          isOpen={showAddMilestoneModal}
+          onClose={() => setShowAddMilestoneModal(false)}
+          targetUserId={uid!}
+          onSuccess={handleRefresh}
+        />
       </div>
     </div>
   );

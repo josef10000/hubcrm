@@ -7,7 +7,7 @@
 Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.
 
   <p>
-    <img src="https://img.shields.io/badge/Version-2.3.0-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-2.4.1-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Status-Production_Ready-22c55e?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge&labelColor=111111" alt="License" />
@@ -251,20 +251,19 @@ Sistema de notificações via **Resend SDK** com anti-spam inteligente:
 
 ---
 
-### 👥 9. People & Culture — Gestão de Equipe & RH
+### 👥 9. People & Culture — Ecossistema de Talentos (v2.4)
 
-Módulo completo de People Management para escalar a cultura e produtividade da equipe.
+Módulo completo de People Management focado em retenção, felicidade e controle patrimonial da equipe.
 
-- **Organograma Dinâmico**: Visualização em árvore da hierarquia real da empresa, com conexões visuais entre líder e liderados.
-- **Gestão de Ausências (Férias)**: Fluxo completo de solicitação, aprovação e controle de férias/folgas com log de status.
-- **Onboarding Checklists**: Gestão de tarefas de integração para novos talentos, com acompanhamento de progresso percentual.
-- **PDI (Plano de Desenvolvimento)**: Árvore de competências e trilha de carreira com categorias e ações de desenvolvimento.
-- **Pesquisa de Clima (eNPS)**: Pesquisa recorrente (ex: a cada 30 dias) baseada na escala clássica de 0 a 10 para medir o engajamento e satisfação interna da equipe. Classifica de forma 100% anônima os membros como Promotores (9-10), Neutros (7-8) ou Detratores (0-6).
-- **Comunicados (Broadcast)**: Disparador em lote integrado ao Resend para avisos internos (ex: novos benefícios, feriados). Suporta injetar Call-To-Actions dinâmicos no layout da Hub Symples usando variáveis natively, e permite segmentar o envio por cargos (Roles) visualmente através dos cards da equipe.
-- **Perfis Profissionais**: Página completa com foto, bio, cargo, contatos sociais e reporting lines.
-- **Sistema de Convites**: Convite por e-mail com link de aceite e expiração configurável (72h padrão).
-- **Edição Segura**: Apenas o próprio usuário ou Administradores podem editar perfis.
-- **Remoção Granular**: Exclusão de membros com opção de deletar ou preservar dados históricos.
+- **Matriz de Competências (Skill Radar Chart)**: Visualização 360º de Hard e Soft Skills com editor de níveis (1-5) integrado e persistência via API.
+- **Mood Tracker Diário**: Widget de check-in integrado no menu principal para monitoramento de bem-estar em tempo real.
+- **Gestão de Inventário & Ativos**: Controle patrimonial seguro com CRUD via backend, vinculando equipamentos por ID de série aos colaboradores.
+- **Mural de Feedbacks & Kudos**: Reconhecimento com controle de privacidade (Público/Privado) e filtragem por RBAC.
+- **Timeline de Carreira**: Registro de marcos históricos (Hired, Promotion, Certification) gerenciado via backend.
+- **Férias & Ausências**: Fluxo de solicitação e aprovação de períodos de descanso com histórico de status.
+- **eNPS Anônimo**: Termômetro de fidelidade e satisfação interna baseado na métrica clássica de promotoria.
+- **Gamificação (Aniversários)**: Celebração visual automática no dia do nascimento com animação de partículas (confetes).
+- **Onboarding Checklists**: trilhas de entrada para novos talentos com controle de progresso.
 
 ---
 
@@ -493,6 +492,11 @@ As rotas foram padronizadas para o formato `/api/asaas/...` com roteamento intel
 | `POST` | `/api/team/remove` | Remover membro |
 | `POST` | `/api/team/cancel-invite` | Cancelar convite pendente |
 | `POST` | `/api/team/update-profile` | Atualizar perfil/hierarquia |
+| `POST` | `/api/team_handler?action=add-feedback` | Registrar novo feedback |
+| `POST` | `/api/team_handler?action=add-asset` | Atribuir equipamento |
+| `POST` | `/api/team_handler?action=remove-asset` | Remover equipamento |
+| `POST` | `/api/team_handler?action=add-milestone` | Registrar marco de carreira |
+| `POST` | `/api/team_handler?action=update-skills` | Atualizar matriz de skills |
 
 ### Outros
 

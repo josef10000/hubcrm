@@ -304,6 +304,13 @@ export interface UserProfile {
   pdiCategories?: { id: string; title: string; actions: { id: string; description: string; completed: boolean; completedAt?: number; }[]; }[];
   onboardingTemplateId?: string;
   lastEnpsResponse?: number; // Timestamp da última vez que respondeu à pesquisa de clima
+  
+  // People & Culture Ecosystem
+  inventory?: ToolAsset[];
+  skills?: SkillMatrix;
+  careerTimeline?: CareerMilestone[];
+  feedbacks?: FeedbackItem[];
+  moodLogs?: MoodLog[];
 }
 
 export interface Organization {
@@ -322,5 +329,51 @@ export interface Invitation {
   status: 'pending' | 'accepted' | 'expired';
   createdAt: number;
   expiresAt: number;
+}
+
+// ── People & Culture Ecosystem ──
+
+export interface ToolAsset {
+  id: string;
+  name: string;
+  category: 'Notebook' | 'Monitor' | 'Celular' | 'Cadeira' | 'Periférico' | 'Outro';
+  serialNumber?: string;
+  condition: 'Novo' | 'Bom' | 'Desgastado' | 'Danificado';
+  assignedAt: number;
+}
+
+export interface Skill {
+  name: string;
+  level: number; // 1-5
+}
+
+export interface SkillMatrix {
+  hard: Skill[];
+  soft: Skill[];
+}
+
+export interface CareerMilestone {
+  id: string;
+  type: 'hired' | 'promotion' | 'milestone' | 'certification';
+  title: string;
+  date: number;
+  description?: string;
+}
+
+export interface FeedbackItem {
+  id: string;
+  fromId: string;
+  fromName: string;
+  type: 'kudo' | 'feedback';
+  text: string;
+  date: number;
+  isPrivate: boolean;
+}
+
+export interface MoodLog {
+  id: string;
+  score: number; // 1-5
+  date: number;
+  emoji: string;
 }
 

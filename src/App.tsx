@@ -34,6 +34,7 @@ import AcceptInviteView from './views/AcceptInviteView';
 import ProfileView from './views/ProfileView';
 import BirthdayCelebration from './components/BirthdayCelebration';
 import EmployeeSurveyModal from './components/EmployeeSurveyModal';
+import MoodTracker from './components/people/MoodTracker';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { UIProvider, useUI } from './contexts/UIContext';
@@ -115,6 +116,12 @@ function CRMInner() {
               />
             ))}
         </nav>
+        
+        {/* Mood Check-in Rápido */}
+        <div className="px-6 py-4">
+          <MoodTracker />
+        </div>
+
         <div className="p-4 border-t border-gray-200 dark:border-white/10">
           <div 
             onClick={() => navigate(`/profile/${user?.uid}`)}

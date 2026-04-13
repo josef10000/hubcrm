@@ -27,6 +27,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return await handleUpdateProfile(req, res, uid!);
       case 'broadcast':
         return await handleBroadcast(req, res, uid!);
+      case 'add-feedback':
+        return await handleAddFeedback(req, res, uid!);
+      case 'add-asset':
+        return await handleAddAsset(req, res, uid!);
+      case 'remove-asset':
+        return await handleRemoveAsset(req, res, uid!);
+      case 'add-milestone':
+        return await handleAddMilestone(req, res, uid!);
+      case 'update-skills':
+        return await handleUpdateSkills(req, res, uid!);
       default:
         return res.status(400).json({ error: 'Ação inválida ou não fornecida' });
     }
@@ -222,3 +232,86 @@ async function handleBroadcast(req: VercelRequest, res: VercelResponse, uid: str
 
   return res.status(200).json({ success: true, count: recipients.length });
 }
+
+async function handleAddFeedback(req: VercelRequest, res: VercelResponse, uid: string) {
+  const { targetUid, feedback } = req.body;
+  
+  // Qualquer um pode enviar feedback? No plano diz: "validando permissões e flag isPrivate"
+  // Geralmente, elogios são públicos, feedbacks técnicos podem ser restritos.
+  const senderSnap = await db.collection('profiles').doc(uid).get();
+  const senderData = senderSnap.data();
+
+  await db.collection('profiles').doc(targetUid).update({
+    feedbacks: getFirebaseAdmin().firestore.FieldValue.arrayUnion({
+      ...feedback,
+      id: crypto.randomUUID(),
+      fromId: uid,
+      fromName: senderData?.displayName || 'Membro da Equipe',
+      date: Date.now()
+    })
+  });
+
+  return res.status(200).json({ success: true });
+}
+
+async function handleAddAsset(req: VercelRequest, res: VercelResponse, uid: string) {
+  const { targetUid, asset } = req.body;
+  const senderSnap = await db.collection('profiles').doc(uid).get();
+  if (senderSnap.data()?.role !== 'Administrador') return res.status(403).json({ error: 'Apenas Admins podem gerenciar ativos' });
+
+  await db.collection('profiles').doc(targetUid).update({
+    inventory: getFirebaseAdmin().firestore.FieldValue.arrayUnion({
+      ...asset,
+      id: crypto.randomUUID(),
+      assignedAt: Date.now()
+    })
+  });
+
+  return res.status(200).json({ success: true });
+}
+
+async function handleRemoveAsset(req: VercelRequest, res: VercelResponse, uid: string) {
+  const { targetUid, assetId } = req.body;
+  const senderSnap = await db.collection('profiles').doc(uid).get();
+  if (senderSnap.data()?.role !== 'Administrador') return res.status(403).json({ error: 'Apenas Admins podem remover ativos' });
+
+  const targetSnap = await db.collection('profiles').doc(targetUid).get();
+  const inventory = targetSnap.data()?.inventory || [];
+  const assetToRemove = inventory.find((a: any) => a.id === assetId);
+
+  if (assetToRemove) {
+    await db.collection('profiles').doc(targetUid).update({
+      inventory: getFirebaseAdmin().firestore.FieldValue.arrayRemove(assetToRemove)
+    });
+  }
+
+  return res.status(200).json({ success: true });
+}
+
+async function handleAddMilestone(req: VercelRequest, res: VercelResponse, uid: string) {
+  const { targetUid, milestone } = req.body;
+  const senderSnap = await db.collection('profiles').doc(uid).get();
+  if (senderSnap.data()?.role !== 'Administrador') return res.status(403).json({ error: 'Apenas Admins podem adicionar marcos' });
+
+  await db.collection('profiles').doc(targetUid).update({
+    careerTimeline: getFirebaseAdmin().firestore.FieldValue.arrayUnion({
+      ...milestone,
+      id: crypto.randomUUID()
+    })
+  });
+
+  return res.status(200).json({ success: true });
+}
+
+async function handleUpdateSkills(req: VercelRequest, res: VercelResponse, uid: string) {
+  const { targetUid, skills } = req.body;
+  const isSelf = uid === targetUid;
+  const senderSnap = await db.collection('profiles').doc(uid).get();
+  const isAdmin = senderSnap.data()?.role === 'Administrador' || senderSnap.data()?.role === 'Gerente';
+
+  if (!isSelf && !isAdmin) return res.status(403).json({ error: 'Sem permissão para atualizar competências' });
+
+  await db.collection('profiles').doc(targetUid).set({ skills }, { merge: true });
+  return res.status(200).json({ success: true });
+}
+
