@@ -101,6 +101,7 @@ interface CRMContextType {
   toggleAsaasNotifications: (clientId: string, enabled: boolean) => Promise<void>;
   handlePayCommission: (commissionId: string) => Promise<void>;
   handleDeleteCommission: (commissionId: string) => Promise<void>;
+  offerActions: any;
 
   // Helpers
   isChurnRisk: (client: Client) => boolean;
@@ -382,7 +383,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       }
     },
     isChurnRisk: clientActions.isChurnRisk, isComboNearRenewal: clientActions.isComboNearRenewal,
-    effectiveOrgId, userProfile, vacations, teamProfiles, commissions
+    effectiveOrgId, userProfile, vacations, teamProfiles, commissions, offerActions
   };
 
   return <CRMContext.Provider value={value}>{children}</CRMContext.Provider>;
