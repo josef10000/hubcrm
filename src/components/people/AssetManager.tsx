@@ -7,8 +7,12 @@ import { Asset } from '../../types/people';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
+import { useAuth } from '../../contexts/AuthContext';
+
 export default function AssetManager() {
+  const { userProfile } = useAuth();
   const { effectiveOrgId, teamProfiles } = useCRM();
+  const isAdminOrManager = userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente';
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,6 +35,10 @@ export default function AssetManager() {
 
   const handleAddAsset = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAdminOrManager) {
+      toast.error('Apenas Administradores ou Gerentes podem gerenciar ativos.');
+      return;
+    }
     if (!newAsset.name || !newAsset.assignedTo) {
       toast.error('Preencha o nome e o colaborador.');
       return;
@@ -50,6 +58,10 @@ export default function AssetManager() {
   };
 
   const handleDeleteAsset = async (id: string) => {
+    if (!isAdminOrManager) {
+      toast.error('Apenas Administradores ou Gerentes podem remover ativos.');
+      return;
+    }
     try {
       await deleteDoc(doc(db, 'organizations', effectiveOrgId, 'assets', id));
       toast.success('Ativo removido.');
@@ -86,12 +98,14 @@ export default function AssetManager() {
             onChange={e => setSearchTerm(e.target.value)}
           />
         </div>
-        <button 
-          onClick={() => setShowAddModal(true)}
-          className="bg-primary-500 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-primary-600 transition-all shadow-lg shadow-primary-500/20 w-full md:w-auto justify-center"
-        >
-          <Plus size={20} /> Atribuir Ativo
-        </button>
+        {isAdminOrManager && (
+          <button 
+            onClick={() => setShowAddModal(true)}
+            className="bg-primary-500 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-primary-600 transition-all shadow-lg shadow-primary-500/20 w-full md:w-auto justify-center"
+          >
+            <Plus size={20} /> Atribuir Ativo
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -104,9 +118,11 @@ export default function AssetManager() {
                 <div className={`p-3 rounded-2xl bg-primary-500/10 text-primary-500`}>
                   <Icon size={24} />
                 </div>
-                <button onClick={() => handleDeleteAsset(asset.id)} className="opacity-0 group-hover:opacity-100 p-2 text-red-500 hover:bg-red-500/10 rounded-xl transition-all">
-                  <Trash2 size={18} />
-                </button>
+                {isAdminOrManager && (
+                  <button onClick={() => handleDeleteAsset(asset.id)} className="opacity-0 group-hover:opacity-100 p-2 text-red-500 hover:bg-red-500/10 rounded-xl transition-all">
+                    <Trash2 size={18} />
+                  </button>
+                )}
               </div>
               <h4 className="font-bold text-lg mb-1 dark:text-white">{asset.name}</h4>
               <p className="text-xs text-gray-400 mb-4">{asset.serialNumber || 'Sem serial'}</p>
@@ -136,7 +152,7 @@ export default function AssetManager() {
 
       {showAddModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowAddModal(false)}>
-          <div className="bg-gray-100 dark:bg-[#1a1c1e] w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl border border-gray-200 dark:border-white/10 scale-in-center" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white dark:bg-[#1a1c1e] w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl border border-gray-200 dark:border-white/10 scale-in-center animate-in zoom-in-95" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-2xl font-bold mb-6 flex items-center gap-2 dark:text-white">
               <PlusCircle className="text-primary-500" /> Novo Ativo
             </h3>

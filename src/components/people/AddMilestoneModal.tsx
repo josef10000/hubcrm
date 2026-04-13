@@ -18,8 +18,7 @@ const MILESTONE_TYPES: { value: CareerMilestone['type']; label: string; icon: an
   { value: 'certification', label: 'Certificação / Curso', icon: <GraduationCap size={18} /> }
 ];
 
-export default function AddMilestoneModal({ isOpen, onClose, targetUserId, onSuccess }: AddMilestoneModalProps) {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -28,10 +27,16 @@ export default function AddMilestoneModal({ isOpen, onClose, targetUserId, onSuc
     description: ''
   });
 
+  const isAdminOrManager = userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente';
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAdminOrManager) {
+      toast.error('Apenas Administradores ou Gerentes podem adicionar marcos.');
+      return;
+    }
     setLoading(true);
 
     try {
@@ -129,14 +134,16 @@ export default function AddMilestoneModal({ isOpen, onClose, targetUserId, onSuc
             />
           </div>
 
-          <button 
-            type="submit"
-            disabled={loading}
-            className="w-full py-4 bg-primary-500 hover:bg-primary-600 text-white rounded-2xl font-bold shadow-xl shadow-primary-500/20 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 transition-all"
-          >
-            {loading ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Plus size={18} />}
-            Salvar na Timeline
-          </button>
+          {isAdminOrManager && (
+            <button 
+              type="submit"
+              disabled={loading}
+              className="w-full py-4 bg-primary-500 hover:bg-primary-600 text-white rounded-2xl font-bold shadow-xl shadow-primary-500/20 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 transition-all"
+            >
+              {loading ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Plus size={18} />}
+              Salvar na Timeline
+            </button>
+          )}
         </form>
       </div>
     </div>

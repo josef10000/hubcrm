@@ -62,6 +62,8 @@ export default function PeopleView() {
     supportRequests
   } = useCRM();
 
+  const isAdminOrManager = userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente';
+
   // Métrica CSAT Geral
   const ratedRequests = supportRequests.filter(req => req.status === 'concluido' && req.csatScore);
   const csatScoreAvg = ratedRequests.length > 0 
@@ -795,16 +797,16 @@ export default function PeopleView() {
 
                <div className="md:col-span-4 bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-6 shadow-xl">
                   <div className="flex items-center justify-between mb-6">
-                    <h3 className="font-bold flex items-center gap-2 font-sans dark:text-white"><Activity className="text-rose-500" /> Status Diário de Saúde da Equipe</h3>
-                    <span className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Acompanhamento em Tempo Real</span>
+                    <h3 className="font-bold flex items-center gap-2 font-sans dark:text-white"><Activity className="text-rose-500" /> Saúde Diária da Equipe</h3>
+                    <span className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Tempo Real</span>
                   </div>
                   
                   <div className="overflow-x-auto custom-scrollbar">
                     <table className="w-full text-left border-separate border-spacing-y-2">
                       <thead>
                         <tr className="text-[10px] text-gray-400 uppercase font-black tracking-widest border-b border-gray-100 dark:border-white/5">
-                          <th className="pb-4 px-4 font-black">Colaborador</th>
-                          <th className="pb-4 px-4 font-black">Último Reporte</th>
+                          <th className="pb-4 px-4 font-black">Colaborador / Cargo</th>
+                          <th className="pb-4 px-4 font-black">Último Reporte (Horário)</th>
                           <th className="pb-4 px-4 font-black">Energia / Humor</th>
                           <th className="pb-4 px-4 text-right font-black">Ação</th>
                         </tr>
@@ -828,18 +830,25 @@ export default function PeopleView() {
                                   </div>
                                   <div>
                                     <p className="text-xs font-bold dark:text-white">{m.displayName}</p>
-                                    <p className="text-[10px] text-gray-400 font-medium">{m.jobTitle}</p>
+                                    <p className="text-[10px] text-gray-400 font-medium uppercase tracking-tighter">{m.jobTitle}</p>
                                   </div>
                                 </div>
                               </td>
-                              <td className="py-4 px-4 text-xs text-gray-500 font-medium">
-                                {lastLog ? format(lastLog.timestamp, "dd/MM 'às' HH:mm", { locale: ptBR }) : 'Nenhum registro'}
+                              <td className="py-4 px-4">
+                                {lastLog ? (
+                                  <div>
+                                    <p className="text-xs font-bold dark:text-white">{format(lastLog.timestamp, 'HH:mm', { locale: ptBR })}</p>
+                                    <p className="text-[9px] text-gray-500">{format(lastLog.timestamp, "dd 'de' MMM", { locale: ptBR })}</p>
+                                  </div>
+                                ) : (
+                                  <span className="text-[10px] text-gray-400 italic">Sem registros</span>
+                                )}
                               </td>
                               <td className="py-4 px-4">
                                 {lastLog ? (
                                   <div className="flex items-center gap-3">
                                     <span className="text-lg grayscale-0 drop-shadow-sm">{moodEmojis[score - 1]}</span>
-                                    <div className="flex-1 min-w-[100px] h-1.5 bg-gray-100 dark:bg-black/20 rounded-full overflow-hidden">
+                                    <div className="flex-1 min-w-[80px] h-1.5 bg-gray-100 dark:bg-black/20 rounded-full overflow-hidden">
                                       <div 
                                         className={`h-full transition-all duration-700 ${score <= 2 ? 'bg-rose-500' : score === 3 ? 'bg-amber-500' : 'bg-emerald-500'}`} 
                                         style={{ width: `${(score / 5) * 100}%` }}
@@ -850,13 +859,13 @@ export default function PeopleView() {
                                     </span>
                                   </div>
                                 ) : (
-                                  <span className="text-[10px] text-gray-400 italic">Sem dados registrados</span>
+                                  <span className="text-[10px] text-gray-400 italic">N/A</span>
                                 )}
                               </td>
                               <td className="py-4 px-4 text-right last:rounded-r-2xl">
                                 <button 
                                   onClick={() => { setSelectedMember(m); setActiveTab('dashboard'); }}
-                                  className="text-[10px] font-black uppercase tracking-widest text-primary-500 hover:text-primary-600 px-4 py-2 bg-primary-500/10 rounded-xl transition-all active:scale-95"
+                                  className="text-[10px] font-black uppercase tracking-widest text-primary-500 hover:text-primary-600 px-4 py-2 bg-primary-500/10 rounded-xl transition-all"
                                 >
                                   Ver Detalhes
                                 </button>
@@ -913,7 +922,9 @@ export default function PeopleView() {
                                   onChange={e => setNewCategoryTitle(e.target.value)}
                                   onKeyPress={e => e.key === 'Enter' && addPDICategory(selectedMember.uid)}
                                 />
-                                <button onClick={() => addPDICategory(selectedMember.uid)} className="absolute right-2 top-1.5 text-primary-500"><PlusCircle size={16} /></button>
+                                {isAdminOrManager && (
+                                  <button onClick={() => addPDICategory(selectedMember.uid)} className="absolute right-2 top-1.5 text-primary-500"><PlusCircle size={16} /></button>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -924,7 +935,9 @@ export default function PeopleView() {
                                  <div key={cat.id} className="bg-white/30 dark:bg-white/5 border border-gray-100 dark:border-white/5 rounded-3xl p-6 relative group/cat">
                                     <div className="flex justify-between items-center mb-6">
                                        <h4 className="font-bold flex items-center gap-2"><ChevronDown size={18} className="text-indigo-500" /> {cat.title}</h4>
-                                       <button onClick={() => removePDICategory(selectedMember.uid, cat.id)} className="opacity-0 group-hover/cat:opacity-100 p-1.5 hover:bg-red-500/10 text-red-500 rounded-lg transition-all"><Trash2 size={14} /></button>
+                                       {isAdminOrManager && (
+                                         <button onClick={() => removePDICategory(selectedMember.uid, cat.id)} className="opacity-0 group-hover/cat:opacity-100 p-1.5 hover:bg-red-500/10 text-red-500 rounded-lg transition-all"><Trash2 size={14} /></button>
+                                       )}
                                     </div>
 
                                     <div className="space-y-3 mb-6">
@@ -932,7 +945,8 @@ export default function PeopleView() {
                                          <div key={action.id} className="flex items-center gap-3 p-4 bg-white/50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/5 group/act">
                                             <button 
                                               onClick={() => togglePDIAction(selectedMember.uid, cat.id, action.id)}
-                                              className={`shrink-0 ${action.completed ? 'text-indigo-500' : 'text-gray-300 hover:text-indigo-400'} transition-all`}
+                                              disabled={!isAdminOrManager}
+                                              className={`shrink-0 ${action.completed ? 'text-indigo-500' : 'text-gray-300 hover:text-indigo-400'} transition-all disabled:opacity-50`}
                                             >
                                               {action.completed ? <CheckCircle2 size={22} /> : <Circle size={22} />}
                                             </button>
@@ -942,22 +956,24 @@ export default function PeopleView() {
                                        ))}
                                     </div>
 
-                                    <div className="flex gap-2">
-                                       <input 
-                                          type="text" 
-                                          placeholder="Nova ação..." 
-                                          className="flex-1 bg-white/50 dark:bg-black/20 border border-gray-100 dark:border-white/10 px-4 py-3 rounded-2xl text-xs focus:outline-none focus:border-indigo-500 transition-all"
-                                          value={newActionText[cat.id] || ''}
-                                          onChange={e => setNewActionText(prev => ({ ...prev, [cat.id]: e.target.value }))}
-                                          onKeyPress={e => e.key === 'Enter' && addPDIAction(selectedMember.uid, cat.id)}
-                                       />
-                                       <button 
-                                          onClick={() => addPDIAction(selectedMember.uid, cat.id)}
-                                          className="p-3 bg-indigo-500 text-white rounded-2xl hover:bg-indigo-600 shadow-lg shadow-indigo-500/20 transition-all"
-                                       >
-                                          <Plus size={18} />
-                                       </button>
-                                    </div>
+                                    {isAdminOrManager && (
+                                      <div className="flex gap-2">
+                                         <input 
+                                            type="text" 
+                                            placeholder="Nova ação..." 
+                                            className="flex-1 bg-white/50 dark:bg-black/20 border border-gray-100 dark:border-white/10 px-4 py-3 rounded-2xl text-xs focus:outline-none focus:border-indigo-500 transition-all"
+                                            value={newActionText[cat.id] || ''}
+                                            onChange={e => setNewActionText(prev => ({ ...prev, [cat.id]: e.target.value }))}
+                                            onKeyPress={e => e.key === 'Enter' && addPDIAction(selectedMember.uid, cat.id)}
+                                         />
+                                         <button 
+                                            onClick={() => addPDIAction(selectedMember.uid, cat.id)}
+                                            className="p-3 bg-indigo-500 text-white rounded-2xl hover:bg-indigo-600 shadow-lg shadow-indigo-500/20 transition-all"
+                                         >
+                                            <Plus size={18} />
+                                         </button>
+                                      </div>
+                                    )}
                                  </div>
                                ))}
                             </div>
