@@ -135,8 +135,8 @@ export default function AssetManager() {
       </div>
 
       {showAddModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-gray-100 dark:bg-[#1a1c1e] w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl border border-gray-200 dark:border-white/10 scale-in-center">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowAddModal(false)}>
+          <div className="bg-gray-100 dark:bg-[#1a1c1e] w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl border border-gray-200 dark:border-white/10 scale-in-center" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-2xl font-bold mb-6 flex items-center gap-2 dark:text-white">
               <PlusCircle className="text-primary-500" /> Novo Ativo
             </h3>

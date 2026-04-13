@@ -41,8 +41,8 @@ export default function SupportSatisfactionModal({ requestId, orgId, onClose }: 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[200] flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-[#0a0a0a] rounded-[2rem] border border-gray-200 dark:border-white/10 w-full max-w-md shadow-2xl overflow-hidden p-8 relative animate-in zoom-in-95 duration-300">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[200] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white dark:bg-[#0a0a0a] rounded-[2rem] border border-gray-200 dark:border-white/10 w-full max-w-md shadow-2xl overflow-hidden p-8 relative animate-in zoom-in-95 duration-300" onClick={(e) => e.stopPropagation()}>
         <button 
           onClick={onClose}
           className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors"
