@@ -9,7 +9,7 @@ import type { TransactionCategory, TransactionType } from '../../types';
 
 export default function CategoryManager() {
   const { user } = useAuth();
-  const { transactionCategories } = useCRM();
+  const { transactionCategories, effectiveOrgId } = useCRM();
   const [isAdding, setIsAdding] = useState(false);
   const [newName, setNewName] = useState('');
   const [newType, setNewType] = useState<TransactionType>('EXPENSE');
@@ -30,7 +30,7 @@ export default function CategoryManager() {
         isCustom: true
       };
 
-      await setDoc(doc(db, 'users', user.uid, 'transactionCategories', catId), newCat);
+      await setDoc(doc(db, 'organizations', effectiveOrgId, 'transactionCategories', catId), newCat);
       toast.success('Categoria criada com sucesso!');
       setNewName('');
       setIsAdding(false);
@@ -43,7 +43,7 @@ export default function CategoryManager() {
     if (!user) return;
     if (confirm('Tem certeza que deseja excluir esta categoria? Ela não será mais exibida para novas transações.')) {
       try {
-        await deleteDoc(doc(db, 'users', user.uid, 'transactionCategories', id));
+        await deleteDoc(doc(db, 'organizations', effectiveOrgId, 'transactionCategories', id));
         toast.success('Categoria excluída.');
       } catch (err) {
         toast.error('Erro ao excluir categoria.');

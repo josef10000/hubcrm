@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 
 export default function BankReconciliation() {
   const { user } = useAuth();
-  const { transactions, transactionCategories } = useCRM();
+  const { transactions, transactionCategories, effectiveOrgId } = useCRM();
   const [ofxItems, setOfxItems] = useState<OFXTransaction[]>([]);
   const [isHovering, setIsHovering] = useState(false);
 
@@ -46,7 +46,7 @@ export default function BankReconciliation() {
 
     const tId = Math.random().toString(36).substring(7);
     try {
-      await setDoc(doc(db, 'users', user.uid, 'transactions', tId), {
+      await setDoc(doc(db, 'organizations', effectiveOrgId, 'transactions', tId), {
         id: tId,
         description: ofx.memo,
         amount: Math.abs(ofx.amount),

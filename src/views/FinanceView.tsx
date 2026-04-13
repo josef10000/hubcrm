@@ -484,6 +484,10 @@ export default function FinanceView() {
               </div>
             </div>
           </div>
+        ) : activeTab === 'categorias' ? (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <CategoryManager />
+          </div>
         ) : null}
 
       </div>

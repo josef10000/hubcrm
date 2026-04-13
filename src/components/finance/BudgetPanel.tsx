@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 
 export default function BudgetPanel() {
   const { user } = useAuth();
-  const { transactions, transactionCategories } = useCRM();
+  const { transactions, transactionCategories, effectiveOrgId } = useCRM();
   const [budgets, setBudgets] = useState<Record<string, number>>({});
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState<string>('');
@@ -17,8 +17,8 @@ export default function BudgetPanel() {
   const currentMonth = new Date().getMonth(); // 0 to 11
 
   useEffect(() => {
-    if (!user) return;
-    const unsubscribe = onSnapshot(collection(db, 'users', user.uid, 'budgets'), (snap) => {
+    if (!effectiveOrgId) return;
+    const unsubscribe = onSnapshot(collection(db, 'organizations', effectiveOrgId, 'budgets'), (snap) => {
       const loaded: Record<string, number> = {};
       snap.forEach(d => {
         const bd = d.data();
@@ -42,7 +42,7 @@ export default function BudgetPanel() {
       if (isNaN(amount)) return;
 
       const docId = `${categoryId}_${currentYear}_${currentMonth}`;
-      await setDoc(doc(db, 'users', user.uid, 'budgets', docId), {
+      await setDoc(doc(db, 'organizations', effectiveOrgId, 'budgets', docId), {
         id: docId,
         categoryId,
         amount,
