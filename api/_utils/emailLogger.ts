@@ -17,7 +17,7 @@ export interface EmailLogData {
  */
 export async function logEmailHistory(userId: string, clientId: string, logData: EmailLogData) {
   try {
-    const clientRef = db.collection('users').doc(userId).collection('clients').doc(clientId);
+    const clientRef = db.collection('organizations').doc(userId).collection('clients').doc(clientId);
     
     // Generate a unique ID for the log entry
     const entryId = Math.random().toString(36).substring(2, 15);

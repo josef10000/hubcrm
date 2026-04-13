@@ -30,7 +30,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(403).json({ error: 'Unauthorized access to this resource' });
     }
 
-    const clientRef = db.collection('users').doc(userId).collection('clients').doc(clientId);
+    const clientRef = db.collection('organizations').doc(userId).collection('clients').doc(clientId);
     const clientDoc = await clientRef.get();
 
     if (!clientDoc.exists) {
