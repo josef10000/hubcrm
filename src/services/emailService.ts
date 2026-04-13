@@ -17,7 +17,9 @@ const TEMPLATE_IDS = {
   FATURA_EMITIDA: 'nova-fatura-disponvel',
   PAGAMENTO_RECEBIDO: 'pagamento-recebido',
   AVISO_VENCIMENTO: 'fatura-vencimento',
-  CONVITE_EQUIPE: 'team-settings'
+  CONVITE_EQUIPE: 'team-settings',
+  BROADCAST_SIMPLE: 'broadcast-simple',
+  BROADCAST_ACTION: 'broadcast-action'
 };
 
 /**
@@ -250,3 +252,41 @@ export async function sendTeamInviteEmail(
   }
 }
 
+export async function sendTeamBroadcastEmail(
+  emails: string[],
+  payload: { subject: string; message: string; hasButton: boolean; buttonText?: string; buttonUrl?: string }
+) {
+  try {
+    const templateId = payload.hasButton ? TEMPLATE_IDS.BROADCAST_ACTION : TEMPLATE_IDS.BROADCAST_SIMPLE;
+    
+    // As variáveis do corpo precisam englobar caso seja botão ou não.
+    // Dica de Resend: quando enviamos pra um array de emails (BCC list essencialmente), a variável é a mesma para todos.
+    const variables: any = {
+      assunto: payload.subject,
+      mensagem: payload.message
+    };
+    
+    if (payload.hasButton) {
+      variables.link_texto = payload.buttonText;
+      variables.link_url = payload.buttonUrl;
+    }
+
+    // @ts-ignore
+    const data = await (resend.emails.send as any)({
+      from: FROM_EMAIL,
+      to: emails,
+      reply_to: REPLY_TO_EMAIL,
+      subject: payload.subject,
+      template: {
+        id: templateId,
+        variables: variables,
+      },
+    });
+    
+    console.log(`Email Broadcast disparado! Tem botão: ${payload.hasButton}, Qtd: ${emails.length}, ID: ${(data as any).id || (data as any).data?.id}`);
+    return data;
+  } catch (error) {
+    console.error('Erro ao disparar broadcast:', error);
+    throw error;
+  }
+}

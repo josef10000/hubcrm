@@ -32,8 +32,9 @@ import { useCRM } from '../contexts/CRMContext';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { VacationPeriod, PDICategory, PDIAction } from '../types/people';
+import BroadcastTab from '../components/people/BroadcastTab';
 
-type PeopleSubTab = 'dashboard' | 'onboarding' | 'development' | 'vacations' | 'climate';
+type PeopleSubTab = 'dashboard' | 'onboarding' | 'development' | 'vacations' | 'climate' | 'broadcast';
 
 export default function PeopleView() {
   const { userProfile } = useAuth();
@@ -408,31 +409,31 @@ export default function PeopleView() {
         </div>
 
         {/* Custom Tabs */}
-        <div className="flex bg-gray-200/50 dark:bg-white/5 p-1 rounded-2xl border border-gray-200 dark:border-white/10 mb-8 w-fit">
+        <div className="flex bg-gray-200/50 dark:bg-white/5 p-1 rounded-2xl border border-gray-200 dark:border-white/10 mb-8 w-max max-w-full overflow-x-auto custom-scrollbar">
           <button 
             onClick={() => setActiveTab('dashboard')}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium ${activeTab === 'dashboard' ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium whitespace-nowrap ${activeTab === 'dashboard' ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
           >
             <TrendingUp size={18} />
             <span>Dashboard</span>
           </button>
           <button 
             onClick={() => setActiveTab('onboarding')}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium ${activeTab === 'onboarding' ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium whitespace-nowrap ${activeTab === 'onboarding' ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
           >
             <Sparkles size={18} />
             <span>Onboarding</span>
           </button>
           <button 
             onClick={() => setActiveTab('development')}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium ${activeTab === 'development' ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium whitespace-nowrap ${activeTab === 'development' ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
           >
             <Target size={18} />
             <span>Desenvolvimento</span>
           </button>
           <button 
             onClick={() => setActiveTab('vacations')}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium ${activeTab === 'vacations' ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium whitespace-nowrap ${activeTab === 'vacations' ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
           >
             <Calendar size={18} />
             <span>Ausências</span>
@@ -440,10 +441,19 @@ export default function PeopleView() {
           {(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture') && (
             <button 
               onClick={() => setActiveTab('climate')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium ${activeTab === 'climate' ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium whitespace-nowrap ${activeTab === 'climate' ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
             >
               <Smile size={18} />
               <span>Clima</span>
+            </button>
+          )}
+          {(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture') && (
+            <button 
+              onClick={() => setActiveTab('broadcast')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium whitespace-nowrap ${activeTab === 'broadcast' ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+            >
+              <MessageSquare size={18} />
+              <span>Comunicados</span>
             </button>
           )}
         </div>
@@ -934,6 +944,13 @@ export default function PeopleView() {
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+          
+          {/* BROADCAST TAB */}
+          {activeTab === 'broadcast' && (userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture') && (
+            <div className="animate-in slide-in-from-bottom duration-500">
+              <BroadcastTab teamMembers={teamMembers} />
             </div>
           )}
         </div>

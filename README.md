@@ -249,6 +249,7 @@ Módulo completo de People Management para escalar a cultura e produtividade da 
 - **Onboarding Checklists**: Gestão de tarefas de integração para novos talentos, com acompanhamento de progresso percentual.
 - **PDI (Plano de Desenvolvimento)**: Árvore de competências e trilha de carreira com categorias e ações de desenvolvimento.
 - **Pesquisa de Clima (eNPS)**: Pesquisa recorrente (ex: a cada 30 dias) baseada na escala clássica de 0 a 10 para medir o engajamento e satisfação interna da equipe. Classifica de forma 100% anônima os membros como Promotores (9-10), Neutros (7-8) ou Detratores (0-6).
+- **Comunicados (Broadcast)**: Disparador em lote integrado ao Resend para avisos internos (ex: novos benefícios, feriados). Suporta injetar Call-To-Actions dinâmicos no layout da Hub Symples usando variáveis natively, e permite segmentar o envio por cargos (Roles) visualmente através dos cards da equipe.
 - **Perfis Profissionais**: Página completa com foto, bio, cargo, contatos sociais e reporting lines.
 - **Sistema de Convites**: Convite por e-mail com link de aceite e expiração configurável (72h padrão).
 - **Edição Segura**: Apenas o próprio usuário ou Administradores podem editar perfis.

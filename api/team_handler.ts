@@ -1,7 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { db, getFirebaseAdmin } from './_utils/firebase.js';
 import { verifyAuth } from './_utils/authMiddleware.js';
-import { sendTeamInviteEmail } from '../src/services/emailService.js';
+import { sendTeamInviteEmail, sendTeamBroadcastEmail } from '../src/services/emailService.js';
 import crypto from 'crypto';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -25,6 +25,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return await handleCancelInvite(req, res, uid!);
       case 'update-profile':
         return await handleUpdateProfile(req, res, uid!);
+      case 'broadcast':
+        return await handleBroadcast(req, res, uid!);
       default:
         return res.status(400).json({ error: 'Ação inválida ou não fornecida' });
     }
@@ -163,4 +165,61 @@ async function handleUpdateProfile(req: VercelRequest, res: VercelResponse, uid:
 
   await db.collection('profiles').doc(targetUid).set({ ...profileData, updatedAt: Date.now() }, { merge: true });
   return res.status(200).json({ success: true });
+}
+
+async function handleBroadcast(req: VercelRequest, res: VercelResponse, uid: string) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido' });
+  
+  const { uids, subject, message, hasButton, buttonText, buttonUrl } = req.body;
+  if (!uids || !Array.isArray(uids) || uids.length === 0) {
+    return res.status(400).json({ error: 'Nenhum destinatário informado' });
+  }
+
+  // Verifica permissão
+  const senderSnap = await db.collection('profiles').doc(uid).get();
+  const senderData = senderSnap.data();
+  if (senderData?.role !== 'Administrador' && senderData?.role !== 'Gerente' && senderData?.role !== 'People & Culture') {
+    return res.status(403).json({ error: 'Acesso negado para enviar comunicados' });
+  }
+
+  // Busca emails da organização para os uids selecionados
+  // Note: Firestore 'in' query has a limit of 30 items per batch. 
+  // For small teams this is fine, for large teams we chunk it.
+  const emails: string[] = [];
+  
+  // Chunck UIDs into batches of 30 to bypass firestore limits
+  const chunkSize = 30;
+  for (let i = 0; i < uids.length; i += chunkSize) {
+    const chunk = uids.slice(i, i + chunkSize);
+    const profilesSnap = await db.collection('profiles')
+      .where('orgId', '==', senderData.orgId)
+      .where('__name__', 'in', chunk)
+      .get();
+      
+    profilesSnap.docs.forEach(d => {
+      if (d.data().email) emails.push(d.data().email);
+    });
+  }
+
+  if (emails.length === 0) {
+    return res.status(400).json({ error: 'Nenhum e-mail válido encontrado para os usuários selecionados' });
+  }
+
+  // Define os dados a enviar
+  const payload = {
+    subject,
+    message,
+    hasButton,
+    buttonText,
+    buttonUrl
+  };
+
+  // Enviar para os emails (Resend aceita até 50 emails por vez no array 'to')
+  const emailChunkSize = 50;
+  for (let i = 0; i < emails.length; i += emailChunkSize) {
+    const chunk = emails.slice(i, i + emailChunkSize);
+    await sendTeamBroadcastEmail(chunk, payload);
+  }
+
+  return res.status(200).json({ success: true, count: emails.length });
 }
