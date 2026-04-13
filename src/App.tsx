@@ -1,3 +1,4 @@
+/** Intranet Hub Symples - Gestão Interna */
 import React, { useMemo } from 'react';
 import {
   LayoutDashboard, Users, Plus, X, DollarSign,
