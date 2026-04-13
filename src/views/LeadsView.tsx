@@ -30,13 +30,18 @@ interface LeadFormData {
   plan: string;
   niche: string;
   nextFollowUp: string;
+  assignedTo: string;
 }
 
-const emptyForm: LeadFormData = { name: '', whatsapp: '', email: '', leadSource: '', estimatedValue: '', notes: '', plan: '', niche: '', nextFollowUp: '' };
+const emptyForm: LeadFormData = { 
+  name: '', whatsapp: '', email: '', leadSource: '', 
+  estimatedValue: '', notes: '', plan: '', niche: '', 
+  nextFollowUp: '', assignedTo: '' 
+};
 
 export default function LeadsView() {
   const { user } = useAuth();
-  const { leads, effectiveOrgId, userProfile } = useCRM();
+  const { leads, effectiveOrgId, userProfile, teamProfiles } = useCRM();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<LeadFormData>(emptyForm);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
@@ -68,7 +73,9 @@ export default function LeadsView() {
         niche: formData.niche.trim() || undefined,
         nextFollowUp: formData.nextFollowUp ? new Date(formData.nextFollowUp).getTime() : undefined,
         updatedAt: Date.now(),
-        assignedTo: editingLead ? editingLead.assignedTo : (userProfile?.role === 'SDR' || userProfile?.role === 'Executive' ? user?.uid : undefined)
+        assignedTo: (userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente') 
+          ? (formData.assignedTo || user?.uid) 
+          : (user?.uid)
       };
       // Clean undefined values
       Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
@@ -140,6 +147,7 @@ export default function LeadsView() {
       leadSource: lead.leadSource || '', estimatedValue: lead.estimatedValue?.toString() || '',
       notes: lead.notes || '', plan: lead.plan || '', niche: lead.niche || '',
       nextFollowUp: lead.nextFollowUp ? new Date(lead.nextFollowUp).toISOString().split('T')[0] : '',
+      assignedTo: lead.assignedTo || '',
     });
     setActiveTab('form');
     setIsModalOpen(true);
@@ -455,6 +463,37 @@ export default function LeadsView() {
                   <input type="date" value={formData.nextFollowUp} onChange={(e) => setFormData({ ...formData, nextFollowUp: e.target.value })}
                     className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500/50 outline-none text-sm" />
                 </div>
+              </div>
+
+              {/* Lead Owner / Assignment */}
+              <div>
+                <label className="block text-xs text-gray-400 font-medium mb-1.5">Dono do Lead (Atribuição)</label>
+                {(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente') ? (
+                  <div className="relative">
+                    <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                    <select 
+                      value={formData.assignedTo || user?.uid} 
+                      onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
+                      className="w-full pl-10 pr-8 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500/50 outline-none text-sm appearance-none cursor-pointer"
+                    >
+                      <option value={user?.uid}>Atribuído a mim</option>
+                      {teamProfiles
+                        .filter(p => p.role === 'SDR' || p.role === 'Executive')
+                        .map(member => (
+                          <option key={member.uid} value={member.uid}>
+                            {member.displayName} ({member.role})
+                          </option>
+                        ))
+                      }
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 px-4 py-2.5 bg-white/5 border border-dashed border-white/10 rounded-xl opacity-80">
+                    <UserCircle className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm text-gray-400">Atribuído automaticamente a você</span>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-xs text-gray-400 font-medium mb-1.5">Observações</label>
