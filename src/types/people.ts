@@ -55,6 +55,53 @@ export interface UserProfilePeople extends UserProfile {
   onboardingTasks?: OnboardingTask[];
   onboardingTemplateId?: string;
   pdiCategories?: PDICategory[];
+  skills?: UserSkill[];
+}
+
+export interface UserSkill {
+  name: string;
+  level: number; // 1 a 5
+  type: 'Hard' | 'Soft';
+}
+
+export interface Asset {
+  id: string;
+  name: string;
+  serialNumber?: string;
+  category: 'Hardware' | 'Software' | 'Acesso' | 'Outro';
+  assignedTo: string; // userId
+  assignedAt: number;
+  status: 'Em uso' | 'Devolvido' | 'Manutenção';
+  orgId: string;
+}
+
+export interface CareerEvent {
+  id: string;
+  userId: string;
+  date: string; // YYYY-MM-DD
+  title: string;
+  description?: string;
+  type: 'Promoção' | 'Mudança de Cargo' | 'Marco' | 'Entrada';
+  orgId: string;
+}
+
+export interface UserDocument {
+  id: string;
+  userId: string;
+  name: string;
+  url: string; 
+  type: 'Contrato' | 'Certificado' | 'Identidade' | 'Outro';
+  uploadedAt: number;
+  orgId: string;
+}
+
+export interface MoodUpdate {
+  id: string;
+  userId: string;
+  date: string; // YYYY-MM-DD
+  mood: 'very-good' | 'good' | 'neutral' | 'bad' | 'very-bad';
+  timestamp: number;
+  orgId: string;
 }
 
 // Template global de onboarding

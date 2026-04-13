@@ -31,10 +31,17 @@ import { format, differenceInYears, parseISO, isSameDay, addDays, isWithinInterv
 import { useCRM } from '../contexts/CRMContext';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
-import { VacationPeriod, PDICategory, PDIAction } from '../types/people';
+import { VacationPeriod, PDICategory, PDIAction, UserProfilePeople } from '../types/people';
 import BroadcastTab from '../components/people/BroadcastTab';
+import MoodTracker from '../components/people/MoodTracker';
+import AssetManager from '../components/people/AssetManager';
+import SkillRadar from '../components/people/SkillRadar';
+import CareerTimeline from '../components/people/CareerTimeline';
+import DocumentManager from '../components/people/DocumentManager';
+import FeedbackBoard from '../components/people/FeedbackBoard';
+import { Package } from 'lucide-react';
 
-type PeopleSubTab = 'dashboard' | 'onboarding' | 'development' | 'vacations' | 'climate' | 'broadcast';
+type PeopleSubTab = 'dashboard' | 'onboarding' | 'development' | 'vacations' | 'climate' | 'broadcast' | 'assets';
 
 export default function PeopleView() {
   const { userProfile } = useAuth();
@@ -82,6 +89,8 @@ export default function PeopleView() {
   const [showClearEnpsConfirm, setShowClearEnpsConfirm] = useState(false);
   const [isClearingEnps, setIsClearingEnps] = useState(false);
 
+  const [memberSubTab, setMemberSubTab] = useState<'overview' | 'skills' | 'timeline' | 'docs' | 'feedback'>('overview');
+  
   useEffect(() => {
     if (!effectiveOrgId) return;
 
@@ -456,6 +465,15 @@ export default function PeopleView() {
               <span>Comunicados</span>
             </button>
           )}
+          {(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture') && (
+            <button 
+              onClick={() => setActiveTab('assets')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium whitespace-nowrap ${activeTab === 'assets' ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+            >
+              <Package size={18} />
+              <span>Ativos</span>
+            </button>
+          )}
         </div>
 
         {/* Content Rendering */}
@@ -463,9 +481,12 @@ export default function PeopleView() {
           {/* DASHBOARD TAB */}
           {activeTab === 'dashboard' && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-in fade-in duration-500">
+              <div className="md:col-span-1">
+                <MoodTracker />
+              </div>
               <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-6 shadow-xl">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="font-bold flex items-center gap-2"><Smile className="text-yellow-500" /> Clima da Equipe</h3>
+                  <h3 className="font-bold flex items-center gap-2 font-sans dark:text-white"><Smile className="text-yellow-500" /> Clima da Equipe</h3>
                   <span className="text-xs font-bold text-primary-500 bg-primary-500/10 px-2 py-1 rounded-lg">Mês Atual</span>
                 </div>
                 <div className="flex flex-col items-center justify-center py-4 text-center">
@@ -603,54 +624,124 @@ export default function PeopleView() {
                   <div className="lg:col-span-3">
                      {selectedMember ? (
                        <div className="animate-in fade-in">
-                          <h3 className="text-xl font-bold mb-6">{selectedMember.displayName}</h3>
-                          {selectedMember.onboardingTasks ? (
-                             <div className="space-y-2">
-                                <div className="flex gap-2 mb-6">
-                                   <input 
-                                     id="new_onboarding_task"
-                                     type="text" 
-                                     placeholder="Nova tarefa de onboarding..." 
-                                     className="flex-1 bg-white/50 dark:bg-white/5 border border-gray-100 dark:border-white/5 px-4 py-3 rounded-2xl text-xs focus:outline-none focus:border-primary-500 transition-all"
-                                     onKeyPress={e => e.key === 'Enter' && addTaskToOnboarding(selectedMember.uid, (e.target as HTMLInputElement).value)}
-                                   />
-                                   <button 
-                                     onClick={() => {
-                                       const input = document.getElementById('new_onboarding_task') as HTMLInputElement;
-                                       addTaskToOnboarding(selectedMember.uid, input.value);
-                                       input.value = '';
-                                     }}
-                                     className="p-3 bg-primary-500 text-white rounded-2xl hover:bg-primary-600 shadow-lg shadow-primary-500/20 transition-all font-bold"
-                                   >
-                                     Adicionar
-                                   </button>
+                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-gray-100 dark:border-white/5">
+                            <div className="flex items-center gap-4">
+                               <div className="w-16 h-16 rounded-3xl bg-primary-500/10 flex items-center justify-center overflow-hidden">
+                                  {selectedMember.photoURL ? <img src={selectedMember.photoURL} alt="" className="w-full h-full object-cover" /> : <Users className="text-primary-500" size={32} />}
+                               </div>
+                               <div>
+                                  <h3 className="text-2xl font-bold dark:text-white leading-tight">{selectedMember.displayName}</h3>
+                                  <p className="text-sm text-gray-400 font-medium">{selectedMember.jobTitle || 'Sem cargo definido'}</p>
+                               </div>
+                            </div>
+                            
+                            <div className="flex bg-gray-100 dark:bg-white/5 p-1 rounded-2xl border border-gray-200 dark:border-white/10 overflow-x-auto">
+                               {[
+                                 { id: 'overview', label: 'Visão Geral', icon: Sparkles },
+                                 { id: 'skills', label: 'Competências', icon: Target },
+                                 { id: 'timeline', label: 'Carreira', icon: TrendingUp },
+                                 { id: 'docs', label: 'Documentos', icon: Package },
+                                 { id: 'feedback', label: 'Feedbacks', icon: MessageSquare }
+                               ].map(tab => (
+                                 <button 
+                                   key={tab.id}
+                                   onClick={() => setMemberSubTab(tab.id as any)}
+                                   className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${memberSubTab === tab.id ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
+                                 >
+                                   <tab.icon size={14} />
+                                   {tab.label}
+                                 </button>
+                               ))}
+                                                  {memberSubTab === 'overview' && (
+                             <div className="animate-in fade-in slide-in-from-right duration-300">
+                                <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6 font-sans">Checklist de Onboarding</h4>
+                                {selectedMember.onboardingTasks ? (
+                                   <div className="space-y-2">
+                                      <div className="flex gap-2 mb-6">
+                                         <input 
+                                           id="new_onboarding_task"
+                                           type="text" 
+                                           placeholder="Nova tarefa de onboarding..." 
+                                           className="flex-1 bg-white/50 dark:bg-white/5 border border-gray-100 dark:border-white/5 px-4 py-3 rounded-2xl text-xs focus:outline-none focus:border-primary-500 transition-all"
+                                           onKeyPress={e => e.key === 'Enter' && addTaskToOnboarding(selectedMember.uid, (e.target as HTMLInputElement).value)}
+                                         />
+                                         <button 
+                                           onClick={() => {
+                                             const input = document.getElementById('new_onboarding_task') as HTMLInputElement;
+                                             addTaskToOnboarding(selectedMember.uid, input.value);
+                                             input.value = '';
+                                           }}
+                                           className="p-3 bg-primary-500 text-white rounded-2xl hover:bg-primary-600 shadow-lg shadow-primary-500/20 transition-all font-bold"
+                                         >
+                                           Adicionar
+                                         </button>
+                                      </div>
+                                      <div className="space-y-2">
+                                        {selectedMember.onboardingTasks.map(t => (
+                                           <div key={t.id} className="flex items-center group/task gap-3 p-4 bg-white/40 dark:bg-white/5 border border-gray-100 dark:border-white/5 rounded-2xl transition-all">
+                                              <div onClick={() => toggleTask(selectedMember.uid, t.id)} className="flex items-center flex-1 gap-3 cursor-pointer">
+                                                {t.completed ? <CheckCircle2 className="text-emerald-500" /> : <Circle className="text-gray-300" />}
+                                                <span className={t.completed ? 'line-through opacity-40' : 'font-medium'}>{t.task}</span>
+                                              </div>
+                                              <button onClick={() => removeTaskFromOnboarding(selectedMember.uid, t.id)} className="opacity-0 group-hover/task:opacity-100 p-2 text-red-500 hover:bg-red-500/10 rounded-xl transition-all">
+                                                <Trash2 size={16} />
+                                              </button>
+                                           </div>
+                                        ))}
+                                      </div>
+                                   </div>
+                                ) : (
+                                   <div className="text-center py-20 bg-gray-100/50 dark:bg-white/5 rounded-3xl border-2 border-dashed border-gray-200 dark:border-white/10">
+                                      <p className="mb-4 text-gray-500">Nenhum checklist ativo.</p>
+                                      <button onClick={() => assignDefaultTemplate(selectedMember.uid)} className="bg-primary-500 text-white px-6 py-3 rounded-2xl font-bold shadow-lg">Iniciar Checklist Padrão</button>
+                                   </div>
+                                )}
+                             </div>
+                          )}
+
+                          {memberSubTab === 'skills' && (
+                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in slide-in-from-right duration-300">
+                                <div className="bg-white/30 dark:bg-white/5 border border-gray-100 dark:border-white/5 rounded-3xl p-8">
+                                   <h4 className="font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2 font-sans">Matriz de Competências</h4>
+                                   <SkillRadar skills={(selectedMember as any).skills || []} />
                                 </div>
-                                <div className="space-y-2">
-                                  {selectedMember.onboardingTasks.map(t => (
-                                     <div key={t.id} className="flex items-center group/task gap-3 p-4 bg-white/40 dark:bg-white/5 border border-gray-100 dark:border-white/5 rounded-2xl transition-all">
-                                        <div onClick={() => toggleTask(selectedMember.uid, t.id)} className="flex items-center flex-1 gap-3 cursor-pointer">
-                                          {t.completed ? <CheckCircle2 className="text-emerald-500" /> : <Circle className="text-gray-300" />}
-                                          <span className={t.completed ? 'line-through opacity-40' : 'font-medium'}>{t.task}</span>
-                                        </div>
-                                        <button onClick={() => removeTaskFromOnboarding(selectedMember.uid, t.id)} className="opacity-0 group-hover/task:opacity-100 p-2 text-red-500 hover:bg-red-500/10 rounded-xl transition-all">
-                                          <Trash2 size={16} />
-                                        </button>
-                                     </div>
-                                  ))}
+                                <div className="bg-white/30 dark:bg-white/5 border border-gray-100 dark:border-white/5 rounded-3xl p-8">
+                                   <h4 className="font-bold text-gray-900 dark:text-white mb-6 font-sans">Sugestão de Desenvolvimento</h4>
+                                   <p className="text-sm text-gray-500 leading-relaxed mb-4">
+                                      Com base na matriz ao lado, foque em desenvolver as competências com menor pontuação para equilibrar o perfil profissional.
+                                   </p>
+                                   <div className="p-4 bg-primary-500/5 border border-primary-500/10 rounded-2xl italic text-xs text-primary-600 font-medium font-sans">
+                                      "O desenvolvimento contínuo é a chave para o sucesso na Hub Symples."
+                                   </div>
                                 </div>
                              </div>
-                          ) : (
-                             <div className="text-center py-20 bg-gray-100/50 dark:bg-white/5 rounded-3xl border-2 border-dashed border-gray-200 dark:border-white/10">
-                                <p className="mb-4 text-gray-500">Nenhum checklist ativo.</p>
-                                <button onClick={() => assignDefaultTemplate(selectedMember.uid)} className="bg-primary-500 text-white px-6 py-3 rounded-2xl font-bold shadow-lg">Iniciar Checklist Padrão</button>
+                          )}
+
+                          {memberSubTab === 'timeline' && (
+                             <div className="animate-in fade-in slide-in-from-right duration-300">
+                                <CareerTimeline userId={selectedMember.uid} />
+                             </div>
+                          )}
+
+                          {memberSubTab === 'docs' && (
+                             <div className="animate-in fade-in slide-in-from-right duration-300">
+                                <DocumentManager userId={selectedMember.uid} />
+                             </div>
+                          )}
+
+                          {memberSubTab === 'feedback' && (
+                             <div className="animate-in fade-in slide-in-from-right duration-300">
+                                <FeedbackBoard userId={selectedMember.uid} />
                              </div>
                           )}
                        </div>
-                     ) : (
+                    ) : (
                        <div className="h-40 flex flex-col items-center justify-center text-gray-400">
                           <Users size={40} className="mb-2 opacity-20" />
                           <p>Selecione alguém para começar</p>
                        </div>
+                    )}
+                   </div>
                      )}
                   </div>
                </div>
@@ -951,6 +1042,13 @@ export default function PeopleView() {
           {activeTab === 'broadcast' && (userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture') && (
             <div className="animate-in slide-in-from-bottom duration-500">
               <BroadcastTab teamMembers={teamMembers} />
+            </div>
+          )}
+
+          {/* ASSETS TAB */}
+          {activeTab === 'assets' && (userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture') && (
+            <div className="animate-in slide-in-from-bottom duration-500">
+              <AssetManager />
             </div>
           )}
         </div>

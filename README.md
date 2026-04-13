@@ -783,6 +783,7 @@ className="bg-gray-100 border-gray-200"
 - [x] Celebração de Aniversários (Gamificação)
 - [x] Sistema de Temas Dinâmicos (Dark Absolute)
 - [x] CI/CD com GitHub Actions (5 pipelines)
+- [x] 🧬 Gestão de Ativos, Skills, Carreira, Docs, Feedbacks e Humor (Módulo Intranet)
 - [x] 🧬 Gestão de Ausências, Onboarding, PDI e eNPS
 - [x] 🎧 Suporte com SLA Tracker, CSAT e Atribuição de Técnicos (Fase 2)
 - [x] 📈 Health Score Automatizado (Financeiro + Engajamento + NPS) (Fase 2)
