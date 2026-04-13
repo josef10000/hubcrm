@@ -30,7 +30,7 @@ export default function MarketingView() {
           Aviso Global (Portal do Cliente)
         </h3>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-          Este aviso aparecerá no topo do portal de todos os seus clientes. Use para comunicar recessos, novos serviços ou atualizações importantes.
+          Este aviso aparecerá no topo do portal corporativo. Use para comunicar recessos, novos processos ou atualizações importantes da Hub Symples.
         </p>
 
         <div className="space-y-4">
@@ -71,7 +71,7 @@ export default function MarketingView() {
                 <option value="info" className="bg-[#0a0a0a] text-white">Informativo (Azul)</option>
                 <option value="warning" className="bg-[#0a0a0a] text-white">Atenção (Amarelo)</option>
                 <option value="success" className="bg-[#0a0a0a] text-white">Novidade/Sucesso (Verde)</option>
-                <option value="new_feature" className="bg-[#0a0a0a] text-white">Lançamento (Primária)</option>
+                <option value="new_feature" className="bg-[#0a0a0a] text-white">Novidade (Primária)</option>
               </select>
             </div>
           </div>

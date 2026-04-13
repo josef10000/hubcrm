@@ -99,9 +99,9 @@ export default function Auth() {
           Hub Central
         </h2>
         <p className="mt-2 text-center text-sm text-gray-400">
-          {mode === 'login' ? 'Acesso exclusivo para administração' : 
-           mode === 'register' ? 'Crie sua conta de administrador' : 
-           'Redefina sua senha de acesso'}
+          {mode === 'login' ? 'Portal Corporativo Hub Symples' : 
+           mode === 'register' ? 'Solicite acesso ao administrador' : 
+           'Redefinição de credenciais de acesso'}
         </p>
       </div>
 

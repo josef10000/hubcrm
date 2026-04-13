@@ -154,16 +154,16 @@ function CRMInner() {
             {currentPath === '/analytics' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Métricas</h2>}
             {currentPath === '/calendar' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Agenda Central</h2>}
             {currentPath === '/support' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Chamados</h2>}
-            {currentPath === '/finance' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Gestão de Custos e Financeiro</h2>}
+            {currentPath === '/finance' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Financeiro Corporativo</h2>}
             {currentPath === '/settings' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Configurações</h2>}
-            {currentPath === '/referrals' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Programa de Indicações</h2>}
-            {currentPath === '/marketing' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Avisos</h2>}
+            {currentPath === '/referrals' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Programa Hub Rewards</h2>}
+            {currentPath === '/marketing' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Comunicados Globais</h2>}
             {currentPath === '/products' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Produtos</h2>}
             {currentPath === '/monitoring' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Monitoramento de Sites</h2>}
             {currentPath === '/map' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Mapa de Clientes</h2>}
             {currentPath === '/map' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Mapa de Clientes</h2>}
             {currentPath === '/leads' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white" translate="no">Funil de Vendas</h2>}
-            {currentPath === '/notifications' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white" translate="no">Central de Avisos</h2>}
+            {currentPath === '/notifications' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white" translate="no">Central de Notificações</h2>}
             {currentPath === '/team' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Gestão de Equipe</h2>}
             {currentPath === '/people' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">People & Culture</h2>}
           </div>

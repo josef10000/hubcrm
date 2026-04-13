@@ -195,10 +195,10 @@ export default function PublicCheckoutPage() {
             <img src="https://i.imgur.com/EFBaYb5.png" alt="Hub Symples Logo" className="h-48 w-auto object-contain drop-shadow-2xl" referrerPolicy="no-referrer" />
           </div>
           <h1 className="text-3xl font-bold text-white mb-4">
-            {ownerSettings?.checkoutTitle || 'Contratação de Projeto'}
+            {ownerSettings?.checkoutTitle || 'Abertura de Projeto Interno'}
           </h1>
           <p className="text-gray-400 max-w-xl mx-auto">
-            {ownerSettings?.checkoutDescription || 'Preencha os dados abaixo para iniciar seu projeto e realizar a assinatura.'}
+            {ownerSettings?.checkoutDescription || 'Preencha os dados abaixo para formalizar a nova demanda interna e realizar a assinatura.'}
           </p>
         </div>
 
@@ -420,7 +420,7 @@ Em caso de suspensão de pagamento, o serviço será suspenso após X dias. Canc
             <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
               <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
                 <CheckCircle className="w-5 h-5 text-primary-500" />
-                Escolha sua Solução
+                Selecione o Escopo da Demanda
               </h2>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -527,7 +527,7 @@ Em caso de suspensão de pagamento, o serviço será suspenso após X dias. Canc
                   </>
                 ) : (
                   <>
-                    Finalizar e Pagar
+                    Finalizar e Registrar
                     <CheckCircle size={18} />
                   </>
                 )}

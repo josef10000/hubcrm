@@ -1,9 +1,10 @@
-<div align="center">
-  <img src="https://i.imgur.com/EFBaYb5.png" alt="Hub Central Logo" width="280" />
-  
-  <h1>Hub Central</h1>
-  <p><strong>Ecossistema Completo de Gestão, Onboarding e Automação Comercial</strong></p>
-  <p><em>By Hub Symples — Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.</em></p>
+# 🔐 Hub Central — Intranet Corporativa
+
+> [!CAUTION]
+> **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
+> Este sistema é uma ferramenta proprietária desenvolvida para a gestão, onboarding e automação comercial interna. O acesso é restrito a colaboradores autorizados.
+
+Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.
 
   <p>
     <img src="https://img.shields.io/badge/Version-2.2.0-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />

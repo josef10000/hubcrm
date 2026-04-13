@@ -43,10 +43,10 @@ export default function OnboardingForm() {
         } else {
           // Default questions if none set
           setQuestions([
-            { id: '1', text: 'Qual o nome da sua empresa?', type: 'text', required: true },
-            { id: '2', text: 'Descreva brevemente o seu negócio', type: 'textarea', required: true },
-            { id: '3', text: 'Quais são as suas cores preferidas?', type: 'text', required: false },
-            { id: '4', text: 'Logo da Empresa (Opcional)', type: 'file', required: false }
+            { id: '1', text: 'Qual o nome do projeto/unidade?', type: 'text', required: true },
+            { id: '2', text: 'Descreva brevemente a demanda', type: 'textarea', required: true },
+            { id: '3', text: 'Quais são as cores preferidas da marca?', type: 'text', required: false },
+            { id: '4', text: 'Logo do Projeto (Opcional)', type: 'file', required: false }
           ]);
         }
 
@@ -213,9 +213,9 @@ export default function OnboardingForm() {
           <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary-500/20">
             <Globe className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-4">Bem-vindo(a)!</h1>
+          <h1 className="text-3xl font-bold text-white mb-4">Abertura de Demanda</h1>
           <p className="text-gray-400 max-w-xl mx-auto">
-            Para começarmos o seu projeto da melhor forma, precisamos de algumas informações. Por favor, preencha o formulário abaixo.
+            Para iniciarmos o processo da melhor forma, precisamos de algumas informações técnicas. Por favor, preencha o formulário abaixo.
           </p>
         </div>
 
@@ -234,13 +234,13 @@ export default function OnboardingForm() {
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Building2 className="h-5 w-5 text-gray-500" />
                   </div>
-                  <input
+                    <input
                     type="text"
                     required
                     value={basicData.name}
                     onChange={(e) => setBasicData({...basicData, name: e.target.value})}
                     className="block w-full pl-10 bg-black/40 border border-white/10 rounded-xl py-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none"
-                    placeholder="Sua Empresa Ltda"
+                    placeholder="Nome do Projeto / Unidade"
                   />
                 </div>
               </div>
