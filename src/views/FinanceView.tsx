@@ -17,7 +17,7 @@ import ROIAnalysis from '../components/finance/ROIAnalysis';
 
 export default function FinanceView() {
   const { user } = useAuth();
-  const { clients, expenses, newExpense, setNewExpense, transactionCategories, budgets, transactions, effectiveOrgId, userProfile, commissions, handlePayCommission, handleDeleteCommission, offerActions } = useCRM();
+  const { clients, expenses, newExpense, setNewExpense, transactionCategories, budgets, transactions, effectiveOrgId, userProfile, commissions, handlePayCommission, handleDeleteCommission, offers } = useCRM();
   const [activeTab, setActiveTab] = useState<'resumo' | 'dre' | 'fluxo' | 'orcamento' | 'conciliacao' | 'categorias' | 'comissoes' | 'roi'>('resumo');
 
   if (userProfile?.role === 'SDR' || userProfile?.role === 'Executive') {
@@ -303,7 +303,7 @@ export default function FinanceView() {
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1 font-bold text-primary-500 uppercase tracking-tighter">Vincular a Oferta (ROI)</label>
                     <select value={newExpense.offerId || ''} onChange={e => setNewExpense({...newExpense, offerId: e.target.value})} className="w-full px-4 py-3 bg-primary-500/10 border border-primary-500/30 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all">
                       <option value="" className="bg-[#030712] text-white">Selecione o produto alvo...</option>
-                      {offerActions.offers.map(o => (
+                      {offers.map(o => (
                         <option key={o.id} value={o.id} className="bg-[#030712] text-white">{o.name}</option>
                       ))}
                     </select>
@@ -345,7 +345,7 @@ export default function FinanceView() {
                             <span className="px-2 py-1 bg-black/40 dark:bg-zinc-950/5 rounded-md border border-white/5">{expense.category}</span>
                           </td>
                           <td className="py-4 text-gray-500 dark:text-gray-400 text-sm">
-                            {expense.clientId ? clients.find(c => c.id === expense.clientId)?.name || 'Desconhecido' : expense.offerId ? (offerActions.offers.find(o => o.id === expense.offerId)?.name + ' (Ads)') : '-'}
+                            {expense.clientId ? clients.find(c => c.id === expense.clientId)?.name || 'Desconhecido' : expense.offerId ? (offers.find(o => o.id === expense.offerId)?.name + ' (Ads)') : '-'}
                           </td>
                           <td className="py-4 text-red-400 font-medium text-right">
                             - R$ {expense.amount.toFixed(2).replace('.', ',')}
