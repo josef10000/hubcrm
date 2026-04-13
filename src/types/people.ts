@@ -51,11 +51,7 @@ export interface ENPSResult {
 
 // Extensão do UserProfile com campos People
 export interface UserProfilePeople extends UserProfile {
-  startDate?: string; // Data de contratação (YYYY-MM-DD)
-  onboardingTasks?: OnboardingTask[];
-  onboardingTemplateId?: string;
-  pdiCategories?: PDICategory[];
-  skills?: UserSkill[];
+  // Os campos como startDate e onboardingTasks já estão incluídos no UserProfile (modificado anteriormente)
 }
 
 export interface UserSkill {

@@ -722,7 +722,7 @@ export default function PeopleView() {
 
                           {memberSubTab === 'timeline' && (
                              <div className="animate-in fade-in slide-in-from-right duration-300">
-                                <CareerTimeline userId={selectedMember.uid} />
+                                <CareerTimeline milestones={selectedMember.careerTimeline || []} />
                              </div>
                           )}
 

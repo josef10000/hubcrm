@@ -55,7 +55,7 @@ export default function EditSkillsModal({ isOpen, onClose, targetUserId, initial
     setLoading(true);
 
     try {
-      const idToken = await window.getAuthToken(); // Função global ou via contexto
+      const idToken = typeof window !== 'undefined' ? (await (window as any).getAuthToken?.()) || "" : ""; // Função global ou via contexto
       const res = await fetch(`/api/team_handler?action=update-skills`, {
         method: 'POST',
         headers: { 
