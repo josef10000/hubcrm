@@ -170,7 +170,7 @@ async function handleUpdateProfile(req: VercelRequest, res: VercelResponse, uid:
 async function handleBroadcast(req: VercelRequest, res: VercelResponse, uid: string) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido' });
   
-  const { uids, subject, message, hasButton, buttonText, buttonUrl } = req.body;
+  const { uids, hasButton, buttonUrl } = req.body;
   if (!uids || !Array.isArray(uids) || uids.length === 0) {
     return res.status(400).json({ error: 'Nenhum destinatário informado' });
   }
@@ -213,10 +213,7 @@ async function handleBroadcast(req: VercelRequest, res: VercelResponse, uid: str
 
   // Define os dados a enviar
   const payload = {
-    subject,
-    message,
     hasButton,
-    buttonText,
     buttonUrl
   };
 

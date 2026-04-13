@@ -11,10 +11,7 @@ interface BroadcastTabProps {
 export default function BroadcastTab({ teamMembers }: BroadcastTabProps) {
   const { userProfile } = useAuth();
   const [selectedUids, setSelectedUids] = useState<string[]>([]);
-  const [subject, setSubject] = useState('');
-  const [message, setMessage] = useState('');
   const [hasButton, setHasButton] = useState(false);
-  const [buttonText, setButtonText] = useState('');
   const [buttonUrl, setButtonUrl] = useState('');
   const [isSending, setIsSending] = useState(false);
   
@@ -51,12 +48,8 @@ export default function BroadcastTab({ teamMembers }: BroadcastTabProps) {
       toast.error('Selecione pelo menos um destinatário.');
       return;
     }
-    if (!subject.trim() || !message.trim()) {
-      toast.error('Preencha o assunto e a mensagem.');
-      return;
-    }
-    if (hasButton && (!buttonText.trim() || !buttonUrl.trim())) {
-      toast.error('Preencha os campos do botão ou desmarque a opção.');
+    if (hasButton && !buttonUrl.trim()) {
+      toast.error('Preencha a URL do botão ou desmarque a opção.');
       return;
     }
 
@@ -70,10 +63,7 @@ export default function BroadcastTab({ teamMembers }: BroadcastTabProps) {
         },
         body: JSON.stringify({
           uids: selectedUids,
-          subject,
-          message,
           hasButton,
-          buttonText,
           buttonUrl
         })
       });
@@ -87,10 +77,7 @@ export default function BroadcastTab({ teamMembers }: BroadcastTabProps) {
       toast.success('Comunicados disparados com sucesso!');
       
       // Clear form
-      setSubject('');
-      setMessage('');
       setHasButton(false);
-      setButtonText('');
       setButtonUrl('');
       setSelectedUids([]);
       
@@ -198,32 +185,6 @@ export default function BroadcastTab({ teamMembers }: BroadcastTabProps) {
           </div>
 
           <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                Assunto do E-mail
-              </label>
-              <input
-                type="text"
-                placeholder="Ex: Novo Benefício: Gympass!"
-                value={subject}
-                onChange={e => setSubject(e.target.value)}
-                className="w-full px-4 py-3 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                Conteúdo do Comunicado
-              </label>
-              <textarea
-                placeholder="Escreva a mensagem aqui..."
-                rows={6}
-                value={message}
-                onChange={e => setMessage(e.target.value)}
-                className="w-full px-4 py-3 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all resize-none"
-              />
-            </div>
-
             <div className="p-4 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/5">
               <div 
                 className="flex items-center gap-3 cursor-pointer"
@@ -232,34 +193,22 @@ export default function BroadcastTab({ teamMembers }: BroadcastTabProps) {
                 <div className={`w-5 h-5 rounded flex items-center justify-center border transition-all ${hasButton ? 'bg-primary-500 border-primary-500' : 'bg-transparent border-gray-300 dark:border-white/30'}`}>
                   {hasButton && <CheckSquare className="text-white w-4 h-4" />}
                 </div>
-                <span className="font-medium text-sm">Adicionar Botão de Ação (Call-to-Action)</span>
+                <span className="font-medium text-sm">Enviar modelo de Comunicado com Link/Botão</span>
               </div>
 
               {hasButton && (
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 animate-in slide-in-from-top-2">
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">Título do Botão</label>
-                    <input
-                      type="text"
-                      placeholder="Acessar Benefício"
-                      value={buttonText}
-                      onChange={e => setButtonText(e.target.value)}
-                      className="w-full px-3 py-2 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-primary-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">Link do Botão (URL)</label>
-                    <input
-                      type="url"
-                      placeholder="https://..."
-                      value={buttonUrl}
-                      onChange={e => setButtonUrl(e.target.value)}
-                      className="w-full px-3 py-2 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-primary-500"
-                    />
-                  </div>
-                  <div className="col-span-full mt-1 flex items-start gap-2 text-[10px] text-gray-400">
-                    <AlertCircle size={12} className="shrink-0 mt-0.5" />
-                    <p>O link será injetado perfeitamente no template estilizado da Hub Symples usando as variáveis nativas do Resend.</p>
+                <div className="mt-4 animate-in slide-in-from-top-2">
+                  <label className="block text-xs text-gray-500 mb-1">URL (Para onde o botão vai redirecionar)</label>
+                  <input
+                    type="url"
+                    placeholder="https://..."
+                    value={buttonUrl}
+                    onChange={e => setButtonUrl(e.target.value)}
+                    className="w-full px-4 py-3 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-primary-500 transition-all"
+                  />
+                  <div className="mt-2 flex items-start gap-2 text-[11px] text-gray-500">
+                    <AlertCircle size={14} className="shrink-0 mt-0.5 text-blue-500" />
+                    <p>Você gerencia os textos diretos e o layout do e-mail nas configurações do template lá no <b>Resend</b>. Aqui, apenas enviamos a URL que o botão usará.</p>
                   </div>
                 </div>
               )}
@@ -267,7 +216,7 @@ export default function BroadcastTab({ teamMembers }: BroadcastTabProps) {
 
             <button
               onClick={handleSend}
-              disabled={isSending || selectedUids.length === 0 || !subject || !message}
+              disabled={isSending || selectedUids.length === 0}
               className="w-full mt-6 py-4 rounded-xl flex items-center justify-center gap-2 font-bold text-white transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-primary-600 to-purple-600 hover:scale-[1.02]"
             >
               {isSending ? (

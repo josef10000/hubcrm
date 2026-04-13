@@ -266,7 +266,7 @@ export async function sendTeamInviteEmail(
 
 export async function sendTeamBroadcastEmail(
   recipients: {email: string; name: string}[],
-  payload: { subject: string; message: string; hasButton: boolean; buttonText?: string; buttonUrl?: string }
+  payload: { hasButton: boolean; buttonUrl?: string }
 ) {
   try {
     const templateId = payload.hasButton ? TEMPLATE_IDS.BROADCAST_ACTION : TEMPLATE_IDS.BROADCAST_SIMPLE;
@@ -282,12 +282,9 @@ export async function sendTeamBroadcastEmail(
       const promises = chunk.map(recipient => {
         const variables: any = {
           nome_do_colaborador: recipient.name,
-          assunto: payload.subject, // Caso o usuário tenha isso no template
-          mensagem: payload.message // Caso o usuário tenha isso no template
         };
         
         if (payload.hasButton) {
-          variables.link_texto = payload.buttonText;
           variables.link_informacao = payload.buttonUrl;
         }
 
@@ -296,7 +293,7 @@ export async function sendTeamBroadcastEmail(
           from: FROM_EMAIL,
           to: recipient.email,
           reply_to: REPLY_TO_EMAIL,
-          subject: payload.subject,
+          subject: 'Comunicado Interno', // Será ignorado se o template do Resend tiver o assunto pré-configurado
           template: {
             id: templateId,
             variables: variables,
