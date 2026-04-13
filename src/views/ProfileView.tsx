@@ -307,12 +307,7 @@ export default function ProfileView() {
           </div>
         </div>
 
-        {/* Mood Tracker - Apenas para o próprio perfil */}
-        {isOwnProfile && (
-          <div className="max-w-2xl mx-auto mb-6">
-            <MoodTracker />
-          </div>
-        )}
+
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column: Avatar & Basic Info */}
@@ -411,6 +406,13 @@ export default function ProfileView() {
                 <p className="text-sm text-gray-500 italic">Não vinculado.</p>
               )}
             </motion.div>
+
+            {/* Mood Tracker - Apenas para o próprio perfil */}
+            {isOwnProfile && (
+              <div className="mt-6">
+                <MoodTracker />
+              </div>
+            )}
           </div>
 
           {/* Right Column: Tabbed Content */}

@@ -14,6 +14,7 @@ import {
   Sparkles,
   ChevronRight,
   UserPlus,
+  Activity,
   PlusCircle,
   Trash2,
   ChevronDown,
@@ -481,6 +482,50 @@ export default function PeopleView() {
           {/* DASHBOARD TAB */}
           {activeTab === 'dashboard' && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-in fade-in duration-500">
+              {/* Alertas de Bem-Estar */}
+              <div className="md:col-span-1 bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-6 shadow-xl flex flex-col h-full">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold flex items-center gap-2 font-sans dark:text-white">
+                    <Activity className="text-rose-500" /> Saúde do Time
+                  </h3>
+                  <span className="text-xs font-bold text-rose-500 bg-rose-500/10 px-2 py-1 rounded-lg">Atenção</span>
+                </div>
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
+                  {(() => {
+                    const moodAlerts = teamMembers.filter(m => {
+                      if (!m.moodLogs || m.moodLogs.length < 3) return false;
+                      const last3 = m.moodLogs.slice(-3);
+                      return last3.every(log => log.score <= 2);
+                    });
+                    
+                    if (moodAlerts.length === 0) {
+                      return (
+                        <div className="h-full flex flex-col items-center justify-center text-center opacity-50 py-4">
+                          <CheckCircle2 className="text-emerald-500 mb-2" size={32} />
+                          <p className="text-xs text-gray-500">O time está energizado.</p>
+                        </div>
+                      );
+                    }
+                    
+                    return (
+                      <div className="space-y-3">
+                        <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-2">Monitorar (3+ dias seguidos)</p>
+                        {moodAlerts.map(m => (
+                          <div key={m.uid} className="flex items-center gap-3 p-3 bg-rose-500/5 border border-rose-500/20 rounded-xl">
+                            <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-white/10 overflow-hidden shrink-0">
+                              {m.photoURL ? <img src={m.photoURL} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-bold text-xs">{m.displayName[0]}</div>}
+                            </div>
+                            <div className="overflow-hidden">
+                              <p className="text-xs font-bold truncate dark:text-white">{m.displayName}</p>
+                              <p className="text-[10px] text-rose-500">Baixa energia reportada</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
 
               <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-6 shadow-xl">
                 <div className="flex items-center justify-between mb-6">
