@@ -185,7 +185,7 @@ async function handleBroadcast(req: VercelRequest, res: VercelResponse, uid: str
   // Busca emails da organização para os uids selecionados
   // Note: Firestore 'in' query has a limit of 30 items per batch. 
   // For small teams this is fine, for large teams we chunk it.
-  const emails: string[] = [];
+  const recipients: {email: string; name: string}[] = [];
   
   // Chunck UIDs into batches of 30 to bypass firestore limits
   const chunkSize = 30;
@@ -197,11 +197,17 @@ async function handleBroadcast(req: VercelRequest, res: VercelResponse, uid: str
       .get();
       
     profilesSnap.docs.forEach(d => {
-      if (d.data().email) emails.push(d.data().email);
+      const pData = d.data();
+      if (pData.email) {
+        recipients.push({
+          email: pData.email,
+          name: pData.displayName ? pData.displayName.split(' ')[0] : 'Time'
+        });
+      }
     });
   }
 
-  if (emails.length === 0) {
+  if (recipients.length === 0) {
     return res.status(400).json({ error: 'Nenhum e-mail válido encontrado para os usuários selecionados' });
   }
 
@@ -214,12 +220,8 @@ async function handleBroadcast(req: VercelRequest, res: VercelResponse, uid: str
     buttonUrl
   };
 
-  // Enviar para os emails (Resend aceita até 50 emails por vez no array 'to')
-  const emailChunkSize = 50;
-  for (let i = 0; i < emails.length; i += emailChunkSize) {
-    const chunk = emails.slice(i, i + emailChunkSize);
-    await sendTeamBroadcastEmail(chunk, payload);
-  }
+  // Enviar os emails
+  await sendTeamBroadcastEmail(recipients, payload);
 
-  return res.status(200).json({ success: true, count: emails.length });
+  return res.status(200).json({ success: true, count: recipients.length });
 }

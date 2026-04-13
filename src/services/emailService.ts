@@ -10,6 +10,18 @@ const REPLY_TO_EMAIL = 'contato@hubsymples.com.br';
 /**
  * IDS DOS TEMPLATES NO RESEND
  * TODO: Substitua os IDs abaixo pelos IDs reais obtidos no painel do Resend (Ex: tpl_V6X2...)
+import { Resend } from 'resend';
+
+// Verifica se a chave existe (no Vercel existirá e ficará em process.env.RESEND_API_KEY)
+const apiKey = process.env.RESEND_API_KEY || '';
+export const resend = new Resend(apiKey);
+
+const FROM_EMAIL = 'Hub Symples <contato@contato.hubsymples.com.br>';
+const REPLY_TO_EMAIL = 'contato@hubsymples.com.br';
+
+/**
+ * IDS DOS TEMPLATES NO RESEND
+ * TODO: Substitua os IDs abaixo pelos IDs reais obtidos no painel do Resend (Ex: tpl_V6X2...)
  */
 const TEMPLATE_IDS = {
   BOAS_VINDAS_SUBSCRIPTION: 'first-invoice-payment', 
@@ -18,8 +30,8 @@ const TEMPLATE_IDS = {
   PAGAMENTO_RECEBIDO: 'pagamento-recebido',
   AVISO_VENCIMENTO: 'fatura-vencimento',
   CONVITE_EQUIPE: 'team-settings',
-  BROADCAST_SIMPLE: 'broadcast-simple',
-  BROADCAST_ACTION: 'broadcast-action'
+  BROADCAST_SIMPLE: 'internal-announcement',
+  BROADCAST_ACTION: 'internal-communication'
 };
 
 /**
@@ -253,38 +265,51 @@ export async function sendTeamInviteEmail(
 }
 
 export async function sendTeamBroadcastEmail(
-  emails: string[],
+  recipients: {email: string; name: string}[],
   payload: { subject: string; message: string; hasButton: boolean; buttonText?: string; buttonUrl?: string }
 ) {
   try {
     const templateId = payload.hasButton ? TEMPLATE_IDS.BROADCAST_ACTION : TEMPLATE_IDS.BROADCAST_SIMPLE;
     
-    // As variáveis do corpo precisam englobar caso seja botão ou não.
-    // Dica de Resend: quando enviamos pra um array de emails (BCC list essencialmente), a variável é a mesma para todos.
-    const variables: any = {
-      assunto: payload.subject,
-      mensagem: payload.message
-    };
+    // We send emails in batches of up to 100 to avoid rate limits and memory issues,
+    // sending them individually via Promise.all so each gets their personalized names.
+    const batchSize = 100;
+    const allResults = [];
     
-    if (payload.hasButton) {
-      variables.link_texto = payload.buttonText;
-      variables.link_url = payload.buttonUrl;
-    }
+    for (let i = 0; i < recipients.length; i += batchSize) {
+      const chunk = recipients.slice(i, i + batchSize);
+      
+      const promises = chunk.map(recipient => {
+        const variables: any = {
+          nome_do_colaborador: recipient.name,
+          assunto: payload.subject, // Caso o usuário tenha isso no template
+          mensagem: payload.message // Caso o usuário tenha isso no template
+        };
+        
+        if (payload.hasButton) {
+          variables.link_texto = payload.buttonText;
+          variables.link_informacao = payload.buttonUrl;
+        }
 
-    // @ts-ignore
-    const data = await (resend.emails.send as any)({
-      from: FROM_EMAIL,
-      to: emails,
-      reply_to: REPLY_TO_EMAIL,
-      subject: payload.subject,
-      template: {
-        id: templateId,
-        variables: variables,
-      },
-    });
+        // @ts-ignore
+        return (resend.emails.send as any)({
+          from: FROM_EMAIL,
+          to: recipient.email,
+          reply_to: REPLY_TO_EMAIL,
+          subject: payload.subject,
+          template: {
+            id: templateId,
+            variables: variables,
+          },
+        });
+      });
+
+      const chunkResults = await Promise.all(promises);
+      allResults.push(...chunkResults);
+    }
     
-    console.log(`Email Broadcast disparado! Tem botão: ${payload.hasButton}, Qtd: ${emails.length}, ID: ${(data as any).id || (data as any).data?.id}`);
-    return data;
+    console.log(`Emails de Broadcast disparados! Qtd: ${recipients.length}`);
+    return allResults;
   } catch (error) {
     console.error('Erro ao disparar broadcast:', error);
     throw error;
