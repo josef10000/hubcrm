@@ -106,8 +106,9 @@ Prospecção → Qualificação → Venda → Onboarding → Entrega → Suporte
 | 🔄 **Ciclo Completo** | Do lead ao pós-venda em uma única plataforma |
 | 🏢 **Multi-Tenant** | Isolamento total de dados por organização |
 | 💳 **Checkout Self-Service** | Cliente se auto-cadastra, paga e inicia o projeto |
-| 📊 **BI Financeiro & Health** | DRE, Fluxo e **Health Score (0-100)** automático por cliente |
-| 🎧 **SLA Tracker** | Monitoramento de prazos de suporte em tempo real com alertas |
+| 📊 **BI Financeiro & Health** | DRE, Fluxo e **Health Score (0-100)** automático |
+| 🎧 **SLA Tracker** | Monitoramento de suporte em tempo real com alertas |
+| 💰 **Calculadora de Comissões** | Automação de repasses para vendedores pós-pagamento |
 | 🎉 **Gamificação** | Celebração automática de aniversários com confetes |
 | 🌐 **100% Cloud-Native** | Zero infraestrutura para manter |
 

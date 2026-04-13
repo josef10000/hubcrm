@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TrendingUp, TrendingDown, DollarSign, Trash2, PieChart, Activity, Target, Tag, AlertTriangle } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Trash2, PieChart, Activity, Target, Tag, AlertTriangle, CheckCircle, UserCheck } from 'lucide-react';
 import { useCRM } from '../contexts/CRMContext';
 import { useAuth } from '../contexts/AuthContext';
 import { getPlanPrice } from '../helpers';
@@ -16,8 +16,8 @@ import CategoryManager from '../components/finance/CategoryManager';
 
 export default function FinanceView() {
   const { user } = useAuth();
-  const { clients, expenses, newExpense, setNewExpense, transactionCategories, budgets, transactions, effectiveOrgId, userProfile } = useCRM();
-  const [activeTab, setActiveTab] = useState<'resumo' | 'dre' | 'fluxo' | 'orcamento' | 'conciliacao' | 'categorias'>('resumo');
+  const { clients, expenses, newExpense, setNewExpense, transactionCategories, budgets, transactions, effectiveOrgId, userProfile, commissions, handlePayCommission, handleDeleteCommission } = useCRM();
+  const [activeTab, setActiveTab] = useState<'resumo' | 'dre' | 'fluxo' | 'orcamento' | 'conciliacao' | 'categorias' | 'comissoes'>('resumo');
 
   if (userProfile?.role === 'SDR' || userProfile?.role === 'Executive') {
     return (
@@ -172,6 +172,13 @@ export default function FinanceView() {
           >
             <Tag size={18} />
             Categorias
+          </button>
+          <button
+            onClick={() => setActiveTab('comissoes')}
+            className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${activeTab === 'comissoes' ? 'bg-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/40 dark:bg-zinc-950/5 text-gray-500 dark:text-gray-400 hover:bg-black/20 dark:hover:bg-zinc-950/10'}`}
+          >
+            <UserCheck size={18} />
+            Comissões
           </button>
         </div>
 
@@ -396,9 +403,86 @@ export default function FinanceView() {
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <BankReconciliation />
           </div>
-        ) : activeTab === 'categorias' ? (
+        ) : activeTab === 'comissoes' ? (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <CategoryManager />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+              <div className="bg-black/40 dark:bg-zinc-950/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl shadow-lg">
+                <h3 className="text-gray-500 dark:text-gray-400 font-medium mb-1">A Pagar</h3>
+                <p className="text-3xl font-bold text-yellow-500">
+                  R$ {commissions.filter(c => c.status === 'PENDING').reduce((acc, c) => acc + c.amount, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </p>
+                <p className="text-xs text-gray-500 mt-2">{commissions.filter(c => c.status === 'PENDING').length} comissões pendentes</p>
+              </div>
+              <div className="bg-black/40 dark:bg-zinc-950/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl shadow-lg">
+                <h3 className="text-gray-500 dark:text-gray-400 font-medium mb-1">Total Pago</h3>
+                <p className="text-3xl font-bold text-emerald-500">
+                  R$ {commissions.filter(c => c.status === 'PAID').reduce((acc, c) => acc + c.amount, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </p>
+                <p className="text-xs text-gray-500 mt-2">Repassado aos vendedores</p>
+              </div>
+            </div>
+
+            <div className="bg-black/40 dark:bg-zinc-950/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl shadow-lg">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Gestão de Comissões</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 text-sm">
+                      <th className="pb-3 font-medium">Data</th>
+                      <th className="pb-3 font-medium">Vendedor</th>
+                      <th className="pb-3 font-medium">Cliente/Oferta</th>
+                      <th className="pb-3 font-medium">Status</th>
+                      <th className="pb-3 font-medium text-right">Valor</th>
+                      <th className="pb-3 font-medium text-right">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {commissions.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="py-8 text-center text-gray-500">Nenhuma comissão registrada.</td>
+                      </tr>
+                    ) : (
+                      commissions.map(comm => (
+                        <tr key={comm.id} className="border-b border-white/5 hover:bg-black/40 dark:hover:bg-primary-500/20 transition-colors group">
+                          <td className="py-4 text-gray-500 text-xs">{new Date(comm.date).toLocaleDateString('pt-BR')}</td>
+                          <td className="py-4 font-medium text-gray-900 dark:text-white">{comm.userName}</td>
+                          <td className="py-4">
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">{comm.clientName}</div>
+                            <div className="text-[10px] text-gray-500 uppercase">{comm.offerName}</div>
+                          </td>
+                          <td className="py-4">
+                            <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded-md ${comm.status === 'PAID' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-yellow-500/20 text-yellow-500'}`}>
+                              {comm.status === 'PAID' ? 'Pago' : 'Pendente'}
+                            </span>
+                          </td>
+                          <td className="py-4 font-bold text-gray-900 dark:text-white text-right">R$ {comm.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                          <td className="py-4 text-right">
+                            <div className="flex justify-end gap-2">
+                              {comm.status === 'PENDING' && (
+                                <button 
+                                  onClick={() => handlePayCommission(comm.id)}
+                                  className="p-2 text-emerald-500 hover:bg-emerald-500/10 rounded-lg transition-colors"
+                                  title="Marcar como Pago"
+                                >
+                                  <CheckCircle size={18} />
+                                </button>
+                              )}
+                              <button 
+                                onClick={() => handleDeleteCommission(comm.id)}
+                                className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                                title="Excluir"
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         ) : null}
 

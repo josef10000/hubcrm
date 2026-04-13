@@ -74,6 +74,7 @@ export interface Offer {
   order?: number;
   displayContext?: 'CHECKOUT' | 'PORTAL' | 'BOTH';
   active: boolean;
+  commissionValue?: number;
   createdAt: number;
 }
 
@@ -235,6 +236,19 @@ export interface SupportRequest {
   csatComment?: string;
   csatAt?: any;
   slaDeadline?: any;
+}
+
+export interface CommissionEntry {
+  id: string;
+  clientId: string;
+  clientName: string;
+  userId: string; // Vendedor
+  userName: string;
+  amount: number;
+  date: number; // Data do recebimento
+  status: 'PENDING' | 'PAID';
+  offerName: string;
+  paymentId?: string; // Referência Asaas ou ID da transação
 }
 
 export type UserRole = 

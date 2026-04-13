@@ -13,6 +13,7 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
     order: 0,
     description: '',
     active: true,
+    commissionValue: 0,
   });
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -31,6 +32,7 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
         order: 0,
         description: '',
         active: true,
+        commissionValue: 0,
       });
     }
   }, [initialData, isOpen]);
@@ -206,6 +208,21 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
               <label htmlFor="active" className="text-sm font-medium text-gray-600 dark:text-gray-300">
                 Oferta Ativa (Visível na criação de clientes)
               </label>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Comissão do Vendedor (R$)</label>
+              <input 
+                type="number" 
+                name="commissionValue" 
+                min="0"
+                step="0.01"
+                value={formData.commissionValue} 
+                onChange={handleChange} 
+                className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all" 
+                placeholder="Ex: 500.00"
+              />
+              <p className="text-xs text-gray-500 mt-1">Valor fixo que o vendedor receberá por esta venda após a baixa do pagamento.</p>
             </div>
           </div>
 

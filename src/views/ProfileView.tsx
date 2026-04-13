@@ -4,7 +4,7 @@ import {
   User as UserIcon, Mail, Phone, Instagram, Linkedin, 
   ChevronLeft, Edit3, Save, X, Briefcase, Info, 
   Shield, Globe, MapPin, Loader2, Camera, Cake, Calendar,
-  Target, ChevronDown, CheckCircle2, Circle, Star
+  Target, ChevronDown, CheckCircle2, Circle, Star, Wallet, TrendingUp, Clock
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCRM } from '../contexts/CRMContext';
@@ -35,7 +35,8 @@ export default function ProfileView() {
   const [isSaving, setIsSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [superior, setSuperior] = useState<UserProfile | null>(null);
-  const [activeTab, setActiveTab] = useState<'info' | 'pdi'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'pdi' | 'comissoes'>('info');
+  const { commissions } = useCRM();
   const [showVacationModal, setShowVacationModal] = useState(false);
   const [newVacation, setNewVacation] = useState<Partial<VacationPeriod>>({
     type: 'Férias',
@@ -365,6 +366,14 @@ export default function ProfileView() {
                 >
                   Meu PDI
                 </button>
+                {(profile?.role === 'SDR' || profile?.role === 'Executive' || profile?.role === 'Administrador') && (
+                  <button 
+                    onClick={() => setActiveTab('comissoes')}
+                    className={`px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'comissoes' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-500'}`}
+                  >
+                    Comissões
+                  </button>
+                )}
               </div>
 
               {activeTab === 'info' && (
@@ -573,6 +582,79 @@ export default function ProfileView() {
                       <p className="text-gray-500 text-sm">Seu PDI ainda não foi iniciado pelo gestor.</p>
                     </div>
                   )}
+                </div>
+              )}
+
+              {activeTab === 'comissoes' && (
+                <div className="animate-in slide-in-from-right duration-500 space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-6 bg-emerald-500/10 border border-emerald-500/20 rounded-3xl">
+                      <div className="flex items-center gap-3 mb-2 text-emerald-500">
+                        <TrendingUp size={18} />
+                        <span className="text-[10px] font-bold uppercase tracking-widest">Ganhos Totais</span>
+                      </div>
+                      <p className="text-2xl font-black text-gray-900 dark:text-white">
+                        R$ {commissions.filter(c => c.userId === uid).reduce((acc, c) => acc + c.amount, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                    
+                    <div className="p-6 bg-amber-500/10 border border-amber-500/20 rounded-3xl">
+                      <div className="flex items-center gap-3 mb-2 text-amber-500">
+                        <Wallet size={18} />
+                        <span className="text-[10px] font-bold uppercase tracking-widest">A Receber</span>
+                      </div>
+                      <p className="text-2xl font-black text-gray-900 dark:text-white">
+                        R$ {commissions.filter(c => c.userId === uid && c.status === 'PENDING').reduce((acc, c) => acc + c.amount, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </p>
+                    </div>
+
+                    <div className="p-6 bg-primary-500/10 border border-primary-500/20 rounded-3xl">
+                      <div className="flex items-center gap-3 mb-2 text-primary-500">
+                        <Clock size={18} />
+                        <span className="text-[10px] font-bold uppercase tracking-widest">Pendentes</span>
+                      </div>
+                      <p className="text-2xl font-black text-gray-900 dark:text-white">
+                        {commissions.filter(c => c.userId === uid && c.status === 'PENDING').length}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <h4 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4">Histórico de Vendas Individual</h4>
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 text-[10px] uppercase font-bold">
+                          <th className="pb-3">Data</th>
+                          <th className="pb-3">Cliente</th>
+                          <th className="pb-3">Status</th>
+                          <th className="pb-3 text-right">Comissão</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {commissions.filter(c => c.userId === uid).length === 0 ? (
+                          <tr>
+                            <td colSpan={4} className="py-10 text-center text-gray-500 italic text-sm">Nenhuma venda com comissão registrada ainda.</td>
+                          </tr>
+                        ) : (
+                          commissions.filter(c => c.userId === uid).map(comm => (
+                            <tr key={comm.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                              <td className="py-4 text-xs text-gray-500">{new Date(comm.date).toLocaleDateString('pt-BR')}</td>
+                              <td className="py-4">
+                                <div className="text-sm font-bold text-gray-900 dark:text-white">{comm.clientName}</div>
+                                <div className="text-[10px] text-gray-500 uppercase">{comm.offerName}</div>
+                              </td>
+                              <td className="py-4">
+                                <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded-md ${comm.status === 'PAID' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-amber-500/20 text-amber-500'}`}>
+                                  {comm.status === 'PAID' ? 'Recebido' : 'Pendente'}
+                                </span>
+                              </td>
+                              <td className="py-4 font-black text-gray-900 dark:text-white text-right">R$ {comm.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </div>

@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { collection, doc, setDoc, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Client, Offer, Expense, Transaction, TransactionCategory, Budget, Lead, UserProfile } from '../types';
+import { Client, Offer, Expense, Transaction, TransactionCategory, Budget, Lead, UserProfile, CommissionEntry } from '../types';
 import { VacationPeriod } from '../types/people';
 import { useAuth } from './AuthContext';
+import { calculateCommissionForClient } from '../helpers/commissionCalculation';
+import { toast } from 'sonner';
 
 // ── Hooks ──
 import { useSettings } from '../hooks/useSettings';
@@ -23,6 +25,7 @@ interface CRMContextType {
   transactions: Transaction[];
   transactionCategories: TransactionCategory[];
   budgets: Budget[];
+  commissions: CommissionEntry[];
   services: any[];
   vacations: VacationPeriod[];
   teamProfiles: UserProfile[];
@@ -96,6 +99,8 @@ interface CRMContextType {
   syncPayments: () => Promise<void>;
   triggerManualEmail: (clientId: string, emailType: 'WELCOME' | 'INVOICE' | 'OVERDUE' | 'WELCOME_SUBSCRIPTION' | 'WELCOME_LINK') => Promise<boolean>;
   toggleAsaasNotifications: (clientId: string, enabled: boolean) => Promise<void>;
+  handlePayCommission: (commissionId: string) => Promise<void>;
+  handleDeleteCommission: (commissionId: string) => Promise<void>;
 
   // Helpers
   isChurnRisk: (client: Client) => boolean;
@@ -123,6 +128,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [vacations, setVacations] = useState<VacationPeriod[]>([]);
   const [teamProfiles, setTeamProfiles] = useState<UserProfile[]>([]);
+  const [commissions, setCommissions] = useState<CommissionEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -254,6 +260,14 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         setVacations(loaded);
       });
 
+      // Listener para Comissões
+      const commissionsRef = collection(db, 'organizations', effectiveOrgId, 'commissions');
+      const unsubCommissions = onSnapshot(commissionsRef, (snapshot) => {
+        const loaded: CommissionEntry[] = [];
+        snapshot.forEach((d) => loaded.push({ ...d.data(), id: d.id } as CommissionEntry));
+        setCommissions(loaded.sort((a, b) => b.date - a.date));
+      });
+
       timeoutId = setTimeout(() => {
         console.warn('Firestore initialization timed out.');
         setLoading(false);
@@ -268,6 +282,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         unsubServices();
         unsubProfiles();
         unsubVacations();
+        unsubCommissions();
         clearTimeout(timeoutId);
       };
     } catch (err: any) {
@@ -276,6 +291,44 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     }
   }, [effectiveOrgId]);
+
+  // ═══ Automação de Comissões ═══
+  useEffect(() => {
+    if (!effectiveOrgId || clients.length === 0 || loading) return;
+
+    const syncCommissions = async () => {
+      const receivedClients = clients.filter(c => 
+        c.paymentStatus === 'RECEIVED' && 
+        c.assignedTo && 
+        c.offerId &&
+        // Verifica se já não existe uma comissão para este cliente
+        !commissions.some(comm => comm.clientId === c.id)
+      );
+
+      for (const client of receivedClients) {
+        const salesperson = teamProfiles.find(p => p.uid === client.assignedTo);
+        const commission = calculateCommissionForClient(
+          client, 
+          offers, 
+          salesperson?.displayName || 'Vendedor'
+        );
+
+        if (commission) {
+          try {
+            await setDoc(doc(db, 'organizations', effectiveOrgId, 'commissions', commission.id), commission);
+            console.log(`Comissão gerada para ${client.name}`);
+            toast.info(`Nova comissão registrada para ${salesperson?.displayName || 'vendedor'}!`, {
+              description: `Cliente: ${client.name}`
+            });
+          } catch (e) {
+            console.error('Erro ao gerar comissão automática:', e);
+          }
+        }
+      }
+    };
+
+    syncCommissions();
+  }, [clients, commissions, offers, teamProfiles, effectiveOrgId, loading]);
 
   const value: CRMContextType = {
     clients, leads, offers, supportRequests,
@@ -313,8 +366,23 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     handleExportCSV: clientActions.handleExportCSV, syncPayments: clientActions.syncPayments,
     triggerManualEmail: clientActions.triggerManualEmail, isEmailLoading: clientActions.isEmailLoading,
     toggleAsaasNotifications: clientActions.toggleAsaasNotifications,
+    handlePayCommission: async (id: string) => {
+      try {
+        await setDoc(doc(db, 'organizations', effectiveOrgId, 'commissions', id), { status: 'PAID' }, { merge: true });
+      } catch (e) {
+        console.error('Error paying commission:', e);
+      }
+    },
+    handleDeleteCommission: async (id: string) => {
+      try {
+        const { deleteDoc } = await import('firebase/firestore');
+        await deleteDoc(doc(db, 'organizations', effectiveOrgId, 'commissions', id));
+      } catch (e) {
+        console.error('Error deleting commission:', e);
+      }
+    },
     isChurnRisk: clientActions.isChurnRisk, isComboNearRenewal: clientActions.isComboNearRenewal,
-    effectiveOrgId, userProfile, vacations, teamProfiles
+    effectiveOrgId, userProfile, vacations, teamProfiles, commissions
   };
 
   return <CRMContext.Provider value={value}>{children}</CRMContext.Provider>;

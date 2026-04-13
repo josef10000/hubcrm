@@ -70,6 +70,11 @@ export default function ProductsView() {
                           <span className="font-medium">Parcelamento:</span> Até {offer.maxInstallments}x
                         </p>
                       )}
+                      {canManageProducts && offer.commissionValue !== undefined && offer.commissionValue > 0 && (
+                        <p className="text-sm text-emerald-600 dark:text-emerald-400 font-bold">
+                          <span className="font-medium text-gray-600 dark:text-gray-400">Comissão vendedor:</span> R$ {offer.commissionValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                      )}
                     </div>
                   </div>
                   {canManageProducts && (
