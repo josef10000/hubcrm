@@ -354,26 +354,39 @@ export default function FinanceView() {
                   <tr className="border-b border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 text-sm">
                     <th className="pb-3 font-medium">Cliente</th>
                     <th className="pb-3 font-medium text-right">Receita (MRR)</th>
-                    <th className="pb-3 font-medium text-right">Custos</th>
-                    <th className="pb-3 font-medium text-right">Lucro</th>
+                    <th className="pb-3 font-medium text-right">Lançamentos</th>
+                    <th className="pb-3 font-medium text-right">Comissões</th>
+                    <th className="pb-3 font-medium text-right">Lucro Real</th>
+                    <th className="pb-3 font-medium text-right">ROI</th>
                     <th className="pb-3 font-medium text-right">Margem</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {clients.filter(c => c.status === 'Ativo' || expenses.some(e => e.clientId === c.id)).map(client => {
+                  {clients.filter(c => c.status === 'Ativo' || expenses.some(e => e.clientId === c.id) || commissions.some(comm => comm.clientId === c.id)).map(client => {
                     const clientExpenses = expenses.filter(e => e.clientId === client.id).reduce((acc, e) => acc + e.amount, 0);
+                    const clientCommissions = commissions.filter(comm => comm.clientId === client.id).reduce((acc, comm) => acc + comm.amount, 0);
                     const mrr = client.status === 'Ativo' ? getPlanPrice(client.plan, client.billingCycle, client) : 0;
-                    const profit = mrr - clientExpenses;
+                    
+                    const totalCosts = clientExpenses + clientCommissions;
+                    const profit = mrr - totalCosts;
                     const margin = mrr > 0 ? (profit / mrr) * 100 : 0;
+                    const roi = totalCosts > 0 ? (profit / totalCosts) * 100 : profit > 0 ? 100 : 0;
                     
                     return (
                       <tr key={client.id} className="border-b border-white/5 hover:bg-black/40 dark:hover:bg-primary-500/20 dark:bg-zinc-950/5 transition-colors group">
-                        <td className="py-4 text-gray-900 dark:text-white font-medium">{client.name}</td>
-                        <td className="py-4 text-emerald-400 font-medium text-right">R$ {mrr.toFixed(2).replace('.', ',')}</td>
-                        <td className="py-4 text-red-400 font-medium text-right">R$ {clientExpenses.toFixed(2).replace('.', ',')}</td>
-                        <td className={`py-4 font-medium text-right ${profit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>R$ {profit.toFixed(2).replace('.', ',')}</td>
-                        <td className="py-4 text-gray-500 dark:text-gray-400 text-sm text-right">
-                          <span className={`px-2 py-1 rounded-md border ${margin >= 50 ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : margin >= 20 ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+                        <td className="py-4">
+                          <div className="text-gray-900 dark:text-white font-medium">{client.name}</div>
+                          <div className="text-[10px] text-gray-500">{client.plan || 'Sem Plano'}</div>
+                        </td>
+                        <td className="py-4 text-emerald-400 font-medium text-right">R$ {mrr.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                        <td className="py-4 text-red-400 font-medium text-right">R$ {clientExpenses.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                        <td className="py-4 text-orange-400 font-medium text-right">R$ {clientCommissions.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                        <td className={`py-4 font-bold text-right ${profit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>R$ {profit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                        <td className={`py-4 text-right text-xs font-medium ${roi >= 100 ? 'text-emerald-400' : roi > 0 ? 'text-blue-400' : 'text-red-400'}`}>
+                          {roi.toFixed(0)}%
+                        </td>
+                        <td className="py-4 text-right">
+                          <span className={`px-2 py-1 rounded-md border text-[10px] font-bold ${margin >= 40 ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : margin >= 15 ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
                             {margin.toFixed(1)}%
                           </span>
                         </td>

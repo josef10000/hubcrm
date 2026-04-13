@@ -4,7 +4,7 @@ import { getPlanPrice } from '../../helpers';
 import { TrendingUp, TrendingDown, Clock, AlertTriangle } from 'lucide-react';
 
 export default function CashFlowProjected() {
-  const { clients, transactions } = useCRM();
+  const { clients, transactions, offers } = useCRM();
   const [currentBalance, setCurrentBalance] = useState<number>(0);
   const [projectionMonths, setProjectionMonths] = useState<number>(3); // 3, 6, 12 meses
 
@@ -47,10 +47,15 @@ export default function CashFlowProjected() {
       const price = getPlanPrice(client.plan, client.billingCycle, client);
       if (price <= 0) return;
 
+      const offer = offers.find(o => o.id === client.offerId || o.name === client.plan);
+      const commValue = offer?.commissionValue || 0;
+
       if (client.billingCycle === 'MONTHLY') {
         // Assume payment every month
         monthlyBuckets.forEach(bucket => {
           bucket.inflow += price;
+          // Project commission outflow if applicable
+          if (commValue > 0) bucket.outflow += commValue;
         });
       } else if (client.billingCycle === 'YEARLY' && client.nextDueDate) {
         // Only hits the specific month
@@ -59,6 +64,7 @@ export default function CashFlowProjected() {
           const mIdx = (nextDate.getFullYear() - today.getFullYear()) * 12 + (nextDate.getMonth() - today.getMonth());
           if (mIdx >= 0 && mIdx < projectionMonths) {
             monthlyBuckets[mIdx].inflow += price;
+            if (commValue > 0) monthlyBuckets[mIdx].outflow += commValue;
           }
         }
       }
@@ -141,6 +147,40 @@ export default function CashFlowProjected() {
             </div>
           </div>
         )}
+
+        {/* Investment Margin Indicator */}
+        <div className="mt-8 p-6 bg-emerald-500/5 border border-emerald-500/20 rounded-3xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:rotate-12 transition-transform">
+            <TrendingUp size={80} className="text-emerald-500" />
+          </div>
+          <div className="relative z-10">
+            <h4 className="text-emerald-400 font-bold mb-1 flex items-center gap-2">
+              <TrendingUp size={18} /> Capacidade de Investimento Segura (Ads)
+            </h4>
+            <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
+              Baseado no lucro líquido projetado (MRR - Custos - Comissões), esta é a margem recomendada para investir no funil de leads.
+            </p>
+            
+            <div className="flex flex-wrap gap-6">
+              {projectedData.slice(0, 3).map((data, i) => {
+                const profit = data.inflow - data.outflow;
+                const safeMargin = profit > 0 ? profit * 0.4 : 0; // 40% safety margin for ads
+                return (
+                  <div key={i} className="flex flex-col">
+                    <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{data.label}</span>
+                    <span className="text-xl font-bold text-gray-900 dark:text-white">R$ {safeMargin.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}</span>
+                  </div>
+                );
+              })}
+              <div className="ml-auto flex items-center gap-2">
+                <div className="text-right">
+                  <span className="block text-[10px] text-emerald-500 font-bold uppercase">ROI Alvo Funil R$ 97</span>
+                  <span className="text-sm font-medium text-gray-500">Mínimo 3.5x</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl shadow-lg p-6">
