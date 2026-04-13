@@ -253,14 +253,6 @@ export interface CommissionEntry {
   paymentId?: string; // Referência Asaas ou ID da transação
 }
 
-- [x] Adicionar campo `offerId` à interface `Expense` em `types.ts`
-- [x] Adicionar campo `offerId` à interface `Transaction` em `types.ts`
-- [/] Atualizar formulário de despesas em `FinanceView.tsx` para permitir vincular anúncios a ofertas
-- [ ] Implementar painel de "Performance de ROI por Oferta" no financeiro
-- [ ] Validar cálculos financeiros com dados simulados
-- [ ] Atualizar o README detalhado com as novas funcionalidades de FinOps
-- [ ] Commit e Push para o GitHub
-
 export type UserRole = 
   | 'Administrador' 
   | 'Gerente' 
