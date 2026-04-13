@@ -49,8 +49,21 @@ export interface ImgBBResponse {
  */
 export async function uploadImageToImgBB(file: File | Blob): Promise<string> {
   try {
+    // Converter arquivo para Base64 antes de enviar (mais seguro p/ ImgBB)
+    const base64Data = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        // Pega apenas o conteúdo base64 sem o prefixo data:image/...;base64,
+        const b64 = result.split(',')[1];
+        resolve(b64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append('image', base64Data);
 
     const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
       method: 'POST',
@@ -62,8 +75,8 @@ export async function uploadImageToImgBB(file: File | Blob): Promise<string> {
     }
 
     const json = await response.json() as ImgBBResponse;
-    if (json.success && json.data && json.data.url) {
-      return json.data.url;
+    if (json.success && json.data && (json.data.display_url || json.data.url)) {
+      return json.data.display_url || json.data.url;
     } else {
       throw new Error('Upload format response unexpected');
     }
