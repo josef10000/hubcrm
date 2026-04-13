@@ -13,11 +13,12 @@ import CashFlowProjected from '../components/finance/CashFlowProjected';
 import BudgetPanel from '../components/finance/BudgetPanel';
 import BankReconciliation from '../components/finance/BankReconciliation';
 import CategoryManager from '../components/finance/CategoryManager';
+import ROIAnalysis from '../components/finance/ROIAnalysis';
 
 export default function FinanceView() {
   const { user } = useAuth();
-  const { clients, expenses, newExpense, setNewExpense, transactionCategories, budgets, transactions, effectiveOrgId, userProfile, commissions, handlePayCommission, handleDeleteCommission } = useCRM();
-  const [activeTab, setActiveTab] = useState<'resumo' | 'dre' | 'fluxo' | 'orcamento' | 'conciliacao' | 'categorias' | 'comissoes'>('resumo');
+  const { clients, expenses, newExpense, setNewExpense, transactionCategories, budgets, transactions, effectiveOrgId, userProfile, commissions, handlePayCommission, handleDeleteCommission, offerActions } = useCRM();
+  const [activeTab, setActiveTab] = useState<'resumo' | 'dre' | 'fluxo' | 'orcamento' | 'conciliacao' | 'categorias' | 'comissoes' | 'roi'>('resumo');
 
   if (userProfile?.role === 'SDR' || userProfile?.role === 'Executive') {
     return (
@@ -97,7 +98,8 @@ export default function FinanceView() {
         amount: Number(newExpense.amount),
         date: new Date(newExpense.date).getTime(),
         category: newExpense.category || 'Ferramentas',
-        clientId: newExpense.clientId || undefined
+        clientId: newExpense.clientId || undefined,
+        offerId: newExpense.offerId || undefined
       };
 
       await setDoc(doc(db, 'organizations', effectiveOrgId, 'expenses', expenseId), expense);
@@ -179,6 +181,13 @@ export default function FinanceView() {
           >
             <UserCheck size={18} />
             Comissões
+          </button>
+          <button
+            onClick={() => setActiveTab('roi')}
+            className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${activeTab === 'roi' ? 'bg-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/40 dark:bg-zinc-950/5 text-gray-500 dark:text-gray-400 hover:bg-black/20 dark:hover:bg-zinc-950/10'}`}
+          >
+            <PieChart size={18} />
+            ROI por Oferta
           </button>
         </div>
 
@@ -289,6 +298,17 @@ export default function FinanceView() {
                     ))}
                   </select>
                 </div>
+                {(newExpense.category === 'Marketing' || newExpense.category === 'Marketing / Anúncios') && (
+                  <div className="animate-in fade-in slide-in-from-top-2">
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1 font-bold text-primary-500 uppercase tracking-tighter">Vincular a Oferta (ROI)</label>
+                    <select value={newExpense.offerId || ''} onChange={e => setNewExpense({...newExpense, offerId: e.target.value})} className="w-full px-4 py-3 bg-primary-500/10 border border-primary-500/30 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all">
+                      <option value="" className="bg-[#030712] text-white">Selecione o produto alvo...</option>
+                      {offerActions.offers.map(o => (
+                        <option key={o.id} value={o.id} className="bg-[#030712] text-white">{o.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <button type="submit" className="w-full py-3 bg-primary-500 hover:bg-primary-600 text-gray-900 dark:text-white rounded-xl font-medium transition-all shadow-lg shadow-primary-500/20">
                   Adicionar Despesa
                 </button>
@@ -306,7 +326,7 @@ export default function FinanceView() {
                       <th className="pb-3 font-medium">Data</th>
                       <th className="pb-3 font-medium">Descrição</th>
                       <th className="pb-3 font-medium">Categoria</th>
-                      <th className="pb-3 font-medium">Cliente</th>
+                      <th className="pb-3 font-medium">Cliente/Oferta</th>
                       <th className="pb-3 font-medium text-right">Valor</th>
                       <th className="pb-3 font-medium text-right">Ação</th>
                     </tr>
@@ -325,7 +345,7 @@ export default function FinanceView() {
                             <span className="px-2 py-1 bg-black/40 dark:bg-zinc-950/5 rounded-md border border-white/5">{expense.category}</span>
                           </td>
                           <td className="py-4 text-gray-500 dark:text-gray-400 text-sm">
-                            {expense.clientId ? clients.find(c => c.id === expense.clientId)?.name || 'Desconhecido' : '-'}
+                            {expense.clientId ? clients.find(c => c.id === expense.clientId)?.name || 'Desconhecido' : expense.offerId ? (offerActions.offers.find(o => o.id === expense.offerId)?.name + ' (Ads)') : '-'}
                           </td>
                           <td className="py-4 text-red-400 font-medium text-right">
                             - R$ {expense.amount.toFixed(2).replace('.', ',')}
@@ -500,6 +520,10 @@ export default function FinanceView() {
         ) : activeTab === 'categorias' ? (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <CategoryManager />
+          </div>
+        ) : activeTab === 'roi' ? (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <ROIAnalysis />
           </div>
         ) : null}
 

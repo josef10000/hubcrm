@@ -176,6 +176,7 @@ Dashboard analítico completo para tomada de decisão baseada em dados.
     - `Bonus/Penalty` NPS (Promotores ganham +10, Detratores perdem -20)
 - **Matriz de Risco Crítico**: Indicadores de cor (`Emerald` >= 80, `Amber` >= 50, `Rose` < 50) para detecção proativa de churn.
 - **KPIs em Tempo Real**: MRR, ARR, Churn Rate, LTV, CAC e taxa de conversão.
+- **Análise de ROI por Oferta**: Módulo especializado que cruza o investimento em Ads (Meta/Google) com a receita direta gerada por cada produto, calculando lucratividade real e CAC.
 - **Dashboard de Tendências**: Gráficos interativos em Recharts com filtros por período.
 - **Distribuição de Receita**: Análise granular por plano e canal de aquisição.
 
@@ -191,7 +192,8 @@ Módulo financeiro completo com 6 sub-abas especializadas:
 | **DRE Gerencial** | Demonstração de Resultados (Entradas vs Saídas) com gráficos de barras |
 | **Inadimplência Crítica** | Módulo de detecção imediata de clientes com faturas em atraso (OVERDUE) ou status devedor. |
 | **Fluxo de Caixa** | Projeção cronológica baseada no vencimento das assinaturas |
-| **Budget (Orçamento)** | Planejamento por categoria com indicadores de saúde orçamentária |
+| **Orcamento (Budget)** | Planejamento por categoria com indicadores de saúde orçamentária |
+| **ROI por Oferta** | **Inteligência de Tráfego:** Performance de Ads (Investimento vs Retorno) por produto |
 | **Conciliação OFX** | Importação de extratos bancários para validação de saldo |
 | **Categorias** | Gerenciamento de categorias de receita e despesa |
 
@@ -690,6 +692,7 @@ hubcrm/
 │   │   ├── OnboardingForm.tsx  # Formulário de onboarding
 │   │   ├── PublicCheckoutPage.tsx # Página de checkout público
 │   │   ├── ReferralsView.tsx   # Programa de indicações
+│   │   ├── ROITrafficView.tsx  # Módulo de ROI e Análise de Tráfego (Novo)
 │   │   ├── client-modal/       # Sub-componentes do modal
 │   │   ├── dashboard/          # Widgets do dashboard
 │   │   ├── finance/            # Sub-módulos financeiros
@@ -782,6 +785,8 @@ className="bg-gray-100 border-gray-200"
 - [x] 📈 Timeline de Vendas e Controle de Follow-up (Fase 2)
 - [x] ⚠️ Alertas de Inadimplência Crítica no Financeiro (Fase 2)
 - [x] ⚙️ Confirmação de Resolução pelo Cliente e CSAT Customizável (Fase 2)
+- [x] 💰 **FinOps Avançado**: Rentabilidade Real (Desconto de Comissões), ROI por Oferta e Gestão de Ads (Fase 2)
+- [x] 🔮 **Projeção de Fluxo de Caixa Inteligente** com capacidade de investimento em Ads (Fase 2)
 - [ ] 🤖 Gemini AI: Analista Financeiro & Predição de Churn
 - [ ] 📱 Mobile experience via PWA / Capacitor
 - [ ] 📧 Automação de E-mails de Aniversário

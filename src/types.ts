@@ -150,6 +150,7 @@ export interface Expense {
   date: number;
   category: string;
   clientId?: string;
+  offerId?: string;
 }
 
 export type TransactionType = 'INCOME' | 'EXPENSE';
@@ -173,6 +174,7 @@ export interface Transaction {
   status: TransactionStatus;
   categoryId: string;
   clientId?: string;
+  offerId?: string;
   bankAccountId?: string; // Para conta bancária (ex: Inter vs Itaú vs PagSeguro)
   referenceId?: string; // Útil para cruzar com Asaas ou OFX
   recurring?: boolean;
@@ -250,6 +252,14 @@ export interface CommissionEntry {
   offerName: string;
   paymentId?: string; // Referência Asaas ou ID da transação
 }
+
+- [x] Adicionar campo `offerId` à interface `Expense` em `types.ts`
+- [x] Adicionar campo `offerId` à interface `Transaction` em `types.ts`
+- [/] Atualizar formulário de despesas em `FinanceView.tsx` para permitir vincular anúncios a ofertas
+- [ ] Implementar painel de "Performance de ROI por Oferta" no financeiro
+- [ ] Validar cálculos financeiros com dados simulados
+- [ ] Atualizar o README detalhado com as novas funcionalidades de FinOps
+- [ ] Commit e Push para o GitHub
 
 export type UserRole = 
   | 'Administrador' 
