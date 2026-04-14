@@ -14,15 +14,13 @@ import {
   Sparkles,
   ChevronRight,
   UserPlus,
-  Activity,
   PlusCircle,
   Trash2,
   ChevronDown,
   AlertTriangle,
   Settings,
   Plus,
-  X,
-  Star
+  X
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
@@ -32,17 +30,9 @@ import { format, differenceInYears, parseISO, isSameDay, addDays, isWithinInterv
 import { useCRM } from '../contexts/CRMContext';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
-import { VacationPeriod, PDICategory, PDIAction, UserProfilePeople } from '../types/people';
-import BroadcastTab from '../components/people/BroadcastTab';
+import { VacationPeriod, PDICategory, PDIAction } from '../types/people';
 
-import AssetManager from '../components/people/AssetManager';
-import SkillRadar from '../components/people/SkillRadar';
-import CareerTimeline from '../components/people/CareerTimeline';
-import DocumentManager from '../components/people/DocumentManager';
-import FeedbackBoard from '../components/people/FeedbackBoard';
-import { Package } from 'lucide-react';
-
-type PeopleSubTab = 'dashboard' | 'onboarding' | 'development' | 'vacations' | 'climate' | 'broadcast' | 'assets';
+type PeopleSubTab = 'dashboard' | 'onboarding' | 'development' | 'vacations' | 'climate';
 
 export default function PeopleView() {
   const { userProfile } = useAuth();
@@ -58,17 +48,8 @@ export default function PeopleView() {
     enpsQuestion,
     setEnpsQuestion,
     enpsFrequency,
-    setEnpsFrequency,
-    supportRequests
+    setEnpsFrequency
   } = useCRM();
-
-  const isAdminOrManager = userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente';
-
-  // Métrica CSAT Geral
-  const ratedRequests = supportRequests.filter(req => req.status === 'concluido' && req.csatScore);
-  const csatScoreAvg = ratedRequests.length > 0 
-    ? (ratedRequests.reduce((acc, curr) => acc + curr.csatScore, 0) / ratedRequests.length).toFixed(1)
-    : null;
   const [showVacationModal, setShowVacationModal] = useState(false);
   const [newVacation, setNewVacation] = useState<Partial<VacationPeriod>>({
     type: 'Férias',
@@ -92,8 +73,6 @@ export default function PeopleView() {
   const [showClearEnpsConfirm, setShowClearEnpsConfirm] = useState(false);
   const [isClearingEnps, setIsClearingEnps] = useState(false);
 
-  const [memberSubTab, setMemberSubTab] = useState<'overview' | 'skills' | 'timeline' | 'docs' | 'feedback'>('overview');
-  
   useEffect(() => {
     if (!effectiveOrgId) return;
 
@@ -133,7 +112,6 @@ export default function PeopleView() {
       setTeamMembers(members);
       setLoading(false);
       
-      // Se tivermos um membro selecionado, atualizamos os dados dele a partir da lista
       if (selectedMember) {
         const updated = members.find(m => m.uid === selectedMember.uid);
         if (updated) setSelectedMember(updated);
@@ -175,12 +153,10 @@ export default function PeopleView() {
     }
   };
 
-  // --- LÓGICA DE ONBOARDING ---
   const toggleTask = async (memberUid: string, taskId: string) => {
     const member = teamMembers.find(m => m.uid === memberUid);
     if (!member || !member.onboardingTasks) return;
 
-    // Criar o novo estado das tarefas de forma imutável
     const updatedTasks = member.onboardingTasks.map(t => {
       if (t.id === taskId) {
         const isNowCompleted = !t.completed;
@@ -194,12 +170,10 @@ export default function PeopleView() {
     });
 
     try {
-      // Atualizar o Firestore
       const profileRef = doc(db, 'profiles', memberUid);
       await updateDoc(profileRef, {
         onboardingTasks: updatedTasks
       });
-      
       toast.success('Tarefa atualizada!');
     } catch (error) {
       console.error('[Onboarding] Erro ao atualizar tarefa:', error);
@@ -255,7 +229,6 @@ export default function PeopleView() {
     }
   };
 
-  // --- LÓGICA DE PDI (DESENVOLVIMENTO) ---
   const addPDICategory = async (memberUid: string) => {
     if (!newCategoryTitle.trim()) return;
     
@@ -310,7 +283,6 @@ export default function PeopleView() {
   };
 
   const togglePDIAction = async (memberUid: string, categoryId: string, actionId: string) => {
-    // Apenas gestores podem marcar como concluído
     if (userProfile?.role !== 'Administrador' && userProfile?.role !== 'Gerente' && userProfile?.role !== 'People & Culture') {
       toast.error('Apenas gestores podem validar o progresso do PDI.');
       return;
@@ -354,7 +326,6 @@ export default function PeopleView() {
     }
   };
 
-  // --- LÓGICA DE AUSÊNCIAS ---
   const handleAddVacation = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newVacation.userId || !newVacation.start || !newVacation.end) {
@@ -421,31 +392,31 @@ export default function PeopleView() {
         </div>
 
         {/* Custom Tabs */}
-        <div className="flex bg-gray-200/50 dark:bg-white/5 p-1 rounded-2xl border border-gray-200 dark:border-white/10 mb-8 w-max max-w-full overflow-x-auto custom-scrollbar">
+        <div className="flex bg-gray-200/50 dark:bg-white/5 p-1 rounded-2xl border border-gray-200 dark:border-white/10 mb-8 w-fit">
           <button 
             onClick={() => setActiveTab('dashboard')}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium whitespace-nowrap ${activeTab === 'dashboard' ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium ${activeTab === 'dashboard' ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
           >
             <TrendingUp size={18} />
             <span>Dashboard</span>
           </button>
           <button 
             onClick={() => setActiveTab('onboarding')}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium whitespace-nowrap ${activeTab === 'onboarding' ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium ${activeTab === 'onboarding' ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
           >
             <Sparkles size={18} />
             <span>Onboarding</span>
           </button>
           <button 
             onClick={() => setActiveTab('development')}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium whitespace-nowrap ${activeTab === 'development' ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium ${activeTab === 'development' ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
           >
             <Target size={18} />
             <span>Desenvolvimento</span>
           </button>
           <button 
             onClick={() => setActiveTab('vacations')}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium whitespace-nowrap ${activeTab === 'vacations' ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium ${activeTab === 'vacations' ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
           >
             <Calendar size={18} />
             <span>Ausências</span>
@@ -453,28 +424,10 @@ export default function PeopleView() {
           {(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture') && (
             <button 
               onClick={() => setActiveTab('climate')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium whitespace-nowrap ${activeTab === 'climate' ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium ${activeTab === 'climate' ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
             >
               <Smile size={18} />
               <span>Clima</span>
-            </button>
-          )}
-          {(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture') && (
-            <button 
-              onClick={() => setActiveTab('broadcast')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium whitespace-nowrap ${activeTab === 'broadcast' ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
-            >
-              <MessageSquare size={18} />
-              <span>Comunicados</span>
-            </button>
-          )}
-          {(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture') && (
-            <button 
-              onClick={() => setActiveTab('assets')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium whitespace-nowrap ${activeTab === 'assets' ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
-            >
-              <Package size={18} />
-              <span>Ativos</span>
             </button>
           )}
         </div>
@@ -483,55 +436,10 @@ export default function PeopleView() {
         <div className="relative">
           {/* DASHBOARD TAB */}
           {activeTab === 'dashboard' && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-in fade-in duration-500">
-              {/* Alertas de Bem-Estar */}
-              <div className="md:col-span-1 bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-6 shadow-xl flex flex-col h-full">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold flex items-center gap-2 font-sans dark:text-white">
-                    <Activity className="text-rose-500" /> Saúde do Time
-                  </h3>
-                  <span className="text-xs font-bold text-rose-500 bg-rose-500/10 px-2 py-1 rounded-lg">Atenção</span>
-                </div>
-                <div className="flex-1 overflow-y-auto custom-scrollbar">
-                  {(() => {
-                    const moodAlerts = teamMembers.filter(m => {
-                      if (!m.moodLogs || m.moodLogs.length < 3) return false;
-                      const last3 = m.moodLogs.slice(-3);
-                      return last3.every(log => log.score <= 2);
-                    });
-                    
-                    if (moodAlerts.length === 0) {
-                      return (
-                        <div className="h-full flex flex-col items-center justify-center text-center opacity-50 py-4">
-                          <CheckCircle2 className="text-emerald-500 mb-2" size={32} />
-                          <p className="text-xs text-gray-500">O time está energizado.</p>
-                        </div>
-                      );
-                    }
-                    
-                    return (
-                      <div className="space-y-3">
-                        <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-2">Monitorar (3+ dias seguidos)</p>
-                        {moodAlerts.map(m => (
-                          <div key={m.uid} className="flex items-center gap-3 p-3 bg-rose-500/5 border border-rose-500/20 rounded-xl">
-                            <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-white/10 overflow-hidden shrink-0">
-                              {m.photoURL ? <img src={m.photoURL} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-bold text-xs">{m.displayName[0]}</div>}
-                            </div>
-                            <div className="overflow-hidden">
-                              <p className="text-xs font-bold truncate dark:text-white">{m.displayName}</p>
-                              <p className="text-[10px] text-rose-500">Baixa energia reportada</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })()}
-                </div>
-              </div>
-
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in duration-500">
               <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-6 shadow-xl">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="font-bold flex items-center gap-2 font-sans dark:text-white"><Smile className="text-yellow-500" /> Clima da Equipe</h3>
+                  <h3 className="font-bold flex items-center gap-2"><Smile className="text-yellow-500" /> Clima da Equipe</h3>
                   <span className="text-xs font-bold text-primary-500 bg-primary-500/10 px-2 py-1 rounded-lg">Mês Atual</span>
                 </div>
                 <div className="flex flex-col items-center justify-center py-4 text-center">
@@ -548,34 +456,7 @@ export default function PeopleView() {
                     ></div>
                   </div>
                   <p className="text-[10px] text-gray-400 mt-4">
-                    {enpsResults.length === 0 ? 'Os dados serão atualizados assim que as pesquisas forem respondidas.' : `Baseado em ${enpsResults.length} respostas anônimas.`}
-                  </p>
-                </div>
-              </div>
-
-              <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-6 shadow-xl">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="font-bold flex items-center gap-2"><Star className="text-amber-500" /> Satisfação (CSAT)</h3>
-                  <span className="text-xs font-bold text-amber-500 bg-amber-500/10 px-2 py-1 rounded-lg">Geral</span>
-                </div>
-                <div className="flex flex-col items-center justify-center py-4 text-center">
-                  <div className={`text-5xl font-black mb-2 ${csatScoreAvg === null ? 'text-gray-400' : Number(csatScoreAvg) >= 4.5 ? 'text-emerald-500' : Number(csatScoreAvg) >= 3.5 ? 'text-yellow-500' : 'text-red-500'}`}>
-                    {csatScoreAvg === null ? '--' : csatScoreAvg}
-                  </div>
-                  <div className="text-sm font-medium text-gray-500">
-                    {csatScoreAvg === null ? 'Média CSAT (Aguardando Dados)' : 'Média de Avaliações'}
-                  </div>
-                  <div className="flex gap-1 mt-6">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star 
-                        key={star} 
-                        size={20} 
-                        className={Number(csatScoreAvg) >= star ? 'fill-amber-500 text-amber-500' : 'text-gray-300 dark:text-white/10'} 
-                      />
-                    ))}
-                  </div>
-                  <p className="text-[10px] text-gray-400 mt-4">
-                    {ratedRequests.length === 0 ? 'Nenhum chamado avaliado ainda.' : `Baseado em ${ratedRequests.length} atendimentos concluídos.`}
+                    {enpsScoreCalc === null ? 'Os dados serão atualizados assim que as pesquisas forem respondidas.' : `Baseado em ${enpsResults.length} respostas anônimas.`}
                   </p>
                 </div>
               </div>
@@ -612,11 +493,7 @@ export default function PeopleView() {
               <div className="md:col-span-3 bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-6 shadow-xl">
                  <h3 className="font-bold flex items-center gap-2 mb-6"><Users className="text-blue-500" /> Talentos em Onboarding</h3>
                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                   {teamMembers.filter(m => {
-                     const total = m.onboardingTasks?.length || 0;
-                     const completed = m.onboardingTasks?.filter(t => t.completed).length || 0;
-                     return total > 0 && completed < total;
-                   }).map(m => {
+                   {teamMembers.filter(m => (m.onboardingTasks?.length || 0) > 0).map(m => {
                      const completed = m.onboardingTasks?.filter(t => t.completed).length || 0;
                      const total = m.onboardingTasks?.length || 0;
                      const percent = Math.round((completed / total) * 100);
@@ -673,212 +550,59 @@ export default function PeopleView() {
                   <div className="lg:col-span-3">
                      {selectedMember ? (
                        <div className="animate-in fade-in">
-                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-gray-100 dark:border-white/5">
-                            <div className="flex items-center gap-4">
-                               <div className="w-16 h-16 rounded-3xl bg-primary-500/10 flex items-center justify-center overflow-hidden">
-                                  {selectedMember.photoURL ? <img src={selectedMember.photoURL} alt="" className="w-full h-full object-cover" /> : <Users className="text-primary-500" size={32} />}
-                               </div>
-                               <div>
-                                  <h3 className="text-2xl font-bold dark:text-white leading-tight">{selectedMember.displayName}</h3>
-                                  <p className="text-sm text-gray-400 font-medium">{selectedMember.jobTitle || 'Sem cargo definido'}</p>
-                               </div>
-                            </div>
-                            
-                            <div className="flex bg-gray-100 dark:bg-white/5 p-1 rounded-2xl border border-gray-200 dark:border-white/10 overflow-x-auto">
-                               {[
-                                 { id: 'overview', label: 'Visão Geral', icon: Sparkles },
-                                 { id: 'skills', label: 'Competências', icon: Target },
-                                 { id: 'timeline', label: 'Carreira', icon: TrendingUp },
-                                 { id: 'docs', label: 'Documentos', icon: Package },
-                                 { id: 'feedback', label: 'Feedbacks', icon: MessageSquare }
-                               ].map(tab => (
-                                 <button 
-                                   key={tab.id}
-                                   onClick={() => setMemberSubTab(tab.id as any)}
-                                   className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${memberSubTab === tab.id ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
-                                 >
-                                   <tab.icon size={14} />
-                                   {tab.label}
-                                 </button>
-                               ))}
-                             </div>
-                           </div>
-                           
-                           {memberSubTab === 'overview' && (
-                              <div className="animate-in fade-in slide-in-from-right duration-300">
-                                <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6 font-sans">Checklist de Onboarding</h4>
-                                {selectedMember.onboardingTasks ? (
-                                   <div className="space-y-2">
-                                      <div className="flex gap-2 mb-6">
-                                         <input 
-                                           id="new_onboarding_task"
-                                           type="text" 
-                                           placeholder="Nova tarefa de onboarding..." 
-                                           className="flex-1 bg-white/50 dark:bg-white/5 border border-gray-100 dark:border-white/5 px-4 py-3 rounded-2xl text-xs focus:outline-none focus:border-primary-500 transition-all"
-                                           onKeyPress={e => e.key === 'Enter' && addTaskToOnboarding(selectedMember.uid, (e.target as HTMLInputElement).value)}
-                                         />
-                                         <button 
-                                           onClick={() => {
-                                             const input = document.getElementById('new_onboarding_task') as HTMLInputElement;
-                                             addTaskToOnboarding(selectedMember.uid, input.value);
-                                             input.value = '';
-                                           }}
-                                           className="p-3 bg-primary-500 text-white rounded-2xl hover:bg-primary-600 shadow-lg shadow-primary-500/20 transition-all font-bold"
-                                         >
-                                           Adicionar
-                                         </button>
-                                      </div>
-                                      <div className="space-y-2">
-                                        {selectedMember.onboardingTasks.map(t => (
-                                           <div key={t.id} className="flex items-center group/task gap-3 p-4 bg-white/40 dark:bg-white/5 border border-gray-100 dark:border-white/5 rounded-2xl transition-all">
-                                              <div onClick={() => toggleTask(selectedMember.uid, t.id)} className="flex items-center flex-1 gap-3 cursor-pointer">
-                                                {t.completed ? <CheckCircle2 className="text-emerald-500" /> : <Circle className="text-gray-300" />}
-                                                <span className={t.completed ? 'line-through opacity-40' : 'font-medium'}>{t.task}</span>
-                                              </div>
-                                              <button onClick={() => removeTaskFromOnboarding(selectedMember.uid, t.id)} className="opacity-0 group-hover/task:opacity-100 p-2 text-red-500 hover:bg-red-500/10 rounded-xl transition-all">
-                                                <Trash2 size={16} />
-                                              </button>
-                                           </div>
-                                        ))}
-                                      </div>
-                                   </div>
-                                ) : (
-                                   <div className="text-center py-20 bg-gray-100/50 dark:bg-white/5 rounded-3xl border-2 border-dashed border-gray-200 dark:border-white/10">
-                                      <p className="mb-4 text-gray-500">Nenhum checklist ativo.</p>
-                                      <button onClick={() => assignDefaultTemplate(selectedMember.uid)} className="bg-primary-500 text-white px-6 py-3 rounded-2xl font-bold shadow-lg">Iniciar Checklist Padrão</button>
-                                   </div>
-                                )}
-                             </div>
-                          )}
-
-                          {memberSubTab === 'skills' && (
-                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in slide-in-from-right duration-300">
-                                <div className="bg-white/30 dark:bg-white/5 border border-gray-100 dark:border-white/5 rounded-3xl p-8">
-                                   <h4 className="font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2 font-sans">Matriz de Competências</h4>
-                                   <SkillRadar skills={(selectedMember as any).skills || []} />
+                          <h3 className="text-xl font-bold mb-6">{selectedMember.displayName}</h3>
+                          {selectedMember.onboardingTasks ? (
+                             <div className="space-y-2">
+                                <div className="flex gap-2 mb-6">
+                                   <input 
+                                     id="new_onboarding_task"
+                                     type="text" 
+                                     placeholder="Nova tarefa de onboarding..." 
+                                     className="flex-1 bg-white/50 dark:bg-white/5 border border-gray-100 dark:border-white/5 px-4 py-3 rounded-2xl text-xs focus:outline-none focus:border-primary-500 transition-all"
+                                     onKeyPress={e => e.key === 'Enter' && addTaskToOnboarding(selectedMember.uid, (e.target as HTMLInputElement).value)}
+                                   />
+                                   <button 
+                                     onClick={() => {
+                                       const input = document.getElementById('new_onboarding_task') as HTMLInputElement;
+                                       addTaskToOnboarding(selectedMember.uid, input.value);
+                                       input.value = '';
+                                     }}
+                                     className="p-3 bg-primary-500 text-white rounded-2xl hover:bg-primary-600 shadow-lg shadow-primary-500/20 transition-all font-bold"
+                                   >
+                                     Adicionar
+                                   </button>
                                 </div>
-                                <div className="bg-white/30 dark:bg-white/5 border border-gray-100 dark:border-white/5 rounded-3xl p-8">
-                                   <h4 className="font-bold text-gray-900 dark:text-white mb-6 font-sans">Sugestão de Desenvolvimento</h4>
-                                   <p className="text-sm text-gray-500 leading-relaxed mb-4">
-                                      Com base na matriz ao lado, foque em desenvolver as competências com menor pontuação para equilibrar o perfil profissional.
-                                   </p>
-                                   <div className="p-4 bg-primary-500/5 border border-primary-500/10 rounded-2xl italic text-xs text-primary-600 font-medium font-sans">
-                                      "O desenvolvimento contínuo é a chave para o sucesso na Hub Symples."
-                                   </div>
+                                <div className="space-y-2">
+                                  {selectedMember.onboardingTasks.map(t => (
+                                     <div key={t.id} className="flex items-center group/task gap-3 p-4 bg-white/40 dark:bg-white/5 border border-gray-100 dark:border-white/5 rounded-2xl transition-all">
+                                        <div onClick={() => toggleTask(selectedMember.uid, t.id)} className="flex items-center flex-1 gap-3 cursor-pointer">
+                                          {t.completed ? <CheckCircle2 className="text-emerald-500" /> : <Circle className="text-gray-300" />}
+                                          <span className={t.completed ? 'line-through opacity-40' : 'font-medium'}>{t.task}</span>
+                                        </div>
+                                        <button onClick={() => removeTaskFromOnboarding(selectedMember.uid, t.id)} className="opacity-0 group-hover/task:opacity-100 p-2 text-red-500 hover:bg-red-500/10 rounded-xl transition-all">
+                                          <Trash2 size={16} />
+                                        </button>
+                                     </div>
+                                  ))}
                                 </div>
                              </div>
-                          )}
-
-                          {memberSubTab === 'timeline' && (
-                             <div className="animate-in fade-in slide-in-from-right duration-300">
-                                <CareerTimeline milestones={selectedMember.careerTimeline || []} />
-                             </div>
-                          )}
-
-                          {memberSubTab === 'docs' && (
-                             <div className="animate-in fade-in slide-in-from-right duration-300">
-                                <DocumentManager userId={selectedMember.uid} />
-                             </div>
-                          )}
-
-                          {memberSubTab === 'feedback' && (
-                             <div className="animate-in fade-in slide-in-from-right duration-300">
-                                <FeedbackBoard userId={selectedMember.uid} />
+                          ) : (
+                             <div className="text-center py-20 bg-gray-100/50 dark:bg-white/5 rounded-3xl border-2 border-dashed border-gray-200 dark:border-white/10">
+                                <p className="mb-4 text-gray-500">Nenhum checklist ativo.</p>
+                                <button onClick={() => assignDefaultTemplate(selectedMember.uid)} className="bg-primary-500 text-white px-6 py-3 rounded-2xl font-bold shadow-lg">Iniciar Checklist Padrão</button>
                              </div>
                           )}
                        </div>
-                    ) : (
+                     ) : (
                        <div className="h-40 flex flex-col items-center justify-center text-gray-400">
                           <Users size={40} className="mb-2 opacity-20" />
                           <p>Selecione alguém para começar</p>
                        </div>
-                    )}
-                   </div>
-
-               <div className="md:col-span-4 bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-6 shadow-xl">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="font-bold flex items-center gap-2 font-sans dark:text-white"><Activity className="text-rose-500" /> Saúde Diária da Equipe</h3>
-                    <span className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Tempo Real</span>
-                  </div>
-                  
-                  <div className="overflow-x-auto custom-scrollbar">
-                    <table className="w-full text-left border-separate border-spacing-y-2">
-                      <thead>
-                        <tr className="text-[10px] text-gray-400 uppercase font-black tracking-widest border-b border-gray-100 dark:border-white/5">
-                          <th className="pb-4 px-4 font-black">Colaborador / Cargo</th>
-                          <th className="pb-4 px-4 font-black">Último Reporte (Horário)</th>
-                          <th className="pb-4 px-4 font-black">Energia / Humor</th>
-                          <th className="pb-4 px-4 text-right font-black">Ação</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {teamMembers.sort((a,b) => {
-                          const lastA = a.moodLogs?.[a.moodLogs.length-1]?.timestamp || 0;
-                          const lastB = b.moodLogs?.[b.moodLogs.length-1]?.timestamp || 0;
-                          return lastB - lastA;
-                        }).map(m => {
-                          const lastLog = m.moodLogs?.[m.moodLogs.length - 1];
-                          const score = lastLog?.score || 0;
-                          const moodEmojis = ['😴', '😫', '😐', '🙂', '🔥'];
-                          
-                          return (
-                            <tr key={m.uid} className="group bg-white/30 dark:bg-white/5 border border-gray-100 dark:border-white/5 rounded-2xl overflow-hidden hover:bg-white/50 dark:hover:bg-white/10 transition-all">
-                              <td className="py-4 px-4 first:rounded-l-2xl">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-white/10 overflow-hidden shrink-0">
-                                    {m.photoURL ? <img src={m.photoURL} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-bold text-xs">{m.displayName[0]}</div>}
-                                  </div>
-                                  <div>
-                                    <p className="text-xs font-bold dark:text-white">{m.displayName}</p>
-                                    <p className="text-[10px] text-gray-400 font-medium uppercase tracking-tighter">{m.jobTitle}</p>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="py-4 px-4">
-                                {lastLog ? (
-                                  <div>
-                                    <p className="text-xs font-bold dark:text-white">{format(lastLog.timestamp, 'HH:mm', { locale: ptBR })}</p>
-                                    <p className="text-[9px] text-gray-500">{format(lastLog.timestamp, "dd 'de' MMM", { locale: ptBR })}</p>
-                                  </div>
-                                ) : (
-                                  <span className="text-[10px] text-gray-400 italic">Sem registros</span>
-                                )}
-                              </td>
-                              <td className="py-4 px-4">
-                                {lastLog ? (
-                                  <div className="flex items-center gap-3">
-                                    <span className="text-lg grayscale-0 drop-shadow-sm">{moodEmojis[score - 1]}</span>
-                                    <div className="flex-1 min-w-[80px] h-1.5 bg-gray-100 dark:bg-black/20 rounded-full overflow-hidden">
-                                      <div 
-                                        className={`h-full transition-all duration-700 ${score <= 2 ? 'bg-rose-500' : score === 3 ? 'bg-amber-500' : 'bg-emerald-500'}`} 
-                                        style={{ width: `${(score / 5) * 100}%` }}
-                                      ></div>
-                                    </div>
-                                    <span className={`text-[10px] font-black ${score <= 2 ? 'text-rose-500' : score === 3 ? 'text-amber-500' : 'text-emerald-500'}`}>
-                                      {score}/5
-                                    </span>
-                                  </div>
-                                ) : (
-                                  <span className="text-[10px] text-gray-400 italic">N/A</span>
-                                )}
-                              </td>
-                              <td className="py-4 px-4 text-right last:rounded-r-2xl">
-                                <button 
-                                  onClick={() => { setSelectedMember(m); setActiveTab('dashboard'); }}
-                                  className="text-[10px] font-black uppercase tracking-widest text-primary-500 hover:text-primary-600 px-4 py-2 bg-primary-500/10 rounded-xl transition-all"
-                                >
-                                  Ver Detalhes
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                     )}
                   </div>
                </div>
-          </div>
-        )}
+            </div>
+          )}
 
           {/* DEVELOPMENT (PDI) TAB */}
           {activeTab === 'development' && (
@@ -922,9 +646,7 @@ export default function PeopleView() {
                                   onChange={e => setNewCategoryTitle(e.target.value)}
                                   onKeyPress={e => e.key === 'Enter' && addPDICategory(selectedMember.uid)}
                                 />
-                                {isAdminOrManager && (
-                                  <button onClick={() => addPDICategory(selectedMember.uid)} className="absolute right-2 top-1.5 text-primary-500"><PlusCircle size={16} /></button>
-                                )}
+                                <button onClick={() => addPDICategory(selectedMember.uid)} className="absolute right-2 top-1.5 text-primary-500"><PlusCircle size={16} /></button>
                               </div>
                             </div>
                           </div>
@@ -935,9 +657,7 @@ export default function PeopleView() {
                                  <div key={cat.id} className="bg-white/30 dark:bg-white/5 border border-gray-100 dark:border-white/5 rounded-3xl p-6 relative group/cat">
                                     <div className="flex justify-between items-center mb-6">
                                        <h4 className="font-bold flex items-center gap-2"><ChevronDown size={18} className="text-indigo-500" /> {cat.title}</h4>
-                                       {isAdminOrManager && (
-                                         <button onClick={() => removePDICategory(selectedMember.uid, cat.id)} className="opacity-0 group-hover/cat:opacity-100 p-1.5 hover:bg-red-500/10 text-red-500 rounded-lg transition-all"><Trash2 size={14} /></button>
-                                       )}
+                                       <button onClick={() => removePDICategory(selectedMember.uid, cat.id)} className="opacity-0 group-hover/cat:opacity-100 p-1.5 hover:bg-red-500/10 text-red-500 rounded-lg transition-all"><Trash2 size={14} /></button>
                                     </div>
 
                                     <div className="space-y-3 mb-6">
@@ -945,8 +665,7 @@ export default function PeopleView() {
                                          <div key={action.id} className="flex items-center gap-3 p-4 bg-white/50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/5 group/act">
                                             <button 
                                               onClick={() => togglePDIAction(selectedMember.uid, cat.id, action.id)}
-                                              disabled={!isAdminOrManager}
-                                              className={`shrink-0 ${action.completed ? 'text-indigo-500' : 'text-gray-300 hover:text-indigo-400'} transition-all disabled:opacity-50`}
+                                              className={`shrink-0 ${action.completed ? 'text-indigo-500' : 'text-gray-300 hover:text-indigo-400'} transition-all`}
                                             >
                                               {action.completed ? <CheckCircle2 size={22} /> : <Circle size={22} />}
                                             </button>
@@ -956,24 +675,22 @@ export default function PeopleView() {
                                        ))}
                                     </div>
 
-                                    {isAdminOrManager && (
-                                      <div className="flex gap-2">
-                                         <input 
-                                            type="text" 
-                                            placeholder="Nova ação..." 
-                                            className="flex-1 bg-white/50 dark:bg-black/20 border border-gray-100 dark:border-white/10 px-4 py-3 rounded-2xl text-xs focus:outline-none focus:border-indigo-500 transition-all"
-                                            value={newActionText[cat.id] || ''}
-                                            onChange={e => setNewActionText(prev => ({ ...prev, [cat.id]: e.target.value }))}
-                                            onKeyPress={e => e.key === 'Enter' && addPDIAction(selectedMember.uid, cat.id)}
-                                         />
-                                         <button 
-                                            onClick={() => addPDIAction(selectedMember.uid, cat.id)}
-                                            className="p-3 bg-indigo-500 text-white rounded-2xl hover:bg-indigo-600 shadow-lg shadow-indigo-500/20 transition-all"
-                                         >
-                                            <Plus size={18} />
-                                         </button>
-                                      </div>
-                                    )}
+                                    <div className="flex gap-2">
+                                       <input 
+                                          type="text" 
+                                          placeholder="Nova ação..." 
+                                          className="flex-1 bg-white/50 dark:bg-black/20 border border-gray-100 dark:border-white/10 px-4 py-3 rounded-2xl text-xs focus:outline-none focus:border-indigo-500 transition-all"
+                                          value={newActionText[cat.id] || ''}
+                                          onChange={e => setNewActionText(prev => ({ ...prev, [cat.id]: e.target.value }))}
+                                          onKeyPress={e => e.key === 'Enter' && addPDIAction(selectedMember.uid, cat.id)}
+                                       />
+                                       <button 
+                                          onClick={() => addPDIAction(selectedMember.uid, cat.id)}
+                                          className="p-3 bg-indigo-500 text-white rounded-2xl hover:bg-indigo-600 shadow-lg shadow-indigo-500/20 transition-all"
+                                       >
+                                          <Plus size={18} />
+                                       </button>
+                                    </div>
                                  </div>
                                ))}
                             </div>
@@ -1176,20 +893,6 @@ export default function PeopleView() {
               </div>
             </div>
           )}
-          
-          {/* BROADCAST TAB */}
-          {activeTab === 'broadcast' && (userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture') && (
-            <div className="animate-in slide-in-from-bottom duration-500">
-              <BroadcastTab teamMembers={teamMembers} />
-            </div>
-          )}
-
-          {/* ASSETS TAB */}
-          {activeTab === 'assets' && (userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture') && (
-            <div className="animate-in slide-in-from-bottom duration-500">
-              <AssetManager />
-            </div>
-          )}
         </div>
 
         {/* Modal de Nova Ausência */}
@@ -1217,9 +920,7 @@ export default function PeopleView() {
                             value={newVacation.reason || ''} 
                             onChange={e => {
                               const reason = e.target.value as any;
-                              // Auto-aprovado se for falta ou médico (Informado)
                               const status = (reason === 'Falta' || reason === 'Motivo Médico') ? 'Informado' : 'Pendente';
-                              // Mapear reason para type (Férias vs Ausência)
                               const type = reason === 'Férias' ? 'Férias' : 'Ausência';
                               setNewVacation({...newVacation, reason, status, type});
                             }}
