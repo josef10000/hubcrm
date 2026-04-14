@@ -27,6 +27,8 @@ import AssetManager from '../components/people/AssetManager';
 import FeedbackBoard from '../components/people/FeedbackBoard';
 import CareerPath from '../components/people/CareerPath';
 import AddMilestoneModal from '../components/people/AddMilestoneModal';
+import SkillRadar from '../components/people/SkillRadar';
+import EditSkillsModal from '../components/people/EditSkillsModal';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
 import { collection, query, where, onSnapshot, doc, updateDoc, setDoc, deleteDoc, arrayUnion, arrayRemove, orderBy } from 'firebase/firestore';
@@ -78,6 +80,7 @@ export default function PeopleView() {
   const [isClearingEnps, setIsClearingEnps] = useState(false);
 
   const [showMilestoneModal, setShowMilestoneModal] = useState(false);
+  const [showSkillsModal, setShowSkillsModal] = useState(false);
 
   useEffect(() => {
     if (!effectiveOrgId) return;
@@ -453,38 +456,71 @@ export default function PeopleView() {
                   </div>
                   <div className="lg:col-span-3">
                      {selectedMember ? (
-                       <div>
-                          <div className="flex justify-between items-center mb-6">
-                             <h3 className="text-xl font-bold">PDI: {selectedMember.displayName}</h3>
-                             <div className="flex gap-2">
-                                <input type="text" placeholder="Nova Categoria..." className="bg-white/5 border border-white/10 px-3 py-2 rounded-xl text-xs" value={newCategoryTitle} onChange={e => setNewCategoryTitle(e.target.value)} onKeyPress={e => e.key === 'Enter' && addPDICategory(selectedMember.uid)} />
-                                <button onClick={() => addPDICategory(selectedMember.uid)} className="bg-primary-500 text-white p-2 rounded-xl"><Plus size={16} /></button>
-                             </div>
-                          </div>
-                          <div className="space-y-6">
-                             {(selectedMember.pdiCategories || []).map(cat => (
-                               <div key={cat.id} className="p-6 bg-white/5 border border-white/5 rounded-3xl relative group">
-                                  <div className="flex justify-between items-center mb-4">
-                                     <h4 className="font-bold">{cat.title}</h4>
-                                     <button onClick={() => removePDICategory(selectedMember.uid, cat.id)} className="opacity-0 group-hover:opacity-100 text-red-500"><Trash2 size={14} /></button>
-                                  </div>
-                                  <div className="space-y-2 mb-4">
-                                     {cat.actions.map(act => (
-                                       <div key={act.id} className="flex items-center gap-3 p-3 bg-black/20 rounded-xl">
-                                          <button onClick={() => togglePDIAction(selectedMember.uid, cat.id, act.id)}>{act.completed ? <CheckCircle2 className="text-primary-500" /> : <Circle className="text-gray-500" />}</button>
-                                          <span className={`text-sm ${act.completed ? 'line-through opacity-40' : ''}`}>{act.description}</span>
-                                       </div>
-                                     ))}
-                                  </div>
-                                  <div className="flex gap-2">
-                                     <input type="text" placeholder="Ação..." className="flex-1 bg-black/30 border border-white/5 px-3 py-2 rounded-xl text-xs" value={newActionText[cat.id] || ''} onChange={e => setNewActionText(prev => ({ ...prev, [cat.id]: e.target.value }))} onKeyPress={e => e.key === 'Enter' && addPDIAction(selectedMember.uid, cat.id)} />
-                                     <button onClick={() => addPDIAction(selectedMember.uid, cat.id)} className="bg-white/10 p-2 rounded-xl"><Plus size={16} /></button>
-                                  </div>
-                               </div>
-                             ))}
-                             {!(selectedMember.pdiCategories?.length) && <p className="text-center py-10 text-gray-500 italic">Nenhum PDI definido.</p>}
-                          </div>
-                       </div>
+                              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                              <div className="space-y-6">
+                                 <div className="flex justify-between items-center mb-6">
+                                    <h3 className="text-xl font-bold">Plano de Desenvolvimento (PDI)</h3>
+                                    {isAdminOrGerente && (
+                                      <div className="flex gap-2">
+                                         <input type="text" placeholder="Nova Categoria..." className="bg-white/5 border border-white/10 px-3 py-2 rounded-xl text-xs" value={newCategoryTitle} onChange={e => setNewCategoryTitle(e.target.value)} onKeyPress={e => e.key === 'Enter' && addPDICategory(selectedMember.uid)} />
+                                         <button onClick={() => addPDICategory(selectedMember.uid)} className="bg-primary-500 text-white p-2 rounded-xl"><Plus size={16} /></button>
+                                      </div>
+                                    )}
+                                 </div>
+                                 <div className="space-y-6">
+                                    {(selectedMember.pdiCategories || []).map(cat => (
+                                      <div key={cat.id} className="p-6 bg-white/5 border border-white/5 rounded-3xl relative group">
+                                         <div className="flex justify-between items-center mb-4">
+                                            <h4 className="font-bold">{cat.title}</h4>
+                                            {isAdminOrGerente && <button onClick={() => removePDICategory(selectedMember.uid, cat.id)} className="opacity-0 group-hover:opacity-100 text-red-500"><Trash2 size={14} /></button>}
+                                         </div>
+                                         <div className="space-y-2 mb-4">
+                                            {cat.actions.map(act => (
+                                              <div key={act.id} className="flex items-center gap-3 p-3 bg-black/20 rounded-xl">
+                                                 <button onClick={() => togglePDIAction(selectedMember.uid, cat.id, act.id)}>{act.completed ? <CheckCircle2 className="text-primary-500" /> : <Circle className="text-gray-500" />}</button>
+                                                 <span className={`text-sm ${act.completed ? 'line-through opacity-40' : ''}`}>{act.description}</span>
+                                              </div>
+                                            ))}
+                                         </div>
+                                         {isAdminOrGerente && (
+                                            <div className="flex gap-2">
+                                               <input type="text" placeholder="Ação..." className="flex-1 bg-black/30 border border-white/5 px-3 py-2 rounded-xl text-xs" value={newActionText[cat.id] || ''} onChange={e => setNewActionText(prev => ({ ...prev, [cat.id]: e.target.value }))} onKeyPress={e => e.key === 'Enter' && addPDIAction(selectedMember.uid, cat.id)} />
+                                               <button onClick={() => addPDIAction(selectedMember.uid, cat.id)} className="bg-white/10 p-2 rounded-xl"><Plus size={16} /></button>
+                                            </div>
+                                         )}
+                                      </div>
+                                    ))}
+                                    {!(selectedMember.pdiCategories?.length) && <p className="text-center py-10 text-gray-500 italic">Nenhum PDI definido.</p>}
+                                 </div>
+                              </div>
+
+                              <div className="space-y-6">
+                                 <div className="flex justify-between items-center mb-6">
+                                    <h3 className="text-xl font-bold">Matriz de Competências</h3>
+                                    {isAdminOrGerente && (
+                                       <button 
+                                          onClick={() => setShowSkillsModal(true)}
+                                          className="text-xs font-bold text-primary-500 hover:text-primary-600 transition-all px-3 py-2 bg-primary-500/10 rounded-xl flex items-center gap-2"
+                                       >
+                                          <Settings size={14} /> Atualizar Matriz
+                                       </button>
+                                    )}
+                                 </div>
+                                 <div className="p-8 bg-white/5 border border-white/5 rounded-3xl min-h-[400px] flex items-center justify-center">
+                                    <SkillRadar skills={[...(selectedMember.skills?.hard || []), ...(selectedMember.skills?.soft || [])]} />
+                                 </div>
+                                 <div className="grid grid-cols-2 gap-4">
+                                    <div className="p-4 bg-primary-500/5 border border-primary-500/10 rounded-2xl">
+                                       <p className="text-[10px] font-black uppercase text-primary-400 mb-1">Hard Skills</p>
+                                       <p className="text-2xl font-black">{selectedMember.skills?.hard?.length || 0}</p>
+                                    </div>
+                                    <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl">
+                                       <p className="text-[10px] font-black uppercase text-emerald-400 mb-1">Soft Skills</p>
+                                       <p className="text-2xl font-black">{selectedMember.skills?.soft?.length || 0}</p>
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
                      ) : <div className="text-center py-20 text-gray-500">Selecione um membro</div>}
                   </div>
                </div>
@@ -616,6 +652,16 @@ export default function PeopleView() {
             onClose={() => setShowMilestoneModal(false)} 
             targetUserId={selectedMember?.uid || ''}
             onSuccess={() => { setShowMilestoneModal(false); toast.success('Adicionado!'); }}
+          />
+        )}
+
+        {showSkillsModal && selectedMember && (
+          <EditSkillsModal
+            isOpen={showSkillsModal}
+            onClose={() => setShowSkillsModal(false)}
+            targetUserId={selectedMember.uid}
+            initialSkills={selectedMember.skills || { hard: [], soft: [] }}
+            onSuccess={() => { setShowSkillsModal(false); toast.success('Matriz atualizada!'); }}
           />
         )}
       </div>
