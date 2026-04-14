@@ -358,6 +358,7 @@ export interface Invitation {
   status: 'pending' | 'accepted' | 'expired';
   createdAt: number;
   expiresAt: number;
+  invitedBy: string;
 }
 
 // ── People & Culture Ecosystem ──
