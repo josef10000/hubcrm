@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Save, Plus, Trash2, Brain, Code } from 'lucide-react';
 import { Skill, SkillMatrix } from '../../types';
 import { useCRM } from '../../contexts/CRMContext';
+import { auth } from '../../lib/firebase';
 import { toast } from 'sonner';
 
 interface EditSkillsModalProps {
@@ -58,7 +59,7 @@ export default function EditSkillsModal({ isOpen, onClose, targetUserId, initial
       const filteredSoft = skills.soft.filter(s => softSkillsPool.includes(s.name));
       const submissionSkills = { ...skills, soft: filteredSoft };
 
-      const idToken = typeof window !== 'undefined' ? (await (window as any).getAuthToken?.()) || "" : "";
+      const idToken = await auth.currentUser?.getIdToken();
       const res = await fetch(`/api/team_handler?action=update-skills`, {
         method: 'POST',
         headers: { 
