@@ -877,8 +877,8 @@ export default function PeopleView() {
                     </table>
                   </div>
                </div>
-            </div>
-          )}
+          </div>
+        )}
 
           {/* DEVELOPMENT (PDI) TAB */}
           {activeTab === 'development' && (

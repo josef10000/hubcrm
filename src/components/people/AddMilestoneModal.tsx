@@ -18,6 +18,7 @@ const MILESTONE_TYPES: { value: CareerMilestone['type']; label: string; icon: an
   { value: 'certification', label: 'Certificação / Curso', icon: <GraduationCap size={18} /> }
 ];
 
+const AddMilestoneModal = ({ isOpen, onClose, targetUserId, onSuccess }: AddMilestoneModalProps) => {
   const { user, userProfile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({

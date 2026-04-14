@@ -182,6 +182,10 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     let unsubscribeOffers: () => void = () => { };
     let unsubServices: () => void = () => { };
     let unsubTags: () => void = () => { };
+    let unsubProfiles: () => void = () => { };
+    let unsubVacations: () => void = () => { };
+    let unsubCommissions: () => void = () => { };
+    let unsubWiki: () => void = () => { };
 
     try {
       const offersRef = collection(db, 'organizations', effectiveOrgId, 'offers');
@@ -260,7 +264,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       // Listener para Perfis da Equipe (Aniversários e Gestão People)
       const profilesRef = collection(db, 'profiles');
       const qProfiles = query(profilesRef, where('orgId', '==', effectiveOrgId));
-      const unsubProfiles = onSnapshot(qProfiles, (snapshot) => {
+      unsubProfiles = onSnapshot(qProfiles, (snapshot) => {
         const loaded: UserProfile[] = [];
         snapshot.forEach((d) => loaded.push({ uid: d.id, ...d.data() } as UserProfile));
         setTeamProfiles(loaded);
@@ -268,7 +272,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
 
       // Listener para Férias/Ausências
       const vacationsRef = collection(db, 'organizations', effectiveOrgId, 'vacations');
-      const unsubVacations = onSnapshot(vacationsRef, (snapshot) => {
+      unsubVacations = onSnapshot(vacationsRef, (snapshot) => {
         const loaded: VacationPeriod[] = [];
         snapshot.forEach((d) => loaded.push({ ...d.data(), id: d.id } as VacationPeriod));
         setVacations(loaded);
@@ -276,18 +280,22 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
 
       // Listener para Comissões
       const commissionsRef = collection(db, 'organizations', effectiveOrgId, 'commissions');
-      const unsubCommissions = onSnapshot(commissionsRef, (snapshot) => {
+      unsubCommissions = onSnapshot(commissionsRef, (snapshot) => {
         const loaded: CommissionEntry[] = [];
         snapshot.forEach((d) => loaded.push({ ...d.data(), id: d.id } as CommissionEntry));
         setCommissions(loaded.sort((a, b) => b.date - a.date));
       });
 
       // Listener para Tags
+      const tagsRef = collection(db, 'organizations', effectiveOrgId, 'tags');
+      unsubTags = onSnapshot(tagsRef, (snapshot) => {
+        const loaded: any[] = [];
+        snapshot.forEach((d) => loaded.push({ ...d.data(), id: d.id }));
         setTags(loaded.sort((a, b) => a.name.localeCompare(b.name)));
       });
       
       const wikiRef = collection(db, 'organizations', effectiveOrgId, 'wikiArticles');
-      const unsubWiki = onSnapshot(wikiRef, (snapshot) => {
+      unsubWiki = onSnapshot(wikiRef, (snapshot) => {
         const loaded: WikiArticle[] = [];
         snapshot.forEach((d) => loaded.push({ ...d.data(), id: d.id } as WikiArticle));
         setWikiArticles(loaded.sort((a, b) => b.updatedAt - a.updatedAt));
