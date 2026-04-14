@@ -9,17 +9,23 @@ import { format } from 'date-fns';
 
 import { useAuth } from '../../contexts/AuthContext';
 
-export default function AssetManager() {
+interface AssetManagerProps {
+  userId?: string;
+}
+
+export default function AssetManager({ userId }: AssetManagerProps) {
   const { userProfile } = useAuth();
   const { effectiveOrgId, teamProfiles } = useCRM();
-  const isAdminOrManager = userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente';
+  const isAdminOrManager = userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture';
+  
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [newAsset, setNewAsset] = useState<Partial<Asset>>({
     category: 'Hardware',
-    status: 'Em uso'
+    status: 'Em uso',
+    assignedTo: userId || ''
   });
 
   useEffect(() => {
@@ -50,7 +56,7 @@ export default function AssetManager() {
         orgId: effectiveOrgId
       });
       setShowAddModal(false);
-      setNewAsset({ category: 'Hardware', status: 'Em uso' });
+      setNewAsset({ category: 'Hardware', status: 'Em uso', assignedTo: userId || '' });
       toast.success('Ativo registrado com sucesso!');
     } catch (error) {
       toast.error('Erro ao registrar ativo.');
@@ -79,29 +85,40 @@ export default function AssetManager() {
     }
   };
 
-  const filteredAssets = assets.filter(a => 
-    a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    a.serialNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    teamProfiles.find(p => p.uid === a.assignedTo)?.displayName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredAssets = assets.filter(a => {
+    const matchesSearch = a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      a.serialNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      teamProfiles.find(p => p.uid === a.assignedTo)?.displayName.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (userId) {
+      return matchesSearch && a.assignedTo === userId;
+    }
+    return matchesSearch;
+  });
 
   return (
     <div className="animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <div className="relative flex-1 w-full md:max-w-md">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-          <input 
-            type="text" 
-            placeholder="Buscar ativos, serial ou colaborador..." 
-            className="w-full bg-white/50 dark:bg-white/5 border border-gray-200 dark:border-white/10 pl-12 pr-4 py-3 rounded-2xl text-sm focus:outline-none focus:border-primary-500 transition-all shadow-sm"
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-          />
-        </div>
+        {!userId && (
+          <div className="relative flex-1 w-full md:max-w-md">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <input 
+              type="text" 
+              placeholder="Buscar ativos, serial ou colaborador..." 
+              className="w-full bg-white/50 dark:bg-white/5 border border-gray-200 dark:border-white/10 pl-12 pr-4 py-3 rounded-2xl text-sm focus:outline-none focus:border-primary-500 transition-all shadow-sm"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+          </div>
+        )}
+        
         {isAdminOrManager && (
           <button 
-            onClick={() => setShowAddModal(true)}
-            className="bg-primary-500 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-primary-600 transition-all shadow-lg shadow-primary-500/20 w-full md:w-auto justify-center"
+            onClick={() => {
+              setNewAsset(prev => ({ ...prev, assignedTo: userId || '' }));
+              setShowAddModal(true);
+            }}
+            className={`bg-primary-500 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-primary-600 transition-all shadow-lg shadow-primary-500/20 w-full md:w-auto justify-center ${userId ? 'ml-auto' : ''}`}
           >
             <Plus size={20} /> Atribuir Ativo
           </button>

@@ -98,18 +98,22 @@ export default function FeedbackBoard({ userId }: FeedbackBoardProps) {
     }
   };
 
+  const isAdminOrManager = currentUser?.role === 'Administrador' || currentUser?.role === 'Gerente' || currentUser?.role === 'People & Culture';
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center mb-4">
         <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
           Mural de Feedbacks & Reconhecimento
         </h3>
-        <button 
-          onClick={() => setShowAddForm(!showAddForm)}
-          className="bg-primary-500 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-primary-500/20 flex items-center gap-1 hover:bg-primary-600 transition-all font-sans"
-        >
-          <Plus size={16} /> Novo Registro
-        </button>
+        {isAdminOrManager && (
+          <button 
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="bg-primary-500 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-primary-500/20 flex items-center gap-1 hover:bg-primary-600 transition-all font-sans"
+          >
+            <Plus size={16} /> Novo Registro
+          </button>
+        )}
       </div>
 
       {showAddForm && (
