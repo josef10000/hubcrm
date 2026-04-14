@@ -9,7 +9,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { useCRM } from '../contexts/CRMContext';
 import { db } from '../lib/firebase';
-import { doc, getDoc, collection, setDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, setDoc, query, where, onSnapshot } from 'firebase/firestore';
 import { uploadImageToImgBB } from '../lib/imgbb';
 import { VacationPeriod } from '../types/people';
 import { UserProfile } from '../types';
@@ -88,6 +88,7 @@ export default function ProfileView() {
     birthDate: '',
     startDate: ''
   });
+  const [userAssets, setUserAssets] = useState<any[]>([]);
 
   const isOwnProfile = user?.uid === uid;
   const isAdmin = currentUserProfile?.role === 'Administrador';
@@ -140,6 +141,23 @@ export default function ProfileView() {
 
     fetchProfile();
   }, [uid, navigate]);
+
+  // Listener para ativos em tempo real
+  useEffect(() => {
+    if (!uid || !currentUserProfile?.orgId) return;
+
+    const q = query(
+      collection(db, 'organizations', currentUserProfile.orgId, 'assets'),
+      where('assignedTo', '==', uid)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const loaded = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      setUserAssets(loaded);
+    });
+
+    return () => unsubscribe();
+  }, [uid, currentUserProfile?.orgId]);
 
   const handleRefresh = async () => {
     if (!uid) return;
@@ -757,7 +775,7 @@ export default function ProfileView() {
               {activeTab === 'inventory' && (
                 <div className="animate-in slide-in-from-right duration-500">
                   <InventorySection 
-                    inventory={profile.inventory || []} 
+                    inventory={userAssets} 
                     isAdmin={isAdmin}
                     onAdd={() => setShowAddAssetModal(true)}
                     onRemove={handleRemoveAsset}

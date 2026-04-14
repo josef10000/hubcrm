@@ -259,12 +259,14 @@ async function handleAddAsset(req: VercelRequest, res: VercelResponse, uid: stri
   const senderSnap = await db.collection('profiles').doc(uid).get();
   if (senderSnap.data()?.role !== 'Administrador') return res.status(403).json({ error: 'Apenas Admins podem gerenciar ativos' });
 
-  await db.collection('profiles').doc(targetUid).update({
-    inventory: getFirebaseAdmin().firestore.FieldValue.arrayUnion({
-      ...asset,
-      id: crypto.randomUUID(),
-      assignedAt: Date.now()
-    })
+  const senderData = senderSnap.data();
+  const orgId = senderData?.orgId || 'default';
+
+  await db.collection('organizations').doc(orgId).collection('assets').add({
+    ...asset,
+    assignedTo: targetUid,
+    assignedAt: Date.now(),
+    orgId
   });
 
   return res.status(200).json({ success: true });
@@ -275,15 +277,10 @@ async function handleRemoveAsset(req: VercelRequest, res: VercelResponse, uid: s
   const senderSnap = await db.collection('profiles').doc(uid).get();
   if (senderSnap.data()?.role !== 'Administrador') return res.status(403).json({ error: 'Apenas Admins podem remover ativos' });
 
-  const targetSnap = await db.collection('profiles').doc(targetUid).get();
-  const inventory = targetSnap.data()?.inventory || [];
-  const assetToRemove = inventory.find((a: any) => a.id === assetId);
+  const senderData = senderSnap.data();
+  const orgId = senderData?.orgId || 'default';
 
-  if (assetToRemove) {
-    await db.collection('profiles').doc(targetUid).update({
-      inventory: getFirebaseAdmin().firestore.FieldValue.arrayRemove(assetToRemove)
-    });
-  }
+  await db.collection('organizations').doc(orgId).collection('assets').doc(assetId).delete();
 
   return res.status(200).json({ success: true });
 }
