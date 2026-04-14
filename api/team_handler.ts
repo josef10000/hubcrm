@@ -132,10 +132,22 @@ async function handleAccept(req: VercelRequest, res: VercelResponse, uid: string
   }
 
   const userRecord = await getFirebaseAdmin().auth().getUser(uid);
-  await db.collection('profiles').doc(uid).set({
-    uid, email: userRecord.email, displayName: userRecord.displayName || inviteData.email.split('@')[0],
-    orgId: inviteData.orgId, role: inviteData.role, createdAt: Date.now(), acceptedInviteAt: Date.now()
-  }, { merge: true });
+  const profileUpdate: any = {
+    uid,
+    email: userRecord.email,
+    displayName: userRecord.displayName || inviteData.email.split('@')[0],
+    orgId: inviteData.orgId,
+    role: inviteData.role,
+    createdAt: Date.now(),
+    acceptedInviteAt: Date.now()
+  };
+
+  // Vínculo inicial de hierarquia: O novo colaborador entra como subordinado de quem o convidou
+  if (inviteData.invitedBy) {
+    profileUpdate.reportsTo = inviteData.invitedBy;
+  }
+
+  await db.collection('profiles').doc(uid).set(profileUpdate, { merge: true });
 
   await inviteSnap.ref.update({ status: 'accepted', acceptedBy: uid, acceptedAt: Date.now() });
   return res.status(200).json({ success: true });
@@ -235,11 +247,14 @@ async function handleBroadcast(req: VercelRequest, res: VercelResponse, uid: str
 
 async function handleAddFeedback(req: VercelRequest, res: VercelResponse, uid: string) {
   const { targetUid, feedback } = req.body;
+  const isSelf = uid === targetUid;
   
-  // Qualquer um pode enviar feedback? No plano diz: "validando permissões e flag isPrivate"
-  // Geralmente, elogios são públicos, feedbacks técnicos podem ser restritos.
   const senderSnap = await db.collection('profiles').doc(uid).get();
   const senderData = senderSnap.data();
+  const isManagement = ['Administrador', 'Gerente', 'People & Culture'].includes(senderData?.role || '');
+
+  if (isSelf) return res.status(403).json({ error: 'Não pode enviar feedback para si mesmo' });
+  if (!isManagement) return res.status(403).json({ error: 'Apenas gestores podem enviar feedbacks' });
 
   await db.collection('profiles').doc(targetUid).update({
     feedbacks: getFirebaseAdmin().firestore.FieldValue.arrayUnion({
@@ -304,9 +319,11 @@ async function handleUpdateSkills(req: VercelRequest, res: VercelResponse, uid: 
   const { targetUid, skills } = req.body;
   const isSelf = uid === targetUid;
   const senderSnap = await db.collection('profiles').doc(uid).get();
-  const isAdmin = senderSnap.data()?.role === 'Administrador' || senderSnap.data()?.role === 'Gerente';
+  const senderData = senderSnap.data();
+  const isManagement = ['Administrador', 'Gerente', 'People & Culture'].includes(senderData?.role || '');
 
-  if (!isSelf && !isAdmin) return res.status(403).json({ error: 'Sem permissão para atualizar competências' });
+  if (isSelf) return res.status(403).json({ error: 'O colaborador não pode atualizar sua própria matriz de competências' });
+  if (!isManagement) return res.status(403).json({ error: 'Sem permissão para atualizar competências' });
 
   await db.collection('profiles').doc(targetUid).set({ skills }, { merge: true });
   return res.status(200).json({ success: true });
