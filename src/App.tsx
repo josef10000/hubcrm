@@ -77,7 +77,8 @@ function CRMInner() {
     isDeleteOfferConfirmOpen, setIsDeleteOfferConfirmOpen, offerToDelete, setOfferToDelete,
     onboardingQuestions,
     handleSaveClient, handleDeleteClient,
-    handleSaveOffer, handleDeleteOffer, handleExportCSV
+    handleSaveOffer, handleDeleteOffer, handleExportCSV,
+    wikiArticles
   } = useCRM();
 
   const { sidebarOpen, setSidebarOpen, isModalOpen, setIsModalOpen, searchTerm, setSearchTerm } = useUI();
