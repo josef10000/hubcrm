@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { collection, doc, setDoc, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { Client, Offer, Expense, Transaction, TransactionCategory, Budget, Lead, UserProfile, CommissionEntry, Tag } from '../types';
+import { Client, Offer, Expense, Transaction, TransactionCategory, Budget, Lead, UserProfile, CommissionEntry, Tag, WikiArticle, WikiComment } from '../types';
 import { VacationPeriod } from '../types/people';
 import { useAuth } from './AuthContext';
 import { calculateCommissionForClient } from '../helpers/commissionCalculation';
@@ -30,6 +30,7 @@ interface CRMContextType {
   vacations: VacationPeriod[];
   teamProfiles: UserProfile[];
   tags: Tag[];
+  wikiArticles: WikiArticle[];
   activeLeadsCount: number;
   effectiveOrgId: string;
   userProfile: any | null;
@@ -109,6 +110,12 @@ interface CRMContextType {
   // Helpers
   isChurnRisk: (client: Client) => boolean;
   isComboNearRenewal: (client: Client) => boolean;
+
+  // Wiki Actions
+  handleSaveWikiArticle: (articleData: Partial<WikiArticle>) => Promise<void>;
+  handleDeleteWikiArticle: (articleId: string) => Promise<void>;
+  handleToggleWikiStar: (articleId: string) => Promise<void>;
+  handleAddWikiComment: (articleId: string, comment: Partial<WikiComment>) => Promise<void>;
 }
 
 const CRMContext = createContext<CRMContextType | null>(null);
@@ -134,6 +141,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   const [teamProfiles, setTeamProfiles] = useState<UserProfile[]>([]);
   const [commissions, setCommissions] = useState<CommissionEntry[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
+  const [wikiArticles, setWikiArticles] = useState<WikiArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -275,11 +283,14 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       });
 
       // Listener para Tags
-      const tagsRef = collection(db, 'organizations', effectiveOrgId, 'tags');
-      unsubTags = onSnapshot(tagsRef, (snapshot) => {
-        const loaded: Tag[] = [];
-        snapshot.forEach((d) => loaded.push({ ...d.data(), id: d.id } as Tag));
         setTags(loaded.sort((a, b) => a.name.localeCompare(b.name)));
+      });
+      
+      const wikiRef = collection(db, 'organizations', effectiveOrgId, 'wikiArticles');
+      const unsubWiki = onSnapshot(wikiRef, (snapshot) => {
+        const loaded: WikiArticle[] = [];
+        snapshot.forEach((d) => loaded.push({ ...d.data(), id: d.id } as WikiArticle));
+        setWikiArticles(loaded.sort((a, b) => b.updatedAt - a.updatedAt));
       });
 
       timeoutId = setTimeout(() => {
@@ -298,6 +309,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         unsubVacations();
         unsubCommissions();
         unsubTags();
+        unsubWiki();
         clearTimeout(timeoutId);
       };
     } catch (err: any) {
@@ -397,8 +409,66 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         console.error('Error deleting commission:', e);
       }
     },
+    handleSaveWikiArticle: async (articleData: Partial<WikiArticle>) => {
+      try {
+        const id = articleData.id || doc(collection(db, 'organizations', effectiveOrgId, 'wikiArticles')).id;
+        const now = Date.now();
+        await setDoc(doc(db, 'organizations', effectiveOrgId, 'wikiArticles', id), {
+          ...articleData,
+          id,
+          createdAt: articleData.createdAt || now,
+          updatedAt: now,
+          viewCount: articleData.viewCount || 0,
+          stars: articleData.stars || [],
+        }, { merge: true });
+        toast.success('Artigo salvo com sucesso!');
+      } catch (e) {
+        console.error('Error saving wiki article:', e);
+        toast.error('Erro ao salvar artigo.');
+      }
+    },
+    handleDeleteWikiArticle: async (articleId: string) => {
+      try {
+        const { deleteDoc } = await import('firebase/firestore');
+        await deleteDoc(doc(db, 'organizations', effectiveOrgId, 'wikiArticles', articleId));
+        toast.success('Artigo removido.');
+      } catch (e) {
+        console.error('Error deleting wiki article:', e);
+        toast.error('Erro ao excluir artigo.');
+      }
+    },
+    handleToggleWikiStar: async (articleId: string) => {
+      if (!user) return;
+      try {
+        const article = wikiArticles.find(a => a.id === articleId);
+        if (!article) return;
+        const stars = article.stars || [];
+        const newStars = stars.includes(user.uid) 
+          ? stars.filter(uid => uid !== user.uid)
+          : [...stars, user.uid];
+        await setDoc(doc(db, 'organizations', effectiveOrgId, 'wikiArticles', articleId), {
+          stars: newStars
+        }, { merge: true });
+      } catch (e) {
+        console.error('Error toggling star:', e);
+      }
+    },
+    handleAddWikiComment: async (articleId: string, comment: Partial<WikiComment>) => {
+      try {
+        const commentId = doc(collection(db, 'organizations', effectiveOrgId, 'wikiArticles', articleId, 'comments')).id;
+        await setDoc(doc(db, 'organizations', effectiveOrgId, 'wikiArticles', articleId, 'comments', commentId), {
+          ...comment,
+          id: commentId,
+          createdAt: Date.now(),
+          stars: 0
+        });
+      } catch (e) {
+        console.error('Error adding comment:', e);
+        toast.error('Erro ao comentar.');
+      }
+    },
     isChurnRisk: clientActions.isChurnRisk, isComboNearRenewal: clientActions.isComboNearRenewal,
-    effectiveOrgId, userProfile, vacations, teamProfiles, commissions, tags, offerActions
+    effectiveOrgId, userProfile, vacations, teamProfiles, commissions, tags, wikiArticles, offerActions
   };
 
   return <CRMContext.Provider value={value}>{children}</CRMContext.Provider>;

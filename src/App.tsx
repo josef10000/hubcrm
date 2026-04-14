@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Plus, X, DollarSign,
   Search, BarChart3, Calendar, MessageCircle, Globe,
   Download, AlertTriangle, Settings,
-  Megaphone, Package, Map as MapIcon, Target, Menu, Bell, Shield, HeartHandshake
+  Megaphone, Package, Map as MapIcon, Target, Menu, Bell, Shield, HeartHandshake, BookOpen
 } from 'lucide-react';
 import { isFirebaseConfigured } from './lib/firebase';
 import Auth from './components/Auth';
@@ -34,6 +34,7 @@ import AcceptInviteView from './views/AcceptInviteView';
 import ProfileView from './views/ProfileView';
 import BirthdayCelebration from './components/BirthdayCelebration';
 import EmployeeSurveyModal from './components/EmployeeSurveyModal';
+import WikiView from './views/WikiView';
 
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -61,6 +62,7 @@ const navItems = [
   { icon: MapIcon, label: 'Mapa', path: '/map' },
   { icon: HeartHandshake, label: 'People', path: '/people', roles: ['Administrador', 'Gerente', 'People & Culture'] },
   { icon: Users, label: 'Equipe', path: '/team', roles: ['Administrador', 'Gerente', 'People & Culture'] },
+  { icon: BookOpen, label: 'Wiki', path: '/wiki' },
   { icon: Settings, label: 'Configurações', path: '/settings' },
 ];
 
@@ -170,6 +172,7 @@ function CRMInner() {
             {currentPath === '/notifications' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white" translate="no">Central de Notificações</h2>}
             {currentPath === '/team' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Gestão de Equipe</h2>}
             {currentPath === '/people' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">People & Culture</h2>}
+            {currentPath === '/wiki' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Wiki Hub</h2>}
           </div>
           <div className="flex items-center gap-3">
             {currentPath === '/' && (
@@ -233,6 +236,7 @@ function CRMInner() {
                 <Route path="/marketing" element={(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'Revenue Operations') ? <MarketingView /> : <DashboardView />} />
                 <Route path="/team" element={(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture') ? <TeamManagementView /> : <DashboardView />} />
                 <Route path="/people" element={(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture') ? <PeopleView /> : <DashboardView />} />
+                <Route path="/wiki" element={<WikiView />} />
                 <Route path="/settings" element={<SettingsView />} />
                 <Route path="/profile/:uid" element={<ProfileView />} />
                 <Route path="*" element={<DashboardView />} />

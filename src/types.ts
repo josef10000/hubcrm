@@ -313,6 +313,35 @@ export interface UserProfile {
   moodLogs?: MoodLog[];
 }
 
+export interface WikiComment {
+  id: string;
+  userId: string;
+  userName: string;
+  userPhoto?: string;
+  text: string;
+  createdAt: number;
+  stars: number; // Curtidas no comentário
+}
+
+export type WikiCategory = 'RH' | 'Vendas' | 'Técnico' | 'Atendimento' | 'Suporte' | 'Geral';
+
+export interface WikiArticle {
+  id: string;
+  title: string;
+  content: string; // HTML do WYSIWYG
+  category: WikiCategory;
+  authorId: string;
+  authorName: string;
+  createdAt: number;
+  updatedAt: number;
+  viewCount: number;
+  stars: string[]; // Array de UIDs que deram estrela
+  allowedRoles?: UserRole[];
+  allowedUserIds?: string[];
+  imageUrl?: string;
+  isPopular?: boolean;
+}
+
 export interface Organization {
   id: string;
   name: string;

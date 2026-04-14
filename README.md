@@ -61,8 +61,8 @@ Transformando prospecção em faturamento através de automação inteligente e 
       <sub>Férias, Onboarding, PDI e eNPS Anônimo</sub>
     </td>
     <td align="center">
-      <br />🚀<br /><strong>Zero Infra</strong><br />
-      <sub>Vercel + Firebase — Escala infinita</sub>
+      <br />📖<br /><strong>Wiki Hub</strong><br />
+      <sub>Central de conhecimento com editor rico e RBAC</sub>
     </td>
   </tr>
 </table>
@@ -265,6 +265,19 @@ Módulo completo de People Management focado em retenção, felicidade e control
 - **eNPS Anônimo**: Termômetro de fidelidade e satisfação interna baseado na métrica clássica de promotoria.
 - **Gamificação (Aniversários)**: Celebração visual automática no dia do nascimento com animação de partículas (confetes).
 - **Onboarding Checklists**: trilhas de entrada para novos talentos com controle de progresso.
+
+---
+
+### 📖 10. Wiki Hub — Central de Conhecimento (v2.5)
+
+Sistema completo de base de conhecimento interna para documentação de processos, cultura e guias técnicos.
+
+- **Editor WYSIWYG Profissional**: Interface amigável para criação de artigos com suporte a formatação rica, links e carregamento de imagens via ImgBB.
+- **Controle de Acesso Granular (RBAC)**: Definição de visibilidade por Cargo (Role) ou por Usuários específicos.
+- **Categorização Estratégica**: Organização por áreas (RH, Vendas, Técnico, Atendimento, Suporte, Geral).
+- **Interatividade Total**: Sistema de curtidas (Estrelas) e seção de comentários com tempo real para tirar dúvidas e enriquecer o conteúdo.
+- **Busca Global**: Filtro inteligente que pesquisa no título e no corpo dos manuais instantaneamente.
+- **Moderação de Conteúdo**: Ferramentas de edição e exclusão de comentários e artigos para administradores e gerentes.
 
 ---
 
@@ -809,6 +822,7 @@ className="bg-gray-100 border-gray-200"
 - [x] 🔮 **Projeção de Fluxo de Caixa Inteligente** com capacidade de investimento em Ads (Fase 2)
 - [ ] 📧 Automação de E-mails de Aniversário
 - [x] 🏷️ Sistema de tags e segmentação de clientes
+- [x] 📖 **Wiki Hub (Central de Conhecimento com RBAC)**
 
 ---
 
