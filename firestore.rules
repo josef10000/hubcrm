@@ -48,6 +48,13 @@ service cloud.firestore {
       match /{collection}/{docId} {
         allow read: if isOwnerEmail() || belongsToOrg(orgId);
         allow write: if isOwnerEmail() || isOrgAdmin(orgId);
+
+        // Sub-coleção de comentários da Wiki (acessível por todos os membros para criar/deletar próprio)
+        match /comments/{commentId} {
+          allow read: if isOwnerEmail() || belongsToOrg(orgId);
+          allow create: if isOwnerEmail() || belongsToOrg(orgId);
+          allow delete: if isOwnerEmail() || isOrgAdmin(orgId) || request.auth.uid == resource.data.userId;
+        }
       }
     }
 
