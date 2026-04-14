@@ -93,70 +93,76 @@ function CRMInner() {
 
       {isBirthday && <BirthdayCelebration uid={user?.uid} />}
 
-      <aside 
-        translate="no"
-        className={`w-64 bg-gray-900/20 dark:bg-black/40 backdrop-blur-3xl border-r border-gray-200 dark:border-white/10 flex flex-col transition-all duration-300 z-30 ${sidebarOpen ? 'translate-x-0 absolute inset-y-0 left-0' : '-translate-x-full absolute md:relative md:translate-x-0'}`}
-      >
-        <div className="p-6 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <img src="https://i.imgur.com/EFBaYb5.png" alt="Hub Symples Logo" className="h-12 w-auto object-contain drop-shadow-lg" referrerPolicy="no-referrer" />
-            <h1 className="text-xl font-bold tracking-tight text-gray-900 dark:text-white whitespace-nowrap">Hub Central</h1>
-          </div>
-          <button className="md:hidden text-gray-500 hover:text-gray-900 dark:text-white shrink-0 ml-2" onClick={() => setSidebarOpen(false)}><X size={20} /></button>
-        </div>
-        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
-          {currentPath !== '/wiki' && navItems
-            .filter(item => !item.roles || (userProfile?.role && item.roles.includes(userProfile.role)))
-            .map(item => (
-              <NavItem
-                key={item.path}
-                icon={item.icon}
-                label={item.label}
-                path={item.path}
-                onClick={() => setSidebarOpen(false)}
-                badge={item.path === '/leads' ? activeLeadsCount : item.path === '/support' ? openTicketCount : undefined}
-              />
-            ))}
-          {currentPath === '/wiki' && (
-            <div className="flex-1 flex flex-col items-center justify-center opacity-20 pointer-events-none">
-              <BookOpen size={48} className="text-gray-500 mb-4" />
-              <p className="text-xs uppercase tracking-widest font-bold text-gray-500">Wiki Mode</p>
+      {currentPath !== '/wiki' && (
+        <aside 
+          translate="no"
+          className={`w-64 bg-gray-900/20 dark:bg-black/40 backdrop-blur-3xl border-r border-gray-200 dark:border-white/10 flex flex-col transition-all duration-300 z-30 ${sidebarOpen ? 'translate-x-0 absolute inset-y-0 left-0' : '-translate-x-full absolute md:relative md:translate-x-0'}`}
+        >
+          <div className="p-6 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <img src="https://i.imgur.com/EFBaYb5.png" alt="Hub Symples Logo" className="h-12 w-auto object-contain drop-shadow-lg" referrerPolicy="no-referrer" />
+              <h1 className="text-xl font-bold tracking-tight text-gray-900 dark:text-white whitespace-nowrap">Hub Central</h1>
             </div>
-          )}
-        </nav>
-        
+            <button className="md:hidden text-gray-500 hover:text-gray-900 dark:text-white shrink-0 ml-2" onClick={() => setSidebarOpen(false)}><X size={20} /></button>
+          </div>
+          <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
+            {navItems
+              .filter(item => !item.roles || (userProfile?.role && item.roles.includes(userProfile.role)))
+              .map(item => (
+                <NavItem
+                  key={item.path}
+                  icon={item.icon}
+                  label={item.label}
+                  path={item.path}
+                  onClick={() => setSidebarOpen(false)}
+                  badge={item.path === '/leads' ? activeLeadsCount : item.path === '/support' ? openTicketCount : undefined}
+                />
+              ))}
+          </nav>
+          
 
-        <div className="p-4 border-t border-gray-200 dark:border-white/10">
-          <div 
-            onClick={() => navigate(`/profile/${user?.uid}`)}
-            className="flex items-center justify-between px-4 py-3 bg-gray-100 dark:bg-white/5 backdrop-blur-xl rounded-2xl border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-200 dark:hover:bg-white/10 transition-all group"
-          >
-            <div className="flex items-center space-x-3 overflow-hidden">
-              <div className="relative">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center text-gray-900 dark:text-white font-bold shrink-0 shadow-lg shadow-primary-500/20 overflow-hidden">
-                  {userProfile?.photoURL ? (
-                    <img src={userProfile.photoURL} alt={userProfile.displayName} className="w-full h-full object-cover" />
-                  ) : (
-                    (userProfile?.displayName || user?.displayName || user?.email || 'U')[0].toUpperCase()
+          <div className="p-4 border-t border-gray-200 dark:border-white/10">
+            <div 
+              onClick={() => navigate(`/profile/${user?.uid}`)}
+              className="flex items-center justify-between px-4 py-3 bg-gray-100 dark:bg-white/5 backdrop-blur-xl rounded-2xl border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-200 dark:hover:bg-white/10 transition-all group"
+            >
+              <div className="flex items-center space-x-3 overflow-hidden">
+                <div className="relative">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center text-gray-900 dark:text-white font-bold shrink-0 shadow-lg shadow-primary-500/20 overflow-hidden">
+                    {userProfile?.photoURL ? (
+                      <img src={userProfile.photoURL} alt={userProfile.displayName} className="w-full h-full object-cover" />
+                    ) : (
+                      (userProfile?.displayName || user?.displayName || user?.email || 'U')[0].toUpperCase()
+                    )}
+                  </div>
+                  {isBirthday && (
+                    <span className="absolute -top-3 -right-3 text-3xl animate-bounce pointer-events-none" title="Aniversariante do Dia! 🎉">🎉</span>
                   )}
                 </div>
-                {isBirthday && (
-                  <span className="absolute -top-3 -right-3 text-3xl animate-bounce pointer-events-none" title="Aniversariante do Dia! 🎉">🎉</span>
-                )}
-              </div>
-              <div className="truncate">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-primary-500 transition-colors">{userProfile?.displayName || user?.displayName || 'Usuário'}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{userProfile?.jobTitle || userProfile?.role || 'Membro'}</p>
+                <div className="truncate">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-primary-500 transition-colors">{userProfile?.displayName || user?.displayName || 'Usuário'}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{userProfile?.jobTitle || userProfile?.role || 'Membro'}</p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </aside>
+        </aside>
+      )}
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative z-20">
         <header className="bg-black/20 backdrop-blur-2xl border-b border-gray-200 dark:border-white/10 px-6 py-4 flex items-center justify-between shrink-0 z-30 gap-4">
           <div className="flex items-center flex-1">
-            <button className="md:hidden mr-4 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white" onClick={() => setSidebarOpen(true)}><Menu size={24} /></button>
+            {currentPath === '/wiki' ? (
+              <button 
+                onClick={() => navigate('/')}
+                className="mr-6 p-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-2xl transition-all flex items-center gap-2 group shadow-xl"
+              >
+                <X size={20} className="group-hover:rotate-90 transition-transform" />
+                <span className="text-sm font-bold uppercase tracking-wider">Sair da Wiki</span>
+              </button>
+            ) : (
+              <button className="md:hidden mr-4 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white" onClick={() => setSidebarOpen(true)}><Menu size={24} /></button>
+            )}
             {currentPath === '/' && (
               <div className="flex items-center w-full max-w-xl relative">
                 <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" />
@@ -195,7 +201,7 @@ function CRMInner() {
                 <span>Exportar</span>
               </button>
             )}
-            {userProfile?.role !== 'Só Leitura' && (
+            {currentPath === '/' && ['Administrador', 'Gerente', 'SDR', 'Executive', 'Customer Success', 'Suporte Técnico', 'Onboarding Specialist'].includes(userProfile?.role || '') && (
               <button onClick={() => { setEditingClient(null); setIsModalOpen(true); }} className="flex items-center space-x-2 bg-gradient-to-r from-primary-500 to-primary-400 hover:from-primary-600 hover:to-primary-600 text-gray-900 dark:text-white px-5 py-3 rounded-2xl transition-all font-medium shadow-xl shadow-primary-500/30 hover:shadow-2xl shadow-primary-500/50 hover:scale-105 active:scale-95 shrink-0">
                 <Plus size={18} />
                 <span className="hidden sm:inline">Novo Cliente</span>

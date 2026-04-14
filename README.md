@@ -255,6 +255,7 @@ Sistema de notificações via **Resend SDK** com anti-spam inteligente:
 
 - v2.4.2 (People & Culture RBAC Hardening)
 - v2.4.3 (Wiki Hub Redesign & Beginner's Guide Config)
+- v2.4.4 (Full Width Wiki & Smart Client Creation RBAC)
 
 Módulo completo de People Management focado em retenção, felicidade e controle patrimonial da equipe.
 
