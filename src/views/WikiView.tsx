@@ -20,7 +20,7 @@ const CATEGORY_MAP = [
 ];
 
 export default function WikiView() {
-  const { wikiArticles, loading, userProfile } = useCRM();
+  const { wikiArticles, loading, userProfile, beginnerGuideArticleId } = useCRM();
   const { user } = useAuth();
   
   const [searchTerm, setSearchTerm] = useState('');
