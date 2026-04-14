@@ -104,7 +104,6 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
           ref={editorRef}
           contentEditable
           onInput={handleInput}
-          placeholder={placeholder}
           className="w-full min-h-[300px] h-full p-6 outline-none text-gray-900 dark:text-gray-100 prose prose-invert max-w-none custom-scrollbar overflow-y-auto"
           style={{ 
             fontFamily: 'Inter, sans-serif',

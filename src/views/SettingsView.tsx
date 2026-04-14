@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, CheckCircle, Trash2, Plus, FileText, Image as ImageIcon, LogOut, Copy, Globe } from 'lucide-react';
+import { Settings, CheckCircle, Trash2, Plus, FileText, Image as ImageIcon, LogOut, Copy, Globe, Star } from 'lucide-react';
 import { useCRM } from '../contexts/CRMContext';
 import { useUI } from '../contexts/UIContext';
 import { auth, db } from '../lib/firebase';

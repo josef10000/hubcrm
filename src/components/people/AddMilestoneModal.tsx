@@ -149,4 +149,6 @@ const AddMilestoneModal = ({ isOpen, onClose, targetUserId, onSuccess }: AddMile
       </div>
     </div>
   );
-}
+};
+
+export default AddMilestoneModal;
