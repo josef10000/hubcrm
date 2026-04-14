@@ -78,6 +78,8 @@ interface CRMContextType {
   setCsatQuestion: (question: string) => void;
   softSkillsPool: string[];
   setSoftSkillsPool: (skills: string[]) => void;
+  beginnerGuideArticleId: string;
+  setBeginnerGuideArticleId: (id: string) => void;
 
   // Support
   replyingTo: string | null;
@@ -390,6 +392,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     csatTitle: settings?.csatTitle || '', setCsatTitle: settings?.setCsatTitle || (() => { }),
     csatQuestion: settings?.csatQuestion || '', setCsatQuestion: settings?.setCsatQuestion || (() => { }),
     softSkillsPool: settings?.softSkillsPool || [], setSoftSkillsPool: settings?.setSoftSkillsPool || (() => { }),
+    beginnerGuideArticleId: settings?.beginnerGuideArticleId || '', setBeginnerGuideArticleId: settings?.setBeginnerGuideArticleId || (() => { }),
 
     replyingTo, setReplyingTo, replyMessage, setReplyMessage,
     newExpense: finance?.newExpense || {}, setNewExpense: finance?.setNewExpense || (() => { }),

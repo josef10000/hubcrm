@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, CheckCircle, Trash2, Plus, FileText, Image as ImageIcon, LogOut, Copy, Globe, Star } from 'lucide-react';
+import { Settings, CheckCircle, Trash2, Plus, FileText, Image as ImageIcon, LogOut, Copy, Globe, Star, BookOpen } from 'lucide-react';
 import { useCRM } from '../contexts/CRMContext';
 import { useUI } from '../contexts/UIContext';
 import { auth, db } from '../lib/firebase';
@@ -31,6 +31,8 @@ export default function SettingsView() {
     setCsatQuestion,
     softSkillsPool,
     setSoftSkillsPool,
+    beginnerGuideArticleId,
+    setBeginnerGuideArticleId,
     effectiveOrgId,
   } = useCRM();
   const { userProfile } = useAuth();
@@ -315,6 +317,46 @@ export default function SettingsView() {
                     <CheckCircle size={16} />
                     Salvar Formulário
                   </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-black/20 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-lg mb-8">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
+                <BookOpen className="mr-2 text-primary-500" size={20} />
+                Wiki Hub
+              </h3>
+              <div className="space-y-6">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Configure o conteúdo principal de onboarding e ajuda da sua Wiki.
+                </p>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">ID do Artigo de Boas-vindas (Guia de Iniciante)</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={beginnerGuideArticleId}
+                      onChange={(e) => setBeginnerGuideArticleId(e.target.value)}
+                      className="flex-1 px-4 py-2 bg-white dark:bg-black/40 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none"
+                      placeholder="Ex: d4f9c8..."
+                    />
+                    <button
+                      onClick={async () => {
+                        if (!effectiveOrgId) return;
+                        try {
+                          await setDoc(doc(db, 'organizations', effectiveOrgId, 'settings', 'preferences'), { beginnerGuideArticleId }, { merge: true });
+                          toast.success('Wiki configurada com sucesso!');
+                        } catch (error) {
+                          toast.error('Erro ao salvar ID da Wiki.');
+                        }
+                      }}
+                      className="px-4 py-2 bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition-colors shadow-lg shadow-primary-500/20 text-sm font-bold"
+                    >
+                      Salvar Wiki
+                    </button>
+                  </div>
+                  <p className="mt-2 text-[10px] text-gray-500 italic">O ID pode ser encontrado na URL do artigo após selecioná-lo na Wiki.</p>
                 </div>
               </div>
             </div>

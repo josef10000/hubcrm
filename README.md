@@ -253,6 +253,9 @@ Sistema de notificações via **Resend SDK** com anti-spam inteligente:
 
 ### 👥 9. People & Culture — Ecossistema de Talentos (v2.4)
 
+- v2.4.2 (People & Culture RBAC Hardening)
+- v2.4.3 (Wiki Hub Redesign & Beginner's Guide Config)
+
 Módulo completo de People Management focado em retenção, felicidade e controle patrimonial da equipe.
 
 - **Matriz de Competências (Skill Radar Chart)**: Gestão 360º de habilidades. Soft Skills geridas globalmente pelo Admin e Hard Skills 100% customizáveis por colaborador.

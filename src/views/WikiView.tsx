@@ -138,101 +138,100 @@ export default function WikiView() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        {/* Main List */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="flex items-center justify-between mb-4">
+      <div className="grid grid-cols-1 gap-10">
+        {/* Main List - Now Full Width */}
+        <div className="space-y-6">
+          <div className="flex flex-col md:flex-row items-center justify-between mb-4 gap-4">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-yellow-500" />
               {selectedCategory ? `Artigos de ${selectedCategory}` : 'Todos os Artigos'}
             </h2>
-            <span className="text-sm text-gray-500">{filteredArticles.length} resultados</span>
+            
+            <button 
+              onClick={() => {
+                if (beginnerGuideArticleId) {
+                  setSelectedArticleId(beginnerGuideArticleId);
+                }
+              }}
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-purple-600 text-white rounded-2xl font-bold text-sm hover:scale-105 transition-all shadow-xl shadow-primary-500/20 active:scale-95 border border-white/10"
+            >
+              <Sparkles className="w-4 h-4" /> Ver Guia de Iniciante
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredArticles.map(article => (
               <div 
                 key={article.id}
                 onClick={() => setSelectedArticleId(article.id)}
-                className="group p-6 bg-white/5 border border-white/10 rounded-[2rem] hover:bg-white/10 transition-all cursor-pointer hover:border-primary-500/30 relative overflow-hidden flex flex-col justify-between min-h-[180px]"
+                className="group p-8 bg-white/5 border border-white/10 rounded-[2.5rem] hover:bg-white/10 transition-all cursor-pointer hover:border-primary-500/30 relative overflow-hidden flex flex-col justify-between min-h-[220px]"
               >
-                <div className="absolute top-0 right-0 w-24 h-24 bg-primary-500/5 blur-3xl -z-10 rounded-full group-hover:bg-primary-500/20 transition-all"></div>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/5 blur-3xl -z-10 rounded-full group-hover:bg-primary-500/20 transition-all"></div>
                 
                 <div>
-                  <div className="flex justify-between items-start mb-4">
-                    <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-[10px] font-bold text-primary-400 uppercase tracking-widest">
+                  <div className="flex justify-between items-start mb-6">
+                    <span className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black text-primary-400 uppercase tracking-widest">
                       {article.category}
                     </span>
-                    <div className="flex items-center gap-1.5 text-gray-500 text-xs">
-                      <Star className="w-3.5 h-3.5 fill-gray-500" />
+                    <div className="flex items-center gap-1.5 text-gray-500 text-xs font-bold">
+                      <Star className="w-4 h-4 fill-gray-500" />
                       {article.stars?.length || 0}
                     </div>
                   </div>
-                  <h3 className="text-lg font-bold text-white group-hover:text-primary-400 transition-colors line-clamp-2">
+                  <h3 className="text-xl font-black text-white group-hover:text-primary-400 transition-colors line-clamp-2 leading-tight">
                     {article.title}
                   </h3>
                 </div>
 
-                <div className="mt-4 flex items-center justify-between text-xs text-gray-500 pt-4 border-t border-white/5">
-                   <div className="flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5" />
+                <div className="mt-8 flex items-center justify-between text-xs text-gray-500 pt-6 border-t border-white/5">
+                   <div className="flex items-center gap-2 font-medium">
+                      <Clock className="w-4 h-4" />
                       {new Date(article.updatedAt).toLocaleDateString()}
                    </div>
-                   <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                   <div className="p-2 bg-white/5 rounded-full group-hover:bg-primary-500 group-hover:text-white transition-all">
+                      <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                   </div>
                 </div>
               </div>
             ))}
             {filteredArticles.length === 0 && (
-              <div className="col-span-full py-20 text-center space-y-4 bg-white/5 border border-dashed border-white/10 rounded-[3rem]">
-                 <div className="p-4 bg-white/5 rounded-full inline-flex text-gray-600">
-                    <BookOpen size={40} />
+              <div className="col-span-full py-32 text-center space-y-6 bg-white/5 border border-dashed border-white/10 rounded-[4rem]">
+                 <div className="p-6 bg-white/5 rounded-full inline-flex text-gray-700 animate-pulse">
+                    <BookOpen size={64} />
                  </div>
-                 <p className="text-gray-500 font-medium">Nenhum artigo encontrado nesta categoria ou busca.</p>
+                 <div className="space-y-2">
+                    <p className="text-xl font-bold text-gray-400">Silêncio no Hub...</p>
+                    <p className="text-gray-600">Nenhum artigo encontrado nesta categoria ou busca.</p>
+                 </div>
               </div>
             )}
           </div>
-        </div>
-
-        {/* Sidebar Features */}
-        <div className="space-y-8">
-           <div className="p-8 bg-gradient-to-br from-primary-600 to-purple-700 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
-              <div className="absolute top-[-20%] right-[-20%] w-48 h-48 bg-white/20 blur-[60px] rounded-full"></div>
-              <h3 className="text-xl font-bold text-white mb-2 relative z-10 flex items-center gap-2">
-                <Sparkles className="w-5 h-5" /> Onboarding
-              </h3>
-              <p className="text-white/80 text-sm mb-6 relative z-10">
-                Novo por aqui? Comece pelo nosso guia de Boas-vindas para entender como a Hub Central funciona.
-              </p>
-              <button className="w-full py-4 bg-white text-primary-600 rounded-2xl font-bold text-sm hover:bg-gray-100 transition-all shadow-xl flex items-center justify-center gap-2 group-hover:scale-105">
-                Ver Guia de Iniciante
-              </button>
-           </div>
-
-           <div className="p-8 bg-white/5 border border-white/10 rounded-[2.5rem] space-y-6">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" /> Mais Úteis
-              </h3>
-              <div className="space-y-4">
-                 {popularArticles.map(art => (
-                   <div 
-                    key={art.id} 
-                    onClick={() => setSelectedArticleId(art.id)}
-                    className="flex gap-4 cursor-pointer group"
-                  >
-                      <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-primary-500 shrink-0 group-hover:bg-primary-500 group-hover:text-white transition-all">
-                        <Star className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-white group-hover:text-primary-400 transition-colors line-clamp-1">{art.title}</p>
-                        <p className="text-xs text-gray-500 mt-1">{art.category}</p>
-                      </div>
-                   </div>
-                 ))}
-                 {popularArticles.length === 0 && (
-                   <p className="text-gray-600 text-xs italic">Nenhum artigo em destaque ainda.</p>
-                 )}
-              </div>
-           </div>
+          
+          {/* Most Useful Section integrated at bottom */}
+          {popularArticles.length > 0 && (
+            <div className="mt-20 pt-10 border-t border-white/5">
+               <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-8 uppercase tracking-widest text-gray-400">
+                  <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" /> Artigos Mais Úteis
+               </h3>
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {popularArticles.map(art => (
+                    <div 
+                      key={art.id} 
+                      onClick={() => setSelectedArticleId(art.id)}
+                      className="flex items-center gap-5 p-4 bg-white/5 border border-white/10 rounded-3xl cursor-pointer hover:bg-white/10 hover:border-primary-500/30 transition-all group"
+                    >
+                        <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-primary-500 shrink-0 group-hover:bg-primary-500 group-hover:text-white transition-all shadow-lg">
+                          <Star className="w-6 h-6" />
+                        </div>
+                        <div className="flex-1 overflow-hidden">
+                          <p className="text-sm font-bold text-white group-hover:text-primary-400 transition-colors truncate">{art.title}</p>
+                          <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-1">{art.category}</p>
+                        </div>
+                    </div>
+                  ))}
+               </div>
+            </div>
+          )}
         </div>
       </div>
 

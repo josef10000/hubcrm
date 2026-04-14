@@ -34,6 +34,7 @@ export function useSettings(userId: string) {
   const [csatQuestion, setCsatQuestion] = useState('Sua opinião é fundamental para melhorarmos nossos serviços. Como você avalia a resolução deste chamado?');
 
   const [softSkillsPool, setSoftSkillsPool] = useState<string[]>(['Comunicação', 'Liderança', 'Trabalho em Equipe', 'Resolução de Problemas', 'Inteligência Emocional']);
+  const [beginnerGuideArticleId, setBeginnerGuideArticleId] = useState('');
 
   // ── Marketing ──
   const [globalAnnouncement, setGlobalAnnouncement] = useState<{ title: string; message: string; type: string; isActive: boolean }>({
@@ -76,6 +77,7 @@ export function useSettings(userId: string) {
         if (data.csatTitle) setCsatTitle(data.csatTitle);
         if (data.csatQuestion) setCsatQuestion(data.csatQuestion);
         if (data.softSkillsPool) setSoftSkillsPool(data.softSkillsPool);
+        if (data.beginnerGuideArticleId) setBeginnerGuideArticleId(data.beginnerGuideArticleId);
       }
     });
     return () => unsubscribe();
@@ -108,5 +110,6 @@ export function useSettings(userId: string) {
     csatTitle, setCsatTitle,
     csatQuestion, setCsatQuestion,
     softSkillsPool, setSoftSkillsPool,
+    beginnerGuideArticleId, setBeginnerGuideArticleId,
   };
 }

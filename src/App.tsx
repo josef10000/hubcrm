@@ -105,7 +105,7 @@ function CRMInner() {
           <button className="md:hidden text-gray-500 hover:text-gray-900 dark:text-white shrink-0 ml-2" onClick={() => setSidebarOpen(false)}><X size={20} /></button>
         </div>
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
-          {navItems
+          {currentPath !== '/wiki' && navItems
             .filter(item => !item.roles || (userProfile?.role && item.roles.includes(userProfile.role)))
             .map(item => (
               <NavItem
@@ -117,6 +117,12 @@ function CRMInner() {
                 badge={item.path === '/leads' ? activeLeadsCount : item.path === '/support' ? openTicketCount : undefined}
               />
             ))}
+          {currentPath === '/wiki' && (
+            <div className="flex-1 flex flex-col items-center justify-center opacity-20 pointer-events-none">
+              <BookOpen size={48} className="text-gray-500 mb-4" />
+              <p className="text-xs uppercase tracking-widest font-bold text-gray-500">Wiki Mode</p>
+            </div>
+          )}
         </nav>
         
 
