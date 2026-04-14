@@ -64,7 +64,7 @@ export default function WikiView() {
       .filter(a => a.isPopular)
       .slice(0, 3);
   }, [wikiArticles]);
-
+  const selectedArticle = useMemo(() => 
     wikiArticles.find(a => a.id === selectedArticleId), 
     [wikiArticles, selectedArticleId]
   );
