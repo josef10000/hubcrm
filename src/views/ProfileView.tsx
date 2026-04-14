@@ -92,6 +92,7 @@ export default function ProfileView() {
 
   const isOwnProfile = user?.uid === uid;
   const isAdmin = currentUserProfile?.role === 'Administrador';
+  const isManagement = ['Administrador', 'Gerente', 'People & Culture'].includes(currentUserProfile?.role || '');
   const canEdit = isOwnProfile || isAdmin;
 
   useEffect(() => {
@@ -653,7 +654,7 @@ export default function ProfileView() {
 
                   <div className="mb-10 relative">
                     <SkillRadarChart skills={profile.skills || { hard: [], soft: [] }} />
-                    {canEdit && (
+                    {isManagement && !isOwnProfile && (
                       <button 
                         onClick={() => setShowEditSkillsModal(true)}
                         className="absolute top-0 right-0 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-bold uppercase tracking-widest text-primary-500 transition-all"
@@ -786,12 +787,14 @@ export default function ProfileView() {
                 <div className="animate-in slide-in-from-right duration-500">
                   <div className="flex items-center justify-between mb-8">
                     <h4 className="text-sm font-bold text-gray-500 uppercase tracking-widest">Mural de Feedbacks</h4>
-                    <button 
-                      onClick={() => setShowAddFeedbackModal(true)}
-                      className="px-4 py-2 bg-primary-500 text-white rounded-xl text-xs font-bold flex items-center gap-2"
-                    >
-                       <Plus size={14} /> Novo Feedback
-                    </button>
+                    {isManagement && !isOwnProfile && (
+                      <button 
+                        onClick={() => setShowAddFeedbackModal(true)}
+                        className="px-4 py-2 bg-primary-500 text-white rounded-xl text-xs font-bold flex items-center gap-2"
+                      >
+                         <Plus size={14} /> Novo Feedback
+                      </button>
+                    )}
                   </div>
                   <FeedbackMural 
                     feedbacks={profile.feedbacks || []} 

@@ -261,7 +261,7 @@ Módulo completo de People Management focado em retenção, felicidade e control
 - **Gestão de Inventário & Ativos**: Controle patrimonial seguro (Laptops, Periféricos, Acessos) vinculado diretamente ao perfil do colaborador, com restrição de criação/exclusão apenas para gestores.
 - **Mural de Feedbacks & Reconhecimento**: Espaço para cultura de feedback e reconhecimento público, integrado com o ecossistema de cultura da empresa.
 - **Jornada do Colaborador (Career Path)**: Linha do tempo visual com marcos históricos (Hired, Promotion, Certification, Birthday) gerenciado com exclusividade pela liderança.
-- **Plano de Desenvolvimento (PDI)**: Árvore de competências e ações de curto/médio prazo. A validação do progresso das ações é restrita a Admins e Gerentes (RBAC).
+- **Plano de Desenvolvimento (PDI)**: Árvore de competências e ações de curto/médio prazo. O gerenciamento e atualização da matriz de competências é restrito a Admins, Gerentes e People & Culture, e não pode ser realizado pelo próprio colaborador em seu próprio perfil (Auto-gestão restrita).
 - **Férias & Ausências**: Fluxo completo de solicitação, aprovação e histórico de períodos de descanso.
 - **eNPS Anônimo**: Termômetro de fidelidade e satisfação interna baseado na métrica clássica de promotoria, com dashboard de sentimentos anônimos.
 - **Gamificação (Aniversários)**: Celebração visual automática no dia do nascimento com animação de partículas (confetes).
@@ -554,6 +554,7 @@ O Hub Central implementa **Role-Based Access Control (RBAC)** com 13 cargos espe
 - **Super-Admin**: O e-mail proprietário é elevado automaticamente a `Administrador` em memória, independente do valor salvo no banco.
 - **Privacidade de Performance (CSAT)**: A média de satisfação individual nos perfis é exibida apenas se o usuário possuir roles de `Administrador`, `Gerente`, `Customer Success` ou `Suporte Técnico`, ou se o seu cargo contiver palavras-chave de atendimento (suporte, sucesso, etc).
 - **Firestore Rules**: Segurança server-side reforçada com funções `belongsToOrg()` e `isOrgAdmin()`.
+- **Auto-Gestão Restrita (v2.4.2)**: Para garantir a integridade dos processos de feedback e desenvolvimento, colaboradores não podem adicionar feedbacks a si mesmos no Mural ou atualizar sua própria matriz de skills no PDI. Estas ações são exclusivas para papéis de gestão (`Administrador`, `Gerente`, `People & Culture`) ao visualizar perfis de terceiros.
 - **Configurações Universais**: Todos os cargos acessam Configurações para trocar tema e sair do sistema. Seções administrativas (etapas, checkout, contrato) são renderizadas condicionalmente apenas para Admin/Gerente.
 
 ---
