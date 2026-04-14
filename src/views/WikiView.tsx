@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useCRM } from '../contexts/CRMContext';
 import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'sonner';
 import { WikiArticle, WikiCategory } from '../types';
 import WikiEditorModal from '../components/wiki/WikiEditorModal';
 import WikiArticleDetail from '../components/wiki/WikiArticleDetail';
