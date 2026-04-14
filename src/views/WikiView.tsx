@@ -149,8 +149,20 @@ export default function WikiView() {
             
             <button 
               onClick={() => {
-                if (beginnerGuideArticleId) {
-                  setSelectedArticleId(beginnerGuideArticleId);
+                const cleanId = beginnerGuideArticleId?.trim();
+                if (cleanId) {
+                  const articleExists = wikiArticles.some(a => a.id === cleanId);
+                  if (articleExists) {
+                    setSelectedArticleId(cleanId);
+                  } else {
+                    toast.error('O Guia de Iniciante não foi encontrado.', {
+                      description: 'Verifique se o ID está correto nas configurações.'
+                    });
+                  }
+                } else {
+                  toast.info('Nenhum guia configurado.', {
+                    description: 'Configure o ID do guia nas configurações da Wiki.'
+                  });
                 }
               }}
               className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-purple-600 text-white rounded-2xl font-bold text-sm hover:scale-105 transition-all shadow-xl shadow-primary-500/20 active:scale-95 border border-white/10"

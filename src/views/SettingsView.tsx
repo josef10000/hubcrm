@@ -345,7 +345,9 @@ export default function SettingsView() {
                       onClick={async () => {
                         if (!effectiveOrgId) return;
                         try {
-                          await setDoc(doc(db, 'organizations', effectiveOrgId, 'settings', 'preferences'), { beginnerGuideArticleId }, { merge: true });
+                          const cleanId = beginnerGuideArticleId.trim();
+                          await setDoc(doc(db, 'organizations', effectiveOrgId, 'settings', 'preferences'), { beginnerGuideArticleId: cleanId }, { merge: true });
+                          setBeginnerGuideArticleId(cleanId);
                           toast.success('Wiki configurada com sucesso!');
                         } catch (error) {
                           toast.error('Erro ao salvar ID da Wiki.');
