@@ -778,7 +778,6 @@ export default function ProfileView() {
                     inventory={userAssets} 
                     isAdmin={isAdmin}
                     onAdd={() => setShowAddAssetModal(true)}
-                    onRemove={handleRemoveAsset}
                   />
                 </div>
               )}
