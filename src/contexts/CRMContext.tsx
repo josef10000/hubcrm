@@ -465,6 +465,11 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       }
     },
     handleAddWikiComment: async (articleId: string, comment: Partial<WikiComment>) => {
+      if (!effectiveOrgId) {
+        console.error('Erro ao comentar: effectiveOrgId não definido');
+        toast.error('Erro ao comentar: Organização não identificada.');
+        return;
+      }
       try {
         const commentId = doc(collection(db, 'organizations', effectiveOrgId, 'wikiArticles', articleId, 'comments')).id;
         await setDoc(doc(db, 'organizations', effectiveOrgId, 'wikiArticles', articleId, 'comments', commentId), {
@@ -473,9 +478,10 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
           createdAt: Date.now(),
           stars: 0
         });
+        toast.success('Comentário adicionado!');
       } catch (e) {
-        console.error('Error adding comment:', e);
-        toast.error('Erro ao comentar.');
+        console.error('Error adding comment to Firestore:', e);
+        toast.error('Erro ao registrar comentário no banco de dados.');
       }
     },
     isChurnRisk: clientActions.isChurnRisk, isComboNearRenewal: clientActions.isComboNearRenewal,

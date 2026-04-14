@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react';
 import { 
   ArrowLeft, Calendar, User, Eye, Star, Share2, 
-  Tag as TagIcon, MoreVertical, Edit2, Trash2 
+  Tag as TagIcon, MoreVertical, Edit2, Trash2, Copy 
 } from 'lucide-react';
 import { WikiArticle } from '../../types';
 import { useCRM } from '../../contexts/CRMContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import WikiCommentSection from './WikiCommentSection';
@@ -97,9 +98,23 @@ export default function WikiArticleDetail({ article, onBack, onEdit }: WikiArtic
           </div>
         </div>
 
-        <h1 className="text-4xl md:text-5xl font-extrabold text-white leading-tight tracking-tight">
-          {article.title}
-        </h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-white leading-tight tracking-tight">
+            {article.title}
+          </h1>
+          <button 
+            onClick={() => {
+              navigator.clipboard.writeText(article.id);
+              toast.success('ID do artigo copiado!', {
+                description: 'Use este ID nas configurações do Guia de Iniciante.'
+              });
+            }}
+            className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-500 hover:text-primary-500 rounded-xl transition-all shadow-lg"
+            title="Copiar ID do Artigo"
+          >
+            <Copy size={20} />
+          </button>
+        </div>
 
         <div className="flex flex-wrap items-center gap-6 py-4 border-y border-white/10">
           <div className="flex items-center gap-3">
