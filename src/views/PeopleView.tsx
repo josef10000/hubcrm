@@ -510,7 +510,7 @@ export default function PeopleView() {
             </div>
           )}
 
-          {activeTab === 'mural' && <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] p-8 shadow-xl animate-in fade-in duration-500"><FeedbackBoard teamMembers={teamMembers} /></div>}
+          {activeTab === 'mural' && <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] p-8 shadow-xl animate-in fade-in duration-500"><FeedbackBoard userId={selectedMember?.uid || ''} /></div>}
 
           {activeTab === 'assets' && (
             <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] p-8 shadow-xl animate-in slide-in-from-bottom duration-500">
@@ -592,7 +592,7 @@ export default function PeopleView() {
                  <div className="flex justify-between mb-6"><h3 className="text-xl font-bold">Nova Solicitação</h3><button onClick={() => setShowVacationModal(false)}><X /></button></div>
                  <form onSubmit={handleAddVacation} className="space-y-4">
                     <select required className="w-full bg-gray-100 dark:bg-white/5 p-4 rounded-xl" value={newVacation.userId || ''} onChange={e => setNewVacation({...newVacation, userId: e.target.value})}><option value="">Membro...</option>{teamProfiles.map(p => <option key={p.uid} value={p.uid}>{p.displayName}</option>)}</select>
-                    <select required className="w-full bg-gray-100 dark:bg-white/5 p-4 rounded-xl" value={newVacation.reason || ''} onChange={e => setNewVacation({...newVacation, reason: e.target.value, status: 'Pendente', type: e.target.value === 'Férias' ? 'Férias' : 'Ausência'})}><option value="">Motivo...</option><option value="Férias">Férias</option><option value="Motivo Médico">Médico</option><option value="Outro">Outro</option></select>
+                    <select required className="w-full bg-gray-100 dark:bg-white/5 p-4 rounded-xl" value={newVacation.reason || ''} onChange={e => setNewVacation({...newVacation, reason: e.target.value as any, status: 'Pendente', type: e.target.value === 'Férias' ? 'Férias' : 'Ausência'})}><option value="">Motivo...</option><option value="Férias">Férias</option><option value="Motivo Médico">Médico</option><option value="Outro">Outro</option></select>
                     <div className="grid grid-cols-2 gap-4"><input type="date" className="p-4 rounded-xl bg-gray-100 dark:bg-white/5" value={newVacation.start} onChange={e => setNewVacation({...newVacation, start: e.target.value})} /><input type="date" className="p-4 rounded-xl bg-gray-100 dark:bg-white/5" value={newVacation.end} onChange={e => setNewVacation({...newVacation, end: e.target.value})} /></div>
                     <button className="w-full py-4 bg-primary-500 text-white rounded-xl font-bold">Enviar</button>
                  </form>
@@ -612,9 +612,10 @@ export default function PeopleView() {
 
         {showMilestoneModal && (
           <AddMilestoneModal 
+            isOpen={showMilestoneModal}
             onClose={() => setShowMilestoneModal(false)} 
-            memberUid={selectedMember?.uid}
-            onSubmit={() => { setShowMilestoneModal(false); toast.success('Adicionado!'); }}
+            targetUserId={selectedMember?.uid || ''}
+            onSuccess={() => { setShowMilestoneModal(false); toast.success('Adicionado!'); }}
           />
         )}
       </div>
