@@ -35,6 +35,7 @@ import ProfileView from './views/ProfileView';
 import BirthdayCelebration from './components/BirthdayCelebration';
 import EmployeeSurveyModal from './components/EmployeeSurveyModal';
 import WikiView from './views/WikiView';
+import WaitingInviteView from './views/WaitingInviteView';
 
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -85,7 +86,14 @@ function CRMInner() {
 
   const openTicketCount = useMemo(() => supportRequests.filter(r => r.status === 'aberto' || r.status === 'em_analise').length, [supportRequests]);
 
-  return (
+  const newWikiCount = useMemo(() => {
+    if (!userProfile?.viewedWikiArticles) return wikiArticles.length;
+    return wikiArticles.filter(art => !userProfile.viewedWikiArticles?.includes(art.id)).length;
+  }, [wikiArticles, userProfile?.viewedWikiArticles]);
+
+  if (userProfile?.orgId === 'pending') {
+    return <WaitingInviteView />;
+  }
     <div className="flex h-screen bg-[#030712] font-sans overflow-hidden text-gray-900 dark:text-gray-100 relative">
       <div className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] bg-primary-600/20 rounded-full blur-[120px] pointer-events-none mix-blend-screen"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] bg-primary-600/20 rounded-full blur-[120px] pointer-events-none mix-blend-screen"></div>
@@ -115,7 +123,12 @@ function CRMInner() {
                   label={item.label}
                   path={item.path}
                   onClick={() => setSidebarOpen(false)}
-                  badge={item.path === '/leads' ? activeLeadsCount : item.path === '/support' ? openTicketCount : undefined}
+                  badge={
+                    item.path === '/leads' ? activeLeadsCount : 
+                    item.path === '/support' ? openTicketCount : 
+                    item.path === '/wiki' ? (newWikiCount > 0 ? newWikiCount : undefined) :
+                    undefined
+                  }
                 />
               ))}
           </nav>

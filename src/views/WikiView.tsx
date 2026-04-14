@@ -21,7 +21,10 @@ const CATEGORY_MAP = [
 ];
 
 export default function WikiView() {
-  const { wikiArticles, loading, userProfile, beginnerGuideArticleId } = useCRM();
+  const { 
+    wikiArticles, loading, userProfile, beginnerGuideArticleId, 
+    handleMarkWikiArticleAsRead 
+  } = useCRM();
   const { user } = useAuth();
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -62,10 +65,14 @@ export default function WikiView() {
       .slice(0, 3);
   }, [wikiArticles]);
 
-  const selectedArticle = useMemo(() => 
     wikiArticles.find(a => a.id === selectedArticleId), 
     [wikiArticles, selectedArticleId]
   );
+
+  const handleSelectArticle = (articleId: string) => {
+    setSelectedArticleId(articleId);
+    handleMarkWikiArticleAsRead(articleId);
+  };
 
   if (selectedArticle) {
     return (
@@ -154,7 +161,7 @@ export default function WikiView() {
                 if (cleanId) {
                   const articleExists = wikiArticles.some(a => a.id === cleanId);
                   if (articleExists) {
-                    setSelectedArticleId(cleanId);
+                    handleSelectArticle(cleanId);
                   } else {
                     toast.error('O Guia de Iniciante não foi encontrado.', {
                       description: 'Verifique se o ID está correto nas configurações.'
@@ -176,7 +183,7 @@ export default function WikiView() {
             {filteredArticles.map(article => (
               <div 
                 key={article.id}
-                onClick={() => setSelectedArticleId(article.id)}
+                onClick={() => handleSelectArticle(article.id)}
                 className="group p-8 bg-white/5 border border-white/10 rounded-[2.5rem] hover:bg-white/10 transition-all cursor-pointer hover:border-primary-500/30 relative overflow-hidden flex flex-col justify-between min-h-[220px]"
               >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/5 blur-3xl -z-10 rounded-full group-hover:bg-primary-500/20 transition-all"></div>
@@ -230,7 +237,7 @@ export default function WikiView() {
                   {popularArticles.map(art => (
                     <div 
                       key={art.id} 
-                      onClick={() => setSelectedArticleId(art.id)}
+                      onClick={() => handleSelectArticle(art.id)}
                       className="flex items-center gap-5 p-4 bg-white/5 border border-white/10 rounded-3xl cursor-pointer hover:bg-white/10 hover:border-primary-500/30 transition-all group"
                     >
                         <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-primary-500 shrink-0 group-hover:bg-primary-500 group-hover:text-white transition-all shadow-lg">

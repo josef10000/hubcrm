@@ -118,6 +118,7 @@ interface CRMContextType {
   handleDeleteWikiArticle: (articleId: string) => Promise<void>;
   handleToggleWikiStar: (articleId: string) => Promise<void>;
   handleAddWikiComment: (articleId: string, comment: Partial<WikiComment>) => Promise<void>;
+  handleMarkWikiArticleAsRead: (articleId: string) => Promise<void>;
 }
 
 const CRMContext = createContext<CRMContextType | null>(null);
@@ -482,6 +483,22 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       } catch (e) {
         console.error('Error adding comment to Firestore:', e);
         toast.error('Erro ao registrar comentário no banco de dados.');
+      }
+    },
+    handleMarkWikiArticleAsRead: async (articleId: string) => {
+      if (!user || !userProfile) return;
+      try {
+        const currentRead = userProfile.viewedWikiArticles || [];
+        if (!currentRead.includes(articleId)) {
+          const newRead = [...currentRead, articleId];
+          await setDoc(doc(db, 'profiles', user.uid), {
+            viewedWikiArticles: newRead
+          }, { merge: true });
+          // Atualiza localmente o perfil no AuthContext via refreshProfile se disponível 
+          // mas o ideal é o AuthContext ter um listener, que ele já tem.
+        }
+      } catch (e) {
+        console.error('Error marking wiki as read:', e);
       }
     },
     isChurnRisk: clientActions.isChurnRisk, isComboNearRenewal: clientActions.isComboNearRenewal,

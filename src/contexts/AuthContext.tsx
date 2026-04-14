@@ -87,27 +87,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 }
               }
 
-              // 2. Se não houver convite, cria como NOVO ADMINISTRADOR (Padrão)
+              // 2. Se não houver convite, entra em modo AGUARDANDO CONVITE
               const newProfile: UserProfile = {
                 uid: u.uid,
                 email: u.email || '',
                 displayName: u.displayName || 'Usuário',
-                orgId: u.uid,
-                role: 'Administrador',
+                orgId: 'pending', // Marca como pendente em vez de criar org automática
+                role: 'Só Leitura',
                 createdAt: Date.now()
               };
-              
-              // Criar organização inicial
-              const orgRef = doc(db, 'organizations', u.uid);
-              const orgSnap = await getDoc(orgRef);
-              if (!orgSnap.exists()) {
-                await setDoc(orgRef, {
-                  id: u.uid,
-                  name: `Org ${u.displayName || u.email}`,
-                  adminId: u.uid,
-                  createdAt: Date.now()
-                });
-              }
               
               await setDoc(profileRef, newProfile);
               setUserProfile(newProfile);

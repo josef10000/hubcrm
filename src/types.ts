@@ -304,6 +304,7 @@ export interface UserProfile {
   pdiCategories?: { id: string; title: string; actions: { id: string; description: string; completed: boolean; completedAt?: number; }[]; }[];
   onboardingTemplateId?: string;
   lastEnpsResponse?: number; // Timestamp da última vez que respondeu à pesquisa de clima
+  viewedWikiArticles?: string[]; // IDs dos artigos da Wiki já lidos pelo usuário
   
   // People & Culture Ecosystem
   inventory?: ToolAsset[];
