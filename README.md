@@ -257,14 +257,16 @@ Módulo completo de People Management focado em retenção, felicidade e control
 
 - **Matriz de Competências (Skill Radar Chart)**: Gestão 360º de habilidades. Soft Skills geridas globalmente pelo Admin e Hard Skills 100% customizáveis por colaborador.
 - **Ecossistema de Saúde & Dashboard**: Monitoramento diário de energia e humor com visualização agregada para liderança e alertas de bem-estar automáticos.
-- **Onboarding Inteligente**: Remoção automática da lista de talentos ativos assim que todas as tarefas de entrada são concluídas.
-- **Gestão de Inventário & Ativos**: Controle patrimonial seguro vinculado diretamente ao perfil do colaborador.
-- **Mural de Feedbacks & Kudos**: Reconhecimento com controle de privacidade (Público/Privado) e filtragem por RBAC.
-- **Timeline de Carreira**: Registro de marcos históricos (Hired, Promotion, Certification) gerenciado via backend.
-- **Férias & Ausências**: Fluxo de solicitação e aprovação de períodos de descanso com histórico de status.
-- **eNPS Anônimo**: Termômetro de fidelidade e satisfação interna baseado na métrica clássica de promotoria.
+- **Onboarding Inteligente**: Filtragem avançada que oculta talentos que já concluíram 100% das tarefas de entrada, mantendo o foco nos novos colaboradores.
+- **Gestão de Inventário & Ativos**: Controle patrimonial seguro (Laptops, Periféricos, Acessos) vinculado diretamente ao perfil do colaborador, com restrição de criação/exclusão apenas para gestores.
+- **Mural de Feedbacks & Reconhecimento**: Espaço para cultura de feedback e reconhecimento público, integrado com o ecossistema de cultura da empresa.
+- **Jornada do Colaborador (Career Path)**: Linha do tempo visual com marcos históricos (Hired, Promotion, Certification, Birthday) gerenciado com exclusividade pela liderança.
+- **Plano de Desenvolvimento (PDI)**: Árvore de competências e ações de curto/médio prazo. A validação do progresso das ações é restrita a Admins e Gerentes (RBAC).
+- **Férias & Ausências**: Fluxo completo de solicitação, aprovação e histórico de períodos de descanso.
+- **eNPS Anônimo**: Termômetro de fidelidade e satisfação interna baseado na métrica clássica de promotoria, com dashboard de sentimentos anônimos.
 - **Gamificação (Aniversários)**: Celebração visual automática no dia do nascimento com animação de partículas (confetes).
-- **Onboarding Checklists**: trilhas de entrada para novos talentos com controle de progresso.
+- **Checklists Interativos**: Trilhas de onboarding personalizáveis por usuário com acompanhamento de progresso em tempo real.
+- **RBAC Robusto**: Todas as ações sensíveis (Ativos, PDI, Carreira, Clima) possuem travas de segurança que exigem permissões de Administrador, Gerente ou People & Culture.
 
 ---
 
