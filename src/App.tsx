@@ -1,4 +1,4 @@
-/** Intranet Hub Symples - Gestão Interna */
+/** Intranet Hub Symples - Gestão Interna (Build Test: Vercel Limits Check) */
 import React, { useMemo } from 'react';
 import {
   LayoutDashboard, Users, Plus, X, DollarSign,
