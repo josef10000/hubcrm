@@ -507,7 +507,10 @@ export default function PeopleView() {
                                     )}
                                  </div>
                                  <div className="p-8 bg-white/5 border border-white/5 rounded-3xl min-h-[400px] flex items-center justify-center">
-                                    <SkillRadar skills={[...(selectedMember.skills?.hard || []), ...(selectedMember.skills?.soft || [])]} />
+                                    <SkillRadar skills={[
+                                       ...(selectedMember.skills?.hard || []).map(s => ({ ...s, type: 'Hard' as const })),
+                                       ...(selectedMember.skills?.soft || []).map(s => ({ ...s, type: 'Soft' as const }))
+                                    ]} />
                                  </div>
                                  <div className="grid grid-cols-2 gap-4">
                                     <div className="p-4 bg-primary-500/5 border border-primary-500/10 rounded-2xl">
