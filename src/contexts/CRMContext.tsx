@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { collection, doc, setDoc, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, doc, setDoc, addDoc, onSnapshot, query, where, serverTimestamp, arrayUnion } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Client, Offer, Expense, Transaction, TransactionCategory, Budget, Lead, UserProfile, CommissionEntry, Tag, WikiArticle, WikiComment } from '../types';
 import { VacationPeriod } from '../types/people';
@@ -119,6 +119,8 @@ interface CRMContextType {
   handleToggleWikiStar: (articleId: string) => Promise<void>;
   handleAddWikiComment: (articleId: string, comment: Partial<WikiComment>) => Promise<void>;
   handleMarkWikiArticleAsRead: (articleId: string) => Promise<void>;
+  handleCreateSupportRequest: (requestData: any) => Promise<void>;
+  handleAddClientLog: (clientId: string, logText: string) => Promise<void>;
 }
 
 const CRMContext = createContext<CRMContextType | null>(null);
@@ -499,6 +501,40 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (e) {
         console.error('Error marking wiki as read:', e);
+      }
+    },
+    handleCreateSupportRequest: async (requestData: any) => {
+      if (!effectiveOrgId) return;
+      try {
+        const requestsRef = collection(db, 'organizations', effectiveOrgId, 'supportRequests');
+        await addDoc(requestsRef, {
+          ...requestData,
+          status: requestData.status || 'aberto',
+          createdAt: serverTimestamp()
+        });
+        toast.success('Chamado registrado com sucesso!');
+      } catch (e) {
+        console.error('Error creating support request:', e);
+        toast.error('Erro ao registrar chamado.');
+        throw e;
+      }
+    },
+    handleAddClientLog: async (clientId: string, logText: string) => {
+      if (!effectiveOrgId) return;
+      try {
+        const clientRef = doc(db, 'organizations', effectiveOrgId, 'clients', clientId);
+        const newLog = {
+          id: Date.now().toString(36) + Math.random().toString(36).substring(2),
+          text: logText,
+          date: Date.now()
+        };
+        await setDoc(clientRef, {
+          logs: arrayUnion(newLog)
+        }, { merge: true });
+        toast.success('Nota registrada no histórico do cliente!');
+      } catch (e) {
+        console.error('Error adding client log:', e);
+        toast.error('Erro ao registrar nota.');
       }
     },
     isChurnRisk: clientActions.isChurnRisk, isComboNearRenewal: clientActions.isComboNearRenewal,

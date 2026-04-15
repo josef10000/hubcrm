@@ -109,6 +109,7 @@ Prospecção → Qualificação → Venda → Onboarding → Entrega → Suporte
 | 💳 **Checkout Self-Service** | Cliente se auto-cadastra, paga e inicia o projeto |
 | 📊 **BI Financeiro & Health** | DRE, Fluxo e **Health Score (0-100)** automático |
 | 🎧 **SLA Tracker** | Monitoramento de suporte em tempo real com alertas |
+| 📱 **Atendimento Ativo** | Abertura rápida de chamados via WhatsApp com busca preditiva |
 | 💰 **Calculadora de Comissões** | Automação de repasses para vendedores pós-pagamento |
 | 🎉 **Gamificação** | Celebração automática de aniversários com confetes |
 | 🌐 **100% Cloud-Native** | Zero infraestrutura para manter |
@@ -227,6 +228,8 @@ Sistema de atendimento profissional focado em SLAs e qualidade perceptível.
   - 🟠 **Vencendo Agora**: Menos de 2 horas para o limite (Efeito *Glow*).
   - 🔵 **Em Alerta**: Menos de 6 horas para o limite.
   - 🟢 **No Prazo**: Dentro dos parâmetros contratuais.
+- **Abertura Rápida de Chamados Internos**: Interface otimizada com busca preditiva de clientes, auto-preenchimento de dados e integração com a Wiki Hub para respostas ágeis.
+- **Modo Nota (Timeline)**: Permite registrar interações do WhatsApp diretamente no histórico do cliente sem a necessidade de abrir um ticket técnico.
 - **Ordenação por Prioridade de SLA**: Sistema inteligente que reorganiza a fila de atendimento priorizando tickets próximos do vencimento ou com maior urgência (`Alta` > `Média` > `Baixa`).
 - **Cálculo de SLA Dinâmico**: Lógica baseada em Horas Úteis com prazos diferenciados por prioridade.
 - **CSAT (Customer Satisfaction Score)**: Ciclo fechado de feedback. Após a conclusão, o cliente avalia o atendimento com estrelas (1-5) e feedback textual.

@@ -247,6 +247,8 @@ export interface SupportRequest {
   csatComment?: string;
   csatAt?: any;
   slaDeadline?: any;
+  origin?: 'portal' | 'whatsapp' | 'interno';
+  whatsappContext?: string;
 }
 
 export interface CommissionEntry {

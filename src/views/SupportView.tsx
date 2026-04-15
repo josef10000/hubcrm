@@ -1,5 +1,6 @@
 import React from 'react';
-import { MessageCircle, Clock, MessageSquare, CheckCircle, Trash2, Star, User, ArrowUp, ArrowDown, Minus, AlertCircle } from 'lucide-react';
+import { MessageCircle, Clock, MessageSquare, CheckCircle, Trash2, Star, User, ArrowUp, ArrowDown, Minus, AlertCircle, Plus, Smartphone } from 'lucide-react';
+import SupportRequestModal from '../components/SupportRequestModal';
 import { differenceInHours } from 'date-fns';
 import { useCRM } from '../contexts/CRMContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,6 +12,7 @@ export default function SupportView() {
   const { user } = useAuth();
   const { supportRequests, replyingTo, setReplyingTo, replyMessage, setReplyMessage, effectiveOrgId, teamProfiles } = useCRM();
   const [sortBy, setSortBy] = React.useState<'recent' | 'sla'>('recent');
+  const [isNewRequestModalOpen, setIsNewRequestModalOpen] = React.useState(false);
 
 
   const csatRequests = supportRequests.filter(r => r.csatScore);
@@ -78,17 +80,27 @@ export default function SupportView() {
             <p className="text-gray-500 dark:text-gray-400">Gerencie solicitações, SLAs e satisfação dos clientes.</p>
           </div>
           
-          {avgCsat && (
-            <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 px-6 rounded-2xl flex items-center gap-4 bg-gradient-to-br from-yellow-500/5 to-transparent">
-              <div className="p-3 bg-yellow-500/20 text-yellow-500 rounded-xl">
-                <Star size={24} fill="currentColor" />
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setIsNewRequestModalOpen(true)}
+              className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-2xl transition-all shadow-xl shadow-primary-500/20 active:scale-95 font-bold"
+            >
+              <Plus size={20} />
+              Novo Chamado Interno
+            </button>
+            
+            {avgCsat && (
+              <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 px-6 rounded-2xl flex items-center gap-4 bg-gradient-to-br from-yellow-500/5 to-transparent">
+                <div className="p-3 bg-yellow-500/20 text-yellow-500 rounded-xl">
+                  <Star size={24} fill="currentColor" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Satisfação (CSAT)</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{avgCsat} <span className="text-sm font-normal text-gray-400">/ 5.0</span></p>
+                </div>
               </div>
-              <div>
-                <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Satisfação (CSAT)</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{avgCsat} <span className="text-sm font-normal text-gray-400">/ 5.0</span></p>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* SLA Summary Dashboard */}
@@ -186,6 +198,12 @@ export default function SupportView() {
                       }`}>
                         {req.status === 'concluido' ? 'Concluído' : req.status === 'resolvido' ? 'Resolvido' : req.status === 'em_analise' ? 'Em Análise' : 'Aberto'}
                       </span>
+                      {req.origin === 'whatsapp' && (
+                        <span className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-widest bg-[#25D366]/20 text-[#25D366] border border-[#25D366]/30">
+                          <Smartphone size={10} />
+                          WhatsApp
+                        </span>
+                      )}
                       {req.category && (
                         <span className="px-2 py-1 rounded-md text-xs font-medium bg-gray-500/10 text-gray-500 border border-gray-500/20">
                           {String(req.category)}
@@ -390,6 +408,11 @@ export default function SupportView() {
           )}
         </div>
       </div>
+
+      <SupportRequestModal 
+        isOpen={isNewRequestModalOpen} 
+        onClose={() => setIsNewRequestModalOpen(false)} 
+      />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import React from 'react';
-import { AlertTriangle, Clock, Phone, Tag, Briefcase, Globe, DollarSign, MessageCircle, Copy, Users, Link as LinkIcon, Zap, Calendar } from 'lucide-react';
+import { AlertTriangle, Clock, Phone, Tag, Briefcase, Globe, DollarSign, MessageCircle, Copy, Users, Link as LinkIcon, Zap, Calendar, PlusCircle } from 'lucide-react';
+import SupportRequestModal from '../SupportRequestModal';
 import { Client } from '../../types';
 import { getPlanPrice } from '../../helpers';
 import { toast } from 'sonner';
@@ -29,6 +30,7 @@ export default function ClientsGrid({
   churnRiskDays
 }: ClientsGridProps) {
   const { tags } = useCRM();
+  const [supportModalClientId, setSupportModalClientId] = React.useState<string | null>(null);
 
   if (dashboardMode === 'list') {
     return (
@@ -216,6 +218,16 @@ export default function ClientsGrid({
                 <Copy size={18} className="mr-2" />
                 Link do Portal
               </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSupportModalClientId(client.id);
+                }}
+                className="flex items-center justify-center w-full py-2.5 rounded-xl bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 border border-indigo-500/30 transition-colors text-sm font-medium"
+              >
+                <PlusCircle size={18} className="mr-2" />
+                Novo Chamado
+              </button>
             </div>
           </div>
         ))}
@@ -306,6 +318,12 @@ export default function ClientsGrid({
           </div>
         );
       })}
+
+      <SupportRequestModal 
+        isOpen={!!supportModalClientId} 
+        onClose={() => setSupportModalClientId(null)} 
+        initialClientId={supportModalClientId || undefined}
+      />
     </div>
   );
 }
