@@ -31,7 +31,8 @@ const TEMPLATE_IDS = {
   AVISO_VENCIMENTO: 'fatura-vencimento',
   CONVITE_EQUIPE: 'team-settings',
   BROADCAST_SIMPLE: 'internal-announcement',
-  BROADCAST_ACTION: 'internal-communication'
+  BROADCAST_ACTION: 'internal-communication',
+  ANIVERSARIO: 'birthday-greeting'
 };
 
 /**
@@ -309,6 +310,38 @@ export async function sendTeamBroadcastEmail(
     return allResults;
   } catch (error) {
     console.error('Erro ao disparar broadcast:', error);
+    throw error;
+  }
+}
+
+/**
+ * Envia e-mail de parabéns pelo aniversário do colaborador
+ */
+export async function sendBirthdayGreetingEmail(
+  email: string,
+  name: string,
+  customSubject?: string
+) {
+  try {
+    const subject = customSubject || `Parabéns pelo seu dia, ${name}! 🎉`;
+
+    // @ts-ignore
+    const data = await (resend.emails.send as any)({
+      from: FROM_EMAIL,
+      to: [email],
+      reply_to: REPLY_TO_EMAIL,
+      subject: subject,
+      template: {
+        id: TEMPLATE_IDS.ANIVERSARIO,
+        variables: {
+          nome_do_colaborador: name
+        },
+      },
+    });
+    console.log(`Email de Aniversário enviado para ${name}! ID: ${(data as any).id || (data as any).data?.id}`);
+    return data;
+  } catch (error) {
+    console.error('Erro ao enviar email de aniversário:', error);
     throw error;
   }
 }

@@ -314,6 +314,7 @@ export interface UserProfile {
   careerTimeline?: CareerMilestone[];
   feedbacks?: FeedbackItem[];
   moodLogs?: MoodLog[];
+  lastBirthdayEmailYear?: number; // Ano do último e-mail de aniversário enviado
 }
 
 export interface WikiComment {

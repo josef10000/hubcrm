@@ -29,5 +29,11 @@
     { "source": "/api/uptimerobot/monitors", "destination": "/api/uptime" },
     
     { "source": "/((?!api/.*).*)", "destination": "/index.html" }
+  ],
+  "crons": [
+    {
+      "path": "/api/birthday_handler",
+      "schedule": "0 11 * * *"
+    }
   ]
 }
