@@ -897,3 +897,5 @@ MIT License — Copyright (c) 2026 Hub Symples LTDA
   <br />
   <sub>Feito com ☕ e dedicação pela equipe Hub Symples</sub>
 </div>
+   
+ 
