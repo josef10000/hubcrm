@@ -369,5 +369,4 @@ export default function App() {
     </BrowserRouter>
   );
 }
-/ /   V e r s ã o   R e s t a u r a d a   v 2 . 6 . 1   -   R o l l b a c k   C o n f i r m a d o  
- 
+// Trigger redeploy v2.6.1 - Clean State UTF-8
