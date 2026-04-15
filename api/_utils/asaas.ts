@@ -15,10 +15,11 @@ export class AsaasApiError extends Error {
   }
 }
 
-export async function asaasRequest(endpoint: string, method: string, body?: any) {
-  const ASAAS_API_KEY = process.env.ASAAS_API_KEY;
-  if (!ASAAS_API_KEY) {
-    throw new AsaasApiError(500, "ASAAS_API_KEY environment variable is not defined", "Serviço de pagamentos indisponível");
+export async function asaasRequest(endpoint: string, method: string, body?: any, customApiKey?: string) {
+  const apiKeyToUse = customApiKey || process.env.ASAAS_API_KEY;
+  
+  if (!apiKeyToUse) {
+    throw new AsaasApiError(500, "ASAAS_API_KEY is not defined (global or custom)", "Serviço de pagamentos indisponível");
   }
 
   const controller = new AbortController();
@@ -29,7 +30,7 @@ export async function asaasRequest(endpoint: string, method: string, body?: any)
       method,
       headers: {
         "Content-Type": "application/json",
-        "access_token": ASAAS_API_KEY,
+        "access_token": apiKeyToUse,
         "User-Agent": "HubCentralCRM"
       },
       body: body ? JSON.stringify(body) : undefined,

@@ -32,7 +32,7 @@
   ],
   "crons": [
     {
-      "path": "/api/birthday_handler",
+      "path": "/api/daily_cron",
       "schedule": "0 11 * * *"
     }
   ]
