@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, getDocs, limit, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { UserProfile } from '../types';
 
@@ -32,19 +32,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
+    let unsubscribeProfile: () => void = () => { };
     
     try {
-      const unsubscribe = onAuthStateChanged(auth, async (u) => {
+      const unsubscribeAuth = onAuthStateChanged(auth, async (u) => {
+        // Limpa listener anterior
+        unsubscribeProfile();
         setUser(u);
         
         if (u) {
           const profileRef = doc(db, 'profiles', u.uid);
-          try {
-            // Buscar perfil do usuário
-            const profileSnap = await getDoc(profileRef);
-            
-            if (profileSnap.exists()) {
-              const data = profileSnap.data() as UserProfile;
+          
+          // Inicia escuta em tempo real do perfil
+          unsubscribeProfile = onSnapshot(profileRef, async (snap) => {
+            if (snap.exists()) {
+              const data = snap.data() as UserProfile;
               
               // REGRA DE SUPER-ADMIN: Garante que o proprietário sempre seja Administrador em memória
               if (u.email === 'jfs102019@hotmail.com') {
@@ -53,87 +55,89 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               } else {
                 setUserProfile(data);
               }
+              setLoading(false);
+              clearTimeout(timeoutId);
             } else {
               // --- BLOCO BOOTSTRAP / NOVO USUÁRIO ---
-              
-              // 1. Verificar se existe convite pendente para este e-mail
-              const invitesRef = query(collection(db, 'convites'), 
-                where('email', '==', u.email), 
-                where('status', '==', 'pending'),
-                limit(1)
-              );
-              
-              const inviteSnap = await getDocs(invitesRef);
-              
-              if (!inviteSnap.empty) {
-                console.log("[Auth] Convite detectado. Realizando auto-vínculo...");
-                const idToken = await u.getIdToken();
-                const acceptRes = await fetch('/api/team/accept', {
-                  method: 'POST',
-                  headers: {
-                    'Authorization': `Bearer ${idToken}`,
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({}) // Sem token, a API usa o e-mail
-                });
+              // (Mantemos a lógica original de convite e criação de perfil pendente)
+              try {
+                // 1. Verificar se existe convite pendente para este e-mail
+                const invitesRef = query(collection(db, 'convites'), 
+                  where('email', '==', u.email), 
+                  where('status', '==', 'pending'),
+                  limit(1)
+                );
                 
-                if (acceptRes.ok) {
-                  const newProfileSnap = await getDoc(profileRef);
-                  if (newProfileSnap.exists()) {
-                    setUserProfile(newProfileSnap.data() as UserProfile);
-                    setLoading(false);
+                const inviteSnap = await getDocs(invitesRef);
+                
+                if (!inviteSnap.empty) {
+                  console.log("[Auth] Convite detectado. Realizando auto-vínculo...");
+                  const idToken = await u.getIdToken();
+                  const acceptRes = await fetch('/api/team/accept', {
+                    method: 'POST',
+                    headers: {
+                      'Authorization': `Bearer ${idToken}`,
+                      'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({}) // Sem token, a API usa o e-mail
+                  });
+                  
+                  if (acceptRes.ok) {
+                    // O onSnapshot lidará com o novo documento assim que for criado pela API
                     return;
                   }
                 }
-              }
 
-              // 2. Se não houver convite, entra em modo AGUARDANDO CONVITE
-              const newProfile: UserProfile = {
-                uid: u.uid,
-                email: u.email || '',
-                displayName: u.displayName || 'Usuário',
-                orgId: 'pending', // Marca como pendente em vez de criar org automática
-                role: 'Só Leitura',
-                createdAt: Date.now()
-              };
-              
-              await setDoc(profileRef, newProfile);
-              setUserProfile(newProfile);
+                // 2. Se não houver convite, entra em modo AGUARDANDO CONVITE
+                const newProfile: UserProfile = {
+                  uid: u.uid,
+                  email: u.email || '',
+                  displayName: u.displayName || 'Usuário',
+                  orgId: 'pending', 
+                  role: 'Só Leitura',
+                  createdAt: Date.now()
+                };
+                
+                await setDoc(profileRef, newProfile);
+                // O setDoc fará o onSnapshot disparar novamente
+              } catch (err) {
+                console.error("Bootstrap Error:", err);
+                
+                if (u.email === 'jfs102019@hotmail.com') {
+                  const emergencyProfile = {
+                    uid: u.uid,
+                    email: u.email || '',
+                    displayName: u.displayName || 'Proprietário',
+                    orgId: u.uid,
+                    role: 'Administrador' as const,
+                    createdAt: Date.now()
+                  };
+                  setUserProfile(emergencyProfile);
+                  setDoc(profileRef, emergencyProfile, { merge: true }).catch(console.error);
+                }
+              }
             }
-          } catch (err: any) {
-            console.error("Critical Profile Error:", err);
-            
-            // FALLBACK DE EMERGÊNCIA: Se for o proprietário, permite entrar mesmo com erro de banco
+          }, (err: any) => {
+            console.error("Profile Listener Error:", err);
+            // Fallback owner
             if (u.email === 'jfs102019@hotmail.com') {
-              console.warn("Using Memory-based Emergency Profile for Owner.");
-              const emergencyProfile = {
+              setUserProfile({
                 uid: u.uid,
                 email: u.email || '',
-                displayName: u.displayName || 'Proprietário',
+                displayName: 'Proprietário (Fallback)',
                 orgId: u.uid,
-                role: 'Administrador' as const,
+                role: 'Administrador',
                 createdAt: Date.now()
-              };
-              setUserProfile(emergencyProfile);
-              
-              // Bootstrap em background: Tenta criar o perfil físico no banco agora que as regras permitem
-              setDoc(profileRef, emergencyProfile, { merge: true }).catch(e => console.error("Bootstrap failed:", e));
-            } else {
-              // Para outros usuários, se falhar o carregamento do perfil, mas o Auth existir, 
-              // não travamos o app, apenas deixamos sem perfil (o CRMContext lidará com isso)
-              console.warn("Profile load failed, but continuing as basic authenticated user.");
-              // Opcional: setErrorMsg se considerarmos que ninguém deve entrar sem perfil
-              // Por enquanto, vamos ser permissivos para evitar o travamento relatado
-              setLoading(false);
+              });
             }
-          }
+            setLoading(false);
+          });
         } else {
           setUserProfile(null);
           setIsBirthday(false);
+          setLoading(false);
+          clearTimeout(timeoutId);
         }
-        
-        setLoading(false);
-        clearTimeout(timeoutId);
       }, (error) => {
         console.error("Auth Error:", error);
         setErrorMsg(error.message);
@@ -147,7 +151,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }, 15000);
 
       return () => {
-        unsubscribe();
+        unsubscribeAuth();
+        unsubscribeProfile();
         clearTimeout(timeoutId);
       };
     } catch (err: any) {
