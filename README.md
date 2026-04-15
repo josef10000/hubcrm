@@ -7,7 +7,7 @@
 Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.
 
   <p>
-    <img src="https://img.shields.io/badge/Version-2.4.1-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-2.5.2-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Status-Production_Ready-22c55e?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge&labelColor=111111" alt="License" />
@@ -248,6 +248,7 @@ Sistema de notificações via **Resend SDK** com anti-spam inteligente:
 | ✅ **Pagamento Recebido** | Webhook Asaas `PAYMENT_RECEIVED` |
 | ⚠️ **Fatura Vencida** | Webhook Asaas `PAYMENT_OVERDUE` |
 | 🔗 **Link de Assinatura** | Criação de assinatura recorrente |
+| 🎂 **Aniversário** | Gatilho diário Vercel Cron (08:00 AM) |
 
 - **Controle de Idempotência**: Prevenção total de disparo duplicado via registro atômico no Firestore.
 - **Rate Limiting**: Proteção contra abuso via Upstash Redis.
@@ -531,6 +532,7 @@ As rotas foram padronizadas para o formato `/api/asaas/...` com roteamento intel
 | `POST` | `/api/email/manual-trigger` | Disparar e-mail manualmente |
 | `GET` | `/api/uptimerobot/monitors` | Consultar status dos monitores |
 | `POST` | `/api/public_checkout` | Processar checkout público |
+| `GET` | `/api/birthday_handler` | Execução diária do Cron de Aniversários |
 
 ---
 
@@ -837,7 +839,8 @@ className="bg-gray-100 border-gray-200"
 - [x] 📖 **Wiki Hub (Central de Conhecimento com RBAC)**
 - [x] 📱 **Atendimento Ativo (Quick Ticket + Modo Nota WhatsApp)** (Fase 3)
 - [x] ⚡ **Sincronização de Perfil em Tempo Real** (Fix Wiki Notification)
-- [ ] 📧 Automação de E-mails de Aniversário
+- [x] 📧 **Automação de E-mails de Aniversário (Vercel Cron)**
+
 
 ---
 
