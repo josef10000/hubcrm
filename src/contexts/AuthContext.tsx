@@ -11,9 +11,15 @@ interface AuthContextType {
   errorMsg: string | null;
   refreshProfile: () => Promise<void>;
   isBirthday: boolean;
+  businessAlerts: BusinessAlert[];
+  unreadAlertsCount: number;
+  markAlertAsRead: (alertId: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
+
+import { BusinessAlert } from '../types';
+import { updateDoc, arrayUnion } from 'firebase/firestore';
 
 export function useAuth() {
   const context = useContext(AuthContext);
@@ -29,6 +35,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isBirthday, setIsBirthday] = useState(false);
+  const [businessAlerts, setBusinessAlerts] = useState<BusinessAlert[]>([]);
+  const [unreadAlertsCount, setUnreadAlertsCount] = useState(0);
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
@@ -179,6 +187,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [userProfile]);
 
+  // Listener para Alertas de Negócio (RBAC)
+  useEffect(() => {
+    if (!userProfile?.role || !userProfile?.orgId) {
+      setBusinessAlerts([]);
+      setUnreadAlertsCount(0);
+      return;
+    }
+
+    // Busca alertas disparados para a organização e que tenham o cargo do usuário como alvo
+    const q = query(
+      collection(db, 'system_alerts'),
+      where('targetRoles', 'array-contains', userProfile.role),
+      limit(50)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const loadedAlerts = snapshot.docs
+        .map(d => ({ id: d.id, ...d.data() } as BusinessAlert))
+        .sort((a, b) => b.createdAt - a.createdAt);
+
+      setBusinessAlerts(loadedAlerts);
+
+      // Calcula os não lidos comparando com o array readAlerts do perfil
+      const unread = loadedAlerts.filter(alert => 
+        !userProfile.readAlerts?.includes(alert.id)
+      ).length;
+
+      setUnreadAlertsCount(unread);
+    }, (err) => {
+      console.error("Alerts Listener Error:", err);
+    });
+
+    return () => unsubscribe();
+  }, [userProfile?.role, userProfile?.readAlerts, userProfile?.orgId]);
+
   const refreshProfile = async () => {
     if (!user) return;
     try {
@@ -198,8 +241,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const markAlertAsRead = async (alertId: string) => {
+    if (!user) return;
+    try {
+      const profileRef = doc(db, 'profiles', user.uid);
+      await updateDoc(profileRef, {
+        readAlerts: arrayUnion(alertId)
+      });
+    } catch (err) {
+      console.error("Error marking alert as read:", err);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, userProfile, loading, errorMsg, refreshProfile, isBirthday }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      userProfile, 
+      loading, 
+      errorMsg, 
+      refreshProfile, 
+      isBirthday,
+      businessAlerts,
+      unreadAlertsCount,
+      markAlertAsRead
+    }}>
       {children}
     </AuthContext.Provider>
   );

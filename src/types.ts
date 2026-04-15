@@ -315,6 +315,17 @@ export interface UserProfile {
   feedbacks?: FeedbackItem[];
   moodLogs?: MoodLog[];
   lastBirthdayEmailYear?: number; // Ano do último e-mail de aniversário enviado
+  readAlerts?: string[]; // IDs dos alertas de negócio já lidos pelo usuário
+}
+
+export interface BusinessAlert {
+  id: string;
+  title: string;
+  message: string;
+  type: 'success' | 'warning' | 'error' | 'info' | 'cron';
+  targetRoles: UserRole[];
+  createdAt: number;
+  link?: string; // Deep link para onde o usuário deve ser levado ao clicar
 }
 
 export interface WikiComment {

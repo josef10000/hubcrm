@@ -7,7 +7,7 @@
 Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.
 
   <p>
-    <img src="https://img.shields.io/badge/Version-2.5.2-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-2.6.0-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Status-Production_Ready-22c55e?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge&labelColor=111111" alt="License" />
@@ -64,6 +64,10 @@ Transformando prospecção em faturamento através de automação inteligente e 
       <br />📖<br /><strong>Wiki Hub</strong><br />
       <sub>Central de conhecimento com editor rico e RBAC</sub>
     </td>
+    <td align="center">
+      <br />🔔<br /><strong>Alertas Operacionais</strong><br />
+      <sub>Notificações inteligentes e filtradas por cargo (RBAC)</sub>
+    </td>
   </tr>
 </table>
 
@@ -111,6 +115,7 @@ Prospecção → Qualificação → Venda → Onboarding → Entrega → Suporte
 | 🎧 **SLA Tracker** | Monitoramento de suporte em tempo real com alertas |
 | 📱 **Atendimento Ativo** | Abertura rápida de chamados via WhatsApp com busca preditiva |
 | 💰 **Calculadora de Comissões** | Automação de repasses para vendedores pós-pagamento |
+| 🔔 **Alertas de Negócio** | Central RBAC de avisos críticos (SLA, Finanças, RH) |
 | 🎉 **Gamificação** | Celebração automática de aniversários com confetes |
 | 🌐 **100% Cloud-Native** | Zero infraestrutura para manter |
 

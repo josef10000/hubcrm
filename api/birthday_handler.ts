@@ -72,6 +72,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     await Promise.all(emailPromises);
 
+    // 3. Criar alerta operacional para a gestão
+    if (birthDayBuddies.length > 0) {
+      await db.collection('system_alerts').add({
+        title: '🎂 Automação de Aniversários',
+        message: `${birthDayBuddies.length} e-mail(s) de parabéns foram enviados hoje para: ${birthDayBuddies.map(b => b.name).join(', ')}.`,
+        type: 'cron',
+        targetRoles: ['Administrador', 'Gerente', 'People & Culture'],
+        createdAt: Date.now(),
+        link: '/team'
+      });
+    }
+
     return res.status(200).json({ 
       success: true, 
       processed: birthDayBuddies.length,

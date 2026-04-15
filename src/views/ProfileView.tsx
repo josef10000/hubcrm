@@ -32,7 +32,9 @@ import {
   Box,
   MessageCircle,
   History,
-  X as XIcon
+  X as XIcon,
+  Inbox,
+  BellRing
 } from 'lucide-react';
 import AddFeedbackModal from '../components/people/AddFeedbackModal';
 import AddAssetModal from '../components/people/AddAssetModal';
@@ -58,7 +60,8 @@ export default function ProfileView() {
   const [isSaving, setIsSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [superior, setSuperior] = useState<UserProfile | null>(null);
-  const [activeTab, setActiveTab] = useState<'info' | 'pdi' | 'comissoes' | 'inventory' | 'feedbacks' | 'history'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'pdi' | 'comissoes' | 'inventory' | 'feedbacks' | 'history' | 'alerts'>('info');
+  const { businessAlerts, unreadAlertsCount, markAlertAsRead } = useAuth();
   const { commissions } = useCRM();
   const [showVacationModal, setShowVacationModal] = useState(false);
   const [showAddFeedbackModal, setShowAddFeedbackModal] = useState(false);
@@ -469,6 +472,17 @@ export default function ProfileView() {
                 >
                   Carreira
                 </button>
+                <button 
+                  onClick={() => setActiveTab('alerts')}
+                  className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all relative ${activeTab === 'alerts' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
+                >
+                  Alertas
+                  {unreadAlertsCount > 0 && isOwnProfile && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[8px] rounded-full flex items-center justify-center border-2 border-zinc-900">
+                      {unreadAlertsCount}
+                    </span>
+                  )}
+                </button>
                 {(profile?.role === 'SDR' || profile?.role === 'Executive' || profile?.role === 'Administrador') && (
                   <button 
                     onClick={() => setActiveTab('comissoes')}
@@ -801,6 +815,86 @@ export default function ProfileView() {
                     currentUserProfile={currentUserProfile}
                     profileOwnerId={uid!}
                   />
+                </div>
+              )}
+
+              {activeTab === 'alerts' && (
+                <div className="animate-in slide-in-from-right duration-500 space-y-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 bg-rose-500/10 rounded-2xl text-rose-500">
+                        <ShieldAlert size={24} />
+                      </div>
+                      <div>
+                        <h4 className="font-bold">Central de Alertas Operacionais</h4>
+                        <p className="text-xs text-gray-500 text-left">Notificações direcionadas baseadas no seu cargo de {profile.role}.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {businessAlerts.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-3">
+                      {businessAlerts.map(alert => {
+                        const isRead = profile.readAlerts?.includes(alert.id);
+                        return (
+                          <div 
+                            key={alert.id}
+                            onClick={() => {
+                              if (!isRead && isOwnProfile) markAlertAsRead(alert.id);
+                              if (alert.link) navigate(alert.link);
+                            }}
+                            className={`group p-5 rounded-3xl border transition-all cursor-pointer text-left ${
+                              isRead 
+                                ? 'bg-white/5 border-white/5 opacity-60' 
+                                : 'bg-white/10 border-primary-500/30 shadow-lg shadow-primary-500/5'
+                            } hover:scale-[1.01] active:scale-[0.99] flex items-start gap-4 relative overflow-hidden`}
+                          >
+                            {!isRead && (
+                              <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-primary-500/10 to-transparent pointer-events-none"></div>
+                            )}
+                            
+                            <div className={`mt-1 p-2 rounded-xl shrink-0 ${
+                              alert.type === 'error' ? 'bg-rose-500/20 text-rose-500' :
+                              alert.type === 'warning' ? 'bg-amber-500/20 text-amber-500' :
+                              alert.type === 'success' ? 'bg-emerald-500/20 text-emerald-500' :
+                              'bg-primary-500/20 text-primary-500'
+                            }`}>
+                              {alert.type === 'cron' ? <Clock size={16} /> : <BellRing size={16} />}
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between mb-1 gap-2">
+                                <h5 className={`text-sm font-bold truncate ${!isRead ? 'text-gray-900 dark:text-white' : 'text-gray-500'}`}>
+                                  {alert.title}
+                                </h5>
+                                <span className="text-[10px] text-gray-500 whitespace-nowrap">
+                                  {new Date(alert.createdAt).toLocaleDateString()}
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-500 leading-relaxed mb-3 line-clamp-2">
+                                {alert.message}
+                              </p>
+                              
+                              {alert.link && (
+                                <div className="inline-flex items-center gap-1.5 text-[10px] font-bold text-primary-500 uppercase tracking-widest group-hover:translate-x-1 transition-transform">
+                                  Ver detalhes <ChevronLeft size={10} className="rotate-180" />
+                                </div>
+                              )}
+                            </div>
+
+                            {!isRead && (
+                              <div className="w-2 h-2 rounded-full bg-primary-500 mt-2 shrink-0 shadow-lg shadow-primary-500/50"></div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="py-20 flex flex-col items-center justify-center text-center opacity-30">
+                      <Inbox size={48} className="mb-4" />
+                      <p className="text-sm font-medium">Nenhum alerta pendente para o seu cargo.</p>
+                    </div>
+                  )}
                 </div>
               )}
 

@@ -68,7 +68,7 @@ const navItems = [
 ];
 
 function CRMInner() {
-  const { user, userProfile, isBirthday } = useAuth();
+  const { user, userProfile, isBirthday, unreadAlertsCount } = useAuth();
   const navigate = useNavigate();
   const {
     clients, activeLeadsCount, offers, supportRequests, loading, errorMsg,
@@ -153,6 +153,11 @@ function CRMInner() {
                   </div>
                   {isBirthday && (
                     <span className="absolute -top-3 -right-3 text-3xl animate-bounce pointer-events-none" title="Aniversariante do Dia! 🎉">🎉</span>
+                  )}
+                  {unreadAlertsCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-zinc-900 shadow-lg animate-pulse">
+                      {unreadAlertsCount}
+                    </span>
                   )}
                 </div>
                 <div className="truncate">
