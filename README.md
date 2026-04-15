@@ -282,10 +282,13 @@ Módulo completo de People Management focado em retenção, felicidade e control
 Sistema completo de base de conhecimento interna para documentação de processos, cultura e guias técnicos.
 
 - **Editor WYSIWYG Profissional**: Interface amigável para criação de artigos com suporte a formatação rica, links e carregamento de imagens via ImgBB.
+- **Sincronização Reativa (v2.5.1)**: Sistema de notificações de leitura atualizado em tempo real via `onSnapshot`, garantindo que badges de novos artigos sumam instantaneamente após a leitura.
+- **Guia do Iniciante Configurável**: Possibilidade de definir um artigo mestre para onboarding de novos colaboradores, acessível com um clique no topo da Wiki.
 - **Controle de Acesso Granular (RBAC)**: Definição de visibilidade por Cargo (Role) ou por Usuários específicos.
 - **Categorização Estratégica**: Organização por áreas (RH, Vendas, Técnico, Atendimento, Suporte, Geral).
 - **Interatividade Total**: Sistema de curtidas (Estrelas) e seção de comentários com tempo real para tirar dúvidas e enriquecer o conteúdo.
 - **Busca Global**: Filtro inteligente que pesquisa no título e no corpo dos manuais instantaneamente.
+- **Integração com Atendimento Proativo**: Busca integrada durante a abertura de chamados para cópia rápida de manuais de suporte.
 - **Moderação de Conteúdo**: Ferramentas de edição e exclusão de comentários e artigos para administradores e gerentes.
 
 ---
@@ -830,9 +833,11 @@ className="bg-gray-100 border-gray-200"
 - [x] ⚙️ Confirmação de Resolução pelo Cliente e CSAT Customizável (Fase 2)
 - [x] 💰 **FinOps Avançado**: Rentabilidade Real (Desconto de Comissões), ROI por Oferta e Gestão de Ads (Fase 2)
 - [x] 🔮 **Projeção de Fluxo de Caixa Inteligente** com capacidade de investimento em Ads (Fase 2)
-- [ ] 📧 Automação de E-mails de Aniversário
 - [x] 🏷️ Sistema de tags e segmentação de clientes
 - [x] 📖 **Wiki Hub (Central de Conhecimento com RBAC)**
+- [x] 📱 **Atendimento Ativo (Quick Ticket + Modo Nota WhatsApp)** (Fase 3)
+- [x] ⚡ **Sincronização de Perfil em Tempo Real** (Fix Wiki Notification)
+- [ ] 📧 Automação de E-mails de Aniversário
 
 ---
 
