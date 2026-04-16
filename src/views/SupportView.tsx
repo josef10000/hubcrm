@@ -73,7 +73,7 @@ export default function SupportView() {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10">
+    <div className="w-full h-full overflow-y-auto p-6 bg-[#030712] custom-scrollbar">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -175,13 +175,12 @@ export default function SupportView() {
             </div>
           ) : (
             [...supportRequests].sort((a, b) => {
-              if (sortBy === 'recent') return 0; // Already sorted by date in context
-              const slaA = getSlaStatus(a.createdAt, a.priority)?.remaining || 999;
-              const slaB = getSlaStatus(b.createdAt, b.priority)?.remaining || 999;
+              if (sortBy === 'recent') return 0;
+              const slaA = getSlaStatus(a?.createdAt, a?.priority)?.remaining ?? 999;
+              const slaB = getSlaStatus(b?.createdAt, b?.priority)?.remaining ?? 999;
               
-              // Concluidos sempre pro final
-              if (a.status === 'concluido' && b.status !== 'concluido') return 1;
-              if (a.status !== 'concluido' && b.status === 'concluido') return -1;
+              if (a?.status === 'concluido' && b?.status !== 'concluido') return 1;
+              if (a?.status !== 'concluido' && b?.status === 'concluido') return -1;
               
               return slaA - slaB;
             }).map((req) => (

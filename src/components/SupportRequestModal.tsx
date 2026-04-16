@@ -138,7 +138,7 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId }
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined' || !document.body) return null;
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-start md:items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto pt-20 md:pt-4">
