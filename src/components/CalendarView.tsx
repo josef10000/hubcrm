@@ -75,9 +75,10 @@ export default function CalendarView({ clients, onClientClick, role }: CalendarV
     const monthDayStr = format(day, 'MM-dd');
     
     const dayVacations = vacations.filter(v => v.status === 'Aprovado' && dayStr >= v.start && dayStr <= v.end);
-    const dayAnniversaries = teamProfiles.filter(p => p.startDate && format(parseISO(p.startDate), 'MM-dd') === monthDayStr);
+    const dayAnniversaries = teamProfiles.filter(p => p.birthDate && format(parseISO(p.birthDate), 'MM-dd') === monthDayStr);
+    const dayWorkAnniversaries = teamProfiles.filter(p => p.startDate && format(parseISO(p.startDate), 'MM-dd') === monthDayStr && format(parseISO(p.startDate), 'yyyy') !== format(day, 'yyyy'));
     
-    return { vacations: dayVacations, anniversaries: dayAnniversaries };
+    return { vacations: dayVacations, anniversaries: dayAnniversaries, workAnniversaries: dayWorkAnniversaries };
   };
 
   const getHolidayForDay = (day: Date): Holiday | undefined => {
@@ -142,14 +143,20 @@ export default function CalendarView({ clients, onClientClick, role }: CalendarV
       );
     } else {
       // People mode summary
-      const { vacations: dayVacations, anniversaries } = getDayPeopleEvents(day);
-      if (dayVacations.length === 0 && anniversaries.length === 0) return null;
+      const { vacations: dayVacations, anniversaries, workAnniversaries } = getDayPeopleEvents(day);
+      if (dayVacations.length === 0 && anniversaries.length === 0 && workAnniversaries.length === 0) return null;
+Baseado na sua solicitação, adicionei a distinção visual entre aniversários de vida e aniversários de casa no calendário. Note que para os aniversários de casa (startDate), adicionei uma verificação para não mostrar no ano de contratação (visto que o primeiro aniversário de casa ocorre apenas após um ano).
 
       return (
         <div className="mt-2 flex flex-col gap-1 w-full">
           {anniversaries.map((p, i) => (
-            <div key={`anniv-${i}`} className="text-[10px] font-bold text-pink-600 dark:text-pink-400 bg-pink-100 dark:bg-pink-900/30 px-1.5 py-0.5 rounded-md truncate">
+            <div key={`anniv-${i}`} className="text-[10px] font-bold text-pink-600 dark:text-pink-400 bg-pink-100 dark:bg-pink-900/30 px-1.5 py-0.5 rounded-md truncate" title={`Aniversário de ${p.displayName}`}>
               🎂 {p.displayName.split(' ')[0]}
+            </div>
+          ))}
+          {workAnniversaries.map((p, i) => (
+            <div key={`work-anniv-${i}`} className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1.5 py-0.5 rounded-md truncate" title={`Aniversário de Empresa: ${p.displayName}`}>
+              🚀 {p.displayName.split(' ')[0]}
             </div>
           ))}
           {dayVacations.map((v, i) => {
@@ -270,9 +277,9 @@ export default function CalendarView({ clients, onClientClick, role }: CalendarV
           {/* Days of the month */}
           {daysInMonth.map(day => {
             const dayEvents = getEventsForDay(day);
-            const { vacations: dayVacations, anniversaries } = getDayPeopleEvents(day);
+            const { vacations: dayVacations, anniversaries, workAnniversaries } = getDayPeopleEvents(day);
             const isCurrentDay = isToday(day);
-            const hasEvents = mode === 'people' ? (dayVacations.length > 0 || anniversaries.length > 0) : dayEvents.length > 0;
+            const hasEvents = mode === 'people' ? (dayVacations.length > 0 || anniversaries.length > 0 || workAnniversaries.length > 0) : dayEvents.length > 0;
             
             return (
               <div 
