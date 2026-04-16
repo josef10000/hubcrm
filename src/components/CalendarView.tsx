@@ -71,21 +71,26 @@ export default function CalendarView({ clients, onClientClick, role }: CalendarV
   };
 
   const getDayPeopleEvents = (day: Date) => {
+    // Normaliza para garantir que comparamos apenas data local, sem risco de deslocamento UTC
+    const dayOfMonth = day.getDate();
+    const month = day.getMonth() + 1;
+    const monthDayStr = `${month.toString().padStart(2, '0')}-${dayOfMonth.toString().padStart(2, '0')}`;
     const dayStr = format(day, 'yyyy-MM-dd');
-    const monthDayStr = format(day, 'MM-dd');
     
     const dayVacations = vacations.filter(v => v.status === 'Aprovado' && dayStr >= v.start && dayStr <= v.end);
     
     const dayAnniversaries = teamProfiles.filter(p => {
       if (!p.birthDate) return false;
-      // Compara apenas MM-dd para ignorar fuso horário do ano/hora
-      return p.birthDate.substring(5, 10) === monthDayStr;
+      // Garante que pegamos os últimos 5 caracteres (MM-DD) independente do prefixo
+      const bDate = p.birthDate.includes('/') ? p.birthDate.split('/').reverse().join('-') : p.birthDate;
+      return bDate.endsWith(monthDayStr);
     });
 
     const dayWorkAnniversaries = teamProfiles.filter(p => {
       if (!p.startDate) return false;
-      // Compara MM-dd e ignora o ano da contratação
-      return p.startDate.substring(5, 10) === monthDayStr && p.startDate.substring(0, 4) !== format(day, 'yyyy');
+      const sDate = p.startDate.includes('/') ? p.startDate.split('/').reverse().join('-') : p.startDate;
+      // Compara MM-dd e ignora o ano da contratação (só mostra se não for o ano atual)
+      return sDate.endsWith(monthDayStr) && sDate.substring(0, 4) !== format(day, 'yyyy');
     });
     
     return { vacations: dayVacations, anniversaries: dayAnniversaries, workAnniversaries: dayWorkAnniversaries };
@@ -97,7 +102,8 @@ export default function CalendarView({ clients, onClientClick, role }: CalendarV
   };
 
   const renderDaySummary = (day: Date, dayEvents: Client[]) => {
-    if (dayEvents.length === 0) return null;
+    const { vacations: dayVacations, anniversaries, workAnniversaries } = getDayPeopleEvents(day);
+    const hasPeopleEvents = dayVacations.length > 0 || anniversaries.length > 0 || workAnniversaries.length > 0;
 
     if (mode === 'finance') {
       const expected = dayEvents.reduce((acc, c) => acc + getPlanPrice(c.plan, c.billingCycle, c.customMonthlyPrice, c.customSetupPrice), 0);
@@ -106,6 +112,13 @@ export default function CalendarView({ clients, onClientClick, role }: CalendarV
 
       return (
         <div className="mt-2 flex flex-col gap-1.5 w-full">
+          {hasPeopleEvents && (
+            <div className="flex gap-1 mb-1 px-1">
+              {anniversaries.length > 0 && <span title="Aniversário do Time" className="text-xs">🎂</span>}
+              {workAnniversaries.length > 0 && <span title="Membro do Time faz anos de empresa" className="text-xs">🚀</span>}
+              {dayVacations.length > 0 && <span title="Colaborador Ausente" className="text-xs">🏖️</span>}
+            </div>
+          )}
           <div className="text-xs font-bold text-primary-700 dark:text-primary-400 bg-primary-100 dark:bg-primary-900/30 px-2 py-1 rounded-md text-center">
             {dayEvents.length} {dayEvents.length === 1 ? 'cobrança' : 'cobranças'}
           </div>
@@ -134,6 +147,13 @@ export default function CalendarView({ clients, onClientClick, role }: CalendarV
 
       return (
         <div className="mt-2 flex flex-col gap-1.5 w-full">
+          {hasPeopleEvents && (
+            <div className="flex gap-1 mb-1 px-1">
+              {anniversaries.length > 0 && <span title="Aniversário do Time" className="text-xs">🎂</span>}
+              {workAnniversaries.length > 0 && <span title="Membro do Time faz anos de empresa" className="text-xs">🚀</span>}
+              {dayVacations.length > 0 && <span title="Colaborador Ausente" className="text-xs">🏖️</span>}
+            </div>
+          )}
           <div className="text-xs font-bold text-blue-700 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded-md text-center">
             {dayEvents.length} {dayEvents.length === 1 ? 'entrega' : 'entregas'}
           </div>
@@ -153,7 +173,6 @@ export default function CalendarView({ clients, onClientClick, role }: CalendarV
       );
     } else {
       // People mode summary
-      const { vacations: dayVacations, anniversaries, workAnniversaries } = getDayPeopleEvents(day);
       if (dayVacations.length === 0 && anniversaries.length === 0 && workAnniversaries.length === 0) return null;
 
       return (

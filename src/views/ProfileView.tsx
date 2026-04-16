@@ -266,9 +266,13 @@ export default function ProfileView() {
 
   const confirmDeleteVacation = async () => {
     if (!vacationToDelete) return;
-    await handleDeleteVacationRequest(vacationToDelete);
-    setShowDeleteVacationConfirm(false);
-    setVacationToDelete(null);
+    try {
+      await handleDeleteVacationRequest(vacationToDelete);
+      setShowDeleteVacationConfirm(false);
+      setVacationToDelete(null);
+    } catch (e) {
+      console.error("Erro ao excluir ausência no Perfil:", e);
+    }
   };
 
    const handleAddVacation = async (e: React.FormEvent) => {
