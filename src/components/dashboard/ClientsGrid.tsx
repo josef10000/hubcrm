@@ -32,8 +32,9 @@ export default function ClientsGrid({
   const { tags } = useCRM();
   const [supportModalClientId, setSupportModalClientId] = React.useState<string | null>(null);
 
-  if (dashboardMode === 'list') {
-    return (
+  return (
+    <>
+      {dashboardMode === 'list' ? (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         {currentClients.map((client) => (
           <div key={client.id} onClick={() => { setEditingClient(client); setIsModalOpen(true); }} className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl cursor-pointer hover:bg-gray-100 dark:hover:bg-primary-500/20 transition-all group relative overflow-hidden shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] hover:shadow-[0_8px_32px_0_rgba(249,115,22,0.15)] hover:-translate-y-1 flex flex-col h-full">
@@ -242,11 +243,8 @@ export default function ClientsGrid({
           </div>
         )}
       </div>
-    );
-  }
-
-  // Kanban Mode
-  return (
+        )}
+      ) : (
     <div className="flex gap-6 overflow-x-auto pb-8 custom-scrollbar items-start">
       {['Em Desenvolvimento', 'Ativo', 'Inadimplente', 'Cancelado'].map((status) => {
         const columnClients = filteredClients.filter((c) => c.status === status);
@@ -325,5 +323,6 @@ export default function ClientsGrid({
         initialClientId={supportModalClientId || undefined}
       />
     </div>
+    </>
   );
 }
