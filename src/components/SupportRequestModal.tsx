@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   X, Search, User, MessageSquare, AlertTriangle, 
   CheckCircle, BookOpen, Copy, ExternalLink, 
@@ -131,12 +132,12 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId }
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-start md:items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto pt-20 md:pt-4">
-      <div className="bg-[#0f0f0f] border border-white/10 w-full max-w-5xl rounded-[2.5rem] shadow-2xl flex flex-col md:flex-row overflow-hidden animate-in fade-in zoom-in duration-300 max-h-[90vh]">
+      <div className="bg-[#0f0f0f] border border-white/10 w-full max-w-4xl rounded-3xl shadow-2xl flex flex-col md:flex-row overflow-hidden animate-in fade-in zoom-in duration-300 max-h-[85vh]">
         
         {/* Left Side: Form */}
-        <div className="flex-1 p-8 border-b md:border-b-0 md:border-r border-white/10 overflow-y-auto custom-scrollbar">
+        <div className="flex-1 p-6 border-b md:border-b-0 md:border-r border-white/10 overflow-y-auto custom-scrollbar">
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-2xl font-bold text-white flex items-center gap-2">
@@ -362,7 +363,7 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId }
         </div>
 
         {/* Right Side: Wiki & Search */}
-        <div className="w-full md:w-[320px] bg-black/40 p-8 flex flex-col gap-6 overflow-y-auto custom-scrollbar">
+        <div className="w-full md:w-[300px] bg-black/40 p-6 flex flex-col gap-6 overflow-y-auto custom-scrollbar">
           <div>
             <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
               <BookOpen size={18} className="text-primary-400" /> Wiki Hub
@@ -438,6 +439,7 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId }
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
