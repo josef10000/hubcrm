@@ -839,7 +839,11 @@ export default function ProfileView() {
                     inventory={userAssets} 
                     isAdmin={isAdmin}
                     onAdd={() => setShowAddAssetModal(true)}
-                              {activeTab === 'feedbacks' && (
+                  />
+                </div>
+              )}
+
+              {activeTab === 'feedbacks' && (
                 <div className="animate-in slide-in-from-right duration-500">
                   <div className="flex items-center justify-between mb-8">
                     <h4 className="text-sm font-bold text-gray-500 uppercase tracking-widest">Mural de Feedbacks</h4>
