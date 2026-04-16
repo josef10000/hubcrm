@@ -11,7 +11,6 @@ import { useCRM } from '../../contexts/CRMContext';
 interface ClientsGridProps {
   currentClients: Client[];
   filteredClients: Client[];
-  dashboardMode: 'list' | 'kanban';
   user: any;
   setEditingClient: (client: Client) => void;
   setIsModalOpen: (open: boolean) => void;
@@ -22,7 +21,6 @@ interface ClientsGridProps {
 export default function ClientsGrid({
   currentClients,
   filteredClients,
-  dashboardMode,
   user,
   setEditingClient,
   setIsModalOpen,
@@ -34,7 +32,6 @@ export default function ClientsGrid({
 
   return (
     <>
-      {dashboardMode === 'list' ? (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         {currentClients.map((client) => (
           <div key={client.id} onClick={() => { setEditingClient(client); setIsModalOpen(true); }} className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl cursor-pointer hover:bg-gray-100 dark:hover:bg-primary-500/20 transition-all group relative overflow-hidden shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] hover:shadow-[0_8px_32px_0_rgba(249,115,22,0.15)] hover:-translate-y-1 flex flex-col h-full">
@@ -243,86 +240,12 @@ export default function ClientsGrid({
           </div>
         )}
       </div>
-        )}
-      ) : (
-    <div className="flex gap-6 overflow-x-auto pb-8 custom-scrollbar items-start">
-      {['Em Desenvolvimento', 'Ativo', 'Inadimplente', 'Cancelado'].map((status) => {
-        const columnClients = filteredClients.filter((c) => c.status === status);
-        return (
-          <div key={status} className="min-w-[320px] w-[320px] bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl p-4 flex flex-col max-h-[70vh]">
-            <div className="flex justify-between items-center mb-4 px-2">
-              <h3 className="text-gray-900 dark:text-white font-medium">{status}</h3>
-              <span className="bg-gray-200 dark:bg-white/10 text-gray-600 dark:text-gray-300 text-xs px-2 py-1 rounded-full">{columnClients.length}</span>
-            </div>
-            <div className="flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2 pb-2">
-              {columnClients.map((client) => (
-                <div key={client.id} onClick={() => { setEditingClient(client); setIsModalOpen(true); }} className="bg-gray-200 dark:bg-white/10 border border-gray-200 dark:border-white/10 p-4 rounded-xl cursor-pointer hover:bg-gray-100 dark:hover:bg-primary-500/20 transition-all group relative">
-                  <h4 className="font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2 flex-wrap">
-                    {client.name}
-                    {isChurnRisk(client) && (
-                      <span title={`Fatura atrasada há mais de ${churnRiskDays} dias`} className="animate-pulse bg-red-500/20 text-red-500 border border-red-500/30 px-1.5 py-0.5 rounded-full text-[9px] uppercase font-bold tracking-wider flex items-center gap-1">
-                        <AlertTriangle size={8} />
-                        Risco
-                      </span>
-                    )}
-                  </h4>
-
-                  {client.tagIds && client.tagIds.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mb-3">
-                      {client.tagIds.map(tagId => {
-                        const tag = tags.find(t => t.id === tagId);
-                        if (!tag) return null;
-                        return (
-                          <div 
-                            key={tagId} 
-                            className="w-2 h-2 rounded-full shadow-sm"
-                            style={{ backgroundColor: tag.color }}
-                            title={tag.name}
-                          />
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  <div className="flex items-center text-gray-500 dark:text-gray-400 text-xs mb-2">
-                    <Phone size={12} className="mr-2 text-primary-400" />
-                    {client.whatsapp}
-                  </div>
-                  {client.paymentStatus && client.paymentStatus !== 'N/A' && (
-                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                      client.paymentStatus === 'RECEIVED' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
-                      client.paymentStatus === 'OVERDUE' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
-                      'bg-primary-500/20 text-primary-400 border border-primary-500/30'
-                    }`}>
-                      {client.paymentStatus === 'RECEIVED' ? 'Pago' : client.paymentStatus === 'OVERDUE' ? 'Atrasado' : 'Pendente'}
-                    </span>
-                  )}
-                  {/* Kanban Health Score */}
-                  <div className="mt-2 flex items-center gap-1.5">
-                    <div className={`w-1.5 h-1.5 rounded-full ${getHealthColor(calculateHealthScore(client)).replace('text', 'bg')}`} />
-                    <span className={`text-[9px] font-bold uppercase tracking-wider ${getHealthColor(calculateHealthScore(client))}`}>
-                      Saúde: {calculateHealthScore(client)}%
-                    </span>
-                  </div>
-                </div>
-
-              ))}
-              {columnClients.length === 0 && (
-                <div className="text-center py-8 text-gray-500 text-sm border border-dashed border-gray-200 dark:border-white/10 rounded-xl">
-                  Vazio
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })}
 
       <SupportRequestModal 
         isOpen={!!supportModalClientId} 
         onClose={() => setSupportModalClientId(null)} 
         initialClientId={supportModalClientId || undefined}
       />
-    </div>
     </>
   );
 }

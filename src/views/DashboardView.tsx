@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, AlignLeft, RefreshCw, ArrowDownAZ, Clock, Tag as TagIcon, ChevronDown, Filter } from 'lucide-react';
+import { RefreshCw, ArrowDownAZ, Clock, Tag as TagIcon, ChevronDown, Filter } from 'lucide-react';
 import { useCRM } from '../contexts/CRMContext';
 import { useUI } from '../contexts/UIContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -29,7 +29,6 @@ export default function DashboardView() {
 
   const {
     currentPage, setCurrentPage, clientsPerPage,
-    dashboardMode, setDashboardMode,
     setIsModalOpen,
     filterStatus, setFilterStatus, 
     sortBy, setSortBy,
@@ -160,8 +159,6 @@ export default function DashboardView() {
             {(userProfile?.role === 'Administrador' || 
               userProfile?.role === 'Gerente' || 
               ['FinOps', 'Controladoria', 'Revenue Operations', 'Gestor de Faturamento'].includes(userProfile?.role || '')) && <div className="w-px h-6 bg-gray-200 dark:bg-white/10 mx-1"></div>}
-            <button onClick={() => setDashboardMode('list')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${dashboardMode === 'list' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}><AlignLeft size={16} className="mr-2"/> Lista</button>
-            <button onClick={() => setDashboardMode('kanban')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${dashboardMode === 'kanban' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}><LayoutDashboard size={16} className="mr-2"/> Kanban</button>
             <div className="w-px h-6 bg-gray-200 dark:bg-white/10 mx-1"></div>
             <button onClick={() => setSortBy('recent')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${sortBy === 'recent' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}><Clock size={16} className="mr-2"/> Recentes</button>
             <button onClick={() => setSortBy('alphabetical')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${sortBy === 'alphabetical' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}><ArrowDownAZ size={16} className="mr-2"/> A-Z</button>
@@ -186,7 +183,6 @@ export default function DashboardView() {
         <ClientsGrid
           currentClients={currentClients}
           filteredClients={filteredClients}
-          dashboardMode={dashboardMode}
           user={user}
           setEditingClient={setEditingClient}
           setIsModalOpen={setIsModalOpen}
@@ -195,7 +191,7 @@ export default function DashboardView() {
         />
 
         {/* Pagination Controls */}
-        {totalPages > 1 && dashboardMode === 'list' && (
+        {totalPages > 1 && (
           <div className="flex justify-center items-center space-x-2 mt-8 mb-4">
             <button
               onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}

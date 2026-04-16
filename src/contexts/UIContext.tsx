@@ -10,9 +10,6 @@ interface UIContextType {
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
 
-  // View Modes
-  dashboardMode: 'list' | 'kanban';
-  setDashboardMode: (mode: 'list' | 'kanban') => void;
 
   // Search & Filters
   searchTerm: string;
@@ -49,7 +46,6 @@ export function useUI() {
 export function UIProvider({ children }: { children: React.ReactNode }) {
   const [view, setView] = useState<CRMView>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [dashboardMode, setDashboardMode] = useState<'list' | 'kanban'>('list');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -83,7 +79,6 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
   const value: UIContextType = {
     view, setView,
     sidebarOpen, setSidebarOpen,
-    dashboardMode, setDashboardMode,
     isModalOpen, setIsModalOpen,
     searchTerm, setSearchTerm,
     filterStatus, setFilterStatus,
