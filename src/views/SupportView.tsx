@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageCircle, Clock, MessageSquare, CheckCircle, Trash2, Star, User, ArrowUp, ArrowDown, Minus, AlertCircle, Plus, Smartphone } from 'lucide-react';
+import { MessageCircle, Clock, MessageSquare, CheckCircle, Trash2, Star, User, ArrowUp, ArrowDown, Minus, AlertTriangle, Plus, Phone } from 'lucide-react';
 import SupportRequestModal from '../components/SupportRequestModal';
 import { differenceInHours } from 'date-fns';
 import { useCRM } from '../contexts/CRMContext';
@@ -10,7 +10,16 @@ import { toast } from 'sonner';
 
 export default function SupportView() {
   const { user } = useAuth();
-  const { supportRequests, replyingTo, setReplyingTo, replyMessage, setReplyMessage, effectiveOrgId, teamProfiles } = useCRM();
+  const crm = useCRM();
+  const { 
+    supportRequests = [], 
+    replyingTo = null, 
+    setReplyingTo = () => {}, 
+    replyMessage = '', 
+    setReplyMessage = () => {}, 
+    effectiveOrgId = '', 
+    teamProfiles = [] 
+  } = crm || {};
   const [sortBy, setSortBy] = React.useState<'recent' | 'sla'>('recent');
   const [isNewRequestModalOpen, setIsNewRequestModalOpen] = React.useState(false);
 
@@ -21,11 +30,11 @@ export default function SupportView() {
     : null;
 
   // Monitoramento de SLA para o Resumo
-  const openRequests = supportRequests.filter(r => r.status !== 'concluido');
+  const openRequests = Array.isArray(supportRequests) ? supportRequests.filter(r => r?.status !== 'concluido') : [];
   const slaMetrics = {
     atrasados: 0,
-    vencendoAgora: 0, // < 2h
-    emAlerta: 0, // < 6h
+    vencendoAgora: 0, 
+    emAlerta: 0, 
     noPrazo: 0
   };
 
@@ -52,8 +61,19 @@ export default function SupportView() {
 
   const getSlaStatus = (createdAt: any, priority?: string) => {
     if (!createdAt) return null;
-    const date = createdAt.toDate ? createdAt.toDate() : new Date(createdAt);
-    const hoursPast = differenceInHours(new Date(), date);
+    let date: Date;
+    try {
+      if (createdAt.toDate && typeof createdAt.toDate === 'function') {
+        date = createdAt.toDate();
+      } else if (createdAt.seconds) {
+        date = new Date(createdAt.seconds * 1000);
+      } else {
+        date = new Date(createdAt);
+      }
+      
+      if (isNaN(date.getTime())) return null;
+      
+      const hoursPast = differenceInHours(new Date(), date);
     
     // SLA Definitions
     const slaLimits = {
@@ -111,7 +131,7 @@ export default function SupportView() {
             <div className="flex items-center justify-between">
               <h3 className={`text-2xl font-bold ${slaMetrics.atrasados > 0 ? 'text-red-500' : 'text-gray-400'}`}>{slaMetrics.atrasados}</h3>
               <div className={`p-2 rounded-lg ${slaMetrics.atrasados > 0 ? 'bg-red-500/20 text-red-500' : 'bg-gray-500/10 text-gray-500'}`}>
-                <AlertCircle size={18} />
+                <AlertTriangle size={18} />
               </div>
             </div>
           </div>
@@ -198,9 +218,9 @@ export default function SupportView() {
                       }`}>
                         {req.status === 'concluido' ? 'Concluído' : req.status === 'resolvido' ? 'Resolvido' : req.status === 'em_analise' ? 'Em Análise' : 'Aberto'}
                       </span>
-                      {req.origin === 'whatsapp' && (
+                      {req?.origin === 'whatsapp' && (
                         <span className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-widest bg-[#25D366]/20 text-[#25D366] border border-[#25D366]/30">
-                          <Smartphone size={10} />
+                          <Phone size={10} />
                           WhatsApp
                         </span>
                       )}

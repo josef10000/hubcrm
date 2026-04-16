@@ -4,7 +4,7 @@ import {
   X, Search, User, MessageSquare, AlertTriangle, 
   CheckCircle, BookOpen, Copy, ExternalLink, 
   History, Send, Info, Clock, ShieldAlert,
-  Hash, Globe, Smartphone, Mail, AlertCircle
+  Hash, Globe, Phone, Mail, AlertTriangle
 } from 'lucide-react';
 import { useCRM } from '../contexts/CRMContext';
 import { toast } from 'sonner';
@@ -149,7 +149,7 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId }
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                <Smartphone className="text-primary-500" /> Atendimento Ativo
+                <Phone className="text-primary-500" /> Atendimento Ativo
                 {initialClientId && selectedClient && (
                   <span className="text-primary-400 hidden sm:inline"> - {selectedClient.name}</span>
                 )}
@@ -252,7 +252,7 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId }
                 <div>
                   <label className="text-xs font-black uppercase tracking-widest text-gray-500 mb-2 block">WhatsApp</label>
                   <div className="relative">
-                    <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" size={16} />
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" size={16} />
                     <input 
                       type="text" 
                       value={clientWhatsapp}
