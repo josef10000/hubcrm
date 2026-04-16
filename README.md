@@ -905,7 +905,7 @@ MIT License — Copyright (c) 2026 Hub Symples LTDA
   <br />
   <img src="https://i.imgur.com/EFBaYb5.png" alt="Hub Central" width="80" />
   <br /><br />
-  <strong>Hub Central v2.9.0-rc1</strong>
+  <strong>Hub Central v3.5.0-rc1</strong>
   <br />
   <em>Modernidade · Automação · Resultados</em>
   <br /><br />
