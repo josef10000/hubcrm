@@ -145,7 +145,6 @@ export default function CalendarView({ clients, onClientClick, role }: CalendarV
       // People mode summary
       const { vacations: dayVacations, anniversaries, workAnniversaries } = getDayPeopleEvents(day);
       if (dayVacations.length === 0 && anniversaries.length === 0 && workAnniversaries.length === 0) return null;
-Baseado na sua solicitação, adicionei a distinção visual entre aniversários de vida e aniversários de casa no calendário. Note que para os aniversários de casa (startDate), adicionei uma verificação para não mostrar no ano de contratação (visto que o primeiro aniversário de casa ocorre apenas após um ano).
 
       return (
         <div className="mt-2 flex flex-col gap-1 w-full">
@@ -161,10 +160,16 @@ Baseado na sua solicitação, adicionei a distinção visual entre aniversários
           ))}
           {dayVacations.map((v, i) => {
              const user = teamProfiles.find(p => p.uid === v.userId);
-             const typeIcon = v.type === 'Férias' ? '🏖️' : '🏥';
+             let typeIcon = '⚠️';
+             if (v.type === 'Férias') typeIcon = '🏖️';
+             else if (v.reason === 'Falta') typeIcon = '❌';
+             else if (v.reason === 'Motivo Médico') typeIcon = '🏥';
+             else if (v.reason === 'Licença Maternidade/Paternidade') typeIcon = '👶';
+             else if (v.type === 'Folga') typeIcon = '🏠';
+
              const displayName = !canSeePeople && v.type !== 'Férias' ? 'Indisponível' : (user?.displayName.split(' ')[0] || 'Membro');
              return (
-               <div key={`vac-${i}`} className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-1.5 py-0.5 rounded-md truncate">
+               <div key={`vac-${i}`} className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-1.5 py-0.5 rounded-md truncate" title={`${v.type}: ${user?.displayName}`}>
                  {typeIcon} {displayName}
                </div>
              );
