@@ -132,7 +132,7 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId }
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
+    <div className="fixed inset-0 z-[9999] flex items-start md:items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto pt-20 md:pt-4">
       <div className="bg-[#0f0f0f] border border-white/10 w-full max-w-5xl rounded-[2.5rem] shadow-2xl flex flex-col md:flex-row overflow-hidden animate-in fade-in zoom-in duration-300 max-h-[90vh]">
         
         {/* Left Side: Form */}
@@ -141,8 +141,16 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId }
             <div>
               <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                 <Smartphone className="text-primary-500" /> Atendimento Ativo
+                {initialClientId && selectedClient && (
+                  <span className="text-primary-400 hidden sm:inline"> - {selectedClient.name}</span>
+                )}
               </h2>
-              <p className="text-gray-500 text-sm mt-1">Abra chamados ou registre notas rapidamente.</p>
+              <p className="text-gray-500 text-sm mt-1">
+                {initialClientId && selectedClient 
+                  ? `Registrando atendimento para ${selectedClient.name}`
+                  : 'Abra chamados ou registre notas rapidamente.'
+                }
+              </p>
             </div>
             <button 
               onClick={onClose}
@@ -153,71 +161,73 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId }
           </div>
 
           <div className="space-y-6">
-            {/* Cliente Search / Display */}
-            <div className="relative">
-              <label className="text-xs font-black uppercase tracking-widest text-gray-500 mb-2 block">Cliente</label>
-              {!selectedClient ? (
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                  <input 
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Buscar por nome, WhatsApp ou e-mail..."
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white outline-none focus:border-primary-500/50 transition-all font-medium"
-                  />
-                  {filteredClients.length > 0 && (
-                    <div className="absolute top-full left-0 w-full bg-[#1a1a1a] border border-white/10 rounded-2xl mt-2 overflow-hidden shadow-2xl z-20">
-                      {filteredClients.map(c => (
-                        <button
-                          key={c.id}
-                          onClick={() => {
-                            setSelectedClient(c);
-                            setSearchQuery('');
-                          }}
-                          className="w-full p-4 flex items-center gap-4 hover:bg-white/5 transition-colors text-left border-b border-white/5 last:border-0"
-                        >
-                          <div className="w-10 h-10 bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-500">
-                             <User size={20} />
-                          </div>
-                          <div>
-                            <p className="font-bold text-white">{c.name}</p>
-                            <p className="text-xs text-gray-500">{c.whatsapp} • {c.email || 'Sem e-mail'}</p>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="bg-primary-500/5 border border-primary-500/20 rounded-2xl p-4 flex items-center justify-between animate-in slide-in-from-top-2">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-primary-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary-500/20">
-                       <User size={24} />
-                    </div>
-                    <div>
-                      <p className="font-bold text-white text-lg">{selectedClient.name}</p>
-                      <div className="flex gap-2 mt-1">
-                        {selectedClient.status === 'Ativo' ? (
-                          <span className="bg-emerald-500/20 text-emerald-400 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter">Ativo</span>
-                        ) : selectedClient.status === 'Inadimplente' ? (
-                          <span className="bg-red-500/20 text-red-400 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter">Inadimplente</span>
-                        ) : null}
-                        {selectedClient.stages?.some(s => !s.completed) && (
-                          <span className="bg-blue-500/20 text-blue-400 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter">Em Onboarding</span>
-                        )}
+            {/* Cliente Search / Display - Hidden if initialClientId is provided */}
+            {!initialClientId && (
+              <div className="relative">
+                <label className="text-xs font-black uppercase tracking-widest text-gray-500 mb-2 block">Cliente</label>
+                {!selectedClient ? (
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                    <input 
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Buscar por nome, WhatsApp ou e-mail..."
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white outline-none focus:border-primary-500/50 transition-all font-medium"
+                    />
+                    {filteredClients.length > 0 && (
+                      <div className="absolute top-full left-0 w-full bg-[#1a1a1a] border border-white/10 rounded-2xl mt-2 overflow-hidden shadow-2xl z-20">
+                        {filteredClients.map(c => (
+                          <button
+                            key={c.id}
+                            onClick={() => {
+                              setSelectedClient(c);
+                              setSearchQuery('');
+                            }}
+                            className="w-full p-4 flex items-center gap-4 hover:bg-white/5 transition-colors text-left border-b border-white/5 last:border-0"
+                          >
+                            <div className="w-10 h-10 bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-500">
+                               <User size={20} />
+                            </div>
+                            <div>
+                              <p className="font-bold text-white">{c.name}</p>
+                              <p className="text-xs text-gray-500">{c.whatsapp} • {c.email || 'Sem e-mail'}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-primary-500/5 border border-primary-500/20 rounded-2xl p-4 flex items-center justify-between animate-in slide-in-from-top-2">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-primary-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary-500/20">
+                         <User size={24} />
+                      </div>
+                      <div>
+                        <p className="font-bold text-white text-lg">{selectedClient.name}</p>
+                        <div className="flex gap-2 mt-1">
+                          {selectedClient.status === 'Ativo' ? (
+                            <span className="bg-emerald-500/20 text-emerald-400 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter">Ativo</span>
+                          ) : selectedClient.status === 'Inadimplente' ? (
+                            <span className="bg-red-500/20 text-red-400 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter">Inadimplente</span>
+                          ) : null}
+                          {selectedClient.stages?.some(s => !s.completed) && (
+                            <span className="bg-blue-500/20 text-blue-400 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter">Em Onboarding</span>
+                          )}
+                        </div>
                       </div>
                     </div>
+                    <button 
+                      onClick={() => setSelectedClient(null)}
+                      className="text-gray-500 hover:text-white text-xs font-bold uppercase tracking-widest bg-white/5 px-4 py-2 rounded-xl border border-white/5"
+                    >
+                      Trocar
+                    </button>
                   </div>
-                  <button 
-                    onClick={() => setSelectedClient(null)}
-                    className="text-gray-500 hover:text-white text-xs font-bold uppercase tracking-widest bg-white/5 px-4 py-2 rounded-xl border border-white/5"
-                  >
-                    Trocar
-                  </button>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
 
             {selectedClient && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-500">
