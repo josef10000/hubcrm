@@ -45,7 +45,7 @@ import { updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 export default function ProfileView() {
   const { uid } = useParams();
   const { user, userProfile: currentUserProfile, refreshProfile } = useAuth();
-  const { supportRequests, vacations, handleSaveVacationRequest, teamProfiles } = useCRM();
+  const { supportRequests, vacations, handleSaveVacationRequest, handleDeleteVacationRequest, teamProfiles } = useCRM();
   const navigate = useNavigate();
 
   // Métrica CSAT Individual
@@ -266,7 +266,7 @@ export default function ProfileView() {
 
   const confirmDeleteVacation = async () => {
     if (!vacationToDelete) return;
-    await crm.handleDeleteVacationRequest(vacationToDelete);
+    await handleDeleteVacationRequest(vacationToDelete);
     setShowDeleteVacationConfirm(false);
     setVacationToDelete(null);
   };

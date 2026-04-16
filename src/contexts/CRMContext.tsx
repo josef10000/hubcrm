@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { collection, doc, setDoc, addDoc, onSnapshot, query, where, serverTimestamp, arrayUnion } from 'firebase/firestore';
+import { collection, doc, setDoc, addDoc, deleteDoc, onSnapshot, query, where, serverTimestamp, arrayUnion } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Client, Offer, Expense, Transaction, TransactionCategory, Budget, Lead, UserProfile, CommissionEntry, Tag, WikiArticle, WikiComment, UserRole } from '../types';
 import { VacationPeriod } from '../types/people';
