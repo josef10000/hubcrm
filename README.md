@@ -7,8 +7,8 @@
 Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.
 
   <p>
-    <img src="https://img.shields.io/badge/Version-2.9.0-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
-    <img src="https://img.shields.io/badge/Status-Production_Ready-22c55e?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
+    <img src="https://img.shields.io/badge/Version-3.5.0-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Status-Sturdy_&_Human_First-22c55e?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge&labelColor=111111" alt="License" />
   </p>
@@ -219,9 +219,17 @@ Módulo financeiro completo com 6 sub-abas especializadas:
 
 ---
 
-### 📅 6. Agenda Central
+### 📅 6. Agenda Central & Calendário Unificado (v3.5)
 
-Calendário integrado com prazos de entrega, datas de pagamento e eventos operacionais vinculados aos clientes.
+Calendário inteligente que integra três modos operacionais com visibilidade global da cultura da empresa.
+
+- **Modos de Visualização**:
+  - 💰 **Financeiro**: Foco em faturas, DRE e previsibilidade de caixa.
+  - 📦 **Produção**: Foco em entregas de clientes, etapas de projeto e prazos.
+  - 🧬 **People**: Foco em férias, solicitações de ausência e bem-estar do time.
+- **Visibilidade de Celebração Universal**: Indicadores globais (🎂 para aniversário, 🚀 para marco de empresa e 🏖️ para ausências) são visíveis no topo de cada dia em **qualquer modo**, garantindo que o humano nunca seja esquecido pelos processos operacionais.
+- **Modal de Detalhes Priorizado**: Ao clicar em um dia, a seção de People & Culture aparece no topo, celebrando aniversariantes antes de listar as entregas técnicas.
+- **Feriados Integrais**: Marcadores de folga coletiva integrados à visão mensal.
 
 ---
 
@@ -243,8 +251,9 @@ Sistema de atendimento profissional focado em SLAs rigorosos e qualidade percept
 A partir da v2.6.1, a plataforma adota o padrão de **Data Shielding** em todos os módulos críticos (Suporte, RH, Financeiro):
 
 - **Blindagem de Hooks**: Desestruturação segura do `useCRM()` com valores padrão garantidos.
-- **Array Validation**: Verificação obrigatória `Array.isArray()` antes de qualquer operação de `.map()` ou `.filter()`, prevenindo crashes causados por tempos de resposta assíncronos do Firebase.
-- **Local State Encapsulation**: Migração de estados de interface (como modos de resposta e modais) do contexto global para estados locais, reduzindo re-renders e aumentando a performance.
+- **Array Validation**: Verificação obrigatória `Array.isArray()` antes de qualquer operação de `.map()` ou `.filter()`.
+- **Atomic Side Effects (v3.4)**: Padrão que isola efeitos colaterais (notificações, e-mails) da lógica de persistência principal. Garante que o usuário receba confirmação de sucesso se o dado foi salvo, mesmo que um alerta secundário falhe devido à rede.
+- **Local State Encapsulation**: Redução de re-renders e aumento de performance via estados locais em modais.
 
 ---
 
@@ -281,12 +290,14 @@ Módulo completo de People Management focado em retenção, felicidade e control
 - **Mural de Feedbacks & Reconhecimento**: Espaço para cultura de feedback e reconhecimento público, integrado com o ecossistema de cultura da empresa.
 - **Jornada do Colaborador (Career Path)**: Linha do tempo visual com marcos históricos (Hired, Promotion, Certification, Birthday) gerenciado com exclusividade pela liderança.
 - **Plano de Desenvolvimento (PDI)**: Árvore de competências e ações de curto/médio prazo. O gerenciamento e atualização da matriz de competências é restrito a Admins, Gerentes e People & Culture, e não pode ser realizado pelo próprio colaborador em seu próprio perfil (Auto-gestão restrita).
-- **Ausências & Férias Auditáveis (v2.8)**: Fluxo proativo de solicitação com **justificativa obrigatória do RH para recusas**. Inclui histórico completo visível no perfil com feedback detalhado e notificações automáticas de retorno para o colaborador.
+- **Ausências & Férias Auditáveis (v2.8 - v3.4)**: Fluxo proativo de solicitação com justificativa obrigatória do RH para recusas. Inclui histórico completo visível no perfil com feedback detalhado e notificações automáticas de retorno para o colaborador.
+- **Resiliência de Transação (v3.4)**: Implementação de salvamento atômico que isola falhas de notificação. A ausência é garantida no banco mesmo se o alerta de sistema falhar, eliminando erros falsos de UX.
+- **Calendário unificado (v3.5)**: Integração total de marcos pessoais (Aniversários) em todas as visões operativa da intranet.
 - **Sistema Totalmente "Tagarela" (v2.9)**: Notificações dinâmicas via **Título da Aba do Navegador** — o HubCRM sincroniza globalmente o contador de pendências (Chamados + RH + Wiki + Alertas) diretamente no título da página, garantindo visibilidade multitarefa.
 - **Gestão Descentralizada de Histórico**: Liderança (Admin/Gerente) possui poder de **exclusão permanente** de registros de ausência diretamente no perfil do colaborador ou na aba central, garantindo higiene de dados e auditoria de solicitações.
 - **Dashboard de Pendências de RH**: Contador dinâmico (badge) no menu global para o time de People & Culture sobre novas solicitações de ausência.
 - **eNPS Anônimo**: Termômetro de fidelidade e satisfação interna baseado na métrica clássica de promotoria, com dashboard de sentimentos anônimos.
-- **Gamificação (Aniversários)**: Celebração visual automática no dia do nascimento com animação de partículas (confetes).
+- **Gamificação (Aniversários)**: Celebração visual automática no dia do nascimento com animação de partículas (confetes). 🎂 Agora visível globalmente no calendário operacional.
 - **Checklists Interativos**: Trilhas de onboarding personalizáveis por usuário com acompanhamento de progresso em tempo real.
 - **RBAC Robusto**: Todas as ações sensíveis (Ativos, PDI, Carreira, Clima) possuem travas de segurança que exigem permissões de Administrador, Gerente ou People & Culture.
 
