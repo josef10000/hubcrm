@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { MessageCircle, Clock, MessageSquare, CheckCircle, Trash2, Star, User, ArrowUp, ArrowDown, Minus, AlertTriangle, Plus, Phone } from 'lucide-react';
 import SupportRequestModal from '../components/SupportRequestModal';
 import { differenceInHours } from 'date-fns';
@@ -11,26 +11,33 @@ import { toast } from 'sonner';
 export default function SupportView() {
   const { user } = useAuth();
   const crm = useCRM();
+  
+  // 1. Extraímos os dados brutos com fallbacks de segurança
   const { 
-    supportRequests = [], 
-    replyingTo = null, 
-    setReplyingTo = () => {}, 
-    replyMessage = '', 
-    setReplyMessage = () => {}, 
+    supportRequests: rawSupportRequests = [], 
     effectiveOrgId = '', 
-    teamProfiles = [] 
+    teamProfiles: rawTeamProfiles = [] 
   } = crm || {};
-  const [sortBy, setSortBy] = React.useState<'recent' | 'sla'>('recent');
-  const [isNewRequestModalOpen, setIsNewRequestModalOpen] = React.useState(false);
 
+  // 2. BLINDAGEM: Garantimos que sempre serão arrays (Evita a tela branca se o Context retornar null)
+  const supportRequests = Array.isArray(rawSupportRequests) ? rawSupportRequests : [];
+  const teamProfiles = Array.isArray(rawTeamProfiles) ? rawTeamProfiles : [];
 
-  const csatRequests = supportRequests.filter(r => r.csatScore);
+  // 3. Estados locais para a interface (Conserta o botão "Responder" e isola UI)
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyMessage, setReplyMessage] = useState('');
+  
+  const [sortBy, setSortBy] = useState<'recent' | 'sla'>('recent');
+  const [isNewRequestModalOpen, setIsNewRequestModalOpen] = useState(false);
+
+  // Agora é 100% seguro rodar os filtros, pois supportRequests nunca será null
+  const csatRequests = supportRequests.filter(r => r?.csatScore);
   const avgCsat = csatRequests.length > 0 
-    ? (csatRequests.reduce((acc, r) => acc + (Number(r.csatScore) || 0), 0) / csatRequests.length).toFixed(1)
+    ? (csatRequests.reduce((acc, r) => acc + (Number(r?.csatScore) || 0), 0) / csatRequests.length).toFixed(1)
     : null;
 
   // Monitoramento de SLA para o Resumo
-  const openRequests = Array.isArray(supportRequests) ? supportRequests.filter(r => r?.status !== 'concluido') : [];
+  const openRequests = supportRequests.filter(r => r?.status !== 'concluido');
   const slaMetrics = {
     atrasados: 0,
     vencendoAgora: 0, 
@@ -39,7 +46,7 @@ export default function SupportView() {
   };
 
   openRequests.forEach(req => {
-    if (!req.createdAt) return;
+    if (!req?.createdAt) return;
     const sla = getSlaStatus(req.createdAt, req.priority);
     if (!sla) return;
     if (sla.isOverdue) slaMetrics.atrasados++;
