@@ -12,60 +12,23 @@ export default function SupportView() {
   const { user } = useAuth();
   const crm = useCRM();
   
-  // 1. Extraímos os dados brutos com fallbacks de segurança
+  // 1. Extração e Blindagem dos Dados do Banco (Garante que nunca sejam nulos)
   const { 
     supportRequests: rawSupportRequests = [], 
     effectiveOrgId = '', 
     teamProfiles: rawTeamProfiles = [] 
   } = crm || {};
 
-  // 2. BLINDAGEM: Garantimos que sempre serão arrays (Evita a tela branca se o Context retornar null)
-  const supportRequests = Array.isArray(rawSupportRequests) ? rawSupportRequests : [];
-  const teamProfiles = Array.isArray(rawTeamProfiles) ? rawTeamProfiles : [];
+  const supportRequests = Array.isArray(rawSupportRequests) ? rawSupportRequests.filter(Boolean) : [];
+  const teamProfiles = Array.isArray(rawTeamProfiles) ? rawTeamProfiles.filter(Boolean) : [];
 
-  // 3. Estados locais para a interface (Conserta o botão "Responder" e isola UI)
+  // 2. Estados Locais da Interface
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyMessage, setReplyMessage] = useState('');
-  
   const [sortBy, setSortBy] = useState<'recent' | 'sla'>('recent');
   const [isNewRequestModalOpen, setIsNewRequestModalOpen] = useState(false);
 
-  // Agora é 100% seguro rodar os filtros, pois supportRequests nunca será null
-  const csatRequests = supportRequests.filter(r => r?.csatScore);
-  const avgCsat = csatRequests.length > 0 
-    ? (csatRequests.reduce((acc, r) => acc + (Number(r?.csatScore) || 0), 0) / csatRequests.length).toFixed(1)
-    : null;
-
-  // Monitoramento de SLA para o Resumo
-  const openRequests = supportRequests.filter(r => r?.status !== 'concluido');
-  const slaMetrics = {
-    atrasados: 0,
-    vencendoAgora: 0, 
-    emAlerta: 0, 
-    noPrazo: 0
-  };
-
-  openRequests.forEach(req => {
-    if (!req?.createdAt) return;
-    const sla = getSlaStatus(req.createdAt, req.priority);
-    if (!sla) return;
-    if (sla.isOverdue) slaMetrics.atrasados++;
-    else if (sla.remaining < 2) slaMetrics.vencendoAgora++;
-    else if (sla.remaining < 6) slaMetrics.emAlerta++;
-    else slaMetrics.noPrazo++;
-  });
-
-
-  const handleUpdateSupport = async (requestId: string, data: any) => {
-    if (!effectiveOrgId) return;
-    try {
-      await setDoc(doc(db, 'organizations', effectiveOrgId, 'supportRequests', requestId), data, { merge: true });
-      toast.success('Chamado atualizado!');
-    } catch (e) {
-      toast.error('Erro ao atualizar chamado.');
-    }
-  };
-
+  // 3. A Função precisa vir ANTES de ser usada (Correção do Crash Fatal)
   const getSlaStatus = (createdAt: any, priority?: string) => {
     if (!createdAt) return null;
     let date: Date;
@@ -82,7 +45,6 @@ export default function SupportView() {
       
       const hoursPast = differenceInHours(new Date(), date);
     
-      // SLA Definitions
       const slaLimits = {
         'alta': 4,
         'media': 24,
@@ -101,6 +63,40 @@ export default function SupportView() {
       return null;
     }
   };
+
+  const handleUpdateSupport = async (requestId: string, data: any) => {
+    if (!effectiveOrgId) return;
+    try {
+      await setDoc(doc(db, 'organizations', effectiveOrgId, 'supportRequests', requestId), data, { merge: true });
+      toast.success('Chamado atualizado!');
+    } catch (e) {
+      toast.error('Erro ao atualizar chamado.');
+    }
+  };
+
+  // 4. Cálculos Seguros
+  const csatRequests = supportRequests.filter(r => r.csatScore);
+  const avgCsat = csatRequests.length > 0 
+    ? (csatRequests.reduce((acc, r) => acc + (Number(r.csatScore) || 0), 0) / csatRequests.length).toFixed(1)
+    : null;
+
+  const openRequests = supportRequests.filter(r => r.status !== 'concluido');
+  const slaMetrics = {
+    atrasados: 0,
+    vencendoAgora: 0, 
+    emAlerta: 0, 
+    noPrazo: 0
+  };
+
+  openRequests.forEach(req => {
+    if (!req.createdAt) return;
+    const sla = getSlaStatus(req.createdAt, req.priority);
+    if (!sla) return;
+    if (sla.isOverdue) slaMetrics.atrasados++;
+    else if (sla.remaining < 2) slaMetrics.vencendoAgora++;
+    else if (sla.remaining < 6) slaMetrics.emAlerta++;
+    else slaMetrics.noPrazo++;
+  });
 
   return (
     <div className="w-full h-full overflow-y-auto p-6 bg-[#030712] custom-scrollbar">
@@ -195,7 +191,6 @@ export default function SupportView() {
           </div>
         </div>
 
-
         <div className="space-y-4">
           {supportRequests.length === 0 ? (
             <div className="text-center py-12 bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl">
@@ -214,7 +209,6 @@ export default function SupportView() {
               
               return slaA - slaB;
             }).map((req) => (
-
               <div key={req.id} className={`bg-gray-100 dark:bg-white/5 backdrop-blur-xl border ${req.status === 'concluido' ? 'border-emerald-500/30 opacity-70' : 'border-gray-200 dark:border-white/10'} p-6 rounded-3xl shadow-lg transition-all`}>
                 <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                   <div className="flex-1 w-full">
@@ -271,8 +265,8 @@ export default function SupportView() {
                           {getSlaStatus(req.createdAt, req.priority)?.text}
                         </div>
                       )}
-
                     </div>
+                    
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                       Enviado em: {req.createdAt && typeof req.createdAt.toDate === 'function' ? req.createdAt.toDate().toLocaleString('pt-BR') : 'Data desconhecida'}
                     </p>
