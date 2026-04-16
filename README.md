@@ -7,7 +7,7 @@
 Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.
 
   <p>
-    <img src="https://img.shields.io/badge/Version-2.6.2-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-2.7.0-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Status-Production_Ready-22c55e?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge&labelColor=111111" alt="License" />
@@ -281,7 +281,8 @@ Módulo completo de People Management focado em retenção, felicidade e control
 - **Mural de Feedbacks & Reconhecimento**: Espaço para cultura de feedback e reconhecimento público, integrado com o ecossistema de cultura da empresa.
 - **Jornada do Colaborador (Career Path)**: Linha do tempo visual com marcos históricos (Hired, Promotion, Certification, Birthday) gerenciado com exclusividade pela liderança.
 - **Plano de Desenvolvimento (PDI)**: Árvore de competências e ações de curto/médio prazo. O gerenciamento e atualização da matriz de competências é restrito a Admins, Gerentes e People & Culture, e não pode ser realizado pelo próprio colaborador em seu próprio perfil (Auto-gestão restrita).
-- **Férias & Ausências**: Fluxo completo de solicitação, aprovação e histórico de períodos de descanso.
+- **Ausências & Férias Auditáveis (v2.7)**: Fluxo proativo de solicitação com justificativa obrigatória, histórico completo (aprovadas/negadas) e notificações automáticas de retorno para o colaborador.
+- **Dashboard de Pendências de RH**: Contador dinâmico (badge) no menu global para o time de People & Culture sobre novas solicitações de ausência.
 - **eNPS Anônimo**: Termômetro de fidelidade e satisfação interna baseado na métrica clássica de promotoria, com dashboard de sentimentos anônimos.
 - **Gamificação (Aniversários)**: Celebração visual automática no dia do nascimento com animação de partículas (confetes).
 - **Checklists Interativos**: Trilhas de onboarding personalizáveis por usuário com acompanhamento de progresso em tempo real.

@@ -120,7 +120,9 @@ interface CRMContextType {
   handleAddWikiComment: (articleId: string, comment: Partial<WikiComment>) => Promise<void>;
   handleMarkWikiArticleAsRead: (articleId: string) => Promise<void>;
   handleCreateSupportRequest: (requestData: any) => Promise<void>;
+  handleSaveVacationRequest: (vacationData: Partial<VacationPeriod>) => Promise<void>;
   handleAddClientLog: (clientId: string, logText: string) => Promise<void>;
+  pendingVacationsCount: number;
 }
 
 const CRMContext = createContext<CRMContextType | null>(null);
@@ -541,6 +543,51 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         throw e;
       }
     },
+    handleSaveVacationRequest: async (vacationData: Partial<VacationPeriod>) => {
+      if (!effectiveOrgId) return;
+      try {
+        const isNew = !vacationData.id;
+        const id = vacationData.id || doc(collection(db, 'organizations', effectiveOrgId, 'vacations')).id;
+        const now = Date.now();
+
+        await setDoc(doc(db, 'organizations', effectiveOrgId, 'vacations', id), {
+          ...vacationData,
+          id,
+          createdAt: vacationData.createdAt || now,
+        }, { merge: true });
+
+        // Gatilhos de Notificação
+        if (isNew) {
+          // Notifica Time de People & Culture sobre nova solicitação
+          await addDoc(collection(db, 'system_alerts'), {
+            title: '📅 Nova Solicitação de Ausência',
+            message: `O colaborador solicitou: ${vacationData.type} (${vacationData.reason}). Justificativa: ${vacationData.description || 'Não informada.'}`,
+            type: 'info',
+            targetRoles: ['People & Culture', 'Administrador', 'Gerente'],
+            orgId: effectiveOrgId,
+            createdAt: now,
+            link: '/people'
+          });
+          toast.success('Solicitação enviada com sucesso!');
+        } else if (vacationData.status === 'Aprovado' || vacationData.status === 'Recusado') {
+          // Notifica o colaborador sobre o retorno da solicitação
+          const statusIcon = vacationData.status === 'Aprovado' ? '✅' : '❌';
+          await addDoc(collection(db, 'system_alerts'), {
+            title: `${statusIcon} Retorno de Solicitação`,
+            message: `Sua solicitação de ${vacationData.type} foi ${vacationData.status.toLowerCase()}.`,
+            type: vacationData.status === 'Aprovado' ? 'success' : 'warning',
+            userId: vacationData.userId, // Alerta específico para o usuário
+            orgId: effectiveOrgId,
+            createdAt: now,
+            link: '/people'
+          });
+          toast.success(`Solicitação ${vacationData.status.toLowerCase()} com sucesso!`);
+        }
+      } catch (e) {
+        console.error('Error saving vacation request:', e);
+        toast.error('Erro ao processar solicitação.');
+      }
+    },
     handleAddClientLog: async (clientId: string, logText: string) => {
       if (!effectiveOrgId) return;
       try {
@@ -559,6 +606,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         toast.error('Erro ao registrar nota.');
       }
     },
+    pendingVacationsCount: vacations.filter(v => v.status === 'Pendente').length,
     isChurnRisk: clientActions.isChurnRisk, isComboNearRenewal: clientActions.isComboNearRenewal,
     effectiveOrgId, userProfile, vacations, teamProfiles, commissions, tags, wikiArticles, offerActions
   };

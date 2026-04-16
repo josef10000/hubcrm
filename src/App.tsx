@@ -78,7 +78,7 @@ function CRMInner() {
     onboardingQuestions,
     handleSaveClient, handleDeleteClient,
     handleSaveOffer, handleDeleteOffer, handleExportCSV,
-    wikiArticles
+    wikiArticles, pendingVacationsCount
   } = useCRM();
 
   const { sidebarOpen, setSidebarOpen, isModalOpen, setIsModalOpen, searchTerm, setSearchTerm } = useUI();
@@ -130,6 +130,7 @@ function CRMInner() {
                     item.path === '/leads' ? activeLeadsCount : 
                     item.path === '/support' ? openTicketCount : 
                     item.path === '/wiki' ? (newWikiCount > 0 ? newWikiCount : undefined) :
+                    item.path === '/people' ? (pendingVacationsCount > 0 ? pendingVacationsCount : undefined) :
                     undefined
                   }
                 />

@@ -69,6 +69,7 @@ export default function PeopleView() {
     type: 'Férias',
     reason: 'Férias',
     status: 'Pendente',
+    description: '',
     start: format(new Date(), 'yyyy-MM-dd'),
     end: format(addDays(new Date(), 15), 'yyyy-MM-dd')
   });
@@ -290,28 +291,24 @@ export default function PeopleView() {
 
   const handleAddVacation = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newVacation.userId || !newVacation.start || !newVacation.end) {
-      toast.error('Preencha todos os campos!');
+    if (!newVacation.userId || !newVacation.start || !newVacation.end || !newVacation.description?.trim()) {
+      toast.error('Preencha todos os campos, incluindo a justificativa!');
       return;
     }
-    try {
-      const vRef = doc(collection(db, 'organizations', effectiveOrgId, 'vacations'));
-      await setDoc(vRef, { ...newVacation, id: vRef.id, createdAt: Date.now() });
-      setShowVacationModal(false);
-      toast.success('Solicitação de ausência enviada!');
-    } catch (error) {
-      toast.error('Erro ao salvar ausência.');
-    }
+    await crm.handleSaveVacationRequest(newVacation);
+    setShowVacationModal(false);
+    setNewVacation({
+      type: 'Férias',
+      reason: 'Férias',
+      status: 'Pendente',
+      description: '',
+      start: format(new Date(), 'yyyy-MM-dd'),
+      end: format(addDays(new Date(), 15), 'yyyy-MM-dd')
+    });
   };
 
-  const updateVacationStatus = async (id: string, status: 'Aprovado' | 'Recusado') => {
-    if (!effectiveOrgId) return;
-    try {
-      await updateDoc(doc(db, 'organizations', effectiveOrgId, 'vacations', id), { status });
-      toast.success(`Solicitação ${status.toLowerCase()}!`);
-    } catch (error) {
-      toast.error('Erro ao atualizar status.');
-    }
+  const updateVacationStatus = async (vacation: VacationPeriod, status: 'Aprovado' | 'Recusado') => {
+    await crm.handleSaveVacationRequest({ ...vacation, status });
   };
 
   const deleteVacation = async (id: string) => {
@@ -578,26 +575,63 @@ export default function PeopleView() {
                   <h2 className="text-xl font-bold">Ausências & Férias</h2>
                   <button onClick={() => setShowVacationModal(true)} className="px-4 py-2 bg-primary-500 text-white rounded-xl text-sm font-bold">Solicitar</button>
                </div>
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {vacations.map(v => (
-                    <div key={v.id} className="p-6 bg-white/5 border border-white/5 rounded-3xl relative group">
-                       <div className="flex justify-between mb-4">
-                          <span className="text-[10px] font-black uppercase text-gray-400">{v.reason}</span>
-                          <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${v.status === 'Aprovado' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>{v.status}</span>
-                       </div>
-                       <p className="font-bold text-sm mb-4">{teamProfiles.find(p => p.uid === v.userId)?.displayName}</p>
-                       <div className="flex justify-between text-xs py-2 border-t border-white/5">
-                          <span>{v.start}</span><span>{v.end}</span>
-                       </div>
-                       {v.status === 'Pendente' && isAdminOrGerente && (
-                         <div className="mt-4 flex gap-2">
-                            <button onClick={() => updateVacationStatus(v.id, 'Aprovado')} className="flex-1 py-1 bg-emerald-500 text-white rounded-lg text-[10px] font-bold">Aprovar</button>
-                            <button onClick={() => updateVacationStatus(v.id, 'Recusado')} className="flex-1 py-1 bg-red-500/10 text-red-500 rounded-lg text-[10px] font-bold">Recusar</button>
+               
+               <div className="space-y-12">
+                 {/* Seção de Pendências */}
+                 <div>
+                    <h3 className="text-xs font-black uppercase text-amber-500 mb-6 tracking-widest flex items-center gap-2">
+                       <AlertTriangle size={14} /> Solicitações Pendentes
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                       {vacations.filter(v => v.status === 'Pendente').map(v => (
+                         <div key={v.id} className="p-6 bg-amber-500/5 border border-amber-500/20 rounded-3xl relative group shadow-xl">
+                            <div className="flex justify-between mb-4">
+                               <span className="text-[10px] font-bold px-2 py-1 rounded-lg bg-amber-500/10 text-amber-500">{v.reason}</span>
+                            </div>
+                            <p className="font-bold text-sm mb-2">{teamProfiles.find(p => p.uid === v.userId)?.displayName}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 italic">"{v.description}"</p>
+                            <div className="flex justify-between text-[10px] py-2 border-t border-white/5 font-mono">
+                               <span>{v.start}</span><span>{v.end}</span>
+                            </div>
+                            {isAdminOrGerente && (
+                              <div className="mt-4 flex gap-2">
+                                 <button onClick={() => updateVacationStatus(v, 'Aprovado')} className="flex-1 py-2 bg-emerald-500 text-white rounded-lg text-[10px] font-bold shadow-lg shadow-emerald-500/20 hover:scale-105 transition-transform">Aprovar</button>
+                                 <button onClick={() => updateVacationStatus(v, 'Recusado')} className="flex-1 py-2 bg-red-500/10 text-red-500 rounded-lg text-[10px] font-bold hover:bg-red-500/20 transition-colors">Recusar</button>
+                              </div>
+                            )}
+                            {isAdminOrGerente && <button onClick={() => deleteVacation(v.id)} className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-red-500"><Trash2 size={12} /></button>}
                          </div>
+                       ))}
+                       {vacations.filter(v => v.status === 'Pendente').length === 0 && (
+                         <div className="md:col-span-3 py-10 text-center opacity-30 text-sm border-2 border-dashed border-white/5 rounded-3xl">Nenhuma solicitação pendente no momento.</div>
                        )}
-                       {isAdminOrGerente && <button onClick={() => deleteVacation(v.id)} className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-red-500"><Trash2 size={12} /></button>}
                     </div>
-                  ))}
+                 </div>
+
+                 {/* Seção de Histórico */}
+                 {vacations.filter(v => v.status !== 'Pendente').length > 0 && (
+                   <div className="pt-8 border-t border-white/5">
+                      <h3 className="text-xs font-black uppercase text-gray-500 mb-6 tracking-widest flex items-center gap-2">
+                        <Clock size={14} /> Histórico de Ausências
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                         {vacations.filter(v => v.status !== 'Pendente').map(v => (
+                           <div key={v.id} className="p-4 bg-white/5 border border-white/5 rounded-2xl opacity-80 group hover:opacity-100 transition-all">
+                              <div className="flex justify-between mb-2">
+                                 <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${v.status === 'Aprovado' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>{v.status}</span>
+                                 <span className="text-[8px] text-gray-500">{v.reason}</span>
+                              </div>
+                              <p className="font-bold text-xs truncate mb-1">{teamProfiles.find(p => p.uid === v.userId)?.displayName}</p>
+                              <p className="text-[10px] text-gray-400 line-clamp-1 mb-3 italic">"{v.description}"</p>
+                              <div className="flex justify-between text-[10px] text-gray-500 border-t border-white/5 pt-2">
+                                 <span>{v.start}</span><span>{v.end}</span>
+                              </div>
+                              {isAdminOrGerente && <button onClick={() => deleteVacation(v.id)} className="mt-2 text-[8px] text-red-500/40 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100 uppercase font-black">Remover do Histórico</button>}
+                           </div>
+                         ))}
+                      </div>
+                   </div>
+                 )}
                </div>
             </div>
           )}
@@ -638,9 +672,10 @@ export default function PeopleView() {
                  <div className="flex justify-between mb-6"><h3 className="text-xl font-bold">Nova Solicitação</h3><button onClick={() => setShowVacationModal(false)}><X /></button></div>
                  <form onSubmit={handleAddVacation} className="space-y-4">
                     <select required className="w-full bg-gray-100 dark:bg-white/5 p-4 rounded-xl" value={newVacation.userId || ''} onChange={e => setNewVacation({...newVacation, userId: e.target.value})}><option value="">Membro...</option>{teamProfiles.map(p => <option key={p.uid} value={p.uid}>{p.displayName}</option>)}</select>
-                    <select required className="w-full bg-gray-100 dark:bg-white/5 p-4 rounded-xl" value={newVacation.reason || ''} onChange={e => setNewVacation({...newVacation, reason: e.target.value as any, status: 'Pendente', type: e.target.value === 'Férias' ? 'Férias' : 'Ausência'})}><option value="">Motivo...</option><option value="Férias">Férias</option><option value="Motivo Médico">Médico</option><option value="Outro">Outro</option></select>
+                    <select required className="w-full bg-gray-100 dark:bg-white/5 p-4 rounded-xl" value={newVacation.reason || ''} onChange={e => setNewVacation({...newVacation, reason: e.target.value as any, status: 'Pendente', type: e.target.value === 'Férias' ? 'Férias' : 'Ausência'})}><option value="">Motivo...</option><option value="Férias">Férias</option><option value="Motivo Médico">Médico</option><option value="Licença Maternidade/Paternidade">Licença Maternidade/Paternidade</option><option value="Outro">Outro/Folga</option></select>
+                    <textarea required placeholder="Descreva o motivo detalhado..." className="w-full bg-gray-100 dark:bg-white/5 p-4 rounded-xl h-32 text-sm" value={newVacation.description || ''} onChange={e => setNewVacation({...newVacation, description: e.target.value})} />
                     <div className="grid grid-cols-2 gap-4"><input type="date" className="p-4 rounded-xl bg-gray-100 dark:bg-white/5" value={newVacation.start} onChange={e => setNewVacation({...newVacation, start: e.target.value})} /><input type="date" className="p-4 rounded-xl bg-gray-100 dark:bg-white/5" value={newVacation.end} onChange={e => setNewVacation({...newVacation, end: e.target.value})} /></div>
-                    <button className="w-full py-4 bg-primary-500 text-white rounded-xl font-bold">Enviar</button>
+                    <button className="w-full py-4 bg-primary-500 text-white rounded-xl font-bold">Enviar Solicitação</button>
                  </form>
               </div>
            </div>

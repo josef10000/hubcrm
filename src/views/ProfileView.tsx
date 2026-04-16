@@ -45,7 +45,7 @@ import { updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 export default function ProfileView() {
   const { uid } = useParams();
   const { user, userProfile: currentUserProfile, refreshProfile } = useAuth();
-  const { supportRequests } = useCRM();
+  const { supportRequests, vacations, handleSaveVacationRequest, teamProfiles } = useCRM();
   const navigate = useNavigate();
 
   // Métrica CSAT Individual
@@ -60,7 +60,7 @@ export default function ProfileView() {
   const [isSaving, setIsSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [superior, setSuperior] = useState<UserProfile | null>(null);
-  const [activeTab, setActiveTab] = useState<'info' | 'pdi' | 'comissoes' | 'inventory' | 'feedbacks' | 'history' | 'alerts'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'pdi' | 'comissoes' | 'inventory' | 'feedbacks' | 'history' | 'alerts' | 'vacations'>('info');
   const { businessAlerts, unreadAlertsCount, markAlertAsRead } = useAuth();
   const { commissions } = useCRM();
   const [showVacationModal, setShowVacationModal] = useState(false);
@@ -74,7 +74,8 @@ export default function ProfileView() {
     status: 'Pendente',
     start: '',
     end: '',
-    reason: 'Férias'
+    reason: 'Férias',
+    description: ''
   });
   
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -260,24 +261,27 @@ export default function ProfileView() {
     }
   };
 
-  const handleAddVacation = async (e: React.FormEvent) => {
+   const handleAddVacation = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!uid || !newVacation.start || !newVacation.end) {
-      toast.error('Preencha as datas!');
+    if (!uid || !newVacation.start || !newVacation.end || !newVacation.description?.trim()) {
+      toast.error('Preencha todos os campos, incluindo a justificativa!');
       return;
     }
 
     try {
-      const orgId = currentUserProfile?.orgId || 'default';
-      const vRef = doc(collection(db, 'organizations', orgId, 'vacations'));
-      await setDoc(vRef, {
+      await handleSaveVacationRequest({
         ...newVacation,
-        userId: uid,
-        id: vRef.id,
-        createdAt: Date.now()
+        userId: uid
       });
       setShowVacationModal(false);
-      toast.success('Solicitação de ausência enviada com sucesso!');
+      setNewVacation({
+        type: 'Férias',
+        status: 'Pendente',
+        start: '',
+        end: '',
+        reason: 'Férias',
+        description: ''
+      });
     } catch (error) {
       console.error(error);
       toast.error('Erro ao enviar solicitação.');
@@ -471,6 +475,12 @@ export default function ProfileView() {
                   className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'history' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
                 >
                   Carreira
+                </button>
+                <button 
+                  onClick={() => setActiveTab('vacations')}
+                  className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'vacations' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
+                >
+                  Ausências
                 </button>
                 <button 
                   onClick={() => setActiveTab('alerts')}
@@ -793,11 +803,7 @@ export default function ProfileView() {
                     inventory={userAssets} 
                     isAdmin={isAdmin}
                     onAdd={() => setShowAddAssetModal(true)}
-                  />
-                </div>
-              )}
-
-              {activeTab === 'feedbacks' && (
+                              {activeTab === 'feedbacks' && (
                 <div className="animate-in slide-in-from-right duration-500">
                   <div className="flex items-center justify-between mb-8">
                     <h4 className="text-sm font-bold text-gray-500 uppercase tracking-widest">Mural de Feedbacks</h4>
@@ -815,6 +821,59 @@ export default function ProfileView() {
                     currentUserProfile={currentUserProfile}
                     profileOwnerId={uid!}
                   />
+                </div>
+              )}
+
+              {activeTab === 'vacations' && (
+                <div className="animate-in slide-in-from-right duration-500 space-y-6 text-left">
+                   <div className="flex items-center gap-3 mb-4">
+                     <div className="p-3 bg-amber-500/10 rounded-2xl text-amber-500">
+                       <Calendar size={24} />
+                     </div>
+                     <div>
+                       <h4 className="font-bold">Histórico de Ausências</h4>
+                       <p className="text-xs text-gray-500">Acompanhamento de férias, folgas e licenças.</p>
+                     </div>
+                   </div>
+
+                   <div className="grid grid-cols-1 gap-4">
+                      {vacations.filter(v => v.userId === uid).length === 0 ? (
+                        <div className="text-center py-20 bg-white/5 rounded-[2rem] border-2 border-dashed border-white/5">
+                           <Clock size={40} className="mx-auto text-gray-300 mb-4 opacity-10" />
+                           <p className="text-gray-500 text-sm">Nenhuma ausência registrada neste perfil.</p>
+                        </div>
+                      ) : (
+                        vacations.filter(v => v.userId === uid)
+                          .sort((a, b) => b.createdAt - a.createdAt)
+                          .map(v => (
+                            <div key={v.id} className="p-6 bg-white/30 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+                               <div className="space-y-1">
+                                  <div className="flex items-center gap-2">
+                                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                       v.status === 'Aprovado' ? 'bg-emerald-500/10 text-emerald-500' :
+                                       v.status === 'Recusado' ? 'bg-red-500/10 text-red-500' :
+                                       'bg-amber-500/10 text-amber-500'
+                                     }`}>
+                                       {v.status}
+                                     </span>
+                                     <span className="text-xs font-bold text-gray-700 dark:text-gray-300">{v.type} - {v.reason}</span>
+                                  </div>
+                                  <p className="text-sm font-medium italic text-gray-500">"{v.description || 'Nenhuma justificativa informada.'}"</p>
+                               </div>
+                               <div className="flex items-center gap-6 text-sm font-mono text-gray-500 shrink-0">
+                                  <div className="flex flex-col">
+                                     <span className="text-[10px] uppercase font-bold text-gray-400">Início</span>
+                                     <span>{v.start}</span>
+                                  </div>
+                                  <div className="flex flex-col">
+                                     <span className="text-[10px] uppercase font-bold text-gray-400">Retorno</span>
+                                     <span>{v.end}</span>
+                                  </div>
+                               </div>
+                            </div>
+                          ))
+                      )}
+                   </div>
                 </div>
               )}
 
@@ -927,7 +986,7 @@ export default function ProfileView() {
                     <button onClick={() => setShowVacationModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full"><X /></button>
                  </div>
                  <form onSubmit={handleAddVacation} className="p-8 space-y-6">
-                    <div className="space-y-2">
+                    <div className="space-y-2 text-left">
                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Tipo / Motivo</label>
                        <select 
                          required 
@@ -948,7 +1007,18 @@ export default function ProfileView() {
                        </select>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2 text-left">
+                       <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Justificativa Detalhada</label>
+                       <textarea 
+                         required 
+                         placeholder="Descreva o motivo da sua ausência..." 
+                         className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-2xl focus:outline-none focus:border-primary-500 transition-all font-medium h-24" 
+                         value={newVacation.description || ''} 
+                         onChange={e => setNewVacation({...newVacation, description: e.target.value})} 
+                       />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 text-left">
                        <div className="space-y-2">
                           <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Início</label>
                           <input type="date" required className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-2xl focus:outline-none focus:border-primary-500 transition-all font-medium" value={newVacation.start} onChange={e => setNewVacation({...newVacation, start: e.target.value})} />
@@ -960,11 +1030,11 @@ export default function ProfileView() {
                     </div>
                     
                     <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
-                      <p className="text-xs text-amber-600 font-medium">
-                        {newVacation.status === 'Informado' 
-                          ? 'Este tipo de ausência será registrado automaticamente como informado.' 
-                          : 'Sua solicitação de férias/licença será enviada para aprovação do gestor.'}
-                      </p>
+                       <p className="text-xs text-amber-600 font-medium">
+                         {newVacation.status === 'Informado' 
+                           ? 'Este tipo de ausência será registrado automaticamente como informado.' 
+                           : 'Sua solicitação de férias/licença será enviada para aprovação do gestor.'}
+                       </p>
                     </div>
 
                     <button type="submit" className="w-full bg-primary-500 hover:bg-primary-600 text-white p-5 rounded-2xl font-bold shadow-xl shadow-primary-500/20 transition-all">Enviar Solicitação</button>
