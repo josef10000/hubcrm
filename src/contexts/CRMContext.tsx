@@ -551,44 +551,50 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         const id = vacationData.id || doc(collection(db, 'organizations', effectiveOrgId, 'vacations')).id;
         const now = Date.now();
 
+        // 1. Salvamento Principal (Prioritário)
         await setDoc(doc(db, 'organizations', effectiveOrgId, 'vacations', id), {
           ...vacationData,
           id,
           createdAt: vacationData.createdAt || now,
         }, { merge: true });
 
-        // Gatilhos de Notificação
-        if (isNew) {
-          // Notifica Time de People & Culture sobre nova solicitação
-          await addDoc(collection(db, 'system_alerts'), {
-            title: '📅 Nova Solicitação de Ausência',
-            message: `O colaborador solicitou: ${vacationData.type} (${vacationData.reason}). Justificativa: ${vacationData.description || 'Não informada.'}`,
-            type: 'info',
-            targetRoles: ['People & Culture', 'Administrador', 'Gerente'],
-            orgId: effectiveOrgId,
-            createdAt: now,
-            link: '/people'
-          });
-          toast.success('Solicitação enviada com sucesso!');
-        } else if (vacationData.status === 'Aprovado' || vacationData.status === 'Recusado') {
-          // Notifica o colaborador sobre o retorno da solicitação
-          const statusIcon = vacationData.status === 'Aprovado' ? '✅' : '❌';
-          const feedbackText = vacationData.hrFeedback ? `\n\nMotivo da decisão: ${vacationData.hrFeedback}` : '';
-          
-          await addDoc(collection(db, 'system_alerts'), {
-            title: `${statusIcon} Retorno de Solicitação`,
-            message: `Sua solicitação de ${vacationData.type} foi ${vacationData.status.toLowerCase()}.${feedbackText}`,
-            type: vacationData.status === 'Aprovado' ? 'success' : 'warning',
-            userId: vacationData.userId, // Alerta específico para o usuário
-            orgId: effectiveOrgId,
-            createdAt: now,
-            link: '/people'
-          });
-          toast.success(`Solicitação ${vacationData.status.toLowerCase()} com sucesso!`);
+        // Confirmação Imediata para o Usuário
+        const successMsg = isNew ? 'Solicitação enviada com sucesso!' : `Solicitação ${vacationData.status?.toLowerCase()} com sucesso!`;
+        toast.success(successMsg);
+
+        // 2. Notificações do Sistema (Secundário/Isolado)
+        try {
+          if (isNew) {
+            await addDoc(collection(db, 'system_alerts'), {
+              title: '📅 Nova Solicitação de Ausência',
+              message: `O colaborador solicitou: ${vacationData.type} (${vacationData.reason}). Justificativa: ${vacationData.description || 'Não informada.'}`,
+              type: 'info',
+              targetRoles: ['People & Culture', 'Administrador', 'Gerente'],
+              orgId: effectiveOrgId,
+              createdAt: now,
+              link: '/people'
+            });
+          } else if (vacationData.status === 'Aprovado' || vacationData.status === 'Recusado') {
+            const statusIcon = vacationData.status === 'Aprovado' ? '✅' : '❌';
+            const feedbackText = vacationData.hrFeedback ? `\n\nMotivo da decisão: ${vacationData.hrFeedback}` : '';
+            
+            await addDoc(collection(db, 'system_alerts'), {
+              title: `${statusIcon} Retorno de Solicitação`,
+              message: `Sua solicitação de ${vacationData.type} foi ${vacationData.status.toLowerCase()}.${feedbackText}`,
+              type: vacationData.status === 'Aprovado' ? 'success' : 'warning',
+              userId: vacationData.userId,
+              orgId: effectiveOrgId,
+              createdAt: now,
+              link: '/people'
+            });
+          }
+        } catch (notifErr) {
+          console.warn('Erro ao disparar alerta de sistema (notificação), mas dado salvo:', notifErr);
         }
       } catch (e) {
         console.error('Error saving vacation request:', e);
-        toast.error('Erro ao processar solicitação.');
+        toast.error('Erro ao processar solicitação. Verifique sua conexão.');
+        throw e; // Re-throw para o componente UI tratar se necessário
       }
     },
     handleDeleteVacationRequest: async (id: string) => {

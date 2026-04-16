@@ -300,16 +300,23 @@ export default function PeopleView() {
       toast.error('Preencha todos os campos, incluindo a justificativa!');
       return;
     }
-    await crm.handleSaveVacationRequest(newVacation);
-    setShowVacationModal(false);
-    setNewVacation({
-      type: 'Férias',
-      reason: 'Férias',
-      status: 'Pendente',
-      description: '',
-      start: format(new Date(), 'yyyy-MM-dd'),
-      end: format(addDays(new Date(), 15), 'yyyy-MM-dd')
-    });
+
+    try {
+      await crm.handleSaveVacationRequest(newVacation);
+      // Sucesso Real: Fecha o modal e limpa os campos
+      setShowVacationModal(false);
+      setNewVacation({
+        type: 'Férias',
+        reason: 'Férias',
+        status: 'Pendente',
+        description: '',
+        start: format(new Date(), 'yyyy-MM-dd'),
+        end: format(addDays(new Date(), 15), 'yyyy-MM-dd')
+      });
+    } catch (error) {
+      // Falha Real de Conexão/Permissão: Mantém o modal aberto e os dados intactos para re-tentativa
+      console.error("Erro ao salvar ausência na UI:", error);
+    }
   };
 
   const updateVacationStatus = async (vacation: VacationPeriod, status: 'Aprovado' | 'Recusado') => {
@@ -326,14 +333,18 @@ export default function PeopleView() {
       toast.error('Informe o motivo da recusa!');
       return;
     }
-    await crm.handleSaveVacationRequest({ 
-      ...vacationToReject, 
-      status: 'Recusado',
-      hrFeedback: rejectionReason.trim()
-    });
-    setShowRejectionModal(false);
-    setRejectionReason('');
-    setVacationToReject(null);
+    try {
+      await crm.handleSaveVacationRequest({ 
+        ...vacationToReject, 
+        status: 'Recusado',
+        hrFeedback: rejectionReason.trim()
+      });
+      setShowRejectionModal(false);
+      setRejectionReason('');
+      setVacationToReject(null);
+    } catch (e) {
+      console.error("Erro ao recusar ausência na UI:", e);
+    }
   };
 
   const deleteVacation = async (id: string) => {
@@ -343,9 +354,13 @@ export default function PeopleView() {
 
   const confirmDeleteVacation = async () => {
     if (!vacationToDelete) return;
-    await crm.handleDeleteVacationRequest(vacationToDelete);
-    setShowDeleteConfirm(false);
-    setVacationToDelete(null);
+    try {
+      await crm.handleDeleteVacationRequest(vacationToDelete);
+      setShowDeleteConfirm(false);
+      setVacationToDelete(null);
+    } catch (e) {
+      console.error("Erro ao excluir ausência na UI:", e);
+    }
   };
 
   return (
