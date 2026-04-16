@@ -121,6 +121,7 @@ interface CRMContextType {
   handleMarkWikiArticleAsRead: (articleId: string) => Promise<void>;
   handleCreateSupportRequest: (requestData: any) => Promise<void>;
   handleSaveVacationRequest: (vacationData: Partial<VacationPeriod>) => Promise<void>;
+  handleDeleteVacationRequest: (id: string) => Promise<void>;
   handleAddClientLog: (clientId: string, logText: string) => Promise<void>;
   pendingVacationsCount: number;
 }
@@ -572,9 +573,11 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         } else if (vacationData.status === 'Aprovado' || vacationData.status === 'Recusado') {
           // Notifica o colaborador sobre o retorno da solicitação
           const statusIcon = vacationData.status === 'Aprovado' ? '✅' : '❌';
+          const feedbackText = vacationData.hrFeedback ? `\n\nMotivo da decisão: ${vacationData.hrFeedback}` : '';
+          
           await addDoc(collection(db, 'system_alerts'), {
             title: `${statusIcon} Retorno de Solicitação`,
-            message: `Sua solicitação de ${vacationData.type} foi ${vacationData.status.toLowerCase()}.`,
+            message: `Sua solicitação de ${vacationData.type} foi ${vacationData.status.toLowerCase()}.${feedbackText}`,
             type: vacationData.status === 'Aprovado' ? 'success' : 'warning',
             userId: vacationData.userId, // Alerta específico para o usuário
             orgId: effectiveOrgId,
@@ -586,6 +589,16 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       } catch (e) {
         console.error('Error saving vacation request:', e);
         toast.error('Erro ao processar solicitação.');
+      }
+    },
+    handleDeleteVacationRequest: async (id: string) => {
+      if (!effectiveOrgId) return;
+      try {
+        await deleteDoc(doc(db, 'organizations', effectiveOrgId, 'vacations', id));
+        toast.success('Histórico removido com sucesso!');
+      } catch (e) {
+        console.error('Error deleting vacation:', e);
+        toast.error('Erro ao remover registro.');
       }
     },
     handleAddClientLog: async (clientId: string, logText: string) => {

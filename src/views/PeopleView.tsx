@@ -90,6 +90,11 @@ export default function PeopleView() {
   const [showMilestoneModal, setShowMilestoneModal] = useState(false);
   const [showSkillsModal, setShowSkillsModal] = useState(false);
 
+  // Estados para Recusa de Ausência
+  const [showRejectionModal, setShowRejectionModal] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [vacationToReject, setVacationToReject] = useState<VacationPeriod | null>(null);
+
   useEffect(() => {
     if (!effectiveOrgId) return;
     const q = query(
@@ -308,7 +313,27 @@ export default function PeopleView() {
   };
 
   const updateVacationStatus = async (vacation: VacationPeriod, status: 'Aprovado' | 'Recusado') => {
+    if (status === 'Recusado') {
+      setVacationToReject(vacation);
+      setShowRejectionModal(true);
+      return;
+    }
     await crm.handleSaveVacationRequest({ ...vacation, status });
+  };
+
+  const handleConfirmRejection = async () => {
+    if (!vacationToReject || !rejectionReason.trim()) {
+      toast.error('Informe o motivo da recusa!');
+      return;
+    }
+    await crm.handleSaveVacationRequest({ 
+      ...vacationToReject, 
+      status: 'Recusado',
+      hrFeedback: rejectionReason.trim()
+    });
+    setShowRejectionModal(false);
+    setRejectionReason('');
+    setVacationToReject(null);
   };
 
   const deleteVacation = async (id: string) => {
@@ -317,15 +342,10 @@ export default function PeopleView() {
   };
 
   const confirmDeleteVacation = async () => {
-    if (!effectiveOrgId || !vacationToDelete) return;
-    try {
-      await deleteDoc(doc(db, 'organizations', effectiveOrgId, 'vacations', vacationToDelete));
-      toast.success('Registro excluído!');
-      setShowDeleteConfirm(false);
-      setVacationToDelete(null);
-    } catch (error) {
-      toast.error('Erro ao excluir.');
-    }
+    if (!vacationToDelete) return;
+    await crm.handleDeleteVacationRequest(vacationToDelete);
+    setShowDeleteConfirm(false);
+    setVacationToDelete(null);
   };
 
   return (
@@ -677,6 +697,37 @@ export default function PeopleView() {
                     <div className="grid grid-cols-2 gap-4"><input type="date" className="p-4 rounded-xl bg-gray-100 dark:bg-white/5" value={newVacation.start} onChange={e => setNewVacation({...newVacation, start: e.target.value})} /><input type="date" className="p-4 rounded-xl bg-gray-100 dark:bg-white/5" value={newVacation.end} onChange={e => setNewVacation({...newVacation, end: e.target.value})} /></div>
                     <button className="w-full py-4 bg-primary-500 text-white rounded-xl font-bold">Enviar Solicitação</button>
                  </form>
+              </div>
+           </div>
+        )}
+
+        {showRejectionModal && (
+           <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[110] flex items-center justify-center p-4">
+              <div className="bg-white dark:bg-[#0a0a0a] rounded-[2rem] p-8 w-full max-w-md shadow-2xl border border-white/5">
+                 <div className="flex justify-between mb-6">
+                    <h3 className="text-xl font-bold flex items-center gap-2">
+                       <AlertTriangle className="text-amber-500" size={20} /> Justificar Recusa
+                    </h3>
+                    <button onClick={() => setShowRejectionModal(false)}><X /></button>
+                 </div>
+                 <p className="text-xs text-gray-400 mb-4 italic">Informe o motivo para que o colaborador saiba por que a solicitação não foi aprovada.</p>
+                 <textarea 
+                    required 
+                    placeholder="Ex: Equipe reduzida no período ou necessidade de escala..." 
+                    className="w-full bg-gray-100 dark:bg-white/5 p-4 rounded-xl h-32 text-sm focus:ring-2 ring-primary-500 transition-all outline-none" 
+                    value={rejectionReason} 
+                    onChange={e => setRejectionReason(e.target.value)} 
+                 />
+                 <div className="flex gap-2 mt-6">
+                    <button onClick={() => setShowRejectionModal(false)} className="flex-1 py-3 border border-white/10 rounded-xl hover:bg-white/5 transition-colors">Cancelar</button>
+                    <button 
+                       onClick={handleConfirmRejection} 
+                       disabled={!rejectionReason.trim()}
+                       className="flex-1 py-3 bg-red-500 text-white rounded-xl font-bold hover:scale-105 transition-transform disabled:opacity-50 disabled:hover:scale-100"
+                    >
+                       Confirmar Recusa
+                    </button>
+                 </div>
               </div>
            </div>
         )}

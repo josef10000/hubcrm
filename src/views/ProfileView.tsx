@@ -77,6 +77,9 @@ export default function ProfileView() {
     reason: 'Férias',
     description: ''
   });
+
+  const [showDeleteVacationConfirm, setShowDeleteVacationConfirm] = useState(false);
+  const [vacationToDelete, setVacationToDelete] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -259,6 +262,13 @@ export default function ProfileView() {
       setIsSaving(true); // Manter coerência com o original que setava true no finally também (bug original?)
       setIsSaving(false);
     }
+  };
+
+  const confirmDeleteVacation = async () => {
+    if (!vacationToDelete) return;
+    await crm.handleDeleteVacationRequest(vacationToDelete);
+    setShowDeleteVacationConfirm(false);
+    setVacationToDelete(null);
   };
 
    const handleAddVacation = async (e: React.FormEvent) => {
@@ -886,30 +896,50 @@ export default function ProfileView() {
                         vacations.filter(v => v.userId === uid)
                           .sort((a, b) => b.createdAt - a.createdAt)
                           .map(v => (
-                            <div key={v.id} className="p-6 bg-white/30 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-4">
-                               <div className="space-y-1">
-                                  <div className="flex items-center gap-2">
-                                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                                       v.status === 'Aprovado' ? 'bg-emerald-500/10 text-emerald-500' :
-                                       v.status === 'Recusado' ? 'bg-red-500/10 text-red-500' :
-                                       'bg-amber-500/10 text-amber-500'
-                                     }`}>
-                                       {v.status}
-                                     </span>
-                                     <span className="text-xs font-bold text-gray-700 dark:text-gray-300">{v.type} - {v.reason}</span>
+                            <div key={v.id} className="p-6 bg-white/30 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl flex flex-col gap-4 relative group">
+                               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                  <div className="space-y-1">
+                                     <div className="flex items-center gap-2">
+                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                          v.status === 'Aprovado' ? 'bg-emerald-500/10 text-emerald-500' :
+                                          v.status === 'Recusado' ? 'bg-red-500/10 text-red-500' :
+                                          'bg-amber-500/10 text-amber-500'
+                                        }`}>
+                                          {v.status}
+                                        </span>
+                                        <span className="text-xs font-bold text-gray-700 dark:text-gray-300">{v.type} - {v.reason}</span>
+                                     </div>
+                                     <p className="text-sm font-medium italic text-gray-500">"{v.description || 'Nenhuma justificativa informada.'}"</p>
                                   </div>
-                                  <p className="text-sm font-medium italic text-gray-500">"{v.description || 'Nenhuma justificativa informada.'}"</p>
+                                  <div className="flex items-center gap-6 text-sm font-mono text-gray-500 shrink-0">
+                                     <div className="flex flex-col">
+                                        <span className="text-[10px] uppercase font-bold text-gray-400">Início</span>
+                                        <span>{v.start}</span>
+                                     </div>
+                                     <div className="flex flex-col">
+                                        <span className="text-[10px] uppercase font-bold text-gray-400">Retorno</span>
+                                        <span>{v.end}</span>
+                                     </div>
+                                     {isManagement && (
+                                       <button 
+                                         onClick={() => { setVacationToDelete(v.id); setShowDeleteVacationConfirm(true); }}
+                                         className="p-2 text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                         title="Remover do histórico"
+                                       >
+                                          <Trash2 size={16} />
+                                       </button>
+                                     )}
+                                  </div>
                                </div>
-                               <div className="flex items-center gap-6 text-sm font-mono text-gray-500 shrink-0">
-                                  <div className="flex flex-col">
-                                     <span className="text-[10px] uppercase font-bold text-gray-400">Início</span>
-                                     <span>{v.start}</span>
-                                  </div>
-                                  <div className="flex flex-col">
-                                     <span className="text-[10px] uppercase font-bold text-gray-400">Retorno</span>
-                                     <span>{v.end}</span>
-                                  </div>
-                               </div>
+                               {v.status === 'Recusado' && v.hrFeedback && (
+                                 <div className="p-4 bg-red-500/5 border border-red-500/10 rounded-2xl flex items-start gap-3">
+                                    <AlertTriangle size={16} className="text-red-500 shrink-0 mt-0.5" />
+                                    <div>
+                                       <p className="text-[10px] font-black uppercase text-red-500 mb-1">Feedback do RH / People</p>
+                                       <p className="text-xs text-gray-600 dark:text-gray-400 italic">"{v.hrFeedback}"</p>
+                                    </div>
+                                 </div>
+                               )}
                             </div>
                           ))
                       )}
@@ -1112,6 +1142,19 @@ export default function ProfileView() {
           targetUserId={uid!}
           onSuccess={handleRefresh}
         />
+
+        {showDeleteVacationConfirm && (
+           <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[110] flex items-center justify-center p-4">
+              <div className="bg-white dark:bg-[#0a0a0a] rounded-[2rem] p-8 text-center max-w-sm shadow-2xl border border-white/5">
+                 <div className="p-4 bg-red-500/10 rounded-full w-fit mx-auto mb-4">
+                    <Trash2 className="text-red-500" size={32} />
+                 </div>
+                 <h3 className="font-bold mb-2">Excluir Registro?</h3>
+                 <p className="text-xs text-gray-500 mb-6">Esta ação removerá permanentemente esta ausência do histórico do colaborador e de gestão.</p>
+                 <div className="flex gap-2"><button onClick={() => setShowDeleteVacationConfirm(false)} className="flex-1 py-3 border border-white/10 rounded-xl hover:bg-white/5 transition-colors">Cancelar</button><button onClick={confirmDeleteVacation} className="flex-1 py-3 bg-red-500 text-white rounded-xl font-bold hover:scale-105 transition-transform">Sim, Excluir</button></div>
+              </div>
+           </div>
+        )}
       </div>
     </div>
   );

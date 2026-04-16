@@ -16,6 +16,7 @@ export interface VacationPeriod {
   reason?: 'Férias' | 'Falta' | 'Motivo Médico' | 'Licença Maternidade/Paternidade' | 'Outro';
   description?: string;
   status: 'Pendente' | 'Aprovado' | 'Recusado' | 'Informado';
+  hrFeedback?: string;
   createdAt: number;
 }
 
