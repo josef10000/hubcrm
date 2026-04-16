@@ -444,6 +444,7 @@ export default function CalendarView({ clients, onClientClick, role }: CalendarV
                   </>
                 );
               })()}
+            </div>
           </div>
         </div>
       )}
