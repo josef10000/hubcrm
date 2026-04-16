@@ -75,8 +75,18 @@ export default function CalendarView({ clients, onClientClick, role }: CalendarV
     const monthDayStr = format(day, 'MM-dd');
     
     const dayVacations = vacations.filter(v => v.status === 'Aprovado' && dayStr >= v.start && dayStr <= v.end);
-    const dayAnniversaries = teamProfiles.filter(p => p.birthDate && format(parseISO(p.birthDate), 'MM-dd') === monthDayStr);
-    const dayWorkAnniversaries = teamProfiles.filter(p => p.startDate && format(parseISO(p.startDate), 'MM-dd') === monthDayStr && format(parseISO(p.startDate), 'yyyy') !== format(day, 'yyyy'));
+    
+    const dayAnniversaries = teamProfiles.filter(p => {
+      if (!p.birthDate) return false;
+      // Compara apenas MM-dd para ignorar fuso horário do ano/hora
+      return p.birthDate.substring(5, 10) === monthDayStr;
+    });
+
+    const dayWorkAnniversaries = teamProfiles.filter(p => {
+      if (!p.startDate) return false;
+      // Compara MM-dd e ignora o ano da contratação
+      return p.startDate.substring(5, 10) === monthDayStr && p.startDate.substring(0, 4) !== format(day, 'yyyy');
+    });
     
     return { vacations: dayVacations, anniversaries: dayAnniversaries, workAnniversaries: dayWorkAnniversaries };
   };
@@ -332,7 +342,7 @@ export default function CalendarView({ clients, onClientClick, role }: CalendarV
             <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1a1a]">
               <div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                  {mode === 'finance' ? 'Cobranças' : 'Entregas'}
+                  {mode === 'finance' ? 'Cobranças' : mode === 'people' ? 'Eventos de Equipe' : 'Entregas'}
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   {format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
@@ -342,43 +352,98 @@ export default function CalendarView({ clients, onClientClick, role }: CalendarV
             </div>
             
             <div className="p-6 overflow-y-auto custom-scrollbar flex flex-col gap-3">
-              {getEventsForDay(selectedDate).length === 0 ? (
-                <div className="text-center text-gray-500 py-8">Nenhum registro para este dia.</div>
-              ) : (
-                getEventsForDay(selectedDate).map(client => (
-                  <div 
-                    key={client.id} 
-                    onClick={() => { setSelectedDate(null); onClientClick(client); }}
-                    className="flex items-center justify-between p-4 rounded-2xl border border-gray-200 dark:border-white/10 hover:border-primary-500/50 cursor-pointer transition-all bg-white dark:bg-white/5 shadow-sm hover:shadow-md group"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl ${mode === 'finance' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 group-hover:bg-emerald-200 dark:group-hover:bg-emerald-900/50' : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50'} transition-colors`}>
-                        {client.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <div className="font-bold text-gray-900 dark:text-white text-lg">{client.name}</div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">{client.plan} • {client.status}</div>
-                      </div>
-                    </div>
-                    
-                    {mode === 'finance' ? (
-                      <div className="text-right">
-                        <div className="font-bold text-gray-900 dark:text-white text-lg">R$ {getPlanPrice(client.plan, client.billingCycle, client.customMonthlyPrice, client.customSetupPrice).toFixed(2)}</div>
-                        <div className={`text-xs font-bold px-2.5 py-1 rounded-md inline-block mt-1 ${client.paymentStatus === 'RECEIVED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : client.paymentStatus === 'OVERDUE' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}`}>
-                          {client.paymentStatus === 'RECEIVED' ? 'Pago' : client.paymentStatus === 'OVERDUE' ? 'Atrasado' : 'Pendente'}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-right">
-                        <div className={`text-xs font-bold px-3 py-1.5 rounded-lg inline-block ${client.status === 'Ativo' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : client.status === 'Em Desenvolvimento' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'}`}>
-                          {client.status}
-                        </div>
+              {(() => {
+                const deliveryEvents = getEventsForDay(selectedDate);
+                const { vacations: dayVacations, anniversaries, workAnniversaries } = getDayPeopleEvents(selectedDate);
+                const hasNoEvents = deliveryEvents.length === 0 && dayVacations.length === 0 && anniversaries.length === 0 && workAnniversaries.length === 0;
+
+                if (hasNoEvents) {
+                  return <div className="text-center text-gray-500 py-8">Nenhum registro para este dia.</div>;
+                }
+
+                return (
+                  <>
+                    {/* People Events Section */}
+                    {(anniversaries.length > 0 || workAnniversaries.length > 0 || dayVacations.length > 0) && (
+                      <div className="flex flex-col gap-2 mb-4">
+                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">People & Culture</h4>
+                        {anniversaries.map((p, i) => (
+                          <div key={`anniv-modal-${i}`} className="flex items-center gap-3 p-3 rounded-xl bg-pink-100/50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800/30">
+                            <span className="text-xl">🎂</span>
+                            <div>
+                              <div className="font-bold text-pink-700 dark:text-pink-300">Aniversário: {p.displayName}</div>
+                              <div className="text-xs text-pink-600/70 dark:text-pink-400/70">Parabéns pelo seu dia! 🎉</div>
+                            </div>
+                          </div>
+                        ))}
+                        {workAnniversaries.map((p, i) => (
+                          <div key={`work-anniv-modal-${i}`} className="flex items-center gap-3 p-3 rounded-xl bg-blue-100/50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/30">
+                            <span className="text-xl">🚀</span>
+                            <div>
+                              <div className="font-bold text-blue-700 dark:text-blue-300">Aniversário de Empresa: {p.displayName}</div>
+                              <div className="text-xs text-blue-600/70 dark:text-blue-400/70">Celebrando mais um ano de jornada!</div>
+                            </div>
+                          </div>
+                        ))}
+                        {dayVacations.map((v, i) => {
+                          const user = teamProfiles.find(p => p.uid === v.userId);
+                          const typeIcon = v.type === 'Férias' ? '🏖️' : v.reason === 'Falta' ? '❌' : v.reason === 'Motivo Médico' ? '🏥' : '⚠️';
+                          return (
+                            <div key={`vac-modal-${i}`} className="flex items-center gap-3 p-3 rounded-xl bg-amber-100/50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30">
+                              <span className="text-xl">{typeIcon}</span>
+                              <div>
+                                <div className="font-bold text-amber-700 dark:text-amber-300">{v.type}: {user?.displayName || 'Membro'}</div>
+                                <div className="text-xs text-amber-600/70 dark:text-amber-400/70">{v.status} • Até {format(parseISO(v.end), 'dd/MM', { locale: ptBR })}</div>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
-                  </div>
-                ))
-              )}
-            </div>
+
+                    {/* Deliveries/Finance Section */}
+                    {deliveryEvents.length > 0 && (
+                      <div className="flex flex-col gap-2">
+                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
+                          {mode === 'finance' ? 'Financeiro' : 'Operacional'}
+                        </h4>
+                        {deliveryEvents.map(client => (
+                          <div 
+                            key={client.id} 
+                            onClick={() => { setSelectedDate(null); onClientClick(client); }}
+                            className="flex items-center justify-between p-4 rounded-2xl border border-gray-200 dark:border-white/10 hover:border-primary-500/50 cursor-pointer transition-all bg-white dark:bg-white/5 shadow-sm hover:shadow-md group"
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-xl ${mode === 'finance' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 group-hover:bg-emerald-200 dark:group-hover:bg-emerald-900/50' : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50'} transition-colors`}>
+                                {client.name.charAt(0).toUpperCase()}
+                              </div>
+                              <div>
+                                <div className="font-bold text-gray-900 dark:text-white text-lg">{client.name}</div>
+                                <div className="text-sm text-gray-500 dark:text-gray-400">{client.plan} • {client.status}</div>
+                              </div>
+                            </div>
+                            
+                            {mode === 'finance' ? (
+                              <div className="text-right">
+                                <div className="font-bold text-gray-900 dark:text-white text-lg">R$ {getPlanPrice(client.plan, client.billingCycle, client.customMonthlyPrice, client.customSetupPrice).toFixed(2)}</div>
+                                <div className={`text-xs font-bold px-2.5 py-1 rounded-md inline-block mt-1 ${client.paymentStatus === 'RECEIVED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : client.paymentStatus === 'OVERDUE' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}`}>
+                                  {client.paymentStatus === 'RECEIVED' ? 'Pago' : client.paymentStatus === 'OVERDUE' ? 'Atrasado' : 'Pendente'}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-right">
+                                <div className={`text-xs font-bold px-3 py-1.5 rounded-lg inline-block ${client.status === 'Ativo' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : client.status === 'Em Desenvolvimento' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'}`}>
+                                  {client.status}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
           </div>
         </div>
       )}
