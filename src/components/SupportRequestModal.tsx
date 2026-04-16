@@ -51,6 +51,14 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId }
     }
   }, [selectedClient]);
 
+  // Sync selected client when initialClientId changes or modal opens
+  React.useEffect(() => {
+    if (isOpen && initialClientId) {
+      const client = clients.find(c => c.id === initialClientId);
+      if (client) setSelectedClient(client);
+    }
+  }, [isOpen, initialClientId, clients]);
+
   // Filters
   const filteredClients = useMemo(() => {
     if (!searchQuery.trim()) return [];
@@ -154,7 +162,16 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId }
               </p>
             </div>
             <button 
-              onClick={onClose}
+              onClick={() => {
+                onClose();
+                // Reset states after animation
+                setTimeout(() => {
+                  setSelectedClient(null);
+                  setMessage('');
+                  setWhatsappContext('');
+                  setIsNoteOnly(false);
+                }, 300);
+              }}
               className="p-2 hover:bg-white/5 rounded-full text-gray-400 transition-colors"
             >
               <X size={24} />
@@ -309,7 +326,9 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId }
 
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="text-xs font-black uppercase tracking-widest text-gray-500">Descrição do Problema</label>
+                <label className="text-xs font-black uppercase tracking-widest text-gray-500">
+                  Descrição do Problema <span className="text-primary-500 lowercase font-medium ml-1">(obrigatório)</span>
+                </label>
                 <button 
                   onClick={() => setIsNoteOnly(!isNoteOnly)}
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${isNoteOnly ? 'bg-indigo-500/20 border-indigo-500 text-indigo-400' : 'bg-white/5 border-white/10 text-gray-500 hover:text-white'}`}
