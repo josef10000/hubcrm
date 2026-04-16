@@ -75,21 +75,24 @@ export default function SupportView() {
       
       const hoursPast = differenceInHours(new Date(), date);
     
-    // SLA Definitions
-    const slaLimits = {
-      'alta': 4,
-      'media': 24,
-      'baixa': 72
-    };
-    
-    const limit = slaLimits[priority as keyof typeof slaLimits] || 24;
-    const remaining = limit - hoursPast;
-    
-    return {
-      remaining,
-      isOverdue: remaining < 0,
-      text: remaining < 0 ? `Atrasado ${Math.abs(remaining)}h` : `${remaining}h restantes`
-    };
+      // SLA Definitions
+      const slaLimits = {
+        'alta': 4,
+        'media': 24,
+        'baixa': 72
+      };
+      
+      const limit = slaLimits[priority as keyof typeof slaLimits] || 24;
+      const remaining = limit - hoursPast;
+      
+      return {
+        remaining,
+        isOverdue: remaining < 0,
+        text: remaining < 0 ? `Atrasado ${Math.abs(remaining)}h` : `${remaining}h restantes`
+      };
+    } catch (e) {
+      return null;
+    }
   };
 
   return (
