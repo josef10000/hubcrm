@@ -92,6 +92,18 @@ function CRMInner() {
     return wikiArticles.filter(art => !userProfile.viewedWikiArticles?.includes(art.id)).length;
   }, [wikiArticles, userProfile?.viewedWikiArticles]);
 
+  const titleCount = useMemo(() => {
+    return unreadAlertsCount + openTicketCount + (['Administrador', 'Gerente', 'People & Culture'].includes(userProfile?.role || '') ? (pendingVacationsCount || 0) : 0) + newWikiCount;
+  }, [unreadAlertsCount, openTicketCount, pendingVacationsCount, newWikiCount, userProfile?.role]);
+
+  React.useEffect(() => {
+    if (titleCount > 0) {
+      document.title = `(${titleCount}) Hub Central`;
+    } else {
+      document.title = 'Hub Central';
+    }
+  }, [titleCount]);
+
   if (userProfile?.orgId === 'pending') {
     return <WaitingInviteView />;
   }

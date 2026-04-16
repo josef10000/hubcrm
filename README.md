@@ -7,7 +7,7 @@
 Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.
 
   <p>
-    <img src="https://img.shields.io/badge/Version-2.8.0-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-2.9.0-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Status-Production_Ready-22c55e?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge&labelColor=111111" alt="License" />
@@ -282,6 +282,7 @@ Módulo completo de People Management focado em retenção, felicidade e control
 - **Jornada do Colaborador (Career Path)**: Linha do tempo visual com marcos históricos (Hired, Promotion, Certification, Birthday) gerenciado com exclusividade pela liderança.
 - **Plano de Desenvolvimento (PDI)**: Árvore de competências e ações de curto/médio prazo. O gerenciamento e atualização da matriz de competências é restrito a Admins, Gerentes e People & Culture, e não pode ser realizado pelo próprio colaborador em seu próprio perfil (Auto-gestão restrita).
 - **Ausências & Férias Auditáveis (v2.8)**: Fluxo proativo de solicitação com **justificativa obrigatória do RH para recusas**. Inclui histórico completo visível no perfil com feedback detalhado e notificações automáticas de retorno para o colaborador.
+- **Sistema Totalmente "Tagarela" (v2.9)**: Notificações dinâmicas via **Título da Aba do Navegador** — o HubCRM sincroniza globalmente o contador de pendências (Chamados + RH + Wiki + Alertas) diretamente no título da página, garantindo visibilidade multitarefa.
 - **Gestão Descentralizada de Histórico**: Liderança (Admin/Gerente) possui poder de **exclusão permanente** de registros de ausência diretamente no perfil do colaborador ou na aba central, garantindo higiene de dados e auditoria de solicitações.
 - **Dashboard de Pendências de RH**: Contador dinâmico (badge) no menu global para o time de People & Culture sobre novas solicitações de ausência.
 - **eNPS Anônimo**: Termômetro de fidelidade e satisfação interna baseado na métrica clássica de promotoria, com dashboard de sentimentos anônimos.
