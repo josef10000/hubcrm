@@ -17,7 +17,7 @@ export default function SupportView() {
 
   const csatRequests = supportRequests.filter(r => r.csatScore);
   const avgCsat = csatRequests.length > 0 
-    ? (csatRequests.reduce((acc, r) => acc + r.csatScore, 0) / csatRequests.length).toFixed(1)
+    ? (csatRequests.reduce((acc, r) => acc + (Number(r.csatScore) || 0), 0) / csatRequests.length).toFixed(1)
     : null;
 
   // Monitoramento de SLA para o Resumo
@@ -30,6 +30,7 @@ export default function SupportView() {
   };
 
   openRequests.forEach(req => {
+    if (!req.createdAt) return;
     const sla = getSlaStatus(req.createdAt, req.priority);
     if (!sla) return;
     if (sla.isOverdue) slaMetrics.atrasados++;
@@ -126,10 +127,10 @@ export default function SupportView() {
           </div>
 
           <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-4 rounded-2xl">
-            <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-1">Em Alerta (&lt;6h)</p>
+            <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-1">Em Alerta (<6h)</p>
             <div className="flex items-center justify-between">
-              <h3 className={`text-2xl font-bold ${slaMetrics.emAlerta > 0 ? 'text-blue-400' : 'text-gray-400'}`}>{slaMetrics.emAlerta}</h3>
-              <div className={`p-2 rounded-lg ${slaMetrics.emAlerta > 0 ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-500/10 text-gray-500'}`}>
+              <h3 className={`text-2xl font-bold ${slaMetrics.emAlerta > 0 ? 'text-indigo-400' : 'text-gray-400'}`}>{slaMetrics.emAlerta}</h3>
+              <div className={`p-2 rounded-lg ${slaMetrics.emAlerta > 0 ? 'bg-indigo-500/20 text-indigo-400' : 'bg-gray-500/10 text-gray-500'}`}>
                 <Clock size={18} />
               </div>
             </div>
@@ -216,7 +217,7 @@ export default function SupportView() {
                           value={req.priority || 'baixa'}
                           onChange={(e) => handleUpdateSupport(req.id, { priority: e.target.value })}
                           className={`text-[10px] font-bold uppercase p-1 px-2 rounded-lg bg-black/20 border border-white/10 outline-none cursor-pointer ${
-                            req.priority === 'alta' ? 'text-red-400' : req.priority === 'media' ? 'text-amber-400' : 'text-blue-400'
+                            req.priority === 'alta' ? 'text-red-400' : req.priority === 'media' ? 'text-amber-400' : 'text-indigo-400'
                           }`}
                         >
                           <option value="alta">Alta</option>
@@ -233,7 +234,7 @@ export default function SupportView() {
                             if (!sla) return '';
                             if (sla.isOverdue) return 'bg-red-500/20 text-red-500 border-red-500/30 animate-pulse';
                             if (sla.remaining < 2) return 'bg-amber-500/20 text-amber-500 border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.2)]';
-                            if (sla.remaining < 6) return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+                            if (sla.remaining < 6) return 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30';
                             return 'bg-emerald-500/20 text-emerald-500 border-emerald-500/30';
                           })()
                         }`}>
