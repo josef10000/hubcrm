@@ -198,6 +198,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Busca alertas disparados para a organização e que tenham o cargo do usuário como alvo
     const q = query(
       collection(db, 'system_alerts'),
+      where('orgId', '==', userProfile.orgId),
       where('targetRoles', 'array-contains', userProfile.role),
       limit(50)
     );

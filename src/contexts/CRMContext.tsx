@@ -425,8 +425,10 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     },
     handleSaveWikiArticle: async (articleData: Partial<WikiArticle>) => {
       try {
+        const isNew = !articleData.id;
         const id = articleData.id || doc(collection(db, 'organizations', effectiveOrgId, 'wikiArticles')).id;
         const now = Date.now();
+        
         await setDoc(doc(db, 'organizations', effectiveOrgId, 'wikiArticles', id), {
           ...articleData,
           id,
@@ -435,7 +437,27 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
           viewCount: articleData.viewCount || 0,
           stars: articleData.stars || [],
         }, { merge: true });
-        toast.success('Artigo salvo com sucesso!');
+
+        // Gatilho de Notificação para novos artigos
+        if (isNew) {
+          const allRoles: UserRole[] = [
+            'Administrador', 'Gerente', 'People & Culture', 'Customer Success', 
+            'Suporte Técnico', 'Onboarding Specialist', 'SDR', 'Executive', 
+            'FinOps', 'Controladoria', 'Revenue Operations', 'Gestor de Faturamento', 'Só Leitura'
+          ];
+
+          await addDoc(collection(db, 'system_alerts'), {
+            title: '📚 Novo Conteúdo na Wiki',
+            message: `Um novo manual foi publicado: "${articleData.title}"`,
+            type: 'info',
+            targetRoles: articleData.allowedRoles?.length ? articleData.allowedRoles : allRoles,
+            orgId: effectiveOrgId,
+            createdAt: now,
+            link: '/wiki'
+          });
+        }
+
+        toast.success(isNew ? 'Artigo publicado e equipe notificada!' : 'Artigo atualizado com sucesso!');
       } catch (e) {
         console.error('Error saving wiki article:', e);
         toast.error('Erro ao salvar artigo.');
