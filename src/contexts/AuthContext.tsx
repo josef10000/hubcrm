@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, collection, query, where, getDocs, limit, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, getDocs, limit, onSnapshot, or } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { UserProfile } from '../types';
 
@@ -195,11 +195,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Busca alertas disparados para a organização e que tenham o cargo do usuário como alvo
+    // Busca alertas disparados para a organização que tenham o cargo do usuário como alvo OU sejam para o usuário específico
     const q = query(
       collection(db, 'system_alerts'),
       where('orgId', '==', userProfile.orgId),
-      where('targetRoles', 'array-contains', userProfile.role),
+      or(
+        where('targetRoles', 'array-contains', userProfile.role),
+        where('userId', '==', userProfile.uid)
+      ),
       limit(50)
     );
 

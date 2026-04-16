@@ -4,7 +4,7 @@ import {
   User as UserIcon, Mail, Phone, Instagram, Linkedin, 
   ChevronLeft, Edit3, Save, X, Briefcase, Info, 
   Shield, Globe, MapPin, Loader2, Camera, Cake, Calendar,
-  Target, ChevronDown, CheckCircle2, Circle, Star, Wallet, TrendingUp, Clock
+  Target, ChevronDown, CheckCircle2, Circle, Star, Wallet, TrendingUp, Clock, Plane, AlertTriangle
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCRM } from '../contexts/CRMContext';
@@ -658,6 +658,42 @@ export default function ProfileView() {
                             )}
                           </div>
                         </div>
+                      </div>
+
+                      {/* Ausências Recentes - Adicionado para Visibilidade Dupla */}
+                      <div className="pt-8 border-t border-gray-100 dark:border-white/5">
+                        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 flex items-center">
+                          <Plane className="mr-2" size={16} />
+                          Últimas Ausências
+                        </h3>
+                        {vacations.filter(v => v.userId === uid).length > 0 ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {vacations.filter(v => v.userId === uid)
+                              .sort((a, b) => b.createdAt - a.createdAt)
+                              .slice(0, 2)
+                              .map(v => (
+                                <div key={v.id} className="p-4 bg-white/50 dark:bg-black/20 border border-gray-100 dark:border-white/5 rounded-2xl flex items-center gap-3">
+                                  <div className={`p-2 rounded-xl ${
+                                    v.status === 'Aprovado' ? 'bg-emerald-500/10 text-emerald-500' :
+                                    v.status === 'Recusado' ? 'bg-rose-500/10 text-rose-500' :
+                                    'bg-amber-500/10 text-amber-500'
+                                  }`}>
+                                    {v.status === 'Aprovado' ? <CheckCircle2 size={16} /> : 
+                                     v.status === 'Recusado' ? <AlertTriangle size={16} /> : 
+                                     <Clock size={16} />}
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider">{v.type}</p>
+                                    <p className="text-[10px] text-gray-500">{v.start} — {v.end}</p>
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        ) : (
+                          <div className="p-4 bg-white/50 dark:bg-black/20 border border-gray-100 dark:border-white/5 rounded-2xl">
+                             <p className="text-xs text-gray-500 italic">Nenhuma ausência registrada neste perfil.</p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
