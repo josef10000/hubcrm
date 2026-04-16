@@ -23,6 +23,7 @@ import DashboardView from './views/DashboardView';
 import AnalyticsView from './views/AnalyticsView';
 import FinanceView from './views/FinanceView';
 import SupportView from './views/SupportView';
+import { useFilteredClients } from './hooks/useFilteredClients';
 import MarketingView from './views/MarketingView';
 import ProductsView from './views/ProductsView';
 import SettingsView from './views/SettingsView';
@@ -80,8 +81,13 @@ function CRMInner() {
     handleSaveOffer, handleDeleteOffer, handleExportCSV,
     wikiArticles, pendingVacationsCount
   } = useCRM();
-
-  const { sidebarOpen, setSidebarOpen, isModalOpen, setIsModalOpen, searchTerm, setSearchTerm } = useUI();
+  
+  const { 
+    sidebarOpen, setSidebarOpen, isModalOpen, setIsModalOpen, 
+    searchTerm, setSearchTerm, filterStatus, sortBy, filterTagId 
+  } = useUI();
+  
+  const filteredClientsForExport = useFilteredClients(clients, searchTerm, filterStatus, sortBy, filterTagId);
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -223,13 +229,7 @@ function CRMInner() {
           <div className="flex items-center gap-3">
             {currentPath === '/' && (
               <button
-                onClick={() => {
-                  // This now requires access to the export method inside Dashboard or passing clients here.. Wait, Dashboard export is better placed inside Dashboard itself!
-                  // For now, I'll let Dashboard button handle exporting or pass it to CRM hook but export needs filtered clients.
-                  // we can keep handleExportCSV in Dashboard or here, but it requires data.
-                  // Actually, I can pass clients directly or let Dashboard render this header part.
-                  // For now, I'll pass clients directly. Wait, handleExportCSV takes `dataToExport`. I will fix this later when splitting Dashboard.
-                }}
+                onClick={() => handleExportCSV(filteredClientsForExport)}
                 className="hidden sm:flex items-center space-x-2 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white px-4 py-3 rounded-2xl transition-all font-medium shrink-0" title="Exportar para CSV">
                 <Download size={18} />
                 <span>Exportar</span>

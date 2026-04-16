@@ -18,6 +18,8 @@ interface UIContextType {
   setFilterStatus: (status: SiteStatus | 'Todos') => void;
   sortBy: 'recent' | 'alphabetical' | 'value';
   setSortBy: (sort: 'recent' | 'alphabetical' | 'value') => void;
+  filterTagId: string;
+  setFilterTagId: (tagId: string) => void;
 
   // Pagination
   currentPage: number;
@@ -51,6 +53,7 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<SiteStatus | 'Todos'>('Todos');
   const [sortBy, setSortBy] = useState<'recent' | 'alphabetical' | 'value'>('recent');
+  const [filterTagId, setFilterTagId] = useState('all');
 
   const [currentPage, setCurrentPage] = useState(1);
   const clientsPerPage = 9;
@@ -74,7 +77,7 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
   // Reset pagination on filter change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterStatus, sortBy]);
+  }, [searchTerm, filterStatus, sortBy, filterTagId]);
 
   const value: UIContextType = {
     view, setView,
@@ -83,6 +86,7 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
     searchTerm, setSearchTerm,
     filterStatus, setFilterStatus,
     sortBy, setSortBy,
+    filterTagId, setFilterTagId,
     currentPage, setCurrentPage, clientsPerPage,
     themeColor, setThemeColor,
   };

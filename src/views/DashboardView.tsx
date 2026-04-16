@@ -32,9 +32,9 @@ export default function DashboardView() {
     setIsModalOpen,
     filterStatus, setFilterStatus, 
     sortBy, setSortBy,
-    searchTerm
+    searchTerm,
+    filterTagId, setFilterTagId
   } = useUI();
-  const [filterTagId, setFilterTagId] = React.useState('all');
 
   const filteredClients = useFilteredClients(clients, searchTerm, filterStatus, sortBy, filterTagId);
 
