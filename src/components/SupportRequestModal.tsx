@@ -4,7 +4,7 @@ import {
   X, Search, User, MessageSquare, AlertTriangle, 
   CheckCircle, BookOpen, Copy, ExternalLink, 
   History, Send, Info, Clock, ShieldAlert,
-  Hash, Globe, Phone, Mail, AlertTriangle
+  Hash, Globe, Phone, Mail
 } from 'lucide-react';
 import { useCRM } from '../contexts/CRMContext';
 import { toast } from 'sonner';
