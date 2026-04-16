@@ -15,7 +15,9 @@ interface AssetManagerProps {
 
 export default function AssetManager({ userId }: AssetManagerProps) {
   const { userProfile } = useAuth();
-  const { effectiveOrgId, teamProfiles } = useCRM();
+  const crm = useCRM();
+  const { effectiveOrgId = '', teamProfiles: rawTeamProfiles = [] } = crm || {};
+  const teamProfiles = Array.isArray(rawTeamProfiles) ? rawTeamProfiles : [];
   const isAdminOrManager = userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture';
   
   const [assets, setAssets] = useState<Asset[]>([]);

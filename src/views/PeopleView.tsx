@@ -48,15 +48,22 @@ export default function PeopleView() {
   const [teamMembers, setTeamMembers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const crm = useCRM();
+  
+  // Blindagem de Dados (Safe Mode)
   const { 
-    vacations, 
-    teamProfiles, 
-    effectiveOrgId,
-    enpsQuestion,
-    setEnpsQuestion,
-    enpsFrequency,
-    setEnpsFrequency
-  } = useCRM();
+    vacations: rawVacations = [], 
+    teamProfiles: rawTeamProfiles = [], 
+    effectiveOrgId = '',
+    enpsQuestion = '',
+    setEnpsQuestion = () => {},
+    enpsFrequency = 'mensal',
+    setEnpsFrequency = () => {}
+  } = crm || {};
+
+  const vacations = Array.isArray(rawVacations) ? rawVacations : [];
+  const teamProfiles = Array.isArray(rawTeamProfiles) ? rawTeamProfiles : [];
+
   const [showVacationModal, setShowVacationModal] = useState(false);
   const [newVacation, setNewVacation] = useState<Partial<VacationPeriod>>({
     type: 'Férias',

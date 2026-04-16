@@ -7,7 +7,7 @@
 Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.
 
   <p>
-    <img src="https://img.shields.io/badge/Version-2.6.0-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-2.6.1-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Status-Production_Ready-22c55e?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge&labelColor=111111" alt="License" />
@@ -224,21 +224,26 @@ Calendário integrado com prazos de entrega, datas de pagamento e eventos operac
 
 ---
 
-### 🎧 8. Gestão de Suporte de Elite (Support Desk)
+### 🎧 8. Gestão de Suporte de Elite (Support Desk v2.6.1)
 
-Sistema de atendimento profissional focado em SLAs e qualidade perceptível.
+Sistema de atendimento profissional focado em SLAs rigorosos e qualidade perceptível, agora com **blindagem de dados nativa**.
 
-- **Dashboard de SLA Tracker**: Painel executivo no topo da visão que categoriza chamados em 4 estados críticos:
-  - 🔴 **Atrasados**: Prazo de resposta expirado (Animação *Pulse*).
-  - 🟠 **Vencendo Agora**: Menos de 2 horas para o limite (Efeito *Glow*).
-  - 🔵 **Em Alerta**: Menos de 6 horas para o limite.
-  - 🟢 **No Prazo**: Dentro dos parâmetros contratuais.
-- **Abertura Rápida de Chamados Internos**: Interface otimizada com busca preditiva de clientes, auto-preenchimento de dados e integração com a Wiki Hub para respostas ágeis.
-- **Modo Nota (Timeline)**: Permite registrar interações do WhatsApp diretamente no histórico do cliente sem a necessidade de abrir um ticket técnico.
-- **Ordenação por Prioridade de SLA**: Sistema inteligente que reorganiza a fila de atendimento priorizando tickets próximos do vencimento ou com maior urgência (`Alta` > `Média` > `Baixa`).
+- **Dashboard de SLA Tracker**: Painel executivo que categoriza chamados em 4 estados críticos de tempo com indicadores visuais dinâmicos.
+- **Support Resilience (Safe Mode)**: Implementação de arquitetura de blindagem que impede o travamento da interface (tela branca) através da validação atômica de dados antes da renderização.
+- **Abertura Rápida & Modo Nota**: Interface otimizada que permite registrar interações (ex: WhatsApp) sem abrir um ticket técnico, mantendo a timeline do cliente limpa e eficiente.
+- **Ordenação por Prioridade de SLA**: Sistema inteligente que reorganiza a fila de atendimento priorizando tickets próximos do vencimento ou com maior urgência.
 - **Cálculo de SLA Dinâmico**: Lógica baseada em Horas Úteis com prazos diferenciados por prioridade.
-- **CSAT (Customer Satisfaction Score)**: Ciclo fechado de feedback. Após a conclusão, o cliente avalia o atendimento com estrelas (1-5) e feedback textual.
-- **Visibilidade Restrita de Performance**: Médias de satisfação individuais protegidas por RBAC, visíveis apenas para lideranças de CS/Suporte.
+- **CSAT Integrado**: Ciclo fechado de feedback com avaliação por estrelas e comentários após a resolução.
+
+---
+
+### 🛡️ Engenharia de Resiliência — Safe Mode Architecture
+
+A partir da v2.6.1, a plataforma adota o padrão de **Data Shielding** em todos os módulos críticos (Suporte, RH, Financeiro):
+
+- **Blindagem de Hooks**: Desestruturação segura do `useCRM()` com valores padrão garantidos.
+- **Array Validation**: Verificação obrigatória `Array.isArray()` antes de qualquer operação de `.map()` ou `.filter()`, prevenindo crashes causados por tempos de resposta assíncronos do Firebase.
+- **Local State Encapsulation**: Migração de estados de interface (como modos de resposta e modais) do contexto global para estados locais, reduzindo re-renders e aumentando a performance.
 
 ---
 
