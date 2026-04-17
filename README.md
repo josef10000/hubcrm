@@ -7,7 +7,7 @@
 Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.
 
   <p>
-    <img src="https://img.shields.io/badge/Version-3.7.2-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-3.8.0-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Status-Sturdy_&_Human_First-22c55e?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge&labelColor=111111" alt="License" />

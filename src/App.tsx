@@ -12,6 +12,7 @@ import CalendarView from './components/CalendarView';
 import MonitoringView from './components/MonitoringView';
 import ClientMapView from './components/ClientMapView';
 import { Toaster, toast } from 'sonner';
+import { Analytics } from '@vercel/analytics/react';
 
 import ConfirmationModal from './components/ConfirmationModal';
 import OfferModal from './components/OfferModal';
@@ -368,6 +369,7 @@ export default function App() {
         </div>
       )}
       <Toaster position="top-right" theme="dark" />
+      <Analytics />
       <AuthProvider>
         <Routes>
           <Route path="/cliente/:orgId/:clientId" element={<ClientPortal />} />
