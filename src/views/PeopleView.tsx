@@ -38,17 +38,16 @@ import { useCRM } from '../contexts/CRMContext';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { VacationPeriod, PDICategory, PDIAction } from '../types/people';
+import UserEditModal from '../components/people/UserEditModal';
 
-type PeopleSubTab = 'dashboard' | 'onboarding' | 'development' | 'vacations' | 'climate' | 'assets' | 'mural' | 'career';
+type PeopleSubTab = 'todos' | 'my_team' | 'times' | 'cargos' | 'onboarding' | 'ferias';
 
 export default function PeopleView() {
-  const { userProfile } = useAuth();
-  const [activeTab, setActiveTab] = useState<PeopleSubTab>('dashboard');
-  const [selectedMember, setSelectedMember] = useState<UserProfile | null>(null);
-  const [teamMembers, setTeamMembers] = useState<UserProfile[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const crm = useCRM();
+  const { user, userProfile, teamProfiles, effectiveOrgId } = useCRM();
+  const [activeTab, setActiveTab] = useState<PeopleSubTab>('todos');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   
   // Blindagem de Dados (Safe Mode)
   const { 

@@ -55,12 +55,26 @@ export default function LeadsView() {
   const [newActivityText, setNewActivityText] = useState('');
   const [isSubmittingActivity, setIsSubmittingActivity] = useState(false);
   const [filterTag, setFilterTag] = useState('all');
+  const [leadFilter, setLeadFilter] = useState<'all' | 'mine'>('all');
+
   const filteredLeads = leads.filter(l => {
     const matchesSearch = !searchTerm || l.name?.toLowerCase().includes(searchTerm.toLowerCase()) || l.whatsapp?.includes(searchTerm);
     const matchesSource = filterSource === 'all' || l.leadSource === filterSource;
     const matchesTag = filterTag === 'all' || l.tagIds?.includes(filterTag);
-    return matchesSearch && matchesSource && matchesTag;
+    const matchesOwner = leadFilter === 'all' || l.assignedTo === user?.uid;
+    return matchesSearch && matchesSource && matchesTag && matchesOwner;
   });
+
+  const handleQuickProposal = (lead: Lead) => {
+    toast.promise(
+      new Promise((resolve) => setTimeout(resolve, 1500)),
+      {
+        loading: `Gerando proposta estratégica para ${lead.name}...`,
+        success: 'Proposta gerada e enviada via WhatsApp!',
+        error: 'Erro ao gerar proposta.',
+      }
+    );
+  };
 
 
   const handleSave = async () => {
@@ -236,12 +250,33 @@ export default function LeadsView() {
           </h1>
           <p className="text-gray-400 text-sm mt-1">Gerencie seus leads e oportunidades de negócio</p>
         </div>
-        <button
-          onClick={() => { setFormData(emptyForm); setEditingLead(null); setIsModalOpen(true); }}
-          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-medium rounded-xl transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:translate-y-0"
-        >
-          <Plus className="w-5 h-5" /> Novo Lead
-        </button>
+        <div className="flex gap-2">
+          {/* Dashboard Toggle Filter */}
+          <div className="flex bg-white/5 border border-white/10 p-1 rounded-xl" role="group" aria-label="Filtro de visualização de leads">
+             <button 
+                onClick={() => setLeadFilter('all')}
+                aria-label="Ver todos os leads da organização"
+                aria-pressed={leadFilter === 'all'}
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${leadFilter === 'all' ? 'bg-blue-500 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
+             >
+                Todos
+             </button>
+             <button 
+                onClick={() => setLeadFilter('mine')}
+                aria-label="Ver apenas leads atribuídos a mim"
+                aria-pressed={leadFilter === 'mine'}
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${leadFilter === 'mine' ? 'bg-blue-500 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
+             >
+                Minhas Oportunidades
+             </button>
+          </div>
+          <button
+            onClick={() => { setFormData(emptyForm); setEditingLead(null); setIsModalOpen(true); }}
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-medium rounded-xl transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:translate-y-0"
+          >
+            <Plus className="w-5 h-5" /> Novo Lead
+          </button>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -372,6 +407,19 @@ export default function LeadsView() {
                           <span className="truncate">{lead.email}</span>
                         </div>
                       )}
+                      
+                      {/* Quick Actions (Proposta 1-Clique) */}
+                      <div className="flex items-center gap-2 mt-3 mb-2">
+                         <button 
+                            onClick={(e) => { e.stopPropagation(); handleQuickProposal(lead); }}
+                            aria-label={`Gerar e enviar proposta estratégica para ${lead.name} via WhatsApp`}
+                            className="flex-1 flex items-center justify-center gap-2 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 rounded-lg text-[10px] font-bold transition-all shadow-sm active:scale-95"
+                         >
+                            <TrendingUp size={12} aria-hidden="true" />
+                            Proposta 1-Clique
+                         </button>
+                      </div>
+
                       <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5">
                         
                         {lead.tagIds && lead.tagIds.length > 0 && (

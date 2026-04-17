@@ -23,46 +23,20 @@ export default function SupportView() {
   const teamProfiles = Array.isArray(rawTeamProfiles) ? rawTeamProfiles.filter(Boolean) : [];
 
   // 2. Estados Locais da Interface
-  const [replyingTo, setReplyingTo] = useState<string | null>(null);
-  const [replyMessage, setReplyMessage] = useState('');
-  const [sortBy, setSortBy] = useState<'recent' | 'sla'>('recent');
-  const [isNewRequestModalOpen, setIsNewRequestModalOpen] = useState(false);
+  const [supportFilter, setSupportFilter] = useState<'all' | 'mine'>('all');
 
-  // 3. A Função precisa vir ANTES de ser usada (Correção do Crash Fatal)
-  const getSlaStatus = (createdAt: any, priority?: string) => {
-    if (!createdAt) return null;
-    let date: Date;
-    try {
-      if (createdAt.toDate && typeof createdAt.toDate === 'function') {
-        date = createdAt.toDate();
-      } else if (createdAt.seconds) {
-        date = new Date(createdAt.seconds * 1000);
-      } else {
-        date = new Date(createdAt);
-      }
+  const filteredRequests = [...supportRequests]
+    .filter(req => supportFilter === 'all' || req.assignedTo === user?.uid)
+    .sort((a, b) => {
+      if (sortBy === 'recent') return 0;
+      const slaA = getSlaStatus(a?.createdAt, a?.priority)?.remaining ?? 999;
+      const slaB = getSlaStatus(b?.createdAt, b?.priority)?.remaining ?? 999;
       
-      if (isNaN(date.getTime())) return null;
+      if (a?.status === 'concluido' && b?.status !== 'concluido') return 1;
+      if (a?.status !== 'concluido' && b?.status === 'concluido') return -1;
       
-      const hoursPast = differenceInHours(new Date(), date);
-    
-      const slaLimits = {
-        'alta': 4,
-        'media': 24,
-        'baixa': 72
-      };
-      
-      const limit = slaLimits[priority as keyof typeof slaLimits] || 24;
-      const remaining = limit - hoursPast;
-      
-      return {
-        remaining,
-        isOverdue: remaining < 0,
-        text: remaining < 0 ? `Atrasado ${Math.abs(remaining)}h` : `${remaining}h restantes`
-      };
-    } catch (e) {
-      return null;
-    }
-  };
+      return slaA - slaB;
+    });
 
   const handleUpdateSupport = async (requestId: string, data: any) => {
     if (!effectiveOrgId) return;
@@ -174,17 +148,33 @@ export default function SupportView() {
         </div>
 
         {/* Filters & Sorting */}
-        <div className="flex justify-end gap-2 mb-6">
+        <div className="flex justify-end gap-3 mb-6">
+          {/* Smart View Filter */}
+          <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-1 rounded-xl flex">
+            <button 
+              onClick={() => setSupportFilter('all')}
+              className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${supportFilter === 'all' ? 'bg-white/10 text-white shadow-sm' : 'text-gray-500 hover:text-white'}`}
+            >
+              Todos
+            </button>
+            <button 
+              onClick={() => setSupportFilter('mine')}
+              className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${supportFilter === 'mine' ? 'bg-primary-500 text-white shadow-xl shadow-primary-500/20' : 'text-gray-500 hover:text-white'}`}
+            >
+              Meus Chamados
+            </button>
+          </div>
+
           <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-1 rounded-xl flex">
             <button 
               onClick={() => setSortBy('recent')}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${sortBy === 'recent' ? 'bg-primary-500 text-white' : 'text-gray-500 hover:text-white'}`}
+              className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${sortBy === 'recent' ? 'bg-white/10 text-white shadow-sm' : 'text-gray-500 hover:text-white'}`}
             >
               Recentes
             </button>
             <button 
               onClick={() => setSortBy('sla')}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${sortBy === 'sla' ? 'bg-primary-500 text-white' : 'text-gray-500 hover:text-white'}`}
+              className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${sortBy === 'sla' ? 'bg-white/10 text-white shadow-sm' : 'text-gray-500 hover:text-white'}`}
             >
               Prioridade SLA
             </button>
@@ -192,24 +182,26 @@ export default function SupportView() {
         </div>
 
         <div className="space-y-4">
-          {supportRequests.length === 0 ? (
+          {filteredRequests.length === 0 ? (
             <div className="text-center py-12 bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl">
               <MessageCircle className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Nenhum chamado aberto</h3>
-              <p className="text-gray-500 dark:text-gray-400">Seus clientes ainda não enviaram nenhuma solicitação.</p>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Nenhum chamado encontrado</h3>
+              <p className="text-gray-500 dark:text-gray-400">Tente mudar o filtro ou aguarde novas solicitações.</p>
             </div>
           ) : (
-            [...supportRequests].sort((a, b) => {
-              if (sortBy === 'recent') return 0;
-              const slaA = getSlaStatus(a?.createdAt, a?.priority)?.remaining ?? 999;
-              const slaB = getSlaStatus(b?.createdAt, b?.priority)?.remaining ?? 999;
-              
-              if (a?.status === 'concluido' && b?.status !== 'concluido') return 1;
-              if (a?.status !== 'concluido' && b?.status === 'concluido') return -1;
-              
-              return slaA - slaB;
-            }).map((req) => (
-              <div key={req.id} className={`bg-gray-100 dark:bg-white/5 backdrop-blur-xl border ${req.status === 'concluido' ? 'border-emerald-500/30 opacity-70' : 'border-gray-200 dark:border-white/10'} p-6 rounded-3xl shadow-lg transition-all`}>
+            filteredRequests.map((req) => {
+              const sla = getSlaStatus(req.createdAt, req.priority);
+              const isCritico = sla?.isOverdue && req.status !== 'concluido';
+
+              return (
+              <div 
+                key={req.id} 
+                className={`bg-gray-100 dark:bg-white/5 backdrop-blur-xl border transition-all duration-500 p-6 rounded-3xl shadow-lg ${
+                  req.status === 'concluido' ? 'border-emerald-500/30 opacity-70' : 
+                  isCritico ? 'border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.15)] ring-1 ring-red-500/20' : 
+                  'border-gray-200 dark:border-white/10'
+                }`}
+              >
                 <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                   <div className="flex-1 w-full">
                     <div className="flex flex-wrap items-center gap-3 mb-2">
@@ -228,13 +220,8 @@ export default function SupportView() {
                           WhatsApp
                         </span>
                       )}
-                      {req.category && (
-                        <span className="px-2 py-1 rounded-md text-xs font-medium bg-gray-500/10 text-gray-500 border border-gray-500/20">
-                          {String(req.category)}
-                        </span>
-                      )}
-
-                      {/* Display Priority */}
+                      
+                      {/* Priority Tag */}
                       <div className="flex items-center gap-1.5 ml-2">
                         <select 
                           value={req.priority || 'baixa'}
@@ -249,20 +236,16 @@ export default function SupportView() {
                         </select>
                       </div>
 
-                      {/* SLA Info */}
+                      {/* Dynamic SLA Badge with Critical Effect */}
                       {req.status !== 'concluido' && (
                         <div className={`flex items-center gap-1.5 ml-auto text-[10px] font-bold px-3 py-1 rounded-full border transition-all ${
-                          (() => {
-                            const sla = getSlaStatus(req.createdAt, req.priority);
-                            if (!sla) return '';
-                            if (sla.isOverdue) return 'bg-red-500/20 text-red-500 border-red-500/30 animate-pulse';
-                            if (sla.remaining < 2) return 'bg-amber-500/20 text-amber-500 border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.2)]';
-                            if (sla.remaining < 6) return 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30';
-                            return 'bg-emerald-500/20 text-emerald-500 border-emerald-500/30';
-                          })()
+                          isCritico ? 'bg-red-500 text-white border-red-600 animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.4)]' :
+                          sla?.remaining < 2 ? 'bg-amber-500/20 text-amber-500 border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.2)]' :
+                          sla?.remaining < 6 ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' :
+                          'bg-emerald-500/20 text-emerald-500 border-emerald-500/30'
                         }`}>
                           <Clock size={12} />
-                          {getSlaStatus(req.createdAt, req.priority)?.text}
+                          {sla?.text}
                         </div>
                       )}
                     </div>
@@ -323,6 +306,7 @@ export default function SupportView() {
                           onChange={(e) => setReplyMessage(e.target.value)}
                           placeholder="Escreva sua resposta para o cliente..."
                           className="w-full min-h-[100px] px-4 py-3 bg-white dark:bg-black/20 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500 custom-scrollbar resize-none mb-3"
+                          aria-label="Campo de resposta ao cliente"
                         ></textarea>
                         <div className="flex justify-end gap-2">
                           <button
@@ -373,7 +357,7 @@ export default function SupportView() {
                         }}
                         className="flex items-center justify-center space-x-2 bg-primary-500/10 hover:bg-primary-500/20 text-primary-600 dark:text-primary-400 border border-primary-500/30 px-4 py-2 rounded-xl transition-all font-medium"
                       >
-                        <Clock size={18} />
+                        <Clock size={18} aria-hidden="true" />
                         <span>Analisar</span>
                       </button>
                     )}
@@ -386,7 +370,7 @@ export default function SupportView() {
                         }}
                         className="flex items-center justify-center space-x-2 bg-primary-500/10 hover:bg-primary-500/20 text-primary-600 dark:text-primary-400 border border-primary-500/30 px-4 py-2 rounded-xl transition-all font-medium"
                       >
-                        <MessageSquare size={18} />
+                        <MessageSquare size={18} aria-hidden="true" />
                         <span>Responder</span>
                       </button>
                     )}
@@ -404,7 +388,7 @@ export default function SupportView() {
                         }}
                         className="flex items-center justify-center space-x-2 bg-primary-500/10 hover:bg-primary-500/20 text-primary-600 dark:text-primary-400 border border-primary-500/30 px-4 py-2 rounded-xl transition-all font-medium"
                       >
-                        <CheckCircle size={18} />
+                        <CheckCircle size={18} aria-hidden="true" />
                         <span>Concluir</span>
                       </button>
                     )}
@@ -422,13 +406,14 @@ export default function SupportView() {
                       }}
                       className="flex items-center justify-center space-x-2 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/30 px-4 py-2 rounded-xl transition-all font-medium"
                     >
-                      <Trash2 size={18} />
+                      <Trash2 size={18} aria-hidden="true" />
                       <span>Excluir</span>
                     </button>
                   </div>
                 </div>
               </div>
-            ))
+            );
+            })
           )}
         </div>
       </div>

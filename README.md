@@ -1,4 +1,4 @@
-# 🔐 Hub Central — Intranet Corporativa v3.9.0 (Acessibilidade)
+# 🔐 Hub Central — Intranet Corporativa v4.0.0 (Decentralized Evolution)
 
 > [!CAUTION]
 > **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
@@ -7,8 +7,8 @@
 Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.
 
   <p>
-    <img src="https://img.shields.io/badge/Version-3.9.0-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
-    <img src="https://img.shields.io/badge/Status-Sturdy_&_Human_First-22c55e?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
+    <img src="https://img.shields.io/badge/Version-4.0.0-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Status-Decentralized_&_Focused-22c55e?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge&labelColor=111111" alt="License" />
   </p>
@@ -19,303 +19,121 @@ Transformando prospecção em faturamento através de automação inteligente e 
     <img src="https://img.shields.io/badge/Vite-6-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite" />
     <img src="https://img.shields.io/badge/Firebase-12-FFCA28?style=flat-square&logo=firebase&logoColor=black" alt="Firebase" />
     <img src="https://img.shields.io/badge/Vercel-Serverless-000000?style=flat-square&logo=vercel&logoColor=white" alt="Vercel" />
-  </p>
-</div>
-
----
-
-<div align="center">
-  <h2>✨ Features em Destaque</h2>
+  </p><div align="center">
+  <h2>✨ Features em Destaque v4.0</h2>
 </div>
 
 <table>
   <tr>
-    <td align="center" width="25%">
-      <br />🔄<br /><strong>Ciclo Completo</strong><br />
-      <sub>Do lead ao pós-venda, sem trocar de ferramenta</sub>
+    <td align="center" width="20%">
+      <br />🎯<br /><strong>Pilar Comercial</strong><br />
+      <sub>Pipeline descentralizado & Proposta 1-Clique</sub>
     </td>
-    <td align="center" width="25%">
-      <br />💳<br /><strong>Power Checkout</strong><br />
-      <sub>Cliente se cadastra, paga e inicia o projeto sozinho</sub>
+    <td align="center" width="20%">
+      <br />⚙️<br /><strong>Pilar Operação</strong><br />
+      <sub>Hub de Onboarding, Contratos & Projetos</sub>
     </td>
-    <td align="center" width="25%">
-      <br />🏢<br /><strong>Multi-Tenant</strong><br />
-      <sub>Uma instalação, infinitas organizações isoladas</sub>
+    <td align="center" width="20%">
+      <br />💰<br /><strong>Pilar Financeiro</strong><br />
+      <sub>Billing Hub Tático & Finance BI Estratégico</sub>
     </td>
-    <td align="center" width="25%">
-      <br />🎉<br /><strong>Gamificação</strong><br />
-      <sub>Confetes e celebrações automáticas de aniversário</sub>
+    <td align="center" width="20%">
+      <br />👥<br /><strong>Pilar Pessoas</strong><br />
+      <sub>Gestão de Talentos, PDI & "Minha Equipe"</sub>
     </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <br />🎧<br /><strong>Gestão de Suporte</strong><br />
-      <sub>CSAT, SLA, Atribuição e Dashboard de Qualidade</sub>
-    </td>
-    <td align="center">
-      <br />📊<br /><strong>BI Financeiro</strong><br />
-      <sub>DRE, Fluxo, Budget e Alertas de Inadimplência</sub>
-    </td>
-    <td align="center">
-      <br />🧬<br /><strong>People & Culture</strong><br />
-      <sub>Férias, Onboarding, PDI e eNPS Anônimo</sub>
-    </td>
-    <td align="center">
-      <br />📖<br /><strong>Wiki Hub</strong><br />
-      <sub>Central de conhecimento com editor rico e RBAC</sub>
-    </td>
-    <td align="center">
-      <br />🔔<br /><strong>Alertas Operacionais</strong><br />
-      <sub>Notificações inteligentes e filtradas por cargo (RBAC)</sub>
+    <td align="center" width="20%">
+      <br />🛡️<br /><strong>Monitoramento</strong><br />
+      <sub>Sentry SDK & Vercel Analytics Nativo</sub>
     </td>
   </tr>
 </table>
 
 ---
 
-
 ## 📋 Índice
 
 - [Visão Geral](#-visão-geral)
+- [Arquitetura de Pilares v4.0](#-arquitetura-de-pilares-v40)
 - [Módulos da Plataforma](#-módulos-da-plataforma)
-- [Identidade Visual — Dark Absolute](#-identidade-visual--dark-absolute)
-- [Stack Tecnológica](#-stack-tecnológica--arquitetura)
-- [Arquitetura de Dados](#-arquitetura-de-dados-firestore-schema)
-- [Endpoints da API (Serverless)](#-endpoints-da-api-serverless)
-- [Sistema RBAC — Cargos e Permissões](#-sistema-rbac--cargos-e-permissões)
-- [Pipeline CI/CD](#-pipeline-cicd)
-- [Instalação e Configuração](#-instalação-e-configuração)
-- [Variáveis de Ambiente](#-variáveis-de-ambiente)
-- [Scripts Disponíveis](#-scripts-disponíveis)
-- [Estrutura de Diretórios](#-estrutura-de-diretórios)
-- [Guia de Contribuição](#-guia-de-contribuição)
+- [Identidade Visual](#-identidade-visual)
+- [Stack Tecnológica](#-stack-tecnológica)
+- [Sistema RBAC](#-sistema-rbac)
 - [Roadmap](#-roadmap)
-- [Licença](#-licença)
 
 ---
 
-## 🚀 Visão Geral
+## 🚀 Visão Geral v4.0 — Decentralized Management
 
-O **Hub Central** é mais do que um CRM — é um ecossistema ponta a ponta projetado para **agências digitais, empresas SaaS e prestadores de serviço** que buscam profissionalismo, escala e automação real.
+O **Hub Central v4.0** marca a evolução de um "CRM visual" para um **Ecossistema de Gestão Descentralizada**. O foco desta versão é a **elimininação de ruído visual**: cada um dos 13 cargos do sistema visualiza apenas o que é essencial para sua entrega, organizado em 4 Pilares de Poder.
 
-A plataforma cobre o ciclo de vida completo do cliente:
+### 🏛️ Arquitetura de Pilares Estratégicos
 
-```
-Prospecção → Qualificação → Venda → Onboarding → Entrega → Suporte → Retenção → Expansão
-```
+1.  **Comercial (Growth Engine)**: Focado em captar e converter. Leads, Pipeline e Propostas.
+2.  **Operação (Delivery Hub)**: Garantia de entrega. Onboarding, Projetos, Contratos e Wiki.
+3.  **Financeiro (Profit Engine)**: Saúde do caixa. Billing (Tático) e Finance (Estratégico).
+4.  **Pessoas (Culture Hub)**: Retenção de talentos. Perfil, Equipe e Bem-estar.
 
-### Diferenciais Competitivos
+### 💎 Diferenciais Estratégicos v4.0
 
 | Diferencial | Descrição |
 |---|---|
-| 🔄 **Ciclo Completo** | Do lead ao pós-venda em uma única plataforma |
-| 🏢 **Multi-Tenant** | Isolamento total de dados por organização |
-| 💳 **Checkout Self-Service** | Cliente se auto-cadastra, paga e inicia o projeto |
-| 📊 **BI Financeiro & Health** | DRE, Fluxo e **Health Score (0-100)** automático |
-| 🎧 **SLA Tracker** | Monitoramento de suporte em tempo real com alertas |
-| 📱 **Atendimento Ativo** | Abertura rápida de chamados via WhatsApp com busca preditiva |
-| 💰 **Calculadora de Comissões** | Automação de repasses para vendedores pós-pagamento |
-| 🔔 **Alertas de Negócio** | Central RBAC de avisos críticos (SLA, Finanças, RH) |
-| 📢 **Motor Tagarela** | Notificações em tempo real para Wiki e eventos do sistema |
-| 🎉 **Gamificação** | Celebração automática de aniversários com confetes |
-| 🌐 **100% Cloud-Native** | Zero infraestrutura para manter |
+| 🎯 **Minhas Oportunidades** | Filtro exclusivo para SDRs/Executives focarem no próprio pipeline. |
+| ✨ **Proposta 1-Clique** | Geração instantânea de proposta estratégica via WhatsApp diretamente do card. |
+| 🛡️ **Billing Hub** | Módulo tático isolado para gestão de inadimplência e comissões. |
+| 🚀 **Hub de Onboarding** | Trilhas reativas de entrada para Clientes e Talentos. |
+| 📋 **Central de Contratos** | Cockpit jurídico para gestão de assinaturas e formalização. |
+| 🔧 **Projects Dashboard** | Visão técnica total com monitoramento de SLA e progresso real. |
+| 👥 **Minha Equipe** | Lógica de liderança (`reportsTo`) para foco total do gestor em seus liderados. |
+| 🚨 **SLA Pulse Red** | Alerta visual pulsante para chamados e entregas fora do prazo. |
 
 ---
 
-## 🛠️ Módulos da Plataforma
+## 🛠️ Módulos da Plataforma (Arquitetura v4.0)
 
-### 🏗️ 1. Funil de Vendas & CRM (Leads Pipeline)
+### 🏗️ 1. Pilar Comercial (Leads Hub)
 
-Gestão intuitiva de leads com pipeline visual em **Kanban** ou **Lista**, atribuição de responsáveis, e conversão direta em clientes com sincronização financeira.
+Gestão descentralizada de leads projetada para alta conversão.
 
-- **Pipeline Visual (Kanban)**: Arraste leads entre estágios (`Novo` → `Em Contato` → `Proposta Enviada` → `Negociação` → `Convertido` / `Perdido`).
-- **Atribuição Inteligente**: Cada lead pode ser atribuído a um SDR ou Executive específico.
-- **Conversão Direta**: Um clique transforma o lead em cliente ativo, sincronizando dados com Asaas automaticamente.
-- **Filtros e Busca**: Pesquisa em tempo real por nome, CPF, e-mail ou status.
-- **Timeline de Atividades (Bussiness Intelligence)**: Histórico atômico dentro de cada lead. Registra Notas, Chamadas, Reuniões e mudanças de status com carimbo de data, hora e responsável.
-- **Lembretes de Follow-up (Sales Ops)**: Campo "Próximo Contato" com lógica de cores. Leads com follow-up atrasado brilham em vermelho no Kanban, enquanto próximos contatos aparecem em azul.
-- **Isolamento Comercial**: SDRs e Executives visualizam **apenas seus próprios leads**, enquanto Gerentes e Admins possuem visão global do pipeline.
+- **Pipeline Descentralizado**: Cada vendedor foca no seu funil através do botão "Minhas Oportunidades".
+- **Proposta 1-Clique**: Automação inteligente que gera a proposta e envia via WhatsApp com um clique.
+- **Kanban Reativo**: Arraste e solte com sincronização atômica e logs de atividade.
+- **Isolamento Comercial**: SDRs e Executives visualizam **apenas seus próprios leads**, enquanto a gestão possui visão BI global.
 - **Segmentação por Etiquetas (Tags)**: Classificação granular de leads com cores personalizadas para identificar nichos, urgências ou origens específicas diretamente no Kanban.
 
----
-
-### 📋 2. CRM & Gestão de Clientes Ativos
-
-Gestão centralizada da base de clientes com automação financeira e segmentação avançada.
-
-- **Segmentação Estratégica**: Sistema de etiquetas (Tags) unificado entre Funil e Dashboard para categorização de clientes (ex: VIP, Risco, Projeto Especial).
-- **Filtragem Dinâmica**: Dashboard com filtros em tempo real por Status, Tag e Ordenação.
-
----
-
-### 💳 2. Power Checkout — Checkout Público & Onboarding Automatizado
-
-Um fluxo de auto-atendimento completo que permite ao cliente se cadastrar, enviar briefing, assinar contrato e pagar — tudo sem intervenção manual.
-
-```
-┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│  📝 Dados   │ →  │  📋 Briefing │ →  │  ✍️ Contrato │ →  │  💳 Pagamento│
-│  Pessoais   │    │  + Uploads   │    │  Digital     │    │  Asaas       │
-└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
-```
-
-- **Multi-Etapas com Validação**: Formulário progressivo com validação Zod em cada passo.
-- **Coleta de Briefing Dinâmica**: Perguntas customizáveis (texto, textarea, select, upload de arquivo) configuradas pelo admin.
-- **Upload de Logos e Ativos**: Envio direto de arquivos multimídia na etapa de briefing.
-- **Assinatura Digital**: Aceite eletrônico com registro de IP, User-Agent e carimbo de data/hora.
-- **Integração Asaas**: Criação automática de cliente, assinatura recorrente (Mensal/Anual) e geração de link de pagamento (PIX, Boleto, Cartão).
-- **Link Público Personalizado**: Cada organização possui sua URL única (`/contratar/{orgId}`).
-
----
-
-### 🖥️ 3. Portal do Cliente (Self-Service)
-
-Área exclusiva para cada cliente com visibilidade total do projeto, faturas e comunicação.
-
-- **Timeline de Projeto**: Barra de progresso visual com etapas personalizáveis (Design, Desenvolvimento, Revisão, Deploy, etc.).
-- **Central de Pagamentos**: Histórico completo de faturas com status em tempo real (Pago, Pendente, Vencido) + links diretos para PIX/Boleto.
-- **Central de Chamados**: Abertura e acompanhamento de tickets de suporte com histórico.
-- **Pesquisa CSAT (Customer Satisfaction)**: Avaliação de satisfação do cliente disparada após a resolução de um chamado técnico, utilizando uma escala visual de 1 a 5 estrelas.
-- **Programa de Indicações**: Sistema completo de referral marketing com geração de códigos, rastreamento e recompensas.
-- **Pesquisa CSAT Automática**: Ao concluir um chamado no suporte, o cliente é convidado a avaliar o atendimento (1-5 estrelas + comentário).
-- **Avisos Globais**: Comunicados configuráveis pelo admin exibidos no topo do portal (recesso, atualizações, novidades).
-
----
-
-### 📈 4. Analytics & Business Intelligence
-
-Dashboard analítico completo para tomada de decisão baseada em dados.
-
-- **Health Score Automatizado (0-100)**: Cálculo multidimensional que avalia a saúde temporal e financeira da conta em tempo real.
-  - **Lógica Matemática do Health Score**: Base zero que soma até 100 pontos baseados em estado de sucesso.
-    - `40 pontos`: Cliente "Ativo". (Desenvolvimento rende 30. Inadimplente/Cancelado rendem 0).
-    - `30 pontos`: Pagamento Asaas "RECEIVED". (Pendente rende 15. Atrasado rende 0).
-    - `30 pontos`: Rate percentual (`%`) de etapas concluídas no portal vs total de etapas.
-    - `Ajuste CSAT / NPS Interno`: Bônus/Penalidade dinâmica extra baseada no histórico de feedbacks estruturados da conta.
-- **Matriz de Risco Crítico**: Indicadores de cor (`Emerald` >= 80, `Amber` >= 50, `Rose` < 50) para detecção proativa de churn.
-- **KPIs em Tempo Real**: MRR, ARR, Churn Rate, LTV, CAC e taxa de conversão.
-- **Análise de ROI por Oferta**: Módulo especializado que cruza o investimento em Ads (Meta/Google) com a receita direta gerada por cada produto, calculando lucratividade real e CAC.
-- **Dashboard de Tendências**: Gráficos interativos em Recharts com filtros por período.
-- **Distribuição de Receita**: Análise granular por plano e canal de aquisição.
-
----
-
-### 💰 5. Gestão Financeira (FinOps)
-
-Módulo financeiro completo com 6 sub-abas especializadas:
-
-| Sub-módulo | Descrição |
-|---|---|
-| **Resumo Operacional** | MRR, Despesas, Lucro e **Alertas de Inadimplência Crítica** |
-| **DRE Gerencial** | Demonstração de Resultados (Entradas vs Saídas) com gráficos de barras |
-| **Inadimplência Crítica** | Módulo de detecção imediata de clientes com faturas em atraso (OVERDUE) ou status devedor. |
-| **Fluxo de Caixa** | Projeção cronológica baseada no vencimento das assinaturas |
-| **Orcamento (Budget)** | Planejamento por categoria com indicadores de saúde orçamentária |
-| **ROI por Oferta** | **Inteligência de Tráfego:** Performance de Ads (Investimento vs Retorno) por produto |
-| **Comissões** | Controle automático de comissões de SDRs e Closers com cálculo de repasse |
-| **Rentabilidade por Cliente** | Cálculo de lucro isolado por contrato, deduzindo custos diretos e comissões |
-| **Conciliação OFX** | Importação de extratos bancários para validação de saldo |
-| **Categorias** | Gerenciamento de categorias de receita e despesa |
-
----
-
-### 📅 6. Agenda Central & Calendário Unificado (v3.5)
-
-Calendário inteligente que integra três modos operacionais com visibilidade global da cultura da empresa.
-
-- **Modos de Visualização**:
-  - 💰 **Financeiro**: Foco em faturas, DRE e previsibilidade de caixa.
-  - 📦 **Produção**: Foco em entregas de clientes, etapas de projeto e prazos.
-  - 🧬 **People**: Foco em férias, solicitações de ausência e bem-estar do time.
-- **Visibilidade de Celebração Universal**: Indicadores globais (🎂 para aniversário, 🚀 para marco de empresa e 🏖️ para ausências) são visíveis no topo de cada dia em **qualquer modo**, garantindo que o humano nunca seja esquecido pelos processos operacionais.
-- **Modal de Detalhes Priorizado**: Ao clicar em um dia, a seção de People & Culture aparece no topo, celebrando aniversariantes antes de listar as entregas técnicas.
-- **Feriados Integrais**: Marcadores de folga coletiva integrados à visão mensal.
-
----
-
-### 🎧 8. Gestão de Suporte de Elite (Support Desk v2.6.1)
-
-Sistema de atendimento profissional focado em SLAs rigorosos e qualidade perceptível, agora com **blindagem de dados nativa**.
-
-- **Dashboard de SLA Tracker**: Painel executivo que categoriza chamados em 4 estados críticos de tempo com indicadores visuais dinâmicos.
-- **Support Resilience (Safe Mode)**: Implementação de arquitetura de blindagem que impede o travamento da interface (tela branca) através da validação atômica de dados antes da renderização.
-- **Abertura Rápida & Modo Nota**: Interface otimizada que permite registrar interações (ex: WhatsApp) sem abrir um ticket técnico, mantendo a timeline do cliente limpa e eficiente.
-- **Ordenação por Prioridade de SLA**: Sistema inteligente que reorganiza a fila de atendimento priorizando tickets próximos do vencimento ou com maior urgência.
-- **Cálculo de SLA Dinâmico**: Lógica baseada em Horas Úteis com prazos diferenciados por prioridade.
-- **CSAT Integrado**: Ciclo fechado de feedback com avaliação por estrelas e comentários após a resolução.
-
----
-
-### 🛡️ Engenharia de Resiliência — Safe Mode Architecture
-
-A partir da v2.6.1, a plataforma adota o padrão de **Data Shielding** em todos os módulos críticos (Suporte, RH, Financeiro):
-
-- **Blindagem de Hooks**: Desestruturação segura do `useCRM()` com valores padrão garantidos.
-- **Array Validation**: Verificação obrigatória `Array.isArray()` antes de qualquer operação de `.map()` ou `.filter()`.
-- **Atomic Side Effects (v3.4)**: Padrão que isola efeitos colaterais (notificações, e-mails) da lógica de persistência principal. Garante que o usuário receba confirmação de sucesso se o dado foi salvo, mesmo que um alerta secundário falhe devido à rede.
-- **Local State Encapsulation**: Redução de re-renders e aumento de performance via estados locais em modais.
-
----
-
-### 📧 8. Automação de Comunicação (E-mails Transacionais)
-
-Sistema de notificações via **Resend SDK** com anti-spam inteligente:
-
-| Template | Gatilho |
-|---|---|
-| 🎉 **Boas-vindas** | Novo cliente criado via Checkout |
-| 📄 **Fatura Gerada** | Webhook Asaas `PAYMENT_CREATED` |
-| ✅ **Pagamento Recebido** | Webhook Asaas `PAYMENT_RECEIVED` |
-| ⚠️ **Fatura Vencida** | Webhook Asaas `PAYMENT_OVERDUE` |
-| 🔗 **Link de Assinatura** | Criação de assinatura recorrente |
-| 🎂 **Aniversário** | Gatilho diário Vercel Cron (08:00 AM) |
-
-- **Controle de Idempotência**: Prevenção total de disparo duplicado via registro atômico no Firestore.
-- **Rate Limiting**: Proteção contra abuso via Upstash Redis.
-
----
-
-### 👥 9. People & Culture — Ecossistema de Talentos (v2.4)
-
-- v2.4.2 (People & Culture RBAC Hardening)
-- v2.4.3 (Wiki Hub Redesign & Beginner's Guide Config)
-- v2.4.4 (Full Width Wiki & Smart Client Creation RBAC)
-
-Módulo completo de People Management focado em retenção, felicidade e controle patrimonial da equipe.
-
-- **Matriz de Competências (Skill Radar Chart)**: Gestão 360º de habilidades. Soft Skills geridas globalmente pelo Admin e Hard Skills 100% customizáveis por colaborador.
-- **Ecossistema de Saúde & Dashboard**: Monitoramento diário de energia e humor com visualização agregada para liderança e alertas de bem-estar automáticos.
-- **Onboarding Inteligente**: Filtragem avançada que oculta talentos que já concluíram 100% das tarefas de entrada, mantendo o foco nos novos colaboradores.
-- **Gestão de Inventário & Ativos**: Controle patrimonial seguro (Laptops, Periféricos, Acessos) vinculado diretamente ao perfil do colaborador, com restrição de criação/exclusão apenas para gestores.
-- **Mural de Feedbacks & Reconhecimento**: Espaço para cultura de feedback e reconhecimento público, integrado com o ecossistema de cultura da empresa.
-- **Jornada do Colaborador (Career Path)**: Linha do tempo visual com marcos históricos (Hired, Promotion, Certification, Birthday) gerenciado com exclusividade pela liderança.
-- **Plano de Desenvolvimento (PDI)**: Árvore de competências e ações de curto/médio prazo. O gerenciamento e atualização da matriz de competências é restrito a Admins, Gerentes e People & Culture, e não pode ser realizado pelo próprio colaborador em seu próprio perfil (Auto-gestão restrita).
-- **Ausências & Férias Auditáveis (v2.8 - v3.4)**: Fluxo proativo de solicitação com justificativa obrigatória do RH para recusas. Inclui histórico completo visível no perfil com feedback detalhado e notificações automáticas de retorno para o colaborador.
-- **Resiliência de Transação (v3.4)**: Implementação de salvamento atômico que isola falhas de notificação. A ausência é garantida no banco mesmo se o alerta de sistema falhar, eliminando erros falsos de UX.
-- **Calendário unificado (v3.5)**: Integração total de marcos pessoais (Aniversários) em todas as visões operativa da intranet.
-- **Sistema Totalmente "Tagarela" (v2.9)**: Notificações dinâmicas via **Título da Aba do Navegador** — o HubCRM sincroniza globalmente o contador de pendências (Chamados + RH + Wiki + Alertas) diretamente no título da página, garantindo visibilidade multitarefa.
-- **Gestão Descentralizada de Histórico**: Liderança (Admin/Gerente) possui poder de **exclusão permanente** de registros de ausência diretamente no perfil do colaborador ou na aba central, garantindo higiene de dados e auditoria de solicitações.
-- **Dashboard de Pendências de RH**: Contador dinâmico (badge) no menu global para o time de People & Culture sobre novas solicitações de ausência.
-- **eNPS Anônimo**: Termômetro de fidelidade e satisfação interna baseado na métrica clássica de promotoria, com dashboard de sentimentos anônimos.
-- **Gamificação (Aniversários)**: Celebração visual automática no dia do nascimento com animação de partículas (confetes). 🎂 Agora visível globalmente no calendário operacional.
-- **Checklists Interativos**: Trilhas de onboarding personalizáveis por usuário com acompanhamento de progresso em tempo real.
-- **RBAC Robusto**: Todas as ações sensíveis (Ativos, PDI, Carreira, Clima) possuem travas de segurança que exigem permissões de Administrador, Gerente ou People & Culture.
-
----
-
-### 📖 10. Wiki Hub — Central de Conhecimento (v2.5)
-
-Sistema completo de base de conhecimento interna para documentação de processos, cultura e guias técnicos.
-
-- **Editor WYSIWYG Profissional**: Interface amigável para criação de artigos com suporte a formatação rica, links e carregamento de imagens via ImgBB.
-- **Sincronização Reativa (v2.5.1)**: Sistema de notificações de leitura atualizado em tempo real via `onSnapshot`, garantindo que badges de novos artigos sumam instantaneamente após a leitura.
-- **Guia do Iniciante Configurável**: Possibilidade de definir um artigo mestre para onboarding de novos colaboradores, acessível com um clique no topo da Wiki.
-- **Controle de Acesso Granular (RBAC)**: Definição de visibilidade por Cargo (Role) ou por Usuários específicos.
-- **Categorização Estratégica**: Organização por áreas (RH, Vendas, Técnico, Atendimento, Suporte, Geral).
-- **Interatividade Total**: Sistema de curtidas (Estrelas) e seção de comentários com tempo real para tirar dúvidas e enriquecer o conteúdo.
-- **Busca Global**: Filtro inteligente que pesquisa no título e no corpo dos manuais instantaneamente.
-- **Integração com Atendimento Proativo**: Busca integrada durante a abertura de chamados para cópia rápida de manuais de suporte.
 - **Moderação de Conteúdo**: Ferramentas de edição e exclusão de comentários e artigos para administradores e gerentes.
+
+---
+
+### ⚙️ 2. Pilar Operação (Delivery Hub)
+
+O cockpit de entrega da empresa, garantindo que o cliente receba exatamente o que comprou, no prazo e com segurança jurídica.
+
+- **🚀 Hub de Onboarding**: Trilhas reativas de entrada para Clientes (CS) e novos Talentos (Equipe), com tracking de progresso em tempo real.
+- **📋 Central de Contratos**: Gestão jurídica centralizada. Acompanhamento de propostas, minutas e assinaturas digitais com histórico de formalização.
+- **🔧 Cockpit de Projetos**: Visão técnica completa de todos os projetos ativos, com estágios personalizados e monitoramento de **SLA Visual**.
+- **🎧 Support Desk (Meus Chamados)**: Filtro descentralizado para foco técnico e efeito **Pulse Red** para chamados com SLA estourado.
+- **📖 Wiki Hub**: Central de conhecimento integrada com badges de leitura em tempo real e busca proativa.
+
+---
+
+### 💰 3. Pilar Financeiro (Profit & Billing Hub)
+
+Desmembramento estratégico entre a operação de cobrança e a análise de lucro.
+
+- **🛡️ Billing Hub (Tático)**: Gestão dedicada de inadimplência, faturamento recorrente, conciliação e geração automática de comissões para o time comercial.
+- **📊 Finance BI (Estratégico)**: Visão executiva pura. DRE Gerencial, Fluxo de Caixa, Budgeting e Análise de Retorno sobre Investimento (ROI).
+- **🪙 ROI por Oferta**: Cruzamento inteligente de investimentos em Ads com o LTV real de cada produto comercializado.
+
+---
+
+### 👥 4. Pilar Pessoas (Culture Hub)
+
+Gestão de talentos focada em retenção, desenvolvimento e clareza de liderança.
+
+- **👥 Minha Equipe**: Filtro estratégico baseado na hierarquia (`reportsTo`), permitindo que gestores foquem apenas em seus liderados diretos.
+- **🧬 People Analytics**: Matriz de competências (Skill Radar), eNPS Anônimo e monitoramento de Clima Organizacional (Energy/Mood).
+- **🏖️ Gestão de Ausências**: Fluxo auditável de férias e folgas integrado ao Calendário Operacional.
+- **🎒 Inventário de Ativos**: Controle patrimonial vinculado ao colaborador com travas de segurança RBAC.
 
 ---
 
@@ -576,30 +394,24 @@ As rotas foram padronizadas para o formato `/api/asaas/...` com roteamento intel
 
 ---
 
-## 🔐 Sistema RBAC — Cargos e Permissões
+## 🔐 Sistema RBAC v4.0 — Decentralized Permissions
 
-O Hub Central implementa **Role-Based Access Control (RBAC)** com 13 cargos especializados e controle granular por módulo.
+O acesso é controlado por 13 cargos especializados, agora organizados pelos 4 Pilares Estratégicos.
 
-### Matriz de Permissões Completa
+### 🏛️ Matriz de Pilares e Permissões
 
-| Módulo | 👑 Admin | 💼 Gerente | 👤 P&C | 🎯 SDR | 🤝 Exec | 🟢 CS | 🔧 Onboard | 🛠️ Suporte | 💰 FinOps | 📊 Ctrl | 📈 RevOps | 💳 Fatur. | 👁️ Leitura |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Dashboard | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Funil (Leads) | ✅ | ✅ | — | ✅¹ | ✅¹ | — | — | — | — | — | — | — | — |
-| Notificações | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Analytics | ✅ | ✅ | — | — | — | — | — | — | — | — | — | — | — |
-| Chamados | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Agenda | ✅ | ✅ | — | — | — | ✅ | ✅ | ✅ | — | — | — | — | — |
-| Financeiro | ✅ | ✅ | — | — | — | — | — | — | ✅ | ✅ | ✅ | ✅ | — |
-| Indicações | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Avisos | ✅ | ✅ | — | — | — | — | — | — | — | — | ✅ | — | — |
-| Produtos | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | — | — | — | — | — | — |
-| Monitoramento | ✅ | ✅ | — | — | — | — | — | ✅ | — | — | — | — | — |
-| **Mapa** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Equipe | ✅ | ✅ | ✅ | — | — | — | — | — | — | — | — | — | — |
-| **Configurações** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Pilar | Módulos Relacionados | Cargos Sugeridos |
+|---|---|---|
+| **Comercial** | Leads, Pipeline, Propostas, ROI | SDR, Executive, RevOps |
+| **Operação** | Onboarding, Contratos, Projetos, Suporte, Wiki | CS, Onboarder, Suporte Técnico |
+| **Financeiro** | Billing, DRE, Budget, Comissões | Financeiro, Faturamento, Controller |
+| **Pessoas** | Perfil, Equipe, PDI, Clima, Ativos | RH, People & Culture, Gestão |
 
-> ¹ **SDR e Executive**: Visualizam apenas leads/clientes **atribuídos a si próprios** (`assignedTo === user.uid`).
+### Regras de Ouro v4.0
+
+- **Data Shielding**: Filtros automáticos por `assignedTo` (Comercial/Suporte) ou `reportsTo` (Pessoas) garantem que a interface exiba apenas o necessário.
+- **Visual Urgency**: O sistema utiliza animações de pulsação sonora/visual (Pulse Red) para destacar atrasos em qualquer módulo para perfis de gestão.
+- **Auto-Gestão Protegida**: Colaboradores não podem editar seus próprios PDIs ou Feedbacks, garantindo a integridade da mentoria.
 
 ### Regras Especiais
 
@@ -877,6 +689,7 @@ className="bg-gray-100 border-gray-200"
 - [x] 📱 **Atendimento Ativo (Quick Ticket + Modo Nota WhatsApp)** (Fase 3)
 - [x] ⚡ **Sincronização de Perfil em Tempo Real** (Fix Wiki Notification)
 - [x] 📧 **Automação de E-mails de Aniversário (Vercel Cron)**
+- [x] 🚀 **v4.0.0 Decentralized Evolution (Leads/Support/People Focus)**
 
 
 ---
@@ -917,7 +730,7 @@ MIT License — Copyright (c) 2026 Hub Symples LTDA
   <br />
   <img src="https://i.imgur.com/EFBaYb5.png" alt="Hub Central" width="80" />
   <br /><br />
-  <strong>Hub Central v3.5.0-rc1</strong>
+  <strong>Hub Central v4.0.0</strong>
   <br />
   <em>Modernidade · Automação · Resultados</em>
   <br /><br />

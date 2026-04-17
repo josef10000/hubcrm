@@ -18,6 +18,7 @@ export default function NavItem({ icon: Icon, label, path, onClick, badge }: Nav
     <Link
       to={path}
       onClick={onClick}
+      aria-current={isActive ? 'page' : undefined}
       className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all ${
         isActive
           ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30'
@@ -25,11 +26,14 @@ export default function NavItem({ icon: Icon, label, path, onClick, badge }: Nav
       }`}
     >
       <div className="flex items-center space-x-3">
-        <Icon size={20} />
+        <Icon size={20} aria-hidden="true" />
         <span className="font-medium">{label}</span>
       </div>
       {badge !== undefined && badge > 0 && (
-        <span className="bg-primary-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+        <span 
+          className="bg-primary-500 text-white text-xs font-bold px-2 py-0.5 rounded-full"
+          aria-label={`${badge} ${label === 'Meus Chamados' || label === 'Support' ? 'chamados pendentes' : 'itens pendentes'}`}
+        >
           {badge}
         </span>
       )}

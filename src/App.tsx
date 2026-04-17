@@ -11,8 +11,13 @@ import Auth from './components/Auth';
 import CalendarView from './components/CalendarView';
 import MonitoringView from './components/MonitoringView';
 import ClientMapView from './components/ClientMapView';
-import { Toaster, toast } from 'sonner';
+import { Toaster } from 'sonner';
 import { Analytics } from '@vercel/analytics/react';
+
+import BillingView from './views/BillingView';
+import OnboardingHubView from './views/OnboardingHubView';
+import ContractsView from './views/ContractsView';
+import ProjectsView from './views/ProjectsView';
 
 import ConfirmationModal from './components/ConfirmationModal';
 import OfferModal from './components/OfferModal';
@@ -49,24 +54,58 @@ import OnboardingForm from './components/OnboardingForm';
 import ContractSignView from './views/ContractSignView';
 import PublicCheckoutPage from './components/PublicCheckoutPage';
 
-// ── Navigation Config ──
-const navItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-  { icon: Target, label: 'Funil de Vendas', path: '/leads', roles: ['Administrador', 'Gerente', 'SDR', 'Executive'] },
-  { icon: Bell, label: 'Notificações', path: '/notifications' },
-  { icon: BarChart3, label: 'Analytics', path: '/analytics', roles: ['Administrador', 'Gerente'] },
-  { icon: MessageCircle, label: 'Chamados', path: '/support' },
-  { icon: Calendar, label: 'Agenda', path: '/calendar', roles: ['Administrador', 'Gerente', 'Customer Success', 'Suporte Técnico', 'Onboarding Specialist'] },
-  { icon: DollarSign, label: 'Gestão de Custos', path: '/finance', roles: ['Administrador', 'Gerente', 'FinOps', 'Controladoria', 'Revenue Operations', 'Gestor de Faturamento'] },
-  { icon: Users, label: 'Indicações', path: '/referrals' },
-  { icon: Megaphone, label: 'Avisos', path: '/marketing', roles: ['Administrador', 'Gerente', 'Revenue Operations'] },
-  { icon: Package, label: 'Produtos', path: '/products', roles: ['Administrador', 'Gerente', 'SDR', 'Executive', 'Customer Success', 'Onboarding Specialist'] },
-  { icon: Globe, label: 'Monitoramento', path: '/monitoring', roles: ['Administrador', 'Gerente', 'Suporte Técnico'] },
-  { icon: MapIcon, label: 'Mapa', path: '/map' },
-  { icon: HeartHandshake, label: 'People', path: '/people', roles: ['Administrador', 'Gerente', 'People & Culture'] },
-  { icon: Users, label: 'Equipe', path: '/team', roles: ['Administrador', 'Gerente', 'People & Culture'] },
-  { icon: BookOpen, label: 'Wiki', path: '/wiki' },
-  { icon: Settings, label: 'Configurações', path: '/settings' },
+// ── Navigation Config 4.0 (Grupos Estratégicos) ──
+const navGroups = [
+  {
+    label: 'Comercial & Crescimento',
+    icon: Target,
+    items: [
+      { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
+      { icon: Target, label: 'Funil de Vendas', path: '/leads', roles: ['Administrador', 'Gerente', 'SDR', 'Executive'] },
+      { icon: Package, label: 'Produtos', path: '/products', roles: ['Administrador', 'Gerente', 'SDR', 'Executive', 'Customer Success', 'Onboarding Specialist'] },
+      { icon: Users, label: 'Hub Rewards', path: '/referrals' },
+      { icon: Megaphone, label: 'Marketing', path: '/marketing', roles: ['Administrador', 'Gerente', 'Revenue Operations'] },
+    ]
+  },
+  {
+    label: 'Operação & Sucesso',
+    icon: Rocket,
+    items: [
+      { icon: Calendar, label: 'Agenda Central', path: '/calendar', roles: ['Administrador', 'Gerente', 'Customer Success', 'Suporte Técnico', 'Onboarding Specialist'] },
+      { icon: MessageCircle, label: 'Meus Chamados', path: '/support' },
+      { icon: Rocket, label: 'Onboarding Hub', path: '/onboarding-hub', roles: ['Administrador', 'Gerente', 'People & Culture', 'Onboarding Specialist', 'Customer Success'] },
+      { icon: Globe, label: 'Monitoramento', path: '/monitoring', roles: ['Administrador', 'Gerente', 'Suporte Técnico'] },
+      { icon: MapIcon, label: 'Mapa', path: '/map' },
+      { icon: Layout, label: 'Projetos / Produção', path: '/projects', roles: ['Administrador', 'Gerente', 'Suporte Técnico', 'Onboarding Specialist'] },
+    ]
+  },
+  {
+    label: 'Financeiro & RevOps',
+    icon: DollarSign,
+    items: [
+      { icon: CreditCard, label: 'Cobrança', path: '/billing', roles: ['Administrador', 'Gerente', 'FinOps', 'Gestor de Faturamento', 'SDR', 'Executive'] },
+      { icon: DollarSign, label: 'Financeiro Estratégico', path: '/finance', roles: ['Administrador', 'Gerente', 'FinOps', 'Controladoria', 'Revenue Operations'] },
+      { icon: Shield, label: 'Contratos', path: '/contracts', roles: ['Administrador', 'Gerente', 'People & Culture', 'FinOps', 'Controladoria'] },
+      { icon: BarChart3, label: 'Analytics', path: '/analytics', roles: ['Administrador', 'Gerente'] },
+    ]
+  },
+  {
+    label: 'Pessoas & Cultura',
+    icon: HeartHandshake,
+    items: [
+      { icon: HeartHandshake, label: 'People & Feedback', path: '/people', roles: ['Administrador', 'Gerente', 'People & Culture'] },
+      { icon: Users, label: 'Equipe', path: '/team', roles: ['Administrador', 'Gerente', 'People & Culture'] },
+      { icon: BookOpen, label: 'Wiki Hub', path: '/wiki' },
+    ]
+  },
+  {
+    label: 'Sistema',
+    icon: Settings,
+    items: [
+      { icon: Bell, label: 'Notificações', path: '/notifications' },
+      { icon: Settings, label: 'Configurações', path: '/settings' },
+    ]
+  }
 ];
 
 function CRMInner() {
@@ -142,25 +181,38 @@ function CRMInner() {
               <X size={20} aria-hidden="true" />
             </button>
           </div>
-          <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar" role="navigation" aria-label="Navegação Principal">
-            {navItems
-              .filter(item => !item.roles || (userProfile?.role && item.roles.includes(userProfile.role)))
-              .map(item => (
-                <NavItem
-                  key={item.path}
-                  icon={item.icon}
-                  label={item.label}
-                  path={item.path}
-                  onClick={() => setSidebarOpen(false)}
-                  badge={
-                    item.path === '/leads' ? activeLeadsCount : 
-                    item.path === '/support' ? openTicketCount : 
-                    item.path === '/wiki' ? (newWikiCount > 0 ? newWikiCount : undefined) :
-                    item.path === '/people' ? (pendingVacationsCount > 0 ? pendingVacationsCount : undefined) :
-                    undefined
-                  }
-                />
-              ))}
+          <nav className="flex-1 px-4 py-6 space-y-8 overflow-y-auto custom-scrollbar" role="navigation" aria-label="Navegação Principal">
+            {navGroups.map((group) => {
+              const visibleItems = group.items.filter(item => !item.roles || (userProfile?.role && item.roles.includes(userProfile.role)));
+              if (visibleItems.length === 0) return null;
+              
+              return (
+                <div key={group.label} className="space-y-3">
+                  <div className="flex items-center gap-2 px-4 mb-2">
+                    <group.icon size={12} className="text-gray-500/50" />
+                    <span className="text-[10px] uppercase font-black tracking-[0.2em] text-gray-500/50 select-none">{group.label}</span>
+                  </div>
+                  <div className="space-y-1">
+                    {visibleItems.map(item => (
+                      <NavItem
+                        key={item.path}
+                        icon={item.icon}
+                        label={item.label}
+                        path={item.path}
+                        onClick={() => setSidebarOpen(false)}
+                        badge={
+                          item.path === '/leads' ? activeLeadsCount : 
+                          item.path === '/support' ? openTicketCount : 
+                          item.path === '/wiki' ? (newWikiCount > 0 ? newWikiCount : undefined) :
+                          item.path === '/people' ? (pendingVacationsCount > 0 ? pendingVacationsCount : undefined) :
+                          undefined
+                        }
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </nav>
           
 
@@ -238,18 +290,21 @@ function CRMInner() {
             {currentPath === '/analytics' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Métricas</h2>}
             {currentPath === '/calendar' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Agenda Central</h2>}
             {currentPath === '/support' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Chamados</h2>}
-            {currentPath === '/finance' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Financeiro Corporativo</h2>}
+            {currentPath === '/finance' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white text-primary-500">Financeiro Estratégico</h2>}
+            {currentPath === '/billing' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white text-emerald-500">Cobrança & Comissões</h2>}
+            {currentPath === '/contracts' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Central de Contratos</h2>}
+            {currentPath === '/onboarding-hub' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Onboarding Hub</h2>}
+            {currentPath === '/projects' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white text-blue-500">Projetos & Produção</h2>}
             {currentPath === '/settings' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Configurações</h2>}
-            {currentPath === '/referrals' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Programa Hub Rewards</h2>}
+            {currentPath === '/referrals' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Hub Rewards</h2>}
             {currentPath === '/marketing' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Comunicados Globais</h2>}
             {currentPath === '/products' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Produtos</h2>}
-            {currentPath === '/monitoring' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Monitoramento de Sites</h2>}
-            {currentPath === '/map' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Mapa de Clientes</h2>}
+            {currentPath === '/monitoring' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Monitoramento</h2>}
             {currentPath === '/map' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Mapa de Clientes</h2>}
             {currentPath === '/leads' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white" translate="no">Funil de Vendas</h2>}
-            {currentPath === '/notifications' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white" translate="no">Central de Notificações</h2>}
+            {currentPath === '/notifications' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white" translate="no">Notificações</h2>}
             {currentPath === '/team' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Gestão de Equipe</h2>}
-            {currentPath === '/people' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">People & Culture</h2>}
+            {currentPath === '/people' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Pessoas & Cultura</h2>}
             {currentPath === '/wiki' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Wiki Hub</h2>}
           </div>
           <div className="flex items-center gap-3">
@@ -308,10 +363,14 @@ function CRMInner() {
                 <Route path="/products" element={<ProductsView />} />
                 <Route path="/monitoring" element={<MonitoringView clients={clients} />} />
                 <Route path="/map" element={<ClientMapView clients={clients} onClientClick={(client) => { setEditingClient(client); setIsModalOpen(true); }} />} />
+                <Route path="/billing" element={<BillingView />} />
+                <Route path="/onboarding-hub" element={<OnboardingHubView />} />
+                <Route path="/contracts" element={<ContractsView />} />
+                <Route path="/projects" element={<ProjectsView />} />
                 
                 {/* Rotas Protegidas (Conforme Roles Definidas no navItems) */}
-                <Route path="/analytics" element={(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente') ? <AnalyticsView /> : <DashboardView />} />
-                <Route path="/finance" element={(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || ['FinOps', 'Controladoria', 'Revenue Operations', 'Gestor de Faturamento'].includes(userProfile?.role || '')) ? <FinanceView /> : <DashboardView />} />
+                <Route path="/analytics" element={(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'FinOps' || userProfile?.role === 'Controladoria') ? <AnalyticsView /> : <DashboardView />} />
+                <Route path="/finance" element={(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || ['FinOps', 'Controladoria', 'Revenue Operations'].includes(userProfile?.role || '')) ? <FinanceView /> : <DashboardView />} />
                 <Route path="/marketing" element={(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'Revenue Operations') ? <MarketingView /> : <DashboardView />} />
                 <Route path="/team" element={(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture') ? <TeamManagementView /> : <DashboardView />} />
                 <Route path="/people" element={(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture') ? <PeopleView /> : <DashboardView />} />
