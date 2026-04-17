@@ -71,10 +71,11 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId }
 
   const filteredWiki = useMemo(() => {
     if (!wikiSearch.trim()) return wikiArticles.slice(0, 3);
-    return wikiArticles.filter(a => 
-      a.title.toLowerCase().includes(wikiSearch.toLowerCase()) ||
-      a.category.toLowerCase().includes(wikiSearch.toLowerCase())
-    ).slice(0, 5);
+    return wikiArticles.filter(a => {
+      const cats = a.categories || [];
+      return a.title.toLowerCase().includes(wikiSearch.toLowerCase()) ||
+             cats.some(c => c.toLowerCase().includes(wikiSearch.toLowerCase()));
+    }).slice(0, 5);
   }, [wikiArticles, wikiSearch]);
 
   const existingTicket = useMemo(() => {
@@ -403,40 +404,42 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId }
 
           <div className="space-y-3">
              {filteredWiki.map(article => (
-               <div 
-                 key={article.id}
-                 className="p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-all group"
-               >
-                 <div className="flex justify-between items-start mb-2">
-                   <span className="text-[10px] font-black uppercase text-primary-500 tracking-tighter">{article.category}</span>
-                   <div className="flex gap-1">
-                      <button 
-                        onClick={() => {
-                          const url = `${window.location.origin}/wiki?id=${article.id}`;
-                          navigator.clipboard.writeText(url);
-                          toast.success('Link do artigo copiado!');
-                        }}
-                        className="p-1.5 bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"
-                        title="Copiar Link"
-                      >
-                        <Copy size={12} />
-                      </button>
-                      <button 
+                <div 
+                  key={article.id}
+                  className="p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-all group"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-[10px] font-black uppercase text-primary-500 tracking-tighter">
+                      {(article.categories || [])[0] || 'Geral'}
+                    </span>
+                    <div className="flex gap-1">
+                       <button 
                          onClick={() => {
-                           navigator.clipboard.writeText(article.title);
-                           toast.success('Título copiado!');
+                           const url = `${window.location.origin}/wiki?id=${article.id}`;
+                           navigator.clipboard.writeText(url);
+                           toast.success('Link do artigo copiado!');
                          }}
                          className="p-1.5 bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"
-                         title="Copiar Título"
-                      >
-                        <ExternalLink size={12} />
-                      </button>
-                   </div>
-                 </div>
-                 <p className="text-sm font-bold text-gray-200 leading-tight group-hover:text-primary-400 transition-colors">
-                    {article.title}
-                 </p>
-               </div>
+                         title="Copiar Link"
+                       >
+                         <Copy size={12} />
+                       </button>
+                       <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText(article.title);
+                            toast.success('Título copiado!');
+                          }}
+                          className="p-1.5 bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"
+                          title="Copiar Título"
+                       >
+                         <ExternalLink size={12} />
+                       </button>
+                    </div>
+                  </div>
+                  <p className="text-sm font-bold text-gray-200 leading-tight group-hover:text-primary-400 transition-colors">
+                     {article.title}
+                  </p>
+                </div>
              ))}
              {filteredWiki.length === 0 && (
                <div className="text-center py-10">

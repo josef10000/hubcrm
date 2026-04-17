@@ -43,8 +43,7 @@ export default function WikiView() {
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     wikiArticles.forEach(article => {
-      // Suporte para categorias múltiplas ou categoria única legacy
-      const cats = article.categories || [article.category as any];
+      const cats = article.categories || [];
       cats.forEach(cat => {
         if (cat) counts[cat] = (counts[cat] || 0) + 1;
       });
@@ -65,13 +64,13 @@ export default function WikiView() {
 
       // 2. Category Filter
       if (selectedCategory) {
-        const cats = article.categories || [article.category as any];
+        const cats = article.categories || [];
         if (!cats.includes(selectedCategory as any)) return false;
       }
 
       // 3. Search Filter
       const search = searchTerm.toLowerCase();
-      const cats = article.categories || [article.category as any];
+      const cats = article.categories || [];
       return (
         article.title.toLowerCase().includes(search) ||
         article.content.toLowerCase().includes(search) ||
@@ -133,8 +132,12 @@ export default function WikiView() {
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-500/10 text-primary-500 rounded-full text-xs font-bold uppercase tracking-widest border border-primary-500/20">
           <BookOpen className="w-4 h-4" /> Hub Knowledge Base
         </div>
-        <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight">
+        <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight flex flex-col items-center gap-4">
           Como podemos te ajudar hoje?
+          <div className="flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/10 rounded-lg">
+            <span className="text-[10px] font-black uppercase text-gray-500 tracking-widest">Base de Conhecimento:</span>
+            <span className="text-sm font-bold text-primary-500">{wikiArticles.length} Artigos Únicos</span>
+          </div>
         </h1>
         <div className="relative group max-w-2xl mx-auto">
           <div className="absolute inset-0 bg-primary-500/20 rounded-[2rem] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -228,7 +231,7 @@ export default function WikiView() {
                 <div>
                   <div className="flex justify-between items-start mb-6">
                     <div className="flex flex-wrap gap-1">
-                      {(article.categories || [article.category as any]).slice(0, 2).map(c => (
+                      {(article.categories || []).slice(0, 2).map(c => (
                         <span key={c} className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-[9px] font-black text-primary-400 uppercase tracking-widest whitespace-nowrap">
                           {c}
                         </span>
@@ -303,7 +306,7 @@ export default function WikiView() {
                         <div className="flex-1 overflow-hidden">
                           <p className="text-sm font-bold text-white group-hover:text-primary-400 transition-colors truncate">{art.title}</p>
                           <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-1 truncate">
-                            {(art.categories || [art.category]).join(' • ')}
+                            {(art.categories || []).join(' • ')}
                           </p>
                         </div>
                     </div>

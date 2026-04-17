@@ -89,7 +89,7 @@ export default function WikiArticleDetail({ article, onBack, onEdit }: WikiArtic
       <div className="space-y-6">
         <div className="flex items-center gap-3">
           <div className="flex flex-wrap gap-2">
-            {(article.categories || [article.category as any]).map(cat => (
+            {(article.categories || []).map(cat => (
               <span key={cat} className="px-4 py-1.5 bg-primary-500/20 text-primary-500 rounded-full text-[10px] font-bold uppercase tracking-widest border border-primary-500/30">
                 {cat}
               </span>
@@ -168,7 +168,7 @@ export default function WikiArticleDetail({ article, onBack, onEdit }: WikiArtic
         <div className="flex flex-wrap gap-2">
            <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-xs text-gray-400">#conhecimento</span>
            <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-xs text-gray-400">#procedimentos</span>
-           {(article.categories || [article.category as any]).map(cat => (
+           {(article.categories || []).map(cat => (
              <span key={cat} className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-xs text-gray-400 font-medium">#{cat.toLowerCase()}</span>
            ))}
         </div>
