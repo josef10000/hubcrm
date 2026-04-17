@@ -7,7 +7,7 @@
 Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.
 
   <p>
-    <img src="https://img.shields.io/badge/Version-3.7.0-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-3.7.2-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Status-Sturdy_&_Human_First-22c55e?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge&labelColor=111111" alt="License" />
@@ -604,7 +604,7 @@ O projeto possui 5 workflows automatizados via **GitHub Actions**:
 | Workflow | Arquivo | Gatilho | Propósito |
 |---|---|---|---|
 | 🔒 **Firebase Rules** | `firebase-rules.yml` | Push → `main` | Deploy de Firestore Rules |
-| 🛡️ **Error Shield** | Sentry SDK | Runtime | Monitoramento Proativo de Erros |
+| 🛡️ **Sentry Monitoring** | `Sentry SDK` | Runtime | Monitoramento Proativo de Erros |
 | 🚀 **Vercel Deploy** | `vercel-deploy.yml` | Push → `main` | Deploy de produção automático |
 
 ---
