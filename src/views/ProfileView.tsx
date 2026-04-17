@@ -507,7 +507,6 @@ export default function ProfileView() {
                     </span>
                   )}
                 </button>
-                )}
                 {isAdmin && (
                   <button 
                     onClick={() => setActiveTab('diagnostics' as any)}
