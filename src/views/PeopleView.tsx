@@ -39,14 +39,14 @@ import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { VacationPeriod, PDICategory, PDIAction } from '../types/people';
 
-type PeopleSubTab = 'todos' | 'my_team' | 'times' | 'cargos' | 'onboarding' | 'ferias';
+type PeopleSubTab = 'dashboard' | 'onboarding' | 'development' | 'career' | 'mural' | 'assets' | 'vacations' | 'climate';
 
 export default function PeopleView() {
   const { user } = useAuth();
   const crm = useCRM();
   const { userProfile, teamProfiles: crmTeamProfiles, effectiveOrgId: crmOrgId } = crm;
 
-  const [activeTab, setActiveTab] = useState<PeopleSubTab>('todos');
+  const [activeTab, setActiveTab] = useState<PeopleSubTab>('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);

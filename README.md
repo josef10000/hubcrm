@@ -1,4 +1,4 @@
-# 🔐 Hub Central — Intranet Corporativa v4.0.0 (Decentralized Evolution)
+# 🔐 Hub Central — Intranet Corporativa v4.1.0 (Stabilized Evolution)
 
 > [!CAUTION]
 > **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
@@ -7,8 +7,8 @@
 Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.
 
   <p>
-    <img src="https://img.shields.io/badge/Version-4.0.0-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
-    <img src="https://img.shields.io/badge/Status-Decentralized_&_Focused-22c55e?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
+    <img src="https://img.shields.io/badge/Version-4.1.0-22c55e?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Status-Stabilized_&_Focused-22c55e?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge&labelColor=111111" alt="License" />
   </p>
