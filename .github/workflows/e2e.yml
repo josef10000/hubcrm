@@ -12,10 +12,12 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
       with:
-        node-version: 18
+        node-version: 20
+        cache: 'npm'
     - name: Install dependencies
       run: |
-        rm -f package-lock.json
+        rm -rf node_modules package-lock.json
+        npm cache clean --force
         npm install
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
