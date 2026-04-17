@@ -3,8 +3,8 @@ import React, { useMemo } from 'react';
 import {
   LayoutDashboard, Users, Plus, X, DollarSign,
   Search, BarChart3, Calendar, MessageCircle, Globe,
-  Download, AlertTriangle, Settings,
-  Megaphone, Package, Map as MapIcon, Target, Menu, Bell, Shield, HeartHandshake, BookOpen
+  Download, AlertTriangle, Settings, Layout, CreditCard,
+  Megaphone, Package, Map as MapIcon, Target, Menu, Bell, Shield, HeartHandshake, BookOpen, Rocket
 } from 'lucide-react';
 import { isFirebaseConfigured } from './lib/firebase';
 import Auth from './components/Auth';

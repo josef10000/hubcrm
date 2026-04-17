@@ -38,22 +38,27 @@ import { useCRM } from '../contexts/CRMContext';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { VacationPeriod, PDICategory, PDIAction } from '../types/people';
-import UserEditModal from '../components/people/UserEditModal';
 
 type PeopleSubTab = 'todos' | 'my_team' | 'times' | 'cargos' | 'onboarding' | 'ferias';
 
 export default function PeopleView() {
-  const { user, userProfile, teamProfiles, effectiveOrgId } = useCRM();
+  const { user } = useAuth();
+  const crm = useCRM();
+  const { userProfile, teamProfiles: crmTeamProfiles, effectiveOrgId: crmOrgId } = crm;
+
   const [activeTab, setActiveTab] = useState<PeopleSubTab>('todos');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   
+  // Estados para Gestão Local e Interatividade
+  const [teamMembers, setTeamMembers] = useState<UserProfile[]>([]);
+  const [selectedMember, setSelectedMember] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  
   // Blindagem de Dados (Safe Mode)
   const { 
     vacations: rawVacations = [], 
-    teamProfiles: rawTeamProfiles = [], 
-    effectiveOrgId = '',
     enpsQuestion = '',
     setEnpsQuestion = () => {},
     enpsFrequency = 'mensal',
@@ -61,7 +66,8 @@ export default function PeopleView() {
   } = crm || {};
 
   const vacations = Array.isArray(rawVacations) ? rawVacations : [];
-  const teamProfiles = Array.isArray(rawTeamProfiles) ? rawTeamProfiles : [];
+  const teamProfiles = Array.isArray(crmTeamProfiles) ? crmTeamProfiles : [];
+  const effectiveOrgId = crmOrgId || '';
 
   const [showVacationModal, setShowVacationModal] = useState(false);
   const [newVacation, setNewVacation] = useState<Partial<VacationPeriod>>({

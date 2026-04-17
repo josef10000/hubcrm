@@ -24,6 +24,10 @@ export default function SupportView() {
 
   // 2. Estados Locais da Interface
   const [supportFilter, setSupportFilter] = useState<'all' | 'mine'>('all');
+  const [sortBy, setSortBy] = useState<'recent' | 'sla'>('sla');
+  const [isNewRequestModalOpen, setIsNewRequestModalOpen] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyMessage, setReplyMessage] = useState('');
 
   const filteredRequests = [...supportRequests]
     .filter(req => supportFilter === 'all' || req.assignedTo === user?.uid)
@@ -37,6 +41,26 @@ export default function SupportView() {
       
       return slaA - slaB;
     });
+
+  const getSlaStatus = (createdAt: any, priority: string = 'baixa') => {
+    if (!createdAt) return null;
+    const createdDate = typeof createdAt.toDate === 'function' ? createdAt.toDate() : new Date(createdAt);
+    const now = new Date();
+    const hoursElapsed = differenceInHours(now, createdDate);
+    
+    let slaLimit = 24;
+    if (priority === 'alta') slaLimit = 4;
+    else if (priority === 'media') slaLimit = 12;
+
+    const remaining = slaLimit - hoursElapsed;
+    const isOverdue = remaining <= 0;
+
+    return {
+      remaining,
+      isOverdue,
+      text: isOverdue ? 'SLA Estourado' : `${Math.round(remaining)}h restantes`
+    };
+  };
 
   const handleUpdateSupport = async (requestId: string, data: any) => {
     if (!effectiveOrgId) return;
