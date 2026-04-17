@@ -26,6 +26,14 @@ export default defineConfig({
     video: 'on-first-retry',
   },
 
+  /* Inicia automaticamente o servidor de desenvolvimento antes de rodar os testes */
+  webServer: {
+    command: 'npm run dev',
+    url: 'http://localhost:5173',
+    reuseExistingServer: !process.env.CI,
+    timeout: 120000, // 2 minutos para subir o servidor
+  },
+
   /* Configura projetos para os principais navegadores */
   projects: [
     {
