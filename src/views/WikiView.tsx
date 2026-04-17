@@ -12,7 +12,7 @@ import WikiEditorModal from '../components/wiki/WikiEditorModal';
 import WikiArticleDetail from '../components/wiki/WikiArticleDetail';
 import Pagination from '../components/common/Pagination';
 
-const ITEMS_PER_PAGE = 12;
+const ITEMS_PER_PAGE = 6;
 
 const CATEGORY_MAP = [
   { id: 'RH', icon: Briefcase, color: 'text-pink-500', bg: 'bg-pink-500/10', border: 'border-pink-500/20' },
