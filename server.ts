@@ -1,7 +1,7 @@
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 import fs from 'fs';
 import dotenv from 'dotenv';
 
@@ -13,7 +13,7 @@ dotenv.config({ path: path.resolve(__dirname, '.env.local') });
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = 5173;
 
   // Middleware to parse JSON bodies
   app.use(express.json());
@@ -45,8 +45,8 @@ async function startServer() {
 
     if (fs.existsSync(handlerPath)) {
       try {
-        // Use tsx to import the handler
-        const module = await import(handlerPath);
+        // Use tsx to import the handler with proper file URL for Linux compatibility
+        const module = await import(pathToFileURL(handlerPath).href);
         const handler = module.default;
         if (typeof handler === 'function') {
           return await handler(req, res);
