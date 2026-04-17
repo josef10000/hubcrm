@@ -367,6 +367,19 @@ Gestão completa do portfólio de serviços e planos:
 - **Configuração**: Preço base, taxa de setup, parcelas máximas, descrição detalhada.
 - **Contextos de Exibição**: controle de onde a oferta aparece (`CHECKOUT`, `PORTAL` ou `BOTH`).
 - **Ordenação Visual**: Drag-and-drop para priorizar a ordem de exibição.
+- **Acessibilidade Nativa (v3.9)**: Interface totalmente compatível com o fluxo de contratação pública.
+
+---
+
+### ♿ 15. Acessibilidade & Inclusão (v3.9.0)
+
+O HubCRM segue o princípio **"Human First"**, garantindo que a tecnologia sirva a todos com a mesma precisão e dignidade.
+
+- **Padrões WCAG 2.1**: Implementação rigorosa de diretrizes de acessibilidade para a web.
+- **HTML Semântico & ARIA**: Uso de marcos regionais (`banner`, `main`, `navigation`, `search`) e atributos ARIA para contextualização total em leitores de tela.
+- **Navegação por Teclado**: Fluxos críticos (Checkout e Dashboard) otimizados para operação via `Tab`, `Shift+Tab` e `Enter`.
+- **Vínculos Semânticos**: Conexão entre rótulos (`label`) e campos (`input`) via IDs únicos, eliminando ambiguidades operacionais.
+- **Indicadores de Progresso**: O fluxo de checkout informa dinamicamente a etapa atual e o contexto da tarefa para tecnologias assistivas.
 
 ---
 
