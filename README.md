@@ -7,7 +7,7 @@
 Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.
 
   <p>
-    <img src="https://img.shields.io/badge/Version-3.5.0-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-3.7.0-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Status-Sturdy_&_Human_First-22c55e?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge&labelColor=111111" alt="License" />
@@ -433,7 +433,7 @@ Sombras:            shadow-primary-500/20
 | **E-mails** | Resend | 3.x | E-mails transacionais |
 | **Rate Limit** | Upstash Redis | 1.x | Proteção contra abuso |
 | **Deploy** | Vercel | Serverless | Edge Functions + CDN |
-| **Testes E2E** | Playwright | 1.50+ | Testes de fluxo ponta a ponta |
+| **Monitoramento** | Sentry SDK | 8.x | Rastreio de erros e performance |
 | **Testes Unitários** | Vitest | 3.x | Unit testing |
 | **AI** | Google Gemini | 1.x | Análise inteligente (opcional) |
 
@@ -603,11 +603,8 @@ O projeto possui 5 workflows automatizados via **GitHub Actions**:
 
 | Workflow | Arquivo | Gatilho | Propósito |
 |---|---|---|---|
-| 🔍 **Lint Check** | `lint-check.yml` | Push/PR → `main` | `tsc --noEmit` — Type checking |
-| 🏗️ **Build Check** | `build-check.yml` | Push/PR → `main` | `vite build` — Validação de build |
-| 🧪 **Test Check** | `test-check.yml` | Push/PR → `main` | `vitest run` — Unit tests |
 | 🔒 **Firebase Rules** | `firebase-rules.yml` | Push → `main` | Deploy de Firestore Rules |
-| 🧪 **E2E Testing** | `e2e.yml` | Push/PR → `main` | Playwright E2E Flow Validation |
+| 🛡️ **Error Shield** | Sentry SDK | Runtime | Monitoramento Proativo de Erros |
 | 🚀 **Vercel Deploy** | `vercel-deploy.yml` | Push → `main` | Deploy de produção automático |
 
 ---
@@ -718,9 +715,7 @@ INVITE_EXPIRATION_HOURS=72
 | `npm run dev` | Servidor de desenvolvimento (Vite + Express proxy) |
 | `npm run build` | Build de produção otimizado |
 | `npm run preview` | Preview do build local |
-| `npm run lint` | Type-checking completo (`tsc --noEmit`) |
 | `npm run test` | Execução dos testes unitários (Vitest) |
-| `npm run test:e2e` | Execução dos testes de ponta a ponta (Playwright) |
 | `npm run clean` | Limpa o diretório `dist/` |
 | `npm start` | Alias para `npm run dev` |
 
