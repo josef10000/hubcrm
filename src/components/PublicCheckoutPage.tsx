@@ -203,16 +203,19 @@ export default function PublicCheckoutPage() {
         </div>
 
         {/* Steps Indicator */}
-        <div className="flex items-center justify-center gap-4 mb-12">
+        <nav className="flex items-center justify-center gap-4 mb-12" aria-label="Progresso do Checkout">
           {[1, 2, 3, 4].map((s) => (
-            <div key={s} className="flex items-center gap-2">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${step >= s ? 'bg-primary-500 text-white' : 'bg-white/5 text-gray-500 border border-white/10'}`}>
-                {step > s ? <Check size={18} /> : s}
+            <div key={s} className="flex items-center gap-2" aria-current={step === s ? 'step' : undefined}>
+              <div 
+                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${step >= s ? 'bg-primary-500 text-white' : 'bg-white/5 text-gray-500 border border-white/10'}`}
+                aria-label={`Etapa ${s}: ${s === 1 ? 'Dados' : s === 2 ? 'Briefing' : s === 3 ? 'Contrato' : 'Plano'}`}
+              >
+                {step > s ? <Check size={18} aria-hidden="true" /> : s}
               </div>
-              {s < 4 && <div className={`w-8 h-px ${step > s ? 'bg-primary-500' : 'bg-white/10'}`} />}
+              {s < 4 && <div className={`w-8 h-px ${step > s ? 'bg-primary-500' : 'bg-white/10'}`} aria-hidden="true" />}
             </div>
           ))}
-        </div>
+        </nav>
 
         <div className="bg-white/5 backdrop-blur-2xl border border-white/10 p-8 rounded-3xl shadow-2xl relative">
           {step === 1 && (
@@ -223,12 +226,14 @@ export default function PublicCheckoutPage() {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Nome Completo / Empresa *</label>
+                  <label htmlFor="checkout-name" className="block text-sm font-medium text-gray-300 mb-2">Nome Completo / Empresa *</label>
                   <div className="relative">
-                    <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+                    <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" aria-hidden="true" />
                     <input
+                      id="checkout-name"
                       type="text"
                       required
+                      aria-required="true"
                       value={clientData.name}
                       onChange={(e) => setClientData({...clientData, name: e.target.value})}
                       className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary-500 transition-all"
@@ -237,12 +242,14 @@ export default function PublicCheckoutPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">E-mail *</label>
+                  <label htmlFor="checkout-email" className="block text-sm font-medium text-gray-300 mb-2">E-mail *</label>
                   <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" aria-hidden="true" />
                     <input
+                      id="checkout-email"
                       type="email"
                       required
+                      aria-required="true"
                       value={clientData.email}
                       onChange={(e) => setClientData({...clientData, email: e.target.value})}
                       className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary-500 transition-all"
@@ -251,12 +258,14 @@ export default function PublicCheckoutPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">WhatsApp *</label>
+                  <label htmlFor="checkout-whatsapp" className="block text-sm font-medium text-gray-300 mb-2">WhatsApp *</label>
                   <div className="relative">
-                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" aria-hidden="true" />
                     <input
+                      id="checkout-whatsapp"
                       type="text"
                       required
+                      aria-required="true"
                       value={clientData.whatsapp}
                       onChange={(e) => setClientData({...clientData, whatsapp: e.target.value})}
                       className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary-500 transition-all"
@@ -265,12 +274,14 @@ export default function PublicCheckoutPage() {
                   </div>
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">CPF ou CNPJ *</label>
+                  <label htmlFor="checkout-cpf-cnpj" className="block text-sm font-medium text-gray-300 mb-2">CPF ou CNPJ *</label>
                   <div className="relative">
-                    <FileText className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+                    <FileText className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" aria-hidden="true" />
                     <input
+                      id="checkout-cpf-cnpj"
                       type="text"
                       required
+                      aria-required="true"
                       value={clientData.cpfCnpj}
                       onChange={(e) => setClientData({...clientData, cpfCnpj: e.target.value})}
                       className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary-500 transition-all"
@@ -390,8 +401,9 @@ Em caso de suspensão de pagamento, o serviço será suspenso após X dias. Canc
               <div className="space-y-4 pt-4">
                 <div className="grid grid-cols-1 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Nome Completo (Assinatura Digital)</label>
+                    <label htmlFor="checkout-signature" className="block text-sm font-medium text-gray-300 mb-2">Nome Completo (Assinatura Digital)</label>
                     <input
+                      id="checkout-signature"
                       type="text"
                       value={signatureName}
                       onChange={(e) => setSignatureName(e.target.value)}
@@ -401,8 +413,9 @@ Em caso de suspensão de pagamento, o serviço será suspenso após X dias. Canc
                   </div>
                 </div>
 
-                <label className="flex items-center gap-3 p-4 bg-primary-500/5 border border-primary-500/20 rounded-xl cursor-pointer group transition-all hover:bg-primary-500/10 active:scale-[0.99]">
+                <label htmlFor="checkout-contract-check" className="flex items-center gap-3 p-4 bg-primary-500/5 border border-primary-500/20 rounded-xl cursor-pointer group transition-all hover:bg-primary-500/10 active:scale-[0.99]">
                   <input
+                    id="checkout-contract-check"
                     type="checkbox"
                     checked={contractAccepted}
                     onChange={(e) => setContractAccepted(e.target.checked)}
@@ -498,8 +511,9 @@ Em caso de suspensão de pagamento, o serviço será suspenso após X dias. Canc
                 onClick={() => setStep(step - 1)}
                 className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
                 disabled={submitting}
+                aria-label="Voltar para a etapa anterior"
               >
-                <ArrowLeft size={18} />
+                <ArrowLeft size={18} aria-hidden="true" />
                 Voltar
               </button>
             ) : <div />}
@@ -510,9 +524,10 @@ Em caso de suspensão de pagamento, o serviço será suspenso após X dias. Canc
                   if (validateStep()) setStep(step + 1);
                 }}
                 className="bg-primary-500 hover:bg-primary-600 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                aria-label="Continuar para o próximo passo"
               >
                 Continuar
-                <ArrowRight size={18} />
+                <ArrowRight size={18} aria-hidden="true" />
               </button>
             ) : (
               <button

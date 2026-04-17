@@ -1,4 +1,4 @@
-# 🔐 Hub Central — Intranet Corporativa
+# 🔐 Hub Central — Intranet Corporativa v3.9.0 (Acessibilidade)
 
 > [!CAUTION]
 > **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
@@ -7,7 +7,7 @@
 Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.
 
   <p>
-    <img src="https://img.shields.io/badge/Version-3.8.0-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-3.9.0-0d0d0d?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Status-Sturdy_&_Human_First-22c55e?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge&labelColor=111111" alt="License" />
@@ -434,6 +434,7 @@ Sombras:            shadow-primary-500/20
 | **Rate Limit** | Upstash Redis | 1.x | Proteção contra abuso |
 | **Deploy** | Vercel | Serverless | Edge Functions + CDN |
 | **Monitoramento** | Sentry SDK | 8.x | Rastreio de erros e performance |
+| **Acessibilidade** | WCAG 2.1 | ARIA | Inclusão e Navegação via Teclado |
 | **Testes Unitários** | Vitest | 3.x | Unit testing |
 | **AI** | Google Gemini | 1.x | Análise inteligente (opcional) |
 
