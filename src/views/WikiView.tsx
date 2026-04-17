@@ -38,6 +38,19 @@ export default function WikiView() {
   const [currentPage, setCurrentPage] = useState(1);
 
   const canCreate = userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture';
+  
+  // Contador dinâmico por categoria v4.1.4
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    wikiArticles.forEach(article => {
+      // Suporte para categorias múltiplas ou categoria única legacy
+      const cats = article.categories || [article.category as any];
+      cats.forEach(cat => {
+        if (cat) counts[cat] = (counts[cat] || 0) + 1;
+      });
+    });
+    return counts;
+  }, [wikiArticles]);
 
   // Filtro de visibilidade e busca
   const filteredArticles = useMemo(() => {
@@ -51,14 +64,18 @@ export default function WikiView() {
       if (!isVisible) return false;
 
       // 2. Category Filter
-      if (selectedCategory && article.category !== selectedCategory) return false;
+      if (selectedCategory) {
+        const cats = article.categories || [article.category as any];
+        if (!cats.includes(selectedCategory as any)) return false;
+      }
 
       // 3. Search Filter
       const search = searchTerm.toLowerCase();
+      const cats = article.categories || [article.category as any];
       return (
         article.title.toLowerCase().includes(search) ||
         article.content.toLowerCase().includes(search) ||
-        article.category.toLowerCase().includes(search)
+        cats.some(c => c.toLowerCase().includes(search))
       );
     });
   }, [wikiArticles, userProfile, selectedCategory, searchTerm]);
@@ -149,8 +166,13 @@ export default function WikiView() {
           <button
             key={cat.id}
             onClick={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
-            className={`flex flex-col items-center justify-center p-6 rounded-[2rem] border transition-all duration-300 group ${selectedCategory === cat.id ? 'bg-primary-500/20 border-primary-500 scale-95' : 'bg-white/5 border-white/10 hover:bg-white/10 hover:scale-105'}`}
+            className={`flex flex-col items-center justify-center p-6 rounded-[2rem] border transition-all duration-300 group relative ${selectedCategory === cat.id ? 'bg-primary-500/20 border-primary-500 scale-95' : 'bg-white/5 border-white/10 hover:bg-white/10 hover:scale-105'}`}
           >
+            {/* Badge Contador v4.1.4 */}
+            <div className="absolute top-4 right-4 px-2.5 py-1 bg-white/5 border border-white/10 rounded-xl backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity">
+              <span className="text-[10px] font-black text-white">{categoryCounts[cat.id] || 0}</span>
+            </div>
+
             <div className={`p-4 rounded-2xl mb-4 ${cat.bg} ${cat.color} transition-transform group-hover:rotate-6 shadow-xl`}>
               <cat.icon className="w-6 h-6" />
             </div>
@@ -205,9 +227,18 @@ export default function WikiView() {
                 
                 <div>
                   <div className="flex justify-between items-start mb-6">
-                    <span className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black text-primary-400 uppercase tracking-widest">
-                      {article.category}
-                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {(article.categories || [article.category as any]).slice(0, 2).map(c => (
+                        <span key={c} className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-[9px] font-black text-primary-400 uppercase tracking-widest whitespace-nowrap">
+                          {c}
+                        </span>
+                      ))}
+                      {(article.categories?.length || 1) > 2 && (
+                        <span className="px-2 py-1 bg-white/5 border border-white/10 rounded-lg text-[9px] font-black text-gray-500 uppercase tracking-widest">
+                          +{(article.categories?.length || 1) - 2}
+                        </span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-1.5 text-gray-500 text-xs font-bold">
                       <Star className="w-4 h-4 fill-gray-500" />
                       {article.stars?.length || 0}
@@ -271,7 +302,9 @@ export default function WikiView() {
                         </div>
                         <div className="flex-1 overflow-hidden">
                           <p className="text-sm font-bold text-white group-hover:text-primary-400 transition-colors truncate">{art.title}</p>
-                          <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-1">{art.category}</p>
+                          <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-1 truncate">
+                            {(art.categories || [art.category]).join(' • ')}
+                          </p>
                         </div>
                     </div>
                   ))}

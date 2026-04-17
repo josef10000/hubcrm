@@ -25,7 +25,7 @@ export default function WikiEditorModal({ isOpen, onClose, initialData }: WikiEd
   const [formData, setFormData] = useState<Partial<WikiArticle>>({
     title: '',
     content: '',
-    category: 'Geral',
+    categories: ['Geral'],
     allowedRoles: [],
     allowedUserIds: [],
     isPopular: false
@@ -38,7 +38,7 @@ export default function WikiEditorModal({ isOpen, onClose, initialData }: WikiEd
       setFormData({
         title: '',
         content: '',
-        category: 'Geral',
+        categories: ['Geral'],
         allowedRoles: [],
         allowedUserIds: [],
         isPopular: false
@@ -118,16 +118,33 @@ export default function WikiEditorModal({ isOpen, onClose, initialData }: WikiEd
                 </h3>
                 
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-2 uppercase">Categoria</label>
-                  <select
-                    value={formData.category}
-                    onChange={e => setFormData({ ...formData, category: e.target.value as WikiCategory })}
-                    className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-primary-500 outline-none"
-                  >
+                  <label className="block text-xs font-medium text-gray-500 mb-3 uppercase tracking-widest">Temas do Artigo</label>
+                  <div className="grid grid-cols-2 gap-2 bg-black/20 p-3 rounded-2xl border border-white/5">
                     {CATEGORIES.map(cat => (
-                      <option key={cat} value={cat} className="bg-gray-900">{cat}</option>
+                      <label key={cat} className="flex items-center gap-3 p-2 hover:bg-white/5 rounded-xl cursor-pointer transition-all border border-transparent hover:border-white/5">
+                        <input
+                          type="checkbox"
+                          checked={formData.categories?.includes(cat)}
+                          onChange={e => {
+                            const current = formData.categories || [];
+                            setFormData({
+                              ...formData,
+                              categories: e.target.checked 
+                                ? [...current, cat]
+                                : current.filter(c => c !== cat)
+                            });
+                          }}
+                          className="w-4 h-4 rounded border-white/10 bg-black/40 text-primary-500 focus:ring-primary-500 transition-all"
+                        />
+                        <span className="text-xs font-medium text-gray-300">{cat}</span>
+                      </label>
                     ))}
-                  </select>
+                  </div>
+                  {(!formData.categories || formData.categories.length === 0) && (
+                    <p className="mt-2 text-[10px] text-orange-500/70 italic flex items-center gap-1">
+                      ⚠️ Selecione pelo menos um tema.
+                    </p>
+                  )}
                 </div>
 
                 <label className="flex items-center gap-3 p-3 bg-white/5 rounded-2xl cursor-pointer hover:bg-white/10 transition-all border border-transparent hover:border-white/10">

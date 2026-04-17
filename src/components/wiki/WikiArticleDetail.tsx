@@ -88,9 +88,13 @@ export default function WikiArticleDetail({ article, onBack, onEdit }: WikiArtic
       {/* Article Header */}
       <div className="space-y-6">
         <div className="flex items-center gap-3">
-          <span className="px-4 py-1.5 bg-primary-500/20 text-primary-500 rounded-full text-xs font-bold uppercase tracking-widest border border-primary-500/30">
-            {article.category}
-          </span>
+          <div className="flex flex-wrap gap-2">
+            {(article.categories || [article.category as any]).map(cat => (
+              <span key={cat} className="px-4 py-1.5 bg-primary-500/20 text-primary-500 rounded-full text-[10px] font-bold uppercase tracking-widest border border-primary-500/30">
+                {cat}
+              </span>
+            ))}
+          </div>
           <div className="h-1 w-1 rounded-full bg-gray-600"></div>
           <div className="flex items-center gap-1.5 text-gray-500 text-sm">
             <Eye className="w-4 h-4" />
@@ -164,7 +168,9 @@ export default function WikiArticleDetail({ article, onBack, onEdit }: WikiArtic
         <div className="flex flex-wrap gap-2">
            <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-xs text-gray-400">#conhecimento</span>
            <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-xs text-gray-400">#procedimentos</span>
-           <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-xs text-gray-400">#{article.category.toLowerCase()}</span>
+           {(article.categories || [article.category as any]).map(cat => (
+             <span key={cat} className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-xs text-gray-400 font-medium">#{cat.toLowerCase()}</span>
+           ))}
         </div>
       </div>
 

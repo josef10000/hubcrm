@@ -345,7 +345,7 @@ export interface WikiArticle {
   id: string;
   title: string;
   content: string; // HTML do WYSIWYG
-  category: WikiCategory;
+  categories: WikiCategory[];
   authorId: string;
   authorName: string;
   createdAt: number;
