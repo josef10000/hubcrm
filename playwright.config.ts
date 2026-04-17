@@ -18,7 +18,7 @@ export default defineConfig({
   /* Configurações compartilhadas para todos os projetos abaixo. Veja https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL para usar em ações como `await page.goto('/')`. */
-    baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:5173',
+    baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:4173',
 
     /* Coleta traços ao tentar novamente um teste com falha. Veja https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -26,12 +26,15 @@ export default defineConfig({
     video: 'on-first-retry',
   },
 
-  /* Inicia automaticamente o servidor de desenvolvimento antes de rodar os testes */
+  /* Inicia automaticamente o servidor de desenvolvimento/produção antes de rodar os testes */
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
+    // No CI, usamos build + preview para máxima estabilidade. Localmente usamos dev para velocidade.
+    command: process.env.CI 
+      ? 'npm run build && npm run preview' 
+      : 'npm run dev',
+    url: 'http://localhost:4173',
     reuseExistingServer: !process.env.CI,
-    timeout: 120000, // 2 minutos para subir o servidor
+    timeout: 180000, // 3 minutos para dar tempo de fazer o build no CI
   },
 
   /* Configura projetos para os principais navegadores */

@@ -13,7 +13,7 @@ dotenv.config({ path: path.resolve(__dirname, '.env.local') });
 
 async function startServer() {
   const app = express();
-  const PORT = 5173;
+  const PORT = 4173;
 
   // Middleware to parse JSON bodies
   app.use(express.json());
