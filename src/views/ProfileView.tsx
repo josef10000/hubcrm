@@ -507,14 +507,6 @@ export default function ProfileView() {
                     </span>
                   )}
                 </button>
-                {isAdmin && (
-                  <button 
-                    onClick={() => setActiveTab('diagnostics' as any)}
-                    className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === ('diagnostics' as any) ? 'bg-rose-500 text-white shadow-lg' : 'bg-rose-500/10 text-rose-500 hover:bg-rose-500/20'}`}
-                  >
-                    Diagnóstico
-                  </button>
-                )}
               </div>
 
               {activeTab === 'info' && (
@@ -1045,45 +1037,6 @@ export default function ProfileView() {
                     )}
                   </div>
                   <CareerTimeline milestones={profile.careerTimeline || []} />
-                </div>
-              )}
-
-              {activeTab === ('diagnostics' as any) && (
-                <div className="animate-in zoom-in duration-500 space-y-8">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-3 bg-rose-500/10 rounded-2xl text-rose-500">
-                      <ShieldAlert size={24} />
-                    </div>
-                    <div>
-                      <h4 className="font-bold">Painel de Diagnóstico Sentry</h4>
-                      <p className="text-xs text-gray-500">Ferramentas de validação técnica para o monitoramento de erros.</p>
-                    </div>
-                  </div>
-
-                  <div className="p-8 bg-white/30 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-[2rem] text-center space-y-6">
-                    <div className="max-w-md mx-auto">
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                        Use o botão abaixo para gerar uma exceção de teste. Isso validará se a conexão com o Sentry está capturando erros corretamente no ambiente de produção.
-                      </p>
-                      <button
-                        onClick={() => {
-                          const toastId = toast.loading('Preparando erro de teste...');
-                          setTimeout(() => {
-                            toast.dismiss(toastId);
-                            // Disparar erro real para o Sentry (v3.7.1)
-                            throw new Error('HubCRM Sentry Connection Test: This is your first error!');
-                          }, 1000);
-                        }}
-                        className="w-full bg-rose-500 hover:bg-rose-600 text-white p-6 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-rose-500/20 active:scale-95 transition-all flex items-center justify-center gap-3"
-                      >
-                        <ShieldAlert size={20} />
-                        Break the World (Test Sentry)
-                      </button>
-                      <p className="text-[10px] text-gray-500 mt-4 uppercase tracking-[0.2em] font-bold">
-                        Aviso: Isto gerará uma notificação real no seu painel Sentry.
-                      </p>
-                    </div>
-                  </div>
                 </div>
               )}
             </div>
