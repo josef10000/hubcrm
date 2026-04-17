@@ -22,7 +22,7 @@ export default function NavItem({ icon: Icon, label, path, onClick, badge }: Nav
       className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all ${
         isActive
           ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400 shadow-sm border border-primary-500/30'
-          : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white dark:text-white border border-transparent'
+          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-primary-500/10 dark:bg-white/5 hover:text-gray-900 dark:hover:text-white border border-transparent'
       }`}
     >
       <div className="flex items-center space-x-3">

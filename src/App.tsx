@@ -189,8 +189,14 @@ function CRMInner() {
               return (
                 <div key={group.label} className="space-y-3">
                   <div className="flex items-center gap-2 px-4 mb-2">
-                    <group.icon size={12} className="text-gray-500/50" />
-                    <span className="text-[10px] uppercase font-black tracking-[0.2em] text-gray-500/50 select-none">{group.label}</span>
+                    <group.icon size={12} className={group.label === 'Operação' ? 'text-blue-400' : group.label === 'Comercial' ? 'text-primary-400' : 'text-gray-400'} />
+                    <span className={`text-[10px] uppercase font-black tracking-[0.2em] select-none ${
+                      group.label === 'Operação' ? 'text-blue-400/90' : 
+                      group.label === 'Comercial' ? 'text-primary-400/90' : 
+                      'text-gray-400/90'
+                    }`}>
+                      {group.label}
+                    </span>
                   </div>
                   <div className="space-y-1">
                     {visibleItems.map(item => (

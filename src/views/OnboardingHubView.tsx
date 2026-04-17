@@ -66,30 +66,30 @@ export default function OnboardingHubView() {
         </div>
 
         {/* Tabs de Navegação */}
-        <div className="flex p-1 bg-black/20 backdrop-blur-xl rounded-2xl border border-white/5 w-fit">
+        <div className="flex p-1 bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10 w-fit">
           <button
             onClick={() => setActiveTab('cs')}
             className={`flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all duration-300 ${
               activeTab === 'cs' 
               ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' 
-              : 'text-gray-400 hover:text-white hover:bg-white/5'
+              : 'text-gray-300 hover:text-white hover:bg-white/5'
             }`}
           >
             <Rocket size={18} />
             <span className="font-medium">Sucesso do Cliente</span>
-            <span className="ml-2 px-2 py-0.5 bg-black/20 rounded-md text-xs">{onboardingClients.length}</span>
+            <span className="ml-2 px-2 py-0.5 bg-black/40 rounded-md text-xs font-bold text-primary-400">{onboardingClients.length}</span>
           </button>
           <button
             onClick={() => setActiveTab('talent')}
             className={`flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all duration-300 ${
               activeTab === 'talent' 
               ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' 
-              : 'text-gray-400 hover:text-white hover:bg-white/5'
+              : 'text-gray-300 hover:text-white hover:bg-white/5'
             }`}
           >
             <Users size={18} />
             <span className="font-medium">Talentos & Cultura</span>
-            <span className="ml-2 px-2 py-0.5 bg-black/20 rounded-md text-xs">{onboardingTalents.length}</span>
+            <span className="ml-2 px-2 py-0.5 bg-black/40 rounded-md text-xs font-bold text-indigo-400">{onboardingTalents.length}</span>
           </button>
         </div>
 
