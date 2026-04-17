@@ -1067,19 +1067,12 @@ export default function ProfileView() {
                       </p>
                       <button
                         onClick={() => {
-                          toast.promise(
-                            new Promise((_, reject) => {
-                              setTimeout(() => {
-                                // Forçar erro para o Sentry (Conforme documentação oficial)
-                                throw new Error('HubCRM Sentry Connection Test: This is your first error!');
-                              }, 1000);
-                            }),
-                            {
-                              loading: 'Preparando erro de teste...',
-                              error: 'Erro enviado ao Sentry!',
-                              success: 'Sucesso?! Isso não deveria acontecer.'
-                            }
-                          );
+                          const toastId = toast.loading('Preparando erro de teste...');
+                          setTimeout(() => {
+                            toast.dismiss(toastId);
+                            // Disparar erro real para o Sentry (v3.7.1)
+                            throw new Error('HubCRM Sentry Connection Test: This is your first error!');
+                          }, 1000);
                         }}
                         className="w-full bg-rose-500 hover:bg-rose-600 text-white p-6 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-rose-500/20 active:scale-95 transition-all flex items-center justify-center gap-3"
                       >
