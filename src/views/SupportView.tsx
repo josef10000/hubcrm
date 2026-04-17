@@ -468,7 +468,6 @@ export default function SupportView() {
           itemsPerPage={ITEMS_PER_PAGE}
         />
       </div>
-    </div>
 
       <SupportRequestModal 
         isOpen={isNewRequestModalOpen} 
