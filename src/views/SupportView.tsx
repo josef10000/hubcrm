@@ -5,8 +5,11 @@ import { differenceInHours } from 'date-fns';
 import { useCRM } from '../contexts/CRMContext';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../lib/firebase';
-import { doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { serverTimestamp, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
+import Pagination from '../components/common/Pagination';
+
+const ITEMS_PER_PAGE = 15;
 
 export default function SupportView() {
   const { user } = useAuth();
@@ -28,6 +31,7 @@ export default function SupportView() {
   const [isNewRequestModalOpen, setIsNewRequestModalOpen] = useState(false);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyMessage, setReplyMessage] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filteredRequests = [...supportRequests]
     .filter(req => supportFilter === 'all' || req.assignedTo === user?.uid)
@@ -41,6 +45,17 @@ export default function SupportView() {
       
       return slaA - slaB;
     });
+
+  // Reset page when filtering or sorting
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [supportFilter, sortBy]);
+
+  const totalPages = Math.ceil(filteredRequests.length / ITEMS_PER_PAGE);
+  const paginatedRequests = filteredRequests.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   const getSlaStatus = (createdAt: any, priority: string = 'baixa') => {
     if (!createdAt) return null;
@@ -213,7 +228,7 @@ export default function SupportView() {
               <p className="text-gray-500 dark:text-gray-400">Tente mudar o filtro ou aguarde novas solicitações.</p>
             </div>
           ) : (
-            filteredRequests.map((req) => {
+            paginatedRequests.map((req) => {
               const sla = getSlaStatus(req.createdAt, req.priority);
               const isCritico = sla?.isOverdue && req.status !== 'concluido';
 
@@ -440,7 +455,20 @@ export default function SupportView() {
             })
           )}
         </div>
+
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={(page) => {
+            setCurrentPage(page);
+            const container = document.querySelector('.overflow-y-auto');
+            if (container) container.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          totalItems={filteredRequests.length}
+          itemsPerPage={ITEMS_PER_PAGE}
+        />
       </div>
+    </div>
 
       <SupportRequestModal 
         isOpen={isNewRequestModalOpen} 

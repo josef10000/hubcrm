@@ -10,6 +10,9 @@ import { toast } from 'sonner';
 import { WikiArticle, WikiCategory } from '../types';
 import WikiEditorModal from '../components/wiki/WikiEditorModal';
 import WikiArticleDetail from '../components/wiki/WikiArticleDetail';
+import Pagination from '../components/common/Pagination';
+
+const ITEMS_PER_PAGE = 12;
 
 const CATEGORY_MAP = [
   { id: 'RH', icon: Briefcase, color: 'text-pink-500', bg: 'bg-pink-500/10', border: 'border-pink-500/20' },
@@ -32,6 +35,7 @@ export default function WikiView() {
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingArticle, setEditingArticle] = useState<WikiArticle | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const canCreate = userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture';
 
@@ -58,6 +62,17 @@ export default function WikiView() {
       );
     });
   }, [wikiArticles, userProfile, selectedCategory, searchTerm]);
+
+  // Reset page when filtering
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedCategory]);
+
+  const totalPages = Math.ceil(filteredArticles.length / ITEMS_PER_PAGE);
+  const paginatedArticles = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredArticles.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredArticles, currentPage]);
 
   const popularArticles = useMemo(() => {
     return wikiArticles
@@ -180,7 +195,7 @@ export default function WikiView() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredArticles.map(article => (
+            {paginatedArticles.map(article => (
               <div 
                 key={article.id}
                 onClick={() => handleSelectArticle(article.id)}
@@ -226,6 +241,17 @@ export default function WikiView() {
               </div>
             )}
           </div>
+
+          <Pagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => {
+              setCurrentPage(page);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            totalItems={filteredArticles.length}
+            itemsPerPage={ITEMS_PER_PAGE}
+          />
           
           {/* Most Useful Section integrated at bottom */}
           {popularArticles.length > 0 && (
