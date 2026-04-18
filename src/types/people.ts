@@ -41,6 +41,7 @@ export interface FeedbackNote {
   content: string;
   type: 'Feedback' | 'PDI' | 'Elogio' | 'Atenção';
   private: boolean; // Só visível para Autor, RH e Admin?
+  isGlobal?: boolean; // Se verdadeiro, é para toda a empresa
 }
 
 export interface ENPSResult {

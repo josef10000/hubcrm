@@ -574,7 +574,38 @@ export default function PeopleView() {
             </div>
           )}
 
-          {activeTab === 'mural' && <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] p-8 shadow-xl animate-in fade-in duration-500"><FeedbackBoard userId={selectedMember?.uid || ''} /></div>}
+          {activeTab === 'mural' && (
+            <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] p-8 shadow-xl animate-in fade-in duration-500">
+               <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                  <div className="lg:col-span-1 border-r border-gray-100 dark:border-white/5 pr-4">
+                     <p className="text-[10px] font-bold text-gray-400 uppercase mb-4 tracking-widest pl-2">Modo de Visualização</p>
+                     <button 
+                        onClick={() => setSelectedMember(null)} 
+                        className={`w-full text-left p-3 rounded-xl mb-4 flex items-center gap-2 transition-all ${selectedMember === null ? 'bg-purple-600 text-white shadow-lg' : 'hover:bg-white/5 text-sm font-medium'}`}
+                     >
+                        <Globe size={16} /> 
+                        <span>Mural Global (Gestão)</span>
+                     </button>
+                     
+                     <p className="text-[10px] font-bold text-gray-400 uppercase mt-8 mb-4 tracking-widest pl-2">Murais Individuais</p>
+                     <div className="space-y-1 max-h-[400px] overflow-y-auto custom-scrollbar pr-1">
+                        {teamMembers.map(m => (
+                           <button 
+                              key={m.uid} 
+                              onClick={() => setSelectedMember(m)} 
+                              className={`w-full text-left p-3 rounded-xl transition-all ${selectedMember?.uid === m.uid ? 'bg-primary-500 text-white shadow-lg' : 'hover:bg-white/5 text-sm'}`}
+                           >
+                              {m.displayName}
+                           </button>
+                        ))}
+                     </div>
+                  </div>
+                  <div className="lg:col-span-3">
+                     <FeedbackBoard userId={selectedMember?.uid} />
+                  </div>
+               </div>
+            </div>
+          )}
 
           {activeTab === 'assets' && (
             <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] p-8 shadow-xl animate-in slide-in-from-bottom duration-500">
