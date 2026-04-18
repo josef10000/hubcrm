@@ -21,7 +21,8 @@ import {
   Settings,
   Plus,
   X,
-  Package
+  Package,
+  Globe
 } from 'lucide-react';
 import AssetManager from '../components/people/AssetManager';
 import FeedbackBoard from '../components/people/FeedbackBoard';
