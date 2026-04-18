@@ -134,7 +134,7 @@
     --primary-600: #4f46e5;
   }
   .dark-absolute body,
-  .dark-absolute .bg-\[#030712\] {
+  .dark-absolute .bg-\[\#030712\] {
     background-color: #000000 !important;
   }
   .dark-absolute .text-gray-400  { color: #d1d5db !important; }

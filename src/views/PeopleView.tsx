@@ -502,34 +502,54 @@ export default function PeopleView() {
                   </div>
                   <div className="lg:col-span-3">
                      {selectedMember ? (
-                              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                       <button 
-                                          onClick={() => setShowSkillsModal(true)}
-                                          className="text-xs font-bold text-primary-500 hover:text-primary-600 transition-all px-3 py-2 bg-primary-500/10 rounded-xl flex items-center gap-2"
-                                       >
-                                          <Settings size={14} /> Atualizar Matriz
-                                       </button>
-                                    )}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                           {/* Coluna Esquerda: PDI */}
+                           <div className="space-y-6">
+                              <div className="flex justify-between items-center mb-6">
+                                 <h3 className="text-xl font-bold">Plano de Desenvolvimento (PDI)</h3>
+                              </div>
+                              <PDIKanban 
+                                 items={(selectedMember.pdiItems || []) as any} 
+                                 orgId={effectiveOrgId} 
+                                 userId={selectedMember.uid} 
+                              />
+                           </div>
+
+                           {/* Coluna Direita: Energy & Skills */}
+                           <div className="space-y-6">
+                              <EnergyScoreCard userProfile={selectedMember} />
+                              <div className="flex justify-between items-center mb-6">
+                                 <h3 className="text-xl font-bold">Matriz de Competências</h3>
+                                 {isAdminOrGerente && (
+                                    <button 
+                                       onClick={() => setShowSkillsModal(true)}
+                                       className="text-xs font-bold text-primary-500 hover:text-primary-600 transition-all px-3 py-2 bg-primary-500/10 rounded-xl flex items-center gap-2"
+                                    >
+                                       <Settings size={14} /> Atualizar Matriz
+                                    </button>
+                                 )}
+                              </div>
+                              <div className="p-8 bg-white/5 border border-white/5 rounded-3xl min-h-[400px] flex items-center justify-center">
+                                 <SkillRadar skills={[
+                                    ...(selectedMember.skills?.hard || []).map(s => ({ ...s, type: 'Hard' as const })),
+                                    ...(selectedMember.skills?.soft || []).map(s => ({ ...s, type: 'Soft' as const }))
+                                 ]} />
+                              </div>
+                              <div className="grid grid-cols-2 gap-4">
+                                 <div className="p-4 bg-primary-500/5 border border-primary-500/10 rounded-2xl">
+                                    <p className="text-[10px] font-black uppercase text-primary-400 mb-1">Hard Skills</p>
+                                    <p className="text-2xl font-black">{selectedMember.skills?.hard?.length || 0}</p>
                                  </div>
-                                 <div className="p-8 bg-white/5 border border-white/5 rounded-3xl min-h-[400px] flex items-center justify-center">
-                                    <SkillRadar skills={[
-                                       ...(selectedMember.skills?.hard || []).map(s => ({ ...s, type: 'Hard' as const })),
-                                       ...(selectedMember.skills?.soft || []).map(s => ({ ...s, type: 'Soft' as const }))
-                                    ]} />
-                                 </div>
-                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="p-4 bg-primary-500/5 border border-primary-500/10 rounded-2xl">
-                                       <p className="text-[10px] font-black uppercase text-primary-400 mb-1">Hard Skills</p>
-                                       <p className="text-2xl font-black">{selectedMember.skills?.hard?.length || 0}</p>
-                                    </div>
-                                    <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl">
-                                       <p className="text-[10px] font-black uppercase text-emerald-400 mb-1">Soft Skills</p>
-                                       <p className="text-2xl font-black">{selectedMember.skills?.soft?.length || 0}</p>
-                                    </div>
+                                 <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl">
+                                    <p className="text-[10px] font-black uppercase text-emerald-400 mb-1">Soft Skills</p>
+                                    <p className="text-2xl font-black">{selectedMember.skills?.soft?.length || 0}</p>
                                  </div>
                               </div>
                            </div>
-                     ) : <div className="text-center py-20 text-gray-500">Selecione um membro</div>}
+                        </div>
+                      ) : (
+                        <div className="text-center py-20 text-gray-500">Selecione um membro</div>
+                      )}
                   </div>
                </div>
             </div>

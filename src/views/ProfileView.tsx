@@ -741,9 +741,6 @@ export default function ProfileView() {
                     )}
                   </div>
 
-                    )}
-                  </div>
-
                   <PDIKanban 
                     items={(profile.pdiItems || []) as any} 
                     orgId={currentUserProfile?.orgId || ''} 
