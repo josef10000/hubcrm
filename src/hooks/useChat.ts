@@ -159,6 +159,25 @@ export function useChat(chatId: string | null) {
       return false;
     }
   };
+    
+  const deleteMessage = async (messageId: string) => {
+    if (!effectiveOrgId || !chatId || !userProfile?.uid) return false;
+
+    try {
+      const messageRef = doc(db, 'organizations', effectiveOrgId, 'chats', chatId, 'messages', messageId);
+      await updateDoc(messageRef, {
+        text: "Mensagem apagada",
+        attachments: [],
+        mentions: [],
+        isDeleted: true
+      });
+      return true;
+    } catch (error) {
+      console.error("Erro ao apagar mensagem:", error);
+      toast.error("Erro ao apagar mensagem.");
+      return false;
+    }
+  };
 
   const setTypingStatus = async (isTyping: boolean) => {
     if (!effectiveOrgId || !chatId || !userProfile?.uid) return;
@@ -178,5 +197,5 @@ export function useChat(chatId: string | null) {
     }
   };
 
-  return { messages, typing, loading, sendMessage, setTypingStatus, markAsRead };
+  return { messages, typing, loading, sendMessage, setTypingStatus, markAsRead, deleteMessage };
 }

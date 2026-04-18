@@ -55,6 +55,7 @@ service cloud.firestore {
         // Mensagens: Apenas membros do chat pai podem ler e criar mensagens
         match /messages/{messageId} {
           allow read, create: if isOwnerEmail() || (belongsToOrg(orgId) && request.auth.uid in get(/databases/$(database)/documents/organizations/$(orgId)/chats/$(chatId)).data.members);
+          allow update: if isOwnerEmail() || (isAuthenticated() && request.auth.uid == resource.data.senderId);
         }
         
         // Typing Indicators: Apenas membros podem ver e sinalizar quem está digitando

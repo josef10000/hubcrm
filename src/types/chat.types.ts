@@ -43,6 +43,7 @@ export interface ChatMessage {
     text: string;
     senderName: string;
   } | null;
+  isDeleted?: boolean;                // Flag para mensagens apagadas
   createdAt: Timestamp;
 }
 

@@ -16,7 +16,7 @@ interface ChatWindowProps {
 export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
   const { userProfile } = useAuth();
   const { teamProfiles } = useCRM();
-  const { messages, typing, sendMessage, setTypingStatus, loading } = useChat(chatId);
+  const { messages, typing, sendMessage, setTypingStatus, loading, deleteMessage } = useChat(chatId);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -186,7 +186,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
       {/* Janela de Mensagens */}
       <div 
         ref={scrollRef}
-        className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] dark:bg-none"
+        className="flex-1 overflow-y-auto overscroll-contain p-6 custom-scrollbar bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] dark:bg-none"
       >
         {loading ? (
           <div className="flex flex-col items-center justify-center h-full opacity-20">
@@ -212,7 +212,11 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
 
               return (
                 <div key={msg.id} onDoubleClick={() => setReplyingTo(msg)}>
-                  <MessageBubble message={msg} isRead={isRead} />
+                  <MessageBubble 
+                    message={msg} 
+                    isRead={isRead} 
+                    onDelete={deleteMessage}
+                  />
                 </div>
               );
             })}
