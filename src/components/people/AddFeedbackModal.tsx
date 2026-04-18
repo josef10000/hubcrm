@@ -3,6 +3,7 @@ import { X, Send, Heart, ShieldAlert, Lock, Globe } from 'lucide-react';
 import { FeedbackItem, UserProfile } from '../../types';
 import { toast } from 'sonner';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCRM } from '../../contexts/CRMContext';
 
 interface AddFeedbackModalProps {
   isOpen: boolean;
@@ -14,12 +15,15 @@ interface AddFeedbackModalProps {
 
 export default function AddFeedbackModal({ isOpen, onClose, targetUserId, fromUser, onSuccess }: AddFeedbackModalProps) {
   const { user } = useAuth();
+  const { teamProfiles } = useCRM();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     text: '',
     type: 'kudo' as 'kudo' | 'feedback',
     isPrivate: false
   });
+
+  const targetUser = teamProfiles.find(p => p.uid === targetUserId);
 
   if (!isOpen) return null;
 
@@ -65,7 +69,15 @@ export default function AddFeedbackModal({ isOpen, onClose, targetUserId, fromUs
         <div className="p-8 border-b border-gray-100 dark:border-white/5 flex justify-between items-center bg-primary-500/5">
           <div>
             <h3 className="text-2xl font-bold">Enviar Feedback</h3>
-            <p className="text-xs text-gray-500 mt-1">Reconheça ou sugira melhorias para o colega.</p>
+            {targetUser && (
+              <div className="flex items-center gap-2 mt-2 bg-white/50 dark:bg-white/5 px-3 py-1.5 rounded-xl border border-gray-100 dark:border-white/10">
+                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Para:</span>
+                <div className="w-5 h-5 rounded-full overflow-hidden bg-gray-200 dark:bg-white/10 flex items-center justify-center">
+                  {targetUser.photoURL ? <img src={targetUser.photoURL} alt="" /> : <span className="text-[8px] font-bold">{targetUser.displayName?.[0]}</span>}
+                </div>
+                <span className="text-xs font-bold text-gray-900 dark:text-white">{targetUser.displayName}</span>
+              </div>
+            )}
           </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full"><X /></button>
         </div>

@@ -118,6 +118,21 @@ export default function FeedbackBoard({ userId }: FeedbackBoardProps) {
 
       {showAddForm && (
         <form onSubmit={handleAddFeedback} className="bg-white/80 dark:bg-white/5 p-6 rounded-[2rem] border border-gray-200 dark:border-white/10 animate-in slide-in-from-top mb-8 shadow-xl">
+          {(() => {
+            const targetUser = teamProfiles.find(p => p.uid === userId);
+            return targetUser && (
+              <div className="flex items-center gap-3 mb-6 p-4 bg-primary-500/5 rounded-2xl border border-primary-500/10">
+                <div className="w-10 h-10 rounded-2xl overflow-hidden bg-white/10 border border-white/10 flex items-center justify-center">
+                  {targetUser.photoURL ? <img src={targetUser.photoURL} alt="" /> : <span className="font-bold">{targetUser.displayName?.[0]}</span>}
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-0.5">Destinatário do Registro</p>
+                  <p className="text-sm font-bold text-gray-900 dark:text-white">{targetUser.displayName}</p>
+                </div>
+              </div>
+            );
+          })()}
+
           <div className="mb-4">
             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2 mb-1 block">Conteúdo do Feedback</label>
             <textarea 
