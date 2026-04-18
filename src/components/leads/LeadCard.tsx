@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Lead } from '../../types';
 import { LeadTimeline } from './LeadTimeline';
+import { calculateHealthScore, getHealthColor } from '../../helpers/healthCalculation';
 
 interface LeadCardProps {
   lead: Lead;
@@ -33,9 +34,17 @@ export function LeadCard({ lead, isDragged, tags, onDragStart, onDragEnd, onClic
       }`}
     >
       {/* Header */}
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <h4 className="text-sm font-medium text-white truncate">{lead.name}</h4>
-        <GripVertical className="w-4 h-4 text-gray-600 shrink-0 group-hover:text-gray-400 transition-colors" />
+      <div className="flex flex-col gap-1 mb-2">
+        <div className="flex items-start justify-between gap-2">
+          <h4 className="text-sm font-medium text-white truncate">{lead.name}</h4>
+          <GripVertical className="w-4 h-4 text-gray-600 shrink-0 group-hover:text-gray-400 transition-colors" />
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={`w-2 h-2 rounded-full ${getHealthColor(calculateHealthScore(lead as any)).replace('text-', 'bg-')}`}></span>
+          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+            Health: {calculateHealthScore(lead as any)}%
+          </span>
+        </div>
       </div>
 
       {lead.whatsapp && (

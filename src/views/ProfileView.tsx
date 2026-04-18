@@ -22,6 +22,8 @@ import SkillRadarChart from '../components/people/SkillRadarChart';
 import CareerTimeline from '../components/people/CareerTimeline';
 import FeedbackMural from '../components/people/FeedbackMural';
 import InventorySection from '../components/people/InventorySection';
+import { EnergyScoreCard } from '../components/people/EnergyScoreCard';
+import { PDIKanban } from '../components/people/PDIKanban';
 import { 
   Plus, 
   Trash2, 
@@ -447,6 +449,15 @@ export default function ProfileView() {
               )}
             </motion.div>
 
+            {/* Energy Score do Colaborador */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <EnergyScoreCard userProfile={profile} />
+            </motion.div>
+
             {/* Mood Tracker - Apenas para o próprio perfil */}
             {isOwnProfile && (
               <div className="mt-6">
@@ -730,39 +741,14 @@ export default function ProfileView() {
                     )}
                   </div>
 
-                  {(profile.pdiCategories || []).length > 0 ? (
-                    <div className="space-y-6">
-                      {profile.pdiCategories!.map(cat => (
-                        <div key={cat.id} className="bg-white/30 dark:bg-white/5 border border-gray-100 dark:border-white/5 rounded-3xl p-6">
-                          <h5 className="font-bold text-sm mb-4 flex items-center gap-2 text-indigo-500">
-                            <ChevronDown size={18} /> {cat.title}
-                          </h5>
-                          <div className="grid grid-cols-1 gap-2">
-                             {cat.actions.map(action => (
-                               <div key={action.id} className="flex items-center gap-3 p-4 bg-white/50 dark:bg-black/20 border border-gray-100 dark:border-white/10 rounded-2xl">
-                                  <div className={`shrink-0 ${action.completed ? 'text-indigo-500' : 'text-gray-300'}`}>
-                                    {action.completed ? <CheckCircle2 size={22} /> : <Circle size={22} />}
-                                  </div>
-                                  <div className="flex-1">
-                                    <p className={`text-sm ${action.completed ? 'line-through text-gray-400' : 'font-medium'}`}>
-                                      {action.description}
-                                    </p>
-                                    {action.completedAt && (
-                                      <p className="text-[10px] text-gray-400 mt-0.5">Validado em: {format(action.completedAt, 'dd/MM/yyyy')}</p>
-                                    )}
-                                  </div>
-                               </div>
-                             ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-20 bg-white/5 rounded-[2rem] border-2 border-dashed border-white/5">
-                      <Target size={40} className="mx-auto text-gray-300 mb-4 opacity-20" />
-                      <p className="text-gray-500 text-sm">Seu PDI ainda não foi iniciado pelo gestor.</p>
-                    </div>
-                  )}
+                    )}
+                  </div>
+
+                  <PDIKanban 
+                    items={(profile.pdiItems || []) as any} 
+                    orgId={currentUserProfile?.orgId || ''} 
+                    userId={uid || ''} 
+                  />
                 </div>
               )}
 

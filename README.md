@@ -21,30 +21,30 @@ Transformando prospecção em faturamento através de automação inteligente e 
     <img src="https://img.shields.io/badge/Vercel-Serverless-000000?style=flat-square&logo=vercel&logoColor=white" alt="Vercel" />
   </p>
   <div align="center">
-  <h2>✨ Features em Destaque v4.0</h2>
+  <h2>✨ Features em Destaque v4.1.5</h2>
 </div>
 
 <table>
   <tr>
     <td align="center" width="20%">
-      <br />🎯<br /><strong>Pilar Comercial</strong><br />
-      <sub>Pipeline descentralizado & Proposta 1-Clique</sub>
+      <br />🚀<br /><strong>Produtividade</strong><br />
+      <sub>Busca Global & Modo Foco</sub>
     </td>
     <td align="center" width="20%">
-      <br />⚙️<br /><strong>Pilar Operação</strong><br />
-      <sub>Hub de Onboarding, Contratos & Projetos</sub>
+      <br />📈<br /><strong>Sales Intelligence</strong><br />
+      <sub>Timeline Visual & SLA Pulse Red</sub>
     </td>
     <td align="center" width="20%">
-      <br />💰<br /><strong>Pilar Financeiro</strong><br />
-      <sub>Billing Hub Tático & Finance BI Estratégico</sub>
+      <br />💎<br /><strong>Financeiro</strong><br />
+      <sub>Inadimplência Crítica & Fluxo 3 Meses</sub>
     </td>
     <td align="center" width="20%">
-      <br />👥<br /><strong>Pilar Pessoas</strong><br />
-      <sub>Gestão de Talentos, PDI & "Minha Equipe"</sub>
+      <br />🎭<br /><strong>Pessoas</strong><br />
+      <sub>Energy Score & PDI Drag-and-Drop</sub>
     </td>
     <td align="center" width="20%">
-      <br />🛡️<br /><strong>Monitoramento</strong><br />
-      <sub>Sentry SDK & Vercel Analytics Nativo</sub>
+      <br />📖<br /><strong>Wiki</strong><br />
+      <sub>Badges de Leitura & Hub de Conhecimento</sub>
     </td>
   </tr>
 </table>

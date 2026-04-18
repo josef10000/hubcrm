@@ -243,6 +243,9 @@ export default function WikiView() {
                       )}
                     </div>
                     <div className="flex items-center gap-1.5 text-gray-500 text-xs font-bold">
+                      {userProfile?.readWikiArticles?.includes(article.id) && (
+                        <span className="mr-2 px-2 py-0.5 bg-emerald-500/10 text-emerald-500 rounded-md text-[9px] font-black uppercase tracking-widest">Lido</span>
+                      )}
                       <Star className="w-4 h-4 fill-gray-500" />
                       {article.stars?.length || 0}
                     </div>

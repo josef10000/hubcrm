@@ -38,6 +38,8 @@ import { useCRM } from '../contexts/CRMContext';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { VacationPeriod, PDICategory, PDIAction } from '../types/people';
+import { PDIKanban } from '../components/people/PDIKanban';
+import { EnergyScoreCard } from '../components/people/EnergyScoreCard';
 
 type PeopleSubTab = 'dashboard' | 'onboarding' | 'development' | 'career' | 'mural' | 'assets' | 'vacations' | 'climate';
 
@@ -501,47 +503,6 @@ export default function PeopleView() {
                   <div className="lg:col-span-3">
                      {selectedMember ? (
                               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                              <div className="space-y-6">
-                                 <div className="flex justify-between items-center mb-6">
-                                    <h3 className="text-xl font-bold">Plano de Desenvolvimento (PDI)</h3>
-                                    {isAdminOrGerente && (
-                                      <div className="flex gap-2">
-                                         <input type="text" placeholder="Nova Categoria..." className="bg-white/5 border border-white/10 px-3 py-2 rounded-xl text-xs" value={newCategoryTitle} onChange={e => setNewCategoryTitle(e.target.value)} onKeyPress={e => e.key === 'Enter' && addPDICategory(selectedMember.uid)} />
-                                         <button onClick={() => addPDICategory(selectedMember.uid)} className="bg-primary-500 text-white p-2 rounded-xl"><Plus size={16} /></button>
-                                      </div>
-                                    )}
-                                 </div>
-                                 <div className="space-y-6">
-                                    {(selectedMember.pdiCategories || []).map(cat => (
-                                      <div key={cat.id} className="p-6 bg-white/5 border border-white/5 rounded-3xl relative group">
-                                         <div className="flex justify-between items-center mb-4">
-                                            <h4 className="font-bold">{cat.title}</h4>
-                                            {isAdminOrGerente && <button onClick={() => removePDICategory(selectedMember.uid, cat.id)} className="opacity-0 group-hover:opacity-100 text-red-500"><Trash2 size={14} /></button>}
-                                         </div>
-                                         <div className="space-y-2 mb-4">
-                                            {cat.actions.map(act => (
-                                              <div key={act.id} className="flex items-center gap-3 p-3 bg-black/20 rounded-xl">
-                                                 <button onClick={() => togglePDIAction(selectedMember.uid, cat.id, act.id)}>{act.completed ? <CheckCircle2 className="text-primary-500" /> : <Circle className="text-gray-500" />}</button>
-                                                 <span className={`text-sm ${act.completed ? 'line-through opacity-40' : ''}`}>{act.description}</span>
-                                              </div>
-                                            ))}
-                                         </div>
-                                         {isAdminOrGerente && (
-                                            <div className="flex gap-2">
-                                               <input type="text" placeholder="Ação..." className="flex-1 bg-black/30 border border-white/5 px-3 py-2 rounded-xl text-xs" value={newActionText[cat.id] || ''} onChange={e => setNewActionText(prev => ({ ...prev, [cat.id]: e.target.value }))} onKeyPress={e => e.key === 'Enter' && addPDIAction(selectedMember.uid, cat.id)} />
-                                               <button onClick={() => addPDIAction(selectedMember.uid, cat.id)} className="bg-white/10 p-2 rounded-xl"><Plus size={16} /></button>
-                                            </div>
-                                         )}
-                                      </div>
-                                    ))}
-                                    {!(selectedMember.pdiCategories?.length) && <p className="text-center py-10 text-gray-500 italic">Nenhum PDI definido.</p>}
-                                 </div>
-                              </div>
-
-                              <div className="space-y-6">
-                                 <div className="flex justify-between items-center mb-6">
-                                    <h3 className="text-xl font-bold">Matriz de Competências</h3>
-                                    {isAdminOrGerente && (
                                        <button 
                                           onClick={() => setShowSkillsModal(true)}
                                           className="text-xs font-bold text-primary-500 hover:text-primary-600 transition-all px-3 py-2 bg-primary-500/10 rounded-xl flex items-center gap-2"
