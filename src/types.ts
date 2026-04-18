@@ -317,6 +317,10 @@ export interface UserProfile {
   lastBirthdayEmailYear?: number; // Ano do último e-mail de aniversário enviado
   readAlerts?: string[]; // IDs dos alertas de negócio já lidos pelo usuário
   pdiItems?: PDIItem[]; // Itens do Plano de Desenvolvimento Individual
+  
+  // Presence System
+  presenceStatus?: 'online' | 'away' | 'offline';
+  lastSeen?: number; // Timestamp
 }
 
 export interface BusinessAlert {

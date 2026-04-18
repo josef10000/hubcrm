@@ -107,17 +107,42 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
                 }`}
               >
                 {/* Avatar */}
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border border-gray-100 dark:border-white/10 overflow-hidden ${
-                  isSelected ? 'bg-white/20' : 'bg-white dark:bg-white/10 shadow-sm'
-                }`}>
-                  {displayPhoto ? (
-                    <img src={displayPhoto} alt="" className="w-full h-full object-cover" />
-                  ) : chat.type === 'self' ? (
-                    <Star size={20} className={isSelected ? 'text-white' : 'text-amber-500'} />
-                  ) : chat.type === 'direct' ? (
-                    <User size={20} />
-                  ) : (
-                    <Users size={20} />
+                <div className="relative shrink-0">
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border border-gray-100 dark:border-white/10 overflow-hidden ${
+                    isSelected ? 'bg-white/20' : 'bg-white dark:bg-white/10 shadow-sm'
+                  }`}>
+                    {displayPhoto ? (
+                      <img src={displayPhoto} alt="" className="w-full h-full object-cover" />
+                    ) : chat.type === 'self' ? (
+                      <Star size={20} className={isSelected ? 'text-white' : 'text-amber-500'} />
+                    ) : chat.type === 'direct' ? (
+                      <User size={20} />
+                    ) : (
+                      <Users size={20} />
+                    )}
+                  </div>
+                  
+                  {chat.type === 'direct' && (
+                    <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 ${isSelected ? 'border-primary-500' : 'border-gray-50 dark:border-zinc-900'} ${
+                      (() => {
+                        const otherUserId = chat.members.find(id => id !== userProfile?.uid);
+                        const otherUser = teamProfiles.find(p => p.uid === otherUserId);
+                        const status = otherUser?.presenceStatus || 'offline';
+                        const lastSeen = otherUser?.lastSeen;
+                        const isOnline = status === 'online' && (Date.now() - (lastSeen || 0) < 120000);
+                        
+                        return isOnline ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 
+                               status === 'away' ? 'bg-amber-500' : 
+                               'bg-gray-400';
+                      })()
+                    }`} title={(() => {
+                        const otherUserId = chat.members.find(id => id !== userProfile?.uid);
+                        const otherUser = teamProfiles.find(p => p.uid === otherUserId);
+                        const status = otherUser?.presenceStatus || 'offline';
+                        const lastSeen = otherUser?.lastSeen;
+                        const isOnline = status === 'online' && (Date.now() - (lastSeen || 0) < 120000);
+                        return isOnline ? 'Online' : status === 'away' ? 'Ausente' : 'Offline';
+                    })()} />
                   )}
                 </div>
 

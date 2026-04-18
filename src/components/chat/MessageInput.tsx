@@ -6,6 +6,7 @@ import { ChatMessage } from '../../types/chat.types';
 import MentionSuggestions from './MentionSuggestions';
 import { uploadImageToImgBB } from '../../lib/imgbb';
 import { toast } from 'sonner';
+import EmojiPicker from './EmojiPicker';
 
 interface MessageInputProps {
   onSend: (text: string, mentions: string[], attachments: string[]) => void;
@@ -20,6 +21,7 @@ export default function MessageInput({ onSend, onTyping, replyTo, onCancelReply 
   const [mentionQuery, setMentionQuery] = useState('');
   const [uploading, setUploading] = useState(false);
   const { teamProfiles } = useCRM();
+  const [isEmojiOpen, setIsEmojiOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout|null>(null);
@@ -100,7 +102,20 @@ export default function MessageInput({ onSend, onTyping, replyTo, onCancelReply 
     }
     if (e.key === 'Escape') {
       setShowMentions(false);
+      setIsEmojiOpen(false);
     }
+  };
+
+  const handleEmojiSelect = (emoji: string) => {
+    const cursorPos = textareaRef.current?.selectionStart || text.length;
+    const before = text.slice(0, cursorPos);
+    const after = text.slice(cursorPos);
+    setText(before + emoji + after);
+    
+    // Devolve o foco ao textarea após 10ms
+    setTimeout(() => {
+      textareaRef.current?.focus();
+    }, 10);
   };
 
   useEffect(() => {
@@ -160,9 +175,19 @@ export default function MessageInput({ onSend, onTyping, replyTo, onCancelReply 
             onChange={handleChange}
             onKeyDown={handleKeyDown}
           />
-          <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-amber-500 transition-colors">
+          <button 
+            type="button" 
+            onClick={() => setIsEmojiOpen(!isEmojiOpen)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-amber-500 transition-colors"
+          >
             <Smile size={18} />
           </button>
+
+          <EmojiPicker 
+            isOpen={isEmojiOpen} 
+            onSelect={handleEmojiSelect} 
+            onClose={() => setIsEmojiOpen(false)} 
+          />
         </div>
 
         <button 

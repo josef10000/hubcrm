@@ -20,6 +20,7 @@ import ContractsView from './views/ContractsView';
 import ProjectsView from './views/ProjectsView';
 import ChatView from './views/ChatView';
 import { useGlobalChatAlerts } from './hooks/useGlobalChatAlerts';
+import { usePresence } from './hooks/usePresence';
 
 import ConfirmationModal from './components/ConfirmationModal';
 import OfferModal from './components/OfferModal';
@@ -113,6 +114,7 @@ const navGroups = [
 
 function CRMInner() {
   const { user, userProfile, isBirthday, unreadAlertsCount } = useAuth();
+  usePresence(); // Ativa monitoramento de status
   const navigate = useNavigate();
   const {
     clients, activeLeadsCount, offers, supportRequests, loading, errorMsg,

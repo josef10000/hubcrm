@@ -20,6 +20,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -44,6 +45,13 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
     displayName = 'Meu Espaço (Você)';
     displayPhoto = userProfile?.photoURL || '';
   }
+
+  // Lógica de Status (Presence)
+  const otherUserId = chat?.type === 'direct' ? chat.members.find(id => id !== userProfile?.uid) : null;
+  const otherUser = otherUserId ? teamProfiles.find(p => p.uid === otherUserId) : null;
+  const status = otherUser?.presenceStatus || 'offline';
+  const lastSeen = otherUser?.lastSeen;
+  const isOnline = status === 'online' && (Date.now() - (lastSeen || 0) < 120000); // 2 mins threshold
 
   // Auto-scroll para o final ao receber mensagens
   useEffect(() => {
@@ -131,9 +139,18 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
                   {typing.map(t => t.displayName).join(', ')} {typing.length > 1 ? 'estão digitando...' : 'está digitando...'}
                 </p>
               ) : (
-                <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">
-                  {chat.type === 'self' ? 'Suas Anotações Privadas' : `${chat.members.length} Membros`}
-                </p>
+                <div className="flex items-center gap-1.5">
+                  <div className={`w-1.5 h-1.5 rounded-full ${
+                    isOnline ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 
+                    status === 'away' ? 'bg-amber-500' : 
+                    'bg-gray-400'
+                  }`} />
+                  <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">
+                    {chat.type === 'self' ? 'Suas Anotações Privadas' : 
+                     chat.type === 'direct' ? (isOnline ? 'Online agora' : status === 'away' ? 'Ausente' : 'Offline') :
+                     `${chat.members.length} Membros`}
+                  </p>
+                </div>
               )}
             </div>
           ) : (
@@ -177,9 +194,32 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
           >
             <ExternalLink size={18} />
           </button>
-          <button className="p-2.5 text-gray-400 hover:text-primary-500 hover:bg-primary-500/5 rounded-xl transition-all">
-            <MoreVertical size={18} />
-          </button>
+          <div className="relative">
+            <button 
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="p-2.5 text-gray-400 hover:text-primary-500 hover:bg-primary-500/5 rounded-xl transition-all"
+            >
+              <MoreVertical size={18} />
+            </button>
+
+            {isMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)} />
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-white/10 rounded-2xl shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-200">
+                  <button onClick={() => { setIsSettingsOpen(true); setIsMenuOpen(false); }} className="w-full text-left px-4 py-2 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-primary-500 hover:text-white transition-colors">
+                    Dados do Grupo
+                  </button>
+                  <button onClick={() => setIsMenuOpen(false)} className="w-full text-left px-4 py-2 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-primary-500 hover:text-white transition-colors">
+                    Ver Membros
+                  </button>
+                  <div className="h-px bg-gray-100 dark:bg-white/5 my-1" />
+                  <button onClick={() => setIsMenuOpen(false)} className="w-full text-left px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-500 hover:text-white transition-colors">
+                    Sair da Conversa
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
