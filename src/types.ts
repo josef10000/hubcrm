@@ -316,6 +316,7 @@ export interface UserProfile {
   moodLogs?: MoodLog[];
   lastBirthdayEmailYear?: number; // Ano do último e-mail de aniversário enviado
   readAlerts?: string[]; // IDs dos alertas de negócio já lidos pelo usuário
+  pdiItems?: PDIItem[]; // Itens do Plano de Desenvolvimento Individual
 }
 
 export interface BusinessAlert {
@@ -421,5 +422,17 @@ export interface MoodLog {
   score: number; // 1-5
   date: number;
   emoji: string;
+}
+
+export interface PDIItem {
+  id: string;
+  title: string;
+  description?: string;
+  status: 'todo' | 'doing' | 'done';
+  priority: 'low' | 'medium' | 'high';
+  createdAt: number;
+  completedAt?: number;
+  dueDate?: number;
+  category?: string;
 }
 

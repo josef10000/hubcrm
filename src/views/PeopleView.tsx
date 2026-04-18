@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import AssetManager from '../components/people/AssetManager';
 import FeedbackBoard from '../components/people/FeedbackBoard';
-import CareerPath from '../components/people/CareerPath';
+import CareerTimeline from '../components/people/CareerTimeline';
 import AddMilestoneModal from '../components/people/AddMilestoneModal';
 import SkillRadar from '../components/people/SkillRadar';
 import EditSkillsModal from '../components/people/EditSkillsModal';
@@ -568,7 +568,7 @@ export default function PeopleView() {
                      ))}
                   </div>
                   <div className="lg:col-span-3">
-                     {selectedMember ? <CareerPath userId={selectedMember.uid} /> : <div className="text-center py-20 text-gray-500">Selecione um membro</div>}
+                      {selectedMember ? <CareerTimeline milestones={selectedMember.careerTimeline || []} /> : <div className="text-center py-20 text-gray-500">Selecione um membro</div>}
                   </div>
                </div>
             </div>

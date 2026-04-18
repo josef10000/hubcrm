@@ -354,7 +354,10 @@ async function handleRemoveAsset(req: VercelRequest, res: VercelResponse, uid: s
 async function handleAddMilestone(req: VercelRequest, res: VercelResponse, uid: string) {
   const { targetUid, milestone } = req.body;
   const senderSnap = await db.collection('profiles').doc(uid).get();
-  if (senderSnap.data()?.role !== 'Administrador') return res.status(403).json({ error: 'Apenas Admins podem adicionar marcos' });
+  const senderData = senderSnap.data();
+  const isManagement = ['Administrador', 'Gerente', 'People & Culture'].includes(senderData?.role || '');
+
+  if (!isManagement) return res.status(403).json({ error: 'Apenas Administradores, Gerentes ou RH podem adicionar marcos' });
 
   await db.collection('profiles').doc(targetUid).update({
     careerTimeline: getFirebaseAdmin().firestore.FieldValue.arrayUnion({
