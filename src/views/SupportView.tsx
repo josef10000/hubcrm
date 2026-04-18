@@ -223,222 +223,125 @@ export default function SupportView() {
         <div className="space-y-4">
           {filteredRequests.length === 0 ? (
             <div className="text-center py-12 bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl">
-              <MessageCircle className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Nenhum chamado encontrado</h3>
-              <p className="text-gray-500 dark:text-gray-400">Tente mudar o filtro ou aguarde novas solicitações.</p>
+import React from 'react';
+import { LifeBuoy, Clock, Users, ArrowRightLeft, Star } from 'lucide-react';
+import { useSupport } from '../hooks/useSupport';
+import { SupportCard } from '../components/support/SupportCard';
+
+export default function SupportView() {
+  const {
+    requests,
+    metrics,
+    teamProfiles,
+    supportFilter,
+    setSupportFilter,
+    sortBy,
+    setSortBy,
+    updateRequest,
+    submitReply,
+    removeRequest,
+    getSlaStatus
+  } = useSupport();
+
+  return (
+    <div className="h-full flex flex-col space-y-6 animate-in fade-in duration-700">
+      {/* Header & Stats Section */}
+      <div className="flex flex-col xl:flex-row gap-6">
+        <div className="flex-1">
+          <div className="flex items-center gap-4 mb-2">
+            <div className="p-3 bg-gradient-to-br from-primary-500/20 to-violet-500/20 rounded-2xl border border-primary-500/20 shadow-xl shadow-primary-500/10">
+              <LifeBuoy className="w-8 h-8 text-primary-500" />
             </div>
-          ) : (
-            paginatedRequests.map((req) => {
+            <div>
+              <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">Central de Atendimento</h1>
+              <p className="text-gray-500 dark:text-gray-400 font-medium italic">Suporte em tempo real & Gestão de SLA</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Global Metrics Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 flex-[2]">
+          <div className="bg-white/5 backdrop-blur-md p-4 rounded-3xl border border-white/10 shadow-lg">
+            <div className="flex items-center gap-2 mb-1">
+              <Star className="w-4 h-4 text-amber-500" />
+              <span className="text-[10px] font-bold text-gray-400 uppercase">Média CSAT</span>
+            </div>
+            <p className="text-2xl font-black text-amber-500">{metrics.avgCsat || 'N/A'}</p>
+          </div>
+          <div className="bg-white/5 backdrop-blur-md p-4 rounded-3xl border border-white/10 shadow-lg">
+            <div className="flex items-center gap-2 mb-1 text-red-500">
+              <Clock className="w-4 h-4" />
+              <span className="text-[10px] font-bold text-gray-400 uppercase font-black">SLA Atrasado</span>
+            </div>
+            <p className="text-2xl font-black text-red-500">{metrics.slaMetrics.atrasados}</p>
+          </div>
+          <div className="bg-white/5 backdrop-blur-md p-4 rounded-3xl border border-white/10 shadow-lg">
+            <div className="flex items-center gap-2 mb-1 text-blue-500">
+              <Users className="w-4 h-4" />
+              <span className="text-[10px] font-bold text-gray-400 uppercase">Em Aberto</span>
+            </div>
+            <p className="text-2xl font-black text-blue-500">{requests.filter(r => r.status !== 'concluido').length}</p>
+          </div>
+          <div className="bg-white/5 backdrop-blur-md p-4 rounded-3xl border border-white/10 shadow-lg">
+            <div className="flex items-center gap-2 mb-1 text-emerald-500">
+              <CheckCircle size={16} />
+              <span className="text-[10px] font-bold text-gray-400 uppercase">Resolvidos</span>
+            </div>
+            <p className="text-2xl font-black text-emerald-500">{requests.filter(r => r.status === 'concluido').length}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Control Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-4 p-2 bg-gray-100 dark:bg-black/20 backdrop-blur-md rounded-3xl border border-gray-200 dark:border-white/5 shadow-inner">
+        <div className="flex gap-1 bg-white dark:bg-black/40 p-1 rounded-2xl border border-gray-300 dark:border-white/10 shadow-sm">
+          <button 
+            onClick={() => setSupportFilter('all')}
+            className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 ${supportFilter === 'all' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}
+          >
+            Todos os Chamados
+          </button>
+          <button 
+            onClick={() => setSupportFilter('mine')}
+            className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 ${supportFilter === 'mine' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}
+          >
+            Meus Atendimentos
+          </button>
+        </div>
+
+        <div className="flex items-center gap-3 px-4">
+          <div className="flex items-center gap-2">
+            <ArrowRightLeft size={14} className="text-gray-500" />
+            <span className="text-[10px] font-bold text-gray-500 uppercase">Ordenar por:</span>
+          </div>
+          <select 
+            value={sortBy} 
+            onChange={(e) => setSortBy(e.target.value as any)}
+            className="bg-transparent text-xs font-bold text-gray-900 dark:text-gray-200 outline-none cursor-pointer border-none focus:ring-0"
+          >
+            <option value="sla" className="bg-gray-100 dark:bg-[#0a0a0a]">Urgência (SLA)</option>
+            <option value="recent" className="bg-gray-100 dark:bg-[#0a0a0a]">Mais Recentes</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Requests Grid/List */}
+      <div className="flex-1 space-y-6 overflow-y-auto pr-2 custom-scrollbar">
+        {requests.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="w-24 h-24 bg-gray-200 dark:bg-white/5 rounded-full flex items-center justify-center mb-6">
+              <LifeBuoy className="w-12 h-12 text-gray-300 dark:text-white/10" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Tudo em dia!</h2>
+            <p className="text-gray-500 dark:text-gray-400">Não há nenhum chamado de suporte pendente no momento.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-6">
+            {requests.map((req) => {
               const sla = getSlaStatus(req.createdAt, req.priority);
               const isCritico = sla?.isOverdue && req.status !== 'concluido';
-
+              
               return (
-              <div 
-                key={req.id} 
-                className={`bg-gray-100 dark:bg-white/5 backdrop-blur-xl border transition-all duration-500 p-6 rounded-3xl shadow-lg ${
-                  req.status === 'concluido' ? 'border-emerald-500/30 opacity-70' : 
-                  isCritico ? 'border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.15)] ring-1 ring-red-500/20' : 
-                  'border-gray-200 dark:border-white/10'
-                }`}
-              >
-                <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                  <div className="flex-1 w-full">
-                    <div className="flex flex-wrap items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{String(req.clientName || 'Cliente Desconhecido')}</h3>
-                      <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-widest border ${
-                        req.status === 'concluido' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 
-                        req.status === 'resolvido' ? 'bg-violet-500/20 text-violet-400 border-violet-500/30' : 
-                        req.status === 'em_analise' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 
-                        'bg-red-500/20 text-red-400 border-red-500/30'
-                      }`}>
-                        {req.status === 'concluido' ? 'Concluído' : req.status === 'resolvido' ? 'Resolvido' : req.status === 'em_analise' ? 'Em Análise' : 'Aberto'}
-                      </span>
-                      {req?.origin === 'whatsapp' && (
-                        <span className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-widest bg-[#25D366]/20 text-[#25D366] border border-[#25D366]/30">
-                          <Phone size={10} />
-                          WhatsApp
-                        </span>
-                      )}
-                      
-                      {/* Priority Tag */}
-                      <div className="flex items-center gap-1.5 ml-2">
-                        <select 
-                          value={req.priority || 'baixa'}
-                          onChange={(e) => handleUpdateSupport(req.id, { priority: e.target.value })}
-                          className={`text-[10px] font-bold uppercase p-1 px-2 rounded-lg bg-black/20 border border-white/10 outline-none cursor-pointer ${
-                            req.priority === 'alta' ? 'text-red-400' : req.priority === 'media' ? 'text-amber-400' : 'text-indigo-400'
-                          }`}
-                        >
-                          <option value="alta">Alta</option>
-                          <option value="media">Média</option>
-                          <option value="baixa">Baixa</option>
-                        </select>
-                      </div>
-
-                      {/* Dynamic SLA Badge with Critical Effect */}
-                      {req.status !== 'concluido' && (
-                        <div className={`flex items-center gap-1.5 ml-auto text-[10px] font-bold px-3 py-1 rounded-full border transition-all ${
-                          isCritico ? 'bg-red-500 text-white border-red-600 animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.4)]' :
-                          sla?.remaining < 2 ? 'bg-amber-500/20 text-amber-500 border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.2)]' :
-                          sla?.remaining < 6 ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' :
-                          'bg-emerald-500/20 text-emerald-500 border-emerald-500/30'
-                        }`}>
-                          <Clock size={12} />
-                          {sla?.text}
-                        </div>
-                      )}
-                    </div>
-                    
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                      Enviado em: {req.createdAt && typeof req.createdAt.toDate === 'function' ? req.createdAt.toDate().toLocaleString('pt-BR') : 'Data desconhecida'}
-                    </p>
-
-                    {/* Assignment Selector */}
-                    <div className="flex items-center gap-2 mb-4 bg-black/20 p-2 rounded-xl border border-white/5 w-fit">
-                      <User size={14} className="text-gray-500" />
-                      <select 
-                        value={req.assignedTo || ''}
-                        onChange={(e) => {
-                          const staff = teamProfiles.find(p => p.uid === e.target.value);
-                          handleUpdateSupport(req.id, { 
-                            assignedTo: e.target.value,
-                            assignedName: staff?.displayName || 'Desconhecido'
-                          });
-                        }}
-                        className="text-xs bg-transparent border-none outline-none text-gray-300 cursor-pointer min-w-[150px]"
-                      >
-                        <option value="">Não atribuído</option>
-                        {teamProfiles.map(staff => (
-                          <option key={staff.uid} value={staff.uid} className="bg-[#0a0a0a]">{staff.displayName}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="bg-white dark:bg-black/20 p-4 rounded-xl border border-gray-200 dark:border-white/5 text-gray-700 dark:text-gray-200 whitespace-pre-wrap mb-4">
-                      {String(req.message || '')}
-                    </div>
-
-                    {req.csatScore && (
-                      <div className="mb-4 p-4 bg-yellow-500/5 border border-yellow-500/20 rounded-2xl flex gap-4 items-start">
-                        <div className="p-2 bg-yellow-500/20 text-yellow-500 rounded-lg">
-                          <Star size={16} fill="currentColor" />
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-yellow-500 uppercase tracking-widest mb-1">Feedback do Cliente ({req.csatScore}/5)</p>
-                          <p className="text-sm text-gray-300 italic">"{req.csatComment || 'Sem comentários adicionais.'}"</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {req.reply && (
-                      <div className="bg-primary-500/10 p-4 rounded-xl border border-primary-500/20 text-gray-900 dark:text-white whitespace-pre-wrap mb-4 relative">
-                        <div className="absolute -top-2 left-6 w-4 h-4 bg-primary-500/10 rotate-45 border-l border-t border-primary-500/20"></div>
-                        <p className="text-xs text-primary-500 dark:text-primary-400 font-bold uppercase tracking-wider mb-2">Sua Resposta</p>
-                        {String(req.reply)}
-                      </div>
-                    )}
-
-                    {replyingTo === req.id && (
-                      <div className="mt-4 animate-in fade-in slide-in-from-top-2">
-                        <textarea
-                          value={replyMessage}
-                          onChange={(e) => setReplyMessage(e.target.value)}
-                          placeholder="Escreva sua resposta para o cliente..."
-                          className="w-full min-h-[100px] px-4 py-3 bg-white dark:bg-black/20 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500 custom-scrollbar resize-none mb-3"
-                          aria-label="Campo de resposta ao cliente"
-                        ></textarea>
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => {
-                              setReplyingTo(null);
-                              setReplyMessage('');
-                            }}
-                            className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg transition-colors"
-                          >
-                            Cancelar
-                          </button>
-                          <button
-                            onClick={async () => {
-                              if (!replyMessage.trim()) return;
-                              if (!effectiveOrgId) return;
-                              try {
-                                await setDoc(doc(db, 'organizations', effectiveOrgId, 'supportRequests', req.id), { 
-                                  reply: replyMessage,
-                                  repliedAt: serverTimestamp(),
-                                  status: req.status === 'aberto' ? 'em_analise' : req.status
-                                }, { merge: true });
-                                toast.success('Resposta enviada com sucesso!');
-                                setReplyingTo(null);
-                                setReplyMessage('');
-                              } catch (e) {
-                                toast.error('Erro ao enviar resposta.');
-                              }
-                            }}
-                            className="px-4 py-2 text-sm font-medium bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors"
-                          >
-                            Enviar Resposta
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-2 shrink-0 w-full sm:w-auto">
-                    {req.status === 'aberto' && (
-                      <button 
-                        onClick={async () => {
-                          if (!effectiveOrgId) return;
-                          try {
-                            await setDoc(doc(db, 'organizations', effectiveOrgId, 'supportRequests', req.id), { status: 'em_analise' }, { merge: true });
-                            toast.success('Chamado em análise!');
-                          } catch (e) {
-                            toast.error('Erro ao atualizar chamado.');
-                          }
-                        }}
-                        className="flex items-center justify-center space-x-2 bg-primary-500/10 hover:bg-primary-500/20 text-primary-600 dark:text-primary-400 border border-primary-500/30 px-4 py-2 rounded-xl transition-all font-medium"
-                      >
-                        <Clock size={18} aria-hidden="true" />
-                        <span>Analisar</span>
-                      </button>
-                    )}
-                    
-                    {req.status !== 'concluido' && (
-                      <button 
-                        onClick={() => {
-                          setReplyingTo(replyingTo === req.id ? null : req.id);
-                          setReplyMessage(req.reply || '');
-                        }}
-                        className="flex items-center justify-center space-x-2 bg-primary-500/10 hover:bg-primary-500/20 text-primary-600 dark:text-primary-400 border border-primary-500/30 px-4 py-2 rounded-xl transition-all font-medium"
-                      >
-                        <MessageSquare size={18} aria-hidden="true" />
-                        <span>Responder</span>
-                      </button>
-                    )}
-
-                    {req.status !== 'concluido' && (
-                      <button 
-                        onClick={async () => {
-                          if (!effectiveOrgId) return;
-                          try {
-                            await setDoc(doc(db, 'organizations', effectiveOrgId, 'supportRequests', req.id), { status: 'concluido' }, { merge: true });
-                            toast.success('Chamado marcado como concluído!');
-                          } catch (e) {
-                            toast.error('Erro ao atualizar chamado.');
-                          }
-                        }}
-                        className="flex items-center justify-center space-x-2 bg-primary-500/10 hover:bg-primary-500/20 text-primary-600 dark:text-primary-400 border border-primary-500/30 px-4 py-2 rounded-xl transition-all font-medium"
-                      >
-                        <CheckCircle size={18} aria-hidden="true" />
-                        <span>Concluir</span>
-                      </button>
-                    )}
-                    <button 
-                      onClick={async () => {
-                        if (!effectiveOrgId) return;
-                        if (window.confirm('Tem certeza que deseja excluir este chamado?')) {
-                          try {
-                            await deleteDoc(doc(db, 'organizations', effectiveOrgId, 'supportRequests', req.id));
-                            toast.success('Chamado excluído!');
-                          } catch (e) {
                             toast.error('Erro ao excluir chamado.');
                           }
                         }
