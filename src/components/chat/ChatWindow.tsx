@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ExternalLink, MoreVertical, Phone, Video, Search, MessageSquare, Megaphone, Info, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Chat, ChatMessage } from '../../types/chat.types';
 import { useChat } from '../../hooks/useChat';
 import { useAuth } from '../../contexts/AuthContext';
@@ -14,6 +15,7 @@ interface ChatWindowProps {
 }
 
 export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
+  const navigate = useNavigate();
   const { userProfile } = useAuth();
   const { teamProfiles } = useCRM();
   const { messages, typing, sendMessage, setTypingStatus, loading, deleteMessage } = useChat(chatId);
@@ -124,7 +126,10 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
       {/* Header do Chat */}
       <div className="p-4 border-b border-gray-100 dark:border-white/10 flex items-center justify-between min-h-[73px]">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center border border-primary-500/20 overflow-hidden">
+          <div 
+            onClick={() => otherUserId && navigate(`/profile/${otherUserId}`)}
+            className={`w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center border border-primary-500/20 overflow-hidden ${otherUserId ? 'cursor-pointer hover:scale-105 transition-transform' : ''}`}
+          >
             {displayPhoto ? (
               <img src={displayPhoto} alt="" className="w-full h-full object-cover" />
             ) : (
@@ -143,11 +148,19 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
                   <div className={`w-1.5 h-1.5 rounded-full ${
                     isOnline ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 
                     status === 'away' ? 'bg-amber-500' : 
+                    status === 'lunch' ? 'bg-blue-500' :
+                    status === 'meeting' ? 'bg-purple-500' :
                     'bg-gray-400'
                   }`} />
                   <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">
                     {chat.type === 'self' ? 'Suas Anotações Privadas' : 
-                     chat.type === 'direct' ? (isOnline ? 'Online agora' : status === 'away' ? 'Ausente' : 'Offline') :
+                     chat.type === 'direct' ? (
+                       isOnline ? 'Online agora' : 
+                       status === 'away' ? 'Ausente' : 
+                       status === 'lunch' ? 'Em Almoço' :
+                       status === 'meeting' ? 'Em Reunião' :
+                       'Offline'
+                     ) :
                      `${chat.members.length} Membros`}
                   </p>
                 </div>

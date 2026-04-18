@@ -3,6 +3,7 @@ import { ChatMessage } from '../../types/chat.types';
 import { formatChatTime } from '../../helpers/chatHelpers';
 import { useAuth } from '../../contexts/AuthContext';
 import { User, Paperclip, Check, CheckCheck, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -12,6 +13,7 @@ interface MessageBubbleProps {
 
 export default function MessageBubble({ message, isRead, onDelete }: MessageBubbleProps) {
   const { userProfile } = useAuth();
+  const navigate = useNavigate();
   const isMine = message.senderId === userProfile?.uid;
   const isDeleted = message.isDeleted;
 
@@ -34,7 +36,10 @@ export default function MessageBubble({ message, isRead, onDelete }: MessageBubb
       <div className={`flex items-end gap-2 max-w-[85%] ${isMine ? 'flex-row-reverse' : ''}`}>
         {/* Avatar */}
         {!isMine && (
-          <div className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 overflow-hidden flex items-center justify-center shrink-0 shadow-sm mb-1">
+          <div 
+            onClick={() => navigate(`/profile/${message.senderId}`)}
+            className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 overflow-hidden flex items-center justify-center shrink-0 shadow-sm mb-1 cursor-pointer hover:scale-105 transition-transform"
+          >
             {message.senderPhotoURL ? <img src={message.senderPhotoURL} alt="" /> : <User size={14} className="text-gray-400" />}
           </div>
         )}

@@ -335,8 +335,8 @@ function CRMInner() {
                 />
               </div>
             )}
-            {/* Botão Modo Foco */}
-            {currentPath !== '/wiki' && (
+            {/* Botão Modo Foco - Apenas no Chat */}
+            {currentPath === '/chat' && (
               <button
                 onClick={() => setFocusMode(!focusMode)}
                 title={focusMode ? 'Sair do Modo Foco' : 'Entrar no Modo Foco'}

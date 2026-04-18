@@ -86,9 +86,9 @@ export interface Tag {
 }
 
 export interface Client {
-  id: string; 
-  name: string; 
-  whatsapp: string; 
+  id: string;
+  name: string;
+  whatsapp: string;
   plan: PlanType;
   offerId?: string;
   planPrice?: number;
@@ -264,19 +264,19 @@ export interface CommissionEntry {
   paymentId?: string; // Referência Asaas ou ID da transação
 }
 
-export type UserRole = 
-  | 'Administrador' 
-  | 'Gerente' 
-  | 'People & Culture' 
-  | 'Customer Success' 
-  | 'Suporte Técnico' 
-  | 'Onboarding Specialist' 
-  | 'SDR' 
-  | 'Executive' 
-  | 'FinOps' 
-  | 'Controladoria' 
-  | 'Revenue Operations' 
-  | 'Gestor de Faturamento' 
+export type UserRole =
+  | 'Administrador'
+  | 'Gerente'
+  | 'People & Culture'
+  | 'Customer Success'
+  | 'Suporte Técnico'
+  | 'Onboarding Specialist'
+  | 'SDR'
+  | 'Executive'
+  | 'FinOps'
+  | 'Controladoria'
+  | 'Revenue Operations'
+  | 'Gestor de Faturamento'
   | 'Só Leitura';
 
 export interface OnboardingTask {
@@ -307,7 +307,7 @@ export interface UserProfile {
   onboardingTemplateId?: string;
   lastEnpsResponse?: number; // Timestamp da última vez que respondeu à pesquisa de clima
   viewedWikiArticles?: string[]; // IDs dos artigos da Wiki já lidos pelo usuário
-  
+
   // People & Culture Ecosystem
   inventory?: ToolAsset[];
   skills?: SkillMatrix;
@@ -317,9 +317,10 @@ export interface UserProfile {
   lastBirthdayEmailYear?: number; // Ano do último e-mail de aniversário enviado
   readAlerts?: string[]; // IDs dos alertas de negócio já lidos pelo usuário
   pdiItems?: PDIItem[]; // Itens do Plano de Desenvolvimento Individual
-  
+
   // Presence System
-  presenceStatus?: 'online' | 'away' | 'offline';
+  presenceStatus?: 'online' | 'away' | 'offline' | 'lunch' | 'meeting';
+  isManualStatus?: boolean;
   lastSeen?: number; // Timestamp
 }
 

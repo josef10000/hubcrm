@@ -8,13 +8,14 @@ export function usePresence() {
   const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const INACTIVITY_LIMIT = 5 * 60 * 1000; // 5 minutos
 
-  const updateStatus = async (status: 'online' | 'away' | 'offline') => {
+  const updateStatus = async (status: 'online' | 'away' | 'offline' | 'lunch' | 'meeting', isManual = false) => {
     if (!userProfile?.uid) return;
 
     try {
       const profileRef = doc(db, 'profiles', userProfile.uid);
       await updateDoc(profileRef, {
         presenceStatus: status,
+        isManualStatus: isManual,
         lastSeen: Date.now()
       });
     } catch (error) {
@@ -22,24 +23,34 @@ export function usePresence() {
     }
   };
 
+  const manualSetStatus = (status: 'online' | 'away' | 'offline' | 'lunch' | 'meeting') => {
+    updateStatus(status, true);
+  };
+
   const resetInactivityTimer = () => {
     if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
     
-    // Se estava away ou offline (e não foi manual), volta para online
-    if (userProfile?.presenceStatus !== 'online') {
-      updateStatus('online');
-    }
+    // Se for um status manual (Almoço/Reunião), não voltamos para Online automaticamente
+    // Se for Online/Away/Offline regular, voltamos para Online se houver atividade
+    if (!userProfile?.isManualStatus) {
+      if (userProfile?.presenceStatus !== 'online') {
+        updateStatus('online', false);
+      }
 
-    inactivityTimeoutRef.current = setTimeout(() => {
-      updateStatus('away');
-    }, INACTIVITY_LIMIT);
+      inactivityTimeoutRef.current = setTimeout(() => {
+        updateStatus('away', false);
+      }, INACTIVITY_LIMIT);
+    }
   };
 
   useEffect(() => {
     if (!userProfile?.uid) return;
 
-    // Inicializa como online
-    updateStatus('online');
+    // Se não houver status definido ou se for offline, inicia como online (automático)
+    if (!userProfile.presenceStatus || userProfile.presenceStatus === 'offline') {
+      updateStatus('online', false);
+    }
+    
     resetInactivityTimer();
 
     const handleVisibilityChange = () => {
@@ -73,5 +84,5 @@ export function usePresence() {
     };
   }, [userProfile?.uid]);
 
-  return { updateStatus };
+  return { updateStatus, manualSetStatus };
 }

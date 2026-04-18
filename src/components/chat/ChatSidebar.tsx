@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useCRM } from '../../contexts/CRMContext';
 import CreateGroupModal from './CreateGroupModal';
 import NewChatModal from './NewChatModal';
+import UserStatusSelector from './UserStatusSelector';
 
 interface ChatSidebarProps {
   chats: Chat[];
@@ -29,6 +30,9 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
     <div className="w-80 border-r border-gray-100 dark:border-white/10 flex flex-col bg-gray-50/50 dark:bg-black/20">
       {/* Header da Sidebar */}
       <div className="p-6">
+        <div className="mb-6">
+          <UserStatusSelector />
+        </div>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Mensagens</h2>
           <div className="flex gap-2">
@@ -133,6 +137,8 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
                         
                         return isOnline ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 
                                status === 'away' ? 'bg-amber-500' : 
+                               status === 'lunch' ? 'bg-blue-500' :
+                               status === 'meeting' ? 'bg-purple-500' :
                                'bg-gray-400';
                       })()
                     }`} title={(() => {
@@ -141,7 +147,11 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
                         const status = otherUser?.presenceStatus || 'offline';
                         const lastSeen = otherUser?.lastSeen;
                         const isOnline = status === 'online' && (Date.now() - (lastSeen || 0) < 120000);
-                        return isOnline ? 'Online' : status === 'away' ? 'Ausente' : 'Offline';
+                        return isOnline ? 'Online' : 
+                               status === 'away' ? 'Ausente' : 
+                               status === 'lunch' ? 'Em Almoço' :
+                               status === 'meeting' ? 'Em Reunião' :
+                               'Offline';
                     })()} />
                   )}
                 </div>
