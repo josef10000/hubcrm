@@ -3,6 +3,7 @@ import { LifeBuoy, Clock, Users, ArrowRightLeft, Star, CheckCircle } from 'lucid
 import { useSupport } from '../hooks/useSupport';
 import { SupportCard } from '../components/support/SupportCard';
 import SupportRequestModal from '../components/SupportRequestModal';
+import { QuickTicketButton } from '../components/support/QuickTicketButton';
 import { useState } from 'react';
 
 export default function SupportView() {
@@ -36,13 +37,14 @@ export default function SupportView() {
               <p className="text-gray-500 dark:text-gray-400 font-medium italic">Suporte em tempo real &amp; Gestão de SLA</p>
             </div>
           </div>
-          <div className="mt-4">
+          <div className="mt-4 flex items-center gap-3">
             <button 
               onClick={() => setIsNewRequestModalOpen(true)}
               className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-2xl transition-all shadow-xl shadow-primary-500/20 active:scale-95 font-bold"
             >
               Novo Chamado Interno
             </button>
+            <QuickTicketButton />
           </div>
         </div>
 

@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Plus, X, DollarSign,
   Search, BarChart3, Calendar, MessageCircle, Globe,
   Download, AlertTriangle, Settings, Layout, CreditCard,
-  Megaphone, Package, Map as MapIcon, Target, Menu, Bell, Shield, HeartHandshake, BookOpen, Rocket
+  Megaphone, Package, Map as MapIcon, Target, Menu, Bell, Shield, HeartHandshake, BookOpen, Rocket, Focus
 } from 'lucide-react';
 import { isFirebaseConfigured } from './lib/firebase';
 import Auth from './components/Auth';
@@ -124,7 +124,8 @@ function CRMInner() {
   
   const { 
     sidebarOpen, setSidebarOpen, isModalOpen, setIsModalOpen, 
-    searchTerm, setSearchTerm, filterStatus, sortBy, filterTagId 
+    searchTerm, setSearchTerm, filterStatus, sortBy, filterTagId,
+    focusMode, setFocusMode, globalSearch, setGlobalSearch
   } = useUI();
   
   const filteredClientsForExport = useFilteredClients(clients, searchTerm, filterStatus, sortBy, filterTagId);
@@ -162,7 +163,7 @@ function CRMInner() {
 
       {isBirthday && <BirthdayCelebration uid={user?.uid} />}
 
-      {currentPath !== '/wiki' && (
+      {currentPath !== '/wiki' && !focusMode && (
         <aside 
           translate="no"
           className={`w-64 bg-gray-900/20 dark:bg-black/40 backdrop-blur-3xl border-r border-gray-200 dark:border-white/10 flex flex-col transition-all duration-300 z-30 ${sidebarOpen ? 'translate-x-0 absolute inset-y-0 left-0' : '-translate-x-full absolute md:relative md:translate-x-0'}`}
@@ -314,6 +315,36 @@ function CRMInner() {
             {currentPath === '/wiki' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Wiki Hub</h2>}
           </div>
           <div className="flex items-center gap-3">
+            {/* Busca Global Unificada */}
+            {currentPath !== '/' && (
+              <div className="hidden md:flex items-center w-52 lg:w-72 relative" role="search">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" aria-hidden="true" />
+                <input
+                  type="text"
+                  placeholder="Busca global..."
+                  value={globalSearch}
+                  onChange={e => setGlobalSearch(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 text-white text-xs rounded-xl pl-9 pr-3 py-2 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/50 transition-all placeholder-gray-600"
+                  aria-label="Busca global"
+                />
+              </div>
+            )}
+            {/* Botão Modo Foco */}
+            {currentPath !== '/wiki' && (
+              <button
+                onClick={() => setFocusMode(!focusMode)}
+                title={focusMode ? 'Sair do Modo Foco' : 'Entrar no Modo Foco'}
+                className={`hidden md:flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
+                  focusMode
+                    ? 'bg-primary-500/20 border-primary-500/50 text-primary-400'
+                    : 'bg-white/5 border-white/10 text-gray-500 hover:text-white hover:bg-white/10'
+                }`}
+                aria-label={focusMode ? 'Sair do Modo Foco' : 'Entrar no Modo Foco'}
+              >
+                <Focus size={14} />
+                <span>{focusMode ? 'Foco ON' : 'Foco'}</span>
+              </button>
+            )}
             {currentPath === '/' && (
               <button
                 onClick={() => handleExportCSV(filteredClientsForExport)}

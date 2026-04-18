@@ -10,6 +10,8 @@ import AlertPanels from '../components/dashboard/AlertPanels';
 import MetricsGrid from '../components/dashboard/MetricsGrid';
 import FinancialCharts from '../components/dashboard/FinancialCharts';
 import ClientsGrid from '../components/dashboard/ClientsGrid';
+import { OverdueAlertWidget } from '../components/dashboard/OverdueAlertWidget';
+import { CashFlowProjection } from '../components/dashboard/CashFlowProjection';
 import { calculateHealthScore } from '../helpers/healthCalculation';
 
 const COLORS = ['#f97316', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#f43f5e'];
@@ -115,6 +117,16 @@ export default function DashboardView() {
           overdueClients={overdueClients} 
           comboRenewalClients={comboRenewalClients} 
         />
+
+        {/* Widget: Inadimplência Crítica (>30 dias) */}
+        {['Administrador', 'Gerente', 'FinOps', 'Controladoria', 'Gestor de Faturamento'].includes(userProfile?.role || '') && (
+          <OverdueAlertWidget clients={clients} />
+        )}
+
+        {/* Widget: Projeção de Fluxo de Caixa */}
+        {['Administrador', 'Gerente', 'FinOps', 'Controladoria', 'Revenue Operations'].includes(userProfile?.role || '') && (
+          <CashFlowProjection clients={clients} />
+        )}
 
         <MetricsGrid 
           activeClients={metrics.active}

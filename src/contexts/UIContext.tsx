@@ -10,6 +10,13 @@ interface UIContextType {
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
 
+  // Modo Foco (esconde sidebar automaticamente)
+  focusMode: boolean;
+  setFocusMode: (focus: boolean) => void;
+
+  // Busca Global Unificada
+  globalSearch: string;
+  setGlobalSearch: (term: string) => void;
 
   // Search & Filters
   searchTerm: string;
@@ -49,6 +56,8 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
   const [view, setView] = useState<CRMView>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [focusMode, setFocusMode] = useState(() => localStorage.getItem('hubcrm-focus') === 'true');
+  const [globalSearch, setGlobalSearch] = useState('');
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<SiteStatus | 'Todos'>('Todos');
@@ -63,16 +72,16 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
   // Aplicar tema dinamicamente
   useEffect(() => {
     const root = document.documentElement;
-    // Remover classes de tema anteriores
     const themeClasses = Array.from(root.classList).filter(c => c.startsWith('theme-'));
     themeClasses.forEach(c => root.classList.remove(c));
-    
-    // Adicionar nova classe de tema
     root.classList.add(`theme-${themeColor}`);
-    
-    // Persistir preferência
     localStorage.setItem('hubcrm-theme', themeColor);
   }, [themeColor]);
+
+  // Persistir Modo Foco
+  useEffect(() => {
+    localStorage.setItem('hubcrm-focus', String(focusMode));
+  }, [focusMode]);
 
   // Reset pagination on filter change
   useEffect(() => {
@@ -82,6 +91,8 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
   const value: UIContextType = {
     view, setView,
     sidebarOpen, setSidebarOpen,
+    focusMode, setFocusMode,
+    globalSearch, setGlobalSearch,
     isModalOpen, setIsModalOpen,
     searchTerm, setSearchTerm,
     filterStatus, setFilterStatus,
