@@ -49,6 +49,9 @@ export function useChat(chatId: string | null) {
       
       // Marcar como lido ao receber novas mensagens se o chat estiver aberto
       markAsRead();
+    }, (error) => {
+      console.error("Erro no onSnapshot do Chat:", error);
+      setLoading(false);
     });
 
     return () => unsubscribe();

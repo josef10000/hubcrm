@@ -44,12 +44,31 @@ service cloud.firestore {
     match /organizations/{orgId} {
       allow read, write: if isOwnerEmail() || belongsToOrg(orgId);
 
-      // Dados dentro da organização
+      // 🟢 HUB CHAT — Regras de Colaboração em Tempo Real
+      match /chats/{chatId} {
+        // Membros podem ler o chat e atualizar dados de denormalização (lastMessage, unreadCount, etc)
+        allow read, update: if isOwnerEmail() || (belongsToOrg(orgId) && request.auth.uid in resource.data.members);
+        
+        // Qualquer membro da organização pode iniciar um chat (DM, Grupo ou Meu Espaço)
+        allow create: if isOwnerEmail() || belongsToOrg(orgId);
+        
+        // Mensagens: Apenas membros do chat pai podem ler e criar mensagens
+        match /messages/{messageId} {
+          allow read, create: if isOwnerEmail() || (belongsToOrg(orgId) && request.auth.uid in get(/databases/$(database)/documents/organizations/$(orgId)/chats/$(chatId)).data.members);
+        }
+        
+        // Typing Indicators: Apenas membros podem ver e sinalizar quem está digitando
+        match /typing/{uid} {
+          allow read, write: if isOwnerEmail() || (belongsToOrg(orgId) && request.auth.uid in get(/databases/$(database)/documents/organizations/$(orgId)/chats/$(chatId)).data.members);
+        }
+      }
+
+      // Outros dados dentro da organização (Regra Genérica)
       match /{collection}/{docId} {
         allow read: if isOwnerEmail() || belongsToOrg(orgId);
         allow write: if isOwnerEmail() || isOrgAdmin(orgId);
 
-        // Sub-coleção de comentários da Wiki (acessível por todos os membros para criar/deletar próprio)
+        // Sub-coleção de comentários da Wiki
         match /comments/{commentId} {
           allow read: if isOwnerEmail() || belongsToOrg(orgId);
           allow create: if isOwnerEmail() || belongsToOrg(orgId);
