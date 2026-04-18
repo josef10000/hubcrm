@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { supportService } from '../services/supportService';
 import { useCRM } from '../contexts/CRMContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -19,7 +19,7 @@ export function useSupport() {
 
   const [supportFilter, setSupportFilter] = useState<SupportFilter>('all');
   const [sortBy, setSortBy] = useState<SupportSort>('sla');
-  const [loading, setLoading] = useState(true);
+
 
   const teamProfiles = useMemo(() => 
     Array.isArray(rawTeamProfiles) ? rawTeamProfiles.filter(Boolean) : [], 

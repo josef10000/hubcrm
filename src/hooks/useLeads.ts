@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useCRM } from '../contexts/CRMContext';
 import { useAuth } from '../contexts/AuthContext';
 import { leadService } from '../services/leadService';
-import { Lead, LeadStatus, LeadActivity } from '../types';
+import { Lead, LeadStatus } from '../types';
 import { toast } from 'sonner';
 
 export type LeadFilterMode = 'all' | 'mine';
@@ -52,7 +52,11 @@ export function useLeads() {
   }, [leads]);
 
   const handleSaveLead = async (formData: any, editingLead: Lead | null) => {
-    if (!user || !effectiveOrgId) return;
+    if (!user || !effectiveOrgId) return false;
+    if (!formData.name?.trim()) {
+      toast.error('Nome é obrigatório');
+      return false;
+    }
     
     try {
       const payload: any = {

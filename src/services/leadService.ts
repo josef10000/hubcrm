@@ -1,5 +1,5 @@
 import { db } from '../lib/firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { Lead, LeadActivity, LeadStatus } from '../types';
 
 export const leadService = {

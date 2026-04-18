@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Lead, LeadStatus } from '../types';
-import { Plus, DollarSign, Target, UserPlus, Search, Filter, ChevronDown, TrendingUp, Tag as TagIcon, Users } from 'lucide-react';
+import { Plus, DollarSign, Target, UserPlus, Search, TrendingUp, Users } from 'lucide-react';
 import { useLeads } from '../hooks/useLeads';
 import { LeadCard } from '../components/leads/LeadCard';
 import { LeadFormModal } from '../components/leads/LeadFormModal';
