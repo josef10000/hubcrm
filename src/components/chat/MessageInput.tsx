@@ -1,0 +1,182 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Send, Paperclip, Smile, X, Loader2 } from 'lucide-react';
+import { parseMentions } from '../../helpers/chatHelpers';
+import { useCRM } from '../../contexts/CRMContext';
+import { ChatMessage } from '../../types/chat.types';
+import MentionSuggestions from './MentionSuggestions';
+import { uploadImageToImgBB } from '../../lib/imgbb';
+import { toast } from 'sonner';
+
+interface MessageInputProps {
+  onSend: (text: string, mentions: string[], attachments: string[]) => void;
+  onTyping: (isTyping: boolean) => void;
+  replyTo: ChatMessage['replyTo'] | null;
+  onCancelReply: () => void;
+}
+
+export default function MessageInput({ onSend, onTyping, replyTo, onCancelReply }: MessageInputProps) {
+  const [text, setText] = useState('');
+  const [showMentions, setShowMentions] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const { teamProfiles } = useCRM();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout|null>(null);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!text.trim() && !uploading) return;
+
+    const mentions = parseMentions(text, teamProfiles.map(p => ({ uid: p.uid, displayName: p.displayName })));
+    onSend(text, mentions, []);
+    setText('');
+    onTyping(false);
+    setShowMentions(false);
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    const id = toast.loading('Enviando anexo...');
+    try {
+      const url = await uploadImageToImgBB(file);
+      onSend('[Anexo]', [], [url]);
+      toast.success('Anexo enviado!', { id });
+    } catch (error) {
+      toast.error('Erro ao enviar anexo.', { id });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setText(val);
+    
+    // Lógica de Menções
+    const cursorPos = e.target.selectionStart;
+    const lastAtPos = val.lastIndexOf('@', cursorPos - 1);
+    
+    if (lastAtPos !== -1) {
+      const textAfterAt = val.slice(lastAtPos + 1, cursorPos);
+      if (!textAfterAt.includes(' ')) {
+        setShowMentions(true);
+        setMentionQuery(textAfterAt);
+      } else {
+        setShowMentions(false);
+      }
+    } else {
+      setShowMentions(false);
+    }
+
+    onTyping(true);
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      onTyping(false);
+    }, 2000);
+  };
+
+  const handleMentionSelect = (member: { uid: string; displayName: string }) => {
+    const cursorPos = textareaRef.current?.selectionStart || 0;
+    const lastAtPos = text.lastIndexOf('@', cursorPos - 1);
+    
+    const beforeAt = text.slice(0, lastAtPos);
+    const afterAt = text.slice(cursorPos);
+    const mentionText = `@${member.displayName} `;
+    
+    setText(beforeAt + mentionText + afterAt);
+    setShowMentions(false);
+    textareaRef.current?.focus();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey && !showMentions) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+    if (e.key === 'Escape') {
+      setShowMentions(false);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    };
+  }, []);
+
+  return (
+    <div className="p-4 bg-white dark:bg-black/20 border-t border-gray-100 dark:border-white/10 relative">
+      {/* Indicador de Resposta */}
+      {replyTo && (
+        <div className="absolute bottom-full left-0 right-0 bg-gray-50 dark:bg-white/5 p-3 flex justify-between items-center border-t border-gray-200 dark:border-white/10 animate-in slide-in-from-bottom">
+          <div className="flex-1 truncate">
+            <span className="text-[10px] font-bold text-primary-500 uppercase block mb-0.5">Respondendo a {replyTo.senderName}</span>
+            <p className="text-xs text-gray-500 truncate italic">"{replyTo.text}"</p>
+          </div>
+          <button onClick={onCancelReply} className="p-1 hover:bg-gray-200 dark:hover:bg-white/10 rounded-full transition-colors">
+            <X size={16} className="text-gray-400" />
+          </button>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="flex items-center gap-2 max-w-6xl mx-auto">
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          className="hidden" 
+          accept="image/*,.pdf,.doc,.docx"
+          onChange={handleFileSelect}
+        />
+        
+        <button 
+          type="button" 
+          disabled={uploading}
+          onClick={() => fileInputRef.current?.click()}
+          className="p-2.5 text-gray-400 hover:text-primary-500 hover:bg-primary-500/10 rounded-xl transition-all disabled:opacity-50"
+        >
+          {uploading ? <Loader2 size={20} className="animate-spin text-primary-500" /> : <Paperclip size={20} />}
+        </button>
+
+        <div className="flex-1 relative">
+          {showMentions && (
+            <MentionSuggestions 
+              query={mentionQuery} 
+              members={teamProfiles.map(p => ({ uid: p.uid, displayName: p.displayName, photoURL: p.photoURL }))} 
+              onSelect={handleMentionSelect} 
+              onClose={() => setShowMentions(false)} 
+            />
+          )}
+          <textarea 
+            ref={textareaRef}
+            rows={1}
+            placeholder="Escreva uma mensagem..."
+            className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-3 pr-12 rounded-2xl text-sm focus:outline-none focus:border-primary-500 transition-all dark:text-white resize-none max-h-32 custom-scrollbar"
+            value={text}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+          />
+          <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-amber-500 transition-colors">
+            <Smile size={18} />
+          </button>
+        </div>
+
+        <button 
+          type="submit" 
+          disabled={!text.trim() || uploading}
+          className={`p-3 rounded-2xl shadow-lg transition-all ${
+            text.trim() && !uploading
+              ? 'bg-primary-500 text-white shadow-primary-500/20 hover:scale-105 active:scale-95' 
+              : 'bg-gray-100 dark:bg-white/5 text-gray-400 cursor-not-allowed'
+          }`}
+        >
+          <Send size={20} />
+        </button>
+      </form>
+    </div>
+  );
+}

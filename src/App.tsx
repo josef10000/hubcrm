@@ -18,6 +18,8 @@ import BillingView from './views/BillingView';
 import OnboardingHubView from './views/OnboardingHubView';
 import ContractsView from './views/ContractsView';
 import ProjectsView from './views/ProjectsView';
+import ChatView from './views/ChatView';
+import { useGlobalChatAlerts } from './hooks/useGlobalChatAlerts';
 
 import ConfirmationModal from './components/ConfirmationModal';
 import OfferModal from './components/OfferModal';
@@ -73,6 +75,7 @@ const navGroups = [
     items: [
       { icon: Calendar, label: 'Agenda Central', path: '/calendar', roles: ['Administrador', 'Gerente', 'Customer Success', 'Suporte Técnico', 'Onboarding Specialist'] },
       { icon: MessageCircle, label: 'Meus Chamados', path: '/support' },
+      { icon: MessageCircle, label: 'Hub Chat', path: '/chat' },
       { icon: Rocket, label: 'Onboarding Hub', path: '/onboarding-hub', roles: ['Administrador', 'Gerente', 'People & Culture', 'Onboarding Specialist', 'Customer Success'] },
       { icon: Globe, label: 'Monitoramento', path: '/monitoring', roles: ['Administrador', 'Gerente', 'Suporte Técnico'] },
       { icon: MapIcon, label: 'Mapa', path: '/map' },
@@ -133,6 +136,7 @@ function CRMInner() {
   const currentPath = location.pathname;
 
   const openTicketCount = useMemo(() => supportRequests.filter(r => r.status === 'aberto' || r.status === 'em_analise').length, [supportRequests]);
+  const { totalUnread: chatUnreadCount, totalMentions: chatMentionCount } = useGlobalChatAlerts();
 
   const newWikiCount = useMemo(() => {
     if (!userProfile?.viewedWikiArticles) return wikiArticles.length;
@@ -210,6 +214,7 @@ function CRMInner() {
                         badge={
                           item.path === '/leads' ? activeLeadsCount : 
                           item.path === '/support' ? openTicketCount : 
+                          item.path === '/chat' ? (chatUnreadCount > 0 ? chatUnreadCount : undefined) :
                           item.path === '/wiki' ? (newWikiCount > 0 ? newWikiCount : undefined) :
                           item.path === '/people' ? (pendingVacationsCount > 0 ? pendingVacationsCount : undefined) :
                           undefined
@@ -394,6 +399,7 @@ function CRMInner() {
                 <Route path="/" element={<DashboardView />} />
                 <Route path="/leads" element={<LeadsView />} />
                 <Route path="/support" element={<SupportView />} />
+                <Route path="/chat" element={<ChatView />} />
                 <Route path="/notifications" element={<NotificationsView />} />
                 <Route path="/calendar" element={<CalendarView role={userProfile?.role} clients={clients} onClientClick={(client) => { setEditingClient(client); setIsModalOpen(true); }} />} />
                 <Route path="/referrals" element={<ReferralsView clients={clients} user={user!} />} />

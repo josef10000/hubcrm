@@ -1,4 +1,4 @@
-# 🔐 Hub Central — Intranet Corporativa v4.1.5 (Performance & Security Audit)
+# 🔐 Hub Central — Intranet Corporativa v4.2.0 (Hub Chat Focus)
 
 > [!CAUTION]
 > **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
@@ -7,7 +7,7 @@
 Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.
 
   <p>
-    <img src="https://img.shields.io/badge/Version-4.1.5-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-4.2.0-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Status-Audited_&_Optimized-3b82f6?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-3b82f6?style=for-the-badge&labelColor=111111" alt="License" />
@@ -18,33 +18,32 @@ Transformando prospecção em faturamento através de automação inteligente e 
     <img src="https://img.shields.io/badge/Tailwind_CSS-4.0-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind" />
     <img src="https://img.shields.io/badge/Vite-6-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite" />
     <img src="https://img.shields.io/badge/Firebase-12-FFCA28?style=flat-square&logo=firebase&logoColor=black" alt="Firebase" />
-    <img src="https://img.shields.io/badge/Vercel-Serverless-000000?style=flat-square&logo=vercel&logoColor=white" alt="Vercel" />
   </p>
   <div align="center">
-  <h2>✨ Features em Destaque v4.1.5</h2>
+  <h2>✨ Features em Destaque v4.2.0</h2>
 </div>
 
 <table>
   <tr>
     <td align="center" width="20%">
-      <br />🚀<br /><strong>Produtividade</strong><br />
-      <sub>Busca Global & Modo Foco</sub>
+      <br />💬<br /><strong>Hub Chat v2.0</strong><br />
+      <sub>Grupos, DMs & Mídia</sub>
     </td>
     <td align="center" width="20%">
-      <br />📈<br /><strong>Sales Intelligence</strong><br />
-      <sub>Timeline Visual & SLA Pulse Red</sub>
+      <br />📈<br /><strong>Sales BI</strong><br />
+      <sub>Timeline & SLA Pulse</sub>
     </td>
     <td align="center" width="20%">
       <br />💎<br /><strong>Financeiro</strong><br />
-      <sub>Inadimplência Crítica & Fluxo 3 Meses</sub>
+      <sub>Billing Hub & DRE</sub>
     </td>
     <td align="center" width="20%">
       <br />🎭<br /><strong>Pessoas</strong><br />
-      <sub>Energy Score & PDI Drag-and-Drop</sub>
+      <sub>Skill Radar & PDI</sub>
     </td>
     <td align="center" width="20%">
-      <br />📖<br /><strong>Wiki</strong><br />
-      <sub>Badges de Leitura & Hub de Conhecimento</sub>
+      <br />📖<br /><strong>Wiki Hub</strong><br />
+      <sub>Central de Conhecimento</sub>
     </td>
   </tr>
 </table>
@@ -54,7 +53,8 @@ Transformando prospecção em faturamento através de automação inteligente e 
 ## 📋 Índice
 
 - [Visão Geral](#-visão-geral)
-- [Arquitetura de Pilares v4.0](#-arquitetura-de-pilares-v40)
+- [Hub Chat v2.0](#-hub-chat-v20)
+- [Arquitetura de Pilares](#-arquitetura-de-pilares)
 - [Módulos da Plataforma](#-módulos-da-plataforma)
 - [Identidade Visual](#-identidade-visual)
 - [Stack Tecnológica](#-stack-tecnológica)
@@ -67,7 +67,24 @@ Transformando prospecção em faturamento através de automação inteligente e 
 
 O **Hub Central v4.0** marca a evolução de um "CRM visual" para um **Ecossistema de Gestão Descentralizada**. O foco desta versão é a **elimininação de ruído visual**: cada um dos 13 cargos do sistema visualiza apenas o que é essencial para sua entrega, organizado em 4 Pilares de Poder.
 
-### 🏛️ Arquitetura de Pilares Estratégicos
+---
+
+## 💬 Hub Chat v2.0 — Real-time Collaboration
+
+A intranet agora conta com um sistema de chat proprietário de alta performance, eliminando a dependência de ferramentas externas como WhatsApp para comunicação interna.
+
+| Recurso | Descrição |
+|---|---|
+| 👥 **Grupos Dinâmicos** | Criação de grupos por setores, projetos ou tópicos gerais. |
+| 👤 **Direct Messages** | Conversas 1:1 privadas com busca global de membros da equipe. |
+| 🖼️ **Multimídia Centralizada** | Envio de imagens e documentos via ImgBB com histórico persistente. |
+| 🔔 **Notificações Globais** | Badges de mensagens não lidas e menções (@) em toda a plataforma. |
+| 🎯 **Modo Foco & Destaque** | Interface limpa ou abertura em nova aba para multitarefa. |
+| 🛡️ **Segurança RBAC** | Acesso restrito apenas a membros autorizados de cada chat. |
+
+---
+
+## 🚀 Arquitetura de Pilares Estratégicos
 
 1.  **Comercial (Growth Engine)**: Focado em captar e converter. Leads, Pipeline e Propostas.
 2.  **Operação (Delivery Hub)**: Garantia de entrega. Onboarding, Projetos, Contratos e Wiki.
@@ -691,6 +708,7 @@ className="bg-gray-100 border-gray-200"
 - [x] ⚡ **Sincronização de Perfil em Tempo Real** (Fix Wiki Notification)
 - [x] 📧 **Automação de E-mails de Aniversário (Vercel Cron)**
 - [x] 🚀 **v4.0.0 Decentralized Evolution (Leads/Support/People Focus)**
+- [x] 💬 **v4.2.0 Hub Chat v2.0 (Groups, DMs, Media, Replies & Polish)**
 
 
 ---
