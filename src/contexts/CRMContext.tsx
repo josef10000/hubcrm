@@ -123,6 +123,7 @@ interface CRMContextType {
   handleSaveVacationRequest: (vacationData: Partial<VacationPeriod>) => Promise<void>;
   handleDeleteVacationRequest: (id: string) => Promise<void>;
   handleAddClientLog: (clientId: string, logText: string) => Promise<void>;
+  handleGenerateCommission: (clientId: string) => Promise<void>;
   pendingVacationsCount: number;
 }
 
@@ -335,43 +336,46 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     }
   }, [effectiveOrgId]);
 
-  // ═══ Automação de Comissões ═══
+  // ═══ Geração de Comissões (Backend) ═══
+  const handleGenerateCommission = async (clientId: string) => {
+    if (!effectiveOrgId) return;
+    try {
+      const res = await fetch('/api/commissions_handler?action=generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await user?.getIdToken()}`
+        },
+        body: JSON.stringify({ clientId, orgId: effectiveOrgId })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        if (data.message === 'Comissão gerada com sucesso') {
+          toast.success('Comissão registrada com sucesso!');
+        }
+      } else {
+        console.warn('Commission Generation API:', data.error);
+      }
+    } catch (e) {
+      console.error('Error triggering commission:', e);
+    }
+  };
+
+  // Trigger automático ao detectar novos pagamentos recebidos (Bridge para o Backend)
   useEffect(() => {
     if (!effectiveOrgId || clients.length === 0 || loading) return;
 
-    const syncCommissions = async () => {
-      const receivedClients = clients.filter(c => 
-        c.paymentStatus === 'RECEIVED' && 
-        c.assignedTo && 
-        c.offerId &&
-        // Verifica se já não existe uma comissão para este cliente
-        !commissions.some(comm => comm.clientId === c.id)
-      );
+    const receivedClients = clients.filter(c => 
+      c.paymentStatus === 'RECEIVED' && 
+      c.assignedTo && 
+      c.offerId &&
+      !commissions.some(comm => comm.clientId === c.id)
+    );
 
-      for (const client of receivedClients) {
-        const salesperson = teamProfiles.find(p => p.uid === client.assignedTo);
-        const commission = calculateCommissionForClient(
-          client, 
-          offers, 
-          salesperson?.displayName || 'Vendedor'
-        );
-
-        if (commission) {
-          try {
-            await setDoc(doc(db, 'organizations', effectiveOrgId, 'commissions', commission.id), commission);
-            console.log(`Comissão gerada para ${client.name}`);
-            toast.info(`Nova comissão registrada para ${salesperson?.displayName || 'vendedor'}!`, {
-              description: `Cliente: ${client.name}`
-            });
-          } catch (e) {
-            console.error('Erro ao gerar comissão automática:', e);
-          }
-        }
-      }
-    };
-
-    syncCommissions();
-  }, [clients, commissions, offers, teamProfiles, effectiveOrgId, loading]);
+    for (const client of receivedClients) {
+      handleGenerateCommission(client.id);
+    }
+  }, [clients, commissions, effectiveOrgId, loading]);
 
   const value: CRMContextType = {
     clients, leads, offers, supportRequests,
@@ -625,6 +629,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         toast.error('Erro ao registrar nota.');
       }
     },
+    handleGenerateCommission,
     pendingVacationsCount: vacations.filter(v => v.status === 'Pendente').length,
     isChurnRisk: clientActions.isChurnRisk, isComboNearRenewal: clientActions.isComboNearRenewal,
     effectiveOrgId, userProfile, vacations, teamProfiles, commissions, tags, wikiArticles, offerActions

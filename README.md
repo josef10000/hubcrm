@@ -1,4 +1,4 @@
-# 🔐 Hub Central — Intranet Corporativa v4.1.4 (Scalability Edition)
+# 🔐 Hub Central — Intranet Corporativa v4.1.5 (Performance & Security Audit)
 
 > [!CAUTION]
 > **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
@@ -7,8 +7,8 @@
 Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.
 
   <p>
-    <img src="https://img.shields.io/badge/Version-4.1.4-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
-    <img src="https://img.shields.io/badge/Status-Scalable_&_Solid-3b82f6?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
+    <img src="https://img.shields.io/badge/Version-4.1.5-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Status-Audited_&_Optimized-3b82f6?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-3b82f6?style=for-the-badge&labelColor=111111" alt="License" />
   </p>
@@ -19,7 +19,8 @@ Transformando prospecção em faturamento através de automação inteligente e 
     <img src="https://img.shields.io/badge/Vite-6-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite" />
     <img src="https://img.shields.io/badge/Firebase-12-FFCA28?style=flat-square&logo=firebase&logoColor=black" alt="Firebase" />
     <img src="https://img.shields.io/badge/Vercel-Serverless-000000?style=flat-square&logo=vercel&logoColor=white" alt="Vercel" />
-  </p><div align="center">
+  </p>
+  <div align="center">
   <h2>✨ Features em Destaque v4.0</h2>
 </div>
 

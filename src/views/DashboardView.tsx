@@ -12,6 +12,7 @@ import FinancialCharts from '../components/dashboard/FinancialCharts';
 import ClientsGrid from '../components/dashboard/ClientsGrid';
 import { calculateHealthScore } from '../helpers/healthCalculation';
 
+const COLORS = ['#f97316', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#f43f5e'];
 
 export default function DashboardView() {
   const { user } = useAuth();
@@ -43,54 +44,68 @@ export default function DashboardView() {
   const currentClients = filteredClients.slice(indexOfFirstClient, indexOfLastClient);
   const totalPages = Math.ceil(filteredClients.length / clientsPerPage);
 
-  // Calculate Metrics
-  const activeClients = clients.filter(c => c.status === 'Ativo').length;
-  const mrr = clients.filter(c => c.status === 'Ativo' || c.status === 'Inadimplente').reduce((acc, c) => {
-    return acc + getPlanPrice(c.plan, c.billingCycle, c);
-  }, 0);
-  const overdueAmount = clients.filter(c => c.status === 'Inadimplente').reduce((acc, c) => {
-    return acc + getPlanPrice(c.plan, c.billingCycle, c);
-  }, 0);
-  
-  const currentMonth = new Date().getMonth();
-  const currentYear = new Date().getFullYear();
-  const expectedThisMonth = clients.filter(c => {
-    if (c.status === 'Cancelado') return false;
-    if (!c.nextDueDate) return true; // Assume it's due if no date
-    const dueDate = new Date(c.nextDueDate);
-    return dueDate.getMonth() === currentMonth && dueDate.getFullYear() === currentYear;
-  }).reduce((acc, c) => {
-    return acc + getPlanPrice(c.plan, c.billingCycle, c);
-  }, 0);
-
-  const averageHealthScore = clients.length > 0
-    ? Math.round(clients.reduce((acc, c) => acc + calculateHealthScore(c), 0) / clients.length)
-    : 100;
-
-
-  // Chart Data
-  const statusData = [
-    { name: 'Em Dev', value: clients.filter(c => c.status === 'Em Desenvolvimento').length, color: '#eab308' },
-    { name: 'Ativo', value: clients.filter(c => c.status === 'Ativo').length, color: '#10b981' },
-    { name: 'Inadimplente', value: clients.filter(c => c.status === 'Inadimplente').length, color: '#ef4444' },
-    { name: 'Cancelado', value: clients.filter(c => c.status === 'Cancelado').length, color: '#6b7280' },
-  ];
-
-  const nicheCounts = clients.reduce((acc, c) => {
-    const niche = c.niche || 'Outros';
-    acc[niche] = (acc[niche] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-  
-  const nicheData = Object.entries(nicheCounts)
-    .map(([name, value]) => ({ name, value: Number(value) }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 5); // Top 5 niches
+  // 📝 Memoized Metrics
+  const metrics = React.useMemo(() => {
+    const active = clients.filter(c => c.status === 'Ativo').length;
     
-  const COLORS = ['#f97316', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#f43f5e'];
+    const calculatedMrr = clients
+      .filter(c => c.status === 'Ativo' || c.status === 'Inadimplente')
+      .reduce((acc, c) => acc + getPlanPrice(c.plan, c.billingCycle, c), 0);
+      
+    const overdue = clients
+      .filter(c => c.status === 'Inadimplente')
+      .reduce((acc, c) => acc + getPlanPrice(c.plan, c.billingCycle, c), 0);
+    
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    
+    const expected = clients.filter(c => {
+      if (c.status === 'Cancelado') return false;
+      if (!c.nextDueDate) return true;
+      const dueDate = new Date(c.nextDueDate);
+      return dueDate.getMonth() === currentMonth && dueDate.getFullYear() === currentYear;
+    }).reduce((acc, c) => acc + getPlanPrice(c.plan, c.billingCycle, c), 0);
 
-  const overdueClients = clients.filter(c => c.status === 'Inadimplente' || c.paymentStatus === 'OVERDUE');
-  const comboRenewalClients = clients.filter(c => isComboNearRenewal(c));
+    const avgHealth = clients.length > 0
+      ? Math.round(clients.reduce((acc, c) => acc + calculateHealthScore(c), 0) / clients.length)
+      : 100;
+
+    return { active, mrr: calculatedMrr, overdue, expected, avgHealth };
+  }, [clients]);
+
+  // 📊 Memoized Chart Data
+  const chartData = React.useMemo(() => {
+    const status = [
+      { name: 'Em Dev', value: clients.filter(c => c.status === 'Em Desenvolvimento').length, color: '#eab308' },
+      { name: 'Ativo', value: clients.filter(c => c.status === 'Ativo').length, color: '#10b981' },
+      { name: 'Inadimplente', value: clients.filter(c => c.status === 'Inadimplente').length, color: '#ef4444' },
+      { name: 'Cancelado', value: clients.filter(c => c.status === 'Cancelado').length, color: '#6b7280' },
+    ];
+
+    const nicheCounts = clients.reduce((acc, c) => {
+      const niche = c.niche || 'Outros';
+      acc[niche] = (acc[niche] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    const niche = Object.entries(nicheCounts)
+      .map(([name, value]) => ({ name, value: Number(value) }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+
+    return { status, niche };
+  }, [clients]);
+
+  const overdueClients = React.useMemo(() => 
+    clients.filter(c => c.status === 'Inadimplente' || c.paymentStatus === 'OVERDUE'),
+    [clients]
+  );
+
+  const comboRenewalClients = React.useMemo(() => 
+    clients.filter(c => isComboNearRenewal(c)),
+    [clients, isComboNearRenewal]
+  );
 
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10">
@@ -102,11 +117,11 @@ export default function DashboardView() {
         />
 
         <MetricsGrid 
-          activeClients={activeClients}
-          mrr={mrr}
-          overdueAmount={overdueAmount}
-          expectedThisMonth={expectedThisMonth}
-          averageHealthScore={averageHealthScore}
+          activeClients={metrics.active}
+          mrr={metrics.mrr}
+          overdueAmount={metrics.overdue}
+          expectedThisMonth={metrics.expected}
+          averageHealthScore={metrics.avgHealth}
           role={userProfile?.role}
         />
 
@@ -115,8 +130,8 @@ export default function DashboardView() {
           userProfile?.role === 'Gerente' || 
           ['FinOps', 'Controladoria', 'Revenue Operations', 'Gestor de Faturamento'].includes(userProfile?.role || '')) && (
           <FinancialCharts 
-            statusData={statusData}
-            nicheData={nicheData}
+            statusData={chartData.status}
+            nicheData={chartData.niche}
             COLORS={COLORS}
           />
         )}

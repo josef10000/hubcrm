@@ -115,42 +115,93 @@ async function handleRemove(req: VercelRequest, res: VercelResponse, uid: string
 
 async function handleAccept(req: VercelRequest, res: VercelResponse, uid: string) {
   const { token } = req.body;
-  let inviteSnap;
+  let inviteId = token;
 
-  if (token) {
-    inviteSnap = await db.collection('convites').doc(token).get();
-  } else {
+  // Se não houver token, buscamos o ID do convite pelo e-mail do usuário autenticado
+  if (!inviteId) {
     const user = await getFirebaseAdmin().auth().getUser(uid);
-    const invites = await db.collection('convites').where('email', '==', user.email).where('status', '==', 'pending').limit(1).get();
-    if (invites.empty) return res.status(404).json({ error: 'Convite não encontrado' });
-    inviteSnap = invites.docs[0];
+    const invites = await db.collection('convites')
+      .where('email', '==', user.email)
+      .where('status', '==', 'pending')
+      .limit(1)
+      .get();
+      
+    if (invites.empty) return res.status(404).json({ error: 'Convite não encontrado para este e-mail' });
+    inviteId = invites.docs[0].id;
   }
 
-  const inviteData = inviteSnap.data();
-  if (!inviteSnap.exists || inviteData?.status !== 'pending' || inviteData.expiresAt < Date.now()) {
-    return res.status(400).json({ error: 'Convite inválido ou expirado' });
+  try {
+    const result = await db.runTransaction(async (transaction) => {
+      const inviteRef = db.collection('convites').doc(inviteId);
+      const inviteSnap = await transaction.get(inviteRef);
+      const inviteData = inviteSnap.data();
+
+      // 1. Validações básicas do convite
+      if (!inviteSnap.exists || inviteData?.status !== 'pending' || inviteData.expiresAt < Date.now()) {
+        throw new Error('Convite inválido, expirado ou já aceito');
+      }
+
+      // 2. Validação rigorosa do Usuário Autenticado
+      const userRecord = await getFirebaseAdmin().auth().getUser(uid);
+      
+      // A) Verificar se o e-mail coincide (segurança contra hijacking de sessão/e-mail não verificado)
+      if (userRecord.email?.toLowerCase() !== inviteData.email?.toLowerCase()) {
+        throw new Error('Este convite foi enviado para outro endereço de e-mail.');
+      }
+
+      // B) Exigir e-mail verificado para segurança em SaaS multi-tenancy
+      if (!userRecord.emailVerified) {
+        throw new Error('Por favor, verifique seu e-mail no Firebase antes de aceitar o convite.');
+      }
+
+      // 3. Verificar se o usuário já tem um perfil e se já pertence a outra organização
+      const profileRef = db.collection('profiles').doc(uid);
+      const profileSnap = await transaction.get(profileRef);
+      
+      if (profileSnap.exists) {
+        const currentProfile = profileSnap.data();
+        if (currentProfile?.orgId && currentProfile.orgId !== 'pending' && currentProfile.orgId !== inviteData.orgId) {
+          throw new Error('Você já pertence a outra organização. Solicite a remoção antes de aceitar um novo convite.');
+        }
+      }
+
+      // 4. Preparar Atualização de Perfil (Profile)
+      const profileUpdate: any = {
+        uid,
+        email: userRecord.email,
+        displayName: userRecord.displayName || inviteData.email.split('@')[0],
+        orgId: inviteData.orgId,
+        role: inviteData.role,
+        updatedAt: Date.now(),
+        acceptedInviteAt: Date.now()
+      };
+
+      // Só define createdAt se for um perfil novo
+      if (!profileSnap.exists) {
+        profileUpdate.createdAt = Date.now();
+      }
+
+      // Vínculo de hierarquia
+      if (inviteData.invitedBy) {
+        profileUpdate.reportsTo = inviteData.invitedBy;
+      }
+
+      // EXECUÇÃO ATÔMICA
+      transaction.set(profileRef, profileUpdate, { merge: true });
+      transaction.update(inviteRef, { 
+        status: 'accepted', 
+        acceptedBy: uid, 
+        acceptedAt: Date.now() 
+      });
+
+      return { success: true };
+    });
+
+    return res.status(200).json(result);
+  } catch (err: any) {
+    console.error('[handleAccept] Transaction failed:', err.message);
+    return res.status(400).json({ error: err.message });
   }
-
-  const userRecord = await getFirebaseAdmin().auth().getUser(uid);
-  const profileUpdate: any = {
-    uid,
-    email: userRecord.email,
-    displayName: userRecord.displayName || inviteData.email.split('@')[0],
-    orgId: inviteData.orgId,
-    role: inviteData.role,
-    createdAt: Date.now(),
-    acceptedInviteAt: Date.now()
-  };
-
-  // Vínculo inicial de hierarquia: O novo colaborador entra como subordinado de quem o convidou
-  if (inviteData.invitedBy) {
-    profileUpdate.reportsTo = inviteData.invitedBy;
-  }
-
-  await db.collection('profiles').doc(uid).set(profileUpdate, { merge: true });
-
-  await inviteSnap.ref.update({ status: 'accepted', acceptedBy: uid, acceptedAt: Date.now() });
-  return res.status(200).json({ success: true });
 }
 
 async function handleCancelInvite(req: VercelRequest, res: VercelResponse, uid: string) {
