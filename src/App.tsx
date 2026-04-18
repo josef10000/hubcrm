@@ -126,13 +126,13 @@ function CRMInner() {
     handleSaveOffer, handleDeleteOffer, handleExportCSV,
     wikiArticles, pendingVacationsCount
   } = useCRM();
-  
-  const { 
-    sidebarOpen, setSidebarOpen, isModalOpen, setIsModalOpen, 
+
+  const {
+    sidebarOpen, setSidebarOpen, isModalOpen, setIsModalOpen,
     searchTerm, setSearchTerm, filterStatus, sortBy, filterTagId,
     focusMode, setFocusMode, globalSearch, setGlobalSearch
   } = useUI();
-  
+
   const filteredClientsForExport = useFilteredClients(clients, searchTerm, filterStatus, sortBy, filterTagId);
   const location = useLocation();
   const currentPath = location.pathname;
@@ -170,7 +170,7 @@ function CRMInner() {
       {isBirthday && <BirthdayCelebration uid={user?.uid} />}
 
       {currentPath !== '/wiki' && !focusMode && (
-        <aside 
+        <aside
           translate="no"
           className={`w-64 bg-gray-900/20 dark:bg-black/40 backdrop-blur-3xl border-r border-gray-200 dark:border-white/10 flex flex-col transition-all duration-300 z-30 ${sidebarOpen ? 'translate-x-0 absolute inset-y-0 left-0' : '-translate-x-full absolute md:relative md:translate-x-0'}`}
           aria-label="Menu Lateral de Navegação"
@@ -180,8 +180,8 @@ function CRMInner() {
               <img src="https://i.imgur.com/EFBaYb5.png" alt="Hub Symples Logo" className="h-12 w-auto object-contain drop-shadow-lg" referrerPolicy="no-referrer" />
               <h1 className="text-xl font-bold tracking-tight text-gray-900 dark:text-white whitespace-nowrap">Hub Central</h1>
             </div>
-            <button 
-              className="md:hidden text-gray-500 hover:text-gray-900 dark:text-white shrink-0 ml-2" 
+            <button
+              className="md:hidden text-gray-500 hover:text-gray-900 dark:text-white shrink-0 ml-2"
               onClick={() => setSidebarOpen(false)}
               aria-label="Fechar menu lateral"
             >
@@ -192,16 +192,15 @@ function CRMInner() {
             {navGroups.map((group) => {
               const visibleItems = group.items.filter(item => !item.roles || (userProfile?.role && item.roles.includes(userProfile.role)));
               if (visibleItems.length === 0) return null;
-              
+
               return (
                 <div key={group.label} className="space-y-3">
                   <div className="flex items-center gap-2 px-4 mb-2">
                     <group.icon size={12} className={group.label === 'Operação' ? 'text-blue-400' : group.label === 'Comercial' ? 'text-primary-400' : 'text-gray-400'} />
-                    <span className={`text-[10px] uppercase font-black tracking-[0.2em] select-none ${
-                      group.label === 'Operação' ? 'text-blue-400/90' : 
-                      group.label === 'Comercial' ? 'text-primary-400/90' : 
-                      'text-gray-400/90'
-                    }`}>
+                    <span className={`text-[10px] uppercase font-black tracking-[0.2em] select-none ${group.label === 'Operação' ? 'text-blue-400/90' :
+                        group.label === 'Comercial' ? 'text-primary-400/90' :
+                          'text-gray-400/90'
+                      }`}>
                       {group.label}
                     </span>
                   </div>
@@ -214,12 +213,12 @@ function CRMInner() {
                         path={item.path}
                         onClick={() => setSidebarOpen(false)}
                         badge={
-                          item.path === '/leads' ? activeLeadsCount : 
-                          item.path === '/support' ? openTicketCount : 
-                          item.path === '/chat' ? (chatUnreadCount > 0 ? chatUnreadCount : undefined) :
-                          item.path === '/wiki' ? (newWikiCount > 0 ? newWikiCount : undefined) :
-                          item.path === '/people' ? (pendingVacationsCount > 0 ? pendingVacationsCount : undefined) :
-                          undefined
+                          item.path === '/leads' ? activeLeadsCount :
+                            item.path === '/support' ? openTicketCount :
+                              item.path === '/chat' ? (chatUnreadCount > 0 ? chatUnreadCount : undefined) :
+                                item.path === '/wiki' ? (newWikiCount > 0 ? newWikiCount : undefined) :
+                                  item.path === '/people' ? (pendingVacationsCount > 0 ? pendingVacationsCount : undefined) :
+                                    undefined
                         }
                       />
                     ))}
@@ -228,10 +227,10 @@ function CRMInner() {
               );
             })}
           </nav>
-          
+
 
           <div className="p-4 border-t border-gray-200 dark:border-white/10" role="complementary" aria-label="Perfil do Usuário">
-            <div 
+            <div
               onClick={() => navigate(`/profile/${user?.uid}`)}
               className="flex items-center justify-between px-4 py-3 bg-gray-100 dark:bg-white/5 backdrop-blur-xl rounded-2xl border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-200 dark:hover:bg-white/10 transition-all group"
               role="button"
@@ -271,7 +270,7 @@ function CRMInner() {
         <header className="bg-black/20 backdrop-blur-2xl border-b border-gray-200 dark:border-white/10 px-6 py-4 flex items-center justify-between shrink-0 z-30 gap-4" role="banner">
           <div className="flex items-center flex-1">
             {currentPath === '/wiki' ? (
-              <button 
+              <button
                 onClick={() => navigate('/')}
                 className="mr-6 p-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-2xl transition-all flex items-center gap-2 group shadow-xl"
                 aria-label="Sair da Wiki e voltar para o dashboard"
@@ -280,8 +279,8 @@ function CRMInner() {
                 <span className="text-sm font-bold uppercase tracking-wider">Sair da Wiki</span>
               </button>
             ) : (
-              <button 
-                className="md:hidden mr-4 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white" 
+              <button
+                className="md:hidden mr-4 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white"
                 onClick={() => setSidebarOpen(true)}
                 aria-label="Abrir menu lateral"
               >
@@ -291,12 +290,12 @@ function CRMInner() {
             {currentPath === '/' && (
               <div className="flex items-center w-full max-w-xl relative" role="search">
                 <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" aria-hidden="true" />
-                <input 
-                  type="text" 
-                  placeholder="Buscar por Nome, CPF, E-mail ou Status..." 
-                  value={searchTerm} 
-                  onChange={e => setSearchTerm(e.target.value)} 
-                  className="w-full bg-white/80 dark:bg-zinc-900/50 backdrop-blur-xl border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-2xl pl-12 pr-4 py-3 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/50 transition-all placeholder-gray-500 shadow-inner" 
+                <input
+                  type="text"
+                  placeholder="Buscar por Nome, CPF, E-mail ou Status..."
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="w-full bg-white/80 dark:bg-zinc-900/50 backdrop-blur-xl border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-2xl pl-12 pr-4 py-3 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/50 transition-all placeholder-gray-500 shadow-inner"
                   aria-label="Campo de busca de clientes"
                 />
               </div>
@@ -341,11 +340,10 @@ function CRMInner() {
               <button
                 onClick={() => setFocusMode(!focusMode)}
                 title={focusMode ? 'Sair do Modo Foco' : 'Entrar no Modo Foco'}
-                className={`hidden md:flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
-                  focusMode
+                className={`hidden md:flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all border ${focusMode
                     ? 'bg-primary-500/20 border-primary-500/50 text-primary-400'
                     : 'bg-white/5 border-white/10 text-gray-500 hover:text-white hover:bg-white/10'
-                }`}
+                  }`}
                 aria-label={focusMode ? 'Sair do Modo Foco' : 'Entrar no Modo Foco'}
               >
                 <Focus size={14} />
@@ -355,7 +353,7 @@ function CRMInner() {
             {currentPath === '/' && (
               <button
                 onClick={() => handleExportCSV(filteredClientsForExport)}
-                className="hidden sm:flex items-center space-x-2 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white px-4 py-3 rounded-2xl transition-all font-medium shrink-0" 
+                className="hidden sm:flex items-center space-x-2 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white px-4 py-3 rounded-2xl transition-all font-medium shrink-0"
                 title="Exportar para CSV"
                 aria-label="Exportar lista de clientes para arquivo CSV"
               >
@@ -364,8 +362,8 @@ function CRMInner() {
               </button>
             )}
             {currentPath === '/' && ['Administrador', 'Gerente', 'SDR', 'Executive', 'Customer Success', 'Suporte Técnico', 'Onboarding Specialist'].includes(userProfile?.role || '') && (
-              <button 
-                onClick={() => { setEditingClient(null); setIsModalOpen(true); }} 
+              <button
+                onClick={() => { setEditingClient(null); setIsModalOpen(true); }}
                 className="flex items-center space-x-2 bg-gradient-to-r from-primary-500 to-primary-400 hover:from-primary-600 hover:to-primary-600 text-gray-900 dark:text-white px-5 py-3 rounded-2xl transition-all font-medium shadow-xl shadow-primary-500/30 hover:shadow-2xl shadow-primary-500/50 hover:scale-105 active:scale-95 shrink-0"
                 aria-label="Adicionar novo cliente ao sistema"
               >
@@ -396,7 +394,7 @@ function CRMInner() {
               </div>
             </div>
           ) : (
-            <div className={`flex-1 ${currentPath === '/chat' ? 'overflow-hidden' : 'overflow-auto'} custom-scrollbar`}>
+            <div className="flex-1 overflow-auto custom-scrollbar">
               <Routes>
                 <Route path="/" element={<DashboardView />} />
                 <Route path="/leads" element={<LeadsView />} />
@@ -412,7 +410,7 @@ function CRMInner() {
                 <Route path="/onboarding-hub" element={<OnboardingHubView />} />
                 <Route path="/contracts" element={<ContractsView />} />
                 <Route path="/projects" element={<ProjectsView />} />
-                
+
                 {/* Rotas Protegidas (Conforme Roles Definidas no navItems) */}
                 <Route path="/analytics" element={(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'FinOps' || userProfile?.role === 'Controladoria') ? <AnalyticsView /> : <DashboardView />} />
                 <Route path="/finance" element={(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || ['FinOps', 'Controladoria', 'Revenue Operations'].includes(userProfile?.role || '')) ? <FinanceView /> : <DashboardView />} />
