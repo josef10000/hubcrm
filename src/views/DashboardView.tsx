@@ -12,6 +12,7 @@ import FinancialCharts from '../components/dashboard/FinancialCharts';
 import ClientsGrid from '../components/dashboard/ClientsGrid';
 import { OverdueAlertWidget } from '../components/dashboard/OverdueAlertWidget';
 import { CashFlowProjection } from '../components/dashboard/CashFlowProjection';
+import { RecentKudosWidget } from '../components/dashboard/RecentKudosWidget';
 import { calculateHealthScore } from '../helpers/healthCalculation';
 
 const COLORS = ['#f97316', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#f43f5e'];
@@ -117,6 +118,9 @@ export default function DashboardView() {
           overdueClients={overdueClients} 
           comboRenewalClients={comboRenewalClients} 
         />
+
+        {/* 🏆 Mural de Reconhecimento Global */}
+        <RecentKudosWidget />
 
         {/* Widget: Inadimplência Crítica (>30 dias) */}
         {['Administrador', 'Gerente', 'FinOps', 'Controladoria', 'Gestor de Faturamento'].includes(userProfile?.role || '') && (
