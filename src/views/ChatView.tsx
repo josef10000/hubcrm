@@ -59,7 +59,7 @@ export default function ChatView() {
   const selectedChat = chats.find(c => c.id === selectedChatId) || null;
 
   return (
-    <div className="flex h-[calc(100vh-2rem)] bg-white dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] overflow-hidden shadow-2xl animate-in fade-in duration-500">
+    <div className="flex h-full bg-white dark:bg-black/40 backdrop-blur-xl animate-in fade-in duration-500">
       {/* Sidebar do Chat */}
       <ChatSidebar 
         chats={chats} 

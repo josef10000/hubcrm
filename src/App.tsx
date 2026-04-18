@@ -396,7 +396,7 @@ function CRMInner() {
               </div>
             </div>
           ) : (
-            <div className="flex-1 overflow-auto custom-scrollbar">
+            <div className={`flex-1 ${currentPath === '/chat' ? 'overflow-hidden' : 'overflow-auto'} custom-scrollbar`}>
               <Routes>
                 <Route path="/" element={<DashboardView />} />
                 <Route path="/leads" element={<LeadsView />} />
