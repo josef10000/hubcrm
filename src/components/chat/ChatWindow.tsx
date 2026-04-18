@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ExternalLink, MoreVertical, Phone, Video, Search, MessageSquare, Megaphone, Info, X } from 'lucide-react';
 import { Chat, ChatMessage } from '../../types/chat.types';
 import { useChat } from '../../hooks/useChat';
+import { useAuth } from '../../contexts/AuthContext';
+import { useCRM } from '../../contexts/CRMContext';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
 import GroupSettingsModal from './GroupSettingsModal';
