@@ -274,7 +274,6 @@ function CRMInner() {
       )}
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative z-20">
-        {!isStandaloneChat && (
         <header className="bg-black/20 backdrop-blur-2xl border-b border-gray-200 dark:border-white/10 px-6 py-4 flex items-center justify-between shrink-0 z-30 gap-4" role="banner">
           <div className="flex items-center flex-1">
             {currentPath === '/wiki' ? (
@@ -380,7 +379,6 @@ function CRMInner() {
             )}
           </div>
         </header>
-        )}
 
         {loading ? (
           <div className="flex-1 p-6">
