@@ -169,7 +169,7 @@ function CRMInner() {
 
       {isBirthday && <BirthdayCelebration uid={user?.uid} />}
 
-      {currentPath !== '/wiki' && !focusMode && (
+      {currentPath !== '/wiki' && !(currentPath === '/chat' && focusMode) && (
         <aside
           translate="no"
           className={`w-64 bg-gray-900/20 dark:bg-black/40 backdrop-blur-3xl border-r border-gray-200 dark:border-white/10 flex flex-col transition-all duration-300 z-30 ${sidebarOpen ? 'translate-x-0 absolute inset-y-0 left-0' : '-translate-x-full absolute md:relative md:translate-x-0'}`}

@@ -110,9 +110,9 @@ export default function MessageBubble({ message, isRead, onDelete, onReply, onRe
 
           {/* Citação de Resposta (Reply) */}
           {message.replyTo && !isDeleted && (
-            <div className={`text-[10px] p-2 rounded-t-2xl border-l-4 bg-gray-100 dark:bg-black/20 border-gray-300 dark:border-white/20 mb-[-12px] pb-4 ${isMine ? 'text-right rounded-tr-none mr-1' : 'text-left rounded-tl-none ml-1'}`}>
-              <span className="font-bold block mb-0.5 opacity-60">{message.replyTo.senderName}</span>
-              <span className="italic whitespace-pre-wrap break-words line-clamp-3 block">"{message.replyTo.text}"</span>
+            <div className={`p-4 rounded-t-2xl border-l-4 bg-gray-100 dark:bg-black/20 border-gray-300 dark:border-white/20 mb-[-12px] pb-6 ${isMine ? 'text-right rounded-tr-none mr-1' : 'text-left rounded-tl-none ml-1'}`}>
+              <span className="font-bold block mb-1 opacity-60 text-[14px]">{message.replyTo.senderName}</span>
+              <span className="italic whitespace-pre-wrap break-words line-clamp-3 block text-[22px] leading-tight">"{message.replyTo.text}"</span>
             </div>
           )}
 

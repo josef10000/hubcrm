@@ -129,9 +129,9 @@ export default function MessageInput({ onSend, onTyping, replyTo, onCancelReply 
       {/* Indicador de Resposta */}
       {replyTo && (
         <div className="absolute bottom-full left-0 right-0 bg-gray-50 dark:bg-white/5 p-3 flex justify-between items-center border-t border-gray-200 dark:border-white/10 animate-in slide-in-from-bottom">
-          <div className="flex-1 truncate">
-            <span className="text-[10px] font-bold text-primary-500 uppercase block mb-0.5">Respondendo a {replyTo.senderName}</span>
-            <p className="text-xs text-gray-500 break-words line-clamp-2 italic">"{replyTo.text}"</p>
+          <div className="flex-1">
+            <span className="text-[12px] font-bold text-primary-500 uppercase block mb-1">Respondendo a {replyTo.senderName}</span>
+            <p className="text-[20px] text-gray-500 break-words line-clamp-2 italic leading-tight">"{replyTo.text}"</p>
           </div>
           <button onClick={onCancelReply} className="p-1 hover:bg-gray-200 dark:hover:bg-white/10 rounded-full transition-colors">
             <X size={16} className="text-gray-400" />
