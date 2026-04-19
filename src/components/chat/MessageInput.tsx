@@ -125,7 +125,7 @@ export default function MessageInput({ onSend, onTyping, replyTo, onCancelReply 
   }, []);
 
   return (
-    <div className="p-4 bg-white dark:bg-black/20 border-t border-gray-100 dark:border-white/10 relative">
+    <div className="p-4 pb-4 bg-white dark:bg-black/20 border-t border-gray-100 dark:border-white/10 relative">
       {/* Indicador de Resposta */}
       {replyTo && (
         <div className="absolute bottom-full left-0 right-0 bg-gray-50 dark:bg-white/5 p-3 flex justify-between items-center border-t border-gray-200 dark:border-white/10 animate-in slide-in-from-bottom">

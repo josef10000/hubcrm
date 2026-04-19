@@ -198,8 +198,8 @@ function CRMInner() {
                   <div className="flex items-center gap-2 px-4 mb-2">
                     <group.icon size={12} className={group.label === 'Operação' ? 'text-blue-400' : group.label === 'Comercial' ? 'text-primary-400' : 'text-gray-400'} />
                     <span className={`text-[10px] uppercase font-black tracking-[0.2em] select-none ${group.label === 'Operação' ? 'text-blue-400/90' :
-                        group.label === 'Comercial' ? 'text-primary-400/90' :
-                          'text-gray-400/90'
+                      group.label === 'Comercial' ? 'text-primary-400/90' :
+                        'text-gray-400/90'
                       }`}>
                       {group.label}
                     </span>
@@ -341,8 +341,8 @@ function CRMInner() {
                 onClick={() => setFocusMode(!focusMode)}
                 title={focusMode ? 'Sair do Modo Foco' : 'Entrar no Modo Foco'}
                 className={`hidden md:flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all border ${focusMode
-                    ? 'bg-primary-500/20 border-primary-500/50 text-primary-400'
-                    : 'bg-white/5 border-white/10 text-gray-500 hover:text-white hover:bg-white/10'
+                  ? 'bg-primary-500/20 border-primary-500/50 text-primary-400'
+                  : 'bg-white/5 border-white/10 text-gray-500 hover:text-white hover:bg-white/10'
                   }`}
                 aria-label={focusMode ? 'Sair do Modo Foco' : 'Entrar no Modo Foco'}
               >
