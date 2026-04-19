@@ -47,6 +47,15 @@ export interface ChatMessage {
     [emoji: string]: string[];
   };
   isDeleted?: boolean;                // Flag para mensagens apagadas
+  type?: "text" | "poll";             // Tipo da mensagem
+  poll?: {                            // Dados da enquete
+    question: string;
+    options: {
+      id: string;
+      text: string;
+      votes: string[];                // UIDs dos votantes
+    }[];
+  };
   createdAt: Timestamp;
 }
 

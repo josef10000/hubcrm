@@ -97,7 +97,9 @@ export function useChat(chatId: string | null) {
     mentions: string[] = [], 
     attachments: string[] = [], 
     replyTo: ChatMessage['replyTo'] = null,
-    members: string[] = []
+    members: string[] = [],
+    type: "text" | "poll" = "text",
+    poll?: ChatMessage['poll']
   ) => {
     if (!effectiveOrgId || !chatId || !userProfile?.uid) return;
 
@@ -107,23 +109,30 @@ export function useChat(chatId: string | null) {
       const messagesRef = collection(db, 'organizations', effectiveOrgId, 'chats', chatId, 'messages');
       const newMessageRef = doc(messagesRef);
 
-      const messageData: Partial<ChatMessage> = {
-        text,
+      const messageContent = type === 'poll' ? `📊 Enquete: ${poll?.question}` : text;
+
+      const messageData: any = {
+        text: messageContent,
         senderId: userProfile.uid,
         senderName: userProfile.displayName || 'Membro',
         senderPhotoURL: userProfile.photoURL || '',
         attachments,
         mentions,
         replyTo,
-        createdAt: serverTimestamp() as any
+        type,
+        createdAt: serverTimestamp()
       };
+
+      if (type === 'poll' && poll) {
+        messageData.poll = poll;
+      }
 
       batch.set(newMessageRef, messageData);
 
       // ATUALIZAÇÃO DO PAI (Denormalização e Notificações)
       const updates: any = {
         lastMessage: {
-          text: text.substring(0, 100),
+          text: messageContent.substring(0, 100),
           senderId: userProfile.uid,
           senderName: userProfile.displayName || 'Membro',
           createdAt: serverTimestamp()
@@ -223,5 +232,43 @@ export function useChat(chatId: string | null) {
     }
   };
 
-  return { messages, typing, loading, sendMessage, setTypingStatus, markAsRead, deleteMessage, toggleReaction };
+  const votePoll = async (messageId: string, optionId: string) => {
+    if (!effectiveOrgId || !chatId || !userProfile?.uid) return;
+
+    try {
+      const messageRef = doc(db, 'organizations', effectiveOrgId, 'chats', chatId, 'messages', messageId);
+      const message = messages.find(m => m.id === messageId);
+      if (!message || !message.poll) return;
+
+      const currentOptions = [...message.poll.options];
+      const newOptions = currentOptions.map(opt => {
+        // Se for a opção que cliquei
+        if (opt.id === optionId) {
+          const hasVoted = opt.votes.includes(userProfile.uid);
+          return {
+            ...opt,
+            votes: hasVoted 
+              ? opt.votes.filter(id => id !== userProfile.uid) // Toggle off
+              : [...opt.votes, userProfile.uid]                // Vote on
+          };
+        }
+        // Se for outra opção e eu já tinha votado nela, remove (Voto Único)
+        if (opt.votes.includes(userProfile.uid)) {
+          return {
+            ...opt,
+            votes: opt.votes.filter(id => id !== userProfile.uid)
+          };
+        }
+        return opt;
+      });
+
+      await updateDoc(messageRef, {
+        "poll.options": newOptions
+      });
+    } catch (error) {
+      console.error("Erro ao votar em enquete:", error);
+    }
+  };
+
+  return { messages, typing, loading, sendMessage, setTypingStatus, markAsRead, deleteMessage, toggleReaction, votePoll };
 }

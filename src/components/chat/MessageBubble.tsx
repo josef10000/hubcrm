@@ -11,11 +11,12 @@ interface MessageBubbleProps {
   onDelete?: (id: string) => Promise<boolean>;
   onReply?: (message: ChatMessage) => void;
   onReact?: (id: string, emoji: string) => void;
+  onVote?: (messageId: string, optionId: string) => void;
 }
 
 const COMMON_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
 
-export default function MessageBubble({ message, isRead, onDelete, onReply, onReact }: MessageBubbleProps) {
+export default function MessageBubble({ message, isRead, onDelete, onReply, onReact, onVote }: MessageBubbleProps) {
   const { userProfile } = useAuth();
   const navigate = useNavigate();
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -131,7 +132,51 @@ export default function MessageBubble({ message, isRead, onDelete, onReply, onRe
               </div>
             ) : (
               <>
-                <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium">{message.text}</p>
+                {message.type === 'poll' && message.poll ? (
+                  <div className="space-y-4 my-2 min-w-[240px]">
+                    <h4 className="font-bold text-base leading-tight">{message.poll.question}</h4>
+                    <div className="space-y-2">
+                      {message.poll.options.map((option) => {
+                        const totalVotes = message.poll?.options.reduce((acc, opt) => acc + opt.votes.length, 0) || 0;
+                        const percentage = totalVotes > 0 ? Math.round((option.votes.length / totalVotes) * 100) : 0;
+                        const hasVoted = option.votes.includes(userProfile?.uid || '');
+
+                        return (
+                          <button
+                            key={option.id}
+                            onClick={() => onVote?.(message.id, option.id)}
+                            className={`w-full relative p-3 rounded-xl border transition-all text-left overflow-hidden group ${
+                              hasVoted 
+                                ? 'border-primary-500 bg-primary-500/10' 
+                                : 'border-gray-200 dark:border-white/10 hover:border-primary-500/50 bg-white/50 dark:bg-black/20'
+                            }`}
+                          >
+                            {/* Barra de Progresso */}
+                            <div 
+                              className={`absolute inset-y-0 left-0 transition-all duration-1000 ease-out opacity-20 ${
+                                hasVoted ? 'bg-primary-500' : 'bg-gray-400 dark:bg-white'
+                              }`}
+                              style={{ width: `${percentage}%` }}
+                            />
+                            
+                            <div className="relative flex justify-between items-center gap-4">
+                              <span className="text-sm font-medium flex-1 break-words">{option.text}</span>
+                              <div className="flex items-center gap-2">
+                                {hasVoted && <div className="w-1.5 h-1.5 rounded-full bg-primary-500" />}
+                                <span className="text-xs font-bold opacity-60">{option.votes.length}</span>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="text-[10px] opacity-40 font-bold uppercase tracking-wider text-center">
+                      {message.poll.options.reduce((acc, opt) => acc + opt.votes.length, 0)} votos no total • Voto Anônimo
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium">{message.text}</p>
+                )}
                 
                 {/* Anexos */}
                 {message.attachments && message.attachments.length > 0 && (

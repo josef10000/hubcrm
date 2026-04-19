@@ -8,14 +8,19 @@ import { uploadImageToImgBB } from '../../lib/imgbb';
 import { toast } from 'sonner';
 import EmojiPicker from './EmojiPicker';
 
+import { PollCreatorModal } from './PollCreatorModal';
+import { BarChart2 } from 'lucide-react';
+
 interface MessageInputProps {
-  onSend: (text: string, mentions: string[], attachments: string[]) => void;
+  onSend: (text: string, mentions: string[], attachments: string[], replyTo: ChatMessage['replyTo'] | null, members: string[], type: "text" | "poll", poll?: ChatMessage['poll']) => void;
   onTyping: (isTyping: boolean) => void;
   replyTo: ChatMessage['replyTo'] | null;
   onCancelReply: () => void;
+  members: string[];
 }
 
-export default function MessageInput({ onSend, onTyping, replyTo, onCancelReply }: MessageInputProps) {
+export default function MessageInput({ onSend, onTyping, replyTo, onCancelReply, members }: MessageInputProps) {
+  const [isPollModalOpen, setIsPollModalOpen] = useState(false);
   const [text, setText] = useState('');
   const [showMentions, setShowMentions] = useState(false);
   const [mentionQuery, setMentionQuery] = useState('');
@@ -31,10 +36,23 @@ export default function MessageInput({ onSend, onTyping, replyTo, onCancelReply 
     if (!text.trim() && !uploading) return;
 
     const mentions = parseMentions(text, teamProfiles.map(p => ({ uid: p.uid, displayName: p.displayName })));
-    onSend(text, mentions, []);
+    onSend(text, mentions, [], replyTo, members, "text");
     setText('');
     onTyping(false);
     setShowMentions(false);
+  };
+
+  const handleCreatePoll = (question: string, options: string[]) => {
+    const pollData = {
+      question,
+      options: options.map(opt => ({
+        id: crypto.randomUUID(),
+        text: opt,
+        votes: []
+      }))
+    };
+
+    onSend('', [], [], null, members, 'poll', pollData);
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,8 +171,18 @@ export default function MessageInput({ onSend, onTyping, replyTo, onCancelReply 
           disabled={uploading}
           onClick={() => fileInputRef.current?.click()}
           className="p-2.5 text-gray-400 hover:text-primary-500 hover:bg-primary-500/10 rounded-xl transition-all disabled:opacity-50"
+          title="Anexar arquivo"
         >
           {uploading ? <Loader2 size={20} className="animate-spin text-primary-500" /> : <Paperclip size={20} />}
+        </button>
+
+        <button 
+          type="button" 
+          onClick={() => setIsPollModalOpen(true)}
+          className="p-2.5 text-gray-400 hover:text-primary-500 hover:bg-primary-500/10 rounded-xl transition-all"
+          title="Criar Enquete"
+        >
+          <BarChart2 size={20} />
         </button>
 
         <div className="flex-1 relative">
@@ -202,6 +230,12 @@ export default function MessageInput({ onSend, onTyping, replyTo, onCancelReply 
           <Send size={20} />
         </button>
       </form>
+
+      <PollCreatorModal 
+        isOpen={isPollModalOpen}
+        onClose={() => setIsPollModalOpen(false)}
+        onSelect={handleCreatePoll}
+      />
     </div>
   );
 }

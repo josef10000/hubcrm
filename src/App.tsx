@@ -150,12 +150,13 @@ function CRMInner() {
   }, [unreadAlertsCount, openTicketCount, pendingVacationsCount, newWikiCount, userProfile?.role]);
 
   React.useEffect(() => {
-    if (titleCount > 0) {
-      document.title = `(${titleCount}) Hub Central`;
+    const prefix = titleCount > 0 ? `(${titleCount}) ` : '';
+    if (currentPath === '/chat') {
+      document.title = `${prefix}Chat`;
     } else {
-      document.title = 'Hub Central';
+      document.title = `${prefix}Hub Central`;
     }
-  }, [titleCount]);
+  }, [titleCount, currentPath]);
 
   if (userProfile?.orgId === 'pending') {
     return <WaitingInviteView />;

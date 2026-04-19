@@ -18,7 +18,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
   const navigate = useNavigate();
   const { userProfile } = useAuth();
   const { teamProfiles } = useCRM();
-  const { messages, typing, sendMessage, setTypingStatus, loading, deleteMessage, toggleReaction } = useChat(chatId);
+  const { messages, typing, sendMessage, setTypingStatus, loading, deleteMessage, toggleReaction, votePoll } = useChat(chatId);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -107,18 +107,29 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
     );
   }
 
-  const handleSend = async (text: string, mentions: string[] = [], attachments: string[] = []) => {
-    if (!text.trim() && attachments.length === 0) return;
+  const handleSend = async (
+    text: string, 
+    mentions: string[] = [], 
+    attachments: string[] = [], 
+    replyTo: ChatMessage['replyTo'] = null,
+    members: string[] = [],
+    type: "text" | "poll" = "text",
+    poll?: ChatMessage['poll']
+  ) => {
+    if (!chat) return;
+    if (!text.trim() && attachments.length === 0 && type === 'text') return;
     
-    const success = await sendMessage(
+    await sendMessage(
       text, 
       mentions, 
       attachments, 
-      replyingTo ? { messageId: replyingTo.id, text: replyingTo.text, senderName: replyingTo.senderName } : null,
-      chat.members
+      replyTo,
+      chat.members,
+      type,
+      poll
     );
     
-    if (success) setReplyingTo(null);
+    setReplyingTo(null);
   };
 
   return (
@@ -271,6 +282,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
                   onDelete={deleteMessage}
                   onReply={setReplyingTo}
                   onReact={toggleReaction}
+                  onVote={votePoll}
                 />
               );
             })}
@@ -280,10 +292,11 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
 
       {/* Input de Mensagem */}
       <MessageInput 
-        onSend={handleSend} 
+        onSend={(text, mentions, att, reply, membersList, type, poll) => handleSend(text, mentions, att, reply, membersList, type, poll)} 
         onTyping={setTypingStatus}
         replyTo={replyingTo ? { messageId: replyingTo.id, text: replyingTo.text, senderName: replyingTo.senderName } : null}
         onCancelReply={() => setReplyingTo(null)}
+        members={chat.members}
       />
 
       <GroupSettingsModal 
