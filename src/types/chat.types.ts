@@ -43,6 +43,9 @@ export interface ChatMessage {
     text: string;
     senderName: string;
   } | null;
+  reactions?: {                       // Reações: emoji -> array de UIDs
+    [emoji: string]: string[];
+  };
   isDeleted?: boolean;                // Flag para mensagens apagadas
   createdAt: Timestamp;
 }

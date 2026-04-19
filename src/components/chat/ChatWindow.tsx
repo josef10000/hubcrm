@@ -18,7 +18,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
   const navigate = useNavigate();
   const { userProfile } = useAuth();
   const { teamProfiles } = useCRM();
-  const { messages, typing, sendMessage, setTypingStatus, loading, deleteMessage } = useChat(chatId);
+  const { messages, typing, sendMessage, setTypingStatus, loading, deleteMessage, toggleReaction } = useChat(chatId);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -264,13 +264,14 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
                 });
 
               return (
-                <div key={msg.id} onDoubleClick={() => setReplyingTo(msg)}>
-                  <MessageBubble 
-                    message={msg} 
-                    isRead={isRead} 
-                    onDelete={deleteMessage}
-                  />
-                </div>
+                <MessageBubble 
+                  key={msg.id}
+                  message={msg} 
+                  isRead={isRead} 
+                  onDelete={deleteMessage}
+                  onReply={setReplyingTo}
+                  onReact={toggleReaction}
+                />
               );
             })}
           </div>

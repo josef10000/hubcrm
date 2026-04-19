@@ -12,7 +12,9 @@ import {
   increment,
   updateDoc,
   setDoc,
-  deleteDoc
+  deleteDoc,
+  arrayUnion,
+  arrayRemove
 } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import { useCRM } from '../contexts/CRMContext';
@@ -196,6 +198,30 @@ export function useChat(chatId: string | null) {
       // Falha silenciosa para typing indicator
     }
   };
+    
+  const toggleReaction = async (messageId: string, emoji: string) => {
+    if (!effectiveOrgId || !chatId || !userProfile?.uid) return;
 
-  return { messages, typing, loading, sendMessage, setTypingStatus, markAsRead, deleteMessage };
+    try {
+      const messageRef = doc(db, 'organizations', effectiveOrgId, 'chats', chatId, 'messages', messageId);
+      const message = messages.find(m => m.id === messageId);
+      const reactions = message?.reactions || {};
+      const userList = reactions[emoji] || [];
+      const hasReacted = userList.includes(userProfile.uid);
+
+      if (hasReacted) {
+        await updateDoc(messageRef, {
+          [`reactions.${emoji}`]: arrayRemove(userProfile.uid)
+        });
+      } else {
+        await updateDoc(messageRef, {
+          [`reactions.${emoji}`]: arrayUnion(userProfile.uid)
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao alternar reação:", error);
+    }
+  };
+
+  return { messages, typing, loading, sendMessage, setTypingStatus, markAsRead, deleteMessage, toggleReaction };
 }
