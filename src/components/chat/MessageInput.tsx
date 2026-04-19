@@ -63,7 +63,7 @@ export default function MessageInput({ onSend, onTyping, replyTo, onCancelReply,
     const id = toast.loading('Enviando anexo...');
     try {
       const url = await uploadImageToImgBB(file);
-      onSend('[Anexo]', [], [url]);
+      onSend('[Anexo]', [], [url], null, members, "text");
       toast.success('Anexo enviado!', { id });
     } catch (error) {
       toast.error('Erro ao enviar anexo.', { id });
