@@ -212,7 +212,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
             <Info size={18} />
           </button>
           <button 
-            onClick={() => window.open('/chat', '_blank')}
+            onClick={() => window.open('/chat?standalone=true', '_blank')}
             className="p-2.5 text-gray-400 hover:text-primary-500 hover:bg-primary-500/5 rounded-xl transition-all" 
             title="Abrir em Nova Aba"
           >

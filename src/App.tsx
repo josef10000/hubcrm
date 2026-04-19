@@ -136,6 +136,12 @@ function CRMInner() {
   const filteredClientsForExport = useFilteredClients(clients, searchTerm, filterStatus, sortBy, filterTagId);
   const location = useLocation();
   const currentPath = location.pathname;
+  const isStandaloneChat = new URLSearchParams(location.search).get('standalone') === 'true' && currentPath === '/chat';
+
+  // Em modo standalone (nova aba), forçar foco permanente
+  React.useEffect(() => {
+    if (isStandaloneChat) setFocusMode(true);
+  }, [isStandaloneChat]);
 
   const openTicketCount = useMemo(() => supportRequests.filter(r => r.status === 'aberto' || r.status === 'em_analise').length, [supportRequests]);
   const { totalUnread: chatUnreadCount, totalMentions: chatMentionCount } = useGlobalChatAlerts();
@@ -170,7 +176,7 @@ function CRMInner() {
 
       {isBirthday && <BirthdayCelebration uid={user?.uid} />}
 
-      {currentPath !== '/wiki' && !(currentPath === '/chat' && focusMode) && (
+      {currentPath !== '/wiki' && !isStandaloneChat && !(currentPath === '/chat' && focusMode) && (
         <aside
           translate="no"
           className={`w-64 bg-gray-900/20 dark:bg-black/40 backdrop-blur-3xl border-r border-gray-200 dark:border-white/10 flex flex-col transition-all duration-300 z-30 ${sidebarOpen ? 'translate-x-0 absolute inset-y-0 left-0' : '-translate-x-full absolute md:relative md:translate-x-0'}`}
@@ -268,6 +274,7 @@ function CRMInner() {
       )}
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative z-20">
+        {!isStandaloneChat && (
         <header className="bg-black/20 backdrop-blur-2xl border-b border-gray-200 dark:border-white/10 px-6 py-4 flex items-center justify-between shrink-0 z-30 gap-4" role="banner">
           <div className="flex items-center flex-1">
             {currentPath === '/wiki' ? (
@@ -336,8 +343,7 @@ function CRMInner() {
                 />
               </div>
             )}
-            {/* Botão Modo Foco - Apenas no Chat */}
-            {currentPath === '/chat' && (
+            {currentPath === '/chat' && !isStandaloneChat && (
               <button
                 onClick={() => setFocusMode(!focusMode)}
                 title={focusMode ? 'Sair do Modo Foco' : 'Entrar no Modo Foco'}
@@ -374,6 +380,7 @@ function CRMInner() {
             )}
           </div>
         </header>
+        )}
 
         {loading ? (
           <div className="flex-1 p-6">
