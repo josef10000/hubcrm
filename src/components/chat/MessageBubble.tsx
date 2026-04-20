@@ -9,6 +9,7 @@ interface MessageBubbleProps {
   message: ChatMessage;
   isRead?: boolean;
   isPinned?: boolean;
+  isBookmarked?: boolean;
   onDelete?: (id: string) => Promise<boolean>;
   onReply?: (message: ChatMessage) => void;
   onReact?: (id: string, emoji: string) => void;
@@ -23,7 +24,7 @@ interface MessageBubbleProps {
 const COMMON_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
 
 export default function MessageBubble({ 
-  message, isRead, isPinned, onDelete, onReply, onReact, onVote, 
+  message, isRead, isPinned, isBookmarked, onDelete, onReply, onReact, onVote, 
   onBookmark, onPin, onUnpin, onCreateTicket, onApprove 
 }: MessageBubbleProps) {
   const { userProfile } = useAuth();
@@ -99,10 +100,10 @@ export default function MessageBubble({
 
                 <button 
                   onClick={() => onBookmark?.(message)}
-                  className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-500/10 rounded-full transition-colors"
-                  title="Salvar nos Favoritos"
+                  className={`p-1.5 rounded-full transition-colors ${isBookmarked ? 'text-blue-500 bg-blue-500/10' : 'text-gray-400 hover:text-blue-500 hover:bg-blue-500/10'}`}
+                  title={isBookmarked ? "Remover dos Favoritos" : "Salvar nos Favoritos"}
                 >
-                  <Bookmark size={14} />
+                  <Bookmark size={14} className={isBookmarked ? 'fill-current' : ''} />
                 </button>
 
                 <button 

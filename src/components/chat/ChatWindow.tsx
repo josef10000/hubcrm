@@ -3,6 +3,7 @@ import { ExternalLink, MoreVertical, Phone, Video, Search, MessageSquare, Megaph
 import { useNavigate } from 'react-router-dom';
 import { Chat, ChatMessage } from '../../types/chat.types';
 import { useChat } from '../../hooks/useChat';
+import { useBookmarks } from '../../hooks/useBookmarks';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCRM } from '../../contexts/CRMContext';
 import MessageBubble from './MessageBubble';
@@ -26,7 +27,10 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
     toggleReaction, votePoll, togglePin, unpinMessage, toggleBookmark, respondApproval 
   } = useChat(chatId);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
-  const [pinnedMessageData, setPinnedMessageData] = useState<ChatMessage | null>(null);
+  const [pinnedMessagesData, setPinnedMessagesData] = useState<ChatMessage[]>([]);
+  const [liveChat, setLiveChat] = useState<Chat | null>(chat);
+  const { bookmarks } = useBookmarks();
+  const bookmarkedIds = bookmarks.map(b => b.messageId);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -74,42 +78,64 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
     }
   }, [messages]);
 
-  // Listener para carregar mensagem fixada se não estiver no buffer
+  // Assinar o chat em tempo real para pins imediatos
   useEffect(() => {
-    const pinnedList = chat?.pinnedMessages || [];
-    const pinnedId = pinnedList.length > 0 ? pinnedList[pinnedList.length - 1] : undefined;
+    if (!chatId || !userProfile?.orgId) return;
+    const { doc, onSnapshot } = require('firebase/firestore');
+    const { db } = require('../../lib/firebase');
     
-    if (!pinnedId) {
-      setPinnedMessageData(null);
-      return;
-    }
-
-    const msgInBuffer = messages.find(m => m.id === pinnedId);
-    if (msgInBuffer) {
-      setPinnedMessageData(msgInBuffer);
-      return;
-    }
-
-    // Se não está no buffer, buscar diretamente
-    const fetchPinnedMessage = async () => {
-      try {
-        const { doc, getDoc } = await import('firebase/firestore');
-        const { db } = await import('../../lib/firebase');
-        const orgId = userProfile?.orgId || (chat as any).orgId; // Fallback se necessário
-        if (!orgId) return;
-
-        const msgRef = doc(db, 'organizations', orgId, 'chats', chatId!, 'messages', pinnedId);
-        const snap = await getDoc(msgRef);
-        if (snap.exists()) {
-          setPinnedMessageData({ id: snap.id, ...snap.data() } as ChatMessage);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar mensagem fixada:", error);
+    const unsubscribe = onSnapshot(doc(db, 'organizations', userProfile.orgId, 'chats', chatId), (snap: any) => {
+      if (snap.exists()) {
+        setLiveChat({ id: snap.id, ...snap.data() } as Chat);
       }
+    });
+    return () => unsubscribe();
+  }, [chatId, userProfile?.orgId]);
+
+  // Sincronizar chat inicial mudado pela sidebar
+  useEffect(() => {
+    if (chat && (!liveChat || liveChat.id !== chat.id)) {
+      setLiveChat(chat);
+    }
+  }, [chat]);
+
+  // Listener para carregar TODAS as mensagens fixadas se não estiverem no buffer
+  useEffect(() => {
+    const pinnedList = liveChat?.pinnedMessages || [];
+    
+    if (pinnedList.length === 0) {
+      setPinnedMessagesData([]);
+      return;
+    }
+
+    const fetchPinnedMessages = async () => {
+      const { doc: fireDoc, getDoc } = await import('firebase/firestore');
+      const { db } = await import('../../lib/firebase');
+      const orgId = userProfile?.orgId;
+      if (!orgId) return;
+
+      const loaded: ChatMessage[] = [];
+      for (const pid of pinnedList) {
+        const msgInBuffer = messages.find(m => m.id === pid);
+        if (msgInBuffer) {
+          loaded.push(msgInBuffer);
+        } else {
+          try {
+            const msgRef = fireDoc(db, 'organizations', orgId, 'chats', chatId!, 'messages', pid);
+            const snap = await getDoc(msgRef);
+            if (snap.exists()) {
+              loaded.push({ id: snap.id, ...snap.data() } as ChatMessage);
+            }
+          } catch (error) {
+            console.error("Erro ao buscar mensagem fixada:", error);
+          }
+        }
+      }
+      setPinnedMessagesData(loaded);
     };
 
-    fetchPinnedMessage();
-  }, [chat?.pinnedMessages, messages, chatId, userProfile?.orgId]);
+    fetchPinnedMessages();
+  }, [liveChat?.pinnedMessages, messages, chatId, userProfile?.orgId]);
 
   if (!chatId || !chat) {
     return (
@@ -308,28 +334,28 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
       </div>
 
       {/* Banner de Mensagens Fixadas */}
-      {chat.pinnedMessages && chat.pinnedMessages.length > 0 && (
-        <div className="bg-primary-500/5 border-b border-primary-500/10 px-4 py-2 flex items-center gap-3 animate-in slide-in-from-top duration-300">
-          <Pin size={16} className="text-primary-500 fill-current" />
-          <div className="flex-1 overflow-hidden">
-            <p className="text-xs font-black uppercase tracking-widest text-primary-600 mb-0.5">Mensagem Fixada</p>
-            <div className="flex items-center gap-2">
-               <p className="text-[15px] font-medium text-gray-800 dark:text-gray-200 truncate max-w-md">
-                 {pinnedMessageData?.text || "Carregando mensagem fixada..."}
-               </p>
+      {pinnedMessagesData.length > 0 && (
+        <div className="bg-primary-500/5 border-b border-primary-500/10 px-4 py-2 flex flex-col gap-2 animate-in slide-in-from-top duration-300">
+          {pinnedMessagesData.map((pinnedMsg) => (
+            <div key={pinnedMsg.id} className="flex items-center gap-3">
+              <Pin size={16} className="text-amber-500 fill-current shrink-0" />
+              <div className="flex-1 overflow-hidden">
+                <p className="text-[10px] font-black uppercase tracking-widest text-primary-600 mb-0.5">Mensagem Fixada</p>
+                <div className="flex items-center gap-2">
+                   <p className="text-[15px] font-medium text-gray-800 dark:text-gray-200 truncate max-w-md">
+                     {pinnedMsg.text || "Carregando..."}
+                   </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => unpinMessage(pinnedMsg.id)}
+                className="p-1.5 shrink-0 hover:bg-primary-500/10 rounded-lg text-primary-400 transition-colors"
+                title="Desfixar"
+              >
+                <X size={14} />
+              </button>
             </div>
-          </div>
-          {chat.pinnedMessages.length > 1 && (
-            <span className="text-[10px] font-bold bg-primary-500/10 text-primary-600 px-2 py-0.5 rounded-full">
-              +{chat.pinnedMessages.length - 1}
-            </span>
-          )}
-          <button 
-            onClick={() => unpinMessage(chat.pinnedMessages![chat.pinnedMessages!.length - 1])}
-            className="p-1.5 hover:bg-primary-500/10 rounded-lg text-primary-400 transition-colors"
-          >
-            <X size={14} />
-          </button>
+          ))}
         </div>
       )}
 
@@ -365,7 +391,8 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
                   key={msg.id}
                   message={msg} 
                   isRead={isRead} 
-                  isPinned={chat.pinnedMessages?.includes(msg.id)}
+                  isPinned={liveChat?.pinnedMessages?.includes(msg.id)}
+                  isBookmarked={bookmarkedIds.includes(msg.id)} // NOVO CÓDIGO
                   onDelete={deleteMessage}
                   onReply={setReplyingTo}
                   onReact={toggleReaction}
