@@ -274,7 +274,7 @@ export default function FinanceView() {
                     </thead>
                     <tbody>
                       {clients.filter(c => c.status === 'Ativo' || transactions.some(t => t.clientId === c.id) || commissions.some(comm => comm.clientId === c.id)).map(client => {
-                        const clientExpenses = transactions.filter(t => t.clientId === client.id \u0026\u0026 t.type === 'EXPENSE').reduce((acc, t) => acc + t.amount, 0);
+                        const clientExpenses = transactions.filter(t => t.clientId === client.id && t.type === 'EXPENSE').reduce((acc, t) => acc + t.amount, 0);
                         const clientCommissions = commissions.filter(comm => comm.clientId === client.id).reduce((acc, comm) => acc + comm.amount, 0);
                         const mrr = client.status === 'Ativo' ? getPlanPrice(client.plan, client.billingCycle, client) : 0;
                         
@@ -339,7 +339,7 @@ export default function FinanceView() {
                 <div className="space-y-4">
                   {clients.map(client => ({
                     ...client,
-                    ltv: transactions.filter(t => t.clientId === client.id \u0026\u0026 t.type === 'INCOME').reduce((acc, t) => acc + t.amount, 0)
+                    ltv: transactions.filter(t => t.clientId === client.id && t.type === 'INCOME').reduce((acc, t) => acc + t.amount, 0)
                   })).sort((a, b) => b.ltv - a.ltv).slice(0, 5).map((c, i) => (
                     <div key={c.id} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
                       <div className="flex items-center gap-3">
@@ -363,7 +363,7 @@ export default function FinanceView() {
                 <div className="flex flex-col items-center justify-center py-8">
                   {(() => {
                     const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
-                    const cancelledLastMonth = clients.filter(c => c.status === 'Cancelado' \u0026\u0026 c.updatedAt \u0026\u0026 c.updatedAt > thirtyDaysAgo).length;
+                    const cancelledLastMonth = clients.filter(c => c.status === 'Cancelado' && c.updatedAt && c.updatedAt > thirtyDaysAgo).length;
                     const totalBaseStart = clients.filter(c => c.status === 'Ativo').length + cancelledLastMonth;
                     const churchRate = totalBaseStart > 0 ? (cancelledLastMonth / totalBaseStart) * 100 : 0;
                     
