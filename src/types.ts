@@ -141,6 +141,7 @@ export interface Client {
   emailHistory?: EmailHistoryEntry[];
   assignedTo?: string;
   tagIds?: string[];
+  updatedAt?: number;
 }
 
 export interface OnboardingQuestion {
@@ -185,6 +186,7 @@ export interface Transaction {
   type: TransactionType;
   status: TransactionStatus;
   categoryId: string;
+  categoryName?: string;
   clientId?: string;
   offerId?: string;
   bankAccountId?: string; // Para conta bancária (ex: Inter vs Itaú vs PagSeguro)

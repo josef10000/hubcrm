@@ -365,17 +365,17 @@ export default function FinanceView() {
                     const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
                     const cancelledLastMonth = clients.filter(c => c.status === 'Cancelado' && c.updatedAt && c.updatedAt > thirtyDaysAgo).length;
                     const totalBaseStart = clients.filter(c => c.status === 'Ativo').length + cancelledLastMonth;
-                    const churchRate = totalBaseStart > 0 ? (cancelledLastMonth / totalBaseStart) * 100 : 0;
+                    const churnRate = totalBaseStart > 0 ? (cancelledLastMonth / totalBaseStart) * 100 : 0;
                     
                     return (
                       <>
                         <div className="relative w-32 h-32 mb-4">
                           <svg className="w-full h-full transform -rotate-90">
                             <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-white/5" />
-                            <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={364.4} strokeDashoffset={364.4 - (364.4 * churchRate) / 100} className="text-red-500" strokeLinecap="round" />
+                            <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={364.4} strokeDashoffset={364.4 - (364.4 * churnRate) / 100} className="text-red-500" strokeLinecap="round" />
                           </svg>
                           <div className="absolute inset-0 flex items-center justify-center flex-col">
-                            <span className="text-2xl font-bold text-gray-900 dark:text-white">{churchRate.toFixed(1)}%</span>
+                            <span className="text-2xl font-bold text-gray-900 dark:text-white">{churnRate.toFixed(1)}%</span>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4 w-full">

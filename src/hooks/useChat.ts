@@ -185,37 +185,6 @@ export function useChat(chatId: string | null) {
       return false;
     }
   };
-
-  const editMessage = async (messageId: string, newText: string) => {
-    if (!effectiveOrgId || !chatId || !userProfile?.uid) return false;
-
-    try {
-      const messageRef = doc(db, 'organizations', effectiveOrgId, 'chats', chatId, 'messages', messageId);
-      await updateDoc(messageRef, {
-        text: newText,
-        isEdited: true,
-        updatedAt: serverTimestamp()
-      });
-      return true;
-    } catch (error) {
-      console.error("Erro ao editar mensagem:", error);
-      toast.error("Erro ao editar mensagem.");
-      return false;
-    }
-  };
-
-  const markMessageAsRead = async (messageId: string) => {
-    if (!effectiveOrgId || !chatId || !userProfile?.uid) return;
-
-    try {
-      const messageRef = doc(db, 'organizations', effectiveOrgId, 'chats', chatId, 'messages', messageId);
-      await updateDoc(messageRef, {
-        readBy: arrayUnion(userProfile.uid)
-      });
-    } catch (error) {
-      // Falha silenciosa
-    }
-  };
     
   const deleteMessage = async (messageId: string) => {
     if (!effectiveOrgId || !chatId || !userProfile?.uid) return false;
@@ -399,7 +368,8 @@ export function useChat(chatId: string | null) {
       const messageRef = doc(db, 'organizations', effectiveOrgId, 'chats', chatId, 'messages', messageId);
       await updateDoc(messageRef, {
         text: newText,
-        isEdited: true
+        isEdited: true,
+        updatedAt: serverTimestamp()
       });
       toast.success("Mensagem editada!");
     } catch (error) {

@@ -127,7 +127,7 @@ export default function DRETable() {
                       );
                     })}
                   </tr>
-                  {Object.entries(aggregated.Deducoes).map(([subcat, values]) => (
+                  {(Object.entries(aggregated.Deducoes) as [string, number[]][]).map(([subcat, values]) => (
                     <tr key={subcat} className="border-b border-white/5 text-gray-500 text-xs italic">
                       <td className="py-2 px-4 pl-10 underline decoration-dotted">{subcat}</td>
                       {values.map((val, i) => (
