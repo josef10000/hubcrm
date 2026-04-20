@@ -392,6 +392,35 @@ export function useChat(chatId: string | null) {
     }
   };
 
+  // Editar mensagem já enviada
+  const editMessage = async (messageId: string, newText: string) => {
+    if (!effectiveOrgId || !chatId || !userProfile?.uid) return;
+    try {
+      const messageRef = doc(db, 'organizations', effectiveOrgId, 'chats', chatId, 'messages', messageId);
+      await updateDoc(messageRef, {
+        text: newText,
+        isEdited: true
+      });
+      toast.success("Mensagem editada!");
+    } catch (error) {
+      console.error("Erro ao editar mensagem:", error);
+      toast.error("Falha ao editar mensagem.");
+    }
+  };
+
+  // Marcar mensagem como lida (readBy array)
+  const markMessageAsRead = async (messageId: string) => {
+    if (!effectiveOrgId || !chatId || !userProfile?.uid) return;
+    try {
+      const messageRef = doc(db, 'organizations', effectiveOrgId, 'chats', chatId, 'messages', messageId);
+      await updateDoc(messageRef, {
+        readBy: arrayUnion(userProfile.uid)
+      });
+    } catch (error) {
+      console.error("Erro ao marcar como lido:", error);
+    }
+  };
+
   return { 
     messages, 
     typing, 

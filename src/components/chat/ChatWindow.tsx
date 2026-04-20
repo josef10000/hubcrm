@@ -26,7 +26,8 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
   const { teamProfiles, effectiveOrgId } = useCRM();
   const { 
     messages, typing, sendMessage, setTypingStatus, loading, deleteMessage, 
-    toggleReaction, votePoll, togglePin, unpinMessage, toggleBookmark, respondApproval 
+    toggleReaction, votePoll, togglePin, unpinMessage, toggleBookmark, respondApproval,
+    editMessage, markMessageAsRead, sharedMedia 
   } = useChat(chatId);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const [pinnedMessagesData, setPinnedMessagesData] = useState<ChatMessage[]>([]);
@@ -42,7 +43,6 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
   const [isMediaOpen, setIsMediaOpen] = useState(false);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { markMessageAsRead, sharedMedia } = useChat(chatId);
 
   // Filtragem de Mensagens (Busca)
   const filteredMessages = messages.filter(msg => 
@@ -210,7 +210,6 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
   };
 
   const handleUpdate = async (messageId: string, text: string) => {
-    const { editMessage } = useChat(chatId);
     await editMessage(messageId, text);
     setEditingMessage(null);
   };
