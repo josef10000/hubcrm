@@ -64,6 +64,11 @@ service cloud.firestore {
         }
       }
 
+      // 🟢 HUB CHAT — Favoritos de Mensagens
+      match /users/{userId}/bookmarks/{bookmarkId} {
+        allow read, write: if isOwnerEmail() || (belongsToOrg(orgId) && request.auth.uid == userId);
+      }
+
       // Outros dados dentro da organização (Regra Genérica)
       match /{collection}/{docId} {
         allow read: if isOwnerEmail() || belongsToOrg(orgId);

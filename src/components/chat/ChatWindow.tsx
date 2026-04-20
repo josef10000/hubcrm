@@ -76,7 +76,9 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
 
   // Listener para carregar mensagem fixada se não estiver no buffer
   useEffect(() => {
-    const pinnedId = chat?.pinnedMessages?.[0];
+    const pinnedList = chat?.pinnedMessages || [];
+    const pinnedId = pinnedList.length > 0 ? pinnedList[pinnedList.length - 1] : undefined;
+    
     if (!pinnedId) {
       setPinnedMessageData(null);
       return;
@@ -323,7 +325,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
             </span>
           )}
           <button 
-            onClick={() => unpinMessage(chat.pinnedMessages![0])}
+            onClick={() => unpinMessage(chat.pinnedMessages![chat.pinnedMessages!.length - 1])}
             className="p-1.5 hover:bg-primary-500/10 rounded-lg text-primary-400 transition-colors"
           >
             <X size={14} />
