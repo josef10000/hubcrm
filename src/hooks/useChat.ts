@@ -60,6 +60,9 @@ export function useChat(chatId: string | null) {
     return () => unsubscribe();
   }, [effectiveOrgId, chatId]);
 
+  // Derivar mídia compartilhada
+  const sharedMedia = messages.filter(m => m.attachments && m.attachments.length > 0);
+
   // Carregar typing indicators
   useEffect(() => {
     if (!effectiveOrgId || !chatId) return;
@@ -150,6 +153,10 @@ export function useChat(chatId: string | null) {
 
       // Atualizar contadores para membros
       if (members.length > 0) {
+        // Detectar @todos ou @everyone
+        const hasMentionAll = text.toLowerCase().includes('@everyone') || text.toLowerCase().includes('@todos');
+        if (hasMentionAll) messageData.mentionAll = true;
+
         members.forEach(memberId => {
           if (memberId === userProfile.uid) return;
           
@@ -157,7 +164,7 @@ export function useChat(chatId: string | null) {
           updates[`unreadCount.${memberId}`] = increment(1);
           
           // Se for mencionado (ou @todos), incrementar unreadMentions
-          const isMentioned = mentions.includes(memberId) || mentions.includes('all');
+          const isMentioned = mentions.includes(memberId) || mentions.includes('all') || hasMentionAll;
           if (isMentioned) {
             updates[`unreadMentions.${memberId}`] = increment(1);
           }
@@ -172,10 +179,37 @@ export function useChat(chatId: string | null) {
       await deleteDoc(typingRef);
       
       return true;
+    }
+  };
+
+  const editMessage = async (messageId: string, newText: string) => {
+    if (!effectiveOrgId || !chatId || !userProfile?.uid) return false;
+
+    try {
+      const messageRef = doc(db, 'organizations', effectiveOrgId, 'chats', chatId, 'messages', messageId);
+      await updateDoc(messageRef, {
+        text: newText,
+        isEdited: true,
+        updatedAt: serverTimestamp()
+      });
+      return true;
     } catch (error) {
-      console.error("Erro ao enviar mensagem:", error);
-      toast.error("Erro ao enviar mensagem.");
+      console.error("Erro ao editar mensagem:", error);
+      toast.error("Erro ao editar mensagem.");
       return false;
+    }
+  };
+
+  const markMessageAsRead = async (messageId: string) => {
+    if (!effectiveOrgId || !chatId || !userProfile?.uid) return;
+
+    try {
+      const messageRef = doc(db, 'organizations', effectiveOrgId, 'chats', chatId, 'messages', messageId);
+      await updateDoc(messageRef, {
+        readBy: arrayUnion(userProfile.uid)
+      });
+    } catch (error) {
+      // Falha silenciosa
     }
   };
     
@@ -367,6 +401,9 @@ export function useChat(chatId: string | null) {
     togglePin,
     unpinMessage,
     toggleBookmark,
-    respondApproval
+    respondApproval,
+    editMessage,
+    markMessageAsRead,
+    sharedMedia
   };
 }

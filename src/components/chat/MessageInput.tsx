@@ -26,10 +26,15 @@ interface MessageInputProps {
   onTyping: (isTyping: boolean) => void;
   replyTo: ChatMessage['replyTo'] | null;
   onCancelReply: () => void;
+  editingMessage: ChatMessage | null;
+  onCancelEdit: () => void;
+  onUpdate: (messageId: string, text: string) => void;
   members: string[];
 }
 
-export default function MessageInput({ onSend, onTyping, replyTo, onCancelReply, members }: MessageInputProps) {
+export default function MessageInput({ 
+  onSend, onTyping, replyTo, onCancelReply, editingMessage, onCancelEdit, onUpdate, members 
+}: MessageInputProps) {
   const [isPollModalOpen, setIsPollModalOpen] = useState(false);
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
   const [text, setText] = useState('');
@@ -42,12 +47,28 @@ export default function MessageInput({ onSend, onTyping, replyTo, onCancelReply,
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout|null>(null);
 
+  // Focus e carregar texto ao editar
+  useEffect(() => {
+    if (editingMessage) {
+      setText(editingMessage.text);
+      textareaRef.current?.focus();
+    } else {
+      setText('');
+    }
+  }, [editingMessage]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!text.trim() && !uploading) return;
 
-    const mentions = parseMentions(text, teamProfiles.map(p => ({ uid: p.uid, displayName: p.displayName })));
-    onSend(text, mentions, [], replyTo, members, "text");
+    if (editingMessage) {
+      onUpdate(editingMessage.id, text);
+      onCancelEdit();
+    } else {
+      const mentions = parseMentions(text, teamProfiles.map(p => ({ uid: p.uid, displayName: p.displayName })));
+      onSend(text, mentions, [], replyTo, members, "text");
+    }
+    
     setText('');
     onTyping(false);
     setShowMentions(false);
@@ -179,6 +200,19 @@ export default function MessageInput({ onSend, onTyping, replyTo, onCancelReply,
         </div>
       )}
 
+      {/* Indicador de Edição */}
+      {editingMessage && (
+        <div className="absolute bottom-full left-0 right-0 bg-amber-50 dark:bg-amber-500/10 p-3 flex justify-between items-center border-t border-amber-200 dark:border-amber-500/20 animate-in slide-in-from-bottom">
+          <div className="flex-1">
+            <span className="text-xs font-bold text-amber-600 dark:text-amber-500 uppercase block mb-1">Editando mensagem</span>
+            <p className="text-sm text-amber-700 dark:text-amber-400 break-words line-clamp-1 italic leading-tight">"{editingMessage.text}"</p>
+          </div>
+          <button onClick={onCancelEdit} className="p-1 hover:bg-amber-200 dark:hover:bg-white/10 rounded-full transition-colors">
+            <X size={16} className="text-amber-600" />
+          </button>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="flex items-center gap-2 max-w-6xl mx-auto">
         <input 
           type="file" 
@@ -254,11 +288,13 @@ export default function MessageInput({ onSend, onTyping, replyTo, onCancelReply,
           disabled={!text.trim() || uploading}
           className={`p-3 rounded-2xl shadow-lg transition-all ${
             text.trim() && !uploading
-              ? 'bg-primary-500 text-white shadow-primary-500/20 hover:scale-105 active:scale-95' 
+              ? editingMessage 
+                ? 'bg-amber-500 text-white shadow-amber-500/20 hover:scale-105 active:scale-95'
+                : 'bg-primary-500 text-white shadow-primary-500/20 hover:scale-105 active:scale-95' 
               : 'bg-gray-100 dark:bg-white/5 text-gray-400 cursor-not-allowed'
           }`}
         >
-          <Send size={20} />
+          {editingMessage ? <CheckCircle2 size={20} /> : <Send size={20} />}
         </button>
       </form>
 

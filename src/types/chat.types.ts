@@ -50,6 +50,9 @@ export interface ChatMessage {
     [emoji: string]: string[];
   };
   isDeleted?: boolean;                // Flag para mensagens apagadas
+  isEdited?: boolean;                 // Flag para mensagens editadas
+  readBy?: string[];                  // Lista de UIDs que leram esta mensagem
+  mentionAll?: boolean;               // Se @todos foi usado
   type?: "text" | "poll" | "approval" | "system" | "rich_link"; // Tipo da mensagem
   poll?: {                            // Dados da enquete
     question: string;
@@ -86,6 +89,8 @@ export interface MessageBookmark {
   text: string;
   senderName: string;
   senderPhotoURL?: string;
+  category?: string;                  // Ex: "Regra", "Financeiro"
+  categoryColor?: string;             // HEX ou Tailwind color
   savedAt: Timestamp;
 }
 

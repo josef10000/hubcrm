@@ -23,7 +23,10 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
   const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false);
   const [activeTab, setActiveTab ] = useState<'chats' | 'saved'>('chats');
-  const { bookmarks, loading: bookmarksLoading } = useBookmarks();
+  const [selectedCategory, setSelectedCategory] = useState<string>('todos');
+  const { bookmarks, loading: bookmarksLoading, updateBookmark } = useBookmarks();
+
+  const categories = ['todos', ...new Set(bookmarks.filter(b => b.category).map(b => b.category!))];
 
   const filteredChats = chats.filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -230,21 +233,71 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
                 <p className="text-[10px] mt-2 leading-relaxed">Você ainda não salvou nenhuma mensagem para acesso rápido.</p>
               </div>
             ) : (
-              bookmarks.map((b) => (
-                <div 
-                  key={b.id}
-                  className="p-3 bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl hover:border-primary-500/30 transition-all group cursor-pointer"
-                  onClick={() => onSelect(b.chatId)}
-                >
-                  <div className="flex justify-between items-start mb-1">
-                    <span className="text-sm font-bold text-primary-500 uppercase tracking-tighter">{b.senderName}</span>
-                    <span className="text-xs text-gray-400">{b.savedAt ? formatChatTime(b.savedAt.toDate()) : '...'}</span>
+              <div className="space-y-3">
+                {/* Filtro de Categorias */}
+                {categories.length > 1 && (
+                  <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar-hide">
+                    {categories.map(cat => (
+                      <button
+                        key={cat}
+                        onClick={() => setSelectedCategory(cat)}
+                        className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${
+                          selectedCategory === cat 
+                            ? 'bg-primary-500 text-white border-primary-500 shadow-lg shadow-primary-500/20' 
+                            : 'bg-white dark:bg-white/5 text-gray-400 border-gray-100 dark:border-white/10 hover:border-primary-500/30'
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-tight">
-                    {b.text}
-                  </p>
-                </div>
-              ))
+                )}
+
+                {bookmarks
+                  .filter(b => selectedCategory === 'todos' || b.category === selectedCategory)
+                  .map((b) => (
+                    <div 
+                      key={b.id}
+                      className="p-3 bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl hover:border-primary-500/30 transition-all group cursor-pointer relative"
+                      onClick={() => onSelect(b.chatId)}
+                    >
+                      {b.category && (
+                        <div 
+                          className="absolute top-3 right-3 w-2 h-2 rounded-full shadow-sm"
+                          style={{ backgroundColor: b.categoryColor || '#3B82F6' }}
+                          title={b.category}
+                        />
+                      )}
+                      <div className="flex justify-between items-start mb-1 pr-4">
+                        <span className="text-sm font-bold text-primary-500 uppercase tracking-tighter">{b.senderName}</span>
+                        <span className="text-xs text-gray-400">{b.savedAt ? formatChatTime(b.savedAt.toDate()) : '...'}</span>
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-tight">
+                        {b.text}
+                      </p>
+                      
+                      {/* Ações Rápidas (Categoria) */}
+                      <div className="mt-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                         {['Urgente', 'Regra', 'Ideia'].map(cat => (
+                           <button
+                             key={cat}
+                             onClick={(e) => {
+                               e.stopPropagation();
+                               updateBookmark(b.id, { 
+                                 category: cat, 
+                                 categoryColor: cat === 'Urgente' ? '#EF4444' : cat === 'Regra' ? '#10B981' : '#F59E0B'
+                               });
+                             }}
+                             className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-gray-100 dark:bg-white/10 hover:bg-primary-500 hover:text-white transition-colors"
+                           >
+                             + {cat}
+                           </button>
+                         ))}
+                      </div>
+                    </div>
+                  ))
+                }
+              </div>
             )}
           </div>
         )}

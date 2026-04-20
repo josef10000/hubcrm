@@ -16,16 +16,9 @@ export function useBookmarks() {
     const q = query(bookmarksRef, orderBy('savedAt', 'desc'));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const bks = snapshot.docs.map(doc => {
-        const data = doc.data();
         return {
           id: doc.id,
-          messageId: data.messageId,
-          chatId: data.chatId,
-          text: data.text,
-          senderName: data.senderName,
-          senderPhotoURL: data.senderPhotoURL,
-          savedAt: data.savedAt
+          ...data
         } as MessageBookmark;
       });
       setBookmarks(bks);
@@ -38,5 +31,19 @@ export function useBookmarks() {
     return () => unsubscribe();
   }, [userProfile?.uid, userProfile?.orgId]);
 
-  return { bookmarks, loading };
+  const updateBookmark = async (id: string, updates: Partial<MessageBookmark>) => {
+    if (!userProfile?.uid || !userProfile?.orgId) return;
+    const { doc: fireDoc, updateDoc } = await import('firebase/firestore');
+    const bookmarkRef = fireDoc(db, 'organizations', userProfile.orgId, 'users', userProfile.uid, 'bookmarks', id);
+    await updateDoc(bookmarkRef, updates);
+  };
+
+  const removeBookmark = async (id: string) => {
+    if (!userProfile?.uid || !userProfile?.orgId) return;
+    const { doc: fireDoc, deleteDoc } = await import('firebase/firestore');
+    const bookmarkRef = fireDoc(db, 'organizations', userProfile.orgId, 'users', userProfile.uid, 'bookmarks', id);
+    await deleteDoc(bookmarkRef);
+  };
+
+  return { bookmarks, loading, updateBookmark, removeBookmark };
 }

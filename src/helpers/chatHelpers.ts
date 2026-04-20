@@ -15,7 +15,7 @@ export const parseMentions = (text: string, teamMembers: { uid: string, displayN
   // Regex simples para capturar @nome ou @todos
   const words = text.split(/\s+/);
   
-  if (text.includes('@todos')) {
+  if (text.includes('@todos') || text.includes('@everyone')) {
     return teamMembers.map(m => m.uid);
   }
 

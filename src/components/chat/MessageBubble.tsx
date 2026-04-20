@@ -11,6 +11,7 @@ interface MessageBubbleProps {
   isPinned?: boolean;
   isBookmarked?: boolean;
   onDelete?: (id: string) => Promise<boolean>;
+  onEdit?: (message: ChatMessage) => void;
   onReply?: (message: ChatMessage) => void;
   onReact?: (id: string, emoji: string) => void;
   onVote?: (messageId: string, optionId: string) => void;
@@ -24,14 +25,16 @@ interface MessageBubbleProps {
 const COMMON_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
 
 export default function MessageBubble({ 
-  message, isRead, isPinned, isBookmarked, onDelete, onReply, onReact, onVote, 
+  message, isRead, isPinned, isBookmarked, onDelete, onEdit, onReply, onReact, onVote, 
   onBookmark, onPin, onUnpin, onCreateTicket, onApprove 
 }: MessageBubbleProps) {
   const { userProfile } = useAuth();
   const navigate = useNavigate();
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showReadBy, setShowReadBy] = useState(false);
   const isMine = message.senderId === userProfile?.uid;
   const isDeleted = message.isDeleted;
+  const isMentioned = message.mentions?.includes(userProfile?.uid || '') || message.mentionAll;
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -124,13 +127,22 @@ export default function MessageBubble({
                 </button>
 
                 {isMine && (
-                  <button 
-                    onClick={handleDelete}
-                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-full transition-colors"
-                    title="Apagar"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  <>
+                    <button 
+                      onClick={() => onEdit?.(message)}
+                      className="p-1.5 text-gray-400 hover:text-amber-500 hover:bg-amber-500/10 rounded-full transition-colors"
+                      title="Editar"
+                    >
+                      <Check size={14} className="scale-75" />
+                    </button>
+                    <button 
+                      onClick={handleDelete}
+                      className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-full transition-colors"
+                      title="Apagar"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </>
                 )}
               </div>
             </div>
@@ -152,6 +164,9 @@ export default function MessageBubble({
                 ? 'bg-black dark:bg-zinc-950 text-white rounded-tr-none ring-1 ring-white/10' 
                 : 'bg-primary-500/10 dark:bg-primary-500/5 text-gray-800 dark:text-gray-100 border border-primary-500/20 rounded-tl-none'
           }`}>
+            {isMentioned && !isMine && (
+              <div className="absolute top-0 right-0 -mt-1 -mr-1 w-2 h-2 bg-primary-500 rounded-full ring-2 ring-white dark:ring-black/20" />
+            )}
             {isDeleted ? (
               <div className="flex items-center gap-2 py-1">
                 <Trash2 size={12} className="opacity-40" />
@@ -259,14 +274,10 @@ export default function MessageBubble({
                        </div>
                      </div>
                    </div>
-                ) : (
-                  <p className={`${
-                    /^(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])$/.test(message.text.trim()) 
-                    ? 'text-4xl' 
-                    : 'text-sm'
-                  } leading-relaxed whitespace-pre-wrap font-medium`}>
-                    {message.text}
-                  </p>
+                )}
+                
+                {message.isEdited && (
+                  <span className="text-[10px] italic opacity-50 block mt-1">(editado)</span>
                 )}
                 
                 {/* Anexos */}
@@ -286,11 +297,34 @@ export default function MessageBubble({
             <div className={`flex items-center gap-1 mt-1 text-xs ${isMine ? 'text-white/40 justify-end' : 'text-gray-400'}`}>
               {message.createdAt ? formatChatTime(message.createdAt.toDate()) : '...'}
               {isMine && !isDeleted && (
-                message.createdAt ? (
-                  isRead ? <CheckCheck size={14} className="text-emerald-400" /> : <Check size={14} />
-                ) : (
-                  <div className="w-2.5 h-2.5 border border-white/40 border-t-transparent rounded-full animate-spin" />
-                )
+                <div className="relative">
+                  <button 
+                    onClick={() => message.readBy && message.readBy.length > 0 && setShowReadBy(!showReadBy)}
+                    className="hover:scale-110 transition-transform flex items-center"
+                  >
+                    {message.createdAt ? (
+                      isRead || (message.readBy && message.readBy.length > 0) ? <CheckCheck size={14} className="text-emerald-400" /> : <Check size={14} />
+                    ) : (
+                      <div className="w-2.5 h-2.5 border border-white/40 border-t-transparent rounded-full animate-spin" />
+                    )}
+                  </button>
+                  
+                  {showReadBy && message.readBy && (
+                    <div className="absolute bottom-full right-0 mb-2 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-white/10 rounded-2xl shadow-2xl p-2 min-w-[120px] z-[100] animate-in zoom-in-95 overflow-hidden">
+                      <p className="text-[10px] font-black uppercase text-gray-400 mb-2 px-1">Lido por</p>
+                      <div className="flex flex-col gap-1 max-h-40 overflow-y-auto custom-scrollbar">
+                        {message.readBy.map(uid => (
+                          <div key={uid} className="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
+                             <div className="w-5 h-5 rounded-full bg-primary-500/10 flex items-center justify-center">
+                               <User size={10} className="text-primary-500" />
+                             </div>
+                             <span className="text-[11px] truncate text-gray-600 dark:text-gray-300">UID: {uid.slice(0, 5)}...</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 

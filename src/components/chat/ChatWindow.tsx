@@ -37,9 +37,11 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [initialTicketMessage, setInitialTicketMessage] = useState('');
+  const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
+  const [isMediaOpen, setIsMediaOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { markMessageAsRead, sharedMedia } = useChat(chatId);
 
   // Filtragem de Mensagens (Busca)
   const filteredMessages = messages.filter(msg => 
@@ -206,6 +208,12 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
     setReplyingTo(null);
   };
 
+  const handleUpdate = async (messageId: string, text: string) => {
+    const { editMessage } = useChat(chatId);
+    await editMessage(messageId, text);
+    setEditingMessage(null);
+  };
+
   // Lógica para detectar Links Internos e gerar Previews
   const detectInternalLinks = async (text: string) => {
     // Ex: https://hubcrm.com/leads/123
@@ -287,9 +295,16 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
               onClick={() => setIsSearchOpen(true)}
               className="p-2.5 text-gray-400 hover:text-primary-500 hover:bg-primary-500/5 rounded-xl transition-all"
             >
-              <Search size={18} />
+              <Search size={24} />
             </button>
           )}
+          <button 
+            onClick={() => setIsMediaOpen(!isMediaOpen)}
+            className={`p-2.5 rounded-xl transition-all ${isMediaOpen ? 'text-primary-500 bg-primary-500/10' : 'text-gray-400 hover:text-primary-500 hover:bg-primary-500/5'}`}
+            title="Mídia Compartilhada"
+          >
+            <Folder size={24} />
+          </button>
           <button 
             onClick={() => setIsSettingsOpen(true)}
             className="p-2.5 text-gray-400 hover:text-primary-500 hover:bg-primary-500/5 rounded-xl transition-all" 
@@ -309,7 +324,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="p-2.5 text-gray-400 hover:text-primary-500 hover:bg-primary-500/5 rounded-xl transition-all"
             >
-              <MoreVertical size={18} />
+              <MoreVertical size={24} />
             </button>
 
             {isMenuOpen && (
@@ -401,6 +416,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
                   onUnpin={unpinMessage}
                   onBookmark={toggleBookmark}
                   onApprove={respondApproval}
+                  onEdit={setEditingMessage}
                   onCreateTicket={(text) => {
                     setInitialTicketMessage(text);
                     setIsSupportModalOpen(true);
@@ -418,6 +434,9 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
         onTyping={setTypingStatus}
         replyTo={replyingTo ? { messageId: replyingTo.id, text: replyingTo.text, senderName: replyingTo.senderName } : null}
         onCancelReply={() => setReplyingTo(null)}
+        editingMessage={editingMessage}
+        onCancelEdit={() => setEditingMessage(null)}
+        onUpdate={handleUpdate}
         members={chat.members}
       />
 
@@ -432,6 +451,45 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
         onClose={() => setIsSupportModalOpen(false)}
         initialMessage={initialTicketMessage}
       />
+    </div>
+
+      {/* Sidebar de Mídia Compartilhada */}
+      {isMediaOpen && (
+        <div className="w-80 border-l border-gray-100 dark:border-white/10 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-xl animate-in slide-in-from-right duration-300 flex flex-col h-full">
+          <div className="p-4 border-b border-gray-100 dark:border-white/10 flex justify-between items-center bg-white/10">
+            <h4 className="text-sm font-black uppercase tracking-widest text-gray-900 dark:text-white">Mídia & Arquivos</h4>
+            <button onClick={() => setIsMediaOpen(false)} className="p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded-full transition-colors">
+              <X size={16} className="text-gray-400" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+            <div className="grid grid-cols-2 gap-2">
+              {sharedMedia.map((msg) => (
+                msg.attachments?.map((url, idx) => (
+                  <a 
+                    key={`${msg.id}-${idx}`} 
+                    href={url} 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="aspect-square rounded-xl overflow-hidden border border-gray-100 dark:border-white/5 group relative"
+                  >
+                    <img src={url} alt="" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <ExternalLink size={16} className="text-white" />
+                    </div>
+                  </a>
+                ))
+              ))}
+            </div>
+            {sharedMedia.length === 0 && (
+              <div className="flex flex-col items-center justify-center mt-20 opacity-30 text-center px-4">
+                <Folder size={40} className="mb-4" />
+                <p className="text-xs font-bold uppercase tracking-widest leading-relaxed">Nenhuma mídia compartilhada neste chat ainda.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
