@@ -238,7 +238,7 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
                 >
                   <div className="flex justify-between items-start mb-1">
                     <span className="text-[10px] font-bold text-primary-500 uppercase tracking-tighter">{b.senderName}</span>
-                    <span className="text-[9px] text-gray-400">{formatChatTime(b.savedAt)}</span>
+                    <span className="text-[9px] text-gray-400">{formatChatTime(b.savedAt.toDate())}</span>
                   </div>
                   <p className="text-[11px] text-gray-600 dark:text-gray-400 line-clamp-2 leading-tight">
                     {b.text}

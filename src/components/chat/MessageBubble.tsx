@@ -1,5 +1,9 @@
 import { User, Paperclip, Check, CheckCheck, Trash2, Reply, Smile, Bookmark, Pin, CheckSquare, LifeBuoy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { ChatMessage } from '../../types/chat.types';
+import { useAuth } from '../../contexts/AuthContext';
+import { formatChatTime } from '../../helpers/chatHelpers';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -281,7 +285,7 @@ export default function MessageBubble({
 
             {/* Hora e Status */}
             <div className={`flex items-center gap-1 mt-1 text-[9px] ${isMine ? 'text-white/40 justify-end' : 'text-gray-400'}`}>
-              {formatChatTime(message.createdAt?.toMillis() || Date.now())}
+              {message.createdAt ? formatChatTime(message.createdAt.toDate()) : '...'}
               {isMine && !isDeleted && (
                 message.createdAt ? (
                   isRead ? <CheckCheck size={12} className="text-emerald-400" /> : <Check size={12} />
@@ -294,7 +298,7 @@ export default function MessageBubble({
             {/* Reações */}
             {message.reactions && Object.keys(message.reactions).length > 0 && !isDeleted && (
               <div className={`absolute -bottom-3 flex flex-wrap gap-1 ${isMine ? 'right-2' : 'left-2'} z-10`}>
-                {Object.entries(message.reactions).map(([emoji, uids]) => {
+                {(Object.entries(message.reactions) as [string, string[]][]).map(([emoji, uids]) => {
                   if (!uids || uids.length === 0) return null;
                   const hasReacted = uids.includes(userProfile?.uid || '');
                   return (

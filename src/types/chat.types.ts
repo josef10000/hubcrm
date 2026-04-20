@@ -80,6 +80,7 @@ export interface ChatMessage {
 }
 
 export interface MessageBookmark {
+  id: string;
   messageId: string;
   chatId: string;
   text: string;

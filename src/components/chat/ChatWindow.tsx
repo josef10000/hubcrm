@@ -9,6 +9,7 @@ import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
 import GroupSettingsModal from './GroupSettingsModal';
 import SupportRequestModal from '../SupportRequestModal';
+import { toast } from 'sonner';
 import { Pin, ChevronRight, Bookmark, Archive, Folder } from 'lucide-react';
 
 interface ChatWindowProps {
@@ -121,8 +122,9 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
     attachments: string[] = [], 
     replyTo: ChatMessage['replyTo'] = null,
     members: string[] = [],
-    type: "text" | "poll" = "text",
-    poll?: ChatMessage['poll']
+    type: "text" | "poll" | "approval" = "text",
+    poll?: ChatMessage['poll'],
+    approval?: ChatMessage['approval']
   ) => {
     if (!chat) return;
     if (!text.trim() && attachments.length === 0 && type === 'text') return;
