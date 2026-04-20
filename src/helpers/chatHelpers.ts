@@ -29,3 +29,10 @@ export const parseMentions = (text: string, teamMembers: { uid: string, displayN
 
   return Array.from(new Set(mentions));
 };
+
+export const highlightMentions = (text: string) => {
+  if (!text) return [];
+  // Regex para capturar @todos, @everyone e @nomeUsuário
+  const mentionRegex = /(@todos|@everyone|@[a-zA-Z0-9_\u00C0-\u017F]+)/g;
+  return text.split(mentionRegex);
+};

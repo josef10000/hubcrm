@@ -1,4 +1,4 @@
-# 🔐 Hub Central — Intranet Corporativa v4.3.4 (Productivity Update)
+# 🔐 Hub Central — Intranet Corporativa v4.3.5 (Emergency Patch)
 
 > [!CAUTION]
 > **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
@@ -7,7 +7,7 @@
 Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.
 
   <p>
-    <img src="https://img.shields.io/badge/Version-4.3.4-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-4.3.5-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Status-Audited_&_Optimized-3b82f6?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-3b82f6?style=for-the-badge&labelColor=111111" alt="License" />
@@ -713,6 +713,7 @@ className="bg-gray-100 border-gray-200"
 - [x] 🛰️ **v4.2.1 Presença Persistente (Correção de Status Manual / Almoço)**
 - [x] 🚀 **v4.3.0 Chat Productivity Hub (Approvals, Pins, Bookmarks & Task Integration)**
 - [x] ⚡ **v4.3.3 UI Standardization & Real-time Pin Reactivity Fix**
+- [x] ⚡ **v4.3.5 Bug Fix: Missing Text rendering & Mention Highlighting upgrade**
 - [ ] 🔮 **v4.4.0 Automations & AI Chat Summary** (Fase 3)
 
 

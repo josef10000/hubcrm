@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
 import { ChatMessage } from '../../types/chat.types';
 import { useAuth } from '../../contexts/AuthContext';
-import { formatChatTime } from '../../helpers/chatHelpers';
+import { formatChatTime, highlightMentions } from '../../helpers/chatHelpers';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -273,8 +273,22 @@ export default function MessageBubble({
                          <span className="text-[10px] font-bold opacity-60">{message.richPreview.value}</span>
                        </div>
                      </div>
-                   </div>
-                ) : null}
+                ) : (
+                  <p className="text-sm whitespace-pre-wrap break-words leading-relaxed font-medium">
+                    {/* Renderização com Destaque de Menções */}
+                    {highlightMentions(message.text).map((part, i) => {
+                      const mentionRegex = /(@todos|@everyone|@[a-zA-Z0-9_\u00C0-\u017F]+)/;
+                      if (mentionRegex.test(part)) {
+                        return (
+                          <span key={i} className={`font-black tracking-tight ${isMine ? 'text-primary-400' : 'text-primary-600'}`}>
+                            {part}
+                          </span>
+                        );
+                      }
+                      return part;
+                    })}
+                  </p>
+                )}
                 
                 {message.isEdited && (
                   <span className="text-[10px] italic opacity-50 block mt-1">(editado)</span>
