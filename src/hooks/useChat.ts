@@ -8,6 +8,7 @@ import {
   onSnapshot, 
   writeBatch, 
   doc, 
+  getDoc,
   serverTimestamp, 
   increment,
   updateDoc,
@@ -282,12 +283,10 @@ export function useChat(chatId: string | null) {
 
     try {
       const chatRef = doc(db, 'organizations', effectiveOrgId, 'chats', chatId);
-      const isPinned = messages.find(m => m.id === messageId)?.id && (messages as any).pinnedMessages?.includes(messageId);
-      // Nota: o hooks já tem messages. No ChatWindow temos o objeto 'chat' que tem o pinnedMessages.
-      // Vou buscar o estado atual do campo no doc para garantir consistencia.
       
       await updateDoc(chatRef, {
-        pinnedMessages: arrayUnion(messageId)
+        pinnedMessages: arrayUnion(messageId),
+        updatedAt: serverTimestamp()
       });
       toast.success("Mensagem fixada!");
     } catch (error) {
@@ -300,7 +299,8 @@ export function useChat(chatId: string | null) {
     try {
       const chatRef = doc(db, 'organizations', effectiveOrgId, 'chats', chatId);
       await updateDoc(chatRef, {
-        pinnedMessages: arrayRemove(messageId)
+        pinnedMessages: arrayRemove(messageId),
+        updatedAt: serverTimestamp()
       });
       toast.success("Mensagem desfixada.");
     } catch (error) {
@@ -313,21 +313,25 @@ export function useChat(chatId: string | null) {
 
     try {
       const bookmarkRef = doc(db, 'organizations', effectiveOrgId, 'users', userProfile.uid, 'bookmarks', msg.id);
-      
-      // Simples toggle: se já existe, remove. Se não, adiciona.
-      // Aqui vamos usar um getDoc ou tentar setDoc se não tivermos certeza do estado local.
-      // Para simplificar agora, vamos apenas setar.
-      await setDoc(bookmarkRef, {
-        messageId: msg.id,
-        chatId: chatId,
-        text: msg.text,
-        senderName: msg.senderName,
-        senderPhotoURL: msg.senderPhotoURL || '',
-        savedAt: serverTimestamp()
-      });
-      toast.success("Mensagem salva nos favoritos!");
+      const snap = await getDoc(bookmarkRef);
+
+      if (snap.exists()) {
+        await deleteDoc(bookmarkRef);
+        toast.info("Removido dos favoritos.");
+      } else {
+        await setDoc(bookmarkRef, {
+          messageId: msg.id,
+          chatId: chatId,
+          text: msg.text,
+          senderName: msg.senderName,
+          senderPhotoURL: msg.senderPhotoURL || '',
+          savedAt: serverTimestamp()
+        });
+        toast.success("Salvo nos favoritos!");
+      }
     } catch (error) {
-      console.error("Erro ao salvar favorito:", error);
+      console.error("Erro no toggle de favorito:", error);
+      toast.error("Erro ao processar favorito.");
     }
   };
 

@@ -21,19 +21,11 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
   const navigate = useNavigate();
   const { userProfile } = useAuth();
   const { teamProfiles } = useCRM();
-  const { messages, typing, sendMessage, setTypingStatus, loading, deleteMessage, toggleReaction, votePoll } = useChat(chatId);
-  const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
-  const [initialTicketMessage, setInitialTicketMessage] = useState('');
-  const scrollRef = useRef<HTMLDivElement>(null);
-
   const { 
-    togglePin, unpinMessage, toggleBookmark, respondApproval 
+    messages, typing, sendMessage, setTypingStatus, loading, deleteMessage, 
+    toggleReaction, votePoll, togglePin, unpinMessage, toggleBookmark, respondApproval 
   } = useChat(chatId);
+  const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
 
   // Filtragem de Mensagens (Busca)
   const filteredMessages = messages.filter(msg => 
@@ -277,7 +269,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
           <div className="flex-1 overflow-hidden">
             <p className="text-[10px] font-black uppercase tracking-widest text-primary-600 mb-0.5">Mensagem Fixada</p>
             <div className="flex items-center gap-2">
-               <p className="text-xs text-gray-600 dark:text-gray-400 truncate max-w-md">
+               <p className="text-[15px] font-medium text-gray-800 dark:text-gray-200 truncate max-w-md">
                  {messages.find(m => m.id === chat.pinnedMessages?.[0])?.text || "Carregando mensagem fixada..."}
                </p>
             </div>
@@ -340,11 +332,6 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
                   onCreateTicket={(text) => {
                     setInitialTicketMessage(text);
                     setIsSupportModalOpen(true);
-                  }}
-                  onCreateTask={(text) => {
-                    // Implementação rápida: Adicionar ao PDI via context se disponível
-                    toast.info("Abrindo criador de tarefas...");
-                    // Aqui você poderia abrir um modal de PDI similar ao de Suporte
                   }}
                 />
               );

@@ -1,4 +1,4 @@
-import { User, Paperclip, Check, CheckCheck, Trash2, Reply, Smile, Bookmark, Pin, CheckSquare, LifeBuoy } from 'lucide-react';
+import { User, Paperclip, Check, CheckCheck, Trash2, Reply, Smile, Bookmark, Pin, LifeBuoy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
 import { ChatMessage } from '../../types/chat.types';
@@ -16,7 +16,6 @@ interface MessageBubbleProps {
   onBookmark?: (message: ChatMessage) => void;
   onPin?: (id: string) => void;
   onUnpin?: (id: string) => void;
-  onCreateTask?: (text: string) => void;
   onCreateTicket?: (text: string) => void;
   onApprove?: (id: string, status: 'approved' | 'rejected') => void;
 }
@@ -25,7 +24,7 @@ const COMMON_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
 
 export default function MessageBubble({ 
   message, isRead, isPinned, onDelete, onReply, onReact, onVote, 
-  onBookmark, onPin, onUnpin, onCreateTask, onCreateTicket, onApprove 
+  onBookmark, onPin, onUnpin, onCreateTicket, onApprove 
 }: MessageBubbleProps) {
   const { userProfile } = useAuth();
   const navigate = useNavigate();
@@ -114,13 +113,6 @@ export default function MessageBubble({
                   <Pin size={14} className={isPinned ? 'fill-current' : ''} />
                 </button>
 
-                <button 
-                  onClick={() => onCreateTask?.(message.text)}
-                  className="p-1.5 text-gray-400 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-full transition-colors"
-                  title="Criar Tarefa (PDI)"
-                >
-                  <CheckSquare size={14} />
-                </button>
 
                 <button 
                   onClick={() => onCreateTicket?.(message.text)}
