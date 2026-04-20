@@ -1,4 +1,4 @@
-# 🔐 Hub Central — Intranet Corporativa v4.3.0 (Advanced Chat Features)
+# 🔐 Hub Central — Intranet Corporativa v4.3.3 (Productivity Hub)
 
 > [!CAUTION]
 > **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
@@ -7,7 +7,7 @@
 Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.
 
   <p>
-    <img src="https://img.shields.io/badge/Version-4.3.0-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-4.3.3-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Status-Audited_&_Optimized-3b82f6?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-3b82f6?style=for-the-badge&labelColor=111111" alt="License" />
@@ -20,14 +20,14 @@ Transformando prospecção em faturamento através de automação inteligente e 
     <img src="https://img.shields.io/badge/Firebase-12-FFCA28?style=flat-square&logo=firebase&logoColor=black" alt="Firebase" />
   </p>
   <div align="center">
-  <h2>✨ Features em Destaque v4.2.0</h2>
+  <h2>✨ Features em Destaque v4.3.3</h2>
 </div>
 
 <table>
   <tr>
     <td align="center" width="20%">
-      <br />💬<br /><strong>Hub Chat v2.0</strong><br />
-      <sub>Grupos, DMs & Mídia</sub>
+      <br />💬<br /><strong>Hub Chat v3.0</strong><br />
+      <sub>Approvals, Pins & Bookmarks</sub>
     </td>
     <td align="center" width="20%">
       <br />📈<br /><strong>Sales BI</strong><br />
@@ -53,7 +53,7 @@ Transformando prospecção em faturamento através de automação inteligente e 
 ## 📋 Índice
 
 - [Visão Geral](#-visão-geral)
-- [Hub Chat v2.0](#-hub-chat-v20)
+- [Hub Chat v3.0](#-hub-chat-v30)
 - [Arquitetura de Pilares](#-arquitetura-de-pilares)
 - [Módulos da Plataforma](#-módulos-da-plataforma)
 - [Identidade Visual](#-identidade-visual)
@@ -69,23 +69,19 @@ O **Hub Central v4.0** marca a evolução de um "CRM visual" para um **Ecossiste
 
 ---
 
-## 💬 Hub Chat v2.0 — Real-time Collaboration
+## 💬 Hub Chat v3.0 — Productivity Hub
 
-A intranet agora conta com um sistema de chat proprietário de alta performance, eliminando a dependência de ferramentas externas como WhatsApp para comunicação interna.
+A comunicação interna foi elevada ao nível de ferramenta de gestão. Mais que um chat, um cockpit de produtividade. Veja os detalhes em [CHAT.md](CHAT.md).
 
 | Recurso | Descrição |
 |---|---|
-| 👥 **Grupos Dinâmicos** | Criação de grupos por setores, projetos ou tópicos gerais. |
-| 👤 **Direct Messages** | Conversas 1:1 privadas com busca global de membros da equipe. |
-| 🖼️ **Multimídia Centralizada** | Envio de imagens e documentos via ImgBB com histórico persistente. |
-| 🔔 **Notificações Globais** | Badges de mensagens não lidas e menções (@) em toda a plataforma. |
-| 🎯 **Modo Foco & Destaque** | Interface limpa ou abertura em nova aba para multitarefa. |
-| 🛡️ **Segurança RBAC** | Acesso restrito apenas a membros autorizados de cada chat. |
-| ✅ **Aprovações Nativas** | Cards estruturados para aprovação de descontos, folgas e reembolsos diretamente no chat. |
-| 📌 **Mensagens Fixadas** | Banner de destaque no topo do chat para regras e avisos importantes. |
-| ⭐ **Mensagens Salvas** | Aba de favoritos para acesso rápido a referências e documentos importantes. |
-| 🔗 **Rich Previews CRM** | Pré-visualização inteligente de links internos do HubCRM (Leads, Faturas, etc). |
-| 🎫 **Conversão de Fluxo** | Transforme qualquer mensagem em um Ticket de Suporte ou Tarefa de PDI com um clique. |
+| ✅ **Aprovações Nativas** | Cards de autorização direta (ex: descontos/folgas) com um clique. |
+| ⭐ **Mensagens Salvas** | Bookmark de mensagens importantes para consulta rápida. |
+| 📌 **Pins reativos** | Mensagens fixadas com atualização em tempo real (sem F5). |
+| 🔗 **Rich Previews** | Pré-visualização automática de links internos do HubCRM. |
+| 😎 **Jumbo Emojis** | Detecção e aumento automático de reações via emoji. |
+| 👥 **Grupos & DMs** | Criação dinâmica de canais e conversas 1:1 privadas. |
+| 🛡️ **Segurança RBAC** | Camada total de proteção de dados via Firestore Rules. |
 
 ---
 
@@ -716,6 +712,8 @@ className="bg-gray-100 border-gray-200"
 - [x] 💬 **v4.2.0 Hub Chat v2.0 (Groups, DMs, Media, Replies & Polish)**
 - [x] 🛰️ **v4.2.1 Presença Persistente (Correção de Status Manual / Almoço)**
 - [x] 🚀 **v4.3.0 Chat Productivity Hub (Approvals, Pins, Bookmarks & Task Integration)**
+- [x] ⚡ **v4.3.3 UI Standardization & Real-time Pin Reactivity Fix**
+- [ ] 🔮 **v4.4.0 Automations & AI Chat Summary** (Fase 3)
 
 
 ---
