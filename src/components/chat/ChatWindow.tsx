@@ -12,6 +12,8 @@ import GroupSettingsModal from './GroupSettingsModal';
 import SupportRequestModal from '../SupportRequestModal';
 import { toast } from 'sonner';
 import { Pin, ChevronRight, Bookmark, Archive, Folder } from 'lucide-react';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 
 interface ChatWindowProps {
   chatId: string | null;
@@ -21,7 +23,7 @@ interface ChatWindowProps {
 export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
   const navigate = useNavigate();
   const { userProfile } = useAuth();
-  const { teamProfiles } = useCRM();
+  const { teamProfiles, effectiveOrgId } = useCRM();
   const { 
     messages, typing, sendMessage, setTypingStatus, loading, deleteMessage, 
     toggleReaction, votePoll, togglePin, unpinMessage, toggleBookmark, respondApproval 
@@ -80,17 +82,15 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
 
   // Assinar o chat em tempo real para pins imediatos
   useEffect(() => {
-    if (!chatId || !userProfile?.orgId) return;
-    const { doc, onSnapshot } = require('firebase/firestore');
-    const { db } = require('../../lib/firebase');
+    if (!chatId || !effectiveOrgId) return;
     
-    const unsubscribe = onSnapshot(doc(db, 'organizations', userProfile.orgId, 'chats', chatId), (snap: any) => {
+    const unsubscribe = onSnapshot(doc(db, 'organizations', effectiveOrgId, 'chats', chatId), (snap: any) => {
       if (snap.exists()) {
         setLiveChat({ id: snap.id, ...snap.data() } as Chat);
       }
     });
     return () => unsubscribe();
-  }, [chatId, userProfile?.orgId]);
+  }, [chatId, effectiveOrgId]);
 
   // Sincronizar chat inicial mudado pela sidebar
   useEffect(() => {
