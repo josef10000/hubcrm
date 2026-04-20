@@ -179,6 +179,10 @@ export function useChat(chatId: string | null) {
       await deleteDoc(typingRef);
       
       return true;
+    } catch (error) {
+      console.error("Erro ao enviar mensagem:", error);
+      // Aqui pode-se adicionar um toast de erro se necessário
+      return false;
     }
   };
 

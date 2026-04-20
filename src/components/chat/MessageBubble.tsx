@@ -274,7 +274,7 @@ export default function MessageBubble({
                        </div>
                      </div>
                    </div>
-                )}
+                ) : null}
                 
                 {message.isEdited && (
                   <span className="text-[10px] italic opacity-50 block mt-1">(editado)</span>

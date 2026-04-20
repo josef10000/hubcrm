@@ -16,6 +16,8 @@ export function useBookmarks() {
     const q = query(bookmarksRef, orderBy('savedAt', 'desc'));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
+      const bks = snapshot.docs.map(doc => {
+        const data = doc.data();
         return {
           id: doc.id,
           ...data

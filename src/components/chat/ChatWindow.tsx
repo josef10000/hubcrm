@@ -227,7 +227,8 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-white dark:bg-black/40">
+    <>
+      <div className="flex-1 flex flex-col bg-white dark:bg-black/40 min-w-0">
       {/* Header do Chat */}
       <div className="p-4 border-b border-gray-100 dark:border-white/10 flex items-center justify-between min-h-[73px]">
         <div className="flex items-center gap-3">
@@ -490,6 +491,6 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
