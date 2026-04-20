@@ -1,4 +1,4 @@
-# 🔐 Hub Central — Intranet Corporativa v4.2.1 (Presence Persistence Fix)
+# 🔐 Hub Central — Intranet Corporativa v4.3.0 (Advanced Chat Features)
 
 > [!CAUTION]
 > **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
@@ -7,7 +7,7 @@
 Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.
 
   <p>
-    <img src="https://img.shields.io/badge/Version-4.2.1-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-4.3.0-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Status-Audited_&_Optimized-3b82f6?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-3b82f6?style=for-the-badge&labelColor=111111" alt="License" />
@@ -81,6 +81,11 @@ A intranet agora conta com um sistema de chat proprietário de alta performance,
 | 🔔 **Notificações Globais** | Badges de mensagens não lidas e menções (@) em toda a plataforma. |
 | 🎯 **Modo Foco & Destaque** | Interface limpa ou abertura em nova aba para multitarefa. |
 | 🛡️ **Segurança RBAC** | Acesso restrito apenas a membros autorizados de cada chat. |
+| ✅ **Aprovações Nativas** | Cards estruturados para aprovação de descontos, folgas e reembolsos diretamente no chat. |
+| 📌 **Mensagens Fixadas** | Banner de destaque no topo do chat para regras e avisos importantes. |
+| ⭐ **Mensagens Salvas** | Aba de favoritos para acesso rápido a referências e documentos importantes. |
+| 🔗 **Rich Previews CRM** | Pré-visualização inteligente de links internos do HubCRM (Leads, Faturas, etc). |
+| 🎫 **Conversão de Fluxo** | Transforme qualquer mensagem em um Ticket de Suporte ou Tarefa de PDI com um clique. |
 
 ---
 
@@ -710,6 +715,7 @@ className="bg-gray-100 border-gray-200"
 - [x] 🚀 **v4.0.0 Decentralized Evolution (Leads/Support/People Focus)**
 - [x] 💬 **v4.2.0 Hub Chat v2.0 (Groups, DMs, Media, Replies & Polish)**
 - [x] 🛰️ **v4.2.1 Presença Persistente (Correção de Status Manual / Almoço)**
+- [x] 🚀 **v4.3.0 Chat Productivity Hub (Approvals, Pins, Bookmarks & Task Integration)**
 
 
 ---

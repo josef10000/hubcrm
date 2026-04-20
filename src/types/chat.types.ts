@@ -26,6 +26,9 @@ export interface Chat {
   // Último timestamp lido por usuário
   lastRead: { [uid: string]: Timestamp };
 
+  // Mensagens Fixadas (Array de IDs)
+  pinnedMessages?: string[];
+
   createdAt: Timestamp;
   updatedAt: Timestamp;               // Usado para orderBy na listagem
 }
@@ -47,7 +50,7 @@ export interface ChatMessage {
     [emoji: string]: string[];
   };
   isDeleted?: boolean;                // Flag para mensagens apagadas
-  type?: "text" | "poll";             // Tipo da mensagem
+  type?: "text" | "poll" | "approval" | "system" | "rich_link"; // Tipo da mensagem
   poll?: {                            // Dados da enquete
     question: string;
     options: {
@@ -56,7 +59,33 @@ export interface ChatMessage {
       votes: string[];                // UIDs dos votantes
     }[];
   };
+  approval?: {                        // Pedidos de Aprovação
+    question: string;
+    status: 'pending' | 'approved' | 'rejected';
+    type: 'discount' | 'holiday' | 'expense' | 'other';
+    targetId?: string;                // ID do Lead, Proposta, etc.
+    value?: any;                      // Valor do desconto, data da folga, etc.
+    processedBy?: string;             // UID de quem aprovou/rejeitou
+    processedAt?: Timestamp;
+  };
+  richPreview?: {                     // Preview de Link Interno
+    title: string;
+    description: string;
+    image?: string;
+    status?: string;
+    value?: string;
+    url: string;
+  };
   createdAt: Timestamp;
+}
+
+export interface MessageBookmark {
+  messageId: string;
+  chatId: string;
+  text: string;
+  senderName: string;
+  senderPhotoURL?: string;
+  savedAt: Timestamp;
 }
 
 export interface TypingIndicator {

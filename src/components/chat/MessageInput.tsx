@@ -9,10 +9,20 @@ import { toast } from 'sonner';
 import EmojiPicker from './EmojiPicker';
 
 import { PollCreatorModal } from './PollCreatorModal';
-import { BarChart2 } from 'lucide-react';
+import { ApprovalCreatorModal } from './ApprovalCreatorModal';
+import { BarChart2, CheckCircle2 } from 'lucide-react';
 
 interface MessageInputProps {
-  onSend: (text: string, mentions: string[], attachments: string[], replyTo: ChatMessage['replyTo'] | null, members: string[], type: "text" | "poll", poll?: ChatMessage['poll']) => void;
+  onSend: (
+    text: string, 
+    mentions: string[], 
+    attachments: string[], 
+    replyTo: ChatMessage['replyTo'] | null, 
+    members: string[], 
+    type: "text" | "poll" | "approval", 
+    poll?: ChatMessage['poll'],
+    approval?: ChatMessage['approval']
+  ) => void;
   onTyping: (isTyping: boolean) => void;
   replyTo: ChatMessage['replyTo'] | null;
   onCancelReply: () => void;
@@ -21,6 +31,7 @@ interface MessageInputProps {
 
 export default function MessageInput({ onSend, onTyping, replyTo, onCancelReply, members }: MessageInputProps) {
   const [isPollModalOpen, setIsPollModalOpen] = useState(false);
+  const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
   const [text, setText] = useState('');
   const [showMentions, setShowMentions] = useState(false);
   const [mentionQuery, setMentionQuery] = useState('');
@@ -53,6 +64,17 @@ export default function MessageInput({ onSend, onTyping, replyTo, onCancelReply,
     };
 
     onSend('', [], [], null, members, 'poll', pollData);
+  };
+
+  const handleCreateApproval = (question: string, type: 'discount' | 'holiday' | 'expense' | 'other', value?: any) => {
+    const approvalData: ChatMessage['approval'] = {
+      question,
+      type,
+      status: 'pending',
+      value
+    };
+
+    onSend('', [], [], null, members, 'approval', undefined, approvalData);
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -185,6 +207,15 @@ export default function MessageInput({ onSend, onTyping, replyTo, onCancelReply,
           <BarChart2 size={20} />
         </button>
 
+        <button 
+          type="button" 
+          onClick={() => setIsApprovalModalOpen(true)}
+          className="p-2.5 text-gray-400 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-xl transition-all"
+          title="Solicitar Aprovação"
+        >
+          <CheckCircle2 size={20} />
+        </button>
+
         <div className="flex-1 relative">
           {showMentions && (
             <MentionSuggestions 
@@ -235,6 +266,12 @@ export default function MessageInput({ onSend, onTyping, replyTo, onCancelReply,
         isOpen={isPollModalOpen}
         onClose={() => setIsPollModalOpen(false)}
         onSelect={handleCreatePoll}
+      />
+
+      <ApprovalCreatorModal 
+        isOpen={isApprovalModalOpen}
+        onClose={() => setIsApprovalModalOpen(false)}
+        onSelect={handleCreateApproval}
       />
     </div>
   );

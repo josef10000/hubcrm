@@ -8,6 +8,8 @@ import { useCRM } from '../../contexts/CRMContext';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
 import GroupSettingsModal from './GroupSettingsModal';
+import SupportRequestModal from '../SupportRequestModal';
+import { Pin, ChevronRight, Bookmark, Archive, Folder } from 'lucide-react';
 
 interface ChatWindowProps {
   chatId: string | null;
@@ -24,7 +26,13 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
+  const [initialTicketMessage, setInitialTicketMessage] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const { 
+    togglePin, unpinMessage, toggleBookmark, respondApproval 
+  } = useChat(chatId);
 
   // Filtragem de Mensagens (Busca)
   const filteredMessages = messages.filter(msg => 
@@ -126,10 +134,23 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
       replyTo,
       chat.members,
       type,
-      poll
+      poll,
+      approval
     );
     
     setReplyingTo(null);
+  };
+
+  // Lógica para detectar Links Internos e gerar Previews
+  const detectInternalLinks = async (text: string) => {
+    // Ex: https://hubcrm.com/leads/123
+    const leadRegex = /\/leads\/([a-zA-Z0-9-]+)/;
+    const match = text.match(leadRegex);
+    if (match) {
+      const leadId = match[1];
+      // Aqui poderíamos buscar dados reais e enviar como rich_link
+      // Para esta versão, vamos apenas garantir que o fluxo de envio suporte isso se detectado
+    }
   };
 
   return (
@@ -247,6 +268,32 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
         </div>
       </div>
 
+      {/* Banner de Mensagens Fixadas */}
+      {chat.pinnedMessages && chat.pinnedMessages.length > 0 && (
+        <div className="bg-primary-500/5 border-b border-primary-500/10 px-4 py-2 flex items-center gap-3 animate-in slide-in-from-top duration-300">
+          <Pin size={14} className="text-primary-500 fill-current" />
+          <div className="flex-1 overflow-hidden">
+            <p className="text-[10px] font-black uppercase tracking-widest text-primary-600 mb-0.5">Mensagem Fixada</p>
+            <div className="flex items-center gap-2">
+               <p className="text-xs text-gray-600 dark:text-gray-400 truncate max-w-md">
+                 {messages.find(m => m.id === chat.pinnedMessages?.[0])?.text || "Carregando mensagem fixada..."}
+               </p>
+            </div>
+          </div>
+          {chat.pinnedMessages.length > 1 && (
+            <span className="text-[10px] font-bold bg-primary-500/10 text-primary-600 px-2 py-0.5 rounded-full">
+              +{chat.pinnedMessages.length - 1}
+            </span>
+          )}
+          <button 
+            onClick={() => unpinMessage(chat.pinnedMessages![0])}
+            className="p-1.5 hover:bg-primary-500/10 rounded-lg text-primary-400 transition-colors"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       {/* Janela de Mensagens */}
       <div 
         ref={scrollRef}
@@ -279,10 +326,24 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
                   key={msg.id}
                   message={msg} 
                   isRead={isRead} 
+                  isPinned={chat.pinnedMessages?.includes(msg.id)}
                   onDelete={deleteMessage}
                   onReply={setReplyingTo}
                   onReact={toggleReaction}
                   onVote={votePoll}
+                  onPin={togglePin}
+                  onUnpin={unpinMessage}
+                  onBookmark={toggleBookmark}
+                  onApprove={respondApproval}
+                  onCreateTicket={(text) => {
+                    setInitialTicketMessage(text);
+                    setIsSupportModalOpen(true);
+                  }}
+                  onCreateTask={(text) => {
+                    // Implementação rápida: Adicionar ao PDI via context se disponível
+                    toast.info("Abrindo criador de tarefas...");
+                    // Aqui você poderia abrir um modal de PDI similar ao de Suporte
+                  }}
                 />
               );
             })}
@@ -292,7 +353,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
 
       {/* Input de Mensagem */}
       <MessageInput 
-        onSend={(text, mentions, att, reply, membersList, type, poll) => handleSend(text, mentions, att, reply, membersList, type, poll)} 
+        onSend={(text, mentions, att, reply, membersList, type, poll, approval) => handleSend(text, mentions, att, reply, membersList, type, poll, approval)} 
         onTyping={setTypingStatus}
         replyTo={replyingTo ? { messageId: replyingTo.id, text: replyingTo.text, senderName: replyingTo.senderName } : null}
         onCancelReply={() => setReplyingTo(null)}
@@ -303,6 +364,12 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
         isOpen={isSettingsOpen} 
         onClose={() => setIsSettingsOpen(false)} 
         chat={chat} 
+      />
+
+      <SupportRequestModal 
+        isOpen={isSupportModalOpen}
+        onClose={() => setIsSupportModalOpen(false)}
+        initialMessage={initialTicketMessage}
       />
     </div>
   );

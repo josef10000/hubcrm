@@ -14,9 +14,10 @@ interface SupportRequestModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialClientId?: string;
+  initialMessage?: string;
 }
 
-export default function SupportRequestModal({ isOpen, onClose, initialClientId }: SupportRequestModalProps) {
+export default function SupportRequestModal({ isOpen, onClose, initialClientId, initialMessage }: SupportRequestModalProps) {
   const { 
     clients, supportRequests, wikiArticles, 
     handleCreateSupportRequest, handleAddClientLog, handleSaveClient 
@@ -29,7 +30,7 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId }
   );
   const [category, setCategory] = useState('Suporte Técnico');
   const [priority, setPriority] = useState<'baixa' | 'media' | 'alta'>('media');
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState(initialMessage || '');
   const [whatsappContext, setWhatsappContext] = useState('');
   const [isNoteOnly, setIsNoteOnly] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,12 +53,17 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId }
   }, [selectedClient]);
 
   // Sync selected client when initialClientId changes or modal opens
-  React.useEffect(() => {
-    if (isOpen && initialClientId) {
-      const client = clients.find(c => c.id === initialClientId);
-      if (client) setSelectedClient(client);
+  useEffect(() => {
+    if (isOpen) {
+      if (initialClientId) {
+        const client = clients.find(c => c.id === initialClientId);
+        if (client) setSelectedClient(client);
+      }
+      if (initialMessage) {
+        setMessage(initialMessage);
+      }
     }
-  }, [isOpen, initialClientId, clients]);
+  }, [isOpen, initialClientId, initialMessage, clients]);
 
   // Filters
   const filteredClients = useMemo(() => {

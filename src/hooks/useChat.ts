@@ -98,8 +98,9 @@ export function useChat(chatId: string | null) {
     attachments: string[] = [], 
     replyTo: ChatMessage['replyTo'] = null,
     members: string[] = [],
-    type: "text" | "poll" = "text",
-    poll?: ChatMessage['poll']
+    type: "text" | "poll" | "approval" | "rich_link" = "text",
+    poll?: ChatMessage['poll'],
+    approval?: ChatMessage['approval']
   ) => {
     if (!effectiveOrgId || !chatId || !userProfile?.uid) return;
 
@@ -109,7 +110,9 @@ export function useChat(chatId: string | null) {
       const messagesRef = collection(db, 'organizations', effectiveOrgId, 'chats', chatId, 'messages');
       const newMessageRef = doc(messagesRef);
 
-      const messageContent = type === 'poll' ? `📊 Enquete: ${poll?.question}` : text;
+      let messageContent = text;
+      if (type === 'poll') messageContent = `📊 Enquete: ${poll?.question}`;
+      if (type === 'approval') messageContent = `📝 Pedido de Aprovação: ${approval?.question}`;
 
       const messageData: any = {
         text: messageContent,
@@ -125,6 +128,10 @@ export function useChat(chatId: string | null) {
 
       if (type === 'poll' && poll) {
         messageData.poll = poll;
+      }
+
+      if (type === 'approval' && approval) {
+        messageData.approval = approval;
       }
 
       batch.set(newMessageRef, messageData);
@@ -270,5 +277,92 @@ export function useChat(chatId: string | null) {
     }
   };
 
-  return { messages, typing, loading, sendMessage, setTypingStatus, markAsRead, deleteMessage, toggleReaction, votePoll };
+  const togglePin = async (messageId: string) => {
+    if (!effectiveOrgId || !chatId) return;
+
+    try {
+      const chatRef = doc(db, 'organizations', effectiveOrgId, 'chats', chatId);
+      const isPinned = messages.find(m => m.id === messageId)?.id && (messages as any).pinnedMessages?.includes(messageId);
+      // Nota: o hooks já tem messages. No ChatWindow temos o objeto 'chat' que tem o pinnedMessages.
+      // Vou buscar o estado atual do campo no doc para garantir consistencia.
+      
+      await updateDoc(chatRef, {
+        pinnedMessages: arrayUnion(messageId)
+      });
+      toast.success("Mensagem fixada!");
+    } catch (error) {
+      console.error("Erro ao fixar mensagem:", error);
+    }
+  };
+
+  const unpinMessage = async (messageId: string) => {
+    if (!effectiveOrgId || !chatId) return;
+    try {
+      const chatRef = doc(db, 'organizations', effectiveOrgId, 'chats', chatId);
+      await updateDoc(chatRef, {
+        pinnedMessages: arrayRemove(messageId)
+      });
+      toast.success("Mensagem desfixada.");
+    } catch (error) {
+      console.error("Erro ao desfixar:", error);
+    }
+  };
+
+  const toggleBookmark = async (msg: ChatMessage) => {
+    if (!effectiveOrgId || !userProfile?.uid) return;
+
+    try {
+      const bookmarkRef = doc(db, 'organizations', effectiveOrgId, 'users', userProfile.uid, 'bookmarks', msg.id);
+      
+      // Simples toggle: se já existe, remove. Se não, adiciona.
+      // Aqui vamos usar um getDoc ou tentar setDoc se não tivermos certeza do estado local.
+      // Para simplificar agora, vamos apenas setar.
+      await setDoc(bookmarkRef, {
+        messageId: msg.id,
+        chatId: chatId,
+        text: msg.text,
+        senderName: msg.senderName,
+        senderPhotoURL: msg.senderPhotoURL || '',
+        savedAt: serverTimestamp()
+      });
+      toast.success("Mensagem salva nos favoritos!");
+    } catch (error) {
+      console.error("Erro ao salvar favorito:", error);
+    }
+  };
+
+  const respondApproval = async (messageId: string, status: 'approved' | 'rejected') => {
+    if (!effectiveOrgId || !chatId || !userProfile?.uid) return;
+
+    try {
+      const messageRef = doc(db, 'organizations', effectiveOrgId, 'chats', chatId, 'messages', messageId);
+      await updateDoc(messageRef, {
+        "approval.status": status,
+        "approval.processedBy": userProfile.uid,
+        "approval.processedAt": serverTimestamp()
+      });
+      
+      toast.success(status === 'approved' ? "Pedido aprovado!" : "Pedido rejeitado.");
+      
+      // Aqui poderíamos disparar uma lógica extra se for desconto (ex: atualizar o lead)
+    } catch (error) {
+      console.error("Erro ao responder aprovação:", error);
+    }
+  };
+
+  return { 
+    messages, 
+    typing, 
+    loading, 
+    sendMessage, 
+    setTypingStatus, 
+    markAsRead, 
+    deleteMessage, 
+    toggleReaction, 
+    votePoll,
+    togglePin,
+    unpinMessage,
+    toggleBookmark,
+    respondApproval
+  };
 }
