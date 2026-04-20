@@ -21,7 +21,6 @@ interface CRMContextType {
   leads: Lead[];
   offers: Offer[];
   supportRequests: any[];
-  expenses: Expense[];
   transactions: Transaction[];
   transactionCategories: TransactionCategory[];
   budgets: Budget[];
@@ -88,8 +87,8 @@ interface CRMContextType {
   setReplyMessage: (msg: string) => void;
 
   // Finance
-  newExpense: Partial<Expense>;
-  setNewExpense: (expense: Partial<Expense>) => void;
+  newTransaction: Partial<Transaction>;
+  setNewTransaction: (transaction: Partial<Transaction>) => void;
 
   // Marketing
   globalAnnouncement: { title: string; message: string; type: string; isActive: boolean };
@@ -380,7 +379,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   const value: CRMContextType = {
     clients, leads, offers, supportRequests,
     activeLeadsCount: leads.filter(l => !['Convertido', 'Perdido'].includes(l.status || '')).length,
-    expenses: finance?.expenses || [], transactions: finance?.transactions || [],
+    transactions: finance?.transactions || [],
     transactionCategories: finance?.transactionCategories || [], budgets: finance?.budgets || [], services,
     loading, errorMsg, isSyncing: clientActions.isSyncing,
 
@@ -405,7 +404,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     beginnerGuideArticleId: settings?.beginnerGuideArticleId || '', setBeginnerGuideArticleId: settings?.setBeginnerGuideArticleId || (() => { }),
 
     replyingTo, setReplyingTo, replyMessage, setReplyMessage,
-    newExpense: finance?.newExpense || {}, setNewExpense: finance?.setNewExpense || (() => { }),
+    newTransaction: finance?.newTransaction || {}, setNewTransaction: finance?.setNewTransaction || (() => { }),
     globalAnnouncement: settings?.globalAnnouncement || { title: '', message: '', type: 'info', isActive: false },
     setGlobalAnnouncement: settings?.setGlobalAnnouncement || (() => { }),
 

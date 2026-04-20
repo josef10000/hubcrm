@@ -1,4 +1,4 @@
-# 🔐 Hub Central — Intranet Corporativa v4.3.5 (Emergency Patch)
+# 🔐 Hub Central — Intranet Corporativa v4.4.0 (Finance Update)
 
 > [!CAUTION]
 > **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
@@ -7,7 +7,7 @@
 Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.
 
   <p>
-    <img src="https://img.shields.io/badge/Version-4.3.5-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-4.4.0-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Status-Audited_&_Optimized-3b82f6?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-3b82f6?style=for-the-badge&labelColor=111111" alt="License" />
@@ -140,8 +140,9 @@ O cockpit de entrega da empresa, garantindo que o cliente receba exatamente o qu
 Desmembramento estratégico entre a operação de cobrança e a análise de lucro.
 
 - **🛡️ Billing Hub (Tático)**: Gestão dedicada de inadimplência, faturamento recorrente, conciliação e geração automática de comissões para o time comercial.
-- **📊 Finance BI (Estratégico)**: Visão executiva pura. DRE Gerencial, Fluxo de Caixa, Budgeting e Análise de Retorno sobre Investimento (ROI).
-- **🪙 ROI por Oferta**: Cruzamento inteligente de investimentos em Ads com o LTV real de cada produto comercializado.
+- 📊 **Finance BI (Estratégico)**: Visão executiva pura. DRE Gerencial com dedução automática de taxas Asaas, Fluxo de Caixa, Budgeting e Métricas SaaS.
+- **🪙 ROI & SaaS Analytics**: Cruzamento inteligente de investimentos em Ads com o LTV real e Churn Rate (30 dias móveis).
+- **📡 CSP (Fixed Cost Apportionment)**: Cálculo automático de rateio de infraestrutura por cliente para determinar a margem de contribuição real.
 
 ---
 
@@ -714,7 +715,8 @@ className="bg-gray-100 border-gray-200"
 - [x] 🚀 **v4.3.0 Chat Productivity Hub (Approvals, Pins, Bookmarks & Task Integration)**
 - [x] ⚡ **v4.3.3 UI Standardization & Real-time Pin Reactivity Fix**
 - [x] ⚡ **v4.3.5 Bug Fix: Missing Text rendering & Mention Highlighting upgrade**
-- [ ] 🔮 **v4.4.0 Automations & AI Chat Summary** (Fase 3)
+- [x] 🚀 **v4.4.0 Finance Optimization (Unified Transactions, Asaas Fee Automation & SaaS Metrics)**
+- [ ] 🔮 **v4.5.0 Automations & AI Chat Summary** (Fase 3)
 
 
 ---

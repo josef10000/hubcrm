@@ -151,6 +151,7 @@ export interface OnboardingQuestion {
   required: boolean;
 }
 
+/** @deprecated Use Transaction with type 'EXPENSE' instead */
 export interface Expense {
   id: string;
   description: string;
@@ -175,7 +176,10 @@ export interface TransactionCategory {
 export interface Transaction {
   id: string;
   description: string;
-  amount: number;
+  amount: number; // Valor Bruto
+  netAmount?: number; // Valor Líquido (após taxas)
+  gatewayFee?: number; // Valor da Taxa do Gateway
+  taxAmount?: number; // Valor de Impostos (opcional)
   date: number; // Data de Emissão/Competência
   paymentDate?: number; // Data de Pagamento/Caixa real
   type: TransactionType;

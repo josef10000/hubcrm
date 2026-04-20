@@ -4,7 +4,7 @@ import { Target, TrendingUp, BarChart3, ArrowUpRight } from 'lucide-react';
 import { getPlanPrice } from '../../helpers';
 
 export default function ROIAnalysis() {
-  const { clients, expenses, offers, commissions } = useCRM();
+  const { clients, transactions, offers, commissions } = useCRM();
 
   const roiData = offers.map(offer => {
     // 1. Receita direta dessa oferta (MRR atual de clientes ativos)
@@ -17,7 +17,7 @@ export default function ROIAnalysis() {
     ).reduce((acc, comm) => acc + comm.amount, 0);
 
     // 3. Investimento em Ads vinculado diretamente a essa oferta
-    const adSpend = expenses.filter(e => e.offerId === offer.id).reduce((acc, e) => acc + e.amount, 0);
+    const adSpend = transactions.filter(t => t.type === 'EXPENSE' && t.clientId === offer.id).reduce((acc, t) => acc + t.amount, 0);
 
     const totalCost = adSpend + offerCommissions;
     const netProfit = revenue - totalCost;
@@ -43,7 +43,7 @@ export default function ROIAnalysis() {
         <div className="bg-black/40 dark:bg-zinc-950/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl">
           <h4 className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-1">Investimento Total Ads</h4>
           <p className="text-2xl font-black text-white">
-            R$ {expenses.filter(e => !!e.offerId).reduce((acc, e) => acc + e.amount, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            R$ {transactions.filter(t => t.type === 'EXPENSE' && !!t.clientId).reduce((acc, t) => acc + t.amount, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </p>
         </div>
         <div className="bg-black/40 dark:bg-zinc-950/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl">

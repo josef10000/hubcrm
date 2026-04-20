@@ -4,21 +4,13 @@ import { db } from '../lib/firebase';
 import { Expense, Transaction, TransactionCategory, Budget } from '../types';
 
 export function useFinance(userId: string) {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [transactionCategories, setTransactionCategories] = useState<TransactionCategory[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
-  const [newExpense, setNewExpense] = useState<Partial<Expense>>({ category: 'Ferramentas' });
+  const [newTransaction, setNewTransaction] = useState<Partial<Transaction>>({ type: 'EXPENSE' });
 
   useEffect(() => {
     if (!userId) return;
-
-    const expensesRef = collection(db, 'organizations', userId, 'expenses');
-    const unsubExpenses = onSnapshot(expensesRef, (snapshot) => {
-      const loaded: Expense[] = [];
-      snapshot.forEach((d) => loaded.push(d.data() as Expense));
-      setExpenses(loaded.sort((a, b) => b.date - a.date));
-    });
 
     const transactionsRef = collection(db, 'organizations', userId, 'transactions');
     const unsubTransactions = onSnapshot(transactionsRef, (snapshot) => {
@@ -42,7 +34,6 @@ export function useFinance(userId: string) {
     });
 
     return () => {
-      unsubExpenses();
       unsubTransactions();
       unsubCategories();
       unsubBudgets();
@@ -50,7 +41,7 @@ export function useFinance(userId: string) {
   }, [userId]);
 
   return {
-    expenses, transactions, transactionCategories, budgets,
-    newExpense, setNewExpense,
+    transactions, transactionCategories, budgets,
+    newTransaction, setNewTransaction,
   };
 }

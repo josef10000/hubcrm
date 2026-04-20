@@ -16,19 +16,25 @@ export default function DRETable() {
   const months = Array.from({ length: 12 }, (_, i) => new Date(currentYear, i, 1));
   
   const aggregated = useMemo(() => {
-    const data: any = { Receitas: {}, Despesas: {} };
+    const data: any = { Receitas: {}, Despesas: {}, Deducoes: {} };
     
     transactions.forEach(t => {
       const date = new Date(t.date);
       if (date.getFullYear() !== currentYear) return;
       const monthIdx = date.getMonth();
       const cat = transactionCategories.find(c => c.id === t.categoryId);
-      const catName = cat ? cat.name : 'Sem Categoria';
+      const catName = cat ? cat.name : (t.categoryName || 'Sem Categoria');
       
       const group = t.type === 'INCOME' ? 'Receitas' : 'Despesas';
       
       if (!data[group][catName]) data[group][catName] = Array(12).fill(0);
       data[group][catName][monthIdx] += t.amount;
+
+      // Se for Receita e tiver taxa de gateway, somamos nas deduções
+      if (t.type === 'INCOME' && t.gatewayFee) {
+        if (!data.Deducoes['Taxas Gateway']) data.Deducoes['Taxas Gateway'] = Array(12).fill(0);
+        data.Deducoes['Taxas Gateway'][monthIdx] += t.gatewayFee;
+      }
     });
     
     return data;
@@ -106,6 +112,34 @@ export default function DRETable() {
             </thead>
             <tbody>
               {renderCategoryGroup('Receitas', aggregated.Receitas)}
+              
+              {/* Seção de Deduções */}
+              {Object.keys(aggregated.Deducoes).length > 0 && (
+                <React.Fragment>
+                  <tr className="bg-orange-500/10 border-b border-orange-500/20 text-orange-400 font-semibold">
+                    <td className="py-3 px-4">(-) Deduções sobre Vendas</td>
+                    {Array(12).fill(0).map((_, i) => {
+                      const totalDeducoes = Object.values(aggregated.Deducoes as Record<string, number[]>).reduce((acc, curr) => acc + curr[i], 0);
+                      return (
+                        <td key={i} className="py-3 px-4 text-right">
+                          R$ {totalDeducoes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                  {Object.entries(aggregated.Deducoes).map(([subcat, values]) => (
+                    <tr key={subcat} className="border-b border-white/5 text-gray-500 text-xs italic">
+                      <td className="py-2 px-4 pl-10 underline decoration-dotted">{subcat}</td>
+                      {values.map((val, i) => (
+                        <td key={i} className="py-2 px-4 text-right">
+                          R$ {val.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </React.Fragment>
+              )}
+
               {renderCategoryGroup('Despesas', aggregated.Despesas)}
               
               <tr className="bg-gray-100 dark:bg-black/40 border-t-2 border-gray-300 dark:border-white/20 font-bold text-gray-900 dark:text-white">
@@ -113,7 +147,8 @@ export default function DRETable() {
                 {Array(12).fill(0).map((_, i) => {
                   const rec = Object.values(aggregated.Receitas as Record<string, number[]>).reduce((acc, curr) => acc + curr[i], 0);
                   const des = Object.values(aggregated.Despesas as Record<string, number[]>).reduce((acc, curr) => acc + curr[i], 0);
-                  const lucro = rec - des;
+                  const ded = Object.values(aggregated.Deducoes as Record<string, number[]>).reduce((acc, curr) => acc + curr[i], 0);
+                  const lucro = rec - des - ded;
                   return (
                     <td key={i} className={`py-4 px-4 text-right ${lucro >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                       R$ {lucro.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}

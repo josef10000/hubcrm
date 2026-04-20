@@ -265,6 +265,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             console.log(`[DEBUG] Anti-Spam: Ignorando Pagamento Confirmado para ${paymentData.id} - E-mail já enviado anteriormente.`);
           } else {
             const pDate = (paymentData.paymentDate || new Date().toISOString().split('T')[0]).split('-').reverse().join('/');
+            
+            // --- REGISTRO DE TRANSAÇÃO FINANCEIRA (NOVO) ---
+            try {
+              const orgId = doc.ref.parent.parent?.id;
+              if (orgId) {
+                const transactionId = `asaas_${paymentData.id}`;
+                const amount = paymentData.value || 0;
+                const netAmount = paymentData.netValue || amount;
+                const gatewayFee = Number((amount - netAmount).toFixed(2));
+                
+                await db.collection('organizations').doc(orgId).collection('transactions').doc(transactionId).set({
+                  id: transactionId,
+                  description: pDesc || `Pagamento Asaas - ${clientData.name}`,
+                  amount: amount,
+                  netAmount: netAmount,
+                  gatewayFee: gatewayFee,
+                  date: Date.now(),
+                  paymentDate: Date.now(),
+                  type: 'INCOME',
+                  status: 'PAID',
+                  clientId: doc.id,
+                  paymentId: paymentData.id,
+                  categoryName: 'Assinatura' // Fallback para visualização se categoryId não for mapeado
+                });
+                console.log(`[FINANCE] Transação registrada para ${clientData.email}: R$ ${amount} (Taxa: R$ ${gatewayFee})`);
+              }
+            } catch (finErr) {
+              console.error('[CRITICAL] Erro ao registrar transação financeira:', finErr);
+            }
+
             await sendPagamentoRecebidoEmail(clientData.email, clientData.name || 'Cliente', pValue, pDate, pDesc)
               .then(() => {
                 const userId = doc.ref.parent.parent?.id;
