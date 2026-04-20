@@ -273,6 +273,7 @@ export default function MessageBubble({
                          <span className="text-[10px] font-bold opacity-60">{message.richPreview.value}</span>
                        </div>
                      </div>
+                   </div>
                 ) : (
                   <p className="text-sm whitespace-pre-wrap break-words leading-relaxed font-medium">
                     {/* Renderização com Destaque de Menções */}
