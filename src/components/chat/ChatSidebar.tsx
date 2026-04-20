@@ -36,8 +36,8 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
         <div className="mb-6">
           <UserStatusSelector />
         </div>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Mensagens</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-tighter">Mensagens</h2>
           <div className="flex gap-2">
             <button 
               onClick={() => setIsNewChatModalOpen(true)}
@@ -62,7 +62,7 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
           <input 
             type="text" 
             placeholder="Buscar conversas..."
-            className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 pl-10 pr-4 py-2.5 rounded-2xl text-xs focus:outline-none focus:border-primary-500 transition-all dark:text-white"
+            className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 pl-10 pr-4 py-2.5 rounded-2xl text-sm focus:outline-none focus:border-primary-500 transition-all dark:text-white"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -133,17 +133,17 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
                 >
                   {/* Avatar */}
                   <div className="relative shrink-0">
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border border-gray-100 dark:border-white/10 overflow-hidden ${
+                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center border border-gray-100 dark:border-white/10 overflow-hidden ${
                       isSelected ? 'bg-white/20' : 'bg-white dark:bg-white/10 shadow-sm'
                     }`}>
                       {displayPhoto ? (
                         <img src={displayPhoto} alt="" className="w-full h-full object-cover" />
                       ) : chat.type === 'self' ? (
-                        <Star size={20} className={isSelected ? 'text-white' : 'text-amber-500'} />
+                        <Star size={18} className={isSelected ? 'text-white' : 'text-amber-500'} />
                       ) : chat.type === 'direct' ? (
-                        <User size={20} />
+                        <User size={18} />
                       ) : (
-                        <Users size={20} />
+                        <Users size={18} />
                       )}
                     </div>
                     
@@ -180,14 +180,14 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
                   {/* Conteúdo */}
                   <div className="flex-1 text-left min-w-0">
                     <div className="flex justify-between items-start mb-0.5">
-                      <h3 className={`text-sm font-bold truncate ${isSelected ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
+                      <h3 className={`text-base font-semibold truncate ${isSelected ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
                         {displayName}
                       </h3>
-                      <span className={`text-[10px] font-medium shrink-0 ${isSelected ? 'text-white/60' : 'text-gray-400'}`}>
+                      <span className={`text-xs font-medium shrink-0 ${isSelected ? 'text-white/60' : 'text-gray-400'}`}>
                         {chat.lastMessage ? formatChatTime(chat.lastMessage.createdAt.toMillis()) : ''}
                       </span>
                     </div>
-                    <p className={`text-[11px] truncate leading-tight ${isSelected ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
+                    <p className={`text-sm truncate leading-tight ${isSelected ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
                       {chat.lastMessage ? (
                         <>
                           <span className="font-bold mr-1">{chat.lastMessage.senderId === userProfile?.uid ? 'Você:' : chat.lastMessage.senderName.split(' ')[0] + ':'}</span>
@@ -206,7 +206,7 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
                         </div>
                       )}
                       {unread > 0 && (
-                        <div className="bg-primary-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md shadow-lg shadow-primary-500/20">
+                        <div className="bg-primary-500 text-white text-xs font-black px-1.5 py-0.5 rounded-md shadow-lg shadow-primary-500/20">
                           {unread > 9 ? '9+' : unread}
                         </div>
                       )}
@@ -237,10 +237,10 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
                   onClick={() => onSelect(b.chatId)}
                 >
                   <div className="flex justify-between items-start mb-1">
-                    <span className="text-[10px] font-bold text-primary-500 uppercase tracking-tighter">{b.senderName}</span>
-                    <span className="text-[9px] text-gray-400">{formatChatTime(b.savedAt.toDate())}</span>
+                    <span className="text-sm font-bold text-primary-500 uppercase tracking-tighter">{b.senderName}</span>
+                    <span className="text-xs text-gray-400">{b.savedAt ? formatChatTime(b.savedAt.toDate()) : '...'}</span>
                   </div>
-                  <p className="text-[11px] text-gray-600 dark:text-gray-400 line-clamp-2 leading-tight">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-tight">
                     {b.text}
                   </p>
                 </div>

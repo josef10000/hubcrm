@@ -170,8 +170,8 @@ export default function MessageInput({ onSend, onTyping, replyTo, onCancelReply,
       {replyTo && (
         <div className="absolute bottom-full left-0 right-0 bg-gray-50 dark:bg-white/5 p-3 flex justify-between items-center border-t border-gray-200 dark:border-white/10 animate-in slide-in-from-bottom">
           <div className="flex-1">
-            <span className="text-[12px] font-bold text-primary-500 uppercase block mb-1">Respondendo a {replyTo.senderName}</span>
-            <p className="text-[20px] text-gray-500 break-words line-clamp-2 italic leading-tight">"{replyTo.text}"</p>
+            <span className="text-xs font-bold text-primary-500 uppercase block mb-1">Respondendo a {replyTo.senderName}</span>
+            <p className="text-sm text-gray-500 break-words line-clamp-1 italic leading-tight">"{replyTo.text}"</p>
           </div>
           <button onClick={onCancelReply} className="p-1 hover:bg-gray-200 dark:hover:bg-white/10 rounded-full transition-colors">
             <X size={16} className="text-gray-400" />
@@ -239,7 +239,7 @@ export default function MessageInput({ onSend, onTyping, replyTo, onCancelReply,
             onClick={() => setIsEmojiOpen(!isEmojiOpen)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-amber-500 transition-colors"
           >
-            <Smile size={18} />
+            <Smile size={20} />
           </button>
 
           <EmojiPicker 

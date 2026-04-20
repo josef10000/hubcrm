@@ -51,7 +51,7 @@ export default function MessageBubble({
     >
       {/* Nome do Remetente (Apenas Grupos/Outros) */}
       {!isMine && !isDeleted && (
-        <span className="text-[10px] font-bold text-gray-500 mb-1 ml-11 uppercase tracking-tighter">
+        <span className="text-base font-semibold text-gray-500 mb-1 ml-11 tracking-tight">
           {message.senderName}
         </span>
       )}
@@ -138,8 +138,8 @@ export default function MessageBubble({
           {/* Citação de Resposta (Reply) */}
           {message.replyTo && !isDeleted && (
             <div className={`p-4 rounded-t-2xl border-l-4 bg-gray-100 dark:bg-black/20 border-gray-300 dark:border-white/20 mb-[-12px] pb-6 ${isMine ? 'text-right rounded-tr-none mr-1' : 'text-left rounded-tl-none ml-1'}`}>
-              <span className="font-bold block mb-1 opacity-60 text-[14px]">{message.replyTo.senderName}</span>
-              <span className="italic whitespace-pre-wrap break-words line-clamp-3 block text-[22px] leading-tight">"{message.replyTo.text}"</span>
+              <span className="font-bold block mb-1 opacity-60 text-xs">{message.replyTo.senderName}</span>
+              <span className="italic whitespace-pre-wrap break-words line-clamp-2 block text-sm leading-tight">"{message.replyTo.text}"</span>
             </div>
           )}
 
@@ -160,7 +160,7 @@ export default function MessageBubble({
               <>
                 {message.type === 'poll' && message.poll ? (
                   <div className="space-y-4 my-2 min-w-[240px]">
-                    <h4 className="font-bold text-base leading-tight">{message.poll.question}</h4>
+                    <h4 className="font-bold text-lg leading-tight">{message.poll.question}</h4>
                     <div className="space-y-2">
                       {message.poll.options.map((option) => {
                         const totalVotes = message.poll?.options.reduce((acc, opt) => acc + opt.votes.length, 0) || 0;
@@ -196,7 +196,7 @@ export default function MessageBubble({
                         );
                       })}
                     </div>
-                    <p className="text-[10px] opacity-40 font-bold uppercase tracking-wider text-center">
+                    <p className="text-xs opacity-40 font-bold uppercase tracking-wider text-center">
                       {message.poll.options.reduce((acc, opt) => acc + opt.votes.length, 0)} votos no total • Voto Anônimo
                     </p>
                   </div>
@@ -206,10 +206,10 @@ export default function MessageBubble({
                       <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-500">
                         <Check size={16} />
                       </div>
-                      <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">Solicitação de Aprovação</span>
+                      <span className="text-xs font-bold uppercase tracking-widest opacity-60">Solicitação de Aprovação</span>
                     </div>
                     
-                    <h4 className="font-bold text-base leading-tight">{message.approval.question}</h4>
+                    <h4 className="font-bold text-lg leading-tight">{message.approval.question}</h4>
                     
                     {message.approval.status === 'pending' ? (
                       <div className="flex gap-2 pt-2">
@@ -259,7 +259,13 @@ export default function MessageBubble({
                      </div>
                    </div>
                 ) : (
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium">{message.text}</p>
+                  <p className={`${
+                    /^(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])$/.test(message.text.trim()) 
+                    ? 'text-4xl' 
+                    : 'text-sm'
+                  } leading-relaxed whitespace-pre-wrap font-medium`}>
+                    {message.text}
+                  </p>
                 )}
                 
                 {/* Anexos */}
@@ -276,13 +282,13 @@ export default function MessageBubble({
             )}
 
             {/* Hora e Status */}
-            <div className={`flex items-center gap-1 mt-1 text-[9px] ${isMine ? 'text-white/40 justify-end' : 'text-gray-400'}`}>
+            <div className={`flex items-center gap-1 mt-1 text-xs ${isMine ? 'text-white/40 justify-end' : 'text-gray-400'}`}>
               {message.createdAt ? formatChatTime(message.createdAt.toDate()) : '...'}
               {isMine && !isDeleted && (
                 message.createdAt ? (
-                  isRead ? <CheckCheck size={12} className="text-emerald-400" /> : <Check size={12} />
+                  isRead ? <CheckCheck size={14} className="text-emerald-400" /> : <Check size={14} />
                 ) : (
-                  <div className="w-2 h-2 border border-white/40 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-2.5 h-2.5 border border-white/40 border-t-transparent rounded-full animate-spin" />
                 )
               )}
             </div>
@@ -297,7 +303,7 @@ export default function MessageBubble({
                     <button
                       key={emoji}
                       onClick={() => handleReact(emoji)}
-                      className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold border transition-all ${
+                      className={`flex items-center gap-1 px-1.5 h-7 rounded-full text-sm font-bold border transition-all ${
                         hasReacted 
                           ? 'bg-primary-500/10 border-primary-500/50 text-primary-600' 
                           : 'bg-white dark:bg-zinc-900 border-gray-100 dark:border-white/10 text-gray-500 hover:border-gray-300'

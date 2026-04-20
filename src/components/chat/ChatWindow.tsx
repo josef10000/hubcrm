@@ -26,6 +26,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
     toggleReaction, votePoll, togglePin, unpinMessage, toggleBookmark, respondApproval 
   } = useChat(chatId);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
+  const [pinnedMessageData, setPinnedMessageData] = useState<ChatMessage | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -72,6 +73,41 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
       });
     }
   }, [messages]);
+
+  // Listener para carregar mensagem fixada se não estiver no buffer
+  useEffect(() => {
+    const pinnedId = chat?.pinnedMessages?.[0];
+    if (!pinnedId) {
+      setPinnedMessageData(null);
+      return;
+    }
+
+    const msgInBuffer = messages.find(m => m.id === pinnedId);
+    if (msgInBuffer) {
+      setPinnedMessageData(msgInBuffer);
+      return;
+    }
+
+    // Se não está no buffer, buscar diretamente
+    const fetchPinnedMessage = async () => {
+      try {
+        const { doc, getDoc } = await import('firebase/firestore');
+        const { db } = await import('../../lib/firebase');
+        const orgId = userProfile?.orgId || (chat as any).orgId; // Fallback se necessário
+        if (!orgId) return;
+
+        const msgRef = doc(db, 'organizations', orgId, 'chats', chatId!, 'messages', pinnedId);
+        const snap = await getDoc(msgRef);
+        if (snap.exists()) {
+          setPinnedMessageData({ id: snap.id, ...snap.data() } as ChatMessage);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar mensagem fixada:", error);
+      }
+    };
+
+    fetchPinnedMessage();
+  }, [chat?.pinnedMessages, messages, chatId, userProfile?.orgId]);
 
   if (!chatId || !chat) {
     return (
@@ -171,9 +207,9 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
           </div>
           {!isSearchOpen ? (
             <div>
-              <h3 className="font-bold text-gray-900 dark:text-white leading-none mb-1">{displayName}</h3>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white leading-none mb-1">{displayName}</h3>
               {typing.length > 0 ? (
-                <p className="text-[10px] text-primary-500 font-bold animate-pulse">
+                <p className="text-xs text-primary-500 font-bold animate-pulse">
                   {typing.map(t => t.displayName).join(', ')} {typing.length > 1 ? 'estão digitando...' : 'está digitando...'}
                 </p>
               ) : (
@@ -185,7 +221,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
                     status === 'meeting' ? 'bg-purple-500' :
                     'bg-gray-400'
                   }`} />
-                  <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">
+                  <p className="text-xs text-gray-400 font-medium uppercase tracking-widest">
                     {chat.type === 'self' ? 'Suas Anotações Privadas' : 
                      chat.type === 'direct' ? (
                        isOnline ? 'Online agora' : 
@@ -231,14 +267,14 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
             className="p-2.5 text-gray-400 hover:text-primary-500 hover:bg-primary-500/5 rounded-xl transition-all" 
             title="Dados do Grupo"
           >
-            <Info size={18} />
+            <Info size={24} />
           </button>
           <button 
             onClick={() => window.open('/chat?standalone=true', '_blank')}
             className="p-2.5 text-gray-400 hover:text-primary-500 hover:bg-primary-500/5 rounded-xl transition-all" 
             title="Abrir em Nova Aba"
           >
-            <ExternalLink size={18} />
+            <ExternalLink size={24} />
           </button>
           <div className="relative">
             <button 
@@ -272,12 +308,12 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
       {/* Banner de Mensagens Fixadas */}
       {chat.pinnedMessages && chat.pinnedMessages.length > 0 && (
         <div className="bg-primary-500/5 border-b border-primary-500/10 px-4 py-2 flex items-center gap-3 animate-in slide-in-from-top duration-300">
-          <Pin size={14} className="text-primary-500 fill-current" />
+          <Pin size={16} className="text-primary-500 fill-current" />
           <div className="flex-1 overflow-hidden">
-            <p className="text-[10px] font-black uppercase tracking-widest text-primary-600 mb-0.5">Mensagem Fixada</p>
+            <p className="text-xs font-black uppercase tracking-widest text-primary-600 mb-0.5">Mensagem Fixada</p>
             <div className="flex items-center gap-2">
                <p className="text-[15px] font-medium text-gray-800 dark:text-gray-200 truncate max-w-md">
-                 {messages.find(m => m.id === chat.pinnedMessages?.[0])?.text || "Carregando mensagem fixada..."}
+                 {pinnedMessageData?.text || "Carregando mensagem fixada..."}
                </p>
             </div>
           </div>

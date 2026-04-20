@@ -10,11 +10,11 @@ export default function UserStatusSelector() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const statuses = [
-    { id: 'online', label: 'Online', color: 'bg-emerald-500', icon: <Globe size={14} /> },
-    { id: 'away', label: 'Ausente', color: 'bg-amber-500', icon: <Clock size={14} /> },
-    { id: 'lunch', label: 'Almoço', color: 'bg-blue-500', icon: <Coffee size={14} /> },
-    { id: 'meeting', label: 'Em Reunião', color: 'bg-purple-500', icon: <Users size={14} /> },
-    { id: 'offline', label: 'Offline', color: 'bg-gray-500', icon: <Circle size={14} /> },
+    { id: 'online', label: 'Online', color: 'bg-emerald-500', icon: <Globe size={16} /> },
+    { id: 'away', label: 'Ausente', color: 'bg-amber-500', icon: <Clock size={16} /> },
+    { id: 'lunch', label: 'Almoço', color: 'bg-blue-500', icon: <Coffee size={16} /> },
+    { id: 'meeting', label: 'Em Reunião', color: 'bg-purple-500', icon: <Users size={16} /> },
+    { id: 'offline', label: 'Offline', color: 'bg-gray-500', icon: <Circle size={16} /> },
   ];
 
   const currentStatus = statuses.find(s => s.id === userProfile?.presenceStatus) || statuses[0];
@@ -39,7 +39,7 @@ export default function UserStatusSelector() {
           <img
             src={userProfile?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile?.displayName || '')}&background=random`}
             alt={userProfile?.displayName}
-            className="w-10 h-10 rounded-full object-cover border-2 border-transparent group-hover:border-primary-500/30 transition-all"
+            className="w-9 h-9 rounded-full object-cover border-2 border-transparent group-hover:border-primary-500/30 transition-all"
           />
           <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-gray-900 ${currentStatus.color}`} />
         </div>
@@ -48,12 +48,12 @@ export default function UserStatusSelector() {
           <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
             {userProfile?.displayName}
           </p>
-          <p className="text-[10px] text-gray-500 dark:text-gray-400 flex items-center gap-1">
+          <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
             {currentStatus.label}
           </p>
         </div>
         
-        <ChevronDown size={14} className={`text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown size={16} className={`text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
