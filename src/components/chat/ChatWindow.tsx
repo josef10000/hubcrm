@@ -26,6 +26,13 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
     toggleReaction, votePoll, togglePin, unpinMessage, toggleBookmark, respondApproval 
   } = useChat(chatId);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
+  const [initialTicketMessage, setInitialTicketMessage] = useState('');
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   // Filtragem de Mensagens (Busca)
   const filteredMessages = messages.filter(msg => 
