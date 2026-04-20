@@ -40,6 +40,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
   const [initialTicketMessage, setInitialTicketMessage] = useState('');
   const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
   const [isMediaOpen, setIsMediaOpen] = useState(false);
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { markMessageAsRead, sharedMedia } = useChat(chatId);
 
