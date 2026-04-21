@@ -267,10 +267,14 @@ export default function TeamManagementView() {
         setDeleteAllData(false);
         fetchData();
       } else {
-      } finally {
-        setIsRemoving(false);
+        toast.error(data.error || 'Erro ao remover membro');
       }
-    };
+    } catch (error) {
+      toast.error('Erro ao processar remoção');
+    } finally {
+      setIsRemoving(false);
+    }
+  };
   
     if (isLoadingPermissions) {
     return (

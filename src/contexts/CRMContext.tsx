@@ -473,8 +473,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
             link: '/wiki'
           });
         }
-      }
-
+        
         toast.success(isNew ? 'Artigo publicado e equipe notificada!' : 'Artigo atualizado com sucesso!');
       } catch (e) {
         console.error('Error saving wiki article:', e);
