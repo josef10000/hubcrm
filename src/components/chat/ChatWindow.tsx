@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Chat, ChatMessage } from '../../types/chat.types';
 import { useChat } from '../../hooks/useChat';
 import { useBookmarks } from '../../hooks/useBookmarks';
+import { isSameDay, formatChatDividerDate } from '../../helpers/chatHelpers';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCRM } from '../../contexts/CRMContext';
 import MessageBubble from './MessageBubble';
@@ -392,7 +393,12 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
           </div>
         ) : (
           <div className="space-y-1">
-            {filteredMessages.map((msg) => {
+            {filteredMessages.map((msg, index) => {
+              // Lógica de divisor de data (Teams Style)
+              const currentDate = (msg.createdAt as any)?.toDate();
+              const previousDate = index > 0 ? (filteredMessages[index - 1].createdAt as any)?.toDate() : null;
+              const showDivider = index === 0 || (currentDate && previousDate && !isSameDay(currentDate, previousDate));
+
               // Calcular se a mensagem foi lida por ALGUÉM além de mim
               const isRead = Object.entries(chat.lastRead || {})
                 .filter(([uid]) => uid !== userProfile?.uid)
@@ -403,26 +409,34 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
                 });
 
               return (
-                <MessageBubble 
-                  key={msg.id}
-                  message={msg} 
-                  isRead={isRead} 
-                  isPinned={liveChat?.pinnedMessages?.includes(msg.id)}
-                  isBookmarked={bookmarkedIds.includes(msg.id)} // NOVO CÓDIGO
-                  onDelete={deleteMessage}
-                  onReply={setReplyingTo}
-                  onReact={toggleReaction}
-                  onVote={votePoll}
-                  onPin={togglePin}
-                  onUnpin={unpinMessage}
-                  onBookmark={toggleBookmark}
-                  onApprove={respondApproval}
-                  onEdit={setEditingMessage}
-                  onCreateTicket={(text) => {
-                    setInitialTicketMessage(text);
-                    setIsSupportModalOpen(true);
-                  }}
-                />
+                <React.Fragment key={msg.id}>
+                  {showDivider && currentDate && (
+                    <div className="flex items-center gap-4 py-6 px-2">
+                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400 capitalize whitespace-nowrap">
+                        {formatChatDividerDate(currentDate)}
+                      </span>
+                    </div>
+                  )}
+                  <MessageBubble 
+                    message={msg} 
+                    isRead={isRead} 
+                    isPinned={liveChat?.pinnedMessages?.includes(msg.id)}
+                    isBookmarked={bookmarkedIds.includes(msg.id)}
+                    onDelete={deleteMessage}
+                    onReply={setReplyingTo}
+                    onReact={toggleReaction}
+                    onVote={votePoll}
+                    onPin={togglePin}
+                    onUnpin={unpinMessage}
+                    onBookmark={toggleBookmark}
+                    onApprove={respondApproval}
+                    onEdit={setEditingMessage}
+                    onCreateTicket={(text) => {
+                      setInitialTicketMessage(text);
+                      setIsSupportModalOpen(true);
+                    }}
+                  />
+                </React.Fragment>
               );
             })}
           </div>

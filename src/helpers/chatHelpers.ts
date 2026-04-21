@@ -9,6 +9,24 @@ export const formatChatDate = (date: number | Date) => {
   return format(date, "dd 'de' MMMM", { locale: ptBR });
 };
 
+export const formatChatDividerDate = (date: number | Date) => {
+  return format(date, "EEEE, d 'de' MMMM", { locale: ptBR });
+};
+
+export const formatChatDateTime = (date: number | Date) => {
+  return format(date, "dd/MM HH:mm", { locale: ptBR });
+};
+
+export const isSameDay = (date1: number | Date, date2: number | Date) => {
+  const d1 = new Date(date1);
+  const d2 = new Date(date2);
+  return (
+    d1.getFullYear() === d2.getFullYear() &&
+    d1.getMonth() === d2.getMonth() &&
+    d1.getDate() === d2.getDate()
+  );
+};
+
 export const parseMentions = (text: string, teamMembers: { uid: string, displayName: string }[]) => {
   const mentions: string[] = [];
   

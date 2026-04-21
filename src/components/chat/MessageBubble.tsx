@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
 import { ChatMessage } from '../../types/chat.types';
 import { useAuth } from '../../contexts/AuthContext';
-import { formatChatTime, highlightMentions } from '../../helpers/chatHelpers';
+import { formatChatTime, formatChatDateTime, highlightMentions } from '../../helpers/chatHelpers';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -72,6 +72,13 @@ export default function MessageBubble({
         )}
 
         <div className="flex flex-col flex-1 relative group/bubble">
+          {/* Timestamp no Topo (Teams Style) */}
+          {!isDeleted && (
+            <div className={`mb-1 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-tighter ${isMine ? 'text-right pr-4' : 'pl-4'}`}>
+              {message.createdAt ? formatChatDateTime(message.createdAt.toDate()) : '...'}
+            </div>
+          )}
+
           {/* Menu de Ações Flutuante */}
           {!isDeleted && (
             <div className={`absolute -top-8 flex items-center gap-1 opacity-0 group-hover/bubble:opacity-100 transition-all z-20 ${isMine ? 'right-0' : 'left-0'}`}>
@@ -308,17 +315,16 @@ export default function MessageBubble({
               </>
             )}
 
-            {/* Hora e Status */}
-            <div className={`flex items-center gap-1 mt-1 text-xs ${isMine ? 'text-white/40 justify-end' : 'text-gray-400'}`}>
-              {message.createdAt ? formatChatTime(message.createdAt.toDate()) : '...'}
-              {isMine && !isDeleted && (
+            {/* Status (Checkmarks) */}
+            {isMine && !isDeleted && (
+              <div className={`flex items-center justify-end mt-1`}>
                 <div className="relative">
                   <button 
                     onClick={() => message.readBy && message.readBy.length > 0 && setShowReadBy(!showReadBy)}
                     className="hover:scale-110 transition-transform flex items-center"
                   >
                     {message.createdAt ? (
-                      isRead || (message.readBy && message.readBy.length > 0) ? <CheckCheck size={14} className="text-emerald-400" /> : <Check size={14} />
+                      isRead || (message.readBy && message.readBy.length > 0) ? <CheckCheck size={14} className="text-emerald-400" /> : <Check size={14} className="text-white/40" />
                     ) : (
                       <div className="w-2.5 h-2.5 border border-white/40 border-t-transparent rounded-full animate-spin" />
                     )}
@@ -340,8 +346,8 @@ export default function MessageBubble({
                     </div>
                   )}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Reações */}
             {message.reactions && Object.keys(message.reactions).length > 0 && !isDeleted && (
