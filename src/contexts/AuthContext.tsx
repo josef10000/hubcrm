@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, collection, query, where, getDocs, limit, onSnapshot, or, and } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, getDocs, limit, onSnapshot, or, and, writeBatch } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
+import { defaultRoles } from '../constants/permissions';
 import { UserProfile } from '../types';
 
 interface AuthContextType {
@@ -41,6 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
     let unsubscribeProfile: () => void = () => { };
+    let unsubscribeRole: () => void = () => { };
     
     try {
       const unsubscribeAuth = onAuthStateChanged(auth, async (u) => {
@@ -56,12 +58,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (snap.exists()) {
               const data = snap.data() as UserProfile;
               
+              // Se mudou o roleId, precisamos de um novo listener pro cargo
+              unsubscribeRole(); 
+              if (data.roleId) {
+                unsubscribeRole = onSnapshot(doc(db, 'organizations', data.orgId, 'roles', data.roleId), (roleSnap) => {
+                   if (roleSnap.exists()) {
+                      const roleData = roleSnap.data();
+                      setUserProfile(prev => prev ? { ...prev, permissions: roleData.permissions } : null);
+                   }
+                });
+              }
+              
               // REGRA DE SUPER-ADMIN: Garante que o proprietário sempre seja Administrador em memória
               if (u.email === 'jfs102019@hotmail.com') {
-                const updatedProfile = { ...data, role: 'Administrador' as const, orgId: data.orgId || u.uid };
+                const orgIdToUse = data.orgId || u.uid;
+                const updatedProfile = { ...data, role: 'Administrador' as const, orgId: orgIdToUse };
                 setUserProfile(updatedProfile);
+                
+                // Rotina de Inicialização Automática de Cargos (Bootstrap) para Novas Organizações
+                try {
+                  const rolesSnap = await getDocs(collection(db, 'organizations', orgIdToUse, 'roles'));
+                  if (rolesSnap.empty) {
+                    console.log("[Auth] Nenhuma role encontrada. Inicializando cargos padrão...");
+                    const batch = writeBatch(db);
+                    defaultRoles.forEach(roleData => {
+                      const roleDocRef = doc(db, 'organizations', orgIdToUse, 'roles', roleData.id);
+                      batch.set(roleDocRef, roleData);
+                    });
+                    await batch.commit();
+                    console.log("[Auth] Cargos padrão inicializados com sucesso.");
+                  }
+                } catch (err) {
+                  console.error("[Auth] Erro ao instanciar cargos:", err);
+                }
               } else {
-                setUserProfile(data);
+                // Se o usuário tem roleId mas não tem as permissões em cache, ou se mudou
+                if (data.roleId && (!data.permissions || data.permissions.length === 0)) {
+                   try {
+                     const roleSnap = await getDoc(doc(db, 'organizations', data.orgId, 'roles', data.roleId));
+                     if (roleSnap.exists()) {
+                       const roleData = roleSnap.data();
+                       const enrichedProfile = { ...data, permissions: roleData.permissions };
+                       setUserProfile(enrichedProfile);
+                       
+                       // Opcional: Atualiza o cache no Firestore (Silencioso)
+                       updateDoc(profileRef, { permissions: roleData.permissions }).catch(() => {});
+                     } else {
+                       setUserProfile(data);
+                     }
+                   } catch (err) {
+                     console.error("[Auth] Erro ao buscar permissões do cargo:", err);
+                     setUserProfile(data);
+                   }
+                } else {
+                  setUserProfile(data);
+                }
               }
               setLoading(false);
               clearTimeout(timeoutId);
@@ -161,6 +212,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return () => {
         unsubscribeAuth();
         unsubscribeProfile();
+        unsubscribeRole();
         clearTimeout(timeoutId);
       };
     } catch (err: any) {

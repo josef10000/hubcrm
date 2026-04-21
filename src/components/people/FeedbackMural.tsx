@@ -12,6 +12,7 @@ import { FeedbackItem, UserProfile } from '../../types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
+import { usePermissions } from '../../hooks/usePermissions';
 
 interface FeedbackMuralProps {
   feedbacks: FeedbackItem[];
@@ -20,8 +21,9 @@ interface FeedbackMuralProps {
 }
 
 export default function FeedbackMural({ feedbacks, currentUserProfile, profileOwnerId }: FeedbackMuralProps) {
+  const { hasPermission } = usePermissions();
   const isOwnProfile = currentUserProfile?.uid === profileOwnerId;
-  const isAdmin = currentUserProfile?.role === 'Administrador' || currentUserProfile?.role === 'People & Culture';
+  const isAdmin = hasPermission('MANAGE_TEAM');
 
   const visibleFeedbacks = feedbacks.filter(f => {
     if (!f.isPrivate) return true;

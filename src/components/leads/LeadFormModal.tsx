@@ -4,6 +4,8 @@ import { format } from 'date-fns';
 import { Lead } from '../../types';
 import { leadService } from '../../services/leadService';
 import { toast } from 'sonner';
+import { usePermissions } from '../../hooks/usePermissions';
+import { defaultRoles } from '../../constants/permissions';
 
 interface LeadFormModalProps {
   isOpen: boolean;
@@ -17,13 +19,15 @@ interface LeadFormModalProps {
   user: any;
   effectiveOrgId: string;
   onSave: () => void;
+  orgRoles?: any[];
 }
 
 const LEAD_SOURCES = ['Indicação', 'Google Ads', 'Tráfego Orgânico', 'Prospecção Manual', 'Instagram', 'WhatsApp Direto', 'Parceiro'];
 
 export function LeadFormModal({ 
-  isOpen, onClose, editingLead, formData, setFormData, tags, teamProfiles, userProfile, user, effectiveOrgId, onSave 
+  isOpen, onClose, editingLead, formData, setFormData, tags, teamProfiles, userProfile, user, effectiveOrgId, onSave, orgRoles = []
 }: LeadFormModalProps) {
+  const { hasPermission } = usePermissions();
   const [activeTab, setActiveTab] = useState<'form' | 'timeline'>('form');
   const [newActivityText, setNewActivityText] = useState('');
   const [isSubmittingActivity, setIsSubmittingActivity] = useState(false);
@@ -139,7 +143,7 @@ export function LeadFormModal({
 
               <div>
                 <label className="block text-xs text-gray-400 font-medium mb-1.5">Dono do Lead (Atribuição)</label>
-                {(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente') ? (
+                {hasPermission('MANAGE_TEAM') ? (
                   <div className="relative">
                     <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                     <select 
@@ -149,10 +153,13 @@ export function LeadFormModal({
                     >
                       <option value={user?.uid}>Atribuído a mim</option>
                       {teamProfiles
-                        .filter(p => p.role === 'SDR' || p.role === 'Executive')
+                        .filter(p => {
+                          const role = orgRoles.find(r => r.id === p.roleId || r.name === p.role);
+                          return role ? role.permissions.includes('MANAGE_LEADS') : false;
+                        })
                         .map(member => (
                           <option key={member.uid} value={member.uid}>
-                            {member.displayName} ({member.role})
+                            {member.displayName} ({orgRoles.find(r => r.id === member.roleId || r.name === member.role)?.name || member.role})
                           </option>
                         ))
                       }

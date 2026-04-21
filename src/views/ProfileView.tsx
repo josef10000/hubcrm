@@ -11,6 +11,7 @@ import { useCRM } from '../contexts/CRMContext';
 import { db } from '../lib/firebase';
 import { doc, getDoc, collection, setDoc, query, where, onSnapshot } from 'firebase/firestore';
 import { uploadImageToImgBB } from '../lib/imgbb';
+import { usePermissions } from '../hooks/usePermissions';
 import { VacationPeriod } from '../types/people';
 import { UserProfile } from '../types';
 import { PDICategory } from '../types/people';
@@ -98,11 +99,12 @@ export default function ProfileView() {
     startDate: ''
   });
   const [userAssets, setUserAssets] = useState<any[]>([]);
+  const { hasPermission } = usePermissions();
 
   const isOwnProfile = user?.uid === uid;
-  const isAdmin = currentUserProfile?.role === 'Administrador';
-  const isManagement = ['Administrador', 'Gerente', 'People & Culture'].includes(currentUserProfile?.role || '');
-  const canEdit = isOwnProfile || isAdmin;
+  const isAdmin = hasPermission('MANAGE_SYSTEM');
+  const isManagement = hasPermission('MANAGE_TEAM');
+  const canEdit = isOwnProfile || isManagement || isAdmin;
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -395,11 +397,11 @@ export default function ProfileView() {
 
               {/* CSAT Individual - Visível apenas para gestão e atendimento */}
               {(() => {
+                const { hasPermission } = usePermissions();
+                const canSeePerformance = hasPermission('MANAGE_TEAM') || hasPermission('MANAGE_SUPPORT');
+                
                 const showCSAT = 
-                  profile?.role === 'Administrador' || 
-                  profile?.role === 'Gerente' || 
-                  profile?.role === 'Customer Success' || 
-                  profile?.role === 'Suporte Técnico' || 
+                  canSeePerformance || 
                   ['suporte', 'atendimento', 'sucesso', 'support', 'success', 'service'].some(keyword => 
                     profile?.jobTitle?.toLowerCase().includes(keyword)
                   );

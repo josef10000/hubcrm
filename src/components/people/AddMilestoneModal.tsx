@@ -3,6 +3,7 @@ import { X, Plus, Trophy, Briefcase, GraduationCap, Calendar, Star } from 'lucid
 import { CareerMilestone } from '../../types';
 import { toast } from 'sonner';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePermissions } from '../../hooks/usePermissions';
 
 interface AddMilestoneModalProps {
   isOpen: boolean;
@@ -19,7 +20,8 @@ const MILESTONE_TYPES: { value: CareerMilestone['type']; label: string; icon: an
 ];
 
 const AddMilestoneModal = ({ isOpen, onClose, targetUserId, onSuccess }: AddMilestoneModalProps) => {
-  const { user, userProfile } = useAuth();
+  const { user } = useAuth();
+  const { hasPermission } = usePermissions();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -28,7 +30,7 @@ const AddMilestoneModal = ({ isOpen, onClose, targetUserId, onSuccess }: AddMile
     description: ''
   });
 
-  const isAdminOrManager = userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente';
+  const isAdminOrManager = hasPermission('MANAGE_TEAM');
 
   if (!isOpen) return null;
 

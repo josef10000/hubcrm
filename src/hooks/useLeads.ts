@@ -4,12 +4,14 @@ import { useAuth } from '../contexts/AuthContext';
 import { leadService } from '../services/leadService';
 import { Lead, LeadStatus } from '../types';
 import { toast } from 'sonner';
+import { usePermissions } from './usePermissions';
 
 export type LeadFilterMode = 'all' | 'mine';
 
 export function useLeads() {
   const { user } = useAuth();
-  const { leads: rawLeads = [], effectiveOrgId = '', userProfile, teamProfiles, tags } = useCRM();
+  const { hasPermission } = usePermissions();
+  const { leads: rawLeads = [], effectiveOrgId = '', userProfile, teamProfiles, tags, orgRoles } = useCRM();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filterSource, setFilterSource] = useState('all');
@@ -69,7 +71,7 @@ export function useLeads() {
         plan: formData.plan || undefined,
         niche: formData.niche.trim() || undefined,
         nextFollowUp: formData.nextFollowUp ? new Date(formData.nextFollowUp).getTime() : undefined,
-        assignedTo: (userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente') 
+        assignedTo: hasPermission('MANAGE_TEAM') 
           ? (formData.assignedTo || user?.uid) 
           : (user?.uid),
         tagIds: formData.tagIds
@@ -101,7 +103,7 @@ export function useLeads() {
 
   const handleDeleteLead = async (leadId: string) => {
     if (!effectiveOrgId) return;
-    if (userProfile?.role !== 'Administrador') {
+    if (!hasPermission('MANAGE_LEADS')) {
       toast.error('Apenas administradores podem excluir leads.');
       return;
     }
@@ -141,6 +143,7 @@ export function useLeads() {
     tags,
     teamProfiles,
     userProfile,
+    orgRoles,
     searchTerm,
     setSearchTerm,
     filterSource,

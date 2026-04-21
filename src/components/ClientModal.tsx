@@ -13,6 +13,7 @@ import { Client, ClientLog, ClientCredential, ClientStage, OnboardingQuestion, O
 import { getPlanPrice, getSetupPrice } from '../helpers';
 import { useCRM } from '../contexts/CRMContext';
 import { useAuth } from '../contexts/AuthContext';
+import { usePermissions } from '../hooks/usePermissions';
 import { Tag as LucideTag } from 'lucide-react';
 
 // ── Tab Components ──
@@ -26,6 +27,7 @@ import ContractsTab from './client-modal/ContractsTab';
 export default
 function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardingQuestions, user, offers }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, onDelete?: (id: string) => void, initialData: Client | null, onboardingQuestions: OnboardingQuestion[], user: User, offers: Offer[] }) {
   const { userProfile } = useAuth();
+  const { hasPermission } = usePermissions();
   const { defaultContractText, effectiveOrgId, tags } = useCRM();
   const activeOffers = offers.filter(o => o.active);
   const defaultOffer = activeOffers.length > 0 ? activeOffers[0] : null;
@@ -555,12 +557,12 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
 
           <div className="flex justify-between items-center p-6 border-t border-gray-200 dark:border-white/10 bg-gray-100 dark:bg-white/5 shrink-0">
             <div className="flex space-x-2">
-              {initialData && onDelete && (userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente') ? (
+              {initialData && onDelete && hasPermission('MANAGE_CLIENTS') ? (
                 <button type="button" onClick={() => onDelete(initialData.id)} className="text-red-400 hover:text-red-300 hover:bg-red-400/10 px-4 py-2 rounded-lg transition-colors flex items-center text-sm font-medium">
                   <Trash2 size={18} className="mr-2" /> Excluir
                 </button>
               ) : null}
-              {initialData && initialData.status !== 'Cancelado' && (userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente') ? (
+              {initialData && initialData.status !== 'Cancelado' && hasPermission('MANAGE_CLIENTS') ? (
                 <button type="button" onClick={() => setShowCancelConfirm(true)} className="text-primary-400 hover:text-primary-300 hover:bg-primary-400/10 px-4 py-2 rounded-lg transition-colors flex items-center text-sm font-medium">
                   Cancelar Assinatura
                 </button>
@@ -568,7 +570,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
             </div>
             <div className="flex space-x-3">
               <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:bg-white/10 transition-colors">Cancelar</button>
-              {userProfile?.role !== 'Só Leitura' && (
+              {hasPermission('MANAGE_CLIENTS') && (
                 <button type="submit" className="px-5 py-2.5 rounded-xl text-sm font-medium bg-primary-500 hover:bg-primary-600 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20 transition-all hover:scale-105 active:scale-95">Salvar Cliente</button>
               )}
             </div>

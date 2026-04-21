@@ -1,5 +1,5 @@
-import React from 'react';
 import { Users, BarChart3, DollarSign, Calendar, Activity } from 'lucide-react';
+import { usePermissions } from '../../hooks/usePermissions';
 
 
 interface MetricsGridProps {
@@ -8,8 +8,6 @@ interface MetricsGridProps {
   overdueAmount: number;
   expectedThisMonth: number;
   averageHealthScore: number;
-  role?: string;
-
 }
 
 export default function MetricsGrid({ 
@@ -17,13 +15,10 @@ export default function MetricsGrid({
   mrr, 
   overdueAmount, 
   expectedThisMonth,
-  averageHealthScore,
-  role 
-
+  averageHealthScore
 }: MetricsGridProps) {
-  const isFinancialRestricted = role !== 'Administrador' && 
-                                role !== 'Gerente' && 
-                                !['FinOps', 'Controladoria', 'Revenue Operations', 'Gestor de Faturamento'].includes(role || '');
+  const { hasPermission } = usePermissions();
+  const isFinancialRestricted = !hasPermission('MANAGE_FINANCE');
 
   return (
     <div className={`grid grid-cols-1 sm:grid-cols-2 ${isFinancialRestricted ? 'lg:grid-cols-1' : 'lg:grid-cols-4'} gap-4 mb-8`}>

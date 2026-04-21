@@ -43,7 +43,8 @@ export default function LeadsView() {
     handleSaveLead,
     handleMoveLead,
     handleDeleteLead,
-    handleCleanup
+    handleCleanup,
+    orgRoles
   } = useLeads();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -228,6 +229,7 @@ export default function LeadsView() {
         user={user}
         effectiveOrgId={(userProfile as any)?.orgId || ''}
         onSave={handleSave}
+        orgRoles={orgRoles}
       />
     </div>
   );

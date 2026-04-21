@@ -5,6 +5,7 @@ import { useUI } from '../contexts/UIContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useFilteredClients } from '../hooks/useFilteredClients';
 import { getPlanPrice } from '../helpers';
+import { usePermissions } from '../hooks/usePermissions';
 
 import AlertPanels from '../components/dashboard/AlertPanels';
 import MetricsGrid from '../components/dashboard/MetricsGrid';
@@ -39,6 +40,8 @@ export default function DashboardView() {
     searchTerm,
     filterTagId, setFilterTagId
   } = useUI();
+  
+  const { hasPermission } = usePermissions();
 
   const filteredClients = useFilteredClients(clients, searchTerm, filterStatus, sortBy, filterTagId);
 
@@ -123,12 +126,12 @@ export default function DashboardView() {
         <RecentKudosWidget />
 
         {/* Widget: Inadimplência Crítica (>30 dias) */}
-        {['Administrador', 'Gerente', 'FinOps', 'Controladoria', 'Gestor de Faturamento'].includes(userProfile?.role || '') && (
+        {hasPermission('VIEW_REPORTS') && (
           <OverdueAlertWidget clients={clients} />
         )}
 
         {/* Widget: Projeção de Fluxo de Caixa */}
-        {['Administrador', 'Gerente', 'FinOps', 'Controladoria', 'Revenue Operations'].includes(userProfile?.role || '') && (
+        {hasPermission('VIEW_REPORTS') && (
           <CashFlowProjection clients={clients} />
         )}
 
@@ -138,13 +141,10 @@ export default function DashboardView() {
           overdueAmount={metrics.overdue}
           expectedThisMonth={metrics.expected}
           averageHealthScore={metrics.avgHealth}
-          role={userProfile?.role}
         />
 
 
-        {(userProfile?.role === 'Administrador' || 
-          userProfile?.role === 'Gerente' || 
-          ['FinOps', 'Controladoria', 'Revenue Operations', 'Gestor de Faturamento'].includes(userProfile?.role || '')) && (
+        {hasPermission('VIEW_REPORTS') && (
           <FinancialCharts 
             statusData={chartData.status}
             nicheData={chartData.niche}
@@ -174,9 +174,7 @@ export default function DashboardView() {
           </div>
           
           <div className="flex items-center space-x-2 bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-1 rounded-2xl">
-            {(userProfile?.role === 'Administrador' || 
-              userProfile?.role === 'Gerente' || 
-              ['FinOps', 'Controladoria', 'Revenue Operations', 'Gestor de Faturamento'].includes(userProfile?.role || '')) && (
+            {hasPermission('MANAGE_FINANCE') && (
               <button 
                 onClick={syncPayments} 
                 disabled={isSyncing}
@@ -187,9 +185,7 @@ export default function DashboardView() {
                 <span className="hidden sm:inline">Sincronizar</span>
               </button>
             )}
-            {(userProfile?.role === 'Administrador' || 
-              userProfile?.role === 'Gerente' || 
-              ['FinOps', 'Controladoria', 'Revenue Operations', 'Gestor de Faturamento'].includes(userProfile?.role || '')) && <div className="w-px h-6 bg-gray-200 dark:bg-white/10 mx-1"></div>}
+            {hasPermission('MANAGE_FINANCE') && <div className="w-px h-6 bg-gray-200 dark:bg-white/10 mx-1"></div>}
             <div className="w-px h-6 bg-gray-200 dark:bg-white/10 mx-1"></div>
             <button onClick={() => setSortBy('recent')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${sortBy === 'recent' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}><Clock size={16} className="mr-2"/> Recentes</button>
             <button onClick={() => setSortBy('alphabetical')} className={`px-3 py-2 rounded-xl text-sm font-medium transition-all flex items-center ${sortBy === 'alphabetical' ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}><ArrowDownAZ size={16} className="mr-2"/> A-Z</button>

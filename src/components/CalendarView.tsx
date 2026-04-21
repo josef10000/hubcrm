@@ -15,6 +15,7 @@ import { getPlanPrice } from '../helpers';
 import { Client, UserProfile } from '../types';
 import { VacationPeriod } from '../types/people';
 import { useCRM } from '../contexts/CRMContext';
+import { usePermissions } from '../hooks/usePermissions';
 
 interface CalendarViewProps {
   clients: Client[];
@@ -32,8 +33,9 @@ interface Holiday {
 
 export default function CalendarView({ clients, onClientClick, role }: CalendarViewProps) {
   const { vacations, teamProfiles } = useCRM();
-  const canSeeFinance = role === 'Administrador' || role === 'Gerente';
-  const canSeePeople = role === 'Administrador' || role === 'Gerente' || role === 'People & Culture';
+  const { hasPermission } = usePermissions();
+  const canSeeFinance = hasPermission('MANAGE_FINANCE');
+  const canSeePeople = hasPermission('MANAGE_TEAM');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [mode, setMode] = useState<CalendarMode>(canSeeFinance ? 'finance' : 'production');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);

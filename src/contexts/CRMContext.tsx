@@ -13,6 +13,7 @@ import { useFinance } from '../hooks/useFinance';
 import { useOffers } from '../hooks/useOffers';
 import { useClients } from '../hooks/useClients';
 import { useUI } from './UIContext';
+import { usePermissions } from '../hooks/usePermissions';
 
 // ─── Context Type ───────────────────────────────────────────────────────────────
 interface CRMContextType {
@@ -33,6 +34,7 @@ interface CRMContextType {
   activeLeadsCount: number;
   effectiveOrgId: string;
   userProfile: any | null;
+  orgRoles: UserRole[];
 
   // Loading / Error
   loading: boolean;
@@ -139,6 +141,7 @@ export function useCRM() {
 // ─── Provider ───────────────────────────────────────────────────────────────────
 export function CRMProvider({ children }: { children: React.ReactNode }) {
   const { user, userProfile } = useAuth();
+  const { hasPermission } = usePermissions();
   const { setIsModalOpen } = useUI();
 
   // ── Local Core Data State ──
@@ -150,6 +153,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   const [commissions, setCommissions] = useState<CommissionEntry[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [wikiArticles, setWikiArticles] = useState<WikiArticle[]>([]);
+  const [orgRoles, setOrgRoles] = useState<UserRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -194,6 +198,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     let unsubVacations: () => void = () => { };
     let unsubCommissions: () => void = () => { };
     let unsubWiki: () => void = () => { };
+    let unsubRoles: () => void = () => { };
 
     try {
       const offersRef = collection(db, 'organizations', effectiveOrgId, 'offers');
@@ -220,8 +225,8 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
           let loadedClients: Client[] = [];
           snapshot.forEach((d) => loadedClients.push({ id: d.id, ...d.data() } as Client));
           
-          // Filtro por cargo: Equipe comercial só vê o que está atribuído a ela
-          if (userProfile?.role === 'SDR' || userProfile?.role === 'Executive') {
+          // Filtro por permissão: Quem não gere equipe só vê o que está atribuído a ela
+          if (!hasPermission('MANAGE_TEAM') && !hasPermission('MANAGE_SYSTEM')) {
             loadedClients = loadedClients.filter(c => c.assignedTo === user?.uid);
           }
           
@@ -242,8 +247,8 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         let loaded: Lead[] = [];
         snapshot.forEach((d) => loaded.push({ id: d.id, ...d.data() } as Lead));
         
-        // Filtro por cargo: Equipe comercial só vê o que está atribuído a ela
-        if (userProfile?.role === 'SDR' || userProfile?.role === 'Executive') {
+        // Filtro por permissão: Quem não gere equipe só vê o que está atribuído a ela
+        if (!hasPermission('MANAGE_TEAM') && !hasPermission('MANAGE_SYSTEM')) {
           loaded = loaded.filter(l => l.assignedTo === user?.uid);
         }
         
@@ -302,11 +307,18 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         setTags(loaded.sort((a, b) => a.name.localeCompare(b.name)));
       });
       
-      const wikiRef = collection(db, 'organizations', effectiveOrgId, 'wikiArticles');
+      const wikiRef = collection(db, 'organizations', effectiveOrgId, 'wiki');
       unsubWiki = onSnapshot(wikiRef, (snapshot) => {
         const loaded: WikiArticle[] = [];
-        snapshot.forEach((d) => loaded.push({ ...d.data(), id: d.id } as WikiArticle));
-        setWikiArticles(loaded.sort((a, b) => b.updatedAt - a.updatedAt));
+        snapshot.forEach((d) => loaded.push({ id: d.id, ...d.data() } as WikiArticle));
+        setWikiArticles(loaded.sort((a, b) => b.createdAt - a.createdAt));
+      });
+
+      const rolesRef = collection(db, 'organizations', effectiveOrgId, 'roles');
+      unsubRoles = onSnapshot(rolesRef, (snapshot) => {
+        const loaded: UserRole[] = [];
+        snapshot.forEach((d) => loaded.push(d.data() as UserRole));
+        setOrgRoles(loaded.sort((a, b) => a.name.localeCompare(b.name)));
       });
 
       timeoutId = setTimeout(() => {
@@ -326,6 +338,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         unsubCommissions();
         unsubTags();
         unsubWiki();
+        unsubRoles();
         clearTimeout(timeoutId);
       };
     } catch (err: any) {
@@ -445,18 +458,15 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         }, { merge: true });
 
         // Gatilho de Notificação para novos artigos
-        if (isNew) {
-          const allRoles: UserRole[] = [
-            'Administrador', 'Gerente', 'People & Culture', 'Customer Success', 
-            'Suporte Técnico', 'Onboarding Specialist', 'SDR', 'Executive', 
-            'FinOps', 'Controladoria', 'Revenue Operations', 'Gestor de Faturamento', 'Só Leitura'
-          ];
+          const targetRoles = articleData.allowedRoles?.length 
+            ? articleData.allowedRoles 
+            : orgRoles.map(r => r.id);
 
           await addDoc(collection(db, 'system_alerts'), {
             title: '📚 Novo Conteúdo na Wiki',
             message: `Um novo manual foi publicado: "${articleData.title}"`,
             type: 'info',
-            targetRoles: articleData.allowedRoles?.length ? articleData.allowedRoles : allRoles,
+            targetRoles: targetRoles,
             orgId: effectiveOrgId,
             createdAt: now,
             link: '/wiki'
@@ -572,7 +582,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
               title: '📅 Nova Solicitação de Ausência',
               message: `O colaborador solicitou: ${vacationData.type} (${vacationData.reason}). Justificativa: ${vacationData.description || 'Não informada.'}`,
               type: 'info',
-              targetRoles: ['People & Culture', 'Administrador', 'Gerente'],
+              targetRoles: orgRoles.filter(r => r.permissions.includes('MANAGE_TEAM')).map(r => r.id),
               orgId: effectiveOrgId,
               createdAt: now,
               link: '/people'

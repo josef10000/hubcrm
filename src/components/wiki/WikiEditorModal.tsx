@@ -12,14 +12,10 @@ interface WikiEditorModalProps {
 }
 
 const CATEGORIES: WikiCategory[] = ['RH', 'Vendas', 'Técnico', 'Atendimento', 'Suporte', 'Geral'];
-const ROLES: UserRole[] = [
-  'Administrador', 'Gerente', 'People & Culture', 'Customer Success', 
-  'Suporte Técnico', 'Onboarding Specialist', 'SDR', 'Executive', 
-  'FinOps', 'Controladoria', 'Revenue Operations', 'Gestor de Faturamento', 'Só Leitura'
-];
+const CATEGORIES: WikiCategory[] = ['RH', 'Vendas', 'Técnico', 'Atendimento', 'Suporte', 'Geral'];
 
 export default function WikiEditorModal({ isOpen, onClose, initialData }: WikiEditorModalProps) {
-  const { handleSaveWikiArticle, teamProfiles } = useCRM();
+  const { handleSaveWikiArticle, teamProfiles, orgRoles } = useCRM();
   const { userProfile } = useAuth();
   
   const [formData, setFormData] = useState<Partial<WikiArticle>>({
@@ -169,23 +165,23 @@ export default function WikiEditorModal({ isOpen, onClose, initialData }: WikiEd
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-2 uppercase">Por Cargos</label>
                   <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto custom-scrollbar p-2">
-                    {ROLES.map(role => (
-                      <label key={role} className="flex items-center gap-2 text-sm text-gray-300">
+                    {orgRoles.map(role => (
+                      <label key={role.id} className="flex items-center gap-2 text-sm text-gray-300">
                         <input
                           type="checkbox"
-                          checked={formData.allowedRoles?.includes(role)}
+                          checked={formData.allowedRoles?.includes(role.id)}
                           onChange={e => {
                             const roles = formData.allowedRoles || [];
                             setFormData({
                               ...formData,
                               allowedRoles: e.target.checked 
-                                ? [...roles, role]
-                                : roles.filter(r => r !== role)
+                                ? [...roles, role.id]
+                                : roles.filter(r => r !== role.id)
                             });
                           }}
                           className="w-4 h-4 rounded border-white/10 bg-black/40 text-primary-500"
                         />
-                        {role}
+                        {role.name}
                       </label>
                     ))}
                   </div>

@@ -11,6 +11,7 @@ import { WikiArticle, WikiCategory } from '../types';
 import WikiEditorModal from '../components/wiki/WikiEditorModal';
 import WikiArticleDetail from '../components/wiki/WikiArticleDetail';
 import Pagination from '../components/common/Pagination';
+import { usePermissions } from '../hooks/usePermissions';
 
 const ITEMS_PER_PAGE = 6;
 
@@ -37,7 +38,8 @@ export default function WikiView() {
   const [editingArticle, setEditingArticle] = useState<WikiArticle | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const canCreate = userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture';
+  const { hasPermission } = usePermissions();
+  const canCreate = hasPermission('MANAGE_WIKI');
   
   // Contador dinâmico por categoria v4.1.4
   const categoryCounts = useMemo(() => {
@@ -55,9 +57,10 @@ export default function WikiView() {
   const filteredArticles = useMemo(() => {
     return wikiArticles.filter(article => {
       // 1. RBAC Check
-      const hasRole = !article.allowedRoles || article.allowedRoles.length === 0 || article.allowedRoles.includes(userProfile?.role);
+      const hasRole = !article.allowedRoles || article.allowedRoles.length === 0 || article.allowedRoles.includes(userProfile?.roleId) || article.allowedRoles.includes(userProfile?.role);
       const isUserAllowed = !article.allowedUserIds || article.allowedUserIds.length === 0 || article.allowedUserIds.includes(userProfile?.uid);
-      const isAdmin = userProfile?.role === 'Administrador';
+      const isAdmin = hasPermission('MANAGE_WIKI');
+
       
       const isVisible = isAdmin || hasRole || isUserAllowed;
       if (!isVisible) return false;

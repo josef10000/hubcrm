@@ -12,16 +12,20 @@ import DREChart from '../components/finance/DREChart';
 import CashFlowProjected from '../components/finance/CashFlowProjected';
 import BudgetPanel from '../components/finance/BudgetPanel';
 import ROIAnalysis from '../components/finance/ROIAnalysis';
+import { usePermissions } from '../hooks/usePermissions';
 
 export default function FinanceView() {
   const { user } = useAuth();
   const { clients, newTransaction, setNewTransaction, transactionCategories, budgets, transactions, effectiveOrgId, userProfile, commissions, offers } = useCRM();
   const [activeTab, setActiveTab] = useState<'resumo' | 'dre' | 'fluxo' | 'orcamento' | 'roi' | 'saas'>('resumo');
 
-  if (userProfile?.role === 'SDR' || userProfile?.role === 'Executive') {
+  const { hasPermission } = usePermissions();
+
+  if (!hasPermission('MANAGE_FINANCE')) {
     return (
-      <div className="flex-1 flex items-center justify-center p-6">
+      <div className="flex-1 flex items-center justify-center p-6 bg-transparent relative z-10 w-full h-full min-h-[calc(100vh-100px)]">
         <div className="text-center">
+          <DollarSign size={48} className="mx-auto text-gray-500 mb-4" />
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Acesso Restrito</h2>
           <p className="text-gray-500 dark:text-gray-400">Você não tem permissão para acessar o módulo financeiro estratégico.</p>
         </div>
@@ -63,7 +67,7 @@ export default function FinanceView() {
     e.preventDefault();
     if (!newTransaction.description || !newTransaction.amount || !newTransaction.date || !effectiveOrgId) return;
     
-    if (userProfile?.role !== 'Administrador' && userProfile?.role !== 'Gerente' && userProfile?.role !== 'FinOps') {
+    if (!hasPermission('MANAGE_FINANCE')) {
       toast.error('Você não tem permissão para adicionar lançamentos.');
       return;
     }
@@ -114,7 +118,7 @@ export default function FinanceView() {
 
   const handleDeleteTransaction = async (id: string) => {
     if (!effectiveOrgId) return;
-    if (userProfile?.role !== 'Administrador' && userProfile?.role !== 'Gerente' && userProfile?.role !== 'FinOps') {
+    if (!hasPermission('MANAGE_FINANCE')) {
       toast.error('Você não tem permissão para excluir lançamentos.');
       return;
     }

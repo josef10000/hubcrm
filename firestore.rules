@@ -25,9 +25,18 @@ service cloud.firestore {
       return isAuthenticated() && (isOwnerEmail() || getUserData().orgId == orgId);
     }
 
-    // Verifica cargo (Role)
+    // Verifica se o usuário tem uma permissão específica (Busca no cache do perfil ou no cargo)
+    // Nota: O cache de 'permissions' no perfil evita o custo de get() extras em regras frequentes
+    function hasPermission(orgId, perm) {
+      let userData = getUserData();
+      return isOwnerEmail() || 
+             (userData.permissions != null && perm in userData.permissions) ||
+             (userData.roleId != null && get(/databases/$(database)/documents/organizations/$(orgId)/roles/$(userData.roleId)).data.permissions.hasAny([perm]));
+    }
+
+    // Função legada para compatibilidade em áreas ainda não migradas 100%
     function isOrgAdmin(orgId) {
-      return belongsToOrg(orgId) && (isOwnerEmail() || getUserData().role == 'Administrador' || getUserData().role == 'Gerente' || getUserData().role == 'People & Culture');
+      return hasPermission(orgId, 'MANAGE_SETTINGS') || hasPermission(orgId, 'MANAGE_TEAM');
     }
 
     // ===============================================================
@@ -69,7 +78,36 @@ service cloud.firestore {
         allow read, write: if isOwnerEmail() || (belongsToOrg(orgId) && request.auth.uid == userId);
       }
 
-      // Outros dados dentro da organização (Regra Genérica)
+      // Outros dados dentro da organização (Regras Granulares)
+      match /transactions/{id} {
+        allow read: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_FINANCE');
+        allow write: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_FINANCE');
+      }
+
+      match /clients/{id} {
+        allow read: if belongsToOrg(orgId);
+        allow write: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_CLIENTS');
+      }
+
+      match /leads/{id} {
+        allow read: if belongsToOrg(orgId);
+        allow write: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_LEADS');
+      }
+
+      match /wiki/{id} {
+        allow read: if belongsToOrg(orgId);
+        allow write: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_WIKI');
+      }
+
+      match /roles/{id} {
+        allow read: if belongsToOrg(orgId);
+        allow write: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_SETTINGS');
+      }
+
+      match /team_invites/{id} {
+        allow read, write: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_TEAM');
+      }
+
       match /{collection}/{docId} {
         allow read: if isOwnerEmail() || belongsToOrg(orgId);
         allow write: if isOwnerEmail() || isOrgAdmin(orgId);

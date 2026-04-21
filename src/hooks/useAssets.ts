@@ -5,12 +5,15 @@ import { useCRM } from '../contexts/CRMContext';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 
+import { usePermissions } from './usePermissions';
+
 /**
  * Custom Hook to manage assets business logic.
  * Handles real-time sync, filtering and role-based permissions.
  */
 export function useAssets(userId?: string) {
   const { userProfile } = useAuth();
+  const { hasPermission } = usePermissions();
   const crm = useCRM();
   const { effectiveOrgId = '', teamProfiles: rawTeamProfiles = [] } = crm || {};
   const teamProfiles = Array.isArray(rawTeamProfiles) ? rawTeamProfiles : [];
@@ -19,11 +22,7 @@ export function useAssets(userId?: string) {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const isAdminOrManager = useMemo(() => {
-    return userProfile?.role === 'Administrador' || 
-           userProfile?.role === 'Gerente' || 
-           userProfile?.role === 'People & Culture';
-  }, [userProfile?.role]);
+  const isAdminOrManager = hasPermission('MANAGE_TEAM');
 
   // Real-time synchronization
   useEffect(() => {

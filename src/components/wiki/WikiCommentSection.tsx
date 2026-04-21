@@ -3,6 +3,7 @@ import { Send, Trash2, Star, User as UserIcon } from 'lucide-react';
 import { WikiComment } from '../../types';
 import { useCRM } from '../../contexts/CRMContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePermissions } from '../../hooks/usePermissions';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { formatDistanceToNow } from 'date-fns';
@@ -14,6 +15,7 @@ interface WikiCommentSectionProps {
 
 export default function WikiCommentSection({ articleId }: WikiCommentSectionProps) {
   const { user, userProfile } = useAuth();
+  const { hasPermission } = usePermissions();
   const { handleAddWikiComment, effectiveOrgId } = useCRM();
   const [comments, setComments] = useState<WikiComment[]>([]);
   const [newComment, setNewComment] = useState('');
@@ -117,7 +119,7 @@ export default function WikiCommentSection({ articleId }: WikiCommentSectionProp
                   Gostei
                 </button>
                 {/* Moderation */}
-                {(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || comment.userId === user?.uid) && (
+                {(hasPermission('MANAGE_WIKI') || comment.userId === user?.uid) && (
                   <button className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 transition-opacity">
                     <Trash2 className="w-3.5 h-3.5" />
                     Excluir

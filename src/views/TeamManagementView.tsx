@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Users, Mail, UserPlus, Shield, X, Check, Loader2, Trash2, GitGraph, List, ChevronRight, Edit2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useCRM } from '../contexts/CRMContext';
+import { usePermissions } from '../hooks/usePermissions';
 import { toast } from 'sonner';
 import { UserRole } from '../types';
 
@@ -81,6 +83,8 @@ const OrgNode = ({ member, members, navigate }: { member: Member, members: Membe
 
 export default function TeamManagementView() {
   const { user, userProfile } = useAuth();
+  const { orgRoles = [] } = useCRM();
+  const { hasPermission } = usePermissions();
   const [members, setMembers] = useState<Member[]>([]);
   const [invites, setInvites] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,7 +94,7 @@ export default function TeamManagementView() {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteName, setInviteName] = useState('');
-  const [inviteRole, setInviteRole] = useState<UserRole>('SDR');
+  const [inviteRole, setInviteRole] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Remove member state
@@ -105,6 +109,7 @@ export default function TeamManagementView() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editJobTitle, setEditJobTitle] = useState('');
   const [editReportsTo, setEditReportsTo] = useState('');
+  const [editRole, setEditRole] = useState('');
   const [editBirthDate, setEditBirthDate] = useState('');
 
   const fetchData = async () => {
@@ -213,6 +218,7 @@ export default function TeamManagementView() {
           targetUid: editingMember.uid,
           profileData: {
             jobTitle: editJobTitle,
+            roleId: editRole,
             reportsTo: editReportsTo || null,
             birthDate: editBirthDate || null
           }
@@ -270,12 +276,22 @@ export default function TeamManagementView() {
     }
   };
 
-  if (userProfile?.role !== 'Administrador' && userProfile?.role !== 'Gerente') {
+  const { permissions, hasPermission, isLoadingPermissions } = usePermissions();
+
+  if (isLoadingPermissions) {
+    return (
+      <div className="flex-1 overflow-y-auto p-12 flex items-center justify-center">
+        <Loader2 className="animate-spin text-primary-500" size={32} />
+      </div>
+    );
+  }
+
+  if (!hasPermission('MANAGE_TEAM')) {
     return (
       <div className="p-12 text-center">
         <Shield size={48} className="mx-auto text-gray-400 mb-4" />
         <h2 className="text-xl font-bold text-gray-900 dark:text-white">Acesso Restrito</h2>
-        <p className="text-gray-500">Apenas administradores e gerentes podem gerenciar a equipe.</p>
+        <p className="text-gray-500">Você não tem permissão para gerenciar a equipe.</p>
       </div>
     );
   }
@@ -305,7 +321,7 @@ export default function TeamManagementView() {
                 <span>Organograma</span>
               </button>
             </div>
-            {userProfile.role === 'Administrador' && (
+            {hasPermission('MANAGE_TEAM') && (
               <button 
                 onClick={() => setIsInviteModalOpen(true)}
                 className="flex items-center space-x-2 bg-primary-500 hover:bg-primary-600 text-gray-900 dark:text-white px-5 py-3 rounded-2xl transition-all font-medium shadow-xl shadow-primary-500/20 whitespace-nowrap"
@@ -355,25 +371,25 @@ export default function TeamManagementView() {
                             <p className="text-xs text-gray-500">{superior?.displayName || 'Ninguém'}</p>
                           </div>
                           <span className={`px-3 py-1 rounded-full text-[10px] font-bold tracking-tight uppercase ${
-                            member.role === 'Administrador' ? 'bg-purple-500/20 text-purple-600 dark:text-purple-400' :
-                            member.role === 'Gerente' ? 'bg-zinc-500/20 text-zinc-600 dark:text-zinc-400' :
-                            member.role === 'People & Culture' ? 'bg-pink-500/20 text-pink-600 dark:text-pink-400' :
-                            member.role === 'Customer Success' ? 'bg-indigo-500/20 text-indigo-600 dark:text-indigo-400' :
-                            member.role === 'Suporte Técnico' ? 'bg-cyan-500/20 text-cyan-600 dark:text-cyan-400' :
-                            member.role === 'Onboarding Specialist' ? 'bg-primary-500/20 text-primary-600 dark:text-primary-400' :
-                            member.role === 'SDR' || member.role === 'Executive' ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' :
-                            member.role === 'FinOps' || member.role === 'Controladoria' || member.role === 'Revenue Operations' || member.role === 'Gestor de Faturamento' ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400' :
+                            member.role.includes('Admin') ? 'bg-purple-500/20 text-purple-600 dark:text-purple-400' :
+                            member.role.includes('Gerente') ? 'bg-zinc-500/20 text-zinc-600 dark:text-zinc-400' :
+                            member.role.includes('People') ? 'bg-pink-500/20 text-pink-600 dark:text-pink-400' :
+                            member.role.includes('Success') ? 'bg-indigo-500/20 text-indigo-600 dark:text-indigo-400' :
+                            member.role.includes('Suporte') ? 'bg-cyan-500/20 text-cyan-600 dark:text-cyan-400' :
+                            member.role.includes('Vendas') || member.role.includes('SDR') ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' :
+                            member.role.includes('Financeiro') || member.role.includes('FinOps') ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400' :
                             'bg-gray-500/20 text-gray-600 dark:text-gray-400'
                           }`}>
                             {member.role}
                           </span>
                           <div className="flex items-center gap-1">
-                            {userProfile.role === 'Administrador' && (
+                            {hasPermission('MANAGE_TEAM') && (
                               <button 
                                 onClick={() => { 
                                   setEditingMember(member); 
                                   setEditJobTitle(member.jobTitle || '');
                                   setEditReportsTo(member.reportsTo || '');
+                                  setEditRole(member.uid === user?.uid ? (member as any).roleId || member.role : (member as any).roleId || member.role);
                                   setEditBirthDate(member.birthDate || '');
                                   setIsEditModalOpen(true); 
                                 }}
@@ -383,7 +399,7 @@ export default function TeamManagementView() {
                                 <Edit2 size={16} />
                               </button>
                             )}
-                            {userProfile.role === 'Administrador' && member.uid !== user?.uid && (
+                            {hasPermission('MANAGE_TEAM') && member.uid !== user?.uid && (
                               <button 
                                 onClick={() => { setMemberToRemove(member); setIsRemoveModalOpen(true); }}
                                 className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
@@ -421,7 +437,7 @@ export default function TeamManagementView() {
                         <div className="flex items-center space-x-4">
                           <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-white/10 rounded-lg text-gray-500">{invite.role}</span>
                           <div className="text-xs text-orange-400 font-medium px-2 py-1 bg-orange-400/10 rounded-lg animate-pulse">Aguardando...</div>
-                          {userProfile.role === 'Administrador' && (
+                          {hasPermission('MANAGE_TEAM') && (
                             <button 
                               onClick={() => handleCancelInvite(invite.id)}
                               className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
@@ -476,19 +492,15 @@ export default function TeamManagementView() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Cargo / Permissões</label>
-                  <select value={inviteRole} onChange={e => setInviteRole(e.target.value as UserRole)} className="w-full bg-gray-200/50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white">
-                    <option value="Gerente">Gerente</option>
-                    <option value="People & Culture">People & Culture</option>
-                    <option value="Customer Success">Customer Success</option>
-                    <option value="Suporte Técnico">Suporte Técnico</option>
-                    <option value="Onboarding Specialist">Onboarding Specialist</option>
-                    <option value="SDR">SDR</option>
-                    <option value="Executive">Vendas (Executive)</option>
-                    <option value="FinOps">FinOps</option>
-                    <option value="Controladoria">Controladoria</option>
-                    <option value="Revenue Operations">Revenue Operations</option>
-                    <option value="Gestor de Faturamento">Gestor de Faturamento</option>
-                    <option value="Só Leitura">Só Leitura</option>
+                  <select 
+                    value={inviteRole} 
+                    onChange={e => setInviteRole(e.target.value)} 
+                    className="w-full bg-gray-200/50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white"
+                  >
+                    <option value="">Selecionar cargo...</option>
+                    {orgRoles.map(role => (
+                      <option key={role.id} value={role.id || role.name}>{role.name}</option>
+                    ))}
                   </select>
                 </div>
                 <div className="pt-4 flex gap-3">
@@ -522,6 +534,20 @@ export default function TeamManagementView() {
                 <div>
                   <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 uppercase">Cargo / Título</label>
                   <input type="text" value={editJobTitle} onChange={e => setEditJobTitle(e.target.value)} className="w-full bg-gray-200/50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 uppercase">Permissões do Sistema (Cargo)</label>
+                  <select 
+                    value={editRole} 
+                    onChange={e => setEditRole(e.target.value)} 
+                    disabled={editingMember.uid === user?.uid} // Evita que o admin tire o próprio admin
+                    className="w-full bg-black/40 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white disabled:opacity-50"
+                  >
+                    {orgRoles.map(role => (
+                      <option key={role.id} value={role.id || role.name}>{role.name}</option>
+                    ))}
+                  </select>
+                  {editingMember.uid === user?.uid && <p className="text-[10px] text-amber-500 mt-1">Você não pode alterar seu próprio cargo por aqui.</p>}
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 uppercase">Superior Imediato</label>

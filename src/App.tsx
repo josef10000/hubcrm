@@ -52,6 +52,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { UIProvider, useUI } from './contexts/UIContext';
 import { CRMProvider, useCRM } from './contexts/CRMContext';
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { usePermissions } from './hooks/usePermissions';
 import ClientPortal from './components/ClientPortal';
 import OnboardingForm from './components/OnboardingForm';
 import ContractSignView from './views/ContractSignView';
@@ -64,41 +65,41 @@ const navGroups = [
     icon: Target,
     items: [
       { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-      { icon: Target, label: 'Funil de Vendas', path: '/leads', roles: ['Administrador', 'Gerente', 'SDR', 'Executive'] },
-      { icon: Package, label: 'Produtos', path: '/products', roles: ['Administrador', 'Gerente', 'SDR', 'Executive', 'Customer Success', 'Onboarding Specialist'] },
+      { icon: Target, label: 'Funil de Vendas', path: '/leads', permission: 'MANAGE_LEADS' },
+      { icon: Package, label: 'Produtos', path: '/products' },
       { icon: Users, label: 'Hub Rewards', path: '/referrals' },
-      { icon: Megaphone, label: 'Marketing', path: '/marketing', roles: ['Administrador', 'Gerente', 'Revenue Operations'] },
+      { icon: Megaphone, label: 'Marketing', path: '/marketing', permission: 'MANAGE_SETTINGS' },
     ]
   },
   {
     label: 'Operação & Sucesso',
     icon: Rocket,
     items: [
-      { icon: Calendar, label: 'Agenda Central', path: '/calendar', roles: ['Administrador', 'Gerente', 'Customer Success', 'Suporte Técnico', 'Onboarding Specialist'] },
+      { icon: Calendar, label: 'Agenda Central', path: '/calendar', permission: 'VIEW_DASHBOARD' },
       { icon: MessageCircle, label: 'Meus Chamados', path: '/support' },
       { icon: MessageCircle, label: 'Hub Chat', path: '/chat' },
-      { icon: Rocket, label: 'Onboarding Hub', path: '/onboarding-hub', roles: ['Administrador', 'Gerente', 'People & Culture', 'Onboarding Specialist', 'Customer Success'] },
-      { icon: Globe, label: 'Monitoramento', path: '/monitoring', roles: ['Administrador', 'Gerente', 'Suporte Técnico'] },
+      { icon: Rocket, label: 'Onboarding Hub', path: '/onboarding-hub', permission: 'MANAGE_CLIENTS' },
+      { icon: Globe, label: 'Monitoramento', path: '/monitoring', permission: 'MANAGE_SUPPORT' },
       { icon: MapIcon, label: 'Mapa', path: '/map' },
-      { icon: Layout, label: 'Projetos / Produção', path: '/projects', roles: ['Administrador', 'Gerente', 'Suporte Técnico', 'Onboarding Specialist'] },
+      { icon: Layout, label: 'Projetos / Produção', path: '/projects', permission: 'MANAGE_CLIENTS' },
     ]
   },
   {
     label: 'Financeiro & RevOps',
     icon: DollarSign,
     items: [
-      { icon: CreditCard, label: 'Cobrança', path: '/billing', roles: ['Administrador', 'Gerente', 'FinOps', 'Gestor de Faturamento', 'SDR', 'Executive'] },
-      { icon: DollarSign, label: 'Financeiro Estratégico', path: '/finance', roles: ['Administrador', 'Gerente', 'FinOps', 'Controladoria', 'Revenue Operations'] },
-      { icon: Shield, label: 'Contratos', path: '/contracts', roles: ['Administrador', 'Gerente', 'People & Culture', 'FinOps', 'Controladoria'] },
-      { icon: BarChart3, label: 'Analytics', path: '/analytics', roles: ['Administrador', 'Gerente'] },
+      { icon: CreditCard, label: 'Cobrança', path: '/billing', permission: 'MANAGE_FINANCE' },
+      { icon: DollarSign, label: 'Financeiro Estratégico', path: '/finance', permission: 'MANAGE_FINANCE' },
+      { icon: Shield, label: 'Contratos', path: '/contracts', permission: 'MANAGE_FINANCE' },
+      { icon: BarChart3, label: 'Analytics', path: '/analytics', permission: 'VIEW_REPORTS' },
     ]
   },
   {
     label: 'Pessoas & Cultura',
     icon: HeartHandshake,
     items: [
-      { icon: HeartHandshake, label: 'People & Feedback', path: '/people', roles: ['Administrador', 'Gerente', 'People & Culture'] },
-      { icon: Users, label: 'Equipe', path: '/team', roles: ['Administrador', 'Gerente', 'People & Culture'] },
+      { icon: HeartHandshake, label: 'People & Feedback', path: '/people', permission: 'MANAGE_TEAM' },
+      { icon: Users, label: 'Equipe', path: '/team', permission: 'MANAGE_TEAM' },
       { icon: BookOpen, label: 'Wiki Hub', path: '/wiki' },
     ]
   },
@@ -107,7 +108,7 @@ const navGroups = [
     icon: Settings,
     items: [
       { icon: Bell, label: 'Notificações', path: '/notifications' },
-      { icon: Settings, label: 'Configurações', path: '/settings' },
+      { icon: Settings, label: 'Configurações', path: '/settings', permission: 'MANAGE_SETTINGS' },
     ]
   }
 ];
@@ -133,6 +134,8 @@ function CRMInner() {
     focusMode, setFocusMode, globalSearch, setGlobalSearch
   } = useUI();
 
+  const { hasPermission } = usePermissions();
+
   const filteredClientsForExport = useFilteredClients(clients, searchTerm, filterStatus, sortBy, filterTagId);
   const location = useLocation();
   const currentPath = location.pathname;
@@ -152,8 +155,9 @@ function CRMInner() {
   }, [wikiArticles, userProfile?.viewedWikiArticles]);
 
   const titleCount = useMemo(() => {
-    return unreadAlertsCount + openTicketCount + (['Administrador', 'Gerente', 'People & Culture'].includes(userProfile?.role || '') ? (pendingVacationsCount || 0) : 0) + newWikiCount;
-  }, [unreadAlertsCount, openTicketCount, pendingVacationsCount, newWikiCount, userProfile?.role]);
+    const isManagement = hasPermission('MANAGE_TEAM');
+    return unreadAlertsCount + openTicketCount + (isManagement ? (pendingVacationsCount || 0) : 0) + newWikiCount;
+  }, [unreadAlertsCount, openTicketCount, pendingVacationsCount, newWikiCount, hasPermission]);
 
   React.useEffect(() => {
     const prefix = titleCount > 0 ? `(${titleCount}) ` : '';
@@ -197,7 +201,10 @@ function CRMInner() {
           </div>
           <nav className="flex-1 px-4 py-6 space-y-8 overflow-y-auto custom-scrollbar" role="navigation" aria-label="Navegação Principal">
             {navGroups.map((group) => {
-              const visibleItems = group.items.filter(item => !item.roles || (userProfile?.role && item.roles.includes(userProfile.role)));
+              const visibleItems = group.items.filter(item => {
+                if (item.permission && !hasPermission(item.permission as any)) return false;
+                return true;
+              });
               if (visibleItems.length === 0) return null;
 
               return (
@@ -367,7 +374,7 @@ function CRMInner() {
                 <span>Exportar</span>
               </button>
             )}
-            {currentPath === '/' && ['Administrador', 'Gerente', 'SDR', 'Executive', 'Customer Success', 'Suporte Técnico', 'Onboarding Specialist'].includes(userProfile?.role || '') && (
+            {currentPath === '/' && hasAnyPermission(['MANAGE_LEADS', 'MANAGE_CLIENTS']) && (
               <button
                 onClick={() => { setEditingClient(null); setIsModalOpen(true); }}
                 className="flex items-center space-x-2 bg-gradient-to-r from-primary-500 to-primary-400 hover:from-primary-600 hover:to-primary-600 text-gray-900 dark:text-white px-5 py-3 rounded-2xl transition-all font-medium shadow-xl shadow-primary-500/30 hover:shadow-2xl shadow-primary-500/50 hover:scale-105 active:scale-95 shrink-0"
@@ -417,12 +424,12 @@ function CRMInner() {
                 <Route path="/contracts" element={<ContractsView />} />
                 <Route path="/projects" element={<ProjectsView />} />
 
-                {/* Rotas Protegidas (Conforme Roles Definidas no navItems) */}
-                <Route path="/analytics" element={(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'FinOps' || userProfile?.role === 'Controladoria') ? <AnalyticsView /> : <DashboardView />} />
-                <Route path="/finance" element={(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || ['FinOps', 'Controladoria', 'Revenue Operations'].includes(userProfile?.role || '')) ? <FinanceView /> : <DashboardView />} />
-                <Route path="/marketing" element={(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'Revenue Operations') ? <MarketingView /> : <DashboardView />} />
-                <Route path="/team" element={(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture') ? <TeamManagementView /> : <DashboardView />} />
-                <Route path="/people" element={(userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture') ? <PeopleView /> : <DashboardView />} />
+                {/* Rotas Protegidas */}
+                <Route path="/analytics" element={hasPermission('VIEW_REPORTS') ? <AnalyticsView /> : <DashboardView />} />
+                <Route path="/finance" element={hasPermission('MANAGE_FINANCE') ? <FinanceView /> : <DashboardView />} />
+                <Route path="/marketing" element={hasPermission('MANAGE_SETTINGS') ? <MarketingView /> : <DashboardView />} />
+                <Route path="/team" element={hasPermission('MANAGE_TEAM') ? <TeamManagementView /> : <DashboardView />} />
+                <Route path="/people" element={hasPermission('MANAGE_TEAM') ? <PeopleView /> : <DashboardView />} />
                 <Route path="/wiki" element={<WikiView />} />
                 <Route path="/settings" element={<SettingsView />} />
                 <Route path="/profile/:uid" element={<ProfileView />} />

@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { OnboardingQuestion } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import TagManager from '../components/settings/TagManager';
-
+import RoleManagement from '../components/settings/RoleManagement';
 export default function SettingsView() {
   const { themeColor, setThemeColor } = useUI();
   const {
@@ -35,11 +35,9 @@ export default function SettingsView() {
     setBeginnerGuideArticleId,
     effectiveOrgId,
   } = useCRM();
-  const { userProfile } = useAuth();
-  
+  const { hasPermission } = usePermissions();
   const [newSoftSkill, setNewSoftSkill] = React.useState('');
-
-  const isAdminOrGerente = userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente';
+  const isAdminOrGerente = hasPermission('MANAGE_SETTINGS');
 
   const handleAddSoftSkill = async () => {
     if (!newSoftSkill.trim()) return;
@@ -132,6 +130,8 @@ export default function SettingsView() {
             <TagManager />
           </div>
         )}
+
+        <RoleManagement />
 
         {isAdminOrGerente && (
           <>

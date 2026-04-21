@@ -24,6 +24,7 @@ import {
   Package,
   Globe
 } from 'lucide-react';
+import { usePermissions } from '../hooks/usePermissions';
 import AssetManager from '../components/people/AssetManager';
 import FeedbackBoard from '../components/people/FeedbackBoard';
 import CareerTimeline from '../components/people/CareerTimeline';
@@ -88,7 +89,8 @@ export default function PeopleView() {
   const [newCategoryTitle, setNewCategoryTitle] = useState('');
   const [newActionText, setNewActionText] = useState<{ [key: string]: string }>({});
 
-  const isAdminOrGerente = userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || userProfile?.role === 'People & Culture';
+  const { hasPermission } = usePermissions();
+  const isAdminOrGerente = hasPermission('MANAGE_TEAM');
 
   const [enpsResults, setEnpsResults] = useState<any[]>([]);
   const [enpsScoreCalc, setEnpsScoreCalc] = useState<number | null>(null);

@@ -4,6 +4,7 @@ import { db } from '../../lib/firebase';
 import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, orderBy, limit } from 'firebase/firestore';
 import { useCRM } from '../../contexts/CRMContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePermissions } from '../../hooks/usePermissions';
 import { FeedbackNote } from '../../types/people';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -15,6 +16,7 @@ interface FeedbackBoardProps {
 
 export default function FeedbackBoard({ userId }: FeedbackBoardProps) {
   const { userProfile: currentUser } = useAuth();
+  const { hasPermission } = usePermissions();
   const { effectiveOrgId, teamProfiles } = useCRM();
   const [feedbacks, setFeedbacks] = useState<FeedbackNote[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,7 +56,7 @@ export default function FeedbackBoard({ userId }: FeedbackBoardProps) {
       let loaded = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as FeedbackNote));
       
       // Filtro de Privacidade:
-      const canSeePrivate = currentUser?.role === 'Administrador' || currentUser?.role === 'Gerente' || currentUser?.role === 'People & Culture';
+      const canSeePrivate = hasPermission('MANAGE_TEAM');
       
       const filtered = loaded.filter(f => {
         // Se eu sou o autor, eu vejo
@@ -135,7 +137,7 @@ export default function FeedbackBoard({ userId }: FeedbackBoardProps) {
     }
   };
 
-  const isAdminOrManager = currentUser?.role === 'Administrador' || currentUser?.role === 'Gerente' || currentUser?.role === 'People & Culture';
+  const isAdminOrManager = hasPermission('MANAGE_TEAM');
 
   return (
     <div className="space-y-6">

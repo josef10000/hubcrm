@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import WikiCommentSection from './WikiCommentSection';
+import { usePermissions } from '../../hooks/usePermissions';
 
 interface WikiArticleDetailProps {
   article: WikiArticle;
@@ -19,10 +20,11 @@ interface WikiArticleDetailProps {
 
 export default function WikiArticleDetail({ article, onBack, onEdit }: WikiArticleDetailProps) {
   const { user, userProfile } = useAuth();
+  const { hasPermission } = usePermissions();
   const { handleToggleWikiStar, handleDeleteWikiArticle, handleSaveWikiArticle } = useCRM();
 
   const isStarred = article.stars?.includes(user?.uid || '');
-  const canManage = userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente' || article.authorId === user?.uid;
+  const canManage = hasPermission('MANAGE_WIKI') || article.authorId === user?.uid;
 
   useEffect(() => {
     // Incrementar view count (simples client-side)

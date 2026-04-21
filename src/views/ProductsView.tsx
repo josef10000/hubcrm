@@ -2,9 +2,11 @@ import React from 'react';
 import { Package, Edit2, Trash2, Plus, RefreshCw } from 'lucide-react';
 import { useCRM } from '../contexts/CRMContext';
 import { useAuth } from '../contexts/AuthContext';
+import { usePermissions } from '../hooks/usePermissions';
 
 export default function ProductsView() {
   const { userProfile } = useAuth();
+  const { hasPermission } = usePermissions();
   const { 
     offers, 
     setEditingOffer, 
@@ -14,7 +16,7 @@ export default function ProductsView() {
     restoreDefaultOffers 
   } = useCRM();
 
-  const canManageProducts = userProfile?.role === 'Administrador' || userProfile?.role === 'Gerente';
+  const canManageProducts = hasPermission('MANAGE_SETTINGS');
 
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10">

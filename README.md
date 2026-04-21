@@ -1,4 +1,4 @@
-# 🔐 Hub Central — Intranet Corporativa v4.4.1 (Finance & Docs Update)
+# 🔐 Hub Central — Intranet Corporativa v4.5.0 (Dynamic RBAC Update)
 
 > [!CAUTION]
 > **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
@@ -7,7 +7,7 @@
 Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.
 
   <p>
-    <img src="https://img.shields.io/badge/Version-4.4.1-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-4.5.0-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Status-Audited_&_Optimized-3b82f6?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-3b82f6?style=for-the-badge&labelColor=111111" alt="License" />
@@ -20,34 +20,30 @@ Transformando prospecção em faturamento através de automação inteligente e 
     <img src="https://img.shields.io/badge/Firebase-12-FFCA28?style=flat-square&logo=firebase&logoColor=black" alt="Firebase" />
   </p>
   <div align="center">
-  <h2>✨ Features em Destaque v4.4.1</h2>
+  <h2>✨ Features em Destaque v4.5.0</h2>
 </div>
 
 <table>
   <tr>
-    <td align="center" width="16%">
-      <br />📖<br /><strong>Master Guide</strong><br />
-      <sub><a href="docs/modules/CRM.md">Documentação v1.0</a></sub>
+    <td align="center" width="20%">
+      <br />🛡️<br /><strong>Dynamic RBAC</strong><br />
+      <sub>Permissões Modulares</sub>
     </td>
-    <td align="center" width="16%">
+    <td align="center" width="20%">
       <br />💬<br /><strong>Hub Chat v3.0</strong><br />
-      <sub>Approvals, Pins & Bookmarks</sub>
+      <sub>Approvals & Pins</sub>
     </td>
-    <td align="center" width="16%">
-      <br />📈<br /><strong>Sales BI</strong><br />
-      <sub>Timeline & SLA Pulse</sub>
+    <td align="center" width="20%">
+      <br />📉<br /><strong>Sales BI</strong><br />
+      <sub>Timeline & SLA</sub>
     </td>
-    <td align="center" width="16%">
+    <td align="center" width="20%">
       <br />💎<br /><strong>Financeiro</strong><br />
-      <sub>Billing Hub & DRE</sub>
+      <sub>DRE & SaaS Metrics</sub>
     </td>
-    <td align="center" width="16%">
-      <br />🎭<br /><strong>Pessoas</strong><br />
-      <sub>Skill Radar & PDI</sub>
-    </td>
-    <td align="center" width="16%">
+    <td align="center" width="20%">
       <br />📖<br /><strong>Wiki Hub</strong><br />
-      <sub>Central de Conhecimento</sub>
+      <sub>Knowledge Base</sub>
     </td>
   </tr>
 </table>

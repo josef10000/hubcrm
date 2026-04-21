@@ -270,20 +270,9 @@ export interface CommissionEntry {
   paymentId?: string; // Referência Asaas ou ID da transação
 }
 
-export type UserRole =
-  | 'Administrador'
-  | 'Gerente'
-  | 'People & Culture'
-  | 'Customer Success'
-  | 'Suporte Técnico'
-  | 'Onboarding Specialist'
-  | 'SDR'
-  | 'Executive'
-  | 'FinOps'
-  | 'Controladoria'
-  | 'Revenue Operations'
-  | 'Gestor de Faturamento'
-  | 'Só Leitura';
+import { CustomRole } from './constants/permissions';
+
+export type UserRole = string; // Agora UserRole é o ID do CustomRole ou a flag legada por compatibilidade
 
 export interface OnboardingTask {
   id: string;
@@ -298,6 +287,8 @@ export interface UserProfile {
   displayName: string;
   orgId: string;
   role: UserRole;
+  roleId?: string; // ID do documento CustomRole (ex: "ROLE_SDR" ou "UUID")
+  permissions?: string[]; // Array opcional para cache rápido no login no Firestore de permissions configuradas
   createdAt: number;
   jobTitle?: string;
   bio?: string;
