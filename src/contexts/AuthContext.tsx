@@ -55,8 +55,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           
           // Inicia escuta em tempo real do perfil
           unsubscribeProfile = onSnapshot(profileRef, async (snap) => {
-            if (snap.exists()) {
-              const data = snap.data() as UserProfile;
+              if (snap.exists()) {
+                const data = snap.data();
+                // Converte role legado (string) para objeto se necessário
+                let roleObj = data.role;
+                if (typeof data.role === 'string') {
+                  roleObj = defaultRoles.find(r => r.id === data.role || r.name === data.role) || defaultRoles[0];
+                }
+                const dataProfile = { ...data, role: roleObj } as UserProfile;
               
               // Se mudou o roleId, precisamos de um novo listener pro cargo
               unsubscribeRole(); 
@@ -72,7 +78,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               // REGRA DE SUPER-ADMIN: Garante que o proprietário sempre seja Administrador em memória
               if (u.email === 'jfs102019@hotmail.com') {
                 const orgIdToUse = data.orgId || u.uid;
-                const updatedProfile = { ...data, role: 'Administrador' as const, orgId: orgIdToUse };
+                const adminRole = defaultRoles.find(r => r.id === 'ROLE_ADMIN') || defaultRoles[0];
+                const updatedProfile = { ...data, role: adminRole, orgId: orgIdToUse };
                 setUserProfile(updatedProfile);
                 
                 // Rotina de Inicialização Automática de Cargos (Bootstrap) para Novas Organizações
@@ -148,12 +155,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 }
 
                 // 2. Se não houver convite, entra em modo AGUARDANDO CONVITE
+                const readOnlyRole = defaultRoles.find(r => r.id === 'ROLE_READONLY') || defaultRoles[6] || defaultRoles[defaultRoles.length - 1];
                 const newProfile: UserProfile = {
                   uid: u.uid,
                   email: u.email || '',
                   displayName: u.displayName || 'Usuário',
                   orgId: 'pending', 
-                  role: 'Só Leitura',
+                  role: readOnlyRole,
                   createdAt: Date.now()
                 };
                 
@@ -168,7 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     email: u.email || '',
                     displayName: u.displayName || 'Proprietário',
                     orgId: u.uid,
-                    role: 'Administrador' as const,
+                    role: defaultRoles.find(r => r.id === 'ROLE_ADMIN') || defaultRoles[0],
                     createdAt: Date.now()
                   };
                   setUserProfile(emergencyProfile);
@@ -180,12 +188,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.error("Profile Listener Error:", err);
             // Fallback owner
             if (u.email === 'jfs102019@hotmail.com') {
+              const adminRole = defaultRoles.find(r => r.id === 'ROLE_ADMIN') || defaultRoles[0];
               setUserProfile({
                 uid: u.uid,
                 email: u.email || '',
                 displayName: 'Proprietário (Fallback)',
                 orgId: u.uid,
-                role: 'Administrador',
+                role: adminRole,
                 createdAt: Date.now()
               });
             }
@@ -253,7 +262,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       and(
         where('orgId', '==', userProfile.orgId),
         or(
-          where('targetRoles', 'array-contains', userProfile.role),
+          where('targetRoles', 'array-contains', userProfile.role.id),
           where('userId', '==', userProfile.uid)
         )
       ),
@@ -289,7 +298,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const data = profileSnap.data() as UserProfile;
         // Garantir regra de super-admin
         if (user.email === 'jfs102019@hotmail.com') {
-          setUserProfile({ ...data, role: 'Administrador', orgId: data.orgId || user.uid });
+          const adminRole = defaultRoles.find(r => r.id === 'ROLE_ADMIN') || defaultRoles[0];
+          setUserProfile({ ...data, role: adminRole, orgId: data.orgId || user.uid });
         } else {
           setUserProfile(data);
         }

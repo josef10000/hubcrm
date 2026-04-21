@@ -22,7 +22,9 @@ export function usePermissions() {
       }
 
       // 1. O proprietário (e-mail principal) tem TODAS as permissões automaticamente
-      const IS_ADMIN_LEGACY = userProfile.role === 'Administrador';
+      const IS_ADMIN_LEGACY = typeof userProfile.role === 'string' 
+        ? userProfile.role === 'Administrador'
+        : userProfile.role.name === 'Administrador' || userProfile.role.id === 'ROLE_ADMIN';
       const IS_ADMIN_ID = userProfile.roleId === 'ROLE_ADMIN';
 
       if (IS_ADMIN_LEGACY || IS_ADMIN_ID) { 

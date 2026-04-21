@@ -168,14 +168,14 @@ export default function WikiEditorModal({ isOpen, onClose, initialData }: WikiEd
                       <label key={role.id} className="flex items-center gap-2 text-sm text-gray-300">
                         <input
                           type="checkbox"
-                          checked={formData.allowedRoles?.includes(role.id)}
+                          checked={formData.allowedRoles?.some(r => (typeof r === 'string' ? r : r.id) === role.id)}
                           onChange={e => {
                             const roles = formData.allowedRoles || [];
                             setFormData({
                               ...formData,
                               allowedRoles: e.target.checked 
-                                ? [...roles, role.id]
-                                : roles.filter(r => r !== role.id)
+                                ? [...roles, role]
+                                : roles.filter(r => (typeof r === 'string' ? r : r.id) !== role.id)
                             });
                           }}
                           className="w-4 h-4 rounded border-white/10 bg-black/40 text-primary-500"

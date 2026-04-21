@@ -18,10 +18,11 @@ export default function BroadcastTab({ teamMembers }: BroadcastTabProps) {
   // Filtros Básicos
   const [roleFilter, setRoleFilter] = useState<string>('todos');
 
-  const roles = Array.from(new Set(teamMembers.map(m => m.role)));
+  const roles = Array.from(new Set(teamMembers.map(m => typeof m.role === 'string' ? m.role : m.role.id)));
 
   const filteredMembers = teamMembers.filter(m => {
-    if (roleFilter !== 'todos' && m.role !== roleFilter) return false;
+    const roleId = typeof m.role === 'string' ? m.role : m.role.id;
+    if (roleFilter !== 'todos' && roleId !== roleFilter) return false;
     return true;
   });
 
@@ -117,9 +118,11 @@ export default function BroadcastTab({ teamMembers }: BroadcastTabProps) {
                 className="px-3 py-2 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm"
               >
                 <option value="todos">Todos os Cargos</option>
-                {roles.map(r => (
-                  <option key={r} value={r}>{r}</option>
-                ))}
+                {roles.map(rId => {
+                  const roleObj = teamMembers.find(m => (typeof m.role === 'string' ? m.role : m.role.id) === rId)?.role;
+                  const roleName = typeof roleObj === 'string' ? roleObj : roleObj?.name || rId;
+                  return <option key={rId} value={rId}>{roleName}</option>;
+                })}
               </select>
               <button 
                 onClick={toggleAll}
@@ -156,7 +159,7 @@ export default function BroadcastTab({ teamMembers }: BroadcastTabProps) {
                     </div>
                     <div className="overflow-hidden pr-6">
                       <p className="font-bold text-sm truncate">{member.displayName}</p>
-                      <p className="text-[10px] text-gray-500 truncate">{member.jobTitle || member.role}</p>
+                      <p className="text-[10px] text-gray-500 truncate">{member.jobTitle || (typeof member.role === 'string' ? member.role : member.role?.name)}</p>
                     </div>
                   </div>
                 );

@@ -274,7 +274,7 @@ function CRMInner() {
                 </div>
                 <div className="truncate">
                   <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-primary-500 transition-colors">{userProfile?.displayName || user?.displayName || 'Usuário'}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{userProfile?.jobTitle || userProfile?.role || 'Membro'}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{userProfile?.jobTitle || (typeof userProfile?.role === 'string' ? userProfile.role : userProfile?.role?.name) || 'Membro'}</p>
                 </div>
               </div>
             </div>
@@ -416,7 +416,7 @@ function CRMInner() {
                 <Route path="/support" element={<SupportView />} />
                 <Route path="/chat" element={<ChatView />} />
                 <Route path="/notifications" element={<NotificationsView />} />
-                <Route path="/calendar" element={<CalendarView role={userProfile?.role} clients={clients} onClientClick={(client) => { setEditingClient(client); setIsModalOpen(true); }} />} />
+                <Route path="/calendar" element={<CalendarView role={typeof userProfile?.role === 'string' ? userProfile.role : userProfile?.role?.id} clients={clients} onClientClick={(client) => { setEditingClient(client); setIsModalOpen(true); }} />} />
                 <Route path="/referrals" element={<ReferralsView clients={clients} user={user!} />} />
                 <Route path="/products" element={<ProductsView />} />
                 <Route path="/monitoring" element={<MonitoringView clients={clients} />} />

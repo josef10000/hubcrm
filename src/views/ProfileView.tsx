@@ -385,7 +385,7 @@ export default function ProfileView() {
               </div>
 
               <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-1">{profile.displayName}</h2>
-              <p className="text-sm font-bold text-primary-500 uppercase tracking-widest mb-4">{profile.jobTitle || profile.role}</p>
+              <p className="text-sm font-bold text-primary-500 uppercase tracking-widest mb-4">{profile.jobTitle || (typeof profile.role === 'string' ? profile.role : profile.role?.name)}</p>
               
               <div className="flex items-center justify-center gap-4 mb-8">
                 {profile.linkedin && (
@@ -443,7 +443,7 @@ export default function ProfileView() {
                   </div>
                   <div>
                     <p className="font-semibold text-sm text-gray-900 dark:text-white group-hover:text-primary-500 transition-colors">{superior.displayName}</p>
-                    <p className="text-[10px] text-gray-500">{superior.jobTitle || superior.role}</p>
+                    <p className="text-[10px] text-gray-500">{superior.jobTitle || (typeof superior.role === 'string' ? superior.role : superior.role?.name)}</p>
                   </div>
                 </div>
               ) : (
@@ -638,7 +638,7 @@ export default function ProfileView() {
                           <div className="space-y-3">
                             <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                               <Briefcase size={16} className="mr-3 opacity-50" />
-                              <span>{profile.jobTitle || profile.role}</span>
+                              <span>{profile.jobTitle || (typeof profile.role === 'string' ? profile.role : profile.role?.name)}</span>
                             </div>
                             <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                               <Globe size={16} className="mr-3 opacity-50" />
@@ -937,7 +937,7 @@ export default function ProfileView() {
                       </div>
                       <div>
                         <h4 className="font-bold">Central de Alertas Operacionais</h4>
-                        <p className="text-xs text-gray-500 text-left">Notificações direcionadas baseadas no seu cargo de {profile.role}.</p>
+                        <p className="text-xs text-gray-500 text-left">Notificações direcionadas baseadas no seu cargo de {typeof profile.role === 'string' ? profile.role : profile.role?.name}.</p>
                       </div>
                     </div>
                   </div>
