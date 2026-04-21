@@ -136,7 +136,7 @@ function CRMInner() {
     focusMode, setFocusMode, globalSearch, setGlobalSearch
   } = useUI();
 
-  const { hasPermission } = usePermissions();
+  const { hasPermission, hasAnyPermission } = usePermissions();
 
   const filteredClientsForExport = useFilteredClients(clients, searchTerm, filterStatus, sortBy, filterTagId);
   const location = useLocation();

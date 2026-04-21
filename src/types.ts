@@ -272,7 +272,7 @@ export interface CommissionEntry {
 
 import { CustomRole } from './constants/permissions';
 
-export type UserRole = string; // Agora UserRole é o ID do CustomRole ou a flag legada por compatibilidade
+export type UserRole = CustomRole; // Agora UserRole reflete o objeto CustomRole completo
 
 export interface OnboardingTask {
   id: string;

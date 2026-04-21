@@ -102,7 +102,7 @@ export default function ProfileView() {
   const { hasPermission } = usePermissions();
 
   const isOwnProfile = user?.uid === uid;
-  const isAdmin = hasPermission('MANAGE_SYSTEM');
+  const isAdmin = hasPermission('MANAGE_SETTINGS');
   const isManagement = hasPermission('MANAGE_TEAM');
   const canEdit = isOwnProfile || isManagement || isAdmin;
 

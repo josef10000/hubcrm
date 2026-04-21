@@ -226,7 +226,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
           snapshot.forEach((d) => loadedClients.push({ id: d.id, ...d.data() } as Client));
           
           // Filtro por permissão: Quem não gere equipe só vê o que está atribuído a ela
-          if (!hasPermission('MANAGE_TEAM') && !hasPermission('MANAGE_SYSTEM')) {
+          if (!hasPermission('MANAGE_TEAM') && !hasPermission('MANAGE_SETTINGS')) {
             loadedClients = loadedClients.filter(c => c.assignedTo === user?.uid);
           }
           
@@ -248,7 +248,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         snapshot.forEach((d) => loaded.push({ id: d.id, ...d.data() } as Lead));
         
         // Filtro por permissão: Quem não gere equipe só vê o que está atribuído a ela
-        if (!hasPermission('MANAGE_TEAM') && !hasPermission('MANAGE_SYSTEM')) {
+        if (!hasPermission('MANAGE_TEAM') && !hasPermission('MANAGE_SETTINGS')) {
           loaded = loaded.filter(l => l.assignedTo === user?.uid);
         }
         
@@ -317,7 +317,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       const rolesRef = collection(db, 'organizations', effectiveOrgId, 'roles');
       unsubRoles = onSnapshot(rolesRef, (snapshot) => {
         const loaded: UserRole[] = [];
-        snapshot.forEach((d) => loaded.push(d.data() as UserRole));
+        snapshot.forEach((d) => loaded.push({ id: d.id, ...d.data() } as UserRole));
         setOrgRoles(loaded.sort((a, b) => a.name.localeCompare(b.name)));
       });
 
@@ -642,7 +642,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     handleGenerateCommission,
     pendingVacationsCount: vacations.filter(v => v.status === 'Pendente').length,
     isChurnRisk: clientActions.isChurnRisk, isComboNearRenewal: clientActions.isComboNearRenewal,
-    effectiveOrgId, userProfile, vacations, teamProfiles, commissions, tags, wikiArticles, offerActions
+    effectiveOrgId, userProfile, vacations, teamProfiles, commissions, tags, wikiArticles, offerActions, orgRoles
   };
 
   return <CRMContext.Provider value={value}>{children}</CRMContext.Provider>;

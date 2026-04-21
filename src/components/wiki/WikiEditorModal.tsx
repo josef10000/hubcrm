@@ -12,7 +12,6 @@ interface WikiEditorModalProps {
 }
 
 const CATEGORIES: WikiCategory[] = ['RH', 'Vendas', 'Técnico', 'Atendimento', 'Suporte', 'Geral'];
-const CATEGORIES: WikiCategory[] = ['RH', 'Vendas', 'Técnico', 'Atendimento', 'Suporte', 'Geral'];
 
 export default function WikiEditorModal({ isOpen, onClose, initialData }: WikiEditorModalProps) {
   const { handleSaveWikiArticle, teamProfiles, orgRoles } = useCRM();
