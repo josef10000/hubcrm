@@ -84,7 +84,7 @@ const OrgNode = ({ member, members, navigate }: { member: Member, members: Membe
 export default function TeamManagementView() {
   const { user, userProfile } = useAuth();
   const { orgRoles = [] } = useCRM();
-  const { hasPermission } = usePermissions();
+  const { hasPermission, isLoadingPermissions } = usePermissions();
   const [members, setMembers] = useState<Member[]>([]);
   const [invites, setInvites] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -267,18 +267,12 @@ export default function TeamManagementView() {
         setDeleteAllData(false);
         fetchData();
       } else {
-        toast.error(data.error || 'Erro ao remover membro');
+      } finally {
+        setIsRemoving(false);
       }
-    } catch (error) {
-      toast.error('Erro ao processar remoção');
-    } finally {
-      setIsRemoving(false);
-    }
-  };
-
-  const { permissions, hasPermission, isLoadingPermissions } = usePermissions();
-
-  if (isLoadingPermissions) {
+    };
+  
+    if (isLoadingPermissions) {
     return (
       <div className="flex-1 overflow-y-auto p-12 flex items-center justify-center">
         <Loader2 className="animate-spin text-primary-500" size={32} />

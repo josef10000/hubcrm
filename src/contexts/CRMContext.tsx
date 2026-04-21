@@ -458,6 +458,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         }, { merge: true });
 
         // Gatilho de Notificação para novos artigos
+        if (isNew) {
           const targetRoles = articleData.allowedRoles?.length 
             ? articleData.allowedRoles 
             : orgRoles.map(r => r.id);
@@ -472,6 +473,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
             link: '/wiki'
           });
         }
+      }
 
         toast.success(isNew ? 'Artigo publicado e equipe notificada!' : 'Artigo atualizado com sucesso!');
       } catch (e) {

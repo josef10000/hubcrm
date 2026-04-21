@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Plus, X, DollarSign,
   Search, BarChart3, Calendar, MessageCircle, Globe,
   Download, AlertTriangle, Settings, Layout, CreditCard,
-  Megaphone, Package, Map as MapIcon, Target, Menu, Bell, Shield, HeartHandshake, BookOpen, Rocket, Focus
+  Megaphone, Package, Map as MapIcon, Target, Menu, Bell, Shield, HeartHandshake, BookOpen, Rocket, Focus, ShieldCheck
 } from 'lucide-react';
 import { isFirebaseConfigured } from './lib/firebase';
 import Auth from './components/Auth';
@@ -15,6 +15,7 @@ import { Toaster } from 'sonner';
 import { Analytics } from '@vercel/analytics/react';
 
 import BillingView from './views/BillingView';
+import AdministrativeView from './views/AdministrativeView';
 import OnboardingHubView from './views/OnboardingHubView';
 import ContractsView from './views/ContractsView';
 import ProjectsView from './views/ProjectsView';
@@ -108,7 +109,8 @@ const navGroups = [
     icon: Settings,
     items: [
       { icon: Bell, label: 'Notificações', path: '/notifications' },
-      { icon: Settings, label: 'Configurações', path: '/settings', permission: 'MANAGE_SETTINGS' },
+      { icon: ShieldCheck, label: 'Administrativo', path: '/admin', permission: 'MANAGE_SETTINGS' },
+      { icon: Settings, label: 'Configurações', path: '/settings' },
     ]
   }
 ];
@@ -432,6 +434,7 @@ function CRMInner() {
                 <Route path="/people" element={hasPermission('MANAGE_TEAM') ? <PeopleView /> : <DashboardView />} />
                 <Route path="/wiki" element={<WikiView />} />
                 <Route path="/settings" element={<SettingsView />} />
+                <Route path="/admin" element={hasPermission('MANAGE_SETTINGS') ? <AdministrativeView /> : <DashboardView />} />
                 <Route path="/profile/:uid" element={<ProfileView />} />
                 <Route path="*" element={<DashboardView />} />
               </Routes>
