@@ -302,14 +302,48 @@ export default function MessageBubble({
                   <span className="text-[10px] italic opacity-50 block mt-1">(editado)</span>
                 )}
                 
-                {/* Anexos */}
+                {/* Anexos de Imagem */}
                 {message.attachments && message.attachments.length > 0 && (
-                  <div className="mt-3 grid grid-cols-1 gap-2">
-                    {message.attachments.map((url, i) => (
-                      <a key={i} href={url} target="_blank" rel="noreferrer" className="block rounded-2xl overflow-hidden border border-black/5 hover:opacity-90 transition-opacity">
-                        <img src={url} alt="Anexo" className="max-h-60 w-full object-cover" />
-                      </a>
-                    ))}
+                  <div className={`mt-3 grid gap-2 ${
+                    message.attachments.length === 1 ? 'grid-cols-1' :
+                    message.attachments.length === 2 ? 'grid-cols-2' :
+                    'grid-cols-2 md:grid-cols-3'
+                  }`}>
+                    {message.attachments.map((url, i) => {
+                      const isSingle = message.attachments?.length === 1;
+                      return (
+                        <a 
+                          key={i} 
+                          href={url} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className={`block rounded-2xl overflow-hidden border border-black/5 dark:border-white/10 hover:opacity-95 transition-all outline-none ${
+                            isSingle 
+                              ? 'max-h-[500px] w-full shadow-2xl shadow-black/20' 
+                              : 'aspect-square shadow-sm'
+                          } relative group/img`}
+                        >
+                          {/* Efeito de Fundo Desfocado para Imagens Únicas (Estilo Premium) */}
+                          {isSingle && (
+                            <div 
+                              className="absolute inset-0 bg-cover bg-center blur-3xl opacity-30 scale-110"
+                              style={{ backgroundImage: `url(${url})` }}
+                            />
+                          )}
+                          
+                          <img 
+                            src={url} 
+                            alt="Anexo" 
+                            className={`relative z-10 w-full h-full transition-transform duration-500 group-hover/img:scale-[1.02] ${
+                              isSingle ? 'object-contain max-h-[500px]' : 'object-cover'
+                            }`}
+                          />
+
+                          {/* Overlay de Hover */}
+                          <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/5 transition-colors z-20" />
+                        </a>
+                      );
+                    })}
                   </div>
                 )}
               </>
