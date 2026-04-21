@@ -53,6 +53,7 @@ Transformando prospecção em faturamento através de automação inteligente e 
 ## 📋 Índice
 
 - [📖 Documentação Master (Comece Aqui)](docs/modules/CRM.md)
+- [🔐 Detalhamento de Cargos e Permissões](docs/ROLES_AND_PERMISSIONS.md)
 - [Visão Geral](#-visão-geral)
 - [Hub Chat v3.0](#-hub-chat-v30)
 - [Arquitetura de Pilares](#-arquitetura-de-pilares)
@@ -415,20 +416,25 @@ As rotas foram padronizadas para o formato `/api/asaas/...` com roteamento intel
 
 ---
 
-## 🔐 Sistema RBAC v4.0 — Decentralized Permissions
+## 🔐 Sistema RBAC v4.5 — Dynamic Permissions
 
-O acesso é controlado por 13 cargos especializados, agora organizados pelos 4 Pilares Estratégicos.
+O HubCRM utiliza um sistema de **Controle de Acesso Baseado em Função (RBAC)** dinâmico, permitindo uma segmentação granular de permissões conforme a necessidade da organização.
 
-### 🏛️ Matriz de Pilares e Permissões
+### 🏛️ Matriz de Pilares e Permissões Principais
 
-| Pilar | Módulos Relacionados | Cargos Sugeridos |
+| Pilar | Módulos Relacionados | Permissões Chave |
 |---|---|---|
-| **Comercial** | Leads, Pipeline, Propostas, ROI | SDR, Executive, RevOps |
-| **Operação** | Onboarding, Contratos, Projetos, Suporte, Wiki | CS, Onboarder, Suporte Técnico |
-| **Financeiro** | Billing, DRE, Budget, Comissões | Financeiro, Faturamento, Controller |
-| **Pessoas** | Perfil, Equipe, PDI, Clima, Ativos | RH, People & Culture, Gestão |
+| **Comercial** | Leads, Pipeline, Propostas | `MANAGE_LEADS`, `MANAGE_CLIENTS` |
+| **Operação** | Onboarding, Contratos, Wiki | `MANAGE_WIKI`, `MANAGE_SUPPORT` |
+| **Financeiro** | Billing, DRE, Budget | `MANAGE_FINANCE`, `VIEW_REPORTS` |
+| **Pessoas** | Perfil, Equipe, PDI | `MANAGE_TEAM`, `VIEW_DASHBOARD` |
 
-### Regras de Ouro v4.0
+### 📖 Documentação Detalhada
+Para uma explicação completa de cada cargo (Administrador, SDR, Financeiro, etc.) e o que cada permissão individual libera tecnicamente no sistema, consulte o guia oficial:
+
+👉 **[Guia Completo de Cargos e Permissões](docs/ROLES_AND_PERMISSIONS.md)**
+
+### Regras de Ouro v4.5
 
 - **Data Shielding**: Filtros automáticos por `assignedTo` (Comercial/Suporte) ou `reportsTo` (Pessoas) garantem que a interface exiba apenas o necessário.
 - **Visual Urgency**: O sistema utiliza animações de pulsação sonora/visual (Pulse Red) para destacar atrasos em qualquer módulo para perfis de gestão.
