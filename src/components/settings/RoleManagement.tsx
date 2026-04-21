@@ -41,7 +41,6 @@ export default function RoleManagement() {
       // Se não tem roles, assume os defaults para UI
       if (loadedRoles.length === 0) {
         loadedRoles = [...defaultRoles];
-        // Opcional: Aqui poderíamos rodar a migração lenta e salvar eles no banco
       }
       
       setRoles(loadedRoles.sort((a,b) => a.level - b.level));
@@ -175,7 +174,7 @@ export default function RoleManagement() {
                 <Shield size={20} className="text-primary-500 mr-2" /> 
                 {editingRole ? `Editar Cargo: ${editingRole.name}` : 'Novo Cargo'}
               </h3>
-              <button disabled={isSaving} onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-white"><X size={20} /></button>
+              <button type="button" disabled={isSaving} onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-white"><X size={20} /></button>
             </div>
             
             <form onSubmit={handleSave} className="p-6 space-y-6">
@@ -196,12 +195,16 @@ export default function RoleManagement() {
                          {group.keys.map(permKey => {
                            const isSelected = formData.permissions?.includes(permKey);
                            return (
-                             <label key={permKey} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${isSelected ? 'bg-primary-500/10 border-primary-500/30' : 'bg-black/20 border-white/5 hover:border-white/10'}`}>
+                             <div 
+                               key={permKey} 
+                               onClick={() => togglePermission(permKey)} 
+                               className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all select-none ${isSelected ? 'bg-primary-500/10 border-primary-500/30' : 'bg-black/20 border-white/5 hover:border-white/10'}`}
+                             >
                                <div className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-colors ${isSelected ? 'bg-primary-500 border-primary-500' : 'border-gray-500'}`}>
                                  {isSelected && <CheckCircle size={14} className="text-white" />}
                                </div>
                                <span className={`text-sm font-medium ${isSelected ? 'text-white' : 'text-gray-400'}`}>{permKey}</span>
-                             </label>
+                             </div>
                            );
                          })}
                        </div>
