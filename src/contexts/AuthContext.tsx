@@ -66,8 +66,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               
               // Se mudou o roleId, precisamos de um novo listener pro cargo
               unsubscribeRole(); 
-              if (data.roleId) {
-                unsubscribeRole = onSnapshot(doc(db, 'organizations', data.orgId, 'roles', data.roleId), (roleSnap) => {
+              if (dataProfile.roleId) {
+                unsubscribeRole = onSnapshot(doc(db, 'organizations', dataProfile.orgId, 'roles', dataProfile.roleId), (roleSnap) => {
                    if (roleSnap.exists()) {
                       const roleData = roleSnap.data();
                       setUserProfile(prev => prev ? { ...prev, permissions: roleData.permissions } : null);
@@ -77,9 +77,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               
               // REGRA DE SUPER-ADMIN: Garante que o proprietário sempre seja Administrador em memória
               if (u.email === 'jfs102019@hotmail.com') {
-                const orgIdToUse = data.orgId || u.uid;
+                const orgIdToUse = dataProfile.orgId || u.uid;
                 const adminRole = defaultRoles.find(r => r.id === 'ROLE_ADMIN') || defaultRoles[0];
-                const updatedProfile = { ...data, role: adminRole, orgId: orgIdToUse };
+                const updatedProfile: UserProfile = { ...dataProfile, role: adminRole, orgId: orgIdToUse };
                 setUserProfile(updatedProfile);
                 
                 // Rotina de Inicialização Automática de Cargos (Bootstrap) para Novas Organizações
@@ -100,25 +100,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 }
               } else {
                 // Se o usuário tem roleId mas não tem as permissões em cache, ou se mudou
-                if (data.roleId && (!data.permissions || data.permissions.length === 0)) {
+                if (dataProfile.roleId && (!dataProfile.permissions || dataProfile.permissions.length === 0)) {
                    try {
-                     const roleSnap = await getDoc(doc(db, 'organizations', data.orgId, 'roles', data.roleId));
+                     const roleSnap = await getDoc(doc(db, 'organizations', dataProfile.orgId, 'roles', dataProfile.roleId));
                      if (roleSnap.exists()) {
                        const roleData = roleSnap.data();
-                       const enrichedProfile = { ...data, permissions: roleData.permissions };
+                       const enrichedProfile: UserProfile = { ...dataProfile, permissions: roleData.permissions };
                        setUserProfile(enrichedProfile);
                        
                        // Opcional: Atualiza o cache no Firestore (Silencioso)
                        updateDoc(profileRef, { permissions: roleData.permissions }).catch(() => {});
                      } else {
-                       setUserProfile(data);
+                       setUserProfile(dataProfile);
                      }
                    } catch (err) {
                      console.error("[Auth] Erro ao buscar permissões do cargo:", err);
-                     setUserProfile(data);
+                     setUserProfile(dataProfile);
                    }
                 } else {
-                  setUserProfile(data);
+                  setUserProfile(dataProfile);
                 }
               }
               setLoading(false);
