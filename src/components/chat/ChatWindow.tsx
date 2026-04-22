@@ -198,7 +198,9 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
     type: "text" | "poll" | "approval" | "rich_link" | "client_card" = "text",
     poll?: ChatMessage['poll'],
     approval?: ChatMessage['approval'],
-    richPreview?: ChatMessage['richPreview']
+    richPreview?: ChatMessage['richPreview'],
+    parentMessageId?: string,
+    scheduledAt?: Timestamp
   ) => {
     if (!chat) return;
     if (!text.trim() && attachments.length === 0 && type === 'text') return;
@@ -212,7 +214,9 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
       type,
       poll,
       approval,
-      richPreview
+      richPreview,
+      parentMessageId,
+      scheduledAt
     );
     
     setReplyingTo(null);
@@ -465,7 +469,9 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
 
       {/* Input de Mensagem */}
       <MessageInput 
-        onSend={(text, mentions, att, reply, membersList, type, poll, approval) => handleSend(text, mentions, att, reply, membersList, type, poll, approval)} 
+        onSend={(text, mentions, att, reply, membersList, type, poll, approval, richPreview, parentMessageId, scheduledAt) => 
+          handleSend(text, mentions, att, reply, membersList, type, poll, approval, richPreview, parentMessageId, scheduledAt)
+        } 
         onTyping={setTypingStatus}
         replyTo={replyingTo ? { messageId: replyingTo.id, text: replyingTo.text, senderName: replyingTo.senderName } : null}
         onCancelReply={() => setReplyingTo(null)}
