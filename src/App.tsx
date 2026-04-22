@@ -263,11 +263,22 @@ function CRMInner() {
                       (userProfile?.displayName || user?.displayName || user?.email || 'U')[0].toUpperCase()
                     )}
                   </div>
+                  {/* Indicador de Presença (Chat) */}
+                  <span 
+                    className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-[#0f1117] transition-colors duration-300 ${
+                      userProfile?.presenceStatus === 'online' ? 'bg-emerald-500 animate-pulse' :
+                      userProfile?.presenceStatus === 'away' ? 'bg-amber-500' :
+                      userProfile?.presenceStatus === 'lunch' ? 'bg-rose-500' :
+                      userProfile?.presenceStatus === 'meeting' ? 'bg-blue-500' :
+                      'bg-gray-500'
+                    }`}
+                    title={`Status: ${userProfile?.presenceStatus || 'offline'}`}
+                  />
                   {isBirthday && (
                     <span className="absolute -top-3 -right-3 text-3xl animate-bounce pointer-events-none" title="Aniversariante do Dia! 🎉">🎉</span>
                   )}
                   {unreadAlertsCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-zinc-900 shadow-lg animate-pulse">
+                    <span className="absolute -top-1 -left-1 w-4 h-4 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-zinc-900 shadow-lg animate-pulse z-10">
                       {unreadAlertsCount}
                     </span>
                   )}
