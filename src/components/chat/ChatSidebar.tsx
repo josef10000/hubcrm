@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Plus, MessageCircle, User, Users, Star, Bookmark } from 'lucide-react';
+import { Search, Plus, MessageCircle, User, Users, Star, Bookmark, Calendar } from 'lucide-react';
 import { Chat } from '../../types/chat.types';
 import { formatChatTime } from '../../helpers/chatHelpers';
 import { useAuth } from '../../contexts/AuthContext';
