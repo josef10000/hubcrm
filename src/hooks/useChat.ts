@@ -121,7 +121,7 @@ export function useChat(chatId: string | null) {
       let messageContent = text;
       if (type === 'poll') messageContent = `📊 Enquete: ${poll?.question}`;
       if (type === 'approval') messageContent = `📝 Pedido de Aprovação: ${approval?.question}`;
-      if (type === 'client_card') messageContent = `📇 Ficha de Cliente: ${richPreview?.title}`;
+      if (type === 'client_card') messageContent = `📇 Ficha de Cliente: ${richPreview?.title || 'Cliente'}`;
 
       const messageData: any = {
         text: messageContent,

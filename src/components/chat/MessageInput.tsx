@@ -113,7 +113,7 @@ export default function MessageInput({
       value: client.planPrice ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(client.planPrice) : 'N/A'
     };
 
-    onSend(`Vinculei a ficha de ${client.name}`, [], [], null, members, 'client_card', undefined, undefined);
+    onSend(`Vinculei a ficha de ${client.name}`, [], [], null, members, 'client_card', undefined, undefined, clientCardData);
     // Nota: O onSend precisa aceitar richPreview ou tratamos internamente no hook. 
     // Vou ajustar o onSend para ser mais flexível se necessário.
     setIsClientModalOpen(false);
