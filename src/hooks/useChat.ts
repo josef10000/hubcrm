@@ -44,10 +44,19 @@ export function useChat(chatId: string | null) {
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const msgs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as ChatMessage)).reverse();
+      const msgs = snapshot.docs
+        .map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as ChatMessage))
+        .filter(m => {
+          // Privacidade: Se a mensagem estiver agendada, apenas o autor pode ver no chat
+          if (m.status === 'scheduled') {
+            return m.senderId === userProfile?.uid;
+          }
+          return true;
+        })
+        .reverse();
       setMessages(msgs);
       setLoading(false);
       

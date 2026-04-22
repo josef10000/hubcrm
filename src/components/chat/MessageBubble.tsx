@@ -38,6 +38,10 @@ export default function MessageBubble({
   const [showReadBy, setShowReadBy] = useState(false);
   const isMine = message.senderId === userProfile?.uid;
   const isDeleted = message.isDeleted;
+  
+  // Se a mensagem for agendada E estiver deletada, não mostrar nada (sumir completamente)
+  if (isDeleted && message.status === 'scheduled') return null;
+
   const isMentioned = message.mentions?.includes(userProfile?.uid || '') || message.mentionAll;
 
   const handleDelete = async (e: React.MouseEvent) => {
