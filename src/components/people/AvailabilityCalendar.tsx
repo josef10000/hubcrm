@@ -126,37 +126,63 @@ export default function AvailabilityCalendar({ userId, isOwner }: AvailabilityCa
       </div>
 
       <div className={clsx(
-        "grid border border-white/20 rounded-3xl overflow-hidden bg-white/20 dark:bg-black/20 backdrop-blur-md shadow-2xl",
+        "grid border border-white/20 rounded-3xl overflow-hidden bg-white/20 dark:bg-black/20 backdrop-blur-md shadow-2xl relative",
         view === 'week' ? "grid-cols-6" : "grid-cols-2"
       )}>
-        {/* Coluna de Horários */}
-        <div className="border-r border-white/10 pt-16">
-          {getTimeSlots().map(time => (
-            <div key={time} className="h-20 flex items-start justify-center border-b border-white/5 text-[10px] font-bold text-gray-400 uppercase tracking-widest pt-2">
-              {time}
-            </div>
-          ))}
-        </div>
+        {/* Adicionando Estilos de Scrollbar Customizada */}
+        <style dangerouslySetInnerHTML={{ __html: `
+          .calendar-scroll::-webkit-scrollbar {
+            width: 6px;
+          }
+          .calendar-scroll::-webkit-scrollbar-track {
+            background: transparent;
+          }
+          .calendar-scroll::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.2);
+            border-radius: 10px;
+          }
+          .calendar-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 0.4);
+          }
+          .dark .calendar-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+          }
+          .dark .calendar-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+          }
+        `}} />
 
-        {/* Colunas dos Dias */}
-        {visibleDays.map((day) => (
-          <div key={day.toISOString()} className={clsx(
-            "flex flex-col border-r border-white/10 last:border-r-0",
-            isSameDay(day, new Date()) ? "bg-blue-500/5" : ""
-          )}>
-            <div className="h-16 flex flex-col items-center justify-center border-b border-white/10 bg-white/5">
-              <span className="text-[10px] uppercase font-bold text-gray-400 tracking-tighter">
-                {format(day, 'EEE', { locale: ptBR })}
-              </span>
-              <span className={clsx(
-                "text-lg font-black",
-                isSameDay(day, new Date()) ? "text-blue-500" : "dark:text-white"
-              )}>
-                {format(day, 'dd')}
-              </span>
-            </div>
+        {/* Container de Scroll Único */}
+        <div className="col-span-full calendar-scroll overflow-y-auto max-h-[650px] grid grid-cols-inherit">
+          {/* Coluna de Horários (Sticky Left) */}
+          <div className="border-r border-white/10 pt-16 flex flex-col bg-white/5 dark:bg-black/5 sticky left-0 z-10 backdrop-blur-sm">
+            {getTimeSlots().map(time => (
+              <div key={time} className="h-20 flex items-start justify-center border-b border-white/5 text-[10px] font-bold text-gray-400 uppercase tracking-widest pt-2">
+                {time}
+              </div>
+            ))}
+          </div>
 
-            {getTimeSlots().map((time) => {
+          {visibleDays.map((day) => (
+            <div key={day.toISOString()} className={clsx(
+              "flex flex-col border-r border-white/10 last:border-r-0",
+              isSameDay(day, new Date()) ? "bg-blue-500/5" : ""
+            )}>
+              {/* Cabeçalho do Dia (Sticky) */}
+              <div className="h-16 flex flex-col items-center justify-center border-b border-white/10 bg-white/80 dark:bg-black/80 backdrop-blur-md sticky top-0 z-20">
+                <span className="text-[10px] uppercase font-bold text-gray-400 tracking-tighter">
+                  {format(day, 'EEE', { locale: ptBR })}
+                </span>
+                <span className={clsx(
+                  "text-lg font-black",
+                  isSameDay(day, new Date()) ? "text-blue-500" : "dark:text-white"
+                )}>
+                  {format(day, 'dd')}
+                </span>
+              </div>
+
+              {/* Slots de Tempo */}
+              {getTimeSlots().map((time) => {
               const [h, m] = time.split(':').map(Number);
               const slotDateTime = new Date(day);
               slotDateTime.setHours(h, m, 0, 0);
@@ -228,6 +254,7 @@ export default function AvailabilityCalendar({ userId, isOwner }: AvailabilityCa
           </div>
         ))}
       </div>
+    </div>
 
       {/* Modal de Solicitação (Simplificado aqui) */}
       <AnimatePresence>
