@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { format, addDays, startOfWeek, isSameDay, isWeekend, addMinutes, isAfter, startOfToday } from 'date-fns';
+import { format, addDays, startOfWeek, isSameDay, isWeekend, addMinutes, isAfter, startOfToday, startOfMonth, endOfMonth, eachDayOfInterval, endOfWeek, isSameMonth, subMonths, addMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar, Clock, Lock, CheckCircle2, AlertCircle, Plus, Trash2 } from 'lucide-react';
+import { Calendar, Clock, Lock, CheckCircle2, AlertCircle, Plus, Trash2, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Appointment, AvailabilityBlock } from '../../types/people';
 import { useCRM } from '../../contexts/CRMContext';
@@ -22,7 +22,8 @@ export default function AvailabilityCalendar({ userId, isOwner }: AvailabilityCa
   const { appointments, availabilityBlocks, handleRequestAppointment, handleUpdateAppointmentStatus, handleSaveAvailabilityBlock, handleDeleteAvailabilityBlock } = useCRM();
   
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [view, setView] = useState<'week' | 'day'>('week');
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [view, setView] = useState<'month' | 'day'>('month');
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [requestData, setRequestData] = useState<Partial<Appointment>>({
     duration: 30,
@@ -35,9 +36,13 @@ export default function AvailabilityCalendar({ userId, isOwner }: AvailabilityCa
   const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
 
   const today = startOfToday();
-  const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 }); // Segunda-feira
-  const weekDays = Array.from({ length: 5 }).map((_, i) => addDays(weekStart, i));
-  const visibleDays = view === 'week' ? weekDays : [selectedDate];
+  
+  // Datas para o mês atual
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(monthStart);
+  const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 }); // Domingo
+  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
+  const monthDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
   // Filtrar dados do usuário selecionado
   const userAppointments = appointments.filter(a => (a.targetId === userId || a.requesterId === userId) && a.status === 'approved');
@@ -104,31 +109,112 @@ export default function AvailabilityCalendar({ userId, isOwner }: AvailabilityCa
         </div>
 
         <div className="flex items-center gap-2 bg-gray-100 dark:bg-white/10 p-1.5 rounded-2xl">
-          <button
-            onClick={() => setView('week')}
-            className={clsx(
-              "px-4 py-2 rounded-xl text-sm font-medium transition-all",
-              view === 'week' ? "bg-white dark:bg-white/20 shadow-sm text-blue-600 dark:text-white" : "text-gray-500 hover:bg-white/50 dark:hover:bg-white/5"
-            )}
-          >
-            Semana
-          </button>
-          <button
-            onClick={() => setView('day')}
-            className={clsx(
-              "px-4 py-2 rounded-xl text-sm font-medium transition-all",
-              view === 'day' ? "bg-white dark:bg-white/20 shadow-sm text-blue-600 dark:text-white" : "text-gray-500 hover:bg-white/50 dark:hover:bg-white/5"
-            )}
-          >
-            Dia
-          </button>
+          {view === 'month' ? (
+            <>
+              <button 
+                onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                className="p-2 hover:bg-white/50 dark:hover:bg-white/5 rounded-xl transition-colors text-gray-500"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <button 
+                onClick={() => setCurrentMonth(new Date())}
+                className="px-4 py-2 text-sm font-bold text-blue-600 dark:text-blue-400 hover:bg-white/50 dark:hover:bg-white/5 rounded-xl"
+              >
+                Hoje
+              </button>
+              <button 
+                onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                className="p-2 hover:bg-white/50 dark:hover:bg-white/5 rounded-xl transition-colors text-gray-500"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => setView('month')}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 hover:scale-105 transition-all"
+            >
+              <ArrowLeft size={16} />
+              Voltar ao Mês
+            </button>
+          )}
         </div>
       </div>
 
-      <div className={clsx(
-        "grid border border-white/20 rounded-3xl overflow-hidden bg-white/20 dark:bg-black/20 backdrop-blur-md shadow-2xl relative",
-        view === 'week' ? "grid-cols-6" : "grid-cols-2"
-      )}>
+      <AnimatePresence mode="wait">
+        {view === 'month' ? (
+          <motion.div
+            key="month"
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            className="grid grid-cols-7 border border-white/20 rounded-[2.5rem] overflow-hidden bg-white/20 dark:bg-black/20 backdrop-blur-md shadow-2xl"
+          >
+            {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
+              <div key={day} className="py-4 text-center text-[10px] uppercase font-black text-gray-400 tracking-widest border-b border-white/10 bg-white/5">
+                {day}
+              </div>
+            ))}
+            {monthDays.map(day => {
+              const isCurrentMonth = isSameMonth(day, monthStart);
+              const isCurrentDay = isSameDay(day, new Date());
+              const isWeekendDay = isWeekend(day);
+              
+              // Contar agendamentos/pendentes para bolinhas indicadoras
+              const dayTsRange = { 
+                start: new Date(day).setHours(0,0,0,0), 
+                end: new Date(day).setHours(23,59,59,999) 
+              };
+              const dayAppointments = userAppointments.filter(a => a.startTime >= dayTsRange.start && a.startTime <= dayTsRange.end);
+              const dayBlocks = userBlocks.filter(b => b.startTime >= dayTsRange.start && b.startTime <= dayTsRange.end);
+
+              return (
+                <button
+                  key={day.toISOString()}
+                  onClick={() => {
+                    if (!isCurrentMonth) return;
+                    setSelectedDate(day);
+                    setView('day');
+                  }}
+                  disabled={!isCurrentMonth}
+                  className={clsx(
+                    "h-24 p-3 border-r border-b border-white/10 flex flex-col items-start gap-1 transition-all relative group",
+                    !isCurrentMonth ? "opacity-20 bg-transparent grayscale" : "hover:bg-white/10",
+                    isCurrentDay && "bg-blue-500/10",
+                    isWeekendDay && isCurrentMonth && "bg-gray-500/5 cursor-not-allowed"
+                  )}
+                >
+                  <span className={clsx(
+                    "text-sm font-black",
+                    isCurrentDay ? "text-blue-500" : isCurrentMonth ? "dark:text-white" : "text-gray-400",
+                    isWeekendDay && "text-gray-500"
+                  )}>
+                    {format(day, 'd')}
+                  </span>
+                  
+                  <div className="mt-auto flex flex-wrap gap-1">
+                    {dayAppointments.length > 0 && <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />}
+                    {dayBlocks.length > 0 && <div className="w-1.5 h-1.5 rounded-full bg-red-500/50" />}
+                  </div>
+
+                  {isCurrentMonth && !isWeekendDay && (
+                    <div className="absolute inset-0 border-2 border-blue-500/0 group-hover:border-blue-500/20 rounded-[inherit] transition-all" />
+                  )}
+                </button>
+              );
+            })}
+          </motion.div>
+        ) : (
+          <motion.div
+            key="day"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className={clsx(
+              "grid border border-white/20 rounded-[2.5rem] overflow-hidden bg-white/20 dark:bg-black/20 backdrop-blur-md shadow-2xl relative grid-cols-2"
+            )}
+          >
         {/* Adicionando Estilos de Scrollbar Customizada */}
         <style dangerouslySetInnerHTML={{ __html: `
           .calendar-scroll::-webkit-scrollbar {
@@ -163,28 +249,24 @@ export default function AvailabilityCalendar({ userId, isOwner }: AvailabilityCa
             ))}
           </div>
 
-          {visibleDays.map((day) => (
-            <div key={day.toISOString()} className={clsx(
-              "flex flex-col border-r border-white/10 last:border-r-0",
-              isSameDay(day, new Date()) ? "bg-blue-500/5" : ""
-            )}>
-              {/* Cabeçalho do Dia (Sticky) */}
-              <div className="h-16 flex flex-col items-center justify-center border-b border-white/10 bg-white/80 dark:bg-black/80 backdrop-blur-md sticky top-0 z-20">
-                <span className="text-[10px] uppercase font-bold text-gray-400 tracking-tighter">
-                  {format(day, 'EEE', { locale: ptBR })}
-                </span>
-                <span className={clsx(
-                  "text-lg font-black",
-                  isSameDay(day, new Date()) ? "text-blue-500" : "dark:text-white"
-                )}>
-                  {format(day, 'dd')}
-                </span>
-              </div>
+          {/* Coluna do Dia Único */}
+          <div key={selectedDate.toISOString()} className={clsx(
+            "flex flex-col border-r border-white/10 last:border-r-0 bg-blue-500/5"
+          )}>
+            {/* Cabeçalho do Dia (Sticky) */}
+            <div className="h-16 flex flex-col items-center justify-center border-b border-white/10 bg-white/80 dark:bg-black/80 backdrop-blur-md sticky top-0 z-20">
+              <span className="text-[10px] uppercase font-bold text-gray-400 tracking-tighter">
+                {format(selectedDate, 'EEEE', { locale: ptBR })}
+              </span>
+              <span className="text-lg font-black dark:text-white">
+                {format(selectedDate, 'dd')}
+              </span>
+            </div>
 
-              {/* Slots de Tempo */}
-              {getTimeSlots().map((time) => {
+            {/* Slots de Tempo */}
+            {getTimeSlots().map((time) => {
               const [h, m] = time.split(':').map(Number);
-              const slotDateTime = new Date(day);
+              const slotDateTime = new Date(selectedDate);
               slotDateTime.setHours(h, m, 0, 0);
               const ts = slotDateTime.getTime();
 
@@ -195,7 +277,7 @@ export default function AvailabilityCalendar({ userId, isOwner }: AvailabilityCa
               return (
                 <div 
                   key={time} 
-                  onClick={() => !app && !block && !pending && handleOpenSlotAction(day, time)}
+                  onClick={() => !app && !block && !pending && handleOpenSlotAction(selectedDate, time)}
                   className="h-20 border-b border-white/5 relative group cursor-pointer hover:bg-white/5 transition-colors"
                 >
                   {/* Visual do Agendamento */}
@@ -252,9 +334,9 @@ export default function AvailabilityCalendar({ userId, isOwner }: AvailabilityCa
               );
             })}
           </div>
-        ))}
-      </div>
-    </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
 
       {/* Modal de Solicitação (Simplificado aqui) */}
       <AnimatePresence>
