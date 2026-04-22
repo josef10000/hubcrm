@@ -10,19 +10,28 @@ interface EnergyScoreCardProps {
 
 function calculateEnergyScore(userProfile: UserProfile | null | undefined): number {
   if (!userProfile) return 0;
-  let score = 60; // base
+  
+  // Nova lógica dinâmica v2.0
+  let score = 40; // Base menor para permitir crescimento via ações
 
-  // NPS/eNPS pessoal se disponível
-  const profileAny = userProfile as any;
-  const enpsScore = profileAny?.enpsScore;
-  if (typeof enpsScore === 'number' && !isNaN(enpsScore)) {
-    if (enpsScore >= 9) score += 20;
-    else if (enpsScore >= 7) score += 10;
-    else score -= 10;
+  // 1. Humor dos últimos 7 dias (Peso: 30%)
+  const moodLogs = userProfile.moodLogs || [];
+  if (moodLogs.length > 0) {
+    const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const recentMoods = moodLogs.filter(m => m.date >= oneWeekAgo);
+    
+    if (recentMoods.length > 0) {
+      const avgMood = recentMoods.reduce((acc, m) => acc + m.score, 0) / recentMoods.length;
+      // Multiplicamos por 6 para que humor 5 valha 30 pontos
+      score += Math.round(avgMood * 6);
+    } else {
+      // Se não logou humor recente, perde potencial de score
+      score += 5; 
+    }
   }
 
-  // Onboarding completo
-  const onboarding = profileAny?.onboardingTasks;
+  // 2. Onboarding (Peso: 15%)
+  const onboarding = userProfile.onboardingTasks;
   if (Array.isArray(onboarding) && onboarding.length > 0) {
     const validOnboarding = onboarding.filter((t: any) => t !== null && typeof t === 'object');
     if (validOnboarding.length > 0) {
@@ -31,11 +40,22 @@ function calculateEnergyScore(userProfile: UserProfile | null | undefined): numb
     }
   }
 
-  // PDI em andamento
-  const pdi = profileAny?.pdiItems;
-  if (Array.isArray(pdi) && pdi.length > 0) {
-    const inProgress = pdi.filter((p: any) => p && typeof p === 'object' && p.status === 'doing').length;
-    score += inProgress * 3;
+  // 3. PDI & Evolução (Peso: 10%)
+  const pdi = userProfile.pdiItems || [];
+  if (pdi.length > 0) {
+    const inProgress = pdi.filter(p => p.status === 'doing').length;
+    const recentlyDone = pdi.filter(p => p.status === 'done' && (p.completedAt || 0) > (Date.now() - 30 * 24 * 60 * 60 * 1000)).length;
+    score += (inProgress * 2) + (recentlyDone * 3);
+  }
+
+  // 4. Engajamento em Pesquisas (eNPS) (Peso: 5%)
+  if (userProfile.lastEnpsResponse) {
+    const lastDate = (userProfile.lastEnpsResponse as any)?.toMillis ? 
+      (userProfile.lastEnpsResponse as any).toMillis() : 
+      userProfile.lastEnpsResponse;
+    
+    const daysSince = (Date.now() - lastDate) / (1000 * 60 * 60 * 24);
+    if (daysSince <= 30) score += 5;
   }
 
   return Math.max(0, Math.min(100, score));
