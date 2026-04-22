@@ -125,6 +125,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const snapshot = await findClient(paymentData.customer);
         if (snapshot.empty) return res.status(200).json({ received: true });
 
+        const doc = snapshot.docs[0];
+        const clientData = doc.data();
         const updates: any = {};
         if (event === 'PAYMENT_RECEIVED' || event === 'PAYMENT_CONFIRMED') {
           updates.paymentStatus = 'RECEIVED';
@@ -198,11 +200,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           }
         }
 
-        // Apenas o primeiro doc
-        const doc = snapshot.docs[0];
         if (Object.keys(updates).length > 0) await doc.ref.update(updates);
         
-        const clientData = doc.data();
         const pValue = paymentData.value || 0;
         const pLink = paymentData.invoiceUrl || paymentData.bankSlipUrl || '';
         const pDueDate = paymentData.dueDate ? paymentData.dueDate.split('-').reverse().join('/') : '';
