@@ -53,7 +53,12 @@ export interface ChatMessage {
   isEdited?: boolean;                 // Flag para mensagens editadas
   readBy?: string[];                  // Lista de UIDs que leram esta mensagem
   mentionAll?: boolean;               // Se @todos foi usado
-  type?: "text" | "poll" | "approval" | "system" | "rich_link"; // Tipo da mensagem
+  type?: "text" | "poll" | "approval" | "system" | "rich_link" | "client_card"; // Tipo da mensagem
+  parentMessageId?: string;           // Para Threads (ID da mensagem pai)
+  threadReplyCount?: number;          // Quantas respostas este tópico tem
+  lastThreadReplyAt?: Timestamp;      // Última resposta no tópico
+  scheduledAt?: Timestamp;            // Data agendada para envio
+  status?: "sent" | "scheduled";      // Status de envio
   poll?: {                            // Dados da enquete
     question: string;
     options: {

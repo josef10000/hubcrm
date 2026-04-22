@@ -1,4 +1,4 @@
-# 🔐 Hub Central — Intranet Corporativa v4.6.0 (Dunning & Stability Patch)
+# 🔐 Hub Central — Intranet Corporativa v4.6.5 (Chat Pro & CRM Linking)
 
 > [!CAUTION]
 > **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
@@ -25,7 +25,7 @@ Certifique-se de configurar as seguintes variáveis no seu ambiente Claude Deskt
 - `FIREBASE_API_KEY` / `FIREBASE_TOKEN`
 
   <p>
-    <img src="https://img.shields.io/badge/Version-4.6.0-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-4.6.5-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Status-Audited_&_Stable-3b82f6?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-3b82f6?style=for-the-badge&labelColor=111111" alt="License" />
@@ -38,7 +38,7 @@ Certifique-se de configurar as seguintes variáveis no seu ambiente Claude Deskt
     <img src="https://img.shields.io/badge/Firebase-12-FFCA28?style=flat-square&logo=firebase&logoColor=black" alt="Firebase" />
   </p>
   <div align="center">
-  <h2>✨ Features em Destaque v4.6.0</h2>
+  <h2>✨ Features em Destaque v4.6.5</h2>
 </div>
 
 <table>
@@ -96,6 +96,9 @@ A comunicação interna foi elevada ao nível de ferramenta de gestão. Mais que
 | Recurso | Descrição |
 |---|---|
 | ✅ **Aprovações Nativas** | Cards de autorização direta (ex: descontos/folgas) com um clique. |
+| 🧵 **Threads (Tópicos)** | Conversas organizadas por assunto para evitar poluição no fluxo principal. |
+| 📇 **CRM Linking** | Vinculação direta de fichas de clientes com cards interativos no chat. |
+| ✅✅ **Leitura Detalhada** | Lista visual (nomes/fotos) de quem visualizou cada mensagem. |
 | ⭐ **Mensagens Salvas** | Bookmark de mensagens importantes para consulta rápida. |
 | 📌 **Pins reativos** | Mensagens fixadas com atualização em tempo real (sem F5). |
 | 🔗 **Rich Previews** | Pré-visualização automática de links internos do HubCRM. |
@@ -759,6 +762,7 @@ className="bg-gray-100 border-gray-200"
 - [x] 🛡️ **v4.5.7 Hook Stability (Fix React Error #310 & Firebase Alert Guard)**
 - [x] 🛡️ **v4.5.9 Audit & Dunning (Webhooks & Audit Logs Implementation)**
 - [x] 🚀 **v4.6.0 Stability Master (Context Hook Fix & Production Hardening)**
+- [x] 💬 **v4.6.5 Hub Chat Pro (Threads, CRM Linking & Detailed Read Receipts)**
 - [ ] 🔮 **v4.7.0 Automations & AI Chat Summary** (Fase 3)
 
 

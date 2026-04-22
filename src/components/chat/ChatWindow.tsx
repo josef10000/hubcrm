@@ -17,6 +17,7 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { AnimatePresence } from 'framer-motion';
 import ImageLightbox from './ImageLightbox';
+import ThreadSidebar from './ThreadSidebar';
 
 interface ChatWindowProps {
   chatId: string | null;
@@ -46,10 +47,12 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
   const [isMediaOpen, setIsMediaOpen] = useState(false);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [activeThread, setActiveThread] = useState<ChatMessage | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Filtragem de Mensagens (Busca)
-  const filteredMessages = messages.filter(msg => 
+  // Filtragem de Mensagens (Busca + Ocultar Threads do fluxo principal)
+  const mainMessages = messages.filter(m => !m.parentMessageId);
+  const filteredMessages = mainMessages.filter(msg => 
     msg.text.toLowerCase().includes(searchTerm.toLowerCase()) ||
     msg.senderName.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -192,9 +195,10 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
     attachments: string[] = [], 
     replyTo: ChatMessage['replyTo'] = null,
     members: string[] = [],
-    type: "text" | "poll" | "approval" = "text",
+    type: "text" | "poll" | "approval" | "rich_link" | "client_card" = "text",
     poll?: ChatMessage['poll'],
-    approval?: ChatMessage['approval']
+    approval?: ChatMessage['approval'],
+    richPreview?: ChatMessage['richPreview']
   ) => {
     if (!chat) return;
     if (!text.trim() && attachments.length === 0 && type === 'text') return;
@@ -207,7 +211,8 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
       chat.members,
       type,
       poll,
-      approval
+      approval,
+      richPreview
     );
     
     setReplyingTo(null);
@@ -449,6 +454,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
                       setIsSupportModalOpen(true);
                     }}
                     onImageClick={(url) => setLightboxImage(url)}
+                    onThreadOpen={setActiveThread}
                   />
                 </React.Fragment>
               );
@@ -526,6 +532,17 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
             onClose={() => setLightboxImage(null)}
             onNext={allConversationImages.indexOf(lightboxImage) < allConversationImages.length - 1 ? handleNextImage : undefined}
             onPrev={allConversationImages.indexOf(lightboxImage) > 0 ? handlePrevImage : undefined}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Sidebar de Threads */}
+      <AnimatePresence>
+        {activeThread && (
+          <ThreadSidebar 
+            parentMessage={activeThread} 
+            chat={chat} 
+            onClose={() => setActiveThread(null)} 
           />
         )}
       </AnimatePresence>

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, Smile, X, Loader2 } from 'lucide-react';
+import { Send, Paperclip, Smile, X, Loader2, Calendar, LayoutGrid, Image as ImageIcon } from 'lucide-react';
 import { parseMentions } from '../../helpers/chatHelpers';
 import { useCRM } from '../../contexts/CRMContext';
 import { ChatMessage } from '../../types/chat.types';
@@ -11,6 +11,8 @@ import EmojiPicker from './EmojiPicker';
 import { PollCreatorModal } from './PollCreatorModal';
 import { ApprovalCreatorModal } from './ApprovalCreatorModal';
 import { BarChart2, CheckCircle2 } from 'lucide-react';
+import { ClientSelectorModal } from './ClientSelectorModal';
+import { Client } from '../../types';
 
 interface MessageInputProps {
   onSend: (
@@ -30,6 +32,7 @@ interface MessageInputProps {
   onCancelEdit: () => void;
   onUpdate: (messageId: string, text: string) => void;
   members: string[];
+  parentMessageId?: string; // Para enviar mensagens em Threads
 }
 
 export default function MessageInput({ 
@@ -37,6 +40,8 @@ export default function MessageInput({
 }: MessageInputProps) {
   const [isPollModalOpen, setIsPollModalOpen] = useState(false);
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
+  const [isClientModalOpen, setIsClientModalOpen] = useState(false);
+  const [scheduledDate, setScheduledDate] = useState<string | null>(null);
   const [text, setText] = useState('');
   const [showMentions, setShowMentions] = useState(false);
   const [mentionQuery, setMentionQuery] = useState('');
@@ -96,6 +101,21 @@ export default function MessageInput({
     };
 
     onSend('', [], [], null, members, 'approval', undefined, approvalData);
+  };
+
+  const handleSelectClient = (client: Client) => {
+    const clientCardData: ChatMessage['richPreview'] = {
+      title: client.name,
+      description: client.notes || "Sem observações adicionais.",
+      url: `/dashboard`, // No CRM atual, clicamos e abre o modal via estado global ou busca
+      status: client.status,
+      value: client.planPrice ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(client.planPrice) : 'N/A'
+    };
+
+    onSend(`Vinculei a ficha de ${client.name}`, [], [], null, members, 'client_card', undefined, undefined);
+    // Nota: O onSend precisa aceitar richPreview ou tratamos internamente no hook. 
+    // Vou ajustar o onSend para ser mais flexível se necessário.
+    setIsClientModalOpen(false);
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -250,6 +270,31 @@ export default function MessageInput({
           <CheckCircle2 size={20} />
         </button>
 
+        <button 
+          type="button" 
+          onClick={() => setIsClientModalOpen(true)}
+          className="p-2.5 text-gray-400 hover:text-blue-500 hover:bg-blue-500/10 rounded-xl transition-all"
+          title="Vincular Cliente CRM"
+        >
+          <LayoutGrid size={20} />
+        </button>
+
+        <button 
+          type="button" 
+          className="p-2.5 text-gray-400 hover:text-amber-500 hover:bg-amber-500/10 rounded-xl transition-all"
+          title="GIFs e Stickers"
+        >
+          <ImageIcon size={20} />
+        </button>
+
+        <button 
+          type="button" 
+          className={`p-2.5 rounded-xl transition-all ${scheduledDate ? 'text-primary-500 bg-primary-500/10' : 'text-gray-400 hover:text-primary-500 hover:bg-primary-500/10'}`}
+          title="Agendar Mensagem"
+        >
+          <Calendar size={20} />
+        </button>
+
         <div className="flex-1 relative">
           {showMentions && (
             <MentionSuggestions 
@@ -308,6 +353,12 @@ export default function MessageInput({
         isOpen={isApprovalModalOpen}
         onClose={() => setIsApprovalModalOpen(false)}
         onSelect={handleCreateApproval}
+      />
+
+      <ClientSelectorModal 
+        isOpen={isClientModalOpen}
+        onClose={() => setIsClientModalOpen(false)}
+        onSelect={handleSelectClient}
       />
     </div>
   );

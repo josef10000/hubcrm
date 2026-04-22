@@ -1,4 +1,4 @@
-import { User, Paperclip, Check, CheckCheck, Trash2, Reply, Smile, Bookmark, Pin, LifeBuoy } from 'lucide-react';
+import { User, Paperclip, Check, CheckCheck, Trash2, Reply, Smile, Bookmark, Pin, LifeBuoy, MessageSquareText, ExternalLink, Hash } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
 import { ChatMessage } from '../../types/chat.types';
@@ -21,15 +21,17 @@ interface MessageBubbleProps {
   onCreateTicket?: (text: string) => void;
   onApprove?: (id: string, status: 'approved' | 'rejected') => void;
   onImageClick?: (url: string) => void;
+  onThreadOpen?: (message: ChatMessage) => void;
 }
 
 const COMMON_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
 
 export default function MessageBubble({ 
   message, isRead, isPinned, isBookmarked, onDelete, onEdit, onReply, onReact, onVote, 
-  onBookmark, onPin, onUnpin, onCreateTicket, onApprove, onImageClick 
+  onBookmark, onPin, onUnpin, onCreateTicket, onApprove, onImageClick, onThreadOpen 
 }: MessageBubbleProps) {
   const { userProfile } = useAuth();
+  const { teamProfiles } = useCRM();
   const navigate = useNavigate();
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showReadBy, setShowReadBy] = useState(false);
@@ -152,6 +154,14 @@ export default function MessageBubble({
                     </button>
                   </>
                 )}
+
+                <button 
+                  onClick={() => onThreadOpen?.(message)}
+                  className="p-1.5 text-gray-400 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-full transition-colors"
+                  title="Responder em Tópico (Thread)"
+                >
+                  <MessageSquareText size={14} />
+                </button>
               </div>
             </div>
           )}
@@ -299,6 +309,50 @@ export default function MessageBubble({
                   </p>
                 )}
                 
+                {/* Card de Cliente Vinculado */}
+                {message.type === 'client_card' && message.richPreview && (
+                  <div className="my-2 min-w-[280px] bg-white dark:bg-black/40 rounded-[2rem] border border-primary-500/30 overflow-hidden shadow-2xl shadow-primary-500/10">
+                    <div className="bg-primary-500/10 p-4 border-b border-primary-500/10 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-xl bg-primary-500 flex items-center justify-center text-white shadow-lg shadow-primary-500/20">
+                          <Hash size={16} />
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-primary-600">Ficha do Cliente</span>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/50 dark:bg-black/20 border border-primary-500/20 text-primary-500">
+                        {message.richPreview.status}
+                      </span>
+                    </div>
+                    <div className="p-5">
+                      <h4 className="text-xl font-black tracking-tight text-gray-900 dark:text-white mb-1">
+                        {message.richPreview.title}
+                      </h4>
+                      <p className="text-xs text-gray-500 mb-4 line-clamp-2">
+                        {message.richPreview.description}
+                      </p>
+                      
+                      <div className="grid grid-cols-2 gap-3 mb-5">
+                        <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/5">
+                          <span className="text-[9px] font-bold text-gray-400 uppercase block mb-1">Nichos</span>
+                          <span className="text-xs font-bold text-gray-700 dark:text-gray-300">Digital / Tech</span>
+                        </div>
+                        <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/5">
+                          <span className="text-[9px] font-bold text-gray-400 uppercase block mb-1">Valor Mensal</span>
+                          <span className="text-xs font-black text-primary-500">{message.richPreview.value}</span>
+                        </div>
+                      </div>
+
+                      <button 
+                        onClick={() => navigate(message.richPreview!.url)}
+                        className="w-full py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-primary-500/20 flex items-center justify-center gap-2"
+                      >
+                        Abrir no CRM
+                        <ExternalLink size={14} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+                
                 {message.isEdited && (
                   <span className="text-[10px] italic opacity-50 block mt-1">(editado)</span>
                 )}
@@ -364,17 +418,29 @@ export default function MessageBubble({
                   </button>
                   
                   {showReadBy && message.readBy && (
-                    <div className="absolute bottom-full right-0 mb-2 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-white/10 rounded-2xl shadow-2xl p-2 min-w-[120px] z-[100] animate-in zoom-in-95 overflow-hidden">
-                      <p className="text-[10px] font-black uppercase text-gray-400 mb-2 px-1">Lido por</p>
-                      <div className="flex flex-col gap-1 max-h-40 overflow-y-auto custom-scrollbar">
-                        {message.readBy.map(uid => (
-                          <div key={uid} className="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
-                             <div className="w-5 h-5 rounded-full bg-primary-500/10 flex items-center justify-center">
-                               <User size={10} className="text-primary-500" />
-                             </div>
-                             <span className="text-[11px] truncate text-gray-600 dark:text-gray-300">UID: {uid.slice(0, 5)}...</span>
-                          </div>
-                        ))}
+                    <div className="absolute bottom-full right-0 mb-2 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-white/10 rounded-2xl shadow-2xl p-3 min-w-[200px] z-[100] animate-in zoom-in-95 overflow-hidden">
+                      <p className="text-[10px] font-black uppercase text-gray-400 mb-3 px-1 tracking-widest">Visualizado por</p>
+                      <div className="flex flex-col gap-2 max-h-56 overflow-y-auto custom-scrollbar">
+                        {message.readBy.map(uid => {
+                          const reader = teamProfiles.find(p => p.uid === uid);
+                          return (
+                            <div key={uid} className="flex items-center gap-3 p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 transition-colors group/reader">
+                               <div className="w-8 h-8 rounded-lg bg-primary-500/10 flex items-center justify-center overflow-hidden border border-primary-500/20 shrink-0">
+                                 {reader?.photoURL ? (
+                                   <img src={reader.photoURL} alt="" className="w-full h-full object-cover" />
+                                 ) : (
+                                   <User size={14} className="text-primary-500" />
+                                 )}
+                               </div>
+                               <div className="flex flex-col min-w-0">
+                                 <span className="text-[12px] font-bold truncate text-gray-800 dark:text-gray-100">
+                                   {reader?.displayName || 'Usuário Removido'}
+                                 </span>
+                                 <span className="text-[9px] text-primary-500 font-bold uppercase tracking-tighter opacity-60">Lido</span>
+                               </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -407,6 +473,22 @@ export default function MessageBubble({
               </div>
             )}
           </div>
+          
+          {/* Indicador de Respostas em Thread */}
+          {message.threadReplyCount && message.threadReplyCount > 0 && (
+            <button 
+              onClick={() => onThreadOpen?.(message)}
+              className={`mt-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full transition-all border ${
+                isMine 
+                  ? 'bg-primary-500/10 border-primary-500/20 text-primary-400 hover:bg-primary-500/20' 
+                  : 'bg-white dark:bg-white/5 border-gray-200 dark:border-white/10 text-primary-500 hover:border-primary-500/30'
+              }`}
+            >
+              <MessageSquareText size={12} />
+              {message.threadReplyCount} {message.threadReplyCount === 1 ? 'Resposta' : 'Respostas'}
+              <ChevronRight size={10} className="ml-1" />
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -102,9 +102,12 @@ export function useChat(chatId: string | null) {
     attachments: string[] = [], 
     replyTo: ChatMessage['replyTo'] = null,
     members: string[] = [],
-    type: "text" | "poll" | "approval" | "rich_link" = "text",
+    type: "text" | "poll" | "approval" | "rich_link" | "client_card" = "text",
     poll?: ChatMessage['poll'],
-    approval?: ChatMessage['approval']
+    approval?: ChatMessage['approval'],
+    richPreview?: ChatMessage['richPreview'],
+    parentMessageId?: string,
+    scheduledAt?: Timestamp
   ) => {
     if (!effectiveOrgId || !chatId || !userProfile?.uid) return;
 
@@ -117,6 +120,7 @@ export function useChat(chatId: string | null) {
       let messageContent = text;
       if (type === 'poll') messageContent = `📊 Enquete: ${poll?.question}`;
       if (type === 'approval') messageContent = `📝 Pedido de Aprovação: ${approval?.question}`;
+      if (type === 'client_card') messageContent = `📇 Ficha de Cliente: ${richPreview?.title}`;
 
       const messageData: any = {
         text: messageContent,
@@ -136,6 +140,21 @@ export function useChat(chatId: string | null) {
 
       if (type === 'approval' && approval) {
         messageData.approval = approval;
+      }
+
+      if (richPreview) {
+        messageData.richPreview = richPreview;
+      }
+
+      if (parentMessageId) {
+        messageData.parentMessageId = parentMessageId;
+      }
+
+      if (scheduledAt) {
+        messageData.scheduledAt = scheduledAt;
+        messageData.status = 'scheduled';
+      } else {
+        messageData.status = 'sent';
       }
 
       batch.set(newMessageRef, messageData);
