@@ -1,4 +1,4 @@
-# 🔐 Hub Central — Intranet Corporativa v4.6.6 (Chat Pro & CRM Linking)
+# 🔐 Hub Central — Intranet Corporativa v4.6.9 (Chat Pro & Expressive Media)
 
 > [!CAUTION]
 > **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
@@ -26,7 +26,7 @@ Certifique-se de configurar as seguintes variáveis no seu ambiente Claude Deskt
 - `VITE_GIPHY_API_KEY` (Obrigatório para GIFs no Chat)
 
   <p>
-    <img src="https://img.shields.io/badge/Version-4.6.6-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-4.6.9-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Status-Audited_&_Stable-3b82f6?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-3b82f6?style=for-the-badge&labelColor=111111" alt="License" />
@@ -100,7 +100,7 @@ A comunicação interna foi elevada ao nível de ferramenta de gestão. Mais que
 | 🧵 **Threads (Tópicos)** | Conversas organizadas por assunto para evitar poluição no fluxo principal. |
 | 📇 **CRM Linking** | Vinculação direta de fichas de clientes com cards interativos no chat. |
 | 📅 **Agendamento** | Motor de disparo automático de mensagens para horários específicos. |
-| 🎬 **Giphy Engine** | Integração com Giphy API para busca e envio de GIFs e Stickers. |
+| 🎬 Stickers & GIFs | Biblioteca expressiva integrada (Giphy + Upload de Figurinhas personalizadas). |
 | ✅✅ **Leitura Detalhada** | Lista visual (nomes/fotos) de quem visualizou cada mensagem. |
 | ⭐ **Mensagens Salvas** | Bookmark de mensagens importantes para consulta rápida. |
 | 📌 **Pins reativos** | Mensagens fixadas com atualização em tempo real (sem F5). |
@@ -766,6 +766,7 @@ className="bg-gray-100 border-gray-200"
 - [x] 🛡️ **v4.5.9 Audit & Dunning (Webhooks & Audit Logs Implementation)**
 - [x] 🚀 **v4.6.0 Stability Master (Context Hook Fix & Production Hardening)**
 - [x] 💬 **v4.6.5 Hub Chat Pro (Threads, CRM Linking & Detailed Read Receipts)**
+- [x] 🚀 **v4.6.9 Multimedia & Expressive Media (Stickers, GIFs & Auto-Scheduling)**
 - [ ] 🔮 **v4.7.0 Automations & AI Chat Summary** (Fase 3)
 
 
