@@ -440,7 +440,6 @@ export default function ProfileView() {
 
               {/* CSAT Individual - Visível apenas para gestão e atendimento */}
               {(() => {
-                const { hasPermission } = usePermissions();
                 const canSeePerformance = hasPermission('MANAGE_TEAM') || hasPermission('MANAGE_SUPPORT');
                 
                 const showCSAT = 

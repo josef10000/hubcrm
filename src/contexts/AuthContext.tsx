@@ -250,7 +250,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Listener para Alertas de Negócio (RBAC)
   useEffect(() => {
-    if (!userProfile?.role || !userProfile?.orgId) {
+    if (!userProfile?.role || !userProfile?.orgId || userProfile.orgId === 'pending') {
       setBusinessAlerts([]);
       setUnreadAlertsCount(0);
       return;
