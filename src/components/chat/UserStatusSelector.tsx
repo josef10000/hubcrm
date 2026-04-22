@@ -12,8 +12,8 @@ export default function UserStatusSelector() {
   const statuses = [
     { id: 'online', label: 'Online', color: 'bg-emerald-500', icon: <Globe size={16} /> },
     { id: 'away', label: 'Ausente', color: 'bg-amber-500', icon: <Clock size={16} /> },
-    { id: 'lunch', label: 'Almoço', color: 'bg-blue-500', icon: <Coffee size={16} /> },
-    { id: 'meeting', label: 'Em Reunião', color: 'bg-purple-500', icon: <Users size={16} /> },
+    { id: 'lunch', label: 'Almoço', color: 'bg-rose-500', icon: <Coffee size={16} /> },
+    { id: 'meeting', label: 'Em Reunião', color: 'bg-blue-500', icon: <Users size={16} /> },
     { id: 'offline', label: 'Offline', color: 'bg-gray-500', icon: <Circle size={16} /> },
   ];
 

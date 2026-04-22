@@ -161,9 +161,9 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
                           
                           return isOnline ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 
                                  status === 'away' ? 'bg-amber-500' : 
-                                 status === 'lunch' ? 'bg-blue-500' :
-                                 status === 'meeting' ? 'bg-purple-500' :
-                                 'bg-gray-400';
+                                 status === 'lunch' ? 'bg-rose-500' :
+                                 status === 'meeting' ? 'bg-blue-500' :
+                                 'bg-gray-500';
                         })()
                       }`} title={(() => {
                           const otherUserId = chat.members.find(id => id !== userProfile?.uid);
