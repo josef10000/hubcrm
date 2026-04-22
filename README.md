@@ -5,6 +5,24 @@
 > Este sistema é uma ferramenta proprietária desenvolvida para a gestão, onboarding e automação comercial interna. O acesso é restrito a colaboradores autorizados.
 
 Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.
+---
+
+## 🤖 Servidores MCP (Python Bridges)
+
+Para contornar a ausência de Node.js no ambiente e permitir automação via IA, o projeto utiliza pontes MCP escritas em Python.
+
+| Servidor | Arquivo | Descrição |
+|---|---|---|
+| **OpenRouter** | `mcp_openrouter.py` | Bridge para chat e listagem de modelos. |
+| **GitHub** | `mcp_github.py` | Automação de issues, arquivos e repositórios. |
+| **Firebase** | `mcp_firebase.py` | Manipulação direta de documentos Firestore. |
+
+### Configuração
+Certifique-se de configurar as seguintes variáveis no seu ambiente Claude Desktop / Antigravity:
+- `OPENROUTER_API_KEY`
+- `GITHUB_TOKEN`
+- `FIREBASE_PROJECT_ID` (Opcional, padrão: `gassistant-83242`)
+- `FIREBASE_API_KEY` / `FIREBASE_TOKEN`
 
   <p>
     <img src="https://img.shields.io/badge/Version-4.5.8-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
