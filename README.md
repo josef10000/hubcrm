@@ -1,4 +1,4 @@
-# 🔐 Hub Central — Intranet Corporativa v4.5.9 (Dunning & Audit Logs)
+# 🔐 Hub Central — Intranet Corporativa v4.6.0 (Dunning & Stability Patch)
 
 > [!CAUTION]
 > **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
@@ -25,8 +25,8 @@ Certifique-se de configurar as seguintes variáveis no seu ambiente Claude Deskt
 - `FIREBASE_API_KEY` / `FIREBASE_TOKEN`
 
   <p>
-    <img src="https://img.shields.io/badge/Version-4.5.9-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
-    <img src="https://img.shields.io/badge/Status-Audited_&_Optimized-3b82f6?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
+    <img src="https://img.shields.io/badge/Version-4.6.0-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Status-Audited_&_Stable-3b82f6?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-3b82f6?style=for-the-badge&labelColor=111111" alt="License" />
   </p>
@@ -38,7 +38,7 @@ Certifique-se de configurar as seguintes variáveis no seu ambiente Claude Deskt
     <img src="https://img.shields.io/badge/Firebase-12-FFCA28?style=flat-square&logo=firebase&logoColor=black" alt="Firebase" />
   </p>
   <div align="center">
-  <h2>✨ Features em Destaque v4.5.9</h2>
+  <h2>✨ Features em Destaque v4.6.0</h2>
 </div>
 
 <table>
@@ -120,10 +120,13 @@ A comunicação interna foi elevada ao nível de ferramenta de gestão. Mais que
 - **Bloqueios de Privacidade**: Colaboradores podem bloquear horários com motivos públicos ou privados.
 - **Integração Visual**: Atalhos de calendário na sidebar do chat para acesso imediato às agendas.
 
-### 🛠 Correções e Melhorias Recentes (v4.5.7):
+### 🛠 Correções e Melhorias Recentes (v4.6.0):
 
 | Diferencial | Descrição |
 |---|---|
+| 🛡️ **Dunning Automático** | Régua de cobrança inteligente com abertura de tickets e alertas no chat para inadimplência. |
+| 🕵️ **Audit Trails** | Registro imutável de ações críticas (leads, equipe, financeiro) para segurança. |
+| ⚡ **Hook Stability** | Correção de erro de renderização no CRMProvider (fix React Error #310). |
 | 🎯 **Minhas Oportunidades** | Filtro exclusivo para SDRs/Executives focarem no próprio pipeline. |
 | ✨ **Proposta 1-Clique** | Geração instantânea de proposta estratégica via WhatsApp diretamente do card. |
 | 🛡️ **Billing Hub** | Módulo tático isolado para gestão de inadimplência e comissões. |
@@ -754,7 +757,9 @@ className="bg-gray-100 border-gray-200"
 - [x] 🛡️ **v4.5.5 Deep Resilience (Radar Chart Fix, Hook Array Guards & Inventory Safety)**
 - [x] 🛡️ **v4.5.6 Zero-White-Screen (Error State Fallback, Energy Score Hardening)**
 - [x] 🛡️ **v4.5.7 Hook Stability (Fix React Error #310 & Firebase Alert Guard)**
-- [ ] 🔮 **v4.5.0 Automations & AI Chat Summary** (Fase 3)
+- [x] 🛡️ **v4.5.9 Audit & Dunning (Webhooks & Audit Logs Implementation)**
+- [x] 🚀 **v4.6.0 Stability Master (Context Hook Fix & Production Hardening)**
+- [ ] 🔮 **v4.7.0 Automations & AI Chat Summary** (Fase 3)
 
 
 ---
