@@ -312,6 +312,24 @@ export default function MessageBubble({
                   </p>
                 )}
                 
+                {/* Indicador de Thread (Tópico) */}
+                {message.threadReplyCount && message.threadReplyCount > 0 && (
+                  <button 
+                    onClick={() => onThreadOpen?.(message)}
+                    className={`mt-3 flex items-center gap-2 py-1.5 px-3 rounded-xl border transition-all w-fit group/thread ${
+                      isMine 
+                        ? 'bg-white/10 border-white/20 hover:bg-white/20 text-white' 
+                        : 'bg-primary-500/10 border-primary-500/20 hover:bg-primary-500/20 text-primary-600 dark:text-primary-400'
+                    }`}
+                  >
+                    <MessageSquareText size={12} className="group-hover/thread:scale-110 transition-transform" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">
+                      {message.threadReplyCount} {message.threadReplyCount === 1 ? 'Resposta' : 'Respostas'}
+                    </span>
+                    <ChevronRight size={12} className="opacity-40" />
+                  </button>
+                )}
+                
                 {/* Card de Cliente Vinculado */}
                 {message.type === 'client_card' && message.richPreview && (
                   <div className="my-2 min-w-[280px] bg-white dark:bg-black/40 rounded-[2rem] border border-primary-500/30 overflow-hidden shadow-2xl shadow-primary-500/10">

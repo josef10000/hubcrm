@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, Smile, X, Loader2, Calendar, LayoutGrid, Image as ImageIcon } from 'lucide-react';
+import { Send, Paperclip, Smile, X, Loader2, Calendar, LayoutGrid, Image as ImageIcon, Clock } from 'lucide-react';
 import { parseMentions } from '../../helpers/chatHelpers';
 import { useCRM } from '../../contexts/CRMContext';
 import { ChatMessage } from '../../types/chat.types';

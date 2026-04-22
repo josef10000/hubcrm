@@ -149,6 +149,13 @@ export function useChat(chatId: string | null) {
 
       if (parentMessageId) {
         messageData.parentMessageId = parentMessageId;
+        
+        // Incrementar o contador de respostas na mensagem pai
+        const parentRef = doc(db, 'organizations', effectiveOrgId, 'chats', chatId, 'messages', parentMessageId);
+        batch.update(parentRef, {
+          threadReplyCount: increment(1),
+          lastThreadReplyAt: serverTimestamp()
+        });
       }
 
       if (scheduledAt) {
