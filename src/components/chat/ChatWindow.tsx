@@ -218,9 +218,6 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
     setEditingMessage(null);
   };
 
-  // Lógica para detectar Links Internos e gerar Previews
-    }
-  };
 
   // Coletar todas as URLs de imagem da conversa para navegação no Lightbox
   const allConversationImages = messages
