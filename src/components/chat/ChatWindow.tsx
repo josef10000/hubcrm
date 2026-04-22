@@ -15,6 +15,8 @@ import { toast } from 'sonner';
 import { Pin, ChevronRight, Bookmark, Archive, Folder } from 'lucide-react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { AnimatePresence } from 'framer-motion';
+import ImageLightbox from './ImageLightbox';
 
 interface ChatWindowProps {
   chatId: string | null;
@@ -43,6 +45,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
   const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
   const [isMediaOpen, setIsMediaOpen] = useState(false);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Filtragem de Mensagens (Busca)
@@ -216,14 +219,27 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
   };
 
   // Lógica para detectar Links Internos e gerar Previews
-  const detectInternalLinks = async (text: string) => {
-    // Ex: https://hubcrm.com/leads/123
-    const leadRegex = /\/leads\/([a-zA-Z0-9-]+)/;
-    const match = text.match(leadRegex);
-    if (match) {
-      const leadId = match[1];
-      // Aqui poderíamos buscar dados reais e enviar como rich_link
-      // Para esta versão, vamos apenas garantir que o fluxo de envio suporte isso se detectado
+    }
+  };
+
+  // Coletar todas as URLs de imagem da conversa para navegação no Lightbox
+  const allConversationImages = messages
+    .flatMap(m => m.attachments || [])
+    .filter(url => url.match(/\.(jpeg|jpg|gif|png|webp)/i) || url.includes('firebasestorage'));
+
+  const handleNextImage = () => {
+    if (!lightboxImage) return;
+    const currentIndex = allConversationImages.indexOf(lightboxImage);
+    if (currentIndex < allConversationImages.length - 1) {
+      setLightboxImage(allConversationImages[currentIndex + 1]);
+    }
+  };
+
+  const handlePrevImage = () => {
+    if (!lightboxImage) return;
+    const currentIndex = allConversationImages.indexOf(lightboxImage);
+    if (currentIndex > 0) {
+      setLightboxImage(allConversationImages[currentIndex - 1]);
     }
   };
 
@@ -435,6 +451,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
                       setInitialTicketMessage(text);
                       setIsSupportModalOpen(true);
                     }}
+                    onImageClick={(url) => setLightboxImage(url)}
                   />
                 </React.Fragment>
               );
@@ -481,18 +498,16 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
             <div className="grid grid-cols-2 gap-2">
               {sharedMedia.map((msg) => (
                 msg.attachments?.map((url, idx) => (
-                  <a 
+                  <div 
                     key={`${msg.id}-${idx}`} 
-                    href={url} 
-                    target="_blank" 
-                    rel="noreferrer" 
-                    className="aspect-square rounded-xl overflow-hidden border border-gray-100 dark:border-white/5 group relative"
+                    onClick={() => setLightboxImage(url)}
+                    className="aspect-square rounded-xl overflow-hidden border border-gray-100 dark:border-white/5 group relative cursor-pointer"
                   >
                     <img src={url} alt="" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <ExternalLink size={16} className="text-white" />
+                      <Search size={16} className="text-white" />
                     </div>
-                  </a>
+                  </div>
                 ))
               ))}
             </div>
@@ -505,6 +520,18 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
           </div>
         </div>
       )}
+
+      {/* Lightbox de Imagem */}
+      <AnimatePresence>
+        {lightboxImage && (
+          <ImageLightbox 
+            url={lightboxImage} 
+            onClose={() => setLightboxImage(null)}
+            onNext={allConversationImages.indexOf(lightboxImage) < allConversationImages.length - 1 ? handleNextImage : undefined}
+            onPrev={allConversationImages.indexOf(lightboxImage) > 0 ? handlePrevImage : undefined}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 }

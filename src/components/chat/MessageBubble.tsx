@@ -20,13 +20,14 @@ interface MessageBubbleProps {
   onUnpin?: (id: string) => void;
   onCreateTicket?: (text: string) => void;
   onApprove?: (id: string, status: 'approved' | 'rejected') => void;
+  onImageClick?: (url: string) => void;
 }
 
 const COMMON_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
 
 export default function MessageBubble({ 
   message, isRead, isPinned, isBookmarked, onDelete, onEdit, onReply, onReact, onVote, 
-  onBookmark, onPin, onUnpin, onCreateTicket, onApprove 
+  onBookmark, onPin, onUnpin, onCreateTicket, onApprove, onImageClick 
 }: MessageBubbleProps) {
   const { userProfile } = useAuth();
   const navigate = useNavigate();
@@ -312,12 +313,10 @@ export default function MessageBubble({
                     {message.attachments.map((url, i) => {
                       const isSingle = message.attachments?.length === 1;
                       return (
-                        <a 
+                        <div 
                           key={i} 
-                          href={url} 
-                          target="_blank" 
-                          rel="noreferrer" 
-                          className={`block rounded-2xl overflow-hidden border border-black/5 dark:border-white/10 hover:opacity-95 transition-all outline-none ${
+                          onClick={() => onImageClick?.(url)}
+                          className={`block rounded-2xl overflow-hidden border border-black/5 dark:border-white/10 hover:opacity-95 transition-all outline-none cursor-pointer ${
                             isSingle 
                               ? 'max-h-[500px] w-full shadow-2xl shadow-black/20' 
                               : 'aspect-square shadow-sm'
@@ -341,7 +340,7 @@ export default function MessageBubble({
 
                           {/* Overlay de Hover */}
                           <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/5 transition-colors z-20" />
-                        </a>
+                        </div>
                       );
                     })}
                   </div>
