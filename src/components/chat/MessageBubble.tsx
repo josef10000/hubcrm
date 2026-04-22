@@ -31,7 +31,7 @@ const COMMON_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
 
 export default function MessageBubble({ 
   message, isRead, isPinned, isBookmarked, onDelete, onEdit, onReply, onReact, onVote, 
-  onBookmark, onPin, onUnpin, onCreateTicket, onApprove, onImageClick, onThreadOpen 
+  onBookmark, onPin, onUnpin, onCreateTicket, onApprove, onImageClick, onThreadOpen, onSetReminder 
 }: MessageBubbleProps) {
   const { userProfile } = useAuth();
   const { teamProfiles } = useCRM();

@@ -460,6 +460,19 @@ export function useChat(chatId: string | null) {
     }
   };
 
+  // Marcar mensagem como lida (readBy array)
+  const markMessageAsRead = async (messageId: string) => {
+    if (!effectiveOrgId || !chatId || !userProfile?.uid) return;
+    try {
+      const messageRef = doc(db, 'organizations', effectiveOrgId, 'chats', chatId, 'messages', messageId);
+      await updateDoc(messageRef, {
+        readBy: arrayUnion(userProfile.uid)
+      });
+    } catch (error) {
+      console.error("Erro ao marcar como lido:", error);
+    }
+  };
+
   // Adicionar lembrete para mensagem
   const setMessageReminder = async (message: ChatMessage, date: Date) => {
     if (!effectiveOrgId || !userProfile?.uid || !chatId) return false;
