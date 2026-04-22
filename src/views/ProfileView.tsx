@@ -67,8 +67,8 @@ export default function ProfileView() {
   const [uploading, setUploading] = useState(false);
   const [superior, setSuperior] = useState<UserProfile | null>(null);
   const [activeTab, setActiveTab] = useState<'info' | 'pdi' | 'comissoes' | 'inventory' | 'feedbacks' | 'history' | 'alerts' | 'vacations'>('info');
-  const { businessAlerts, unreadAlertsCount, markAlertAsRead } = useAuth();
-  const { commissions } = useCRM();
+  const { businessAlerts = [], unreadAlertsCount = 0, markAlertAsRead } = useAuth();
+  const { commissions = [] } = useCRM();
   const [showVacationModal, setShowVacationModal] = useState(false);
   const [showAddFeedbackModal, setShowAddFeedbackModal] = useState(false);
   const [showAddAssetModal, setShowAddAssetModal] = useState(false);
@@ -688,9 +688,9 @@ export default function ProfileView() {
                           <Plane className="mr-2" size={16} />
                           Últimas Ausências
                         </h3>
-                        {vacations.filter(v => v.userId === uid).length > 0 ? (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {vacations.filter(v => v.userId === uid)
+                        {Array.isArray(vacations) && vacations.filter(v => v && v.userId === uid).length > 0 ? (
+                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                           {vacations.filter(v => v && v.userId === uid)
                               .sort((a, b) => b.createdAt - a.createdAt)
                               .slice(0, 2)
                               .map(v => (
@@ -763,7 +763,7 @@ export default function ProfileView() {
                         <span className="text-[10px] font-bold uppercase tracking-widest">Ganhos Totais</span>
                       </div>
                       <p className="text-2xl font-black text-gray-900 dark:text-white">
-                        R$ {commissions.filter(c => c.userId === uid).reduce((acc, c) => acc + c.amount, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        R$ {(Array.isArray(commissions) ? commissions.filter(c => c && c.userId === uid).reduce((acc, c) => acc + (c.amount || 0), 0) : 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </p>
                     </div>
                     
@@ -773,7 +773,7 @@ export default function ProfileView() {
                         <span className="text-[10px] font-bold uppercase tracking-widest">A Receber</span>
                       </div>
                       <p className="text-2xl font-black text-gray-900 dark:text-white">
-                        R$ {commissions.filter(c => c.userId === uid && c.status === 'PENDING').reduce((acc, c) => acc + c.amount, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        R$ {(Array.isArray(commissions) ? commissions.filter(c => c && c.userId === uid && c.status === 'PENDING').reduce((acc, c) => acc + (c.amount || 0), 0) : 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </p>
                     </div>
 
@@ -783,7 +783,7 @@ export default function ProfileView() {
                         <span className="text-[10px] font-bold uppercase tracking-widest">Pendentes</span>
                       </div>
                       <p className="text-2xl font-black text-gray-900 dark:text-white">
-                        {commissions.filter(c => c.userId === uid && c.status === 'PENDING').length}
+                        {Array.isArray(commissions) ? commissions.filter(c => c && c.userId === uid && c.status === 'PENDING').length : 0}
                       </p>
                     </div>
                   </div>
@@ -800,14 +800,16 @@ export default function ProfileView() {
                         </tr>
                       </thead>
                       <tbody>
-                        {commissions.filter(c => c.userId === uid).length === 0 ? (
+                        {(!Array.isArray(commissions) || commissions.filter(c => c && c.userId === uid).length === 0) ? (
                           <tr>
                             <td colSpan={4} className="py-10 text-center text-gray-500 italic text-sm">Nenhuma venda com comissão registrada ainda.</td>
                           </tr>
                         ) : (
-                          commissions.filter(c => c.userId === uid).map(comm => (
+                          commissions.filter(c => c && c.userId === uid).map(comm => (
                             <tr key={comm.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                              <td className="py-4 text-xs text-gray-500">{new Date(comm.date).toLocaleDateString('pt-BR')}</td>
+                              <td className="py-4 text-xs text-gray-500">
+                                {comm.date ? (typeof comm.date === 'number' ? new Date(comm.date).toLocaleDateString('pt-BR') : (comm.date as any).toDate?.()?.toLocaleDateString('pt-BR') || '—') : '—'}
+                              </td>
                               <td className="py-4">
                                 <div className="text-sm font-bold text-gray-900 dark:text-white">{comm.clientName}</div>
                                 <div className="text-[10px] text-gray-500 uppercase">{comm.offerName}</div>
@@ -871,13 +873,13 @@ export default function ProfileView() {
                    </div>
 
                    <div className="grid grid-cols-1 gap-4">
-                      {vacations.filter(v => v.userId === uid).length === 0 ? (
+                      {(!Array.isArray(vacations) || vacations.filter(v => v && v.userId === uid).length === 0) ? (
                         <div className="text-center py-20 bg-white/5 rounded-[2rem] border-2 border-dashed border-white/5">
                            <Clock size={40} className="mx-auto text-gray-300 mb-4 opacity-10" />
                            <p className="text-gray-500 text-sm">Nenhuma ausência registrada neste perfil.</p>
                         </div>
                       ) : (
-                        vacations.filter(v => v.userId === uid)
+                        vacations.filter(v => v && v.userId === uid)
                           .sort((a, b) => b.createdAt - a.createdAt)
                           .map(v => (
                             <div key={v.id} className="p-6 bg-white/30 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl flex flex-col gap-4 relative group">
@@ -945,7 +947,7 @@ export default function ProfileView() {
                     </div>
                   </div>
 
-                  {businessAlerts.length > 0 ? (
+                  {Array.isArray(businessAlerts) && businessAlerts.length > 0 ? (
                     <div className="grid grid-cols-1 gap-3">
                       {businessAlerts.map(alert => {
                         const isRead = profile.readAlerts?.includes(alert.id);
@@ -981,7 +983,7 @@ export default function ProfileView() {
                                   {alert.title}
                                 </h5>
                                 <span className="text-[10px] text-gray-500 whitespace-nowrap">
-                                  {new Date(alert.createdAt).toLocaleDateString()}
+                                  {alert.createdAt ? (typeof alert.createdAt === 'number' ? new Date(alert.createdAt).toLocaleDateString() : (alert.createdAt as any).toDate?.()?.toLocaleDateString() || '—') : '—'}
                                 </span>
                               </div>
                               <p className="text-xs text-gray-500 leading-relaxed mb-3 line-clamp-2">

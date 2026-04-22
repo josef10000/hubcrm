@@ -11,7 +11,6 @@ import {
   Zap
 } from 'lucide-react';
 import { ToolAsset } from '../../types';
-import { format } from 'date-fns';
 
 interface InventorySectionProps {
   inventory: ToolAsset[];
@@ -85,7 +84,7 @@ export default function InventorySection({ inventory, isAdmin, onAdd, onRemove }
               )}
               <div className="flex items-center gap-1 text-[10px] text-gray-600">
                 <Calendar size={10} />
-                Atribuído em {format(asset.assignedAt, 'dd/MM/yyyy')}
+                Atribuído em {asset.assignedAt ? (typeof asset.assignedAt === 'number' ? new Date(asset.assignedAt).toLocaleDateString('pt-BR') : (asset.assignedAt as any).toDate?.()?.toLocaleDateString('pt-BR') || new Date(asset.assignedAt).toLocaleDateString('pt-BR')) : '—'}
               </div>
             </div>
 

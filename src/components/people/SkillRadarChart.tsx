@@ -11,10 +11,10 @@ interface SkillRadarChartProps {
 }
 
 export default function SkillRadarChart({ skills }: SkillRadarChartProps) {
-  // Combinar Hard e Soft Skills para o gráfico
+  // Combinar Hard e Soft Skills para o gráfico com segurança (R1 Guard)
   const data = [
-    ...skills.hard.map(s => ({ subject: s.name, level: s.level, type: 'Hard Skill' })),
-    ...skills.soft.map(s => ({ subject: s.name, level: s.level, type: 'Soft Skill' }))
+    ...(Array.isArray(skills?.hard) ? skills.hard.map(s => ({ subject: s.name, level: s.level, type: 'Hard Skill' })) : []),
+    ...(Array.isArray(skills?.soft) ? skills.soft.map(s => ({ subject: s.name, level: s.level, type: 'Soft Skill' })) : [])
   ];
 
   if (data.length === 0) {
