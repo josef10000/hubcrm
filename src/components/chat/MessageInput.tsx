@@ -15,6 +15,7 @@ import { ClientSelectorModal } from './ClientSelectorModal';
 import { Client } from '../../types';
 import { MessageSchedulerModal } from './MessageSchedulerModal';
 import { Timestamp } from 'firebase/firestore';
+import { GifPickerModal } from './GifPickerModal';
 
 interface MessageInputProps {
   onSend: (
@@ -41,12 +42,13 @@ interface MessageInputProps {
 }
 
 export default function MessageInput({ 
-  onSend, onTyping, replyTo, onCancelReply, editingMessage, onCancelEdit, onUpdate, members 
+  onSend, onTyping, replyTo, onCancelReply, editingMessage, onCancelEdit, onUpdate, members, parentMessageId 
 }: MessageInputProps) {
   const [isPollModalOpen, setIsPollModalOpen] = useState(false);
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
   const [isSchedulerOpen, setIsSchedulerOpen] = useState(false);
+  const [isGifModalOpen, setIsGifModalOpen] = useState(false);
   const [scheduledAt, setScheduledAt] = useState<Timestamp | null>(null);
   const [text, setText] = useState('');
   const [showMentions, setShowMentions] = useState(false);
@@ -123,6 +125,11 @@ export default function MessageInput({
     // Nota: O onSend precisa aceitar richPreview ou tratamos internamente no hook. 
     // Vou ajustar o onSend para ser mais flexível se necessário.
     setIsClientModalOpen(false);
+  };
+  
+  const handleSelectGif = (url: string) => {
+    onSend('[GIF]', [], [url], null, members, "text", undefined, undefined, undefined, parentMessageId, scheduledAt || undefined);
+    setIsGifModalOpen(false);
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -290,6 +297,7 @@ export default function MessageInput({
 
           <button 
             type="button" 
+            onClick={() => setIsGifModalOpen(true)}
             className="p-2 text-gray-400 hover:text-amber-500 hover:bg-amber-500/10 rounded-lg transition-all"
             title="GIFs e Stickers"
           >
@@ -380,6 +388,12 @@ export default function MessageInput({
         onClose={() => setIsSchedulerOpen(false)}
         onSelect={setScheduledAt}
         currentScheduledAt={scheduledAt}
+      />
+
+      <GifPickerModal 
+        isOpen={isGifModalOpen}
+        onClose={() => setIsGifModalOpen(false)}
+        onSelect={handleSelectGif}
       />
     </div>
   );
