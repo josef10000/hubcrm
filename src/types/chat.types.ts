@@ -53,7 +53,7 @@ export interface ChatMessage {
   isEdited?: boolean;                 // Flag para mensagens editadas
   readBy?: string[];                  // Lista de UIDs que leram esta mensagem
   mentionAll?: boolean;               // Se @todos foi usado
-  type?: "text" | "poll" | "approval" | "system" | "rich_link" | "client_card"; // Tipo da mensagem
+  type?: "text" | "poll" | "approval" | "system" | "rich_link" | "client_card" | "sticker"; // Tipo da mensagem
   parentMessageId?: string;           // Para Threads (ID da mensagem pai)
   threadReplyCount?: number;          // Quantas respostas este tópico tem
   lastThreadReplyAt?: Timestamp;      // Última resposta no tópico

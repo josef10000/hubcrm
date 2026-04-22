@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 interface GifPickerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (url: string) => void;
+  onSelect: (url: string, type: 'sticker') => void;
 }
 
 export function GifPickerModal({ isOpen, onClose, onSelect }: GifPickerModalProps) {
@@ -201,7 +201,7 @@ export function GifPickerModal({ isOpen, onClose, onSelect }: GifPickerModalProp
                   {customStickers.map((sticker) => (
                     <button
                       key={sticker.id}
-                      onClick={() => onSelect(sticker.url)}
+                      onClick={() => onSelect(sticker.url, 'sticker')}
                       className="relative aspect-square rounded-2xl overflow-hidden hover:ring-2 hover:ring-primary-500 transition-all group p-2 bg-gray-50 dark:bg-white/5"
                     >
                       <img 
@@ -222,7 +222,7 @@ export function GifPickerModal({ isOpen, onClose, onSelect }: GifPickerModalProp
                   {gifs.map((gif: any) => (
                     <button
                       key={gif.id}
-                      onClick={() => onSelect(gif.images.fixed_height.url)}
+                      onClick={() => onSelect(gif.images.fixed_height.url, 'sticker')}
                       className="relative aspect-video rounded-xl overflow-hidden hover:ring-2 hover:ring-primary-500 transition-all group"
                     >
                       <img 

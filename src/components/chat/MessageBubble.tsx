@@ -183,11 +183,13 @@ export default function MessageBubble({
           <div className={`p-4 rounded-[1.8rem] shadow-sm relative overflow-visible transition-all ${
             isDeleted 
               ? 'bg-gray-50 dark:bg-white/5 border border-dashed border-gray-200 dark:border-white/10 italic text-gray-400 dark:text-gray-500' 
-              : message.status === 'scheduled'
-                ? 'bg-amber-500/5 dark:bg-amber-500/10 text-gray-800 dark:text-amber-100 border border-dashed border-amber-500/30'
-                : isMine 
-                  ? 'bg-black dark:bg-zinc-950 text-white rounded-tr-none ring-1 ring-white/10' 
-                  : 'bg-primary-500/10 dark:bg-primary-500/5 text-gray-800 dark:text-gray-100 border border-primary-500/20 rounded-tl-none'
+              : message.type === 'sticker'
+                ? 'bg-transparent shadow-none border-none !p-0'
+                : message.status === 'scheduled'
+                  ? 'bg-amber-500/5 dark:bg-amber-500/10 text-gray-800 dark:text-amber-100 border border-dashed border-amber-500/30'
+                  : isMine 
+                    ? 'bg-black dark:bg-zinc-950 text-white rounded-tr-none ring-1 ring-white/10' 
+                    : 'bg-primary-500/10 dark:bg-primary-500/5 text-gray-800 dark:text-gray-100 border border-primary-500/20 rounded-tl-none'
           }`}>
             {isMentioned && !isMine && (
               <div className="absolute top-0 right-0 -mt-1 -mr-1 w-2 h-2 bg-primary-500 rounded-full ring-2 ring-white dark:ring-black/20" />
@@ -299,6 +301,18 @@ export default function MessageBubble({
                        </div>
                      </div>
                    </div>
+                  </p>
+                ) : message.type === 'sticker' && message.attachments?.[0] ? (
+                  <div 
+                    onClick={() => onImageClick?.(message.attachments[0])}
+                    className="cursor-pointer hover:scale-105 transition-transform"
+                  >
+                    <img 
+                      src={message.attachments[0]} 
+                      alt="Sticker" 
+                      className="w-[140px] h-auto object-contain rounded-lg"
+                    />
+                  </div>
                 ) : (
                   <p className="text-sm whitespace-pre-wrap break-words leading-relaxed font-medium">
                     {/* Renderização com Destaque de Menções */}
@@ -392,8 +406,8 @@ export default function MessageBubble({
                   </div>
                 )}
                 
-                {/* Anexos de Imagem */}
-                {message.attachments && message.attachments.length > 0 && (
+                {/* Anexos de Imagem (Apenas se não for sticker) */}
+                {message.type !== 'sticker' && message.attachments && message.attachments.length > 0 && (
                   <div className={`mt-3 grid gap-2 ${
                     message.attachments.length === 1 ? 'grid-cols-1' :
                     message.attachments.length === 2 ? 'grid-cols-2' :

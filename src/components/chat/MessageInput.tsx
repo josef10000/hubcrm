@@ -24,7 +24,7 @@ interface MessageInputProps {
     attachments: string[], 
     replyTo: ChatMessage['replyTo'] | null, 
     members: string[], 
-    type: "text" | "poll" | "approval" | "rich_link" | "client_card", 
+    type: "text" | "poll" | "approval" | "rich_link" | "client_card" | "sticker", 
     poll?: ChatMessage['poll'],
     approval?: ChatMessage['approval'],
     richPreview?: ChatMessage['richPreview'],
@@ -127,8 +127,8 @@ export default function MessageInput({
     setIsClientModalOpen(false);
   };
   
-  const handleSelectGif = (url: string) => {
-    onSend('[GIF]', [], [url], null, members, "text", undefined, undefined, undefined, parentMessageId, scheduledAt || undefined);
+  const handleSelectGif = (url: string, type: 'sticker') => {
+    onSend('', [], [url], null, members, type, undefined, undefined, undefined, parentMessageId, scheduledAt || undefined);
     setIsGifModalOpen(false);
   };
 
