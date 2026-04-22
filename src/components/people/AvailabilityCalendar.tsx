@@ -334,9 +334,10 @@ export default function AvailabilityCalendar({ userId, isOwner }: AvailabilityCa
               );
             })}
           </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        </div>
+      </motion.div>
+    )}
+  </AnimatePresence>
 
       {/* Modal de Solicitação (Simplificado aqui) */}
       <AnimatePresence>
