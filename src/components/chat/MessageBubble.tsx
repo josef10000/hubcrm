@@ -1,8 +1,9 @@
-import { User, Paperclip, Check, CheckCheck, Trash2, Reply, Smile, Bookmark, Pin, LifeBuoy, MessageSquareText, ExternalLink, Hash } from 'lucide-react';
+import { User, Paperclip, Check, CheckCheck, Trash2, Reply, Smile, Bookmark, Pin, LifeBuoy, MessageSquareText, ExternalLink, Hash, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
 import { ChatMessage } from '../../types/chat.types';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCRM } from '../../contexts/CRMContext';
 import { formatChatTime, formatChatDateTime, highlightMentions } from '../../helpers/chatHelpers';
 
 interface MessageBubbleProps {

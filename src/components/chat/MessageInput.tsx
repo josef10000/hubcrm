@@ -21,9 +21,10 @@ interface MessageInputProps {
     attachments: string[], 
     replyTo: ChatMessage['replyTo'] | null, 
     members: string[], 
-    type: "text" | "poll" | "approval", 
+    type: "text" | "poll" | "approval" | "rich_link" | "client_card", 
     poll?: ChatMessage['poll'],
-    approval?: ChatMessage['approval']
+    approval?: ChatMessage['approval'],
+    richPreview?: ChatMessage['richPreview']
   ) => void;
   onTyping: (isTyping: boolean) => void;
   replyTo: ChatMessage['replyTo'] | null;
