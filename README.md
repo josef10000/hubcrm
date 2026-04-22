@@ -1,4 +1,4 @@
-# 🔐 Hub Central — Intranet Corporativa v4.6.9 (Chat Pro & Expressive Media)
+# 🔐 Hub Central — Intranet Corporativa v4.7.0 (Productivity & Expressive Media)
 
 > [!CAUTION]
 > **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
@@ -26,7 +26,7 @@ Certifique-se de configurar as seguintes variáveis no seu ambiente Claude Deskt
 - `VITE_GIPHY_API_KEY` (Obrigatório para GIFs no Chat)
 
   <p>
-    <img src="https://img.shields.io/badge/Version-4.6.9-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-4.7.0-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Status-Audited_&_Stable-3b82f6?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-3b82f6?style=for-the-badge&labelColor=111111" alt="License" />
@@ -98,6 +98,8 @@ A comunicação interna foi elevada ao nível de ferramenta de gestão. Mais que
 |---|---|
 | ✅ **Aprovações Nativas** | Cards de autorização direta (ex: descontos/folgas) com um clique. |
 | 🧵 **Threads (Tópicos)** | Conversas organizadas por assunto para evitar poluição no fluxo principal. |
+| 🔔 **Lembretes (Remind Me)** | Agende notificações para mensagens específicas, transformando o chat em um gestor de tarefas. |
+| 🖼️ **Sticker Management** | Controle total sobre a biblioteca de figurinhas, incluindo upload e exclusão de mídias personalizadas. |
 | 📇 **CRM Linking** | Vinculação direta de fichas de clientes com cards interativos no chat. |
 | 📅 **Agendamento** | Motor de disparo automático de mensagens para horários específicos. |
 | 🎬 Stickers & GIFs | Biblioteca expressiva integrada (Giphy + Upload de Figurinhas personalizadas). |
