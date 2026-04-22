@@ -9,27 +9,29 @@ interface EnergyScoreCardProps {
 }
 
 function calculateEnergyScore(userProfile: UserProfile): number {
+  if (!userProfile) return 0;
   let score = 60; // base
 
   // NPS/eNPS pessoal se disponível
-  if ((userProfile as any).enpsScore !== undefined) {
-    const nps = (userProfile as any).enpsScore as number;
+  const profileAny = userProfile as any;
+  if (profileAny.enpsScore !== undefined && typeof profileAny.enpsScore === 'number') {
+    const nps = profileAny.enpsScore;
     if (nps >= 9) score += 20;
     else if (nps >= 7) score += 10;
     else score -= 10;
   }
 
   // Onboarding completo
-  const onboarding = (userProfile as any).onboardingTasks as any[] | undefined;
-  if (onboarding && onboarding.length > 0) {
-    const done = onboarding.filter((t: any) => t.completed).length;
+  const onboarding = profileAny.onboardingTasks;
+  if (Array.isArray(onboarding) && onboarding.length > 0) {
+    const done = onboarding.filter((t: any) => t && t.completed).length;
     score += Math.round((done / onboarding.length) * 15);
   }
 
   // PDI em andamento
-  const pdi = (userProfile as any).pdiItems as any[] | undefined;
-  if (pdi && pdi.length > 0) {
-    const inProgress = pdi.filter((p: any) => p.status === 'doing').length;
+  const pdi = profileAny.pdiItems;
+  if (Array.isArray(pdi) && pdi.length > 0) {
+    const inProgress = pdi.filter((p: any) => p && p.status === 'doing').length;
     score += inProgress * 3;
   }
 

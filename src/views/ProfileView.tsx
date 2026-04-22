@@ -51,8 +51,11 @@ export default function ProfileView() {
   const { supportRequests, vacations, handleSaveVacationRequest, handleDeleteVacationRequest, teamProfiles } = useCRM();
   const navigate = useNavigate();
 
-  // Métrica CSAT Individual
-  const memberRatedRequests = supportRequests.filter(req => req.assignedTo === uid && req.status === 'concluido' && req.csatScore);
+  // Métrica CSAT Individual (Segura)
+  const memberRatedRequests = Array.isArray(supportRequests) 
+    ? supportRequests.filter(req => req && req.assignedTo === uid && req.status === 'concluido' && typeof req.csatScore === 'number')
+    : [];
+    
   const csatAvg = memberRatedRequests.length > 0
     ? (memberRatedRequests.reduce((acc, curr) => acc + (curr.csatScore || 0), 0) / memberRatedRequests.length).toFixed(1)
     : null;
@@ -642,15 +645,15 @@ export default function ProfileView() {
                             </div>
                             <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                               <Globe size={16} className="mr-3 opacity-50" />
-                              <span>Membro desde {new Date(profile.createdAt).toLocaleDateString()}</span>
+                              <span>Membro desde {profile.createdAt ? (typeof profile.createdAt === 'number' ? new Date(profile.createdAt).toLocaleDateString() : (profile.createdAt as any).toDate?.()?.toLocaleDateString() || '—') : '—'}</span>
                             </div>
-                            {profile.birthDate && (
+                            {profile.birthDate && profile.birthDate.length >= 5 && (
                               <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                                 <Cake size={16} className="mr-3 opacity-50" />
                                 <span>Aniversário em: {new Date(profile.birthDate + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}</span>
                               </div>
                             )}
-                            {profile.startDate && (
+                            {profile.startDate && profile.startDate.length >= 10 && (
                               <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                                 <Calendar size={16} className="mr-3 opacity-50" />
                                 <span>Contratado em: {new Date(profile.startDate + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}</span>

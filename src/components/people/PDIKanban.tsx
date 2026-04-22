@@ -32,7 +32,7 @@ export function PDIKanban({ items, orgId, userId }: PDIKanbanProps) {
   const [adding, setAdding] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const userDocRef = doc(db, 'organizations', orgId, 'users', userId);
+  const userDocRef = doc(db, 'profiles', userId);
 
   const moveItem = useCallback(async (item: PDIItem, newStatus: PDIItem['status']) => {
     if (item.status === newStatus) return;
