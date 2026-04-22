@@ -1,4 +1,4 @@
-import { User, Paperclip, Check, CheckCheck, Trash2, Reply, Smile, Bookmark, Pin, LifeBuoy, MessageSquareText, ExternalLink, Hash, ChevronRight } from 'lucide-react';
+import { User, Paperclip, Check, CheckCheck, Trash2, Reply, Smile, Bookmark, Pin, LifeBuoy, MessageSquareText, ExternalLink, Hash, ChevronRight, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
 import { ChatMessage } from '../../types/chat.types';
@@ -179,9 +179,11 @@ export default function MessageBubble({
           <div className={`p-4 rounded-[1.8rem] shadow-sm relative overflow-visible transition-all ${
             isDeleted 
               ? 'bg-gray-50 dark:bg-white/5 border border-dashed border-gray-200 dark:border-white/10 italic text-gray-400 dark:text-gray-500' 
-              : isMine 
-                ? 'bg-black dark:bg-zinc-950 text-white rounded-tr-none ring-1 ring-white/10' 
-                : 'bg-primary-500/10 dark:bg-primary-500/5 text-gray-800 dark:text-gray-100 border border-primary-500/20 rounded-tl-none'
+              : message.status === 'scheduled'
+                ? 'bg-amber-500/5 dark:bg-amber-500/10 text-gray-800 dark:text-amber-100 border border-dashed border-amber-500/30'
+                : isMine 
+                  ? 'bg-black dark:bg-zinc-950 text-white rounded-tr-none ring-1 ring-white/10' 
+                  : 'bg-primary-500/10 dark:bg-primary-500/5 text-gray-800 dark:text-gray-100 border border-primary-500/20 rounded-tl-none'
           }`}>
             {isMentioned && !isMine && (
               <div className="absolute top-0 right-0 -mt-1 -mr-1 w-2 h-2 bg-primary-500 rounded-full ring-2 ring-white dark:ring-black/20" />
@@ -356,6 +358,16 @@ export default function MessageBubble({
                 
                 {message.isEdited && (
                   <span className="text-[10px] italic opacity-50 block mt-1">(editado)</span>
+                )}
+
+                {/* Badge de Agendamento */}
+                {message.status === 'scheduled' && message.scheduledAt && (
+                  <div className="mt-3 py-1.5 px-3 rounded-full bg-amber-500/20 border border-amber-500/30 flex items-center gap-2 w-fit">
+                    <Clock size={12} className="text-amber-600 dark:text-amber-400" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">
+                      Agendado para {formatChatDateTime(message.scheduledAt.toDate())}
+                    </span>
+                  </div>
                 )}
                 
                 {/* Anexos de Imagem */}
