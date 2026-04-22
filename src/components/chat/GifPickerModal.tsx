@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCRM } from '../../contexts/CRMContext';
 import { db } from '../../lib/firebase';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
 import { uploadImageToImgBB } from '../../lib/imgbb';
 import { toast } from 'sonner';
 
@@ -78,6 +78,21 @@ export function GifPickerModal({ isOpen, onClose, onSelect }: GifPickerModalProp
 
     return () => unsubscribe();
   }, [isOpen, effectiveOrgId, userProfile?.uid]);
+
+  const handleDeleteSticker = async (e: React.MouseEvent, stickerId: string) => {
+    e.stopPropagation();
+    if (!effectiveOrgId || !userProfile?.uid) return;
+
+    if (!confirm('Deseja excluir esta figurinha?')) return;
+
+    try {
+      await deleteDoc(doc(db, 'organizations', effectiveOrgId, 'users', userProfile.uid, 'stickers', stickerId));
+      toast.success('Figurinha removida!');
+    } catch (error) {
+      console.error("Erro ao deletar figurinha:", error);
+      toast.error('Erro ao remover figurinha.');
+    }
+  };
 
   const handleCustomUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -199,18 +214,25 @@ export function GifPickerModal({ isOpen, onClose, onSelect }: GifPickerModalProp
                   />
 
                   {customStickers.map((sticker) => (
-                    <button
-                      key={sticker.id}
-                      onClick={() => onSelect(sticker.url, 'sticker')}
-                      className="relative aspect-square rounded-2xl overflow-hidden hover:ring-2 hover:ring-primary-500 transition-all group p-2 bg-gray-50 dark:bg-white/5"
-                    >
-                      <img 
-                        src={sticker.url} 
-                        alt=""
-                        className="w-full h-full object-contain"
-                      />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-all" />
-                    </button>
+                    <div className="relative group">
+                      <button
+                        key={sticker.id}
+                        onClick={() => onSelect(sticker.url, 'sticker')}
+                        className="w-full aspect-square rounded-2xl overflow-hidden hover:ring-2 hover:ring-primary-500 transition-all p-2 bg-gray-50 dark:bg-white/5"
+                      >
+                        <img 
+                          src={sticker.url} 
+                          alt=""
+                          className="w-full h-full object-contain"
+                        />
+                      </button>
+                      <button 
+                        onClick={(e) => handleDeleteSticker(e, sticker.id)}
+                        className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-10 hover:bg-red-600"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
                   ))}
                 </div>
               ) : (activeTab === 'gifs' || activeTab === 'stickers') && loading ? (

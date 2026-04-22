@@ -99,6 +99,17 @@ export interface MessageBookmark {
   savedAt: Timestamp;
 }
 
+export interface MessageReminder {
+  id: string;
+  messageId: string;
+  chatId: string;
+  remindAt: Timestamp;
+  textPreview: string;
+  senderName: string;
+  status: 'pending' | 'completed';
+  createdAt: Timestamp;
+}
+
 export interface TypingIndicator {
   displayName: string;
   timestamp: Timestamp;

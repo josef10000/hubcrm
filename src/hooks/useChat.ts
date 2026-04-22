@@ -14,6 +14,7 @@ import {
   updateDoc,
   setDoc,
   deleteDoc,
+  addDoc,
   arrayUnion,
   arrayRemove,
   Timestamp
@@ -459,16 +460,26 @@ export function useChat(chatId: string | null) {
     }
   };
 
-  // Marcar mensagem como lida (readBy array)
-  const markMessageAsRead = async (messageId: string) => {
-    if (!effectiveOrgId || !chatId || !userProfile?.uid) return;
+  // Adicionar lembrete para mensagem
+  const setMessageReminder = async (message: ChatMessage, date: Date) => {
+    if (!effectiveOrgId || !userProfile?.uid || !chatId) return false;
     try {
-      const messageRef = doc(db, 'organizations', effectiveOrgId, 'chats', chatId, 'messages', messageId);
-      await updateDoc(messageRef, {
-        readBy: arrayUnion(userProfile.uid)
+      const remindersRef = collection(db, 'organizations', effectiveOrgId, 'users', userProfile.uid, 'reminders');
+      await addDoc(remindersRef, {
+        messageId: message.id,
+        chatId: chatId,
+        remindAt: Timestamp.fromDate(date),
+        textPreview: message.text.substring(0, 100),
+        senderName: message.senderName,
+        status: 'pending',
+        createdAt: serverTimestamp()
       });
+      toast.success("Lembrete agendado!");
+      return true;
     } catch (error) {
-      console.error("Erro ao marcar como lido:", error);
+      console.error("Erro ao agendado lembrete:", error);
+      toast.error("Falha ao agendar lembrete.");
+      return false;
     }
   };
 
@@ -488,6 +499,7 @@ export function useChat(chatId: string | null) {
     respondApproval,
     editMessage,
     markMessageAsRead,
+    setMessageReminder,
     sharedMedia
   };
 }

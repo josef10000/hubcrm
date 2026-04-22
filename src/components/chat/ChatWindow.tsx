@@ -29,10 +29,9 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
   const navigate = useNavigate();
   const { userProfile } = useAuth();
   const { teamProfiles, effectiveOrgId } = useCRM();
-  const { 
     messages, typing, sendMessage, setTypingStatus, loading, deleteMessage, 
     toggleReaction, votePoll, togglePin, unpinMessage, toggleBookmark, respondApproval,
-    editMessage, markMessageAsRead, sharedMedia 
+    editMessage, markMessageAsRead, setMessageReminder, sharedMedia 
   } = useChat(chatId);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const [pinnedMessagesData, setPinnedMessagesData] = useState<ChatMessage[]>([]);
@@ -460,6 +459,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
                     }}
                     onImageClick={(url) => setLightboxImage(url)}
                     onThreadOpen={setActiveThread}
+                    onSetReminder={setMessageReminder}
                   />
                 </React.Fragment>
               );

@@ -1,10 +1,11 @@
-import { User, Paperclip, Check, CheckCheck, Trash2, Reply, Smile, Bookmark, Pin, LifeBuoy, MessageSquareText, ExternalLink, Hash, ChevronRight, Clock } from 'lucide-react';
+import { User, Paperclip, Check, CheckCheck, Trash2, Reply, Smile, Bookmark, Pin, LifeBuoy, MessageSquareText, ExternalLink, Hash, ChevronRight, Clock, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
 import { ChatMessage } from '../../types/chat.types';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCRM } from '../../contexts/CRMContext';
 import { formatChatTime, formatChatDateTime, highlightMentions } from '../../helpers/chatHelpers';
+import { ReminderModal } from './ReminderModal';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -23,6 +24,7 @@ interface MessageBubbleProps {
   onApprove?: (id: string, status: 'approved' | 'rejected') => void;
   onImageClick?: (url: string) => void;
   onThreadOpen?: (message: ChatMessage) => void;
+  onSetReminder?: (message: ChatMessage, date: Date) => void;
 }
 
 const COMMON_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
@@ -36,6 +38,7 @@ export default function MessageBubble({
   const navigate = useNavigate();
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showReadBy, setShowReadBy] = useState(false);
+  const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
   const isMine = message.senderId === userProfile?.uid;
   const isDeleted = message.isDeleted;
   
@@ -139,6 +142,14 @@ export default function MessageBubble({
                   title="Abrir Ticket Suporte"
                 >
                   <LifeBuoy size={14} />
+                </button>
+
+                <button 
+                  onClick={() => setIsReminderModalOpen(true)}
+                  className="p-1.5 text-gray-400 hover:text-amber-500 hover:bg-amber-500/10 rounded-full transition-colors"
+                  title="Lembrar-me"
+                >
+                  <Bell size={14} />
                 </button>
 
                 {isMine && (
@@ -524,6 +535,13 @@ export default function MessageBubble({
           
         </div>
       </div>
+
+      <ReminderModal 
+        isOpen={isReminderModalOpen}
+        onClose={() => setIsReminderModalOpen(false)}
+        onConfirm={(date) => onSetReminder?.(message, date)}
+        messageText={message.text}
+      />
     </div>
   );
 }
