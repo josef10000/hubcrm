@@ -234,7 +234,7 @@ export default function MessageInput({
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="flex items-center gap-2 max-w-6xl mx-auto">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3 max-w-6xl mx-auto w-full">
         <input 
           type="file" 
           ref={fileInputRef} 
@@ -243,105 +243,111 @@ export default function MessageInput({
           onChange={handleFileSelect}
         />
         
-        <button 
-          type="button" 
-          disabled={uploading}
-          onClick={() => fileInputRef.current?.click()}
-          className="p-2.5 text-gray-400 hover:text-primary-500 hover:bg-primary-500/10 rounded-xl transition-all disabled:opacity-50"
-          title="Anexar arquivo"
-        >
-          {uploading ? <Loader2 size={20} className="animate-spin text-primary-500" /> : <Paperclip size={20} />}
-        </button>
-
-        <button 
-          type="button" 
-          onClick={() => setIsPollModalOpen(true)}
-          className="p-2.5 text-gray-400 hover:text-primary-500 hover:bg-primary-500/10 rounded-xl transition-all"
-          title="Criar Enquete"
-        >
-          <BarChart2 size={20} />
-        </button>
-
-        <button 
-          type="button" 
-          onClick={() => setIsApprovalModalOpen(true)}
-          className="p-2.5 text-gray-400 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-xl transition-all"
-          title="Solicitar Aprovação"
-        >
-          <CheckCircle2 size={20} />
-        </button>
-
-        <button 
-          type="button" 
-          onClick={() => setIsClientModalOpen(true)}
-          className="p-2.5 text-gray-400 hover:text-blue-500 hover:bg-blue-500/10 rounded-xl transition-all"
-          title="Vincular Cliente CRM"
-        >
-          <LayoutGrid size={20} />
-        </button>
-
-        <button 
-          type="button" 
-          className="p-2.5 text-gray-400 hover:text-amber-500 hover:bg-amber-500/10 rounded-xl transition-all"
-          title="GIFs e Stickers"
-        >
-          <ImageIcon size={20} />
-        </button>
-
-        <button 
-          type="button" 
-          className={`p-2.5 rounded-xl transition-all ${scheduledDate ? 'text-primary-500 bg-primary-500/10' : 'text-gray-400 hover:text-primary-500 hover:bg-primary-500/10'}`}
-          title="Agendar Mensagem"
-        >
-          <Calendar size={20} />
-        </button>
-
-        <div className="flex-1 relative">
-          {showMentions && (
-            <MentionSuggestions 
-              query={mentionQuery} 
-              members={teamProfiles.map(p => ({ uid: p.uid, displayName: p.displayName, photoURL: p.photoURL }))} 
-              onSelect={handleMentionSelect} 
-              onClose={() => setShowMentions(false)} 
-            />
-          )}
-          <textarea 
-            ref={textareaRef}
-            rows={1}
-            placeholder="Escreva uma mensagem..."
-            className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-3 pr-12 rounded-2xl text-sm focus:outline-none focus:border-primary-500 transition-all dark:text-white resize-none max-h-32 custom-scrollbar"
-            value={text}
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
-          />
+        {/* Barra de Ferramentas Superior */}
+        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
           <button 
             type="button" 
-            onClick={() => setIsEmojiOpen(!isEmojiOpen)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-amber-500 transition-colors"
+            disabled={uploading}
+            onClick={() => fileInputRef.current?.click()}
+            className="p-2 text-gray-400 hover:text-primary-500 hover:bg-primary-500/10 rounded-lg transition-all disabled:opacity-50"
+            title="Anexar arquivo"
           >
-            <Smile size={20} />
+            {uploading ? <Loader2 size={18} className="animate-spin text-primary-500" /> : <Paperclip size={18} />}
           </button>
 
-          <EmojiPicker 
-            isOpen={isEmojiOpen} 
-            onSelect={handleEmojiSelect} 
-            onClose={() => setIsEmojiOpen(false)} 
-          />
+          <button 
+            type="button" 
+            onClick={() => setIsPollModalOpen(true)}
+            className="p-2 text-gray-400 hover:text-primary-500 hover:bg-primary-500/10 rounded-lg transition-all"
+            title="Criar Enquete"
+          >
+            <BarChart2 size={18} />
+          </button>
+
+          <button 
+            type="button" 
+            onClick={() => setIsApprovalModalOpen(true)}
+            className="p-2 text-gray-400 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-lg transition-all"
+            title="Solicitar Aprovação"
+          >
+            <CheckCircle2 size={18} />
+          </button>
+
+          <button 
+            type="button" 
+            onClick={() => setIsClientModalOpen(true)}
+            className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-all"
+            title="Vincular Cliente CRM"
+          >
+            <LayoutGrid size={18} />
+          </button>
+
+          <button 
+            type="button" 
+            className="p-2 text-gray-400 hover:text-amber-500 hover:bg-amber-500/10 rounded-lg transition-all"
+            title="GIFs e Stickers"
+          >
+            <ImageIcon size={18} />
+          </button>
+
+          <button 
+            type="button" 
+            className={`p-2 rounded-lg transition-all ${scheduledDate ? 'text-primary-500 bg-primary-500/10' : 'text-gray-400 hover:text-primary-500 hover:bg-primary-500/10'}`}
+            title="Agendar Mensagem"
+          >
+            <Calendar size={18} />
+          </button>
         </div>
 
-        <button 
-          type="submit" 
-          disabled={!text.trim() || uploading}
-          className={`p-3 rounded-2xl shadow-lg transition-all ${
-            text.trim() && !uploading
-              ? editingMessage 
-                ? 'bg-amber-500 text-white shadow-amber-500/20 hover:scale-105 active:scale-95'
-                : 'bg-primary-500 text-white shadow-primary-500/20 hover:scale-105 active:scale-95' 
-              : 'bg-gray-100 dark:bg-white/5 text-gray-400 cursor-not-allowed'
-          }`}
-        >
-          {editingMessage ? <CheckCircle2 size={20} /> : <Send size={20} />}
-        </button>
+        {/* Área de Texto + Botão de Enviar */}
+        <div className="flex items-end gap-2">
+          <div className="flex-1 relative">
+            {showMentions && (
+              <MentionSuggestions 
+                query={mentionQuery} 
+                members={teamProfiles.map(p => ({ uid: p.uid, displayName: p.displayName, photoURL: p.photoURL }))} 
+                onSelect={handleMentionSelect} 
+                onClose={() => setShowMentions(false)} 
+              />
+            )}
+            <textarea 
+              ref={textareaRef}
+              rows={1}
+              placeholder="Escreva uma mensagem..."
+              className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-3 pr-12 rounded-2xl text-sm focus:outline-none focus:border-primary-500 transition-all dark:text-white resize-none max-h-32 custom-scrollbar"
+              value={text}
+              onChange={handleChange}
+              onKeyDown={handleKeyDown}
+            />
+            <button 
+              type="button" 
+              onClick={() => setIsEmojiOpen(!isEmojiOpen)}
+              className="absolute right-3 bottom-3 text-gray-400 hover:text-amber-500 transition-colors"
+            >
+              <Smile size={20} />
+            </button>
+
+            <EmojiPicker 
+              isOpen={isEmojiOpen} 
+              onSelect={handleEmojiSelect} 
+              onClose={() => setIsEmojiOpen(false)} 
+            />
+          </div>
+
+          <button 
+            type="submit" 
+            disabled={!text.trim() || uploading}
+            className={`p-3 rounded-2xl shadow-lg transition-all h-[46px] w-[46px] flex items-center justify-center shrink-0 ${
+              text.trim() && !uploading
+                ? editingMessage 
+                  ? 'bg-amber-500 text-white shadow-amber-500/20 hover:scale-105 active:scale-95'
+                  : 'bg-primary-500 text-white shadow-primary-500/20 hover:scale-105 active:scale-95' 
+                : 'bg-gray-100 dark:bg-white/5 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            {editingMessage ? <CheckCircle2 size={20} /> : <Send size={20} />}
+          </button>
+        </div>
       </form>
 
       <PollCreatorModal 
