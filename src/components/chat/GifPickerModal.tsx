@@ -12,21 +12,23 @@ export function GifPickerModal({ isOpen, onClose, onSelect }: GifPickerModalProp
   const [search, setSearch] = useState('');
   const [gifs, setGifs] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'gifs' | 'stickers'>('gifs');
   const GIPHY_API_KEY = import.meta.env.VITE_GIPHY_API_KEY;
 
-  const fetchGifs = async (query: string) => {
+  const fetchGifs = async (query: string, type: 'gifs' | 'stickers') => {
     if (!GIPHY_API_KEY) return;
     setLoading(true);
     try {
+      const baseEndpoint = type === 'gifs' ? 'gifs' : 'stickers';
       const endpoint = query 
-        ? `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(query)}&limit=20&rating=g`
-        : `https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_API_KEY}&limit=20&rating=g`;
+        ? `https://api.giphy.com/v1/${baseEndpoint}/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(query)}&limit=21&rating=g`
+        : `https://api.giphy.com/v1/${baseEndpoint}/trending?api_key=${GIPHY_API_KEY}&limit=21&rating=g`;
       
       const response = await fetch(endpoint);
       const data = await response.json();
       setGifs(data.data || []);
     } catch (error) {
-      console.error("Erro ao buscar GIFs:", error);
+      console.error(`Erro ao buscar ${type}:`, error);
     } finally {
       setLoading(false);
     }
@@ -34,16 +36,16 @@ export function GifPickerModal({ isOpen, onClose, onSelect }: GifPickerModalProp
 
   useEffect(() => {
     if (isOpen) {
-      fetchGifs('');
+      fetchGifs('', activeTab);
     }
-  }, [isOpen]);
+  }, [isOpen, activeTab]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (isOpen) fetchGifs(search);
+      if (isOpen) fetchGifs(search, activeTab);
     }, 500);
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [search, activeTab]);
 
   return (
     <AnimatePresence>
@@ -71,15 +73,39 @@ export function GifPickerModal({ isOpen, onClose, onSelect }: GifPickerModalProp
                   <X size={20} className="text-gray-400" />
                 </button>
               </div>
-              <div className="relative">
+              <div className="relative mb-4">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 <input 
                   type="text"
-                  placeholder="Pesquisar no Giphy..."
+                  placeholder={`Pesquisar ${activeTab === 'gifs' ? 'GIFs' : 'Stickers'} no Giphy...`}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 pl-12 pr-4 py-3 rounded-2xl text-sm focus:outline-none focus:border-primary-500 transition-all dark:text-white"
                 />
+              </div>
+
+              {/* Tabs */}
+              <div className="flex bg-gray-100 dark:bg-white/5 p-1 rounded-2xl">
+                <button 
+                  onClick={() => setActiveTab('gifs')}
+                  className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${
+                    activeTab === 'gifs' 
+                      ? 'bg-white dark:bg-zinc-800 text-primary-500 shadow-sm' 
+                      : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                  }`}
+                >
+                  GIFs
+                </button>
+                <button 
+                  onClick={() => setActiveTab('stickers')}
+                  className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${
+                    activeTab === 'stickers' 
+                      ? 'bg-white dark:bg-zinc-800 text-primary-500 shadow-sm' 
+                      : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                  }`}
+                >
+                  Stickers
+                </button>
               </div>
             </div>
 
