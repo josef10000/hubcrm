@@ -62,6 +62,7 @@ export default function ProfileView() {
   
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -120,6 +121,7 @@ export default function ProfileView() {
         if (snap.exists()) {
           const data = snap.data() as UserProfile;
           setProfile(data);
+          setError(null);
           setFormData({
             displayName: data.displayName || '',
             jobTitle: data.jobTitle || '',
@@ -143,11 +145,14 @@ export default function ProfileView() {
             setSuperior(null);
           }
         } else {
+          setError('Perfil não encontrado no sistema.');
           toast.error('Perfil não encontrado');
-          navigate('/team');
+          // Delay navigate para dar chance do toast ser visto
+          setTimeout(() => navigate('/team'), 3000);
         }
-      } catch (error) {
-        console.error(error);
+      } catch (err: any) {
+        console.error(err);
+        setError(`Erro ao carregar dados: ${err.message || 'Falha de conexão'}`);
         toast.error('Erro ao carregar perfil');
       } finally {
         setLoading(false);
@@ -317,7 +322,42 @@ export default function ProfileView() {
     );
   }
 
-  if (!profile) return null;
+  if (error) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center bg-transparent p-6 text-center">
+        <div className="w-20 h-20 bg-rose-500/10 rounded-full flex items-center justify-center mb-6 text-rose-500 border border-rose-500/20 shadow-lg shadow-rose-500/5">
+          <AlertTriangle size={32} />
+        </div>
+        <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2">Ops! Algo deu errado</h2>
+        <p className="text-gray-500 max-w-sm mb-8">{error}</p>
+        <button 
+          onClick={() => navigate('/team')}
+          className="px-8 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-2xl font-bold transition-all shadow-xl shadow-primary-500/20 active:scale-95 flex items-center gap-2"
+        >
+          <ChevronLeft size={18} />
+          Voltar para a Equipe
+        </button>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center bg-transparent p-6 text-center">
+        <div className="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center mb-6 text-amber-500 border border-amber-500/20">
+          <UserIcon size={32} />
+        </div>
+        <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2">Perfil não localizado</h2>
+        <p className="text-gray-500 max-w-sm mb-8">Não conseguimos encontrar as informações deste colaborador no momento.</p>
+        <button 
+          onClick={() => navigate('/team')}
+          className="px-8 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-700 dark:text-white rounded-2xl font-bold transition-all"
+        >
+          Explorar Time
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10">
