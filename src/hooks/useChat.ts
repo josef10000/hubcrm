@@ -157,7 +157,7 @@ export function useChat(chatId: string | null) {
     attachments: string[] = [], 
     replyTo: ChatMessage['replyTo'] = null,
     members: string[] = [],
-    type: "text" | "poll" | "approval" | "rich_link" | "client_card" = "text",
+    type: "text" | "poll" | "approval" | "rich_link" | "client_card" | "sticker" = "text",
     poll?: ChatMessage['poll'],
     approval?: ChatMessage['approval'],
     richPreview?: ChatMessage['richPreview'],
