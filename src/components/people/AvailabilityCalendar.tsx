@@ -15,7 +15,7 @@ interface AvailabilityCalendarProps {
 
 const DURATIONS = [15, 30, 60] as const;
 const START_HOUR = 8;
-const END_HOUR = 19;
+const END_HOUR = 22; // Agora até as 21:00-21:30
 
 export default function AvailabilityCalendar({ userId, isOwner }: AvailabilityCalendarProps) {
   const { userProfile } = useAuth();
@@ -28,10 +28,16 @@ export default function AvailabilityCalendar({ userId, isOwner }: AvailabilityCa
     duration: 30,
     meetingName: '',
   });
+  const [blockData, setBlockData] = useState<Partial<AvailabilityBlock>>({
+    reason: '',
+    isPrivate: false
+  });
+  const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
 
   const today = startOfToday();
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 }); // Segunda-feira
   const weekDays = Array.from({ length: 5 }).map((_, i) => addDays(weekStart, i));
+  const visibleDays = view === 'week' ? weekDays : [selectedDate];
 
   // Filtrar dados do usuário selecionado
   const userAppointments = appointments.filter(a => (a.targetId === userId || a.requesterId === userId) && a.status === 'approved');
@@ -47,14 +53,24 @@ export default function AvailabilityCalendar({ userId, isOwner }: AvailabilityCa
     return slots;
   };
 
-  const handleOpenRequest = (day: Date, time: string) => {
-    if (isOwner) return;
-    
-    // Validar antecedência de 24h
+  const handleOpenSlotAction = (day: Date, time: string) => {
     const [hours, minutes] = time.split(':').map(Number);
     const slotDate = new Date(day);
     slotDate.setHours(hours, minutes, 0, 0);
+    const ts = slotDate.getTime();
 
+    if (isOwner) {
+      setBlockData({
+        startTime: ts,
+        endTime: addMinutes(slotDate, 30).getTime(),
+        reason: '',
+        isPrivate: false
+      });
+      setIsBlockModalOpen(true);
+      return;
+    }
+    
+    // Validar antecedência de 24h para agendamentos
     const minTime = addDays(new Date(), 1);
     if (!isAfter(slotDate, minTime)) {
       alert('Respeite a antecedência mínima de 24h para novos agendamentos.');
@@ -64,7 +80,7 @@ export default function AvailabilityCalendar({ userId, isOwner }: AvailabilityCa
     setRequestData({
       ...requestData,
       targetId: userId,
-      startTime: slotDate.getTime(),
+      startTime: ts,
     });
     setIsRequestModalOpen(true);
   };
@@ -109,7 +125,10 @@ export default function AvailabilityCalendar({ userId, isOwner }: AvailabilityCa
         </div>
       </div>
 
-      <div className="grid grid-cols-6 border border-white/20 rounded-3xl overflow-hidden bg-white/20 dark:bg-black/20 backdrop-blur-md shadow-2xl">
+      <div className={clsx(
+        "grid border border-white/20 rounded-3xl overflow-hidden bg-white/20 dark:bg-black/20 backdrop-blur-md shadow-2xl",
+        view === 'week' ? "grid-cols-6" : "grid-cols-2"
+      )}>
         {/* Coluna de Horários */}
         <div className="border-r border-white/10 pt-16">
           {getTimeSlots().map(time => (
@@ -119,8 +138,8 @@ export default function AvailabilityCalendar({ userId, isOwner }: AvailabilityCa
           ))}
         </div>
 
-        {/* Colunas dos Dias (Seg-Sex) */}
-        {weekDays.map((day) => (
+        {/* Colunas dos Dias */}
+        {visibleDays.map((day) => (
           <div key={day.toISOString()} className={clsx(
             "flex flex-col border-r border-white/10 last:border-r-0",
             isSameDay(day, new Date()) ? "bg-blue-500/5" : ""
@@ -150,7 +169,7 @@ export default function AvailabilityCalendar({ userId, isOwner }: AvailabilityCa
               return (
                 <div 
                   key={time} 
-                  onClick={() => !app && !block && !pending && handleOpenRequest(day, time)}
+                  onClick={() => !app && !block && !pending && handleOpenSlotAction(day, time)}
                   className="h-20 border-b border-white/5 relative group cursor-pointer hover:bg-white/5 transition-colors"
                 >
                   {/* Visual do Agendamento */}
@@ -189,6 +208,12 @@ export default function AvailabilityCalendar({ userId, isOwner }: AvailabilityCa
                           Solicitação
                         </span>
                       </div>
+                    </div>
+                  )}
+
+                  {!app && !block && !pending && isOwner && (
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Lock className="w-4 h-4 text-red-500/30" />
                     </div>
                   )}
 
@@ -271,6 +296,76 @@ export default function AvailabilityCalendar({ userId, isOwner }: AvailabilityCa
                     className="flex-1 py-4 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-600/20 transition-all disabled:opacity-50"
                   >
                     Enviar Solicitação
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      {/* Modal de Bloqueio (Apenas Dono) */}
+      <AnimatePresence>
+        {isBlockModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white dark:bg-gray-900 w-full max-w-md rounded-[2.5rem] shadow-2xl border border-white/20 p-8"
+            >
+              <h2 className="text-2xl font-bold mb-6 dark:text-white flex items-center gap-2">
+                <Lock className="w-6 h-6 text-red-500" />
+                Bloquear Horário
+              </h2>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 block">
+                    Motivo (Opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={blockData.reason}
+                    onChange={e => setBlockData({ ...blockData, reason: e.target.value })}
+                    className="w-full bg-gray-100 dark:bg-white/5 border border-transparent focus:border-red-500 rounded-2xl px-4 py-3 outline-none transition-all dark:text-white"
+                    placeholder="Ex: Foco Profundo, Médico..."
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-gray-100 dark:bg-white/5 rounded-2xl">
+                  <div>
+                    <p className="text-sm font-bold dark:text-white">Bloqueio Privado</p>
+                    <p className="text-[10px] text-gray-500">Ocultar o motivo da equipe</p>
+                  </div>
+                  <button
+                    onClick={() => setBlockData({ ...blockData, isPrivate: !blockData.isPrivate })}
+                    className={clsx(
+                      "w-12 h-6 rounded-full transition-all relative",
+                      blockData.isPrivate ? "bg-red-500" : "bg-gray-300 dark:bg-white/10"
+                    )}
+                  >
+                    <div className={clsx(
+                      "absolute top-1 w-4 h-4 rounded-full bg-white transition-all",
+                      blockData.isPrivate ? "right-1" : "left-1"
+                    )} />
+                  </button>
+                </div>
+
+                <div className="pt-4 flex gap-3">
+                  <button
+                    onClick={() => setIsBlockModalOpen(false)}
+                    className="flex-1 py-4 text-gray-500 font-bold hover:bg-gray-100 dark:hover:bg-white/5 rounded-2xl transition-all"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleSaveAvailabilityBlock(blockData);
+                      setIsBlockModalOpen(false);
+                    }}
+                    className="flex-1 py-4 bg-red-600 text-white font-bold rounded-2xl hover:bg-red-700 shadow-lg shadow-red-600/20 transition-all"
+                  >
+                    Bloquear Agora
                   </button>
                 </div>
               </div>
