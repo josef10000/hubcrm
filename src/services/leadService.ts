@@ -1,6 +1,7 @@
 import { db } from '../lib/firebase';
 import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { Lead, LeadActivity, LeadStatus } from '../types';
+import { auditService } from './auditService';
 
 export const leadService = {
   /**
@@ -23,7 +24,19 @@ export const leadService = {
       activities: [activity]
     };
 
-    return await addDoc(collection(db, 'organizations', orgId, 'leads'), finalPayload);
+    const docRef = await addDoc(collection(db, 'organizations', orgId, 'leads'), finalPayload);
+    
+    // Log Audit
+    await auditService.logActivity(orgId, {
+      userId: payload.assignedTo || 'system',
+      userName,
+      action: 'LEAD_CREATED',
+      targetId: docRef.id,
+      targetType: 'lead',
+      details: `Lead ${payload.name} criado.`
+    });
+
+    return docRef;
   },
 
   /**
@@ -50,11 +63,23 @@ export const leadService = {
 
     const updatedActivities = [...(lead.activities || []), activity];
 
-    return await updateDoc(doc(db, 'organizations', orgId, 'leads', lead.id), {
+    await updateDoc(doc(db, 'organizations', orgId, 'leads', lead.id), {
       status: targetStatus,
       updatedAt: Date.now(),
       activities: updatedActivities
     });
+
+    // Auditoria para mudanças críticas (Conversão ou Perda)
+    if (targetStatus === 'Convertido' || targetStatus === 'Perdido') {
+      await auditService.logActivity(orgId, {
+        userId: lead.assignedTo || 'system',
+        userName,
+        action: `LEAD_STATUS_${targetStatus.toUpperCase()}`,
+        targetId: lead.id,
+        targetType: 'lead',
+        details: `Lead ${lead.name} marcado como ${targetStatus}.`
+      });
+    }
   },
 
   /**
@@ -71,6 +96,16 @@ export const leadService = {
    * Deletes a lead.
    */
   deleteLead: async (orgId: string, leadId: string) => {
+    // Nota: Como deletamos, precisamos de dados básicos antes ou logar apenas o ID
+    await auditService.logActivity(orgId, {
+      userId: 'admin', // Idealmente passar o UID do executor
+      userName: 'Administrador',
+      action: 'LEAD_DELETED',
+      targetId: leadId,
+      targetType: 'lead',
+      details: `Lead ID ${leadId} excluído permanentemente.`
+    });
+
     return await deleteDoc(doc(db, 'organizations', orgId, 'leads', leadId));
   },
 

@@ -3,6 +3,7 @@ import { db, getFirebaseAdmin } from './_utils/firebase.js';
 import { verifyAuth } from './_utils/authMiddleware.js';
 import { sendTeamInviteEmail, sendTeamBroadcastEmail } from '../src/services/emailService.js';
 import crypto from 'crypto';
+import { logActivity } from './_utils/audit.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { action } = req.query;
@@ -84,6 +85,16 @@ async function handleInvite(req: VercelRequest, res: VercelResponse, uid: string
   const protocol = req.headers['x-forwarded-proto'] || 'http';
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${req.headers.host}`;
   await sendTeamInviteEmail(email, collaboratorName, role, `${baseUrl}/convite/${token}`);
+  
+  await logActivity({
+    orgId: senderData.orgId,
+    userId: uid,
+    userName: senderData.displayName || 'Admin',
+    action: 'TEAM_INVITE_SENT',
+    targetId: email,
+    targetType: 'team',
+    details: `Convite enviado para ${email} com a role ${role}`
+  });
 
   return res.status(200).json({ success: true, message: 'Convite enviado' });
 }
@@ -110,6 +121,17 @@ async function handleRemove(req: VercelRequest, res: VercelResponse, uid: string
   }
   batch.delete(targetRef);
   await batch.commit();
+
+  await logActivity({
+    orgId: senderSnap.data()?.orgId,
+    userId: uid,
+    userName: senderSnap.data()?.displayName || 'Admin',
+    action: 'TEAM_MEMBER_REMOVED',
+    targetId: targetUid,
+    targetType: 'team',
+    details: `Membro ${targetUid} removido da organização. Dados deletados: ${deleteAllData}`
+  });
+
   return res.status(200).json({ success: true });
 }
 
@@ -333,6 +355,16 @@ async function handleAddAsset(req: VercelRequest, res: VercelResponse, uid: stri
     assignedTo: targetUid,
     assignedAt: Date.now(),
     orgId
+  });
+
+  await logActivity({
+    orgId,
+    userId: uid,
+    userName: senderData.displayName || 'Admin',
+    action: 'ASSET_ASSIGNED',
+    targetId: targetUid,
+    targetType: 'team',
+    details: `Ativo ${asset.name} atribuído ao usuário ${targetUid}`
   });
 
   return res.status(200).json({ success: true });

@@ -7,6 +7,7 @@ import {
   sendFaturaVencimentoEmail 
 } from '../../../src/services/emailService.js';
 import { logEmailHistory } from '../../_utils/emailLogger.js';
+import { logActivity } from '../../_utils/audit.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -131,6 +132,70 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         } else if (event === 'PAYMENT_OVERDUE') {
           updates.paymentStatus = 'OVERDUE';
           updates.status = 'Inadimplente';
+          
+          // --- DUNNING: TICKET DE SUPORTE AUTOMÁTICO ---
+          try {
+            const orgId = doc.ref.parent.parent?.id;
+            if (orgId) {
+              const ticketRef = db.collection('organizations').doc(orgId).collection('supportRequests').doc();
+              await ticketRef.set({
+                id: ticketRef.id,
+                clientId: doc.id,
+                clientName: clientData.name || 'Cliente',
+                category: 'Financeiro',
+                priority: 'alta',
+                status: 'aberto',
+                origin: 'interno',
+                message: `⚠️ COBRANÇA VENCIDA: A fatura de R$ ${paymentData.value} do cliente ${clientData.name} venceu em ${paymentData.dueDate}. Favor entrar em contato via WhatsApp: ${clientData.whatsapp}`,
+                createdAt: new Date(),
+                whatsappContext: clientData.whatsapp
+              });
+              
+              await logActivity({
+                orgId,
+                userId: 'SYSTEM',
+                userName: 'Hub Automator',
+                action: 'DUNNING_TICKET_CREATED',
+                targetId: ticketRef.id,
+                targetType: 'client',
+                details: `Ticket de cobrança automática criado para ${clientData.name} (Vencimento)`
+              });
+            }
+          } catch (tErr) {
+            console.error('Erro ao criar ticket de dunning:', tErr);
+          }
+        } else if (event === 'PAYMENT_REJECTED') {
+          // --- DUNNING: TICKET DE SUPORTE AUTOMÁTICO PARA CARTÃO REJEITADO ---
+          try {
+            const orgId = doc.ref.parent.parent?.id;
+            if (orgId) {
+              const ticketRef = db.collection('organizations').doc(orgId).collection('supportRequests').doc();
+              await ticketRef.set({
+                id: ticketRef.id,
+                clientId: doc.id,
+                clientName: clientData.name || 'Cliente',
+                category: 'Financeiro',
+                priority: 'alta',
+                status: 'aberto',
+                origin: 'interno',
+                message: `❌ CARTÃO REJEITADO: O pagamento de R$ ${paymentData.value} do cliente ${clientData.name} foi REJEITADO pelo banco. Necessário contato urgente para regularização via WhatsApp: ${clientData.whatsapp}`,
+                createdAt: new Date(),
+                whatsappContext: clientData.whatsapp
+              });
+              
+              await logActivity({
+                orgId,
+                userId: 'SYSTEM',
+                userName: 'Hub Automator',
+                action: 'DUNNING_REJECTION_TICKET',
+                targetId: ticketRef.id,
+                targetType: 'client',
+                details: `Ticket de cartão rejeitado criado para ${clientData.name}`
+              });
+            }
+          } catch (tErr) {
+            console.error('Erro ao criar ticket de rejection:', tErr);
+          }
         }
 
         // Apenas o primeiro doc

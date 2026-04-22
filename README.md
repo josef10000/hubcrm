@@ -1,4 +1,4 @@
-# 🔐 Hub Central — Intranet Corporativa v4.5.8 (Wiki Persistence Fix)
+# 🔐 Hub Central — Intranet Corporativa v4.5.9 (Dunning & Audit Logs)
 
 > [!CAUTION]
 > **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
@@ -25,7 +25,7 @@ Certifique-se de configurar as seguintes variáveis no seu ambiente Claude Deskt
 - `FIREBASE_API_KEY` / `FIREBASE_TOKEN`
 
   <p>
-    <img src="https://img.shields.io/badge/Version-4.5.8-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-4.5.9-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Status-Audited_&_Optimized-3b82f6?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-3b82f6?style=for-the-badge&labelColor=111111" alt="License" />
@@ -38,7 +38,7 @@ Certifique-se de configurar as seguintes variáveis no seu ambiente Claude Deskt
     <img src="https://img.shields.io/badge/Firebase-12-FFCA28?style=flat-square&logo=firebase&logoColor=black" alt="Firebase" />
   </p>
   <div align="center">
-  <h2>✨ Features em Destaque v4.5.7</h2>
+  <h2>✨ Features em Destaque v4.5.9</h2>
 </div>
 
 <table>
@@ -60,8 +60,8 @@ Certifique-se de configurar as seguintes variáveis no seu ambiente Claude Deskt
       <sub>DRE & SaaS Metrics</sub>
     </td>
     <td align="center" width="20%">
-      <br />📖<br /><strong>Wiki Hub</strong><br />
-      <sub>Knowledge Base</sub>
+      <br />🛡️<br /><strong>Audit Trails</strong><br />
+      <sub>Segurança & Logs</sub>
     </td>
   </tr>
 </table>
