@@ -146,7 +146,7 @@ export function MessageSchedulerModal({ isOpen, onClose, onSelect, currentSchedu
                     disabled={!selectedDate || !selectedTime}
                     className="flex-[2] p-4 rounded-3xl bg-primary-500 text-white font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-primary-500/20 uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Confirmar Agenda
+                    Agendar Mensagem
                   </button>
                 </div>
               </form>

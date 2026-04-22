@@ -303,15 +303,6 @@ export default function MessageInput({
           >
             <ImageIcon size={18} />
           </button>
-
-          <button 
-            type="button" 
-            onClick={() => setIsSchedulerOpen(true)}
-            className={`p-2 rounded-lg transition-all ${scheduledAt ? 'text-primary-500 bg-primary-500/10' : 'text-gray-400 hover:text-primary-500 hover:bg-primary-500/10'}`}
-            title="Agendar Mensagem"
-          >
-            <Calendar size={18} />
-          </button>
         </div>
 
         {/* Área de Texto + Botão de Enviar */}
@@ -349,19 +340,34 @@ export default function MessageInput({
             />
           </div>
 
-          <button 
-            type="submit" 
-            disabled={!text.trim() || uploading}
-            className={`p-3 rounded-2xl shadow-lg transition-all h-[46px] w-[46px] flex items-center justify-center shrink-0 ${
-              text.trim() && !uploading
-                ? editingMessage 
-                  ? 'bg-amber-500 text-white shadow-amber-500/20 hover:scale-105 active:scale-95'
-                  : 'bg-primary-500 text-white shadow-primary-500/20 hover:scale-105 active:scale-95' 
-                : 'bg-gray-100 dark:bg-white/5 text-gray-400 cursor-not-allowed'
-            }`}
-          >
-            {editingMessage ? <CheckCircle2 size={20} /> : <Send size={20} />}
-          </button>
+          <div className="flex items-center gap-1">
+            <button 
+              type="button" 
+              onClick={() => setIsSchedulerOpen(true)}
+              className={`p-3 rounded-2xl transition-all h-[46px] w-[46px] flex items-center justify-center shrink-0 ${
+                scheduledAt 
+                  ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' 
+                  : 'text-gray-400 hover:text-amber-500 hover:bg-amber-500/10'
+              }`}
+              title="Agendar Mensagem"
+            >
+              <Clock size={20} />
+            </button>
+
+            <button 
+              type="submit" 
+              disabled={!text.trim() || uploading}
+              className={`p-3 rounded-2xl shadow-lg transition-all h-[46px] w-[46px] flex items-center justify-center shrink-0 ${
+                text.trim() && !uploading
+                  ? editingMessage 
+                    ? 'bg-amber-500 text-white shadow-amber-500/20 hover:scale-105 active:scale-95'
+                    : 'bg-primary-500 text-white shadow-primary-500/20 hover:scale-105 active:scale-95' 
+                  : 'bg-gray-100 dark:bg-white/5 text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              {editingMessage ? <CheckCircle2 size={20} /> : <Send size={20} />}
+            </button>
+          </div>
         </div>
       </form>
 
@@ -386,7 +392,15 @@ export default function MessageInput({
       <MessageSchedulerModal 
         isOpen={isSchedulerOpen}
         onClose={() => setIsSchedulerOpen(false)}
-        onSelect={setScheduledAt}
+        onSelect={(timestamp) => {
+          if (timestamp && text.trim()) {
+            onSend(text, [], [], null, members, "text", undefined, undefined, undefined, parentMessageId, timestamp);
+            setText('');
+            setScheduledAt(null);
+          } else {
+            setScheduledAt(timestamp);
+          }
+        }}
         currentScheduledAt={scheduledAt}
       />
 
