@@ -505,21 +505,6 @@ export default function MessageBubble({
             )}
           </div>
           
-          {/* Indicador de Respostas em Thread */}
-          {message.threadReplyCount && message.threadReplyCount > 0 && (
-            <button 
-              onClick={() => onThreadOpen?.(message)}
-              className={`mt-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full transition-all border ${
-                isMine 
-                  ? 'bg-primary-500/10 border-primary-500/20 text-primary-400 hover:bg-primary-500/20' 
-                  : 'bg-white dark:bg-white/5 border-gray-200 dark:border-white/10 text-primary-500 hover:border-primary-500/30'
-              }`}
-            >
-              <MessageSquareText size={12} />
-              {message.threadReplyCount} {message.threadReplyCount === 1 ? 'Resposta' : 'Respostas'}
-              <ChevronRight size={10} className="ml-1" />
-            </button>
-          )}
         </div>
       </div>
     </div>
