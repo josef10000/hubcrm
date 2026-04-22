@@ -29,6 +29,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
   const navigate = useNavigate();
   const { userProfile } = useAuth();
   const { teamProfiles, effectiveOrgId } = useCRM();
+  const { 
     messages, typing, sendMessage, setTypingStatus, loading, deleteMessage, 
     toggleReaction, votePoll, togglePin, unpinMessage, toggleBookmark, respondApproval,
     editMessage, markMessageAsRead, setMessageReminder, sharedMedia 
