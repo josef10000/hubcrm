@@ -91,6 +91,51 @@ export function useChat(chatId: string | null) {
     return () => unsubscribe();
   }, [effectiveOrgId, chatId, userProfile?.uid]);
 
+  // WORKER DE DISPARO (Client-Side): Verifica mensagens agendadas que venceram
+  useEffect(() => {
+    if (!effectiveOrgId || !chatId || !userProfile?.uid || messages.length === 0) return;
+
+    const now = Date.now();
+    const dueMessages = messages.filter(m => 
+      m.status === 'scheduled' && 
+      m.senderId === userProfile.uid && 
+      m.scheduledAt && 
+      m.scheduledAt.toMillis() <= now
+    );
+
+    if (dueMessages.length > 0) {
+      dueMessages.forEach(async (msg) => {
+        try {
+          const msgRef = doc(db, 'organizations', effectiveOrgId, 'chats', chatId, 'messages', msg.id);
+          const chatRef = doc(db, 'organizations', effectiveOrgId, 'chats', chatId);
+          
+          const batch = writeBatch(db);
+          
+          // 1. Efetivar a mensagem (mudar status e data)
+          batch.update(msgRef, {
+            status: 'sent',
+            createdAt: serverTimestamp() // Atualiza para o topo do chat
+          });
+
+          // 2. Notificar o chat (última mensagem)
+          batch.update(chatRef, {
+            lastMessage: {
+              text: msg.text.substring(0, 100),
+              senderId: userProfile.uid,
+              senderName: userProfile.displayName || 'Membro',
+              createdAt: serverTimestamp()
+            },
+            updatedAt: serverTimestamp()
+          });
+
+          await batch.commit();
+        } catch (error) {
+          console.error("Erro ao disparar mensagem agendada:", error);
+        }
+      });
+    }
+  }, [messages, effectiveOrgId, chatId, userProfile]);
+
   const markAsRead = useCallback(async () => {
     if (!effectiveOrgId || !chatId || !userProfile?.uid) return;
 
