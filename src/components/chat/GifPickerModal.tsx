@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Search, X, Loader2 } from 'lucide-react';
+import { Search, X, Loader2, Plus, Upload } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../../contexts/AuthContext';
+import { useCRM } from '../../contexts/CRMContext';
+import { db } from '../../lib/firebase';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { uploadImageToImgBB } from '../../lib/imgbb';
+import { toast } from 'sonner';
 
 interface GifPickerModalProps {
   isOpen: boolean;
@@ -12,7 +18,13 @@ export function GifPickerModal({ isOpen, onClose, onSelect }: GifPickerModalProp
   const [search, setSearch] = useState('');
   const [gifs, setGifs] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'gifs' | 'stickers'>('gifs');
+  const [uploading, setUploading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'gifs' | 'stickers' | 'custom'>('gifs');
+  const [customStickers, setCustomStickers] = useState<any[]>([]);
+  
+  const { userProfile } = useAuth();
+  const { effectiveOrgId } = useCRM();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const GIPHY_API_KEY = import.meta.env.VITE_GIPHY_API_KEY;
 
   const fetchGifs = async (query: string, type: 'gifs' | 'stickers') => {
@@ -35,17 +47,57 @@ export function GifPickerModal({ isOpen, onClose, onSelect }: GifPickerModalProp
   };
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && (activeTab === 'gifs' || activeTab === 'stickers')) {
       fetchGifs('', activeTab);
     }
   }, [isOpen, activeTab]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (isOpen) fetchGifs(search, activeTab);
+      if (isOpen && (activeTab === 'gifs' || activeTab === 'stickers')) fetchGifs(search, activeTab);
     }, 500);
     return () => clearTimeout(timer);
   }, [search, activeTab]);
+
+  // Carregar figurinhas personalizadas
+  useEffect(() => {
+    if (!isOpen || !effectiveOrgId || !userProfile?.uid) return;
+
+    const q = query(
+      collection(db, 'organizations', effectiveOrgId, 'users', userProfile.uid, 'stickers'),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const stickers = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setCustomStickers(stickers);
+    });
+
+    return () => unsubscribe();
+  }, [isOpen, effectiveOrgId, userProfile?.uid]);
+
+  const handleCustomUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !effectiveOrgId || !userProfile?.uid) return;
+
+    setUploading(true);
+    try {
+      const url = await uploadImageToImgBB(file);
+      await addDoc(collection(db, 'organizations', effectiveOrgId, 'users', userProfile.uid, 'stickers'), {
+        url,
+        createdAt: serverTimestamp()
+      });
+      toast.success('Figurinha adicionada!');
+    } catch (error) {
+      console.error("Erro ao subir figurinha:", error);
+      toast.error('Erro ao subir figurinha');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -106,6 +158,16 @@ export function GifPickerModal({ isOpen, onClose, onSelect }: GifPickerModalProp
                 >
                   Stickers
                 </button>
+                <button 
+                  onClick={() => setActiveTab('custom')}
+                  className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${
+                    activeTab === 'custom' 
+                      ? 'bg-white dark:bg-zinc-800 text-primary-500 shadow-sm' 
+                      : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                  }`}
+                >
+                  Minhas
+                </button>
               </div>
             </div>
 
@@ -116,8 +178,42 @@ export function GifPickerModal({ isOpen, onClose, onSelect }: GifPickerModalProp
                   <p className="text-sm font-bold uppercase tracking-widest mb-2">Chave API Ausente</p>
                   <p className="text-xs">Configure VITE_GIPHY_API_KEY para habilitar GIFs.</p>
                 </div>
-              ) : loading ? (
-                <div className="flex items-center justify-center h-full">
+              ) : activeTab === 'custom' ? (
+                <div className="grid grid-cols-3 gap-3">
+                  {/* Botão de Upload */}
+                  <button 
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="aspect-square rounded-2xl border-2 border-dashed border-gray-200 dark:border-white/10 flex flex-col items-center justify-center gap-2 hover:border-primary-500 hover:bg-primary-500/5 transition-all text-gray-400 hover:text-primary-500 disabled:opacity-50"
+                  >
+                    {uploading ? <Loader2 className="animate-spin" size={24} /> : <Plus size={24} />}
+                    <span className="text-[8px] font-black uppercase tracking-widest">Nova</span>
+                  </button>
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    accept="image/*" 
+                    onChange={handleCustomUpload} 
+                  />
+
+                  {customStickers.map((sticker) => (
+                    <button
+                      key={sticker.id}
+                      onClick={() => onSelect(sticker.url)}
+                      className="relative aspect-square rounded-2xl overflow-hidden hover:ring-2 hover:ring-primary-500 transition-all group p-2 bg-gray-50 dark:bg-white/5"
+                    >
+                      <img 
+                        src={sticker.url} 
+                        alt=""
+                        className="w-full h-full object-contain"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-all" />
+                    </button>
+                  ))}
+                </div>
+              ) : (activeTab === 'gifs' || activeTab === 'stickers') && loading ? (
+                <div className="flex items-center justify-center h-full min-h-[200px]">
                   <Loader2 size={32} className="animate-spin text-primary-500" />
                 </div>
               ) : (
