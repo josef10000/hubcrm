@@ -91,9 +91,10 @@ export function GifPickerModal({ isOpen, onClose, onSelect }: GifPickerModalProp
         createdAt: serverTimestamp()
       });
       toast.success('Figurinha adicionada!');
-    } catch (error) {
-      console.error("Erro ao subir figurinha:", error);
-      toast.error('Erro ao subir figurinha');
+    } catch (error: any) {
+      console.error("Erro detalhado ao subir figurinha:", error);
+      const errorMessage = error.message || 'Erro desconhecido';
+      toast.error(`Falha no upload: ${errorMessage}`);
     } finally {
       setUploading(false);
     }
