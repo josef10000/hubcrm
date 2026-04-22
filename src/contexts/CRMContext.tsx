@@ -173,8 +173,8 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
 
   // ── Specialized Hooks ──
   const effectiveOrgId = userProfile?.orgId || user?.uid || '';
-  const settings = effectiveOrgId ? useSettings(effectiveOrgId) : ({} as any);
-  const finance = effectiveOrgId ? useFinance(effectiveOrgId) : ({} as any);
+  const settings = useSettings(effectiveOrgId);
+  const finance = useFinance(effectiveOrgId);
   const offerActions = useOffers(effectiveOrgId, offers, setOffers);
   const clientActions = useClients({
     userId: effectiveOrgId,
