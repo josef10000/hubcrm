@@ -20,8 +20,16 @@ export default function ThreadSidebar({ parentMessage, chat, onClose }: ThreadSi
     editMessage 
   } = useChat(chat.id); // Reutilizamos useChat, mas filtraremos mensagens no render
 
+  const [editingMessage, setEditingMessage] = React.useState<ChatMessage | null>(null);
+
   // Filtrar apenas mensagens que pertencem a esta thread ou a mensagem pai
   const threadMessages = messages.filter(m => m.parentMessageId === parentMessage.id);
+
+  const handleUpdate = async (text: string) => {
+    if (!editingMessage) return;
+    await editMessage(editingMessage.id, text);
+    setEditingMessage(null);
+  };
 
   const handleSendReply = async (
     text: string, 
@@ -93,7 +101,7 @@ export default function ThreadSidebar({ parentMessage, chat, onClose }: ThreadSi
               onDelete={deleteMessage}
               onReact={toggleReaction}
               onBookmark={toggleBookmark}
-              onEdit={editMessage}
+              onEdit={setEditingMessage}
             />
           ))
         )}
@@ -105,10 +113,10 @@ export default function ThreadSidebar({ parentMessage, chat, onClose }: ThreadSi
           onSend={handleSendReply}
           onTyping={() => {}} // Opcional no thread
           members={chat.members}
-          onCancelEdit={() => {}}
+          onCancelEdit={() => setEditingMessage(null)}
           onCancelReply={() => {}}
-          onUpdate={() => {}}
-          editingMessage={null}
+          onUpdate={handleUpdate}
+          editingMessage={editingMessage}
           replyTo={null}
         />
       </div>
