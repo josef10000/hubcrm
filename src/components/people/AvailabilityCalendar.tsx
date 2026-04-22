@@ -212,7 +212,7 @@ export default function AvailabilityCalendar({ userId, isOwner }: AvailabilityCa
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             className={clsx(
-              "grid border border-white/20 rounded-[2.5rem] overflow-hidden bg-white/20 dark:bg-black/20 backdrop-blur-md shadow-2xl relative grid-cols-2"
+              "grid border border-white/20 rounded-[2.5rem] overflow-hidden bg-white/20 dark:bg-black/20 backdrop-blur-md shadow-2xl relative"
             )}
           >
         {/* Adicionando Estilos de Scrollbar Customizada */}
@@ -239,7 +239,7 @@ export default function AvailabilityCalendar({ userId, isOwner }: AvailabilityCa
         `}} />
 
         {/* Container de Scroll Único */}
-        <div className="col-span-full calendar-scroll overflow-y-auto max-h-[650px] grid grid-cols-inherit">
+        <div className="col-span-full calendar-scroll overflow-y-auto max-h-[650px] grid grid-cols-[80px_1fr]">
           {/* Coluna de Horários (Sticky Left) */}
           <div className="border-r border-white/10 pt-16 flex flex-col bg-white/5 dark:bg-black/5 sticky left-0 z-10 backdrop-blur-sm">
             {getTimeSlots().map(time => (
@@ -251,7 +251,7 @@ export default function AvailabilityCalendar({ userId, isOwner }: AvailabilityCa
 
           {/* Coluna do Dia Único */}
           <div key={selectedDate.toISOString()} className={clsx(
-            "flex flex-col border-r border-white/10 last:border-r-0 bg-blue-500/5"
+            "flex flex-col border-r border-white/10 last:border-r-0"
           )}>
             {/* Cabeçalho do Dia (Sticky) */}
             <div className="h-16 flex flex-col items-center justify-center border-b border-white/10 bg-white/80 dark:bg-black/80 backdrop-blur-md sticky top-0 z-20">
