@@ -301,7 +301,6 @@ export default function MessageBubble({
                        </div>
                      </div>
                    </div>
-                  </p>
                 ) : message.type === 'sticker' && message.attachments?.[0] ? (
                   <div 
                     onClick={() => onImageClick?.(message.attachments[0])}
