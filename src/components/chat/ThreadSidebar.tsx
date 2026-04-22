@@ -5,6 +5,7 @@ import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
 import { useChat } from '../../hooks/useChat';
 import { useAuth } from '../../contexts/AuthContext';
+import { Timestamp } from 'firebase/firestore';
 
 interface ThreadSidebarProps {
   parentMessage: ChatMessage;
@@ -39,19 +40,23 @@ export default function ThreadSidebar({ parentMessage, chat, onClose }: ThreadSi
     members: string[], 
     type: any, 
     poll: any, 
-    approval: any
+    approval: any,
+    richPreview?: any,
+    parentMessageId?: string,
+    scheduledAt?: Timestamp
   ) => {
     await sendMessage(
       text, 
       mentions, 
       attachments, 
-      null, // No thread, replyTo é implícito pelo parentMessageId
-      chat.members, 
+      replyTo,
+      members, 
       type, 
       poll, 
       approval,
-      undefined,
-      parentMessage.id
+      richPreview,
+      parentMessageId,
+      scheduledAt
     );
   };
 
@@ -118,6 +123,7 @@ export default function ThreadSidebar({ parentMessage, chat, onClose }: ThreadSi
           onUpdate={handleUpdate}
           editingMessage={editingMessage}
           replyTo={null}
+          parentMessageId={parentMessage.id}
         />
       </div>
     </div>

@@ -13,6 +13,8 @@ import { ApprovalCreatorModal } from './ApprovalCreatorModal';
 import { BarChart2, CheckCircle2 } from 'lucide-react';
 import { ClientSelectorModal } from './ClientSelectorModal';
 import { Client } from '../../types';
+import { MessageSchedulerModal } from './MessageSchedulerModal';
+import { Timestamp } from 'firebase/firestore';
 
 interface MessageInputProps {
   onSend: (
@@ -24,7 +26,9 @@ interface MessageInputProps {
     type: "text" | "poll" | "approval" | "rich_link" | "client_card", 
     poll?: ChatMessage['poll'],
     approval?: ChatMessage['approval'],
-    richPreview?: ChatMessage['richPreview']
+    richPreview?: ChatMessage['richPreview'],
+    parentMessageId?: string,
+    scheduledAt?: Timestamp
   ) => void;
   onTyping: (isTyping: boolean) => void;
   replyTo: ChatMessage['replyTo'] | null;
@@ -42,7 +46,8 @@ export default function MessageInput({
   const [isPollModalOpen, setIsPollModalOpen] = useState(false);
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
-  const [scheduledDate, setScheduledDate] = useState<string | null>(null);
+  const [isSchedulerOpen, setIsSchedulerOpen] = useState(false);
+  const [scheduledAt, setScheduledAt] = useState<Timestamp | null>(null);
   const [text, setText] = useState('');
   const [showMentions, setShowMentions] = useState(false);
   const [mentionQuery, setMentionQuery] = useState('');
@@ -72,10 +77,11 @@ export default function MessageInput({
       onCancelEdit();
     } else {
       const mentions = parseMentions(text, teamProfiles.map(p => ({ uid: p.uid, displayName: p.displayName })));
-      onSend(text, mentions, [], replyTo, members, "text");
+      onSend(text, mentions, [], replyTo, members, "text", undefined, undefined, undefined, parentMessageId, scheduledAt || undefined);
     }
     
     setText('');
+    setScheduledAt(null);
     onTyping(false);
     setShowMentions(false);
   };
@@ -90,7 +96,7 @@ export default function MessageInput({
       }))
     };
 
-    onSend('', [], [], null, members, 'poll', pollData);
+    onSend('', [], [], null, members, 'poll', pollData, undefined, undefined, parentMessageId, scheduledAt || undefined);
   };
 
   const handleCreateApproval = (question: string, type: 'discount' | 'holiday' | 'expense' | 'other', value?: any) => {
@@ -101,7 +107,7 @@ export default function MessageInput({
       value
     };
 
-    onSend('', [], [], null, members, 'approval', undefined, approvalData);
+    onSend('', [], [], null, members, 'approval', undefined, approvalData, undefined, parentMessageId, scheduledAt || undefined);
   };
 
   const handleSelectClient = (client: Client) => {
@@ -113,7 +119,7 @@ export default function MessageInput({
       value: client.planPrice ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(client.planPrice) : 'N/A'
     };
 
-    onSend(`Vinculei a ficha de ${client.name}`, [], [], null, members, 'client_card', undefined, undefined, clientCardData);
+    onSend(`Vinculei a ficha de ${client.name}`, [], [], null, members, 'client_card', undefined, undefined, clientCardData, parentMessageId, scheduledAt || undefined);
     // Nota: O onSend precisa aceitar richPreview ou tratamos internamente no hook. 
     // Vou ajustar o onSend para ser mais flexível se necessário.
     setIsClientModalOpen(false);
@@ -292,7 +298,8 @@ export default function MessageInput({
 
           <button 
             type="button" 
-            className={`p-2 rounded-lg transition-all ${scheduledDate ? 'text-primary-500 bg-primary-500/10' : 'text-gray-400 hover:text-primary-500 hover:bg-primary-500/10'}`}
+            onClick={() => setIsSchedulerOpen(true)}
+            className={`p-2 rounded-lg transition-all ${scheduledAt ? 'text-primary-500 bg-primary-500/10' : 'text-gray-400 hover:text-primary-500 hover:bg-primary-500/10'}`}
             title="Agendar Mensagem"
           >
             <Calendar size={18} />
@@ -366,6 +373,13 @@ export default function MessageInput({
         isOpen={isClientModalOpen}
         onClose={() => setIsClientModalOpen(false)}
         onSelect={handleSelectClient}
+      />
+
+      <MessageSchedulerModal 
+        isOpen={isSchedulerOpen}
+        onClose={() => setIsSchedulerOpen(false)}
+        onSelect={setScheduledAt}
+        currentScheduledAt={scheduledAt}
       />
     </div>
   );
