@@ -1,4 +1,4 @@
-# 🔐 Hub Central — Intranet Corporativa v4.5.7 (Hook Stability Update)
+# 🔐 Hub Central — Intranet Corporativa v4.5.8 (Wiki Persistence Fix)
 
 > [!CAUTION]
 > **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
@@ -7,7 +7,7 @@
 Transformando prospecção em faturamento através de automação inteligente e gestão de alta precisão.
 
   <p>
-    <img src="https://img.shields.io/badge/Version-4.5.7-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-4.5.8-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Status-Audited_&_Optimized-3b82f6?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-3b82f6?style=for-the-badge&labelColor=111111" alt="License" />
@@ -114,6 +114,7 @@ A comunicação interna foi elevada ao nível de ferramenta de gestão. Mais que
 | 🔧 **Projects Dashboard** | Visão técnica total com monitoramento de SLA e progresso real. |
 | 👥 **Minha Equipe** | Lógica de liderança (`reportsTo`) para foco total do gestor em seus liderados. |
 | 🚨 **SLA Pulse Red** | Alerta visual pulsante para chamados e entregas fora do prazo. |
+| 📖 **Wiki Persistence** | Correção da inconsistência de coleções no Firestore (wiki vs wikiArticles). |
 
 ---
 

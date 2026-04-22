@@ -315,7 +315,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         setTags(loaded.sort((a, b) => a.name.localeCompare(b.name)));
       });
       
-      const wikiRef = collection(db, 'organizations', effectiveOrgId, 'wiki');
+      const wikiRef = collection(db, 'organizations', effectiveOrgId, 'wikiArticles');
       unsubWiki = onSnapshot(wikiRef, (snapshot) => {
         const loaded: WikiArticle[] = [];
         snapshot.forEach((d) => loaded.push({ id: d.id, ...d.data() } as WikiArticle));

@@ -94,7 +94,7 @@ service cloud.firestore {
         allow write: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_LEADS');
       }
 
-      match /wiki/{id} {
+      match /wikiArticles/{id} {
         allow read: if belongsToOrg(orgId);
         allow write: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_WIKI');
       }
