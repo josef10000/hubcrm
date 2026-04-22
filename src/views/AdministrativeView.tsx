@@ -160,6 +160,18 @@ export default function AdministrativeView() {
                             className="w-full h-24 px-4 py-2 bg-black/40 border border-white/10 rounded-xl resize-none"
                             placeholder="Descrição"
                         />
+                        <button
+                            onClick={async () => {
+                                await setDoc(doc(db, 'organizations', effectiveOrgId, 'settings', 'preferences'), { 
+                                    checkoutTitle, 
+                                    checkoutDescription 
+                                }, { merge: true });
+                                toast.success('Configurações de checkout salvas!');
+                            }}
+                            className="w-full py-2 bg-primary-500 text-white rounded-xl font-bold"
+                        >
+                            Salvar Checkout
+                        </button>
                          <div className="p-4 bg-primary-500/5 border border-primary-500/20 rounded-2xl">
                             <label className="block text-xs font-bold text-primary-500 uppercase mb-2">Link público</label>
                             <div className="flex gap-2">
@@ -167,6 +179,40 @@ export default function AdministrativeView() {
                                 <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/contratar/${effectiveOrgId}`); toast.success('Link copiado!'); }} className="text-primary-500"><Copy size={16} /></button>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <div className="bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-lg">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
+                        <Star className="mr-2 text-primary-500" size={20} />
+                        Satisfação (CSAT)
+                    </h3>
+                    <div className="space-y-4">
+                        <input
+                            type="text"
+                            value={csatTitle}
+                            onChange={(e) => setCsatTitle(e.target.value)}
+                            className="w-full px-4 py-2 bg-black/40 border border-white/10 rounded-xl"
+                            placeholder="Título da Pesquisa"
+                        />
+                        <textarea
+                            value={csatQuestion}
+                            onChange={(e) => setCsatQuestion(e.target.value)}
+                            className="w-full h-24 px-4 py-2 bg-black/40 border border-white/10 rounded-xl resize-none"
+                            placeholder="Pergunta de satisfação"
+                        />
+                        <button
+                            onClick={async () => {
+                                await setDoc(doc(db, 'organizations', effectiveOrgId, 'settings', 'preferences'), { 
+                                    csatTitle, 
+                                    csatQuestion 
+                                }, { merge: true });
+                                toast.success('Configurações de CSAT salvas!');
+                            }}
+                            className="w-full py-2 bg-primary-500 text-white rounded-xl font-bold"
+                        >
+                            Salvar CSAT
+                        </button>
                     </div>
                 </div>
 
