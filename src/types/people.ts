@@ -111,3 +111,28 @@ export interface OnboardingTemplate {
   orgId: string;
   active: boolean;
 }
+
+export interface Appointment {
+  id: string;
+  requesterId: string;
+  targetId: string;
+  startTime: number; // timestamp
+  duration: 15 | 30 | 60;
+  status: 'pending' | 'approved' | 'declined' | 'cancelled';
+  meetingName: string;
+  meetingLink?: string;
+  isRecurring: boolean;
+  recurringDay?: number; // 0-6 (dom-sab)
+  orgId: string;
+  createdAt: number;
+}
+
+export interface AvailabilityBlock {
+  id: string;
+  userId: string;
+  startTime: number; // timestamp (início do dia ou horário fixo)
+  endTime: number; // timestamp
+  reason?: string;
+  isPrivate: boolean;
+  orgId: string;
+}

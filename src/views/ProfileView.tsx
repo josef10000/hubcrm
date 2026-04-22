@@ -4,10 +4,11 @@ import {
   User as UserIcon, Mail, Phone, Instagram, Linkedin, 
   ChevronLeft, Edit3, Save, X, Briefcase, Info, 
   Shield, Globe, MapPin, Loader2, Camera, Cake, Calendar,
-  Target, ChevronDown, CheckCircle2, Circle, Star, Wallet, TrendingUp, Clock, Plane, AlertTriangle
+  Target, ChevronDown, CheckCircle2, Circle, Star, Wallet, TrendingUp, Clock, Plane, AlertTriangle, CalendarDays
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCRM } from '../contexts/CRMContext';
+import AvailabilityCalendar from '../components/people/AvailabilityCalendar';
 import { db } from '../lib/firebase';
 import { doc, getDoc, collection, setDoc, query, where, onSnapshot } from 'firebase/firestore';
 import { uploadImageToImgBB } from '../lib/imgbb';
@@ -67,7 +68,7 @@ export default function ProfileView() {
   const [isSaving, setIsSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [superior, setSuperior] = useState<UserProfile | null>(null);
-  const [activeTab, setActiveTab] = useState<'info' | 'pdi' | 'comissoes' | 'inventory' | 'feedbacks' | 'history' | 'alerts' | 'vacations'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'pdi' | 'comissoes' | 'inventory' | 'feedbacks' | 'history' | 'alerts' | 'vacations' | 'availability'>('info');
   const { businessAlerts = [], unreadAlertsCount = 0, markAlertAsRead } = useAuth();
   const { commissions = [] } = useCRM();
   const [showVacationModal, setShowVacationModal] = useState(false);
@@ -522,6 +523,12 @@ export default function ProfileView() {
                   Informações
                 </button>
                 <button 
+                  onClick={() => setActiveTab('availability')}
+                  className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'availability' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
+                >
+                  Disponibilidade
+                </button>
+                <button 
                   onClick={() => setActiveTab('pdi')}
                   className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'pdi' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
                 >
@@ -563,6 +570,15 @@ export default function ProfileView() {
                   )}
                 </button>
               </div>
+
+              {activeTab === 'availability' && (
+                <div className="animate-in slide-in-from-right duration-500">
+                  <AvailabilityCalendar 
+                    userId={uid || ''} 
+                    isOwner={isOwnProfile} 
+                  />
+                </div>
+              )}
 
               {activeTab === 'info' && (
                 <div className="animate-in fade-in duration-500">

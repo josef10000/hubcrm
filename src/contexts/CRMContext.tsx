@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { collection, doc, setDoc, addDoc, deleteDoc, onSnapshot, query, where, serverTimestamp, arrayUnion } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Client, Offer, Expense, Transaction, TransactionCategory, Budget, Lead, UserProfile, CommissionEntry, Tag, WikiArticle, WikiComment, UserRole } from '../types';
-import { VacationPeriod } from '../types/people';
+import { VacationPeriod, Appointment, AvailabilityBlock } from '../types/people';
 import { useAuth } from './AuthContext';
 import { calculateCommissionForClient } from '../helpers/commissionCalculation';
 import { toast } from 'sonner';
@@ -28,6 +28,8 @@ interface CRMContextType {
   commissions: CommissionEntry[];
   services: any[];
   vacations: VacationPeriod[];
+  appointments: Appointment[];
+  availabilityBlocks: AvailabilityBlock[];
   teamProfiles: UserProfile[];
   tags: Tag[];
   wikiArticles: WikiArticle[];
@@ -123,6 +125,10 @@ interface CRMContextType {
   handleCreateSupportRequest: (requestData: any) => Promise<void>;
   handleSaveVacationRequest: (vacationData: Partial<VacationPeriod>) => Promise<void>;
   handleDeleteVacationRequest: (id: string) => Promise<void>;
+  handleRequestAppointment: (appointment: Partial<Appointment>) => Promise<void>;
+  handleUpdateAppointmentStatus: (id: string, status: Appointment['status']) => Promise<void>;
+  handleSaveAvailabilityBlock: (block: Partial<AvailabilityBlock>) => Promise<void>;
+  handleDeleteAvailabilityBlock: (id: string) => Promise<void>;
   handleAddClientLog: (clientId: string, logText: string) => Promise<void>;
   handleGenerateCommission: (clientId: string) => Promise<void>;
   pendingVacationsCount: number;
@@ -152,6 +158,8 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   const [teamProfiles, setTeamProfiles] = useState<UserProfile[]>([]);
   const [commissions, setCommissions] = useState<CommissionEntry[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [availabilityBlocks, setAvailabilityBlocks] = useState<AvailabilityBlock[]>([]);
   const [wikiArticles, setWikiArticles] = useState<WikiArticle[]>([]);
   const [orgRoles, setOrgRoles] = useState<UserRole[]>([]);
   const [loading, setLoading] = useState(true);
@@ -313,6 +321,20 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         snapshot.forEach((d) => loaded.push({ id: d.id, ...d.data() } as WikiArticle));
         setWikiArticles(loaded.sort((a, b) => b.createdAt - a.createdAt));
       });
+      
+      const appointmentsRef = collection(db, 'organizations', effectiveOrgId, 'appointments');
+      const unsubAppointments = onSnapshot(appointmentsRef, (snapshot) => {
+        const loaded: Appointment[] = [];
+        snapshot.forEach((d) => loaded.push({ id: d.id, ...d.data() } as Appointment));
+        setAppointments(loaded.sort((a, b) => b.startTime - a.startTime));
+      });
+
+      const blocksRef = collection(db, 'organizations', effectiveOrgId, 'availability_blocks');
+      const unsubBlocks = onSnapshot(blocksRef, (snapshot) => {
+        const loaded: AvailabilityBlock[] = [];
+        snapshot.forEach((d) => loaded.push({ id: d.id, ...d.data() } as AvailabilityBlock));
+        setAvailabilityBlocks(loaded);
+      });
 
       const rolesRef = collection(db, 'organizations', effectiveOrgId, 'roles');
       unsubRoles = onSnapshot(rolesRef, (snapshot) => {
@@ -339,6 +361,8 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         unsubTags();
         unsubWiki();
         unsubRoles();
+        unsubAppointments();
+        unsubBlocks();
         clearTimeout(timeoutId);
       };
     } catch (err: any) {
@@ -611,6 +635,89 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         throw e; // Re-throw para o componente UI tratar se necessário
       }
     },
+    handleRequestAppointment: async (data: Partial<Appointment>) => {
+      if (!effectiveOrgId || !user) return;
+      try {
+        // Validação básica de 24h
+        const now = Date.now();
+        const minTime = now + (24 * 60 * 60 * 1000);
+        if ((data.startTime || 0) < minTime) {
+          toast.error('Agendamentos devem ser feitos com no mínimo 24h de antecedência.');
+          return;
+        }
+
+        const id = doc(collection(db, 'organizations', effectiveOrgId, 'appointments')).id;
+        await setDoc(doc(db, 'organizations', effectiveOrgId, 'appointments', id), {
+          ...data,
+          id,
+          requesterId: user.uid,
+          status: 'pending',
+          orgId: effectiveOrgId,
+          createdAt: now
+        });
+        toast.success('Solicitação de agendamento enviada!');
+      } catch (e) {
+        console.error('Error requesting appointment:', e);
+        toast.error('Erro ao enviar solicitação.');
+      }
+    },
+    handleUpdateAppointmentStatus: async (id: string, status: Appointment['status']) => {
+      if (!effectiveOrgId) return;
+      try {
+        const appRef = doc(db, 'organizations', effectiveOrgId, 'appointments', id);
+        await setDoc(appRef, { status }, { merge: true });
+        
+        const app = appointments.find(a => a.id === id);
+        if (status === 'approved' && app) {
+          // Criar sala de chat automaticamente
+          const chatData = {
+            name: `🤝 ${app.meetingName}`,
+            description: `Reunião agendada via Hub Central. Link: ${app.meetingLink || 'Não informado.'}`,
+            members: [app.requesterId, app.targetId],
+            type: 'group',
+            orgId: effectiveOrgId,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            createdBy: user?.uid,
+            isSystemGenerated: true,
+            appointmentId: id
+          };
+          
+          await addDoc(collection(db, 'organizations', effectiveOrgId, 'chats'), chatData);
+          toast.success('Agendamento aprovado! Sala de chat criada.');
+        } else if (status === 'declined') {
+          toast.info('Agendamento recusado.');
+        }
+      } catch (e) {
+        console.error('Error updating appointment:', e);
+        toast.error('Erro ao responder agendamento.');
+      }
+    },
+    handleSaveAvailabilityBlock: async (data: Partial<AvailabilityBlock>) => {
+      if (!effectiveOrgId || !user) return;
+      try {
+        const id = data.id || doc(collection(db, 'organizations', effectiveOrgId, 'availability_blocks')).id;
+        await setDoc(doc(db, 'organizations', effectiveOrgId, 'availability_blocks', id), {
+          ...data,
+          id,
+          userId: user.uid,
+          orgId: effectiveOrgId
+        }, { merge: true });
+        toast.success(data.id ? 'Bloco atualizado.' : 'Horário bloqueado com sucesso!');
+      } catch (e) {
+        console.error('Error saving block:', e);
+        toast.error('Erro ao salvar bloqueio.');
+      }
+    },
+    handleDeleteAvailabilityBlock: async (id: string) => {
+      if (!effectiveOrgId) return;
+      try {
+        await deleteDoc(doc(db, 'organizations', effectiveOrgId, 'availability_blocks', id));
+        toast.success('Horário liberado.');
+      } catch (e) {
+        console.error('Error deleting block:', e);
+      }
+    },
     handleDeleteVacationRequest: async (id: string) => {
       if (!effectiveOrgId) return;
       try {
@@ -642,7 +749,8 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     handleGenerateCommission,
     pendingVacationsCount: vacations.filter(v => v.status === 'Pendente').length,
     isChurnRisk: clientActions.isChurnRisk, isComboNearRenewal: clientActions.isComboNearRenewal,
-    effectiveOrgId, userProfile, vacations, teamProfiles, commissions, tags, wikiArticles, offerActions, orgRoles
+    effectiveOrgId, userProfile, vacations, teamProfiles, commissions, tags, wikiArticles, offerActions, orgRoles,
+    appointments, availabilityBlocks
   };
 
   return <CRMContext.Provider value={value}>{children}</CRMContext.Provider>;

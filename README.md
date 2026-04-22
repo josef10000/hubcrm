@@ -95,7 +95,14 @@ A comunicação interna foi elevada ao nível de ferramenta de gestão. Mais que
 3.  **Financeiro (Profit Engine)**: Saúde do caixa. Billing (Tático) e Finance (Estratégico).
 4.  **Pessoas (Culture Hub)**: Retenção de talentos. Perfil, Equipe e Bem-estar.
 
-### 💎 Diferenciais Estratégicos v4.0
+### 🚀 O que há de novo na v4.6.0:
+- **Agenda de Disponibilidade**: Sistema de agendamento 1:1 entre membros da equipe diretamente no Perfil.
+- **Automação de Chat contextuais**: Ao aprovar uma reunião, o sistema cria automaticamente uma sala de chat dedicada com os participantes e o link da reunião.
+- **Regras de Etiqueta Corporativa**: Trava obrigatória de **24 horas** para novos agendamentos e durações fixas de 15, 30 e 60 minutos.
+- **Bloqueios de Privacidade**: Colaboradores podem bloquear horários com motivos públicos ou privados.
+- **Integração Visual**: Atalhos de calendário na sidebar do chat para acesso imediato às agendas.
+
+### 🛠 Correções e Melhorias Recentes (v4.5.7):
 
 | Diferencial | Descrição |
 |---|---|
@@ -110,7 +117,7 @@ A comunicação interna foi elevada ao nível de ferramenta de gestão. Mais que
 
 ---
 
-## 🛠️ Módulos da Plataforma (Arquitetura v4.0)
+## 🛠️ Módulos da Plataforma (Arquitetura v4.6.0)
 
 ### 🏗️ 1. Pilar Comercial (Leads Hub)
 

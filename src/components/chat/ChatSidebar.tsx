@@ -183,9 +183,24 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
                   {/* Conteúdo */}
                   <div className="flex-1 text-left min-w-0">
                     <div className="flex justify-between items-start mb-0.5">
-                      <h3 className={`text-base font-semibold truncate ${isSelected ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
-                        {displayName}
-                      </h3>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <h3 className={`text-base font-semibold truncate ${isSelected ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
+                          {displayName}
+                        </h3>
+                        {chat.type === 'direct' && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const otherUserId = chat.members.find(id => id !== userProfile?.uid);
+                              if (otherUserId) window.location.href = `/profile/${otherUserId}?tab=availability`;
+                            }}
+                            className={`p-1 rounded-lg transition-colors ${isSelected ? 'text-white/40 hover:text-white/80 hover:bg-white/10' : 'text-gray-400 hover:text-primary-500 hover:bg-primary-500/10'}`}
+                            title="Ver Disponibilidade"
+                          >
+                            <Calendar size={14} />
+                          </button>
+                        )}
+                      </div>
                       <span className={`text-xs font-medium shrink-0 ${isSelected ? 'text-white/60' : 'text-gray-400'}`}>
                         {chat.lastMessage ? formatChatTime(chat.lastMessage.createdAt.toMillis()) : ''}
                       </span>
