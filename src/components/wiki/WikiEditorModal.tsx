@@ -17,6 +17,8 @@ export default function WikiEditorModal({ isOpen, onClose, initialData }: WikiEd
   const { handleSaveWikiArticle, teamProfiles, orgRoles } = useCRM();
   const { userProfile } = useAuth();
   
+  const editorRef = React.useRef<any>(null);
+  
   const [formData, setFormData] = useState<Partial<WikiArticle>>({
     title: '',
     content: '',
@@ -43,10 +45,15 @@ export default function WikiEditorModal({ isOpen, onClose, initialData }: WikiEd
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title || !formData.content) return;
+    
+    // Capturar o conteúdo atualizado diretamente do editor (DOM) para evitar race conditions
+    const currentContent = editorRef.current?.getContent() || formData.content;
+    
+    if (!formData.title || !currentContent) return;
 
     await handleSaveWikiArticle({
       ...formData,
+      content: currentContent,
       authorId: userProfile?.uid || '',
       authorName: userProfile?.displayName || 'Desconhecido'
     });
@@ -98,6 +105,7 @@ export default function WikiEditorModal({ isOpen, onClose, initialData }: WikiEd
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-2">Conteúdo do Artigo</label>
                 <RichTextEditor
+                  ref={editorRef}
                   value={formData.content || ''}
                   onChange={val => setFormData({ ...formData, content: val })}
                   placeholder="Escreva o conteúdo detalhado aqui..."

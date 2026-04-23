@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import { 
   Bold, Italic, List, ListOrdered, Image as ImageIcon, 
   Type, AlignLeft, AlignCenter, AlignRight, Link2, 
@@ -13,10 +13,20 @@ interface RichTextEditorProps {
   placeholder?: string;
 }
 
-export default function RichTextEditor({ value, onChange, placeholder }: RichTextEditorProps) {
+export interface RichTextEditorHandle {
+  getContent: () => string;
+}
+
+const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(
+  ({ value, onChange, placeholder }, ref) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
+  // Expor o conteúdo diretamente para evitar race conditions no salvamento
+  useImperativeHandle(ref, () => ({
+    getContent: () => editorRef.current?.innerHTML || ''
+  }));
 
   useEffect(() => {
     if (editorRef.current && editorRef.current.innerHTML !== value) {
@@ -41,7 +51,6 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Salvar a posição atual do cursor antes de abrir o seletor de arquivos
     const selection = window.getSelection();
     let range: Range | null = null;
     if (selection && selection.rangeCount > 0) {
@@ -55,34 +64,29 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
       if (editorRef.current) {
         editorRef.current.focus();
         
-        // Criar o elemento de imagem simplificado
         const img = document.createElement('img');
         img.src = url;
         img.alt = "Imagem do artigo";
         img.style.maxWidth = '100%';
         img.style.height = 'auto';
         img.style.display = 'block';
-        img.className = "wiki-image"; // Classe para facilitar estilização global
+        img.className = "wiki-image";
 
-        // Tentar inserir na posição salva do cursor
         if (range && selection) {
           selection.removeAllRanges();
           selection.addRange(range);
           range.deleteContents();
           range.insertNode(img);
           
-          // Mover o cursor para depois da imagem
           range.setStartAfter(img);
           range.setEndAfter(img);
           selection.removeAllRanges();
           selection.addRange(range);
         } else {
-          // Fallback: Adiciona ao final se perder a posição
           editorRef.current.appendChild(img);
           editorRef.current.appendChild(document.createElement('br'));
         }
 
-        // Sincronizar o estado
         onChange(editorRef.current.innerHTML);
       }
       
@@ -98,7 +102,6 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
 
   return (
     <div className={`flex flex-col border border-gray-200 dark:border-white/10 rounded-2xl bg-white/5 backdrop-blur-xl overflow-hidden active-ring-primary-500 transition-all ${isFullScreen ? 'fixed inset-4 z-[100]' : 'relative'}`}>
-      {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-1 p-2 border-b border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/5">
         <div className="flex items-center gap-1 pr-2 border-r border-gray-200 dark:border-white/10">
           <ToolbarButton onClick={() => executeCommand('bold')} icon={Bold} title="Negrito (Ctrl+B)" />
@@ -140,7 +143,6 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
         />
       </div>
 
-      {/* Editor Area */}
       <div className="relative flex-1 bg-white/5">
         <div
           ref={editorRef}
@@ -179,6 +181,21 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
         .prose a { color: #3b82f6; text-decoration: underline; }
       `}} />
     </div>
+  );
+});
+
+RichTextEditor.displayName = 'RichTextEditor';
+export default RichTextEditor;
+
+function ToolbarButton({ onClick, icon: Icon, title, active = false }: { onClick: () => void; icon: any; title: string; active?: boolean }) {
+  return (
+    <button
+      onClick={(e) => { e.preventDefault(); onClick(); }}
+      className={`p-2 rounded-lg transition-all hover:bg-white/10 group ${active ? 'bg-primary-500/20 text-primary-500' : 'text-gray-400'}`}
+      title={title}
+    >
+      <Icon className={`w-4 h-4 group-hover:scale-110 transition-transform ${active ? 'text-primary-500' : ''}`} />
+    </button>
   );
 }
 
