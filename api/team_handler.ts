@@ -406,9 +406,15 @@ async function handleUpdateSkills(req: VercelRequest, res: VercelResponse, uid: 
   const isSelf = uid === targetUid;
   const senderSnap = await db.collection('profiles').doc(uid).get();
   const senderData = senderSnap.data();
-  const isManagement = ['Administrador', 'Gerente', 'People & Culture'].includes(senderData?.role || '');
+  // Aceita tanto o nome amigável quanto o ID da role para maior compatibilidade
+  const roleName = typeof senderData?.role === 'object' ? senderData.role.name : senderData?.role;
+  const isManagement = ['Administrador', 'Gerente', 'People & Culture'].includes(roleName || '');
 
-  if (isSelf) return res.status(403).json({ error: 'O colaborador não pode atualizar sua própria matriz de competências' });
+  // Permitir auto-edição apenas se for Administrador (Dono)
+  if (isSelf && roleName !== 'Administrador') {
+    return res.status(403).json({ error: 'O colaborador não pode atualizar sua própria matriz de competências' });
+  }
+  
   if (!isManagement) return res.status(403).json({ error: 'Sem permissão para atualizar competências' });
 
   await db.collection('profiles').doc(targetUid).set({ skills }, { merge: true });
