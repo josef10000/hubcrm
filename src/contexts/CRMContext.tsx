@@ -780,8 +780,6 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     handleGenerateCommission,
     pendingVacationsCount: vacations.filter(v => v.status === 'Pendente').length,
     isChurnRisk: clientActions.isChurnRisk, isComboNearRenewal: clientActions.isComboNearRenewal,
-    handleDeleteWikiComment: value.handleDeleteWikiComment,
-    handleToggleWikiCommentLike: value.handleToggleWikiCommentLike,
     effectiveOrgId, userProfile, vacations, teamProfiles, commissions, tags, wikiArticles, offerActions, orgRoles,
     appointments, availabilityBlocks
   };

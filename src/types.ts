@@ -339,7 +339,7 @@ export interface WikiComment {
   userPhoto?: string;
   text: string;
   createdAt: number;
-  stars: number; // Curtidas no comentário
+  likedBy: string[]; // Array de UIDs que deram estrela
 }
 
 export type WikiCategory = 'RH' | 'Vendas' | 'Técnico' | 'Atendimento' | 'Suporte' | 'Geral';
