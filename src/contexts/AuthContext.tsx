@@ -83,6 +83,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 const updatedProfile: UserProfile = { ...dataProfile, role: adminRole, orgId: orgIdToUse };
                 setUserProfile(updatedProfile);
                 
+                // AUTO-CORREÇÃO NO BANCO: Se o orgId no Firestore estiver 'pending', atualizamos para o ID real
+                if (dataProfile.orgId === 'pending') {
+                  updateDoc(profileRef, { 
+                    orgId: u.uid,
+                    displayName: dataProfile.displayName || 'Proprietário'
+                  }).catch(err => console.error("[Auth] Erro ao auto-corrigir perfil:", err));
+                }
+                
                 // Rotina de Inicialização Automática de Cargos (Bootstrap) para Novas Organizações
                 try {
                   const rolesSnap = await getDocs(collection(db, 'organizations', orgIdToUse, 'roles'));
@@ -308,6 +316,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const adminRole = defaultRoles.find(r => r.id === 'ROLE_ADMIN') || defaultRoles[0];
           const orgIdToUse = (data.orgId && data.orgId !== 'pending') ? data.orgId : user.uid;
           setUserProfile({ ...data, role: adminRole, orgId: orgIdToUse });
+          
+          if (data.orgId === 'pending') {
+            updateDoc(profileRef, { orgId: user.uid }).catch(() => {});
+          }
         } else {
           setUserProfile(data);
         }
