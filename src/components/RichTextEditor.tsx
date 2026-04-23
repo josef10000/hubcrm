@@ -1,10 +1,9 @@
 import React, { useRef, useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import { 
-  Bold, Italic, List, ListOrdered, Image as ImageIcon, 
-  Type, AlignLeft, AlignCenter, AlignRight, Link2, 
-  ChevronDown, Maximize2, Minimize2 
+  Bold, Italic, List, ListOrdered, 
+  AlignLeft, AlignCenter, AlignRight, Link2, 
+  Maximize2, Minimize2 
 } from 'lucide-react';
-import { uploadImageToImgBB } from '../lib/imgbb';
 import { toast } from 'sonner';
 
 interface RichTextEditorProps {
@@ -21,7 +20,6 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(
   ({ value, onChange, placeholder }, ref) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
 
   // Expor o conteúdo diretamente para evitar race conditions no salvamento
   useImperativeHandle(ref, () => ({
@@ -47,59 +45,6 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const selection = window.getSelection();
-    let range: Range | null = null;
-    if (selection && selection.rangeCount > 0) {
-      range = selection.getRangeAt(0);
-    }
-
-    setIsUploading(true);
-    try {
-      const url = await uploadImageToImgBB(file);
-      
-      if (editorRef.current) {
-        editorRef.current.focus();
-        
-        const img = document.createElement('img');
-        img.src = url;
-        img.alt = "Imagem do artigo";
-        img.style.maxWidth = '100%';
-        img.style.height = 'auto';
-        img.style.display = 'block';
-        img.className = "wiki-image";
-
-        if (range && selection) {
-          selection.removeAllRanges();
-          selection.addRange(range);
-          range.deleteContents();
-          range.insertNode(img);
-          
-          range.setStartAfter(img);
-          range.setEndAfter(img);
-          selection.removeAllRanges();
-          selection.addRange(range);
-        } else {
-          editorRef.current.appendChild(img);
-          editorRef.current.appendChild(document.createElement('br'));
-        }
-
-        onChange(editorRef.current.innerHTML);
-      }
-      
-      toast.success('Imagem carregada!');
-    } catch (err) {
-      console.error("[RichTextEditor] Upload/Insert Error:", err);
-      toast.error('Erro ao carregar imagem.');
-    } finally {
-      setIsUploading(false);
-      if (e.target) e.target.value = '';
-    }
-  };
-
   return (
     <div className={`flex flex-col border border-gray-200 dark:border-white/10 rounded-2xl bg-white/5 backdrop-blur-xl overflow-hidden active-ring-primary-500 transition-all ${isFullScreen ? 'fixed inset-4 z-[100]' : 'relative'}`}>
       <div className="flex flex-wrap items-center gap-1 p-2 border-b border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/5">
@@ -120,14 +65,6 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(
         </div>
 
         <div className="flex items-center gap-1 px-2 border-r border-gray-200 dark:border-white/10">
-            <label className="p-2 hover:bg-white/10 rounded-lg cursor-pointer transition-colors relative" title="Inserir Imagem">
-                {isUploading ? (
-                    <div className="w-4 h-4 border-2 border-primary-500 border-t-transparent animate-spin rounded-full"></div>
-                ) : (
-                    <ImageIcon className="w-4 h-4 text-gray-400 hover:text-primary-500" />
-                )}
-                <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={isUploading} />
-            </label>
           <ToolbarButton onClick={() => {
             const url = prompt('Cole a URL do link:');
             if(url) executeCommand('createLink', url);
@@ -167,14 +104,6 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(
           content: attr(placeholder);
           color: #6b7280;
           font-style: italic;
-        }
-        .prose img {
-          max-width: 100%;
-          height: auto;
-          display: block;
-          border-radius: 1rem;
-          margin: 1.5rem 0;
-          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
         .prose ul { list-style-type: disc; padding-left: 1.5rem; }
         .prose ol { list-style-type: decimal; padding-left: 1.5rem; }
