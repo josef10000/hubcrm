@@ -1,4 +1,4 @@
-# 🔐 Hub Central — Intranet Corporativa v4.7.0 (Productivity & Expressive Media)
+# 🔐 Hub Central — Intranet Corporativa v4.7.1 (Autonomous Automation)
 
 > [!CAUTION]
 > **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
@@ -16,6 +16,7 @@ Para contornar a ausência de Node.js no ambiente e permitir automação via IA,
 | **OpenRouter** | `mcp_openrouter.py` | Bridge para chat e listagem de modelos. |
 | **GitHub** | `mcp_github.py` | Automação de issues, arquivos e repositórios. |
 | **Firebase** | `mcp_firebase.py` | Manipulação direta de documentos Firestore. |
+| **Cron API** | `/api/cron/process-scheduler` | Endpoint central para mensagens agendadas e lembretes. |
 
 ### Configuração
 Certifique-se de configurar as seguintes variáveis no seu ambiente Claude Desktop / Antigravity:
@@ -26,7 +27,7 @@ Certifique-se de configurar as seguintes variáveis no seu ambiente Claude Deskt
 - `VITE_GIPHY_API_KEY` (Obrigatório para GIFs no Chat)
 
   <p>
-    <img src="https://img.shields.io/badge/Version-4.7.0-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-4.7.1-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Status-Audited_&_Stable-3b82f6?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-3b82f6?style=for-the-badge&labelColor=111111" alt="License" />
