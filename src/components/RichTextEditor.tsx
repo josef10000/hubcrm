@@ -55,14 +55,14 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
       if (editorRef.current) {
         editorRef.current.focus();
         
-        // Criar o elemento de imagem
+        // Criar o elemento de imagem simplificado
         const img = document.createElement('img');
         img.src = url;
         img.alt = "Imagem do artigo";
         img.style.maxWidth = '100%';
-        img.style.borderRadius = '1rem';
-        img.style.margin = '1rem 0';
+        img.style.height = 'auto';
         img.style.display = 'block';
+        img.className = "wiki-image"; // Classe para facilitar estilização global
 
         // Tentar inserir na posição salva do cursor
         if (range && selection) {

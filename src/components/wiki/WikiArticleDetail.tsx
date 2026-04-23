@@ -157,12 +157,10 @@ export default function WikiArticleDetail({ article, onBack, onEdit }: WikiArtic
             prose-headings:text-white prose-headings:font-bold
             prose-a:text-primary-400 prose-a:no-underline hover:prose-a:underline
             prose-strong:text-white prose-strong:font-semibold
-            prose-img:rounded-[2rem] prose-img:shadow-2xl prose-img:my-12 prose-img:w-full
+            prose-img:rounded-2xl prose-img:shadow-xl
             prose-ul:list-disc prose-ol:list-decimal
           "
-          dangerouslySetInnerHTML={{ 
-            __html: article.content.replace(/src="http:\/\//g, 'src="https://') 
-          }}
+          dangerouslySetInnerHTML={{ __html: article.content }}
         />
       </article>
 
