@@ -85,6 +85,7 @@ const OrgNode = ({ member, members, navigate }: { member: Member, members: Membe
 export default function TeamManagementView() {
   const { user, userProfile } = useAuth();
   const { orgRoles = [] } = useCRM();
+  const { confirm } = useDialog();
   const { hasPermission, isLoadingPermissions } = usePermissions();
   const [members, setMembers] = useState<Member[]>([]);
   const [invites, setInvites] = useState<Invitation[]>([]);

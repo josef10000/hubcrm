@@ -4,6 +4,7 @@ import { db } from '../../lib/firebase';
 import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, orderBy, limit } from 'firebase/firestore';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDialog } from '../../contexts/DialogContext';
+import { useCRM } from '../../contexts/CRMContext';
 import { usePermissions } from '../../hooks/usePermissions';
 import { FeedbackNote } from '../../types/people';
 import { format } from 'date-fns';
