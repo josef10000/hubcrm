@@ -198,15 +198,3 @@ function ToolbarButton({ onClick, icon: Icon, title, active = false }: { onClick
     </button>
   );
 }
-
-function ToolbarButton({ onClick, icon: Icon, title, active = false }: { onClick: () => void; icon: any; title: string; active?: boolean }) {
-  return (
-    <button
-      onClick={(e) => { e.preventDefault(); onClick(); }}
-      className={`p-2 rounded-lg transition-all hover:bg-white/10 group ${active ? 'bg-primary-500/20 text-primary-500' : 'text-gray-400'}`}
-      title={title}
-    >
-      <Icon className={`w-4 h-4 group-hover:scale-110 transition-transform ${active ? 'text-primary-500' : ''}`} />
-    </button>
-  );
-}
