@@ -41,16 +41,42 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Salvar a posição atual do cursor antes de abrir o seletor de arquivos
+    const selection = window.getSelection();
+    let range: Range | null = null;
+    if (selection && selection.rangeCount > 0) {
+      range = selection.getRangeAt(0);
+    }
+
     setIsUploading(true);
     try {
       const url = await uploadImageToImgBB(file);
-      executeCommand('insertImage', url);
+      
+      // Restaurar o foco no editor
+      if (editorRef.current) {
+        editorRef.current.focus();
+        
+        // Se conseguimos salvar o range, restauramos ele
+        if (range && selection) {
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+
+        // Inserir a imagem manualmente para garantir que funcione
+        const imgHtml = `<img src="${url}" alt="Imagem do artigo" style="max-width:100%; border-radius:1rem; margin:1rem 0;" />`;
+        document.execCommand('insertHTML', false, imgHtml);
+        
+        // Se o execCommand falhar, anexamos ao final
+        handleInput();
+      }
+      
       toast.success('Imagem carregada!');
     } catch (err) {
+      console.error(err);
       toast.error('Erro ao carregar imagem.');
     } finally {
       setIsUploading(false);
-      e.target.value = '';
+      if (e.target) e.target.value = '';
     }
   };
 
