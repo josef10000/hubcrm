@@ -52,27 +52,43 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
     try {
       const url = await uploadImageToImgBB(file);
       
-      // Restaurar o foco no editor
       if (editorRef.current) {
         editorRef.current.focus();
         
-        // Se conseguimos salvar o range, restauramos ele
+        // Criar o elemento de imagem
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = "Imagem do artigo";
+        img.style.maxWidth = '100%';
+        img.style.borderRadius = '1rem';
+        img.style.margin = '1rem 0';
+        img.style.display = 'block';
+
+        // Tentar inserir na posição salva do cursor
         if (range && selection) {
           selection.removeAllRanges();
           selection.addRange(range);
+          range.deleteContents();
+          range.insertNode(img);
+          
+          // Mover o cursor para depois da imagem
+          range.setStartAfter(img);
+          range.setEndAfter(img);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        } else {
+          // Fallback: Adiciona ao final se perder a posição
+          editorRef.current.appendChild(img);
+          editorRef.current.appendChild(document.createElement('br'));
         }
 
-        // Inserir a imagem manualmente para garantir que funcione
-        const imgHtml = `<img src="${url}" alt="Imagem do artigo" style="max-width:100%; border-radius:1rem; margin:1rem 0;" />`;
-        document.execCommand('insertHTML', false, imgHtml);
-        
-        // Se o execCommand falhar, anexamos ao final
-        handleInput();
+        // Sincronizar o estado
+        onChange(editorRef.current.innerHTML);
       }
       
       toast.success('Imagem carregada!');
     } catch (err) {
-      console.error(err);
+      console.error("[RichTextEditor] Upload/Insert Error:", err);
       toast.error('Erro ao carregar imagem.');
     } finally {
       setIsUploading(false);
