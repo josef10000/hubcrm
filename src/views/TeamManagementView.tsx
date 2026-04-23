@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Users, Mail, UserPlus, Shield, X, Check, Loader2, Trash2, GitGraph, List, ChevronRight, Edit2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useDialog } from '../contexts/DialogContext';
 import { useCRM } from '../contexts/CRMContext';
 import { usePermissions } from '../hooks/usePermissions';
 import { toast } from 'sonner';
@@ -173,7 +174,13 @@ export default function TeamManagementView() {
   };
 
   const handleCancelInvite = async (inviteId: string) => {
-    if (!window.confirm('Deseja cancelar este convite pendente?')) return;
+    const ok = await confirm({
+      title: 'Cancelar Convite',
+      message: 'Deseja cancelar este convite pendente?',
+      confirmText: 'Sim, cancelar',
+      variant: 'warning'
+    });
+    if (!ok) return;
     
     setIsCancellingInvite(true);
     try {

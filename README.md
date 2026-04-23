@@ -61,9 +61,13 @@ Certifique-se de configurar as seguintes variáveis no seu ambiente Claude Deskt
       <br />💎<br /><strong>Financeiro</strong><br />
       <sub>DRE & SaaS Metrics</sub>
     </td>
-    <td align="center" width="20%">
+    <td align="center" width="16%">
       <br />🛡️<br /><strong>Audit Trails</strong><br />
       <sub>Segurança & Logs</sub>
+    </td>
+    <td align="center" width="16%">
+      <br />✨<br /><strong>Custom Dialogs</strong><br />
+      <sub>Async useDialog()</sub>
     </td>
   </tr>
 </table>
@@ -135,6 +139,7 @@ A comunicação interna foi elevada ao nível de ferramenta de gestão. Mais que
 |---|---|
 | 🛡️ **Dunning Automático** | Régua de cobrança inteligente com abertura de tickets e alertas no chat para inadimplência. |
 | 🕵️ **Audit Trails** | Registro imutável de ações críticas (leads, equipe, financeiro) para segurança. |
+| ✨ **useDialog() v5.0** | Sistema de diálogos premium (alert/confirm/prompt) assíncronos com Framer Motion, substituindo diálogos nativos em 100% do CRM. |
 | ⚡ **Hook Stability** | Correção de erro de renderização no CRMProvider (fix React Error #310). |
 | 🎯 **Minhas Oportunidades** | Filtro exclusivo para SDRs/Executives focarem no próprio pipeline. |
 | ✨ **Proposta 1-Clique** | Geração instantânea de proposta estratégica via WhatsApp diretamente do card. |
@@ -770,7 +775,8 @@ className="bg-gray-100 border-gray-200"
 - [x] 🚀 **v4.6.0 Stability Master (Context Hook Fix & Production Hardening)**
 - [x] 💬 **v4.6.5 Hub Chat Pro (Threads, CRM Linking & Detailed Read Receipts)**
 - [x] 🚀 **v4.6.9 Multimedia & Expressive Media (Stickers, GIFs & Auto-Scheduling)**
-- [ ] 🔮 **v4.7.0 Automations & AI Chat Summary** (Fase 3)
+- [x] 🚀 **v5.0.0 Global Custom Dialog System (useDialog Premium Integration)**
+- [ ] 🔮 **v5.1.0 Automations & AI Chat Summary** (Fase 3)
 
 
 ---

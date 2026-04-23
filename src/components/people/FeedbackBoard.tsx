@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { MessageSquare, Star, Heart, AlertCircle, Plus, Trash2, Shield, Lock, Globe, Users, Megaphone } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, orderBy, limit } from 'firebase/firestore';
-import { useCRM } from '../../contexts/CRMContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useDialog } from '../../contexts/DialogContext';
 import { usePermissions } from '../../hooks/usePermissions';
 import { FeedbackNote } from '../../types/people';
 import { format } from 'date-fns';
@@ -18,6 +18,7 @@ export default function FeedbackBoard({ userId }: FeedbackBoardProps) {
   const { userProfile: currentUser } = useAuth();
   const { hasPermission } = usePermissions();
   const { effectiveOrgId, teamProfiles } = useCRM();
+  const { confirm } = useDialog();
   const [feedbacks, setFeedbacks] = useState<FeedbackNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -108,7 +109,13 @@ export default function FeedbackBoard({ userId }: FeedbackBoardProps) {
   };
 
   const handleRemoveFeedback = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja remover este registro do mural?')) return;
+    const ok = await confirm({
+      title: 'Remover do Mural',
+      message: 'Tem certeza que deseja remover este registro do mural?',
+      confirmText: 'Sim, remover',
+      variant: 'danger'
+    });
+    if (!ok) return;
     try {
       await deleteDoc(doc(db, 'organizations', effectiveOrgId, 'feedbacks', id));
       toast.success('Mural atualizado.');

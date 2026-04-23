@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, X, Loader2, Plus, Upload } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
+import { useDialog } from '../../contexts/DialogContext';
 import { useCRM } from '../../contexts/CRMContext';
 import { db } from '../../lib/firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
@@ -24,6 +25,7 @@ export function GifPickerModal({ isOpen, onClose, onSelect }: GifPickerModalProp
   
   const { userProfile } = useAuth();
   const { effectiveOrgId } = useCRM();
+  const { confirm } = useDialog();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const GIPHY_API_KEY = import.meta.env.VITE_GIPHY_API_KEY;
 
@@ -83,7 +85,13 @@ export function GifPickerModal({ isOpen, onClose, onSelect }: GifPickerModalProp
     e.stopPropagation();
     if (!effectiveOrgId || !userProfile?.uid) return;
 
-    if (!confirm('Deseja excluir esta figurinha?')) return;
+    const ok = await confirm({
+      title: 'Excluir Figurinha',
+      message: 'Deseja excluir esta figurinha?',
+      confirmText: 'Sim, excluir',
+      variant: 'danger'
+    });
+    if (!ok) return;
 
     try {
       await deleteDoc(doc(db, 'organizations', effectiveOrgId, 'users', userProfile.uid, 'stickers', stickerId));

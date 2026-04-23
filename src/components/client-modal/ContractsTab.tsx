@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, FileSignature, FileUp, CheckCircle, Loader2, Trash2, Eye, Link as LinkIcon, Copy } from 'lucide-react';
+import { useDialog } from '../../contexts/DialogContext';
 import { doc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../lib/firebase';
@@ -16,6 +17,7 @@ interface ContractsTabProps {
 }
 
 export default function ContractsTab({ client, user, formData, setFormData, defaultContractText }: ContractsTabProps) {
+  const { confirm } = useDialog();
   const [showNewContractForm, setShowNewContractForm] = useState(false);
   const [newContractType, setNewContractType] = useState<'pdf' | 'text'>('text');
   const [newContractText, setNewContractText] = useState(defaultContractText || '');
@@ -81,7 +83,13 @@ export default function ContractsTab({ client, user, formData, setFormData, defa
   };
 
   const handleDeleteContract = async (contractId: string) => {
-    if (!confirm('Tem absoluta certeza que deseja excluir permanentemente este contrato?')) return;
+    const ok = await confirm({
+      title: 'Excluir Contrato',
+      message: 'Tem absoluta certeza que deseja excluir permanentemente este contrato?',
+      confirmText: 'Sim, excluir permanentemente',
+      variant: 'danger'
+    });
+    if (!ok) return;
     try {
       const updated = (client.contracts || []).filter(c => c.id !== contractId);
       await updateDoc(doc(db, 'users', user.uid, 'clients', client.id), {

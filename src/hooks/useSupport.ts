@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { supportService } from '../services/supportService';
 import { useCRM } from '../contexts/CRMContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useDialog } from '../contexts/DialogContext';
 import { differenceInHours } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -16,6 +17,7 @@ export function useSupport() {
     effectiveOrgId = '', 
     teamProfiles: rawTeamProfiles = [] 
   } = crm || {};
+  const { confirm } = useDialog();
 
   const [supportFilter, setSupportFilter] = useState<SupportFilter>('all');
   const [sortBy, setSortBy] = useState<SupportSort>('sla');
@@ -107,7 +109,13 @@ export function useSupport() {
   };
 
   const removeRequest = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir este chamado?')) return;
+    const ok = await confirm({
+      title: 'Excluir Chamado',
+      message: 'Tem certeza que deseja excluir este chamado?',
+      confirmText: 'Sim, excluir',
+      variant: 'danger'
+    });
+    if (!ok) return;
     try {
       await supportService.deleteRequest(effectiveOrgId, id);
       toast.success('Chamado excluído!');

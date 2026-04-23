@@ -4,6 +4,7 @@ import {
   AlignLeft, AlignCenter, AlignRight, Link2, 
   Maximize2, Minimize2 
 } from 'lucide-react';
+import { useDialog } from '../contexts/DialogContext';
 import { toast } from 'sonner';
 
 interface RichTextEditorProps {
@@ -18,6 +19,7 @@ export interface RichTextEditorHandle {
 
 const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(
   ({ value, onChange, placeholder }, ref) => {
+  const { prompt } = useDialog();
   const editorRef = useRef<HTMLDivElement>(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
 
@@ -65,8 +67,12 @@ const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(
         </div>
 
         <div className="flex items-center gap-1 px-2 border-r border-gray-200 dark:border-white/10">
-          <ToolbarButton onClick={() => {
-            const url = prompt('Cole a URL do link:');
+          <ToolbarButton onClick={async () => {
+            const url = await prompt({
+              title: 'Inserir Link',
+              message: 'Cole a URL do link:',
+              placeholder: 'https://exemplo.com'
+            });
             if(url) executeCommand('createLink', url);
           }} icon={Link2} title="Inserir Link" />
         </div>

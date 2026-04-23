@@ -8,6 +8,7 @@ import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useDialog } from '../../contexts/DialogContext';
 
 interface WikiCommentSectionProps {
   articleId: string;
@@ -17,6 +18,7 @@ export default function WikiCommentSection({ articleId }: WikiCommentSectionProp
   const { user, userProfile } = useAuth();
   const { hasPermission } = usePermissions();
   const { handleAddWikiComment, handleDeleteWikiComment, handleToggleWikiCommentLike, effectiveOrgId } = useCRM();
+  const { confirm } = useDialog();
   const [comments, setComments] = useState<WikiComment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -128,8 +130,14 @@ export default function WikiCommentSection({ articleId }: WikiCommentSectionProp
                   {/* Moderation */}
                   {(hasPermission('MANAGE_WIKI') || comment.userId === user?.uid) && (
                     <button 
-                      onClick={() => {
-                        if(confirm('Excluir este comentário?')) {
+                      onClick={async () => {
+                        const ok = await confirm({
+                          title: 'Excluir Comentário',
+                          message: 'Tem certeza que deseja remover permanentemente este comentário?',
+                          confirmText: 'Excluir',
+                          variant: 'danger'
+                        });
+                        if(ok) {
                           handleDeleteWikiComment(articleId, comment.id);
                         }
                       }}

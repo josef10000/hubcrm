@@ -7,6 +7,7 @@ import {
   Target, ChevronDown, CheckCircle2, Circle, Star, Wallet, TrendingUp, Clock, Plane, AlertTriangle, CalendarDays
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useDialog } from '../contexts/DialogContext';
 import { useCRM } from '../contexts/CRMContext';
 import AvailabilityCalendar from '../components/people/AvailabilityCalendar';
 import { db } from '../lib/firebase';
@@ -50,6 +51,7 @@ export default function ProfileView() {
   const { uid } = useParams();
   const { user, userProfile: currentUserProfile, refreshProfile } = useAuth();
   const { supportRequests, vacations, handleSaveVacationRequest, handleDeleteVacationRequest, teamProfiles } = useCRM();
+  const { confirm } = useDialog();
   const navigate = useNavigate();
 
   // Métrica CSAT Individual (Segura)
@@ -86,9 +88,7 @@ export default function ProfileView() {
     description: ''
   });
 
-  const [showDeleteVacationConfirm, setShowDeleteVacationConfirm] = useState(false);
-  const [vacationToDelete, setVacationToDelete] = useState<string | null>(null);
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form State
@@ -191,7 +191,13 @@ export default function ProfileView() {
 
   const handleRemoveAsset = async (assetId: string) => {
     if (!profile || !uid) return;
-    if (!window.confirm('Deseja remover este equipamento deste colaborador?')) return;
+    const ok = await confirm({
+      title: 'Remover Equipamento',
+      message: 'Deseja remover este equipamento deste colaborador?',
+      confirmText: 'Sim, remover',
+      variant: 'danger'
+    });
+    if (!ok) return;
 
     try {
       const token = await user?.getIdToken();
@@ -277,14 +283,21 @@ export default function ProfileView() {
     }
   };
 
-  const confirmDeleteVacation = async () => {
-    if (!vacationToDelete) return;
+  const confirmDeleteVacation = async (vacationId: string) => {
+    const ok = await confirm({
+      title: 'Excluir Registro de Ausência',
+      message: 'Esta ação removerá permanentemente esta ausência do histórico do colaborador e de gestão. Deseja continuar?',
+      confirmText: 'Sim, excluir',
+      variant: 'danger'
+    });
+    if (!ok) return;
+
     try {
-      await handleDeleteVacationRequest(vacationToDelete);
-      setShowDeleteVacationConfirm(false);
-      setVacationToDelete(null);
+      await handleDeleteVacationRequest(vacationId);
+      toast.success('Ausência excluída com sucesso!');
     } catch (e) {
       console.error("Erro ao excluir ausência no Perfil:", e);
+      toast.error('Erro ao excluir ausência');
     }
   };
 
@@ -963,7 +976,7 @@ export default function ProfileView() {
                                      </div>
                                      {isManagement && (
                                        <button 
-                                         onClick={() => { setVacationToDelete(v.id); setShowDeleteVacationConfirm(true); }}
+                                         onClick={() => confirmDeleteVacation(v.id)}
                                          className="p-2 text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
                                          title="Remover do histórico"
                                        >
@@ -1184,18 +1197,6 @@ export default function ProfileView() {
           onSuccess={handleRefresh}
         />
 
-        {showDeleteVacationConfirm && (
-           <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[110] flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-[#0a0a0a] rounded-[2rem] p-8 text-center max-w-sm shadow-2xl border border-white/5">
-                 <div className="p-4 bg-red-500/10 rounded-full w-fit mx-auto mb-4">
-                    <Trash2 className="text-red-500" size={32} />
-                 </div>
-                 <h3 className="font-bold mb-2">Excluir Registro?</h3>
-                 <p className="text-xs text-gray-500 mb-6">Esta ação removerá permanentemente esta ausência do histórico do colaborador e de gestão.</p>
-                 <div className="flex gap-2"><button onClick={() => setShowDeleteVacationConfirm(false)} className="flex-1 py-3 border border-white/10 rounded-xl hover:bg-white/5 transition-colors">Cancelar</button><button onClick={confirmDeleteVacation} className="flex-1 py-3 bg-red-500 text-white rounded-xl font-bold hover:scale-105 transition-transform">Sim, Excluir</button></div>
-              </div>
-           </div>
-        )}
       </div>
     </div>
   );

@@ -52,6 +52,7 @@ import WaitingInviteView from './views/WaitingInviteView';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { UIProvider, useUI } from './contexts/UIContext';
 import { CRMProvider, useCRM } from './contexts/CRMContext';
+import { DialogProvider } from './contexts/DialogContext';
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { usePermissions } from './hooks/usePermissions';
 import ClientPortal from './components/ClientPortal';
@@ -531,17 +532,19 @@ export default function App() {
       )}
       <Toaster position="top-right" theme="dark" />
       <Analytics />
-      <AuthProvider>
-        <Routes>
-          <Route path="/cliente/:orgId/:clientId" element={<ClientPortal />} />
-          <Route path="/onboarding/:orgId" element={<OnboardingForm />} />
-          <Route path="/onboarding/:orgId/:clientId" element={<OnboardingForm />} />
-          <Route path="/contrato/:orgId/:clientId/:contractId" element={<ContractSignView />} />
-          <Route path="/contratar/:orgId" element={<PublicCheckoutPage />} />
-          <Route path="/convite/:token" element={<AcceptInviteView />} />
-          <Route path="*" element={<PrivateApp />} />
-        </Routes>
-      </AuthProvider>
+      <DialogProvider>
+        <AuthProvider>
+          <Routes>
+            <Route path="/cliente/:orgId/:clientId" element={<ClientPortal />} />
+            <Route path="/onboarding/:orgId" element={<OnboardingForm />} />
+            <Route path="/onboarding/:orgId/:clientId" element={<OnboardingForm />} />
+            <Route path="/contrato/:orgId/:clientId/:contractId" element={<ContractSignView />} />
+            <Route path="/contratar/:orgId" element={<PublicCheckoutPage />} />
+            <Route path="/convite/:token" element={<AcceptInviteView />} />
+            <Route path="*" element={<PrivateApp />} />
+          </Routes>
+        </AuthProvider>
+      </DialogProvider>
     </BrowserRouter>
   );
 }

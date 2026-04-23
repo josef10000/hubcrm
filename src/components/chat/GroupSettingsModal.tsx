@@ -3,6 +3,7 @@ import { X, Users, Edit3, Trash2, Shield, UserMinus, Plus } from 'lucide-react';
 import { Chat } from '../../types/chat.types';
 import { useCRM } from '../../contexts/CRMContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useDialog } from '../../contexts/DialogContext';
 import { db } from '../../lib/firebase';
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
@@ -16,6 +17,7 @@ interface GroupSettingsModalProps {
 export default function GroupSettingsModal({ isOpen, onClose, chat }: GroupSettingsModalProps) {
   const { teamProfiles, effectiveOrgId } = useCRM();
   const { userProfile } = useAuth();
+  const { confirm } = useDialog();
   const [name, setName] = useState(chat.name);
   const [isEditingName, setIsEditingName] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -65,7 +67,13 @@ export default function GroupSettingsModal({ isOpen, onClose, chat }: GroupSetti
   };
 
   const handleDeleteGroup = async () => {
-    if (!window.confirm('Tem certeza que deseja EXCLUIR este grupo para TODOS? Esta ação é irreversível.')) return;
+    const ok = await confirm({
+      title: 'Excluir Grupo',
+      message: 'Tem certeza que deseja EXCLUIR este grupo para TODOS? Esta ação é irreversível.',
+      confirmText: 'Sim, excluir permanentemente',
+      variant: 'danger'
+    });
+    if (!ok) return;
     if (!effectiveOrgId || !isAdmin) return;
 
     setLoading(true);

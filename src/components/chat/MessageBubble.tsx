@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
 import { ChatMessage } from '../../types/chat.types';
 import { useAuth } from '../../contexts/AuthContext';
+import { useDialog } from '../../contexts/DialogContext';
 import { useCRM } from '../../contexts/CRMContext';
 import { formatChatTime, formatChatDateTime, highlightMentions } from '../../helpers/chatHelpers';
 import { ReminderModal } from './ReminderModal';
@@ -35,6 +36,7 @@ export default function MessageBubble({
 }: MessageBubbleProps) {
   const { userProfile } = useAuth();
   const { teamProfiles } = useCRM();
+  const { confirm } = useDialog();
   const navigate = useNavigate();
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showReadBy, setShowReadBy] = useState(false);
@@ -49,7 +51,13 @@ export default function MessageBubble({
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm('Deseja apagar esta mensagem?')) {
+    const ok = await confirm({
+      title: 'Apagar Mensagem',
+      message: 'Deseja apagar esta mensagem permanentemente?',
+      confirmText: 'Sim, apagar',
+      variant: 'danger'
+    });
+    if (ok) {
       await onDelete?.(message.id);
     }
   };

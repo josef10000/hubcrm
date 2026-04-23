@@ -7,6 +7,7 @@ import { Appointment, AvailabilityBlock } from '../../types/people';
 import { useCRM } from '../../contexts/CRMContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { clsx } from 'clsx';
+import { useDialog } from '../../contexts/DialogContext';
 
 interface AvailabilityCalendarProps {
   userId: string;
@@ -20,6 +21,7 @@ const END_HOUR = 22; // Agora até as 21:00-21:30
 export default function AvailabilityCalendar({ userId, isOwner }: AvailabilityCalendarProps) {
   const { userProfile } = useAuth();
   const { appointments, availabilityBlocks, handleRequestAppointment, handleUpdateAppointmentStatus, handleSaveAvailabilityBlock, handleDeleteAvailabilityBlock } = useCRM();
+  const { alert } = useDialog();
   
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -78,7 +80,11 @@ export default function AvailabilityCalendar({ userId, isOwner }: AvailabilityCa
     // Validar antecedência de 24h para agendamentos
     const minTime = addDays(new Date(), 1);
     if (!isAfter(slotDate, minTime)) {
-      alert('Respeite a antecedência mínima de 24h para novos agendamentos.');
+      alert({
+        title: 'Horário Indisponível',
+        message: 'Respeite a antecedência mínima de 24h para novos agendamentos com a equipe.',
+        variant: 'warning'
+      });
       return;
     }
 

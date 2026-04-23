@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Plus, Edit2, Trash2, CheckCircle, X, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useDialog } from '../../contexts/DialogContext';
 import { usePermissions } from '../../hooks/usePermissions';
 import { db } from '../../lib/firebase';
 import { collection, query, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
@@ -17,6 +18,7 @@ const PERMISSION_GROUPS: { name: string; keys: AppPermission[] }[] = [
 export default function RoleManagement() {
   const { userProfile } = useAuth();
   const { hasPermission } = usePermissions();
+  const { confirm } = useDialog();
   const [roles, setRoles] = useState<CustomRole[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -91,11 +93,17 @@ export default function RoleManagement() {
   };
 
   const handleDelete = async (role: CustomRole) => {
-    if (role.isDefault) {
       toast.error('Cargos padrão não podem ser excluídos');
       return;
     }
-    if (!confirm(`Deseja realmente excluir o cargo ${role.name}? Usuários com este cargo podem perder acesso.`)) return;
+    
+    const ok = await confirm({
+      title: 'Excluir Cargo',
+      message: `Deseja realmente excluir o cargo ${role.name}? Usuários com este cargo podem perder acesso.`,
+      confirmText: 'Sim, excluir',
+      variant: 'danger'
+    });
+    if (!ok) return;
 
     try {
       await deleteDoc(doc(db, `organizations/${userProfile!.orgId}/roles`, role.id));

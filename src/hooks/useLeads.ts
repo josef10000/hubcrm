@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useCRM } from '../contexts/CRMContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useDialog } from '../contexts/DialogContext';
 import { leadService } from '../services/leadService';
 import { Lead, LeadStatus } from '../types';
 import { toast } from 'sonner';
@@ -12,6 +13,7 @@ export function useLeads() {
   const { user } = useAuth();
   const { hasPermission } = usePermissions();
   const { leads: rawLeads = [], effectiveOrgId = '', userProfile, teamProfiles, tags, orgRoles } = useCRM();
+  const { confirm } = useDialog();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filterSource, setFilterSource] = useState('all');
@@ -107,7 +109,13 @@ export function useLeads() {
       toast.error('Apenas administradores podem excluir leads.');
       return;
     }
-    if (!confirm('Excluir este lead permanentemente?')) return;
+    const ok = await confirm({
+      title: 'Excluir Lead',
+      message: 'Excluir este lead permanentemente?',
+      confirmText: 'Sim, excluir',
+      variant: 'danger'
+    });
+    if (!ok) return;
     try {
       await leadService.deleteLead(effectiveOrgId, leadId);
       toast.success('Lead excluído');
@@ -126,7 +134,13 @@ export function useLeads() {
       return;
     }
 
-    if (!confirm(`Encotrados ${ghostLeads.length} leads fantasmas. Deseja excluí-los?`)) return;
+    const ok = await confirm({
+      title: 'Limpar Leads Fantasmas',
+      message: `Encontrados ${ghostLeads.length} leads fantasmas. Deseja excluí-los?`,
+      confirmText: 'Sim, limpar',
+      variant: 'warning'
+    });
+    if (!ok) return;
 
     try {
       await leadService.cleanupGhostLeads(effectiveOrgId, ghostLeads);

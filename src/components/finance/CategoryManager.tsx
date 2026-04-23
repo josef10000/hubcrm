@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useCRM } from '../../contexts/CRMContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useDialog } from '../../contexts/DialogContext';
 import { db } from '../../lib/firebase';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { Plus, Trash2, Tag, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
@@ -10,6 +11,7 @@ import type { TransactionCategory, TransactionType } from '../../types';
 export default function CategoryManager() {
   const { user } = useAuth();
   const { transactionCategories, effectiveOrgId } = useCRM();
+  const { confirm } = useDialog();
   const [isAdding, setIsAdding] = useState(false);
   const [newName, setNewName] = useState('');
   const [newType, setNewType] = useState<TransactionType>('EXPENSE');
@@ -41,7 +43,13 @@ export default function CategoryManager() {
 
   const handleDelete = async (id: string) => {
     if (!user) return;
-    if (confirm('Tem certeza que deseja excluir esta categoria? Ela não será mais exibida para novas transações.')) {
+    const ok = await confirm({
+      title: 'Excluir Categoria',
+      message: 'Tem certeza que deseja excluir esta categoria? Ela não será mais exibida para novas transações.',
+      confirmText: 'Sim, excluir',
+      variant: 'danger'
+    });
+    if (ok) {
       try {
         await deleteDoc(doc(db, 'organizations', effectiveOrgId, 'transactionCategories', id));
         toast.success('Categoria excluída.');

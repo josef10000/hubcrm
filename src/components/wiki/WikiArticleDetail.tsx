@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import WikiCommentSection from './WikiCommentSection';
 import { usePermissions } from '../../hooks/usePermissions';
+import { useDialog } from '../../contexts/DialogContext';
 
 interface WikiArticleDetailProps {
   article: WikiArticle;
@@ -22,6 +23,7 @@ export default function WikiArticleDetail({ article, onBack, onEdit }: WikiArtic
   const { user, userProfile } = useAuth();
   const { hasPermission } = usePermissions();
   const { handleToggleWikiStar, handleDeleteWikiArticle, handleSaveWikiArticle } = useCRM();
+  const { confirm } = useDialog();
 
   const isStarred = article.stars?.includes(user?.uid || '');
   const canManage = hasPermission('MANAGE_WIKI') || article.authorId === user?.uid;
@@ -71,8 +73,14 @@ export default function WikiArticleDetail({ article, onBack, onEdit }: WikiArtic
                 <Edit2 className="w-5 h-5" />
               </button>
               <button 
-                onClick={() => {
-                   if(confirm('Tem certeza que deseja excluir este artigo?')) {
+                onClick={async () => {
+                   const ok = await confirm({
+                     title: 'Excluir Artigo',
+                     message: `Deseja realmente excluir o artigo "${article.title}"? Esta ação é irreversível e o conteúdo será perdido para toda a equipe.`,
+                     confirmText: 'Sim, excluir permanentemente',
+                     variant: 'danger'
+                   });
+                   if(ok) {
                        handleDeleteWikiArticle(article.id);
                        onBack();
                    }

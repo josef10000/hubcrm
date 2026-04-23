@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Tag as TagIcon, Plus, Trash2, X, Check, Palette } from 'lucide-react';
 import { useCRM } from '../../contexts/CRMContext';
+import { useDialog } from '../../contexts/DialogContext';
 import { collection, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { toast } from 'sonner';
@@ -23,6 +24,7 @@ const PRESET_COLORS = [
 
 export default function TagManager() {
   const { tags, effectiveOrgId } = useCRM();
+  const { confirm } = useDialog();
   const [isAdding, setIsAdding] = useState(false);
   const [newTag, setNewTag] = useState({ name: '', color: PRESET_COLORS[0] });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,7 +53,14 @@ export default function TagManager() {
   };
 
   const handleDeleteTag = async (id: string) => {
-    if (!effectiveOrgId || !window.confirm('Tem certeza que deseja excluir esta tag? Ela será removida de todos os leads e clientes.')) return;
+    if (!effectiveOrgId) return;
+    const ok = await confirm({
+      title: 'Excluir Etiqueta',
+      message: 'Tem certeza que deseja excluir esta tag? Ela será removida de todos os leads e clientes.',
+      confirmText: 'Sim, excluir',
+      variant: 'danger'
+    });
+    if (!ok) return;
 
     try {
       await deleteDoc(doc(db, 'organizations', effectiveOrgId, 'tags', id));
