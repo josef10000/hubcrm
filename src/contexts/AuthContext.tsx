@@ -157,12 +157,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
                 // 2. Se não houver convite, entra em modo AGUARDANDO CONVITE
                 const readOnlyRole = defaultRoles.find(r => r.id === 'ROLE_READONLY') || defaultRoles[6] || defaultRoles[defaultRoles.length - 1];
+                
+                // EXCEÇÃO PARA PROPRIETÁRIO NO BOOTSTRAP
+                const isOwner = u.email === 'jfs102019@hotmail.com';
+                const orgIdToUse = isOwner ? u.uid : 'pending';
+                const roleToUse = isOwner ? (defaultRoles.find(r => r.id === 'ROLE_ADMIN') || defaultRoles[0]) : readOnlyRole;
+
                 const newProfile: UserProfile = {
                   uid: u.uid,
                   email: u.email || '',
-                  displayName: u.displayName || 'Usuário',
-                  orgId: 'pending', 
-                  role: readOnlyRole,
+                  displayName: u.displayName || (isOwner ? 'Proprietário' : 'Usuário'),
+                  orgId: orgIdToUse, 
+                  role: roleToUse,
                   createdAt: Date.now()
                 };
                 
