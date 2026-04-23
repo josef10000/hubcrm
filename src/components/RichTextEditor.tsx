@@ -126,6 +126,8 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
         }
         .prose img {
           max-width: 100%;
+          height: auto;
+          display: block;
           border-radius: 1rem;
           margin: 1.5rem 0;
           box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
