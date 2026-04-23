@@ -93,19 +93,21 @@ export default function RoleManagement() {
   };
 
   const handleDelete = async (role: CustomRole) => {
+    if (role.isDefault) {
       toast.error('Cargos padrão não podem ser excluídos');
       return;
     }
     
-    const ok = await confirm({
-      title: 'Excluir Cargo',
-      message: `Deseja realmente excluir o cargo ${role.name}? Usuários com este cargo podem perder acesso.`,
-      confirmText: 'Sim, excluir',
-      variant: 'danger'
-    });
-    if (!ok) return;
-
     try {
+      const ok = await confirm({
+        title: 'Excluir Cargo',
+        message: `Deseja realmente excluir o cargo ${role.name}? Usuários com este cargo podem perder acesso.`,
+        confirmText: 'Sim, excluir',
+        variant: 'danger'
+      });
+      
+      if (!ok) return;
+
       await deleteDoc(doc(db, `organizations/${userProfile!.orgId}/roles`, role.id));
       toast.success('Cargo excluído com sucesso!');
       fetchRoles();

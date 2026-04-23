@@ -779,9 +779,19 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     },
     handleGenerateCommission,
     pendingVacationsCount: vacations.filter(v => v.status === 'Pendente').length,
-    isChurnRisk: clientActions.isChurnRisk, isComboNearRenewal: clientActions.isComboNearRenewal,
-    effectiveOrgId, userProfile, vacations, teamProfiles, commissions, tags, wikiArticles, offerActions, orgRoles,
-    appointments, availabilityBlocks
+    isChurnRisk: clientActions.isChurnRisk,
+    isComboNearRenewal: clientActions.isComboNearRenewal,
+    effectiveOrgId,
+    userProfile,
+    vacations,
+    teamProfiles,
+    commissions,
+    tags,
+    wikiArticles,
+    offerActions,
+    orgRoles,
+    appointments,
+    availabilityBlocks
   };
 
   return <CRMContext.Provider value={value}>{children}</CRMContext.Provider>;

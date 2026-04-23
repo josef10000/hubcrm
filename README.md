@@ -776,6 +776,7 @@ className="bg-gray-100 border-gray-200"
 - [x] 💬 **v4.6.5 Hub Chat Pro (Threads, CRM Linking & Detailed Read Receipts)**
 - [x] 🚀 **v4.6.9 Multimedia & Expressive Media (Stickers, GIFs & Auto-Scheduling)**
 - [x] 🚀 **v5.0.0 Global Custom Dialog System (useDialog Premium Integration)**
+- [x] 🛡️ **v5.0.1 Build Stability (Fix RoleManagement Syntax & Async Context)**
 - [ ] 🔮 **v5.1.0 Automations & AI Chat Summary** (Fase 3)
 
 
