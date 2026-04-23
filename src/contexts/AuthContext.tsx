@@ -75,9 +75,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 });
               }
               
-              // REGRA DE SUPER-ADMIN: Garante que o proprietário sempre seja Administrador em memória
+              // REGRA DE SUPER-ADMIN: Garante que o proprietário sempre tenha Administrador em memória
               if (u.email === 'jfs102019@hotmail.com') {
-                const orgIdToUse = dataProfile.orgId || u.uid;
+                // Se o orgId estiver 'pending' ou vazio, forçamos o uso do UID do administrador como orgId principal
+                const orgIdToUse = (dataProfile.orgId && dataProfile.orgId !== 'pending') ? dataProfile.orgId : u.uid;
                 const adminRole = defaultRoles.find(r => r.id === 'ROLE_ADMIN') || defaultRoles[0];
                 const updatedProfile: UserProfile = { ...dataProfile, role: adminRole, orgId: orgIdToUse };
                 setUserProfile(updatedProfile);
@@ -299,7 +300,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Garantir regra de super-admin
         if (user.email === 'jfs102019@hotmail.com') {
           const adminRole = defaultRoles.find(r => r.id === 'ROLE_ADMIN') || defaultRoles[0];
-          setUserProfile({ ...data, role: adminRole, orgId: data.orgId || user.uid });
+          const orgIdToUse = (data.orgId && data.orgId !== 'pending') ? data.orgId : user.uid;
+          setUserProfile({ ...data, role: adminRole, orgId: orgIdToUse });
         } else {
           setUserProfile(data);
         }
