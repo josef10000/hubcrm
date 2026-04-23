@@ -16,7 +16,7 @@ interface WikiCommentSectionProps {
 export default function WikiCommentSection({ articleId }: WikiCommentSectionProps) {
   const { user, userProfile } = useAuth();
   const { hasPermission } = usePermissions();
-  const { handleAddWikiComment, effectiveOrgId } = useCRM();
+  const { handleAddWikiComment, handleDeleteWikiComment, handleToggleWikiCommentLike, effectiveOrgId } = useCRM();
   const [comments, setComments] = useState<WikiComment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -91,44 +91,59 @@ export default function WikiCommentSection({ articleId }: WikiCommentSectionProp
 
       {/* Comments List */}
       <div className="space-y-6">
-        {comments.map(comment => (
-          <div key={comment.id} className="flex gap-4 group">
-            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center shrink-0 overflow-hidden border border-white/10 shadow-sm">
-              {comment.userPhoto ? (
-                <img src={comment.userPhoto} alt={comment.userName} className="w-full h-full object-cover" />
-              ) : (
-                <UserIcon className="w-5 h-5 text-gray-400" />
-              )}
-            </div>
-            <div className="flex-1">
-              <div className="bg-white/5 border border-white/10 p-5 rounded-2xl rounded-tl-none group-hover:bg-white/[0.07] transition-all">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-semibold text-white text-sm">{comment.userName}</span>
-                  <span className="text-xs text-gray-500">
-                    {formatDistanceToNow(comment.createdAt, { addSuffix: true, locale: ptBR })}
-                  </span>
-                </div>
-                <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
-                  {comment.text}
-                </p>
-              </div>
-              
-              <div className="flex items-center gap-4 mt-2 ml-1">
-                <button className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-primary-500 transition-colors">
-                  <Star className="w-3.5 h-3.5" />
-                  Gostei
-                </button>
-                {/* Moderation */}
-                {(hasPermission('MANAGE_WIKI') || comment.userId === user?.uid) && (
-                  <button className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Trash2 className="w-3.5 h-3.5" />
-                    Excluir
-                  </button>
+        {comments.map(comment => {
+          const isLiked = comment.likedBy?.includes(user?.uid || '');
+          
+          return (
+            <div key={comment.id} className="flex gap-4 group">
+              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center shrink-0 overflow-hidden border border-white/10 shadow-sm">
+                {comment.userPhoto ? (
+                  <img src={comment.userPhoto} alt={comment.userName} className="w-full h-full object-cover" />
+                ) : (
+                  <UserIcon className="w-5 h-5 text-gray-400" />
                 )}
               </div>
+              <div className="flex-1">
+                <div className="bg-white/5 border border-white/10 p-5 rounded-2xl rounded-tl-none group-hover:bg-white/[0.07] transition-all">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-semibold text-white text-sm">{comment.userName}</span>
+                    <span className="text-xs text-gray-500">
+                      {formatDistanceToNow(comment.createdAt, { addSuffix: true, locale: ptBR })}
+                    </span>
+                  </div>
+                  <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
+                    {comment.text}
+                  </p>
+                </div>
+                
+                <div className="flex items-center gap-4 mt-2 ml-1">
+                  <button 
+                    onClick={() => handleToggleWikiCommentLike(articleId, comment.id)}
+                    className={`flex items-center gap-1.5 text-xs transition-colors ${isLiked ? 'text-primary-500 font-bold' : 'text-gray-500 hover:text-primary-500'}`}
+                  >
+                    <Star className={`w-3.5 h-3.5 ${isLiked ? 'fill-primary-500' : ''}`} />
+                    <span>{comment.likedBy?.length || 0}</span>
+                    {isLiked ? 'Gostei' : 'Dar estrela'}
+                  </button>
+                  {/* Moderation */}
+                  {(hasPermission('MANAGE_WIKI') || comment.userId === user?.uid) && (
+                    <button 
+                      onClick={() => {
+                        if(confirm('Excluir este comentário?')) {
+                          handleDeleteWikiComment(articleId, comment.id);
+                        }
+                      }}
+                      className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Excluir
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {comments.length === 0 && (
           <div className="text-center py-12 bg-white/5 border border-dashed border-white/10 rounded-3xl">

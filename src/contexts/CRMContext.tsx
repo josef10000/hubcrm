@@ -121,6 +121,8 @@ interface CRMContextType {
   handleDeleteWikiArticle: (articleId: string) => Promise<void>;
   handleToggleWikiStar: (articleId: string) => Promise<void>;
   handleAddWikiComment: (articleId: string, comment: Partial<WikiComment>) => Promise<void>;
+  handleDeleteWikiComment: (articleId: string, commentId: string) => Promise<void>;
+  handleToggleWikiCommentLike: (articleId: string, commentId: string) => Promise<void>;
   handleMarkWikiArticleAsRead: (articleId: string) => Promise<void>;
   handleCreateSupportRequest: (requestData: any) => Promise<void>;
   handleSaveVacationRequest: (vacationData: Partial<VacationPeriod>) => Promise<void>;
@@ -542,12 +544,41 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
           ...comment,
           id: commentId,
           createdAt: Date.now(),
-          stars: 0
+          likedBy: [] // Usamos array de IDs para controle preciso
         });
         toast.success('Comentário adicionado!');
       } catch (e) {
         console.error('Error adding comment to Firestore:', e);
         toast.error('Erro ao registrar comentário no banco de dados.');
+      }
+    },
+    handleDeleteWikiComment: async (articleId: string, commentId: string) => {
+      if (!effectiveOrgId) return;
+      try {
+        await deleteDoc(doc(db, 'organizations', effectiveOrgId, 'wikiArticles', articleId, 'comments', commentId));
+        toast.success('Comentário removido.');
+      } catch (e) {
+        console.error('Error deleting wiki comment:', e);
+        toast.error('Erro ao excluir comentário.');
+      }
+    },
+    handleToggleWikiCommentLike: async (articleId: string, commentId: string) => {
+      if (!effectiveOrgId || !user) return;
+      try {
+        const commentRef = doc(db, 'organizations', effectiveOrgId, 'wikiArticles', articleId, 'comments', commentId);
+        const commentSnap = await (await import('firebase/firestore')).getDoc(commentRef);
+        
+        if (commentSnap.exists()) {
+          const data = commentSnap.data();
+          const likedBy = data.likedBy || [];
+          const newLikedBy = likedBy.includes(user.uid)
+            ? likedBy.filter((uid: string) => uid !== user.uid)
+            : [...likedBy, user.uid];
+          
+          await setDoc(commentRef, { likedBy: newLikedBy }, { merge: true });
+        }
+      } catch (e) {
+        console.error('Error toggling comment like:', e);
       }
     },
     handleMarkWikiArticleAsRead: async (articleId: string) => {
@@ -749,6 +780,8 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     handleGenerateCommission,
     pendingVacationsCount: vacations.filter(v => v.status === 'Pendente').length,
     isChurnRisk: clientActions.isChurnRisk, isComboNearRenewal: clientActions.isComboNearRenewal,
+    handleDeleteWikiComment: value.handleDeleteWikiComment,
+    handleToggleWikiCommentLike: value.handleToggleWikiCommentLike,
     effectiveOrgId, userProfile, vacations, teamProfiles, commissions, tags, wikiArticles, offerActions, orgRoles,
     appointments, availabilityBlocks
   };
