@@ -406,12 +406,14 @@ async function handleUpdateSkills(req: VercelRequest, res: VercelResponse, uid: 
   const isSelf = uid === targetUid;
   const senderSnap = await db.collection('profiles').doc(uid).get();
   const senderData = senderSnap.data();
+  const isOwner = senderData?.email === 'jfs102019@hotmail.com';
+  
   // Aceita tanto o nome amigável quanto o ID da role para maior compatibilidade
   const roleName = typeof senderData?.role === 'object' ? senderData.role.name : senderData?.role;
-  const isManagement = ['Administrador', 'Gerente', 'People & Culture'].includes(roleName || '');
+  const isManagement = isOwner || ['Administrador', 'Gerente', 'People & Culture'].includes(roleName || '');
 
-  // Permitir auto-edição apenas se for Administrador (Dono)
-  if (isSelf && roleName !== 'Administrador') {
+  // Se for o dono, ignoramos a trava de isSelf
+  if (isSelf && !isOwner && roleName !== 'Administrador') {
     return res.status(403).json({ error: 'O colaborador não pode atualizar sua própria matriz de competências' });
   }
   
