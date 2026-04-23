@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { db } from '../_utils/firebase.js';
-import * as admin from 'firebase-admin';
+import { getFirebaseAdmin, db } from '../_utils/firebase.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { secret } = req.query;
+  const admin = getFirebaseAdmin();
 
   // 1. Validação de Segurança
   if (secret !== process.env.CRON_SECRET) {
