@@ -77,8 +77,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               
               // REGRA DE SUPER-ADMIN: Garante que o proprietário sempre tenha Administrador em memória
               if (u.email === 'jfs102019@hotmail.com') {
-                // Se o orgId estiver 'pending' ou vazio, forçamos o uso do UID do administrador como orgId principal
-                const orgIdToUse = (dataProfile.orgId && dataProfile.orgId !== 'pending') ? dataProfile.orgId : u.uid;
+                // Prioridade: 1. orgId do banco (se não for pending) | 2. 'hubcrm' (ID padrão) | 3. UID do usuário (emergência)
+                const orgIdToUse = (dataProfile.orgId && dataProfile.orgId !== 'pending') 
+                  ? dataProfile.orgId 
+                  : (dataProfile.orgId === 'pending' ? 'hubcrm' : u.uid);
+                  
                 const adminRole = defaultRoles.find(r => r.id === 'ROLE_ADMIN') || defaultRoles[0];
                 const updatedProfile: UserProfile = { ...dataProfile, role: adminRole, orgId: orgIdToUse };
                 setUserProfile(updatedProfile);
@@ -160,7 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 
                 // EXCEÇÃO PARA PROPRIETÁRIO NO BOOTSTRAP
                 const isOwner = u.email === 'jfs102019@hotmail.com';
-                const orgIdToUse = isOwner ? u.uid : 'pending';
+                const orgIdToUse = isOwner ? 'hubcrm' : 'pending';
                 const roleToUse = isOwner ? (defaultRoles.find(r => r.id === 'ROLE_ADMIN') || defaultRoles[0]) : readOnlyRole;
 
                 const newProfile: UserProfile = {
@@ -306,7 +309,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Garantir regra de super-admin
         if (user.email === 'jfs102019@hotmail.com') {
           const adminRole = defaultRoles.find(r => r.id === 'ROLE_ADMIN') || defaultRoles[0];
-          const orgIdToUse = (data.orgId && data.orgId !== 'pending') ? data.orgId : user.uid;
+          const orgIdToUse = (data.orgId && data.orgId !== 'pending') ? data.orgId : 'hubcrm';
           setUserProfile({ ...data, role: adminRole, orgId: orgIdToUse });
         } else {
           setUserProfile(data);
