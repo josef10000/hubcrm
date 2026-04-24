@@ -8,8 +8,8 @@ import { toast, Toaster } from 'sonner';
 import SupportSatisfactionModal from './SupportSatisfactionModal';
 
 export default function ClientPortal() {
-  const { orgId, clientId } = useParams<{ orgId: string; clientId: string }>();
   const [client, setClient] = useState<any>(null);
+  const [activeClientId, setActiveClientId] = useState<string | null>(null);
   const [paymentsHistory, setPaymentsHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -138,14 +138,19 @@ export default function ClientPortal() {
       setLoading(false);
       return;
     }
+    setActiveClientId(clientId);
+  }, [orgId, clientId]);
+
+  useEffect(() => {
+    if (!orgId || !activeClientId) return;
 
     const loadData = async () => {
       try {
-        const docRef = doc(db, 'organizations', orgId, 'clients', clientId);
+        const docRef = doc(db, 'organizations', orgId, 'clients', activeClientId);
         const docSnap = await getDoc(docRef);
 
         if (!docSnap.exists()) {
-          setError("Cliente não encontrado.");
+          setError("Dados não encontrados.");
           setLoading(false);
           return;
         }
@@ -153,54 +158,44 @@ export default function ClientPortal() {
         const mainData = { id: docSnap.id, ...docSnap.data() } as any;
         setClient(mainData);
 
-        // Listen for all cards of this client (Multi-card Support)
+        // Listen for all cards of this client (Identity Aggregation)
         const clientsRef = collection(db, 'organizations', orgId, 'clients');
         
-        // Buscamos todos os cards que tenham o MESMO WhatsApp OU o MESMO E-mail
-        // Como o Firestore não tem um OR global simples para coleções grandes sem índices, 
-        // vamos buscar pelo WhatsApp e complementar se necessário.
-        const q = query(clientsRef, where('whatsapp', '==', mainData.whatsapp));
+        // Buscamos todos os cards. Para ser resiliente, buscamos por WhatsApp e Email separadamente e unimos no código.
+        const qWhatsapp = query(clientsRef, where('whatsapp', '==', mainData.whatsapp));
+        const qEmail = query(clientsRef, where('email', '==', mainData.email));
+
+        const [snapW, snapE] = await Promise.all([getDocs(qWhatsapp), getDocs(qEmail)]);
         
-        const unsubscribeMulti = onSnapshot(q, async (snapshot) => {
-          let linkedClients = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as any));
-          
-          // Se tiver e-mail, vamos garantir que buscamos cards por e-mail também caso o whatsapp mude
-          if (mainData.email) {
-            const qEmail = query(clientsRef, where('email', '==', mainData.email));
-            const emailSnap = await getDocs(qEmail);
-            const emailClients = emailSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
-            
-            // Merge sem duplicatas
-            const existingIds = new Set(linkedClients.map(c => c.id));
-            emailClients.forEach(c => {
-              if (!existingIds.has(c.id)) linkedClients.push(c);
-            });
-          }
-
-          setAllLinkedClients(linkedClients);
-          
-          // Aggregate Payments
-          const aggregatedPayments: any[] = [];
-          for (const c of linkedClients) {
-            if (c.asaasCustomerId) {
-               try {
-                const res = await fetch(`/api/asaas/payments?customer=${c.asaasCustomerId}`);
-                if (res.ok) {
-                  const data = await res.json();
-                  const payments = data.data || [];
-                  payments.forEach((p: any) => {
-                    p.planName = c.plan || 'Serviço';
-                  });
-                  aggregatedPayments.push(...payments);
-                }
-              } catch (e) { console.error(e); }
-            }
-          }
-          setPaymentsHistory(aggregatedPayments.sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime()));
-          setLoading(false);
+        const linkedMap = new Map();
+        [...snapW.docs, ...snapE.docs].forEach(d => {
+          linkedMap.set(d.id, { id: d.id, ...d.data() });
         });
+        
+        const linkedList = Array.from(linkedMap.values());
+        setAllLinkedClients(linkedList);
 
-        // Fetch Support Requests History (Consolidated by Identity)
+        // Aggregate Payments for all customers
+        const aggregatedPayments: any[] = [];
+        for (const c of linkedList) {
+          if (c.asaasCustomerId) {
+             try {
+              const res = await fetch(`/api/asaas/payments?customer=${c.asaasCustomerId}`);
+              if (res.ok) {
+                const data = await res.json();
+                const payments = data.data || [];
+                payments.forEach((p: any) => {
+                  p.planName = c.plan || 'Serviço';
+                });
+                aggregatedPayments.push(...payments);
+              }
+            } catch (e) { console.error(e); }
+          }
+        }
+        setPaymentsHistory(aggregatedPayments.sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime()));
+        setLoading(false);
+
+        // Listen for support requests for ALL linked clients
         const requestsRef = collection(db, 'organizations', orgId, 'supportRequests');
         const qReq = query(requestsRef, where('clientWhatsapp', '==', mainData.whatsapp));
         const unsubscribeRequests = onSnapshot(qReq, (snapshot) => {
@@ -208,10 +203,17 @@ export default function ClientPortal() {
           setClientRequests(loaded.sort((a:any, b:any) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0)));
         });
 
-        return () => {
-          unsubscribeMulti();
-          unsubscribeRequests();
-        };
+        return () => unsubscribeRequests();
+      } catch (err) {
+        console.error(err);
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [orgId, activeClientId]);
+
+  const loadInitial = () => {
       } catch (err) {
         console.error(err);
         setError("Erro ao carregar dados.");
@@ -418,47 +420,80 @@ export default function ClientPortal() {
           <p className="text-gray-400 text-sm md:text-base">Bem-vindo ao seu Portal do Cliente exclusivo</p>
         </div>
 
+        {/* Service Selector / Subscriptions Switcher */}
+        {allLinkedClients.length > 1 && (
+          <div className="mb-8 p-1.5 bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] flex overflow-x-auto no-scrollbar gap-1">
+            {allLinkedClients.map(linked => (
+              <button
+                key={linked.id}
+                onClick={() => {
+                  setLoading(true);
+                  setActiveClientId(linked.id);
+                }}
+                className={`flex-1 min-w-[140px] px-6 py-4 rounded-[1.5rem] text-sm font-bold transition-all whitespace-nowrap flex flex-col items-center gap-1 ${
+                  activeClientId === linked.id 
+                  ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' 
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <span className="truncate w-full text-center">{linked.plan}</span>
+                <span className={`text-[10px] uppercase tracking-tighter opacity-70 ${activeClientId === linked.id ? 'text-white' : 'text-gray-500'}`}>
+                  {linked.status}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
-          {/* Status Card */}
+          {/* Status Card (contextual to active selection) */}
           <div className="group bg-white/[0.03] backdrop-blur-2xl border border-white/10 p-6 md:p-8 rounded-[2rem] shadow-2xl hover:border-white/20 transition-all duration-300">
             <h2 className="text-base md:text-lg font-semibold mb-6 flex items-center gap-2 text-gray-200">
               <div className="p-1.5 bg-primary-500/10 rounded-lg">
                 <Globe className="w-4 h-4 md:w-5 md:h-5 text-primary-400" />
               </div>
-              Seus Planos e Serviços
+              Status do Serviço
             </h2>
             
             <div className="space-y-4">
-              {allLinkedClients.map(linked => (
-                <div key={linked.id} className="p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-primary-500/30 transition-all">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-bold text-white text-sm">{linked.plan}</h3>
-                    <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-black uppercase tracking-tighter ${getStatusColor(linked.status)}`}>
-                      {getStatusIcon(linked.status)}
-                      {linked.status}
+                <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-white text-lg">{client.plan}</h3>
+                    <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-black uppercase tracking-tight ${getStatusColor(client.status)}`}>
+                      {getStatusIcon(client.status)}
+                      {client.status}
                     </div>
                   </div>
 
-                  {linked.deliveryDate && linked.status !== 'Ativo' && linked.status !== 'Cancelado' && (
-                    <div className="flex items-center gap-2 text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-3">
-                      <Calendar className="w-3 h-3" />
-                      Entrega: {new Date(linked.deliveryDate + 'T12:00:00').toLocaleDateString('pt-BR')}
+                  {client.deliveryDate && client.status !== 'Ativo' && client.status !== 'Cancelado' && (
+                    <div className="mt-2 mb-4 p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl">
+                      <p className="text-xs text-blue-400 font-bold uppercase tracking-wider mb-1 flex items-center gap-2">
+                        <Calendar className="w-3.5 h-3.5" />
+                        Previsão de Entrega
+                      </p>
+                      <p className="text-xl font-black text-white">
+                        {new Date(client.deliveryDate + 'T12:00:00').toLocaleDateString('pt-BR')}
+                      </p>
                     </div>
                   )}
 
-                  {linked.siteLink && linked.status === 'Ativo' && (
-                    <a 
-                      href={linked.siteLink.startsWith('http') ? linked.siteLink : `https://${linked.siteLink}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center justify-between p-2 bg-black/20 rounded-xl hover:bg-black/40 transition-all group/link"
-                    >
-                      <span className="text-xs text-primary-400 font-medium truncate">{linked.siteLink}</span>
-                      <ExternalLink className="w-3 h-3 text-primary-400 opacity-50 group-hover/link:opacity-100" />
-                    </a>
+                  {client.siteLink && client.status === 'Ativo' && (
+                    <div className="mt-4 p-4 bg-white/5 rounded-2xl border border-white/5">
+                      <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-2">Link de acesso:</p>
+                      <a 
+                        href={client.siteLink.startsWith('http') ? client.siteLink : `https://${client.siteLink}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-between group/link"
+                      >
+                        <span className="text-primary-400 font-medium truncate mr-2">{client.siteLink}</span>
+                        <div className="p-2 bg-primary-500/10 rounded-lg group-hover/link:bg-primary-500/20 transition-colors">
+                          <ExternalLink className="w-4 h-4 text-primary-400" />
+                        </div>
+                      </a>
+                    </div>
                   )}
                 </div>
-              ))}
             </div>
           </div>
 
