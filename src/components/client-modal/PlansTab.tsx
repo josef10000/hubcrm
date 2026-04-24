@@ -18,7 +18,7 @@ import {
 import { Client, ClientPlan, Offer } from '../../types';
 import { authFetch } from '../../lib/authFetch';
 import { db } from '../../lib/firebase';
-import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion, collection, setDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
 
 interface PlansTabProps {
@@ -33,7 +33,7 @@ export default function PlansTab({ client, offers, onUpdate, orgId }: PlansTabPr
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
-  const plans = client.plans || [];
+  const plans = (client.plans || []).filter(p => p.type === 'SUBSCRIPTION');
 
   const handleAddProduct = async (offer: Offer) => {
     if (!client.id) return;
@@ -80,17 +80,38 @@ export default function PlansTab({ client, offers, onUpdate, orgId }: PlansTabPr
         createdAt: Date.now()
       };
 
-      const clientRef = doc(db, 'organizations', orgId, 'clients', client.id);
-      await updateDoc(clientRef, {
-        plans: arrayUnion(newPlan)
-      });
+      // REGRA: Criar um NOVO CARD (Documento) para este serviço
+      const newClientRef = doc(collection(db, 'organizations', orgId, 'clients'));
+      const newClientData = {
+        ...client,
+        id: newClientRef.id,
+        plan: offer.name,
+        offerId: offer.id,
+        planPrice: offer.price,
+        setupPrice: offer.setupPrice || 0,
+        status: 'Em Desenvolvimento',
+        plans: [newPlan],
+        logs: [{
+          id: Date.now().toString(),
+          text: `Novo serviço contratado e card criado: ${offer.name}`,
+          type: 'system',
+          createdAt: Date.now(),
+          createdBy: 'Sistema'
+        }],
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      };
 
-      onUpdate([...plans, newPlan]);
+      await setDoc(newClientRef, newClientData);
+
+      toast.success(`Novo card criado para ${offer.name}!`);
       setShowAddForm(false);
-      toast.success(`${offer.name} adicionado com sucesso!`);
       
       // Abrir link de pagamento em nova aba
       window.open(invoiceUrl, '_blank');
+
+      // Se quiser atualizar a UI do modal atual (opcional, já que criou outro card)
+      // onUpdate([...(client.plans || []), newPlan]);
 
     } catch (error: any) {
       console.error('Error adding product:', error);

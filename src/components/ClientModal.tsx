@@ -24,6 +24,7 @@ import OnboardingTab from './client-modal/OnboardingTab';
 import ReferralsTab from './client-modal/ReferralsTab';
 import ContractsTab from './client-modal/ContractsTab';
 import PlansTab from './client-modal/PlansTab';
+import PurchasesTab from './client-modal/PurchasesTab';
 
 export default
 function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardingQuestions, user, offers }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, onDelete?: (id: string) => void, initialData: Client | null, onboardingQuestions: OnboardingQuestion[], user: User, offers: Offer[] }) {
@@ -45,7 +46,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
   });
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [activeTab, setActiveTab] = useState<'details' | 'history' | 'stages' | 'credentials' | 'onboarding' | 'contracts' | 'referrals' | 'emails' | 'plans'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'history' | 'stages' | 'credentials' | 'onboarding' | 'contracts' | 'referrals' | 'emails' | 'plans' | 'purchases'>('details');
   const [cepLoading, setCepLoading] = useState(false);
   const [cpfCnpjStatus, setCpfCnpjStatus] = useState<'idle' | 'valid' | 'invalid' | 'loading'>('idle');
   const [newLogText, setNewLogText] = useState('');
@@ -221,7 +222,8 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
     { key: 'onboarding', label: 'Briefing' },
     { key: 'referrals', label: 'Indicações' },
     { key: 'contracts', label: 'Contratos' },
-    { key: 'plans', label: 'Produtos e Serviços' },
+    { key: 'plans', label: 'Assinaturas' },
+    { key: 'purchases', label: 'Compras' },
   ] as const;
 
   return (
@@ -544,6 +546,10 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
               </div>
             ) : activeTab === 'history' ? (
               <HistoryTab logs={formData.logs || []} newLogText={newLogText} setNewLogText={setNewLogText} setFormData={setFormData} />
+            ) : activeTab === 'plans' ? (
+              <PlansTab client={formData as Client} offers={offers} onUpdate={(updatedPlans) => setFormData({ ...formData, plans: updatedPlans })} orgId={effectiveOrgId} />
+            ) : activeTab === 'purchases' ? (
+              <PurchasesTab client={formData as Client} />
             ) : activeTab === 'stages' ? (
               <StagesTab stages={formData.stages || []} setFormData={setFormData} />
             ) : activeTab === 'credentials' && initialData ? (

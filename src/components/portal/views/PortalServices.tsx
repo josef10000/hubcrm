@@ -5,15 +5,14 @@ import {
   Star, 
   ArrowRight, 
   Zap, 
-  Check,
-  ShieldCheck,
-  Sparkles,
-  Search,
-  X,
-  Info,
-  Loader2
+  CheckCircle2, 
+  ShieldCheck, 
+  Sparkles, 
+  Search, 
+  X, 
+  Info, 
+  Loader2 
 } from 'lucide-react';
-import { usePortalCheckout } from '../../../hooks/usePortalCheckout';
 import { Offer, Client } from '../../../types';
 
 interface PortalServicesProps {
@@ -23,11 +22,15 @@ interface PortalServicesProps {
 
 export default function PortalServices({ offers, client }: PortalServicesProps) {
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
-  const { hireOffer, isLoading } = usePortalCheckout(client);
   
   // Encontrar o mais contratado ou o primeiro
   const featuredOffer = offers.find(o => o.isMostHired) || offers[0];
   const otherOffers = offers.filter(o => o.id !== featuredOffer?.id);
+
+  const handleHireClick = (offer: any) => {
+    const message = encodeURIComponent(`Olá! Gostaria de fechar o acordo para o serviço: ${offer.name}`);
+    window.open(`https://wa.me/5511952924208?text=${message}`, '_blank');
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -80,13 +83,11 @@ export default function PortalServices({ offers, client }: PortalServicesProps) 
                   Ver Detalhes
                 </button>
                 <button 
-                  onClick={() => hireOffer(featuredOffer)}
-                  disabled={isLoading}
-                  className="px-8 py-4 bg-primary-500 text-white font-black rounded-2xl hover:bg-primary-600 transition-all active:scale-95 shadow-xl flex items-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => handleHireClick(featuredOffer)}
+                  className="px-8 py-4 bg-primary-500 text-white font-black rounded-2xl hover:bg-primary-600 transition-all active:scale-95 shadow-xl flex items-center gap-2 group"
                 >
-                  {isLoading ? 'Processando...' : 'Contratar Agora'}
-                  {!isLoading && <Zap size={20} className="fill-current group-hover:scale-125 transition-transform" />}
-                  {isLoading && <Loader2 size={20} className="animate-spin" />}
+                  Fechar Acordo Agora
+                  <Zap size={20} className="fill-current group-hover:scale-125 transition-transform" />
                 </button>
               </div>
             </div>
@@ -134,22 +135,29 @@ export default function PortalServices({ offers, client }: PortalServicesProps) 
                   <div>
                     <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest block">Investimento</span>
                     <span className="text-2xl font-black text-white">
-                      {offer.price ? `R$ ${offer.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'Consultar'}
+                      {offer.monthlyPrice ? `R$ ${offer.monthlyPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'Consultar'}
                     </span>
                   </div>
                   <div className="flex flex-col items-end">
                     <ShieldCheck className="text-emerald-500 w-5 h-5 mb-1" />
-                    <span className="text-[10px] text-emerald-500 font-bold uppercase tracking-tighter">Compra Segura</span>
+                    <span className="text-[10px] text-emerald-500 font-bold uppercase tracking-tighter">Acordo Seguro</span>
                   </div>
                 </div>
                 
-                <button 
-                  onClick={() => setSelectedOffer(offer)}
-                  className="w-full py-4 bg-white/5 group-hover:bg-primary-500 group-hover:text-white text-gray-400 font-bold rounded-2xl transition-all flex items-center justify-center gap-2"
-                >
-                  Ver Detalhes
-                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                </button>
+                <div className="grid grid-cols-2 gap-3">
+                  <button 
+                    onClick={() => handleHireClick(offer)}
+                    className="py-3.5 bg-primary-500 text-white text-xs font-black rounded-xl transition-all active:scale-95 shadow-lg"
+                  >
+                    Fechar Acordo
+                  </button>
+                  <button 
+                    onClick={() => setSelectedOffer(offer)}
+                    className="py-3.5 bg-white/5 hover:bg-white/10 text-white text-xs font-bold rounded-xl border border-white/10 transition-all"
+                  >
+                    Detalhes
+                  </button>
+                </div>
               </div>
             </motion.div>
           ))
@@ -197,15 +205,15 @@ export default function PortalServices({ offers, client }: PortalServicesProps) 
                   <div>
                     <h4 className="text-sm font-black text-primary-500 uppercase tracking-widest mb-4">Sobre esta solução</h4>
                     <p className="text-gray-300 leading-relaxed text-lg">
-                      {selectedOffer.details || selectedOffer.description || "Nenhum detalhe adicional informado."}
+                      {selectedOffer.description || "Nenhum detalhe adicional informado."}
                     </p>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-white/5 p-6 rounded-3xl border border-white/5">
-                      <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest block mb-1">Preço Total</span>
+                      <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest block mb-1">Valor Mensal</span>
                       <span className="text-3xl font-black text-white">
-                        R$ {selectedOffer.price?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        R$ {selectedOffer.monthlyPrice?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </span>
                     </div>
                     {selectedOffer.setupPrice > 0 && (
@@ -217,34 +225,38 @@ export default function PortalServices({ offers, client }: PortalServicesProps) 
                       </div>
                     )}
                   </div>
+
+                  {selectedOffer.features && selectedOffer.features.length > 0 && (
+                    <div className="space-y-4">
+                      <h4 className="text-sm font-black text-primary-500 uppercase tracking-widest">O que inclui</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {selectedOffer.features.map((feature, idx) => (
+                          <div key={idx} className="flex items-center gap-3 p-3 bg-white/5 rounded-2xl border border-white/5">
+                            <CheckCircle2 className="text-emerald-400 w-4 h-4" />
+                            <span className="text-gray-300 text-xs">{feature}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   
                   <div className="bg-emerald-500/10 border border-emerald-500/20 p-6 rounded-3xl flex items-start gap-4">
                     <ShieldCheck className="text-emerald-500 shrink-0" size={24} />
                     <div>
-                      <h4 className="text-emerald-400 font-bold">Compra Garantida</h4>
-                      <p className="text-emerald-500/70 text-sm">Sua transação é processada com segurança de ponta a ponta e suporte prioritário.</p>
+                      <h4 className="text-emerald-400 font-bold">Acordo Direto</h4>
+                      <p className="text-emerald-500/70 text-sm">Este serviço requer alinhamento estratégico. Clique abaixo para falar com nosso atendimento e fechar o acordo.</p>
                     </div>
                   </div>
                 </div>
               </div>
               
-              <div className="p-8 border-t border-white/5 bg-white/5 flex flex-col md:flex-row items-center justify-between gap-6">
-                <div className="text-center md:text-left">
-                  <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest block">Pagamento via</span>
-                  <div className="flex items-center gap-2 mt-1">
-                    <div className="w-8 h-5 bg-white/10 rounded flex items-center justify-center text-[8px] font-bold">VISA</div>
-                    <div className="w-8 h-5 bg-white/10 rounded flex items-center justify-center text-[8px] font-bold">PIX</div>
-                    <div className="w-8 h-5 bg-white/10 rounded flex items-center justify-center text-[8px] font-bold">BOLETO</div>
-                  </div>
-                </div>
+              <div className="p-8 border-t border-white/5 bg-white/5">
                 <button 
-                  onClick={() => hireOffer(selectedOffer)}
-                  disabled={isLoading}
-                  className="w-full md:w-auto px-10 py-5 bg-primary-500 text-white font-black rounded-2xl hover:bg-primary-600 transition-all active:scale-95 shadow-xl flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => handleHireClick(selectedOffer)}
+                  className="w-full py-5 bg-primary-500 text-white font-black rounded-2xl hover:bg-primary-600 transition-all active:scale-95 shadow-xl flex items-center justify-center gap-3"
                 >
-                  {isLoading ? 'Processando...' : 'Contratar Agora'}
-                  {!isLoading && <ArrowRight size={20} />}
-                  {isLoading && <Loader2 size={20} className="animate-spin" />}
+                  Falar com Atendimento
+                  <ArrowRight size={20} />
                 </button>
               </div>
             </motion.div>

@@ -35,6 +35,7 @@ export default function ClientPortal() {
   const [globalAnnouncement, setGlobalAnnouncement] = useState<{title: string, message: string, type: string, isActive: boolean} | null>(null);
   const [services, setServices] = useState<any[]>([]);
   const [offers, setOffers] = useState<any[]>([]);
+  const [allLinkedClients, setAllLinkedClients] = useState<any[]>([]);
 
   const faqData = [
     {
@@ -137,146 +138,93 @@ export default function ClientPortal() {
       return;
     }
 
+    const loadData = async () => {
+      try {
+        const docRef = doc(db, 'organizations', orgId, 'clients', clientId);
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) {
+          setError("Cliente não encontrado.");
+          setLoading(false);
+          return;
+        }
+
+        const mainData = { id: docSnap.id, ...docSnap.data() } as any;
+        setClient(mainData);
+
+        // Listen for all cards of this client (Multi-card Support)
+        const clientsRef = collection(db, 'organizations', orgId, 'clients');
+        const q = query(clientsRef, where('whatsapp', '==', mainData.whatsapp));
+        
+        const unsubscribeMulti = onSnapshot(q, async (snapshot) => {
+          const linkedClients = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as any));
+          setAllLinkedClients(linkedClients);
+          
+          // Aggregate Payments
+          const aggregatedPayments: any[] = [];
+          for (const c of linkedClients) {
+            if (c.asaasCustomerId) {
+               try {
+                const res = await fetch(`/api/asaas/payments?customer=${c.asaasCustomerId}`);
+                if (res.ok) {
+                  const data = await res.json();
+                  const payments = data.data || [];
+                  payments.forEach((p: any) => {
+                    p.planName = c.plan || 'Serviço';
+                  });
+                  aggregatedPayments.push(...payments);
+                }
+              } catch (e) { console.error(e); }
+            }
+          }
+          setPaymentsHistory(aggregatedPayments.sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime()));
+          setLoading(false);
+        });
+
+        return unsubscribeMulti;
+      } catch (err) {
+        console.error(err);
+        setError("Erro ao carregar dados.");
+        setLoading(false);
+      }
+    };
+
+    const multiPromise = loadData();
+
     // Fetch Support Requests History
     const requestsRef = collection(db, 'organizations', orgId, 'supportRequests');
-    const q = query(requestsRef, where('clientId', '==', clientId));
-    
-    const unsubscribeRequests = onSnapshot(q, (snapshot) => {
-      const loadedRequests: any[] = [];
-      snapshot.forEach((doc) => {
-        loadedRequests.push({ id: doc.id, ...doc.data() });
-      });
-      loadedRequests.sort((a, b) => {
-        const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
-        const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
-        return timeB - timeA; // Descending
-      });
-      setClientRequests(loadedRequests);
-
-      // Check for completed requests without CSAT
-      const pendingCsat = loadedRequests.find(r => r.status === 'concluido' && !r.csatScore);
-      if (pendingCsat) {
-        setPendingCsatRequestId(pendingCsat.id);
-        setShowCsatModal(true);
-      }
+    const qReq = query(requestsRef, where('clientId', '==', clientId));
+    const unsubscribeRequests = onSnapshot(qReq, (snapshot) => {
+      const loaded = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      setClientRequests(loaded.sort((a:any, b:any) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0)));
     });
 
-    // Fetch Global Announcement
+    // Global Announcement
     const globalRef = doc(db, 'organizations', orgId, 'settings', 'global');
     const unsubscribeGlobal = onSnapshot(globalRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        if (data.announcement && data.announcement.isActive) {
-          setGlobalAnnouncement(data.announcement);
-        } else {
-          setGlobalAnnouncement(null);
-        }
-      }
+      if (docSnap.exists()) setGlobalAnnouncement(docSnap.data().announcement?.isActive ? docSnap.data().announcement : null);
     });
 
-    // Fetch Services
+    // Services
     const servicesRef = collection(db, 'organizations', orgId, 'services');
     const unsubscribeServices = onSnapshot(servicesRef, (snapshot) => {
-      const loadedServices: any[] = [];
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        if (data.isActive) {
-          loadedServices.push({ id: doc.id, ...data });
-        }
-      });
-      setServices(loadedServices.sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0)));
+      const loaded = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter((s:any) => s.isActive);
+      setServices(loaded.sort((a:any, b:any) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0)));
     });
 
-    // Fetch Offers
+    // Offers
     const offersRef = collection(db, 'organizations', orgId, 'offers');
     const unsubscribeOffers = onSnapshot(offersRef, (snapshot) => {
-      const loadedOffers: any[] = [];
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        if (data.active) {
-          loadedOffers.push({ id: doc.id, ...data });
-        }
-      });
-      setOffers(loadedOffers);
-    });
-
-    // Fetch Client Data
-    const docRef = doc(db, 'organizations', orgId, 'clients', clientId);
-    const unsubscribeClient = onSnapshot(docRef, async (docSnap) => {
-      if (docSnap.exists()) {
-        const clientData = docSnap.data();
-        
-        if (clientData.asaasCustomerId) {
-          try {
-            const paymentsRes = await fetch(`/api/asaas/payments?customer=${clientData.asaasCustomerId}`);
-            
-            let subscription = null;
-            if (clientData.asaasSubscriptionId) {
-              const subRes = await fetch(`/api/asaas/subscriptions/${clientData.asaasSubscriptionId}`);
-              if (subRes.ok) {
-                const subData = await subRes.json();
-                subscription = subData.subscription;
-              }
-            }
-
-            if (paymentsRes.ok) {
-              const paymentsData = await paymentsRes.json();
-              const payments = paymentsData.data || [];
-              
-              setPaymentsHistory(payments);
-
-              if (payments.length > 0) {
-                // Sort payments by due date ascending to get the earliest one
-                const sortedPayments = [...payments].sort((a: any, b: any) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
-                
-                let targetPayment = sortedPayments.find((p: any) => p.status === 'OVERDUE');
-                if (!targetPayment) {
-                  targetPayment = sortedPayments.find((p: any) => p.status === 'PENDING');
-                }
-                if (!targetPayment) {
-                  // If no overdue or pending, get the most recent payment (descending)
-                  targetPayment = [...payments].sort((a: any, b: any) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime())[0];
-                }
-                
-                const status = targetPayment.status;
-                
-                let newPaymentStatus = 'PENDING';
-                if (status === 'RECEIVED' || status === 'CONFIRMED') {
-                  newPaymentStatus = 'RECEIVED';
-                } else if (status === 'OVERDUE') {
-                  newPaymentStatus = 'OVERDUE';
-                }
-                
-                clientData.paymentStatus = newPaymentStatus;
-                clientData.invoiceUrl = targetPayment.invoiceUrl || targetPayment.bankSlipUrl || clientData.invoiceUrl;
-                
-                clientData.currentDueDate = (status === 'PENDING' || status === 'OVERDUE') ? targetPayment.dueDate : null;
-                clientData.nextDueDate = subscription?.nextDueDate || clientData.nextDueDate;
-              }
-            }
-          } catch (e) {
-            console.error("Error fetching real-time Asaas data:", e);
-          }
-        }
-        
-        setClient(clientData);
-        setLoading(false);
-      } else {
-        setError("Cliente não encontrado.");
-        setLoading(false);
-      }
-    }, (err) => {
-      console.error("Error fetching client:", err);
-      setError("Não foi possível carregar os dados.");
-      setLoading(false);
+      const loaded = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter((o:any) => o.active);
+      setOffers(loaded);
     });
 
     return () => {
       unsubscribeRequests();
-      unsubscribeClient();
       unsubscribeGlobal();
       unsubscribeServices();
       unsubscribeOffers();
+      multiPromise.then(unsub => unsub?.());
     };
   }, [orgId, clientId]);
 
