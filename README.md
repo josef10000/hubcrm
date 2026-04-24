@@ -1,4 +1,4 @@
-# 🔐 Hub Central — Intranet Corporativa v5.7.0 (Unified Multi-Plan Portal & Multi-Subscription Sync)
+# 🔐 Hub Central — Intranet Corporativa v5.8.0 (Unified Multi-Plan Portal & Premium Mobile UX)
 
 > [!CAUTION]
 > **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
@@ -40,35 +40,35 @@ Certifique-se de configurar as seguintes variáveis no seu ambiente Claude Deskt
     <img src="https://img.shields.io/badge/Firebase-12-FFCA28?style=flat-square&logo=firebase&logoColor=black" alt="Firebase" />
   </p>
   <div align="center">
-  <h2>✨ Features em Destaque v5.5.0</h2>
-  <p><strong>Multi-Plan Marketplace & Seamless Checkout</strong></p>
+  <h2>✨ Features em Destaque v5.8.0</h2>
+  <p><strong>Unified Multi-Plan Portal & Premium Mobile UX</strong></p>
 </div>
 
 <table>
   <tr>
-    <td align="center" width="20%">
-      <br />🛒<br /><strong>Multi-Planos</strong><br />
-      <sub>Assinaturas Simultâneas</sub>
+    <td align="center" width="16%">
+      <br />📱<br /><strong>Mobile UX</strong><br />
+      <sub>Bottom Navigation</sub>
     </td>
-    <td align="center" width="20%">
+    <td align="center" width="16%">
+      <br />🔄<br /><strong>Unified Hub</strong><br />
+      <sub>Sync por CPF/CNPJ</sub>
+    </td>
+    <td align="center" width="16%">
       <br />💬<br /><strong>Hub Chat Pro</strong><br />
       <sub>Threads & CRM Links</sub>
     </td>
-    <td align="center" width="20%">
+    <td align="center" width="16%">
       <br />💎<br /><strong>Premium Portal</strong><br />
       <sub>Glassmorphism UI</sub>
     </td>
-    <td align="center" width="20%">
+    <td align="center" width="16%">
       <br />⚡<br /><strong>Auto Checkout</strong><br />
       <sub>Portal Payments</sub>
     </td>
     <td align="center" width="16%">
       <br />🛡️<br /><strong>Audit Trails</strong><br />
       <sub>Segurança & Logs</sub>
-    </td>
-    <td align="center" width="16%">
-      <br />✨<br /><strong>Custom Dialogs</strong><br />
-      <sub>Async useDialog()</sub>
     </td>
   </tr>
 </table>
@@ -140,6 +140,8 @@ A comunicação interna foi elevada ao nível de ferramenta de gestão. Mais que
 |---|---|
 | 🛡️ **Dunning Automático** | Régua de cobrança inteligente com abertura de tickets e alertas no chat para inadimplência. |
 | 🕵️ **Audit Trails** | Registro imutável de ações críticas (leads, equipe, financeiro) para segurança. |
+| 📱 **Premium Mobile UX** | Navegação inferior (Bottom Nav) dedicada e interface adaptativa para smartphones. |
+| 🔄 **Unified Portal** | Motor de busca por CPF/CNPJ que unifica todas as assinaturas do cliente em um único acesso. |
 | ✨ **useDialog() v5.0** | Sistema de diálogos premium (alert/confirm/prompt) assíncronos com Framer Motion, substituindo diálogos nativos em 100% do CRM. |
 | ⚡ **Hook Stability** | Correção de erro de renderização no CRMProvider (fix React Error #310). |
 | 🎯 **Minhas Oportunidades** | Filtro exclusivo para SDRs/Executives focarem no próprio pipeline. |
@@ -784,6 +786,7 @@ className="bg-gray-100 border-gray-200"
 - [x] 🚀 **v5.5.0 Multi-Plan Marketplace (Simultaneous Subscriptions & In-Portal Checkout)**
 - [x] 🚀 **v5.6.0 Multi-Card Portal (Aggregated Billing, WhatsApp Consultative Sales & Multi-Document Sync)**
 - [x] 🚀 **v5.7.0 Unified Multi-Plan Portal (CPF/CNPJ Document Sync & Cross-Subscription Billing Switcher)**
+- [x] 📱 **v5.8.0 Premium Mobile UX (Bottom Navigation, Responsive Cards & Mobile-First Layouts)**
 
 
 ---
