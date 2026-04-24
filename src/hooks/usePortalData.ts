@@ -43,22 +43,22 @@ export function usePortalData(orgId: string | undefined, clientId: string | unde
           }
         }
 
-        // Se houver consultor designado, escutar em tempo real
+        // Definir dados iniciais do cliente imediatamente
+        const clientData = { id: snap.id, ...data };
+        setClient(clientData);
+
+        // Se houver consultor designado, escutar em tempo real para atualizar o objeto client
         if (data.assignedTo) {
           const userRef = doc(db, 'organizations', orgId, 'users', data.assignedTo);
           unsubConsultant(); // Limpar anterior se existir
           unsubConsultant = onSnapshot(userRef, (userSnap) => {
             if (userSnap.exists()) {
-              setClient((prev: any) => ({
-                ...prev,
-                ...data,
-                id: snap.id,
+              setClient({
+                ...clientData,
                 consultant: { id: userSnap.id, ...userSnap.data() }
-              }));
+              });
             }
           });
-        } else {
-          setClient({ id: snap.id, ...data });
         }
         
         setLoading(false);
