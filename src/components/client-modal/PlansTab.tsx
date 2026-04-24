@@ -7,9 +7,12 @@ import {
   Calendar,
   RefreshCw,
   Package,
-  Zap
+  Zap,
+  Users
 } from 'lucide-react';
 import { Client, ClientPlan } from '../../types';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 
 interface PlansTabProps {
   client: Partial<Client>;
@@ -17,7 +20,35 @@ interface PlansTabProps {
   orgId?: string;
 }
 
-export default function PlansTab({ client }: PlansTabProps) {
+export default function PlansTab({ client, orgId }: PlansTabProps) {
+  const [linkedPlans, setLinkedPlans] = React.useState<any[]>([]);
+  const [isLoadingLinked, setIsLoadingLinked] = React.useState(false);
+
+  React.useEffect(() => {
+    const fetchLinkedCards = async () => {
+      if (!client.whatsapp && !client.email) return;
+      setIsLoadingLinked(true);
+      try {
+        const clientsRef = collection(db, 'organizations', orgId!, 'clients');
+        
+        // Buscamos por whatsapp
+        const q = query(clientsRef, where('whatsapp', '==', client.whatsapp));
+        const querySnapshot = await getDocs(q);
+        const otherCards = querySnapshot.docs
+          .map(d => ({ id: d.id, ...d.data() } as any))
+          .filter(d => d.id !== client.id); // Remove o card atual
+        
+        setLinkedPlans(otherCards);
+      } catch (err) {
+        console.error("Erro ao buscar cards vinculados:", err);
+      } finally {
+        setIsLoadingLinked(false);
+      }
+    };
+
+    if (orgId && (client.whatsapp || client.email)) fetchLinkedCards();
+  }, [client.whatsapp, client.email, client.id, orgId]);
+
   const plans = (client.plans || []).filter(p => p.type === 'SUBSCRIPTION');
 
   return (
@@ -101,6 +132,45 @@ export default function PlansTab({ client }: PlansTabProps) {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Linked Cards (Aggregation) */}
+      {linkedPlans.length > 0 && (
+        <div className="mt-8 space-y-4 pt-6 border-t border-white/10">
+          <div className="flex items-center gap-2 text-primary-400 font-bold text-sm uppercase tracking-widest">
+            <Users size={16} />
+            Outros Serviços (Assinados em outros Cards)
+          </div>
+          <div className="grid grid-cols-1 gap-3">
+            {linkedPlans.map(linked => (
+              <div key={linked.id} className="bg-white/5 border border-white/5 rounded-2xl p-5 flex items-center justify-between group hover:border-primary-500/30 transition-all">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-500 group-hover:scale-110 transition-transform">
+                    <Package size={20} />
+                  </div>
+                  <div>
+                    <h5 className="text-white font-bold">{linked.plan || 'Serviço s/ nome'}</h5>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black">ID: {linked.id}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                   <span className={`text-[10px] font-black px-3 py-1 rounded-full border ${
+                    linked.status === 'Ativo' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/20 text-amber-400 border-amber-500/20'
+                  }`}>
+                    {linked.status.toUpperCase()}
+                  </span>
+                  <button 
+                    onClick={() => window.open(`/dashboard/clients/${linked.id}`, '_blank')}
+                    className="p-2 bg-white/5 hover:bg-primary-500 hover:text-white rounded-xl text-gray-400 transition-all border border-white/5"
+                    title="Abrir Card"
+                  >
+                    <ExternalLink size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
