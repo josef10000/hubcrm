@@ -16,6 +16,9 @@ interface PortalServicesProps {
 }
 
 export default function PortalServices({ offers }: PortalServicesProps) {
+  const featuredOffer = offers.find(o => o.isFeatured) || offers[0];
+  const otherOffers = offers.filter(o => o.id !== featuredOffer?.id);
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header with Search (Future functionality) */}
@@ -41,52 +44,63 @@ export default function PortalServices({ offers }: PortalServicesProps) {
       </div>
 
       {/* Hero Service (Pinned or Featured) */}
-      <div className="bg-gradient-to-br from-indigo-600/20 to-primary-600/10 border border-white/10 p-10 rounded-[3rem] relative overflow-hidden group">
-        <div className="absolute top-[-20%] right-[-10%] w-[40%] h-[120%] bg-primary-500/20 rounded-full blur-[100px] group-hover:bg-primary-500/30 transition-colors duration-700" />
-        
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary-500/20 border border-primary-500/30 rounded-full mb-6">
-              <Sparkles className="w-3.5 h-3.5 text-primary-400" />
-              <span className="text-[10px] font-bold text-primary-400 uppercase tracking-wider">Mais Contratado</span>
-            </div>
-            <h2 className="text-4xl font-black text-white mb-4 leading-tight">
-              E-mail Profissional <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-blue-400">Google Workspace</span>
-            </h2>
-            <p className="text-gray-400 text-lg leading-relaxed mb-8 max-w-md">
-              Dê mais autoridade para sua marca com e-mails personalizados @suaempresa e as melhores ferramentas do Google.
-            </p>
-            <ul className="space-y-3 mb-10">
-              {['30GB de Armazenamento', 'E-mails @suamarca.com', 'Google Meet Premium', 'Suporte Especializado'].map((item, i) => (
-                <li key={i} className="flex items-center gap-3 text-white/80 font-medium">
-                  <div className="w-5 h-5 bg-emerald-500/20 rounded-full flex items-center justify-center">
-                    <Check className="text-emerald-400" size={12} strokeWidth={3} />
-                  </div>
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <button className="px-10 py-5 bg-white text-black font-black rounded-2xl hover:bg-gray-100 transition-all active:scale-95 shadow-2xl flex items-center gap-3 group">
-              Contratar Agora
-              <Zap size={20} className="fill-current group-hover:scale-125 transition-transform" />
-            </button>
-          </div>
+      {featuredOffer ? (
+        <div className="bg-gradient-to-br from-indigo-600/20 to-primary-600/10 border border-white/10 p-10 rounded-[3rem] relative overflow-hidden group">
+          <div className="absolute top-[-20%] right-[-10%] w-[40%] h-[120%] bg-primary-500/20 rounded-full blur-[100px] group-hover:bg-primary-500/30 transition-colors duration-700" />
           
-          <div className="hidden lg:flex items-center justify-center">
-            <div className="relative w-full aspect-square max-w-sm">
-              <div className="absolute inset-0 bg-primary-500/20 rounded-full blur-[60px] animate-pulse" />
-              <div className="relative bg-white/5 backdrop-blur-3xl border border-white/20 p-10 rounded-[3rem] shadow-2xl rotate-3 group-hover:rotate-0 transition-transform duration-500">
-                 <ShoppingBag className="w-full h-full text-primary-400/50" strokeWidth={0.5} />
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary-500/20 border border-primary-500/30 rounded-full mb-6">
+                <Sparkles className="w-3.5 h-3.5 text-primary-400" />
+                <span className="text-[10px] font-bold text-primary-400 uppercase tracking-wider">Mais Contratado</span>
+              </div>
+              <h2 className="text-4xl font-black text-white mb-4 leading-tight">
+                {featuredOffer.title}
+              </h2>
+              <p className="text-gray-400 text-lg leading-relaxed mb-8 max-w-md">
+                {featuredOffer.description || 'Uma solução completa para impulsionar os resultados do seu negócio digital.'}
+              </p>
+              {featuredOffer.features && (
+                <ul className="space-y-3 mb-10">
+                  {featuredOffer.features.map((item: string, i: number) => (
+                    <li key={i} className="flex items-center gap-3 text-white/80 font-medium">
+                      <div className="w-5 h-5 bg-emerald-500/20 rounded-full flex items-center justify-center">
+                        <Check className="text-emerald-400" size={12} strokeWidth={3} />
+                      </div>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <button 
+                onClick={() => featuredOffer.checkoutUrl && window.open(featuredOffer.checkoutUrl, '_blank')}
+                className="px-10 py-5 bg-white text-black font-black rounded-2xl hover:bg-gray-100 transition-all active:scale-95 shadow-2xl flex items-center gap-3 group"
+              >
+                {featuredOffer.buttonText || 'Contratar Agora'}
+                <Zap size={20} className="fill-current group-hover:scale-125 transition-transform" />
+              </button>
+            </div>
+            
+            <div className="hidden lg:flex items-center justify-center">
+              <div className="relative w-full aspect-square max-w-sm">
+                <div className="absolute inset-0 bg-primary-500/20 rounded-full blur-[60px] animate-pulse" />
+                <div className="relative bg-white/5 backdrop-blur-3xl border border-white/20 p-10 rounded-[3rem] shadow-2xl rotate-3 group-hover:rotate-0 transition-transform duration-500">
+                   <ShoppingBag className="w-full h-full text-primary-400/50" strokeWidth={0.5} />
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="bg-white/5 border border-white/10 p-20 rounded-[3rem] text-center text-gray-500 italic">
+          Nenhuma oferta em destaque no momento.
+        </div>
+      )}
 
       {/* Grid of Offers */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-10">
-        {offers.length > 0 ? (
-          offers.map((offer, index) => (
+        {otherOffers.length > 0 ? (
+          otherOffers.map((offer, index) => (
             <motion.div
               key={offer.id}
               initial={{ opacity: 0, y: 20 }}

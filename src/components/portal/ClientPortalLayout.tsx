@@ -82,7 +82,7 @@ export default function ClientPortalLayout() {
           <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
             <LayoutDashboard size={18} className="text-white" />
           </div>
-          <span className="font-bold tracking-tight">Portal <span className="text-primary-500">Premium</span></span>
+          <span className="font-bold tracking-tight">Portal <span className="text-primary-500">Hub</span></span>
         </div>
         <button onClick={() => setIsSidebarOpen(true)} className="p-2 hover:bg-white/5 rounded-lg transition-colors">
           <Menu size={24} />
@@ -102,7 +102,7 @@ export default function ClientPortalLayout() {
               </div>
               <div className="flex flex-col">
                 <span className="font-bold text-lg leading-none">Hub<span className="text-primary-500">CRM</span></span>
-                <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mt-1">Portal do Cliente</span>
+                <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mt-1">Portal Hub</span>
               </div>
             </div>
             <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-2 hover:bg-white/5 rounded-lg text-gray-400">
@@ -193,7 +193,7 @@ export default function ClientPortalLayout() {
               transition={{ duration: 0.3, ease: "easeOut" }}
               className="h-full"
             >
-              {activeTab === 'home' && <PortalHome client={client} announcement={announcement} />}
+              {activeTab === 'home' && <PortalHome client={client} announcement={announcement} setActiveTab={setActiveTab} />}
               {activeTab === 'finance' && <PortalFinance client={client} paymentsHistory={paymentsHistory} />}
               {activeTab === 'services' && <PortalServices offers={offers} />}
               {activeTab === 'docs' && <PortalDocuments />}

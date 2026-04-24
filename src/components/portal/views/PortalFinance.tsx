@@ -18,7 +18,14 @@ interface PortalFinanceProps {
 }
 
 export default function PortalFinance({ client, paymentsHistory }: PortalFinanceProps) {
-  const currentInvoice = paymentsHistory.find(p => p.status === 'PENDING' || p.status === 'OVERDUE') || paymentsHistory[0];
+  const currentInvoice = paymentsHistory.find(p => p.status === 'PENDING' || p.status === 'OVERDUE') 
+    || paymentsHistory[0]
+    || { 
+        value: client.monthlyFee || 0, 
+        status: 'PENDING', 
+        dueDate: new Date().toISOString().split('T')[0],
+        invoiceUrl: client.paymentLink
+       };
 
   const getStatusStyle = (status: string) => {
     switch (status) {
@@ -64,14 +71,15 @@ export default function PortalFinance({ client, paymentsHistory }: PortalFinance
             </div>
 
             <div className="flex flex-col sm:flex-row items-center gap-4">
-              {currentInvoice?.invoiceUrl && currentInvoice?.status !== 'RECEIVED' ? (
+              {(currentInvoice?.status === 'PENDING' || currentInvoice?.status === 'OVERDUE') ? (
                 <a 
-                  href={currentInvoice.invoiceUrl}
+                  href={currentInvoice.invoiceUrl || '#'}
+                  onClick={(e) => !currentInvoice.invoiceUrl && e.preventDefault()}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full sm:w-auto px-10 py-4 bg-white text-primary-600 font-black rounded-2xl flex items-center justify-center gap-2 hover:bg-gray-100 transition-all active:scale-95 shadow-xl"
+                  className={`w-full sm:w-auto px-10 py-4 bg-white text-primary-600 font-black rounded-2xl flex items-center justify-center gap-2 hover:bg-gray-100 transition-all active:scale-95 shadow-xl ${!currentInvoice.invoiceUrl ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  Pagar Agora
+                  {currentInvoice.invoiceUrl ? 'Pagar Agora' : 'Link em Geração'}
                   <ArrowUpRight size={20} />
                 </a>
               ) : (

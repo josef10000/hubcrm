@@ -16,9 +16,10 @@ import { toast } from 'sonner';
 interface PortalHomeProps {
   client: any;
   announcement: any;
+  setActiveTab: (tab: string) => void;
 }
 
-export default function PortalHome({ client, announcement }: PortalHomeProps) {
+export default function PortalHome({ client, announcement, setActiveTab }: PortalHomeProps) {
   const completedStages = client.stages?.filter((s: any) => s.completed).length || 0;
   const totalStages = client.stages?.length || 0;
   const progress = totalStages > 0 ? Math.round((completedStages / totalStages) * 100) : 0;
@@ -127,7 +128,10 @@ export default function PortalHome({ client, announcement }: PortalHomeProps) {
               Resumo Financeiro
             </h3>
             <div className="space-y-4">
-              <div className="p-4 bg-white/5 rounded-2xl border border-white/5 group hover:bg-white/10 transition-colors cursor-pointer">
+              <div 
+                onClick={() => setActiveTab('finance')}
+                className="p-4 bg-white/5 rounded-2xl border border-white/5 group hover:bg-white/10 transition-colors cursor-pointer"
+              >
                 <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Status de Pagamento</p>
                 <div className="flex items-center justify-between">
                   <span className={`text-sm font-bold ${client.paymentStatus === 'RECEIVED' ? 'text-emerald-400' : 'text-yellow-400'}`}>
@@ -145,7 +149,10 @@ export default function PortalHome({ client, announcement }: PortalHomeProps) {
             </div>
           </div>
           
-          <button className="w-full mt-6 py-4 bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl font-bold flex items-center justify-center gap-2 group hover:shadow-lg hover:shadow-primary-500/20 transition-all">
+          <button 
+            onClick={() => setActiveTab('finance')}
+            className="w-full mt-6 py-4 bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl font-bold flex items-center justify-center gap-2 group hover:shadow-lg hover:shadow-primary-500/20 transition-all"
+          >
             Ver Financeiro
             <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
           </button>

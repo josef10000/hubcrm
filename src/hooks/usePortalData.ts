@@ -24,6 +24,8 @@ export function usePortalData(orgId: string | undefined, clientId: string | unde
     const globalRef = doc(db, 'organizations', orgId, 'settings', 'global');
 
     // 1. Client Data & Consultant Profile
+    // 1. Client Data
+    let unsubConsultant: () => void = () => {};
     const unsubClient = onSnapshot(clientRef, async (snap) => {
       if (snap.exists()) {
         const data = snap.data();
@@ -41,16 +43,24 @@ export function usePortalData(orgId: string | undefined, clientId: string | unde
           }
         }
 
-        // Buscar perfil do consultor se existir
+        // Se houver consultor designado, escutar em tempo real
         if (data.assignedTo) {
           const userRef = doc(db, 'organizations', orgId, 'users', data.assignedTo);
-          const userSnap = await getDoc(userRef);
-          if (userSnap.exists()) {
-            data.consultant = { id: userSnap.id, ...userSnap.data() };
-          }
+          unsubConsultant(); // Limpar anterior se existir
+          unsubConsultant = onSnapshot(userRef, (userSnap) => {
+            if (userSnap.exists()) {
+              setClient((prev: any) => ({
+                ...prev,
+                ...data,
+                id: snap.id,
+                consultant: { id: userSnap.id, ...userSnap.data() }
+              }));
+            }
+          });
+        } else {
+          setClient({ id: snap.id, ...data });
         }
-
-        setClient({ id: snap.id, ...data });
+        
         setLoading(false);
       } else {
         setError("Cliente não encontrado.");
@@ -83,6 +93,7 @@ export function usePortalData(orgId: string | undefined, clientId: string | unde
 
     return () => {
       unsubClient();
+      unsubConsultant();
       unsubRequests();
       unsubOffers();
       unsubGlobal();
