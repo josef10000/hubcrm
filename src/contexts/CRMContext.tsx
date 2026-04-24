@@ -138,13 +138,6 @@ interface CRMContextType {
 
 const CRMContext = createContext<CRMContextType | null>(null);
 
-export function useCRM() {
-  const context = useContext(CRMContext);
-  if (!context) {
-    throw new Error('useCRM must be used within a CRMProvider');
-  }
-  return context;
-}
 
 // ─── Provider ───────────────────────────────────────────────────────────────────
 export function CRMProvider({ children }: { children: React.ReactNode }) {
