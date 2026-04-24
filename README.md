@@ -1,4 +1,4 @@
-# 🔐 Hub Central — Intranet Corporativa v5.6.0 (Multi-Card Portal & WhatsApp Marketplace)
+# 🔐 Hub Central — Intranet Corporativa v5.7.0 (Unified Multi-Plan Portal & Multi-Subscription Sync)
 
 > [!CAUTION]
 > **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
@@ -783,6 +783,7 @@ className="bg-gray-100 border-gray-200"
 - [x] 🖋️ **v5.3.0 in-Portal Document Signing (Live Contract Repository & Digital Signature Integration)**
 - [x] 🚀 **v5.5.0 Multi-Plan Marketplace (Simultaneous Subscriptions & In-Portal Checkout)**
 - [x] 🚀 **v5.6.0 Multi-Card Portal (Aggregated Billing, WhatsApp Consultative Sales & Multi-Document Sync)**
+- [x] 🚀 **v5.7.0 Unified Multi-Plan Portal (CPF/CNPJ Document Sync & Cross-Subscription Billing Switcher)**
 
 
 ---

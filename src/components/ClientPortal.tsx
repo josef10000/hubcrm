@@ -14,14 +14,14 @@ export default function ClientPortal() {
   const [paymentsHistory, setPaymentsHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [requestMessage, setRequestMessage] = useState('');
   const [requestCategory, setRequestCategory] = useState('Suporte Técnico');
   const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [clientRequests, setClientRequests] = useState<any[]>([]);
   const [expandedRequest, setExpandedRequest] = useState<string | null>(null);
-  
+
   const [npsScore, setNpsScore] = useState<number | null>(null);
   const [npsComment, setNpsComment] = useState('');
   const [isSubmittingNPS, setIsSubmittingNPS] = useState(false);
@@ -33,7 +33,7 @@ export default function ClientPortal() {
   const [showCsatModal, setShowCsatModal] = useState(false);
   const [pendingCsatRequestId, setPendingCsatRequestId] = useState<string | null>(null);
 
-  const [globalAnnouncement, setGlobalAnnouncement] = useState<{title: string, message: string, type: string, isActive: boolean} | null>(null);
+  const [globalAnnouncement, setGlobalAnnouncement] = useState<{ title: string, message: string, type: string, isActive: boolean } | null>(null);
   const [services, setServices] = useState<any[]>([]);
   const [offers, setOffers] = useState<any[]>([]);
   const [allLinkedClients, setAllLinkedClients] = useState<any[]>([]);
@@ -74,7 +74,7 @@ export default function ClientPortal() {
 
   const handleNPSSubmit = async () => {
     if (npsScore === null || !orgId || !clientId) return;
-    
+
     setIsSubmittingNPS(true);
     try {
       await updateDoc(doc(db, 'organizations', orgId, 'clients', clientId), {
@@ -117,7 +117,7 @@ export default function ClientPortal() {
       setIsSubmittingRequest(false);
     }
   };
-  
+
   const handleConfirmResolution = async (requestId: string) => {
     if (!orgId) return;
     try {
@@ -161,18 +161,18 @@ export default function ClientPortal() {
 
         // Listen for all cards of this client (Identity Aggregation)
         const clientsRef = collection(db, 'organizations', orgId, 'clients');
-        
+
         // Buscamos todos os cards. Para ser resiliente, buscamos por WhatsApp e Email separadamente e unimos no código.
         const qWhatsapp = query(clientsRef, where('whatsapp', '==', mainData.whatsapp));
         const qEmail = query(clientsRef, where('email', '==', mainData.email));
 
         const [snapW, snapE] = await Promise.all([getDocs(qWhatsapp), getDocs(qEmail)]);
-        
+
         const linkedMap = new Map();
         [...snapW.docs, ...snapE.docs].forEach(d => {
           linkedMap.set(d.id, { id: d.id, ...d.data() });
         });
-        
+
         const linkedList = Array.from(linkedMap.values());
         setAllLinkedClients(linkedList);
 
@@ -180,7 +180,7 @@ export default function ClientPortal() {
         const aggregatedPayments: any[] = [];
         for (const c of linkedList) {
           if (c.asaasCustomerId) {
-             try {
+            try {
               const res = await fetch(`/api/asaas/payments?customer=${c.asaasCustomerId}`);
               if (res.ok) {
                 const data = await res.json();
@@ -201,7 +201,7 @@ export default function ClientPortal() {
         const qReq = query(requestsRef, where('clientWhatsapp', '==', mainData.whatsapp));
         const unsubscribeRequests = onSnapshot(qReq, (snapshot) => {
           const loaded = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-          setClientRequests(loaded.sort((a:any, b:any) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0)));
+          setClientRequests(loaded.sort((a: any, b: any) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0)));
         });
 
         return () => unsubscribeRequests();
@@ -225,13 +225,13 @@ export default function ClientPortal() {
 
     const servicesRef = collection(db, 'organizations', orgId, 'services');
     const unsubscribeServices = onSnapshot(servicesRef, (snapshot) => {
-      const loaded = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter((s:any) => s.isActive);
-      setServices(loaded.sort((a:any, b:any) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0)));
+      const loaded = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter((s: any) => s.isActive);
+      setServices(loaded.sort((a: any, b: any) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0)));
     });
 
     const offersRef = collection(db, 'organizations', orgId, 'offers');
     const unsubscribeOffers = onSnapshot(offersRef, (snapshot) => {
-      const loaded = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter((o:any) => o.active);
+      const loaded = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter((o: any) => o.active);
       setOffers(loaded);
     });
 
@@ -251,7 +251,7 @@ export default function ClientPortal() {
       const q = query(clientsRef, where('referredBy', '==', clientId));
       const querySnapshot = await getDocs(q);
       const referredClients = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
-      
+
       if (type === 'discount') {
         discount = calculateDiscount(client, referredClients);
       }
@@ -344,19 +344,17 @@ export default function ClientPortal() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/5 rounded-full blur-[120px]"></div>
       </div>
 
-        {globalAnnouncement && (
-        <div className={`mb-8 p-4 rounded-2xl border flex items-start gap-4 shadow-lg animate-in fade-in slide-in-from-top-4 duration-500 ${
-          globalAnnouncement.type === 'info' ? 'bg-blue-500/10 border-blue-500/30 text-blue-100' :
-          globalAnnouncement.type === 'warning' ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-100' :
-          globalAnnouncement.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-100' :
-          'bg-primary-500/10 border-primary-500/30 text-primary-100'
-        }`}>
-          <div className={`p-2 rounded-xl shrink-0 ${
-            globalAnnouncement.type === 'info' ? 'bg-blue-500/20 text-blue-400' :
-            globalAnnouncement.type === 'warning' ? 'bg-yellow-500/20 text-yellow-400' :
-            globalAnnouncement.type === 'success' ? 'bg-emerald-500/20 text-emerald-400' :
-            'bg-primary-500/20 text-primary-400'
+      {globalAnnouncement && (
+        <div className={`mb-8 p-4 rounded-2xl border flex items-start gap-4 shadow-lg animate-in fade-in slide-in-from-top-4 duration-500 ${globalAnnouncement.type === 'info' ? 'bg-blue-500/10 border-blue-500/30 text-blue-100' :
+            globalAnnouncement.type === 'warning' ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-100' :
+              globalAnnouncement.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-100' :
+                'bg-primary-500/10 border-primary-500/30 text-primary-100'
           }`}>
+          <div className={`p-2 rounded-xl shrink-0 ${globalAnnouncement.type === 'info' ? 'bg-blue-500/20 text-blue-400' :
+              globalAnnouncement.type === 'warning' ? 'bg-yellow-500/20 text-yellow-400' :
+                globalAnnouncement.type === 'success' ? 'bg-emerald-500/20 text-emerald-400' :
+                  'bg-primary-500/20 text-primary-400'
+            }`}>
             <AlertCircle className="w-6 h-6" />
           </div>
           <div>
@@ -370,7 +368,7 @@ export default function ClientPortal() {
       {showSuccessModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in duration-300">
-            <button 
+            <button
               onClick={() => setShowSuccessModal(false)}
               className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"
             >
@@ -383,7 +381,7 @@ export default function ClientPortal() {
             <p className="text-gray-400 text-center mb-8 leading-relaxed">
               Recebemos sua solicitação e nossa equipe fará a verificação em até <strong className="text-white">24 horas úteis</strong>. Você pode acompanhar o status logo abaixo no seu histórico.
             </p>
-            <button 
+            <button
               onClick={() => {
                 setShowSuccessModal(false);
                 document.getElementById('historico-chamados')?.scrollIntoView({ behavior: 'smooth' });
@@ -419,11 +417,10 @@ export default function ClientPortal() {
                   setLoading(true);
                   setActiveClientId(linked.id);
                 }}
-                className={`flex-1 min-w-[140px] px-6 py-4 rounded-[1.5rem] text-sm font-bold transition-all whitespace-nowrap flex flex-col items-center gap-1 ${
-                  activeClientId === linked.id 
-                  ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' 
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
-                }`}
+                className={`flex-1 min-w-[140px] px-6 py-4 rounded-[1.5rem] text-sm font-bold transition-all whitespace-nowrap flex flex-col items-center gap-1 ${activeClientId === linked.id
+                    ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20'
+                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  }`}
               >
                 <span className="truncate w-full text-center">{linked.plan}</span>
                 <span className={`text-[10px] uppercase tracking-tighter opacity-70 ${activeClientId === linked.id ? 'text-white' : 'text-gray-500'}`}>
@@ -443,53 +440,53 @@ export default function ClientPortal() {
               </div>
               Status do Serviço
             </h2>
-            
+
             <div className="space-y-4">
-                <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-bold text-white text-lg">{client.plan}</h3>
-                    <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-black uppercase tracking-tight ${getStatusColor(client.status)}`}>
-                      {getStatusIcon(client.status)}
-                      {client.status}
-                    </div>
+              <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-white text-lg">{client.plan}</h3>
+                  <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-black uppercase tracking-tight ${getStatusColor(client.status)}`}>
+                    {getStatusIcon(client.status)}
+                    {client.status}
                   </div>
-
-                  {client.deliveryDate && client.status !== 'Ativo' && client.status !== 'Cancelado' && (
-                    <div className="mt-2 mb-4 p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl">
-                      <p className="text-xs text-blue-400 font-bold uppercase tracking-wider mb-1 flex items-center gap-2">
-                        <Calendar className="w-3.5 h-3.5" />
-                        Previsão de Entrega
-                      </p>
-                      <p className="text-xl font-black text-white">
-                        {new Date(client.deliveryDate + 'T12:00:00').toLocaleDateString('pt-BR')}
-                      </p>
-                    </div>
-                  )}
-
-                  {client.siteLink && client.status === 'Ativo' && (
-                    <div className="mt-4 p-4 bg-white/5 rounded-2xl border border-white/5">
-                      <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-2">Link de acesso:</p>
-                      <a 
-                        href={client.siteLink.startsWith('http') ? client.siteLink : `https://${client.siteLink}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center justify-between group/link"
-                      >
-                        <span className="text-primary-400 font-medium truncate mr-2">{client.siteLink}</span>
-                        <div className="p-2 bg-primary-500/10 rounded-lg group-hover/link:bg-primary-500/20 transition-colors">
-                          <ExternalLink className="w-4 h-4 text-primary-400" />
-                        </div>
-                      </a>
-                    </div>
-                  )}
                 </div>
+
+                {client.deliveryDate && client.status !== 'Ativo' && client.status !== 'Cancelado' && (
+                  <div className="mt-2 mb-4 p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl">
+                    <p className="text-xs text-blue-400 font-bold uppercase tracking-wider mb-1 flex items-center gap-2">
+                      <Calendar className="w-3.5 h-3.5" />
+                      Previsão de Entrega
+                    </p>
+                    <p className="text-xl font-black text-white">
+                      {new Date(client.deliveryDate + 'T12:00:00').toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                )}
+
+                {client.siteLink && client.status === 'Ativo' && (
+                  <div className="mt-4 p-4 bg-white/5 rounded-2xl border border-white/5">
+                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-2">Link de acesso:</p>
+                    <a
+                      href={client.siteLink.startsWith('http') ? client.siteLink : `https://${client.siteLink}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center justify-between group/link"
+                    >
+                      <span className="text-primary-400 font-medium truncate mr-2">{client.siteLink}</span>
+                      <div className="p-2 bg-primary-500/10 rounded-lg group-hover/link:bg-primary-500/20 transition-colors">
+                        <ExternalLink className="w-4 h-4 text-primary-400" />
+                      </div>
+                    </a>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Finance Card */}
           <div className="group bg-white/[0.03] backdrop-blur-2xl border border-white/10 p-6 md:p-8 rounded-[2rem] shadow-2xl relative overflow-hidden hover:border-white/20 transition-all duration-300">
             <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-primary-500/10 rounded-full blur-3xl group-hover:bg-primary-500/20 transition-colors duration-500"></div>
-            
+
             <h2 className="text-base md:text-lg font-semibold mb-6 flex items-center gap-2 text-gray-200">
               <div className="p-1.5 bg-primary-500/10 rounded-lg">
                 <CreditCard className="w-4 h-4 md:w-5 md:h-5 text-primary-400" />
@@ -498,29 +495,27 @@ export default function ClientPortal() {
             </h2>
 
             <div className="space-y-4">
-               {allLinkedClients.length > 0 ? (
-                 allLinkedClients.map(c => (
-                   <div key={c.id} className={`p-4 rounded-2xl border transition-all ${
-                     c.paymentStatus === 'RECEIVED' || c.paymentStatus === 'CONFIRMED' 
-                     ? 'bg-emerald-500/5 border-emerald-500/10' 
-                     : 'bg-primary-500/10 border-primary-500/20 shadow-lg shadow-primary-500/5'
-                   }`}>
-                     <div className="flex justify-between items-start mb-3">
-                       <div>
-                         <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{c.plan}</p>
-                         <p className="text-xl font-black text-white">R$ {(c.planPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} <span className="text-[10px] text-gray-500 font-normal">/ mês</span></p>
-                       </div>
-                       <div className="flex flex-col items-end gap-2">
-                         <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-tighter border ${
-                           c.paymentStatus === 'RECEIVED' || c.paymentStatus === 'CONFIRMED' 
-                           ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' 
-                           : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
-                         }`}>
-                           {c.paymentStatus === 'RECEIVED' || c.paymentStatus === 'CONFIRMED' ? 'PAGO' : 'PENDENTE'}
-                         </span>
-                         
-                         {c.invoiceUrl && c.paymentStatus !== 'RECEIVED' && (
-                           <a 
+              {allLinkedClients.length > 0 ? (
+                allLinkedClients.map(c => (
+                  <div key={c.id} className={`p-4 rounded-2xl border transition-all ${c.paymentStatus === 'RECEIVED' || c.paymentStatus === 'CONFIRMED'
+                      ? 'bg-emerald-500/5 border-emerald-500/10'
+                      : 'bg-primary-500/10 border-primary-500/20 shadow-lg shadow-primary-500/5'
+                    }`}>
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{c.plan}</p>
+                        <p className="text-xl font-black text-white">R$ {(c.planPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} <span className="text-[10px] text-gray-500 font-normal">/ mês</span></p>
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-tighter border ${c.paymentStatus === 'RECEIVED' || c.paymentStatus === 'CONFIRMED'
+                            ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                            : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                          }`}>
+                          {c.paymentStatus === 'RECEIVED' || c.paymentStatus === 'CONFIRMED' ? 'PAGO' : 'PENDENTE'}
+                        </span>
+
+                        {c.invoiceUrl && c.paymentStatus !== 'RECEIVED' && (
+                          <a
                             href={c.invoiceUrl}
                             target="_blank"
                             rel="noreferrer"
@@ -529,34 +524,34 @@ export default function ClientPortal() {
                             <ExternalLink size={12} />
                             Pagar Agora
                           </a>
-                         )}
-                       </div>
-                     </div>
-                     
-                     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-2 border-t border-white/5">
-                        <div className="flex items-center gap-1.5 text-[10px] text-gray-400 uppercase font-black">
-                           <Clock size={12} className="text-gray-600" /> 
-                           Próximo: {new Date((c.currentDueDate || c.nextDueDate) + 'T12:00:00').toLocaleDateString('pt-BR')}
-                        </div>
-                        {c.invoiceUrl && (
-                          <a 
-                            href={c.invoiceUrl} 
-                            target="_blank" 
-                            rel="noreferrer"
-                            className="text-[10px] text-primary-400 hover:text-primary-300 font-black uppercase flex items-center gap-1 transition-colors"
-                          >
-                            <FileText size={12} /> Ver Fatura
-                          </a>
                         )}
-                     </div>
-                   </div>
-                 ))
-               ) : (
-                  <div className="p-10 rounded-3xl bg-white/5 border border-white/10 text-center">
-                    <CheckCircle className="w-8 h-8 text-emerald-500/30 mx-auto mb-3" />
-                    <p className="text-sm text-gray-500 font-medium italic">Nenhum serviço financeiro encontrado.</p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-2 border-t border-white/5">
+                      <div className="flex items-center gap-1.5 text-[10px] text-gray-400 uppercase font-black">
+                        <Clock size={12} className="text-gray-600" />
+                        Próximo: {new Date((c.currentDueDate || c.nextDueDate) + 'T12:00:00').toLocaleDateString('pt-BR')}
+                      </div>
+                      {c.invoiceUrl && (
+                        <a
+                          href={c.invoiceUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[10px] text-primary-400 hover:text-primary-300 font-black uppercase flex items-center gap-1 transition-colors"
+                        >
+                          <FileText size={12} /> Ver Fatura
+                        </a>
+                      )}
+                    </div>
                   </div>
-               )}
+                ))
+              ) : (
+                <div className="p-10 rounded-3xl bg-white/5 border border-white/10 text-center">
+                  <CheckCircle className="w-8 h-8 text-emerald-500/30 mx-auto mb-3" />
+                  <p className="text-sm text-gray-500 font-medium italic">Nenhum serviço financeiro encontrado.</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -568,7 +563,7 @@ export default function ClientPortal() {
               <FileText className="w-5 h-5 text-primary-400" />
               Histórico de Pagamentos
             </h2>
-            
+
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -596,20 +591,19 @@ export default function ClientPortal() {
                         R$ {payment.value.toFixed(2).replace('.', ',')}
                       </td>
                       <td className="py-4">
-                        <span className={`px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wider ${
-                          payment.status === 'RECEIVED' || payment.status === 'CONFIRMED' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                          payment.status === 'OVERDUE' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
-                          'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
-                        }`}>
+                        <span className={`px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wider ${payment.status === 'RECEIVED' || payment.status === 'CONFIRMED' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                            payment.status === 'OVERDUE' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
+                              'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                          }`}>
                           {payment.status === 'RECEIVED' || payment.status === 'CONFIRMED' ? 'PAGO' :
-                           payment.status === 'OVERDUE' ? 'VENCIDO' : 'PENDENTE'}
+                            payment.status === 'OVERDUE' ? 'VENCIDO' : 'PENDENTE'}
                         </span>
                       </td>
                       <td className="py-4 text-right">
                         {payment.invoiceUrl && (
-                          <a 
-                            href={payment.invoiceUrl} 
-                            target="_blank" 
+                          <a
+                            href={payment.invoiceUrl}
+                            target="_blank"
                             rel="noreferrer"
                             className="inline-flex items-center gap-1 text-sm text-primary-400 hover:text-primary-300 transition-colors"
                           >
@@ -648,10 +642,10 @@ export default function ClientPortal() {
                         {stage.approvedAt && <p className="text-xs text-emerald-500/70 mt-2 font-medium">Aprovado em: {new Date(stage.approvedAt).toLocaleString('pt-BR')}</p>}
                       </div>
                     </div>
-                    
+
                     <div className="flex flex-wrap items-center gap-3 sm:ml-14 mt-2 sm:mt-0">
                       {stage.link && (
-                        <a 
+                        <a
                           href={stage.link}
                           target="_blank"
                           rel="noreferrer"
@@ -661,7 +655,7 @@ export default function ClientPortal() {
                           Ver Material
                         </a>
                       )}
-                      
+
                       {isCurrent && (
                         <button
                           onClick={async () => {
@@ -712,11 +706,10 @@ export default function ClientPortal() {
                 <button
                   key={score}
                   onClick={() => setNpsScore(score)}
-                  className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl border font-bold transition-all flex items-center justify-center ${
-                    npsScore === score 
-                      ? 'bg-primary-500 border-primary-500 text-white scale-110 shadow-lg shadow-primary-500/30' 
+                  className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl border font-bold transition-all flex items-center justify-center ${npsScore === score
+                      ? 'bg-primary-500 border-primary-500 text-white scale-110 shadow-lg shadow-primary-500/30'
                       : 'bg-white/5 border-white/10 text-gray-400 hover:border-primary-500/50 hover:text-primary-400'
-                  }`}
+                    }`}
                 >
                   {score}
                 </button>
@@ -726,13 +719,13 @@ export default function ClientPortal() {
             {npsScore !== null && (
               <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                 <label className="block text-sm font-medium text-gray-400 mb-2">O que mais você gostaria de nos dizer? (Opcional)</label>
-                <textarea 
+                <textarea
                   value={npsComment}
                   onChange={(e) => setNpsComment(e.target.value)}
                   placeholder="Seu feedback nos ajuda a melhorar..."
                   className="w-full min-h-[100px] px-4 py-3 bg-black/20 border border-white/10 text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500 custom-scrollbar resize-none mb-4"
                 ></textarea>
-                
+
                 <button
                   onClick={handleNPSSubmit}
                   disabled={isSubmittingNPS}
@@ -808,8 +801,8 @@ export default function ClientPortal() {
                 )}
                 <div className={`font-bold mb-1 ${client?.referralRewardType === 'discount' || !client?.referralRewardType ? 'text-emerald-400' : 'text-gray-300'}`}>Desconto Mensal</div>
                 <div className="text-xs opacity-80 mb-3">
-                  {client?.billingCycle === 'YEARLY' || client?.isCombo 
-                    ? 'Indisponível para planos anuais.' 
+                  {client?.billingCycle === 'YEARLY' || client?.isCombo
+                    ? 'Indisponível para planos anuais.'
                     : 'R$ 100 de desconto por indicação. Válido enquanto o cliente estiver ativo.'}
                 </div>
                 <ul className="text-xs space-y-1.5 opacity-90">
@@ -826,7 +819,7 @@ export default function ClientPortal() {
               <div className="flex-1 bg-white/5 px-4 py-3 rounded-xl text-emerald-400 font-mono text-sm truncate">
                 {`${window.location.origin}/onboarding/${orgId}?ref=${clientId}`}
               </div>
-              <button 
+              <button
                 onClick={() => {
                   navigator.clipboard.writeText(`${window.location.origin}/onboarding/${orgId}?ref=${clientId}`);
                   toast.success('Link de indicação copiado!');
@@ -853,11 +846,11 @@ export default function ClientPortal() {
             </div>
           </div>
         </div>
-        
+
         {/* Planos Disponíveis */}
         <div className="mt-8 bg-white/[0.03] backdrop-blur-2xl border border-white/10 p-6 md:p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/5 blur-[100px] -z-10 group-hover:bg-primary-500/10 transition-colors duration-700"></div>
-          
+
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-500/10 border border-primary-500/20 mb-4">
@@ -868,18 +861,17 @@ export default function ClientPortal() {
               <p className="text-gray-400 text-sm mt-2 max-w-md">Conheça nossas opções para escalar o seu negócio digital com tecnologia de ponta.</p>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {offers.map((offer) => {
               const isCurrentPlan = client.offerId === offer.id || client.plan === offer.name;
               return (
-                <div 
+                <div
                   key={offer.id}
-                  className={`p-8 rounded-[2rem] border flex flex-col h-full transition-all duration-500 relative group/card ${
-                    isCurrentPlan 
-                      ? 'bg-emerald-500/10 border-emerald-500/30 ring-1 ring-emerald-500/50 shadow-xl shadow-emerald-500/10' 
+                  className={`p-8 rounded-[2rem] border flex flex-col h-full transition-all duration-500 relative group/card ${isCurrentPlan
+                      ? 'bg-emerald-500/10 border-emerald-500/30 ring-1 ring-emerald-500/50 shadow-xl shadow-emerald-500/10'
                       : 'bg-white/[0.02] border-white/5 hover:border-white/20 hover:bg-white/[0.04]'
-                  }`}
+                    }`}
                 >
                   <div className="mb-6">
                     <h3 className="text-2xl font-bold text-white mb-2">{offer.name}</h3>
@@ -887,7 +879,7 @@ export default function ClientPortal() {
                       {offer.type === 'SUBSCRIPTION' ? 'Plano de assinatura recorrente.' : 'Pagamento único para o seu projeto.'}
                     </p>
                   </div>
-                  
+
                   <div className="space-y-4 mb-8">
                     <div className="p-4 rounded-2xl bg-black/20 border border-white/5 space-y-3">
                       {offer.setupPrice > 0 && (
@@ -924,10 +916,10 @@ export default function ClientPortal() {
                         {feature}
                       </li>
                     )) || (
-                      <li className="flex items-start gap-3 text-xs text-gray-300 italic opacity-50">
-                        Consulte detalhes com nosso suporte.
-                      </li>
-                    )}
+                        <li className="flex items-start gap-3 text-xs text-gray-300 italic opacity-50">
+                          Consulte detalhes com nosso suporte.
+                        </li>
+                      )}
                   </ul>
 
                   {isCurrentPlan ? (
@@ -935,7 +927,7 @@ export default function ClientPortal() {
                       Seu Plano Ativo
                     </div>
                   ) : (
-                    <button 
+                    <button
                       onClick={() => {
                         window.open(`https://wa.me/5511952924208?text=Olá! Gostaria de mais informações sobre o upgrade para o plano: ${offer.name}`, '_blank');
                       }}
@@ -955,7 +947,7 @@ export default function ClientPortal() {
                   <h3 className="text-2xl font-bold text-white mb-2">Plano sob consulta</h3>
                   <p className="text-xs text-gray-400 leading-relaxed">Plano com condições especiais negociadas diretamente com nossa equipe. Ideal para agências ou projetos complexos.</p>
                 </div>
-                
+
                 <div className="space-y-4 mb-8">
                   <div className="p-4 rounded-2xl bg-black/20 border border-white/5 space-y-3">
                     <div className="flex items-center justify-between">
@@ -1005,7 +997,7 @@ export default function ClientPortal() {
                     Seu Plano Ativo
                   </div>
                 ) : (
-                  <button 
+                  <button
                     onClick={() => {
                       window.open(`https://wa.me/5511952924208?text=Olá! Gostaria de saber mais sobre o Plano sob consulta e como ele funciona.`, '_blank');
                     }}
@@ -1022,7 +1014,7 @@ export default function ClientPortal() {
         {/* Support Request Form */}
         <div className="mt-8 bg-white/[0.03] backdrop-blur-2xl border border-white/10 p-6 md:p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden group" id="support-form">
           <div className="absolute top-0 left-0 w-64 h-64 bg-primary-500/5 blur-[100px] -z-10 group-hover:bg-primary-500/10 transition-colors duration-700"></div>
-          
+
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-500/10 border border-primary-500/20 mb-4">
@@ -1033,13 +1025,13 @@ export default function ClientPortal() {
               <p className="text-gray-400 text-sm mt-2 max-w-md">Precisa de alguma mudança no site ou ajuda com algo? Nossa equipe está pronta para ajudar.</p>
             </div>
           </div>
-          
+
           <form onSubmit={handleSubmitRequest} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Categoria do Chamado</label>
                 <div className="relative group/select">
-                  <select 
+                  <select
                     value={requestCategory}
                     onChange={(e) => setRequestCategory(e.target.value)}
                     className="w-full px-5 py-4 bg-black/40 border border-white/10 text-white rounded-2xl focus:ring-2 focus:ring-primary-500/50 outline-none transition-all appearance-none cursor-pointer hover:border-white/20"
@@ -1054,7 +1046,7 @@ export default function ClientPortal() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="hidden md:flex items-center justify-center p-6 rounded-2xl bg-primary-500/5 border border-primary-500/10">
                 <div className="text-center">
                   <p className="text-[10px] text-primary-400 font-bold uppercase tracking-wider mb-1">Tempo Médio de Resposta</p>
@@ -1062,10 +1054,10 @@ export default function ClientPortal() {
                 </div>
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Descrição do Pedido</label>
-              <textarea 
+              <textarea
                 value={requestMessage}
                 onChange={(e) => setRequestMessage(e.target.value)}
                 placeholder="Descreva o que você precisa em detalhes para que possamos ser mais assertivos..."
@@ -1079,9 +1071,9 @@ export default function ClientPortal() {
                 <AlertCircle size={14} className="text-primary-500" />
                 <span>Anexos podem ser enviados após a abertura do chamado via WhatsApp.</span>
               </div>
-              
-              <button 
-                type="submit" 
+
+              <button
+                type="submit"
                 disabled={isSubmittingRequest || !requestMessage.trim()}
                 className="w-full sm:w-auto flex items-center justify-center space-x-3 bg-gradient-to-r from-primary-600 to-primary-400 hover:from-primary-500 hover:to-primary-300 disabled:opacity-50 disabled:cursor-not-allowed text-white px-10 py-4 rounded-2xl transition-all font-bold shadow-xl shadow-primary-500/20 hover:shadow-primary-500/40 active:scale-[0.98]"
               >
@@ -1105,7 +1097,7 @@ export default function ClientPortal() {
         {clientRequests.length > 0 && (
           <div id="historico-chamados" className="mt-8 bg-white/[0.03] backdrop-blur-2xl border border-white/10 p-6 md:p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/5 blur-[100px] -z-10 group-hover:bg-primary-500/10 transition-colors duration-700"></div>
-            
+
             <div className="flex items-center justify-between mb-8">
               <div>
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-500/10 border border-primary-500/20 mb-4">
@@ -1115,11 +1107,11 @@ export default function ClientPortal() {
                 <h2 className="text-3xl font-bold text-white tracking-tight">Histórico de Chamados</h2>
               </div>
             </div>
-            
+
             <div className="space-y-4">
               {clientRequests.map((req) => (
                 <div key={req.id} className={`group/item border transition-all duration-300 rounded-[1.5rem] overflow-hidden ${expandedRequest === req.id ? 'bg-white/[0.06] border-white/20 shadow-xl' : 'bg-black/20 border-white/5 hover:border-white/10'}`}>
-                  <div 
+                  <div
                     className="p-6 cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                     onClick={() => setExpandedRequest(expandedRequest === req.id ? null : req.id)}
                   >
@@ -1132,7 +1124,7 @@ export default function ClientPortal() {
                         {req.message}
                       </p>
                     </div>
-                    
+
                     <div className="flex items-center justify-between sm:justify-end gap-6">
                       <div className="text-right">
                         <p className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">Aberto em</p>
@@ -1145,11 +1137,11 @@ export default function ClientPortal() {
                       </div>
                     </div>
                   </div>
-                  
+
                   {expandedRequest === req.id && (
                     <div className="px-6 pb-6 pt-2 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
                       <div className="h-px bg-white/10 w-full"></div>
-                      
+
                       <div className="space-y-2">
                         <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Sua Solicitação</p>
                         <div className="p-4 rounded-2xl bg-black/40 border border-white/5 text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">
@@ -1174,7 +1166,7 @@ export default function ClientPortal() {
                         <div className="p-5 rounded-2xl bg-violet-500/10 border border-violet-500/20 text-center space-y-3 animate-pulse">
                           <p className="text-sm text-violet-100/90 font-medium">Nossa equipe marcou este chamado como resolvido. O problema foi solucionado?</p>
                           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                            <button 
+                            <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleConfirmResolution(req.id);
@@ -1184,7 +1176,7 @@ export default function ClientPortal() {
                               <CheckCircle size={18} />
                               Sim, Confirmar Solução
                             </button>
-                            <button 
+                            <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 window.open(`https://wa.me/5511952924208?text=Olá! O chamado #${req.id.slice(-6).toUpperCase()} ainda não foi resolvido. Preciso de mais ajuda.`, '_blank');
@@ -1205,8 +1197,8 @@ export default function ClientPortal() {
                             <p className="text-[10px] text-gray-400 font-mono">#{req.id.slice(-6).toUpperCase()}</p>
                           </div>
                         </div>
-                        
-                        <button 
+
+                        <button
                           onClick={(e) => {
                             e.stopPropagation();
                             window.open(`https://wa.me/5511952924208?text=Olá! Gostaria de falar sobre o chamado #${req.id.slice(-6).toUpperCase()}`, '_blank');
@@ -1232,7 +1224,7 @@ export default function ClientPortal() {
               <MessageSquare className="w-6 h-6 text-emerald-400" />
             </div>
             <p className="text-gray-400 text-sm mb-4 max-w-xs">Prefere um atendimento mais direto? Nossa equipe está disponível no WhatsApp.</p>
-            <a 
+            <a
               href="https://wa.me/5511952924208"
               target="_blank"
               rel="noreferrer"
@@ -1256,7 +1248,7 @@ export default function ClientPortal() {
                   <h3 className="font-bold text-xl tracking-tight">Central de Ajuda</h3>
                   <p className="text-xs text-primary-100/80 mt-1">Como podemos te ajudar hoje?</p>
                 </div>
-                <button 
+                <button
                   onClick={() => setIsHelpOpen(false)}
                   className="p-2.5 hover:bg-white/10 rounded-2xl transition-colors backdrop-blur-md border border-white/10"
                 >
@@ -1264,11 +1256,11 @@ export default function ClientPortal() {
                 </button>
               </div>
             </div>
-            
+
             <div className="p-6 border-b border-white/5 bg-white/[0.02]">
               <div className="relative group">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-primary-400 transition-colors" size={18} />
-                <input 
+                <input
                   type="text"
                   placeholder="Pesquisar dúvidas..."
                   value={searchQuery}
@@ -1277,16 +1269,16 @@ export default function ClientPortal() {
                 />
               </div>
             </div>
-            
+
             <div className="flex-1 overflow-y-auto p-6 sm:p-8 custom-scrollbar space-y-6 bg-white/[0.01]">
               {faqData.map((category) => {
-                const filteredQuestions = category.questions.filter(q => 
-                  q.q.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                const filteredQuestions = category.questions.filter(q =>
+                  q.q.toLowerCase().includes(searchQuery.toLowerCase()) ||
                   q.a.toLowerCase().includes(searchQuery.toLowerCase())
                 );
-                
+
                 if (filteredQuestions.length === 0) return null;
-                
+
                 return (
                   <div key={category.category} className="space-y-3">
                     <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] px-2">
@@ -1295,7 +1287,7 @@ export default function ClientPortal() {
                     <div className="space-y-2">
                       {filteredQuestions.map((item, idx) => (
                         <div key={idx} className={`rounded-2xl border transition-all duration-300 ${activeFaq === `${category.category}-${idx}` ? 'bg-white/[0.06] border-white/10 shadow-lg' : 'bg-white/[0.02] border-white/5 hover:border-white/10'}`}>
-                          <button 
+                          <button
                             onClick={() => setActiveFaq(activeFaq === `${category.category}-${idx}` ? null : `${category.category}-${idx}`)}
                             className="w-full px-5 py-4 text-left transition-colors flex items-center justify-between gap-4"
                           >
@@ -1316,7 +1308,7 @@ export default function ClientPortal() {
                   </div>
                 );
               })}
-              
+
               {searchQuery && faqData.every(c => c.questions.filter(q => q.q.toLowerCase().includes(searchQuery.toLowerCase()) || q.a.toLowerCase().includes(searchQuery.toLowerCase())).length === 0) && (
                 <div className="text-center py-12">
                   <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -1326,9 +1318,9 @@ export default function ClientPortal() {
                 </div>
               )}
             </div>
-            
+
             <div className="p-6 sm:p-8 bg-white/[0.02] border-t border-white/5">
-              <a 
+              <a
                 href="https://wa.me/5511952924208"
                 target="_blank"
                 rel="noreferrer"
@@ -1340,7 +1332,7 @@ export default function ClientPortal() {
             </div>
           </div>
         ) : (
-          <button 
+          <button
             onClick={() => setIsHelpOpen(true)}
             className="group relative p-5 bg-gradient-to-br from-primary-600 to-primary-400 text-white rounded-[2rem] shadow-2xl shadow-primary-500/40 hover:shadow-primary-500/60 transition-all hover:scale-110 active:scale-95"
           >
@@ -1354,7 +1346,7 @@ export default function ClientPortal() {
       </div>
 
       {showCsatModal && pendingCsatRequestId && orgId && (
-        <SupportSatisfactionModal 
+        <SupportSatisfactionModal
           requestId={pendingCsatRequestId}
           orgId={orgId}
           onClose={() => setShowCsatModal(false)}

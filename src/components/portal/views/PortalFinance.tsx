@@ -15,9 +15,18 @@ import {
 interface PortalFinanceProps {
   client: any;
   paymentsHistory: any[];
+  allClients?: any[];
+  activeClientId?: string;
+  setActiveClientId?: (id: string) => void;
 }
 
-export default function PortalFinance({ client, paymentsHistory }: PortalFinanceProps) {
+export default function PortalFinance({ 
+  client, 
+  paymentsHistory, 
+  allClients = [], 
+  activeClientId, 
+  setActiveClientId 
+}: PortalFinanceProps) {
   const setupValue = client.customSetupPrice || client.setupPrice || 0;
   const monthlyValue = client.customMonthlyPrice || client.planPrice || 0;
   
@@ -62,6 +71,25 @@ export default function PortalFinance({ client, paymentsHistory }: PortalFinance
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Subscription Switcher (Tabs) */}
+      {allClients.length > 1 && (
+        <div className="bg-white/5 p-1.5 rounded-2xl border border-white/10 inline-flex gap-1">
+          {allClients.map((sub) => (
+            <button
+              key={sub.id}
+              onClick={() => setActiveClientId?.(sub.id)}
+              className={`
+                px-6 py-2.5 rounded-xl text-xs font-bold transition-all duration-300
+                ${activeClientId === sub.id 
+                  ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' 
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'}
+              `}
+            >
+              {sub.plan}
+            </button>
+          ))}
+        </div>
+      )}
       {/* Active Invoice Card */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 bg-gradient-to-br from-primary-600 to-primary-800 p-8 rounded-[2.5rem] shadow-2xl shadow-primary-500/20 relative overflow-hidden group">

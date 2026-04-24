@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { doc, collection, query, where, onSnapshot, getDoc } from 'firebase/firestore';
+import { doc, collection, query, where, onSnapshot, getDocs, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
-export function usePortalData(orgId: string | undefined, clientId: string | undefined) {
+export function usePortalData(orgId: string | undefined, initialClientId: string | undefined) {
+  const [activeClientId, setActiveClientId] = useState<string | undefined>(initialClientId);
+  const [allClients, setAllClients] = useState<any[]>([]);
   const [client, setClient] = useState<any>(null);
   const [paymentsHistory, setPaymentsHistory] = useState<any[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
@@ -11,26 +13,56 @@ export function usePortalData(orgId: string | undefined, clientId: string | unde
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // 1. Buscar todas as assinaturas (clientes) com o mesmo CPF/CNPJ
   useEffect(() => {
-    if (!orgId || !clientId) {
-      setError("Parâmetros inválidos.");
-      setLoading(false);
+    if (!orgId || !initialClientId) return;
+
+    const fetchAllSubscriptions = async () => {
+      try {
+        const clientsRef = collection(db, 'organizations', orgId, 'clients');
+        const initialClientDoc = doc(db, 'organizations', orgId, 'clients', initialClientId);
+        const initialClientSnap = await getDoc(initialClientDoc);
+
+        if (initialClientSnap.exists()) {
+          const data = initialClientSnap.data();
+          if (data.cpfCnpj) {
+            const q = query(clientsRef, where('cpfCnpj', '==', data.cpfCnpj));
+            const qSnap = await getDocs(q);
+            const clients = qSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+            setAllClients(clients);
+          } else {
+            setAllClients([{ id: initialClientSnap.id, ...data }]);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching all subscriptions:", err);
+      }
+    };
+
+    fetchAllSubscriptions();
+  }, [orgId, initialClientId]);
+
+  // 2. Escutar dados da assinatura ativa
+  useEffect(() => {
+    if (!orgId || !activeClientId) {
+      if (!initialClientId) {
+        setError("Parâmetros inválidos.");
+        setLoading(false);
+      }
       return;
     }
 
-    const clientRef = doc(db, 'organizations', orgId, 'clients', clientId);
+    setLoading(true);
+    const clientRef = doc(db, 'organizations', orgId, 'clients', activeClientId);
     const requestsRef = collection(db, 'organizations', orgId, 'supportRequests');
     const offersRef = collection(db, 'organizations', orgId, 'offers');
     const globalRef = doc(db, 'organizations', orgId, 'settings', 'global');
 
-    // 1. Client Data & Consultant Profile
-    // 1. Client Data
     let unsubConsultant: () => void = () => {};
     const unsubClient = onSnapshot(clientRef, async (snap) => {
       if (snap.exists()) {
         const data = snap.data();
         
-        // Se houver integração Asaas, buscar dados em tempo real
         if (data.asaasCustomerId) {
           try {
             const res = await fetch(`/api/asaas/payments?customer=${data.asaasCustomerId}`);
@@ -41,16 +73,16 @@ export function usePortalData(orgId: string | undefined, clientId: string | unde
           } catch (e) {
             console.error("Asaas fetch error:", e);
           }
+        } else {
+          setPaymentsHistory([]);
         }
 
-        // Definir dados iniciais do cliente imediatamente
         const clientData = { id: snap.id, ...data };
         setClient(clientData);
 
-        // Se houver consultor designado, escutar em tempo real para atualizar o objeto client
         if (data.assignedTo) {
           const userRef = doc(db, 'organizations', orgId, 'users', data.assignedTo);
-          unsubConsultant(); // Limpar anterior se existir
+          unsubConsultant();
           unsubConsultant = onSnapshot(userRef, (userSnap) => {
             if (userSnap.exists()) {
               setClient({
@@ -63,25 +95,22 @@ export function usePortalData(orgId: string | undefined, clientId: string | unde
         
         setLoading(false);
       } else {
-        setError("Cliente não encontrado.");
+        setError("Assinatura não encontrada.");
         setLoading(false);
       }
     });
 
-    // 2. Support Requests
-    const qRequests = query(requestsRef, where('clientId', '==', clientId));
+    const qRequests = query(requestsRef, where('clientId', '==', activeClientId));
     const unsubRequests = onSnapshot(qRequests, (snap) => {
       const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       setRequests(list.sort((a: any, b: any) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0)));
     });
 
-    // 3. Offers/Marketplace
     const qOffers = query(offersRef, where('active', '==', true));
     const unsubOffers = onSnapshot(qOffers, (snap) => {
       setOffers(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     });
 
-    // 4. Announcements
     const unsubGlobal = onSnapshot(globalRef, (snap) => {
       if (snap.exists()) {
         const data = snap.data();
@@ -98,7 +127,19 @@ export function usePortalData(orgId: string | undefined, clientId: string | unde
       unsubOffers();
       unsubGlobal();
     };
-  }, [orgId, clientId]);
+  }, [orgId, activeClientId]);
 
-  return { client, paymentsHistory, requests, offers, announcement, loading, error };
+  return { 
+    client, 
+    allClients,
+    activeClientId,
+    setActiveClientId,
+    paymentsHistory, 
+    requests, 
+    offers, 
+    announcement, 
+    loading, 
+    error 
+  };
 }
+

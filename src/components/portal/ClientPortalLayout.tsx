@@ -24,7 +24,17 @@ import PortalSupport from './views/PortalSupport';
 
 export default function ClientPortalLayout() {
   const { orgId, clientId } = useParams<{ orgId: string; clientId: string }>();
-  const { client, loading, error, announcement, paymentsHistory, offers } = usePortalData(orgId, clientId);
+  const { 
+    client, 
+    allClients,
+    activeClientId,
+    setActiveClientId,
+    loading, 
+    error, 
+    announcement, 
+    paymentsHistory, 
+    offers 
+  } = usePortalData(orgId, clientId);
   const [activeTab, setActiveTab] = useState('home');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -110,6 +120,36 @@ export default function ClientPortalLayout() {
             </button>
           </div>
 
+          {/* Subscription Selector (Multi-Plan) */}
+          {allClients.length > 1 && (
+            <div className="mb-8">
+              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-3 px-2">Suas Assinaturas</p>
+              <div className="space-y-2 max-h-[200px] overflow-y-auto custom-scrollbar pr-2">
+                {allClients.map((sub) => (
+                  <button
+                    key={sub.id}
+                    onClick={() => setActiveClientId(sub.id)}
+                    className={`
+                      w-full flex flex-col items-start p-3 rounded-xl transition-all duration-300 border
+                      ${activeClientId === sub.id 
+                        ? 'bg-primary-500/10 border-primary-500/30 text-white' 
+                        : 'bg-white/5 border-transparent text-gray-400 hover:bg-white/10'}
+                    `}
+                  >
+                    <span className="text-xs font-bold truncate w-full text-left">{sub.plan}</span>
+                    <span className="text-[10px] opacity-60 truncate w-full text-left">{sub.id.toUpperCase()}</span>
+                    {activeClientId === sub.id && (
+                      <div className="mt-2 flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                        <span className="text-[9px] font-bold text-emerald-400 uppercase">Ativa Agora</span>
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <nav className="flex-1 space-y-2">
             {navItems.map((item) => (
               <button
@@ -186,7 +226,7 @@ export default function ClientPortalLayout() {
         <div className="flex-1 overflow-y-auto px-6 lg:px-10 pb-10 custom-scrollbar">
           <AnimatePresence mode="wait">
             <motion.div
-              key={activeTab}
+              key={activeTab + activeClientId}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
@@ -194,7 +234,15 @@ export default function ClientPortalLayout() {
               className="h-full"
             >
               {activeTab === 'home' && <PortalHome client={client} announcement={announcement} setActiveTab={setActiveTab} />}
-              {activeTab === 'finance' && <PortalFinance client={client} paymentsHistory={paymentsHistory} />}
+              {activeTab === 'finance' && (
+                <PortalFinance 
+                  client={client} 
+                  paymentsHistory={paymentsHistory} 
+                  allClients={allClients}
+                  activeClientId={activeClientId}
+                  setActiveClientId={setActiveClientId}
+                />
+              )}
               {activeTab === 'services' && <PortalServices offers={offers} client={client} />}
               {activeTab === 'docs' && <PortalDocuments client={client} orgId={orgId || ''} />}
               {activeTab === 'support' && <PortalSupport client={client} />}
@@ -218,3 +266,4 @@ export default function ClientPortalLayout() {
     </div>
   );
 }
+
