@@ -20,7 +20,7 @@ import PortalHome from './views/PortalHome';
 import PortalFinance from './views/PortalFinance';
 import PortalServices from './views/PortalServices';
 import PortalDocuments from './views/PortalDocuments';
-import PortalSupportChat from './views/PortalSupportChat';
+import PortalSupport from './views/PortalSupport';
 
 export default function ClientPortalLayout() {
   const { orgId, clientId } = useParams<{ orgId: string; clientId: string }>();
@@ -197,7 +197,7 @@ export default function ClientPortalLayout() {
               {activeTab === 'finance' && <PortalFinance client={client} paymentsHistory={paymentsHistory} />}
               {activeTab === 'services' && <PortalServices offers={offers} />}
               {activeTab === 'docs' && <PortalDocuments />}
-              {activeTab === 'support' && <PortalSupportChat client={client} />}
+              {activeTab === 'support' && <PortalSupport client={client} />}
             </motion.div>
           </AnimatePresence>
         </div>
