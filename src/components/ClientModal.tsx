@@ -547,7 +547,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
             ) : activeTab === 'history' ? (
               <HistoryTab logs={formData.logs || []} newLogText={newLogText} setNewLogText={setNewLogText} setFormData={setFormData} />
             ) : activeTab === 'plans' ? (
-              <PlansTab client={formData as Client} offers={offers} onUpdate={(updatedPlans) => setFormData({ ...formData, plans: updatedPlans })} orgId={effectiveOrgId} />
+              <PlansTab client={formData as Client} />
             ) : activeTab === 'purchases' ? (
               <PurchasesTab client={formData as Client} />
             ) : activeTab === 'stages' ? (
