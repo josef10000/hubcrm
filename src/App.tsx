@@ -55,7 +55,7 @@ import { CRMProvider, useCRM } from './contexts/CRMContext';
 import { DialogProvider } from './contexts/DialogContext';
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { usePermissions } from './hooks/usePermissions';
-import ClientPortal from './components/ClientPortal';
+import ClientPortal from './components/portal/ClientPortalLayout';
 import OnboardingForm from './components/OnboardingForm';
 import ContractSignView from './views/ContractSignView';
 import PublicCheckoutPage from './components/PublicCheckoutPage';
