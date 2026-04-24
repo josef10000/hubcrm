@@ -10,15 +10,20 @@ import {
   Sparkles,
   Search,
   X,
-  Info
+  Info,
+  Loader2
 } from 'lucide-react';
+import { usePortalCheckout } from '../../../hooks/usePortalCheckout';
+import { Offer, Client } from '../../../types';
 
 interface PortalServicesProps {
-  offers: any[];
+  offers: Offer[];
+  client: Client;
 }
 
-export default function PortalServices({ offers }: PortalServicesProps) {
-  const [selectedOffer, setSelectedOffer] = useState<any | null>(null);
+export default function PortalServices({ offers, client }: PortalServicesProps) {
+  const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
+  const { hireOffer, isLoading } = usePortalCheckout(client);
   
   // Encontrar o mais contratado ou o primeiro
   const featuredOffer = offers.find(o => o.isMostHired) || offers[0];
@@ -75,10 +80,13 @@ export default function PortalServices({ offers }: PortalServicesProps) {
                   Ver Detalhes
                 </button>
                 <button 
-                  className="px-8 py-4 bg-primary-500 text-white font-black rounded-2xl hover:bg-primary-600 transition-all active:scale-95 shadow-xl flex items-center gap-2 group"
+                  onClick={() => hireOffer(featuredOffer)}
+                  disabled={isLoading}
+                  className="px-8 py-4 bg-primary-500 text-white font-black rounded-2xl hover:bg-primary-600 transition-all active:scale-95 shadow-xl flex items-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Contratar Agora
-                  <Zap size={20} className="fill-current group-hover:scale-125 transition-transform" />
+                  {isLoading ? 'Processando...' : 'Contratar Agora'}
+                  {!isLoading && <Zap size={20} className="fill-current group-hover:scale-125 transition-transform" />}
+                  {isLoading && <Loader2 size={20} className="animate-spin" />}
                 </button>
               </div>
             </div>
@@ -230,10 +238,13 @@ export default function PortalServices({ offers }: PortalServicesProps) {
                   </div>
                 </div>
                 <button 
-                  className="w-full md:w-auto px-10 py-5 bg-primary-500 text-white font-black rounded-2xl hover:bg-primary-600 transition-all active:scale-95 shadow-xl flex items-center justify-center gap-3"
+                  onClick={() => hireOffer(selectedOffer)}
+                  disabled={isLoading}
+                  className="w-full md:w-auto px-10 py-5 bg-primary-500 text-white font-black rounded-2xl hover:bg-primary-600 transition-all active:scale-95 shadow-xl flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Contratar Agora
-                  <ArrowRight size={20} />
+                  {isLoading ? 'Processando...' : 'Contratar Agora'}
+                  {!isLoading && <ArrowRight size={20} />}
+                  {isLoading && <Loader2 size={20} className="animate-spin" />}
                 </button>
               </div>
             </motion.div>

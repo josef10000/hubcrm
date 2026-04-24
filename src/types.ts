@@ -88,34 +88,48 @@ export interface Tag {
   icon?: string;
 }
 
+export interface ClientPlan {
+  id: string;
+  offerId: string;
+  name: string;
+  type: 'SUBSCRIPTION' | 'SINGLE';
+  price: number;
+  status: 'Ativo' | 'Em Desenvolvimento' | 'Inadimplente' | 'Cancelado' | 'Pendente';
+  asaasSubscriptionId?: string;
+  asaasPaymentId?: string;
+  invoiceUrl?: string;
+  nextDueDate?: string;
+  createdAt: number;
+}
+
 export interface Client {
   id: string;
   name: string;
+  email: string;
   whatsapp: string;
-  plan: PlanType;
-  offerId?: string;
-  planPrice?: number;
-  setupPrice?: number;
-  siteLink?: string;
   status: SiteStatus;
-  createdAt: number;
-  niche?: string;
-  notes?: string;
-  logs?: ClientLog[];
+  plan: string;
+  offerId?: string;
+  planPrice: number;
+  setupPrice: number;
+  billingCycle?: 'MONTHLY' | 'YEARLY';
+  billingType?: 'CREDIT_CARD' | 'PIX' | 'BOLETO' | 'UNDEFINED';
+  isCombo?: boolean;
+  maxInstallments?: number;
+  firstPaymentDate?: string;
+  recurringPaymentDay?: number;
+  welcomeEmailSent?: boolean;
+  sentEvents?: string[];
+  plans?: ClientPlan[];
   attachments?: ClientAttachment[];
   stages?: ClientStage[];
   contracts?: ClientContract[];
   cpfCnpj?: string;
-  email?: string;
   asaasCustomerId?: string;
   asaasSubscriptionId?: string;
   invoiceUrl?: string;
   paymentStatus?: 'PENDING' | 'RECEIVED' | 'OVERDUE' | 'N/A';
   nextDueDate?: string;
-  billingType?: 'PIX' | 'CREDIT_CARD' | 'BOLETO' | 'UNDEFINED';
-  billingCycle?: 'MONTHLY' | 'YEARLY';
-  firstPaymentDate?: string;
-  recurringPaymentDay?: number;
   deliveryDate?: string;
   onboardingAnswers?: Record<string, string>;
   referralCode?: string;
@@ -129,8 +143,6 @@ export interface Client {
   npsScore?: number;
   npsComment?: string;
   npsSubmittedAt?: any;
-  isCombo?: boolean;
-  maxInstallments?: number;
   comboRenewalDate?: string;
   leadSource?: 'Indicação' | 'Google Ads' | 'Tráfego Orgânico' | 'Prospecção Manual' | 'Instagram' | 'WhatsApp Direto' | 'Parceiro';
   customMonthlyPrice?: number;
@@ -145,6 +157,11 @@ export interface Client {
   assignedTo?: string;
   tagIds?: string[];
   updatedAt?: number;
+  createdAt: number;
+  siteLink?: string;
+  niche?: string;
+  notes?: string;
+  logs?: ClientLog[];
 }
 
 export interface OnboardingQuestion {

@@ -195,7 +195,7 @@ export default function ClientPortalLayout() {
             >
               {activeTab === 'home' && <PortalHome client={client} announcement={announcement} setActiveTab={setActiveTab} />}
               {activeTab === 'finance' && <PortalFinance client={client} paymentsHistory={paymentsHistory} />}
-              {activeTab === 'services' && <PortalServices offers={offers} />}
+              {activeTab === 'services' && <PortalServices offers={offers} client={client} />}
               {activeTab === 'docs' && <PortalDocuments client={client} orgId={orgId || ''} />}
               {activeTab === 'support' && <PortalSupport client={client} />}
             </motion.div>

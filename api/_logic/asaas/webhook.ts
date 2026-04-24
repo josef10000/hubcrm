@@ -200,6 +200,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           }
         }
 
+        // --- ATUALIZAÇÃO DO ARRAY PLANS (MULTI-PLANOS) ---
+        if (clientData.plans && clientData.plans.length > 0) {
+          const planId = paymentData.subscription || paymentData.id;
+          const planIndex = clientData.plans.findIndex((p: any) => p.id === planId || p.asaasSubscriptionId === planId || p.asaasPaymentId === planId);
+          
+          if (planIndex !== -1) {
+            const updatedPlans = [...clientData.plans];
+            if (event === 'PAYMENT_RECEIVED' || event === 'PAYMENT_CONFIRMED') {
+              updatedPlans[planIndex].status = 'Ativo';
+              if (paymentData.dueDate) updatedPlans[planIndex].nextDueDate = paymentData.dueDate;
+            } else if (event === 'PAYMENT_OVERDUE') {
+              updatedPlans[planIndex].status = 'Inadimplente';
+            }
+            updates.plans = updatedPlans;
+            console.log(`[ASAAS] Plano ${updatedPlans[planIndex].name} atualizado para ${updatedPlans[planIndex].status}`);
+          }
+        }
+
         if (Object.keys(updates).length > 0) await doc.ref.update(updates);
         
         const pValue = paymentData.value || 0;

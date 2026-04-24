@@ -23,6 +23,7 @@ import CredentialsTab from './client-modal/CredentialsTab';
 import OnboardingTab from './client-modal/OnboardingTab';
 import ReferralsTab from './client-modal/ReferralsTab';
 import ContractsTab from './client-modal/ContractsTab';
+import PlansTab from './client-modal/PlansTab';
 
 export default
 function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardingQuestions, user, offers }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, onDelete?: (id: string) => void, initialData: Client | null, onboardingQuestions: OnboardingQuestion[], user: User, offers: Offer[] }) {
@@ -44,7 +45,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
   });
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [activeTab, setActiveTab] = useState<'details' | 'history' | 'stages' | 'credentials' | 'onboarding' | 'contracts' | 'referrals' | 'emails'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'history' | 'stages' | 'credentials' | 'onboarding' | 'contracts' | 'referrals' | 'emails' | 'plans'>('details');
   const [cepLoading, setCepLoading] = useState(false);
   const [cpfCnpjStatus, setCpfCnpjStatus] = useState<'idle' | 'valid' | 'invalid' | 'loading'>('idle');
   const [newLogText, setNewLogText] = useState('');
@@ -220,6 +221,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
     { key: 'onboarding', label: 'Briefing' },
     { key: 'referrals', label: 'Indicações' },
     { key: 'contracts', label: 'Contratos' },
+    { key: 'plans', label: 'Planos' },
   ] as const;
 
   return (
@@ -552,6 +554,8 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
               <ReferralsTab client={initialData} user={user} />
             ) : activeTab === 'contracts' && initialData ? (
               <ContractsTab client={initialData} user={user} formData={formData} setFormData={setFormData} defaultContractText={defaultContractText} orgId={effectiveOrgId} />
+            ) : activeTab === 'plans' ? (
+              <PlansTab client={formData} />
             ) : null}
           </div>
 
