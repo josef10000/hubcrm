@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, Star } from 'lucide-react';
 import { Offer } from '../types';
 
 export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Offer>) => void, onDelete?: (id: string) => void, initialData: Partial<Offer> | null }) {
@@ -202,6 +202,21 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
             <div className="flex items-center gap-3 mt-4">
               <input 
                 type="checkbox" 
+                id="isMostHired"
+                name="isMostHired" 
+                checked={formData.isMostHired || false} 
+                onChange={handleChange as any} 
+                className="w-5 h-5 rounded border-gray-300 text-primary-500 focus:ring-primary-500 bg-black/20"
+              />
+              <label htmlFor="isMostHired" className="text-sm font-medium text-amber-500 flex items-center gap-2">
+                <Star size={14} fill="currentColor" />
+                Marcar como MAIS CONTRATADO (Destaque no Portal)
+              </label>
+            </div>
+
+            <div className="flex items-center gap-3 mt-4">
+              <input 
+                type="checkbox" 
                 id="active"
                 name="active" 
                 checked={formData.active !== undefined ? formData.active : true} 
@@ -211,6 +226,18 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
               <label htmlFor="active" className="text-sm font-medium text-gray-600 dark:text-gray-300">
                 Oferta Ativa (Visível na criação de clientes)
               </label>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Detalhes Adicionais (Página de Detalhes)</label>
+              <textarea 
+                name="details" 
+                value={formData.details || ''} 
+                onChange={handleChange} 
+                className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all h-32 resize-none" 
+                placeholder="Descreva aqui todos os detalhes, benefícios e o que está incluso neste produto/serviço..."
+              />
+              <p className="text-xs text-gray-500 mt-1">Este texto aparecerá quando o cliente clicar em "Ver detalhes" no portal.</p>
             </div>
 
             <div>

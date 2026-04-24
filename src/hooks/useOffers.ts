@@ -33,11 +33,21 @@ export function useOffers(userId: string, offers: Offer[], setOffers: React.Disp
         displayContext: offerData.displayContext || 'PORTAL',
         order: offerData.order !== undefined ? offerData.order : 0,
         description: offerData.description || '',
+        isMostHired: offerData.isMostHired || false,
+        details: offerData.details || '',
         createdAt: isNew ? Date.now() : offerData.createdAt || Date.now(),
       };
       if (offerData.setupPrice !== undefined) offerToSave.setupPrice = offerData.setupPrice;
       if (offerData.maxInstallments !== undefined) offerToSave.maxInstallments = offerData.maxInstallments;
       if (offerData.commissionValue !== undefined) offerToSave.commissionValue = offerData.commissionValue;
+
+      // Se este produto está sendo marcado como "Mais Contratado", desmarcar os outros
+      if (offerToSave.isMostHired) {
+        const otherMostHired = offers.filter(o => o.isMostHired && o.id !== offerId);
+        for (const other of otherMostHired) {
+          await setDoc(doc(db, 'organizations', userId, 'offers', other.id), { ...other, isMostHired: false }, { merge: true });
+        }
+      }
 
       await setDoc(offerRef, offerToSave);
       toast.success(isNew ? 'Oferta criada com sucesso!' : 'Oferta atualizada com sucesso!');

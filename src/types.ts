@@ -76,6 +76,8 @@ export interface Offer {
   displayContext?: 'CHECKOUT' | 'PORTAL' | 'BOTH';
   active: boolean;
   commissionValue?: number;
+  isMostHired?: boolean;
+  details?: string;
   createdAt: number;
 }
 
