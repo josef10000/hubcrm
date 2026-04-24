@@ -18,14 +18,33 @@ interface PortalFinanceProps {
 }
 
 export default function PortalFinance({ client, paymentsHistory }: PortalFinanceProps) {
+  const setupValue = client.customSetupPrice || client.setupPrice || 0;
+  const monthlyValue = client.customMonthlyPrice || client.planPrice || 0;
+  
+  // Verificar se o setup já foi pago no histórico
+  const isSetupPaid = paymentsHistory.some(p => 
+    (p.description?.toLowerCase().includes('setup') || p.description?.toLowerCase().includes('implementação')) && 
+    (p.status === 'RECEIVED' || p.status === 'CONFIRMED')
+  );
+
+  // Fatura prioritária (Setup se não pago, senão a próxima pendente/recorrente)
   const currentInvoice = paymentsHistory.find(p => p.status === 'PENDING' || p.status === 'OVERDUE') 
     || paymentsHistory[0]
-    || { 
-        value: client.monthlyFee || 0, 
-        status: 'PENDING', 
+    || (setupValue > 0 && !isSetupPaid ? {
+        value: setupValue,
+        status: 'PENDING',
         dueDate: new Date().toISOString().split('T')[0],
-        invoiceUrl: client.paymentLink
-       };
+        invoiceUrl: client.paymentLink || client.invoiceUrl,
+        description: 'Taxa de Implementação (Setup)'
+       } : { 
+        value: monthlyValue, 
+        status: 'PENDING', 
+        dueDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0], // Mês seguinte se for mensalidade nova
+        invoiceUrl: client.paymentLink || client.invoiceUrl,
+        description: 'Mensalidade'
+       });
+
+  const isSetupFocus = currentInvoice?.description?.includes('Setup') || (setupValue > 0 && !isSetupPaid && paymentsHistory.length === 0);
 
   const getStatusStyle = (status: string) => {
     switch (status) {
@@ -53,33 +72,41 @@ export default function PortalFinance({ client, paymentsHistory }: PortalFinance
                 <Wallet className="text-white w-6 h-6" />
               </div>
               <div className="flex flex-col items-end">
-                <span className="text-white/60 text-[10px] font-bold uppercase tracking-widest">Plano Mensal</span>
+                <span className="text-white/60 text-[10px] font-bold uppercase tracking-widest">{isSetupFocus ? 'Serviço Profissional' : 'Plano Recorrente'}</span>
                 <span className="text-xl font-bold text-white uppercase">{client.plan}</span>
               </div>
             </div>
             
-            <div className="mb-10">
-              <span className="text-white/60 text-xs font-medium block mb-1">Valor da Mensalidade</span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-black text-white">R$ {currentInvoice?.value.toFixed(2).replace('.', ',') || '0,00'}</span>
-                {client.currentDiscount > 0 && (
-                  <span className="bg-emerald-400 text-emerald-950 text-[10px] font-black px-2 py-1 rounded-lg uppercase">
-                    -{Math.round((client.currentDiscount / (currentInvoice?.value + client.currentDiscount)) * 100)}% Off
-                  </span>
-                )}
+            <div className="mb-10 flex items-center gap-12">
+              <div>
+                <span className="text-white/60 text-xs font-medium block mb-1">{isSetupFocus ? 'Taxa de Implementação' : 'Valor da Mensalidade'}</span>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-black text-white">R$ {currentInvoice?.value.toFixed(2).replace('.', ',') || '0,00'}</span>
+                  {client.currentDiscount > 0 && !isSetupFocus && (
+                    <span className="bg-emerald-400 text-emerald-950 text-[10px] font-black px-2 py-1 rounded-lg uppercase">
+                      -{Math.round((client.currentDiscount / (currentInvoice?.value + client.currentDiscount)) * 100)}% Off
+                    </span>
+                  )}
+                </div>
               </div>
+
+              {isSetupFocus && monthlyValue > 0 && (
+                <div className="pl-12 border-l border-white/10">
+                  <span className="text-white/60 text-xs font-medium block mb-1">Mensalidade (Mês Seguinte)</span>
+                  <span className="text-xl font-bold text-white/90">R$ {monthlyValue.toFixed(2).replace('.', ',')}</span>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col sm:flex-row items-center gap-4">
               {(currentInvoice?.status === 'PENDING' || currentInvoice?.status === 'OVERDUE') ? (
                 <a 
-                  href={currentInvoice.invoiceUrl || '#'}
-                  onClick={(e) => !currentInvoice.invoiceUrl && e.preventDefault()}
+                  href={currentInvoice.invoiceUrl || client.paymentLink || '#'}
                   target="_blank"
                   rel="noreferrer"
-                  className={`w-full sm:w-auto px-10 py-4 bg-white text-primary-600 font-black rounded-2xl flex items-center justify-center gap-2 hover:bg-gray-100 transition-all active:scale-95 shadow-xl ${!currentInvoice.invoiceUrl ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className="w-full sm:w-auto px-10 py-4 bg-white text-primary-600 font-black rounded-2xl flex items-center justify-center gap-2 hover:bg-gray-100 transition-all active:scale-95 shadow-xl"
                 >
-                  {currentInvoice.invoiceUrl ? 'Pagar Agora' : 'Link em Geração'}
+                  Pagar {isSetupFocus ? 'Setup' : 'Fatura'}
                   <ArrowUpRight size={20} />
                 </a>
               ) : (
