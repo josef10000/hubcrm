@@ -30,6 +30,7 @@ export default function ClientPortalLayout() {
     activeClientId,
     setActiveClientId,
     loading, 
+    switching,
     error, 
     announcement, 
     paymentsHistory, 
@@ -46,7 +47,7 @@ export default function ClientPortalLayout() {
     { id: 'support', label: 'Atendimento', icon: MessageCircle },
   ];
 
-  if (loading) {
+  if (loading && !client) {
     return (
       <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center">
         <motion.div 
@@ -197,6 +198,27 @@ export default function ClientPortalLayout() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col h-screen overflow-hidden pt-16 lg:pt-0 relative">
+        {/* Switching Loader Overlay */}
+        <AnimatePresence>
+          {switching && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-[2px]"
+            >
+              <div className="flex flex-col items-center gap-3 bg-black/40 p-6 rounded-3xl border border-white/10 shadow-2xl">
+                <motion.div 
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  className="w-8 h-8 border-3 border-primary-500 border-t-transparent rounded-full"
+                />
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Sincronizando...</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Top Header (Desktop) */}
         <header className="hidden lg:flex items-center justify-between px-10 h-24 shrink-0">
           <div>
@@ -223,8 +245,8 @@ export default function ClientPortalLayout() {
         </header>
 
         {/* View Container */}
-        <div className="flex-1 overflow-y-auto px-6 lg:px-10 pb-10 custom-scrollbar">
-          <AnimatePresence mode="wait">
+        <div className="flex-1 overflow-y-auto px-6 lg:px-10 pb-10 custom-scrollbar relative">
+          <AnimatePresence mode="popLayout">
             <motion.div
               key={activeTab + activeClientId}
               initial={{ opacity: 0, y: 20 }}

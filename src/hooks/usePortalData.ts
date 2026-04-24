@@ -11,6 +11,7 @@ export function usePortalData(orgId: string | undefined, initialClientId: string
   const [offers, setOffers] = useState<any[]>([]);
   const [announcement, setAnnouncement] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [switching, setSwitching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // 1. Buscar todas as assinaturas (clientes) com o mesmo CPF/CNPJ
@@ -52,7 +53,11 @@ export function usePortalData(orgId: string | undefined, initialClientId: string
       return;
     }
 
-    setLoading(true);
+    if (!client) {
+      setLoading(true);
+    } else {
+      setSwitching(true);
+    }
     const clientRef = doc(db, 'organizations', orgId, 'clients', activeClientId);
     const requestsRef = collection(db, 'organizations', orgId, 'supportRequests');
     const offersRef = collection(db, 'organizations', orgId, 'offers');
@@ -94,9 +99,11 @@ export function usePortalData(orgId: string | undefined, initialClientId: string
         }
         
         setLoading(false);
+        setSwitching(false);
       } else {
         setError("Assinatura não encontrada.");
         setLoading(false);
+        setSwitching(false);
       }
     });
 
@@ -139,6 +146,7 @@ export function usePortalData(orgId: string | undefined, initialClientId: string
     offers, 
     announcement, 
     loading, 
+    switching,
     error 
   };
 }
