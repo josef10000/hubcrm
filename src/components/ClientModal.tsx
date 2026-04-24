@@ -233,13 +233,13 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
           <div className="flex items-center space-x-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{initialData ? 'Detalhes do Cliente' : 'Novo Cliente'}</h2>
             {initialData && (
-              <div className="flex space-x-2 bg-black/20 p-1 rounded-xl border border-white/5">
+              <div className="flex space-x-2 bg-black/20 p-1 rounded-xl border border-white/5 overflow-x-auto scrollbar-hide max-w-[280px] sm:max-w-md md:max-w-lg lg:max-w-xl">
                 {tabButtons.map(tab => (
                   <button 
                     key={tab.key}
                     type="button"
                     onClick={() => setActiveTab(tab.key)}
-                    className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTab === tab.key ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
+                    className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all shrink-0 ${activeTab === tab.key ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}
                   >
                     {tab.label}
                   </button>

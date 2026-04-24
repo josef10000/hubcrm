@@ -43,18 +43,34 @@ export default function PlansTab({ client, offers, onUpdate, orgId }: PlansTabPr
       const isSubscription = offer.type === 'SUBSCRIPTION';
       const action = isSubscription ? 'subscriptions' : 'payment-links';
       
+      if (!client.asaasCustomerId) {
+        toast.error('Este cliente não possui um ID vinculado no Asaas. Sincronize os dados antes de prosseguir.');
+        setIsCreating(false);
+        return;
+      }
+
+      const value = isSubscription ? offer.price : (offer.price + (offer.setupPrice || 0));
+      
+      if (value < 5) {
+        toast.error('O valor mínimo para cobrança no Asaas é R$ 5,00');
+        setIsCreating(false);
+        return;
+      }
+
       const payload: any = {
         customer: client.asaasCustomerId,
-        value: offer.price + (offer.setupPrice || 0),
+        value: value,
         description: `Contratação: ${offer.name}`,
       };
 
       if (isSubscription) {
+        payload.billingType = 'UNDEFINED';
         payload.cycle = 'MONTHLY';
         payload.nextDueDate = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
       } else {
         payload.name = offer.name;
         payload.chargeType = 'DETACHED';
+        payload.billingType = 'UNDEFINED';
       }
 
       const response = await authFetch(`/api/asaas?action=${action}`, {
@@ -62,7 +78,10 @@ export default function PlansTab({ client, offers, onUpdate, orgId }: PlansTabPr
         body: JSON.stringify(payload)
       });
 
-      if (!response.ok) throw new Error('Erro ao criar no Asaas');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.details || errorData.error || 'Erro ao criar no Asaas');
+      }
 
       const asaasData = await response.json();
       const invoiceUrl = asaasData.invoiceUrl || asaasData.url;
