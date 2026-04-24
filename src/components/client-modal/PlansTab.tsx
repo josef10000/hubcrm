@@ -116,6 +116,7 @@ export default function PlansTab({ client, offers, onUpdate, orgId }: PlansTabPr
           <p className="text-xs text-gray-500">Gerencie todos os serviços contratados por este cliente.</p>
         </div>
         <button 
+          type="button"
           onClick={() => setShowAddForm(!showAddForm)}
           className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white text-xs font-black rounded-xl transition-all shadow-lg shadow-primary-500/20 active:scale-95"
         >
@@ -163,6 +164,7 @@ export default function PlansTab({ client, offers, onUpdate, orgId }: PlansTabPr
                     <p className="text-[11px] text-gray-500 line-clamp-2">{offer.description}</p>
                   </div>
                   <button 
+                    type="button"
                     onClick={() => handleAddProduct(offer)}
                     disabled={isCreating}
                     className="mt-4 w-full py-2 bg-primary-500/10 hover:bg-primary-500 text-primary-500 hover:text-white text-[10px] font-black uppercase tracking-widest rounded-lg border border-primary-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
