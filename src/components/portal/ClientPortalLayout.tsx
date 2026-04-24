@@ -24,7 +24,7 @@ import PortalSupportChat from './views/PortalSupportChat';
 
 export default function ClientPortalLayout() {
   const { orgId, clientId } = useParams<{ orgId: string; clientId: string }>();
-  const { client, loading, error, announcement } = usePortalData(orgId, clientId);
+  const { client, loading, error, announcement, paymentsHistory, offers } = usePortalData(orgId, clientId);
   const [activeTab, setActiveTab] = useState('home');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
