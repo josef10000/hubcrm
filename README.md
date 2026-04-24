@@ -41,6 +41,7 @@ Certifique-se de configurar as seguintes variáveis no seu ambiente Claude Deskt
   </p>
   <div align="center">
   <h2>✨ Features em Destaque v5.4.0</h2>
+  <p><strong>Marketplace Experience & Support Visuals</strong></p>
 </div>
 
 <table>
