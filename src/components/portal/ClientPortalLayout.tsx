@@ -89,15 +89,21 @@ export default function ClientPortalLayout() {
 
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-black/50 backdrop-blur-xl border-b border-white/10 z-50 flex items-center justify-between px-6">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
-            <LayoutDashboard size={18} className="text-white" />
-          </div>
-          <span className="font-bold tracking-tight">Portal <span className="text-primary-500">Hub</span></span>
+        <div className="flex flex-col">
+          <span className="text-[10px] text-primary-500 font-bold uppercase tracking-widest">Portal Hub</span>
+          <h1 className="text-sm font-bold text-white">
+            {navItems.find(i => i.id === activeTab)?.label}
+          </h1>
         </div>
-        <button onClick={() => setIsSidebarOpen(true)} className="p-2 hover:bg-white/5 rounded-lg transition-colors">
-          <Menu size={24} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button className="relative p-2 hover:bg-white/5 rounded-xl transition-colors">
+            <Bell size={20} className="text-gray-400" />
+            {announcement && <span className="absolute top-2 right-2 w-2 h-2 bg-primary-500 rounded-full border-2 border-black" />}
+          </button>
+          <button onClick={() => setIsSidebarOpen(true)} className="p-2 hover:bg-white/5 rounded-xl transition-colors">
+            <Menu size={24} />
+          </button>
+        </div>
       </div>
 
       {/* Sidebar */}
@@ -245,7 +251,7 @@ export default function ClientPortalLayout() {
         </header>
 
         {/* View Container */}
-        <div className="flex-1 overflow-y-auto px-6 lg:px-10 pb-10 custom-scrollbar relative">
+        <div className="flex-1 overflow-y-auto px-4 lg:px-10 pb-32 lg:pb-10 custom-scrollbar relative">
           <AnimatePresence mode="popLayout">
             <motion.div
               key={activeTab + activeClientId}
@@ -272,6 +278,29 @@ export default function ClientPortalLayout() {
           </AnimatePresence>
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-20 bg-black/80 backdrop-blur-2xl border-t border-white/10 z-50 flex items-center justify-around px-2">
+        {navItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => setActiveTab(item.id)}
+            className={`
+              flex flex-col items-center gap-1 p-2 transition-all duration-300 relative
+              ${activeTab === item.id ? 'text-primary-500' : 'text-gray-500'}
+            `}
+          >
+            <item.icon size={20} />
+            <span className="text-[10px] font-bold uppercase tracking-tighter">{item.label}</span>
+            {activeTab === item.id && (
+              <motion.div 
+                layoutId="activeIndicatorMobile"
+                className="absolute -top-2 w-10 h-1 bg-primary-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.5)]"
+              />
+            )}
+          </button>
+        ))}
+      </nav>
 
       {/* Overlay for mobile sidebar */}
       <AnimatePresence>

@@ -31,60 +31,60 @@ export default function PortalHome({ client, announcement, setActiveTab }: Porta
   };
 
   return (
-    <div className="space-y-8 pb-10">
+    <div className="space-y-6 lg:space-y-8 pb-10">
       {/* Announcement Banner */}
       {announcement && (
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="p-1 rounded-3xl bg-gradient-to-r from-primary-500/20 to-blue-500/20 border border-white/10"
+          className="p-1 rounded-[2rem] lg:rounded-3xl bg-gradient-to-r from-primary-500/20 to-blue-500/20 border border-white/10"
         >
-          <div className="bg-[#0a0a0a]/60 backdrop-blur-xl p-6 rounded-[calc(1.5rem-1px)] flex items-start gap-5">
-            <div className="w-12 h-12 bg-primary-500/10 rounded-2xl flex items-center justify-center shrink-0 border border-primary-500/20">
-              <Megaphone className="text-primary-400 w-6 h-6" />
+          <div className="bg-[#0a0a0a]/60 backdrop-blur-xl p-4 lg:p-6 rounded-[calc(1.5rem+4px)] lg:rounded-[calc(1.5rem-1px)] flex items-start gap-4 lg:gap-5">
+            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-primary-500/10 rounded-xl lg:rounded-2xl flex items-center justify-center shrink-0 border border-primary-500/20">
+              <Megaphone className="text-primary-400 w-5 h-5 lg:w-6 lg:h-6" />
             </div>
             <div>
-              <h3 className="font-bold text-white text-lg mb-1">{announcement.title}</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">{announcement.message}</p>
+              <h3 className="font-bold text-white text-base lg:text-lg mb-1">{announcement.title}</h3>
+              <p className="text-gray-400 text-xs lg:text-sm leading-relaxed">{announcement.message}</p>
             </div>
           </div>
         </motion.div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
         {/* Project Progress Card */}
-        <div className="lg:col-span-2 group bg-white/[0.03] backdrop-blur-2xl border border-white/10 p-8 rounded-[2.5rem] relative overflow-hidden transition-all duration-500 hover:border-white/20">
-          <div className="flex flex-col md:flex-row items-center gap-10">
+        <div className="lg:col-span-2 group bg-white/[0.03] backdrop-blur-2xl border border-white/10 p-6 lg:p-8 rounded-[2rem] lg:rounded-[2.5rem] relative overflow-hidden transition-all duration-500 hover:border-white/20">
+          <div className="flex flex-col md:flex-row items-center gap-6 lg:gap-10">
             {/* Circular Progress */}
-            <div className="relative w-48 h-48 shrink-0">
+            <div className="relative w-32 h-32 lg:w-48 lg:h-48 shrink-0">
               <svg className="w-full h-full transform -rotate-90">
                 <circle
-                  cx="96"
-                  cy="96"
-                  r="88"
+                  cx="50%"
+                  cy="50%"
+                  r="42%"
                   stroke="currentColor"
-                  strokeWidth="12"
+                  strokeWidth="10"
                   fill="transparent"
                   className="text-white/5"
                 />
                 <motion.circle
-                  cx="96"
-                  cy="96"
-                  r="88"
+                  cx="50%"
+                  cy="50%"
+                  r="42%"
                   stroke="currentColor"
-                  strokeWidth="12"
+                  strokeWidth="10"
                   fill="transparent"
-                  strokeDasharray={552.92}
-                  initial={{ strokeDashoffset: 552.92 }}
-                  animate={{ strokeDashoffset: 552.92 - (552.92 * progress) / 100 }}
+                  strokeDasharray="264"
+                  initial={{ strokeDashoffset: 264 }}
+                  animate={{ strokeDashoffset: 264 - (264 * progress) / 100 }}
                   transition={{ duration: 1.5, ease: "easeOut" }}
                   strokeLinecap="round"
                   className="text-primary-500 drop-shadow-[0_0_8px_rgba(242,125,38,0.5)]"
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-4xl font-black text-white">{progress}%</span>
-                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Completo</span>
+                <span className="text-2xl lg:text-4xl font-black text-white">{progress}%</span>
+                <span className="text-[8px] lg:text-[10px] text-gray-500 font-bold uppercase tracking-widest">Completo</span>
               </div>
             </div>
 
@@ -93,10 +93,9 @@ export default function PortalHome({ client, announcement, setActiveTab }: Porta
                 <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
                 <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Status do Projeto</span>
               </div>
-              <h2 className="text-3xl font-bold text-white mb-3 tracking-tight">Seu site está ganhando vida!</h2>
-              <p className="text-gray-400 text-sm leading-relaxed mb-6">
+              <h2 className="text-xl lg:text-3xl font-bold text-white mb-2 lg:mb-3 tracking-tight">Seu site está ganhando vida!</h2>
+              <p className="text-gray-400 text-xs lg:text-sm leading-relaxed mb-4 lg:mb-6">
                 Estamos na etapa de <strong className="text-white">"{client.stages?.find((s: any) => !s.completed)?.name || 'Finalização'}"</strong>. 
-                Nossa equipe está trabalhando para entregar a melhor experiência possível.
               </p>
               
               <div className="flex flex-wrap justify-center md:justify-start gap-4">
@@ -121,7 +120,7 @@ export default function PortalHome({ client, announcement, setActiveTab }: Porta
         </div>
 
         {/* Quick Actions / Info Card */}
-        <div className="bg-white/[0.03] backdrop-blur-2xl border border-white/10 p-8 rounded-[2.5rem] flex flex-col justify-between">
+        <div className="bg-white/[0.03] backdrop-blur-2xl border border-white/10 p-6 lg:p-8 rounded-[2rem] lg:rounded-[2.5rem] flex flex-col justify-between">
           <div>
             <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
               <Clock className="w-5 h-5 text-primary-400" />
@@ -160,7 +159,7 @@ export default function PortalHome({ client, announcement, setActiveTab }: Porta
       </div>
 
       {/* Referral / Member Get Member */}
-      <div className="bg-gradient-to-br from-blue-600/10 to-primary-600/5 backdrop-blur-2xl border border-blue-500/20 p-8 rounded-[2.5rem] relative overflow-hidden group">
+      <div className="bg-gradient-to-br from-blue-600/10 to-primary-600/5 backdrop-blur-2xl border border-blue-500/20 p-6 lg:p-8 rounded-[2rem] lg:rounded-[2.5rem] relative overflow-hidden group">
         <div className="absolute top-[-20%] right-[-10%] w-64 h-64 bg-primary-500/10 rounded-full blur-[100px] group-hover:bg-primary-500/20 transition-colors duration-700" />
         
         <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
