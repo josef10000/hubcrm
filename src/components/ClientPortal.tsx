@@ -474,32 +474,63 @@ export default function ClientPortal() {
             </h2>
 
             <div className="space-y-4">
-               {allLinkedClients.filter(c => c.invoiceUrl && c.paymentStatus !== 'RECEIVED').length > 0 ? (
-                 allLinkedClients.filter(c => c.invoiceUrl && c.paymentStatus !== 'RECEIVED').map(c => (
-                   <div key={c.id} className="p-4 bg-primary-500/10 border border-primary-500/20 rounded-2xl">
-                     <div className="flex justify-between items-start mb-2">
+               {allLinkedClients.length > 0 ? (
+                 allLinkedClients.map(c => (
+                   <div key={c.id} className={`p-4 rounded-2xl border transition-all ${
+                     c.paymentStatus === 'RECEIVED' || c.paymentStatus === 'CONFIRMED' 
+                     ? 'bg-emerald-500/5 border-emerald-500/10' 
+                     : 'bg-primary-500/10 border-primary-500/20 shadow-lg shadow-primary-500/5'
+                   }`}>
+                     <div className="flex justify-between items-start mb-3">
                        <div>
-                         <p className="text-[10px] text-primary-400 font-bold uppercase tracking-widest">{c.plan}</p>
-                         <p className="text-lg font-black text-white">R$ {(c.planPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                         <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{c.plan}</p>
+                         <p className="text-xl font-black text-white">R$ {(c.planPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} <span className="text-[10px] text-gray-500 font-normal">/ mês</span></p>
                        </div>
-                       <a 
-                        href={c.invoiceUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="px-3 py-2 bg-primary-500 hover:bg-primary-600 text-white text-[10px] font-black uppercase rounded-lg transition-all"
-                      >
-                        Pagar
-                      </a>
+                       <div className="flex flex-col items-end gap-2">
+                         <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-tighter border ${
+                           c.paymentStatus === 'RECEIVED' || c.paymentStatus === 'CONFIRMED' 
+                           ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' 
+                           : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                         }`}>
+                           {c.paymentStatus === 'RECEIVED' || c.paymentStatus === 'CONFIRMED' ? 'PAGO' : 'PENDENTE'}
+                         </span>
+                         
+                         {c.invoiceUrl && c.paymentStatus !== 'RECEIVED' && (
+                           <a 
+                            href={c.invoiceUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white text-[10px] font-black uppercase rounded-xl transition-all shadow-lg shadow-primary-500/20 flex items-center gap-2"
+                          >
+                            <ExternalLink size={12} />
+                            Pagar Agora
+                          </a>
+                         )}
+                       </div>
                      </div>
-                     <div className="flex items-center gap-2 text-[10px] text-gray-400 uppercase font-black">
-                        <Clock size={12} /> Vencimento: {new Date((c.currentDueDate || c.nextDueDate) + 'T12:00:00').toLocaleDateString('pt-BR')}
+                     
+                     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-2 border-t border-white/5">
+                        <div className="flex items-center gap-1.5 text-[10px] text-gray-400 uppercase font-black">
+                           <Clock size={12} className="text-gray-600" /> 
+                           Próximo: {new Date((c.currentDueDate || c.nextDueDate) + 'T12:00:00').toLocaleDateString('pt-BR')}
+                        </div>
+                        {c.invoiceUrl && (
+                          <a 
+                            href={c.invoiceUrl} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="text-[10px] text-primary-400 hover:text-primary-300 font-black uppercase flex items-center gap-1 transition-colors"
+                          >
+                            <FileText size={12} /> Ver Fatura
+                          </a>
+                        )}
                      </div>
                    </div>
                  ))
                ) : (
                   <div className="p-10 rounded-3xl bg-white/5 border border-white/10 text-center">
                     <CheckCircle className="w-8 h-8 text-emerald-500/30 mx-auto mb-3" />
-                    <p className="text-sm text-gray-500 font-medium italic">Tudo em dia! Nenhuma fatura pendente.</p>
+                    <p className="text-sm text-gray-500 font-medium italic">Nenhum serviço financeiro encontrado.</p>
                   </div>
                )}
             </div>
@@ -519,9 +550,10 @@ export default function ClientPortal() {
                 <thead>
                   <tr className="border-b border-white/10 text-gray-400 text-sm">
                     <th className="pb-3 font-medium">Vencimento</th>
+                    <th className="pb-3 font-medium">Serviço</th>
                     <th className="pb-3 font-medium">Valor</th>
                     <th className="pb-3 font-medium">Status</th>
-                    <th className="pb-3 font-medium text-right">Comprovante</th>
+                    <th className="pb-3 font-medium text-right">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -529,6 +561,12 @@ export default function ClientPortal() {
                     <tr key={payment.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                       <td className="py-4 text-sm">
                         {new Date(payment.dueDate + 'T12:00:00').toLocaleDateString('pt-BR')}
+                      </td>
+                      <td className="py-4">
+                        <div className="flex flex-col">
+                          <span className="text-sm text-white font-medium">{payment.planName}</span>
+                          <span className="text-[10px] text-gray-500 uppercase tracking-tighter">ID: {payment.id.substring(0, 8)}</span>
+                        </div>
                       </td>
                       <td className="py-4 text-sm font-medium">
                         R$ {payment.value.toFixed(2).replace('.', ',')}
