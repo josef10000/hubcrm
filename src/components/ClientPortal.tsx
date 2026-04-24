@@ -213,32 +213,21 @@ export default function ClientPortal() {
     loadData();
   }, [orgId, activeClientId]);
 
-  const loadInitial = () => {
-      } catch (err) {
-        console.error(err);
-        setError("Erro ao carregar dados.");
-        setLoading(false);
-      }
-    };
+  // Global Data Listeners (Services, Offers, Announcements)
+  useEffect(() => {
+    if (!orgId) return;
 
-    const multiPromise = loadData();
-
-
-
-    // Global Announcement
     const globalRef = doc(db, 'organizations', orgId, 'settings', 'global');
     const unsubscribeGlobal = onSnapshot(globalRef, (docSnap) => {
       if (docSnap.exists()) setGlobalAnnouncement(docSnap.data().announcement?.isActive ? docSnap.data().announcement : null);
     });
 
-    // Services
     const servicesRef = collection(db, 'organizations', orgId, 'services');
     const unsubscribeServices = onSnapshot(servicesRef, (snapshot) => {
       const loaded = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter((s:any) => s.isActive);
       setServices(loaded.sort((a:any, b:any) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0)));
     });
 
-    // Offers
     const offersRef = collection(db, 'organizations', orgId, 'offers');
     const unsubscribeOffers = onSnapshot(offersRef, (snapshot) => {
       const loaded = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter((o:any) => o.active);
@@ -249,9 +238,8 @@ export default function ClientPortal() {
       unsubscribeGlobal();
       unsubscribeServices();
       unsubscribeOffers();
-      multiPromise.then(unsub => unsub?.());
     };
-  }, [orgId, clientId]);
+  }, [orgId]);
 
   const handleUpdateRewardType = async (type: 'commission' | 'discount') => {
     if (!orgId || !clientId || !client) return;
