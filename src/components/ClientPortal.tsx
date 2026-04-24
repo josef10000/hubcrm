@@ -155,10 +155,28 @@ export default function ClientPortal() {
 
         // Listen for all cards of this client (Multi-card Support)
         const clientsRef = collection(db, 'organizations', orgId, 'clients');
+        
+        // Buscamos todos os cards que tenham o MESMO WhatsApp OU o MESMO E-mail
+        // Como o Firestore não tem um OR global simples para coleções grandes sem índices, 
+        // vamos buscar pelo WhatsApp e complementar se necessário.
         const q = query(clientsRef, where('whatsapp', '==', mainData.whatsapp));
         
         const unsubscribeMulti = onSnapshot(q, async (snapshot) => {
-          const linkedClients = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as any));
+          let linkedClients = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as any));
+          
+          // Se tiver e-mail, vamos garantir que buscamos cards por e-mail também caso o whatsapp mude
+          if (mainData.email) {
+            const qEmail = query(clientsRef, where('email', '==', mainData.email));
+            const emailSnap = await getDocs(qEmail);
+            const emailClients = emailSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+            
+            // Merge sem duplicatas
+            const existingIds = new Set(linkedClients.map(c => c.id));
+            emailClients.forEach(c => {
+              if (!existingIds.has(c.id)) linkedClients.push(c);
+            });
+          }
+
           setAllLinkedClients(linkedClients);
           
           // Aggregate Payments
@@ -182,7 +200,18 @@ export default function ClientPortal() {
           setLoading(false);
         });
 
-        return unsubscribeMulti;
+        // Fetch Support Requests History (Consolidated by Identity)
+        const requestsRef = collection(db, 'organizations', orgId, 'supportRequests');
+        const qReq = query(requestsRef, where('clientWhatsapp', '==', mainData.whatsapp));
+        const unsubscribeRequests = onSnapshot(qReq, (snapshot) => {
+          const loaded = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+          setClientRequests(loaded.sort((a:any, b:any) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0)));
+        });
+
+        return () => {
+          unsubscribeMulti();
+          unsubscribeRequests();
+        };
       } catch (err) {
         console.error(err);
         setError("Erro ao carregar dados.");
@@ -192,15 +221,7 @@ export default function ClientPortal() {
 
     const multiPromise = loadData();
 
-    // Fetch Support Requests History (Consolidated by Identity)
-    const requestsRef = collection(db, 'organizations', orgId, 'supportRequests');
-    // Como Firestore não permite OR complexo em campos diferentes facilmente sem índices pesados, 
-    // vamos filtrar pelo clientId atual mas também pelo whatsapp se disponível
-    const qReq = query(requestsRef, where('clientWhatsapp', '==', client.whatsapp));
-    const unsubscribeRequests = onSnapshot(qReq, (snapshot) => {
-      const loaded = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      setClientRequests(loaded.sort((a:any, b:any) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0)));
-    });
+
 
     // Global Announcement
     const globalRef = doc(db, 'organizations', orgId, 'settings', 'global');

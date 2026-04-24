@@ -32,13 +32,26 @@ export default function PlansTab({ client, orgId }: PlansTabProps) {
         const clientsRef = collection(db, 'organizations', orgId!, 'clients');
         
         // Buscamos por whatsapp
-        const q = query(clientsRef, where('whatsapp', '==', client.whatsapp));
-        const querySnapshot = await getDocs(q);
-        const otherCards = querySnapshot.docs
-          .map(d => ({ id: d.id, ...d.data() } as any))
-          .filter(d => d.id !== client.id); // Remove o card atual
+        let otherCards: any[] = [];
+        if (client.whatsapp) {
+          const q = query(clientsRef, where('whatsapp', '==', client.whatsapp));
+          const querySnapshot = await getDocs(q);
+          otherCards = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() } as any));
+        }
+
+        // Buscamos por e-mail e fazemos o merge
+        if (client.email) {
+          const qEmail = query(clientsRef, where('email', '==', client.email));
+          const emailSnap = await getDocs(qEmail);
+          const emailCards = emailSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+          
+          const existingIds = new Set(otherCards.map(c => c.id));
+          emailCards.forEach(c => {
+            if (!existingIds.has(c.id)) otherCards.push(c);
+          });
+        }
         
-        setLinkedPlans(otherCards);
+        setLinkedPlans(otherCards.filter(d => d.id !== client.id));
       } catch (err) {
         console.error("Erro ao buscar cards vinculados:", err);
       } finally {
