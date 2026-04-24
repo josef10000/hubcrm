@@ -22,6 +22,7 @@ export default function ContractsTab({ client, user, formData, setFormData, defa
   const [showNewContractForm, setShowNewContractForm] = useState(false);
   const [newContractType, setNewContractType] = useState<'pdf' | 'text'>('text');
   const [newContractText, setNewContractText] = useState(defaultContractText || '');
+  const [newContractTitle, setNewContractTitle] = useState('');
   const [isContractUploading, setIsContractUploading] = useState(false);
 
   const handleSaveTextContract = async () => {
@@ -29,6 +30,7 @@ export default function ContractsTab({ client, user, formData, setFormData, defa
       setIsContractUploading(true);
       const newContract: ClientContract = {
         id: Date.now().toString(36) + Math.random().toString(36).substring(2),
+        title: newContractTitle || 'Contrato de Serviços',
         type: 'text',
         content: newContractText,
         status: 'pending',
@@ -63,6 +65,7 @@ export default function ContractsTab({ client, user, formData, setFormData, defa
       
       const newContract: ClientContract = {
         id: Date.now().toString(36) + Math.random().toString(36).substring(2),
+        title: newContractTitle || file.name.replace('.pdf', ''),
         type: 'pdf',
         content: downloadUrl,
         status: 'pending',
@@ -134,6 +137,17 @@ export default function ContractsTab({ client, user, formData, setFormData, defa
             </button>
           </div>
 
+          <div className="mb-4">
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Título do Contrato (Opcional)</label>
+            <input 
+              type="text" 
+              placeholder="Ex: Contrato de Manutenção 2024"
+              value={newContractTitle}
+              onChange={(e) => setNewContractTitle(e.target.value)}
+              className="w-full px-4 py-2.5 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+
           {newContractType === 'text' ? (
             <div className="space-y-4">
               <p className="text-sm text-gray-400">Edite as cláusulas abaixo para gerar o contrato exclusivo deste lead.</p>
@@ -174,7 +188,7 @@ export default function ContractsTab({ client, user, formData, setFormData, defa
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-900 dark:text-white">
-                    Contrato em {contract.type === 'pdf' ? 'PDF' : 'Texto Base'}
+                    {contract.title || `Contrato em ${contract.type === 'pdf' ? 'PDF' : 'Texto Base'}`}
                   </h4>
                   <div className="flex items-center gap-2 mt-1">
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${contract.status === 'signed' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-primary-500/20 text-primary-500'}`}>

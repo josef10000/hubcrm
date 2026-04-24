@@ -155,7 +155,18 @@ export default function ContractSignView() {
           </div>
         )}
 
-        <div className="bg-[#14151a] border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
+        <div className="bg-[#111111] border border-white/5 rounded-3xl overflow-hidden shadow-2xl relative">
+          <div className="p-4 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
+            <span className="text-xs text-gray-500 font-bold uppercase tracking-widest flex items-center gap-2">
+              <FileText size={14} className="text-primary-500" />
+              {contract.title || (contract.type === 'pdf' ? 'Contrato em PDF' : 'Contrato de Serviços')}
+            </span>
+            <div className="flex gap-2">
+              <div className="w-2 h-2 rounded-full bg-red-500/30" />
+              <div className="w-2 h-2 rounded-full bg-yellow-500/30" />
+              <div className="w-2 h-2 rounded-full bg-emerald-500/30" />
+            </div>
+          </div>
           <div className="p-6 md:p-8 border-b border-white/5 bg-white/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
               <p className="text-sm font-semibold text-primary-500 mb-1">PARTES CONTRATANTES</p>

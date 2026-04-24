@@ -53,6 +53,7 @@ export interface ClientCredential {
 
 export interface ClientContract {
   id: string;
+  title?: string;
   type: 'pdf' | 'text';
   content: string;
   status: 'pending' | 'signed';
