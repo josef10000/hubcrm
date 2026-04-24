@@ -258,6 +258,7 @@ export interface SupportRequest {
   slaDeadline?: any;
   origin?: 'portal' | 'whatsapp' | 'interno';
   whatsappContext?: string;
+  imageUrl?: string;
 }
 
 export interface CommissionEntry {

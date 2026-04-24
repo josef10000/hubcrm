@@ -14,10 +14,14 @@ import {
   Shield,
   HelpCircle,
   Lightbulb,
-  DollarSign
+  DollarSign,
+  Image as ImageIcon,
+  Paperclip,
+  Download
 } from 'lucide-react';
 import { usePortalSupport } from '../../../hooks/usePortalSupport';
 import { useParams } from 'react-router-dom';
+import { uploadImageToImgBB } from '../../../lib/imgbb';
 
 interface PortalSupportProps {
   client: any;
@@ -35,6 +39,20 @@ export default function PortalSupport({ client }: PortalSupportProps) {
   const [priority, setPriority] = useState('media');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const categories = [
     { id: 'Financeiro', label: 'Financeiro', icon: DollarSign, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
@@ -56,11 +74,22 @@ export default function PortalSupport({ client }: PortalSupportProps) {
     if (!category || !message) return;
 
     setIsSubmitting(true);
+    
+    let imageUrl = '';
+    if (selectedImage) {
+      try {
+        imageUrl = await uploadImageToImgBB(selectedImage);
+      } catch (err) {
+        console.error("Image upload failed:", err);
+      }
+    }
+
     const success = await createRequest({
       category,
       message,
       priority,
-      clientName: client.name
+      clientName: client.name,
+      imageUrl
     });
 
     if (success) {
@@ -68,6 +97,8 @@ export default function PortalSupport({ client }: PortalSupportProps) {
       setCategory('');
       setMessage('');
       setPriority('media');
+      setSelectedImage(null);
+      setImagePreview(null);
     }
     setIsSubmitting(false);
   };
@@ -265,6 +296,42 @@ export default function PortalSupport({ client }: PortalSupportProps) {
                   />
                 </div>
 
+                <div>
+                  <label className="text-[10px] text-gray-500 font-bold uppercase tracking-widest block mb-4">Anexar Imagem (Opcional)</label>
+                  <div className="flex items-center gap-4">
+                    <label className="flex-1 cursor-pointer">
+                      <div className="bg-white/5 border border-dashed border-white/10 rounded-2xl p-6 flex flex-col items-center justify-center gap-2 hover:bg-white/10 transition-all group">
+                        <div className="w-10 h-10 bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-400 group-hover:scale-110 transition-transform">
+                          <Paperclip size={20} />
+                        </div>
+                        <span className="text-xs text-gray-500 font-bold">Clique para selecionar uma imagem</span>
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={handleImageChange} 
+                          className="hidden" 
+                        />
+                      </div>
+                    </label>
+
+                    {imagePreview && (
+                      <div className="relative w-24 h-24 rounded-2xl overflow-hidden border border-white/10 bg-black shadow-2xl group">
+                        <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            setSelectedImage(null);
+                            setImagePreview(null);
+                          }}
+                          className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <button 
                   type="submit"
                   disabled={isSubmitting || !category || !message}
@@ -312,6 +379,42 @@ export default function PortalSupport({ client }: PortalSupportProps) {
                   </div>
                   <div className="bg-white/5 border border-white/10 p-5 rounded-2xl text-sm text-gray-200 leading-relaxed shadow-inner">
                     {selectedTicket.message}
+                    
+                    {selectedTicket.imageUrl && (
+                      <div className="mt-6 space-y-3">
+                        <div className="relative group rounded-2xl overflow-hidden border border-white/10 bg-black/40 aspect-video flex items-center justify-center">
+                          <img 
+                            src={selectedTicket.imageUrl} 
+                            alt="Anexo" 
+                            className="max-h-full object-contain cursor-pointer hover:scale-105 transition-transform"
+                            onClick={() => window.open(selectedTicket.imageUrl, '_blank')}
+                          />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                            <button 
+                              onClick={() => window.open(selectedTicket.imageUrl, '_blank')}
+                              className="p-3 bg-white/10 backdrop-blur-md rounded-xl hover:bg-white/20 text-white transition-all"
+                              title="Visualizar"
+                            >
+                              <ImageIcon size={20} />
+                            </button>
+                            <a 
+                              href={selectedTicket.imageUrl} 
+                              download={`anexo-${selectedTicket.id}.jpg`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-3 bg-white/10 backdrop-blur-md rounded-xl hover:bg-white/20 text-white transition-all"
+                              title="Baixar"
+                            >
+                              <Download size={20} />
+                            </a>
+                          </div>
+                        </div>
+                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest flex items-center gap-2">
+                          <ImageIcon size={12} />
+                          Anexo enviado pelo cliente
+                        </p>
+                      </div>
+                    )}
                   </div>
                   <span className="text-[10px] text-gray-600 font-bold uppercase">
                     {selectedTicket.createdAt?.toDate ? selectedTicket.createdAt.toDate().toLocaleString() : ''}

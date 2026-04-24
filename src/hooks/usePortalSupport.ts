@@ -24,7 +24,7 @@ export function usePortalSupport(orgId: string | undefined, clientId: string | u
     return () => unsubscribe();
   }, [orgId, clientId]);
 
-  const createRequest = async (data: { category: string; message: string; priority: string; clientName: string }) => {
+  const createRequest = async (data: { category: string; message: string; priority: string; clientName: string; imageUrl?: string }) => {
     if (!orgId || !clientId) return;
 
     try {

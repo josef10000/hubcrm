@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Clock, MessageSquare, CheckCircle, Trash2, User, Phone } from 'lucide-react';
+import { Clock, MessageSquare, CheckCircle, Trash2, User, Phone, Image as ImageIcon, Download } from 'lucide-react';
 
 interface SupportCardProps {
   req: any;
@@ -99,6 +99,63 @@ export function SupportCard({ req, sla, isCritico, teamProfiles, onUpdate, onRep
 
           <div className="bg-white dark:bg-black/20 p-4 rounded-xl border border-gray-200 dark:border-white/5 text-gray-700 dark:text-gray-200 whitespace-pre-wrap mb-4">
             {String(req.message || '')}
+            
+            {req.imageUrl && (
+              <div className="mt-4 p-4 bg-black/20 rounded-xl border border-white/5 flex flex-col md:flex-row gap-6 items-center">
+                <div className="relative w-full md:w-48 aspect-video rounded-lg overflow-hidden border border-white/10 bg-black flex items-center justify-center group">
+                  <img 
+                    src={req.imageUrl} 
+                    alt="Anexo" 
+                    className="max-h-full object-contain cursor-pointer hover:scale-110 transition-transform"
+                    onClick={() => window.open(req.imageUrl, '_blank')}
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                    <button 
+                      onClick={() => window.open(req.imageUrl, '_blank')}
+                      className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+                      title="Abrir"
+                    >
+                      <ImageIcon size={16} />
+                    </button>
+                    <a 
+                      href={req.imageUrl} 
+                      download={`suporte-${req.id}.jpg`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+                      title="Baixar"
+                    >
+                      <Download size={16} />
+                    </a>
+                  </div>
+                </div>
+                
+                <div className="flex-1 text-center md:text-left">
+                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-2 flex items-center justify-center md:justify-start gap-2">
+                    <ImageIcon size={12} />
+                    Anexo do Cliente
+                  </p>
+                  <div className="flex flex-wrap justify-center md:justify-start gap-3">
+                    <button 
+                      onClick={() => window.open(req.imageUrl, '_blank')}
+                      className="text-[10px] font-bold uppercase px-3 py-1 bg-white/5 hover:bg-white/10 text-white rounded-md border border-white/10 transition-colors"
+                    >
+                      Ver Imagem
+                    </button>
+                    <button 
+                      onClick={() => {
+                        if (confirm('Deseja remover este anexo para liberar espaço? (A imagem continuará no IMGBB mas não aparecerá mais aqui)')) {
+                          onUpdate(req.id, { imageUrl: null });
+                        }
+                      }}
+                      className="text-[10px] font-bold uppercase px-3 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-md border border-red-500/20 transition-colors"
+                    >
+                      Remover Anexo
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {req.reply && (
