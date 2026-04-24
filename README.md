@@ -1,4 +1,4 @@
-# 🔐 Hub Central — Intranet Corporativa v5.4.0 (Marketplace Experience)
+# 🔐 Hub Central — Intranet Corporativa v5.5.0 (Multi-Plan Marketplace)
 
 > [!CAUTION]
 > **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
@@ -27,7 +27,7 @@ Certifique-se de configurar as seguintes variáveis no seu ambiente Claude Deskt
 - `VITE_GIPHY_API_KEY` (Obrigatório para GIFs no Chat)
 
   <p>
-    <img src="https://img.shields.io/badge/Version-5.4.0-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-5.5.0-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Status-Audited_&_Stable-3b82f6?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-3b82f6?style=for-the-badge&labelColor=111111" alt="License" />
@@ -40,15 +40,15 @@ Certifique-se de configurar as seguintes variáveis no seu ambiente Claude Deskt
     <img src="https://img.shields.io/badge/Firebase-12-FFCA28?style=flat-square&logo=firebase&logoColor=black" alt="Firebase" />
   </p>
   <div align="center">
-  <h2>✨ Features em Destaque v5.4.0</h2>
-  <p><strong>Marketplace Experience & Support Visuals</strong></p>
+  <h2>✨ Features em Destaque v5.5.0</h2>
+  <p><strong>Multi-Plan Marketplace & Seamless Checkout</strong></p>
 </div>
 
 <table>
   <tr>
     <td align="center" width="20%">
-      <br />🛡️<br /><strong>Dynamic RBAC</strong><br />
-      <sub>Permissões Modulares</sub>
+      <br />🛒<br /><strong>Multi-Planos</strong><br />
+      <sub>Assinaturas Simultâneas</sub>
     </td>
     <td align="center" width="20%">
       <br />💬<br /><strong>Hub Chat Pro</strong><br />
@@ -59,8 +59,8 @@ Certifique-se de configurar as seguintes variáveis no seu ambiente Claude Deskt
       <sub>Glassmorphism UI</sub>
     </td>
     <td align="center" width="20%">
-      <br />💎<br /><strong>Financeiro</strong><br />
-      <sub>DRE & SaaS Metrics</sub>
+      <br />⚡<br /><strong>Auto Checkout</strong><br />
+      <sub>Portal Payments</sub>
     </td>
     <td align="center" width="16%">
       <br />🛡️<br /><strong>Audit Trails</strong><br />
@@ -781,7 +781,7 @@ className="bg-gray-100 border-gray-200"
 - [x] 🚀 **v5.1.0 Premium Client Portal (Glassmorphism, Real-time Finance & Hybrid Support Chat)**
 - [x] 🛡️ **v5.2.0 Contract Resilience (Multi-tenant Firestore Paths, Public Sign Fix & Portal Access Hardening)**
 - [x] 🖋️ **v5.3.0 in-Portal Document Signing (Live Contract Repository & Digital Signature Integration)**
-- [ ] 🔮 **v5.4.0 Automations & AI Chat Summary** (Fase 3)
+- [x] 🚀 **v5.5.0 Multi-Plan Marketplace (Simultaneous Subscriptions & In-Portal Checkout)**
 
 
 ---
