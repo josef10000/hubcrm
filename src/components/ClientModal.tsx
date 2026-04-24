@@ -560,8 +560,6 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
               <ReferralsTab client={initialData} user={user} />
             ) : activeTab === 'contracts' && initialData ? (
               <ContractsTab client={initialData} user={user} formData={formData} setFormData={setFormData} defaultContractText={defaultContractText} orgId={effectiveOrgId} />
-            ) : activeTab === 'plans' ? (
-              <PlansTab client={formData} offers={offers} onUpdate={(updatedPlans) => setFormData({ ...formData, plans: updatedPlans })} orgId={effectiveOrgId} />
             ) : null}
           </div>
 

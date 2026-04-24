@@ -135,7 +135,7 @@ export default function PortalServices({ offers, client }: PortalServicesProps) 
                   <div>
                     <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest block">Investimento</span>
                     <span className="text-2xl font-black text-white">
-                      {offer.monthlyPrice ? `R$ ${offer.monthlyPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'Consultar'}
+                      {offer.price ? `R$ ${offer.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'Consultar'}
                     </span>
                   </div>
                   <div className="flex flex-col items-end">
@@ -213,7 +213,7 @@ export default function PortalServices({ offers, client }: PortalServicesProps) 
                     <div className="bg-white/5 p-6 rounded-3xl border border-white/5">
                       <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest block mb-1">Valor Mensal</span>
                       <span className="text-3xl font-black text-white">
-                        R$ {selectedOffer.monthlyPrice?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        R$ {selectedOffer.price?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </span>
                     </div>
                     {selectedOffer.setupPrice > 0 && (
@@ -226,11 +226,11 @@ export default function PortalServices({ offers, client }: PortalServicesProps) 
                     )}
                   </div>
 
-                  {selectedOffer.features && selectedOffer.features.length > 0 && (
+                  {selectedOffer.details && (
                     <div className="space-y-4">
                       <h4 className="text-sm font-black text-primary-500 uppercase tracking-widest">O que inclui</h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {selectedOffer.features.map((feature, idx) => (
+                        {selectedOffer.details.split('\n').filter(f => f.trim()).map((feature, idx) => (
                           <div key={idx} className="flex items-center gap-3 p-3 bg-white/5 rounded-2xl border border-white/5">
                             <CheckCircle2 className="text-emerald-400 w-4 h-4" />
                             <span className="text-gray-300 text-xs">{feature}</span>
