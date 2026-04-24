@@ -221,7 +221,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
     { key: 'onboarding', label: 'Briefing' },
     { key: 'referrals', label: 'Indicações' },
     { key: 'contracts', label: 'Contratos' },
-    { key: 'plans', label: 'Planos' },
+    { key: 'plans', label: 'Produtos e Serviços' },
   ] as const;
 
   return (
@@ -555,7 +555,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
             ) : activeTab === 'contracts' && initialData ? (
               <ContractsTab client={initialData} user={user} formData={formData} setFormData={setFormData} defaultContractText={defaultContractText} orgId={effectiveOrgId} />
             ) : activeTab === 'plans' ? (
-              <PlansTab client={formData} />
+              <PlansTab client={formData} offers={offers} onUpdate={(updatedPlans) => setFormData({ ...formData, plans: updatedPlans })} orgId={effectiveOrgId} />
             ) : null}
           </div>
 
