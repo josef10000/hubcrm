@@ -8,6 +8,7 @@ import { toast, Toaster } from 'sonner';
 import SupportSatisfactionModal from './SupportSatisfactionModal';
 
 export default function ClientPortal() {
+  const { orgId, clientId } = useParams<{ orgId: string; clientId: string }>();
   const [client, setClient] = useState<any>(null);
   const [activeClientId, setActiveClientId] = useState<string | null>(null);
   const [paymentsHistory, setPaymentsHistory] = useState<any[]>([]);
