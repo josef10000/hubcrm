@@ -796,3 +796,11 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
 
   return <CRMContext.Provider value={value}>{children}</CRMContext.Provider>;
 }
+
+export function useCRM() {
+  const context = useContext(CRMContext);
+  if (!context) {
+    throw new Error('useCRM deve ser usado dentro de um CRMProvider');
+  }
+  return context;
+}

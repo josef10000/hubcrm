@@ -180,7 +180,7 @@ export default function TeamManagementView() {
       message: 'Deseja cancelar este convite pendente?',
       confirmText: 'Sim, cancelar',
       variant: 'warning'
-    });
+    } as any);
     if (!ok) return;
     
     setIsCancellingInvite(true);
