@@ -244,7 +244,6 @@ export default function ClientPortal() {
     });
 
     return () => {
-      unsubscribeRequests();
       unsubscribeGlobal();
       unsubscribeServices();
       unsubscribeOffers();
