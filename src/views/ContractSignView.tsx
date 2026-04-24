@@ -7,7 +7,7 @@ import { FileSignature, ShieldCheck, CheckCircle, Clock, Loader2, FileUp, AlertC
 import { toast, Toaster } from 'sonner';
 
 export default function ContractSignView() {
-  const { userId, clientId, contractId } = useParams();
+  const { orgId, clientId, contractId } = useParams();
   
   const [loading, setLoading] = useState(true);
   const [client, setClient] = useState<Client | null>(null);
@@ -17,12 +17,12 @@ export default function ContractSignView() {
 
   useEffect(() => {
     async function fetchContract() {
-      if (!userId || !clientId || !contractId) {
+      if (!orgId || !clientId || !contractId) {
         setLoading(false);
         return;
       }
       try {
-        const clientRef = doc(db, 'users', userId, 'clients', clientId);
+        const clientRef = doc(db, 'organizations', orgId, 'clients', clientId);
         const snap = await getDoc(clientRef);
         if (snap.exists()) {
           const clientData = { id: snap.id, ...snap.data() } as Client;
@@ -37,7 +37,7 @@ export default function ContractSignView() {
       }
     }
     fetchContract();
-  }, [userId, clientId, contractId]);
+  }, [orgId, clientId, contractId]);
 
   const handleSign = async () => {
     if (!agreed) {
@@ -76,7 +76,7 @@ export default function ContractSignView() {
         date: timestamp
       };
 
-      const clientRef = doc(db, 'users', userId!, 'clients', clientId!);
+      const clientRef = doc(db, 'organizations', orgId!, 'clients', clientId!);
       await updateDoc(clientRef, {
         contracts: updatedContracts,
         logs: [...(client.logs || []), newLog]

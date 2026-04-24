@@ -14,9 +14,10 @@ interface ContractsTabProps {
   formData: Partial<Client>;
   setFormData: React.Dispatch<React.SetStateAction<any>>;
   defaultContractText: string;
+  orgId: string;
 }
 
-export default function ContractsTab({ client, user, formData, setFormData, defaultContractText }: ContractsTabProps) {
+export default function ContractsTab({ client, user, formData, setFormData, defaultContractText, orgId }: ContractsTabProps) {
   const { confirm } = useDialog();
   const [showNewContractForm, setShowNewContractForm] = useState(false);
   const [newContractType, setNewContractType] = useState<'pdf' | 'text'>('text');
@@ -34,7 +35,7 @@ export default function ContractsTab({ client, user, formData, setFormData, defa
         createdAt: Date.now()
       };
       const updatedContracts = [...(client.contracts || []), newContract];
-      await updateDoc(doc(db, 'users', user.uid, 'clients', client.id), {
+      await updateDoc(doc(db, 'organizations', orgId, 'clients', client.id), {
         contracts: updatedContracts
       });
       setFormData((prev: any) => ({ ...prev, contracts: updatedContracts }));
@@ -56,7 +57,7 @@ export default function ContractsTab({ client, user, formData, setFormData, defa
     }
     try {
       setIsContractUploading(true);
-      const fileRef = ref(storage, `users/${user.uid}/clients/${client.id}/contracts/${Date.now()}_${file.name}`);
+      const fileRef = ref(storage, `organizations/${orgId}/clients/${client.id}/contracts/${Date.now()}_${file.name}`);
       const snapshot = await uploadBytesResumable(fileRef, file);
       const downloadUrl = await getDownloadURL(snapshot.ref);
       
@@ -68,7 +69,7 @@ export default function ContractsTab({ client, user, formData, setFormData, defa
         createdAt: Date.now()
       };
       const updatedContracts = [...(client.contracts || []), newContract];
-      await updateDoc(doc(db, 'users', user.uid, 'clients', client.id), {
+      await updateDoc(doc(db, 'organizations', orgId, 'clients', client.id), {
         contracts: updatedContracts
       });
       setFormData((prev: any) => ({ ...prev, contracts: updatedContracts }));
@@ -92,7 +93,7 @@ export default function ContractsTab({ client, user, formData, setFormData, defa
     if (!ok) return;
     try {
       const updated = (client.contracts || []).filter(c => c.id !== contractId);
-      await updateDoc(doc(db, 'users', user.uid, 'clients', client.id), {
+      await updateDoc(doc(db, 'organizations', orgId, 'clients', client.id), {
         contracts: updated
       });
       setFormData((prev: any) => ({ ...prev, contracts: updated }));
@@ -188,7 +189,7 @@ export default function ContractsTab({ client, user, formData, setFormData, defa
               <div className="flex items-center gap-2 w-full md:w-auto justify-end">
                 {contract.status === 'pending' ? (
                   <button type="button" onClick={() => {
-                    const url = `${window.location.origin}/contrato/${user.uid}/${client.id}/${contract.id}`;
+                  const url = `${window.location.origin}/contrato/${orgId}/${client.id}/${contract.id}`;
                     navigator.clipboard.writeText(url);
                     toast.success('Link copiado!', { description: 'Envie este link para seu cliente assinar.' });
                   }}
@@ -201,7 +202,7 @@ export default function ContractsTab({ client, user, formData, setFormData, defa
                     <p className="text-[10px] text-gray-400 font-mono mt-0.5" title="IP do Assinante">{contract.signedIp}</p>
                   </div>
                 )}
-                <a href={`${window.location.origin}/contrato/${user.uid}/${client.id}/${contract.id}`} target="_blank" rel="noopener noreferrer"
+                <a href={`${window.location.origin}/contrato/${orgId}/${client.id}/${contract.id}`} target="_blank" rel="noopener noreferrer"
                   className="p-2.5 text-gray-400 hover:text-white bg-black/40 hover:bg-black/60 rounded-xl transition-colors" title="Visualizar Contrato">
                   <Eye size={18} />
                 </a>

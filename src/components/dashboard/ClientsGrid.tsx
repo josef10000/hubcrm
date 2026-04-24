@@ -27,7 +27,7 @@ export default function ClientsGrid({
   isChurnRisk,
   churnRiskDays
 }: ClientsGridProps) {
-  const { tags } = useCRM();
+  const { tags, effectiveOrgId } = useCRM();
   const [supportModalClientId, setSupportModalClientId] = React.useState<string | null>(null);
 
   return (
@@ -207,7 +207,7 @@ export default function ClientsGrid({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  const url = `${window.location.origin}/cliente/${user.uid}/${client.id}`;
+                  const url = `${window.location.origin}/cliente/${effectiveOrgId}/${client.id}`;
                   navigator.clipboard.writeText(url);
                   toast.success('Link do Portal copiado para a área de transferência!');
                 }}

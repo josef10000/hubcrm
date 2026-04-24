@@ -1,4 +1,4 @@
-# 🔐 Hub Central — Intranet Corporativa v5.1.0 (Autonomous Automation)
+# 🔐 Hub Central — Intranet Corporativa v5.2.0 (Autonomous Automation)
 
 > [!CAUTION]
 > **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
@@ -27,7 +27,7 @@ Certifique-se de configurar as seguintes variáveis no seu ambiente Claude Deskt
 - `VITE_GIPHY_API_KEY` (Obrigatório para GIFs no Chat)
 
   <p>
-    <img src="https://img.shields.io/badge/Version-5.1.0-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-5.2.0-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Status-Audited_&_Stable-3b82f6?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-3b82f6?style=for-the-badge&labelColor=111111" alt="License" />
@@ -40,7 +40,7 @@ Certifique-se de configurar as seguintes variáveis no seu ambiente Claude Deskt
     <img src="https://img.shields.io/badge/Firebase-12-FFCA28?style=flat-square&logo=firebase&logoColor=black" alt="Firebase" />
   </p>
   <div align="center">
-  <h2>✨ Features em Destaque v5.1.0</h2>
+  <h2>✨ Features em Destaque v5.2.0</h2>
 </div>
 
 <table>
@@ -778,7 +778,8 @@ className="bg-gray-100 border-gray-200"
 - [x] 🚀 **v5.0.0 Global Custom Dialog System (useDialog Premium Integration)**
 - [x] 🛡️ **v5.0.1 Build Stability (Fix RoleManagement Syntax & Async Context)**
 - [x] 🚀 **v5.1.0 Premium Client Portal (Glassmorphism, Real-time Finance & Hybrid Support Chat)**
-- [ ] 🔮 **v5.2.0 Automations & AI Chat Summary** (Fase 3)
+- [x] 🛡️ **v5.2.0 Contract Resilience (Multi-tenant Firestore Paths, Public Sign Fix & Portal Access Hardening)**
+- [ ] 🔮 **v5.3.0 Automations & AI Chat Summary** (Fase 3)
 
 
 ---
