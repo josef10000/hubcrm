@@ -114,12 +114,14 @@ export default function ClientPortalLayout() {
         <div className="flex flex-col h-full p-6">
           <div className="flex items-center justify-between mb-10 lg:mb-12">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/20">
-                <LayoutDashboard size={22} className="text-white" />
-              </div>
+              <img 
+                src="https://i.imgur.com/EFBaYb5.png" 
+                alt="Hub Symples Logo" 
+                className="w-10 h-10 object-contain drop-shadow-lg" 
+                referrerPolicy="no-referrer"
+              />
               <div className="flex flex-col">
-                <span className="font-bold text-lg leading-none">Hub<span className="text-primary-500">CRM</span></span>
-                <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mt-1">Portal Hub</span>
+                <span className="font-bold text-lg leading-none">Portal <span className="text-primary-500">Hub</span></span>
               </div>
             </div>
             <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-2 hover:bg-white/5 rounded-lg text-gray-400">
