@@ -1,4 +1,4 @@
-# 🔐 Hub Central — Intranet Corporativa v5.8.0 (Unified Multi-Plan Portal & Premium Mobile UX)
+# 🔐 Hub Central — Intranet Corporativa v6.0.0 (Functional PWA & Premium Desktop UX)
 
 > [!CAUTION]
 > **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
@@ -27,8 +27,8 @@ Certifique-se de configurar as seguintes variáveis no seu ambiente Claude Deskt
 - `VITE_GIPHY_API_KEY` (Obrigatório para GIFs no Chat)
 
   <p>
-    <img src="https://img.shields.io/badge/Version-5.5.0-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
-    <img src="https://img.shields.io/badge/Status-Audited_&_Stable-3b82f6?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
+    <img src="https://img.shields.io/badge/Version-6.0.0-f97316?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Status-PWA_Active-3b82f6?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-3b82f6?style=for-the-badge&labelColor=111111" alt="License" />
   </p>
@@ -40,35 +40,39 @@ Certifique-se de configurar as seguintes variáveis no seu ambiente Claude Deskt
     <img src="https://img.shields.io/badge/Firebase-12-FFCA28?style=flat-square&logo=firebase&logoColor=black" alt="Firebase" />
   </p>
   <div align="center">
-  <h2>✨ Features em Destaque v5.8.0</h2>
-  <p><strong>Unified Multi-Plan Portal & Premium Mobile UX</strong></p>
+  <h2>✨ Features em Destaque v6.0.0</h2>
+  <p><strong>Functional PWA & Premium Desktop UX</strong></p>
 </div>
 
 <table>
   <tr>
-    <td align="center" width="16%">
-      <br />📱<br /><strong>Mobile UX</strong><br />
-      <sub>Bottom Navigation</sub>
+    <td align="center" width="14%">
+      <br />📱<br /><strong>PWA Native</strong><br />
+      <sub>Instalação Local</sub>
     </td>
-    <td align="center" width="16%">
+    <td align="center" width="14%">
       <br />🔄<br /><strong>Unified Hub</strong><br />
       <sub>Sync por CPF/CNPJ</sub>
     </td>
-    <td align="center" width="16%">
+    <td align="center" width="14%">
       <br />💬<br /><strong>Hub Chat Pro</strong><br />
       <sub>Threads & CRM Links</sub>
     </td>
-    <td align="center" width="16%">
+    <td align="center" width="14%">
       <br />💎<br /><strong>Premium Portal</strong><br />
       <sub>Glassmorphism UI</sub>
     </td>
-    <td align="center" width="16%">
+    <td align="center" width="14%">
       <br />⚡<br /><strong>Auto Checkout</strong><br />
       <sub>Portal Payments</sub>
     </td>
-    <td align="center" width="16%">
+    <td align="center" width="14%">
       <br />🛡️<br /><strong>Audit Trails</strong><br />
       <sub>Segurança & Logs</sub>
+    </td>
+    <td align="center" width="14%">
+      <br />🚀<br /><strong>Offline Cache</strong><br />
+      <sub>Service Workers</sub>
     </td>
   </tr>
 </table>
@@ -786,7 +790,8 @@ className="bg-gray-100 border-gray-200"
 - [x] 🚀 **v5.5.0 Multi-Plan Marketplace (Simultaneous Subscriptions & In-Portal Checkout)**
 - [x] 🚀 **v5.6.0 Multi-Card Portal (Aggregated Billing, WhatsApp Consultative Sales & Multi-Document Sync)**
 - [x] 🚀 **v5.7.0 Unified Multi-Plan Portal (CPF/CNPJ Document Sync & Cross-Subscription Billing Switcher)**
-- [x] 📱 **v5.8.0 Premium Mobile UX (Bottom Navigation, Responsive Cards & Mobile-First Layouts)**
+- [x] 🚀 **v5.8.0 Premium Mobile UX (Bottom Navigation, Responsive Cards & Mobile-First Layouts)**
+- [x] 📱 **v6.0.0 Hub Central PWA (Standalone Installation, Offline Cache & Maskable Icons)**
 
 
 ---
