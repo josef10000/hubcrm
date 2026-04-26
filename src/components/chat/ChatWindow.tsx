@@ -23,9 +23,10 @@ import ThreadSidebar from './ThreadSidebar';
 interface ChatWindowProps {
   chatId: string | null;
   chat: Chat | null;
+  onBack?: () => void;
 }
 
-export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
+export default function ChatWindow({ chatId, chat, onBack }: ChatWindowProps) {
   const navigate = useNavigate();
   const { userProfile } = useAuth();
   const { teamProfiles, effectiveOrgId } = useCRM();
@@ -256,6 +257,14 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
       {/* Header do Chat */}
       <div className="p-4 border-b border-gray-100 dark:border-white/10 flex items-center justify-between min-h-[73px]">
         <div className="flex items-center gap-3">
+          {onBack && (
+            <button 
+              onClick={onBack}
+              className="md:hidden p-2 -ml-2 text-gray-500 hover:text-primary-500 transition-colors"
+            >
+              <ChevronLeft size={24} />
+            </button>
+          )}
           <div 
             onClick={() => otherUserId && navigate(`/profile/${otherUserId}`)}
             className={`w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center border border-primary-500/20 overflow-hidden ${otherUserId ? 'cursor-pointer hover:scale-105 transition-transform' : ''}`}
@@ -498,7 +507,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
 
       {/* Sidebar de Mídia Compartilhada */}
       {isMediaOpen && (
-        <div className="w-80 border-l border-gray-100 dark:border-white/10 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-xl animate-in slide-in-from-right duration-300 flex flex-col h-full">
+        <div className="fixed md:relative inset-0 md:inset-auto z-50 md:z-auto md:w-80 border-l border-gray-100 dark:border-white/10 bg-white dark:bg-zinc-950 backdrop-blur-xl animate-in slide-in-from-right duration-300 flex flex-col h-full shadow-2xl md:shadow-none">
           <div className="p-4 border-b border-gray-100 dark:border-white/10 flex justify-between items-center bg-white/10">
             <h4 className="text-sm font-black uppercase tracking-widest text-gray-900 dark:text-white">Mídia & Arquivos</h4>
             <button onClick={() => setIsMediaOpen(false)} className="p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded-full transition-colors">

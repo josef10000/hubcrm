@@ -24,20 +24,25 @@ export default function ChatView() {
   const selectedChat = chats.find(c => c.id === selectedChatId) || null;
 
   return (
-    <div className="flex h-full m-2 bg-white dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] overflow-hidden shadow-2xl animate-in fade-in duration-500">
+    <div className="flex h-full md:m-2 bg-white dark:bg-black/40 backdrop-blur-xl md:border border-gray-200 dark:border-white/10 md:rounded-[2rem] overflow-hidden shadow-2xl animate-in fade-in duration-500">
       {/* Sidebar do Chat */}
-      <ChatSidebar
-        chats={chats}
-        loading={loading}
-        selectedId={selectedChatId}
-        onSelect={setSelectedChatId}
-      />
+      <div className={`flex-col ${selectedChatId ? 'hidden md:flex' : 'flex w-full md:w-80'}`}>
+        <ChatSidebar
+          chats={chats}
+          loading={loading}
+          selectedId={selectedChatId}
+          onSelect={setSelectedChatId}
+        />
+      </div>
 
       {/* Janela de Mensagens */}
-      <ChatWindow
-        chatId={selectedChatId}
-        chat={selectedChat}
-      />
+      <div className={`flex-1 flex-col ${selectedChatId ? 'flex' : 'hidden md:flex'}`}>
+        <ChatWindow
+          chatId={selectedChatId}
+          chat={selectedChat}
+          onBack={() => setSelectedChatId(null)}
+        />
+      </div>
     </div>
   );
 }

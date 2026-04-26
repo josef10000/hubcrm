@@ -33,7 +33,7 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
   );
 
   return (
-    <div className="w-80 border-r border-gray-100 dark:border-white/10 flex flex-col bg-gray-50/50 dark:bg-black/20">
+    <div className="w-full border-r border-gray-100 dark:border-white/10 flex flex-col bg-gray-50/50 dark:bg-black/20 h-full">
       {/* Header da Sidebar */}
       <div className="p-6">
         <div className="mb-6">

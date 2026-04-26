@@ -220,7 +220,7 @@ export default function MessageInput({
   }, []);
 
   return (
-    <div className="p-4 pb-4 bg-white dark:bg-black/20 border-t border-gray-100 dark:border-white/10 relative">
+    <div className="p-3 md:p-4 pb-6 md:pb-4 bg-white dark:bg-black/20 border-t border-gray-100 dark:border-white/10 relative">
       {/* Indicador de Resposta */}
       {replyTo && (
         <div className="absolute bottom-full left-0 right-0 bg-gray-50 dark:bg-white/5 p-3 flex justify-between items-center border-t border-gray-200 dark:border-white/10 animate-in slide-in-from-bottom">
@@ -262,7 +262,7 @@ export default function MessageInput({
             type="button" 
             disabled={uploading}
             onClick={() => fileInputRef.current?.click()}
-            className="p-2 text-gray-400 hover:text-primary-500 hover:bg-primary-500/10 rounded-lg transition-all disabled:opacity-50"
+            className="p-3 md:p-2 text-gray-400 hover:text-primary-500 hover:bg-primary-500/10 rounded-lg transition-all disabled:opacity-50"
             title="Anexar arquivo"
           >
             {uploading ? <Loader2 size={18} className="animate-spin text-primary-500" /> : <Paperclip size={18} />}
@@ -271,7 +271,7 @@ export default function MessageInput({
           <button 
             type="button" 
             onClick={() => setIsPollModalOpen(true)}
-            className="p-2 text-gray-400 hover:text-primary-500 hover:bg-primary-500/10 rounded-lg transition-all"
+            className="p-3 md:p-2 text-gray-400 hover:text-primary-500 hover:bg-primary-500/10 rounded-lg transition-all"
             title="Criar Enquete"
           >
             <BarChart2 size={18} />
@@ -280,7 +280,7 @@ export default function MessageInput({
           <button 
             type="button" 
             onClick={() => setIsApprovalModalOpen(true)}
-            className="p-2 text-gray-400 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-lg transition-all"
+            className="p-3 md:p-2 text-gray-400 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-lg transition-all"
             title="Solicitar Aprovação"
           >
             <CheckCircle2 size={18} />
@@ -289,7 +289,7 @@ export default function MessageInput({
           <button 
             type="button" 
             onClick={() => setIsClientModalOpen(true)}
-            className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-all"
+            className="p-3 md:p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-all"
             title="Vincular Cliente CRM"
           >
             <LayoutGrid size={18} />
@@ -298,7 +298,7 @@ export default function MessageInput({
           <button 
             type="button" 
             onClick={() => setIsGifModalOpen(true)}
-            className="p-2 text-gray-400 hover:text-amber-500 hover:bg-amber-500/10 rounded-lg transition-all"
+            className="p-3 md:p-2 text-gray-400 hover:text-amber-500 hover:bg-amber-500/10 rounded-lg transition-all"
             title="GIFs e Stickers"
           >
             <ImageIcon size={18} />
@@ -320,7 +320,7 @@ export default function MessageInput({
               ref={textareaRef}
               rows={1}
               placeholder="Escreva uma mensagem..."
-              className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-3 pr-12 rounded-2xl text-sm focus:outline-none focus:border-primary-500 transition-all dark:text-white resize-none max-h-32 custom-scrollbar"
+              className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 md:p-3 pr-12 rounded-2xl text-base md:text-sm focus:outline-none focus:border-primary-500 transition-all dark:text-white resize-none max-h-48 md:max-h-32 custom-scrollbar"
               value={text}
               onChange={handleChange}
               onKeyDown={handleKeyDown}
