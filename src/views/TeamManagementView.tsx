@@ -51,7 +51,9 @@ const OrgNode = ({ member, members, navigate }: { member: Member, members: Membe
           )}
         </div>
         <p className="font-bold text-gray-900 dark:text-white text-sm text-center line-clamp-1">{member.displayName}</p>
-        <p className="text-[10px] text-primary-500 font-medium tracking-tight uppercase">{member.jobTitle || member.role}</p>
+        <p className="text-[10px] text-primary-500 font-medium tracking-tight uppercase">
+          {member.jobTitle || (typeof member.role === 'object' ? (member.role as any).name : String(member.role || ''))}
+        </p>
         <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <ChevronRight size={12} className="text-primary-500" />
         </div>
