@@ -88,7 +88,7 @@ async function handleInvite(req: VercelRequest, res: VercelResponse, uid: string
   const expiresAt = Date.now() + (7 * 24 * 60 * 60 * 1000);
 
   await db.collection('convites').doc(token).set({
-    id: token, email, role, orgId: senderData.orgId, token, status: 'pending', createdAt: Date.now(), expiresAt, invitedBy: uid
+    id: token, email, role, orgId: pData?.orgId, token, status: 'pending', createdAt: Date.now(), expiresAt, invitedBy: uid
   });
 
   const protocol = req.headers['x-forwarded-proto'] || 'http';
@@ -96,9 +96,9 @@ async function handleInvite(req: VercelRequest, res: VercelResponse, uid: string
   await sendTeamInviteEmail(email, collaboratorName, role, `${baseUrl}/convite/${token}`);
   
   await logActivity({
-    orgId: senderData.orgId,
+    orgId: pData?.orgId,
     userId: uid,
-    userName: senderData.displayName || 'Admin',
+    userName: pData?.displayName || 'Admin',
     action: 'TEAM_INVITE_SENT',
     targetId: email,
     targetType: 'team',
@@ -251,7 +251,7 @@ async function handleCancelInvite(req: VercelRequest, res: VercelResponse, uid: 
 
   const inviteRef = db.collection('convites').doc(inviteId);
   const inviteSnap = await inviteRef.get();
-  if (!inviteSnap.exists || inviteSnap.data()?.orgId !== senderData.orgId) return res.status(403).json({ error: 'Convite inválido' });
+  if (!inviteSnap.exists || inviteSnap.data()?.orgId !== sData?.orgId) return res.status(403).json({ error: 'Convite inválido' });
 
   await inviteRef.delete();
   return res.status(200).json({ success: true });
@@ -269,7 +269,7 @@ async function handleUpdateProfile(req: VercelRequest, res: VercelResponse, uid:
 
   if (isAdmin && !isEditingSelf) {
     const targetSnap = await db.collection('profiles').doc(targetUid).get();
-    if (!targetSnap.exists || targetSnap.data()?.orgId !== editorData?.orgId) {
+    if (!targetSnap.exists || targetSnap.data()?.orgId !== eData?.orgId) {
       return res.status(403).json({ error: 'Membro de outra organização' });
     }
   }
@@ -309,7 +309,7 @@ async function handleBroadcast(req: VercelRequest, res: VercelResponse, uid: str
   for (let i = 0; i < uids.length; i += chunkSize) {
     const chunk = uids.slice(i, i + chunkSize);
     const profilesSnap = await db.collection('profiles')
-      .where('orgId', '==', senderData.orgId)
+      .where('orgId', '==', sData?.orgId)
       .where('__name__', 'in', chunk)
       .get();
       
@@ -358,7 +358,7 @@ async function handleAddFeedback(req: VercelRequest, res: VercelResponse, uid: s
       ...feedback,
       id: crypto.randomUUID(),
       fromId: uid,
-      fromName: senderData?.displayName || 'Membro da Equipe',
+      fromName: sData?.displayName || 'Membro da Equipe',
       date: Date.now()
     })
   });
@@ -375,8 +375,7 @@ async function handleAddAsset(req: VercelRequest, res: VercelResponse, uid: stri
 
   if (!isAdmin) return res.status(403).json({ error: 'Apenas Admins podem gerenciar ativos' });
 
-  const senderData = senderSnap.data();
-  const orgId = senderData?.orgId || 'default';
+  const orgId = sData?.orgId || 'default';
 
   await db.collection('organizations').doc(orgId).collection('assets').add({
     ...asset,
@@ -388,7 +387,7 @@ async function handleAddAsset(req: VercelRequest, res: VercelResponse, uid: stri
   await logActivity({
     orgId,
     userId: uid,
-    userName: senderData.displayName || 'Admin',
+    userName: sData?.displayName || 'Admin',
     action: 'ASSET_ASSIGNED',
     targetId: targetUid,
     targetType: 'team',
