@@ -1,5 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ExternalLink, MoreVertical, Phone, Video, Search, MessageSquare, Megaphone, Info, X } from 'lucide-react';
+import { 
+  ExternalLink, MoreVertical, Phone, Video, Search, MessageSquare, Megaphone, Info, X,
+  Pin, ChevronRight, ChevronLeft, Bookmark, Archive, Folder 
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Chat, ChatMessage } from '../../types/chat.types';
 import { useChat } from '../../hooks/useChat';
@@ -12,7 +15,6 @@ import MessageInput from './MessageInput';
 import GroupSettingsModal from './GroupSettingsModal';
 import SupportRequestModal from '../SupportRequestModal';
 import { toast } from 'sonner';
-import { Pin, ChevronRight, ChevronLeft, Bookmark, Archive, Folder } from 'lucide-react';
 import { Timestamp } from 'firebase/firestore';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
