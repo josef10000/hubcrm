@@ -422,12 +422,22 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
               const previousDate = index > 0 ? (filteredMessages[index - 1].createdAt as any)?.toDate?.() || null : null;
               const showDivider = index === 0 || (currentDate && previousDate && !isSameDay(currentDate, previousDate));
 
+              // Função ultra-segura para extrair milissegundos (Sugerida por DeepSeek R1)
+              const getSafeMillis = (ts: any) => {
+                if (!ts) return 0;
+                if (typeof ts.toMillis === 'function') return ts.toMillis();
+                if (ts.seconds) return ts.seconds * 1000;
+                if (ts instanceof Date) return ts.getTime();
+                if (typeof ts === 'number') return ts;
+                return 0;
+              };
+
               // Calcular se a mensagem foi lida por ALGUÉM além de mim
               const isRead = Object.entries(chat.lastRead || {})
                 .filter(([uid]) => uid !== userProfile?.uid)
                 .some(([_, lastReadTs]) => {
-                  const lrMillis = (lastReadTs as any)?.toMillis?.() || (lastReadTs as any)?.seconds * 1000 || 0;
-                  const msgMillis = (msg.createdAt as any)?.toMillis?.() || (msg.createdAt as any)?.seconds * 1000 || 0;
+                  const lrMillis = getSafeMillis(lastReadTs);
+                  const msgMillis = getSafeMillis(msg.createdAt);
                   return lrMillis >= msgMillis && msgMillis > 0;
                 });
 
