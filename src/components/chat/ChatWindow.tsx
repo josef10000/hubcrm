@@ -12,7 +12,7 @@ import MessageInput from './MessageInput';
 import GroupSettingsModal from './GroupSettingsModal';
 import SupportRequestModal from '../SupportRequestModal';
 import { toast } from 'sonner';
-import { Pin, ChevronRight, Bookmark, Archive, Folder } from 'lucide-react';
+import { Pin, ChevronRight, ChevronLeft, Bookmark, Archive, Folder } from 'lucide-react';
 import { Timestamp } from 'firebase/firestore';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
