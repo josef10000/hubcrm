@@ -418,16 +418,16 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
           <div className="space-y-1">
             {filteredMessages.map((msg, index) => {
               // Lógica de divisor de data (Teams Style)
-              const currentDate = (msg.createdAt as any)?.toDate();
-              const previousDate = index > 0 ? (filteredMessages[index - 1].createdAt as any)?.toDate() : null;
+              const currentDate = (msg.createdAt as any)?.toDate?.() || null;
+              const previousDate = index > 0 ? (filteredMessages[index - 1].createdAt as any)?.toDate?.() || null : null;
               const showDivider = index === 0 || (currentDate && previousDate && !isSameDay(currentDate, previousDate));
 
               // Calcular se a mensagem foi lida por ALGUÉM além de mim
               const isRead = Object.entries(chat.lastRead || {})
                 .filter(([uid]) => uid !== userProfile?.uid)
                 .some(([_, lastReadTs]) => {
-                  const lrMillis = (lastReadTs as any)?.toMillis?.() || 0;
-                  const msgMillis = (msg.createdAt as any)?.toMillis?.() || 0;
+                  const lrMillis = (lastReadTs as any)?.toMillis?.() || (lastReadTs as any)?.seconds * 1000 || 0;
+                  const msgMillis = (msg.createdAt as any)?.toMillis?.() || (msg.createdAt as any)?.seconds * 1000 || 0;
                   return lrMillis >= msgMillis && msgMillis > 0;
                 });
 

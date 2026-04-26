@@ -94,7 +94,7 @@ export default function MessageBubble({
           {/* Timestamp no Topo (Teams Style) */}
           {!isDeleted && (
             <div className={`mb-1 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-tighter ${isMine ? 'text-right pr-4' : 'pl-4'}`}>
-              {message.createdAt ? formatChatDateTime(message.createdAt.toDate()) : '...'}
+              {message.createdAt && (message.createdAt as any).toDate ? formatChatDateTime((message.createdAt as any).toDate()) : 'Enviando...'}
             </div>
           )}
 
