@@ -354,6 +354,9 @@ export default function TeamManagementView() {
                 <div className="divide-y divide-gray-200 dark:divide-white/10">
                   {members.map(member => {
                     const superior = members.find(m => m.uid === member.reportsTo);
+                    const roleRaw = member.role;
+                    const roleStr = typeof roleRaw === 'object' ? (roleRaw as any).name : String(roleRaw || '');
+                    
                     return (
                       <div key={member.uid} className="px-6 py-4 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-white/5 transition-colors group">
                         <div 
@@ -368,7 +371,7 @@ export default function TeamManagementView() {
                               {member.displayName}
                               <ChevronRight size={14} className="opacity-0 group-hover:opacity-100 transition-all -ml-1" />
                             </p>
-                            <p className="text-xs text-gray-500">{member.jobTitle || member.role}</p>
+                            <p className="text-xs text-gray-500">{member.jobTitle || roleStr}</p>
                           </div>
                         </div>
                         <div className="flex items-center space-x-4">
@@ -377,16 +380,16 @@ export default function TeamManagementView() {
                             <p className="text-xs text-gray-500">{superior?.displayName || 'Ninguém'}</p>
                           </div>
                           <span className={`px-3 py-1 rounded-full text-[10px] font-bold tracking-tight uppercase ${
-                            member.role.includes('Admin') ? 'bg-purple-500/20 text-purple-600 dark:text-purple-400' :
-                            member.role.includes('Gerente') ? 'bg-zinc-500/20 text-zinc-600 dark:text-zinc-400' :
-                            member.role.includes('People') ? 'bg-pink-500/20 text-pink-600 dark:text-pink-400' :
-                            member.role.includes('Success') ? 'bg-indigo-500/20 text-indigo-600 dark:text-indigo-400' :
-                            member.role.includes('Suporte') ? 'bg-cyan-500/20 text-cyan-600 dark:text-cyan-400' :
-                            member.role.includes('Vendas') || member.role.includes('SDR') ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' :
-                            member.role.includes('Financeiro') || member.role.includes('FinOps') ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400' :
+                            roleStr.includes('Admin') ? 'bg-purple-500/20 text-purple-600 dark:text-purple-400' :
+                            roleStr.includes('Gerente') ? 'bg-zinc-500/20 text-zinc-600 dark:text-zinc-400' :
+                            roleStr.includes('People') ? 'bg-pink-500/20 text-pink-600 dark:text-pink-400' :
+                            roleStr.includes('Success') ? 'bg-indigo-500/20 text-indigo-600 dark:text-indigo-400' :
+                            roleStr.includes('Suporte') ? 'bg-cyan-500/20 text-cyan-600 dark:text-cyan-400' :
+                            roleStr.includes('Vendas') || roleStr.includes('SDR') ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' :
+                            roleStr.includes('Financeiro') || roleStr.includes('FinOps') ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400' :
                             'bg-gray-500/20 text-gray-600 dark:text-gray-400'
                           }`}>
-                            {member.role}
+                            {roleStr}
                           </span>
                           <div className="flex items-center gap-1">
                             {hasPermission('MANAGE_TEAM') && (
