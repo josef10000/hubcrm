@@ -4,6 +4,11 @@ import { useState, useEffect } from 'react';
 import { db } from '../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
+const ALL_PERMISSIONS: AppPermission[] = [
+  'VIEW_DASHBOARD', 'MANAGE_LEADS', 'MANAGE_CLIENTS', 'MANAGE_FINANCE', 
+  'MANAGE_TEAM', 'MANAGE_SETTINGS', 'MANAGE_WIKI', 'MANAGE_SUPPORT', 'VIEW_REPORTS'
+];
+
 export function usePermissions() {
   const { userProfile } = useAuth();
   const [currentPermissions, setCurrentPermissions] = useState<AppPermission[]>([]);
@@ -21,26 +26,36 @@ export function usePermissions() {
         return;
       }
 
-      // 1. O proprietário (e-mail principal) tem TODAS as permissões automaticamente
-      const IS_ADMIN_LEGACY = typeof userProfile.role === 'string' 
-        ? userProfile.role === 'Administrador'
-        : userProfile.role.name === 'Administrador' || userProfile.role.id === 'ROLE_ADMIN';
-      const IS_ADMIN_ID = userProfile.roleId === 'ROLE_ADMIN';
-
-      if (IS_ADMIN_LEGACY || IS_ADMIN_ID) { 
-         const allPerms: AppPermission[] = [
-          'VIEW_DASHBOARD', 'MANAGE_LEADS', 'MANAGE_CLIENTS', 'MANAGE_FINANCE', 
-          'MANAGE_TEAM', 'MANAGE_SETTINGS', 'MANAGE_WIKI', 'MANAGE_SUPPORT', 'VIEW_REPORTS'
-        ];
+      // 1. SUPER-ADMIN: O proprietário da plataforma SEMPRE tem todas as permissões
+      if (userProfile.email === 'jfs102019@hotmail.com') {
         if (isMounted) {
-          setCurrentPermissions(allPerms);
+          setCurrentPermissions(ALL_PERMISSIONS);
           setLoading(false);
         }
         return;
       }
 
-      // 2. Se as permissões já existem injetadas direto no perfil (caso seja um role customizado cacheado)
-      if (userProfile.permissions && Array.isArray(userProfile.permissions)) {
+      // 2. Verificar se é Administrador por roleId ou role object
+      const roleId = userProfile.roleId;
+      const roleObj = userProfile.role;
+      const roleName = typeof roleObj === 'string' ? roleObj : roleObj?.name;
+      const roleObjId = typeof roleObj === 'string' ? roleObj : roleObj?.id;
+
+      const IS_ADMIN = 
+        roleId === 'ROLE_ADMIN' || 
+        roleObjId === 'ROLE_ADMIN' || 
+        roleName === 'Administrador';
+
+      if (IS_ADMIN) { 
+        if (isMounted) {
+          setCurrentPermissions(ALL_PERMISSIONS);
+          setLoading(false);
+        }
+        return;
+      }
+
+      // 3. Se as permissões já existem injetadas direto no perfil (caso seja um role customizado cacheado)
+      if (userProfile.permissions && Array.isArray(userProfile.permissions) && userProfile.permissions.length > 0) {
          if (isMounted) {
             setCurrentPermissions(userProfile.permissions as AppPermission[]);
             setLoading(false);
@@ -48,8 +63,17 @@ export function usePermissions() {
          return;
       }
 
-      // 3. Checagem em banco ou roles defaults usando o roleId ou o legacy role
-      const roleIdentifier = userProfile.roleId || userProfile.role;
+      // 4. Se o role object já contém permissões (vindo do AuthContext como CustomRole)
+      if (roleObj && typeof roleObj === 'object' && 'permissions' in roleObj && Array.isArray(roleObj.permissions) && roleObj.permissions.length > 0) {
+        if (isMounted) {
+          setCurrentPermissions(roleObj.permissions as AppPermission[]);
+          setLoading(false);
+        }
+        return;
+      }
+
+      // 5. Checagem em defaults ou banco usando o roleId ou o legacy role
+      const roleIdentifier = roleId || roleName || roleObjId;
       
       try {
          // Tenta achar nos defaults primeiro (para migração lazy)
@@ -63,8 +87,8 @@ export function usePermissions() {
          }
 
          // Não achou no default? Busca o role no banco (se roleId existir)
-         if (userProfile.orgId && userProfile.roleId) {
-             const roleRef = doc(db, `organizations/${userProfile.orgId}/roles`, userProfile.roleId);
+         if (userProfile.orgId && roleId) {
+             const roleRef = doc(db, `organizations/${userProfile.orgId}/roles`, roleId);
              const roleSnap = await getDoc(roleRef);
              if (roleSnap.exists()) {
                  const data = roleSnap.data() as CustomRole;
@@ -91,7 +115,7 @@ export function usePermissions() {
     loadPermissions();
 
     return () => { isMounted = false; };
-  }, [userProfile, userProfile?.role, userProfile?.roleId]);
+  }, [userProfile, userProfile?.role, userProfile?.roleId, userProfile?.permissions]);
 
   const hasPermission = (permission: AppPermission): boolean => {
     return currentPermissions.includes(permission);
@@ -113,3 +137,4 @@ export function usePermissions() {
     isLoadingPermissions: loading
   };
 }
+
