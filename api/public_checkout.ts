@@ -123,7 +123,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       contracts: req.body.contract?.accepted ? [{
         id: `signed_${Date.now()}`,
         type: 'text',
-        content: req.body.contract.content,
+        content: req.body.contract.content || "",
         status: 'signed',
         createdAt: Date.now(),
         signedAt: Date.now(),
