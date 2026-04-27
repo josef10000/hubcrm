@@ -33,11 +33,22 @@ export default function PublicCheckoutPage() {
 
   const handleFileUpload = async (questionId: string, file: File) => {
     if (!orgId) return;
+    console.log(`[Checkout] Iniciando upload para pergunta: ${questionId}`, file.name);
     setUploadingFile(questionId);
+    
     try {
-      const storageRef = ref(storage, `organizations/${orgId}/checkouts/${Date.now()}_${file.name}`);
+      // Sanitização do nome do arquivo para evitar erros de caracteres especiais
+      const safeName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+      const fileName = `${Date.now()}_${safeName}`;
+      const storageRef = ref(storage, `organizations/${orgId}/checkouts/${fileName}`);
+      
+      console.log(`[Checkout] Subindo arquivo para: organizations/${orgId}/checkouts/${fileName}`);
       const snapshot = await uploadBytes(storageRef, file);
+      
+      console.log(`[Checkout] Upload concluído, obtendo URL...`);
       const downloadURL = await getDownloadURL(snapshot.ref);
+      
+      console.log(`[Checkout] URL obtida com sucesso:`, downloadURL);
       
       // Se for a pergunta de Logo/Imagens, anexamos em vez de substituir
       const isLogoQuestion = questionId.toLowerCase().includes('logo') || questionId.toLowerCase().includes('imagem');
@@ -51,10 +62,16 @@ export default function PublicCheckoutPage() {
       });
       
       toast.success('Arquivo enviado com sucesso!');
-    } catch (error) {
-      console.error("Upload error:", error);
-      toast.error('Erro ao enviar arquivo.');
+    } catch (error: any) {
+      console.error("[Checkout] Erro crítico no upload:", error);
+      // Se o erro for de permissão, avisamos o usuário
+      if (error.code === 'storage/unauthorized') {
+        toast.error('Erro de permissão: O sistema não autorizou o upload público. Verifique as regras de Storage.');
+      } else {
+        toast.error(`Erro ao enviar arquivo: ${error.message || 'Tente novamente.'}`);
+      }
     } finally {
+      console.log(`[Checkout] Finalizando estado de upload.`);
       setUploadingFile(null);
     }
   };
