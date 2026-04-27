@@ -170,6 +170,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   } catch (error: any) {
     console.error('[PublicCheckout] Error:', error);
-    return safeErrorResponse(res, error, 'Ocorreu um erro ao processar seu cadastro. Tente novamente.');
+    // Retorna a mensagem real do erro para o frontend para facilitar a identificação do problema
+    return res.status(500).json({ error: `Erro ao processar: ${error.message || 'Falha interna'}` });
   }
 }

@@ -45,12 +45,10 @@ export default function PublicCheckoutPage() {
 
       console.log(`[Checkout] URL obtida com sucesso:`, downloadURL);
       
-      // Se for a pergunta de Logo/Imagens, anexamos em vez de substituir
-      const isLogoQuestion = questionId.toLowerCase().includes('logo') || questionId.toLowerCase().includes('imagem');
-      
+      // Acumula os URLs caso o cliente envie várias fotos na mesma pergunta
       setAnswers(prev => {
         const current = prev[questionId] || '';
-        if (isLogoQuestion && current) {
+        if (current) {
           return { ...prev, [questionId]: `${current}, ${downloadURL}` };
         }
         return { ...prev, [questionId]: downloadURL };
@@ -346,23 +344,41 @@ export default function PublicCheckoutPage() {
                     ) : q.type === 'file' ? (
                       <div className="flex flex-col gap-2">
                         {answers[q.id] ? (
-                          <div className="flex items-center gap-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                          <div className="flex items-center gap-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl relative group">
                             <CheckCircle className="text-emerald-500 w-5 h-5 flex-shrink-0" />
-                            <span className="text-emerald-400 text-sm truncate flex-1">Arquivo subido com sucesso</span>
+                            <span className="text-emerald-400 text-sm truncate flex-1">
+                              {answers[q.id].split(',').length} arquivo(s) enviado(s)
+                            </span>
+                            <input
+                              type="file"
+                              multiple
+                              onChange={async (e) => {
+                                const files = Array.from(e.target.files || []);
+                                for (const file of files) {
+                                  await handleFileUpload(q.id, file);
+                                }
+                              }}
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                              disabled={uploadingFile === q.id}
+                              title="Adicionar mais arquivos"
+                            />
                             <button 
-                              onClick={() => setAnswers({...answers, [q.id]: ''})}
-                              className="text-gray-400 hover:text-white transition-colors"
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setAnswers({...answers, [q.id]: ''}); }}
+                              className="text-gray-400 hover:text-white transition-colors relative z-20"
                             >
-                              Remover
+                              Limpar
                             </button>
                           </div>
                         ) : (
                           <div className="relative group">
                             <input
                               type="file"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) handleFileUpload(q.id, file);
+                              multiple
+                              onChange={async (e) => {
+                                const files = Array.from(e.target.files || []);
+                                for (const file of files) {
+                                  await handleFileUpload(q.id, file);
+                                }
                               }}
                               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                               disabled={uploadingFile === q.id}
