@@ -5,6 +5,42 @@ import { sendTeamInviteEmail, sendTeamBroadcastEmail } from '../src/services/ema
 import crypto from 'crypto';
 import { logActivity } from './_utils/audit.js';
 
+// Helper para extrair o nome do role (compatível com string e objeto)
+function getRoleName(role: any): string {
+  if (!role) return '';
+  if (typeof role === 'string') return role;
+  if (typeof role === 'object' && role.name) return role.name;
+  if (typeof role === 'object' && role.id) return role.id;
+  return '';
+}
+
+function isAdminOrManager(profileData: any): boolean {
+  if (!profileData) return false;
+  // Super-admin por e-mail
+  if (profileData.email === 'jfs102019@hotmail.com') return true;
+  // Verificar roleId
+  if (profileData.roleId === 'ROLE_ADMIN' || profileData.roleId === 'ROLE_GERENTE') return true;
+  // Verificar role como string ou objeto
+  const roleName = getRoleName(profileData.role);
+  return ['Administrador', 'Gerente'].includes(roleName);
+}
+
+function isAdmin(profileData: any): boolean {
+  if (!profileData) return false;
+  if (profileData.email === 'jfs102019@hotmail.com') return true;
+  if (profileData.roleId === 'ROLE_ADMIN') return true;
+  const roleName = getRoleName(profileData.role);
+  return roleName === 'Administrador';
+}
+
+function isManagement(profileData: any): boolean {
+  if (!profileData) return false;
+  if (profileData.email === 'jfs102019@hotmail.com') return true;
+  if (['ROLE_ADMIN', 'ROLE_GERENTE', 'ROLE_PEOPLE'].includes(profileData.roleId || '')) return true;
+  const roleName = getRoleName(profileData.role);
+  return ['Administrador', 'Gerente', 'People & Culture'].includes(roleName);
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { action } = req.query;
 
@@ -53,8 +89,9 @@ async function handleList(req: VercelRequest, res: VercelResponse, uid: string) 
   const profileSnap = await db.collection('profiles').doc(uid).get();
   if (!profileSnap.exists) return res.status(403).json({ error: 'Perfil não encontrado' });
 
-  const { orgId, role } = profileSnap.data()!;
-  if (role !== 'Administrador' && role !== 'Gerente') return res.status(403).json({ error: 'Acesso negado' });
+  const profileData = profileSnap.data()!;
+  const { orgId } = profileData;
+  if (!isAdminOrManager(profileData)) return res.status(403).json({ error: 'Acesso negado' });
 
   const membersSnap = await db.collection('profiles').where('orgId', '==', orgId).get();
   const members = membersSnap.docs.map(d => ({ uid: d.id, ...d.data() }));
@@ -71,7 +108,7 @@ async function handleInvite(req: VercelRequest, res: VercelResponse, uid: string
 
   const profileSnap = await db.collection('profiles').doc(uid).get();
   const senderData = profileSnap.data();
-  if (senderData?.role !== 'Administrador' && senderData?.role !== 'Gerente') {
+  if (!isAdminOrManager(senderData)) {
     return res.status(403).json({ error: 'Permissão negada para convidar' });
   }
 
@@ -104,7 +141,7 @@ async function handleRemove(req: VercelRequest, res: VercelResponse, uid: string
   if (uid === targetUid) return res.status(400).json({ error: 'Não pode remover a si mesmo' });
 
   const senderSnap = await db.collection('profiles').doc(uid).get();
-  if (senderSnap.data()?.role !== 'Administrador') return res.status(403).json({ error: 'Apenas Admins podem remover' });
+  if (!isAdmin(senderSnap.data())) return res.status(403).json({ error: 'Apenas Admins podem remover' });
 
   const targetRef = db.collection('profiles').doc(targetUid);
   const targetSnap = await targetRef.get();
@@ -230,7 +267,7 @@ async function handleCancelInvite(req: VercelRequest, res: VercelResponse, uid: 
   const { inviteId } = req.body;
   const senderSnap = await db.collection('profiles').doc(uid).get();
   const senderData = senderSnap.data();
-  if (senderData?.role !== 'Administrador' && senderData?.role !== 'Gerente') return res.status(403).json({ error: 'Acesso negado' });
+  if (!isAdminOrManager(senderData)) return res.status(403).json({ error: 'Acesso negado' });
 
   const inviteRef = db.collection('convites').doc(inviteId);
   const inviteSnap = await inviteRef.get();
@@ -245,11 +282,11 @@ async function handleUpdateProfile(req: VercelRequest, res: VercelResponse, uid:
   const isEditingSelf = uid === targetUid;
   const editorSnap = await db.collection('profiles').doc(uid).get();
   const editorData = editorSnap.data();
-  const isAdmin = editorData?.role === 'Administrador';
+  const isAdminUser = isAdmin(editorData);
 
-  if (!isEditingSelf && !isAdmin) return res.status(403).json({ error: 'Permissão negada' });
+  if (!isEditingSelf && !isAdminUser) return res.status(403).json({ error: 'Permissão negada' });
 
-  if (isAdmin && !isEditingSelf) {
+  if (isAdminUser && !isEditingSelf) {
     const targetSnap = await db.collection('profiles').doc(targetUid).get();
     if (!targetSnap.exists || targetSnap.data()?.orgId !== editorData?.orgId) {
       return res.status(403).json({ error: 'Membro de outra organização' });
@@ -273,7 +310,7 @@ async function handleBroadcast(req: VercelRequest, res: VercelResponse, uid: str
   // Verifica permissão
   const senderSnap = await db.collection('profiles').doc(uid).get();
   const senderData = senderSnap.data();
-  if (senderData?.role !== 'Administrador' && senderData?.role !== 'Gerente' && senderData?.role !== 'People & Culture') {
+  if (!isManagement(senderData)) {
     return res.status(403).json({ error: 'Acesso negado para enviar comunicados' });
   }
 
@@ -324,10 +361,10 @@ async function handleAddFeedback(req: VercelRequest, res: VercelResponse, uid: s
   
   const senderSnap = await db.collection('profiles').doc(uid).get();
   const senderData = senderSnap.data();
-  const isManagement = ['Administrador', 'Gerente', 'People & Culture'].includes(senderData?.role || '');
+  const isManagementUser = isManagement(senderData);
 
   if (isSelf) return res.status(403).json({ error: 'Não pode enviar feedback para si mesmo' });
-  if (!isManagement) return res.status(403).json({ error: 'Apenas gestores podem enviar feedbacks' });
+  if (!isManagementUser) return res.status(403).json({ error: 'Apenas gestores podem enviar feedbacks' });
 
   await db.collection('profiles').doc(targetUid).update({
     feedbacks: getFirebaseAdmin().firestore.FieldValue.arrayUnion({
@@ -345,7 +382,7 @@ async function handleAddFeedback(req: VercelRequest, res: VercelResponse, uid: s
 async function handleAddAsset(req: VercelRequest, res: VercelResponse, uid: string) {
   const { targetUid, asset } = req.body;
   const senderSnap = await db.collection('profiles').doc(uid).get();
-  if (senderSnap.data()?.role !== 'Administrador') return res.status(403).json({ error: 'Apenas Admins podem gerenciar ativos' });
+  if (!isAdmin(senderSnap.data())) return res.status(403).json({ error: 'Apenas Admins podem gerenciar ativos' });
 
   const senderData = senderSnap.data();
   const orgId = senderData?.orgId || 'default';
@@ -373,7 +410,7 @@ async function handleAddAsset(req: VercelRequest, res: VercelResponse, uid: stri
 async function handleRemoveAsset(req: VercelRequest, res: VercelResponse, uid: string) {
   const { targetUid, assetId } = req.body;
   const senderSnap = await db.collection('profiles').doc(uid).get();
-  if (senderSnap.data()?.role !== 'Administrador') return res.status(403).json({ error: 'Apenas Admins podem remover ativos' });
+  if (!isAdmin(senderSnap.data())) return res.status(403).json({ error: 'Apenas Admins podem remover ativos' });
 
   const senderData = senderSnap.data();
   const orgId = senderData?.orgId || 'default';
@@ -387,9 +424,9 @@ async function handleAddMilestone(req: VercelRequest, res: VercelResponse, uid: 
   const { targetUid, milestone } = req.body;
   const senderSnap = await db.collection('profiles').doc(uid).get();
   const senderData = senderSnap.data();
-  const isManagement = ['Administrador', 'Gerente', 'People & Culture'].includes(senderData?.role || '');
+  const isManagementUser = isManagement(senderData);
 
-  if (!isManagement) return res.status(403).json({ error: 'Apenas Administradores, Gerentes ou RH podem adicionar marcos' });
+  if (!isManagementUser) return res.status(403).json({ error: 'Apenas Administradores, Gerentes ou RH podem adicionar marcos' });
 
   await db.collection('profiles').doc(targetUid).update({
     careerTimeline: getFirebaseAdmin().firestore.FieldValue.arrayUnion({
@@ -407,17 +444,14 @@ async function handleUpdateSkills(req: VercelRequest, res: VercelResponse, uid: 
   const senderSnap = await db.collection('profiles').doc(uid).get();
   const senderData = senderSnap.data();
   const isOwner = senderData?.email === 'jfs102019@hotmail.com';
-  
-  // Aceita tanto o nome amigável quanto o ID da role para maior compatibilidade
-  const roleName = typeof senderData?.role === 'object' ? senderData.role.name : senderData?.role;
-  const isManagement = isOwner || ['Administrador', 'Gerente', 'People & Culture'].includes(roleName || '');
+  const isManagementUser = isManagement(senderData);
 
   // Se for o dono, ignoramos a trava de isSelf
-  if (isSelf && !isOwner && roleName !== 'Administrador') {
+  if (isSelf && !isOwner && !isAdmin(senderData)) {
     return res.status(403).json({ error: 'O colaborador não pode atualizar sua própria matriz de competências' });
   }
   
-  if (!isManagement) return res.status(403).json({ error: 'Sem permissão para atualizar competências' });
+  if (!isManagementUser) return res.status(403).json({ error: 'Sem permissão para atualizar competências' });
 
   await db.collection('profiles').doc(targetUid).set({ skills }, { merge: true });
   return res.status(200).json({ success: true });
