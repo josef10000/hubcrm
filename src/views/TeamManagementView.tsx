@@ -32,6 +32,16 @@ const Clock = (props: any) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
 );
 
+// Helper para extrair o nome da role (compatível com string e objeto)
+const getRoleDisplayName = (role: any): string => {
+  if (!role) return 'Colaborador';
+  if (typeof role === 'string') return role;
+  if (typeof role === 'object') {
+    return role.name || role.id || 'Colaborador';
+  }
+  return 'Colaborador';
+};
+
 const OrgNode = ({ member, members, navigate }: { member: Member, members: Member[], navigate: any }) => {
   const children = members.filter(m => m.reportsTo === member.uid);
   
@@ -51,7 +61,7 @@ const OrgNode = ({ member, members, navigate }: { member: Member, members: Membe
           )}
         </div>
         <p className="font-bold text-gray-900 dark:text-white text-sm text-center line-clamp-1">{member.displayName}</p>
-        <p className="text-[10px] text-primary-500 font-medium tracking-tight uppercase">{member.jobTitle || member.role}</p>
+        <p className="text-[10px] text-primary-500 font-medium tracking-tight uppercase">{member.jobTitle || getRoleDisplayName(member.role)}</p>
         <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <ChevronRight size={12} className="text-primary-500" />
         </div>
@@ -368,7 +378,7 @@ export default function TeamManagementView() {
                               {member.displayName}
                               <ChevronRight size={14} className="opacity-0 group-hover:opacity-100 transition-all -ml-1" />
                             </p>
-                            <p className="text-xs text-gray-500">{member.jobTitle || member.role}</p>
+                            <p className="text-xs text-gray-500">{member.jobTitle || getRoleDisplayName(member.role)}</p>
                           </div>
                         </div>
                         <div className="flex items-center space-x-4">
@@ -376,17 +386,18 @@ export default function TeamManagementView() {
                             <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Superior</p>
                             <p className="text-xs text-gray-500">{superior?.displayName || 'Ninguém'}</p>
                           </div>
-                          <span className={`px-3 py-1 rounded-full text-[10px] font-bold tracking-tight uppercase ${
-                            member.role.includes('Admin') ? 'bg-purple-500/20 text-purple-600 dark:text-purple-400' :
-                            member.role.includes('Gerente') ? 'bg-zinc-500/20 text-zinc-600 dark:text-zinc-400' :
-                            member.role.includes('People') ? 'bg-pink-500/20 text-pink-600 dark:text-pink-400' :
-                            member.role.includes('Success') ? 'bg-indigo-500/20 text-indigo-600 dark:text-indigo-400' :
-                            member.role.includes('Suporte') ? 'bg-cyan-500/20 text-cyan-600 dark:text-cyan-400' :
-                            member.role.includes('Vendas') || member.role.includes('SDR') ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' :
-                            member.role.includes('Financeiro') || member.role.includes('FinOps') ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400' :
-                            'bg-gray-500/20 text-gray-600 dark:text-gray-400'
-                          }`}>
-                            {member.role}
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-bold tracking-tight uppercase ${(() => {
+                            const roleName = getRoleDisplayName(member.role);
+                            return roleName.includes('Admin') ? 'bg-purple-500/20 text-purple-600 dark:text-purple-400' :
+                                   roleName.includes('Gerente') ? 'bg-zinc-500/20 text-zinc-600 dark:text-zinc-400' :
+                                   roleName.includes('People') ? 'bg-pink-500/20 text-pink-600 dark:text-pink-400' :
+                                   roleName.includes('Success') ? 'bg-indigo-500/20 text-indigo-600 dark:text-indigo-400' :
+                                   roleName.includes('Suporte') ? 'bg-cyan-500/20 text-cyan-600 dark:text-cyan-400' :
+                                   roleName.includes('Vendas') || roleName.includes('SDR') ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' :
+                                   roleName.includes('Financeiro') || roleName.includes('FinOps') ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400' :
+                                   'bg-gray-500/20 text-gray-600 dark:text-gray-400';
+                          })()}`}>
+                            {getRoleDisplayName(member.role)}
                           </span>
                           <div className="flex items-center gap-1">
                             {hasPermission('MANAGE_TEAM') && (
@@ -441,7 +452,7 @@ export default function TeamManagementView() {
                           </div>
                         </div>
                         <div className="flex items-center space-x-4">
-                          <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-white/10 rounded-lg text-gray-500">{invite.role}</span>
+                          <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-white/10 rounded-lg text-gray-500">{getRoleDisplayName(invite.role)}</span>
                           <div className="text-xs text-orange-400 font-medium px-2 py-1 bg-orange-400/10 rounded-lg animate-pulse">Aguardando...</div>
                           {hasPermission('MANAGE_TEAM') && (
                             <button 
