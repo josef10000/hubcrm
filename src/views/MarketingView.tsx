@@ -13,11 +13,12 @@ export default function MarketingView() {
   const handleSaveAnnouncement = async () => {
     if (!effectiveOrgId) return;
     try {
-      await setDoc(doc(db, 'organizations', effectiveOrgId, 'settings', 'global'), {
+      await setDoc(doc(db, 'organizations', effectiveOrgId), {
         announcement: globalAnnouncement
       }, { merge: true });
       toast.success('Aviso global atualizado com sucesso!');
     } catch (err) {
+      console.error("Erro ao salvar aviso:", err);
       toast.error('Erro ao atualizar aviso.');
     }
   };

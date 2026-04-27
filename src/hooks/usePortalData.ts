@@ -61,7 +61,7 @@ export function usePortalData(orgId: string | undefined, initialClientId: string
     const clientRef = doc(db, 'organizations', orgId, 'clients', activeClientId);
     const requestsRef = collection(db, 'organizations', orgId, 'supportRequests');
     const offersRef = collection(db, 'organizations', orgId, 'offers');
-    const globalRef = doc(db, 'organizations', orgId, 'settings', 'global');
+    const orgRef = doc(db, 'organizations', orgId);
 
     let unsubConsultant: () => void = () => {};
     const unsubClient = onSnapshot(clientRef, async (snap) => {
@@ -118,11 +118,13 @@ export function usePortalData(orgId: string | undefined, initialClientId: string
       setOffers(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     });
 
-    const unsubGlobal = onSnapshot(globalRef, (snap) => {
+    const unsubGlobal = onSnapshot(orgRef, (snap) => {
       if (snap.exists()) {
         const data = snap.data();
         if (data.announcement?.isActive) {
           setAnnouncement(data.announcement);
+        } else {
+          setAnnouncement(null);
         }
       }
     });
