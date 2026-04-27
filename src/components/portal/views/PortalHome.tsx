@@ -37,11 +37,27 @@ export default function PortalHome({ client, announcement, setActiveTab }: Porta
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="p-1 rounded-[2rem] lg:rounded-3xl bg-gradient-to-r from-primary-500/20 to-blue-500/20 border border-white/10"
+          className={`p-1 rounded-[2rem] lg:rounded-3xl border ${
+            announcement.type === 'warning' 
+              ? 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-yellow-500/30' 
+              : announcement.type === 'success'
+                ? 'bg-gradient-to-r from-emerald-500/20 to-green-500/20 border-emerald-500/30'
+                : announcement.type === 'new_feature'
+                  ? 'bg-gradient-to-r from-primary-500/20 to-purple-500/20 border-primary-500/30'
+                  : 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border-blue-500/30'
+          }`}
         >
-          <div className="bg-[#0a0a0a]/60 backdrop-blur-xl p-4 lg:p-6 rounded-[calc(1.5rem+4px)] lg:rounded-[calc(1.5rem-1px)] flex items-start gap-4 lg:gap-5">
-            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-primary-500/10 rounded-xl lg:rounded-2xl flex items-center justify-center shrink-0 border border-primary-500/20">
-              <Megaphone className="text-primary-400 w-5 h-5 lg:w-6 lg:h-6" />
+          <div className="bg-[#0a0a0a]/60 backdrop-blur-xl p-4 lg:p-6 rounded-[calc(2rem-4px)] lg:rounded-[calc(1.5rem-1px)] flex items-start gap-4 lg:gap-5">
+            <div className={`w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl flex items-center justify-center shrink-0 border ${
+              announcement.type === 'warning' 
+                ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400' 
+                : announcement.type === 'success'
+                  ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                  : announcement.type === 'new_feature'
+                    ? 'bg-primary-500/10 border-primary-500/20 text-primary-400'
+                    : 'bg-blue-500/10 border-blue-500/20 text-blue-400'
+            }`}>
+              <Megaphone className="w-5 h-5 lg:w-6 lg:h-6" />
             </div>
             <div>
               <h3 className="font-bold text-white text-base lg:text-lg mb-1">{announcement.title}</h3>

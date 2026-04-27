@@ -8,12 +8,12 @@ import { toast } from 'sonner';
 
 export default function MarketingView() {
   const { user } = useAuth();
-  const { globalAnnouncement, setGlobalAnnouncement } = useCRM();
+  const { globalAnnouncement, setGlobalAnnouncement, effectiveOrgId } = useCRM();
 
   const handleSaveAnnouncement = async () => {
-    if (!user) return;
+    if (!effectiveOrgId) return;
     try {
-      await setDoc(doc(db, 'users', user.uid, 'settings', 'global'), {
+      await setDoc(doc(db, 'organizations', effectiveOrgId, 'settings', 'global'), {
         announcement: globalAnnouncement
       }, { merge: true });
       toast.success('Aviso global atualizado com sucesso!');
