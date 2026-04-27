@@ -17,4 +17,10 @@ export const app = isFirebaseConfigured ? initializeApp(firebaseConfig) : null;
 export const auth = app ? getAuth(app) : ({} as any);
 export const db = app ? getFirestore(app) : ({} as any);
 export const storage = app ? getStorage(app) : ({} as any);
+
+if (app && storage) {
+  // Limita as tentativas de upload para 10 segundos, evitando "carregamento infinito" por erro de CORS/Rede
+  storage.maxUploadRetryTime = 10000; 
+}
+
 export const googleProvider = new GoogleAuthProvider();
