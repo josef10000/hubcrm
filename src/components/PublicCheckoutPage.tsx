@@ -69,8 +69,24 @@ export default function PublicCheckoutPage() {
         // 1. Fetch Owner Settings
         const settingsRef = doc(db, 'organizations', orgId, 'settings', 'preferences');
         const docSnap = await getDoc(settingsRef);
+        
+        let settingsData: any = null;
         if (docSnap.exists()) {
-          setOwnerSettings(docSnap.data());
+          settingsData = docSnap.data();
+          setOwnerSettings(settingsData);
+        }
+
+        // Se não houver perguntas cadastradas, usa um padrão básico para não ficar vazio
+        if (!settingsData?.onboardingQuestions || settingsData.onboardingQuestions.length === 0) {
+          setOwnerSettings((prev: any) => ({
+            ...prev,
+            onboardingQuestions: [
+              { id: 'q1', text: 'Qual o nome da sua empresa?', type: 'text', required: true },
+              { id: 'q2', text: 'Descreva brevemente o seu negócio', type: 'textarea', required: true },
+              { id: 'q3', text: 'Quais são as suas cores preferidas?', type: 'text', required: false },
+              { id: 'q4', text: 'Logo e Imagens de Referência', type: 'file', required: false }
+            ]
+          }));
         }
 
         // 2. Fetch Active Offers for Checkout

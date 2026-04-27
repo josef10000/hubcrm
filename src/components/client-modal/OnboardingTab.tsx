@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, Sparkles, Wand2, Download, Copy, X } from 'lucide-react';
+import { FileText, Sparkles, Wand2, Download, Copy, X, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { OnboardingQuestion } from '../../types';
 
@@ -53,16 +53,44 @@ export default function OnboardingTab({ onboardingAnswers, onboardingQuestions }
               return (
                 <div key={questionId} className="bg-black/20 border border-white/5 p-4 rounded-xl">
                   <h4 className="font-medium text-gray-900 dark:text-white mb-2 text-sm opacity-80">{questionText}</h4>
-                  {question?.type === 'file' && typeof answer === 'string' && answer.startsWith('data:image') ? (
-                    <div className="mt-2">
-                      <img src={answer} alt="Attachment" className="max-w-full h-auto rounded-lg border border-white/10 max-h-64 object-contain" referrerPolicy="no-referrer" />
-                      <a href={answer} download={`attachment-${questionId}`} className="inline-flex items-center gap-2 mt-2 text-xs text-primary-500 hover:text-primary-400 font-medium">
-                        <Download size={12} />
-                        Baixar Imagem
-                      </a>
+                  
+                  {question?.type === 'file' && typeof answer === 'string' && (answer.startsWith('data:image') || answer.startsWith('http')) ? (
+                    <div className="mt-2 space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {answer.split(',').map((url, idx) => (
+                          <div key={idx} className="group relative">
+                            <img 
+                              src={url.trim()} 
+                              alt={`Anexo ${idx + 1}`} 
+                              className="w-full h-48 object-contain rounded-lg border border-white/10 bg-black/40 transition-transform hover:scale-[1.02]"
+                              referrerPolicy="no-referrer" 
+                            />
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg gap-3">
+                              <a 
+                                href={url.trim()} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+                                title="Ver em tamanho real"
+                              >
+                                <ImageIcon size={20} />
+                              </a>
+                              <a 
+                                href={url.trim()} 
+                                download={`anexo-${questionId}-${idx}`} 
+                                className="p-2 bg-primary-500 hover:bg-primary-600 rounded-full text-white transition-colors"
+                                title="Baixar"
+                              >
+                                <Download size={20} />
+                              </a>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-[10px] text-gray-500 italic">O cliente enviou {answer.split(',').length} imagem(ns).</p>
                     </div>
                   ) : (
-                    <p className="text-gray-300 whitespace-pre-wrap">{String(answer)}</p>
+                    <p className="text-gray-300 whitespace-pre-wrap text-sm leading-relaxed">{String(answer)}</p>
                   )}
                 </div>
               );
