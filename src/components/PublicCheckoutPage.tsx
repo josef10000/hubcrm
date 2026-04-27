@@ -37,17 +37,32 @@ export default function PublicCheckoutPage() {
     setUploadingFile(questionId);
     
     try {
-      // Sanitização do nome do arquivo para evitar erros de caracteres especiais
-      const safeName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
-      const fileName = `${Date.now()}_${safeName}`;
-      const storageRef = ref(storage, `organizations/${orgId}/checkouts/${fileName}`);
+      // Chave da API do ImgBB (Substitua pela sua chave gratuita do api.imgbb.com)
+      const IMGBB_API_KEY = import.meta.env.VITE_IMGBB_API_KEY || 'SUA_CHAVE_IMGBB_AQUI';
       
-      console.log(`[Checkout] Subindo arquivo para: organizations/${orgId}/checkouts/${fileName}`);
-      const snapshot = await uploadBytes(storageRef, file);
+      if (IMGBB_API_KEY === 'SUA_CHAVE_IMGBB_AQUI') {
+        toast.error('Configure sua chave do ImgBB no código para usar o upload de imagens.');
+        setUploadingFile(null);
+        return;
+      }
+
+      console.log(`[Checkout] Enviando imagem para o ImgBB...`);
       
-      console.log(`[Checkout] Upload concluído, obtendo URL...`);
-      const downloadURL = await getDownloadURL(snapshot.ref);
-      
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error?.message || 'Falha ao enviar imagem para o ImgBB');
+      }
+
+      const downloadURL = data.data.url;
       console.log(`[Checkout] URL obtida com sucesso:`, downloadURL);
       
       // Se for a pergunta de Logo/Imagens, anexamos em vez de substituir
@@ -64,12 +79,7 @@ export default function PublicCheckoutPage() {
       toast.success('Arquivo enviado com sucesso!');
     } catch (error: any) {
       console.error("[Checkout] Erro crítico no upload:", error);
-      // Se o erro for de permissão, avisamos o usuário
-      if (error.code === 'storage/unauthorized') {
-        toast.error('Erro de permissão: O sistema não autorizou o upload público. Verifique as regras de Storage.');
-      } else {
-        toast.error(`Erro ao enviar arquivo: ${error.message || 'Tente novamente.'}`);
-      }
+      toast.error(`Erro ao enviar arquivo: ${error.message || 'Tente novamente.'}`);
     } finally {
       console.log(`[Checkout] Finalizando estado de upload.`);
       setUploadingFile(null);
