@@ -1,4 +1,4 @@
-# 🔐 Hub Central — Intranet Corporativa v5.8.0 (Unified Multi-Plan Portal & Premium Mobile UX)
+# 🔐 Hub Central — Intranet Corporativa v5.9.0 (Hub Canvas & Strategic Planning)
 
 > [!CAUTION]
 > **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
@@ -27,7 +27,7 @@ Certifique-se de configurar as seguintes variáveis no seu ambiente Claude Deskt
 - `VITE_GIPHY_API_KEY` (Obrigatório para GIFs no Chat)
 
   <p>
-    <img src="https://img.shields.io/badge/Version-5.5.0-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-5.9.0-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
     <img src="https://img.shields.io/badge/Status-Audited_&_Stable-3b82f6?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
     <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
     <img src="https://img.shields.io/badge/License-MIT-3b82f6?style=for-the-badge&labelColor=111111" alt="License" />
@@ -40,8 +40,8 @@ Certifique-se de configurar as seguintes variáveis no seu ambiente Claude Deskt
     <img src="https://img.shields.io/badge/Firebase-12-FFCA28?style=flat-square&logo=firebase&logoColor=black" alt="Firebase" />
   </p>
   <div align="center">
-  <h2>✨ Features em Destaque v5.8.0</h2>
-  <p><strong>Unified Multi-Plan Portal & Premium Mobile UX</strong></p>
+  <h2>✨ Features em Destaque v5.9.0</h2>
+  <p><strong>Hub Canvas & Strategic Planning</strong></p>
 </div>
 
 <table>
@@ -69,6 +69,10 @@ Certifique-se de configurar as seguintes variáveis no seu ambiente Claude Deskt
     <td align="center" width="16%">
       <br />🛡️<br /><strong>Audit Trails</strong><br />
       <sub>Segurança & Logs</sub>
+    </td>
+    <td align="center" width="16%">
+      <br />🎨<br /><strong>Hub Canvas</strong><br />
+      <sub>Planejamento Infinito</sub>
     </td>
   </tr>
 </table>
@@ -177,6 +181,7 @@ Gestão descentralizada de leads projetada para alta conversão.
 O cockpit de entrega da empresa, garantindo que o cliente receba exatamente o que comprou, no prazo e com segurança jurídica.
 
 - **🚀 Hub de Onboarding**: Trilhas reativas de entrada para Clientes (CS) e novos Talentos (Equipe), com tracking de progresso em tempo real.
+- **🎨 Hub Canvas (Estratégia)**: Quadro infinito profissional (tldraw) para mapas mentais, fluxogramas e planejamento estratégico com Modo Apresentação.
 - **📋 Central de Contratos**: Gestão jurídica centralizada. Acompanhamento de propostas, minutas e assinaturas digitais com histórico de formalização.
 - **🔧 Cockpit de Projetos**: Visão técnica completa de todos os projetos ativos, com estágios personalizados e monitoramento de **SLA Visual**.
 - **🎧 Support Desk (Meus Chamados)**: Filtro descentralizado para foco técnico e efeito **Pulse Red** para chamados com SLA estourado.
@@ -347,6 +352,7 @@ Sombras:            shadow-primary-500/20
 | **Monitoramento** | Sentry SDK | 8.x | Rastreio de erros e performance |
 | **Acessibilidade** | WCAG 2.1 | ARIA | Inclusão e Navegação via Teclado |
 | **Testes Unitários** | Vitest | 3.x | Unit testing |
+| **Canvas Infinito** | tldraw | 3.x | Planejamento estratégico e mapas mentais |
 | **AI** | Google Gemini | 1.x | Análise inteligente (opcional) |
 
 ---
@@ -798,6 +804,7 @@ className="bg-gray-100 border-gray-200"
 - [x] 🚀 **v5.6.0 Multi-Card Portal (Aggregated Billing, WhatsApp Consultative Sales & Multi-Document Sync)**
 - [x] 🚀 **v5.7.0 Unified Multi-Plan Portal (CPF/CNPJ Document Sync & Cross-Subscription Billing Switcher)**
 - [x] 📱 **v5.8.0 Premium Mobile UX (Bottom Navigation, Responsive Cards & Mobile-First Layouts)**
+- [x] 🎨 **v5.9.0 Hub Canvas (Infinite Strategic Board, Zen Mode & Laser Pointer)**
 
 
 ---
