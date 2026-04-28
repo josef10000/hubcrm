@@ -277,7 +277,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       and(
         where('orgId', '==', userProfile.orgId),
         or(
-          where('targetRoles', 'array-contains', userProfile.role.id),
+          where('targetRoles', 'array-contains', typeof userProfile.role === 'string' ? userProfile.role : (userProfile.role?.id || '')),
           where('userId', '==', userProfile.uid)
         )
       ),
@@ -315,7 +315,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (user.email === 'jfs102019@hotmail.com') {
           const adminRole = defaultRoles.find(r => r.id === 'ROLE_ADMIN') || defaultRoles[0];
           const orgIdToUse = (data.orgId && data.orgId !== 'pending') ? data.orgId : user.uid;
-          setUserProfile({ ...data, role: adminRole, orgId: orgIdToUse });
+          setUserProfile({ ...data, email: user.email || data.email, role: adminRole, orgId: orgIdToUse });
           
           if (data.orgId === 'pending') {
             updateDoc(profileRef, { orgId: user.uid }).catch(() => {});

@@ -387,8 +387,9 @@ export default function TeamManagementView() {
                             <p className="text-xs text-gray-500">{superior?.displayName || 'Ninguém'}</p>
                           </div>
                           <span className={`px-3 py-1 rounded-full text-[10px] font-bold tracking-tight uppercase ${(() => {
-                            const roleName = getRoleDisplayName(member.role);
-                            return roleName.includes('Admin') ? 'bg-purple-500/20 text-purple-600 dark:text-purple-400' :
+                            const rawRole = getRoleDisplayName(member.role);
+                            const roleName = String(rawRole || '');
+                            return String(roleName || '').includes('Admin') ? 'bg-purple-500/20 text-purple-600 dark:text-purple-400' :
                                    roleName.includes('Gerente') ? 'bg-zinc-500/20 text-zinc-600 dark:text-zinc-400' :
                                    roleName.includes('People') ? 'bg-pink-500/20 text-pink-600 dark:text-pink-400' :
                                    roleName.includes('Success') ? 'bg-indigo-500/20 text-indigo-600 dark:text-indigo-400' :

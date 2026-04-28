@@ -202,7 +202,7 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
                         )}
                       </div>
                       <span className={`text-xs font-medium shrink-0 ${isSelected ? 'text-white/60' : 'text-gray-400'}`}>
-                        {chat.lastMessage?.createdAt?.toMillis ? formatChatTime(chat.lastMessage.createdAt.toMillis()) : ''}
+                        {chat.lastMessage?.createdAt?.toMillis ? formatChatTime(chat.lastMessage.createdAt?.toMillis ? chat.lastMessage.createdAt.toMillis() : 0) : ''}
                       </span>
                     </div>
                     <p className={`text-sm truncate leading-tight ${isSelected ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>

@@ -15,12 +15,21 @@ export default function SettingsView() {
     effectiveOrgId,
   } = useCRM();
 
-  const themes = [
-    { id: 'orange', name: 'Laranja (Original)', color: 'bg-[#f97316]' },
+  const colorThemes = [
+    { id: 'orange', name: 'Laranja', color: 'bg-[#f97316]' },
     { id: 'blue', name: 'Azul', color: 'bg-[#3b82f6]' },
     { id: 'green', name: 'Verde', color: 'bg-[#22c55e]' },
     { id: 'purple', name: 'Roxo', color: 'bg-[#a855f7]' },
     { id: 'rose', name: 'Rosa', color: 'bg-[#f43f5e]' },
+  ];
+
+  const aestheticThemes = [
+    { id: 'cyberpunk', name: 'Cyberpunk', color: 'bg-[#00f3ff]' },
+    { id: 'minimalist', name: 'Minimalista', color: 'bg-[#111827]' },
+    { id: 'forest', name: 'Forest', color: 'bg-[#10b981]' },
+    { id: 'nordic', name: 'Nordic', color: 'bg-[#38bdf8]' },
+    { id: 'midnight', name: 'Midnight', color: 'bg-[#8b5cf6]' },
+    { id: 'barbie', name: 'Barbie', color: 'bg-[#f472b6]' },
   ];
 
   return (
@@ -56,17 +65,34 @@ export default function SettingsView() {
             <div className="h-px bg-gray-200 dark:bg-white/10 w-full"></div>
 
             <div>
-              <h4 className="text-gray-900 dark:text-white font-medium mb-3">Cor de Destaque</h4>
+              <h4 className="text-gray-900 dark:text-white font-medium mb-3">Cores de Destaque</h4>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Escolha a cor principal do sistema</p>
-              <div className="flex flex-wrap gap-4">
-                {themes.map(t => (
+              <div className="flex flex-wrap gap-3">
+                {colorThemes.map(t => (
                   <button
                     key={t.id}
                     onClick={() => setThemeColor(t.id)}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-xl border transition-all ${themeColor === t.id ? 'border-primary-500 bg-primary-500/10' : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'}`}
+                    className={`flex items-center space-x-2 px-3 py-2 rounded-xl border transition-all ${themeColor === t.id ? 'border-primary-500 bg-primary-500/10' : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'}`}
                   >
-                    <div className={`w-4 h-4 rounded-full ${t.color}`}></div>
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">{t.name}</span>
+                    <div className={`w-3 h-3 rounded-full ${t.color}`}></div>
+                    <span className="text-xs font-medium text-gray-900 dark:text-white">{t.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-gray-900 dark:text-white font-medium mb-3">Temas Estéticos</h4>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Experiências visuais completas e imersivas</p>
+              <div className="flex flex-wrap gap-3">
+                {aestheticThemes.map(t => (
+                  <button
+                    key={t.id}
+                    onClick={() => setThemeColor(t.id)}
+                    className={`flex items-center space-x-2 px-3 py-2 rounded-xl border transition-all ${themeColor === t.id ? 'border-primary-500 bg-primary-500/10' : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'}`}
+                  >
+                    <div className={`w-3 h-3 rounded-full ${t.color}`}></div>
+                    <span className="text-xs font-medium text-gray-900 dark:text-white">{t.name}</span>
                   </button>
                 ))}
               </div>

@@ -220,8 +220,9 @@ Sistema automático de celebração que detecta o aniversário do colaborador a 
 
 ### 🎨 11. Personalização & Sistema de Temas
 
-Experiência visual premium com troca dinâmica de identidade.
+Experiência visual premium com troca dinâmica de identidade e ambientação completa.
 
+#### Cores de Destaque (Originais)
 | Tema | Cor Primária | Código |
 |---|---|---|
 | 🟠 **Laranja** (Padrão) | `#f97316` | `theme-orange` |
@@ -230,7 +231,17 @@ Experiência visual premium com troca dinâmica de identidade.
 | 🟣 **Roxo** | `#a855f7` | `theme-purple` |
 | 🌹 **Rosa** | `#f43f5e` | `theme-rose` |
 
-A troca de tema altera **globalmente** todos os elementos de destaque da interface (botões, badges, ícones, gradientes, sombras) via CSS Custom Properties.
+#### Temas Estéticos (Imersivos)
+| Tema | Estética | Código |
+|---|---|---|
+| 🌃 **Cyberpunk** | Neon, Ciano & Pink | `theme-cyberpunk` |
+| 🧊 **Minimalista** | Mono Premium B&W | `theme-minimalist` |
+| 🌲 **Forest** | Esmeralda & Ouro | `theme-forest` |
+| 🌊 **Nordic** | Gelo Ártico & Clean | `theme-nordic` |
+| 🎆 **Midnight** | Solarized Deep Purple | `theme-midnight` |
+| 🎀 **Barbie** | Pink Pastel & Premium | `theme-barbie` |
+
+A troca de tema altera **globalmente** todos os elementos de destaque da interface (botões, badges, ícones, gradientes, sombras) e, no caso dos Temas Estéticos, também redefine as cores de fundo e bordas para uma imersão total.
 
 ---
 
