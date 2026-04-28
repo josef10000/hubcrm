@@ -339,7 +339,7 @@ export interface UserProfile {
   // Personalization & Well-being
   wallpaperUrl?: string;
   soundTheme?: 'none' | 'zen' | 'tech';
-  avatarFrame?: 'none' | 'neon' | 'gold' | 'floral' | 'cyberpunk';
+  avatarFrame?: 'none' | 'neon' | 'gold' | 'floral' | 'cyberpunk' | 'ruby' | 'ocean' | 'dark' | 'rainbow' | 'silver';
   myCorner?: {
     phrase: string;
     links: { title: string; url: string }[];
