@@ -35,6 +35,13 @@ let webhookEventsStore: Record<string, boolean> = {};
 
 vi.mock('../_utils/firebase.js', () => {
   return {
+    admin: {
+      firestore: {
+        FieldValue: {
+          arrayUnion: vi.fn((val) => [val]),
+        },
+      },
+    },
     db: {
       runTransaction: (fn: Function) => {
         if (transactionImpl) return transactionImpl(fn);

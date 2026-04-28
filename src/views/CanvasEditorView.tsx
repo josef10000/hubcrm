@@ -66,9 +66,7 @@ export default function CanvasEditorView() {
         const snapshot = JSON.parse(canvas.document);
         editor.store.loadSnapshot(snapshot);
         
-        // Sync dark mode
-        const isDark = document.documentElement.classList.contains('dark');
-        editor.user.updateUserPreferences({ isDarkMode: isDark });
+
       } catch (e) {
         console.error('Error loading snapshot:', e);
       }
