@@ -44,6 +44,7 @@ import PeopleView from './views/PeopleView';
 import AcceptInviteView from './views/AcceptInviteView';
 import ProfileView from './views/ProfileView';
 import BirthdayCelebration from './components/BirthdayCelebration';
+import AvatarFrame from './components/AvatarFrame';
 import ThemeEffects from './components/ThemeEffects';
 import EmployeeSurveyModal from './components/EmployeeSurveyModal';
 import WikiView from './views/WikiView';
@@ -178,10 +179,16 @@ function CRMInner() {
 
   return (
     <div className="flex h-screen bg-[#030712] font-sans overflow-hidden text-gray-900 dark:text-gray-100 relative">
+      {userProfile?.wallpaperUrl && (
+        <div 
+          className="absolute inset-0 z-0 bg-cover bg-center opacity-20 pointer-events-none mix-blend-overlay transition-all duration-1000"
+          style={{ backgroundImage: `url(${userProfile.wallpaperUrl})` }}
+        />
+      )}
       <ThemeEffects />
-      <div className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] bg-primary-600/20 rounded-full blur-[120px] pointer-events-none mix-blend-screen"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] bg-primary-600/20 rounded-full blur-[120px] pointer-events-none mix-blend-screen"></div>
-      <div className="absolute top-[40%] left-[60%] w-[30vw] h-[30vw] bg-purple-600/10 rounded-full blur-[100px] pointer-events-none mix-blend-screen"></div>
+      <div className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] bg-primary-600/20 rounded-full blur-[120px] pointer-events-none mix-blend-screen z-0"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] bg-primary-600/20 rounded-full blur-[120px] pointer-events-none mix-blend-screen z-0"></div>
+      <div className="absolute top-[40%] left-[60%] w-[30vw] h-[30vw] bg-purple-600/10 rounded-full blur-[100px] pointer-events-none mix-blend-screen z-0"></div>
 
       {isBirthday && <BirthdayCelebration uid={user?.uid} />}
 
@@ -259,13 +266,15 @@ function CRMInner() {
             >
               <div className="flex items-center space-x-3 overflow-hidden">
                 <div className="relative">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center text-gray-900 dark:text-white font-bold shrink-0 shadow-lg shadow-primary-500/20 overflow-hidden">
-                    {userProfile?.photoURL ? (
-                      <img src={userProfile.photoURL} alt={userProfile.displayName} className="w-full h-full object-cover" />
-                    ) : (
-                      (userProfile?.displayName || user?.displayName || user?.email || 'U')[0].toUpperCase()
-                    )}
-                  </div>
+                  <AvatarFrame size="md">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center text-gray-900 dark:text-white font-bold shrink-0 shadow-lg shadow-primary-500/20 overflow-hidden">
+                      {userProfile?.photoURL ? (
+                        <img src={userProfile.photoURL} alt={userProfile.displayName} className="w-full h-full object-cover" />
+                      ) : (
+                        (userProfile?.displayName || user?.displayName || user?.email || 'U')[0].toUpperCase()
+                      )}
+                    </div>
+                  </AvatarFrame>
                   {/* Indicador de Presença (Chat) */}
                   <span 
                     className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-[#0f1117] transition-colors duration-300 ${
@@ -317,19 +326,29 @@ function CRMInner() {
                 <Menu size={24} aria-hidden="true" />
               </button>
             )}
-            {currentPath === '/' && (
-              <div className="flex items-center w-full max-w-xl relative" role="search">
-                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" aria-hidden="true" />
-                <input
-                  type="text"
-                  placeholder="Buscar por Nome, CPF, E-mail ou Status..."
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  className="w-full bg-white/80 dark:bg-zinc-900/50 backdrop-blur-xl border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-2xl pl-12 pr-4 py-3 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/50 transition-all placeholder-gray-500 shadow-inner"
-                  aria-label="Campo de busca de clientes"
-                />
+            {currentPath === '/' ? (
+              <div className="flex items-center gap-6 w-full flex-1">
+                <div className="hidden lg:block shrink-0">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {new Date().getHours() >= 5 && new Date().getHours() < 12 ? '☀️ Bom dia' : new Date().getHours() >= 12 && new Date().getHours() < 18 ? '🌤️ Boa tarde' : '🌙 Boa noite'},
+                  </p>
+                  <h2 className="text-lg font-bold text-gray-900 dark:text-white truncate max-w-[200px]">
+                    {userProfile?.displayName?.split(' ')[0] || 'Colaborador'}!
+                  </h2>
+                </div>
+                <div className="flex items-center w-full max-w-xl relative" role="search">
+                  <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" aria-hidden="true" />
+                  <input
+                    type="text"
+                    placeholder="Buscar por Nome, CPF, E-mail ou Status..."
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    className="w-full bg-white/80 dark:bg-zinc-900/50 backdrop-blur-xl border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-2xl pl-12 pr-4 py-3 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/50 transition-all placeholder-gray-500 shadow-inner"
+                    aria-label="Campo de busca de clientes"
+                  />
+                </div>
               </div>
-            )}
+            ) : null}
             {currentPath === '/analytics' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Métricas</h2>}
             {currentPath === '/calendar' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Agenda Central</h2>}
             {currentPath === '/support' && <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Chamados</h2>}

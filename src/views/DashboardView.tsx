@@ -15,6 +15,7 @@ import { OverdueAlertWidget } from '../components/dashboard/OverdueAlertWidget';
 import { CashFlowProjection } from '../components/dashboard/CashFlowProjection';
 import { RecentKudosWidget } from '../components/dashboard/RecentKudosWidget';
 import { calculateHealthScore } from '../helpers/healthCalculation';
+import MyCornerWidget from '../components/dashboard/MyCornerWidget';
 
 const COLORS = ['#f97316', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#f43f5e'];
 
@@ -117,6 +118,9 @@ export default function DashboardView() {
     <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10">
       <div className="max-w-7xl mx-auto">
         
+        {/* Meu Canto Pessoal */}
+        <MyCornerWidget />
+
         <AlertPanels 
           overdueClients={overdueClients} 
           comboRenewalClients={comboRenewalClients} 

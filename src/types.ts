@@ -336,6 +336,16 @@ export interface UserProfile {
   readAlerts?: string[]; // IDs dos alertas de negócio já lidos pelo usuário
   pdiItems?: PDIItem[]; // Itens do Plano de Desenvolvimento Individual
 
+  // Personalization & Well-being
+  wallpaperUrl?: string;
+  soundTheme?: 'none' | 'zen' | 'tech';
+  avatarFrame?: 'none' | 'neon' | 'gold' | 'floral' | 'cyberpunk';
+  myCorner?: {
+    phrase: string;
+    links: { title: string; url: string }[];
+    notes: string;
+  };
+
   // Presence System
   presenceStatus?: 'online' | 'away' | 'offline' | 'lunch' | 'meeting';
   isManualStatus?: boolean;

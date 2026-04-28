@@ -1,7 +1,8 @@
-import React from 'react';
-import { Settings, LogOut } from 'lucide-react';
+import React, { useState } from 'react';
+import { Settings, LogOut, Image as ImageIcon, Volume2, Crown } from 'lucide-react';
 import { useCRM } from '../contexts/CRMContext';
 import { useUI } from '../contexts/UIContext';
+import { useAuth } from '../contexts/AuthContext';
 import { auth, db } from '../lib/firebase';
 import { signOut } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
@@ -14,6 +15,30 @@ export default function SettingsView() {
     setChurnRiskDays,
     effectiveOrgId,
   } = useCRM();
+
+  const { userProfile, user } = useAuth();
+  
+  const [wallpaperUrl, setWallpaperUrl] = useState(userProfile?.wallpaperUrl || '');
+  const [soundTheme, setSoundTheme] = useState(userProfile?.soundTheme || 'none');
+  const [avatarFrame, setAvatarFrame] = useState(userProfile?.avatarFrame || 'none');
+  const [isSavingPersonal, setIsSavingPersonal] = useState(false);
+
+  const savePersonalSettings = async () => {
+    if (!user) return;
+    setIsSavingPersonal(true);
+    try {
+      await setDoc(doc(db, 'profiles', user.uid), {
+        wallpaperUrl,
+        soundTheme,
+        avatarFrame
+      }, { merge: true });
+      toast.success('Configurações pessoais salvas!');
+    } catch (error) {
+      toast.error('Erro ao salvar configurações.');
+    } finally {
+      setIsSavingPersonal(false);
+    }
+  };
 
   const colorThemes = [
     { id: 'orange', name: 'Laranja', color: 'bg-[#f97316]' },
@@ -36,6 +61,73 @@ export default function SettingsView() {
     <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10">
       <div className="max-w-3xl mx-auto">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">Configurações</h2>
+
+        {/* --- Personalização do Perfil (Privado do Usuário) --- */}
+        <div className="bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-lg mb-8 relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-cyan-400"></div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
+            <ImageIcon className="mr-2 text-cyan-400" size={20} />
+            Meu Hub (Personalização)
+          </h3>
+
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">Papel de Parede (URL)</label>
+              <input
+                type="text"
+                placeholder="https://exemplo.com/imagem.jpg"
+                value={wallpaperUrl}
+                onChange={e => setWallpaperUrl(e.target.value)}
+                className="w-full bg-white dark:bg-black/20 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary-500 outline-none text-sm"
+              />
+              <p className="text-xs text-gray-500 mt-1">Cole a URL de uma imagem para usar de fundo (Alta resolução recomendada).</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                  <Volume2 size={16}/> Efeitos Sonoros
+                </label>
+                <select
+                  value={soundTheme}
+                  onChange={e => setSoundTheme(e.target.value as any)}
+                  className="w-full bg-white dark:bg-black/20 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary-500 outline-none text-sm"
+                >
+                  <option value="none">Mudo (Padrão)</option>
+                  <option value="tech">Tech (Cliques digitais)</option>
+                  <option value="zen">Zen (Sons harmônicos suaves)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                  <Crown size={16}/> Moldura do Avatar
+                </label>
+                <select
+                  value={avatarFrame}
+                  onChange={e => setAvatarFrame(e.target.value as any)}
+                  className="w-full bg-white dark:bg-black/20 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary-500 outline-none text-sm"
+                >
+                  <option value="none">Nenhuma</option>
+                  <option value="neon">Neon Purple</option>
+                  <option value="gold">Gold Premium</option>
+                  <option value="cyberpunk">Cyberpunk Cyan</option>
+                  <option value="floral">Eco Floral</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-white/10">
+              <button
+                onClick={savePersonalSettings}
+                disabled={isSavingPersonal}
+                className="px-6 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-xl font-bold transition-colors flex items-center gap-2"
+              >
+                {isSavingPersonal ? 'Salvando...' : 'Salvar Meu Perfil'}
+              </button>
+            </div>
+          </div>
+        </div>
 
         <div className="bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-lg mb-8">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
