@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, LayoutTemplate, MoreVertical, Trash2, Globe, Lock, Search } from 'lucide-react';
 import { canvasService, CanvasDocument } from '../services/canvasService';
 import { useCRM } from '../contexts/CRMContext';
+import { useAuth } from '../contexts/AuthContext';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -11,10 +12,8 @@ export default function CanvasListView() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
-  const { state } = useCRM();
-  
-  // Current user info (from context or mocked if not fully available in state)
-  const currentUserId = state.users?.[0]?.id || 'admin-1'; // Mock fallback
+  const { user } = useAuth();
+  const currentUserId = user?.uid || 'admin-1';
 
   useEffect(() => {
     loadCanvases();

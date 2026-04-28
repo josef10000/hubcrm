@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { db } from '../../_utils/firebase.js';
+import { db, admin } from '../../_utils/firebase.js';
 import { 
   sendPagamentoRecebidoEmail, 
   sendBoasVindasSubscriptionEmail, 
@@ -273,7 +273,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const freshData = (freshSnap as any).data();
             const sentEvents = freshData.sentEvents || [];
             if (!sentEvents.includes(eventKey)) {
-              t.update(doc.ref, { sentEvents: [...sentEvents, eventKey] });
+              t.update(doc.ref, { sentEvents: admin.firestore.FieldValue.arrayUnion(eventKey) });
               return true;
             }
             return false;
@@ -337,7 +337,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const freshData = (freshSnap as any).data();
             const sentEvents = freshData.sentEvents || [];
             if (!sentEvents.includes(eventKey)) {
-              t.update(doc.ref, { sentEvents: [...sentEvents, eventKey] });
+              t.update(doc.ref, { sentEvents: admin.firestore.FieldValue.arrayUnion(eventKey) });
               return true;
             }
             return false;

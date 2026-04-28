@@ -5,13 +5,14 @@ import 'tldraw/tldraw.css';
 import { canvasService, CanvasDocument } from '../services/canvasService';
 import { ArrowLeft, MonitorPlay, Save } from 'lucide-react';
 import { useCRM } from '../contexts/CRMContext';
+import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 
 export default function CanvasEditorView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { state } = useCRM();
-  const currentUserId = state.users?.[0]?.id || 'admin-1';
+  const { user } = useAuth();
+  const currentUserId = user?.uid || 'admin-1';
   
   const [canvas, setCanvas] = useState<CanvasDocument | null>(null);
   const [loading, setLoading] = useState(true);
@@ -64,6 +65,10 @@ export default function CanvasEditorView() {
       try {
         const snapshot = JSON.parse(canvas.document);
         editor.store.loadSnapshot(snapshot);
+        
+        // Sync dark mode
+        const isDark = document.documentElement.classList.contains('dark');
+        editor.user.updateUserPreferences({ isDarkMode: isDark });
       } catch (e) {
         console.error('Error loading snapshot:', e);
       }
@@ -173,8 +178,7 @@ export default function CanvasEditorView() {
       >
         <Tldraw 
           onMount={handleMount}
-          // Set to dark mode if the app is in dark mode (you'd need to sync this with your theme provider ideally)
-          darkMode={document.documentElement.classList.contains('dark')}
+          inferDarkMode
         />
         
         {/* Floating exit fullscreen button when in fullscreen */}
