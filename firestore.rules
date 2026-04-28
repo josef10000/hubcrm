@@ -49,6 +49,12 @@ service cloud.firestore {
       allow write: if isOwnerEmail() || request.auth.uid == userId || isOrgAdmin(getUserData().orgId);
     }
 
+    // Hub Canvas
+    match /canvases/{canvasId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
     // Organizações e seus dados (Multi-Tenant)
     match /organizations/{orgId} {
       allow read, write: if isOwnerEmail() || belongsToOrg(orgId);
