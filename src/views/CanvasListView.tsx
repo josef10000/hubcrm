@@ -4,6 +4,7 @@ import { Plus, LayoutTemplate, MoreVertical, Trash2, Globe, Lock, Search } from 
 import { canvasService, CanvasDocument } from '../services/canvasService';
 import { useCRM } from '../contexts/CRMContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useDialog } from '../contexts/DialogContext';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -13,6 +14,7 @@ export default function CanvasListView() {
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { prompt, confirm, alert } = useDialog();
   const currentUserId = user?.uid || 'admin-1';
 
   useEffect(() => {
@@ -33,10 +35,20 @@ export default function CanvasListView() {
 
   const handleCreateCanvas = async () => {
     try {
-      const title = prompt('Digite o nome do novo quadro estratégico:');
+      const title = await prompt({
+        title: 'Novo Quadro Estratégico',
+        message: 'Digite o nome do novo quadro:',
+        confirmText: 'Avançar',
+        placeholder: 'Ex: Mapa de Jornada do Cliente'
+      });
       if (!title) return;
 
-      const isPublic = confirm('Este quadro deve ser público para toda a equipe? (OK para Sim, Cancelar para Privado)');
+      const isPublic = await confirm({
+        title: 'Visibilidade do Quadro',
+        message: 'Este quadro deve ser público para toda a equipe?',
+        confirmText: 'Público',
+        cancelText: 'Privado',
+      });
 
       // Create an empty tldraw document json structure
       const emptyDoc = JSON.stringify({});
@@ -51,13 +63,24 @@ export default function CanvasListView() {
       navigate(`/canvas/${newId}`);
     } catch (error) {
       console.error('Error creating canvas:', error);
-      alert('Erro ao criar quadro.');
+      await alert({
+        title: 'Erro',
+        message: 'Ocorreu um erro ao criar o quadro. Tente novamente.',
+        variant: 'danger'
+      });
     }
   };
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (confirm('Tem certeza que deseja excluir este quadro? Esta ação não pode ser desfeita.')) {
+    const confirmed = await confirm({
+      title: 'Excluir Quadro',
+      message: 'Tem certeza que deseja excluir este quadro? Esta ação não pode ser desfeita.',
+      confirmText: 'Excluir',
+      variant: 'danger'
+    });
+    
+    if (confirmed) {
       try {
         await canvasService.deleteCanvas(id);
         loadCanvases();
