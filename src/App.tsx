@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Plus, X, DollarSign,
   Search, BarChart3, Calendar, MessageCircle, Globe,
   Download, AlertTriangle, Settings, Layout, CreditCard,
-  Megaphone, Package, Map as MapIcon, Target, Menu, Bell, Shield, HeartHandshake, BookOpen, Rocket, Focus, ShieldCheck
+  Megaphone, Package, Map as MapIcon, Target, Menu, Bell, Shield, HeartHandshake, BookOpen, Rocket, Focus, ShieldCheck, LayoutTemplate
 } from 'lucide-react';
 import { isFirebaseConfigured } from './lib/firebase';
 import Auth from './components/Auth';
@@ -49,6 +49,8 @@ import ThemeEffects from './components/ThemeEffects';
 import EmployeeSurveyModal from './components/EmployeeSurveyModal';
 import WikiView from './views/WikiView';
 import WaitingInviteView from './views/WaitingInviteView';
+import CanvasListView from './views/CanvasListView';
+import CanvasEditorView from './views/CanvasEditorView';
 
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -84,6 +86,7 @@ const navGroups = [
       { icon: MessageCircle, label: 'Hub Chat', path: '/chat' },
       { icon: Rocket, label: 'Onboarding Hub', path: '/onboarding-hub', permission: 'MANAGE_CLIENTS' },
       { icon: Globe, label: 'Monitoramento', path: '/monitoring', permission: 'MANAGE_SUPPORT' },
+      { icon: LayoutTemplate, label: 'Hub Canvas', path: '/canvas', permission: 'MANAGE_TEAM' },
       { icon: MapIcon, label: 'Mapa', path: '/map' },
       { icon: Layout, label: 'Projetos / Produção', path: '/projects', permission: 'MANAGE_CLIENTS' },
     ]
@@ -468,6 +471,8 @@ function CRMInner() {
                 <Route path="/wiki" element={<WikiView />} />
                 <Route path="/settings" element={<SettingsView />} />
                 <Route path="/admin" element={hasPermission('MANAGE_SETTINGS') ? <AdministrativeView /> : <DashboardView />} />
+                <Route path="/canvas" element={hasPermission('MANAGE_TEAM') || hasPermission('MANAGE_SETTINGS') ? <CanvasListView /> : <DashboardView />} />
+                <Route path="/canvas/:id" element={hasPermission('MANAGE_TEAM') || hasPermission('MANAGE_SETTINGS') ? <CanvasEditorView /> : <DashboardView />} />
                 <Route path="/profile/:uid" element={<ProfileView />} />
                 <Route path="*" element={<DashboardView />} />
               </Routes>
