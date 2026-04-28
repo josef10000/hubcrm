@@ -16,7 +16,8 @@ export default function MyCornerWidget() {
   const [newLinkTitle, setNewLinkTitle] = useState('');
   const [newLinkUrl, setNewLinkUrl] = useState('');
 
-  const handleAddLink = () => {
+  const handleAddLink = (e?: React.MouseEvent) => {
+    e?.preventDefault();
     if (newLinkTitle && newLinkUrl) {
       let formattedUrl = newLinkUrl;
       if (!formattedUrl.startsWith('http')) {
@@ -25,6 +26,8 @@ export default function MyCornerWidget() {
       setLinks([...links, { title: newLinkTitle, url: formattedUrl }]);
       setNewLinkTitle('');
       setNewLinkUrl('');
+    } else {
+      toast.error('Preencha título e URL para adicionar o link.');
     }
   };
 
@@ -32,7 +35,8 @@ export default function MyCornerWidget() {
     setLinks(links.filter((_, i) => i !== index));
   };
 
-  const handleSave = async () => {
+  const handleSave = async (e?: React.MouseEvent) => {
+    e?.preventDefault();
     if (!user) return;
     try {
       await setDoc(doc(db, 'profiles', user.uid), {
@@ -41,6 +45,7 @@ export default function MyCornerWidget() {
       toast.success('Seu cantinho foi salvo!');
       setIsEditing(false);
     } catch (e) {
+      console.error(e);
       toast.error('Erro ao salvar as configurações.');
     }
   };
@@ -54,11 +59,11 @@ export default function MyCornerWidget() {
           ☕ Meu Canto
         </h3>
         {!isEditing ? (
-          <button onClick={() => setIsEditing(true)} className="p-2 bg-white/5 hover:bg-white/10 rounded-xl text-gray-400 hover:text-white transition-colors opacity-0 group-hover:opacity-100">
+          <button type="button" onClick={() => setIsEditing(true)} className="p-2 bg-white/5 hover:bg-white/10 rounded-xl text-gray-400 hover:text-white transition-colors opacity-0 group-hover:opacity-100">
             <Edit2 size={16} />
           </button>
         ) : (
-          <button onClick={handleSave} className="flex items-center gap-2 px-3 py-1.5 bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition-colors text-sm font-bold">
+          <button type="button" onClick={handleSave} className="flex items-center gap-2 px-3 py-1.5 bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition-colors text-sm font-bold">
             <Save size={16} /> Salvar
           </button>
         )}
@@ -111,13 +116,13 @@ export default function MyCornerWidget() {
             <div className="flex gap-2 mb-3">
               <input type="text" value={newLinkTitle} onChange={e => setNewLinkTitle(e.target.value)} placeholder="Título (ex: Spotify)" className="flex-1 bg-white dark:bg-black/20 border border-gray-300 dark:border-white/10 rounded-xl px-3 py-1.5 text-gray-900 dark:text-white text-sm" />
               <input type="text" value={newLinkUrl} onChange={e => setNewLinkUrl(e.target.value)} placeholder="URL" className="flex-1 bg-white dark:bg-black/20 border border-gray-300 dark:border-white/10 rounded-xl px-3 py-1.5 text-gray-900 dark:text-white text-sm" />
-              <button onClick={handleAddLink} className="p-2 bg-gray-200 dark:bg-white/10 hover:bg-gray-300 dark:hover:bg-white/20 rounded-xl text-gray-900 dark:text-white"><Plus size={16}/></button>
+              <button type="button" onClick={handleAddLink} className="p-2 bg-gray-200 dark:bg-white/10 hover:bg-gray-300 dark:hover:bg-white/20 rounded-xl text-gray-900 dark:text-white"><Plus size={16}/></button>
             </div>
             <div className="flex flex-wrap gap-2">
               {links.map((link, i) => (
                 <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg text-xs text-gray-700 dark:text-gray-300">
                   {link.title}
-                  <button onClick={() => handleRemoveLink(i)} className="text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300"><X size={12}/></button>
+                  <button type="button" onClick={() => handleRemoveLink(i)} className="text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300"><X size={12}/></button>
                 </div>
               ))}
             </div>

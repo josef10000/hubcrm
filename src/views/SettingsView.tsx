@@ -71,34 +71,7 @@ export default function SettingsView() {
           </h3>
 
           <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">Papel de Parede (URL)</label>
-              <input
-                type="text"
-                placeholder="https://exemplo.com/imagem.jpg"
-                value={wallpaperUrl}
-                onChange={e => setWallpaperUrl(e.target.value)}
-                className="w-full bg-white dark:bg-black/20 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary-500 outline-none text-sm"
-              />
-              <p className="text-xs text-gray-500 mt-1">Cole a URL de uma imagem para usar de fundo (Alta resolução recomendada).</p>
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-                  <Volume2 size={16}/> Efeitos Sonoros
-                </label>
-                <select
-                  value={soundTheme}
-                  onChange={e => setSoundTheme(e.target.value as any)}
-                  className="w-full bg-white dark:bg-black/20 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary-500 outline-none text-sm"
-                >
-                  <option value="none">Mudo (Padrão)</option>
-                  <option value="tech">Tech (Cliques digitais)</option>
-                  <option value="zen">Zen (Sons harmônicos suaves)</option>
-                </select>
-              </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2 flex items-center gap-2">
                   <Crown size={16}/> Moldura do Avatar
@@ -113,6 +86,11 @@ export default function SettingsView() {
                   <option value="gold">Gold Premium</option>
                   <option value="cyberpunk">Cyberpunk Cyan</option>
                   <option value="floral">Eco Floral</option>
+                  <option value="ruby">Ruby Red</option>
+                  <option value="ocean">Ocean Blue</option>
+                  <option value="dark">Dark Minimalist</option>
+                  <option value="rainbow">Rainbow Glow</option>
+                  <option value="silver">Silver Platinum</option>
                 </select>
               </div>
             </div>
