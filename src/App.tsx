@@ -44,6 +44,7 @@ import PeopleView from './views/PeopleView';
 import AcceptInviteView from './views/AcceptInviteView';
 import ProfileView from './views/ProfileView';
 import BirthdayCelebration from './components/BirthdayCelebration';
+import ThemeEffects from './components/ThemeEffects';
 import EmployeeSurveyModal from './components/EmployeeSurveyModal';
 import WikiView from './views/WikiView';
 import WaitingInviteView from './views/WaitingInviteView';
@@ -177,6 +178,7 @@ function CRMInner() {
 
   return (
     <div className="flex h-screen bg-[#030712] font-sans overflow-hidden text-gray-900 dark:text-gray-100 relative">
+      <ThemeEffects />
       <div className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] bg-primary-600/20 rounded-full blur-[120px] pointer-events-none mix-blend-screen"></div>
       <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] bg-primary-600/20 rounded-full blur-[120px] pointer-events-none mix-blend-screen"></div>
       <div className="absolute top-[40%] left-[60%] w-[30vw] h-[30vw] bg-purple-600/10 rounded-full blur-[100px] pointer-events-none mix-blend-screen"></div>

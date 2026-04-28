@@ -127,6 +127,92 @@
   :root.theme-barbie:not(.dark), .theme-barbie:not(.dark) body { background-color: #fff5f7 !important; }
   .theme-barbie.dark, .theme-barbie.dark body { background-color: #2d0a1a !important; }
   .theme-barbie.dark .border-white\/10 { border-color: rgba(244, 114, 182, 0.2) !important; }
+
+  /* Glow Effects */
+  .theme-cyberpunk .bg-primary-500 {
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.5), 0 0 5px rgba(0, 243, 255, 0.2);
+  }
+  .theme-barbie .bg-primary-500 {
+    box-shadow: 0 0 15px rgba(244, 114, 182, 0.4), 0 0 5px rgba(244, 114, 182, 0.2);
+  }
+}
+
+@layer utilities {
+  /* Cyberpunk Scanlines */
+  .scanlines {
+    position: relative;
+    overflow: hidden;
+  }
+  .scanlines:before {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+    z-index: 2;
+    background-size: 100% 2px, 3px 100%;
+    pointer-events: none;
+  }
+  .scanline-move {
+    width: 100%;
+    height: 100px;
+    z-index: 3;
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0) 0%, rgba(0, 243, 255, 0.05) 50%, rgba(0, 0, 0, 0) 100%);
+    opacity: 0.1;
+    position: absolute;
+    bottom: 100%;
+    animation: scanline 8s linear infinite;
+  }
+  @keyframes scanline {
+    0% { bottom: 100%; }
+    100% { bottom: -100px; }
+  }
+
+  /* Frosty Texture */
+  .frosty-texture {
+    position: relative;
+  }
+  .frosty-texture:after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Twinkle Animation */
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+  .animate-twinkle {
+    animation: twinkle 3s ease-in-out infinite;
+  }
+
+  /* Glitter Sparkle */
+  @keyframes sparkle {
+    0% { transform: scale(0) rotate(0deg); opacity: 0; }
+    50% { transform: scale(1.2) rotate(180deg); opacity: 1; }
+    100% { transform: scale(0) rotate(360deg); opacity: 0; }
+  }
+  .animate-sparkle {
+    animation: sparkle 1.5s ease-in-out infinite;
+  }
+
+  /* Glitch Text (Cyberpunk) */
+  .glitch-hover:hover {
+    animation: glitch 0.3s cubic-bezier(.25, .46, .45, .94) both infinite;
+  }
+  @keyframes glitch {
+    0% { transform: translate(0); }
+    20% { transform: translate(-2px, 2px); }
+    40% { transform: translate(-2px, -2px); }
+    60% { transform: translate(2px, 2px); }
+    80% { transform: translate(2px, -2px); }
+    100% { transform: translate(0); }
+  }
 }
 
 @layer utilities {
