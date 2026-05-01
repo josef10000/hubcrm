@@ -175,6 +175,15 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
                         <Users size={18} />
                       )}
                     </div>
+
+                    {/* Indicador de Silenciado */}
+                    {chat.muted?.[userProfile?.uid || ''] && (
+                      <div className={`absolute -top-1 -left-1 w-4 h-4 rounded-full flex items-center justify-center border-2 shadow-sm z-20 ${
+                        isSelected ? 'bg-white text-primary-500 border-primary-500' : 'bg-gray-400 text-white border-gray-50 dark:border-zinc-900'
+                      }`}>
+                        <BellOff size={8} />
+                      </div>
+                    )}
                     
                     {chat.type === 'direct' && (
                       <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 ${isSelected ? 'border-primary-500' : 'border-gray-50 dark:border-zinc-900'} ${
