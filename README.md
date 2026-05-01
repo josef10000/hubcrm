@@ -237,4 +237,5 @@ Um registro do contínuo processo de amadurecimento e modernização do produto.
 - [x] **v5.9.0** — Hub Canvas (Ferramenta de arquitetura estratégica tldraw integrada) & Estabilização Serverless.
 - [x] **v5.9.1** — Group Mentions no Hub Chat (Integração com Cargos/Departamentos).
 - [x] **v5.9.2** — Group Avatars (ImgBB) & Flexible Group Creation (Sem membros obrigatórios).
+- [x] **v5.9.3** — Sistema de Controle de Notificações (Mute) & Menu de Contexto Premium no Chat.
 
