@@ -236,4 +236,5 @@ Um registro do contínuo processo de amadurecimento e modernização do produto.
 - [x] **v5.1.0** — Premium Client Portal (Visão externa sofisticada com métricas em tempo real).
 - [x] **v5.9.0** — Hub Canvas (Ferramenta de arquitetura estratégica tldraw integrada) & Estabilização Serverless.
 - [x] **v5.9.1** — Group Mentions no Hub Chat (Integração com Cargos/Departamentos).
+- [x] **v5.9.2** — Group Avatars (ImgBB) & Flexible Group Creation (Sem membros obrigatórios).
 
