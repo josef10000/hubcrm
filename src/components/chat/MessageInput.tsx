@@ -54,7 +54,7 @@ export default function MessageInput({
   const [showMentions, setShowMentions] = useState(false);
   const [mentionQuery, setMentionQuery] = useState('');
   const [uploading, setUploading] = useState(false);
-  const { teamProfiles } = useCRM();
+  const { teamProfiles, orgRoles } = useCRM();
   const [isEmojiOpen, setIsEmojiOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -78,7 +78,11 @@ export default function MessageInput({
       onUpdate(editingMessage.id, text);
       onCancelEdit();
     } else {
-      const mentions = parseMentions(text, teamProfiles.map(p => ({ uid: p.uid, displayName: p.displayName })));
+      const mentions = parseMentions(
+        text, 
+        teamProfiles.map(p => ({ uid: p.uid, displayName: p.displayName, roleId: p.roleId })),
+        orgRoles.map(r => ({ id: r.id, name: r.name }))
+      );
       onSend(text, mentions, [], replyTo, members, "text", undefined, undefined, undefined, parentMessageId, scheduledAt || undefined);
     }
     
@@ -177,13 +181,13 @@ export default function MessageInput({
     }, 2000);
   };
 
-  const handleMentionSelect = (member: { uid: string; displayName: string }) => {
+  const handleMentionSelect = (item: { uid: string; displayName: string }) => {
     const cursorPos = textareaRef.current?.selectionStart || 0;
     const lastAtPos = text.lastIndexOf('@', cursorPos - 1);
     
     const beforeAt = text.slice(0, lastAtPos);
     const afterAt = text.slice(cursorPos);
-    const mentionText = `@${member.displayName} `;
+    const mentionText = `@${item.displayName.replace(/\s/g, '')} `;
     
     setText(beforeAt + mentionText + afterAt);
     setShowMentions(false);
@@ -312,6 +316,7 @@ export default function MessageInput({
               <MentionSuggestions 
                 query={mentionQuery} 
                 members={teamProfiles.map(p => ({ uid: p.uid, displayName: p.displayName, photoURL: p.photoURL }))} 
+                roles={orgRoles.map(r => ({ id: r.id, name: r.name }))}
                 onSelect={handleMentionSelect} 
                 onClose={() => setShowMentions(false)} 
               />

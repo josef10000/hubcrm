@@ -1,4 +1,4 @@
-# 🔐 Hub Central — Intranet Corporativa v5.9.0
+# 🔐 Hub Central — Intranet Corporativa v5.9.1
 
 > [!CAUTION]
 > **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
@@ -9,11 +9,13 @@ A plataforma Hub Central é o motor de crescimento da Hub Symples. Nossa intrane
 ---
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-5.9.0-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
+  <img src="https://img.shields.io/badge/Version-5.9.1-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
   <img src="https://img.shields.io/badge/Status-Audited_&_Stable-3b82f6?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
   <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
   <img src="https://img.shields.io/badge/License-Proprietary-3b82f6?style=for-the-badge&labelColor=111111" alt="License" />
 </p>
+
+---
 
 <p align="center">
   <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=white" alt="React 19" />
@@ -24,9 +26,9 @@ A plataforma Hub Central é o motor de crescimento da Hub Symples. Nossa intrane
 </p>
 
 <div align="center">
-  <h2>✨ Destaque da Versão v5.9.0</h2>
-  <p><strong>Hub Canvas & Strategic Planning</strong></p>
-  <p>Lançamento do quadro infinito avançado para mapeamento de processos, design estratégico e planejamento de longo prazo diretamente na intranet.</p>
+  <h2>✨ Destaque da Versão v5.9.1</h2>
+  <p><strong>Hub Chat Group Mentions</strong></p>
+  <p>Implementação de menções inteligentes por cargo (@Financeiro, @Suporte), otimizando a comunicação entre departamentos.</p>
 </div>
 
 <br />
@@ -43,7 +45,7 @@ A plataforma Hub Central é o motor de crescimento da Hub Symples. Nossa intrane
     </td>
     <td align="center" width="16%">
       <br />💬<br /><strong>Hub Chat Pro</strong><br />
-      <sub>Threads & CRM Links</sub>
+      <sub>Mentions & Threads</sub>
     </td>
     <td align="center" width="16%">
       <br />💎<br /><strong>Premium Portal</strong><br />
@@ -123,6 +125,7 @@ Nossa comunicação interna vai muito além da troca de mensagens de texto; ela 
 | **Aprovações Nativas** | Botões de `Aprovar` embutidos no chat para autorização de propostas comerciais e aprovação de folgas com 1 clique. |
 | **CRM Linking** | Referências ricas ("Rich Cards") de clientes diretamente no chat, permitindo pular da conversa para a ficha técnica do cliente. |
 | **Threads e Organização** | Respostas em tópicos para debates aprofundados sem poluição visual da linha do tempo da empresa. |
+| **Menções de Grupo** | Notificação em massa para departamentos inteiros (ex: `@Financeiro`, `@Suporte`) com 1 único comando. |
 | **Agendamento & Reminders** | Programação de envio de mensagens para horários cruciais (follow-ups) e lembretes pessoais vinculados a tarefas. |
 | **Controle Anti-Ruído** | Leituras detalhadas de mensagem (status de lido nominal), reações com Jumbo Emojis, e fixação dinâmica de atualizações da diretoria. |
 
@@ -232,3 +235,5 @@ Um registro do contínuo processo de amadurecimento e modernização do produto.
 - [x] **v5.0.0** — Sistema Global Customizado de Dialogs (Design Premium Glassmorphism).
 - [x] **v5.1.0** — Premium Client Portal (Visão externa sofisticada com métricas em tempo real).
 - [x] **v5.9.0** — Hub Canvas (Ferramenta de arquitetura estratégica tldraw integrada) & Estabilização Serverless.
+- [x] **v5.9.1** — Group Mentions no Hub Chat (Integração com Cargos/Departamentos).
+

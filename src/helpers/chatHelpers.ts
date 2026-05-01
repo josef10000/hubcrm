@@ -27,10 +27,12 @@ export const isSameDay = (date1: number | Date, date2: number | Date) => {
   );
 };
 
-export const parseMentions = (text: string, teamMembers: { uid: string, displayName: string }[]) => {
+export const parseMentions = (
+  text: string, 
+  teamMembers: { uid: string, displayName: string, roleId?: string }[],
+  roles: { id: string, name: string }[] = []
+) => {
   const mentions: string[] = [];
-  
-  // Regex simples para capturar @nome ou @todos
   const words = text.split(/\s+/);
   
   if (text.includes('@todos') || text.includes('@everyone')) {
@@ -39,9 +41,30 @@ export const parseMentions = (text: string, teamMembers: { uid: string, displayN
 
   words.forEach(word => {
     if (word.startsWith('@')) {
-      const name = word.slice(1);
-      const member = teamMembers.find(m => m.displayName.toLowerCase().replace(/\s/g, '') === name.toLowerCase());
-      if (member) mentions.push(member.uid);
+      // Remove @ e converte para slug comparável (sem espaços, minúsculo)
+      const slug = word.slice(1).toLowerCase().replace(/[^\w\u00C0-\u017F]/g, '');
+      
+      // 1. Tenta encontrar um membro direto
+      const member = teamMembers.find(m => 
+        m.displayName.toLowerCase().replace(/\s/g, '') === slug
+      );
+      
+      if (member) {
+        mentions.push(member.uid);
+      } else {
+        // 2. Tenta encontrar um cargo/grupo
+        const role = roles.find(r => 
+          r.name.toLowerCase().replace(/\s/g, '') === slug
+        );
+        
+        if (role) {
+          // Se encontrou o cargo, adiciona todos os membros que possuem esse roleId
+          const roleMembers = teamMembers
+            .filter(m => m.roleId === role.id)
+            .map(m => m.uid);
+          mentions.push(...roleMembers);
+        }
+      }
     }
   });
 

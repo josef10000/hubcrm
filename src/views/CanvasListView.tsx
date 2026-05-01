@@ -50,6 +50,9 @@ export default function CanvasListView() {
         cancelText: 'Privado',
       });
 
+      // Se o usuário fechou o modal no X (retorna null), abortamos a criação.
+      if (isPublic === null) return;
+
       // Create an empty tldraw document json structure
       const emptyDoc = JSON.stringify({});
 
@@ -57,7 +60,7 @@ export default function CanvasListView() {
         title,
         document: emptyDoc,
         createdBy: currentUserId,
-        isPublic
+        isPublic: !!isPublic
       });
 
       navigate(`/canvas/${newId}`);
