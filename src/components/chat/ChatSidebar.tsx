@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { Search, Plus, MessageCircle, User, Users, Star, Bookmark, Calendar } from 'lucide-react';
+import { Search, Plus, MessageCircle, User, Users, Star, Bookmark, Calendar, BellOff, Bell, Trash2, ShieldOff } from 'lucide-react';
+import { db } from '../../lib/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
+import { toast } from 'sonner';
 import { Chat } from '../../types/chat.types';
 import { formatChatTime } from '../../helpers/chatHelpers';
 import { useAuth } from '../../contexts/AuthContext';
@@ -25,12 +28,29 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
   const [activeTab, setActiveTab ] = useState<'chats' | 'saved'>('chats');
   const [selectedCategory, setSelectedCategory] = useState<string>('todos');
   const { bookmarks, loading: bookmarksLoading, updateBookmark } = useBookmarks();
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, chatId: string } | null>(null);
+  const { effectiveOrgId } = useCRM();
 
   const categories = ['todos', ...new Set(bookmarks.filter(b => b.category).map(b => b.category!))];
 
   const filteredChats = chats.filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleToggleMute = async (chat: Chat) => {
+    if (!userProfile?.uid || !effectiveOrgId) return;
+    
+    const isMuted = chat.muted?.[userProfile.uid] || false;
+    try {
+      await updateDoc(doc(db, 'organizations', effectiveOrgId, 'chats', chat.id), {
+        [`muted.${userProfile.uid}`]: !isMuted
+      });
+      toast.success(isMuted ? 'Notificações ativadas' : 'Conversa silenciada');
+    } catch (error) {
+      toast.error('Erro ao alterar notificações');
+    }
+    setContextMenu(null);
+  };
 
   return (
     <div className="w-80 border-r border-gray-100 dark:border-white/10 flex flex-col bg-gray-50/50 dark:bg-black/20">
@@ -135,6 +155,10 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
                       ? 'bg-primary-500 text-white shadow-xl shadow-primary-500/20 scale-[1.02]' 
                       : 'hover:bg-white dark:hover:bg-white/5 text-gray-600 dark:text-gray-400'
                   }`}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    setContextMenu({ x: e.clientX, y: e.clientY, chatId: chat.id });
+                  }}
                 >
                   {/* Avatar */}
                   <div className="relative shrink-0">
@@ -331,6 +355,47 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
         onClose={() => setIsGroupModalOpen(false)} 
         onSuccess={onSelect}
       />
+
+      {/* Menu de Contexto */}
+      {contextMenu && (
+        <>
+          <div className="fixed inset-0 z-[110]" onClick={() => setContextMenu(null)} onContextMenu={(e) => { e.preventDefault(); setContextMenu(null); }} />
+          <div 
+            className="fixed z-[120] w-56 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-white/10 rounded-2xl shadow-2xl py-2 animate-in fade-in zoom-in-95 duration-200"
+            style={{ left: contextMenu.x, top: contextMenu.y }}
+          >
+            {(() => {
+              const chat = chats.find(c => c.id === contextMenu.chatId);
+              if (!chat) return null;
+              const isMuted = chat.muted?.[userProfile?.uid || ''] || false;
+
+              return (
+                <>
+                  <div className="px-4 py-2 mb-1 border-b border-gray-100 dark:border-white/5">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Opções de Conversa</p>
+                  </div>
+                  <button 
+                    onClick={() => handleToggleMute(chat)}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-primary-500 hover:text-white transition-colors"
+                  >
+                    {isMuted ? <Bell size={16} /> : <BellOff size={16} />}
+                    {isMuted ? 'Ativar Notificações' : 'Silenciar Notificações'}
+                  </button>
+                  <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-primary-500 hover:text-white transition-colors">
+                    <Star size={16} />
+                    Favoritar Conversa
+                  </button>
+                  <div className="h-px bg-gray-100 dark:bg-white/5 my-1" />
+                  <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-500 hover:text-white transition-colors">
+                    <Trash2 size={16} />
+                    Apagar Histórico
+                  </button>
+                </>
+              );
+            })()}
+          </div>
+        </>
+      )}
     </div>
   );
 }

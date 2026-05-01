@@ -26,6 +26,9 @@ export interface Chat {
   // Último timestamp lido por usuário
   lastRead: { [uid: string]: Timestamp };
 
+  // Preferência de silenciamento por usuário
+  muted?: { [uid: string]: boolean };
+
   // Mensagens Fixadas (Array de IDs)
   pinnedMessages?: string[];
 
