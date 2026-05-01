@@ -5,6 +5,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { toast } from 'sonner';
+import { uploadImageToImgBB } from '../../lib/imgbb';
+import { Camera, Loader2 } from 'lucide-react';
 
 interface CreateGroupModalProps {
   isOpen: boolean;
@@ -19,6 +21,8 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateG
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   if (!isOpen) return null;
 
@@ -36,7 +40,6 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateG
 
   const handleCreate = async () => {
     if (!name.trim()) return toast.error('Dê um nome ao grupo!');
-    if (selectedMembers.length === 0) return toast.error('Selecione pelo menos um membro!');
     if (!effectiveOrgId || !userProfile?.uid) return;
 
     setLoading(true);
@@ -48,6 +51,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateG
         orgId: effectiveOrgId,
         members,
         adminIds: [userProfile.uid],
+        avatarUrl: avatarUrl || null,
         lastMessage: null,
         unreadCount: members.reduce((acc, uid) => ({ ...acc, [uid]: 0 }), {}),
         unreadMentions: members.reduce((acc, uid) => ({ ...acc, [uid]: 0 }), {}),
@@ -64,6 +68,26 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateG
       toast.error('Erro ao criar o grupo.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      return toast.error('A imagem deve ter no máximo 2MB');
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const url = await uploadImageToImgBB(file);
+      setAvatarUrl(url);
+      toast.success('Ícone carregado!');
+    } catch (error) {
+      toast.error('Erro ao carregar ícone.');
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -99,6 +123,35 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateG
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
+          </div>
+
+          {/* Avatar do Grupo */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Ícone do Grupo (Opcional)</label>
+            <div className="flex items-center gap-6 p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl">
+              <div className="relative w-20 h-20 group">
+                <div className="w-full h-full bg-gray-200 dark:bg-white/10 rounded-2xl overflow-hidden flex items-center justify-center border border-gray-200 dark:border-white/10 shadow-inner">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <Users size={32} className="text-gray-400" />
+                  )}
+                  {uploadingAvatar && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm">
+                      <Loader2 size={24} className="text-white animate-spin" />
+                    </div>
+                  )}
+                </div>
+                <label className="absolute -bottom-2 -right-2 w-8 h-8 bg-primary-500 text-white rounded-xl flex items-center justify-center shadow-lg cursor-pointer hover:scale-110 active:scale-95 transition-all">
+                  <Camera size={16} />
+                  <input type="file" className="hidden" accept="image/*" onChange={handleAvatarUpload} disabled={uploadingAvatar} />
+                </label>
+              </div>
+              <div className="flex-1">
+                <p className="text-xs text-gray-500 font-medium mb-1">Personalize o visual do seu grupo com uma imagem única.</p>
+                <p className="text-[10px] text-gray-400">Tamanho máximo: 2MB. Formatos: JPG, PNG, GIF.</p>
+              </div>
+            </div>
           </div>
 
           {/* Seleção de Membros */}
@@ -160,7 +213,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateG
           <div className="flex gap-3">
             <button onClick={onClose} className="px-6 py-3 text-sm font-bold text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">Cancelar</button>
             <button 
-              disabled={loading || !name.trim() || selectedMembers.length === 0}
+              disabled={loading || !name.trim() || uploadingAvatar}
               onClick={handleCreate}
               className="px-8 py-3 bg-primary-500 text-white text-sm font-bold rounded-2xl shadow-xl shadow-primary-500/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >

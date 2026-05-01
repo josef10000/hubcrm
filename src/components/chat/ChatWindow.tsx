@@ -72,6 +72,8 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
   } else if (chat?.type === 'self') {
     displayName = 'Meu Espaço (Você)';
     displayPhoto = userProfile?.photoURL || '';
+  } else if (chat?.type === 'group') {
+    displayPhoto = chat.avatarUrl || '';
   }
 
   // Lógica de Status (Presence)

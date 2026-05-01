@@ -122,6 +122,8 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
               } else if (chat.type === 'self') {
                 displayName = 'Meu Espaço (Você)';
                 displayPhoto = userProfile?.photoURL || '';
+              } else if (chat.type === 'group') {
+                displayPhoto = chat.avatarUrl || '';
               }
               
               return (

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, Users, Edit3, Trash2, Shield, UserMinus, Plus } from 'lucide-react';
+import { X, Users, Edit3, Trash2, Shield, UserMinus, Plus, Camera, Loader2 } from 'lucide-react';
+import { uploadImageToImgBB } from '../../lib/imgbb';
 import { Chat } from '../../types/chat.types';
 import { useCRM } from '../../contexts/CRMContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -21,6 +22,9 @@ export default function GroupSettingsModal({ isOpen, onClose, chat }: GroupSetti
   const [name, setName] = useState(chat.name);
   const [isEditingName, setIsEditingName] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [isAddingMember, setIsAddingMember] = useState(false);
+  const [memberSearchTerm, setMemberSearchTerm] = useState('');
 
   if (!isOpen) return null;
 
@@ -45,6 +49,29 @@ export default function GroupSettingsModal({ isOpen, onClose, chat }: GroupSetti
     }
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !effectiveOrgId || !isAdmin) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      return toast.error('A imagem deve ter no máximo 2MB');
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const url = await uploadImageToImgBB(file);
+      await updateDoc(doc(db, 'organizations', effectiveOrgId, 'chats', chat.id), {
+        avatarUrl: url
+      });
+      toast.success('Ícone do grupo atualizado!');
+    } catch (error) {
+      console.error("Erro ao carregar ícone:", error);
+      toast.error('Erro ao carregar ícone.');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   const handleRemoveMember = async (memberId: string) => {
     if (!effectiveOrgId || !isAdmin) return;
     if (memberId === userProfile?.uid) return toast.error('Você não pode se remover! Use Sair do Grupo.');
@@ -61,6 +88,28 @@ export default function GroupSettingsModal({ isOpen, onClose, chat }: GroupSetti
       toast.success('Membro removido.');
     } catch (error) {
       toast.error('Erro ao remover membro.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddMember = async (memberId: string) => {
+    if (!effectiveOrgId || !isAdmin) return;
+
+    setLoading(true);
+    try {
+      const newMembers = [...chat.members, memberId];
+      
+      await updateDoc(doc(db, 'organizations', effectiveOrgId, 'chats', chat.id), {
+        members: newMembers,
+        [`unreadCount.${memberId}`]: 0,
+        [`unreadMentions.${memberId}`]: 0,
+        [`lastRead.${memberId}`]: serverTimestamp()
+      });
+      toast.success('Membro adicionado!');
+    } catch (error) {
+      console.error("Erro ao adicionar membro:", error);
+      toast.error('Erro ao adicionar membro.');
     } finally {
       setLoading(false);
     }
@@ -96,8 +145,25 @@ export default function GroupSettingsModal({ isOpen, onClose, chat }: GroupSetti
         {/* Header */}
         <div className="p-8 pb-4 flex items-center justify-between border-b border-gray-100 dark:border-white/5">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-primary-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-primary-500/20">
-              <Users size={24} />
+            <div className="relative group">
+              <div className="w-12 h-12 bg-primary-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-primary-500/20 overflow-hidden">
+                {chat.avatarUrl ? (
+                  <img src={chat.avatarUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <Users size={24} />
+                )}
+                {uploadingAvatar && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm">
+                    <Loader2 size={16} className="text-white animate-spin" />
+                  </div>
+                )}
+              </div>
+              {isAdmin && (
+                <label className="absolute -bottom-1 -right-1 w-5 h-5 bg-white dark:bg-zinc-800 text-primary-500 rounded-lg flex items-center justify-center shadow-lg cursor-pointer hover:scale-110 active:scale-95 transition-all border border-gray-100 dark:border-white/10">
+                  <Camera size={10} />
+                  <input type="file" className="hidden" accept="image/*" onChange={handleAvatarUpload} disabled={uploadingAvatar} />
+                </label>
+              )}
             </div>
             <div>
               <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Dados do Grupo</h2>
@@ -144,7 +210,55 @@ export default function GroupSettingsModal({ isOpen, onClose, chat }: GroupSetti
 
           {/* Lista de Membros */}
           <div className="space-y-4">
-            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Membros</label>
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Membros</label>
+              {isAdmin && (
+                <button 
+                  onClick={() => setIsAddingMember(!isAddingMember)} 
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                    isAddingMember ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/20' : 'bg-primary-500/10 text-primary-500 hover:bg-primary-500 hover:text-white'
+                  }`}
+                >
+                  {isAddingMember ? <X size={12} /> : <Plus size={12} />}
+                  {isAddingMember ? 'Fechar' : 'Adicionar'}
+                </button>
+              )}
+            </div>
+
+            {isAddingMember && (
+              <div className="space-y-3 p-4 bg-primary-500/5 rounded-2xl border border-primary-500/10 animate-in slide-in-from-top-2 duration-200">
+                <div className="relative">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input 
+                    type="text"
+                    placeholder="Buscar membro para adicionar..."
+                    className="w-full bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 pl-9 pr-3 py-2 rounded-xl text-xs focus:outline-none focus:border-primary-500 dark:text-white"
+                    value={memberSearchTerm}
+                    onChange={(e) => setMemberSearchTerm(e.target.value)}
+                  />
+                </div>
+                <div className="max-h-40 overflow-y-auto custom-scrollbar space-y-1">
+                  {teamProfiles
+                    .filter(p => !chat.members.includes(p.uid) && p.displayName.toLowerCase().includes(memberSearchTerm.toLowerCase()))
+                    .map(p => (
+                      <button
+                        key={p.uid}
+                        onClick={() => handleAddMember(p.uid)}
+                        className="w-full flex items-center justify-between p-2 hover:bg-white dark:hover:bg-white/10 rounded-xl transition-all group"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-white/10 overflow-hidden border border-gray-100 dark:border-white/10">
+                            {p.photoURL ? <img src={p.photoURL} alt="" /> : <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-gray-400">{p.displayName[0]}</div>}
+                          </div>
+                          <span className="text-xs font-bold text-gray-700 dark:text-gray-300">{p.displayName}</span>
+                        </div>
+                        <Plus size={14} className="text-primary-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </button>
+                    ))}
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2">
               {chatMembers.map((member) => {
                 const isMemberAdmin = chat.adminIds.includes(member.uid);
