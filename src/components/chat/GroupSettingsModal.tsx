@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { X, Users, Edit3, Trash2, Shield, UserMinus, Plus, Camera, Loader2 } from 'lucide-react';
+import { X, Users, Edit3, Trash2, Shield, UserMinus, Plus, Camera, Loader2, Search } from 'lucide-react';
 import { uploadImageToImgBB } from '../../lib/imgbb';
 import { Chat } from '../../types/chat.types';
 import { useCRM } from '../../contexts/CRMContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDialog } from '../../contexts/DialogContext';
 import { db } from '../../lib/firebase';
-import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { doc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { toast } from 'sonner';
 
 interface GroupSettingsModalProps {
