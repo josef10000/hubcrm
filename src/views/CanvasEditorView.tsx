@@ -218,11 +218,14 @@ export default function CanvasEditorView() {
               try {
                 const { uploadImageToImgBB } = await import('../lib/imgbb');
                 const url = await uploadImageToImgBB(file);
-                if (url) return url;
+                if (url) {
+                  return { src: url };
+                }
+                throw new Error("Upload failed");
               } catch (e) {
                 console.error("Erro ao subir imagem pro imgBB:", e);
+                throw e;
               }
-              return false; // Retorna false se falhar
             },
             resolve(asset) {
               return asset.props.src;
