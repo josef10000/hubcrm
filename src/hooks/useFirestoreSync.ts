@@ -23,6 +23,13 @@ export function useFirestoreSync(editor: Editor | null, orgId: string | undefine
         const data = change.doc.data() as TLRecord;
         if (['instance', 'camera', 'instance_page_state', 'instance_presence', 'pointer'].includes(data.typeName)) return;
 
+        // Sanitização de dados corrompidos (ex: geo shapes antigos com propriedade text que quebra o schema do v3)
+        if (data.typeName === 'shape' && data.type === 'geo') {
+          if (data.props && 'text' in data.props) {
+            delete (data.props as any).text;
+          }
+        }
+
         if (change.type === 'added' || change.type === 'modified') {
           toMerge.push(data);
         } else if (change.type === 'removed') {

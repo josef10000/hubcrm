@@ -114,6 +114,15 @@ export default function CanvasEditorView() {
         const parsed = JSON.parse(docString);
         
         if (isValidTldrawSnapshot(parsed)) {
+          // Sanitização preventiva do snapshot antes de carregar
+          const store = parsed.store as Record<string, any>;
+          Object.values(store).forEach(record => {
+            if (record.typeName === 'shape' && record.type === 'geo') {
+              if (record.props && 'text' in record.props) {
+                delete record.props.text;
+              }
+            }
+          });
           newEditor.store.loadSnapshot(parsed as any);
         } else {
           console.warn('Hub Canvas: snapshot salvo não é válido, iniciando canvas limpo.', parsed);
