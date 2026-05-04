@@ -20,10 +20,13 @@ export function useFirestoreSync(editor: Editor | null, orgId: string | undefine
       const toRemove: TLRecord['id'][] = [];
       
       changes.forEach(change => {
+        const data = change.doc.data() as TLRecord;
+        if (['instance', 'camera', 'instance_page_state', 'instance_presence', 'pointer'].includes(data.typeName)) return;
+
         if (change.type === 'added' || change.type === 'modified') {
-          toMerge.push(change.doc.data() as TLRecord);
+          toMerge.push(data);
         } else if (change.type === 'removed') {
-          toRemove.push(change.doc.data().id as TLRecord['id']);
+          toRemove.push(data.id);
         }
       });
       
@@ -48,19 +51,21 @@ export function useFirestoreSync(editor: Editor | null, orgId: string | undefine
         let hasChanges = false;
 
         Object.values(update.changes.added).forEach(record => {
-           // Ignorar cursor records se quisermos economizar reads/writes (mas cursor é útil para multiplayer)
+           if (['instance', 'camera', 'instance_page_state', 'instance_presence', 'pointer'].includes(record.typeName)) return;
            const docRef = doc(recordsRef, record.id);
            batch.set(docRef, record);
            hasChanges = true;
         });
 
         Object.values(update.changes.updated).forEach(([oldRecord, newRecord]) => {
+           if (['instance', 'camera', 'instance_page_state', 'instance_presence', 'pointer'].includes(newRecord.typeName)) return;
            const docRef = doc(recordsRef, newRecord.id);
            batch.set(docRef, newRecord);
            hasChanges = true;
         });
 
         Object.values(update.changes.removed).forEach(record => {
+           if (['instance', 'camera', 'instance_page_state', 'instance_presence', 'pointer'].includes(record.typeName)) return;
            const docRef = doc(recordsRef, record.id);
            batch.delete(docRef);
            hasChanges = true;

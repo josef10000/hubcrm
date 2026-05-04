@@ -17,117 +17,111 @@ export function applyTemplate(editor: Editor, templateId: CanvasTemplateId) {
     const oId = createShapeId();
     const tId = createShapeId();
 
-    editor.createShapes([
-      {
-        id: sId,
-        type: 'geo',
-        x: 100,
-        y: 100,
-        props: {
-          geo: 'rectangle',
-          w: 300,
-          h: 200,
-          color: 'green',
-          fill: 'semi',
-          text: 'FORÇAS\n\n-',
-          align: 'start'
+    try {
+      editor.createShapes([
+        {
+          id: sId,
+          type: 'geo',
+          x: 100,
+          y: 100,
+          props: {
+            geo: 'rectangle',
+            w: 300,
+            h: 200,
+            color: 'light-green',
+            text: 'FORÇAS\n\n-',
+          }
+        },
+        {
+          id: wId,
+          type: 'geo',
+          x: 420,
+          y: 100,
+          props: {
+            geo: 'rectangle',
+            w: 300,
+            h: 200,
+            color: 'light-red',
+            text: 'FRAQUEZAS\n\n-',
+          }
+        },
+        {
+          id: oId,
+          type: 'geo',
+          x: 100,
+          y: 320,
+          props: {
+            geo: 'rectangle',
+            w: 300,
+            h: 200,
+            color: 'light-blue',
+            text: 'OPORTUNIDADES\n\n-',
+          }
+        },
+        {
+          id: tId,
+          type: 'geo',
+          x: 420,
+          y: 320,
+          props: {
+            geo: 'rectangle',
+            w: 300,
+            h: 200,
+            color: 'yellow',
+            text: 'AMEAÇAS\n\n-',
+          }
         }
-      },
-      {
-        id: wId,
-        type: 'geo',
-        x: 420,
-        y: 100,
-        props: {
-          geo: 'rectangle',
-          w: 300,
-          h: 200,
-          color: 'red',
-          fill: 'semi',
-          text: 'FRAQUEZAS\n\n-',
-          align: 'start'
-        }
-      },
-      {
-        id: oId,
-        type: 'geo',
-        x: 100,
-        y: 320,
-        props: {
-          geo: 'rectangle',
-          w: 300,
-          h: 200,
-          color: 'blue',
-          fill: 'semi',
-          text: 'OPORTUNIDADES\n\n-',
-          align: 'start'
-        }
-      },
-      {
-        id: tId,
-        type: 'geo',
-        x: 420,
-        y: 320,
-        props: {
-          geo: 'rectangle',
-          w: 300,
-          h: 200,
-          color: 'yellow',
-          fill: 'semi',
-          text: 'AMEAÇAS\n\n-',
-          align: 'start'
-        }
-      }
-    ]);
+      ]);
+    } catch (e) {
+      console.error("Hub Canvas: Erro ao aplicar template SWOT", e);
+    }
   }
 
   if (templateId === 'kanban') {
-    editor.createShapes([
-      {
-        id: createShapeId(),
-        type: 'geo',
-        x: 100,
-        y: 100,
-        props: {
-          geo: 'rectangle',
-          w: 250,
-          h: 500,
-          color: 'black',
-          fill: 'solid',
-          text: 'TODO',
-          align: 'middle'
+    try {
+      editor.createShapes([
+        {
+          id: createShapeId(),
+          type: 'geo',
+          x: 100,
+          y: 100,
+          props: {
+            geo: 'rectangle',
+            w: 250,
+            h: 500,
+            color: 'black',
+            text: 'TODO',
+          }
+        },
+        {
+          id: createShapeId(),
+          type: 'geo',
+          x: 370,
+          y: 100,
+          props: {
+            geo: 'rectangle',
+            w: 250,
+            h: 500,
+            color: 'blue',
+            text: 'DOING',
+          }
+        },
+        {
+          id: createShapeId(),
+          type: 'geo',
+          x: 640,
+          y: 100,
+          props: {
+            geo: 'rectangle',
+            w: 250,
+            h: 500,
+            color: 'green',
+            text: 'DONE',
+          }
         }
-      },
-      {
-        id: createShapeId(),
-        type: 'geo',
-        x: 370,
-        y: 100,
-        props: {
-          geo: 'rectangle',
-          w: 250,
-          h: 500,
-          color: 'blue',
-          fill: 'solid',
-          text: 'DOING',
-          align: 'middle'
-        }
-      },
-      {
-        id: createShapeId(),
-        type: 'geo',
-        x: 640,
-        y: 100,
-        props: {
-          geo: 'rectangle',
-          w: 250,
-          h: 500,
-          color: 'green',
-          fill: 'solid',
-          text: 'DONE',
-          align: 'middle'
-        }
-      }
-    ]);
+      ]);
+    } catch (e) {
+      console.error("Hub Canvas: Erro ao aplicar template Kanban", e);
+    }
   }
 }
