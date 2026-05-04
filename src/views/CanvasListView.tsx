@@ -13,18 +13,22 @@ export default function CanvasListView() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const { prompt, confirm, alert } = useDialog();
   const currentUserId = user?.uid || 'admin-1';
+  const orgId = userProfile?.orgId;
 
   useEffect(() => {
-    loadCanvases();
-  }, []);
+    if (orgId) {
+      loadCanvases();
+    }
+  }, [orgId]);
 
   const loadCanvases = async () => {
+    if (!orgId) return;
     setLoading(true);
     try {
-      const data = await canvasService.getCanvases(currentUserId);
+      const data = await canvasService.getCanvases(orgId, currentUserId);
       setCanvases(data);
     } catch (error) {
       console.error('Error loading canvases:', error);
@@ -34,6 +38,7 @@ export default function CanvasListView() {
   };
 
   const handleCreateCanvas = async () => {
+    if (!orgId) return;
     try {
       const title = await prompt({
         title: 'Novo Quadro Estratégico',
@@ -56,7 +61,7 @@ export default function CanvasListView() {
       // Create an empty tldraw document json structure
       const emptyDoc = JSON.stringify({});
 
-      const newId = await canvasService.createCanvas({
+      const newId = await canvasService.createCanvas(orgId, {
         title,
         document: emptyDoc,
         createdBy: currentUserId,
@@ -75,6 +80,7 @@ export default function CanvasListView() {
   };
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
+    if (!orgId) return;
     e.stopPropagation();
     const confirmed = await confirm({
       title: 'Excluir Quadro',
@@ -85,7 +91,7 @@ export default function CanvasListView() {
     
     if (confirmed) {
       try {
-        await canvasService.deleteCanvas(id);
+        await canvasService.deleteCanvas(orgId, id);
         loadCanvases();
       } catch (error) {
         console.error('Error deleting canvas:', error);

@@ -28,10 +28,11 @@ const COLLECTION_NAME = 'canvases';
 
 export const canvasService = {
   // Get all canvases (either public or owned by the user)
-  async getCanvases(userId: string): Promise<CanvasDocument[]> {
+  async getCanvases(orgId: string, userId: string): Promise<CanvasDocument[]> {
+    if (!orgId) return [];
     try {
       const q = query(
-        collection(db, COLLECTION_NAME),
+        collection(db, 'organizations', orgId, 'canvases'),
         orderBy('createdAt', 'desc')
       );
       
@@ -62,9 +63,10 @@ export const canvasService = {
   },
 
   // Get a single canvas
-  async getCanvas(canvasId: string): Promise<CanvasDocument | null> {
+  async getCanvas(orgId: string, canvasId: string): Promise<CanvasDocument | null> {
+    if (!orgId) return null;
     try {
-      const docRef = doc(db, COLLECTION_NAME, canvasId);
+      const docRef = doc(db, 'organizations', orgId, 'canvases', canvasId);
       const docSnap = await getDoc(docRef);
       
       if (docSnap.exists()) {
@@ -87,9 +89,10 @@ export const canvasService = {
   },
 
   // Create a new canvas
-  async createCanvas(data: Omit<CanvasDocument, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+  async createCanvas(orgId: string, data: Omit<CanvasDocument, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    if (!orgId) throw new Error("orgId is required");
     try {
-      const docRef = await addDoc(collection(db, COLLECTION_NAME), {
+      const docRef = await addDoc(collection(db, 'organizations', orgId, 'canvases'), {
         ...data,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -102,9 +105,10 @@ export const canvasService = {
   },
 
   // Update an existing canvas
-  async updateCanvas(canvasId: string, data: Partial<CanvasDocument>): Promise<void> {
+  async updateCanvas(orgId: string, canvasId: string, data: Partial<CanvasDocument>): Promise<void> {
+    if (!orgId) throw new Error("orgId is required");
     try {
-      const docRef = doc(db, COLLECTION_NAME, canvasId);
+      const docRef = doc(db, 'organizations', orgId, 'canvases', canvasId);
       const updateData = {
         ...data,
         updatedAt: serverTimestamp(),
@@ -125,9 +129,10 @@ export const canvasService = {
   },
 
   // Delete a canvas
-  async deleteCanvas(canvasId: string): Promise<void> {
+  async deleteCanvas(orgId: string, canvasId: string): Promise<void> {
+    if (!orgId) throw new Error("orgId is required");
     try {
-      const docRef = doc(db, COLLECTION_NAME, canvasId);
+      const docRef = doc(db, 'organizations', orgId, 'canvases', canvasId);
       await deleteDoc(docRef);
     } catch (error) {
       console.error('Error deleting canvas:', error);

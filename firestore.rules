@@ -49,15 +49,15 @@ service cloud.firestore {
       allow write: if isOwnerEmail() || request.auth.uid == userId || isOrgAdmin(getUserData().orgId);
     }
 
-    // Hub Canvas
-    match /canvases/{canvasId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
-    }
-
     // Organizações e seus dados (Multi-Tenant)
     match /organizations/{orgId} {
       allow read, write: if isOwnerEmail() || belongsToOrg(orgId);
+
+      // Hub Canvas (agora dentro da organização)
+      match /canvases/{canvasId} {
+        allow read: if isOwnerEmail() || belongsToOrg(orgId);
+        allow write: if isOwnerEmail() || belongsToOrg(orgId);
+      }
 
       // 🟢 HUB CHAT — Regras de Colaboração em Tempo Real
       match /chats/{chatId} {

@@ -22,8 +22,9 @@ function isValidTldrawSnapshot(obj: unknown): obj is { store: Record<string, unk
 export default function CanvasEditorView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const currentUserId = user?.uid || 'admin-1';
+  const orgId = userProfile?.orgId;
   
   const [canvas, setCanvas] = useState<CanvasDocument | null>(null);
   const [loading, setLoading] = useState(true);
@@ -37,10 +38,10 @@ export default function CanvasEditorView() {
   const canvasDocRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (id) {
-      loadCanvas(id);
+    if (id && orgId) {
+      loadCanvas(orgId, id);
     }
-  }, [id]);
+  }, [id, orgId]);
 
   // Cleanup: garantir que o debounce é cancelado ao desmontar o componente
   useEffect(() => {
@@ -68,9 +69,9 @@ export default function CanvasEditorView() {
     canvasDocRef.current = canvas?.document ?? null;
   }, [canvas?.document]);
 
-  const loadCanvas = async (canvasId: string) => {
+  const loadCanvas = async (orgId: string, canvasId: string) => {
     try {
-      const data = await canvasService.getCanvas(canvasId);
+      const data = await canvasService.getCanvas(orgId, canvasId);
       if (data) {
         setCanvas(data);
       } else {
@@ -118,8 +119,8 @@ export default function CanvasEditorView() {
             const snapshot = editor.store.getSnapshot();
             const json = JSON.stringify(snapshot);
             
-            if (id) {
-              await canvasService.updateCanvas(id, { document: json });
+            if (id && orgId) {
+              await canvasService.updateCanvas(orgId, id, { document: json });
             }
           } catch (error) {
             console.error('Error auto-saving canvas:', error);
@@ -131,7 +132,7 @@ export default function CanvasEditorView() {
       },
       { source: 'user', scope: 'document' } // Only trigger on user edits, not remote or state changes
     );
-  }, [id]);
+  }, [id, orgId]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
