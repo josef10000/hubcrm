@@ -118,7 +118,7 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
       variant: 'danger'
     });
     if (!confirmed) return;
-
+    try {
       // Deselecionar IMEDIATAMENTE para evitar race conditions na UI
       onSelect(null);
 
