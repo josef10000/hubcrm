@@ -4,9 +4,20 @@ import { Tldraw, Editor } from 'tldraw';
 import 'tldraw/tldraw.css';
 import { canvasService, CanvasDocument } from '../services/canvasService';
 import { ArrowLeft, MonitorPlay, Save } from 'lucide-react';
-import { useCRM } from '../contexts/CRMContext';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
+
+/**
+ * Verifica se um objeto JSON parseado é um snapshot tldraw válido.
+ * O snapshot da tldraw v3 deve conter pelo menos a key 'store'.
+ */
+function isValidTldrawSnapshot(obj: unknown): obj is { store: Record<string, unknown> } {
+  if (!obj || typeof obj !== 'object') return false;
+  const snap = obj as Record<string, unknown>;
+  // O snapshot deve ter a key 'store' que é um objeto não-vazio
+  if (!snap.store || typeof snap.store !== 'object') return false;
+  return Object.keys(snap.store).length > 0;
+}
 
 export default function CanvasEditorView() {
   const { id } = useParams<{ id: string }>();
@@ -22,12 +33,24 @@ export default function CanvasEditorView() {
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<Editor | null>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Ref para manter o document atualizado sem depender de re-render do useCallback
+  const canvasDocRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (id) {
       loadCanvas(id);
     }
   }, [id]);
+
+  // Cleanup: garantir que o debounce é cancelado ao desmontar o componente
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -39,6 +62,11 @@ export default function CanvasEditorView() {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
   }, []);
+
+  // Atualizar a ref sempre que o canvas mudar
+  useEffect(() => {
+    canvasDocRef.current = canvas?.document ?? null;
+  }, [canvas?.document]);
 
   const loadCanvas = async (canvasId: string) => {
     try {
@@ -60,23 +88,23 @@ export default function CanvasEditorView() {
   const handleMount = useCallback((editor: Editor) => {
     editorRef.current = editor;
     
-    // Load initial data
-    if (canvas?.document && canvas.document !== '{}') {
+    // Carregar dados iniciais do snapshot salvo
+    const docString = canvasDocRef.current;
+    if (docString && docString !== '{}') {
       try {
-        const snapshot = JSON.parse(canvas.document);
-        editor.store.loadSnapshot(snapshot);
+        const parsed = JSON.parse(docString);
         
-
+        if (isValidTldrawSnapshot(parsed)) {
+          editor.store.loadSnapshot(parsed);
+        } else {
+          console.warn('Hub Canvas: snapshot salvo não é válido, iniciando canvas limpo.', parsed);
+        }
       } catch (e) {
-        console.error('Error loading snapshot:', e);
+        console.error('Hub Canvas: erro ao restaurar snapshot:', e);
+        toast.error('Não foi possível restaurar o conteúdo anterior do quadro.');
       }
     }
 
-    // Is the user just a viewer?
-    // If we wanted strict view-only: editor.updateInstanceState({ isReadonly: true })
-    // For now, if the user didn't create it and it's public, maybe they can view only?
-    // Let's assume admins/managers can edit if they have access.
-    
     // Listen for changes and auto-save
     editor.store.listen(
       () => {
@@ -95,6 +123,7 @@ export default function CanvasEditorView() {
             }
           } catch (error) {
             console.error('Error auto-saving canvas:', error);
+            toast.error('Erro ao salvar automaticamente o quadro.');
           } finally {
             setSaving(false);
           }
@@ -102,7 +131,7 @@ export default function CanvasEditorView() {
       },
       { source: 'user', scope: 'document' } // Only trigger on user edits, not remote or state changes
     );
-  }, [canvas?.document, id]);
+  }, [id]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
