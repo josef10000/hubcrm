@@ -82,8 +82,11 @@ export default function CanvasEditorView() {
     setEditor(newEditor);
     
     // Handler para upload de imagens via drag & drop / paste
-    newEditor.registerExternalAssetHandler('image', async ({ file }) => {
+    newEditor.registerExternalAssetHandler('file', async (info) => {
       try {
+        if (!('file' in info) || !info.file) return null;
+        const file = info.file as File;
+        
         const { uploadImageToImgBB } = await import('../lib/imgbb');
         const url = await uploadImageToImgBB(file);
         if (url) {
