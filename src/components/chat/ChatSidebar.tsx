@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Search, Plus, MessageCircle, User, Users, Star, Bookmark, Calendar, BellOff, Bell, Trash2, ShieldOff, Hash, Compass } from 'lucide-react';
+import { Search, Plus, MessageCircle, User, Users, Star, Bookmark, Calendar, BellOff, Bell, Trash2, ShieldOff, Hash, Compass, LogOut, AlertTriangle } from 'lucide-react';
 import { db } from '../../lib/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, deleteDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
 import { toast } from 'sonner';
 import { Chat } from '../../types/chat.types';
 import { formatChatTime } from '../../helpers/chatHelpers';
@@ -58,6 +58,102 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
       toast.success(isMuted ? 'Notificações ativadas' : 'Conversa silenciada');
     } catch (error) {
       toast.error('Erro ao alterar notificações');
+    }
+    setContextMenu(null);
+  };
+
+  const handleClearHistory = async (chat: Chat) => {
+    if (!effectiveOrgId) return;
+    const confirmed = window.confirm(`Tem certeza que deseja apagar TODO o histórico de "${chat.name}"? Esta ação é irreversível.`);
+    if (!confirmed) return;
+
+    try {
+      const messagesRef = collection(db, 'organizations', effectiveOrgId, 'chats', chat.id, 'messages');
+      const snap = await getDocs(messagesRef);
+
+      // Firestore batch delete (máx 500 por batch)
+      const batchSize = 450;
+      let batch = writeBatch(db);
+      let count = 0;
+
+      for (const docSnap of snap.docs) {
+        batch.delete(docSnap.ref);
+        count++;
+        if (count % batchSize === 0) {
+          await batch.commit();
+          batch = writeBatch(db);
+        }
+      }
+      if (count % batchSize !== 0) {
+        await batch.commit();
+      }
+
+      // Limpa lastMessage no documento do chat
+      await updateDoc(doc(db, 'organizations', effectiveOrgId, 'chats', chat.id), {
+        lastMessage: null,
+        pinnedMessages: []
+      });
+
+      toast.success(`Histórico de "${chat.name}" apagado (${count} mensagens).`);
+    } catch (error) {
+      console.error('Erro ao apagar histórico:', error);
+      toast.error('Erro ao apagar histórico.');
+    }
+    setContextMenu(null);
+  };
+
+  const handleDeleteChat = async (chat: Chat) => {
+    if (!effectiveOrgId) return;
+    const label = chat.type === 'channel' ? 'canal' : chat.type === 'group' ? 'grupo' : 'conversa';
+    const confirmed = window.confirm(`Tem certeza que deseja EXCLUIR permanentemente o ${label} "${chat.name}"? Todas as mensagens serão perdidas.`);
+    if (!confirmed) return;
+
+    try {
+      // 1. Apagar todas as mensagens primeiro
+      const messagesRef = collection(db, 'organizations', effectiveOrgId, 'chats', chat.id, 'messages');
+      const snap = await getDocs(messagesRef);
+      const batchSize = 450;
+      let batch = writeBatch(db);
+      let count = 0;
+
+      for (const docSnap of snap.docs) {
+        batch.delete(docSnap.ref);
+        count++;
+        if (count % batchSize === 0) {
+          await batch.commit();
+          batch = writeBatch(db);
+        }
+      }
+      if (count % batchSize !== 0) {
+        await batch.commit();
+      }
+
+      // 2. Apagar o documento do chat
+      await deleteDoc(doc(db, 'organizations', effectiveOrgId, 'chats', chat.id));
+
+      toast.success(`${label.charAt(0).toUpperCase() + label.slice(1)} "${chat.name}" excluído.`);
+      onSelect(''); // Deseleciona
+    } catch (error) {
+      console.error('Erro ao excluir chat:', error);
+      toast.error('Erro ao excluir conversa.');
+    }
+    setContextMenu(null);
+  };
+
+  const handleLeaveChat = async (chat: Chat) => {
+    if (!effectiveOrgId || !userProfile?.uid) return;
+    const confirmed = window.confirm(`Tem certeza que deseja sair de "${chat.name}"?`);
+    if (!confirmed) return;
+
+    try {
+      const newMembers = chat.members.filter(m => m !== userProfile.uid);
+      await updateDoc(doc(db, 'organizations', effectiveOrgId, 'chats', chat.id), {
+        members: newMembers
+      });
+      toast.success(`Você saiu de "${chat.name}".`);
+      onSelect('');
+    } catch (error) {
+      toast.error('Erro ao sair do canal.');
     }
     setContextMenu(null);
   };
@@ -511,7 +607,7 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
               if (!chat) return null;
               const isMuted = chat.muted?.[userProfile?.uid || ''] || false;
 
-              return (
+                return (
                 <>
                   <div className="px-4 py-2 mb-1 border-b border-gray-100 dark:border-white/5">
                     <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Opções de Conversa</p>
@@ -523,15 +619,39 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
                     {isMuted ? <Bell size={16} /> : <BellOff size={16} />}
                     {isMuted ? 'Ativar Notificações' : 'Silenciar Notificações'}
                   </button>
-                  <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-primary-500 hover:text-white transition-colors">
-                    <Star size={16} />
-                    Favoritar Conversa
-                  </button>
+
+                  {/* Sair do canal/grupo */}
+                  {(chat.type === 'channel' || chat.type === 'group') && (
+                    <button 
+                      onClick={() => handleLeaveChat(chat)}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-amber-500 hover:text-white transition-colors"
+                    >
+                      <LogOut size={16} />
+                      Sair do {chat.type === 'channel' ? 'Canal' : 'Grupo'}
+                    </button>
+                  )}
+
                   <div className="h-px bg-gray-100 dark:bg-white/5 my-1" />
-                  <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-500 hover:text-white transition-colors">
+
+                  {/* Apagar Histórico */}
+                  <button 
+                    onClick={() => handleClearHistory(chat)}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-amber-600 hover:bg-amber-500 hover:text-white transition-colors"
+                  >
                     <Trash2 size={16} />
                     Apagar Histórico
                   </button>
+
+                  {/* Excluir Chat/Canal (apenas admin) */}
+                  {isAdmin && (
+                    <button 
+                      onClick={() => handleDeleteChat(chat)}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-500 hover:text-white transition-colors"
+                    >
+                      <AlertTriangle size={16} />
+                      Excluir {chat.type === 'channel' ? 'Canal' : chat.type === 'group' ? 'Grupo' : 'Conversa'}
+                    </button>
+                  )}
                 </>
               );
             })()}
