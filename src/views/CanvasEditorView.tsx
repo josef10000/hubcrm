@@ -231,9 +231,10 @@ export default function CanvasEditorView() {
               return asset.props.src;
             }
           }}
-        >
-          <CustomCanvasUI />
-        </Tldraw>
+          components={{
+            InFrontOfTheCanvas: CustomCanvasUI
+          }}
+        />
         
         {/* Floating exit fullscreen button when in fullscreen */}
         {isFullscreen && (
