@@ -54,9 +54,11 @@ export function useFirestoreSync(editor: Editor | null, orgId: string | undefine
     // 2. Escutar alterações locais (Tldraw -> Firestore)
     const unsubscribeEditor = editor.store.listen(
       (update) => {
+        // Ignorar alterações que vieram do próprio Firestore (evita loop infinito)
+        if (update.source === 'remote') return;
+
         const batch = writeBatch(db);
         let hasChanges = false;
-
         Object.values(update.changes.added).forEach(record => {
            if (['instance', 'camera', 'instance_page_state', 'instance_presence', 'pointer'].includes(record.typeName)) return;
            const docRef = doc(recordsRef, record.id);
@@ -82,7 +84,7 @@ export function useFirestoreSync(editor: Editor | null, orgId: string | undefine
           batch.commit().catch(e => console.error("Hub Canvas Sync Error:", e));
         }
       },
-      { source: 'user', scope: 'document' } // Somente ações geradas pelo usuário atual
+      { scope: 'document' } // Capturar todas as mudanças no documento (incluindo assets)
     );
 
     return () => {

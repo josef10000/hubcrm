@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Tldraw, Editor, useEditor, AssetRecordType } from 'tldraw';
 import 'tldraw/tldraw.css';
@@ -36,6 +36,24 @@ export default function CanvasEditorView() {
   
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasDocRef = useRef<string | null>(null);
+  
+  // Configuração do Asset Store para ImgBB (Memoizado para evitar re-renders infinitos)
+  const assetStore = useMemo(() => ({
+    async upload(_asset: any, file: File) {
+      try {
+        const { uploadImageToImgBB } = await import('../lib/imgbb');
+        const url = await uploadImageToImgBB(file);
+        if (url) return { src: url };
+        throw new Error("Upload failed");
+      } catch (e) {
+        console.error("Hub Canvas: Erro no upload ImgBB:", e);
+        throw e;
+      }
+    },
+    resolve(asset: any) {
+      return asset.props.src;
+    }
+  }), []);
 
   // Hook para Multiplayer via Firestore
   const isSynced = useFirestoreSync(editor, orgId, id);
@@ -80,37 +98,6 @@ export default function CanvasEditorView() {
 
   const handleMount = useCallback((newEditor: Editor) => {
     setEditor(newEditor);
-    
-    // Handler para upload de imagens via drag & drop / paste
-    newEditor.registerExternalAssetHandler('file', async (info) => {
-      try {
-        if (!('file' in info) || !info.file) return null;
-        const file = info.file as File;
-        
-        const { uploadImageToImgBB } = await import('../lib/imgbb');
-        const url = await uploadImageToImgBB(file);
-        if (url) {
-          return {
-            id: (info as any).assetId ?? AssetRecordType.createId(),
-            typeName: 'asset',
-            type: 'image',
-            props: {
-              src: url,
-              w: 500,
-              h: 500,
-              isAnimated: false,
-              mimeType: file.type,
-              name: file.name
-            },
-            meta: {}
-          };
-        }
-        return null;
-      } catch (e) {
-        console.error("Hub Canvas: Erro ao subir imagem:", e);
-        return null;
-      }
-    });
     
     // Carregar dados iniciais do snapshot salvo (fallback para quadros antigos)
     const docString = canvasDocRef.current;
@@ -212,6 +199,7 @@ export default function CanvasEditorView() {
         <Tldraw 
           onMount={handleMount}
           inferDarkMode
+          assets={assetStore}
         />
         
         {/* Floating exit fullscreen button when in fullscreen */}

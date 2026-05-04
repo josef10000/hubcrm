@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Clock, MessageSquare, CheckCircle, Trash2, User, Phone, Image as ImageIcon, Download } from 'lucide-react';
+import { useDialog } from '../../contexts/DialogContext';
 
 interface SupportCardProps {
   req: any;
@@ -12,6 +13,7 @@ interface SupportCardProps {
 }
 
 export function SupportCard({ req, sla, isCritico, teamProfiles, onUpdate, onReply, onDelete }: SupportCardProps) {
+  const { confirm } = useDialog();
   const [isReplying, setIsReplying] = useState(false);
   const [replyMessage, setReplyMessage] = useState(req.reply || '');
 
@@ -143,8 +145,14 @@ export function SupportCard({ req, sla, isCritico, teamProfiles, onUpdate, onRep
                       Ver Imagem
                     </button>
                     <button 
-                      onClick={() => {
-                        if (confirm('Deseja remover este anexo para liberar espaço? (A imagem continuará no IMGBB mas não aparecerá mais aqui)')) {
+                      onClick={async () => {
+                        const ok = await confirm({
+                          title: 'Remover Anexo',
+                          message: 'Deseja remover este anexo para liberar espaço? (A imagem continuará no IMGBB mas não aparecerá mais aqui)',
+                          confirmText: 'Remover',
+                          variant: 'danger'
+                        });
+                        if (ok) {
                           onUpdate(req.id, { imageUrl: null });
                         }
                       }}

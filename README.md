@@ -1,4 +1,4 @@
-# 🔐 Hub Central — Intranet Corporativa v5.9.1
+# 🔐 Hub Central — Intranet Corporativa v6.0.1
 
 > [!CAUTION]
 > **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
@@ -9,7 +9,7 @@ A plataforma Hub Central é o motor de crescimento da Hub Symples. Nossa intrane
 ---
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-5.9.1-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
+  <img src="https://img.shields.io/badge/Version-6.0.1-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
   <img src="https://img.shields.io/badge/Status-Audited_&_Stable-3b82f6?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
   <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
   <img src="https://img.shields.io/badge/License-Proprietary-3b82f6?style=for-the-badge&labelColor=111111" alt="License" />
@@ -26,9 +26,9 @@ A plataforma Hub Central é o motor de crescimento da Hub Symples. Nossa intrane
 </p>
 
 <div align="center">
-  <h2>✨ Destaque da Versão v5.9.1</h2>
-  <p><strong>Hub Chat Group Mentions</strong></p>
-  <p>Implementação de menções inteligentes por cargo (@Financeiro, @Suporte), otimizando a comunicação entre departamentos.</p>
+  <h2>✨ Destaque da Versão v6.0.1</h2>
+  <p><strong>Hub Canvas Stabilization & Premium Dialogs</strong></p>
+  <p>Estabilização total da persistência do Hub Canvas e migração completa de todos os alertas e confirmações nativas para o sistema premium de diálogos.</p>
 </div>
 
 <br />
@@ -239,4 +239,5 @@ Um registro do contínuo processo de amadurecimento e modernização do produto.
 - [x] **v5.9.2** — Group Avatars (ImgBB) & Flexible Group Creation (Sem membros obrigatórios).
 - [x] **v5.9.3** — Sistema de Controle de Notificações (Mute) & Menu de Contexto Premium no Chat.
 - [x] **v6.0.0** — HubBots (Comandos /) & Salas Temáticas (Canais Públicos/Privados) no Hub Chat.
+- [x] **v6.0.1** — Estabilização do Hub Canvas (Persistência ImgBB/Firestore) & Migração Global para Custom Dialogs.
 

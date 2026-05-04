@@ -13,6 +13,7 @@ import UserStatusSelector from './UserStatusSelector';
 import { useBookmarks } from '../../hooks/useBookmarks';
 import CreateChannelModal from './CreateChannelModal';
 import ExploreChannelsModal from './ExploreChannelsModal';
+import { useDialog } from '../../contexts/DialogContext';
 
 interface ChatSidebarProps {
   chats: Chat[];
@@ -23,7 +24,8 @@ interface ChatSidebarProps {
 
 export default function ChatSidebar({ chats, loading, selectedId, onSelect }: ChatSidebarProps) {
   const { userProfile } = useAuth();
-  const { teamProfiles } = useCRM();
+  const { teamProfiles, effectiveOrgId } = useCRM();
+  const { confirm } = useDialog();
   const [searchTerm, setSearchTerm] = useState('');
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
   const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false);
@@ -64,7 +66,12 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
 
   const handleClearHistory = async (chat: Chat) => {
     if (!effectiveOrgId) return;
-    const confirmed = window.confirm(`Tem certeza que deseja apagar TODO o histórico de "${chat.name}"? Esta ação é irreversível.`);
+    const confirmed = await confirm({
+      title: 'Limpar Histórico',
+      message: `Tem certeza que deseja apagar TODO o histórico de "${chat.name}"? Esta ação é irreversível.`,
+      confirmText: 'Limpar Tudo',
+      variant: 'danger'
+    });
     if (!confirmed) return;
 
     try {
@@ -105,7 +112,12 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
   const handleDeleteChat = async (chat: Chat) => {
     if (!effectiveOrgId) return;
     const label = chat.type === 'channel' ? 'canal' : chat.type === 'group' ? 'grupo' : 'conversa';
-    const confirmed = window.confirm(`Tem certeza que deseja EXCLUIR permanentemente o ${label} "${chat.name}"? Todas as mensagens serão perdidas.`);
+    const confirmed = await confirm({
+      title: `Excluir ${label}`,
+      message: `Tem certeza que deseja EXCLUIR permanentemente o ${label} "${chat.name}"? Todas as mensagens serão perdidas.`,
+      confirmText: 'Excluir Permanentemente',
+      variant: 'danger'
+    });
     if (!confirmed) return;
 
     try {
@@ -142,7 +154,12 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
 
   const handleLeaveChat = async (chat: Chat) => {
     if (!effectiveOrgId || !userProfile?.uid) return;
-    const confirmed = window.confirm(`Tem certeza que deseja sair de "${chat.name}"?`);
+    const confirmed = await confirm({
+      title: 'Sair do Grupo',
+      message: `Tem certeza que deseja sair de "${chat.name}"?`,
+      confirmText: 'Sair do Grupo',
+      variant: 'danger'
+    });
     if (!confirmed) return;
 
     try {
