@@ -6,34 +6,8 @@ import { canvasService, CanvasDocument } from '../services/canvasService';
 import { ArrowLeft, MonitorPlay, Save, Building2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
-import { CRMCardShapeUtil, CRMCardTool } from '../components/canvas/CRMCardShape';
-
 import { useFirestoreSync } from '../hooks/useFirestoreSync';
 
-const customShapeUtils = [CRMCardShapeUtil];
-const customTools = [CRMCardTool];
-
-// Componente para adicionar o botão do Card na UI do Tldraw
-function CustomCanvasUI() {
-  const editor = useEditor();
-  
-  return (
-    <div className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-800 px-4 py-2 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 flex items-center gap-4 pointer-events-auto z-[300]">
-      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Ferramentas CRM:</span>
-      <button 
-        onClick={() => editor.setCurrentTool('crm-card')}
-        className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-          editor.getCurrentToolId() === 'crm-card' 
-            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300' 
-            : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-        }`}
-      >
-        <Building2 size={16} />
-        Card CRM
-      </button>
-    </div>
-  );
-}
 
 /**
  * Verifica se um objeto JSON parseado é um snapshot tldraw válido.
@@ -220,8 +194,6 @@ export default function CanvasEditorView() {
         <Tldraw 
           onMount={handleMount}
           inferDarkMode
-          shapeUtils={customShapeUtils}
-          tools={customTools}
           assets={{
             async upload(asset, file) {
               try {
@@ -239,9 +211,6 @@ export default function CanvasEditorView() {
             resolve(asset) {
               return asset.props.src;
             }
-          }}
-          components={{
-            InFrontOfTheCanvas: CustomCanvasUI
           }}
         />
         
