@@ -1,4 +1,4 @@
-import { User, Paperclip, Check, CheckCheck, Trash2, Reply, Smile, Bookmark, Pin, LifeBuoy, MessageSquareText, ExternalLink, Hash, ChevronRight, Clock, Bell } from 'lucide-react';
+import { User, Paperclip, Check, CheckCheck, Trash2, Reply, Smile, Bookmark, Pin, LifeBuoy, MessageSquareText, ExternalLink, Hash, ChevronRight, Clock, Bell, Bot } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
 import { ChatMessage } from '../../types/chat.types';
@@ -43,6 +43,7 @@ export default function MessageBubble({
   const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
   const isMine = message.senderId === userProfile?.uid;
   const isDeleted = message.isDeleted;
+  const isBot = message.isBot || message.type === 'bot_response';
   
   // Se a mensagem for agendada E estiver deletada, não mostrar nada (sumir completamente)
   if (isDeleted && message.status === 'scheduled') return null;
@@ -74,8 +75,13 @@ export default function MessageBubble({
     >
       {/* Nome do Remetente (Apenas Grupos/Outros) */}
       {!isMine && !isDeleted && (
-        <span className="text-base font-semibold text-gray-500 mb-1 ml-11 tracking-tight">
-          {message.senderName}
+        <span className="text-base font-semibold text-gray-500 mb-1 ml-11 tracking-tight flex items-center gap-2">
+          {isBot ? (
+            <>
+              <span className="text-violet-500 font-black">HubBot</span>
+              <span className="text-[8px] font-black uppercase tracking-widest bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white px-2 py-0.5 rounded-full shadow-sm">BOT</span>
+            </>
+          ) : message.senderName}
         </span>
       )}
 
@@ -83,10 +89,20 @@ export default function MessageBubble({
         {/* Avatar */}
         {!isMine && (
           <div 
-            onClick={() => navigate(`/profile/${message.senderId}`)}
-            className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 overflow-hidden flex items-center justify-center shrink-0 shadow-sm mb-1 cursor-pointer hover:scale-105 transition-transform"
+            onClick={() => !isBot && navigate(`/profile/${message.senderId}`)}
+            className={`w-8 h-8 rounded-xl border overflow-hidden flex items-center justify-center shrink-0 shadow-sm mb-1 transition-transform ${
+              isBot 
+                ? 'bg-gradient-to-br from-violet-500 to-fuchsia-500 border-violet-500/30 shadow-violet-500/20 shadow-lg' 
+                : 'bg-gray-100 dark:bg-white/5 border-gray-200 dark:border-white/10 cursor-pointer hover:scale-105'
+            }`}
           >
-            {message.senderPhotoURL ? <img src={message.senderPhotoURL} alt="" /> : <User size={14} className="text-gray-400" />}
+            {isBot ? (
+              <Bot size={14} className="text-white" />
+            ) : message.senderPhotoURL ? (
+              <img src={message.senderPhotoURL} alt="" />
+            ) : (
+              <User size={14} className="text-gray-400" />
+            )}
           </div>
         )}
 
@@ -202,6 +218,8 @@ export default function MessageBubble({
           <div className={`p-4 rounded-[1.8rem] shadow-sm relative overflow-visible transition-all ${
             isDeleted 
               ? 'bg-gray-50 dark:bg-white/5 border border-dashed border-gray-200 dark:border-white/10 italic text-gray-400 dark:text-gray-500' 
+              : isBot
+                ? 'bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 dark:from-violet-500/5 dark:to-fuchsia-500/5 text-gray-800 dark:text-gray-100 border border-violet-500/20 rounded-tl-none'
               : message.type === 'sticker'
                 ? 'bg-transparent shadow-none border-none !p-0'
                 : message.status === 'scheduled'

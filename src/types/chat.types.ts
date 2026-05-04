@@ -3,11 +3,18 @@ import { Timestamp } from 'firebase/firestore';
 export interface Chat {
   id: string;
   name: string;                       // "Equipe Comercial", "Meu Espaço", "José ↔ Maria"
-  type: "group" | "self" | "direct";  // Grupo, Anotações Privadas, Conversa 1:1
+  type: "group" | "self" | "direct" | "channel";  // Grupo, Anotações Privadas, Conversa 1:1, Canal Temático
   orgId: string;                      // Isolamento multi-tenant
   members: string[];                  // UIDs permitidos (máx ~40)
   adminIds: string[];                 // Quem pode editar nome, adicionar/remover membros
   avatarUrl?: string;                 // Foto do grupo (opcional)
+
+  // === CAMPOS DE CANAL ===
+  isPublic?: boolean;                 // Se o canal é visível para todos da org
+  category?: string;                  // Categoria temática (vendas, geral, rh, etc.)
+  description?: string;               // Descrição do canal
+  icon?: string;                      // Emoji do canal (ex: 📢, ☕, 💰)
+  isRequired?: boolean;               // Se novos membros entram automaticamente
 
   // === DENORMALIZAÇÃO DE PERFORMANCE ===
   lastMessage: {
@@ -56,7 +63,9 @@ export interface ChatMessage {
   isEdited?: boolean;                 // Flag para mensagens editadas
   readBy?: string[];                  // Lista de UIDs que leram esta mensagem
   mentionAll?: boolean;               // Se @todos foi usado
-  type?: "text" | "poll" | "approval" | "system" | "rich_link" | "client_card" | "sticker"; // Tipo da mensagem
+  type?: "text" | "poll" | "approval" | "system" | "rich_link" | "client_card" | "sticker" | "bot_response"; // Tipo da mensagem
+  isBot?: boolean;                    // Flag para mensagens de bot
+  botName?: string;                   // Nome do bot (ex: HubBot)
   parentMessageId?: string;           // Para Threads (ID da mensagem pai)
   threadReplyCount?: number;          // Quantas respostas este tópico tem
   lastThreadReplyAt?: Timestamp;      // Última resposta no tópico

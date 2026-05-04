@@ -74,6 +74,9 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
     displayPhoto = userProfile?.photoURL || '';
   } else if (chat?.type === 'group') {
     displayPhoto = chat.avatarUrl || '';
+  } else if (chat?.type === 'channel') {
+    displayName = `#${chat.name}`;
+    displayPhoto = chat.avatarUrl || '';
   }
 
   // Lógica de Status (Presence)
@@ -198,7 +201,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
     attachments: string[] = [], 
     replyTo: ChatMessage['replyTo'] = null,
     members: string[] = [],
-    type: "text" | "poll" | "approval" | "rich_link" | "client_card" | "sticker" = "text",
+    type: "text" | "poll" | "approval" | "rich_link" | "client_card" | "sticker" | "bot_response" = "text",
     poll?: ChatMessage['poll'],
     approval?: ChatMessage['approval'],
     richPreview?: ChatMessage['richPreview'],
@@ -260,10 +263,16 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
         <div className="flex items-center gap-3">
           <div 
             onClick={() => otherUserId && navigate(`/profile/${otherUserId}`)}
-            className={`w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center border border-primary-500/20 overflow-hidden ${otherUserId ? 'cursor-pointer hover:scale-105 transition-transform' : ''}`}
+            className={`w-10 h-10 rounded-xl flex items-center justify-center border overflow-hidden ${
+              chat?.type === 'channel'
+                ? 'bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 border-violet-500/20'
+                : 'bg-primary-500/10 border-primary-500/20'
+            } ${otherUserId ? 'cursor-pointer hover:scale-105 transition-transform' : ''}`}
           >
             {displayPhoto ? (
               <img src={displayPhoto} alt="" className="w-full h-full object-cover" />
+            ) : chat?.type === 'channel' ? (
+              <span className="text-xl">{chat.icon || '📢'}</span>
             ) : (
               <MessageSquare size={20} className="text-primary-500" />
             )}
@@ -293,6 +302,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
                        status === 'meeting' ? 'Em Reunião' :
                        'Offline'
                      ) :
+                     chat.type === 'channel' ? (chat.description || `${chat.members.length} membros • Canal ${chat.isPublic ? 'Público' : 'Privado'}`) :
                      `${chat.members.length} Membros`}
                   </p>
                 </div>

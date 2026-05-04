@@ -114,7 +114,7 @@ export function useChat(chatId: string | null) {
     attachments: string[] = [], 
     replyTo: ChatMessage['replyTo'] = null,
     members: string[] = [],
-    type: "text" | "poll" | "approval" | "rich_link" | "client_card" | "sticker" = "text",
+    type: "text" | "poll" | "approval" | "rich_link" | "client_card" | "sticker" | "bot_response" = "text",
     poll?: ChatMessage['poll'],
     approval?: ChatMessage['approval'],
     richPreview?: ChatMessage['richPreview'],
@@ -133,16 +133,20 @@ export function useChat(chatId: string | null) {
       if (type === 'poll') messageContent = `📊 Enquete: ${poll?.question}`;
       if (type === 'approval') messageContent = `📝 Pedido de Aprovação: ${approval?.question}`;
       if (type === 'client_card') messageContent = `📇 Ficha de Cliente: ${richPreview?.title || 'Cliente'}`;
+      if (type === 'bot_response') messageContent = text;
+
+      const isBot = type === 'bot_response';
 
       const messageData: any = {
         text: messageContent,
-        senderId: userProfile.uid,
-        senderName: userProfile.displayName || 'Membro',
-        senderPhotoURL: userProfile.photoURL || '',
+        senderId: isBot ? 'hubbot' : userProfile.uid,
+        senderName: isBot ? 'HubBot' : (userProfile.displayName || 'Membro'),
+        senderPhotoURL: isBot ? '' : (userProfile.photoURL || ''),
         attachments,
         mentions,
         replyTo,
         type,
+        ...(isBot && { isBot: true, botName: 'HubBot' }),
         createdAt: serverTimestamp()
       };
 

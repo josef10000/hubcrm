@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Plus, MessageCircle, User, Users, Star, Bookmark, Calendar, BellOff, Bell, Trash2, ShieldOff } from 'lucide-react';
+import { Search, Plus, MessageCircle, User, Users, Star, Bookmark, Calendar, BellOff, Bell, Trash2, ShieldOff, Hash, Compass } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
@@ -11,6 +11,8 @@ import CreateGroupModal from './CreateGroupModal';
 import NewChatModal from './NewChatModal';
 import UserStatusSelector from './UserStatusSelector';
 import { useBookmarks } from '../../hooks/useBookmarks';
+import CreateChannelModal from './CreateChannelModal';
+import ExploreChannelsModal from './ExploreChannelsModal';
 
 interface ChatSidebarProps {
   chats: Chat[];
@@ -25,17 +27,25 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
   const [searchTerm, setSearchTerm] = useState('');
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
   const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false);
-  const [activeTab, setActiveTab ] = useState<'chats' | 'saved'>('chats');
+  const [activeTab, setActiveTab ] = useState<'chats' | 'channels' | 'saved'>('chats');
   const [selectedCategory, setSelectedCategory] = useState<string>('todos');
   const { bookmarks, loading: bookmarksLoading, updateBookmark } = useBookmarks();
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, chatId: string } | null>(null);
   const { effectiveOrgId } = useCRM();
+  const [isChannelModalOpen, setIsChannelModalOpen] = useState(false);
+  const [isExploreOpen, setIsExploreOpen] = useState(false);
 
   const categories = ['todos', ...new Set(bookmarks.filter(b => b.category).map(b => b.category!))];
 
   const filteredChats = chats.filter(c => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase())
+    c.type !== 'channel' && c.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const filteredChannels = chats.filter(c => 
+    c.type === 'channel' && c.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'master';
 
   const handleToggleMute = async (chat: Chat) => {
     if (!userProfile?.uid || !effectiveOrgId) return;
@@ -112,6 +122,15 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
           Salvos
           {activeTab === 'saved' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-500 rounded-full" />}
         </button>
+        <button 
+          onClick={() => setActiveTab('channels')}
+          className={`pb-2 text-xs font-bold uppercase tracking-widest transition-all relative ${
+            activeTab === 'channels' ? 'text-violet-500' : 'text-gray-400 hover:text-gray-600'
+          }`}
+        >
+          Canais
+          {activeTab === 'channels' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-violet-500 rounded-full" />}
+        </button>
       </div>
 
       {/* Lista de Chats */}
@@ -143,6 +162,8 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
                 displayName = 'Meu Espaço (Você)';
                 displayPhoto = userProfile?.photoURL || '';
               } else if (chat.type === 'group') {
+                displayPhoto = chat.avatarUrl || '';
+              } else if (chat.type === 'channel') {
                 displayPhoto = chat.avatarUrl || '';
               }
               
@@ -269,6 +290,105 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
               );
             })
           )
+        ) : activeTab === 'channels' ? (
+          <div className="space-y-2 px-1">
+            {/* Ações do Canal */}
+            <div className="flex gap-2 mb-3">
+              {isAdmin && (
+                <button
+                  onClick={() => setIsChannelModalOpen(true)}
+                  className="flex-1 flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-violet-500/20 hover:scale-[1.02] active:scale-95 transition-all"
+                >
+                  <Plus size={14} />
+                  Criar Canal
+                </button>
+              )}
+              <button
+                onClick={() => setIsExploreOpen(true)}
+                className="flex-1 flex items-center justify-center gap-2 p-3 bg-white dark:bg-white/5 text-gray-700 dark:text-gray-300 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-gray-200 dark:border-white/10 hover:border-violet-500/30 hover:scale-[1.02] active:scale-95 transition-all"
+              >
+                <Compass size={14} />
+                Explorar
+              </button>
+            </div>
+
+            {filteredChannels.length === 0 ? (
+              <div className="p-8 text-center opacity-40">
+                <Hash size={32} className="mx-auto mb-2" />
+                <p className="text-xs font-medium">Nenhum canal encontrado</p>
+                <p className="text-[10px] mt-1">Explore para encontrar canais disponíveis</p>
+              </div>
+            ) : (
+              filteredChannels.map(channel => {
+                const isSelected = selectedId === channel.id;
+                const unread = channel.unreadCount?.[userProfile?.uid || ''] || 0;
+
+                return (
+                  <button
+                    key={channel.id}
+                    onClick={() => onSelect(channel.id)}
+                    className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all relative group ${
+                      isSelected 
+                        ? 'bg-violet-500 text-white shadow-xl shadow-violet-500/20 scale-[1.02]' 
+                        : 'hover:bg-white dark:hover:bg-white/5 text-gray-600 dark:text-gray-400'
+                    }`}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      setContextMenu({ x: e.clientX, y: e.clientY, chatId: channel.id });
+                    }}
+                  >
+                    {/* Avatar do Canal */}
+                    <div className="relative shrink-0">
+                      <div className={`w-10 h-10 rounded-2xl flex items-center justify-center border overflow-hidden ${
+                        isSelected ? 'bg-white/20 border-white/20' : 'bg-white dark:bg-white/10 border-gray-100 dark:border-white/10 shadow-sm'
+                      }`}>
+                        {channel.avatarUrl ? (
+                          <img src={channel.avatarUrl} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-xl">{channel.icon || '📢'}</span>
+                        )}
+                      </div>
+
+                      {/* Indicador de Silenciado */}
+                      {channel.muted?.[userProfile?.uid || ''] && (
+                        <div className={`absolute -top-1 -left-1 w-4 h-4 rounded-full flex items-center justify-center border-2 shadow-sm z-20 ${
+                          isSelected ? 'bg-white text-violet-500 border-violet-500' : 'bg-gray-400 text-white border-gray-50 dark:border-zinc-900'
+                        }`}>
+                          <BellOff size={8} />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Conteúdo */}
+                    <div className="flex-1 min-w-0 text-left">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className={`text-sm font-black tracking-tight truncate ${isSelected ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
+                          #{channel.name}
+                        </span>
+                        {channel.category && (
+                          <span className={`text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full ${
+                            isSelected ? 'bg-white/20 text-white' : 'bg-violet-500/10 text-violet-500'
+                          }`}>
+                            {channel.category}
+                          </span>
+                        )}
+                      </div>
+                      <p className={`text-[11px] truncate ${isSelected ? 'text-white/70' : 'text-gray-500'}`}>
+                        {channel.lastMessage ? channel.lastMessage.text : (channel.description || `${channel.members.length} membros`)}
+                      </p>
+                    </div>
+
+                    {/* Badges */}
+                    {unread > 0 && (
+                      <div className="bg-violet-500 text-white text-xs font-black px-1.5 py-0.5 rounded-md shadow-lg shadow-violet-500/20">
+                        {unread > 9 ? '9+' : unread}
+                      </div>
+                    )}
+                  </button>
+                );
+              })
+            )}
+          </div>
         ) : (
           <div className="space-y-1">
             {bookmarksLoading ? (
@@ -363,6 +483,19 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
         isOpen={isGroupModalOpen} 
         onClose={() => setIsGroupModalOpen(false)} 
         onSuccess={onSelect}
+      />
+
+      <CreateChannelModal
+        isOpen={isChannelModalOpen}
+        onClose={() => setIsChannelModalOpen(false)}
+        onSuccess={onSelect}
+      />
+
+      <ExploreChannelsModal
+        isOpen={isExploreOpen}
+        onClose={() => setIsExploreOpen(false)}
+        onJoin={onSelect}
+        currentChats={chats}
       />
 
       {/* Menu de Contexto */}

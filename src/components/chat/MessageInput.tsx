@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Paperclip, Smile, X, Loader2, Calendar, LayoutGrid, Image as ImageIcon, Clock } from 'lucide-react';
 import { parseMentions } from '../../helpers/chatHelpers';
+import { filterCommands, findCommand, BotCommand, BotContext } from '../../helpers/botCommands';
 import { useCRM } from '../../contexts/CRMContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { ChatMessage } from '../../types/chat.types';
 import MentionSuggestions from './MentionSuggestions';
+import SlashCommandSuggestions from './SlashCommandSuggestions';
 import { uploadImageToImgBB } from '../../lib/imgbb';
 import { toast } from 'sonner';
 import EmojiPicker from './EmojiPicker';
@@ -24,7 +27,7 @@ interface MessageInputProps {
     attachments: string[], 
     replyTo: ChatMessage['replyTo'] | null, 
     members: string[], 
-    type: "text" | "poll" | "approval" | "rich_link" | "client_card" | "sticker", 
+    type: "text" | "poll" | "approval" | "rich_link" | "client_card" | "sticker" | "bot_response", 
     poll?: ChatMessage['poll'],
     approval?: ChatMessage['approval'],
     richPreview?: ChatMessage['richPreview'],
@@ -54,8 +57,12 @@ export default function MessageInput({
   const [showMentions, setShowMentions] = useState(false);
   const [mentionQuery, setMentionQuery] = useState('');
   const [uploading, setUploading] = useState(false);
-  const { teamProfiles, orgRoles } = useCRM();
+  const { teamProfiles, orgRoles, effectiveOrgId } = useCRM();
+  const { userProfile } = useAuth();
   const [isEmojiOpen, setIsEmojiOpen] = useState(false);
+  const [showSlashCommands, setShowSlashCommands] = useState(false);
+  const [slashQuery, setSlashQuery] = useState('');
+  const [processingBot, setProcessingBot] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout|null>(null);
@@ -90,6 +97,35 @@ export default function MessageInput({
     setScheduledAt(null);
     onTyping(false);
     setShowMentions(false);
+    setShowSlashCommands(false);
+  };
+
+  const handleSlashCommand = async (cmd: BotCommand) => {
+    if (!effectiveOrgId || !userProfile?.uid) return;
+    setShowSlashCommands(false);
+    setProcessingBot(true);
+    setText('');
+
+    // Envia o comando como mensagem do usuário
+    onSend(cmd.name, [], [], null, members, 'text', undefined, undefined, undefined, parentMessageId, scheduledAt || undefined);
+
+    const ctx: BotContext = {
+      orgId: effectiveOrgId,
+      userId: userProfile.uid,
+      userName: userProfile.displayName || 'Membro',
+      chatId: '', // será preenchido pelo hook
+      members
+    };
+
+    try {
+      const response = await cmd.handler(ctx);
+      // Envia a resposta do bot
+      onSend(response, [], [], null, members, 'bot_response', undefined, undefined, undefined, parentMessageId);
+    } catch (error) {
+      toast.error('Erro ao executar comando do bot.');
+    } finally {
+      setProcessingBot(false);
+    }
   };
 
   const handleCreatePoll = (question: string, options: string[]) => {
@@ -174,6 +210,14 @@ export default function MessageInput({
       setShowMentions(false);
     }
 
+    // Lógica de Slash Commands
+    if (val.startsWith('/') && !val.includes(' ')) {
+      setShowSlashCommands(true);
+      setSlashQuery(val);
+    } else {
+      setShowSlashCommands(false);
+    }
+
     onTyping(true);
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
@@ -201,6 +245,7 @@ export default function MessageInput({
     }
     if (e.key === 'Escape') {
       setShowMentions(false);
+      setShowSlashCommands(false);
       setIsEmojiOpen(false);
     }
   };
@@ -319,6 +364,13 @@ export default function MessageInput({
                 roles={orgRoles.map(r => ({ id: r.id, name: r.name }))}
                 onSelect={handleMentionSelect} 
                 onClose={() => setShowMentions(false)} 
+              />
+            )}
+            {showSlashCommands && (
+              <SlashCommandSuggestions
+                commands={filterCommands(slashQuery)}
+                onSelect={handleSlashCommand}
+                query={slashQuery}
               />
             )}
             <textarea 

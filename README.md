@@ -238,4 +238,5 @@ Um registro do contínuo processo de amadurecimento e modernização do produto.
 - [x] **v5.9.1** — Group Mentions no Hub Chat (Integração com Cargos/Departamentos).
 - [x] **v5.9.2** — Group Avatars (ImgBB) & Flexible Group Creation (Sem membros obrigatórios).
 - [x] **v5.9.3** — Sistema de Controle de Notificações (Mute) & Menu de Contexto Premium no Chat.
+- [x] **v6.0.0** — HubBots (Comandos /) & Salas Temáticas (Canais Públicos/Privados) no Hub Chat.
 
