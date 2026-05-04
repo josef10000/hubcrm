@@ -105,19 +105,6 @@ export default function CanvasEditorView() {
         console.error('Hub Canvas: erro ao restaurar snapshot:', e);
         toast.error('Não foi possível restaurar o conteúdo anterior do quadro.');
       }
-    } else {
-      // É um canvas novo vazio. Verificar se há um template selecionado na URL
-      const params = new URLSearchParams(window.location.search);
-      const templateId = params.get('template');
-      if (templateId && templateId !== 'blank') {
-        import('../lib/canvasTemplates').then(({ applyTemplate }) => {
-          applyTemplate(newEditor, templateId as any);
-          
-          // Limpar a URL para não aplicar o template novamente se recarregar
-          const newUrl = window.location.pathname;
-          window.history.replaceState({}, '', newUrl);
-        });
-      }
     }
   }, []);
 

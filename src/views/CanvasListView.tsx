@@ -7,7 +7,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useDialog } from '../contexts/DialogContext';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CANVAS_TEMPLATES, CanvasTemplateId } from '../lib/canvasTemplates';
 
 export default function CanvasListView() {
   const [canvases, setCanvases] = useState<CanvasDocument[]>([]);
@@ -18,7 +17,6 @@ export default function CanvasListView() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newIsPublic, setNewIsPublic] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<CanvasTemplateId>('blank');
   const [isCreating, setIsCreating] = useState(false);
 
   const navigate = useNavigate();
@@ -65,10 +63,9 @@ export default function CanvasListView() {
 
       setShowCreateModal(false);
       setNewTitle('');
-      setSelectedTemplate('blank');
       setNewIsPublic(false);
 
-      navigate(`/canvas/${newId}?template=${selectedTemplate}`);
+      navigate(`/canvas/${newId}`);
     } catch (error) {
       console.error('Error creating canvas:', error);
       await alert({
@@ -231,30 +228,6 @@ export default function CanvasListView() {
                     className="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-gray-900 dark:text-white"
                     autoFocus
                   />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Template Inicial
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {CANVAS_TEMPLATES.map((tpl) => (
-                      <button
-                        key={tpl.id}
-                        onClick={() => setSelectedTemplate(tpl.id as CanvasTemplateId)}
-                        className={`p-3 text-left border rounded-lg transition-colors flex flex-col items-start ${
-                          selectedTemplate === tpl.id 
-                            ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 ring-1 ring-indigo-500' 
-                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                        }`}
-                      >
-                        <LayoutTemplate className={`mb-2 ${selectedTemplate === tpl.id ? 'text-indigo-500' : 'text-gray-400'}`} size={20} />
-                        <span className={`block text-sm font-medium ${selectedTemplate === tpl.id ? 'text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300'}`}>
-                          {tpl.name}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
                 </div>
 
                 <div className="flex items-center gap-2 pt-2">
