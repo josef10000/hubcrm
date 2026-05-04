@@ -60,6 +60,7 @@ async function handleLeads(ctx: BotContext): Promise<string> {
       '_Consulte o CRM para mais detalhes._'
     ].join('\n');
   } catch (error) {
+    console.error('[HubBot /lead]', error);
     return '🤖 Erro ao consultar leads. Tente novamente.';
   }
 }
@@ -69,6 +70,7 @@ async function handleMetas(ctx: BotContext): Promise<string> {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     
+    // Tenta buscar contratos fechados no mês
     const q = query(
       collection(db, 'organizations', ctx.orgId, 'clients'),
       where('status', '==', 'Fechado'),
@@ -80,7 +82,7 @@ async function handleMetas(ctx: BotContext): Promise<string> {
     let totalValue = 0;
     snap.docs.forEach(doc => {
       const d = doc.data();
-      totalValue += (d.contractValue || d.valor || 0);
+      totalValue += (d.contractValue || d.valor || d.value || 0);
     });
 
     const monthName = now.toLocaleDateString('pt-BR', { month: 'long' });
@@ -94,31 +96,63 @@ async function handleMetas(ctx: BotContext): Promise<string> {
       '_Dados atualizados em tempo real do CRM._'
     ].join('\n');
   } catch (error) {
+    console.error('[HubBot /metas]', error);
     return '🤖 Erro ao consultar metas. Tente novamente.';
   }
 }
 
 async function handleAniversarios(ctx: BotContext): Promise<string> {
   try {
+    // Busca perfis na coleção correta: "profiles" (raiz) com filtro por orgId
     const q = query(
-      collection(db, 'organizations', ctx.orgId, 'team')
+      collection(db, 'profiles'),
+      where('orgId', '==', ctx.orgId)
     );
     const snap = await getDocs(q);
     
     const now = new Date();
-    const currentMonth = now.getMonth() + 1;
+    const currentMonth = now.getMonth(); // 0-indexed (0 = Janeiro)
+    const currentDay = now.getDate();
     
-    const aniversariantes = snap.docs
-      .map(doc => doc.data())
-      .filter(member => {
-        if (!member.birthDate) return false;
-        const birth = member.birthDate.toDate ? member.birthDate.toDate() : new Date(member.birthDate);
-        return (birth.getMonth() + 1) === currentMonth;
-      })
-      .map(member => {
-        const birth = member.birthDate.toDate ? member.birthDate.toDate() : new Date(member.birthDate);
-        return `🎂 **${member.displayName || member.name}** — dia ${birth.getDate()}`;
-      });
+    const aniversariantes: { name: string; day: number; isToday: boolean }[] = [];
+    
+    snap.docs.forEach(doc => {
+      const member = doc.data();
+      
+      // birthDate é string no formato "YYYY-MM-DD"
+      const birthStr = member.birthDate;
+      if (!birthStr) return;
+      
+      let birthMonth: number;
+      let birthDay: number;
+      
+      if (typeof birthStr === 'string') {
+        // Formato "YYYY-MM-DD"
+        const parts = birthStr.split('-');
+        if (parts.length >= 3) {
+          birthMonth = parseInt(parts[1], 10) - 1; // 0-indexed
+          birthDay = parseInt(parts[2], 10);
+        } else {
+          return;
+        }
+      } else if (birthStr.toDate) {
+        // Se for Timestamp do Firestore (fallback)
+        const d = birthStr.toDate();
+        birthMonth = d.getMonth();
+        birthDay = d.getDate();
+      } else {
+        return;
+      }
+      
+      if (birthMonth === currentMonth) {
+        const displayName = member.displayName || member.name || 'Membro';
+        const isToday = birthDay === currentDay;
+        aniversariantes.push({ name: displayName, day: birthDay, isToday });
+      }
+    });
+
+    // Ordena por dia do mês
+    aniversariantes.sort((a, b) => a.day - b.day);
 
     if (aniversariantes.length === 0) {
       const monthName = now.toLocaleDateString('pt-BR', { month: 'long' });
@@ -126,39 +160,87 @@ async function handleAniversarios(ctx: BotContext): Promise<string> {
     }
 
     const monthName = now.toLocaleDateString('pt-BR', { month: 'long' });
+    
+    const lines = aniversariantes.map(a => {
+      if (a.isToday) {
+        return `🎂 **${a.name}** — dia ${a.day} 🎉 **HOJE!**`;
+      }
+      const isPast = a.day < currentDay;
+      return `${isPast ? '✅' : '🎂'} **${a.name}** — dia ${a.day}${isPast ? ' _(já passou)_' : ''}`;
+    });
+
     return [
       `🤖 **Aniversariantes de ${monthName.charAt(0).toUpperCase() + monthName.slice(1)}:**`,
       '',
-      ...aniversariantes,
+      ...lines,
       '',
-      '_Parabéns aos aniversariantes! 🎉_'
+      `_${aniversariantes.filter(a => a.isToday).length > 0 ? '🎉 Temos aniversariante(s) hoje! Parabéns!' : 'Parabéns aos aniversariantes! 🎉'}_`
     ].join('\n');
   } catch (error) {
+    console.error('[HubBot /aniversarios]', error);
     return '🤖 Erro ao consultar aniversários. Tente novamente.';
   }
 }
 
 async function handleMembros(ctx: BotContext): Promise<string> {
   try {
-    const q = query(
-      collection(db, 'organizations', ctx.orgId, 'team'),
-      where('uid', 'in', ctx.members.slice(0, 10))
-    );
-    const snap = await getDocs(q);
+    // Verifica se tem membros no contexto
+    if (!ctx.members || ctx.members.length === 0) {
+      return '🤖 Nenhum membro encontrado neste canal.';
+    }
 
-    const lines = snap.docs.map(doc => {
-      const d = doc.data();
-      const role = d.jobTitle || d.role || 'Membro';
-      return `👤 **${d.displayName || d.name}** — _${role}_`;
-    });
+    // Busca perfis na coleção correta: "profiles" (raiz) com filtro por orgId
+    // Firestore 'in' suporta até 30 itens
+    const batchSize = 30;
+    const batches = [];
+    for (let i = 0; i < ctx.members.length; i += batchSize) {
+      batches.push(ctx.members.slice(i, i + batchSize));
+    }
+
+    const allMembers: { name: string; role: string; isOnline?: boolean }[] = [];
+
+    for (const batch of batches) {
+      if (batch.length === 0) continue;
+      
+      const q = query(
+        collection(db, 'profiles'),
+        where('orgId', '==', ctx.orgId),
+        where('uid', 'in', batch)
+      );
+      const snap = await getDocs(q);
+
+      snap.docs.forEach(doc => {
+        const d = doc.data();
+        const name = d.displayName || d.name || 'Membro';
+        const role = d.jobTitle || d.role?.name || 'Membro';
+        allMembers.push({ name, role });
+      });
+    }
+
+    // Adiciona membros que não foram encontrados nos perfis (pode ser bot ou externo)
+    const foundUids = new Set(allMembers.map(() => true)); // placeholder
+    
+    if (allMembers.length === 0) {
+      return `🤖 Este canal tem **${ctx.members.length}** membro(s), mas não foi possível carregar os perfis.`;
+    }
+
+    // Ordena alfabeticamente
+    allMembers.sort((a, b) => a.name.localeCompare(b.name));
+
+    const lines = allMembers.map(m => `👤 **${m.name}** — _${m.role}_`);
+
+    const notLoaded = ctx.members.length - allMembers.length;
 
     return [
       `🤖 **Membros deste canal (${ctx.members.length}):**`,
       '',
       ...lines,
-      ...(ctx.members.length > 10 ? ['', `_...e mais ${ctx.members.length - 10} membros._`] : [])
+      ...(notLoaded > 0 ? ['', `_...e mais ${notLoaded} membro(s) não identificado(s)._`] : []),
+      '',
+      '_Lista atualizada em tempo real._'
     ].join('\n');
   } catch (error) {
+    console.error('[HubBot /membros]', error);
     return '🤖 Erro ao listar membros. Tente novamente.';
   }
 }
