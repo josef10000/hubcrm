@@ -250,14 +250,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (userProfile?.birthDate) {
       const today = new Date();
-      const birthDate = new Date(userProfile.birthDate + 'T00:00:00');
+      const dateStr = userProfile.birthDate;
       
-      const isToday = 
-        today.getDate() === birthDate.getDate() && 
-        today.getMonth() === birthDate.getMonth();
+      let day: number = 0;
+      let month: number = 0;
+
+      if (dateStr.includes('/')) {
+        const parts = dateStr.split('/');
+        if (parts.length >= 2) {
+          day = parseInt(parts[0], 10);
+          month = parseInt(parts[1], 10) - 1;
+        }
+      } else if (dateStr.includes('-')) {
+        const parts = dateStr.split('-');
+        if (parts.length >= 3) {
+          // YYYY-MM-DD
+          day = parseInt(parts[2], 10);
+          month = parseInt(parts[1], 10) - 1;
+        } else if (parts.length === 2) {
+          // MM-DD
+          day = parseInt(parts[1], 10);
+          month = parseInt(parts[0], 10) - 1;
+        }
+      }
+
+      const isBday = day !== 0 && today.getDate() === day && today.getMonth() === month;
       
-      setIsBirthday(isToday);
-      console.log(`[Auth] Verificação de aniversário: ${isToday ? '🎉 Hoje é seu dia!' : 'Não é hoje.'}`);
+      setIsBirthday(isBday);
+      console.log(`[Auth] Verificação de aniversário (${dateStr}): ${isBday ? '🎉 Hoje é seu dia!' : 'Não é hoje.'}`);
     } else {
       setIsBirthday(false);
     }

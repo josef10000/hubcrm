@@ -1,11 +1,39 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Tldraw, Editor } from 'tldraw';
+import { Tldraw, Editor, useEditor } from 'tldraw';
 import 'tldraw/tldraw.css';
 import { canvasService, CanvasDocument } from '../services/canvasService';
-import { ArrowLeft, MonitorPlay, Save } from 'lucide-react';
+import { ArrowLeft, MonitorPlay, Save, Building2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
+import { CRMCardShapeUtil, CRMCardTool } from '../components/canvas/CRMCardShape';
+
+import { useFirestoreSync } from '../hooks/useFirestoreSync';
+
+const customShapeUtils = [CRMCardShapeUtil];
+const customTools = [CRMCardTool];
+
+// Componente para adicionar o botão do Card na UI do Tldraw
+function CustomCanvasUI() {
+  const editor = useEditor();
+  
+  return (
+    <div className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-800 px-4 py-2 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 flex items-center gap-4 pointer-events-auto z-[300]">
+      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Ferramentas CRM:</span>
+      <button 
+        onClick={() => editor.setCurrentTool('crm-card')}
+        className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+          editor.getCurrentToolId() === 'crm-card' 
+            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300' 
+            : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+        }`}
+      >
+        <Building2 size={16} />
+        Card CRM
+      </button>
+    </div>
+  );
+}
 
 /**
  * Verifica se um objeto JSON parseado é um snapshot tldraw válido.
@@ -14,7 +42,6 @@ import { toast } from 'sonner';
 function isValidTldrawSnapshot(obj: unknown): boolean {
   if (!obj || typeof obj !== 'object') return false;
   const snap = obj as Record<string, unknown>;
-  // O snapshot deve ter a key 'store' e 'schema'
   if (!snap.store || typeof snap.store !== 'object') return false;
   if (!snap.schema || typeof snap.schema !== 'object') return false;
   return Object.keys(snap.store).length > 0;
@@ -31,28 +58,19 @@ export default function CanvasEditorView() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [editor, setEditor] = useState<Editor | null>(null);
   
   const containerRef = useRef<HTMLDivElement>(null);
-  const editorRef = useRef<Editor | null>(null);
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  // Ref para manter o document atualizado sem depender de re-render do useCallback
   const canvasDocRef = useRef<string | null>(null);
+
+  // Hook para Multiplayer via Firestore
+  const isSynced = useFirestoreSync(editor, orgId, id);
 
   useEffect(() => {
     if (id && orgId) {
       loadCanvas(orgId, id);
     }
   }, [id, orgId]);
-
-  // Cleanup: garantir que o debounce é cancelado ao desmontar o componente
-  useEffect(() => {
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-        saveTimeoutRef.current = null;
-      }
-    };
-  }, []);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -65,7 +83,6 @@ export default function CanvasEditorView() {
     };
   }, []);
 
-  // Atualizar a ref sempre que o canvas mudar
   useEffect(() => {
     canvasDocRef.current = canvas?.document ?? null;
   }, [canvas?.document]);
@@ -87,17 +104,17 @@ export default function CanvasEditorView() {
     }
   };
 
-  const handleMount = useCallback((editor: Editor) => {
-    editorRef.current = editor;
+  const handleMount = useCallback((newEditor: Editor) => {
+    setEditor(newEditor);
     
-    // Carregar dados iniciais do snapshot salvo
+    // Carregar dados iniciais do snapshot salvo (fallback para quadros antigos)
     const docString = canvasDocRef.current;
     if (docString && docString !== '{}') {
       try {
         const parsed = JSON.parse(docString);
         
         if (isValidTldrawSnapshot(parsed)) {
-          editor.store.loadSnapshot(parsed as any);
+          newEditor.store.loadSnapshot(parsed as any);
         } else {
           console.warn('Hub Canvas: snapshot salvo não é válido, iniciando canvas limpo.', parsed);
         }
@@ -105,35 +122,21 @@ export default function CanvasEditorView() {
         console.error('Hub Canvas: erro ao restaurar snapshot:', e);
         toast.error('Não foi possível restaurar o conteúdo anterior do quadro.');
       }
+    } else {
+      // É um canvas novo vazio. Verificar se há um template selecionado na URL
+      const params = new URLSearchParams(window.location.search);
+      const templateId = params.get('template');
+      if (templateId && templateId !== 'blank') {
+        import('../lib/canvasTemplates').then(({ applyTemplate }) => {
+          applyTemplate(newEditor, templateId as any);
+          
+          // Limpar a URL para não aplicar o template novamente se recarregar
+          const newUrl = window.location.pathname;
+          window.history.replaceState({}, '', newUrl);
+        });
+      }
     }
-
-    // Listen for changes and auto-save
-    editor.store.listen(
-      () => {
-        if (saveTimeoutRef.current) {
-          clearTimeout(saveTimeoutRef.current);
-        }
-        
-        setSaving(true);
-        saveTimeoutRef.current = setTimeout(async () => {
-          try {
-            const snapshot = editor.store.getSnapshot();
-            const json = JSON.stringify(snapshot);
-            
-            if (id && orgId) {
-              await canvasService.updateCanvas(orgId, id, { document: json });
-            }
-          } catch (error) {
-            console.error('Error auto-saving canvas:', error);
-            toast.error('Erro ao salvar automaticamente o quadro.');
-          } finally {
-            setSaving(false);
-          }
-        }, 2000); // Debounce 2 seconds
-      },
-      { source: 'user', scope: 'document' } // Only trigger on user edits, not remote or state changes
-    );
-  }, [id, orgId]);
+  }, []);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -208,7 +211,11 @@ export default function CanvasEditorView() {
         <Tldraw 
           onMount={handleMount}
           inferDarkMode
-        />
+          shapeUtils={customShapeUtils}
+          tools={customTools}
+        >
+          <CustomCanvasUI />
+        </Tldraw>
         
         {/* Floating exit fullscreen button when in fullscreen */}
         {isFullscreen && (

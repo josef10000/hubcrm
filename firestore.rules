@@ -57,6 +57,10 @@ service cloud.firestore {
       match /canvases/{canvasId} {
         allow read: if isOwnerEmail() || belongsToOrg(orgId);
         allow write: if isOwnerEmail() || belongsToOrg(orgId);
+        
+        match /records/{recordId} {
+          allow read, write: if isOwnerEmail() || belongsToOrg(orgId);
+        }
       }
 
       // 🟢 HUB CHAT — Regras de Colaboração em Tempo Real

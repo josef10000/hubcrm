@@ -114,7 +114,9 @@ export default function MessageInput({
       userId: userProfile.uid,
       userName: userProfile.displayName || 'Membro',
       chatId: '', // será preenchido pelo hook
-      members
+      members,
+      teamProfiles,
+      clients
     };
 
     try {
