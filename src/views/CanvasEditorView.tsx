@@ -9,13 +9,14 @@ import { toast } from 'sonner';
 
 /**
  * Verifica se um objeto JSON parseado é um snapshot tldraw válido.
- * O snapshot da tldraw v3 deve conter pelo menos a key 'store'.
+ * O snapshot da tldraw v3 deve conter pelo menos a key 'store' e 'schema'.
  */
-function isValidTldrawSnapshot(obj: unknown): obj is { store: Record<string, unknown> } {
+function isValidTldrawSnapshot(obj: unknown): boolean {
   if (!obj || typeof obj !== 'object') return false;
   const snap = obj as Record<string, unknown>;
-  // O snapshot deve ter a key 'store' que é um objeto não-vazio
+  // O snapshot deve ter a key 'store' e 'schema'
   if (!snap.store || typeof snap.store !== 'object') return false;
+  if (!snap.schema || typeof snap.schema !== 'object') return false;
   return Object.keys(snap.store).length > 0;
 }
 
@@ -96,7 +97,7 @@ export default function CanvasEditorView() {
         const parsed = JSON.parse(docString);
         
         if (isValidTldrawSnapshot(parsed)) {
-          editor.store.loadSnapshot(parsed);
+          editor.store.loadSnapshot(parsed as any);
         } else {
           console.warn('Hub Canvas: snapshot salvo não é válido, iniciando canvas limpo.', parsed);
         }
