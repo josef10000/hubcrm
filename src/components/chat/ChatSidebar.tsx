@@ -45,7 +45,7 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
     c.type === 'channel' && c.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'master';
+  const isAdmin = userProfile?.role?.id === 'ROLE_ADMIN' || userProfile?.role?.level === 0;
 
   const handleToggleMute = async (chat: Chat) => {
     if (!userProfile?.uid || !effectiveOrgId) return;
