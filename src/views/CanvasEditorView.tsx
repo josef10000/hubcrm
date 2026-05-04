@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Tldraw, Editor, useEditor } from 'tldraw';
+import { Tldraw, Editor, useEditor, AssetRecordType } from 'tldraw';
 import 'tldraw/tldraw.css';
 import { canvasService, CanvasDocument } from '../services/canvasService';
 import { ArrowLeft, MonitorPlay, Save, Building2 } from 'lucide-react';
@@ -91,6 +91,8 @@ export default function CanvasEditorView() {
         const url = await uploadImageToImgBB(file);
         if (url) {
           return {
+            id: (info as any).assetId ?? AssetRecordType.createId(),
+            typeName: 'asset',
             type: 'image',
             props: {
               src: url,
@@ -99,7 +101,8 @@ export default function CanvasEditorView() {
               isAnimated: false,
               mimeType: file.type,
               name: file.name
-            }
+            },
+            meta: {}
           };
         }
         return null;
