@@ -81,6 +81,31 @@ export default function CanvasEditorView() {
   const handleMount = useCallback((newEditor: Editor) => {
     setEditor(newEditor);
     
+    // Handler para upload de imagens via drag & drop / paste
+    newEditor.registerExternalAssetHandler('image', async ({ file }) => {
+      try {
+        const { uploadImageToImgBB } = await import('../lib/imgbb');
+        const url = await uploadImageToImgBB(file);
+        if (url) {
+          return {
+            type: 'image',
+            props: {
+              src: url,
+              w: 500,
+              h: 500,
+              isAnimated: false,
+              mimeType: file.type,
+              name: file.name
+            }
+          };
+        }
+        return null;
+      } catch (e) {
+        console.error("Hub Canvas: Erro ao subir imagem:", e);
+        return null;
+      }
+    });
+    
     // Carregar dados iniciais do snapshot salvo (fallback para quadros antigos)
     const docString = canvasDocRef.current;
     if (docString && docString !== '{}') {
@@ -181,24 +206,6 @@ export default function CanvasEditorView() {
         <Tldraw 
           onMount={handleMount}
           inferDarkMode
-          assets={{
-            async upload(asset, file) {
-              try {
-                const { uploadImageToImgBB } = await import('../lib/imgbb');
-                const url = await uploadImageToImgBB(file);
-                if (url) {
-                  return { src: url };
-                }
-                throw new Error("Upload failed");
-              } catch (e) {
-                console.error("Erro ao subir imagem pro imgBB:", e);
-                throw e;
-              }
-            },
-            resolve(asset) {
-              return asset.props.src;
-            }
-          }}
         />
         
         {/* Floating exit fullscreen button when in fullscreen */}
