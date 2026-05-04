@@ -19,7 +19,7 @@ interface ChatSidebarProps {
   chats: Chat[];
   loading: boolean;
   selectedId: string | null;
-  onSelect: (id: string) => void;
+  onSelect: (id: string | null) => void;
 }
 
 export default function ChatSidebar({ chats, loading, selectedId, onSelect }: ChatSidebarProps) {
@@ -33,7 +33,6 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
   const [selectedCategory, setSelectedCategory] = useState<string>('todos');
   const { bookmarks, loading: bookmarksLoading, updateBookmark } = useBookmarks();
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, chatId: string } | null>(null);
-  const { effectiveOrgId } = useCRM();
   const [isChannelModalOpen, setIsChannelModalOpen] = useState(false);
   const [isExploreOpen, setIsExploreOpen] = useState(false);
 
@@ -120,7 +119,9 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
     });
     if (!confirmed) return;
 
-    try {
+      // Deselecionar IMEDIATAMENTE para evitar race conditions na UI
+      onSelect(null);
+
       // 1. Apagar todas as mensagens primeiro
       const messagesRef = collection(db, 'organizations', effectiveOrgId, 'chats', chat.id, 'messages');
       const snap = await getDocs(messagesRef);
@@ -144,7 +145,6 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
       await deleteDoc(doc(db, 'organizations', effectiveOrgId, 'chats', chat.id));
 
       toast.success(`${label.charAt(0).toUpperCase() + label.slice(1)} "${chat.name}" excluído.`);
-      onSelect(''); // Deseleciona
     } catch (error) {
       console.error('Erro ao excluir chat:', error);
       toast.error('Erro ao excluir conversa.');
