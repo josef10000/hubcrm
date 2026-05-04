@@ -12,65 +12,19 @@ export function applyTemplate(editor: Editor, templateId: CanvasTemplateId) {
   if (templateId === 'blank') return;
 
   if (templateId === 'swot') {
-    const sId = createShapeId();
-    const wId = createShapeId();
-    const oId = createShapeId();
-    const tId = createShapeId();
-
     try {
       editor.createShapes([
-        {
-          id: sId,
-          type: 'geo',
-          x: 100,
-          y: 100,
-          props: {
-            geo: 'rectangle',
-            w: 300,
-            h: 200,
-            color: 'light-green',
-            text: 'FORÇAS\n\n-',
-          }
-        },
-        {
-          id: wId,
-          type: 'geo',
-          x: 420,
-          y: 100,
-          props: {
-            geo: 'rectangle',
-            w: 300,
-            h: 200,
-            color: 'light-red',
-            text: 'FRAQUEZAS\n\n-',
-          }
-        },
-        {
-          id: oId,
-          type: 'geo',
-          x: 100,
-          y: 320,
-          props: {
-            geo: 'rectangle',
-            w: 300,
-            h: 200,
-            color: 'light-blue',
-            text: 'OPORTUNIDADES\n\n-',
-          }
-        },
-        {
-          id: tId,
-          type: 'geo',
-          x: 420,
-          y: 320,
-          props: {
-            geo: 'rectangle',
-            w: 300,
-            h: 200,
-            color: 'yellow',
-            text: 'AMEAÇAS\n\n-',
-          }
-        }
+        { id: createShapeId(), type: 'geo', x: 100, y: 100, props: { geo: 'rectangle', w: 300, h: 200, color: 'light-green' } },
+        { id: createShapeId(), type: 'text', x: 120, y: 120, props: { text: 'FORÇAS' } },
+        
+        { id: createShapeId(), type: 'geo', x: 420, y: 100, props: { geo: 'rectangle', w: 300, h: 200, color: 'light-red' } },
+        { id: createShapeId(), type: 'text', x: 440, y: 120, props: { text: 'FRAQUEZAS' } },
+        
+        { id: createShapeId(), type: 'geo', x: 100, y: 320, props: { geo: 'rectangle', w: 300, h: 200, color: 'light-blue' } },
+        { id: createShapeId(), type: 'text', x: 120, y: 340, props: { text: 'OPORTUNIDADES' } },
+        
+        { id: createShapeId(), type: 'geo', x: 420, y: 320, props: { geo: 'rectangle', w: 300, h: 200, color: 'yellow' } },
+        { id: createShapeId(), type: 'text', x: 440, y: 340, props: { text: 'AMEAÇAS' } }
       ]);
     } catch (e) {
       console.error("Hub Canvas: Erro ao aplicar template SWOT", e);
@@ -80,45 +34,14 @@ export function applyTemplate(editor: Editor, templateId: CanvasTemplateId) {
   if (templateId === 'kanban') {
     try {
       editor.createShapes([
-        {
-          id: createShapeId(),
-          type: 'geo',
-          x: 100,
-          y: 100,
-          props: {
-            geo: 'rectangle',
-            w: 250,
-            h: 500,
-            color: 'black',
-            text: 'TODO',
-          }
-        },
-        {
-          id: createShapeId(),
-          type: 'geo',
-          x: 370,
-          y: 100,
-          props: {
-            geo: 'rectangle',
-            w: 250,
-            h: 500,
-            color: 'blue',
-            text: 'DOING',
-          }
-        },
-        {
-          id: createShapeId(),
-          type: 'geo',
-          x: 640,
-          y: 100,
-          props: {
-            geo: 'rectangle',
-            w: 250,
-            h: 500,
-            color: 'green',
-            text: 'DONE',
-          }
-        }
+        { id: createShapeId(), type: 'geo', x: 100, y: 100, props: { geo: 'rectangle', w: 250, h: 500, color: 'black' } },
+        { id: createShapeId(), type: 'text', x: 180, y: 120, props: { text: 'TODO' } },
+        
+        { id: createShapeId(), type: 'geo', x: 370, y: 100, props: { geo: 'rectangle', w: 250, h: 500, color: 'blue' } },
+        { id: createShapeId(), type: 'text', x: 445, y: 120, props: { text: 'DOING' } },
+        
+        { id: createShapeId(), type: 'geo', x: 640, y: 100, props: { geo: 'rectangle', w: 250, h: 500, color: 'green' } },
+        { id: createShapeId(), type: 'text', x: 720, y: 120, props: { text: 'DONE' } }
       ]);
     } catch (e) {
       console.error("Hub Canvas: Erro ao aplicar template Kanban", e);
