@@ -144,19 +144,42 @@ export const handleAjuda = async () => {
          `Dica: Estou sempre de olho para te manter informado! 🚀`;
 };
 
-export const processBotCommand = async (command: string, ctx: any) => {
-  const cmd = command.toLowerCase().trim();
+export interface BotContext {
+  orgId: string;
+  userId: string;
+  userName: string;
+  chatId: string;
+  members: string[];
+  teamProfiles: any[];
+  clients: any[];
+}
 
-  switch (cmd) {
-    case '/aniversarios':
-      return await handleAniversarios(ctx);
-    case '/membros':
-      return await handleMembros(ctx);
-    case '/metas':
-      return await handleMetas(ctx);
-    case '/ajuda':
-      return await handleAjuda();
-    default:
-      return null;
+export interface BotCommand {
+  name: string;
+  description: string;
+  handler: (ctx: BotContext) => Promise<string | null>;
+}
+
+export const availableCommands: BotCommand[] = [
+  { name: '/aniversarios', description: 'Veja aniversariantes do dia', handler: handleAniversarios },
+  { name: '/membros', description: 'Lista os participantes ativos', handler: handleMembros },
+  { name: '/metas', description: 'Acompanhe o desempenho de faturamento', handler: handleMetas },
+  { name: '/ajuda', description: 'Mostra esta mensagem de auxílio', handler: handleAjuda },
+];
+
+export const filterCommands = (query: string): BotCommand[] => {
+  const q = query.toLowerCase().trim();
+  return availableCommands.filter(cmd => cmd.name.startsWith(q));
+};
+
+export const findCommand = (name: string): BotCommand | undefined => {
+  return availableCommands.find(cmd => cmd.name === name);
+};
+
+export const processBotCommand = async (command: string, ctx: any) => {
+  const cmd = findCommand(command.toLowerCase().trim());
+  if (cmd) {
+    return await cmd.handler(ctx);
   }
+  return null;
 };

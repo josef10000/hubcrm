@@ -57,7 +57,7 @@ export default function MessageInput({
   const [showMentions, setShowMentions] = useState(false);
   const [mentionQuery, setMentionQuery] = useState('');
   const [uploading, setUploading] = useState(false);
-  const { teamProfiles, orgRoles, effectiveOrgId } = useCRM();
+  const { teamProfiles, orgRoles, effectiveOrgId, clients } = useCRM();
   const { userProfile } = useAuth();
   const [isEmojiOpen, setIsEmojiOpen] = useState(false);
   const [showSlashCommands, setShowSlashCommands] = useState(false);
