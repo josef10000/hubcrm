@@ -157,6 +157,7 @@ export interface BotContext {
 export interface BotCommand {
   name: string;
   description: string;
+  icon?: any;
   handler: (ctx: BotContext) => Promise<string | null>;
 }
 
