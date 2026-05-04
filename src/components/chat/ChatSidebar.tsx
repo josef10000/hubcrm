@@ -119,35 +119,44 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
     });
     if (!confirmed) return;
     try {
-      // Deselecionar IMEDIATAMENTE para evitar race conditions na UI
+      // 1. Deselecionar IMEDIATAMENTE para evitar race conditions na UI
       onSelect(null);
 
-      // 1. Apagar todas as mensagens primeiro
-      const messagesRef = collection(db, 'organizations', effectiveOrgId, 'chats', chat.id, 'messages');
-      const snap = await getDocs(messagesRef);
-      const batchSize = 450;
-      let batch = writeBatch(db);
-      let count = 0;
+      // 2. Apagar o documento do chat primeiro para remover da barra lateral instantaneamente
+      const chatRef = doc(db, 'organizations', effectiveOrgId, 'chats', chat.id);
+      await deleteDoc(chatRef);
+      
+      // 3. Tentar apagar as mensagens em segundo plano (background cleanup)
+      // Se falhar aqui, o chat já foi removido da UI, então o usuário não verá erro crítico
+      try {
+        const messagesRef = collection(db, 'organizations', effectiveOrgId, 'chats', chat.id, 'messages');
+        const snap = await getDocs(messagesRef);
+        
+        if (!snap.empty) {
+          const batchSize = 450;
+          let batch = writeBatch(db);
+          let count = 0;
 
-      for (const docSnap of snap.docs) {
-        batch.delete(docSnap.ref);
-        count++;
-        if (count % batchSize === 0) {
-          await batch.commit();
-          batch = writeBatch(db);
+          for (const docSnap of snap.docs) {
+            batch.delete(docSnap.ref);
+            count++;
+            if (count % batchSize === 0) {
+              await batch.commit();
+              batch = writeBatch(db);
+            }
+          }
+          if (count % batchSize !== 0) {
+            await batch.commit();
+          }
         }
+      } catch (msgError) {
+        console.warn('Aviso: Algumas mensagens não puderam ser limpas, mas o chat foi excluído:', msgError);
       }
-      if (count % batchSize !== 0) {
-        await batch.commit();
-      }
-
-      // 2. Apagar o documento do chat
-      await deleteDoc(doc(db, 'organizations', effectiveOrgId, 'chats', chat.id));
 
       toast.success(`${label.charAt(0).toUpperCase() + label.slice(1)} "${chat.name}" excluído.`);
     } catch (error) {
       console.error('Erro ao excluir chat:', error);
-      toast.error('Erro ao excluir conversa.');
+      toast.error('Erro ao excluir conversa. Verifique suas permissões.');
     }
     setContextMenu(null);
   };
