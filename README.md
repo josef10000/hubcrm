@@ -1,4 +1,4 @@
-# 🔐 Hub Central — Intranet Corporativa v6.0.3
+# 🔐 Hub Central — Intranet Corporativa v6.0.4
 
 > [!CAUTION]
 > **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
@@ -242,3 +242,4 @@ Um registro do contínuo processo de amadurecimento e modernização do produto.
 - [x] **v6.0.1** — Estabilização do Hub Canvas (Persistência ImgBB/Firestore) & Migração Global para Custom Dialogs.
 - [x] **v6.0.2** — Estabilização do Hub Chat: Correção crítica na exclusão do último canal e padronização global de diálogos (Glassmorphism).
 - [x] **v6.0.3** — Hotfix Hub Chat: Correção de erro de sintaxe no `ChatSidebar.tsx` que impedia o build.
+- [x] **v6.0.4** — Resiliência no Hub Chat: Refatoração da exclusão para priorizar o documento principal, mitigando erros de permissão em subcoleções.
