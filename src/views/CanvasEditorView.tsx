@@ -213,18 +213,20 @@ export default function CanvasEditorView() {
           inferDarkMode
           shapeUtils={customShapeUtils}
           tools={customTools}
-          onAssetCreate={async (app, file, info) => {
-            if (file) {
+          assets={{
+            async upload(asset, file) {
               try {
-                // importar de imgbb inline para evitar dependência global se não estiver no topo
                 const { uploadImageToImgBB } = await import('../lib/imgbb');
                 const url = await uploadImageToImgBB(file);
                 if (url) return url;
               } catch (e) {
                 console.error("Erro ao subir imagem pro imgBB:", e);
               }
+              return false; // Retorna false se falhar
+            },
+            resolve(asset) {
+              return asset.props.src;
             }
-            return false;
           }}
         >
           <CustomCanvasUI />
