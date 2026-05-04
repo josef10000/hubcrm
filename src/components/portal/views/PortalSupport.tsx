@@ -223,15 +223,18 @@ export default function PortalSupport({ client }: PortalSupportProps) {
         </div>
       </div>
 
-      {/* New Ticket Modal */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+            <div 
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm" 
+              onClick={() => setIsModalOpen(false)} 
+            />
             <motion.div 
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-[#0f0f0f] border border-white/10 w-full max-w-xl rounded-[3rem] shadow-2xl overflow-hidden"
+              className="relative bg-[#0f0f0f] border border-white/10 w-full max-w-xl rounded-[3rem] shadow-2xl overflow-hidden"
             >
               <div className="px-8 py-6 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
                 <h3 className="text-xl font-bold text-white flex items-center gap-3">
@@ -349,12 +352,16 @@ export default function PortalSupport({ client }: PortalSupportProps) {
       {/* Ticket Details Modal */}
       <AnimatePresence>
         {selectedTicket && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+            <div 
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm" 
+              onClick={() => setSelectedTicket(null)} 
+            />
             <motion.div 
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-[#0f0f0f] border border-white/10 w-full max-w-2xl rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+              className="relative bg-[#0f0f0f] border border-white/10 w-full max-w-2xl rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
             >
               <div className="px-8 py-6 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
                 <div>

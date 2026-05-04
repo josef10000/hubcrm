@@ -519,8 +519,18 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
     </div>
 
       {/* Sidebar de Mídia Compartilhada */}
-      {isMediaOpen && (
-        <div className="w-80 border-l border-gray-100 dark:border-white/10 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-xl animate-in slide-in-from-right duration-300 flex flex-col h-full">
+      <AnimatePresence>
+        {isMediaOpen && (
+          <>
+            {/* Backdrop para mobile (clique fora para fechar) */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMediaOpen(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+            />
+            <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-80 lg:relative lg:inset-auto lg:z-0 border-l border-gray-100 dark:border-white/10 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-xl animate-in slide-in-from-right duration-300 flex flex-col h-full">
           <div className="p-4 border-b border-gray-100 dark:border-white/10 flex justify-between items-center bg-white/10">
             <h4 className="text-sm font-black uppercase tracking-widest text-gray-900 dark:text-white">Mídia & Arquivos</h4>
             <button onClick={() => setIsMediaOpen(false)} className="p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded-full transition-colors">
@@ -552,7 +562,9 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
             )}
           </div>
         </div>
-      )}
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Lightbox de Imagem */}
       <AnimatePresence>
@@ -569,11 +581,21 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
       {/* Sidebar de Threads */}
       <AnimatePresence>
         {activeThread && (
-          <ThreadSidebar 
-            parentMessage={activeThread} 
-            chat={chat} 
-            onClose={() => setActiveThread(null)} 
-          />
+          <>
+            {/* Backdrop para mobile (clique fora para fechar) */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setActiveThread(null)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+            />
+            <ThreadSidebar 
+              parentMessage={activeThread} 
+              chat={chat} 
+              onClose={() => setActiveThread(null)} 
+            />
+          </>
         )}
       </AnimatePresence>
     </>

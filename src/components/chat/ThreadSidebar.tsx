@@ -61,7 +61,7 @@ export default function ThreadSidebar({ parentMessage, chat, onClose }: ThreadSi
   };
 
   return (
-    <div className="w-[400px] border-l border-gray-100 dark:border-white/10 bg-white dark:bg-zinc-950 flex flex-col h-full shadow-2xl animate-in slide-in-from-right duration-300">
+    <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[400px] lg:relative lg:inset-auto lg:z-0 border-l border-gray-100 dark:border-white/10 bg-white dark:bg-zinc-950 flex flex-col h-full shadow-2xl animate-in slide-in-from-right duration-300">
       {/* Header */}
       <div className="p-4 border-b border-gray-100 dark:border-white/10 flex justify-between items-center bg-gray-50/50 dark:bg-white/5">
         <div className="flex items-center gap-2">
