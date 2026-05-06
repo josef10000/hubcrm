@@ -9,7 +9,7 @@ A plataforma Hub Central é o motor de crescimento da Hub Symples. Nossa intrane
 ---
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-6.0.7-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
+  <img src="https://img.shields.io/badge/Version-6.0.8-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
   <img src="https://img.shields.io/badge/Status-Audited_&_Stable-3b82f6?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
   <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
   <img src="https://img.shields.io/badge/License-Proprietary-3b82f6?style=for-the-badge&labelColor=111111" alt="License" />
@@ -26,9 +26,9 @@ A plataforma Hub Central é o motor de crescimento da Hub Symples. Nossa intrane
 </p>
 
 <div align="center">
-  <h2>✨ Destaque da Versão v6.0.7</h2>
-  <p><strong>Quick View Sidebar & Floating UI</strong></p>
-  <p>Implementação do sistema de navegação por menus flutuantes. Os pilares funcionam como gatilhos que abrem painéis laterais em Glassmorphism ao passar o mouse, otimizando o espaço de trabalho.</p>
+  <h2>✨ Destaque da Versão v6.0.8</h2>
+  <p><strong>Dual-Layer Navigation (Official Interface)</strong></p>
+  <p>Após testes A/B de interface, a navegação em duas camadas (Pilar + Itens) foi consolidada como o padrão oficial do Hub Central por sua superioridade em organização e escalabilidade.</p>
 </div>
 
 <br />
