@@ -9,7 +9,7 @@ A plataforma Hub Central é o motor de crescimento da Hub Symples. Nossa intrane
 ---
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-6.0.5-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
+  <img src="https://img.shields.io/badge/Version-6.0.6-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
   <img src="https://img.shields.io/badge/Status-Audited_&_Stable-3b82f6?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
   <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
   <img src="https://img.shields.io/badge/License-Proprietary-3b82f6?style=for-the-badge&labelColor=111111" alt="License" />
@@ -26,9 +26,9 @@ A plataforma Hub Central é o motor de crescimento da Hub Symples. Nossa intrane
 </p>
 
 <div align="center">
-  <h2>✨ Destaque da Versão v6.0.5</h2>
-  <p><strong>Sidebar v4.0 & Personal Productivity</strong></p>
-  <p>Implementação da nova barra lateral em duas camadas com ícones de pilares, sistema de favoritos (pins) para produtividade individual e indicadores inteligentes de atividade.</p>
+  <h2>✨ Destaque da Versão v6.0.6</h2>
+  <p><strong>Accordion Sidebar & Focus UI</strong></p>
+  <p>Transição para o sistema de navegação em Acordeon, permitindo uma interface mais limpa e focada. Inclui animações de expansão suaves e persistência de estado.</p>
 </div>
 
 <br />
