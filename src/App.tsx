@@ -27,7 +27,8 @@ import ConfirmationModal from './components/ConfirmationModal';
 import OfferModal from './components/OfferModal';
 import ClientModal from './components/ClientModal';
 import ReferralsView from './components/ReferralsView';
-import NavItem from './components/NavItem';
+import Sidebar from './components/Sidebar';
+import { navGroups } from './constants/navigation';
 
 import DashboardView from './views/DashboardView';
 import AnalyticsView from './views/AnalyticsView';
@@ -64,63 +65,6 @@ import OnboardingForm from './components/OnboardingForm';
 import ContractSignView from './views/ContractSignView';
 import PublicCheckoutPage from './components/PublicCheckoutPage';
 
-// ── Navigation Config 4.0 (Grupos Estratégicos) ──
-const navGroups = [
-  {
-    label: 'Comercial & Crescimento',
-    icon: Target,
-    items: [
-      { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-      { icon: Target, label: 'Funil de Vendas', path: '/leads', permission: 'MANAGE_LEADS' },
-      { icon: Package, label: 'Produtos', path: '/products' },
-      { icon: Users, label: 'Hub Rewards', path: '/referrals' },
-      { icon: Megaphone, label: 'Marketing', path: '/marketing', permission: 'MANAGE_SETTINGS' },
-    ]
-  },
-  {
-    label: 'Operação & Sucesso',
-    icon: Rocket,
-    items: [
-      { icon: Calendar, label: 'Agenda Central', path: '/calendar', permission: 'VIEW_DASHBOARD' },
-      { icon: MessageCircle, label: 'Meus Chamados', path: '/support' },
-      { icon: MessageCircle, label: 'Hub Chat', path: '/chat' },
-      { icon: Rocket, label: 'Onboarding Hub', path: '/onboarding-hub', permission: 'MANAGE_CLIENTS' },
-      { icon: Globe, label: 'Monitoramento', path: '/monitoring', permission: 'MANAGE_SUPPORT' },
-      { icon: LayoutTemplate, label: 'Hub Canvas', path: '/canvas', permission: 'MANAGE_TEAM' },
-      { icon: MapIcon, label: 'Mapa', path: '/map' },
-      { icon: Layout, label: 'Projetos / Produção', path: '/projects', permission: 'MANAGE_CLIENTS' },
-    ]
-  },
-  {
-    label: 'Financeiro & RevOps',
-    icon: DollarSign,
-    items: [
-      { icon: CreditCard, label: 'Cobrança', path: '/billing', permission: 'MANAGE_FINANCE' },
-      { icon: DollarSign, label: 'Financeiro Estratégico', path: '/finance', permission: 'MANAGE_FINANCE' },
-      { icon: Shield, label: 'Contratos', path: '/contracts', permission: 'MANAGE_FINANCE' },
-      { icon: BarChart3, label: 'Analytics', path: '/analytics', permission: 'VIEW_REPORTS' },
-    ]
-  },
-  {
-    label: 'Pessoas & Cultura',
-    icon: HeartHandshake,
-    items: [
-      { icon: HeartHandshake, label: 'People & Feedback', path: '/people', permission: 'MANAGE_TEAM' },
-      { icon: Users, label: 'Equipe', path: '/team', permission: 'MANAGE_TEAM' },
-      { icon: BookOpen, label: 'Wiki Hub', path: '/wiki' },
-    ]
-  },
-  {
-    label: 'Sistema',
-    icon: Settings,
-    items: [
-      { icon: Bell, label: 'Notificações', path: '/notifications' },
-      { icon: ShieldCheck, label: 'Administrativo', path: '/admin', permission: 'MANAGE_SETTINGS' },
-      { icon: Settings, label: 'Configurações', path: '/settings' },
-    ]
-  }
-];
-
 function CRMInner() {
   const { user, userProfile, isBirthday, unreadAlertsCount } = useAuth();
   usePresence(); // Ativa monitoramento de status
@@ -155,7 +99,7 @@ function CRMInner() {
   }, [isStandaloneChat]);
 
   const openTicketCount = useMemo(() => supportRequests.filter(r => r.status === 'aberto' || r.status === 'em_analise').length, [supportRequests]);
-  const { totalUnread: chatUnreadCount, totalMentions: chatMentionCount } = useGlobalChatAlerts();
+  const { totalUnread: chatUnreadCount } = useGlobalChatAlerts();
 
   const newWikiCount = useMemo(() => {
     if (!userProfile?.viewedWikiArticles) return wikiArticles.length;
@@ -196,117 +140,9 @@ function CRMInner() {
       {isBirthday && <BirthdayCelebration uid={user?.uid} />}
 
       {currentPath !== '/wiki' && !isStandaloneChat && !(currentPath === '/chat' && focusMode) && (
-        <aside
-          translate="no"
-          className={`w-64 bg-gray-900/20 dark:bg-black/40 backdrop-blur-3xl border-r border-gray-200 dark:border-white/10 flex flex-col transition-all duration-300 z-30 ${sidebarOpen ? 'translate-x-0 absolute inset-y-0 left-0' : '-translate-x-full absolute md:relative md:translate-x-0'}`}
-          aria-label="Menu Lateral de Navegação"
-        >
-          <div className="p-6 flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <img src="https://i.imgur.com/EFBaYb5.png" alt="Hub Symples Logo" className="h-12 w-auto object-contain drop-shadow-lg" referrerPolicy="no-referrer" />
-              <h1 className="text-xl font-bold tracking-tight text-gray-900 dark:text-white whitespace-nowrap">Hub Central</h1>
-            </div>
-            <button
-              className="md:hidden text-gray-500 hover:text-gray-900 dark:text-white shrink-0 ml-2"
-              onClick={() => setSidebarOpen(false)}
-              aria-label="Fechar menu lateral"
-            >
-              <X size={20} aria-hidden="true" />
-            </button>
-          </div>
-          <nav className="flex-1 px-4 py-6 space-y-8 overflow-y-auto custom-scrollbar" role="navigation" aria-label="Navegação Principal">
-            {navGroups.map((group) => {
-              const visibleItems = group.items.filter(item => {
-                if (item.permission && !hasPermission(item.permission as any)) return false;
-                return true;
-              });
-              if (visibleItems.length === 0) return null;
-
-              return (
-                <div key={group.label} className="space-y-3">
-                  <div className="flex items-center gap-2 px-4 mb-2">
-                    <group.icon size={12} className={group.label === 'Operação' ? 'text-blue-400' : group.label === 'Comercial' ? 'text-primary-400' : 'text-gray-400'} />
-                    <span className={`text-[10px] uppercase font-black tracking-[0.2em] select-none ${group.label === 'Operação' ? 'text-blue-400/90' :
-                      group.label === 'Comercial' ? 'text-primary-400/90' :
-                        'text-gray-400/90'
-                      }`}>
-                      {group.label}
-                    </span>
-                  </div>
-                  <div className="space-y-1">
-                    {visibleItems.map(item => (
-                      <NavItem
-                        key={item.path}
-                        icon={item.icon}
-                        label={item.label}
-                        path={item.path}
-                        onClick={() => setSidebarOpen(false)}
-                        badge={
-                          item.path === '/leads' ? activeLeadsCount :
-                            item.path === '/support' ? openTicketCount :
-                              item.path === '/chat' ? (chatUnreadCount > 0 ? chatUnreadCount : undefined) :
-                                item.path === '/wiki' ? (newWikiCount > 0 ? newWikiCount : undefined) :
-                                  item.path === '/people' ? (pendingVacationsCount > 0 ? pendingVacationsCount : undefined) :
-                                    undefined
-                        }
-                      />
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </nav>
-
-
-          <div className="p-4 border-t border-gray-200 dark:border-white/10" role="complementary" aria-label="Perfil do Usuário">
-            <div
-              onClick={() => navigate(`/profile/${user?.uid}`)}
-              className="flex items-center justify-between px-4 py-3 bg-gray-100 dark:bg-white/5 backdrop-blur-xl rounded-2xl border border-gray-200 dark:border-white/10 cursor-pointer hover:bg-gray-200 dark:hover:bg-white/10 transition-all group"
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && navigate(`/profile/${user?.uid}`)}
-              aria-label={`Acessar perfil de ${userProfile?.displayName || user?.displayName || 'Usuário'}`}
-            >
-              <div className="flex items-center space-x-3 overflow-hidden">
-                <div className="relative">
-                  <AvatarFrame size="md">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center text-gray-900 dark:text-white font-bold shrink-0 shadow-lg shadow-primary-500/20 overflow-hidden">
-                      {userProfile?.photoURL ? (
-                        <img src={userProfile.photoURL} alt={userProfile.displayName} className="w-full h-full object-cover" />
-                      ) : (
-                        (userProfile?.displayName || user?.displayName || user?.email || 'U')[0].toUpperCase()
-                      )}
-                    </div>
-                  </AvatarFrame>
-                  {/* Indicador de Presença (Chat) */}
-                  <span 
-                    className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-[#0f1117] transition-colors duration-300 ${
-                      userProfile?.presenceStatus === 'online' ? 'bg-emerald-500 animate-pulse' :
-                      userProfile?.presenceStatus === 'away' ? 'bg-amber-500' :
-                      userProfile?.presenceStatus === 'lunch' ? 'bg-rose-500' :
-                      userProfile?.presenceStatus === 'meeting' ? 'bg-blue-500' :
-                      'bg-gray-500'
-                    }`}
-                    title={`Status: ${userProfile?.presenceStatus || 'offline'}`}
-                  />
-                  {isBirthday && (
-                    <span className="absolute -top-3 -right-3 text-3xl animate-bounce pointer-events-none" title="Aniversariante do Dia! 🎉">🎉</span>
-                  )}
-                  {unreadAlertsCount > 0 && (
-                    <span className="absolute -top-1 -left-1 w-4 h-4 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-zinc-900 shadow-lg animate-pulse z-10">
-                      {unreadAlertsCount}
-                    </span>
-                  )}
-                </div>
-                <div className="truncate">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-primary-500 transition-colors">{userProfile?.displayName || user?.displayName || 'Usuário'}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{userProfile?.jobTitle || (typeof userProfile?.role === 'string' ? userProfile.role : userProfile?.role?.name) || 'Membro'}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </aside>
+        <Sidebar />
       )}
+
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative z-20">
         <header className="bg-black/20 backdrop-blur-2xl border-b border-gray-200 dark:border-white/10 px-6 py-4 flex items-center justify-between shrink-0 z-30 gap-4" role="banner">

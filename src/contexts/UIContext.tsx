@@ -9,6 +9,10 @@ interface UIContextType {
   setView: (view: CRMView) => void;
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
+  activeNavGroup: string;
+  setActiveNavGroup: (group: string) => void;
+  pinnedItems: string[];
+  togglePinItem: (path: string) => void;
 
   // Modo Foco (esconde sidebar automaticamente)
   focusMode: boolean;
@@ -59,6 +63,9 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
   const [focusMode, setFocusMode] = useState(() => localStorage.getItem('hubcrm-focus') === 'true');
   const [globalSearch, setGlobalSearch] = useState('');
 
+  const [activeNavGroup, setActiveNavGroup] = useState(() => localStorage.getItem('hubcrm-active-group') || 'Comercial & Crescimento');
+  const [pinnedItems, setPinnedItems] = useState<string[]>(() => JSON.parse(localStorage.getItem('hubcrm-pinned-items') || '[]'));
+
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<SiteStatus | 'Todos'>('Todos');
   const [sortBy, setSortBy] = useState<'recent' | 'alphabetical' | 'value'>('recent');
@@ -78,10 +85,24 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('hubcrm-theme', themeColor);
   }, [themeColor]);
 
-  // Persistir Modo Foco
+  // Persistir Estados
   useEffect(() => {
     localStorage.setItem('hubcrm-focus', String(focusMode));
   }, [focusMode]);
+
+  useEffect(() => {
+    localStorage.setItem('hubcrm-active-group', activeNavGroup);
+  }, [activeNavGroup]);
+
+  useEffect(() => {
+    localStorage.setItem('hubcrm-pinned-items', JSON.stringify(pinnedItems));
+  }, [pinnedItems]);
+
+  const togglePinItem = (path: string) => {
+    setPinnedItems(prev => 
+      prev.includes(path) ? prev.filter(p => p !== path) : [...prev, path]
+    );
+  };
 
   // Reset pagination on filter change
   useEffect(() => {
@@ -91,6 +112,8 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
   const value: UIContextType = {
     view, setView,
     sidebarOpen, setSidebarOpen,
+    activeNavGroup, setActiveNavGroup,
+    pinnedItems, togglePinItem,
     focusMode, setFocusMode,
     globalSearch, setGlobalSearch,
     isModalOpen, setIsModalOpen,
