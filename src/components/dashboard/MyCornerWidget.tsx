@@ -9,12 +9,57 @@ export default function MyCornerWidget() {
   const { userProfile, user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   
-  const [phrase, setPhrase] = useState(userProfile?.myCorner?.phrase || '');
+  const [dailyQuote, setDailyQuote] = useState<{content: string, author: string} | null>(null);
   const [notes, setNotes] = useState(userProfile?.myCorner?.notes || '');
   const [links, setLinks] = useState<{title: string, url: string}[]>(userProfile?.myCorner?.links || []);
   
   const [newLinkTitle, setNewLinkTitle] = useState('');
   const [newLinkUrl, setNewLinkUrl] = useState('');
+
+  // Lógica para frase do dia via Quotable API (Diferente por pessoa, fixa por dia)
+  React.useEffect(() => {
+    if (!user) return;
+    
+    const today = new Date().toLocaleDateString('pt-BR');
+    const storageKey = `hub_daily_quote_${user.uid}`;
+    const stored = localStorage.getItem(storageKey);
+    
+    if (stored) {
+      try {
+        const data = JSON.parse(stored);
+        if (data.date === today) {
+          setDailyQuote(data.quote);
+          return;
+        }
+      } catch (e) {
+        console.error('Erro ao ler cache de frase:', e);
+      }
+    }
+
+    const fetchQuote = async () => {
+      try {
+        // Buscamos uma frase aleatória (será diferente para cada usuário no primeiro fetch do dia)
+        const response = await fetch('https://api.quotable.io/random?tags=motivational,inspirational');
+        if (!response.ok) throw new Error('API offline');
+        const data = await response.json();
+        
+        const quoteObj = { content: data.content, author: data.author };
+        setDailyQuote(quoteObj);
+        
+        // Salva no localStorage com a data de hoje para manter fixa
+        localStorage.setItem(storageKey, JSON.stringify({ date: today, quote: quoteObj }));
+      } catch (error) {
+        console.error('Erro ao buscar frase:', error);
+        // Fallback robusto
+        setDailyQuote({ 
+          content: "O sucesso é a soma de pequenos esforços repetidos dia após dia.", 
+          author: "Robert Collier" 
+        });
+      }
+    };
+
+    fetchQuote();
+  }, [user]);
 
   const handleAddLink = (e?: React.MouseEvent) => {
     e?.preventDefault();
@@ -40,7 +85,7 @@ export default function MyCornerWidget() {
     if (!user) return;
     try {
       await setDoc(doc(db, 'profiles', user.uid), {
-        myCorner: { phrase, notes, links }
+        myCorner: { notes, links }
       }, { merge: true });
       toast.success('Seu cantinho foi salvo!');
       setIsEditing(false);
@@ -72,13 +117,19 @@ export default function MyCornerWidget() {
       {!isEditing ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-1 space-y-4">
-             {phrase ? (
-               <div className="flex gap-3">
-                 <Quote className="text-primary-500/50 shrink-0" size={24} />
-                 <p className="text-gray-600 dark:text-gray-300 italic font-medium">"{phrase}"</p>
+             {dailyQuote ? (
+               <div className="flex flex-col gap-2">
+                 <div className="flex gap-3">
+                   <Quote className="text-primary-500/50 shrink-0" size={20} />
+                   <p className="text-gray-600 dark:text-gray-300 italic font-medium leading-relaxed">"{dailyQuote.content}"</p>
+                 </div>
+                 <span className="text-[10px] font-bold text-primary-500/70 uppercase tracking-widest text-right">— {dailyQuote.author}</span>
                </div>
              ) : (
-               <p className="text-gray-500 italic text-sm">Nenhuma frase definida.</p>
+               <div className="animate-pulse space-y-2">
+                 <div className="h-4 bg-white/5 rounded w-full"></div>
+                 <div className="h-4 bg-white/5 rounded w-3/4"></div>
+               </div>
              )}
              
              <div className="pt-4 border-t border-gray-200 dark:border-white/5">
@@ -103,9 +154,9 @@ export default function MyCornerWidget() {
         </div>
       ) : (
         <div className="space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Frase do Dia</label>
-            <input type="text" value={phrase} onChange={e => setPhrase(e.target.value)} className="w-full bg-white dark:bg-black/20 border border-gray-300 dark:border-white/10 rounded-xl px-4 py-2 text-gray-900 dark:text-white focus:outline-none focus:border-primary-500 text-sm" placeholder="O que te inspira hoje?" />
+          <div className="p-4 bg-primary-500/5 border border-primary-500/10 rounded-xl">
+            <p className="text-[10px] font-black text-primary-500 uppercase tracking-widest mb-1">Frase Dinâmica Ativada</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 italic">A frase do dia agora é automática e inspiracional. Cada colega recebe uma dose única de motivação a cada 24 horas.</p>
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Anotações Privadas</label>
