@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useMemo, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Star, X, ChevronDown, ChevronRight } from 'lucide-react';
+import { Star, X, ChevronRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useUI } from '../contexts/UIContext';
 import { useCRM } from '../contexts/CRMContext';
@@ -16,12 +16,15 @@ export default function Sidebar() {
   const { user, userProfile, unreadAlertsCount, isBirthday } = useAuth();
   const { 
     sidebarOpen, setSidebarOpen, 
-    activeNavGroup, setActiveNavGroup,
     pinnedItems
   } = useUI();
   const { activeLeadsCount, supportRequests, wikiArticles, pendingVacationsCount } = useCRM();
   const { hasPermission } = usePermissions();
   const { totalUnread: chatUnreadCount } = useGlobalChatAlerts();
+
+  // Estado para o menu flutuante
+  const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Contadores para badges
   const openTicketCount = useMemo(() => supportRequests.filter(r => r.status === 'aberto' || r.status === 'em_analise').length, [supportRequests]);
@@ -49,15 +52,25 @@ export default function Sidebar() {
       ...group,
       items: group.items.filter(item => !item.permission || hasPermission(item.permission as any)),
       totalBadges: group.items.reduce((acc, item) => acc + (getBadgeForPath(item.path) || 0), 0)
-    })).filter(g => g.items.length > 0 || (g.id === 'favorites' && pinnedNavItems.length > 0));
-  }, [hasPermission, activeLeadsCount, openTicketCount, chatUnreadCount, newWikiCount, pendingVacationsCount, pinnedNavItems]);
+    })).filter(g => g.items.length > 0);
+  }, [hasPermission, activeLeadsCount, openTicketCount, chatUnreadCount, newWikiCount, pendingVacationsCount]);
 
-  const toggleGroup = (groupLabel: string) => {
-    if (activeNavGroup === groupLabel) {
-      setActiveNavGroup(''); // Fecha se clicar no que já está aberto
-    } else {
-      setActiveNavGroup(groupLabel);
+  const activeGroupData = useMemo(() => {
+    if (activeGroupId === 'favorites') {
+      return { label: 'Favoritos', items: pinnedNavItems };
     }
+    return visibleGroups.find(g => g.id === activeGroupId);
+  }, [activeGroupId, visibleGroups, pinnedNavItems]);
+
+  const handleMouseEnter = (groupId: string) => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setActiveGroupId(groupId);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      setActiveGroupId(null);
+    }, 300);
   };
 
   return (
@@ -72,9 +85,10 @@ export default function Sidebar() {
 
       <aside
         translate="no"
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-[#030712]/90 backdrop-blur-3xl border-r border-white/5 flex flex-col transition-all duration-300 md:relative ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#030712]/90 backdrop-blur-3xl border-r border-white/5 flex flex-col transition-all duration-300 md:relative ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
+        onMouseLeave={handleMouseLeave}
       >
         {/* Header com Logo */}
         <div className="p-6 flex items-center justify-between">
@@ -84,7 +98,7 @@ export default function Sidebar() {
               alt="Logo" 
               className="h-10 w-auto group-hover:scale-110 transition-transform" 
             />
-            <h1 className="text-lg font-black tracking-tight text-white whitespace-nowrap opacity-90 group-hover:opacity-100">Hub Central</h1>
+            <h1 className="text-lg font-black tracking-tight text-white whitespace-nowrap opacity-90">Hub Central</h1>
           </div>
           <button
             className="md:hidden text-gray-500 hover:text-white"
@@ -94,109 +108,96 @@ export default function Sidebar() {
           </button>
         </div>
 
-        {/* ÁREA DE NAVEGAÇÃO (ACORDEON) */}
-        <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto custom-scrollbar">
+        {/* LISTA DE PILARES (GATILHOS DO MENU FLUTUANTE) */}
+        <nav className="flex-1 px-4 py-4 space-y-3">
           
-          {/* SEÇÃO FIXA: FAVORITOS (Se houver itens) */}
-          {pinnedNavItems.length > 0 && (
-            <div className="mb-6">
-              <button
-                onClick={() => toggleGroup('Favoritos')}
-                className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all ${
-                  activeNavGroup === 'Favoritos' 
-                  ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' 
-                  : 'text-gray-500 hover:text-gray-300 hover:bg-white/5 border border-transparent'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <Star size={18} fill={activeNavGroup === 'Favoritos' ? 'currentColor' : 'none'} />
-                  <span className="text-xs font-black uppercase tracking-widest">Favoritos</span>
-                </div>
-                {activeNavGroup === 'Favoritos' ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-              </button>
-              
-              <AnimatePresence>
-                {activeNavGroup === 'Favoritos' && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: 'easeInOut' }}
-                    className="overflow-hidden"
-                  >
-                    <div className="pt-2 pl-4 space-y-1">
-                      {pinnedNavItems.map(item => (
-                        <NavItem
-                          key={`pinned-${item.path}`}
-                          icon={item.icon}
-                          label={item.label}
-                          path={item.path}
-                          onClick={() => setSidebarOpen(false)}
-                          badge={getBadgeForPath(item.path)}
-                        />
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+          {/* Favoritos como gatilho */}
+          <button
+            onMouseEnter={() => handleMouseEnter('favorites')}
+            className={`w-full flex items-center justify-between px-4 py-4 rounded-2xl transition-all relative group ${
+              activeGroupId === 'favorites' 
+              ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20 shadow-[0_0_20px_rgba(245,158,11,0.1)]' 
+              : 'text-gray-500 hover:text-gray-300 hover:bg-white/5 border border-transparent'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <Star size={20} fill={pinnedNavItems.length > 0 ? 'currentColor' : 'none'} className={pinnedNavItems.length > 0 ? 'text-amber-500' : ''} />
+              <span className="text-xs font-black uppercase tracking-[0.15em]">Favoritos</span>
             </div>
-          )}
+            <ChevronRight size={16} className={`transition-transform duration-300 ${activeGroupId === 'favorites' ? 'translate-x-1' : 'opacity-0 group-hover:opacity-100'}`} />
+          </button>
 
-          {/* PILARES (GRUPOS) */}
-          <div className="space-y-3">
-            {visibleGroups.map((group) => {
-              const isOpen = activeNavGroup === group.label;
-              return (
-                <div key={group.id} className="group/pilar">
-                  <button
-                    onClick={() => toggleGroup(group.label)}
-                    className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl transition-all relative ${
-                      isOpen 
-                      ? 'bg-primary-500/10 text-primary-400 border border-primary-500/20' 
-                      : 'text-gray-500 hover:text-gray-300 hover:bg-white/5 border border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <group.icon size={18} />
-                      <span className="text-xs font-black uppercase tracking-widest">{group.label}</span>
-                      {group.totalBadges > 0 && !isOpen && (
-                        <span className="absolute top-2 right-8 w-2 h-2 bg-primary-500 rounded-full border border-[#030712] animate-pulse" />
-                      )}
-                    </div>
-                    {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                  </button>
+          <div className="w-12 h-[1px] bg-white/5 mx-auto my-4" />
 
-                  <AnimatePresence>
-                    {isOpen && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3, ease: 'easeInOut' }}
-                        className="overflow-hidden"
-                      >
-                        <div className="pt-2 pl-4 space-y-1">
-                          {group.items.map(item => (
-                            <NavItem
-                              key={item.path}
-                              icon={item.icon}
-                              label={item.label}
-                              path={item.path}
-                              onClick={() => setSidebarOpen(false)}
-                              badge={getBadgeForPath(item.path)}
-                            />
-                          ))}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              );
-            })}
-          </div>
+          {visibleGroups.map((group) => (
+            <button
+              key={group.id}
+              onMouseEnter={() => handleMouseEnter(group.id)}
+              className={`w-full flex items-center justify-between px-4 py-4 rounded-2xl transition-all relative group ${
+                activeGroupId === group.id 
+                ? 'bg-primary-500/10 text-primary-400 border border-primary-500/20 shadow-[0_0_20px_rgba(var(--primary-rgb),0.1)]' 
+                : 'text-gray-500 hover:text-gray-300 hover:bg-white/5 border border-transparent'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <group.icon size={20} />
+                <span className="text-xs font-black uppercase tracking-[0.15em]">{group.label}</span>
+                {group.totalBadges > 0 && (
+                  <span className="absolute top-3 right-3 w-2 h-2 bg-primary-500 rounded-full border border-[#030712] animate-pulse" />
+                )}
+              </div>
+              <ChevronRight size={16} className={`transition-transform duration-300 ${activeGroupId === group.id ? 'translate-x-1' : 'opacity-0 group-hover:opacity-100'}`} />
+            </button>
+          ))}
         </nav>
 
-        {/* RODAPÉ: PERFIL DO USUÁRIO */}
+        {/* MENU FLUTUANTE (QUICK VIEW) */}
+        <AnimatePresence>
+          {activeGroupId && activeGroupData && (
+            <motion.div
+              initial={{ opacity: 0, x: -10, scale: 0.95 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: -10, scale: 0.95 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              onMouseEnter={() => { if (timeoutRef.current) clearTimeout(timeoutRef.current); }}
+              onMouseLeave={handleMouseLeave}
+              className="fixed left-64 top-0 bottom-0 w-72 bg-[#05070a]/95 backdrop-blur-2xl border-r border-white/10 p-6 z-[60] shadow-[20px_0_50px_rgba(0,0,0,0.5)] flex flex-col"
+            >
+              <div className="mb-8">
+                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-500 mb-1">Conteúdo</h3>
+                <h2 className="text-xl font-bold text-white">{activeGroupData.label}</h2>
+              </div>
+
+              <div className="flex-1 space-y-1 overflow-y-auto custom-scrollbar pr-2">
+                {activeGroupData.items.map(item => (
+                  <NavItem
+                    key={`${activeGroupId}-${item.path}`}
+                    icon={item.icon}
+                    label={item.label}
+                    path={item.path}
+                    onClick={() => {
+                      setActiveGroupId(null);
+                      setSidebarOpen(false);
+                    }}
+                    badge={getBadgeForPath(item.path)}
+                  />
+                ))}
+                {activeGroupId === 'favorites' && pinnedNavItems.length === 0 && (
+                  <div className="py-12 text-center opacity-30">
+                    <Star size={32} className="mx-auto mb-2" />
+                    <p className="text-xs">Nenhum favorito</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-auto pt-6 border-t border-white/5 text-[10px] text-gray-600 uppercase tracking-widest font-bold">
+                Hub Symples v6.0.7
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* RODAPÉ: PERFIL */}
         <div className="p-4 border-t border-white/5 bg-black/20">
           <div
             onClick={() => navigate(`/profile/${user?.uid}`)}
@@ -221,27 +222,16 @@ export default function Sidebar() {
                   'bg-gray-500'
                 }`}
               />
-              {unreadAlertsCount > 0 && (
-                <span className="absolute -top-1 -left-1 w-5 h-5 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-[#030712] shadow-lg animate-pulse z-10">
-                  {unreadAlertsCount}
-                </span>
-              )}
             </div>
             <div className="truncate flex-1">
               <p className="text-sm font-bold text-white truncate group-hover:text-primary-400 transition-colors">
                 {userProfile?.displayName || 'Usuário'}
               </p>
-              <p className="text-[10px] text-gray-500 truncate uppercase tracking-wider font-medium">
+              <p className="text-[10px] text-gray-500 truncate uppercase tracking-wider">
                 {userProfile?.jobTitle || 'Membro'}
               </p>
             </div>
           </div>
-          
-          {isBirthday && (
-            <div className="mt-2 py-1 px-3 bg-rose-500/10 border border-rose-500/20 rounded-lg flex items-center justify-center gap-2">
-              <span className="text-xs">🎂 Parabéns!</span>
-            </div>
-          )}
         </div>
       </aside>
     </>
