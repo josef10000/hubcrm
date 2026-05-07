@@ -16,12 +16,36 @@ export default function MyCornerWidget() {
   const [newLinkTitle, setNewLinkTitle] = useState('');
   const [newLinkUrl, setNewLinkUrl] = useState('');
 
-  // Lógica para frase do dia via Quotable API (Diferente por pessoa, fixa por dia)
+  // Biblioteca interna de frases premium em Português (Fallback determinístico)
+  const MOTIVATIONAL_QUOTES = [
+    { content: "O sucesso não é o final, o fracasso não é fatal: é a coragem de continuar que conta.", author: "Winston Churchill" },
+    { content: "Acredite que você pode e você estará no meio do caminho.", author: "Theodore Roosevelt" },
+    { content: "Sua limitação — é apenas sua imaginação.", author: "Autor Desconhecido" },
+    { content: "Trabalhe duro em silêncio, deixe seu sucesso ser seu barulho.", author: "Frank Ocean" },
+    { content: "Às vezes o 'depois' se torna 'nunca'. Faça agora.", author: "Autor Desconhecido" },
+    { content: "Grandes coisas nunca vieram de zonas de conforto.", author: "Autor Desconhecido" },
+    { content: "Sonhe alto. Comece pequeno. Mas, acima de tudo, comece.", author: "Simon Sinek" },
+    { content: "Não pare quando estiver cansado. Pare quando tiver terminado.", author: "Autor Desconhecido" },
+    { content: "Vai ser difícil, mas difícil não significa impossível.", author: "Autor Desconhecido" },
+    { content: "Não espere por oportunidades. Crie-as.", author: "Autor Desconhecido" },
+    { content: "O sucesso não te encontra. Você tem que sair e pegá-lo.", author: "Autor Desconhecido" },
+    { content: "A chave para o sucesso é focar em metas, não em obstáculos.", author: "Autor Desconhecido" },
+    { content: "A disciplina é fazer o que precisa ser feito, mesmo que você não queira.", author: "Autor Desconhecido" },
+    { content: "Sua única competição é quem você era ontem.", author: "Autor Desconhecido" },
+    { content: "A persistência é o caminho do êxito.", author: "Charles Chaplin" },
+    { content: "O melhor momento para plantar uma árvore foi há 20 anos. O segundo melhor é agora.", author: "Provérbio Chinês" },
+    { content: "O que você faz hoje pode melhorar todos os seus amanhãs.", author: "Ralph Marston" },
+    { content: "Não conte os dias, faça os dias contarem.", author: "Muhammad Ali" },
+    { content: "A coragem não é a ausência de medo, mas o triunfo sobre ele.", author: "Nelson Mandela" },
+    { content: "Se você quer algo que nunca teve, precisa fazer algo que nunca fez.", author: "Thomas Jefferson" }
+  ];
+
+  // Lógica para frase do dia (Diferente por pessoa, fixa por dia)
   React.useEffect(() => {
     if (!user) return;
     
-    const today = new Date().toLocaleDateString('pt-BR');
-    const storageKey = `hub_daily_quote_${user.uid}`;
+    const today = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD (Estável)
+    const storageKey = `hub_daily_quote_v2_${user.uid}`; // Versão 2 para invalidar cache antigo
     const stored = localStorage.getItem(storageKey);
     
     if (stored) {
@@ -38,23 +62,37 @@ export default function MyCornerWidget() {
 
     const fetchQuote = async () => {
       try {
-        // Buscamos uma frase aleatória (será diferente para cada usuário no primeiro fetch do dia)
-        const response = await fetch('https://api.quotable.io/random?tags=motivational,inspirational');
-        if (!response.ok) throw new Error('API offline');
-        const data = await response.json();
+        // Tentamos uma API estável (ZenQuotes via Proxy para evitar CORS e instabilidade)
+        const response = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent('https://zenquotes.io/api/random'));
+        if (!response.ok) throw new Error('API Offline');
         
-        const quoteObj = { content: data.content, author: data.author };
-        setDailyQuote(quoteObj);
+        const wrapper = await response.json();
+        const data = JSON.parse(wrapper.contents);
         
-        // Salva no localStorage com a data de hoje para manter fixa
-        localStorage.setItem(storageKey, JSON.stringify({ date: today, quote: quoteObj }));
+        if (data && data[0]) {
+          const quoteObj = { 
+            content: data[0].q, 
+            author: data[0].a 
+          };
+          setDailyQuote(quoteObj);
+          localStorage.setItem(storageKey, JSON.stringify({ date: today, quote: quoteObj }));
+          return;
+        }
+        throw new Error('Formato inválido');
       } catch (error) {
-        console.error('Erro ao buscar frase:', error);
-        // Fallback robusto
-        setDailyQuote({ 
-          content: "O sucesso é a soma de pequenos esforços repetidos dia após dia.", 
-          author: "Robert Collier" 
-        });
+        console.warn('Usando biblioteca interna de frases (API Offline/Injetada):', error);
+        
+        // Algoritmo Determinístico: Usa a data e o UID do usuário para escolher uma frase da lista
+        // Isso garante que cada usuário tenha uma frase diferente, mas fixa para aquele dia
+        const seed = today.replace(/-/g, '') + user.uid.substring(0, 4);
+        const hash = Array.from(seed).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        const index = hash % MOTIVATIONAL_QUOTES.length;
+        
+        const fallbackQuote = MOTIVATIONAL_QUOTES[index];
+        setDailyQuote(fallbackQuote);
+        
+        // Salva o fallback no cache também para evitar re-fetch inútil no mesmo dia
+        localStorage.setItem(storageKey, JSON.stringify({ date: today, quote: fallbackQuote }));
       }
     };
 
