@@ -9,6 +9,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
 import { OnboardingQuestion } from '../types';
 import { usePermissions } from '../hooks/usePermissions';
+import { useDialog } from '../contexts/DialogContext';
 import TagManager from '../components/settings/TagManager';
 import RoleManagement from '../components/settings/RoleManagement';
 
@@ -35,6 +36,7 @@ export default function AdministrativeView() {
     effectiveOrgId,
   } = useCRM();
 
+  const { hasPermission } = usePermissions();
   const { alert, confirm } = useDialog();
   const [newSoftSkill, setNewSoftSkill] = React.useState('');
   
