@@ -21,13 +21,15 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   const [isDeleteOfferConfirmOpen, setIsDeleteOfferConfirmOpen] = useState(false);
   const [offerToDelete, setOfferToDelete] = useState<Offer | null>(null);
 
+  const permissionsKey = JSON.stringify(permissions);
+  
   // Sincroniza a Store com o Firestore
   useEffect(() => {
     if (orgId && user?.uid && orgId !== 'pending') {
       const unsubscribe = store.init(orgId, user.uid, permissions);
       return () => unsubscribe();
     }
-  }, [orgId, user?.uid, permissions]);
+  }, [orgId, user?.uid, permissionsKey]);
 
   // Adaptador para manter compatibilidade com o código legado que usa useCRM()
   const value = {
