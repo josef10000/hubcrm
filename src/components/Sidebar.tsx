@@ -209,7 +209,6 @@ export default function Sidebar() {
             </motion.div>
           )}
         </AnimatePresence>
-ce>
       </aside>
     </>
   );
