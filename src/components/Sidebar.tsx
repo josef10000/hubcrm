@@ -83,15 +83,6 @@ export default function Sidebar() {
         onMouseLeave={handleMouseLeave}
       >
         <div className="w-20 bg-[#05070a]/90 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] flex flex-col items-center py-8 gap-6 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-          <div className="mb-4">
-            <img 
-              src="https://i.imgur.com/EFBaYb5.png" 
-              alt="Logo" 
-              className="h-10 w-auto cursor-pointer hover:scale-110 transition-transform" 
-              onClick={() => navigate('/')}
-            />
-          </div>
-
           <div className="flex-1 flex flex-col gap-4 items-center w-full px-2">
             {/* Gatilho Favoritos */}
             <button

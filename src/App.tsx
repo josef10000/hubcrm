@@ -165,24 +165,43 @@ function CRMInner() {
                 <Menu size={24} aria-hidden="true" />
               </button>
             )}
+            {currentPath !== '/wiki' && (
+              <div 
+                onClick={() => navigate('/')}
+                className="flex items-center gap-3 mr-8 cursor-pointer group shrink-0"
+              >
+                <div className="w-10 h-10 bg-primary-500/10 rounded-xl flex items-center justify-center border border-primary-500/20 group-hover:scale-110 transition-transform">
+                  <img 
+                    src="https://i.imgur.com/EFBaYb5.png" 
+                    alt="Logo" 
+                    className="h-7 w-auto" 
+                  />
+                </div>
+                <div className="hidden sm:block">
+                  <h1 className="text-lg font-black tracking-tighter text-white uppercase leading-none">Hub</h1>
+                  <p className="text-[10px] font-bold text-primary-400 tracking-[0.2em] uppercase leading-none mt-0.5">Central</p>
+                </div>
+              </div>
+            )}
+
             {currentPath === '/' ? (
-              <div className="flex items-center gap-6 w-full flex-1">
-                <div className="hidden lg:block shrink-0">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {new Date().getHours() >= 5 && new Date().getHours() < 12 ? '☀️ Bom dia' : new Date().getHours() >= 12 && new Date().getHours() < 18 ? '🌤️ Boa tarde' : '🌙 Boa noite'},
+              <div className="flex items-center gap-8 w-full flex-1">
+                <div className="hidden lg:block shrink-0 border-l border-white/10 pl-8">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-0.5">
+                    {new Date().getHours() >= 5 && new Date().getHours() < 12 ? '☀️ Bom dia' : new Date().getHours() >= 12 && new Date().getHours() < 18 ? '🌤️ Boa tarde' : '🌙 Boa noite'}
                   </p>
-                  <h2 className="text-lg font-bold text-gray-900 dark:text-white truncate max-w-[200px]">
+                  <h2 className="text-sm font-bold text-white truncate max-w-[150px]">
                     {userProfile?.displayName?.split(' ')[0] || 'Colaborador'}!
                   </h2>
                 </div>
-                <div className="flex items-center w-full max-w-xl relative" role="search">
-                  <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400" aria-hidden="true" />
+                <div className="flex items-center w-full max-w-sm relative" role="search">
+                  <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" aria-hidden="true" />
                   <input
                     type="text"
-                    placeholder="Buscar por Nome, CPF, E-mail ou Status..."
+                    placeholder="Buscar clientes..."
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
-                    className="w-full bg-white/80 dark:bg-zinc-900/50 backdrop-blur-xl border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white text-sm rounded-2xl pl-12 pr-4 py-3 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/50 transition-all placeholder-gray-500 shadow-inner"
+                    className="w-full bg-white/5 border border-white/10 text-white text-xs rounded-2xl pl-11 pr-4 py-2.5 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/50 transition-all placeholder-gray-600 shadow-inner"
                     aria-label="Campo de busca de clientes"
                   />
                 </div>
