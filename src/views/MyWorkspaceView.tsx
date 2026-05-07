@@ -80,8 +80,8 @@ export default function MyWorkspaceView() {
     }
 
     return [
-      { id: '1', label: 'Dashboard Hub', url: '#', icon: 'ph-monitor', folderId: '1' },
-      { id: '2', label: 'Figma Design', url: '#', icon: 'ph-figma-logo', folderId: '1' }
+      { id: '1', label: 'Dashboard Hub', url: 'https://hubcrm.io', icon: 'ph-monitor', folderId: '1' },
+      { id: '2', label: 'Figma Design', url: 'https://figma.com', icon: 'ph-figma-logo', folderId: '1' }
     ];
   });
 
@@ -103,7 +103,7 @@ export default function MyWorkspaceView() {
   useEffect(() => localStorage.setItem('hub_workspace_goals', JSON.stringify(goals)), [goals]);
   useEffect(() => localStorage.setItem('hub_workspace_notes', notes), [notes]);
 
-  // Handlers de Gerenciamento
+  // HANDLERS: PASTAS
   const handleAddFolder = () => {
     const label = prompt('Nome da nova pasta:');
     if (!label) return;
@@ -116,39 +116,63 @@ export default function MyWorkspaceView() {
     setFolders([...folders, newFolder]);
   };
 
-  const handleAddLink = () => {
-    if (!selectedFolderId && folders.length > 0) {
-      setSelectedFolderId(folders[0].id);
-    }
-    const label = prompt('Título do link:');
-    const url = prompt('URL completa (ex: https://...):');
-    if (!label || !url) return;
-    
-    const newLink: PersonalLink = {
-      id: Date.now().toString(),
-      label,
-      url: url.startsWith('http') ? url : `https://${url}`,
-      icon: 'ph-link',
-      folderId: selectedFolderId || folders[0]?.id
-    };
-    setLinks([...links, newLink]);
+  const handleEditFolder = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const folder = folders.find(f => f.id === id);
+    if (!folder) return;
+    const label = prompt('Novo nome da pasta:', folder.label);
+    if (!label) return;
+    setFolders(folders.map(f => f.id === id ? { ...f, label } : f));
   };
 
   const handleDeleteFolder = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm('Deseja excluir esta pasta? Os links não serão excluídos, mas ficarão sem pasta.')) {
+    if (confirm('Deseja excluir esta pasta? Os links vinculados ficarão sem pasta.')) {
       setFolders(folders.filter(f => f.id !== id));
       if (selectedFolderId === id) setSelectedFolderId(null);
     }
   };
 
+  // HANDLERS: LINKS
+  const handleAddLink = () => {
+    const label = prompt('Título do link:');
+    const urlInput = prompt('URL completa (ex: https://...):');
+    if (!label || !urlInput) return;
+    
+    const url = urlInput.startsWith('http') ? urlInput : `https://${urlInput}`;
+    const newLink: PersonalLink = {
+      id: Date.now().toString(),
+      label,
+      url,
+      icon: 'ph-link',
+      folderId: selectedFolderId || (folders.length > 0 ? folders[0].id : undefined)
+    };
+    setLinks([...links, newLink]);
+  };
+
+  const handleEditLink = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const link = links.find(l => l.id === id);
+    if (!link) return;
+    
+    const label = prompt('Novo título:', link.label);
+    const urlInput = prompt('Nova URL:', link.url);
+    if (!label || !urlInput) return;
+    
+    const url = urlInput.startsWith('http') ? urlInput : `https://${urlInput}`;
+    setLinks(links.map(l => l.id === id ? { ...l, label, url } : l));
+  };
+
   const handleDeleteLink = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     if (confirm('Deseja excluir este link?')) {
       setLinks(links.filter(l => l.id !== id));
     }
   };
 
+  // HANDLERS: METAS
   const handleAddGoal = () => {
     const label = prompt('O que você quer alcançar? (ex: Leads Atendidos)');
     const target = prompt('Qual é o valor alvo? (ex: 50)');
@@ -158,11 +182,21 @@ export default function MyWorkspaceView() {
     const newGoal: PersonalGoal = {
       id: Date.now().toString(),
       label,
-      target: parseInt(target),
+      target: parseInt(target) || 0,
       current: 0,
       unit
     };
     setGoals([...goals, newGoal]);
+  };
+
+  const handleEditGoal = (id: string) => {
+    const goal = goals.find(g => g.id === id);
+    if (!goal) return;
+    const label = prompt('Novo título da meta:', goal.label);
+    const target = prompt('Novo valor alvo:', goal.target.toString());
+    const unit = prompt('Nova unidade:', goal.unit);
+    if (!label || !target || !unit) return;
+    setGoals(goals.map(g => g.id === id ? { ...g, label, target: parseInt(target) || 0, unit } : g));
   };
 
   const handleUpdateGoal = (id: string, increment: boolean) => {
@@ -180,6 +214,7 @@ export default function MyWorkspaceView() {
     }
   };
 
+  // UTILS
   const copyToClipboard = (text: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -198,7 +233,7 @@ export default function MyWorkspaceView() {
         <div className="space-y-6 flex-1">
           <div className="flex items-center gap-3">
             <div className="px-3 py-1 bg-primary-500/10 border border-primary-500/20 rounded-full">
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary-400">Nexus Workspace v7.0</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary-400">Nexus Workspace v7.0.7</span>
             </div>
             <span className="text-gray-600 font-mono text-xs">// Private Node</span>
           </div>
@@ -288,14 +323,24 @@ export default function MyWorkspaceView() {
                         </div>
                         <span className="font-bold group-hover:translate-x-1 transition-transform">{folder.label}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-black opacity-40">{links.filter(l => l.folderId === folder.id).length}</span>
-                        <button 
-                          onClick={(e) => handleDeleteFolder(folder.id, e)}
-                          className="opacity-0 group-hover:opacity-100 p-2 hover:text-rose-400 transition-all"
-                        >
-                          <i className="ph-bold ph-trash" />
-                        </button>
+                      <div className="flex items-center gap-1">
+                        <span className="text-[10px] font-black opacity-40 mr-2">{links.filter(l => l.folderId === folder.id).length}</span>
+                        <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button 
+                            onClick={(e) => handleEditFolder(folder.id, e)}
+                            className="p-1.5 hover:text-primary-400 transition-all"
+                            title="Editar Pasta"
+                          >
+                            <i className="ph-bold ph-pencil-simple" />
+                          </button>
+                          <button 
+                            onClick={(e) => handleDeleteFolder(folder.id, e)}
+                            className="p-1.5 hover:text-rose-400 transition-all"
+                            title="Excluir Pasta"
+                          >
+                            <i className="ph-bold ph-trash" />
+                          </button>
+                        </div>
                       </div>
                     </button>
                   ))}
@@ -321,11 +366,8 @@ export default function MyWorkspaceView() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {filteredLinks.map(link => (
-                    <a
+                    <div
                       key={link.id}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
                       className="p-6 bg-[#0a0c12]/60 backdrop-blur-xl border border-white/10 rounded-[2rem] hover:border-primary-500/50 group transition-all relative overflow-hidden shadow-xl"
                     >
                       <div className="absolute top-0 right-0 p-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
@@ -337,14 +379,26 @@ export default function MyWorkspaceView() {
                           <i className="ph-bold ph-copy" />
                         </button>
                         <button 
+                          onClick={(e) => handleEditLink(link.id, e)}
+                          className="p-2 bg-white/5 rounded-xl hover:bg-primary-500/20 hover:text-primary-400 transition-all"
+                          title="Editar Link"
+                        >
+                          <i className="ph-bold ph-pencil-simple" />
+                        </button>
+                        <button 
                           onClick={(e) => handleDeleteLink(link.id, e)}
                           className="p-2 bg-white/5 rounded-xl hover:bg-rose-500/20 hover:text-rose-400 transition-all"
-                          title="Excluir"
+                          title="Excluir Link"
                         >
                           <i className="ph-bold ph-trash" />
                         </button>
                       </div>
-                      <div className="flex items-center gap-5 relative z-10">
+                      <a 
+                        href={link.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-5 relative z-10"
+                      >
                         <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
                           <i className={`ph-duotone ${link.icon} text-primary-400`} />
                         </div>
@@ -352,8 +406,8 @@ export default function MyWorkspaceView() {
                           <h4 className="font-bold text-white group-hover:text-primary-400 transition-colors truncate">{link.label}</h4>
                           <p className="text-[10px] text-gray-500 font-mono mt-1 truncate">{link.url.replace('https://', '')}</p>
                         </div>
-                      </div>
-                    </a>
+                      </a>
+                    </div>
                   ))}
                   <button 
                     onClick={handleAddLink}
@@ -383,8 +437,16 @@ export default function MyWorkspaceView() {
                   <div key={goal.id} className="p-8 bg-[#0a0c12]/60 backdrop-blur-xl border border-white/10 rounded-[2.5rem] shadow-2xl space-y-6 group relative">
                     <div className="absolute top-6 right-6 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button 
+                        onClick={() => handleEditGoal(goal.id)}
+                        className="p-2 bg-white/5 rounded-xl hover:bg-primary-500/20 hover:text-primary-400 transition-all"
+                        title="Editar Meta"
+                      >
+                        <i className="ph-bold ph-pencil-simple" />
+                      </button>
+                      <button 
                         onClick={() => handleDeleteGoal(goal.id)}
                         className="p-2 bg-white/5 rounded-xl hover:bg-rose-500/20 hover:text-rose-400 transition-all"
+                        title="Excluir Meta"
                       >
                         <i className="ph-bold ph-trash" />
                       </button>
