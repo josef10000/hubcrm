@@ -118,10 +118,10 @@ export default function Sidebar() {
         translate="no"
         className={`fixed inset-y-0 left-0 z-50 flex h-full transition-all duration-500 md:relative md:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } p-4`}
+        } p-3`}
         onMouseLeave={handleMouseLeave}
       >
-        <div className="relative w-20 bg-[#05070a]/60 backdrop-blur-[40px] border border-white/10 rounded-[2.5rem] flex flex-col items-center py-8 gap-6 shadow-[0_20px_50px_rgba(0,0,0,0.4)] overflow-hidden">
+        <div className="relative w-20 bg-[#05070a]/60 backdrop-blur-[40px] border border-white/10 rounded-[2.5rem] flex flex-col items-center py-6 gap-4 shadow-[0_20px_50px_rgba(0,0,0,0.4)] overflow-hidden">
           {/* Grain Texture Overlay */}
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay bg-[url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')]" />
           
@@ -134,11 +134,11 @@ export default function Sidebar() {
             />
           </div>
 
-          <div className="relative z-10 flex-1 flex flex-col gap-4 items-center w-full px-2">
+          <div className="relative z-10 flex-1 flex flex-col gap-2.5 items-center w-full px-2 pb-4 overflow-y-auto custom-scrollbar no-scrollbar">
             {/* Gatilho Favoritos */}
             <button
               onMouseEnter={() => handleMouseEnter('favorites')}
-              className={`p-3.5 rounded-2xl transition-all duration-300 relative group ${
+              className={`p-3 rounded-2xl transition-all duration-300 relative group ${
                 activeGroupId === 'favorites' 
                 ? 'bg-amber-500/20 text-amber-500 border border-amber-500/30 shadow-[0_0_25px_rgba(245,158,11,0.25)]' 
                 : 'text-gray-500 hover:text-white hover:bg-white/5'
@@ -160,7 +160,7 @@ export default function Sidebar() {
               <button
                 key={group.id}
                 onMouseEnter={() => handleMouseEnter(group.id)}
-                className={`p-3.5 rounded-2xl transition-all duration-300 relative group ${
+                className={`p-3 rounded-2xl transition-all duration-300 relative group ${
                   activeGroupId === group.id 
                   ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30 shadow-[0_0_25px_rgba(var(--primary-rgb),0.25)]' 
                   : 'text-gray-500 hover:text-white hover:bg-white/5'

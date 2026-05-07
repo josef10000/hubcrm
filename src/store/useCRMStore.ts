@@ -34,6 +34,7 @@ interface CRMState {
   loading: boolean;
   errorMsg: string | null;
   effectiveOrgId: string | null;
+  currentUserId: string | null;
   initialized: boolean;
   
   // Actions
@@ -86,12 +87,13 @@ export const useCRMStore = create<CRMState>((set, get) => ({
   loading: true,
   errorMsg: null,
   effectiveOrgId: null,
+  currentUserId: null,
   initialized: false,
 
   init: (orgId: string, userId: string, permissions: string[]) => {
     // Se mudar de Org ou for a primeira vez, mostramos loading
-    if (get().effectiveOrgId !== orgId) {
-      set({ effectiveOrgId: orgId, loading: true, initialized: true, errorMsg: null });
+    if (get().effectiveOrgId !== orgId || get().currentUserId !== userId) {
+      set({ effectiveOrgId: orgId, currentUserId: userId, loading: true, initialized: true, errorMsg: null });
     }
 
     const unsubscribers: (() => void)[] = [];
@@ -192,16 +194,25 @@ export const useCRMStore = create<CRMState>((set, get) => ({
   },
 
   handleSaveClient: async (clientData) => {
-    const orgId = get().effectiveOrgId;
-    if (!orgId) return;
+    const { effectiveOrgId, currentUserId } = get();
+    if (!effectiveOrgId) return;
     try {
-      const id = clientData.id || doc(collection(db, 'organizations', orgId, 'clients')).id;
-      await setDoc(doc(db, 'organizations', orgId, 'clients', id), {
+      const isNew = !clientData.id;
+      const id = clientData.id || doc(collection(db, 'organizations', effectiveOrgId, 'clients')).id;
+      
+      const finalData: any = {
         ...clientData,
         id,
         updatedAt: serverTimestamp(),
         createdAt: clientData.createdAt || serverTimestamp()
-      }, { merge: true });
+      };
+
+      // Se for um novo cliente e não tiver responsável, atribui ao usuário atual
+      if (isNew && !finalData.assignedTo && currentUserId) {
+        finalData.assignedTo = currentUserId;
+      }
+
+      await setDoc(doc(db, 'organizations', effectiveOrgId, 'clients', id), finalData, { merge: true });
       toast.success('Cliente salvo com sucesso!');
     } catch (err) {
       console.error("[CRMStore] Error saving client:", err);
