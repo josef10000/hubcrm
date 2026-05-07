@@ -29,8 +29,31 @@ interface PersonalGoal {
 export default function MyWorkspaceView() {
   const { user, userProfile } = useAuth();
   const [activeTab, setActiveTab] = useState<'links' | 'goals' | 'notes'>('links');
+  const [dailyQuote, setDailyQuote] = useState<{content: string, author: string} | null>(null);
   
-  // States para Dados (Persistência em LocalStorage por enquanto)
+  // Biblioteca interna de frases premium (Fallback)
+  const MOTIVATIONAL_QUOTES = [
+    { content: "O sucesso não é o final, o fracasso não é fatal: é a coragem de continuar que conta.", author: "Winston Churchill" },
+    { content: "Acredite que você pode e você estará no meio do caminho.", author: "Theodore Roosevelt" },
+    { content: "Trabalhe duro em silêncio, deixe seu sucesso ser seu barulho.", author: "Frank Ocean" },
+    { content: "Sonhe alto. Comece pequeno. Mas, acima de tudo, comece.", author: "Simon Sinek" },
+    { content: "Não espere por oportunidades. Crie-as.", author: "Autor Desconhecido" },
+    { content: "Sua única competição é quem você era ontem.", author: "Autor Desconhecido" },
+    { content: "O melhor momento para plantar uma árvore foi há 20 anos. O segundo melhor é agora.", author: "Provérbio Chinês" },
+    { content: "O que você faz hoje pode melhorar todos os seus amanhãs.", author: "Ralph Marston" }
+  ];
+
+  // Lógica de Frase do Dia (Determinística)
+  useEffect(() => {
+    if (!user) return;
+    const today = new Date().toISOString().split('T')[0];
+    const seed = today.replace(/-/g, '') + user.uid.substring(0, 4);
+    const hash = Array.from(seed).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const index = hash % MOTIVATIONAL_QUOTES.length;
+    setDailyQuote(MOTIVATIONAL_QUOTES[index]);
+  }, [user]);
+
+  // States para Dados (Sincronizados com Perfil + LocalStorage)
   const [folders, setFolders] = useState<LinkFolder[]>(() => {
     const saved = localStorage.getItem('hub_workspace_folders');
     return saved ? JSON.parse(saved) : [
@@ -41,8 +64,22 @@ export default function MyWorkspaceView() {
   });
 
   const [links, setLinks] = useState<PersonalLink[]>(() => {
+    // Tenta migrar do My Corner se existir
+    const legacyLinks = userProfile?.myCorner?.links || [];
     const saved = localStorage.getItem('hub_workspace_links');
-    return saved ? JSON.parse(saved) : [
+    if (saved) return JSON.parse(saved);
+    
+    if (legacyLinks.length > 0) {
+      return legacyLinks.map((l: any, i: number) => ({
+        id: `legacy-${i}`,
+        label: l.title,
+        url: l.url,
+        icon: 'ph-link',
+        folderId: '1'
+      }));
+    }
+
+    return [
       { id: '1', label: 'Dashboard Hub', url: '#', icon: 'ph-monitor', folderId: '1' },
       { id: '2', label: 'Figma Design', url: '#', icon: 'ph-figma-logo', folderId: '1' }
     ];
@@ -51,12 +88,14 @@ export default function MyWorkspaceView() {
   const [goals, setGoals] = useState<PersonalGoal[]>(() => {
     const saved = localStorage.getItem('hub_workspace_goals');
     return saved ? JSON.parse(saved) : [
-      { id: '1', label: 'Leads Atendidos', current: 12, target: 20, unit: 'leads' },
-      { id: '2', label: 'Artigos Wiki Criados', current: 2, target: 5, unit: 'artigos' }
+      { id: '1', label: 'Leads Atendidos', current: 0, target: 20, unit: 'leads' },
+      { id: '2', label: 'Artigos Wiki Criados', current: 0, target: 5, unit: 'artigos' }
     ];
   });
 
-  const [notes, setNotes] = useState(() => localStorage.getItem('hub_workspace_notes') || '');
+  const [notes, setNotes] = useState(() => {
+    return localStorage.getItem('hub_workspace_notes') || userProfile?.myCorner?.notes || '';
+  });
 
   // Efeitos de Persistência
   useEffect(() => localStorage.setItem('hub_workspace_folders', JSON.stringify(folders)), [folders]);
@@ -67,24 +106,38 @@ export default function MyWorkspaceView() {
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-12">
       {/* HEADER DE BOAS VINDAS */}
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/5 pb-12">
-        <div className="space-y-4">
+      <header className="flex flex-col xl:flex-row xl:items-end justify-between gap-10 border-b border-white/5 pb-12">
+        <div className="space-y-6 flex-1">
           <div className="flex items-center gap-3">
             <div className="px-3 py-1 bg-primary-500/10 border border-primary-500/20 rounded-full">
               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary-400">Nexus Workspace v7.0</span>
             </div>
             <span className="text-gray-600 font-mono text-xs">// Private Node</span>
           </div>
-          <h1 className="text-5xl font-black text-white tracking-tighter leading-tight">
-            Olá, <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-primary-600">{userProfile?.displayName?.split(' ')[0] || user?.displayName?.split(' ')[0] || 'Hubber'}</span>.
-          </h1>
-          <p className="text-gray-400 max-w-lg font-medium leading-relaxed">
-            Bem-vindo ao seu cockpit pessoal. Organize seus recursos, acompanhe suas metas e gerencie suas notas em um ambiente privado e focado.
-          </p>
+          
+          <div className="space-y-2">
+            <h1 className="text-5xl font-black text-white tracking-tighter leading-tight">
+              Olá, <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-primary-600">{userProfile?.displayName?.split(' ')[0] || user?.displayName?.split(' ')[0] || 'Hubber'}</span>.
+            </h1>
+            
+            {dailyQuote && (
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="flex items-start gap-4 max-w-2xl mt-4 p-4 bg-white/[0.02] border border-white/5 rounded-3xl"
+              >
+                <i className="ph-duotone ph-quotes text-3xl text-primary-500/40 mt-1" />
+                <div className="space-y-1">
+                  <p className="text-gray-300 italic font-medium leading-relaxed">"{dailyQuote.content}"</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-primary-500/60">— {dailyQuote.author}</p>
+                </div>
+              </motion.div>
+            )}
+          </div>
         </div>
 
         {/* NAVEGAÇÃO DE TABS (GLASS) */}
-        <nav className="flex bg-white/5 backdrop-blur-xl p-1.5 rounded-[1.5rem] border border-white/10 shadow-2xl">
+        <nav className="flex bg-[#0a0c12]/40 backdrop-blur-2xl p-1.5 rounded-[2rem] border border-white/10 shadow-2xl h-fit">
           {[
             { id: 'links', label: 'Vault', icon: 'ph-link' },
             { id: 'goals', label: 'Metas', icon: 'ph-target' },
