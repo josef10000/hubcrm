@@ -27,13 +27,14 @@ Nossa arquitetura descentralizada garante que cada cargo (dos 13 níveis sistêm
 
 ---
 
-## ✨ Estrela da Versão: Hub Nexus v7.1
+## ✨ Estrela da Versão: Hub Nexus v7.2
 O **Hub Nexus** é o novo cockpit pessoal do colaborador. Uma área de alta performance onde a produtividade individual encontra a sincronização em nuvem.
 
-- **Link Vault (Cloud Sync):** Seus recursos sempre à mão. Sincronização em tempo real via **Firestore**, eliminando dependências locais.
-- **Metas Dinâmicas (OKRs):** Tracking visual de progresso com animações fluidas e metas individuais customizáveis.
-- **Premium Dialogs:** Adeus prompts nativos. Interações via diálogos **Glassmorphism** que respeitam a estética do sistema.
-- **Notes Engine:** Bloco de notas persistente com suporte a exportação tática e limpeza rápida.
+- **Nexus Focus Mode:** Temporizador Pomodoro integrado com Checklist de tarefas pessoais.
+- **Agenda Inteligente:** Visualização consolidada de eventos, aniversários e ausências da equipe.
+- **Dashboard de Performance:** Métricas em tempo real de Leads e Clientes atribuídos ao usuário.
+- **Vault de Links & Metas:** Organização em pastas, metas com progresso visual e notas persistentes.
+- **Sincronização Total:** Todos os dados do workspace são salvos no perfil do usuário no Firestore.
 
 ---
 

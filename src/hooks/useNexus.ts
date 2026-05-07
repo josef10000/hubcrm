@@ -26,10 +26,18 @@ export interface PersonalGoal {
   unit: string;
 }
 
+export interface NexusTask {
+  id: string;
+  label: string;
+  completed: boolean;
+  createdAt: number;
+}
+
 export interface NexusData {
   folders: LinkFolder[];
   links: PersonalLink[];
   goals: PersonalGoal[];
+  tasks: NexusTask[];
   notes: string;
 }
 
@@ -65,19 +73,27 @@ export function useNexus() {
         const nexus = profileData.nexusData || null;
 
         if (nexus) {
-          setData(nexus);
+          setData({
+            folders: nexus.folders || [],
+            links: nexus.links || [],
+            goals: nexus.goals || [],
+            tasks: nexus.tasks || [],
+            notes: nexus.notes || ''
+          });
           setLoading(false);
         } else {
           // Tenta migrar do localStorage ou usa padrão
           const savedFolders = localStorage.getItem('hub_workspace_folders');
           const savedLinks = localStorage.getItem('hub_workspace_links');
           const savedGoals = localStorage.getItem('hub_workspace_goals');
+          const savedTasks = localStorage.getItem('hub_workspace_tasks');
           const savedNotes = localStorage.getItem('hub_workspace_notes');
 
           const initialData: NexusData = {
             folders: savedFolders ? JSON.parse(savedFolders) : DEFAULT_FOLDERS,
             links: savedLinks ? JSON.parse(savedLinks) : DEFAULT_LINKS,
             goals: savedGoals ? JSON.parse(savedGoals) : [],
+            tasks: savedTasks ? JSON.parse(savedTasks) : [],
             notes: savedNotes || ''
           };
 
@@ -109,6 +125,7 @@ export function useNexus() {
     setFolders: (folders: LinkFolder[]) => updateNexus({ folders }),
     setLinks: (links: PersonalLink[]) => updateNexus({ links }),
     setGoals: (goals: PersonalGoal[]) => updateNexus({ goals }),
+    setTasks: (tasks: NexusTask[]) => updateNexus({ tasks }),
     setNotes: (notes: string) => updateNexus({ notes })
   };
 }
