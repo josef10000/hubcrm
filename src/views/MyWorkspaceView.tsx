@@ -2,9 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useCRM } from '../contexts/CRMContext';
-import { useNexus, PersonalLink, LinkFolder, PersonalGoal, NexusTask } from '../hooks/useNexus';
+import { useNexusStore } from '../store/useNexusStore';
 import { PremiumDialog } from '../components/PremiumDialog';
 import { format, isToday } from 'date-fns';
+
+// Interfaces importadas da Store
+import type { PersonalLink, LinkFolder, PersonalGoal, NexusTask } from '../store/useNexusStore';
 
 // Helper para ícones de sites comuns
 const getUrlIcon = (url: string) => {
@@ -30,15 +33,32 @@ const getUrlIcon = (url: string) => {
 export default function MyWorkspaceView() {
   const { userProfile, user } = useAuth();
   const { teamProfiles, vacations, appointments, leads, clients } = useCRM();
-  const { 
-    folders, links, goals, tasks, notes, 
-    setFolders, setLinks, setGoals, setTasks, setNotes, 
-    loading 
-  } = useNexus();
   
+  // Zustand Store
+  const folders = useNexusStore(state => state.folders);
+  const links = useNexusStore(state => state.links);
+  const goals = useNexusStore(state => state.goals);
+  const tasks = useNexusStore(state => state.tasks);
+  const notes = useNexusStore(state => state.notes);
+  const loading = useNexusStore(state => state.loading);
+  const initNexus = useNexusStore(state => state.init);
+  const setFolders = useNexusStore(state => state.setFolders);
+  const setLinks = useNexusStore(state => state.setLinks);
+  const setGoals = useNexusStore(state => state.setGoals);
+  const setTasks = useNexusStore(state => state.setTasks);
+  const setNotes = useNexusStore(state => state.setNotes);
+
   const [activeTab, setActiveTab] = useState<'links' | 'goals' | 'notes' | 'tasks'>('links');
   const [dailyQuote, setDailyQuote] = useState<{content: string, author: string} | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+
+  // Inicializa a Store
+  useEffect(() => {
+    if (user?.uid) {
+      const unsubscribe = initNexus(user.uid);
+      return () => unsubscribe();
+    }
+  }, [user?.uid, initNexus]);
 
   // Modal States
   const [modalConfig, setModalConfig] = useState<{

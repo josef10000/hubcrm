@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
+import { create } from 'zustand';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { useAuth } from '../contexts/AuthContext';
 
 export interface PersonalLink {
   id: string;
@@ -41,6 +40,24 @@ export interface NexusData {
   notes: string;
 }
 
+interface NexusState extends NexusData {
+  loading: boolean;
+  initialized: boolean;
+  error: string | null;
+  
+  // Actions
+  init: (uid: string) => () => void;
+  setFolders: (folders: LinkFolder[]) => Promise<void>;
+  setLinks: (links: PersonalLink[]) => Promise<void>;
+  setGoals: (goals: PersonalGoal[]) => Promise<void>;
+  setTasks: (tasks: NexusTask[]) => Promise<void>;
+  setNotes: (notes: string) => Promise<void>;
+  
+  // Internal update
+  _updateFirestore: (newData: Partial<NexusData>) => Promise<void>;
+  uid: string | null;
+}
+
 const DEFAULT_FOLDERS: LinkFolder[] = [
   { id: '1', label: 'Recursos Diários', icon: 'ph-star', color: 'amber' },
   { id: '2', label: 'Ferramentas de Vendas', icon: 'ph-funnel', color: 'primary' },
@@ -52,21 +69,22 @@ const DEFAULT_LINKS: PersonalLink[] = [
   { id: '2', label: 'Figma Design', url: 'https://figma.com', icon: 'ph-figma-logo', folderId: '1' }
 ];
 
-export function useNexus() {
-  const { user } = useAuth();
-  const [data, setData] = useState<NexusData>({
-    folders: [],
-    links: [],
-    goals: [],
-    tasks: [],
-    notes: ''
-  });
-  const [loading, setLoading] = useState(true);
+export const useNexusStore = create<NexusState>((set, get) => ({
+  folders: [],
+  links: [],
+  goals: [],
+  tasks: [],
+  notes: '',
+  loading: true,
+  initialized: false,
+  error: null,
+  uid: null,
 
-  useEffect(() => {
-    if (!user) return;
-
-    const profileRef = doc(db, 'profiles', user.uid);
+  init: (uid: string) => {
+    if (get().initialized && get().uid === uid) return () => {};
+    
+    set({ uid, loading: true });
+    const profileRef = doc(db, 'profiles', uid);
     
     const unsubscribe = onSnapshot(profileRef, (snap) => {
       if (snap.exists()) {
@@ -74,16 +92,17 @@ export function useNexus() {
         const nexus = profileData.nexusData || null;
 
         if (nexus) {
-          setData({
+          set({
             folders: nexus.folders || [],
             links: nexus.links || [],
             goals: nexus.goals || [],
             tasks: nexus.tasks || [],
-            notes: nexus.notes || ''
+            notes: nexus.notes || '',
+            loading: false,
+            initialized: true
           });
-          setLoading(false);
         } else {
-          // Tenta migrar do localStorage ou usa padrão
+          // Migração / Inicialização
           const savedFolders = localStorage.getItem('hub_workspace_folders');
           const savedLinks = localStorage.getItem('hub_workspace_links');
           const savedGoals = localStorage.getItem('hub_workspace_goals');
@@ -98,35 +117,41 @@ export function useNexus() {
             notes: savedNotes || ''
           };
 
-          // Salva no Firestore pela primeira vez
           updateDoc(profileRef, { nexusData: initialData });
-          setData(initialData);
-          setLoading(false);
+          set({ ...initialData, loading: false, initialized: true });
         }
       }
+    }, (err) => {
+      console.error("[NexusStore] Subscription error:", err);
+      set({ error: err.message, loading: false });
     });
 
-    return () => unsubscribe();
-  }, [user]);
+    return unsubscribe;
+  },
 
-  const updateNexus = async (newData: Partial<NexusData>) => {
-    if (!user) return;
-    const profileRef = doc(db, 'profiles', user.uid);
+  _updateFirestore: async (newData: Partial<NexusData>) => {
+    const { uid, folders, links, goals, tasks, notes } = get();
+    if (!uid) return;
+
+    const profileRef = doc(db, 'profiles', uid);
     try {
-      const updatedData = { ...data, ...newData };
+      const updatedData = {
+        folders,
+        links,
+        goals,
+        tasks,
+        notes,
+        ...newData
+      };
       await updateDoc(profileRef, { nexusData: updatedData });
     } catch (err) {
-      console.error("[Nexus] Error updating data:", err);
+      console.error("[NexusStore] Error updating firestore:", err);
     }
-  };
+  },
 
-  return {
-    ...data,
-    loading,
-    setFolders: (folders: LinkFolder[]) => updateNexus({ folders }),
-    setLinks: (links: PersonalLink[]) => updateNexus({ links }),
-    setGoals: (goals: PersonalGoal[]) => updateNexus({ goals }),
-    setTasks: (tasks: NexusTask[]) => updateNexus({ tasks }),
-    setNotes: (notes: string) => updateNexus({ notes })
-  };
-}
+  setFolders: (folders) => get()._updateFirestore({ folders }),
+  setLinks: (links) => get()._updateFirestore({ links }),
+  setGoals: (goals) => get()._updateFirestore({ goals }),
+  setTasks: (tasks) => get()._updateFirestore({ tasks }),
+  setNotes: (notes) => get()._updateFirestore({ notes }),
+}));
