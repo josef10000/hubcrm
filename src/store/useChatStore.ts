@@ -2,10 +2,11 @@ import { create } from 'zustand';
 import { 
   collection, query, where, orderBy, onSnapshot, doc, 
   addDoc, updateDoc, serverTimestamp, Timestamp, arrayUnion, arrayRemove,
-  getDocs, limit, writeBatch
+  getDoc, setDoc, deleteDoc, limit, writeBatch
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Chat, ChatMessage, TypingIndicator } from '../types/chat.types';
+import { toast } from 'sonner';
 
 interface ChatState {
   // Data
@@ -43,9 +44,10 @@ interface ChatState {
 
   // Other Actions
   setTypingStatus: (orgId: string, chatId: string, userId: string, userName: string, isTyping: boolean) => Promise<void>;
-  deleteMessage: (orgId: string, chatId: string, messageId: string) => Promise<void>;
+  deleteMessage: (orgId: string, chatId: string, messageId: string) => Promise<boolean>;
   editMessage: (orgId: string, chatId: string, messageId: string, newText: string) => Promise<void>;
   markAsRead: (orgId: string, chatId: string, userId: string) => Promise<void>;
+  markMessageAsRead: (orgId: string, chatId: string, messageId: string, userId: string) => Promise<void>;
   toggleReaction: (orgId: string, chatId: string, messageId: string, userId: string, emoji: string) => Promise<void>;
   votePoll: (orgId: string, chatId: string, messageId: string, userId: string, optionId: string) => Promise<void>;
   togglePin: (orgId: string, chatId: string, messageId: string, isPinned: boolean) => Promise<void>;
@@ -117,6 +119,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         const now = Date.now();
         const activeTyping = Object.entries(data)
           .filter(([uid, info]: [string, any]) => {
+            if (!info || typeof info !== 'object') return false;
             const infoTs = info.timestamp?.toMillis ? info.timestamp.toMillis() : 0;
             return now - infoTs < 5000; // 5 segundos de validade
           })
@@ -212,7 +215,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       await batch.commit();
     } catch (err) {
       console.error("[ChatStore] Error sending message:", err);
-      // Reverter otimismo em caso de erro (opcional, ou marcar como falha)
+      // Reverter otimismo em caso de erro
       set(state => ({
         messages: state.messages.filter(m => m.id !== optimisticId)
       }));
@@ -223,36 +226,31 @@ export const useChatStore = create<ChatState>((set, get) => ({
     if (!orgId || !chatId) return;
     const typingRef = doc(db, 'organizations', orgId, 'chats', chatId, 'typing', 'status');
     try {
-      if (isTyping) {
-        await updateDoc(typingRef, {
-          [userId]: {
-            displayName: userName,
-            timestamp: serverTimestamp()
-          }
-        });
-      } else {
-        // Remove do mapa de typing
-        await updateDoc(typingRef, {
-          [userId]: null // No Firestore, isso remove se o campo existir ou seta nulo
-        });
-      }
-    } catch (err) {
-      // Se o documento não existe, cria ele
-      const { setDoc } = await import('firebase/firestore');
       await setDoc(typingRef, {
-        [userId]: isTyping ? { displayName: userName, timestamp: serverTimestamp() } : null
+        [userId]: isTyping ? {
+          displayName: userName,
+          timestamp: serverTimestamp()
+        } : null
       }, { merge: true });
+    } catch (err) {
+      console.error("[ChatStore] Error updating typing status:", err);
     }
   },
 
   deleteMessage: async (orgId, chatId, messageId) => {
-    if (!orgId || !chatId) return;
-    const msgRef = doc(db, 'organizations', orgId, 'chats', chatId, 'messages', messageId);
-    await updateDoc(msgRef, { 
-      isDeleted: true, 
-      text: "🚫 Esta mensagem foi apagada",
-      attachments: [] 
-    });
+    if (!orgId || !chatId) return false;
+    try {
+      const msgRef = doc(db, 'organizations', orgId, 'chats', chatId, 'messages', messageId);
+      await updateDoc(msgRef, { 
+        isDeleted: true, 
+        text: "🚫 Esta mensagem foi apagada",
+        attachments: [] 
+      });
+      return true;
+    } catch (err) {
+      console.error("[ChatStore] Error deleting message:", err);
+      return false;
+    }
   },
 
   editMessage: async (orgId, chatId, messageId, newText) => {
@@ -272,6 +270,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
       [`unreadCount.${userId}`]: 0,
       [`unreadMentions.${userId}`]: 0,
       [`lastRead.${userId}`]: serverTimestamp()
+    });
+  },
+
+  markMessageAsRead: async (orgId, chatId, messageId, userId) => {
+    if (!orgId || !chatId) return;
+    const msgRef = doc(db, 'organizations', orgId, 'chats', chatId, 'messages', messageId);
+    await updateDoc(msgRef, {
+      readBy: arrayUnion(userId)
     });
   },
 
@@ -327,7 +333,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         senderName: msg.senderName,
         senderPhotoURL: msg.senderPhotoURL || '',
         savedAt: serverTimestamp()
-      });
+      }, { merge: true });
       toast.success("Salvo nos favoritos!");
     }
   },

@@ -162,6 +162,7 @@ export interface Client {
   niche?: string;
   notes?: string;
   logs?: ClientLog[];
+  lastContactAt?: number;
 }
 
 export interface OnboardingQuestion {

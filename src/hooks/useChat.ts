@@ -43,9 +43,9 @@ export function useChat(chatId: string | null) {
     await store.setTypingStatus(effectiveOrgId, chatId, userProfile.uid, userProfile.displayName || 'Membro', isTyping);
   }, [effectiveOrgId, chatId, userProfile]);
 
-  const deleteMessage = useCallback(async (messageId: string) => {
-    if (!effectiveOrgId || !chatId) return;
-    await store.deleteMessage(effectiveOrgId, chatId, messageId);
+  const deleteMessage = useCallback(async (messageId: string): Promise<boolean> => {
+    if (!effectiveOrgId || !chatId) return false;
+    return await store.deleteMessage(effectiveOrgId, chatId, messageId);
   }, [effectiveOrgId, chatId]);
 
   const editMessage = useCallback(async (messageId: string, text: string) => {
@@ -88,6 +88,11 @@ export function useChat(chatId: string | null) {
     await store.setMessageReminder(effectiveOrgId, userProfile.uid, chatId, message, date);
   }, [effectiveOrgId, userProfile, chatId]);
 
+  const markMessageAsRead = useCallback(async (messageId: string) => {
+    if (!effectiveOrgId || !chatId || !userProfile) return;
+    await store.markMessageAsRead(effectiveOrgId, chatId, messageId, userProfile.uid);
+  }, [effectiveOrgId, chatId, userProfile]);
+
   return {
     messages: store.messages,
     typing: store.typing,
@@ -103,6 +108,7 @@ export function useChat(chatId: string | null) {
     toggleBookmark,
     respondApproval,
     setMessageReminder,
+    markMessageAsRead,
     sharedMedia: store.messages.filter(m => m.attachments && m.attachments.length > 0)
   };
 }
