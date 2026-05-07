@@ -35,9 +35,9 @@ export default function AdministrativeView() {
     setBeginnerGuideArticleId,
     effectiveOrgId,
   } = useCRM();
-
+  
   const { hasPermission } = usePermissions();
-  const { alert, confirm } = useDialog();
+  const { confirm, alert } = useDialog();
   const [newSoftSkill, setNewSoftSkill] = React.useState('');
   
   if (!hasPermission('MANAGE_SETTINGS')) {

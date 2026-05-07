@@ -216,14 +216,12 @@ export default function Sidebar() {
               {/* Grain Texture Overlay */}
               <div className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay bg-[url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')]" />
               
-              <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary-500/50 to-transparent" />
-              
               <div className="relative z-10 mb-8">
                 <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary-500/60 mb-2">Workspace</h3>
                 <h2 className="text-2xl font-black text-white tracking-tight leading-none">{activeGroupData.label}</h2>
               </div>
 
-              <div className="relative z-10 flex-1 space-y-1.5 overflow-y-auto custom-scrollbar pr-2">
+              <div className="relative z-10 flex-1 space-y-1.5 overflow-y-auto no-scrollbar pr-2">
                 {activeGroupData.items.map(item => (
                   <NavItem
                     key={`${activeGroupId}-${item.path}`}
