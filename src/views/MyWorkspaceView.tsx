@@ -215,7 +215,7 @@ export default function MyWorkspaceView() {
         <div className="space-y-6 flex-1">
           <div className="flex items-center gap-3">
             <div className="px-3 py-1 bg-primary-500/10 border border-primary-500/20 rounded-full">
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary-400">Nexus Workspace v7.2</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary-400">Nexus Workspace v7.2.2</span>
             </div>
             <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -257,25 +257,6 @@ export default function MyWorkspaceView() {
                 </div>
               </div>
 
-              {/* Widget: Stats Rápidas */}
-              <div className="p-4 bg-white/[0.03] border border-white/5 rounded-3xl min-w-[240px] flex-1">
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-3 flex items-center gap-2">
-                  <i className="ph-bold ph-chart-pie text-primary-500" />
-                  Minha Performance
-                </h4>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-0.5">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-600">Leads Ativos</p>
-                    <p className="text-xl font-black text-white">{myLeads.length}</p>
-                  </div>
-                  <div className="space-y-0.5">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-600">Atrasados</p>
-                    <p className={`text-xl font-black ${myOverdueClients.length > 0 ? 'text-rose-500' : 'text-white'}`}>
-                      {myOverdueClients.length}
-                    </p>
-                  </div>
-                </div>
-              </div>
 
               {/* Widget: Frase do Dia */}
               {dailyQuote && (
@@ -383,12 +364,12 @@ export default function MyWorkspaceView() {
                       key={link.id}
                       className="p-6 bg-[#0a0c12]/60 backdrop-blur-xl border border-white/10 rounded-[2rem] hover:border-primary-500/50 group transition-all relative overflow-hidden shadow-xl"
                     >
-                      <div className="absolute top-0 right-0 p-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-                        <button onClick={(e) => copyToClipboard(link.url, e)} className="p-2 bg-white/5 rounded-xl hover:bg-primary-500/20 hover:text-primary-400 transition-all" title="Copiar"><i className="ph-bold ph-copy" /></button>
-                        <button onClick={(e) => { e.stopPropagation(); setModalConfig({ isOpen: true, type: 'link', mode: 'edit', data: link }); }} className="p-2 bg-white/5 rounded-xl hover:bg-primary-500/20 hover:text-primary-400 transition-all"><i className="ph-bold ph-pencil-simple" /></button>
-                        <button onClick={(e) => handleDeleteLink(link.id, e)} className="p-2 bg-white/5 rounded-xl hover:bg-rose-500/20 hover:text-rose-400 transition-all"><i className="ph-bold ph-trash" /></button>
+                      <div className="absolute top-2 right-2 p-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                        <button onClick={(e) => copyToClipboard(link.url, e)} className="p-1.5 bg-white/5 rounded-lg hover:bg-primary-500/20 hover:text-primary-400 transition-all" title="Copiar"><i className="ph-bold ph-copy text-sm" /></button>
+                        <button onClick={(e) => { e.stopPropagation(); setModalConfig({ isOpen: true, type: 'link', mode: 'edit', data: link }); }} className="p-1.5 bg-white/5 rounded-lg hover:bg-primary-500/20 hover:text-primary-400 transition-all"><i className="ph-bold ph-pencil-simple text-sm" /></button>
+                        <button onClick={(e) => handleDeleteLink(link.id, e)} className="p-1.5 bg-white/5 rounded-lg hover:bg-rose-500/20 hover:text-rose-400 transition-all"><i className="ph-bold ph-trash text-sm" /></button>
                       </div>
-                      <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-5 relative z-10">
+                      <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-5 relative z-10 pr-24">
                         <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform shadow-lg group-hover:shadow-primary-500/20">
                           <i className={`ph-duotone ${link.icon || getUrlIcon(link.url)} text-primary-400`} />
                         </div>

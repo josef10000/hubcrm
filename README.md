@@ -1,7 +1,7 @@
 # <p align="center">🔐 HUB CENTRAL — INTELLIGENCE ECOSYSTEM</p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Enterprise_OS-v7.2.1-3b82f6?style=for-the-badge&labelColor=0a0a0a" alt="Version" />
+  <img src="https://img.shields.io/badge/Enterprise_OS-v7.2.2-3b82f6?style=for-the-badge&labelColor=0a0a0a" alt="Version" />
   <img src="https://img.shields.io/badge/Architecture-Serverless_Event_Driven-blueviolet?style=for-the-badge&labelColor=0a0a0a" alt="Architecture" />
   <img src="https://img.shields.io/badge/Status-Audited_&_Production_Ready-emerald?style=for-the-badge&labelColor=0a0a0a" alt="Status" />
 </p>
@@ -27,12 +27,11 @@ Nossa arquitetura descentralizada garante que cada cargo (dos 13 níveis sistêm
 
 ---
 
-## ✨ Estrela da Versão: Hub Nexus v7.2.1
+## ✨ Estrela da Versão: Hub Nexus v7.2.2
 O **Hub Nexus** é o novo cockpit pessoal do colaborador. Uma área de alta performance onde a produtividade individual encontra a sincronização em nuvem.
 
 - **Tarefas & Checklist:** Aba dedicada para gestão de pendências diárias com sincronização em nuvem.
 - **Agenda Inteligente:** Visualização consolidada de eventos, aniversários e ausências da equipe.
-- **Dashboard de Performance:** Métricas em tempo real de Leads e Clientes atribuídos ao usuário.
 - **Vault de Links & Metas:** Organização em pastas, metas com progresso visual e notas persistentes.
 - **Sincronização Total:** Todos os dados do workspace são salvos no perfil do usuário no Firestore.
 
@@ -81,7 +80,8 @@ O Hub Central segue diretrizes rígidas de design para manter seu status premium
 - [x] **v6.0.4** — Resiliência de subcoleções no Firestore.
 - [x] **v7.0** — Lançamento do Hub Nexus (Workspace Pessoal).
 - [x] **v7.1.0** — Nexus Cloud Sync & Premium Dialogs.
-- [x] **v7.2.1** — **Nexus Tasks & Smart Agenda** (Lançamento Atual).
+- [x] **v7.2.1** — Nexus Tasks & Smart Agenda.
+- [x] **v7.2.2** — **Nexus Workspace Refinement** (Lançamento Atual).
 - [ ] **v7.5.0** — IA Integrada: Nexus Copilot para automação de tarefas.
 
 ---
