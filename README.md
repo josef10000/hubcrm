@@ -1,4 +1,4 @@
-# 🔐 Hub Central — Intranet Corporativa v7.0.8
+# 🔐 Hub Central — Intranet Corporativa v7.1.0
 
 > [!CAUTION]
 > **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
@@ -9,7 +9,7 @@ A plataforma Hub Central é o motor de crescimento da Hub Symples. Nossa intrane
 ---
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-7.0.0-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
+  <img src="https://img.shields.io/badge/Version-7.1.0-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
   <img src="https://img.shields.io/badge/Status-Audited_&_Stable-3b82f6?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
   <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
   <img src="https://img.shields.io/badge/License-Proprietary-3b82f6?style=for-the-badge&labelColor=111111" alt="License" />
@@ -26,9 +26,9 @@ A plataforma Hub Central é o motor de crescimento da Hub Symples. Nossa intrane
 </p>
 
 <div align="center">
-  <h2>✨ Destaque da Versão v7.0.8</h2>
-  <p><strong>Hub Nexus: O Cockpit Pessoal (CRUD Total)</strong></p>
-  <p>O Workspace Pessoal agora é 100% gerenciável. Adição de Link Vault com suporte completo a edição e exclusão de links/pastas, Dashboard de Metas (OKRs) interativo e Bloco de Notas com exportação segura.</p>
+  <h2>✨ Destaque da Versão v7.1.0</h2>
+  <p><strong>Hub Nexus: Cloud Sync & Premium UI</strong></p>
+  <p>O Workspace Pessoal agora possui sincronização em tempo real via Firestore (fim da dependência do localStorage). Introdução de <strong>Premium Dialogs</strong> para uma experiência ultra-fluida e interface 100% glassmorphism.</p>
 </div>
 
 <br />
@@ -244,3 +244,4 @@ Um registro do contínuo processo de amadurecimento e modernização do produto.
 - [x] **v6.0.3** — Hotfix Hub Chat: Correção de erro de sintaxe no `ChatSidebar.tsx` que impedia o build.
 - [x] **v6.0.4** — Resiliência no Hub Chat: Refatoração da exclusão para priorizar o documento principal, mitigando erros de permissão em subcoleções.
 - [x] **v7.0.8** — Lançamento do Hub Nexus: Workspace pessoal completo com Link Vault (CRUD), Gestão de Metas (OKRs) e Bloco de Notas sincronizado.
+- [x] **v7.1.0** — Nexus Evolution: Sincronização em nuvem (Firestore) e substituição de prompts por Premium Dialogs.
