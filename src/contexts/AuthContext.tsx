@@ -291,28 +291,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Busca alertas disparados para a organização que tenham o cargo do usuário como alvo OU sejam para o usuário específico
+    console.log("[Auth] Iniciando listener de alertas para:", userProfile.orgId);
+    
+    // Simplificamos a query para evitar problemas de permissão complexos ou falta de índices
     const q = query(
       collection(db, 'system_alerts'),
-      and(
-        where('orgId', '==', userProfile.orgId),
-        or(
-          where('targetRoles', 'array-contains', typeof userProfile.role === 'string' ? userProfile.role : (userProfile.role?.id || '')),
-          where('userId', '==', userProfile.uid)
-        )
-      ),
+      where('orgId', '==', userProfile.orgId),
       limit(50)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const loadedAlerts = snapshot.docs
-        .map(d => ({ id: d.id, ...d.data() } as BusinessAlert))
-        .sort((a, b) => b.createdAt - a.createdAt);
+      const allAlerts = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as BusinessAlert));
+      
+      // Filtragem em memória (RBAC)
+      const userRoleId = typeof userProfile.role === 'string' ? userProfile.role : (userProfile.role?.id || '');
+      const filteredAlerts = allAlerts.filter(alert => 
+        (alert.targetRoles && Array.isArray(alert.targetRoles) && alert.targetRoles.includes(userRoleId)) ||
+        (alert.userId === userProfile.uid) ||
+        (!alert.targetRoles && !alert.userId) // Alerta global da org
+      ).sort((a, b) => b.createdAt - a.createdAt);
 
-      setBusinessAlerts(loadedAlerts);
+      setBusinessAlerts(filteredAlerts);
 
-      // Calcula os não lidos comparando com o array readAlerts do perfil
-      const unread = loadedAlerts.filter(alert => 
+      // Calcula os não lidos
+      const unread = filteredAlerts.filter(alert => 
         !userProfile.readAlerts?.includes(alert.id)
       ).length;
 
