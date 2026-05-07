@@ -359,6 +359,7 @@ export interface BusinessAlert {
   message: string;
   type: 'success' | 'warning' | 'error' | 'info' | 'cron';
   targetRoles: UserRole[];
+  userId?: string; // Alerta específico para um usuário
   orgId: string;
   createdAt: number;
   link?: string; // Deep link para onde o usuário deve ser levado ao clicar

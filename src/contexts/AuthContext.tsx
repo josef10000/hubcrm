@@ -303,13 +303,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const allAlerts = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as BusinessAlert));
       
-      // Filtragem em memória (RBAC)
+      // Filtragem em memória (RBAC) com tratamento de tipagem robusto
       const userRoleId = typeof userProfile.role === 'string' ? userProfile.role : (userProfile.role?.id || '');
-      const filteredAlerts = allAlerts.filter(alert => 
-        (alert.targetRoles && Array.isArray(alert.targetRoles) && alert.targetRoles.includes(userRoleId)) ||
-        (alert.userId === userProfile.uid) ||
-        (!alert.targetRoles && !alert.userId) // Alerta global da org
-      ).sort((a, b) => b.createdAt - a.createdAt);
+      const filteredAlerts = allAlerts.filter(alert => {
+        const targetRoles = alert.targetRoles || [];
+        const hasRole = targetRoles.some(r => 
+          (typeof r === 'string' && r === userRoleId) || 
+          (typeof r === 'object' && r !== null && (r as any).id === userRoleId)
+        );
+        const isForUser = alert.userId === userProfile.uid;
+        const isGlobal = targetRoles.length === 0 && !alert.userId;
+        
+        return hasRole || isForUser || isGlobal;
+      }).sort((a, b) => b.createdAt - a.createdAt);
 
       setBusinessAlerts(filteredAlerts);
 
