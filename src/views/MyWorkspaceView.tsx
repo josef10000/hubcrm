@@ -30,6 +30,7 @@ export default function MyWorkspaceView() {
   const { user, userProfile } = useAuth();
   const [activeTab, setActiveTab] = useState<'links' | 'goals' | 'notes'>('links');
   const [dailyQuote, setDailyQuote] = useState<{content: string, author: string} | null>(null);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   
   // Biblioteca interna de frases premium (Fallback)
   const MOTIVATIONAL_QUOTES = [
@@ -64,14 +65,13 @@ export default function MyWorkspaceView() {
   });
 
   const [links, setLinks] = useState<PersonalLink[]>(() => {
-    // Tenta migrar do My Corner se existir
     const legacyLinks = userProfile?.myCorner?.links || [];
     const saved = localStorage.getItem('hub_workspace_links');
     if (saved) return JSON.parse(saved);
     
     if (legacyLinks.length > 0) {
       return legacyLinks.map((l: any, i: number) => ({
-        id: `legacy-${i}`,
+        id: `legacy-${i}-${Date.now()}`,
         label: l.title,
         url: l.url,
         icon: 'ph-link',
@@ -102,6 +102,94 @@ export default function MyWorkspaceView() {
   useEffect(() => localStorage.setItem('hub_workspace_links', JSON.stringify(links)), [links]);
   useEffect(() => localStorage.setItem('hub_workspace_goals', JSON.stringify(goals)), [goals]);
   useEffect(() => localStorage.setItem('hub_workspace_notes', notes), [notes]);
+
+  // Handlers de Gerenciamento
+  const handleAddFolder = () => {
+    const label = prompt('Nome da nova pasta:');
+    if (!label) return;
+    const newFolder: LinkFolder = {
+      id: Date.now().toString(),
+      label,
+      icon: 'ph-folder-simple',
+      color: 'primary'
+    };
+    setFolders([...folders, newFolder]);
+  };
+
+  const handleAddLink = () => {
+    if (!selectedFolderId && folders.length > 0) {
+      setSelectedFolderId(folders[0].id);
+    }
+    const label = prompt('Título do link:');
+    const url = prompt('URL completa (ex: https://...):');
+    if (!label || !url) return;
+    
+    const newLink: PersonalLink = {
+      id: Date.now().toString(),
+      label,
+      url: url.startsWith('http') ? url : `https://${url}`,
+      icon: 'ph-link',
+      folderId: selectedFolderId || folders[0]?.id
+    };
+    setLinks([...links, newLink]);
+  };
+
+  const handleDeleteFolder = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm('Deseja excluir esta pasta? Os links não serão excluídos, mas ficarão sem pasta.')) {
+      setFolders(folders.filter(f => f.id !== id));
+      if (selectedFolderId === id) setSelectedFolderId(null);
+    }
+  };
+
+  const handleDeleteLink = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm('Deseja excluir este link?')) {
+      setLinks(links.filter(l => l.id !== id));
+    }
+  };
+
+  const handleAddGoal = () => {
+    const label = prompt('O que você quer alcançar? (ex: Leads Atendidos)');
+    const target = prompt('Qual é o valor alvo? (ex: 50)');
+    const unit = prompt('Qual a unidade? (ex: leads, vendas, posts)');
+    if (!label || !target || !unit) return;
+
+    const newGoal: PersonalGoal = {
+      id: Date.now().toString(),
+      label,
+      target: parseInt(target),
+      current: 0,
+      unit
+    };
+    setGoals([...goals, newGoal]);
+  };
+
+  const handleUpdateGoal = (id: string, increment: boolean) => {
+    setGoals(goals.map(g => {
+      if (g.id === id) {
+        return { ...g, current: Math.max(0, increment ? g.current + 1 : g.current - 1) };
+      }
+      return g;
+    }));
+  };
+
+  const handleDeleteGoal = (id: string) => {
+    if (confirm('Deseja excluir esta meta?')) {
+      setGoals(goals.filter(g => g.id !== id));
+    }
+  };
+
+  const copyToClipboard = (text: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigator.clipboard.writeText(text);
+    alert('Link copiado!');
+  };
+
+  const filteredLinks = selectedFolderId 
+    ? links.filter(l => l.folderId === selectedFolderId)
+    : links;
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-12">
@@ -172,23 +260,49 @@ export default function MyWorkspaceView() {
             >
               {/* LISTA DE PASTAS */}
               <div className="lg:col-span-1 space-y-6">
-                <h3 className="text-xs font-black uppercase tracking-[0.4em] text-gray-500 mb-6">Categorias</h3>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xs font-black uppercase tracking-[0.4em] text-gray-500">Categorias</h3>
+                  {selectedFolderId && (
+                    <button 
+                      onClick={() => setSelectedFolderId(null)}
+                      className="text-[10px] font-black uppercase tracking-widest text-primary-400 hover:text-white"
+                    >
+                      Limpar Filtro
+                    </button>
+                  )}
+                </div>
                 <div className="space-y-3">
                   {folders.map(folder => (
                     <button
                       key={folder.id}
-                      className="w-full flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-3xl hover:bg-white/10 transition-all group"
+                      onClick={() => setSelectedFolderId(folder.id)}
+                      className={`w-full flex items-center justify-between p-4 rounded-3xl transition-all group border ${
+                        selectedFolderId === folder.id 
+                        ? 'bg-primary-500/20 border-primary-500/40 text-white' 
+                        : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
+                      }`}
                     >
                       <div className="flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-2xl bg-${folder.color}-500/20 flex items-center justify-center text-${folder.color}-400 border border-${folder.color}-500/30`}>
+                        <div className={`w-10 h-10 rounded-2xl bg-primary-500/20 flex items-center justify-center text-primary-400 border border-primary-500/30 group-hover:scale-110 transition-transform`}>
                           <i className={`ph-duotone ${folder.icon} text-xl`} />
                         </div>
-                        <span className="font-bold text-white group-hover:translate-x-1 transition-transform">{folder.label}</span>
+                        <span className="font-bold group-hover:translate-x-1 transition-transform">{folder.label}</span>
                       </div>
-                      <i className="ph-bold ph-caret-right text-gray-600 group-hover:text-white transition-colors" />
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black opacity-40">{links.filter(l => l.folderId === folder.id).length}</span>
+                        <button 
+                          onClick={(e) => handleDeleteFolder(folder.id, e)}
+                          className="opacity-0 group-hover:opacity-100 p-2 hover:text-rose-400 transition-all"
+                        >
+                          <i className="ph-bold ph-trash" />
+                        </button>
+                      </div>
                     </button>
                   ))}
-                  <button className="w-full p-4 border border-dashed border-white/10 rounded-3xl text-gray-500 hover:text-white hover:border-primary-500/50 transition-all font-bold text-sm flex items-center justify-center gap-2">
+                  <button 
+                    onClick={handleAddFolder}
+                    className="w-full p-4 border border-dashed border-white/10 rounded-3xl text-gray-500 hover:text-white hover:border-primary-500/50 transition-all font-bold text-sm flex items-center justify-center gap-2"
+                  >
                     <i className="ph-bold ph-plus" />
                     Nova Pasta
                   </button>
@@ -198,31 +312,53 @@ export default function MyWorkspaceView() {
               {/* GRID DE LINKS */}
               <div className="lg:col-span-2 space-y-6">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-black uppercase tracking-[0.4em] text-gray-500">Recursos Salvos</h3>
-                  <button className="text-[10px] font-black uppercase tracking-widest text-primary-400 hover:text-primary-300">Ver Todos</button>
+                  <h3 className="text-xs font-black uppercase tracking-[0.4em] text-gray-500">
+                    {selectedFolderId ? `Links em ${folders.find(f => f.id === selectedFolderId)?.label}` : 'Todos os Recursos'}
+                  </h3>
+                  <div className="flex items-center gap-4">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-600">{filteredLinks.length} Itens</span>
+                  </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {links.map(link => (
+                  {filteredLinks.map(link => (
                     <a
                       key={link.id}
                       href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="p-6 bg-[#0a0c12]/60 backdrop-blur-xl border border-white/10 rounded-[2rem] hover:border-primary-500/50 group transition-all relative overflow-hidden shadow-xl"
                     >
-                      <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <i className="ph-bold ph-arrow-square-out text-primary-400" />
+                      <div className="absolute top-0 right-0 p-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                        <button 
+                          onClick={(e) => copyToClipboard(link.url, e)}
+                          className="p-2 bg-white/5 rounded-xl hover:bg-primary-500/20 hover:text-primary-400 transition-all"
+                          title="Copiar Link"
+                        >
+                          <i className="ph-bold ph-copy" />
+                        </button>
+                        <button 
+                          onClick={(e) => handleDeleteLink(link.id, e)}
+                          className="p-2 bg-white/5 rounded-xl hover:bg-rose-500/20 hover:text-rose-400 transition-all"
+                          title="Excluir"
+                        >
+                          <i className="ph-bold ph-trash" />
+                        </button>
                       </div>
-                      <div className="flex items-center gap-5">
+                      <div className="flex items-center gap-5 relative z-10">
                         <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
                           <i className={`ph-duotone ${link.icon} text-primary-400`} />
                         </div>
-                        <div>
-                          <h4 className="font-bold text-white group-hover:text-primary-400 transition-colors">{link.label}</h4>
-                          <p className="text-[10px] text-gray-500 font-mono mt-1">{link.url.replace('https://', '')}</p>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-white group-hover:text-primary-400 transition-colors truncate">{link.label}</h4>
+                          <p className="text-[10px] text-gray-500 font-mono mt-1 truncate">{link.url.replace('https://', '')}</p>
                         </div>
                       </div>
                     </a>
                   ))}
-                  <button className="p-6 border border-dashed border-white/10 rounded-[2rem] flex flex-col items-center justify-center gap-3 text-gray-500 hover:text-primary-400 hover:border-primary-500/50 transition-all group">
+                  <button 
+                    onClick={handleAddLink}
+                    className="p-6 border border-dashed border-white/10 rounded-[2rem] flex flex-col items-center justify-center gap-3 text-gray-500 hover:text-primary-400 hover:border-primary-500/50 transition-all group min-h-[104px]"
+                  >
                     <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-xl group-hover:rotate-90 transition-transform">
                       <i className="ph-bold ph-plus" />
                     </div>
@@ -244,7 +380,15 @@ export default function MyWorkspaceView() {
               {goals.map(goal => {
                 const percent = Math.min(100, (goal.current / goal.target) * 100);
                 return (
-                  <div key={goal.id} className="p-8 bg-[#0a0c12]/60 backdrop-blur-xl border border-white/10 rounded-[2.5rem] shadow-2xl space-y-6">
+                  <div key={goal.id} className="p-8 bg-[#0a0c12]/60 backdrop-blur-xl border border-white/10 rounded-[2.5rem] shadow-2xl space-y-6 group relative">
+                    <div className="absolute top-6 right-6 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button 
+                        onClick={() => handleDeleteGoal(goal.id)}
+                        className="p-2 bg-white/5 rounded-xl hover:bg-rose-500/20 hover:text-rose-400 transition-all"
+                      >
+                        <i className="ph-bold ph-trash" />
+                      </button>
+                    </div>
                     <div className="flex items-center justify-between">
                       <div className="space-y-1">
                         <h3 className="text-xl font-black text-white tracking-tight">{goal.label}</h3>
@@ -255,9 +399,25 @@ export default function MyWorkspaceView() {
                       </div>
                     </div>
                     
-                    <div className="space-y-3">
+                    <div className="space-y-6">
                       <div className="flex justify-between items-end">
-                        <span className="text-3xl font-black text-white">{goal.current} <span className="text-sm text-gray-500">/ {goal.target} {goal.unit}</span></span>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-3xl font-black text-white">{goal.current} <span className="text-sm text-gray-500">/ {goal.target} {goal.unit}</span></span>
+                          <div className="flex gap-2">
+                            <button 
+                              onClick={() => handleUpdateGoal(goal.id, true)}
+                              className="px-3 py-1 bg-primary-500/20 text-primary-400 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-primary-500/40 transition-colors"
+                            >
+                              + Adicionar
+                            </button>
+                            <button 
+                              onClick={() => handleUpdateGoal(goal.id, false)}
+                              className="px-3 py-1 bg-white/5 text-gray-500 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-colors"
+                            >
+                              - Reduzir
+                            </button>
+                          </div>
+                        </div>
                         <span className="text-sm font-black text-primary-400">{Math.round(percent)}%</span>
                       </div>
                       <div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/10 p-0.5">
@@ -272,7 +432,10 @@ export default function MyWorkspaceView() {
                   </div>
                 );
               })}
-              <button className="p-8 border border-dashed border-white/10 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 text-gray-500 hover:text-primary-400 hover:border-primary-500/50 transition-all group">
+              <button 
+                onClick={handleAddGoal}
+                className="p-8 border border-dashed border-white/10 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 text-gray-500 hover:text-primary-400 hover:border-primary-500/50 transition-all group min-h-[220px]"
+              >
                 <i className="ph-bold ph-plus-circle text-4xl group-hover:scale-110 transition-transform" />
                 <span className="text-xs font-black uppercase tracking-[0.4em]">Criar Nova Meta</span>
               </button>
@@ -294,8 +457,27 @@ export default function MyWorkspaceView() {
                     <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Sync Ativo</span>
                   </div>
                   <div className="flex items-center gap-4">
-                    <button className="text-gray-500 hover:text-white transition-colors"><i className="ph-bold ph-export" /></button>
-                    <button className="text-gray-500 hover:text-white transition-colors"><i className="ph-bold ph-trash" /></button>
+                    <button 
+                      onClick={() => {
+                        const blob = new Blob([notes], { type: 'text/plain' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `notas-hub-${new Date().toISOString().split('T')[0]}.txt`;
+                        a.click();
+                      }}
+                      className="p-2 hover:bg-white/5 rounded-xl text-gray-500 hover:text-white transition-all"
+                      title="Exportar Notas"
+                    >
+                      <i className="ph-bold ph-export" />
+                    </button>
+                    <button 
+                      onClick={() => { if(confirm('Limpar todas as notas?')) setNotes(''); }}
+                      className="p-2 hover:bg-white/5 rounded-xl text-gray-500 hover:text-rose-400 transition-all"
+                      title="Limpar"
+                    >
+                      <i className="ph-bold ph-trash" />
+                    </button>
                   </div>
                 </div>
                 <textarea

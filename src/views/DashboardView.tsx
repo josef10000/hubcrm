@@ -118,9 +118,6 @@ export default function DashboardView() {
     <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10">
       <div className="max-w-7xl mx-auto">
         
-        {/* Meu Canto Pessoal */}
-        <MyCornerWidget />
-
         <AlertPanels 
           overdueClients={overdueClients} 
           comboRenewalClients={comboRenewalClients} 
