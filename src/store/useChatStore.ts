@@ -168,7 +168,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     // 3. Persistir no Firebase
     try {
-      console.log(`[ChatStore] Enviando mensagem para chat ${chatId}...`);
       const messagesRef = collection(db, 'organizations', orgId, 'chats', chatId, 'messages');
       const chatRef = doc(db, 'organizations', orgId, 'chats', chatId);
 
@@ -216,7 +215,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }
 
       await batch.commit();
-      console.log("[ChatStore] Mensagem enviada com sucesso!");
     } catch (err: any) {
       console.error("[ChatStore] Error sending message:", err);
       toast.error(`Erro ao enviar: ${err.message || 'Erro desconhecido'}`);

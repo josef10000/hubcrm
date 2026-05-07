@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useCRM } from '../contexts/CRMContext';
 import { useNexusStore } from '../store/useNexusStore';
+import { useDialog } from '../contexts/DialogContext';
+import { toast } from 'sonner';
 import { PremiumDialog } from '../components/PremiumDialog';
 import { format, isToday } from 'date-fns';
 
@@ -33,6 +35,7 @@ const getUrlIcon = (url: string) => {
 export default function MyWorkspaceView() {
   const { userProfile, user } = useAuth();
   const { teamProfiles, vacations, appointments, leads, clients } = useCRM();
+  const { confirm, alert } = useDialog();
   
   // Zustand Store
   const folders = useNexusStore(state => state.folders);
@@ -170,25 +173,46 @@ export default function MyWorkspaceView() {
     }));
   };
 
-  const handleDeleteGoal = (id: string) => {
-    if (confirm('Deseja excluir esta meta?')) {
+  const handleDeleteGoal = async (id: string) => {
+    const ok = await confirm({
+      title: 'Excluir Meta',
+      message: 'Tem certeza que deseja excluir esta meta? O progresso será perdido.',
+      variant: 'danger',
+      confirmText: 'Excluir'
+    });
+    if (ok) {
       setGoals(goals.filter(g => g.id !== id));
+      toast.success('Meta removida');
     }
   };
 
-  const handleDeleteFolder = (id: string, e: React.MouseEvent) => {
+  const handleDeleteFolder = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm('Deseja excluir esta pasta?')) {
+    const ok = await confirm({
+      title: 'Excluir Pasta',
+      message: 'Deseja excluir esta pasta? Os links dentro dela não serão apagados, mas ficarão sem categoria.',
+      variant: 'danger',
+      confirmText: 'Excluir'
+    });
+    if (ok) {
       setFolders(folders.filter(f => f.id !== id));
       if (selectedFolderId === id) setSelectedFolderId(null);
+      toast.success('Pasta removida');
     }
   };
 
-  const handleDeleteLink = (id: string, e: React.MouseEvent) => {
+  const handleDeleteLink = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    if (confirm('Deseja excluir este link?')) {
+    const ok = await confirm({
+      title: 'Excluir Link',
+      message: 'Deseja remover este atalho do seu cofre?',
+      variant: 'danger',
+      confirmText: 'Excluir'
+    });
+    if (ok) {
       setLinks(links.filter(l => l.id !== id));
+      toast.success('Link removido');
     }
   };
 
@@ -196,7 +220,7 @@ export default function MyWorkspaceView() {
     e.preventDefault();
     e.stopPropagation();
     navigator.clipboard.writeText(text);
-    alert('Link copiado!');
+    toast.success('Link copiado para a área de transferência!');
   };
 
   // Data: Agenda & Stats
@@ -527,7 +551,13 @@ export default function MyWorkspaceView() {
                   </div>
                   <div className="flex items-center gap-4">
                     <button onClick={() => { const blob = new Blob([notes], { type: 'text/plain' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `notas-hub-${new Date().toISOString().split('T')[0]}.txt`; a.click(); }} className="p-2 hover:bg-white/5 rounded-xl text-gray-500 hover:text-white transition-all" title="Exportar"><i className="ph-bold ph-export" /></button>
-                    <button onClick={() => { if(confirm('Limpar todas as notas?')) setNotes(''); }} className="p-2 hover:bg-white/5 rounded-xl text-gray-500 hover:text-rose-400 transition-all" title="Limpar"><i className="ph-bold ph-trash" /></button>
+                    <button onClick={async () => { 
+                      const ok = await confirm({ title: 'Limpar Notas', message: 'Deseja apagar todo o conteúdo das notas? Esta ação não pode ser desfeita.', variant: 'danger' });
+                      if (ok) {
+                        setNotes(''); 
+                        toast.success('Notas limpas');
+                      }
+                    }} className="p-2 hover:bg-white/5 rounded-xl text-gray-500 hover:text-rose-400 transition-all" title="Limpar"><i className="ph-bold ph-trash" /></button>
                   </div>
                 </div>
                 <textarea

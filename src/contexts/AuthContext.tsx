@@ -95,14 +95,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 try {
                   const rolesSnap = await getDocs(collection(db, 'organizations', orgIdToUse, 'roles'));
                   if (rolesSnap.empty) {
-                    console.log("[Auth] Nenhuma role encontrada. Inicializando cargos padrão...");
                     const batch = writeBatch(db);
                     defaultRoles.forEach(roleData => {
                       const roleDocRef = doc(db, 'organizations', orgIdToUse, 'roles', roleData.id);
                       batch.set(roleDocRef, roleData);
                     });
                     await batch.commit();
-                    console.log("[Auth] Cargos padrão inicializados com sucesso.");
+                    await batch.commit();
                   }
                 } catch (err) {
                   console.error("[Auth] Erro ao instanciar cargos:", err);
@@ -146,7 +145,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 const inviteSnap = await getDocs(invitesRef);
                 
                 if (!inviteSnap.empty) {
-                  console.log("[Auth] Convite detectado. Realizando auto-vínculo...");
                   const idToken = await u.getIdToken();
                   const acceptRes = await fetch('/api/team/accept', {
                     method: 'POST',
@@ -277,7 +275,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const isBday = day !== 0 && today.getDate() === day && today.getMonth() === month;
       
       setIsBirthday(isBday);
-      console.log(`[Auth] Verificação de aniversário (${dateStr}): ${isBday ? '🎉 Hoje é seu dia!' : 'Não é hoje.'}`);
     } else {
       setIsBirthday(false);
     }
@@ -290,8 +287,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUnreadAlertsCount(0);
       return;
     }
-
-    console.log("[Auth] Iniciando listener de alertas para:", userProfile.orgId);
     
     // Simplificamos a query para evitar problemas de permissão complexos ou falta de índices
     const q = query(

@@ -1,7 +1,7 @@
 # <p align="center">🔐 HUB CENTRAL — INTELLIGENCE ECOSYSTEM</p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Enterprise_OS-v7.2.3.9-3b82f6?style=for-the-badge&labelColor=0a0a0a" alt="Version" />
+  <img src="https://img.shields.io/badge/Enterprise_OS-v7.2.3.23-3b82f6?style=for-the-badge&labelColor=0a0a0a" alt="Version" />
   <img src="https://img.shields.io/badge/Architecture-Zustand_Global_Sync-blueviolet?style=for-the-badge&labelColor=0a0a0a" alt="Architecture" />
   <img src="https://img.shields.io/badge/Status-Optimized_Performance-emerald?style=for-the-badge&labelColor=0a0a0a" alt="Status" />
 </p>
@@ -87,6 +87,7 @@ O Hub Central segue diretrizes rígidas de design para manter seu status premium
 - [x] **v7.2.3** — **Zustand State Migration** (Core Nexus).
 - [x] **v7.2.3.9** — **Global Zustand Sync** (CRM & Chat Optimistic UI).
 - [x] **v7.2.3.15** — **Resilience & Stability Update** (Fixed Permissions & Global State Bridge).
+- [x] **v7.2.3.23** — **Dialog Migration & Performance Cleanup** (Centralized Async Dialogs & Debug Log Purge).
 - [ ] **v7.5.0** — IA Integrada: Nexus Copilot para automação de tarefas.
 
 ---

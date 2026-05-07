@@ -85,7 +85,6 @@ export const useNexusStore = create<NexusState>((set, get) => ({
     if (get().initialized && get().uid === uid) return () => {};
     
     set({ uid, loading: true });
-    console.log(`[NexusStore] Iniciando listener para usuário ${uid}...`);
     const profileRef = doc(db, 'profiles', uid);
     
     const unsubscribe = onSnapshot(profileRef, (snap) => {
@@ -105,7 +104,6 @@ export const useNexusStore = create<NexusState>((set, get) => ({
           });
         } else {
           // Migração / Inicialização
-          console.log("[NexusStore] Inicializando nexusData padrão...");
           const initialData: NexusData = {
             folders: DEFAULT_FOLDERS,
             links: DEFAULT_LINKS,

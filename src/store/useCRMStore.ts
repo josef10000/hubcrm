@@ -89,7 +89,6 @@ export const useCRMStore = create<CRMState>((set, get) => ({
   initialized: false,
 
   init: (orgId: string, userId: string, permissions: string[]) => {
-    console.log(`[CRMStore] Inicializando para Org: ${orgId}`);
     // Se mudar de Org ou for a primeira vez, mostramos loading
     if (get().effectiveOrgId !== orgId) {
       set({ effectiveOrgId: orgId, loading: true, initialized: true, errorMsg: null });

@@ -35,7 +35,7 @@ export default function AdministrativeView() {
     effectiveOrgId,
   } = useCRM();
 
-  const { hasPermission } = usePermissions();
+  const { alert, confirm } = useDialog();
   const [newSoftSkill, setNewSoftSkill] = React.useState('');
   
   if (!hasPermission('MANAGE_SETTINGS')) {
@@ -68,6 +68,15 @@ export default function AdministrativeView() {
   };
 
   const handleRemoveSoftSkill = async (skill: string) => {
+    const ok = await confirm({
+      title: 'Remover Habilidade',
+      message: `Tem certeza que deseja remover "${skill}" do pool global?`,
+      confirmText: 'Remover',
+      variant: 'danger'
+    });
+
+    if (!ok) return;
+
     const updatedPool = softSkillsPool.filter(s => s !== skill);
     try {
       await setDoc(doc(db, 'organizations', effectiveOrgId, 'settings', 'preferences'), { softSkillsPool: updatedPool }, { merge: true });
@@ -116,11 +125,25 @@ export default function AdministrativeView() {
                                     }}
                                     className="flex-1 px-4 py-2 bg-black/40 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white rounded-xl outline-none"
                                 />
-                                <button onClick={() => setDefaultStages(defaultStages.filter(s => s.id !== stage.id))} className="text-gray-400 hover:text-red-500">
+                                <button 
+                                    onClick={async () => {
+                                        const ok = await confirm({
+                                            title: 'Excluir Etapa',
+                                            message: 'Deseja remover esta etapa do fluxo padrão?',
+                                            confirmText: 'Excluir',
+                                            variant: 'danger'
+                                        });
+                                        if (ok) {
+                                            setDefaultStages(defaultStages.filter(s => s.id !== stage.id));
+                                        }
+                                    }} 
+                                    className="text-gray-400 hover:text-red-500"
+                                >
                                     <Trash2 size={18} />
                                 </button>
                             </div>
                         ))}
+
                         <button
                             onClick={() => setDefaultStages([...defaultStages, { id: Math.random().toString(36).substring(7), name: 'Nova Etapa' }])}
                             className="w-full py-2 bg-white/5 border border-white/10 rounded-xl text-sm"
