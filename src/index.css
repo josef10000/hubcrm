@@ -288,5 +288,14 @@
   .dark-absolute .text-gray-400  { color: #d1d5db !important; }
   .dark-absolute .text-gray-500  { color: #9ca3af !important; }
   .dark-absolute .border-white\/10 { border-color: rgba(255,255,255,0.18) !important; }
+
+  /* Utility to hide scrollbars */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
 

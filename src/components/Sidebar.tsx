@@ -134,7 +134,7 @@ export default function Sidebar() {
             />
           </div>
 
-          <div className="relative z-10 flex-1 flex flex-col gap-2.5 items-center w-full px-2 pb-4 overflow-y-auto custom-scrollbar no-scrollbar">
+          <div className="relative z-10 flex-1 flex flex-col gap-2.5 items-center w-full px-2 pb-4 overflow-y-auto no-scrollbar">
             {/* Gatilho Favoritos */}
             <button
               onMouseEnter={() => handleMouseEnter('favorites')}
