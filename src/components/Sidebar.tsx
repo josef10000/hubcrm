@@ -134,7 +134,7 @@ export default function Sidebar() {
             />
           </div>
 
-          <div className="relative z-10 flex-1 flex flex-col gap-2.5 items-center w-full px-2 pb-4 overflow-y-auto no-scrollbar">
+          <div className="relative z-10 flex-1 flex flex-col gap-2.5 items-center w-full px-2 pb-4 overflow-y-auto overflow-x-hidden no-scrollbar">
             {/* Gatilho Favoritos */}
             <button
               onMouseEnter={() => handleMouseEnter('favorites')}
@@ -221,7 +221,7 @@ export default function Sidebar() {
                 <h2 className="text-2xl font-black text-white tracking-tight leading-none">{activeGroupData.label}</h2>
               </div>
 
-              <div className="relative z-10 flex-1 space-y-1.5 overflow-y-auto no-scrollbar pr-2">
+              <div className="relative z-10 flex-1 space-y-1.5 overflow-y-auto overflow-x-hidden no-scrollbar pr-2">
                 {activeGroupData.items.map(item => (
                   <NavItem
                     key={`${activeGroupId}-${item.path}`}
