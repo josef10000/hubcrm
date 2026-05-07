@@ -170,13 +170,6 @@ function CRMInner() {
                 onClick={() => navigate('/')}
                 className="flex items-center gap-3 mr-8 cursor-pointer group shrink-0"
               >
-                <div className="w-10 h-10 bg-primary-500/10 rounded-xl flex items-center justify-center border border-primary-500/20 group-hover:scale-110 transition-transform">
-                  <img 
-                    src="https://i.imgur.com/EFBaYb5.png" 
-                    alt="Logo" 
-                    className="h-7 w-auto" 
-                  />
-                </div>
                 <div className="hidden sm:block">
                   <h1 className="text-lg font-black tracking-tighter text-white uppercase leading-none">Hub</h1>
                   <p className="text-[10px] font-bold text-primary-400 tracking-[0.2em] uppercase leading-none mt-0.5">Central</p>
