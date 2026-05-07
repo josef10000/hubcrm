@@ -151,13 +151,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
       mentions: mentions || [],
       replyTo: replyTo || null,
       type,
-      poll,
-      approval,
-      richPreview,
-      parentMessageId,
-      scheduledAt,
       createdAt: Timestamp.now(), // Fake timestamp para UI
     };
+
+    // Adiciona campos opcionais apenas se definidos para evitar erro de 'undefined' no Firestore
+    if (poll) newMessage.poll = poll;
+    if (approval) newMessage.approval = approval;
+    if (richPreview) newMessage.richPreview = richPreview;
+    if (parentMessageId) newMessage.parentMessageId = parentMessageId;
+    if (scheduledAt) newMessage.scheduledAt = scheduledAt;
 
     // 2. Atualizar UI imediatamente
     set(state => ({

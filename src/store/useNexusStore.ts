@@ -81,9 +81,11 @@ export const useNexusStore = create<NexusState>((set, get) => ({
   uid: null,
 
   init: (uid: string) => {
+    // Se já estiver inicializado para o mesmo UID, não faz nada (mas não mata o listener se ele já existir)
     if (get().initialized && get().uid === uid) return () => {};
     
     set({ uid, loading: true });
+    console.log(`[NexusStore] Iniciando listener para usuário ${uid}...`);
     const profileRef = doc(db, 'profiles', uid);
     
     const unsubscribe = onSnapshot(profileRef, (snap) => {
@@ -103,18 +105,13 @@ export const useNexusStore = create<NexusState>((set, get) => ({
           });
         } else {
           // Migração / Inicialização
-          const savedFolders = localStorage.getItem('hub_workspace_folders');
-          const savedLinks = localStorage.getItem('hub_workspace_links');
-          const savedGoals = localStorage.getItem('hub_workspace_goals');
-          const savedTasks = localStorage.getItem('hub_workspace_tasks');
-          const savedNotes = localStorage.getItem('hub_workspace_notes');
-
+          console.log("[NexusStore] Inicializando nexusData padrão...");
           const initialData: NexusData = {
-            folders: savedFolders ? JSON.parse(savedFolders) : DEFAULT_FOLDERS,
-            links: savedLinks ? JSON.parse(savedLinks) : DEFAULT_LINKS,
-            goals: savedGoals ? JSON.parse(savedGoals) : [],
-            tasks: savedTasks ? JSON.parse(savedTasks) : [],
-            notes: savedNotes || ''
+            folders: DEFAULT_FOLDERS,
+            links: DEFAULT_LINKS,
+            goals: [],
+            tasks: [],
+            notes: ''
           };
 
           updateDoc(profileRef, { nexusData: initialData });
@@ -133,17 +130,22 @@ export const useNexusStore = create<NexusState>((set, get) => ({
     const { uid, folders, links, goals, tasks, notes } = get();
     if (!uid) return;
 
+    // Atualização Otimista local
+    set(state => ({ ...state, ...newData }));
+
     const profileRef = doc(db, 'profiles', uid);
     try {
-      const updatedData = {
-        folders,
-        links,
-        goals,
-        tasks,
-        notes,
-        ...newData
-      };
-      await updateDoc(profileRef, { nexusData: updatedData });
+      const baseData = { folders, links, goals, tasks, notes };
+      const merged = { ...baseData, ...newData };
+      
+      // Sanitização profunda para evitar undefined no Firestore
+      const sanitized: any = {};
+      Object.keys(merged).forEach(key => {
+        const val = (merged as any)[key];
+        if (val !== undefined) sanitized[key] = val;
+      });
+
+      await updateDoc(profileRef, { nexusData: sanitized });
     } catch (err) {
       console.error("[NexusStore] Error updating firestore:", err);
     }
