@@ -88,6 +88,7 @@ O Hub Central segue diretrizes rígidas de design para manter seu status premium
 - [x] **v7.2.3.9** — **Global Zustand Sync** (CRM & Chat Optimistic UI).
 - [x] **v7.2.3.15** — **Resilience & Stability Update** (Fixed Permissions & Global State Bridge).
 - [x] **v7.2.3.23** — **Dialog Migration & Performance Cleanup** (Centralized Async Dialogs & Debug Log Purge).
+- [x] **v7.2.4.0** — **Layout & Visibility Refinement** (Compact Sidebar & Client Auto-Assignment Logic).
 - [ ] **v7.5.0** — IA Integrada: Nexus Copilot para automação de tarefas.
 
 ---
