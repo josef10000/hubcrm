@@ -11,6 +11,45 @@ import NavItem from './NavItem';
 import AvatarFrame from './AvatarFrame';
 import { navGroups } from '../constants/navigation';
 
+// Mapeador de Ícones Premium (Phosphor Duotone)
+export const PremiumIcon = ({ iconName, size = 22, className = "" }: { iconName: string, size?: number, className?: string }) => {
+  const mapping: Record<string, string> = {
+    'Target': 'ph-target',
+    'LayoutDashboard': 'ph-house',
+    'Package': 'ph-package',
+    'Users': 'ph-users-three',
+    'Megaphone': 'ph-megaphone',
+    'Calendar': 'ph-calendar-blank',
+    'MessageCircle': 'ph-chats-circle',
+    'Rocket': 'ph-rocket',
+    'Globe': 'ph-globe',
+    'LayoutTemplate': 'ph-layout',
+    'Map': 'ph-map-trifold',
+    'Layout': 'ph-kanban',
+    'CreditCard': 'ph-credit-card',
+    'DollarSign': 'ph-currency-circle-dollar',
+    'Shield': 'ph-shield-checkered',
+    'BarChart3': 'ph-chart-bar',
+    'HeartHandshake': 'ph-hand-heart',
+    'BookOpen': 'ph-book-open-text',
+    'Settings': 'ph-gear-six',
+    'Bell': 'ph-bell',
+    'ShieldCheck': 'ph-shield-check',
+    'Star': 'ph-star',
+    'Search': 'ph-magnifying-glass',
+    'X': 'ph-x-circle'
+  };
+
+  const phClass = mapping[iconName] || 'ph-question';
+  
+  return (
+    <i 
+      className={`ph-duotone ${phClass} ${className}`} 
+      style={{ fontSize: `${size}px`, filter: className.includes('text-primary') || className.includes('text-amber') ? 'drop-shadow(0 0 8px currentColor)' : 'none' }} 
+    />
+  );
+};
+
 export default function Sidebar() {
   const navigate = useNavigate();
   const { user, userProfile, unreadAlertsCount, isBirthday } = useAuth();
@@ -105,7 +144,10 @@ export default function Sidebar() {
                 : 'text-gray-500 hover:text-white hover:bg-white/5'
               }`}
             >
-              <Star size={22} fill={pinnedNavItems.length > 0 ? 'currentColor' : 'none'} className={pinnedNavItems.length > 0 ? 'text-amber-500' : ''} />
+              <PremiumIcon 
+                iconName="Star" 
+                className={activeGroupId === 'favorites' || pinnedNavItems.length > 0 ? 'text-amber-500' : ''} 
+              />
               {pinnedNavItems.length > 0 && (
                 <span className="absolute top-2 right-2 w-2 h-2 bg-amber-500 rounded-full border border-[#05070a]" />
               )}
@@ -124,7 +166,7 @@ export default function Sidebar() {
                   : 'text-gray-500 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <group.icon size={22} />
+                <PremiumIcon iconName={group.icon.name || group.icon.displayName || 'Target'} />
                 {group.totalBadges > 0 && (
                   <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-primary-500 rounded-full border-2 border-[#05070a] animate-pulse" />
                 )}

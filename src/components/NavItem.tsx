@@ -1,10 +1,10 @@
 import React from 'react';
-import { LucideIcon, Star } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useUI } from '../contexts/UIContext';
+import { PremiumIcon } from './Sidebar';
 
 interface NavItemProps {
-  icon: LucideIcon;
+  icon: any; // Aceita o componente Lucide original para mapeamento
   label: string;
   path: string;
   onClick?: () => void;
@@ -32,7 +32,11 @@ export default function NavItem({ icon: Icon, label, path, onClick, badge }: Nav
         }`}
       >
         <div className="flex items-center space-x-3">
-          <Icon size={18} aria-hidden="true" className={isActive ? 'text-primary-400' : 'text-gray-500 group-hover/item:text-gray-300'} />
+          <PremiumIcon 
+            iconName={Icon?.name || Icon?.displayName || 'Target'} 
+            size={18} 
+            className={isActive ? 'text-primary-400' : 'text-gray-500 group-hover/item:text-gray-300'} 
+          />
           <span className="text-sm font-medium tracking-wide">{label}</span>
         </div>
         {badge !== undefined && badge > 0 && (
@@ -59,7 +63,11 @@ export default function NavItem({ icon: Icon, label, path, onClick, badge }: Nav
         }`}
         title={isPinned ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
       >
-        <Star size={14} fill={isPinned ? 'currentColor' : 'none'} />
+        <PremiumIcon 
+          iconName="Star" 
+          size={14} 
+          className={isPinned ? 'text-amber-500' : ''} 
+        />
       </button>
     </div>
   );
