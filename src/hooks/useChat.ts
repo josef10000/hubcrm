@@ -30,7 +30,11 @@ export function useChat(chatId: string | null) {
     parentMessageId?: string,
     scheduledAt?: Timestamp
   ) => {
-    if (!effectiveOrgId || !chatId || !userProfile) return;
+    console.log("[useChat] Chamando sendMessage:", { text, type, chatId, orgId: effectiveOrgId });
+    if (!effectiveOrgId || !chatId || !userProfile) {
+      console.warn("[useChat] Abortando envio: dados insuficientes", { effectiveOrgId, chatId, userProfile: !!userProfile });
+      return;
+    }
     await store.sendMessage(
       effectiveOrgId, chatId, userProfile.uid, 
       userProfile.displayName || 'Membro', userProfile.photoURL || '',
