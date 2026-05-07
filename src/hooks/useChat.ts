@@ -97,6 +97,16 @@ export function useChat(chatId: string | null) {
     await store.markMessageAsRead(effectiveOrgId, chatId, messageId, userProfile.uid);
   }, [effectiveOrgId, chatId, userProfile]);
 
+  const sendBotMessage = useCallback(async (botName: string, text: string, type: ChatMessage['type'] = 'bot_response', parentMessageId?: string) => {
+    if (!effectiveOrgId || !chatId) return;
+    await store.sendBotMessage(effectiveOrgId, chatId, botName, text, type, parentMessageId);
+  }, [effectiveOrgId, chatId]);
+
+  const createChannel = useCallback(async (data: Partial<Chat>) => {
+    if (!effectiveOrgId) return;
+    return await store.createChannel(effectiveOrgId, data);
+  }, [effectiveOrgId]);
+
   return {
     messages: store.messages,
     typing: store.typing,
@@ -113,6 +123,8 @@ export function useChat(chatId: string | null) {
     respondApproval,
     setMessageReminder,
     markMessageAsRead,
+    sendBotMessage,
+    createChannel,
     sharedMedia: store.messages.filter(m => m.attachments && m.attachments.length > 0)
   };
 }

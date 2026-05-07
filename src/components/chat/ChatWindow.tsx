@@ -32,7 +32,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
   const { 
     messages, typing, sendMessage, setTypingStatus, loading, deleteMessage, 
     toggleReaction, votePoll, togglePin, unpinMessage, toggleBookmark, respondApproval,
-    editMessage, markMessageAsRead, setMessageReminder, sharedMedia 
+    editMessage, markMessageAsRead, setMessageReminder, sharedMedia, sendBotMessage 
   } = useChat(chatId);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const [pinnedMessagesData, setPinnedMessagesData] = useState<ChatMessage[]>([]);
@@ -211,19 +211,23 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
     if (!chat) return;
     if (!text.trim() && attachments.length === 0 && type === 'text') return;
     
-    await sendMessage(
-      text, 
-      mentions, 
-      attachments, 
-      replyTo,
-      chat.members,
-      type,
-      poll,
-      approval,
-      richPreview,
-      parentMessageId,
-      scheduledAt
-    );
+    if (type === 'bot_response') {
+      await sendBotMessage('HubBot', text, 'bot_response', parentMessageId);
+    } else {
+      await sendMessage(
+        text, 
+        mentions, 
+        attachments, 
+        replyTo,
+        chat.members,
+        type,
+        poll,
+        approval,
+        richPreview,
+        parentMessageId,
+        scheduledAt
+      );
+    }
     
     setReplyingTo(null);
   };

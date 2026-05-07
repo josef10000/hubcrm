@@ -54,6 +54,8 @@ interface ChatState {
   toggleBookmark: (orgId: string, userId: string, messageId: string, msg: ChatMessage, chatId: string) => Promise<void>;
   respondApproval: (orgId: string, chatId: string, messageId: string, userId: string, status: 'approved' | 'rejected') => Promise<void>;
   setMessageReminder: (orgId: string, userId: string, chatId: string, message: ChatMessage, date: Date) => Promise<void>;
+  createChannel: (orgId: string, data: Partial<Chat>) => Promise<string>;
+  sendBotMessage: (orgId: string, chatId: string, botName: string, text: string, type?: ChatMessage['type'], parentMessageId?: string) => Promise<void>;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -109,6 +111,22 @@ export const useChatStore = create<ChatState>((set, get) => ({
         ...doc.data()
       } as ChatMessage));
       set({ messages: msgs, loadingMessages: false });
+
+      // Verificar Notificações (Última mensagem enviada por outros)
+      if (msgs.length > 0) {
+        const lastMsg = msgs[msgs.length - 1];
+        const userId = (window as any).currentUserUid; // Fallback se não tiver no escopo
+        
+        if (lastMsg.senderId !== userId) {
+          const isMentioned = lastMsg.mentions?.includes(userId || '') || lastMsg.mentionAll;
+          if (isMentioned && Notification.permission === 'granted') {
+            new Notification(`${lastMsg.senderName} te mencionou`, {
+              body: lastMsg.text,
+              icon: lastMsg.senderPhotoURL || '/logo192.png'
+            });
+          }
+        }
+      }
     });
 
     // Listener de Typing
@@ -149,6 +167,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       senderPhotoURL: userPhoto,
       attachments: attachments || [],
       mentions: mentions || [],
+      mentionAll: text.toLowerCase().includes('@todos') || text.toLowerCase().includes('@everyone'),
       replyTo: replyTo || null,
       type,
       createdAt: Timestamp.now(), // Fake timestamp para UI
@@ -203,7 +222,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           currentChat.members.forEach(memberId => {
             if (memberId !== userId) {
               unreadUpdates[`unreadCount.${memberId}`] = (currentChat.unreadCount?.[memberId] || 0) + 1;
-              if (mentions?.includes(memberId) || text.includes('@todos')) {
+              if (mentions?.includes(memberId) || text.toLowerCase().includes('@todos') || text.toLowerCase().includes('@everyone')) {
                 unreadUpdates[`unreadMentions.${memberId}`] = (currentChat.unreadMentions?.[memberId] || 0) + 1;
               }
             }
@@ -363,5 +382,81 @@ export const useChatStore = create<ChatState>((set, get) => ({
       createdAt: serverTimestamp()
     });
     toast.success("Lembrete agendado!");
+  },
+
+  createChannel: async (orgId, data) => {
+    const channelsRef = collection(db, 'organizations', orgId, 'chats');
+    const newChannel = {
+      ...data,
+      type: 'channel',
+      orgId,
+      unreadCount: {},
+      unreadMentions: {},
+      lastRead: {},
+      lastMessage: null,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    };
+    const docRef = await addDoc(channelsRef, newChannel);
+    return docRef.id;
+  },
+
+  sendBotMessage: async (orgId, chatId, botName, text, type = "text", parentMessageId) => {
+    if (!orgId || !chatId) return;
+
+    try {
+      const messagesRef = collection(db, 'organizations', orgId, 'chats', chatId, 'messages');
+      const chatRef = doc(db, 'organizations', orgId, 'chats', chatId);
+
+      const batch = writeBatch(db);
+
+      const botMessage: any = {
+        text,
+        senderId: 'hub-bot',
+        senderName: botName,
+        senderPhotoURL: '', // Pode adicionar um avatar fixo aqui
+        attachments: [],
+        mentions: [],
+        type,
+        isBot: true,
+        botName,
+        createdAt: serverTimestamp(),
+        status: 'sent'
+      };
+
+      if (parentMessageId) botMessage.parentMessageId = parentMessageId;
+
+      const newMsgRef = doc(messagesRef);
+      batch.set(newMsgRef, botMessage);
+
+      // Atualizar Chat
+      if (!parentMessageId) {
+        batch.update(chatRef, {
+          lastMessage: {
+            text: type === 'text' ? text : `[${type}]`,
+            senderId: 'hub-bot',
+            senderName: botName,
+            createdAt: serverTimestamp()
+          },
+          updatedAt: serverTimestamp()
+        });
+
+        // Incrementar unreadCount para todos
+        const currentChat = get().chats.find(c => c.id === chatId);
+        if (currentChat) {
+          const unreadUpdates: any = {};
+          currentChat.members.forEach(memberId => {
+            unreadUpdates[`unreadCount.${memberId}`] = (currentChat.unreadCount?.[memberId] || 0) + 1;
+          });
+          if (Object.keys(unreadUpdates).length > 0) {
+            batch.update(chatRef, unreadUpdates);
+          }
+        }
+      }
+
+      await batch.commit();
+    } catch (err) {
+      console.error("[ChatStore] Error sending bot message:", err);
+    }
   }
 }));

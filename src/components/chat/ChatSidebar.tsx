@@ -184,6 +184,9 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
     setContextMenu(null);
   };
 
+  const totalUnreadChats = filteredChats.reduce((acc, c) => acc + (c.unreadCount?.[userProfile?.uid || ''] || 0), 0);
+  const totalMentionsChannels = filteredChannels.reduce((acc, c) => acc + (c.unreadMentions?.[userProfile?.uid || ''] || 0), 0);
+
   return (
     <div className="w-80 border-r border-gray-100 dark:border-white/10 flex flex-col bg-gray-50/50 dark:bg-black/20">
       {/* Header da Sidebar */}
@@ -228,11 +231,14 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
       <div className="px-6 pb-2 flex gap-4 border-b border-gray-100 dark:border-white/5 mb-2">
         <button 
           onClick={() => setActiveTab('chats')}
-          className={`pb-2 text-xs font-bold uppercase tracking-widest transition-all relative ${
+          className={`pb-2 text-xs font-bold uppercase tracking-widest transition-all relative flex items-center gap-2 ${
             activeTab === 'chats' ? 'text-primary-500' : 'text-gray-400 hover:text-gray-600'
           }`}
         >
           Conversas
+          {totalUnreadChats > 0 && (
+            <span className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-pulse" />
+          )}
           {activeTab === 'chats' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-500 rounded-full" />}
         </button>
         <button 
@@ -246,11 +252,14 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
         </button>
         <button 
           onClick={() => setActiveTab('channels')}
-          className={`pb-2 text-xs font-bold uppercase tracking-widest transition-all relative ${
+          className={`pb-2 text-xs font-bold uppercase tracking-widest transition-all relative flex items-center gap-2 ${
             activeTab === 'channels' ? 'text-violet-500' : 'text-gray-400 hover:text-gray-600'
           }`}
         >
           Canais
+          {totalMentionsChannels > 0 && (
+            <span className="w-2 h-2 bg-red-500 rounded-full animate-bounce shadow-lg shadow-red-500/20" />
+          )}
           {activeTab === 'channels' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-violet-500 rounded-full" />}
         </button>
       </div>
@@ -444,6 +453,7 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
               filteredChannels.map(channel => {
                 const isSelected = selectedId === channel.id;
                 const unread = channel.unreadCount?.[userProfile?.uid || ''] || 0;
+                const mention = channel.unreadMentions?.[userProfile?.uid || ''] || 0;
 
                 return (
                   <button
@@ -501,11 +511,18 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
                     </div>
 
                     {/* Badges */}
-                    {unread > 0 && (
-                      <div className="bg-violet-500 text-white text-xs font-black px-1.5 py-0.5 rounded-md shadow-lg shadow-violet-500/20">
-                        {unread > 9 ? '9+' : unread}
-                      </div>
-                    )}
+                    <div className="flex flex-col gap-1">
+                      {mention > 0 && (
+                        <div className="h-4 min-w-[16px] px-1 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center shadow-lg animate-pulse border border-white dark:border-zinc-900">
+                          @
+                        </div>
+                      )}
+                      {unread > 0 && (
+                        <div className="bg-violet-500 text-white text-xs font-black px-1.5 py-0.5 rounded-md shadow-lg shadow-violet-500/20">
+                          {unread > 9 ? '9+' : unread}
+                        </div>
+                      )}
+                    </div>
                   </button>
                 );
               })

@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useCRM } from '../../contexts/CRMContext';
 import { toast } from 'sonner';
 import { uploadImageToImgBB } from '../../lib/imgbb';
+import { useChatStore } from '../../store/useChatStore';
 
 interface CreateChannelModalProps {
   isOpen: boolean;
@@ -44,12 +45,12 @@ export default function CreateChannelModal({ isOpen, onClose, onSuccess }: Creat
     if (!name.trim()) return toast.error('Dê um nome ao canal!');
     if (!effectiveOrgId || !userProfile?.uid) return;
 
+    const createChannel = useChatStore.getState().createChannel;
+
     setLoading(true);
     try {
-      const docRef = await addDoc(collection(db, 'organizations', effectiveOrgId, 'chats'), {
+      const channelId = await createChannel(effectiveOrgId, {
         name: name.trim(),
-        type: 'channel',
-        orgId: effectiveOrgId,
         members: [userProfile.uid],
         adminIds: [userProfile.uid],
         avatarUrl: avatarUrl || null,
@@ -58,17 +59,13 @@ export default function CreateChannelModal({ isOpen, onClose, onSuccess }: Creat
         category,
         description: description.trim(),
         icon,
-        lastMessage: null,
         unreadCount: { [userProfile.uid]: 0 },
         unreadMentions: { [userProfile.uid]: 0 },
-        lastRead: {},
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
       });
 
       toast.success(`Canal #${name} criado!`);
       onClose();
-      onSuccess?.(docRef.id);
+      onSuccess?.(channelId);
       setName('');
       setDescription('');
       setIcon('📢');

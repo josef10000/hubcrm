@@ -1,9 +1,9 @@
 # <p align="center">🔐 HUB CENTRAL — INTELLIGENCE ECOSYSTEM</p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Enterprise_OS-v7.2.3.23-3b82f6?style=for-the-badge&labelColor=0a0a0a" alt="Version" />
-  <img src="https://img.shields.io/badge/Architecture-Zustand_Global_Sync-blueviolet?style=for-the-badge&labelColor=0a0a0a" alt="Architecture" />
-  <img src="https://img.shields.io/badge/Status-Optimized_Performance-emerald?style=for-the-badge&labelColor=0a0a0a" alt="Status" />
+  <img src="https://img.shields.io/badge/Enterprise_OS-v7.3.0-3b82f6?style=for-the-badge&labelColor=0a0a0a" alt="Version" />
+  <img src="https://img.shields.io/badge/Architecture-Collaboration_Bots-blueviolet?style=for-the-badge&labelColor=0a0a0a" alt="Architecture" />
+  <img src="https://img.shields.io/badge/Status-Pro_Collaboration-emerald?style=for-the-badge&labelColor=0a0a0a" alt="Status" />
 </p>
 
 <p align="center">
@@ -89,6 +89,7 @@ O Hub Central segue diretrizes rígidas de design para manter seu status premium
 - [x] **v7.2.3.15** — **Resilience & Stability Update** (Fixed Permissions & Global State Bridge).
 - [x] **v7.2.3.23** — **Dialog Migration & Performance Cleanup** (Centralized Async Dialogs & Debug Log Purge).
 - [x] **v7.2.4.0** — **Layout & Visibility Refinement** (Compact Sidebar & Client Auto-Assignment Logic).
+- [x] **v7.3.0** — **Collaboration & HubBots** (Thematic Channels, Slash Commands & Smart Notifications).
 - [ ] **v7.5.0** — IA Integrada: Nexus Copilot para automação de tarefas.
 
 ---
