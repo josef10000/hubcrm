@@ -318,7 +318,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setUnreadAlertsCount(unread);
     }, (err) => {
-      console.error("Alerts Listener Error:", err);
+      console.warn("[Auth] Alertas do sistema (RBAC) indisponíveis ou erro de permissão:", err.message);
+      setBusinessAlerts([]);
+      setUnreadAlertsCount(0);
     });
 
     return () => unsubscribe();

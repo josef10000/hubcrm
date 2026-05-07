@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useCRMStore } from '../store/useCRMStore';
 import { useAuth } from './AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
+import { Client, Offer } from '../types';
 
 const CRMContext = createContext<any>(null);
 
@@ -13,9 +14,16 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   const orgId = userProfile?.orgId || user?.uid || '';
   const permissions = userProfile?.permissions || [];
 
+  // Estados de UI que o CRMContext carregava (Bridge)
+  const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
+  const [editingOffer, setEditingOffer] = useState<Offer | null>(null);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [isDeleteOfferConfirmOpen, setIsDeleteOfferConfirmOpen] = useState(false);
+  const [offerToDelete, setOfferToDelete] = useState<Offer | null>(null);
+
   // Sincroniza a Store com o Firestore
   useEffect(() => {
-    if (orgId && user?.uid) {
+    if (orgId && user?.uid && orgId !== 'pending') {
       const unsubscribe = store.init(orgId, user.uid, permissions);
       return () => unsubscribe();
     }
@@ -28,24 +36,20 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     activeLeadsCount: store.leads.filter(l => !['Convertido', 'Perdido'].includes(l.status || '')).length,
     effectiveOrgId: orgId,
     userProfile,
-    // Mapeamento de ações para nomes legados (se necessário)
-    handlePayCommission: async (id: string) => {
-      // Implementação rápida ou delegar para store se existir
+    
+    // UI States (Bridge)
+    isOfferModalOpen, setIsOfferModalOpen,
+    editingOffer, setEditingOffer,
+    editingClient, setEditingClient,
+    isDeleteOfferConfirmOpen, setIsDeleteOfferConfirmOpen,
+    offerToDelete, setOfferToDelete,
+    
+    // Fallbacks e mapeamentos de ações
+    handleExportCSV: (data: any[]) => {
+      console.log("Exporting CSV...", data);
+      // Implementação do export se necessário
     },
-    handleDeleteCommission: async (id: string) => {
-      // Implementação rápida
-    },
-    syncPayments: async () => { /* Logic mapping */ },
-    isSyncing: false,
-    isEmailLoading: false,
-    pendingVacationsCount: store.vacations.filter(v => v.status === 'Pendente').length,
-    // Widgets e estados de UI que o CRMContext carregava
-    isOfferModalOpen: false,
-    setIsOfferModalOpen: () => {},
-    editingOffer: null,
-    setEditingOffer: () => {},
-    editingClient: null,
-    setEditingClient: () => {},
+    errorMsg: store.errorMsg
   };
 
   return <CRMContext.Provider value={value}>{children}</CRMContext.Provider>;

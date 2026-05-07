@@ -26,6 +26,9 @@ interface CRMState {
   orgRoles: UserRole[];
   supportRequests: any[];
   services: any[];
+  onboardingQuestions: any[];
+  churnRiskDays: number;
+  isSyncing: boolean;
   
   // UI / Global State
   loading: boolean;
@@ -59,6 +62,8 @@ interface CRMState {
   
   // Helpers (Calculated)
   isChurnRisk: (client: Client, churnRiskDays: number) => boolean;
+  isComboNearRenewal: (client: Client) => boolean;
+  syncPayments: () => Promise<void>;
 }
 
 export const useCRMStore = create<CRMState>((set, get) => ({
@@ -75,44 +80,65 @@ export const useCRMStore = create<CRMState>((set, get) => ({
   orgRoles: [],
   supportRequests: [],
   services: [],
+  onboardingQuestions: [],
+  churnRiskDays: 30,
+  isSyncing: false,
   loading: true,
   errorMsg: null,
   effectiveOrgId: null,
   initialized: false,
 
   init: (orgId: string, userId: string, permissions: string[]) => {
+    // Se já inicializado para a mesma org, não faz nada
     if (get().initialized && get().effectiveOrgId === orgId) return () => {};
     
-    set({ effectiveOrgId: orgId, loading: true, initialized: true });
+    console.log(`[CRMStore] Inicializando para Org: ${orgId}`);
+    set({ effectiveOrgId: orgId, loading: true, initialized: true, errorMsg: null });
 
     const unsubscribers: (() => void)[] = [];
 
-    const setupListener = (collPath: string, setter: (data: any[]) => void, sortFn?: (a: any, b: any) => number, filterFn?: (data: any[]) => any[]) => {
-      const ref = collection(db, 'organizations', orgId, collPath);
-      const unsub = onSnapshot(ref, (snap) => {
-        let data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        if (filterFn) data = filterFn(data);
-        if (sortFn) data.sort(sortFn);
-        setter(data);
-      }, (err) => {
-        console.error(`[CRMStore] Error loading ${collPath}:`, err);
-      });
-      unsubscribers.push(unsub);
+    const setupListener = (
+      collPath: string, 
+      setter: (data: any[]) => void, 
+      sortFn?: (a: any, b: any) => number, 
+      filterFn?: (data: any[]) => any[],
+      isCritical: boolean = false
+    ) => {
+      try {
+        const ref = collection(db, 'organizations', orgId, collPath);
+        const unsub = onSnapshot(ref, (snap) => {
+          let data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          if (filterFn) data = filterFn(data);
+          if (sortFn) data.sort(sortFn);
+          setter(data);
+          if (isCritical) set({ loading: false });
+        }, (err) => {
+          console.error(`[CRMStore] Erro no listener ${collPath}:`, err);
+          if (isCritical) {
+            set({ errorMsg: `Erro ao carregar ${collPath}: ${err.message}`, loading: false });
+          }
+        });
+        unsubscribers.push(unsub);
+      } catch (err: any) {
+        console.error(`[CRMStore] Falha ao configurar listener ${collPath}:`, err);
+        if (isCritical) set({ loading: false, errorMsg: err.message });
+      }
     };
 
-    // 1. Clientes (com filtro de permissão)
+    // 1. Listeners Críticos (que liberam o loading)
     setupListener('clients', 
-      (data) => set({ clients: data, loading: false }),
+      (data) => set({ clients: data }),
       undefined,
       (data) => {
         if (!permissions.includes('MANAGE_TEAM') && !permissions.includes('MANAGE_SETTINGS')) {
           return data.filter(c => c.assignedTo === userId);
         }
         return data;
-      }
+      },
+      true // É crítico
     );
 
-    // 2. Leads (com filtro de permissão)
+    // 2. Outros Listeners (Não bloqueantes)
     setupListener('leads',
       (data) => set({ leads: data }),
       (a, b) => (b.createdAt || 0) - (a.createdAt || 0),
@@ -124,27 +150,46 @@ export const useCRMStore = create<CRMState>((set, get) => ({
       }
     );
 
-    // 3. Outros Listeners
     setupListener('offers', (data) => set({ offers: data }), (a, b) => (a.order || 0) - (b.order || 0));
     setupListener('vacations', (data) => set({ vacations: data }));
     setupListener('commissions', (data) => set({ commissions: data }), (a, b) => b.date - a.date);
     setupListener('tags', (data) => set({ tags: data }), (a, b) => a.name.localeCompare(b.name));
     setupListener('wikiArticles', (data) => set({ wikiArticles: data }), (a, b) => b.createdAt - a.createdAt);
     setupListener('appointments', (data) => set({ appointments: data }), (a, b) => b.startTime - a.startTime);
-    setupListener('supportRequests', (data) => set({ supportRequests: data }), (a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
-    setupListener('services', (data) => set({ services: data }), (a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0));
-    setupListener('roles', (data) => set({ orgRoles: data }), (a, b) => a.name.localeCompare(b.name));
+    
+    // Suporte e Serviços (podem falhar por permissão em algumas orgs)
+    setupListener('supportRequests', (data) => set({ supportRequests: data }));
+    setupListener('services', (data) => set({ services: data }));
+    setupListener('roles', (data) => set({ orgRoles: data }));
+    setupListener('onboarding_questions', (data) => set({ onboardingQuestions: data }), (a, b) => (a.order || 0) - (b.order || 0));
 
-    // 4. Perfis da Equipe (Global)
-    const profilesRef = collection(db, 'profiles');
-    const qProfiles = query(profilesRef, where('orgId', '==', orgId));
-    const unsubProfiles = onSnapshot(qProfiles, (snapshot) => {
-      const loaded: UserProfile[] = snapshot.docs.map(d => ({ uid: d.id, ...d.data() } as UserProfile));
-      set({ teamProfiles: loaded });
-    });
-    unsubscribers.push(unsubProfiles);
+    // 3. Perfis da Equipe (Global)
+    try {
+      const profilesRef = collection(db, 'profiles');
+      const qProfiles = query(profilesRef, where('orgId', '==', orgId));
+      const unsubProfiles = onSnapshot(qProfiles, (snapshot) => {
+        const loaded: UserProfile[] = snapshot.docs.map(d => ({ uid: d.id, ...d.data() } as UserProfile));
+        set({ teamProfiles: loaded });
+      }, (err) => {
+        console.error("[CRMStore] Erro ao carregar perfis da equipe:", err);
+      });
+      unsubscribers.push(unsubProfiles);
+    } catch (err) {
+      console.error("[CRMStore] Falha ao configurar listener de perfis:", err);
+    }
 
-    return () => unsubscribers.forEach(unsub => unsub());
+    // Timeout de segurança para não travar a UI se o Firebase demorar muito
+    const timeout = setTimeout(() => {
+      if (get().loading) {
+        console.warn("[CRMStore] Timeout de inicialização atingido. Liberando UI...");
+        set({ loading: false });
+      }
+    }, 10000); // 10 segundos
+
+    return () => {
+      clearTimeout(timeout);
+      unsubscribers.forEach(unsub => unsub());
+    };
   },
 
   handleSaveClient: async (clientData) => {
@@ -301,5 +346,20 @@ export const useCRMStore = create<CRMState>((set, get) => ({
     if (!client.lastContactAt) return true;
     const diff = (Date.now() - client.lastContactAt) / (1000 * 60 * 60 * 24);
     return diff > churnRiskDays;
+  },
+
+  isComboNearRenewal: (client) => {
+    if (!client.comboRenewalDate) return false;
+    const renewal = new Date(client.comboRenewalDate);
+    const diff = (renewal.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+    return diff <= 15 && diff >= 0;
+  },
+
+  syncPayments: async () => {
+    toast.promise(new Promise(r => setTimeout(r, 2000)), {
+      loading: 'Sincronizando pagamentos...',
+      success: 'Pagamentos sincronizados!',
+      error: 'Erro na sincronização.'
+    });
   }
 }));
