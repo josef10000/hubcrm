@@ -2,37 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PremiumIcon } from '../components/Sidebar';
 import { useAuth } from '../contexts/AuthContext';
-
-interface PersonalLink {
-  id: string;
-  label: string;
-  url: string;
-  icon: string;
-  folderId?: string;
-}
-
-interface LinkFolder {
-  id: string;
-  label: string;
-  icon: string;
-  color: string;
-}
-
-interface PersonalGoal {
-  id: string;
-  label: string;
-  current: number;
-  target: number;
-  unit: string;
-}
+import { useNexus, PersonalLink, LinkFolder, PersonalGoal } from '../hooks/useNexus';
+import { PremiumDialog } from '../components/PremiumDialog';
 
 export default function MyWorkspaceView() {
-  const { user, userProfile } = useAuth();
+  const { userProfile, user } = useAuth();
+  const { folders, links, goals, notes, setFolders, setLinks, setGoals, setNotes, loading } = useNexus();
   const [activeTab, setActiveTab] = useState<'links' | 'goals' | 'notes'>('links');
   const [dailyQuote, setDailyQuote] = useState<{content: string, author: string} | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
-  
-  // Biblioteca interna de frases premium (Fallback)
+
+  // Modal States
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    type: 'folder' | 'link' | 'goal';
+    mode: 'add' | 'edit';
+    data?: any;
+  }>({ isOpen: false, type: 'folder', mode: 'add' });
+
+  // Biblioteca interna de frases premium
   const MOTIVATIONAL_QUOTES = [
     { content: "O sucesso não é o final, o fracasso não é fatal: é a coragem de continuar que conta.", author: "Winston Churchill" },
     { content: "Acredite que você pode e você estará no meio do caminho.", author: "Theodore Roosevelt" },
@@ -44,7 +32,6 @@ export default function MyWorkspaceView() {
     { content: "O que você faz hoje pode melhorar todos os seus amanhãs.", author: "Ralph Marston" }
   ];
 
-  // Lógica de Frase do Dia (Determinística)
   useEffect(() => {
     if (!user) return;
     const today = new Date().toISOString().split('T')[0];
@@ -54,149 +41,53 @@ export default function MyWorkspaceView() {
     setDailyQuote(MOTIVATIONAL_QUOTES[index]);
   }, [user]);
 
-  // States para Dados (Sincronizados com Perfil + LocalStorage)
-  const [folders, setFolders] = useState<LinkFolder[]>(() => {
-    const saved = localStorage.getItem('hub_workspace_folders');
-    return saved ? JSON.parse(saved) : [
-      { id: '1', label: 'Recursos Diários', icon: 'ph-star', color: 'amber' },
-      { id: '2', label: 'Ferramentas de Vendas', icon: 'ph-funnel', color: 'primary' },
-      { id: '3', label: 'Referências Wiki', icon: 'ph-book-open', color: 'emerald' }
-    ];
-  });
-
-  const [links, setLinks] = useState<PersonalLink[]>(() => {
-    const legacyLinks = userProfile?.myCorner?.links || [];
-    const saved = localStorage.getItem('hub_workspace_links');
-    if (saved) return JSON.parse(saved);
-    
-    if (legacyLinks.length > 0) {
-      return legacyLinks.map((l: any, i: number) => ({
-        id: `legacy-${i}-${Date.now()}`,
-        label: l.title,
-        url: l.url,
-        icon: 'ph-link',
-        folderId: '1'
-      }));
-    }
-
-    return [
-      { id: '1', label: 'Dashboard Hub', url: 'https://hubcrm.io', icon: 'ph-monitor', folderId: '1' },
-      { id: '2', label: 'Figma Design', url: 'https://figma.com', icon: 'ph-figma-logo', folderId: '1' }
-    ];
-  });
-
-  const [goals, setGoals] = useState<PersonalGoal[]>(() => {
-    const saved = localStorage.getItem('hub_workspace_goals');
-    return saved ? JSON.parse(saved) : [
-      { id: '1', label: 'Leads Atendidos', current: 0, target: 20, unit: 'leads' },
-      { id: '2', label: 'Artigos Wiki Criados', current: 0, target: 5, unit: 'artigos' }
-    ];
-  });
-
-  const [notes, setNotes] = useState(() => {
-    return localStorage.getItem('hub_workspace_notes') || userProfile?.myCorner?.notes || '';
-  });
-
-  // Efeitos de Persistência
-  useEffect(() => localStorage.setItem('hub_workspace_folders', JSON.stringify(folders)), [folders]);
-  useEffect(() => localStorage.setItem('hub_workspace_links', JSON.stringify(links)), [links]);
-  useEffect(() => localStorage.setItem('hub_workspace_goals', JSON.stringify(goals)), [goals]);
-  useEffect(() => localStorage.setItem('hub_workspace_notes', notes), [notes]);
-
   // HANDLERS: PASTAS
-  const handleAddFolder = () => {
-    const label = prompt('Nome da nova pasta:');
-    if (!label) return;
-    const newFolder: LinkFolder = {
-      id: Date.now().toString(),
-      label,
-      icon: 'ph-folder-simple',
-      color: 'primary'
-    };
-    setFolders([...folders, newFolder]);
-  };
-
-  const handleEditFolder = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const folder = folders.find(f => f.id === id);
-    if (!folder) return;
-    const label = prompt('Novo nome da pasta:', folder.label);
-    if (!label) return;
-    setFolders(folders.map(f => f.id === id ? { ...f, label } : f));
-  };
-
-  const handleDeleteFolder = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (confirm('Deseja excluir esta pasta? Os links vinculados ficarão sem pasta.')) {
-      setFolders(folders.filter(f => f.id !== id));
-      if (selectedFolderId === id) setSelectedFolderId(null);
+  const onConfirmFolder = (values: any) => {
+    if (modalConfig.mode === 'add') {
+      const newFolder: LinkFolder = {
+        id: Date.now().toString(),
+        label: values.label,
+        icon: 'ph-folder-simple',
+        color: 'primary'
+      };
+      setFolders([...folders, newFolder]);
+    } else {
+      setFolders(folders.map(f => f.id === modalConfig.data.id ? { ...f, label: values.label } : f));
     }
   };
 
   // HANDLERS: LINKS
-  const handleAddLink = () => {
-    const label = prompt('Título do link:');
-    const urlInput = prompt('URL completa (ex: https://...):');
-    if (!label || !urlInput) return;
-    
-    const url = urlInput.startsWith('http') ? urlInput : `https://${urlInput}`;
-    const newLink: PersonalLink = {
-      id: Date.now().toString(),
-      label,
-      url,
-      icon: 'ph-link',
-      folderId: selectedFolderId || (folders.length > 0 ? folders[0].id : undefined)
-    };
-    setLinks([...links, newLink]);
-  };
-
-  const handleEditLink = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    const link = links.find(l => l.id === id);
-    if (!link) return;
-    
-    const label = prompt('Novo título:', link.label);
-    const urlInput = prompt('Nova URL:', link.url);
-    if (!label || !urlInput) return;
-    
-    const url = urlInput.startsWith('http') ? urlInput : `https://${urlInput}`;
-    setLinks(links.map(l => l.id === id ? { ...l, label, url } : l));
-  };
-
-  const handleDeleteLink = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (confirm('Deseja excluir este link?')) {
-      setLinks(links.filter(l => l.id !== id));
+  const onConfirmLink = (values: any) => {
+    const url = values.url.startsWith('http') ? values.url : `https://${values.url}`;
+    if (modalConfig.mode === 'add') {
+      const newLink: PersonalLink = {
+        id: Date.now().toString(),
+        label: values.label,
+        url,
+        icon: 'ph-link',
+        folderId: selectedFolderId || (folders.length > 0 ? folders[0].id : undefined)
+      };
+      setLinks([...links, newLink]);
+    } else {
+      setLinks(links.map(l => l.id === modalConfig.data.id ? { ...l, label: values.label, url } : l));
     }
   };
 
   // HANDLERS: METAS
-  const handleAddGoal = () => {
-    const label = prompt('O que você quer alcançar? (ex: Leads Atendidos)');
-    const target = prompt('Qual é o valor alvo? (ex: 50)');
-    const unit = prompt('Qual a unidade? (ex: leads, vendas, posts)');
-    if (!label || !target || !unit) return;
-
-    const newGoal: PersonalGoal = {
-      id: Date.now().toString(),
-      label,
-      target: parseInt(target) || 0,
-      current: 0,
-      unit
-    };
-    setGoals([...goals, newGoal]);
-  };
-
-  const handleEditGoal = (id: string) => {
-    const goal = goals.find(g => g.id === id);
-    if (!goal) return;
-    const label = prompt('Novo título da meta:', goal.label);
-    const target = prompt('Novo valor alvo:', goal.target.toString());
-    const unit = prompt('Nova unidade:', goal.unit);
-    if (!label || !target || !unit) return;
-    setGoals(goals.map(g => g.id === id ? { ...g, label, target: parseInt(target) || 0, unit } : g));
+  const onConfirmGoal = (values: any) => {
+    const target = parseInt(values.target) || 0;
+    if (modalConfig.mode === 'add') {
+      const newGoal: PersonalGoal = {
+        id: Date.now().toString(),
+        label: values.label,
+        target,
+        current: 0,
+        unit: values.unit
+      };
+      setGoals([...goals, newGoal]);
+    } else {
+      setGoals(goals.map(g => g.id === modalConfig.data.id ? { ...g, label: values.label, target, unit: values.unit } : g));
+    }
   };
 
   const handleUpdateGoal = (id: string, increment: boolean) => {
@@ -214,7 +105,22 @@ export default function MyWorkspaceView() {
     }
   };
 
-  // UTILS
+  const handleDeleteFolder = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm('Deseja excluir esta pasta?')) {
+      setFolders(folders.filter(f => f.id !== id));
+      if (selectedFolderId === id) setSelectedFolderId(null);
+    }
+  };
+
+  const handleDeleteLink = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (confirm('Deseja excluir este link?')) {
+      setLinks(links.filter(l => l.id !== id));
+    }
+  };
+
   const copyToClipboard = (text: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -226,6 +132,15 @@ export default function MyWorkspaceView() {
     ? links.filter(l => l.folderId === selectedFolderId)
     : links;
 
+  if (loading) return (
+    <div className="h-full flex items-center justify-center p-20">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-12 h-12 border-4 border-primary-500/20 border-t-primary-500 rounded-full animate-spin" />
+        <span className="text-xs font-black uppercase tracking-[0.4em] text-gray-500">Acessando Nexus...</span>
+      </div>
+    </div>
+  );
+
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-12">
       {/* HEADER DE BOAS VINDAS */}
@@ -233,9 +148,12 @@ export default function MyWorkspaceView() {
         <div className="space-y-6 flex-1">
           <div className="flex items-center gap-3">
             <div className="px-3 py-1 bg-primary-500/10 border border-primary-500/20 rounded-full">
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary-400">Nexus Workspace v7.0.7</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary-400">Nexus Workspace v7.1</span>
             </div>
-            <span className="text-gray-600 font-mono text-xs">// Private Node</span>
+            <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
+               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+               <span className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-400">Cloud Sync Active</span>
+            </div>
           </div>
           
           <div className="space-y-2">
@@ -259,7 +177,7 @@ export default function MyWorkspaceView() {
           </div>
         </div>
 
-        {/* NAVEGAÇÃO DE TABS (GLASS) */}
+        {/* NAVEGAÇÃO DE TABS */}
         <nav className="flex bg-[#0a0c12]/40 backdrop-blur-2xl p-1.5 rounded-[2rem] border border-white/10 shadow-2xl h-fit">
           {[
             { id: 'links', label: 'Vault', icon: 'ph-link' },
@@ -327,16 +245,17 @@ export default function MyWorkspaceView() {
                         <span className="text-[10px] font-black opacity-40 mr-2">{links.filter(l => l.folderId === folder.id).length}</span>
                         <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
                           <button 
-                            onClick={(e) => handleEditFolder(folder.id, e)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setModalConfig({ isOpen: true, type: 'folder', mode: 'edit', data: folder });
+                            }}
                             className="p-1.5 hover:text-primary-400 transition-all"
-                            title="Editar Pasta"
                           >
                             <i className="ph-bold ph-pencil-simple" />
                           </button>
                           <button 
                             onClick={(e) => handleDeleteFolder(folder.id, e)}
                             className="p-1.5 hover:text-rose-400 transition-all"
-                            title="Excluir Pasta"
                           >
                             <i className="ph-bold ph-trash" />
                           </button>
@@ -345,7 +264,7 @@ export default function MyWorkspaceView() {
                     </button>
                   ))}
                   <button 
-                    onClick={handleAddFolder}
+                    onClick={() => setModalConfig({ isOpen: true, type: 'folder', mode: 'add' })}
                     className="w-full p-4 border border-dashed border-white/10 rounded-3xl text-gray-500 hover:text-white hover:border-primary-500/50 transition-all font-bold text-sm flex items-center justify-center gap-2"
                   >
                     <i className="ph-bold ph-plus" />
@@ -379,16 +298,17 @@ export default function MyWorkspaceView() {
                           <i className="ph-bold ph-copy" />
                         </button>
                         <button 
-                          onClick={(e) => handleEditLink(link.id, e)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setModalConfig({ isOpen: true, type: 'link', mode: 'edit', data: link });
+                          }}
                           className="p-2 bg-white/5 rounded-xl hover:bg-primary-500/20 hover:text-primary-400 transition-all"
-                          title="Editar Link"
                         >
                           <i className="ph-bold ph-pencil-simple" />
                         </button>
                         <button 
                           onClick={(e) => handleDeleteLink(link.id, e)}
                           className="p-2 bg-white/5 rounded-xl hover:bg-rose-500/20 hover:text-rose-400 transition-all"
-                          title="Excluir Link"
                         >
                           <i className="ph-bold ph-trash" />
                         </button>
@@ -410,7 +330,7 @@ export default function MyWorkspaceView() {
                     </div>
                   ))}
                   <button 
-                    onClick={handleAddLink}
+                    onClick={() => setModalConfig({ isOpen: true, type: 'link', mode: 'add' })}
                     className="p-6 border border-dashed border-white/10 rounded-[2rem] flex flex-col items-center justify-center gap-3 text-gray-500 hover:text-primary-400 hover:border-primary-500/50 transition-all group min-h-[104px]"
                   >
                     <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-xl group-hover:rotate-90 transition-transform">
@@ -437,16 +357,14 @@ export default function MyWorkspaceView() {
                   <div key={goal.id} className="p-8 bg-[#0a0c12]/60 backdrop-blur-xl border border-white/10 rounded-[2.5rem] shadow-2xl space-y-6 group relative">
                     <div className="absolute top-6 right-6 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button 
-                        onClick={() => handleEditGoal(goal.id)}
+                        onClick={() => setModalConfig({ isOpen: true, type: 'goal', mode: 'edit', data: goal })}
                         className="p-2 bg-white/5 rounded-xl hover:bg-primary-500/20 hover:text-primary-400 transition-all"
-                        title="Editar Meta"
                       >
                         <i className="ph-bold ph-pencil-simple" />
                       </button>
                       <button 
                         onClick={() => handleDeleteGoal(goal.id)}
                         className="p-2 bg-white/5 rounded-xl hover:bg-rose-500/20 hover:text-rose-400 transition-all"
-                        title="Excluir Meta"
                       >
                         <i className="ph-bold ph-trash" />
                       </button>
@@ -495,7 +413,7 @@ export default function MyWorkspaceView() {
                 );
               })}
               <button 
-                onClick={handleAddGoal}
+                onClick={() => setModalConfig({ isOpen: true, type: 'goal', mode: 'add' })}
                 className="p-8 border border-dashed border-white/10 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 text-gray-500 hover:text-primary-400 hover:border-primary-500/50 transition-all group min-h-[220px]"
               >
                 <i className="ph-bold ph-plus-circle text-4xl group-hover:scale-110 transition-transform" />
@@ -553,6 +471,38 @@ export default function MyWorkspaceView() {
           )}
         </AnimatePresence>
       </main>
+
+      {/* DIÁLOGOS PREMIUM */}
+      <PremiumDialog
+        isOpen={modalConfig.isOpen && modalConfig.type === 'folder'}
+        onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
+        title={modalConfig.mode === 'add' ? 'Nova Pasta' : 'Editar Pasta'}
+        onConfirm={onConfirmFolder}
+        fields={[{ id: 'label', label: 'Nome da Pasta', defaultValue: modalConfig.data?.label }]}
+      />
+
+      <PremiumDialog
+        isOpen={modalConfig.isOpen && modalConfig.type === 'link'}
+        onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
+        title={modalConfig.mode === 'add' ? 'Adicionar Link' : 'Editar Link'}
+        onConfirm={onConfirmLink}
+        fields={[
+          { id: 'label', label: 'Título do Link', defaultValue: modalConfig.data?.label },
+          { id: 'url', label: 'URL Completa', type: 'url', defaultValue: modalConfig.data?.url }
+        ]}
+      />
+
+      <PremiumDialog
+        isOpen={modalConfig.isOpen && modalConfig.type === 'goal'}
+        onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
+        title={modalConfig.mode === 'add' ? 'Nova Meta' : 'Editar Meta'}
+        onConfirm={onConfirmGoal}
+        fields={[
+          { id: 'label', label: 'Título da Meta', defaultValue: modalConfig.data?.label },
+          { id: 'target', label: 'Valor Alvo', type: 'number', defaultValue: modalConfig.data?.target },
+          { id: 'unit', label: 'Unidade (ex: leads)', defaultValue: modalConfig.data?.unit }
+        ]}
+      />
 
       {/* FOOTER DO WORKSPACE */}
       <footer className="pt-12 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-6 opacity-40">
