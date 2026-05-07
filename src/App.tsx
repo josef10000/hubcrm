@@ -170,9 +170,9 @@ function CRMInner() {
                 onClick={() => navigate('/')}
                 className="flex items-center gap-3 mr-8 cursor-pointer group shrink-0"
               >
-                <div className="hidden sm:block">
-                  <h1 className="text-lg font-black tracking-tighter text-white uppercase leading-none">Hub</h1>
-                  <p className="text-[10px] font-bold text-primary-400 tracking-[0.2em] uppercase leading-none mt-0.5">Central</p>
+                <div className="hidden sm:flex items-baseline gap-1.5">
+                  <h1 className="text-2xl font-black tracking-tighter text-white uppercase leading-none">Hub</h1>
+                  <p className="text-2xl font-light text-primary-400 tracking-tight uppercase leading-none">Central</p>
                 </div>
               </div>
             )}
