@@ -85,6 +85,7 @@ export default function Auth() {
     }
   };
 
+  return (
     <div className="min-h-screen bg-[#02040a] relative flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans text-gray-100 overflow-hidden">
       {/* Background Glows for Glassmorphism */}
       <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-primary-500/10 rounded-full blur-[150px] pointer-events-none animate-pulse"></div>
