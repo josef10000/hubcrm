@@ -85,6 +85,18 @@ export default function MessageInput({
       onUpdate(editingMessage.id, text);
       onCancelEdit();
     } else {
+      // Lógica de Slash Commands manuais (ex: /pago Joao)
+      if (text.startsWith('/')) {
+        const parts = text.trim().split(' ');
+        const cmdName = parts[0].toLowerCase();
+        const args = parts.slice(1).join(' ');
+        const cmd = findCommand(cmdName);
+        if (cmd) {
+          handleSlashCommand(cmd, args);
+          return;
+        }
+      }
+
       const mentions = parseMentions(
         text, 
         teamProfiles.map(p => ({ uid: p.uid, displayName: p.displayName, roleId: p.roleId })),
@@ -100,14 +112,24 @@ export default function MessageInput({
     setShowSlashCommands(false);
   };
 
-  const handleSlashCommand = async (cmd: BotCommand) => {
+  const handleSlashCommand = async (cmd: BotCommand, args?: string) => {
     if (!effectiveOrgId || !userProfile?.uid) return;
+    
+    // Se selecionado da lista (sem args) e requer argumentos, apenas preenche o texto para o usuário continuar
+    if (cmd.requiresArgs && !args) {
+      setText(`${cmd.name} `);
+      setShowSlashCommands(false);
+      setTimeout(() => textareaRef.current?.focus(), 10);
+      return;
+    }
+
     setShowSlashCommands(false);
     setProcessingBot(true);
     setText('');
 
     // Envia o comando como mensagem do usuário
-    onSend(cmd.name, [], [], null, members, 'text', undefined, undefined, undefined, parentMessageId, scheduledAt || undefined);
+    const fullCommand = args ? `${cmd.name} ${args}` : cmd.name;
+    onSend(fullCommand, [], [], null, members, 'text', undefined, undefined, undefined, parentMessageId, scheduledAt || undefined);
 
     const ctx: BotContext = {
       orgId: effectiveOrgId,
@@ -116,13 +138,16 @@ export default function MessageInput({
       chatId: '', // será preenchido pelo hook
       members,
       teamProfiles,
-      clients
+      clients,
+      args
     };
 
     try {
       const response = await cmd.handler(ctx);
-      // Envia a resposta do bot
-      onSend(response, [], [], null, members, 'bot_response', undefined, undefined, undefined, parentMessageId);
+      if (response) {
+        // Envia a resposta do bot
+        onSend(response, [], [], null, members, 'bot_response', undefined, undefined, undefined, parentMessageId);
+      }
     } catch (error) {
       toast.error('Erro ao executar comando do bot.');
     } finally {

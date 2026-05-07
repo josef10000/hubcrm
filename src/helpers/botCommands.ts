@@ -134,12 +134,59 @@ export const handleMetas = async (ctx: any) => {
   }
 };
 
+export const handlePago = async (ctx: BotContext) => {
+  try {
+    const { orgId, clients, args } = ctx;
+    if (!orgId) return "Não consegui identificar sua organização.";
+    if (!args) return "Por favor, informe o nome ou ID do cliente. Ex: `/pago Joao` ou `/pago ID_DO_CLIENTE`";
+
+    const queryStr = args.toLowerCase().trim();
+    
+    // Busca o cliente no cache (ctx.clients) ou ID exato
+    const client = clients.find((c: Client) => 
+      c.id === queryStr || c.name.toLowerCase().includes(queryStr)
+    );
+
+    if (!client) {
+      return `❌ Cliente "${args}" não encontrado no CRM. Verifique se o nome está correto.`;
+    }
+
+    // Busca as transações do cliente no Firestore
+    const transactionsRef = collection(db, 'organizations', orgId, 'transactions');
+    const q = query(
+      transactionsRef, 
+      where('clientId', '==', client.id),
+      where('type', '==', 'INCOME'),
+      where('status', '==', 'PAID')
+    );
+    
+    const snapshot = await getDocs(q);
+    const transactions = snapshot.docs.map(doc => doc.data() as Transaction);
+
+    const totalPaid = transactions.reduce((acc, t) => acc + (t.amount || 0), 0);
+    const count = transactions.length;
+
+    if (count === 0) {
+      return `💸 O cliente *${client.name}* ainda não possui pagamentos confirmados no sistema.`;
+    }
+
+    return `💰 *RELATÓRIO DE PAGAMENTOS: ${client.name.toUpperCase()}* 💰\n\n` +
+           `• *Total Pago:* R$ ${totalPaid.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
+           `• *Qtd. Acordos:* ${count} pagamento(s) realizado(s)\n\n` +
+           `O cliente está com o status: *${client.status}*. ✅`;
+  } catch (error) {
+    console.error("Erro ao processar /pago:", error);
+    return "Ops! Tive um problema ao consultar os pagamentos deste cliente.";
+  }
+};
+
 export const handleAjuda = async () => {
   return `🤖 *HUB BOT - COMO POSSO AJUDAR?* 🤖\n\n` +
          `Use os comandos abaixo para interagir comigo:\n\n` +
          `• */aniversarios* - Veja quem da equipe apaga as velinhas hoje 🎂\n` +
          `• */membros* - Lista os participantes ativos do canal ou organização 👥\n` +
          `• */metas* - Acompanhe o desempenho de faturamento em tempo real 📈\n` +
+         `• */pago [cliente]* - Veja quanto um cliente já pagou em acordos 💰\n` +
          `• */ajuda* - Mostra esta mensagem de auxílio 🆘\n\n` +
          `Dica: Estou sempre de olho para te manter informado! 🚀`;
 };
@@ -152,12 +199,14 @@ export interface BotContext {
   members: string[];
   teamProfiles: any[];
   clients: any[];
+  args?: string;
 }
 
 export interface BotCommand {
   name: string;
   description: string;
   icon?: any;
+  requiresArgs?: boolean;
   handler: (ctx: BotContext) => Promise<string | null>;
 }
 
@@ -165,6 +214,7 @@ export const availableCommands: BotCommand[] = [
   { name: '/aniversarios', description: 'Veja aniversariantes do dia', handler: handleAniversarios },
   { name: '/membros', description: 'Lista os participantes ativos', handler: handleMembros },
   { name: '/metas', description: 'Acompanhe o desempenho de faturamento', handler: handleMetas },
+  { name: '/pago', description: 'Quanto o cliente já pagou (ex: /pago Joao)', requiresArgs: true, handler: handlePago },
   { name: '/ajuda', description: 'Mostra esta mensagem de auxílio', handler: handleAjuda },
 ];
 

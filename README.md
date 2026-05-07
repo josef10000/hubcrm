@@ -90,6 +90,7 @@ O Hub Central segue diretrizes rígidas de design para manter seu status premium
 - [x] **v7.2.3.23** — **Dialog Migration & Performance Cleanup** (Centralized Async Dialogs & Debug Log Purge).
 - [x] **v7.2.4.0** — **Layout & Visibility Refinement** (Compact Sidebar & Client Auto-Assignment Logic).
 - [x] **v7.3.0** — **Collaboration & HubBots** (Thematic Channels, Slash Commands & Smart Notifications).
+- [x] **v7.3.5** — **Payment Intel Commands** (Bot command /pago with client transaction search & arg support).
 - [ ] **v7.5.0** — IA Integrada: Nexus Copilot para automação de tarefas.
 
 ---
