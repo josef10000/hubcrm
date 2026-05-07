@@ -1,12 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PremiumIcon } from '../components/Sidebar';
 import { useAuth } from '../contexts/AuthContext';
 import { useCRM } from '../contexts/CRMContext';
 import { useNexus, PersonalLink, LinkFolder, PersonalGoal, NexusTask } from '../hooks/useNexus';
 import { PremiumDialog } from '../components/PremiumDialog';
 import { format, isToday } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 
 // Helper para ícones de sites comuns
 const getUrlIcon = (url: string) => {
@@ -38,15 +36,9 @@ export default function MyWorkspaceView() {
     loading 
   } = useNexus();
   
-  const [activeTab, setActiveTab] = useState<'links' | 'goals' | 'notes' | 'focus'>('links');
+  const [activeTab, setActiveTab] = useState<'links' | 'goals' | 'notes' | 'tasks'>('links');
   const [dailyQuote, setDailyQuote] = useState<{content: string, author: string} | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
-
-  // Focus Timer States
-  const [timerActive, setTimerActive] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(25 * 60);
-  const [timerMode, setTimerMode] = useState<'work' | 'break'>('work');
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Modal States
   const [modalConfig, setModalConfig] = useState<{
@@ -76,39 +68,6 @@ export default function MyWorkspaceView() {
     const index = hash % MOTIVATIONAL_QUOTES.length;
     setDailyQuote(MOTIVATIONAL_QUOTES[index]);
   }, [user]);
-
-  // Logic: Focus Timer
-  useEffect(() => {
-    if (timerActive && timeLeft > 0) {
-      timerRef.current = setInterval(() => {
-        setTimeLeft(prev => prev - 1);
-      }, 1000);
-    } else if (timeLeft === 0) {
-      if (timerMode === 'work') {
-        alert("Bom trabalho! Hora de uma pausa.");
-        setTimerMode('break');
-        setTimeLeft(5 * 60);
-      } else {
-        alert("Pausa terminada. Pronto para focar?");
-        setTimerMode('work');
-        setTimeLeft(25 * 60);
-      }
-      setTimerActive(false);
-    }
-    return () => { if(timerRef.current) clearInterval(timerRef.current); };
-  }, [timerActive, timeLeft, timerMode]);
-
-  const toggleTimer = () => setTimerActive(!timerActive);
-  const resetTimer = () => {
-    setTimerActive(false);
-    setTimeLeft(timerMode === 'work' ? 25 * 60 : 5 * 60);
-  };
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
 
   // HANDLERS: PASTAS
   const onConfirmFolder = (values: any) => {
@@ -335,7 +294,7 @@ export default function MyWorkspaceView() {
           {[
             { id: 'links', label: 'Vault', icon: 'ph-link' },
             { id: 'goals', label: 'Metas', icon: 'ph-target' },
-            { id: 'focus', label: 'Focus', icon: 'ph-brain' },
+            { id: 'tasks', label: 'Tarefas', icon: 'ph-checks' },
             { id: 'notes', label: 'Notas', icon: 'ph-note-pencil' }
           ].map(tab => (
             <button
@@ -500,60 +459,24 @@ export default function MyWorkspaceView() {
             </motion.section>
           )}
 
-          {activeTab === 'focus' && (
+          {activeTab === 'tasks' && (
             <motion.section
-              key="focus"
+              key="tasks"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+              className="max-w-3xl mx-auto"
             >
-              {/* Pomodoro Timer */}
-              <div className="p-10 bg-[#0a0c12]/60 backdrop-blur-xl border border-white/10 rounded-[3rem] shadow-2xl flex flex-col items-center justify-center space-y-8 relative overflow-hidden">
-                <div className={`absolute inset-0 bg-gradient-to-br ${timerMode === 'work' ? 'from-primary-500/5' : 'from-emerald-500/5'} to-transparent`} />
-                <div className="text-center space-y-2 relative z-10">
-                  <h3 className="text-xs font-black uppercase tracking-[0.5em] text-gray-500">Pomodoro Focus</h3>
-                  <p className={`text-sm font-bold uppercase tracking-widest ${timerMode === 'work' ? 'text-primary-400' : 'text-emerald-400'}`}>
-                    {timerMode === 'work' ? 'Hora de Focar' : 'Pausa Curta'}
-                  </p>
-                </div>
-                
-                <div className="relative flex items-center justify-center z-10">
-                   <svg className="w-64 h-64 -rotate-90">
-                      <circle cx="128" cy="128" r="120" className="stroke-white/5 fill-none stroke-[8]" />
-                      <motion.circle 
-                        cx="128" cy="128" r="120" 
-                        className={`fill-none stroke-[8] ${timerMode === 'work' ? 'stroke-primary-500' : 'stroke-emerald-500'}`}
-                        strokeDasharray={753.9}
-                        animate={{ strokeDashoffset: 753.9 * (1 - timeLeft / (timerMode === 'work' ? 25 * 60 : 5 * 60)) }}
-                        transition={{ duration: 1, ease: "linear" }}
-                      />
-                   </svg>
-                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                     <span className="text-6xl font-black text-white tracking-tighter tabular-nums">{formatTime(timeLeft)}</span>
-                   </div>
-                </div>
-
-                <div className="flex gap-4 relative z-10">
-                  <button 
-                    onClick={toggleTimer}
-                    className={`px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all shadow-xl ${
-                      timerActive 
-                      ? 'bg-white/10 text-white' 
-                      : 'bg-primary-500 text-white shadow-primary-500/20 hover:scale-105'
-                    }`}
-                  >
-                    {timerActive ? 'Pausar' : 'Iniciar'}
-                  </button>
-                  <button onClick={resetTimer} className="p-4 bg-white/5 rounded-2xl text-gray-400 hover:text-white transition-all"><i className="ph-bold ph-arrow-counter-clockwise text-xl" /></button>
-                </div>
-              </div>
-
               {/* Personal Checklist */}
-              <div className="p-8 bg-[#0a0c12]/60 backdrop-blur-xl border border-white/10 rounded-[3rem] shadow-2xl flex flex-col h-full min-h-[400px]">
-                <h3 className="text-xs font-black uppercase tracking-[0.5em] text-gray-500 mb-6">Checklist de Tarefas</h3>
+              <div className="p-10 bg-[#0a0c12]/60 backdrop-blur-xl border border-white/10 rounded-[3rem] shadow-2xl flex flex-col min-h-[500px]">
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="w-12 h-12 rounded-2xl bg-primary-500/20 flex items-center justify-center text-2xl text-primary-400">
+                    <i className="ph-duotone ph-checks" />
+                  </div>
+                  <h3 className="text-xl font-black text-white tracking-tight">Checklist de Tarefas</h3>
+                </div>
                 
-                <form onSubmit={handleAddTask} className="flex gap-3 mb-8">
+                <form onSubmit={handleAddTask} className="flex gap-3 mb-10">
                   <input
                     name="taskInput"
                     placeholder="O que você precisa fazer hoje?"
@@ -566,20 +489,20 @@ export default function MyWorkspaceView() {
 
                 <div className="flex-1 space-y-3 overflow-y-auto custom-scrollbar pr-2">
                   {tasks.length === 0 && (
-                    <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-30">
+                    <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-30 mt-10">
                        <i className="ph-duotone ph-clipboard-text text-6xl" />
                        <p className="text-sm font-bold uppercase tracking-widest">Nenhuma tarefa pendente</p>
                     </div>
                   )}
                   {tasks.sort((a,b) => (a.completed ? 1 : -1)).map(task => (
-                    <div key={task.id} className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${task.completed ? 'bg-emerald-500/5 border-emerald-500/10' : 'bg-white/5 border-white/10'}`}>
+                    <div key={task.id} className={`flex items-center justify-between p-5 rounded-2xl border transition-all ${task.completed ? 'bg-emerald-500/5 border-emerald-500/10' : 'bg-white/5 border-white/10'}`}>
                       <div className="flex items-center gap-4 flex-1">
-                        <button onClick={() => toggleTask(task.id)} className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${task.completed ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-white/20'}`}>
+                        <button onClick={() => toggleTask(task.id)} className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center transition-all ${task.completed ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-white/20'}`}>
                           {task.completed && <i className="ph-bold ph-check text-xs" />}
                         </button>
-                        <span className={`font-medium transition-all ${task.completed ? 'text-emerald-400/50 line-through' : 'text-gray-200'}`}>{task.label}</span>
+                        <span className={`text-lg font-medium transition-all ${task.completed ? 'text-emerald-400/50 line-through' : 'text-gray-200'}`}>{task.label}</span>
                       </div>
-                      <button onClick={() => deleteTask(task.id)} className="p-2 text-gray-600 hover:text-rose-400 transition-all"><i className="ph-bold ph-trash" /></button>
+                      <button onClick={() => deleteTask(task.id)} className="p-2 text-gray-600 hover:text-rose-400 transition-all"><i className="ph-bold ph-trash text-lg" /></button>
                     </div>
                   ))}
                 </div>

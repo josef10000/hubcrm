@@ -58,6 +58,7 @@ export function useNexus() {
     folders: [],
     links: [],
     goals: [],
+    tasks: [],
     notes: ''
   });
   const [loading, setLoading] = useState(true);
