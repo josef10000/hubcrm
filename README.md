@@ -1,4 +1,4 @@
-# 🔐 Hub Central — Intranet Corporativa v6.0.4
+# 🔐 Hub Central — Intranet Corporativa v7.0.0
 
 > [!CAUTION]
 > **USO INTERNO EXCLUSIVO DA HUB SYMPLES LTDA**
@@ -9,7 +9,7 @@ A plataforma Hub Central é o motor de crescimento da Hub Symples. Nossa intrane
 ---
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-6.0.9-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
+  <img src="https://img.shields.io/badge/Version-7.0.0-3b82f6?style=for-the-badge&labelColor=111111" alt="Version" />
   <img src="https://img.shields.io/badge/Status-Audited_&_Stable-3b82f6?style=for-the-badge&labelColor=0d0d0d" alt="Status" />
   <img src="https://img.shields.io/badge/Identity-Dark_Absolute-ffffff?style=for-the-badge&labelColor=0d0d0d" alt="Identity" />
   <img src="https://img.shields.io/badge/License-Proprietary-3b82f6?style=for-the-badge&labelColor=111111" alt="License" />
@@ -26,9 +26,9 @@ A plataforma Hub Central é o motor de crescimento da Hub Symples. Nossa intrane
 </p>
 
 <div align="center">
-  <h2>✨ Destaque da Versão v6.0.9</h2>
-  <p><strong>Flyout Navigation & Workspace Max</strong></p>
-  <p>Introdução da navegação modelo Flyout. A sidebar agora ocupa apenas 80px da largura, expandindo submenus flutuantes em Glassmorphism sob demanda, recuperando o espaço vital de tela para o dashboard.</p>
+  <h2>✨ Destaque da Versão v7.0.0</h2>
+  <p><strong>Hub Nexus: O Cockpit Pessoal</strong></p>
+  <p>Lançamento do Workspace Pessoal. Uma área privada para cada colaborador gerenciar seus próprios links, metas individuais (OKRs) e notas persistentes, transformando o Hub Central em uma ferramenta completa de auto-gestão.</p>
 </div>
 
 <br />

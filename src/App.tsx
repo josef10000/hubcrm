@@ -52,6 +52,7 @@ import WikiView from './views/WikiView';
 import WaitingInviteView from './views/WaitingInviteView';
 import CanvasListView from './views/CanvasListView';
 import CanvasEditorView from './views/CanvasEditorView';
+import MyWorkspaceView from './views/MyWorkspaceView';
 
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -322,6 +323,7 @@ function CRMInner() {
                 <Route path="/canvas" element={hasPermission('MANAGE_TEAM') || hasPermission('MANAGE_SETTINGS') ? <CanvasListView /> : <DashboardView />} />
                 <Route path="/canvas/:id" element={hasPermission('MANAGE_TEAM') || hasPermission('MANAGE_SETTINGS') ? <CanvasEditorView /> : <DashboardView />} />
                 <Route path="/profile/:uid" element={<ProfileView />} />
+                <Route path="/workspace" element={<MyWorkspaceView />} />
                 <Route path="*" element={<DashboardView />} />
               </Routes>
             </div>

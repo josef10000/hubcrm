@@ -6,6 +6,14 @@ import {
 
 export const navGroups = [
   {
+    id: 'personal',
+    label: 'Meu Espaço',
+    icon: Rocket, // Usando Rocket como placeholder elegante
+    items: [
+      { icon: LayoutTemplate, label: 'Meu Workspace', path: '/workspace' },
+    ]
+  },
+  {
     id: 'commercial',
     label: 'Comercial & Crescimento',
     icon: Target,
