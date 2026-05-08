@@ -7,9 +7,8 @@ import { useDialog } from '../contexts/DialogContext';
 import { toast } from 'sonner';
 import { PremiumDialog } from '../components/PremiumDialog';
 import { format, isToday } from 'date-fns';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { storage } from '../lib/firebase';
 import { uploadImageToImgBB } from '../lib/imgbb';
+import { uploadToCloudinary } from '../lib/cloudinary';
 
 // Interfaces importadas da Store
 import type { PersonalLink, LinkFolder, PersonalGoal, NexusTask, NexusNote, NexusBook } from '../store/useNexusStore';
@@ -238,33 +237,27 @@ export default function MyWorkspaceView() {
     }
 
     setIsUploading(true);
-    const storageRef = ref(storage, `nexus_books/${user.uid}/${Date.now()}_${file.name}`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    setUploadProgress(20); // Progresso simulado/inicial
 
-    uploadTask.on('state_changed', 
-      (snapshot) => {
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        setUploadProgress(progress);
-      }, 
-      (error) => {
-        console.error("Upload error:", error);
-        toast.error('Erro ao fazer upload do livro');
-        setIsUploading(false);
-      }, 
-      async () => {
-        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-        const newBook: NexusBook = {
-          id: Date.now().toString(),
-          title: file.name.replace('.pdf', ''),
-          pdfUrl: downloadURL,
-          addedAt: Date.now()
-        };
-        setBooks([newBook, ...books]);
-        setIsUploading(false);
-        setUploadProgress(0);
-        toast.success('Livro adicionado à sua biblioteca!');
-      }
-    );
+    try {
+      const downloadURL = await uploadToCloudinary(file);
+      setUploadProgress(100);
+      
+      const newBook: NexusBook = {
+        id: Date.now().toString(),
+        title: file.name.replace('.pdf', ''),
+        pdfUrl: downloadURL,
+        addedAt: Date.now()
+      };
+      setBooks([newBook, ...books]);
+      toast.success('Livro adicionado à sua biblioteca!');
+    } catch (error: any) {
+      console.error("Cloudinary upload error:", error);
+      toast.error(`Falha no upload: ${error.message || 'Erro no Cloudinary'}`);
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
   };
 
   const deleteBook = async (id: string) => {
