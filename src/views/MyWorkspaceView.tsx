@@ -942,7 +942,8 @@ export default function MyWorkspaceView() {
                           </div>
                         </div>
                       </div>
-                        </div>
+                    ))}
+                  </div>
 
                         {/* Paginação */}
                         {totalPages > 1 && (
