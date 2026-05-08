@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useCRM } from '../contexts/CRMContext';
@@ -237,25 +237,46 @@ export default function MyWorkspaceView() {
   const [bookSearchResults, setBookSearchResults] = useState<any[]>([]);
   const [isSearchingBook, setIsSearchingBook] = useState(false);
 
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const searchGoogleBooks = async (query: string) => {
-    if (!query || query.length < 3) return;
-    setIsSearchingBook(true);
-    try {
-      const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=5`);
-      const data = await response.json();
-      const items = data.items || [];
-      setBookSearchResults(items.map((item: any) => ({
-        title: item.volumeInfo.title,
-        author: item.volumeInfo.authors?.join(', ') || 'Autor desconhecido',
-        publishedAt: item.volumeInfo.publishedDate || '',
-        coverUrl: item.volumeInfo.imageLinks?.thumbnail?.replace('http:', 'https:'),
-        description: item.volumeInfo.description || ''
-      })));
-    } catch (error) {
-      console.error("Google Books API Error:", error);
-    } finally {
-      setIsSearchingBook(false);
+    if (!query || query.length < 3) {
+      setBookSearchResults([]);
+      return;
     }
+
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+
+    searchTimeoutRef.current = setTimeout(async () => {
+      setIsSearchingBook(true);
+      try {
+        const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=5&printType=books`);
+        
+        if (response.status === 429) {
+          toast.error('Muitas requisições. Aguarde um momento.');
+          return;
+        }
+
+        const data = await response.json();
+        const items = data.items || [];
+        
+        if (items.length === 0) {
+          toast.info('Nenhum livro encontrado com esse termo.');
+        }
+
+        setBookSearchResults(items.map((item: any) => ({
+          title: item.volumeInfo.title,
+          author: item.volumeInfo.authors?.join(', ') || 'Autor desconhecido',
+          publishedAt: item.volumeInfo.publishedDate || '',
+          coverUrl: (item.volumeInfo.imageLinks?.thumbnail || item.volumeInfo.imageLinks?.smallThumbnail)?.replace('http:', 'https:'),
+          description: item.volumeInfo.description || ''
+        })));
+      } catch (error) {
+        console.error("Google Books API Error:", error);
+        toast.error('Erro ao conectar com o Google Books.');
+      } finally {
+        setIsSearchingBook(false);
+      }
+    }, 600); // Debounce de 600ms
   };
 
   const handleAddBookByLink = (data: { title: string, url: string, author?: string, publishedAt?: string, coverUrl?: string, description?: string }) => {
@@ -1067,12 +1088,7 @@ export default function MyWorkspaceView() {
                       type="text"
                       placeholder="Digite o nome do livro ou autor..."
                       className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:border-primary-500 transition-all outline-none"
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val.length >= 3) {
-                          searchGoogleBooks(val);
-                        }
-                      }}
+                      onChange={(e) => searchGoogleBooks(e.target.value)}
                     />
                     {isSearchingBook && (
                       <div className="absolute right-6 top-1/2 -translate-y-1/2">
