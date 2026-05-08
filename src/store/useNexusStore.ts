@@ -32,15 +32,24 @@ export interface NexusTask {
   createdAt: number;
 }
 
+export interface NexusNote {
+  id: string;
+  title: string;
+  content: string;
+  color?: string;
+  updatedAt: number;
+}
+
 export interface NexusData {
   folders: LinkFolder[];
   links: PersonalLink[];
   goals: PersonalGoal[];
   tasks: NexusTask[];
-  notes: string;
+  notes: NexusNote[];
 }
 
-interface NexusState extends NexusData {
+interface NexusState extends Omit<NexusData, 'notes'> {
+  notes: NexusNote[];
   loading: boolean;
   initialized: boolean;
   error: string | null;
@@ -51,7 +60,7 @@ interface NexusState extends NexusData {
   setLinks: (links: PersonalLink[]) => Promise<void>;
   setGoals: (goals: PersonalGoal[]) => Promise<void>;
   setTasks: (tasks: NexusTask[]) => Promise<void>;
-  setNotes: (notes: string) => Promise<void>;
+  setNotes: (notes: NexusNote[]) => Promise<void>;
   
   // Internal update
   _updateFirestore: (newData: Partial<NexusData>) => Promise<void>;
@@ -74,14 +83,13 @@ export const useNexusStore = create<NexusState>((set, get) => ({
   links: [],
   goals: [],
   tasks: [],
-  notes: '',
+  notes: [],
   loading: true,
   initialized: false,
   error: null,
   uid: null,
 
   init: (uid: string) => {
-    // Se já estiver inicializado para o mesmo UID, não faz nada (mas não mata o listener se ele já existir)
     if (get().initialized && get().uid === uid) return () => {};
     
     set({ uid, loading: true });
@@ -93,23 +101,40 @@ export const useNexusStore = create<NexusState>((set, get) => ({
         const nexus = profileData.nexusData || null;
 
         if (nexus) {
+          // Lógica de migração de notas (string -> array)
+          let migratedNotes: NexusNote[] = [];
+          if (typeof nexus.notes === 'string' && nexus.notes.trim() !== '') {
+            migratedNotes = [{
+              id: 'legacy',
+              title: 'Minhas Notas',
+              content: nexus.notes,
+              updatedAt: Date.now()
+            }];
+          } else if (Array.isArray(nexus.notes)) {
+            migratedNotes = nexus.notes;
+          }
+
           set({
             folders: nexus.folders || [],
             links: nexus.links || [],
             goals: nexus.goals || [],
             tasks: nexus.tasks || [],
-            notes: nexus.notes || '',
+            notes: migratedNotes,
             loading: false,
             initialized: true
           });
+          
+          // Se migrou, já salva no firestore para evitar re-migração
+          if (typeof nexus.notes === 'string') {
+            updateDoc(profileRef, { "nexusData.notes": migratedNotes });
+          }
         } else {
-          // Migração / Inicialização
           const initialData: NexusData = {
             folders: DEFAULT_FOLDERS,
             links: DEFAULT_LINKS,
             goals: [],
             tasks: [],
-            notes: ''
+            notes: []
           };
 
           updateDoc(profileRef, { nexusData: initialData });
@@ -128,7 +153,6 @@ export const useNexusStore = create<NexusState>((set, get) => ({
     const { uid, folders, links, goals, tasks, notes } = get();
     if (!uid) return;
 
-    // Atualização Otimista local
     set(state => ({ ...state, ...newData }));
 
     const profileRef = doc(db, 'profiles', uid);
@@ -136,7 +160,6 @@ export const useNexusStore = create<NexusState>((set, get) => ({
       const baseData = { folders, links, goals, tasks, notes };
       const merged = { ...baseData, ...newData };
       
-      // Sanitização profunda para evitar undefined no Firestore
       const sanitized: any = {};
       Object.keys(merged).forEach(key => {
         const val = (merged as any)[key];

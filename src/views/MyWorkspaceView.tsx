@@ -9,7 +9,7 @@ import { PremiumDialog } from '../components/PremiumDialog';
 import { format, isToday } from 'date-fns';
 
 // Interfaces importadas da Store
-import type { PersonalLink, LinkFolder, PersonalGoal, NexusTask } from '../store/useNexusStore';
+import type { PersonalLink, LinkFolder, PersonalGoal, NexusTask, NexusNote } from '../store/useNexusStore';
 
 // Helper para ícones de sites comuns
 const getUrlIcon = (url: string) => {
@@ -54,6 +54,14 @@ export default function MyWorkspaceView() {
   const [activeTab, setActiveTab] = useState<'links' | 'goals' | 'notes' | 'tasks'>('links');
   const [dailyQuote, setDailyQuote] = useState<{content: string, author: string} | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
+
+  // Seleciona a primeira nota automaticamente se houver e nenhuma estiver selecionada
+  useEffect(() => {
+    if (activeTab === 'notes' && !selectedNoteId && notes.length > 0) {
+      setSelectedNoteId(notes[0].id);
+    }
+  }, [activeTab, notes, selectedNoteId]);
 
   // Inicializa a Store
   useEffect(() => {
@@ -66,7 +74,7 @@ export default function MyWorkspaceView() {
   // Modal States
   const [modalConfig, setModalConfig] = useState<{
     isOpen: boolean;
-    type: 'folder' | 'link' | 'goal' | 'task';
+    type: 'folder' | 'link' | 'goal' | 'task' | 'note';
     mode: 'add' | 'edit';
     data?: any;
   }>({ isOpen: false, type: 'folder', mode: 'add' });
@@ -162,6 +170,43 @@ export default function MyWorkspaceView() {
 
   const deleteTask = (id: string) => {
     setTasks(tasks.filter(t => t.id !== id));
+  };
+
+  // HANDLERS: NOTAS
+  const handleAddNote = () => {
+    const newNote: NexusNote = {
+      id: Date.now().toString(),
+      title: 'Nova Nota',
+      content: '',
+      updatedAt: Date.now()
+    };
+    setNotes([newNote, ...notes]);
+    setSelectedNoteId(newNote.id);
+  };
+
+  const updateNoteContent = (id: string, content: string) => {
+    setNotes(notes.map(n => n.id === id ? { ...n, content, updatedAt: Date.now() } : n));
+  };
+
+  const updateNoteTitle = (id: string, title: string) => {
+    setNotes(notes.map(n => n.id === id ? { ...n, title, updatedAt: Date.now() } : n));
+  };
+
+  const deleteNote = async (id: string) => {
+    const ok = await confirm({
+      title: 'Excluir Nota',
+      message: 'Tem certeza que deseja excluir esta nota permanentemente?',
+      variant: 'danger',
+      confirmText: 'Excluir'
+    });
+    if (ok) {
+      const newNotes = notes.filter(n => n.id !== id);
+      setNotes(newNotes);
+      if (selectedNoteId === id) {
+        setSelectedNoteId(newNotes.length > 0 ? newNotes[0].id : null);
+      }
+      toast.success('Nota removida');
+    }
   };
 
   const handleUpdateGoal = (id: string, increment: boolean) => {
@@ -538,34 +583,109 @@ export default function MyWorkspaceView() {
           {activeTab === 'notes' && (
             <motion.section
               key="notes"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="h-full"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="grid grid-cols-1 lg:grid-cols-4 gap-8 h-[600px]"
             >
-              <div className="bg-[#0a0c12]/60 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-1 shadow-2xl h-full flex flex-col min-h-[500px]">
-                <div className="flex items-center justify-between px-8 py-6 border-b border-white/5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Cloud Sync Ativo</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <button onClick={() => { const blob = new Blob([notes], { type: 'text/plain' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `notas-hub-${new Date().toISOString().split('T')[0]}.txt`; a.click(); }} className="p-2 hover:bg-white/5 rounded-xl text-gray-500 hover:text-white transition-all" title="Exportar"><i className="ph-bold ph-export" /></button>
-                    <button onClick={async () => { 
-                      const ok = await confirm({ title: 'Limpar Notas', message: 'Deseja apagar todo o conteúdo das notas? Esta ação não pode ser desfeita.', variant: 'danger' });
-                      if (ok) {
-                        setNotes(''); 
-                        toast.success('Notas limpas');
-                      }
-                    }} className="p-2 hover:bg-white/5 rounded-xl text-gray-500 hover:text-rose-400 transition-all" title="Limpar"><i className="ph-bold ph-trash" /></button>
-                  </div>
+              {/* Sidebar de Notas */}
+              <div className="lg:col-span-1 flex flex-col gap-6 overflow-hidden">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-black uppercase tracking-[0.4em] text-gray-500">Coleção</h3>
+                  <button 
+                    onClick={handleAddNote}
+                    className="w-8 h-8 bg-primary-500/10 hover:bg-primary-500 text-primary-400 hover:text-white rounded-xl flex items-center justify-center transition-all shadow-lg"
+                  >
+                    <i className="ph-bold ph-plus" />
+                  </button>
                 </div>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Comece a escrever suas ideias aqui..."
-                  className="flex-1 bg-transparent border-none focus:ring-0 text-white placeholder-gray-600 p-8 text-lg font-medium resize-none custom-scrollbar"
-                />
+
+                <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-2">
+                  {notes.length === 0 && (
+                    <div className="py-10 text-center opacity-20">
+                      <i className="ph-duotone ph-note-pencil text-4xl mb-2" />
+                      <p className="text-[10px] font-bold uppercase tracking-widest">Sem notas</p>
+                    </div>
+                  )}
+                  {notes.map(note => (
+                    <button
+                      key={note.id}
+                      onClick={() => setSelectedNoteId(note.id)}
+                      className={`w-full text-left p-4 rounded-3xl transition-all group border ${
+                        selectedNoteId === note.id 
+                        ? 'bg-primary-500/20 border-primary-500/40' 
+                        : 'bg-white/5 border-white/10 hover:bg-white/10'
+                      }`}
+                    >
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center justify-between">
+                          <span className={`font-bold truncate ${selectedNoteId === note.id ? 'text-white' : 'text-gray-400'}`}>
+                            {note.title || 'Sem título'}
+                          </span>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); deleteNote(note.id); }}
+                            className="opacity-0 group-hover:opacity-100 p-1 hover:text-rose-400 transition-all"
+                          >
+                            <i className="ph-bold ph-trash text-xs" />
+                          </button>
+                        </div>
+                        <span className="text-[9px] font-medium text-gray-600 truncate">
+                          {note.content || 'Comece a escrever...'}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Editor */}
+              <div className="lg:col-span-3">
+                {selectedNoteId ? (
+                  <div className="bg-[#0a0c12]/60 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-1 shadow-2xl h-full flex flex-col overflow-hidden">
+                    <div className="flex items-center justify-between px-8 py-4 border-b border-white/5">
+                      <input 
+                        value={notes.find(n => n.id === selectedNoteId)?.title || ''}
+                        onChange={(e) => updateNoteTitle(selectedNoteId, e.target.value)}
+                        placeholder="Título da nota..."
+                        className="bg-transparent border-none focus:ring-0 text-white font-black text-xl placeholder-gray-700 w-full"
+                      />
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 mr-4">
+                          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                          <span className="text-[9px] font-black uppercase tracking-widest text-gray-500">Salvo</span>
+                        </div>
+                        <button 
+                          onClick={() => { 
+                            const note = notes.find(n => n.id === selectedNoteId);
+                            if (!note) return;
+                            const blob = new Blob([note.content], { type: 'text/plain' }); 
+                            const url = URL.createObjectURL(blob); 
+                            const a = document.createElement('a'); 
+                            a.href = url; 
+                            a.download = `${note.title || 'nota'}-${new Date().toISOString().split('T')[0]}.txt`; 
+                            a.click(); 
+                          }} 
+                          className="p-2 hover:bg-white/5 rounded-xl text-gray-500 hover:text-white transition-all" 
+                          title="Exportar Nota"
+                        >
+                          <i className="ph-bold ph-export" />
+                        </button>
+                      </div>
+                    </div>
+                    <textarea
+                      value={notes.find(n => n.id === selectedNoteId)?.content || ''}
+                      onChange={(e) => updateNoteContent(selectedNoteId, e.target.value)}
+                      placeholder="Comece a escrever suas ideias aqui..."
+                      className="flex-1 bg-transparent border-none focus:ring-0 text-white placeholder-gray-700 p-8 text-lg font-medium resize-none custom-scrollbar"
+                    />
+                  </div>
+                ) : (
+                  <div className="bg-white/[0.02] border border-dashed border-white/10 rounded-[2.5rem] h-full flex flex-col items-center justify-center text-center p-20 opacity-30">
+                    <i className="ph-duotone ph-note-pencil text-6xl mb-6" />
+                    <h3 className="text-xl font-black uppercase tracking-widest">Nenhuma nota selecionada</h3>
+                    <p className="text-sm mt-2 max-w-xs">Selecione uma nota na lista ou crie uma nova para começar.</p>
+                  </div>
+                )}
               </div>
             </motion.section>
           )}
