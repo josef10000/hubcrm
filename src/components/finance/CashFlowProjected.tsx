@@ -31,7 +31,7 @@ export default function CashFlowProjected() {
     });
 
     // 1. Calculate future OUTFLOWS (Contas a Pagar/Transactions pending)
-    transactions.forEach(t => {
+    (transactions || []).forEach(t => {
       if (t.type === 'EXPENSE' && t.status !== 'PAID') {
         const tDate = new Date(t.date);
         if (tDate >= today) {

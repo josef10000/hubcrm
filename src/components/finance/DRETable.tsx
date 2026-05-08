@@ -21,7 +21,7 @@ export default function DRETable() {
   const aggregated = useMemo(() => {
     const data: any = { Receitas: {}, Despesas: {}, Deducoes: {} };
     
-    transactions.forEach(t => {
+    (transactions || []).forEach(t => {
       const date = new Date(t.date);
       if (date.getFullYear() !== currentYear) return;
       const monthIdx = date.getMonth();

@@ -15,7 +15,7 @@ export default function DREChart() {
   const chartData = useMemo(() => {
     const data = months.map(m => ({ month: m, income: 0, expense: 0, profit: 0, margin: 0 }));
 
-    transactions.forEach(t => {
+    (transactions || []).forEach(t => {
       const date = new Date(t.date);
       if (date.getFullYear() !== currentYear) return;
       const monthIdx = date.getMonth();

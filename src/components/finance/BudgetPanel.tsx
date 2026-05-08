@@ -66,7 +66,7 @@ export default function BudgetPanel() {
   const expensesByCategory = useMemo(() => {
     const data: Record<string, number> = {};
     
-    transactions.forEach(t => {
+    (transactions || []).forEach(t => {
       const date = new Date(t.date);
       if (t.type === 'EXPENSE' && date.getFullYear() === currentYear && date.getMonth() === currentMonth) {
         if (!data[t.categoryId]) data[t.categoryId] = 0;
