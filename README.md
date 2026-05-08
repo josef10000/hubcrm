@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <i>"Transformando prospecção em faturamento através de engenharia de dados e automação de alta fidelidade."</i>
+  <i>"Transformando prospecção em faturamento através de engenharia de dados e automação de alta fidelidade."</i> ✨
 </p>
 
 ---
