@@ -9,6 +9,7 @@ import { PremiumDialog } from '../components/PremiumDialog';
 import { format, isToday } from 'date-fns';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { storage } from '../lib/firebase';
+import { uploadImageToImgBB } from '../lib/imgbb';
 
 // Interfaces importadas da Store
 import type { PersonalLink, LinkFolder, PersonalGoal, NexusTask, NexusNote, NexusBook } from '../store/useNexusStore';
@@ -289,18 +290,10 @@ export default function MyWorkspaceView() {
 
       toast.loading('Fazendo upload da capa...');
       try {
-        const formData = new FormData();
-        formData.append('image', file);
-        const response = await fetch(`https://api.imgbb.com/1/upload?key=YOUR_IMGBB_API_KEY`, {
-          method: 'POST',
-          body: formData
-        });
-        const result = await response.json();
-        if (result.success) {
-          setBooks(books.map(b => b.id === bookId ? { ...b, coverUrl: result.data.url } : b));
-          toast.dismiss();
-          toast.success('Capa atualizada!');
-        }
+        const url = await uploadImageToImgBB(file);
+        setBooks(books.map(b => b.id === bookId ? { ...b, coverUrl: url } : b));
+        toast.dismiss();
+        toast.success('Capa atualizada!');
       } catch (err) {
         toast.dismiss();
         toast.error('Erro ao fazer upload da capa');
