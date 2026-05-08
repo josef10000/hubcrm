@@ -40,16 +40,27 @@ export interface NexusNote {
   updatedAt: number;
 }
 
+export interface NexusBook {
+  id: string;
+  title: string;
+  author?: string;
+  pdfUrl: string;
+  coverUrl?: string;
+  addedAt: number;
+}
+
 export interface NexusData {
   folders: LinkFolder[];
   links: PersonalLink[];
   goals: PersonalGoal[];
   tasks: NexusTask[];
   notes: NexusNote[];
+  books: NexusBook[];
 }
 
-interface NexusState extends Omit<NexusData, 'notes'> {
+interface NexusState extends Omit<NexusData, 'notes' | 'books'> {
   notes: NexusNote[];
+  books: NexusBook[];
   loading: boolean;
   initialized: boolean;
   error: string | null;
@@ -61,6 +72,7 @@ interface NexusState extends Omit<NexusData, 'notes'> {
   setGoals: (goals: PersonalGoal[]) => Promise<void>;
   setTasks: (tasks: NexusTask[]) => Promise<void>;
   setNotes: (notes: NexusNote[]) => Promise<void>;
+  setBooks: (books: NexusBook[]) => Promise<void>;
   
   // Internal update
   _updateFirestore: (newData: Partial<NexusData>) => Promise<void>;
@@ -84,6 +96,7 @@ export const useNexusStore = create<NexusState>((set, get) => ({
   goals: [],
   tasks: [],
   notes: [],
+  books: [],
   loading: true,
   initialized: false,
   error: null,
@@ -120,6 +133,7 @@ export const useNexusStore = create<NexusState>((set, get) => ({
             goals: nexus.goals || [],
             tasks: nexus.tasks || [],
             notes: migratedNotes,
+            books: nexus.books || [],
             loading: false,
             initialized: true
           });
@@ -134,7 +148,8 @@ export const useNexusStore = create<NexusState>((set, get) => ({
             links: DEFAULT_LINKS,
             goals: [],
             tasks: [],
-            notes: []
+            notes: [],
+            books: []
           };
 
           updateDoc(profileRef, { nexusData: initialData });
@@ -150,14 +165,14 @@ export const useNexusStore = create<NexusState>((set, get) => ({
   },
 
   _updateFirestore: async (newData: Partial<NexusData>) => {
-    const { uid, folders, links, goals, tasks, notes } = get();
+    const { uid, folders, links, goals, tasks, notes, books } = get();
     if (!uid) return;
 
     set(state => ({ ...state, ...newData }));
 
     const profileRef = doc(db, 'profiles', uid);
     try {
-      const baseData = { folders, links, goals, tasks, notes };
+      const baseData = { folders, links, goals, tasks, notes, books };
       const merged = { ...baseData, ...newData };
       
       const sanitized: any = {};
@@ -177,4 +192,5 @@ export const useNexusStore = create<NexusState>((set, get) => ({
   setGoals: (goals) => get()._updateFirestore({ goals }),
   setTasks: (tasks) => get()._updateFirestore({ tasks }),
   setNotes: (notes) => get()._updateFirestore({ notes }),
+  setBooks: (books) => get()._updateFirestore({ books }),
 }));

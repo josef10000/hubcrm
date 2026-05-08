@@ -7,9 +7,11 @@ import { useDialog } from '../contexts/DialogContext';
 import { toast } from 'sonner';
 import { PremiumDialog } from '../components/PremiumDialog';
 import { format, isToday } from 'date-fns';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { storage } from '../lib/firebase';
 
 // Interfaces importadas da Store
-import type { PersonalLink, LinkFolder, PersonalGoal, NexusTask, NexusNote } from '../store/useNexusStore';
+import type { PersonalLink, LinkFolder, PersonalGoal, NexusTask, NexusNote, NexusBook } from '../store/useNexusStore';
 
 // Helper para ícones de sites comuns
 const getUrlIcon = (url: string) => {
@@ -43,6 +45,7 @@ export default function MyWorkspaceView() {
   const goals = useNexusStore(state => state.goals);
   const tasks = useNexusStore(state => state.tasks);
   const notes = useNexusStore(state => state.notes);
+  const books = useNexusStore(state => state.books);
   const loading = useNexusStore(state => state.loading);
   const initNexus = useNexusStore(state => state.init);
   const setFolders = useNexusStore(state => state.setFolders);
@@ -50,11 +53,15 @@ export default function MyWorkspaceView() {
   const setGoals = useNexusStore(state => state.setGoals);
   const setTasks = useNexusStore(state => state.setTasks);
   const setNotes = useNexusStore(state => state.setNotes);
+  const setBooks = useNexusStore(state => state.setBooks);
 
-  const [activeTab, setActiveTab] = useState<'links' | 'goals' | 'notes' | 'tasks'>('links');
+  const [activeTab, setActiveTab] = useState<'links' | 'goals' | 'notes' | 'tasks' | 'library'>('links');
   const [dailyQuote, setDailyQuote] = useState<{content: string, author: string} | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
+  const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Seleciona a primeira nota automaticamente se houver e nenhuma estiver selecionada
   useEffect(() => {
@@ -74,7 +81,7 @@ export default function MyWorkspaceView() {
   // Modal States
   const [modalConfig, setModalConfig] = useState<{
     isOpen: boolean;
-    type: 'folder' | 'link' | 'goal' | 'task' | 'note';
+    type: 'folder' | 'link' | 'goal' | 'task' | 'note' | 'book';
     mode: 'add' | 'edit';
     data?: any;
   }>({ isOpen: false, type: 'folder', mode: 'add' });
@@ -216,6 +223,90 @@ export default function MyWorkspaceView() {
       }
       return g;
     }));
+  };
+
+  // HANDLERS: BIBLIOTECA
+  const handleUploadBook = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    if (file.type !== 'application/pdf') {
+      toast.error('Por favor, selecione um arquivo PDF.');
+      return;
+    }
+
+    setIsUploading(true);
+    const storageRef = ref(storage, `nexus_books/${user.uid}/${Date.now()}_${file.name}`);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+
+    uploadTask.on('state_changed', 
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        setUploadProgress(progress);
+      }, 
+      (error) => {
+        console.error("Upload error:", error);
+        toast.error('Erro ao fazer upload do livro');
+        setIsUploading(false);
+      }, 
+      async () => {
+        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+        const newBook: NexusBook = {
+          id: Date.now().toString(),
+          title: file.name.replace('.pdf', ''),
+          pdfUrl: downloadURL,
+          addedAt: Date.now()
+        };
+        setBooks([newBook, ...books]);
+        setIsUploading(false);
+        setUploadProgress(0);
+        toast.success('Livro adicionado à sua biblioteca!');
+      }
+    );
+  };
+
+  const deleteBook = async (id: string) => {
+    const ok = await confirm({
+      title: 'Remover Livro',
+      message: 'Deseja remover este livro da sua biblioteca? O arquivo será mantido no servidor, mas o atalho será apagado.',
+      variant: 'danger',
+      confirmText: 'Remover'
+    });
+    if (ok) {
+      setBooks(books.filter(b => b.id !== id));
+      if (selectedBookId === id) setSelectedBookId(null);
+      toast.success('Livro removido');
+    }
+  };
+
+  const updateBookCover = async (bookId: string) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async (e: any) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      toast.loading('Fazendo upload da capa...');
+      try {
+        const formData = new FormData();
+        formData.append('image', file);
+        const response = await fetch(`https://api.imgbb.com/1/upload?key=YOUR_IMGBB_API_KEY`, {
+          method: 'POST',
+          body: formData
+        });
+        const result = await response.json();
+        if (result.success) {
+          setBooks(books.map(b => b.id === bookId ? { ...b, coverUrl: result.data.url } : b));
+          toast.dismiss();
+          toast.success('Capa atualizada!');
+        }
+      } catch (err) {
+        toast.dismiss();
+        toast.error('Erro ao fazer upload da capa');
+      }
+    };
+    input.click();
   };
 
   const handleDeleteGoal = async (id: string) => {
@@ -365,7 +456,8 @@ export default function MyWorkspaceView() {
             { id: 'links', label: 'Vault', icon: 'ph-link' },
             { id: 'goals', label: 'Metas', icon: 'ph-target' },
             { id: 'tasks', label: 'Tarefas', icon: 'ph-checks' },
-            { id: 'notes', label: 'Notas', icon: 'ph-note-pencil' }
+            { id: 'notes', label: 'Notas', icon: 'ph-note-pencil' },
+            { id: 'library', label: 'Biblioteca', icon: 'ph-books' }
           ].map(tab => (
             <button
               key={tab.id}
@@ -687,6 +779,110 @@ export default function MyWorkspaceView() {
                   </div>
                 )}
               </div>
+            </motion.section>
+          )}
+
+          {activeTab === 'library' && (
+            <motion.section
+              key="library"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="space-y-8"
+            >
+              {!selectedBookId ? (
+                <div className="space-y-8">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <h3 className="text-xs font-black uppercase tracking-[0.4em] text-gray-500">Minha Estante</h3>
+                      <p className="text-sm text-gray-400">Gerencie seus estudos e referências em PDF</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {isUploading && (
+                        <div className="flex items-center gap-3 px-4 py-2 bg-primary-500/10 border border-primary-500/20 rounded-2xl">
+                          <div className="w-4 h-4 border-2 border-primary-500/20 border-t-primary-500 rounded-full animate-spin" />
+                          <span className="text-[10px] font-black text-primary-400 uppercase tracking-widest">{Math.round(uploadProgress)}%</span>
+                        </div>
+                      )}
+                      <label className="flex items-center gap-2 px-6 py-3 bg-primary-500 text-white rounded-2xl text-sm font-black uppercase tracking-widest cursor-pointer hover:scale-105 transition-all shadow-xl shadow-primary-500/20">
+                        <i className="ph-bold ph-plus" />
+                        <span>Adicionar Livro</span>
+                        <input type="file" accept=".pdf" className="hidden" onChange={handleUploadBook} disabled={isUploading} />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                    {books.map(book => (
+                      <div key={book.id} className="group relative">
+                        <div 
+                          onClick={() => setSelectedBookId(book.id)}
+                          className="aspect-[3/4] bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-primary-500/50 transition-all cursor-pointer shadow-xl relative"
+                        >
+                          {book.coverUrl ? (
+                            <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                          ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center gap-4 opacity-30">
+                              <i className="ph-duotone ph-book text-5xl" />
+                              <span className="text-[10px] font-bold uppercase tracking-widest leading-tight">{book.title}</span>
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                             <div className="w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center text-white text-xl shadow-xl shadow-primary-500/40">
+                               <i className="ph-bold ph-play" />
+                             </div>
+                          </div>
+                        </div>
+                        <div className="mt-3 px-1 flex justify-between items-start">
+                          <div className="min-w-0">
+                            <h4 className="text-xs font-black text-white truncate uppercase tracking-widest">{book.title}</h4>
+                            <p className="text-[9px] font-medium text-gray-500 uppercase mt-0.5">PDF Document</p>
+                          </div>
+                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => updateBookCover(book.id)} className="p-1.5 hover:text-primary-400 transition-all" title="Alterar Capa"><i className="ph-bold ph-image" /></button>
+                            <button onClick={() => deleteBook(book.id)} className="p-1.5 hover:text-rose-400 transition-all" title="Excluir"><i className="ph-bold ph-trash" /></button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {books.length === 0 && !isUploading && (
+                       <div className="col-span-full py-20 text-center opacity-20 border border-dashed border-white/10 rounded-[2.5rem]">
+                         <i className="ph-duotone ph-books text-6xl mb-4" />
+                         <p className="text-sm font-black uppercase tracking-widest">Sua estante está vazia</p>
+                       </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="h-[800px] flex flex-col bg-[#0a0c12]/80 backdrop-blur-3xl border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl">
+                  <div className="flex items-center justify-between px-8 py-4 border-b border-white/5 bg-white/5">
+                    <div className="flex items-center gap-4">
+                      <button 
+                        onClick={() => setSelectedBookId(null)}
+                        className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+                      >
+                        <i className="ph-bold ph-caret-left" />
+                      </button>
+                      <div>
+                        <h3 className="text-sm font-black text-white uppercase tracking-widest">
+                          {books.find(b => b.id === selectedBookId)?.title}
+                        </h3>
+                        <p className="text-[9px] font-medium text-gray-500 uppercase tracking-[0.2em]">Visualizador Imersivo v1.0</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                       <button onClick={() => window.open(books.find(b => b.id === selectedBookId)?.pdfUrl)} className="px-4 py-2 bg-white/5 rounded-xl text-[10px] font-black text-gray-400 hover:text-white transition-all uppercase tracking-widest">
+                         Baixar Original
+                       </button>
+                    </div>
+                  </div>
+                  <iframe 
+                    src={`${books.find(b => b.id === selectedBookId)?.pdfUrl}#toolbar=0`} 
+                    className="flex-1 w-full border-none bg-white"
+                    title="PDF Viewer"
+                  />
+                </div>
+              )}
             </motion.section>
           )}
         </AnimatePresence>
