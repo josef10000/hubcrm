@@ -35,7 +35,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   const value = {
     ...store,
     // Mapeamentos de nomes se necessário para componentes legados
-    activeLeadsCount: store.leads.filter(l => !['Convertido', 'Perdido'].includes(l.status || '')).length,
+    activeLeadsCount: (store.leads || []).filter(l => !['Convertido', 'Perdido'].includes(l.status || '')).length,
     effectiveOrgId: orgId,
     userProfile,
     

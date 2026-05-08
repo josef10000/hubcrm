@@ -49,6 +49,11 @@ service cloud.firestore {
       allow write: if isOwnerEmail() || request.auth.uid == userId || isOrgAdmin(getUserData().orgId);
     }
 
+    // Alertas do sistema (RBAC)
+    match /system_alerts/{id} {
+      allow read: if isAuthenticated() && (isOwnerEmail() || resource.data.orgId == getUserData().orgId);
+    }
+
     // Organizações e seus dados (Multi-Tenant)
     match /organizations/{orgId} {
       allow read, write: if isOwnerEmail() || belongsToOrg(orgId);

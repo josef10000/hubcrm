@@ -99,12 +99,11 @@ function CRMInner() {
     if (isStandaloneChat) setFocusMode(true);
   }, [isStandaloneChat]);
 
-  const openTicketCount = useMemo(() => supportRequests.filter(r => r.status === 'aberto' || r.status === 'em_analise').length, [supportRequests]);
+  const openTicketCount = useMemo(() => (supportRequests || []).filter(r => r.status === 'aberto' || r.status === 'em_analise').length, [supportRequests]);
   const { totalUnread: chatUnreadCount } = useGlobalChatAlerts();
 
   const newWikiCount = useMemo(() => {
-    if (!userProfile?.viewedWikiArticles) return wikiArticles.length;
-    return wikiArticles.filter(art => !userProfile.viewedWikiArticles?.includes(art.id)).length;
+    return (wikiArticles || []).filter(art => !userProfile.viewedWikiArticles?.includes(art.id)).length;
   }, [wikiArticles, userProfile?.viewedWikiArticles]);
 
   const titleCount = useMemo(() => {

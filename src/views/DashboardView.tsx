@@ -49,17 +49,18 @@ export default function DashboardView() {
   const indexOfLastClient = currentPage * clientsPerPage;
   const indexOfFirstClient = indexOfLastClient - clientsPerPage;
   const currentClients = filteredClients.slice(indexOfFirstClient, indexOfLastClient);
-  const totalPages = Math.ceil(filteredClients.length / clientsPerPage);
+  const totalPages = Math.ceil((filteredClients || []).length / clientsPerPage);
 
   // 📝 Memoized Metrics
   const metrics = React.useMemo(() => {
-    const active = clients.filter(c => c.status === 'Ativo').length;
+    const clientsList = clients || [];
+    const active = clientsList.filter(c => c.status === 'Ativo').length;
     
-    const calculatedMrr = clients
+    const calculatedMrr = clientsList
       .filter(c => c.status === 'Ativo' || c.status === 'Inadimplente')
       .reduce((acc, c) => acc + getPlanPrice(c.plan, c.billingCycle, c), 0);
       
-    const overdue = clients
+    const overdue = clientsList
       .filter(c => c.status === 'Inadimplente')
       .reduce((acc, c) => acc + getPlanPrice(c.plan, c.billingCycle, c), 0);
     
@@ -67,15 +68,15 @@ export default function DashboardView() {
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
     
-    const expected = clients.filter(c => {
+    const expected = clientsList.filter(c => {
       if (c.status === 'Cancelado') return false;
       if (!c.nextDueDate) return true;
       const dueDate = new Date(c.nextDueDate);
       return dueDate.getMonth() === currentMonth && dueDate.getFullYear() === currentYear;
     }).reduce((acc, c) => acc + getPlanPrice(c.plan, c.billingCycle, c), 0);
 
-    const avgHealth = clients.length > 0
-      ? Math.round(clients.reduce((acc, c) => acc + calculateHealthScore(c), 0) / clients.length)
+    const avgHealth = clientsList.length > 0
+      ? Math.round(clientsList.reduce((acc, c) => acc + calculateHealthScore(c), 0) / clientsList.length)
       : 100;
 
     return { active, mrr: calculatedMrr, overdue, expected, avgHealth };
@@ -83,14 +84,15 @@ export default function DashboardView() {
 
   // 📊 Memoized Chart Data
   const chartData = React.useMemo(() => {
+    const clientsList = clients || [];
     const status = [
-      { name: 'Em Dev', value: clients.filter(c => c.status === 'Em Desenvolvimento').length, color: '#eab308' },
-      { name: 'Ativo', value: clients.filter(c => c.status === 'Ativo').length, color: '#10b981' },
-      { name: 'Inadimplente', value: clients.filter(c => c.status === 'Inadimplente').length, color: '#ef4444' },
-      { name: 'Cancelado', value: clients.filter(c => c.status === 'Cancelado').length, color: '#6b7280' },
+      { name: 'Em Dev', value: clientsList.filter(c => c.status === 'Em Desenvolvimento').length, color: '#eab308' },
+      { name: 'Ativo', value: clientsList.filter(c => c.status === 'Ativo').length, color: '#10b981' },
+      { name: 'Inadimplente', value: clientsList.filter(c => c.status === 'Inadimplente').length, color: '#ef4444' },
+      { name: 'Cancelado', value: clientsList.filter(c => c.status === 'Cancelado').length, color: '#6b7280' },
     ];
 
-    const nicheCounts = clients.reduce((acc, c) => {
+    const nicheCounts = clientsList.reduce((acc, c) => {
       const niche = c.niche || 'Outros';
       acc[niche] = (acc[niche] || 0) + 1;
       return acc;
@@ -105,12 +107,12 @@ export default function DashboardView() {
   }, [clients]);
 
   const overdueClients = React.useMemo(() => 
-    clients.filter(c => c.status === 'Inadimplente' || c.paymentStatus === 'OVERDUE'),
+    (clients || []).filter(c => c.status === 'Inadimplente' || c.paymentStatus === 'OVERDUE'),
     [clients]
   );
 
   const comboRenewalClients = React.useMemo(() => 
-    clients.filter(c => isComboNearRenewal(c)),
+    (clients || []).filter(c => isComboNearRenewal(c)),
     [clients, isComboNearRenewal]
   );
 
@@ -157,7 +159,8 @@ export default function DashboardView() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div className="flex bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-1 rounded-2xl overflow-x-auto max-w-full custom-scrollbar">
             {['Todos', 'Em Desenvolvimento', 'Ativo', 'Inadimplente', 'Cancelado'].map((status) => {
-              const count = status === 'Todos' ? clients.length : clients.filter(c => c.status === status).length;
+              const clientsList = clients || [];
+              const count = status === 'Todos' ? clientsList.length : clientsList.filter(c => c.status === status).length;
               return (
                 <button
                   key={status}
