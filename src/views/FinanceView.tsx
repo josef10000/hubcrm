@@ -16,7 +16,18 @@ import { usePermissions } from '../hooks/usePermissions';
 
 export default function FinanceView() {
   const { user } = useAuth();
-  const { clients, newTransaction, setNewTransaction, transactionCategories, budgets, transactions, effectiveOrgId, userProfile, commissions, offers } = useCRM();
+  const { 
+    clients = [], 
+    newTransaction, 
+    setNewTransaction, 
+    transactionCategories = [], 
+    budgets = [], 
+    transactions = [], 
+    effectiveOrgId, 
+    userProfile, 
+    commissions = [], 
+    offers = [] 
+  } = useCRM();
   const [activeTab, setActiveTab] = useState<'resumo' | 'dre' | 'fluxo' | 'orcamento' | 'roi' | 'saas'>('resumo');
 
   const { hasPermission } = usePermissions();
@@ -33,16 +44,16 @@ export default function FinanceView() {
     );
   }
 
-  const totalMRR = clients.filter(c => c.status === 'Ativo' || c.status === 'Inadimplente').reduce((acc, c) => {
+  const totalMRR = (clients || []).filter(c => c.status === 'Ativo' || c.status === 'Inadimplente').reduce((acc, c) => {
     return acc + getPlanPrice(c.plan, c.billingCycle, c);
   }, 0);
   
-  const totalExpenses = transactions.filter(t => t.type === 'EXPENSE').reduce((acc, t) => acc + t.amount, 0);
+  const totalExpenses = (transactions || []).filter(t => t.type === 'EXPENSE').reduce((acc, t) => acc + t.amount, 0);
   const netProfit = totalMRR - totalExpenses;
 
   // --- CÁLCULO DE RATEIO DE CUSTOS FIXOS (CSP) ---
-  const activeClientsCount = clients.filter(c => c.status === 'Ativo').length;
-  const infraExpenses = transactions.filter(t => 
+  const activeClientsCount = (clients || []).filter(c => c.status === 'Ativo').length;
+  const infraExpenses = (transactions || []).filter(t => 
     t.type === 'EXPENSE' && 
     (t.categoryName === 'Infraestrutura' || t.categoryName === 'Infraestrutura / Hospedagem')
   ).reduce((acc, t) => acc + t.amount, 0);
@@ -50,13 +61,13 @@ export default function FinanceView() {
   const cspUnitario = activeClientsCount > 0 ? infraExpenses / activeClientsCount : 0;
 
   // Calculo de Saúde do Orçamento (Mês Atual)
-  const currentMonthSpent = transactions.filter(t => 
+  const currentMonthSpent = (transactions || []).filter(t => 
     t.type === 'EXPENSE' && 
     new Date(t.date).getMonth() === new Date().getMonth() &&
     new Date(t.date).getFullYear() === new Date().getFullYear()
   ).reduce((acc, t) => acc + t.amount, 0);
   
-  const totalBudget = budgets.filter(b => 
+  const totalBudget = (budgets || []).filter(b => 
     b.year === new Date().getFullYear() && 
     b.month === new Date().getMonth()
   ).reduce((acc, b) => acc + b.amount, 0);
@@ -77,7 +88,7 @@ export default function FinanceView() {
       if (selectedCat) {
         const currentYear = new Date().getFullYear();
         const currentMonth = new Date().getMonth();
-        const monthlySpent = transactions.filter(t => 
+        const monthlySpent = (transactions || []).filter(t => 
           t.categoryId === selectedCat.id && 
           t.type === 'EXPENSE' &&
           new Date(t.date).getFullYear() === currentYear &&
@@ -277,9 +288,9 @@ export default function FinanceView() {
                       </tr>
                     </thead>
                     <tbody>
-                      {clients.filter(c => c.status === 'Ativo' || transactions.some(t => t.clientId === c.id) || commissions.some(comm => comm.clientId === c.id)).map(client => {
-                        const clientExpenses = transactions.filter(t => t.clientId === client.id && t.type === 'EXPENSE').reduce((acc, t) => acc + t.amount, 0);
-                        const clientCommissions = commissions.filter(comm => comm.clientId === client.id).reduce((acc, comm) => acc + comm.amount, 0);
+                      {(clients || []).filter(c => c.status === 'Ativo' || (transactions || []).some(t => t.clientId === c.id) || (commissions || []).some(comm => comm.clientId === c.id)).map(client => {
+                        const clientExpenses = (transactions || []).filter(t => t.clientId === client.id && t.type === 'EXPENSE').reduce((acc, t) => acc + t.amount, 0);
+                        const clientCommissions = (commissions || []).filter(comm => comm.clientId === client.id).reduce((acc, comm) => acc + comm.amount, 0);
                         const mrr = client.status === 'Ativo' ? getPlanPrice(client.plan, client.billingCycle, client) : 0;
                         
                         // Custo Total = Custos Diretos + Rateio de Infra (CSP)
@@ -341,9 +352,9 @@ export default function FinanceView() {
                   LTV (Lifetime Value) - Ranking
                 </h3>
                 <div className="space-y-4">
-                  {clients.map(client => ({
+                  {(clients || []).map(client => ({
                     ...client,
-                    ltv: transactions.filter(t => t.clientId === client.id && t.type === 'INCOME').reduce((acc, t) => acc + t.amount, 0)
+                    ltv: (transactions || []).filter(t => t.clientId === client.id && t.type === 'INCOME').reduce((acc, t) => acc + t.amount, 0)
                   })).sort((a, b) => b.ltv - a.ltv).slice(0, 5).map((c, i) => (
                     <div key={c.id} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
                       <div className="flex items-center gap-3">
@@ -367,8 +378,8 @@ export default function FinanceView() {
                 <div className="flex flex-col items-center justify-center py-8">
                   {(() => {
                     const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
-                    const cancelledLastMonth = clients.filter(c => c.status === 'Cancelado' && c.updatedAt && c.updatedAt > thirtyDaysAgo).length;
-                    const totalBaseStart = clients.filter(c => c.status === 'Ativo').length + cancelledLastMonth;
+                    const cancelledLastMonth = (clients || []).filter(c => c.status === 'Cancelado' && c.updatedAt && c.updatedAt > thirtyDaysAgo).length;
+                    const totalBaseStart = (clients || []).filter(c => c.status === 'Ativo').length + cancelledLastMonth;
                     const churnRate = totalBaseStart > 0 ? (cancelledLastMonth / totalBaseStart) * 100 : 0;
                     
                     return (

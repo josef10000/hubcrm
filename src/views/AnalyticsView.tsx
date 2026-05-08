@@ -7,11 +7,11 @@ import { useCRM } from '../contexts/CRMContext';
 import { getPlanPrice } from '../helpers';
 
 export default function AnalyticsView() {
-  const { clients } = useCRM();
+  const { clients = [] } = useCRM();
 
-  const totalClients = clients.length;
-  const activeClients = clients.filter(c => c.status === 'Ativo').length;
-  const activeClientsList = clients.filter(c => c.status === 'Ativo');
+  const totalClients = (clients || []).length;
+  const activeClients = (clients || []).filter(c => c.status === 'Ativo').length;
+  const activeClientsList = (clients || []).filter(c => c.status === 'Ativo');
   const mrr = activeClientsList.reduce((acc, c) => {
     return acc + getPlanPrice(c.plan, c.billingCycle, c);
   }, 0);
@@ -22,7 +22,7 @@ export default function AnalyticsView() {
   }, 0);
   const overdueRate = activeClients > 0 ? ((overdueClients.length / activeClients) * 100).toFixed(1) : '0.0';
 
-  const canceledClientsList = clients.filter(c => c.status === 'Cancelado');
+  const canceledClientsList = (clients || []).filter(c => c.status === 'Cancelado');
   const canceledClients = canceledClientsList.length;
   const churnRate = totalClients > 0 ? ((canceledClients / totalClients) * 100).toFixed(1) : '0.0';
 
@@ -34,7 +34,7 @@ export default function AnalyticsView() {
   // Novas Métricas Gerenciais
   const ticketMedio = activeClients > 0 ? mrr / activeClients : 0;
   
-  const novosClientesMesList = clients.filter(c => {
+  const novosClientesMesList = (clients || []).filter(c => {
     const d = new Date(c.createdAt);
     return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
   });
@@ -47,7 +47,7 @@ export default function AnalyticsView() {
   const mrrPerdido = canceledClientsList.reduce((acc, c) => acc + getPlanPrice(c.plan, c.billingCycle, c), 0); // Total histórico perdido
   const mrrLiquido = mrrNovo - mrrPerdido; // Simplificado
 
-  const clientsWithDelivery = clients.filter(c => c.deliveryDate && c.createdAt);
+  const clientsWithDelivery = (clients || []).filter(c => c.deliveryDate && c.createdAt);
   const tempoMedioEntrega = clientsWithDelivery.length > 0 
     ? clientsWithDelivery.reduce((acc, c) => {
         const start = new Date(c.createdAt).getTime();
@@ -56,9 +56,9 @@ export default function AnalyticsView() {
       }, 0) / clientsWithDelivery.length
     : 0;
 
-  const taxaBriefing = totalClients > 0 ? (clients.filter(c => c.onboardingAnswers && Object.keys(c.onboardingAnswers).length > 0).length / totalClients * 100).toFixed(1) : '0.0';
-  const taxaIndicacao = totalClients > 0 ? (clients.filter(c => c.referredBy).length / totalClients * 100).toFixed(1) : '0.0';
-  const taxaUpsell = totalClients > 0 ? (clients.filter(c => c.isCombo).length / totalClients * 100).toFixed(1) : '0.0';
+  const taxaBriefing = totalClients > 0 ? ((clients || []).filter(c => c.onboardingAnswers && Object.keys(c.onboardingAnswers).length > 0).length / totalClients * 100).toFixed(1) : '0.0';
+  const taxaIndicacao = totalClients > 0 ? ((clients || []).filter(c => c.referredBy).length / totalClients * 100).toFixed(1) : '0.0';
+  const taxaUpsell = totalClients > 0 ? ((clients || []).filter(c => c.isCombo).length / totalClients * 100).toFixed(1) : '0.0';
 
   // Cohorts
   const cohortsMap: Record<string, { total: number, retained: number, mrr: number, channels: Record<string, number> }> = {};

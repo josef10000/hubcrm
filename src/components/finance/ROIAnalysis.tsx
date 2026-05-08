@@ -4,20 +4,25 @@ import { Target, TrendingUp, BarChart3, ArrowUpRight } from 'lucide-react';
 import { getPlanPrice } from '../../helpers';
 
 export default function ROIAnalysis() {
-  const { clients, transactions, offers, commissions } = useCRM();
+  const { 
+    clients = [], 
+    transactions = [], 
+    offers = [], 
+    commissions = [] 
+  } = useCRM();
 
-  const roiData = offers.map(offer => {
+  const roiData = (offers || []).map(offer => {
     // 1. Receita direta dessa oferta (MRR atual de clientes ativos)
-    const offerClients = clients.filter(c => c.offerId === offer.id && c.status === 'Ativo');
+    const offerClients = (clients || []).filter(c => c.offerId === offer.id && c.status === 'Ativo');
     const revenue = offerClients.reduce((acc, c) => acc + getPlanPrice(c.plan, c.billingCycle, c), 0);
     
     // 2. Comissões pagas/devidas por essa oferta
-    const offerCommissions = commissions.filter(comm => 
+    const offerCommissions = (commissions || []).filter(comm => 
       offerClients.some(c => c.id === comm.clientId) || comm.offerName === offer.name
     ).reduce((acc, comm) => acc + comm.amount, 0);
 
     // 3. Investimento em Ads vinculado diretamente a essa oferta
-    const adSpend = transactions.filter(t => t.type === 'EXPENSE' && t.clientId === offer.id).reduce((acc, t) => acc + t.amount, 0);
+    const adSpend = (transactions || []).filter(t => t.type === 'EXPENSE' && t.clientId === offer.id).reduce((acc, t) => acc + t.amount, 0);
 
     const totalCost = adSpend + offerCommissions;
     const netProfit = revenue - totalCost;
@@ -43,13 +48,13 @@ export default function ROIAnalysis() {
         <div className="bg-black/40 dark:bg-zinc-950/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl">
           <h4 className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-1">Investimento Total Ads</h4>
           <p className="text-2xl font-black text-white">
-            R$ {transactions.filter(t => t.type === 'EXPENSE' && !!t.clientId).reduce((acc, t) => acc + t.amount, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            R$ {(transactions || []).filter(t => t.type === 'EXPENSE' && !!t.clientId).reduce((acc, t) => acc + t.amount, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </p>
         </div>
         <div className="bg-black/40 dark:bg-zinc-950/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl">
           <h4 className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-1">Receita Atribuída</h4>
           <p className="text-2xl font-black text-emerald-400">
-            R$ {roiData.reduce((acc, d) => acc + d.revenue, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            R$ {(roiData || []).reduce((acc, d) => acc + d.revenue, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </p>
         </div>
         <div className="bg-black/40 dark:bg-zinc-950/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-6 rounded-3xl">

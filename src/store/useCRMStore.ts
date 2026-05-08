@@ -28,6 +28,11 @@ interface CRMState {
   services: any[];
   onboardingQuestions: any[];
   churnRiskDays: number;
+  transactions: Transaction[];
+  transactionCategories: TransactionCategory[];
+  budgets: Budget[];
+  newTransaction: Partial<Transaction>;
+  setNewTransaction: (transaction: Partial<Transaction>) => void;
   isSyncing: boolean;
   
   // UI / Global State
@@ -83,6 +88,11 @@ export const useCRMStore = create<CRMState>((set, get) => ({
   services: [],
   onboardingQuestions: [],
   churnRiskDays: 30,
+  transactions: [],
+  transactionCategories: [],
+  budgets: [],
+  newTransaction: { type: 'EXPENSE' },
+  setNewTransaction: (newTransaction: Partial<Transaction>) => set({ newTransaction }),
   isSyncing: false,
   loading: true,
   errorMsg: null,
@@ -163,6 +173,11 @@ export const useCRMStore = create<CRMState>((set, get) => ({
     setupListener('services', (data) => set({ services: data }));
     setupListener('roles', (data) => set({ orgRoles: data }));
     setupListener('onboarding_questions', (data) => set({ onboardingQuestions: data }), (a, b) => (a.order || 0) - (b.order || 0));
+
+    // 2.1 Finance Listeners
+    setupListener('transactions', (data) => set({ transactions: data }), (a, b) => b.date - a.date);
+    setupListener('transactionCategories', (data) => set({ transactionCategories: data }));
+    setupListener('budgets', (data) => set({ budgets: data }));
 
     // 3. Perfis da Equipe (Global)
     try {

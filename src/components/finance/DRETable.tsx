@@ -4,7 +4,10 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Transaction, TransactionCategory } from '../../types';
 
 export default function DRETable() {
-  const { transactions, transactionCategories } = useCRM();
+  const { 
+    transactions = [], 
+    transactionCategories = [] 
+  } = useCRM();
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [drillDown, setDrillDown] = useState<{ categoryName: string; month: number } | null>(null);
 

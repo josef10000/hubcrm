@@ -3,7 +3,10 @@ import { useCRM } from '../../contexts/CRMContext';
 import { getPlanPrice } from '../../helpers';
 
 export default function DREChart() {
-  const { transactions, clients } = useCRM();
+  const { 
+    transactions = [], 
+    clients = [] 
+  } = useCRM();
   
   const currentYear = new Date().getFullYear();
   const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];

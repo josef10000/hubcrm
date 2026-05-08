@@ -8,7 +8,11 @@ import { toast } from 'sonner';
 
 export default function BudgetPanel() {
   const { user } = useAuth();
-  const { transactions, transactionCategories, effectiveOrgId } = useCRM();
+  const { 
+    transactions = [], 
+    transactionCategories = [], 
+    effectiveOrgId 
+  } = useCRM();
   const [budgets, setBudgets] = useState<Record<string, number>>({});
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState<string>('');
