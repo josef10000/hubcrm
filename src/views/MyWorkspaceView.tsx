@@ -230,18 +230,8 @@ export default function MyWorkspaceView() {
 
   // HANDLERS: BIBLIOTECA
   const handleUploadBook = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
-
-    if (file.type !== 'application/pdf') {
-      toast.error('Por favor, selecione um arquivo PDF.');
-      return;
-    }
-
-    } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
-    }
+    // Desativado em favor da catalogação via link
+    toast.info('Catalogação agora é feita via busca e link externo para maior flexibilidade.');
   };
 
   const [bookSearchResults, setBookSearchResults] = useState<any[]>([]);
