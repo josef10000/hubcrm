@@ -248,35 +248,49 @@ export default function MyWorkspaceView() {
 
     searchTimeoutRef.current = setTimeout(async () => {
       setIsSearchingBook(true);
+      console.log(`[GoogleBooks] Buscando por: "${query}"...`);
+      
       try {
-        const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=5&printType=books`);
+        const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=8`);
         
         if (response.status === 429) {
-          toast.error('Muitas requisições. Aguarde um momento.');
+          toast.error('Limite de busca do Google atingido. Aguarde 1 minuto.');
+          setIsSearchingBook(false);
           return;
+        }
+
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
         }
 
         const data = await response.json();
         const items = data.items || [];
         
+        console.log(`[GoogleBooks] Resultados encontrados: ${items.length}`);
+
         if (items.length === 0) {
-          toast.info('Nenhum livro encontrado com esse termo.');
+          toast.info('Nenhum resultado para essa busca.');
         }
 
-        setBookSearchResults(items.map((item: any) => ({
-          title: item.volumeInfo.title,
-          author: item.volumeInfo.authors?.join(', ') || 'Autor desconhecido',
-          publishedAt: item.volumeInfo.publishedDate || '',
-          coverUrl: (item.volumeInfo.imageLinks?.thumbnail || item.volumeInfo.imageLinks?.smallThumbnail)?.replace('http:', 'https:'),
-          description: item.volumeInfo.description || ''
-        })));
+        const mappedResults = items.map((item: any) => {
+          const info = item.volumeInfo || {};
+          return {
+            title: info.title || 'Título Indisponível',
+            author: info.authors?.join(', ') || 'Autor Desconhecido',
+            publishedAt: info.publishedDate || '',
+            coverUrl: (info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail)?.replace('http:', 'https:') || '',
+            description: info.description || ''
+          };
+        });
+
+        setBookSearchResults(mappedResults);
       } catch (error) {
-        console.error("Google Books API Error:", error);
-        toast.error('Erro ao conectar com o Google Books.');
+        console.error("[GoogleBooks] Search Error:", error);
+        toast.error('Falha ao conectar com o catálogo global.');
       } finally {
         setIsSearchingBook(false);
       }
-    }, 600); // Debounce de 600ms
+    }, 600);
   };
 
   const handleAddBookByLink = (data: { title: string, url: string, author?: string, publishedAt?: string, coverUrl?: string, description?: string }) => {
