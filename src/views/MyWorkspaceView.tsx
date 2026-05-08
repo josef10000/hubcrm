@@ -60,9 +60,10 @@ export default function MyWorkspaceView() {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
-  const [viewingBookDetailsId, setViewingBookDetailsId] = useState<string | null>(null);
-  const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [bookSearchTerm, setBookSearchTerm] = useState('');
+  const [bookSearchResults, setBookSearchResults] = useState<any[]>([]);
+  const [isSearchingBook, setIsSearchingBook] = useState(false);
 
   // Seleciona a primeira nota automaticamente se houver e nenhuma estiver selecionada
   useEffect(() => {
@@ -234,64 +235,71 @@ export default function MyWorkspaceView() {
     toast.info('Catalogação agora é feita via busca e link externo para maior flexibilidade.');
   };
 
-  const [bookSearchResults, setBookSearchResults] = useState<any[]>([]);
-  const [isSearchingBook, setIsSearchingBook] = useState(false);
-
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const searchGoogleBooks = async (query: string) => {
-    if (!query || query.length < 3) {
+    if (!query || query.trim().length < 3) {
       setBookSearchResults([]);
       return;
     }
 
-    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
-
-    searchTimeoutRef.current = setTimeout(async () => {
-      setIsSearchingBook(true);
-      console.log(`[GoogleBooks] Buscando por: "${query}"...`);
+    setIsSearchingBook(true);
+    console.log(`[NexusBooks] Iniciando busca para: "${query}"`);
+    
+    try {
+      // Usando uma URL limpa sem filtros extras inicialmente
+      const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=10`;
+      const response = await fetch(url);
       
-      try {
-        const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=8`);
-        
+      if (!response.ok) {
         if (response.status === 429) {
-          toast.error('Limite de busca do Google atingido. Aguarde 1 minuto.');
-          setIsSearchingBook(false);
-          return;
+          toast.error('O Google bloqueou a busca temporariamente (limite de uso). Tente novamente em 1 minuto.');
+        } else {
+          toast.error(`Erro na API (${response.status}). Tente outro termo.`);
         }
-
-        if (!response.ok) {
-          throw new Error(`HTTP Error: ${response.status}`);
-        }
-
-        const data = await response.json();
-        const items = data.items || [];
-        
-        console.log(`[GoogleBooks] Resultados encontrados: ${items.length}`);
-
-        if (items.length === 0) {
-          toast.info('Nenhum resultado para essa busca.');
-        }
-
-        const mappedResults = items.map((item: any) => {
-          const info = item.volumeInfo || {};
-          return {
-            title: info.title || 'Título Indisponível',
-            author: info.authors?.join(', ') || 'Autor Desconhecido',
-            publishedAt: info.publishedDate || '',
-            coverUrl: (info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail)?.replace('http:', 'https:') || '',
-            description: info.description || ''
-          };
-        });
-
-        setBookSearchResults(mappedResults);
-      } catch (error) {
-        console.error("[GoogleBooks] Search Error:", error);
-        toast.error('Falha ao conectar com o catálogo global.');
-      } finally {
-        setIsSearchingBook(false);
+        return;
       }
-    }, 600);
+
+      const data = await response.json();
+      const items = data.items || [];
+      
+      console.log(`[NexusBooks] Sucesso! Livros encontrados:`, items.length);
+
+      if (items.length === 0) {
+        toast.info('Nenhum livro encontrado com este nome.');
+      }
+
+      const results = items.map((item: any) => {
+        const info = item.volumeInfo || {};
+        return {
+          title: info.title || 'Sem Título',
+          author: info.authors?.join(', ') || 'Autor Desconhecido',
+          publishedAt: info.publishedDate || 'Data N/D',
+          coverUrl: (info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail)?.replace('http:', 'https:') || '',
+          description: info.description || ''
+        };
+      });
+
+      setBookSearchResults(results);
+    } catch (error) {
+      console.error("[NexusBooks] Erro Crítico:", error);
+      toast.error('Erro de conexão. Verifique sua internet.');
+    } finally {
+      setIsSearchingBook(false);
+    }
   };
+
+  // Debounce da busca
+  useEffect(() => {
+    if (!bookSearchTerm || bookSearchTerm.length < 3) {
+      setBookSearchResults([]);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      searchGoogleBooks(bookSearchTerm);
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, [bookSearchTerm]);
 
   const handleAddBookByLink = (data: { title: string, url: string, author?: string, publishedAt?: string, coverUrl?: string, description?: string }) => {
     const newBook: NexusBook = {
@@ -1096,19 +1104,31 @@ export default function MyWorkspaceView() {
               <div className="space-y-6">
                 {/* Busca */}
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">1. Buscar Obra</label>
-                  <div className="relative">
-                    <input 
-                      type="text"
-                      placeholder="Digite o nome do livro ou autor..."
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:border-primary-500 transition-all outline-none"
-                      onChange={(e) => searchGoogleBooks(e.target.value)}
-                    />
-                    {isSearchingBook && (
-                      <div className="absolute right-6 top-1/2 -translate-y-1/2">
-                        <div className="w-4 h-4 border-2 border-primary-500/20 border-t-primary-500 rounded-full animate-spin" />
-                      </div>
-                    )}
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">1. Buscar Obra no Catálogo Global</label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <input 
+                        type="text"
+                        value={bookSearchTerm}
+                        placeholder="Digite título ou autor (ex: Pai Rico Pai Pobre)"
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:border-primary-500 transition-all outline-none"
+                        onChange={(e) => setBookSearchTerm(e.target.value)}
+                      />
+                      {isSearchingBook && (
+                        <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                          <span className="text-[9px] font-black text-primary-500 uppercase animate-pulse">Buscando...</span>
+                          <div className="w-4 h-4 border-2 border-primary-500/20 border-t-primary-500 rounded-full animate-spin" />
+                        </div>
+                      )}
+                    </div>
+                    <button 
+                      onClick={() => searchGoogleBooks(bookSearchTerm)}
+                      disabled={isSearchingBook || bookSearchTerm.length < 3}
+                      className="px-6 bg-white/5 border border-white/10 rounded-2xl text-gray-400 hover:text-white hover:bg-white/10 transition-all disabled:opacity-50"
+                      title="Forçar Busca"
+                    >
+                      <i className="ph-bold ph-magnifying-glass" />
+                    </button>
                   </div>
 
                   {/* Resultados da Busca */}
