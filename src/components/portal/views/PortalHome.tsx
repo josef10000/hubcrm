@@ -25,9 +25,10 @@ export default function PortalHome({ client, announcement, setActiveTab }: Porta
   const progress = totalStages > 0 ? Math.round((completedStages / totalStages) * 100) : 0;
 
   const copyReferralLink = () => {
-    const link = `https://hubsimples.com.br/indicar/${client.id}`;
+    const message = `Olá! Fui indicado por ${client.name} e gostaria de conhecer os projetos da Hub Simples.`;
+    const link = `https://wa.me/5511952924208?text=${encodeURIComponent(message)}`;
     navigator.clipboard.writeText(link);
-    toast.success('Link de indicação copiado!');
+    toast.success('Link de indicação (WhatsApp) copiado!');
   };
 
   return (
@@ -219,8 +220,8 @@ export default function PortalHome({ client, announcement, setActiveTab }: Porta
           </div>
           
           <div className="w-full lg:w-auto flex flex-col sm:flex-row items-center gap-4">
-            <div className="flex-1 lg:w-64 bg-black/40 border border-white/10 px-4 py-4 rounded-2xl font-mono text-xs text-gray-300 truncate">
-              hubsimples.com.br/indicar/{client.id}
+            <div className="flex-1 lg:w-64 bg-black/40 border border-white/10 px-4 py-4 rounded-2xl font-mono text-[10px] text-gray-300 truncate">
+              wa.me/5511952924208?text=Fui indicado por...
             </div>
             <button 
               onClick={copyReferralLink}

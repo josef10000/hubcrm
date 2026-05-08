@@ -1,7 +1,7 @@
 # <p align="center">🔐 HUB CENTRAL — INTELLIGENCE ECOSYSTEM</p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Enterprise_OS-v7.3.5.5-3b82f6?style=for-the-badge&labelColor=0a0a0a" alt="Version" />
+  <img src="https://img.shields.io/badge/Enterprise_OS-v7.3.6.0-3b82f6?style=for-the-badge&labelColor=0a0a0a" alt="Version" />
   <img src="https://img.shields.io/badge/Architecture-Collaboration_Bots-blueviolet?style=for-the-badge&labelColor=0a0a0a" alt="Architecture" />
   <img src="https://img.shields.io/badge/Status-Pro_Collaboration-emerald?style=for-the-badge&labelColor=0a0a0a" alt="Status" />
 </p>
@@ -93,6 +93,7 @@ O Hub Central segue diretrizes rígidas de design para manter seu status premium
 - [x] **v7.3.5** — **Payment Intel Commands** (Bot command /pago with client transaction search & arg support).
 - [x] **v7.3.5.1** — **UX Polish** (Fixed ClientModal auto-close after submission).
 - [x] **v7.3.5.5** — **Financial Module Stabilization** (State persistence for Transactions/Budgets & Defensive UI Fallbacks).
+- [x] **v7.3.6.0** — **Referral Flow Update** (Replaced external checkout links with WhatsApp personalized referral messages).
 - [ ] **v7.5.0** — IA Integrada: Nexus Copilot para automação de tarefas.
 
 ---

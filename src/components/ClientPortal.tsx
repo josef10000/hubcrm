@@ -816,13 +816,15 @@ export default function ClientPortal() {
           <div className="bg-black/40 border border-white/10 rounded-2xl p-4 mb-6">
             <p className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-2">Seu Link de Indicação</p>
             <div className="flex items-center gap-3">
-              <div className="flex-1 bg-white/5 px-4 py-3 rounded-xl text-emerald-400 font-mono text-sm truncate">
-                {`${window.location.origin}/onboarding/${orgId}?ref=${clientId}`}
+              <div className="flex-1 bg-white/5 px-4 py-3 rounded-xl text-emerald-400 font-mono text-[10px] truncate">
+                {`wa.me/5511952924208?text=Fui indicado por ${client.name}...`}
               </div>
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/onboarding/${orgId}?ref=${clientId}`);
-                  toast.success('Link de indicação copiado!');
+                  const message = `Olá! Fui indicado por ${client.name} e gostaria de conhecer os projetos da Hub Simples.`;
+                  const link = `https://wa.me/5511952924208?text=${encodeURIComponent(message)}`;
+                  navigator.clipboard.writeText(link);
+                  toast.success('Link de indicação (WhatsApp) copiado!');
                 }}
                 className="p-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-all shadow-lg shadow-emerald-500/20"
               >
