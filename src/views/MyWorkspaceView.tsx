@@ -236,53 +236,48 @@ export default function MyWorkspaceView() {
     toast.info('Catalogação agora é feita via busca e link externo para maior flexibilidade.');
   };
 
-  const searchGoogleBooks = async (query: string) => {
+  const searchBooks = async (query: string) => {
     if (!query || query.trim().length < 3) {
       setBookSearchResults([]);
       return;
     }
 
     setIsSearchingBook(true);
-    console.log(`[NexusBooks] Iniciando busca para: "${query}"`);
+    console.log(`[OpenLibrary] Iniciando busca para: "${query}"`);
     
     try {
-      // Usando uma URL limpa sem filtros extras inicialmente
-      const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=10`;
+      const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=10`;
       const response = await fetch(url);
       
       if (!response.ok) {
-        if (response.status === 429) {
-          toast.error('O Google bloqueou a busca temporariamente (limite de uso). Tente novamente em 1 minuto.');
-        } else {
-          toast.error(`Erro na API (${response.status}). Tente outro termo.`);
-        }
-        return;
+        throw new Error(`Erro na API: ${response.status}`);
       }
 
       const data = await response.json();
-      const items = data.items || [];
+      const docs = data.docs || [];
       
-      console.log(`[NexusBooks] Sucesso! Livros encontrados:`, items.length);
+      console.log(`[OpenLibrary] Sucesso! Livros encontrados:`, docs.length);
 
-      if (items.length === 0) {
+      if (docs.length === 0) {
         toast.info('Nenhum livro encontrado com este nome.');
       }
 
-      const results = items.map((item: any) => {
-        const info = item.volumeInfo || {};
+      const results = docs.map((doc: any) => {
         return {
-          title: info.title || 'Sem Título',
-          author: info.authors?.join(', ') || 'Autor Desconhecido',
-          publishedAt: info.publishedDate || 'Data N/D',
-          coverUrl: (info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail)?.replace('http:', 'https:') || '',
-          description: info.description || ''
+          title: doc.title || 'Sem Título',
+          author: doc.author_name?.join(', ') || 'Autor Desconhecido',
+          publishedAt: doc.first_publish_year?.toString() || 'Data N/D',
+          coverUrl: doc.cover_i 
+            ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg` 
+            : '',
+          description: doc.first_sentence?.[0] || 'Obra catalogada via Open Library.'
         };
       });
 
       setBookSearchResults(results);
     } catch (error) {
-      console.error("[NexusBooks] Erro Crítico:", error);
-      toast.error('Erro de conexão. Verifique sua internet.');
+      console.error("[OpenLibrary] Erro:", error);
+      toast.error('Erro ao conectar com a Open Library.');
     } finally {
       setIsSearchingBook(false);
     }
@@ -1111,7 +1106,7 @@ export default function MyWorkspaceView() {
                       )}
                     </div>
                     <button 
-                      onClick={() => searchGoogleBooks(bookSearchTerm)}
+                      onClick={() => searchBooks(bookSearchTerm)}
                       disabled={isSearchingBook || bookSearchTerm.length < 3}
                       className="px-6 bg-white/5 border border-white/10 rounded-2xl text-gray-400 hover:text-white hover:bg-white/10 transition-all disabled:opacity-50"
                       title="Forçar Busca"
