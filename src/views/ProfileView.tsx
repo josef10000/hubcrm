@@ -12,7 +12,7 @@ import { useCRM } from '../contexts/CRMContext';
 import AvailabilityCalendar from '../components/people/AvailabilityCalendar';
 import { db } from '../lib/firebase';
 import { doc, getDoc, collection, setDoc, query, where, onSnapshot } from 'firebase/firestore';
-import { uploadImageToImgBB } from '../lib/imgbb';
+import { uploadToCloudinary } from '../lib/cloudinary';
 import { usePermissions } from '../hooks/usePermissions';
 import { VacationPeriod } from '../types/people';
 import { UserProfile } from '../types';
@@ -240,7 +240,7 @@ export default function ProfileView() {
     try {
       if (file.size > 10 * 1024 * 1024) throw new Error("A imagem deve ter no máximo 10MB");
       
-      const imageUrl = await uploadImageToImgBB(file);
+      const imageUrl = await uploadToCloudinary(file);
       
       setFormData(prev => ({ ...prev, photoURL: imageUrl }));
       toast.success('Foto carregada! Clique em "Salvar Alterações" para confirmar.');

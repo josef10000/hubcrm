@@ -238,40 +238,51 @@ export default function MyWorkspaceView() {
       return;
     }
 
-    setIsUploading(true);
-    setUploadProgress(20); // Progresso simulado/inicial
-
-    try {
-      const downloadURL = await uploadToCloudinary(file);
-      setUploadProgress(100);
-      
-      const newBook: NexusBook = {
-        id: Date.now().toString(),
-        title: file.name.replace('.pdf', ''),
-        pdfUrl: downloadURL,
-        addedAt: Date.now()
-      };
-      setBooks([newBook, ...books]);
-      toast.success('Livro adicionado à sua biblioteca!');
-    } catch (error: any) {
-      console.error("Cloudinary upload error:", error);
-      toast.error(`Falha no upload: ${error.message || 'Erro no Cloudinary'}`);
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
     }
   };
 
-  const handleAddBookByLink = (data: { title: string, url: string }) => {
+  const [bookSearchResults, setBookSearchResults] = useState<any[]>([]);
+  const [isSearchingBook, setIsSearchingBook] = useState(false);
+
+  const searchGoogleBooks = async (query: string) => {
+    if (!query || query.length < 3) return;
+    setIsSearchingBook(true);
+    try {
+      const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=5`);
+      const data = await response.json();
+      const items = data.items || [];
+      setBookSearchResults(items.map((item: any) => ({
+        title: item.volumeInfo.title,
+        author: item.volumeInfo.authors?.join(', ') || 'Autor desconhecido',
+        publishedAt: item.volumeInfo.publishedDate || '',
+        coverUrl: item.volumeInfo.imageLinks?.thumbnail?.replace('http:', 'https:'),
+        description: item.volumeInfo.description || ''
+      })));
+    } catch (error) {
+      console.error("Google Books API Error:", error);
+    } finally {
+      setIsSearchingBook(false);
+    }
+  };
+
+  const handleAddBookByLink = (data: { title: string, url: string, author?: string, publishedAt?: string, coverUrl?: string, description?: string }) => {
     const newBook: NexusBook = {
       id: Date.now().toString(),
       title: data.title,
       pdfUrl: data.url,
+      author: data.author,
+      publishedAt: data.publishedAt,
+      coverUrl: data.coverUrl,
+      description: data.description,
       addedAt: Date.now()
     };
     setBooks([newBook, ...books]);
     setIsAddBookLinkOpen(false);
-    toast.success('Livro adicionado via link!');
+    setBookSearchResults([]);
+    toast.success('Livro catalogado com sucesso!');
   };
 
   const deleteBook = async (id: string) => {
@@ -803,24 +814,13 @@ export default function MyWorkspaceView() {
                       <p className="text-sm text-gray-400">Gerencie seus estudos e referências em PDF</p>
                     </div>
                       <div className="flex items-center gap-3">
-                        {isUploading && (
-                          <div className="flex items-center gap-3 px-4 py-2 bg-primary-500/10 border border-primary-500/20 rounded-2xl">
-                            <div className="w-4 h-4 border-2 border-primary-500/20 border-t-primary-500 rounded-full animate-spin" />
-                            <span className="text-[10px] font-black text-primary-400 uppercase tracking-widest">{Math.round(uploadProgress)}%</span>
-                          </div>
-                        )}
                         <button 
                           onClick={() => setIsAddBookLinkOpen(true)}
-                          className="flex items-center gap-2 px-6 py-3 bg-white/5 border border-white/10 text-white rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-white/10 transition-all shadow-xl"
+                          className="flex items-center gap-3 px-8 py-4 bg-primary-500 text-white rounded-[2rem] text-sm font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl shadow-primary-500/20"
                         >
-                          <i className="ph-bold ph-link" />
-                          <span>Adicionar via Link</span>
-                        </button>
-                        <label className="flex items-center gap-2 px-6 py-3 bg-primary-500 text-white rounded-2xl text-sm font-black uppercase tracking-widest cursor-pointer hover:scale-105 transition-all shadow-xl shadow-primary-500/20">
                           <i className="ph-bold ph-plus" />
-                          <span>Upload PDF</span>
-                          <input type="file" accept=".pdf" className="hidden" onChange={handleUploadBook} disabled={isUploading} />
-                        </label>
+                          <span>Adicionar Novo Livro</span>
+                        </button>
                       </div>
                   </div>
 
@@ -1045,16 +1045,142 @@ export default function MyWorkspaceView() {
         ]}
       />
 
-      <PremiumDialog
-        isOpen={isAddBookLinkOpen}
-        onClose={() => setIsAddBookLinkOpen(false)}
-        title="Adicionar Livro por Link"
-        onConfirm={handleAddBookByLink}
-        fields={[
-          { id: 'title', label: 'Título do Livro', placeholder: 'Ex: Pai Rico, Pai Pobre' },
-          { id: 'url', label: 'URL do PDF (Google Drive, Dropbox, etc)', placeholder: 'https://...', type: 'url' }
-        ]}
-      />
+      <AnimatePresence>
+        {isAddBookLinkOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="bg-[#0a0c12] border border-white/10 rounded-[3rem] w-full max-w-2xl overflow-hidden shadow-2xl p-10 space-y-8"
+            >
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <h3 className="text-xl font-black text-white uppercase tracking-tighter">Novo Livro</h3>
+                  <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">Catalogação via Google Books API</p>
+                </div>
+                <button onClick={() => setIsAddBookLinkOpen(false)} className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-gray-400 hover:text-white transition-all">
+                  <i className="ph-bold ph-x" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Busca */}
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">1. Buscar Obra</label>
+                  <div className="relative">
+                    <input 
+                      type="text"
+                      placeholder="Digite o nome do livro ou autor..."
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:border-primary-500 transition-all outline-none"
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val.length >= 3) {
+                          searchGoogleBooks(val);
+                        }
+                      }}
+                    />
+                    {isSearchingBook && (
+                      <div className="absolute right-6 top-1/2 -translate-y-1/2">
+                        <div className="w-4 h-4 border-2 border-primary-500/20 border-t-primary-500 rounded-full animate-spin" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Resultados da Busca */}
+                  <AnimatePresence>
+                    {bookSearchResults.length > 0 && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden divide-y divide-white/5 max-h-[300px] overflow-y-auto custom-scrollbar"
+                      >
+                        {bookSearchResults.map((res, i) => (
+                          <button 
+                            key={i}
+                            onClick={() => {
+                              // Preencher campos e fechar lista
+                              const titleInput = document.getElementById('book-title') as HTMLInputElement;
+                              const authorInput = document.getElementById('book-author') as HTMLInputElement;
+                              const dateInput = document.getElementById('book-date') as HTMLInputElement;
+                              const descInput = document.getElementById('book-desc') as HTMLTextAreaElement;
+                              const coverInput = document.getElementById('book-cover') as HTMLInputElement;
+                              
+                              if (titleInput) titleInput.value = res.title;
+                              if (authorInput) authorInput.value = res.author;
+                              if (dateInput) dateInput.value = res.publishedAt;
+                              if (descInput) descInput.value = res.description;
+                              if (coverInput) coverInput.value = res.coverUrl;
+                              
+                              setBookSearchResults([]);
+                            }}
+                            className="w-full p-4 flex items-center gap-4 hover:bg-white/10 transition-all text-left group"
+                          >
+                            <img src={res.coverUrl || 'https://via.placeholder.com/40x60'} className="w-10 aspect-[2/3] object-cover rounded-md shadow-lg" />
+                            <div className="min-w-0">
+                              <p className="text-sm font-black text-white truncate uppercase tracking-tighter">{res.title}</p>
+                              <p className="text-[10px] text-gray-500 font-bold uppercase truncate">{res.author}</p>
+                            </div>
+                            <i className="ph-bold ph-plus ml-auto text-primary-500 opacity-0 group-hover:opacity-100 transition-all" />
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Campos de Link e Dados */}
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">2. Link do Documento (Google Drive)</label>
+                    <input id="book-url" type="url" placeholder="https://drive.google.com/..." className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:border-primary-500 outline-none" />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">Título</label>
+                      <input id="book-title" type="text" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">Autor</label>
+                      <input id="book-author" type="text" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none" />
+                    </div>
+                  </div>
+
+                  <input id="book-cover" type="hidden" />
+                  <input id="book-date" type="hidden" />
+                  <textarea id="book-desc" className="hidden" />
+                </div>
+
+                <button 
+                  onClick={() => {
+                    const title = (document.getElementById('book-title') as HTMLInputElement).value;
+                    const url = (document.getElementById('book-url') as HTMLInputElement).value;
+                    const author = (document.getElementById('book-author') as HTMLInputElement).value;
+                    const publishedAt = (document.getElementById('book-date') as HTMLInputElement).value;
+                    const description = (document.getElementById('book-desc') as HTMLTextAreaElement).value;
+                    const coverUrl = (document.getElementById('book-cover') as HTMLInputElement).value;
+
+                    if (!title || !url) {
+                      toast.error('Título e Link são obrigatórios!');
+                      return;
+                    }
+
+                    handleAddBookByLink({ title, url, author, publishedAt, description, coverUrl });
+                  }}
+                  className="w-full bg-primary-500 text-white py-5 rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-primary-500/30 hover:scale-[1.02] active:scale-95 transition-all"
+                >
+                  Confirmar Catalogação
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* FOOTER DO WORKSPACE */}
       <footer className="pt-12 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-6 opacity-40">
