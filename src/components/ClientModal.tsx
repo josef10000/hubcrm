@@ -124,6 +124,7 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
       return;
     }
     onSave(formData);
+    onClose();
   };
 
   const handleCancelSubscription = () => {
