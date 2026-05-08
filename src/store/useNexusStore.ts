@@ -48,6 +48,8 @@ export interface NexusBook {
   publishedAt?: string;
   pdfUrl: string;
   coverUrl?: string;
+  currentPage?: number;
+  totalPages?: number;
   addedAt: number;
 }
 

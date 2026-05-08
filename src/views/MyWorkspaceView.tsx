@@ -283,22 +283,39 @@ export default function MyWorkspaceView() {
     }
   };
 
-  // Removido o useEffect de debounce automático para evitar erros 429
+  const handleAddBookByLink = (data: { 
+    title: string, 
+    url: string, 
+    author?: string, 
+    publishedAt?: string, 
+    coverUrl?: string, 
+    description?: string,
+    currentPage?: number,
+    totalPages?: number
+  }) => {
+    // Auto-ajuste de link do Google Drive para modo preview
+    let finalUrl = data.url;
+    if (finalUrl.includes('drive.google.com')) {
+      finalUrl = finalUrl.replace(/\/view(\?usp=sharing)?$/, '/preview')
+                         .replace(/\/edit(\?usp=sharing)?$/, '/preview');
+    }
 
-  const handleAddBookByLink = (data: { title: string, url: string, author?: string, publishedAt?: string, coverUrl?: string, description?: string }) => {
     const newBook: NexusBook = {
       id: Date.now().toString(),
       title: data.title,
-      pdfUrl: data.url,
+      pdfUrl: finalUrl,
       author: data.author,
       publishedAt: data.publishedAt,
       coverUrl: data.coverUrl,
       description: data.description,
+      currentPage: data.currentPage || 0,
+      totalPages: data.totalPages || 0,
       addedAt: Date.now()
     };
     setBooks([newBook, ...books]);
     setIsAddBookLinkOpen(false);
     setBookSearchResults([]);
+    setBookSearchTerm('');
     toast.success('Livro catalogado com sucesso!');
   };
 
@@ -848,6 +865,25 @@ export default function MyWorkspaceView() {
                           onClick={() => setViewingBookDetailsId(book.id)}
                           className="aspect-[3/4] bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-primary-500/50 transition-all cursor-pointer shadow-xl relative"
                         >
+                          {/* Progress Indicator */}
+                          {(book.totalPages && book.totalPages > 0) ? (
+                            <div className="absolute top-3 left-3 px-2 py-1 bg-black/60 backdrop-blur-md rounded-lg border border-white/10 z-10">
+                              <div className="flex flex-col gap-1">
+                                <span className="text-[8px] font-black text-white/70 uppercase leading-none">
+                                  {Math.round(((book.currentPage || 0) / book.totalPages) * 100)}% Lido
+                                </span>
+                                <div className="w-10 h-1 bg-white/10 rounded-full overflow-hidden">
+                                  <motion.div 
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${((book.currentPage || 0) / book.totalPages) * 100}%` }}
+                                    className="h-full bg-primary-500"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ) : null}
+
+                          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500" />
                           {book.coverUrl ? (
                             <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
                           ) : (
@@ -983,6 +1019,61 @@ export default function MyWorkspaceView() {
                       />
                     </div>
                   </div>
+
+                  {/* Reading Progress */}
+                  {(() => {
+                    const currentBook = books.find(b => b.id === viewingBookDetailsId);
+                    if (!currentBook) return null;
+                    return (
+                      <div className="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-500">
+                              <i className="ph-bold ph-book-open-text text-xl" />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-black text-white uppercase tracking-widest">Progresso de Leitura</h4>
+                              <p className="text-[10px] text-gray-500 font-bold uppercase">Página {currentBook.currentPage || 0} de {currentBook.totalPages || '?'}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-xl font-black text-white leading-none">
+                              {currentBook.totalPages ? Math.round(((currentBook.currentPage || 0) / currentBook.totalPages) * 100) : 0}%
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="relative w-full h-3 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                          <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${currentBook.totalPages ? ((currentBook.currentPage || 0) / currentBook.totalPages) * 100 : 0}%` }}
+                            className="h-full bg-gradient-to-r from-primary-600 to-primary-400 shadow-[0_0_15px_rgba(59,130,246,0.5)]"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-2">Página Atual</label>
+                            <input 
+                              type="number" 
+                              value={currentBook.currentPage || 0}
+                              onChange={(e) => updateBookDetails(currentBook.id, { currentPage: parseInt(e.target.value) || 0 })}
+                              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white font-bold outline-none focus:border-primary-500 transition-all text-center"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-2">Total de Páginas</label>
+                            <input 
+                              type="number" 
+                              value={currentBook.totalPages || 0}
+                              onChange={(e) => updateBookDetails(currentBook.id, { totalPages: parseInt(e.target.value) || 0 })}
+                              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white font-bold outline-none focus:border-primary-500 transition-all text-center"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   <div className="space-y-3">
                     <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-600">Descrição e Notas</h4>
@@ -1162,6 +1253,7 @@ export default function MyWorkspaceView() {
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">2. Link do Documento (Google Drive)</label>
                     <input id="book-url" type="url" placeholder="https://drive.google.com/..." className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:border-primary-500 outline-none" />
+                    <p className="text-[9px] text-gray-600 font-bold uppercase tracking-tighter ml-2">O Hub ajustará automaticamente o link para modo preview.</p>
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
@@ -1172,6 +1264,17 @@ export default function MyWorkspaceView() {
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">Autor</label>
                       <input id="book-author" type="text" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">Página Atual</label>
+                      <input id="book-current-page" type="number" defaultValue="0" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">Total de Páginas</label>
+                      <input id="book-total-pages" type="number" defaultValue="0" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none" />
                     </div>
                   </div>
 
@@ -1188,13 +1291,15 @@ export default function MyWorkspaceView() {
                     const publishedAt = (document.getElementById('book-date') as HTMLInputElement).value;
                     const description = (document.getElementById('book-desc') as HTMLTextAreaElement).value;
                     const coverUrl = (document.getElementById('book-cover') as HTMLInputElement).value;
+                    const currentPage = parseInt((document.getElementById('book-current-page') as HTMLInputElement).value) || 0;
+                    const totalPages = parseInt((document.getElementById('book-total-pages') as HTMLInputElement).value) || 0;
 
                     if (!title || !url) {
                       toast.error('Título e Link são obrigatórios!');
                       return;
                     }
 
-                    handleAddBookByLink({ title, url, author, publishedAt, description, coverUrl });
+                    handleAddBookByLink({ title, url, author, publishedAt, description, coverUrl, currentPage, totalPages });
                   }}
                   className="w-full bg-primary-500 text-white py-5 rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-primary-500/30 hover:scale-[1.02] active:scale-95 transition-all"
                 >
