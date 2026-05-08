@@ -87,6 +87,8 @@ export default function MyWorkspaceView() {
     data?: any;
   }>({ isOpen: false, type: 'folder', mode: 'add' });
 
+  const [isAddBookLinkOpen, setIsAddBookLinkOpen] = useState(false);
+
   // Biblioteca interna de frases premium
   const MOTIVATIONAL_QUOTES = [
     { content: "O sucesso não é o final, o fracasso não é fatal: é a coragem de continuar que conta.", author: "Winston Churchill" },
@@ -258,6 +260,18 @@ export default function MyWorkspaceView() {
       setIsUploading(false);
       setUploadProgress(0);
     }
+  };
+
+  const handleAddBookByLink = (data: { title: string, url: string }) => {
+    const newBook: NexusBook = {
+      id: Date.now().toString(),
+      title: data.title,
+      pdfUrl: data.url,
+      addedAt: Date.now()
+    };
+    setBooks([newBook, ...books]);
+    setIsAddBookLinkOpen(false);
+    toast.success('Livro adicionado via link!');
   };
 
   const deleteBook = async (id: string) => {
@@ -788,19 +802,26 @@ export default function MyWorkspaceView() {
                       <h3 className="text-xs font-black uppercase tracking-[0.4em] text-gray-500">Minha Estante</h3>
                       <p className="text-sm text-gray-400">Gerencie seus estudos e referências em PDF</p>
                     </div>
-                    <div className="flex items-center gap-3">
-                      {isUploading && (
-                        <div className="flex items-center gap-3 px-4 py-2 bg-primary-500/10 border border-primary-500/20 rounded-2xl">
-                          <div className="w-4 h-4 border-2 border-primary-500/20 border-t-primary-500 rounded-full animate-spin" />
-                          <span className="text-[10px] font-black text-primary-400 uppercase tracking-widest">{Math.round(uploadProgress)}%</span>
-                        </div>
-                      )}
-                      <label className="flex items-center gap-2 px-6 py-3 bg-primary-500 text-white rounded-2xl text-sm font-black uppercase tracking-widest cursor-pointer hover:scale-105 transition-all shadow-xl shadow-primary-500/20">
-                        <i className="ph-bold ph-plus" />
-                        <span>Adicionar Livro</span>
-                        <input type="file" accept=".pdf" className="hidden" onChange={handleUploadBook} disabled={isUploading} />
-                      </label>
-                    </div>
+                      <div className="flex items-center gap-3">
+                        {isUploading && (
+                          <div className="flex items-center gap-3 px-4 py-2 bg-primary-500/10 border border-primary-500/20 rounded-2xl">
+                            <div className="w-4 h-4 border-2 border-primary-500/20 border-t-primary-500 rounded-full animate-spin" />
+                            <span className="text-[10px] font-black text-primary-400 uppercase tracking-widest">{Math.round(uploadProgress)}%</span>
+                          </div>
+                        )}
+                        <button 
+                          onClick={() => setIsAddBookLinkOpen(true)}
+                          className="flex items-center gap-2 px-6 py-3 bg-white/5 border border-white/10 text-white rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-white/10 transition-all shadow-xl"
+                        >
+                          <i className="ph-bold ph-link" />
+                          <span>Adicionar via Link</span>
+                        </button>
+                        <label className="flex items-center gap-2 px-6 py-3 bg-primary-500 text-white rounded-2xl text-sm font-black uppercase tracking-widest cursor-pointer hover:scale-105 transition-all shadow-xl shadow-primary-500/20">
+                          <i className="ph-bold ph-plus" />
+                          <span>Upload PDF</span>
+                          <input type="file" accept=".pdf" className="hidden" onChange={handleUploadBook} disabled={isUploading} />
+                        </label>
+                      </div>
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
@@ -1021,6 +1042,17 @@ export default function MyWorkspaceView() {
           { id: 'label', label: 'Título da Meta', defaultValue: modalConfig.data?.label },
           { id: 'target', label: 'Valor Alvo', type: 'number', defaultValue: modalConfig.data?.target },
           { id: 'unit', label: 'Unidade (ex: leads)', defaultValue: modalConfig.data?.unit }
+        ]}
+      />
+
+      <PremiumDialog
+        isOpen={isAddBookLinkOpen}
+        onClose={() => setIsAddBookLinkOpen(false)}
+        title="Adicionar Livro por Link"
+        onConfirm={handleAddBookByLink}
+        fields={[
+          { id: 'title', label: 'Título do Livro', placeholder: 'Ex: Pai Rico, Pai Pobre' },
+          { id: 'url', label: 'URL do PDF (Google Drive, Dropbox, etc)', placeholder: 'https://...', type: 'url' }
         ]}
       />
 
