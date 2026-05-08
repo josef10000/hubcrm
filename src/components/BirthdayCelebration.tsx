@@ -86,7 +86,7 @@ export default function BirthdayCelebration({ uid }: BirthdayCelebrationProps) {
             <span className="text-3xl md:text-5xl animate-bounce">🎉</span>
             <div>
               <h2 className="text-xl md:text-3xl font-black text-white drop-shadow-lg leading-tight">Parabéns pelo seu dia!</h2>
-              <p className="text-white/90 text-sm md:text-base font-medium">A Hub Simples deseja um feliz aniversário!</p>
+              <p className="text-white/90 text-sm md:text-base font-medium">A Hub Symples deseja um feliz aniversário!</p>
             </div>
             <span className="text-3xl md:text-5xl animate-bounce" style={{ animationDelay: '0.2s' }}>🎂</span>
           </motion.div>

@@ -821,7 +821,7 @@ export default function ClientPortal() {
               </div>
               <button
                 onClick={() => {
-                  const message = `Olá! Fui indicado por ${client.name} e gostaria de conhecer os projetos da Hub Simples.`;
+                  const message = `Olá! Fui indicado por ${client.name} e gostaria de conhecer os projetos da Hub Symples.`;
                   const link = `https://wa.me/5511952924208?text=${encodeURIComponent(message)}`;
                   navigator.clipboard.writeText(link);
                   toast.success('Link de indicação (WhatsApp) copiado!');
