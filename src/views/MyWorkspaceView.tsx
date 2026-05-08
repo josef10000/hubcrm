@@ -65,6 +65,8 @@ export default function MyWorkspaceView() {
   const [bookSearchTerm, setBookSearchTerm] = useState('');
   const [bookSearchResults, setBookSearchResults] = useState<any[]>([]);
   const [isSearchingBook, setIsSearchingBook] = useState(false);
+  const [librarySearchQuery, setLibrarySearchQuery] = useState('');
+  const [libraryPage, setLibraryPage] = useState(1);
 
   // Seleciona a primeira nota automaticamente se houver e nenhuma estiver selecionada
   useEffect(() => {
@@ -605,7 +607,7 @@ export default function MyWorkspaceView() {
                           <i className={`ph-duotone ${link.icon || getUrlIcon(link.url)} text-primary-400`} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-bold text-white group-hover:text-primary-400 transition-colors truncate">{link.label}</h4>
+                          <h4 className="font-bold text-white group-hover:text-primary-400 transition-colors line-clamp-2 leading-tight">{link.label}</h4>
                           <p className="text-[10px] text-gray-500 font-mono mt-1 truncate">{link.url.replace(/https?:\/\/(www\.)?/, '').split('/')[0]}</p>
                         </div>
                       </a>
@@ -842,26 +844,57 @@ export default function MyWorkspaceView() {
             >
               {!selectedBookId ? (
                 <div className="space-y-8">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="space-y-1">
                       <h3 className="text-xs font-black uppercase tracking-[0.4em] text-gray-500">Minha Estante</h3>
                       <p className="text-sm text-gray-400">Gerencie seus estudos e referências em PDF</p>
                     </div>
-                      <div className="flex items-center gap-3">
-                        <button 
-                          onClick={() => setIsAddBookLinkOpen(true)}
-                          className="flex items-center gap-3 px-8 py-4 bg-primary-500 text-white rounded-[2rem] text-sm font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl shadow-primary-500/20"
-                        >
-                          <i className="ph-bold ph-plus" />
-                          <span>Adicionar Novo Livro</span>
-                        </button>
+                    
+                    <div className="flex flex-1 max-w-md items-center gap-4">
+                      <div className="relative flex-1">
+                        <i className="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                        <input 
+                          type="text"
+                          placeholder="Buscar por título ou autor..."
+                          value={librarySearchQuery}
+                          onChange={(e) => { setLibrarySearchQuery(e.target.value); setLibraryPage(1); }}
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-3 text-sm text-white focus:border-primary-500 transition-all outline-none"
+                        />
                       </div>
+                      <button 
+                        onClick={() => setIsAddBookLinkOpen(true)}
+                        className="flex items-center gap-3 px-6 py-3 bg-primary-500 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl shadow-primary-500/20"
+                      >
+                        <i className="ph-bold ph-plus" />
+                        <span className="hidden sm:inline">Adicionar</span>
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-                    {books.map(book => (
-                      <div key={book.id} className="group relative">
-                        <div 
+                  {(() => {
+                    const filteredBooks = books.filter(b => 
+                      b.title.toLowerCase().includes(librarySearchQuery.toLowerCase()) || 
+                      b.author?.toLowerCase().includes(librarySearchQuery.toLowerCase())
+                    );
+                    const itemsPerPage = 10;
+                    const totalPages = Math.ceil(filteredBooks.length / itemsPerPage);
+                    const currentBooks = filteredBooks.slice((libraryPage - 1) * itemsPerPage, libraryPage * itemsPerPage);
+
+                    if (filteredBooks.length === 0) {
+                      return (
+                        <div className="py-20 bg-white/[0.02] border border-dashed border-white/10 rounded-[3rem] flex flex-col items-center justify-center opacity-30">
+                          <i className="ph-duotone ph-magnifying-glass text-6xl mb-4" />
+                          <p className="text-sm font-bold uppercase tracking-widest">Nenhum livro encontrado</p>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="space-y-10">
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+                          {currentBooks.map(book => (
+                            <div key={book.id} className="group relative">
+                          <div 
                           onClick={() => setViewingBookDetailsId(book.id)}
                           className="aspect-[3/4] bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-primary-500/50 transition-all cursor-pointer shadow-xl relative"
                         >
@@ -909,14 +942,51 @@ export default function MyWorkspaceView() {
                           </div>
                         </div>
                       </div>
-                    ))}
-                    {books.length === 0 && !isUploading && (
-                       <div className="col-span-full py-20 text-center opacity-20 border border-dashed border-white/10 rounded-[2.5rem]">
-                         <i className="ph-duotone ph-books text-6xl mb-4" />
-                         <p className="text-sm font-black uppercase tracking-widest">Sua estante está vazia</p>
-                       </div>
-                    )}
-                  </div>
+                        </div>
+
+                        {/* Paginação */}
+                        {totalPages > 1 && (
+                          <div className="flex items-center justify-center gap-4 pt-8">
+                            <button 
+                              disabled={libraryPage === 1}
+                              onClick={() => setLibraryPage(p => p - 1)}
+                              className="p-3 bg-white/5 border border-white/10 rounded-xl text-gray-400 hover:text-white disabled:opacity-30 transition-all"
+                            >
+                              <i className="ph-bold ph-caret-left" />
+                            </button>
+                            <div className="flex items-center gap-2">
+                              {Array.from({ length: totalPages }).map((_, i) => (
+                                <button
+                                  key={i}
+                                  onClick={() => setLibraryPage(i + 1)}
+                                  className={`w-10 h-10 rounded-xl text-xs font-black transition-all ${
+                                    libraryPage === i + 1 
+                                    ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' 
+                                    : 'bg-white/5 text-gray-500 hover:text-white hover:bg-white/10'
+                                  }`}
+                                >
+                                  {i + 1}
+                                </button>
+                              ))}
+                            </div>
+                            <button 
+                              disabled={libraryPage === totalPages}
+                              onClick={() => setLibraryPage(p => p + 1)}
+                              className="p-3 bg-white/5 border border-white/10 rounded-xl text-gray-400 hover:text-white disabled:opacity-30 transition-all"
+                            >
+                              <i className="ph-bold ph-caret-right" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                  {books.length === 0 && !isUploading && (
+                     <div className="py-20 text-center opacity-20 border border-dashed border-white/10 rounded-[2.5rem]">
+                       <i className="ph-duotone ph-books text-6xl mb-4" />
+                       <p className="text-sm font-black uppercase tracking-widest">Sua estante está vazia</p>
+                     </div>
+                  )}
                 </div>
               ) : (
                 <div className="h-[800px] flex flex-col bg-[#0a0c12]/80 backdrop-blur-3xl border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl">
