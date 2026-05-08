@@ -60,6 +60,7 @@ export default function MyWorkspaceView() {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
+  const [viewingBookDetailsId, setViewingBookDetailsId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [bookSearchTerm, setBookSearchTerm] = useState('');
   const [bookSearchResults, setBookSearchResults] = useState<any[]>([]);
@@ -287,19 +288,7 @@ export default function MyWorkspaceView() {
     }
   };
 
-  // Debounce da busca
-  useEffect(() => {
-    if (!bookSearchTerm || bookSearchTerm.length < 3) {
-      setBookSearchResults([]);
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      searchGoogleBooks(bookSearchTerm);
-    }, 800);
-
-    return () => clearTimeout(timer);
-  }, [bookSearchTerm]);
+  // Removido o useEffect de debounce automático para evitar erros 429
 
   const handleAddBookByLink = (data: { title: string, url: string, author?: string, publishedAt?: string, coverUrl?: string, description?: string }) => {
     const newBook: NexusBook = {
