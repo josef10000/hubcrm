@@ -61,6 +61,7 @@ export default function MyWorkspaceView() {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
+  const [viewingBookDetailsId, setViewingBookDetailsId] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -278,6 +279,10 @@ export default function MyWorkspaceView() {
       if (selectedBookId === id) setSelectedBookId(null);
       toast.success('Livro removido');
     }
+  };
+
+  const updateBookDetails = (bookId: string, updates: Partial<NexusBook>) => {
+    setBooks(books.map(b => b.id === bookId ? { ...b, ...updates } : b));
   };
 
   const updateBookCover = async (bookId: string) => {
@@ -809,7 +814,7 @@ export default function MyWorkspaceView() {
                     {books.map(book => (
                       <div key={book.id} className="group relative">
                         <div 
-                          onClick={() => setSelectedBookId(book.id)}
+                          onClick={() => setViewingBookDetailsId(book.id)}
                           className="aspect-[3/4] bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-primary-500/50 transition-all cursor-pointer shadow-xl relative"
                         >
                           {book.coverUrl ? (
@@ -880,6 +885,119 @@ export default function MyWorkspaceView() {
           )}
         </AnimatePresence>
       </main>
+
+      {/* OVERLAY: DETALHES DO LIVRO */}
+      <AnimatePresence>
+        {viewingBookDetailsId && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md"
+            onClick={() => setViewingBookDetailsId(null)}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-[#0a0c12] border border-white/10 rounded-[3rem] w-full max-w-5xl overflow-hidden shadow-2xl flex flex-col md:flex-row"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Capa Ampliada */}
+              <div className="md:w-2/5 aspect-[3/4] md:aspect-auto bg-white/5 relative group">
+                {books.find(b => b.id === viewingBookDetailsId)?.coverUrl ? (
+                  <img 
+                    src={books.find(b => b.id === viewingBookDetailsId)?.coverUrl} 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-700">
+                    <i className="ph-duotone ph-book text-9xl" />
+                  </div>
+                )}
+                <div className="absolute top-6 left-6">
+                  <button 
+                    onClick={() => setViewingBookDetailsId(null)}
+                    className="w-12 h-12 bg-black/50 backdrop-blur-xl rounded-2xl flex items-center justify-center text-white hover:scale-110 transition-all"
+                  >
+                    <i className="ph-bold ph-x" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Detalhes e Ações */}
+              <div className="flex-1 p-12 flex flex-col justify-between">
+                <div className="space-y-8">
+                  <div className="space-y-2">
+                    <input 
+                      value={books.find(b => b.id === viewingBookDetailsId)?.title || ''}
+                      onChange={(e) => updateBookDetails(viewingBookDetailsId!, { title: e.target.value })}
+                      className="bg-transparent border-none p-0 focus:ring-0 text-3xl font-black text-white uppercase tracking-tighter w-full placeholder-gray-800"
+                      placeholder="Título do Livro"
+                    />
+                    <div className="flex items-center gap-4 text-primary-400 font-black text-xs uppercase tracking-widest">
+                      <input 
+                        value={books.find(b => b.id === viewingBookDetailsId)?.author || ''}
+                        onChange={(e) => updateBookDetails(viewingBookDetailsId!, { author: e.target.value })}
+                        className="bg-transparent border-none p-0 focus:ring-0 text-primary-400 font-black w-full placeholder-primary-900"
+                        placeholder="Nome do Autor"
+                      />
+                      <span className="text-gray-700">•</span>
+                      <input 
+                            type="text"
+                            value={books.find(b => b.id === viewingBookDetailsId)?.publishedAt || ''}
+                            onChange={(e) => updateBookDetails(viewingBookDetailsId!, { publishedAt: e.target.value })}
+                            className="bg-transparent border-none p-0 focus:ring-0 text-gray-500 font-bold w-32 placeholder-gray-800"
+                            placeholder="Ano/Data"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-600">Descrição e Notas</h4>
+                    <textarea 
+                      value={books.find(b => b.id === viewingBookDetailsId)?.description || ''}
+                      onChange={(e) => updateBookDetails(viewingBookDetailsId!, { description: e.target.value })}
+                      className="w-full bg-white/5 border border-white/5 rounded-3xl p-6 text-gray-400 font-medium text-lg min-h-[200px] focus:border-primary-500/30 transition-all resize-none custom-scrollbar"
+                      placeholder="Escreva detalhes sobre o livro, o que você aprendeu ou por que ele é importante..."
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 mt-8">
+                  <button 
+                    onClick={() => {
+                      setSelectedBookId(viewingBookDetailsId);
+                      setViewingBookDetailsId(null);
+                    }}
+                    className="flex-1 bg-primary-500 text-white py-5 rounded-2xl font-black uppercase tracking-widest text-sm shadow-xl shadow-primary-500/30 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"
+                  >
+                    <i className="ph-bold ph-play" />
+                    Ler Agora
+                  </button>
+                  <button 
+                    onClick={() => updateBookCover(viewingBookDetailsId!)}
+                    className="w-16 h-16 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+                    title="Alterar Capa"
+                  >
+                    <i className="ph-bold ph-image" />
+                  </button>
+                  <button 
+                    onClick={() => {
+                      deleteBook(viewingBookDetailsId!);
+                      setViewingBookDetailsId(null);
+                    }}
+                    className="w-16 h-16 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center justify-center text-rose-500 hover:bg-rose-500 hover:text-white transition-all"
+                    title="Remover"
+                  >
+                    <i className="ph-bold ph-trash" />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* DIÁLOGOS PREMIUM */}
       <PremiumDialog

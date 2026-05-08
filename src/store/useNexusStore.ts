@@ -44,6 +44,8 @@ export interface NexusBook {
   id: string;
   title: string;
   author?: string;
+  description?: string;
+  publishedAt?: string;
   pdfUrl: string;
   coverUrl?: string;
   addedAt: number;
