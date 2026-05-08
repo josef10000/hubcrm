@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useCRM } from '../contexts/CRMContext';
@@ -67,6 +69,10 @@ export default function MyWorkspaceView() {
   const [isSearchingBook, setIsSearchingBook] = useState(false);
   const [librarySearchQuery, setLibrarySearchQuery] = useState('');
   const [libraryPage, setLibraryPage] = useState(1);
+  const [librarySubTab, setLibrarySubTab] = useState<'my' | 'shared' | 'community'>('my');
+  const [communityBooks, setCommunityBooks] = useState<NexusBook[]>([]);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [sharingBook, setSharingBook] = useState<NexusBook | null>(null);
 
   // Seleciona a primeira nota automaticamente se houver e nenhuma estiver selecionada
   useEffect(() => {
@@ -82,6 +88,19 @@ export default function MyWorkspaceView() {
       return () => unsubscribe();
     }
   }, [user?.uid, initNexus]);
+
+  // Busca Livros da Comunidade
+  useEffect(() => {
+    const orgId = userProfile?.orgId;
+    if (activeTab === 'library' && librarySubTab === 'community' && orgId) {
+      const q = query(collection(db, 'organizations', orgId, 'communityBooks'), orderBy('addedAt', 'desc'));
+      const unsubscribe = onSnapshot(q, (snap) => {
+        const loaded = snap.docs.map(d => ({ ...d.data(), id: d.id } as NexusBook));
+        setCommunityBooks(loaded);
+      });
+      return () => unsubscribe();
+    }
+  }, [activeTab, librarySubTab, userProfile?.orgId]);
 
   // Modal States
   const [modalConfig, setModalConfig] = useState<{
@@ -845,9 +864,32 @@ export default function MyWorkspaceView() {
               {!selectedBookId ? (
                 <div className="space-y-8">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div className="space-y-1">
-                      <h3 className="text-xs font-black uppercase tracking-[0.4em] text-gray-500">Minha Estante</h3>
-                      <p className="text-sm text-gray-400">Gerencie seus estudos e referências em PDF</p>
+                    <div className="flex flex-col gap-4">
+                      <div className="space-y-1">
+                        <h3 className="text-xs font-black uppercase tracking-[0.4em] text-gray-500">Nexus Library</h3>
+                        <p className="text-sm text-gray-400">Conhecimento coletivo e pessoal</p>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 p-1 bg-white/5 rounded-2xl w-fit border border-white/5">
+                        <button 
+                          onClick={() => { setLibrarySubTab('my'); setLibraryPage(1); }}
+                          className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${librarySubTab === 'my' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' : 'text-gray-500 hover:text-white'}`}
+                        >
+                          Minha Estante
+                        </button>
+                        <button 
+                          onClick={() => { setLibrarySubTab('shared'); setLibraryPage(1); }}
+                          className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${librarySubTab === 'shared' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' : 'text-gray-500 hover:text-white'}`}
+                        >
+                          Recomendações
+                        </button>
+                        <button 
+                          onClick={() => { setLibrarySubTab('community'); setLibraryPage(1); }}
+                          className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${librarySubTab === 'community' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' : 'text-gray-500 hover:text-white'}`}
+                        >
+                          Comunidade
+                        </button>
+                      </div>
                     </div>
                     
                     <div className="flex flex-1 max-w-md items-center gap-4">
@@ -855,7 +897,7 @@ export default function MyWorkspaceView() {
                         <i className="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
                         <input 
                           type="text"
-                          placeholder="Buscar por título ou autor..."
+                          placeholder="Buscar na biblioteca..."
                           value={librarySearchQuery}
                           onChange={(e) => { setLibrarySearchQuery(e.target.value); setLibraryPage(1); }}
                           className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-3 text-sm text-white focus:border-primary-500 transition-all outline-none"
@@ -872,7 +914,16 @@ export default function MyWorkspaceView() {
                   </div>
 
                   {(() => {
-                    const filteredBooks = books.filter(b => 
+                    let sourceBooks = [];
+                    if (librarySubTab === 'my') {
+                      sourceBooks = books.filter(b => !b.sharedBy && !b.isCommunity);
+                    } else if (librarySubTab === 'shared') {
+                      sourceBooks = books.filter(b => b.sharedBy);
+                    } else {
+                      sourceBooks = communityBooks;
+                    }
+
+                    const filteredBooks = sourceBooks.filter(b => 
                       b.title.toLowerCase().includes(librarySearchQuery.toLowerCase()) || 
                       b.author?.toLowerCase().includes(librarySearchQuery.toLowerCase())
                     );
@@ -905,6 +956,9 @@ export default function MyWorkspaceView() {
                                 <span className="text-[8px] font-black text-white/70 uppercase leading-none">
                                   {Math.round(((book.currentPage || 0) / book.totalPages) * 100)}% Lido
                                 </span>
+                                <span className="text-[7px] font-bold text-gray-500 uppercase leading-none mt-0.5">
+                                  Pág. {book.currentPage || 0} de {book.totalPages}
+                                </span>
                                 <div className="w-10 h-1 bg-white/10 rounded-full overflow-hidden">
                                   <motion.div 
                                     initial={{ width: 0 }}
@@ -933,12 +987,23 @@ export default function MyWorkspaceView() {
                         </div>
                         <div className="mt-3 px-1 flex justify-between items-start">
                           <div className="min-w-0">
-                            <h4 className="text-xs font-black text-white truncate uppercase tracking-widest">{book.title}</h4>
-                            <p className="text-[9px] font-medium text-gray-500 uppercase mt-0.5">PDF Document</p>
+                            <h4 className="text-xs font-black text-white truncate uppercase tracking-widest leading-none">{book.title}</h4>
+                            <p className="text-[9px] font-medium text-gray-500 uppercase mt-1">
+                              {book.sharedBy ? `Enviado por ${book.sharedBy.name}` : book.isCommunity ? 'Comunidade' : 'Documento PDF'}
+                            </p>
                           </div>
-                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => updateBookCover(book.id)} className="p-1.5 hover:text-primary-400 transition-all" title="Alterar Capa"><i className="ph-bold ph-image" /></button>
-                            <button onClick={() => deleteBook(book.id)} className="p-1.5 hover:text-rose-400 transition-all" title="Excluir"><i className="ph-bold ph-trash" /></button>
+                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity items-center">
+                            {librarySubTab === 'my' && (
+                              <>
+                                <button onClick={(e) => { e.stopPropagation(); setSharingBook(book); setIsShareModalOpen(true); }} className="p-1.5 hover:text-primary-400 transition-all" title="Compartilhar"><i className="ph-bold ph-paper-plane-tilt" /></button>
+                                <button onClick={(e) => { e.stopPropagation(); handlePublishBook(book); }} className={`p-1.5 transition-all ${book.isCommunity ? 'text-primary-400' : 'hover:text-primary-400'}`} title="Publicar na Comunidade"><i className="ph-bold ph-users-three" /></button>
+                                <button onClick={(e) => { e.stopPropagation(); updateBookCover(book.id); }} className="p-1.5 hover:text-primary-400 transition-all" title="Alterar Capa"><i className="ph-bold ph-image" /></button>
+                              </>
+                            )}
+                            {librarySubTab === 'community' && !books.some(b => b.pdfUrl === book.pdfUrl) && (
+                              <button onClick={(e) => { e.stopPropagation(); setBooks([...books, { ...book, id: Date.now().toString(), addedAt: Date.now(), isCommunity: false }]); toast.success('Adicionado à sua estante!'); }} className="p-1.5 hover:text-primary-400 transition-all" title="Adicionar à minha estante"><i className="ph-bold ph-plus-circle" /></button>
+                            )}
+                            <button onClick={(e) => { e.stopPropagation(); deleteBook(book.id); }} className="p-1.5 hover:text-rose-400 transition-all" title="Excluir"><i className="ph-bold ph-trash" /></button>
                           </div>
                         </div>
                       </div>
@@ -1392,6 +1457,62 @@ export default function MyWorkspaceView() {
           Last Sync: {new Date().toLocaleTimeString()}
         </div>
       </footer>
+      {/* Share Book Modal */}
+      <AnimatePresence>
+        {isShareModalOpen && sharingBook && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setIsShareModalOpen(false)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-md bg-[#0a0c12] border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden"
+            >
+              <div className="p-8 border-b border-white/5">
+                <h3 className="text-xl font-black text-white uppercase tracking-widest">Compartilhar Livro</h3>
+                <p className="text-sm text-gray-500 mt-1">{sharingBook.title}</p>
+              </div>
+              
+              <div className="p-8 max-h-[400px] overflow-y-auto custom-scrollbar space-y-4">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Selecione o destinatário:</p>
+                {teamProfiles.filter(p => p.uid !== user?.uid).map(profile => (
+                  <button
+                    key={profile.uid}
+                    onClick={() => handleConfirmShare(profile.uid, profile.displayName)}
+                    className="w-full flex items-center gap-4 p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-primary-500/30 hover:bg-primary-500/5 transition-all text-left group"
+                  >
+                    <div className="w-12 h-12 rounded-xl overflow-hidden bg-white/10">
+                      {profile.photoURL ? (
+                        <img src={profile.photoURL} alt={profile.displayName} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-xl font-black text-white/20">
+                          {profile.displayName.charAt(0)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-white group-hover:text-primary-400 transition-colors">{profile.displayName}</p>
+                      <p className="text-[10px] text-gray-500 uppercase font-medium">{profile.jobTitle || 'Membro do Time'}</p>
+                    </div>
+                    <i className="ph-bold ph-caret-right text-gray-600 group-hover:translate-x-1 transition-transform" />
+                  </button>
+                ))}
+              </div>
+              
+              <div className="p-8 bg-white/5 flex justify-end">
+                <button 
+                  onClick={() => setIsShareModalOpen(false)}
+                  className="px-6 py-3 text-xs font-black uppercase tracking-widest text-gray-500 hover:text-white transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

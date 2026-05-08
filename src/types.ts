@@ -351,6 +351,9 @@ export interface UserProfile {
   presenceStatus?: 'online' | 'away' | 'offline' | 'lunch' | 'meeting';
   isManualStatus?: boolean;
   lastSeen?: number; // Timestamp
+
+  // Library Integration
+  readingProgress?: Record<string, { currentPage: number; totalPages: number }>;
 }
 
 export interface BusinessAlert {
@@ -392,6 +395,7 @@ export interface WikiArticle {
   allowedUserIds?: string[];
   imageUrl?: string;
   isPopular?: boolean;
+  relatedBookId?: string; // ID do livro na Nexus Library vinculado a este artigo
 }
 
 export interface Organization {

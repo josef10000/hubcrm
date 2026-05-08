@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react';
 import { 
   ArrowLeft, Calendar, User, Eye, Star, Share2, 
-  Tag as TagIcon, MoreVertical, Edit2, Trash2, Copy 
+  Tag as TagIcon, MoreVertical, Edit2, Trash2, Copy, Book as BookIcon 
 } from 'lucide-react';
 import { WikiArticle } from '../../types';
 import { useCRM } from '../../contexts/CRMContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNexusStore } from '../../store/useNexusStore';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -24,6 +25,8 @@ export default function WikiArticleDetail({ article, onBack, onEdit }: WikiArtic
   const { hasPermission } = usePermissions();
   const { handleToggleWikiStar, handleDeleteWikiArticle, handleSaveWikiArticle } = useCRM();
   const { confirm } = useDialog();
+  const allBooks = useNexusStore(state => state.books);
+  const relatedBook = allBooks.find(b => b.id === article.relatedBookId);
 
   const isStarred = article.stars?.includes(user?.uid || '');
   const canManage = hasPermission('MANAGE_WIKI') || article.authorId === user?.uid;
@@ -154,6 +157,45 @@ export default function WikiArticleDetail({ article, onBack, onEdit }: WikiArtic
           </div>
         </div>
       </div>
+
+      {/* Related Book Section */}
+      {relatedBook && (
+        <div className="flex flex-col md:flex-row gap-8 items-start p-8 bg-primary-500/5 border border-primary-500/20 rounded-[2.5rem] group transition-all hover:bg-primary-500/10 shadow-xl shadow-primary-500/5">
+          <div className="w-40 aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border border-white/10 group-hover:scale-105 transition-transform shrink-0">
+            {relatedBook.coverUrl ? (
+              <img src={relatedBook.coverUrl} alt={relatedBook.title} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-white/5 flex items-center justify-center">
+                <BookIcon className="w-10 h-10 text-white/20" />
+              </div>
+            )}
+          </div>
+          <div className="flex-1 space-y-4 pt-2">
+            <div className="flex items-center gap-2 text-primary-400">
+              <BookIcon className="w-4 h-4" />
+              <span className="text-[10px] font-black uppercase tracking-widest">Leitura Recomendada</span>
+            </div>
+            <div>
+              <h4 className="text-2xl font-black text-white leading-tight uppercase tracking-tight">{relatedBook.title}</h4>
+              <p className="text-sm text-gray-500 font-medium uppercase mt-1">{relatedBook.author || 'Autor da Obra'}</p>
+            </div>
+            <p className="text-gray-400 text-sm leading-relaxed line-clamp-3">
+              Este artigo está vinculado a uma obra da Nexus Library. Clique abaixo para ler o material completo e aprofundar seu conhecimento.
+            </p>
+            <button 
+              onClick={() => {
+                toast.info('Livro disponível na Nexus Library!', {
+                    description: 'Acesse o Workspace para ler a obra completa.'
+                });
+              }}
+              className="px-8 py-3 bg-primary-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl shadow-primary-500/20 flex items-center gap-3"
+            >
+              <BookIcon className="w-4 h-4" />
+              Ler Obra Completa
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <article className="relative">

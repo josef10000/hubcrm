@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, getDoc, setDoc, collection } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
 export interface PersonalLink {
@@ -51,6 +51,10 @@ export interface NexusBook {
   currentPage?: number;
   totalPages?: number;
   addedAt: number;
+  ownerId?: string;
+  isCommunity?: boolean;
+  sharedBy?: { uid: string; name: string };
+  originalBookId?: string;
 }
 
 export interface NexusData {
@@ -77,6 +81,8 @@ interface NexusState extends Omit<NexusData, 'notes' | 'books'> {
   setTasks: (tasks: NexusTask[]) => Promise<void>;
   setNotes: (notes: NexusNote[]) => Promise<void>;
   setBooks: (books: NexusBook[]) => Promise<void>;
+  shareBook: (book: NexusBook, targetUserId: string, targetUserName: string) => Promise<void>;
+  publishToCommunity: (book: NexusBook, orgId: string) => Promise<void>;
   
   // Internal update
   _updateFirestore: (newData: Partial<NexusData>) => Promise<void>;
@@ -197,4 +203,48 @@ export const useNexusStore = create<NexusState>((set, get) => ({
   setTasks: (tasks) => get()._updateFirestore({ tasks }),
   setNotes: (notes) => get()._updateFirestore({ notes }),
   setBooks: (books) => get()._updateFirestore({ books }),
+
+  shareBook: async (book, targetUserId, targetUserName) => {
+    const { uid } = get();
+    if (!uid) return;
+
+    const targetRef = doc(db, 'profiles', targetUserId);
+    const targetSnap = await getDoc(targetRef);
+    
+    if (targetSnap.exists()) {
+      const data = targetSnap.data();
+      const nexus = data.nexusData || { folders: [], links: [], goals: [], tasks: [], notes: [], books: [] };
+      const books = nexus.books || [];
+      
+      // Evita duplicatas
+      if (books.some((b: NexusBook) => b.pdfUrl === book.pdfUrl)) return;
+
+      const newBook: NexusBook = {
+        ...book,
+        id: doc(collection(db, 'tmp')).id,
+        currentPage: 0,
+        addedAt: Date.now(),
+        sharedBy: { uid, name: targetUserName }, // Na verdade é quem enviou
+        originalBookId: book.id
+      };
+
+      await updateDoc(targetRef, {
+        "nexusData.books": [...books, newBook]
+      });
+    }
+  },
+
+  publishToCommunity: async (book, orgId) => {
+    const { uid } = get();
+    if (!uid) return;
+
+    const communityRef = doc(db, 'organizations', orgId, 'communityBooks', book.id);
+    await setDoc(communityRef, {
+      ...book,
+      ownerId: uid,
+      isCommunity: true,
+      addedAt: Date.now(),
+      currentPage: 0 // Reseta progresso para a comunidade
+    }, { merge: true });
+  }
 }));
