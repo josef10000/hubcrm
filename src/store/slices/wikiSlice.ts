@@ -3,9 +3,9 @@ import {
   collection, doc, setDoc, deleteDoc, 
   updateDoc, arrayUnion
 } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
-import { WikiArticle, WikiComment } from '../../types';
+import { WikiArticle, WikiComment } from '@/types';
 import { CRMStoreState } from '../types';
 
 export interface WikiSlice {

@@ -3,7 +3,7 @@ import { Plus, FileSignature, FileUp, CheckCircle, Loader2, Trash2, Eye, Link as
 import { useDialog } from '@/contexts/DialogContext';
 import { doc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../../lib/firebase';
+import { db, storage } from '@/lib/firebase';
 import { toast } from 'sonner';
 import { Client, ClientContract } from '@/types';
 import { User } from 'firebase/auth';

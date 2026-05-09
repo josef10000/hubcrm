@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, Star, MessageSquare, Globe, ArrowRight, User as UserIcon, Megaphone } from 'lucide-react';
-import { db } from '../../lib/firebase';
+import { db } from '@/lib/firebase';
 import { collection, query, where, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { useCRM } from '@crm/contexts/CRMContext';
-import { FeedbackNote } from '../../types/people';
+import { FeedbackNote } from '@/types/people';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';

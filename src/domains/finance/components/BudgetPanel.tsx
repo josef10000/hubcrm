@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { AlertCircle, Target, TrendingDown, Edit2, Check } from 'lucide-react';
-import { db } from '../../lib/firebase';
+import { db } from '@/lib/firebase';
 import { collection, doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { toast } from 'sonner';
 

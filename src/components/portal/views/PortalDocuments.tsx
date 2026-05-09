@@ -15,8 +15,8 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../../../lib/firebase';
-import { Client, ClientContract, ClientLog } from '../../../types';
+import { db } from '@/lib/firebase';
+import { Client, ClientContract, ClientLog } from '@/types';
 import { toast } from 'sonner';
 
 interface PortalDocumentsProps {

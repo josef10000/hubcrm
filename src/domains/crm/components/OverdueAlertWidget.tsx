@@ -4,7 +4,7 @@ import { Client } from '@/types';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useUI } from '@/contexts/UIContext';
 import { differenceInDays, parseISO } from 'date-fns';
-import { getPlanPrice } from '../../helpers';
+import { getPlanPrice } from '@/helpers';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
-import { parseOFX, OFXTransaction } from '../../lib/ofxParser';
+import { parseOFX, OFXTransaction } from '@/lib/ofxParser';
 import { Upload, CheckCircle, PlusCircle, AlertCircle } from 'lucide-react';
-import { db } from '../../lib/firebase';
+import { db } from '@/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
 

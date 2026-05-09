@@ -7,7 +7,7 @@ import { useAuth } from '@auth/contexts/AuthContext';
 import { ChatMessage } from '../../types/chat.types';
 import MentionSuggestions from './MentionSuggestions';
 import SlashCommandSuggestions from './SlashCommandSuggestions';
-import { uploadImageToImgBB } from '../../lib/imgbb';
+import { uploadImageToImgBB } from '@/lib/imgbb';
 import { toast } from 'sonner';
 import EmojiPicker from './EmojiPicker';
 

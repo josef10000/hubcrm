@@ -3,7 +3,7 @@ import { Tag as TagIcon, Plus, Trash2, X, Check, Palette } from 'lucide-react';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useDialog } from '@/contexts/DialogContext';
 import { collection, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
 import { Tag } from '@/types';
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Trash2, User, Monitor, Laptop, Key, HelpCircle } from 'lucide-react';
-import { Asset } from '../../types/people';
+import { Asset } from '@/types/people';
 import { format } from 'date-fns';
 
 interface AssetCardProps {

@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { db } from '@/lib/firebase';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { GripVertical, Plus, Target, Loader } from 'lucide-react';
 import { toast } from 'sonner';

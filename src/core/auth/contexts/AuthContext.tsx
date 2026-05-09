@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc, collection, query, where, getDocs, limit, onSnapshot, or, and, writeBatch } from 'firebase/firestore';
-import { auth, db } from '../../../lib/firebase';
-import { defaultRoles } from '../../../constants/permissions';
-import { UserProfile } from '../../../types';
+import { auth, db } from '@/lib/firebase';
+import { defaultRoles } from '@/constants/permissions';
+import { UserProfile } from '@/types';
 
 interface AuthContextType {
   user: User | null;
@@ -19,7 +19,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-import { BusinessAlert } from '../../../types';
+import { BusinessAlert } from '@/types';
 import { updateDoc, arrayUnion } from 'firebase/firestore';
 
 export function useAuth() {

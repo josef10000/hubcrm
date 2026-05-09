@@ -7,7 +7,7 @@ import {
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { toast } from 'sonner';
-import { WikiArticle, WikiCategory } from '../../../types';
+import { WikiArticle, WikiCategory } from '@/types';
 import WikiEditorModal from '../components/WikiEditorModal';
 import WikiArticleDetail from '../components/WikiArticleDetail';
 import Pagination from '@/components/common/Pagination';

@@ -3,7 +3,7 @@ import { format, addDays, startOfWeek, isSameDay, isWeekend, addMinutes, isAfter
 import { ptBR } from 'date-fns/locale';
 import { Calendar, Clock, Lock, CheckCircle2, AlertCircle, Plus, Trash2, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Appointment, AvailabilityBlock } from '../../types/people';
+import { Appointment, AvailabilityBlock } from '@/types/people';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { clsx } from 'clsx';

@@ -3,9 +3,9 @@ import {
   collection, doc, setDoc, deleteDoc, 
   serverTimestamp, arrayUnion 
 } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
-import { Client, Offer, Lead, Tag } from '../../types';
+import { Client, Offer, Lead, Tag } from '@/types';
 import { CRMStoreState } from '../types';
 import { logger } from '../../core/utils/logger';
 

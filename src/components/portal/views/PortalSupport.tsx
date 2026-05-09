@@ -19,9 +19,9 @@ import {
   Paperclip,
   Download
 } from 'lucide-react';
-import { usePortalSupport } from '../../../hooks/usePortalSupport';
+import { usePortalSupport } from '@/hooks/usePortalSupport';
 import { useParams } from 'react-router-dom';
-import { uploadImageToImgBB } from '../../../lib/imgbb';
+import { uploadImageToImgBB } from '@/lib/imgbb';
 
 interface PortalSupportProps {
   client: any;

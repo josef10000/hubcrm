@@ -1,6 +1,6 @@
 import React from 'react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
-import { UserSkill } from '../../types/people';
+import { UserSkill } from '@/types/people';
 
 interface SkillRadarProps {
   skills: UserSkill[];

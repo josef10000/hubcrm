@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Hash, Users, Search, LogIn, Check } from 'lucide-react';
-import { db } from '../../lib/firebase';
+import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, updateDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';

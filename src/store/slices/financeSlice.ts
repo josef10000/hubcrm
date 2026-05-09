@@ -3,9 +3,9 @@ import {
   collection, doc, setDoc, deleteDoc, 
   query, where, onSnapshot
 } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
-import { Transaction, TransactionCategory, Budget } from '../../types';
+import { Transaction, TransactionCategory, Budget } from '@/types';
 import { CRMStoreState } from '../types';
 
 export interface FinanceSlice {

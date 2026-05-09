@@ -2,10 +2,10 @@ import React from 'react';
 import { RefreshCw, ArrowDownAZ, Clock, Tag as TagIcon, ChevronDown, Filter } from 'lucide-react';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useCRMStore } from '@store/useCRMStore';
-import { useUI } from '../../../contexts/UIContext';
+import { useUI } from '@/contexts/UIContext';
 import { useAuth } from '@auth/contexts/AuthContext';
-import { useFilteredClients } from '../../../hooks/useFilteredClients';
-import { getPlanPrice } from '../../../helpers';
+import { useFilteredClients } from '@/hooks/useFilteredClients';
+import { getPlanPrice } from '@/helpers';
 import { usePermissions } from '@auth/hooks/usePermissions';
 
 import AlertPanels from '../components/AlertPanels';

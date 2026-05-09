@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Copy, Trash2, AlertTriangle } from 'lucide-react';
-import { auth, db } from '../../lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { collection, doc, setDoc, onSnapshot, deleteDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
 import { ClientCredential } from '@/types';

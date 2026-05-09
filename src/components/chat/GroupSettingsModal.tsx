@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { X, Users, Edit3, Trash2, Shield, UserMinus, Plus, Camera, Loader2, Search } from 'lucide-react';
-import { uploadImageToImgBB } from '../../lib/imgbb';
+import { uploadImageToImgBB } from '@/lib/imgbb';
 import { Chat } from '../../types/chat.types';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useDialog } from '@/contexts/DialogContext';
-import { db } from '../../lib/firebase';
+import { db } from '@/lib/firebase';
 import { doc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { toast } from 'sonner';
 

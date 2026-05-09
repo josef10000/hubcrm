@@ -26,8 +26,8 @@
       "@shared/*": ["./src/shared/*"],
       "@core/*": ["./src/core/*"],
       "@auth/*": ["./src/core/auth/*"],
-      "@store/*": ["./src/store/*"],
-      "@/*": ["./src/*"]
+      "@support/*": ["./src/domains/support/*"],
+      "@store/*": ["./src/store/*"]
     },
     "allowImportingTsExtensions": true,
     "noEmit": true

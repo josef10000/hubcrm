@@ -1,7 +1,7 @@
 import { useAuth } from '../contexts/AuthContext';
-import { CustomRole, defaultRoles, AppPermission } from '../../../constants/permissions';
+import { CustomRole, defaultRoles, AppPermission } from '@/constants/permissions';
 import { useState, useEffect } from 'react';
-import { db } from '../../../lib/firebase';
+import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
 const ALL_PERMISSIONS: AppPermission[] = [

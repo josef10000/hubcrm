@@ -3,7 +3,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { addMonths, format, startOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Client } from '@/types';
-import { getPlanPrice } from '../../helpers';
+import { getPlanPrice } from '@/helpers';
 import { TrendingUp } from 'lucide-react';
 
 interface CashFlowProjectionProps {

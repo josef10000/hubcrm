@@ -3,12 +3,12 @@ import {
   collection, doc, setDoc, deleteDoc, 
   query, where, onSnapshot
 } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
 import { 
   UserProfile, VacationPeriod, Appointment, 
   CustomRole, OnboardingQuestion 
-} from '../../types';
+} from '@/types';
 import { CRMStoreState } from '../types';
 
 export interface PeopleSlice {

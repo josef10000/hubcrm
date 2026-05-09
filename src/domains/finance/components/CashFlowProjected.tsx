@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useCRM } from '@crm/contexts/CRMContext';
-import { getPlanPrice } from '../../helpers';
+import { getPlanPrice } from '@/helpers';
 import { TrendingUp, TrendingDown, Clock, AlertTriangle } from 'lucide-react';
 
 export default function CashFlowProjected() {

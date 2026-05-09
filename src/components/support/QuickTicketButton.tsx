@@ -3,7 +3,7 @@ import { Zap, X, MessageSquare, Send } from 'lucide-react';
 import { useSupport } from '@/hooks/useSupport';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
-import { db } from '../../lib/firebase';
+import { db } from '@/lib/firebase';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { toast } from 'sonner';
 

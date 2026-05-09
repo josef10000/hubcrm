@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, Save, Plus, Trash2, Brain, Code } from 'lucide-react';
 import { Skill, SkillMatrix } from '@/types';
 import { useCRM } from '@crm/contexts/CRMContext';
-import { auth } from '../../lib/firebase';
+import { auth } from '@/lib/firebase';
 import { toast } from 'sonner';
 
 interface EditSkillsModalProps {

@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useCRMStore } from '../../../store/useCRMStore';
+import { useCRMStore } from '@store/useCRMStore';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
-import { Client, Offer } from '../../../types';
+import { Client, Offer } from '@/types';
 
 const CRMContext = createContext<any>(null);
 

@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { MessageSquare, Star, Heart, AlertCircle, Plus, Trash2, Shield, Lock, Globe, Users, Megaphone } from 'lucide-react';
-import { db } from '../../lib/firebase';
+import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, orderBy, limit } from 'firebase/firestore';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useDialog } from '@/contexts/DialogContext';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
-import { FeedbackNote } from '../../types/people';
+import { FeedbackNote } from '@/types/people';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';

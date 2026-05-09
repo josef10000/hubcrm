@@ -1,7 +1,7 @@
 import React from 'react';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { Target, TrendingUp, BarChart3, ArrowUpRight } from 'lucide-react';
-import { getPlanPrice } from '../../helpers';
+import { getPlanPrice } from '@/helpers';
 
 export default function ROIAnalysis() {
   const { 

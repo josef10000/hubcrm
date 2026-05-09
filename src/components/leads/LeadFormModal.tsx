@@ -5,7 +5,7 @@ import { Lead } from '@/types';
 import { leadService } from '../../services/leadService';
 import { toast } from 'sonner';
 import { usePermissions } from '@auth/hooks/usePermissions';
-import { defaultRoles } from '../../constants/permissions';
+import { defaultRoles } from '@/constants/permissions';
 
 interface LeadFormModalProps {
   isOpen: boolean;

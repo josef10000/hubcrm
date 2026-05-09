@@ -14,14 +14,14 @@ import ClientMapView from './components/ClientMapView';
 import { Toaster } from 'sonner';
 import { Analytics } from '@vercel/analytics/react';
 
-import ProjectsView from './domains/crm/views/ProjectsView';
-import SettingsView from './core/settings/views/SettingsView';
-import OnboardingHubView from './domains/crm/views/OnboardingHubView';
-import ContractsView from './domains/crm/views/ContractsView';
-import ContractSignView from './domains/crm/views/ContractSignView';
-import BillingView from './domains/finance/views/BillingView';
-import AdministrativeView from './core/admin/views/AdministrativeView';
-import MyWorkspaceView from './domains/nexus/views/MyWorkspaceView';
+import ProjectsView from '@crm/views/ProjectsView';
+import SettingsView from '@core/settings/views/SettingsView';
+import OnboardingHubView from '@crm/views/OnboardingHubView';
+import ContractsView from '@crm/views/ContractsView';
+import ContractSignView from '@crm/views/ContractSignView';
+import BillingView from '@finance/views/BillingView';
+import AdministrativeView from '@core/admin/views/AdministrativeView';
+import MyWorkspaceView from '@nexus/views/MyWorkspaceView';
 
 import { useGlobalChatAlerts } from './hooks/useGlobalChatAlerts';
 import { usePresence } from './hooks/usePresence';
@@ -33,28 +33,28 @@ import ReferralsView from './components/ReferralsView';
 import Sidebar from './components/Sidebar';
 import { navGroups } from './constants/navigation';
 
-import DashboardView from './domains/crm/views/DashboardView';
-import AnalyticsView from './domains/crm/views/AnalyticsView';
-import WikiView from './domains/wiki/views/WikiView';
-import FinanceView from './domains/finance/views/FinanceView';
-import SupportView from './domains/support/views/SupportView';
+import DashboardView from '@crm/views/DashboardView';
+import AnalyticsView from '@crm/views/AnalyticsView';
+import WikiView from '@wiki/views/WikiView';
+import FinanceView from '@finance/views/FinanceView';
+import SupportView from '@support/views/SupportView';
 import { useFilteredClients } from './hooks/useFilteredClients';
-import MarketingView from './domains/crm/views/MarketingView';
-import ProductsView from './domains/crm/views/ProductsView';
-import LeadsView from './domains/crm/views/LeadsView';
-import NotificationsView from './core/notifications/views/NotificationsView';
-import TeamManagementView from './domains/people/views/TeamManagementView';
-import PeopleView from './domains/people/views/PeopleView';
-import AcceptInviteView from './core/auth/views/AcceptInviteView';
-import ProfileView from './core/profile/views/ProfileView';
+import MarketingView from '@crm/views/MarketingView';
+import ProductsView from '@crm/views/ProductsView';
+import LeadsView from '@crm/views/LeadsView';
+import NotificationsView from '@core/notifications/views/NotificationsView';
+import TeamManagementView from '@people/views/TeamManagementView';
+import PeopleView from '@people/views/PeopleView';
+import AcceptInviteView from '@auth/views/AcceptInviteView';
+import ProfileView from '@core/profile/views/ProfileView';
 import BirthdayCelebration from './components/BirthdayCelebration';
 import AvatarFrame from './components/AvatarFrame';
 import ThemeEffects from './components/ThemeEffects';
 import EmployeeSurveyModal from './components/EmployeeSurveyModal';
-import WaitingInviteView from './core/auth/views/WaitingInviteView';
-import ChatView from './domains/chat/views/ChatView';
-import CanvasListView from './domains/chat/views/CanvasListView';
-import CanvasEditorView from './domains/chat/views/CanvasEditorView';
+import WaitingInviteView from '@auth/views/WaitingInviteView';
+import ChatView from '@chat/views/ChatView';
+import CanvasListView from '@chat/views/CanvasListView';
+import CanvasEditorView from '@chat/views/CanvasEditorView';
 
 
 import { AuthProvider, useAuth } from '@auth/contexts/AuthContext';
@@ -65,7 +65,6 @@ import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-ro
 import { usePermissions } from '@auth/hooks/usePermissions';
 import ClientPortal from './components/portal/ClientPortalLayout';
 import OnboardingForm from './components/OnboardingForm';
-import ContractSignView from './views/ContractSignView';
 import PublicCheckoutPage from './components/PublicCheckoutPage';
 
 function CRMInner() {

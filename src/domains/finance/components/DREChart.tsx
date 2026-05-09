@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useCRM } from '@crm/contexts/CRMContext';
-import { getPlanPrice } from '../../helpers';
+import { getPlanPrice } from '@/helpers';
 
 export default function DREChart() {
   const { 

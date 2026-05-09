@@ -13,7 +13,7 @@ import {
   Info, 
   Loader2 
 } from 'lucide-react';
-import { Offer, Client } from '../../../types';
+import { Offer, Client } from '@/types';
 
 interface PortalServicesProps {
   offers: Offer[];

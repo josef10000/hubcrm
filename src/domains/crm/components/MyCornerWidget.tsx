@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { doc, setDoc } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { db } from '@/lib/firebase';
 import { Edit2, ExternalLink, Plus, Quote, StickyNote, X, Save } from 'lucide-react';
 import { toast } from 'sonner';
 

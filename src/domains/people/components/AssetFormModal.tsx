@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PlusCircle } from 'lucide-react';
-import { Asset } from '../../types/people';
+import { Asset } from '@/types/people';
 
 interface AssetFormModalProps {
   isOpen: boolean;

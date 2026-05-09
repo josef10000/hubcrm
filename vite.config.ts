@@ -22,8 +22,8 @@ export default defineConfig(({mode}) => {
         '@shared': path.resolve(__dirname, './src/shared'),
         '@core': path.resolve(__dirname, './src/core'),
         '@auth': path.resolve(__dirname, './src/core/auth'),
+        '@support': path.resolve(__dirname, './src/domains/support'),
         '@store': path.resolve(__dirname, './src/store'),
-        '@': path.resolve(__dirname, './src'),
       },
     },
     build: {

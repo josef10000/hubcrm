@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useDialog } from '@/contexts/DialogContext';
-import { db } from '../../lib/firebase';
+import { db } from '@/lib/firebase';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { Plus, Trash2, Tag, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
 import { toast } from 'sonner';

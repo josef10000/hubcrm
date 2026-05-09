@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Plus, MessageCircle, User, Users, Star, Bookmark, Calendar, BellOff, Bell, Trash2, ShieldOff, Hash, Compass, LogOut, AlertTriangle } from 'lucide-react';
-import { db } from '../../lib/firebase';
+import { db } from '@/lib/firebase';
 import { doc, updateDoc, deleteDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
 import { toast } from 'sonner';
 import { Chat } from '../../types/chat.types';

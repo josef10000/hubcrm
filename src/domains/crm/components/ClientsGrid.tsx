@@ -2,7 +2,7 @@ import React from 'react';
 import { AlertTriangle, Clock, Phone, Tag, Briefcase, Globe, DollarSign, MessageCircle, Copy, Users, Link as LinkIcon, Zap, Calendar, PlusCircle } from 'lucide-react';
 import SupportRequestModal from '../SupportRequestModal';
 import { Client } from '@/types';
-import { getPlanPrice } from '../../helpers';
+import { getPlanPrice } from '@/helpers';
 import { toast } from 'sonner';
 import { calculateHealthScore, getHealthColor, getHealthLabel } from '../../helpers/healthCalculation';
 import { useCRM } from '@crm/contexts/CRMContext';

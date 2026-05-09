@@ -3,9 +3,9 @@ import { Shield, Plus, Edit2, Trash2, CheckCircle, X, Loader2 } from 'lucide-rea
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useDialog } from '@/contexts/DialogContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
-import { db } from '../../lib/firebase';
+import { db } from '@/lib/firebase';
 import { collection, query, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
-import { CustomRole, AppPermission, defaultRoles } from '../../constants/permissions';
+import { CustomRole, AppPermission, defaultRoles } from '@/constants/permissions';
 import { toast } from 'sonner';
 
 const PERMISSION_GROUPS: { name: string; keys: AppPermission[] }[] = [

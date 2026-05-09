@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { Client, ClientPlan } from '@/types';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import { db } from '@/lib/firebase';
 
 interface PlansTabProps {
   client: Partial<Client>;

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Plus, Trash2, Download, ExternalLink, Calendar, PlusCircle } from 'lucide-react';
-import { db } from '../../lib/firebase';
+import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { useCRM } from '@crm/contexts/CRMContext';
-import { UserDocument } from '../../types/people';
+import { UserDocument } from '@/types/people';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 

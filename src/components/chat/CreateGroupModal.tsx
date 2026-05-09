@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { X, Users, Search, Check, Info } from 'lucide-react';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
-import { db } from '../../lib/firebase';
+import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { toast } from 'sonner';
-import { uploadImageToImgBB } from '../../lib/imgbb';
+import { uploadImageToImgBB } from '@/lib/imgbb';
 import { Camera, Loader2 } from 'lucide-react';
 
 interface CreateGroupModalProps {
