@@ -10,6 +10,40 @@ interface VaultTabProps {
   confirm: (options: any) => Promise<boolean>;
 }
 
+// Componente de Card Memoizado para links
+const LinkCard = React.memo(({ 
+  link, 
+  onCopy, 
+  onEdit, 
+  onDelete, 
+  getUrlIcon 
+}: { 
+  link: PersonalLink; 
+  onCopy: (url: string, e: React.MouseEvent) => void;
+  onEdit: (link: PersonalLink) => void;
+  onDelete: (id: string, e: React.MouseEvent) => void;
+  getUrlIcon: (url: string) => string;
+}) => (
+  <div
+    className="p-6 bg-[#0a0c12]/60 backdrop-blur-xl border border-white/10 rounded-[2rem] hover:border-primary-500/50 group transition-all relative overflow-hidden shadow-xl"
+  >
+    <div className="absolute top-2 right-2 p-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+      <button onClick={(e) => onCopy(link.url, e)} className="p-1.5 bg-white/5 rounded-lg hover:bg-primary-500/20 hover:text-primary-400 transition-all" title="Copiar"><i className="ph-bold ph-copy text-sm" /></button>
+      <button onClick={(e) => { e.stopPropagation(); onEdit(link); }} className="p-1.5 bg-white/5 rounded-lg hover:bg-primary-500/20 hover:text-primary-400 transition-all"><i className="ph-bold ph-pencil-simple text-sm" /></button>
+      <button onClick={(e) => onDelete(link.id, e)} className="p-1.5 bg-white/5 rounded-lg hover:bg-rose-500/20 hover:text-rose-400 transition-all"><i className="ph-bold ph-trash text-sm" /></button>
+    </div>
+    <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-5 relative z-10 pr-24">
+      <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform shadow-lg group-hover:shadow-primary-500/20">
+        <i className={`ph-duotone ${link.icon || getUrlIcon(link.url)} text-primary-400`} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <h4 className="font-bold text-white group-hover:text-primary-400 transition-colors line-clamp-2 leading-tight">{link.label}</h4>
+        <p className="text-[10px] text-gray-500 font-mono mt-1 truncate">{link.url.replace(/https?:\/\/(www\.)?/, '').split('/')[0]}</p>
+      </div>
+    </a>
+  </div>
+));
+
 export const VaultTab: React.FC<VaultTabProps> = ({ 
   selectedFolderId, 
   setSelectedFolderId, 
@@ -21,7 +55,7 @@ export const VaultTab: React.FC<VaultTabProps> = ({
   const setFolders = useNexusStore(state => state.setFolders);
   const setLinks = useNexusStore(state => state.setLinks);
 
-  const getUrlIcon = (url: string) => {
+  const getUrlIcon = React.useCallback((url: string) => {
     const u = url.toLowerCase();
     if (u.includes('google')) return 'ph-google-logo';
     if (u.includes('figma')) return 'ph-figma-logo';
@@ -39,16 +73,16 @@ export const VaultTab: React.FC<VaultTabProps> = ({
     if (u.includes('meet.google')) return 'ph-video-camera';
     if (u.includes('zoom')) return 'ph-video-camera';
     return 'ph-link';
-  };
+  }, []);
 
-  const copyToClipboard = (text: string, e: React.MouseEvent) => {
+  const copyToClipboard = React.useCallback((text: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     navigator.clipboard.writeText(text);
     toast.success('Link copiado para a área de transferência!');
-  };
+  }, []);
 
-  const handleDeleteFolder = async (id: string, e: React.MouseEvent) => {
+  const handleDeleteFolder = React.useCallback(async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     const ok = await confirm({
       title: 'Excluir Pasta',
@@ -61,9 +95,9 @@ export const VaultTab: React.FC<VaultTabProps> = ({
       if (selectedFolderId === id) setSelectedFolderId(null);
       toast.success('Pasta removida');
     }
-  };
+  }, [folders, setFolders, selectedFolderId, setSelectedFolderId, confirm]);
 
-  const handleDeleteLink = async (id: string, e: React.MouseEvent) => {
+  const handleDeleteLink = React.useCallback(async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     const ok = await confirm({
@@ -76,11 +110,13 @@ export const VaultTab: React.FC<VaultTabProps> = ({
       setLinks(links.filter(l => l.id !== id));
       toast.success('Link removido');
     }
-  };
+  }, [links, setLinks, confirm]);
 
-  const filteredLinks = selectedFolderId 
-    ? links.filter(l => l.folderId === selectedFolderId)
-    : links;
+  const filteredLinks = React.useMemo(() => (
+    selectedFolderId 
+      ? links.filter(l => l.folderId === selectedFolderId)
+      : links
+  ), [links, selectedFolderId]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -139,25 +175,14 @@ export const VaultTab: React.FC<VaultTabProps> = ({
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {filteredLinks.map(link => (
-            <div
+            <LinkCard 
               key={link.id}
-              className="p-6 bg-[#0a0c12]/60 backdrop-blur-xl border border-white/10 rounded-[2rem] hover:border-primary-500/50 group transition-all relative overflow-hidden shadow-xl"
-            >
-              <div className="absolute top-2 right-2 p-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-                <button onClick={(e) => copyToClipboard(link.url, e)} className="p-1.5 bg-white/5 rounded-lg hover:bg-primary-500/20 hover:text-primary-400 transition-all" title="Copiar"><i className="ph-bold ph-copy text-sm" /></button>
-                <button onClick={(e) => { e.stopPropagation(); setModalConfig({ isOpen: true, type: 'link', mode: 'edit', data: link }); }} className="p-1.5 bg-white/5 rounded-lg hover:bg-primary-500/20 hover:text-primary-400 transition-all"><i className="ph-bold ph-pencil-simple text-sm" /></button>
-                <button onClick={(e) => handleDeleteLink(link.id, e)} className="p-1.5 bg-white/5 rounded-lg hover:bg-rose-500/20 hover:text-rose-400 transition-all"><i className="ph-bold ph-trash text-sm" /></button>
-              </div>
-              <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-5 relative z-10 pr-24">
-                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform shadow-lg group-hover:shadow-primary-500/20">
-                  <i className={`ph-duotone ${link.icon || getUrlIcon(link.url)} text-primary-400`} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-bold text-white group-hover:text-primary-400 transition-colors line-clamp-2 leading-tight">{link.label}</h4>
-                  <p className="text-[10px] text-gray-500 font-mono mt-1 truncate">{link.url.replace(/https?:\/\/(www\.)?/, '').split('/')[0]}</p>
-                </div>
-              </a>
-            </div>
+              link={link}
+              onCopy={copyToClipboard}
+              onEdit={(l) => setModalConfig({ isOpen: true, type: 'link', mode: 'edit', data: l })}
+              onDelete={handleDeleteLink}
+              getUrlIcon={getUrlIcon}
+            />
           ))}
           <button onClick={() => setModalConfig({ isOpen: true, type: 'link', mode: 'add' })} className="p-6 border border-dashed border-white/10 rounded-[2rem] flex flex-col items-center justify-center gap-3 text-gray-500 hover:text-primary-400 hover:border-primary-500/50 transition-all group min-h-[104px]">
             <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-xl group-hover:rotate-90 transition-transform"><i className="ph-bold ph-plus" /></div>

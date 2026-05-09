@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { 
   collection, query, where, orderBy, onSnapshot, doc, 
   addDoc, updateDoc, serverTimestamp, Timestamp, arrayUnion, arrayRemove,
@@ -58,7 +59,9 @@ interface ChatState {
   sendBotMessage: (orgId: string, chatId: string, botName: string, text: string, type?: ChatMessage['type'], parentMessageId?: string) => Promise<void>;
 }
 
-export const useChatStore = create<ChatState>((set, get) => ({
+export const useChatStore = create<ChatState>()(
+  persist(
+    (set, get) => ({
   chats: [],
   activeChatId: null,
   messages: [],
@@ -459,4 +462,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
       console.error("[ChatStore] Error sending bot message:", err);
     }
   }
+}), {
+  name: 'hubcrm-chat-storage',
+  partialize: (state) => ({ 
+    chats: state.chats 
+  }),
 }));

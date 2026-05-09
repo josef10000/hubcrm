@@ -1,24 +1,82 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { useNexusStore } from '../../store/useNexusStore';
-import type { NexusBook } from '../../store/useNexusStore';
-import { toast } from 'sonner';
+// Componente de Card Memoizado para evitar re-renderizações inúteis
+const BookCard = React.memo(({ 
+  book, 
+  onView, 
+  onShare, 
+  onPublish, 
+  onUpdateCover, 
+  onDelete, 
+  onAddToLibrary,
+  isOwner,
+  isInLibrary
+}: { 
+  book: NexusBook; 
+  onView: (id: string) => void;
+  onShare: (book: NexusBook) => void;
+  onPublish: (book: NexusBook) => void;
+  onUpdateCover: (id: string) => void;
+  onDelete: (id: string) => void;
+  onAddToLibrary: (book: NexusBook) => void;
+  isOwner: boolean;
+  isInLibrary: boolean;
+}) => (
+  <div className="group relative">
+    <div 
+      onClick={() => onView(book.id)}
+      className="aspect-[3/4] bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-primary-500/50 transition-all cursor-pointer shadow-xl relative"
+    >
+      {/* Progress Indicator */}
+      {(book.totalPages && book.totalPages > 0) ? (
+        <div className="absolute top-3 left-3 px-2 py-1 bg-black/60 backdrop-blur-md rounded-lg border border-white/10 z-10">
+          <div className="flex flex-col gap-1">
+            <span className="text-[8px] font-black text-white/70 uppercase leading-none">
+              {Math.round(((book.currentPage || 0) / book.totalPages) * 100)}% Lido
+            </span>
+            <span className="text-[7px] font-bold text-gray-500 uppercase leading-none mt-0.5">
+              Pág. {book.currentPage || 0} de {book.totalPages}
+            </span>
+          </div>
+        </div>
+      ) : null}
 
-interface LibraryTabProps {
-  librarySubTab: 'my' | 'shared' | 'community';
-  setLibrarySubTab: (tab: 'my' | 'shared' | 'community') => void;
-  librarySearchQuery: string;
-  setLibrarySearchQuery: (q: string) => void;
-  libraryPage: number;
-  setLibraryPage: (p: number | ((prev: number) => number)) => void;
-  setViewingBookDetailsId: (id: string | null) => void;
-  setIsAddBookLinkOpen: (open: boolean) => void;
-  setSharingBook: (book: NexusBook | null) => void;
-  setIsShareModalOpen: (open: boolean) => void;
-  communityBooks: NexusBook[];
-  confirm: (options: any) => Promise<boolean>;
-  orgId?: string;
-}
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500" />
+      {book.coverUrl ? (
+        <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover transition-transform group-hover:scale-110" loading="lazy" />
+      ) : (
+        <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center gap-4 opacity-30">
+          <i className="ph-duotone ph-book text-5xl" />
+          <span className="text-[10px] font-bold uppercase tracking-widest leading-tight">{book.title}</span>
+        </div>
+      )}
+      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+         <div className="w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center text-white text-xl shadow-xl shadow-primary-500/40">
+           <i className="ph-bold ph-play" />
+         </div>
+      </div>
+    </div>
+    <div className="mt-3 px-1 flex justify-between items-start">
+      <div className="min-w-0">
+        <h4 className="text-xs font-black text-white truncate uppercase tracking-widest leading-none">{book.title}</h4>
+        <p className="text-[9px] font-medium text-gray-500 uppercase mt-1">
+          {book.sharedBy ? `Enviado por ${book.sharedBy.name}` : book.isCommunity ? 'Comunidade' : 'Documento PDF'}
+        </p>
+      </div>
+      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity items-center">
+        {isOwner && (
+          <>
+            <button onClick={(e) => { e.stopPropagation(); onShare(book); }} className="p-1.5 hover:text-primary-400 transition-all" title="Compartilhar"><i className="ph-bold ph-paper-plane-tilt" /></button>
+            <button onClick={(e) => { e.stopPropagation(); onPublish(book); }} className={`p-1.5 transition-all ${book.isCommunity ? 'text-primary-400' : 'hover:text-primary-400'}`} title="Publicar na Comunidade"><i className="ph-bold ph-users-three" /></button>
+            <button onClick={(e) => { e.stopPropagation(); onUpdateCover(book.id); }} className="p-1.5 hover:text-primary-400 transition-all" title="Alterar Capa"><i className="ph-bold ph-image" /></button>
+          </>
+        )}
+        {!isOwner && !isInLibrary && (
+          <button onClick={(e) => { e.stopPropagation(); onAddToLibrary(book); }} className="p-1.5 hover:text-primary-400 transition-all" title="Adicionar à minha estante"><i className="ph-bold ph-plus-circle" /></button>
+        )}
+        <button onClick={(e) => { e.stopPropagation(); onDelete(book.id); }} className="p-1.5 hover:text-rose-400 transition-all" title="Excluir"><i className="ph-bold ph-trash" /></button>
+      </div>
+    </div>
+  </div>
+));
 
 export const LibraryTab: React.FC<LibraryTabProps> = ({
   librarySubTab,
@@ -38,19 +96,8 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
   const books = useNexusStore(state => state.books);
   const setBooks = useNexusStore(state => state.setBooks);
   const publishToCommunityAction = useNexusStore(state => state.publishToCommunity);
-  const uploadImageToImgBB = async (file: File) => {
-     // Local implementation or imported
-     const formData = new FormData();
-     formData.append('image', file);
-     const res = await fetch(`https://api.imgbb.com/1/upload?key=67f6b96e5792d44933a3880486c99c35`, {
-       method: 'POST',
-       body: formData
-     });
-     const data = await res.json();
-     return data.data.url;
-  };
-
-  const handlePublishBook = async (book: NexusBook) => {
+  
+  const handlePublishBook = React.useCallback(async (book: NexusBook) => {
     if (!orgId) return;
     
     const ok = await confirm({
@@ -68,9 +115,9 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
         toast.error('Erro ao publicar livro');
       }
     }
-  };
+  }, [orgId, confirm, publishToCommunityAction]);
 
-  const deleteBook = async (id: string) => {
+  const deleteBook = React.useCallback(async (id: string) => {
     const ok = await confirm({
       title: 'Remover Livro',
       message: 'Deseja remover este livro da sua biblioteca? O arquivo será mantido no servidor, mas o atalho será apagado.',
@@ -81,9 +128,9 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
       setBooks(books.filter(b => b.id !== id));
       toast.success('Livro removido');
     }
-  };
+  }, [books, setBooks, confirm]);
 
-  const updateBookCover = async (bookId: string) => {
+  const updateBookCover = React.useCallback(async (bookId: string) => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
@@ -93,7 +140,14 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
 
       toast.loading('Fazendo upload da capa...');
       try {
-        const url = await uploadImageToImgBB(file);
+        const formData = new FormData();
+        formData.append('image', file);
+        const res = await fetch(`https://api.imgbb.com/1/upload?key=67f6b96e5792d44933a3880486c99c35`, {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        const url = data.data.url;
         setBooks(books.map(b => b.id === bookId ? { ...b, coverUrl: url } : b));
         toast.dismiss();
         toast.success('Capa atualizada!');
@@ -103,7 +157,12 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
       }
     };
     input.click();
-  };
+  }, [books, setBooks]);
+
+  const addToMyLibrary = React.useCallback((book: NexusBook) => {
+    setBooks([...books, { ...book, id: Date.now().toString(), addedAt: Date.now(), isCommunity: false }]);
+    toast.success('Adicionado à sua estante!');
+  }, [books, setBooks]);
 
   let sourceBooks = [];
   if (librarySubTab === 'my') {
@@ -176,62 +235,18 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
         <div className="space-y-10">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
             {currentBooks.map(book => (
-              <div key={book.id} className="group relative">
-                <div 
-                  onClick={() => setViewingBookDetailsId(book.id)}
-                  className="aspect-[3/4] bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-primary-500/50 transition-all cursor-pointer shadow-xl relative"
-                >
-                  {/* Progress Indicator */}
-                  {(book.totalPages && book.totalPages > 0) ? (
-                    <div className="absolute top-3 left-3 px-2 py-1 bg-black/60 backdrop-blur-md rounded-lg border border-white/10 z-10">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-[8px] font-black text-white/70 uppercase leading-none">
-                          {Math.round(((book.currentPage || 0) / book.totalPages) * 100)}% Lido
-                        </span>
-                        <span className="text-[7px] font-bold text-gray-500 uppercase leading-none mt-0.5">
-                          Pág. {book.currentPage || 0} de {book.totalPages}
-                        </span>
-                      </div>
-                    </div>
-                  ) : null}
-
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500" />
-                  {book.coverUrl ? (
-                    <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center gap-4 opacity-30">
-                      <i className="ph-duotone ph-book text-5xl" />
-                      <span className="text-[10px] font-bold uppercase tracking-widest leading-tight">{book.title}</span>
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
-                     <div className="w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center text-white text-xl shadow-xl shadow-primary-500/40">
-                       <i className="ph-bold ph-play" />
-                     </div>
-                  </div>
-                </div>
-                <div className="mt-3 px-1 flex justify-between items-start">
-                  <div className="min-w-0">
-                    <h4 className="text-xs font-black text-white truncate uppercase tracking-widest leading-none">{book.title}</h4>
-                    <p className="text-[9px] font-medium text-gray-500 uppercase mt-1">
-                      {book.sharedBy ? `Enviado por ${book.sharedBy.name}` : book.isCommunity ? 'Comunidade' : 'Documento PDF'}
-                    </p>
-                  </div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity items-center">
-                    {librarySubTab === 'my' && (
-                      <>
-                        <button onClick={(e) => { e.stopPropagation(); setSharingBook(book); setIsShareModalOpen(true); }} className="p-1.5 hover:text-primary-400 transition-all" title="Compartilhar"><i className="ph-bold ph-paper-plane-tilt" /></button>
-                        <button onClick={(e) => { e.stopPropagation(); handlePublishBook(book); }} className={`p-1.5 transition-all ${book.isCommunity ? 'text-primary-400' : 'hover:text-primary-400'}`} title="Publicar na Comunidade"><i className="ph-bold ph-users-three" /></button>
-                        <button onClick={(e) => { e.stopPropagation(); updateBookCover(book.id); }} className="p-1.5 hover:text-primary-400 transition-all" title="Alterar Capa"><i className="ph-bold ph-image" /></button>
-                      </>
-                    )}
-                    {librarySubTab === 'community' && !books.some(b => b.pdfUrl === book.pdfUrl) && (
-                      <button onClick={(e) => { e.stopPropagation(); setBooks([...books, { ...book, id: Date.now().toString(), addedAt: Date.now(), isCommunity: false }]); toast.success('Adicionado à sua estante!'); }} className="p-1.5 hover:text-primary-400 transition-all" title="Adicionar à minha estante"><i className="ph-bold ph-plus-circle" /></button>
-                    )}
-                    <button onClick={(e) => { e.stopPropagation(); deleteBook(book.id); }} className="p-1.5 hover:text-rose-400 transition-all" title="Excluir"><i className="ph-bold ph-trash" /></button>
-                  </div>
-                </div>
-              </div>
+              <BookCard 
+                key={book.id}
+                book={book}
+                onView={setViewingBookDetailsId}
+                onShare={(b) => { setSharingBook(b); setIsShareModalOpen(true); }}
+                onPublish={handlePublishBook}
+                onUpdateCover={updateBookCover}
+                onDelete={deleteBook}
+                onAddToLibrary={addToMyLibrary}
+                isOwner={librarySubTab === 'my'}
+                isInLibrary={books.some(b => b.pdfUrl === book.pdfUrl)}
+              />
             ))}
           </div>
 

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { 
   collection, doc, setDoc, addDoc, deleteDoc, onSnapshot, 
   query, where, serverTimestamp, arrayUnion, arrayRemove, getDoc 
@@ -72,7 +73,9 @@ interface CRMState {
   syncPayments: () => Promise<void>;
 }
 
-export const useCRMStore = create<CRMState>((set, get) => ({
+export const useCRMStore = create<CRMState>()(
+  persist(
+    (set, get) => ({
   clients: [],
   leads: [],
   offers: [],
@@ -380,11 +383,15 @@ export const useCRMStore = create<CRMState>((set, get) => ({
     return diff <= 15 && diff >= 0;
   },
 
-  syncPayments: async () => {
-    toast.promise(new Promise(r => setTimeout(r, 2000)), {
-      loading: 'Sincronizando pagamentos...',
-      success: 'Pagamentos sincronizados!',
-      error: 'Erro na sincronização.'
     });
   }
+}), {
+  name: 'hubcrm-crm-storage',
+  partialize: (state) => ({ 
+    clients: state.clients, 
+    leads: state.leads, 
+    teamProfiles: state.teamProfiles,
+    offers: state.offers,
+    tags: state.tags
+  }),
 }));

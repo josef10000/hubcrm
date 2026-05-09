@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 import firebaseConfig from '../../firebase-applet-config.json';
@@ -16,6 +16,16 @@ if (!isFirebaseConfigured) {
 export const app = isFirebaseConfigured ? initializeApp(firebaseConfig) : null;
 export const auth = app ? getAuth(app) : ({} as any);
 export const db = app ? getFirestore(app) : ({} as any);
+
+if (app && db) {
+  enableIndexedDbPersistence(db).catch((err) => {
+    if (err.code === 'failed-precondition') {
+      console.warn("Múltiplas abas abertas, persistência habilitada apenas na primeira.");
+    } else if (err.code === 'unimplemented') {
+      console.warn("O navegador atual não suporta persistência offline.");
+    }
+  });
+}
 export const storage = app ? getStorage(app) : ({} as any);
 
 if (app && storage) {

@@ -14,12 +14,14 @@ import { uploadToCloudinary } from '../lib/cloudinary';
 
 // Novos Componentes Modulares
 import ErrorBoundary from '../components/common/ErrorBoundary';
-import { VaultTab } from '../components/nexus/VaultTab';
-import { GoalsTab } from '../components/nexus/GoalsTab';
-import { TasksTab } from '../components/nexus/TasksTab';
-import { NotesTab } from '../components/nexus/NotesTab';
-import { LibraryTab } from '../components/nexus/LibraryTab';
 import { VaultSkeleton, GoalsSkeleton, LibrarySkeleton } from '../components/nexus/NexusSkeleton';
+
+// Imports dinâmicos para performance
+const VaultTab = React.lazy(() => import('../components/nexus/VaultTab').then(m => ({ default: m.VaultTab })));
+const GoalsTab = React.lazy(() => import('../components/nexus/GoalsTab').then(m => ({ default: m.GoalsTab })));
+const TasksTab = React.lazy(() => import('../components/nexus/TasksTab').then(m => ({ default: m.TasksTab })));
+const NotesTab = React.lazy(() => import('../components/nexus/NotesTab').then(m => ({ default: m.NotesTab })));
+const LibraryTab = React.lazy(() => import('../components/nexus/LibraryTab').then(m => ({ default: m.LibraryTab })));
 
 // Interfaces importadas da Store
 import type { PersonalLink, LinkFolder, PersonalGoal, NexusTask, NexusNote, NexusBook } from '../store/useNexusStore';
@@ -353,77 +355,79 @@ export default function MyWorkspaceView() {
       {/* CONTEÚDO DINÂMICO COM SKELETONS E ERROR BOUNDARY */}
       <main className="min-h-[500px]">
         <ErrorBoundary>
-          <AnimatePresence mode="wait">
-            {activeTab === 'links' && (
-              <motion.section key="links" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-                {loading ? <VaultSkeleton /> : (
-                  <VaultTab 
-                    selectedFolderId={selectedFolderId} 
-                    setSelectedFolderId={setSelectedFolderId}
-                    setModalConfig={setModalConfig}
-                    confirm={confirm}
-                  />
-                )}
-              </motion.section>
-            )}
-
-            {activeTab === 'goals' && (
-              <motion.section key="goals" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}>
-                {loading ? <GoalsSkeleton /> : <GoalsTab setModalConfig={setModalConfig} confirm={confirm} />}
-              </motion.section>
-            )}
-
-            {activeTab === 'tasks' && (
-              <motion.section key="tasks" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-                <TasksTab />
-              </motion.section>
-            )}
-
-            {activeTab === 'notes' && (
-              <motion.section key="notes" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-                <NotesTab selectedNoteId={selectedNoteId} setSelectedNoteId={setSelectedNoteId} confirm={confirm} />
-              </motion.section>
-            )}
-
-            {activeTab === 'library' && (
-              <motion.section key="library" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}>
-                {!selectedBookId ? (
-                  loading && communityBooks.length === 0 ? <LibrarySkeleton /> : (
-                    <LibraryTab 
-                      librarySubTab={librarySubTab} setLibrarySubTab={setLibrarySubTab}
-                      librarySearchQuery={librarySearchQuery} setLibrarySearchQuery={setLibrarySearchQuery}
-                      libraryPage={libraryPage} setLibraryPage={setLibraryPage}
-                      setViewingBookDetailsId={setViewingBookDetailsId}
-                      setIsAddBookLinkOpen={setIsAddBookLinkOpen}
-                      setSharingBook={setSharingBook}
-                      setIsShareModalOpen={setIsShareModalOpen}
-                      communityBooks={communityBooks}
+          <React.Suspense fallback={<div className="h-full flex items-center justify-center p-20"><div className="w-12 h-12 border-4 border-primary-500/20 border-t-primary-500 rounded-full animate-spin" /></div>}>
+            <AnimatePresence mode="wait">
+              {activeTab === 'links' && (
+                <motion.section key="links" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+                  {loading ? <VaultSkeleton /> : (
+                    <VaultTab 
+                      selectedFolderId={selectedFolderId} 
+                      setSelectedFolderId={setSelectedFolderId}
+                      setModalConfig={setModalConfig}
                       confirm={confirm}
-                      orgId={userProfile?.orgId}
                     />
-                  )
-                ) : (
-                  <div className="h-[800px] flex flex-col bg-[#0a0c12]/80 backdrop-blur-3xl border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl">
-                    <div className="flex items-center justify-between px-8 py-4 border-b border-white/5 bg-white/5">
-                      <div className="flex items-center gap-4">
-                        <button onClick={() => setSelectedBookId(null)} className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all">
-                          <i className="ph-bold ph-caret-left" />
-                        </button>
-                        <div>
-                          <h3 className="text-sm font-black text-white uppercase tracking-widest">{books.find(b => b.id === selectedBookId)?.title}</h3>
-                          <p className="text-[9px] font-medium text-gray-500 uppercase tracking-[0.2em]">Visualizador Imersivo v1.0</p>
+                  )}
+                </motion.section>
+              )}
+
+              {activeTab === 'goals' && (
+                <motion.section key="goals" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}>
+                  {loading ? <GoalsSkeleton /> : <GoalsTab setModalConfig={setModalConfig} confirm={confirm} />}
+                </motion.section>
+              )}
+
+              {activeTab === 'tasks' && (
+                <motion.section key="tasks" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+                  <TasksTab />
+                </motion.section>
+              )}
+
+              {activeTab === 'notes' && (
+                <motion.section key="notes" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+                  <NotesTab selectedNoteId={selectedNoteId} setSelectedNoteId={setSelectedNoteId} confirm={confirm} />
+                </motion.section>
+              )}
+
+              {activeTab === 'library' && (
+                <motion.section key="library" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}>
+                  {!selectedBookId ? (
+                    loading && communityBooks.length === 0 ? <LibrarySkeleton /> : (
+                      <LibraryTab 
+                        librarySubTab={librarySubTab} setLibrarySubTab={setLibrarySubTab}
+                        librarySearchQuery={librarySearchQuery} setLibrarySearchQuery={setLibrarySearchQuery}
+                        libraryPage={libraryPage} setLibraryPage={setLibraryPage}
+                        setViewingBookDetailsId={setViewingBookDetailsId}
+                        setIsAddBookLinkOpen={setIsAddBookLinkOpen}
+                        setSharingBook={setSharingBook}
+                        setIsShareModalOpen={setIsShareModalOpen}
+                        communityBooks={communityBooks}
+                        confirm={confirm}
+                        orgId={userProfile?.orgId}
+                      />
+                    )
+                  ) : (
+                    <div className="h-[800px] flex flex-col bg-[#0a0c12]/80 backdrop-blur-3xl border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl">
+                      <div className="flex items-center justify-between px-8 py-4 border-b border-white/5 bg-white/5">
+                        <div className="flex items-center gap-4">
+                          <button onClick={() => setSelectedBookId(null)} className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all">
+                            <i className="ph-bold ph-caret-left" />
+                          </button>
+                          <div>
+                            <h3 className="text-sm font-black text-white uppercase tracking-widest">{books.find(b => b.id === selectedBookId)?.title}</h3>
+                            <p className="text-[9px] font-medium text-gray-500 uppercase tracking-[0.2em]">Visualizador Imersivo v1.0</p>
+                          </div>
                         </div>
+                        <button onClick={() => window.open(books.find(b => b.id === selectedBookId)?.pdfUrl)} className="px-4 py-2 bg-white/5 rounded-xl text-[10px] font-black text-gray-400 hover:text-white transition-all uppercase tracking-widest">
+                          Baixar Original
+                        </button>
                       </div>
-                      <button onClick={() => window.open(books.find(b => b.id === selectedBookId)?.pdfUrl)} className="px-4 py-2 bg-white/5 rounded-xl text-[10px] font-black text-gray-400 hover:text-white transition-all uppercase tracking-widest">
-                        Baixar Original
-                      </button>
+                      <iframe src={`${books.find(b => b.id === selectedBookId)?.pdfUrl}#toolbar=0`} className="flex-1 w-full border-none bg-white" title="PDF Viewer" />
                     </div>
-                    <iframe src={`${books.find(b => b.id === selectedBookId)?.pdfUrl}#toolbar=0`} className="flex-1 w-full border-none bg-white" title="PDF Viewer" />
-                  </div>
-                )}
-              </motion.section>
-            )}
-          </AnimatePresence>
+                  )}
+                </motion.section>
+              )}
+            </AnimatePresence>
+          </React.Suspense>
         </ErrorBoundary>
       </main>
 
