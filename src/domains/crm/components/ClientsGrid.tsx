@@ -14,7 +14,7 @@ interface ClientsGridProps {
   user: any;
   setEditingClient: (client: Client) => void;
   setIsModalOpen: (open: boolean) => void;
-  isChurnRisk: (client: Client) => boolean;
+  isChurnRisk: (client: Client, churnRiskDays: number) => boolean;
   churnRiskDays: number;
 }
 
@@ -40,7 +40,7 @@ export default function ClientsGrid({
             <div className="flex justify-between items-start mb-4">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate pr-4 flex items-center gap-2">
                 {client.name}
-                {isChurnRisk(client) && (
+                {isChurnRisk(client, churnRiskDays) && (
                   <span title={`Fatura atrasada há mais de ${churnRiskDays} dias`} className="animate-pulse bg-red-500/20 text-red-500 border border-red-500/30 px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider flex items-center gap-1">
                     <AlertTriangle size={10} />
                     Risco Churn

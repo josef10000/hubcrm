@@ -5,10 +5,8 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
-import { 
-  UserProfile, VacationPeriod, Appointment, 
-  CustomRole, OnboardingQuestion 
-} from '@/types';
+import { UserProfile, OnboardingQuestion } from '@/types';
+import { VacationPeriod, Appointment, CustomRole } from '@/types/people';
 import { CRMStoreState } from '../types';
 
 export interface PeopleSlice {

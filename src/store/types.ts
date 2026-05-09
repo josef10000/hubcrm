@@ -1,8 +1,9 @@
 import { 
   Client, Offer, Lead, UserProfile, Tag, WikiArticle, 
   Transaction, TransactionCategory, Budget, CommissionEntry,
-  SupportRequest, OnboardingQuestion, VacationPeriod, Appointment
+  SupportRequest, OnboardingQuestion
 } from '../types';
+import { VacationPeriod, Appointment } from '@/types/people';
 import { CRMSlice } from './slices/crmSlice';
 import { WikiSlice } from './slices/wikiSlice';
 import { FinanceSlice } from './slices/financeSlice';
