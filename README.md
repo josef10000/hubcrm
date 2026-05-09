@@ -1,7 +1,7 @@
 # <p align="center">🔐 HUB CENTRAL — INTELLIGENCE ECOSYSTEM</p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Enterprise_OS-v8.0.1-3b82f6?style=for-the-badge&labelColor=0a0a0a" alt="Version" />
+  <img src="https://img.shields.io/badge/Enterprise_OS-v8.0.3-3b82f6?style=for-the-badge&labelColor=0a0a0a" alt="Version" />
   <img src="https://img.shields.io/badge/Architecture-Collaboration_Bots-blueviolet?style=for-the-badge&labelColor=0a0a0a" alt="Architecture" />
   <img src="https://img.shields.io/badge/Status-Pro_Collaboration-emerald?style=for-the-badge&labelColor=0a0a0a" alt="Status" />
 </p>
@@ -115,7 +115,7 @@ O Hub Central segue diretrizes rígidas de design para manter seu status premium
 - [x] **v7.3.8.5** — **Google Books Integration & Cloudinary Migration** (Auto-cataloging & performance-focused asset storage).
 - [x] **v7.3.9.0** — **Wiki Notification Stability** (Fixed article read-status tracking, field unification & star logic persistence).
 - [x] **v7.5.0** — **Architecture & Performance Update** (React.lazy, Suspense, Zustand Persistence & Firestore Offline Support).
-- [x] **v8.0.1** — **Build Stabilization & Path Fixes** (Resolved resolution errors, duplicate aliases & TSX extensions).
+- [x] **v8.0.3** — **Build Stabilization & Path Fixes** (Resolved resolution errors, duplicate aliases & TSX extensions).
 - [ ] **v8.1.0** — IA Integrada: Nexus Copilot para automação de tarefas.
 
 ---
