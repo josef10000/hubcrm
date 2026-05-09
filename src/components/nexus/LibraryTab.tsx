@@ -1,3 +1,23 @@
+import React from 'react';
+import { useNexusStore, NexusBook } from '../../store/useNexusStore';
+import { toast } from 'sonner';
+
+interface LibraryTabProps {
+  librarySubTab: 'my' | 'shared' | 'community';
+  setLibrarySubTab: (tab: 'my' | 'shared' | 'community') => void;
+  librarySearchQuery: string;
+  setLibrarySearchQuery: (query: string) => void;
+  libraryPage: number;
+  setLibraryPage: (page: number | ((p: number) => number)) => void;
+  setViewingBookDetailsId: (id: string | null) => void;
+  setIsAddBookLinkOpen: (open: boolean) => void;
+  setSharingBook: (book: NexusBook | null) => void;
+  setIsShareModalOpen: (open: boolean) => void;
+  communityBooks: NexusBook[];
+  confirm: (options: any) => Promise<boolean>;
+  orgId: string | undefined;
+}
+
 // Componente de Card Memoizado para evitar re-renderizações inúteis
 const BookCard = React.memo(({ 
   book, 
