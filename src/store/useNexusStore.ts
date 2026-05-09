@@ -84,6 +84,8 @@ interface NexusState extends Omit<NexusData, 'notes' | 'books'> {
   setBooks: (books: NexusBook[]) => Promise<void>;
   shareBook: (book: NexusBook, targetUserId: string, targetUserName: string) => Promise<void>;
   publishToCommunity: (book: NexusBook, orgId: string) => Promise<void>;
+  updateBookDetails: (bookId: string, details: Partial<NexusBook>) => Promise<void>;
+  deleteBook: (bookId: string) => Promise<void>;
   
   // Internal update
   _updateFirestore: (newData: Partial<NexusData>) => Promise<void>;
@@ -249,6 +251,18 @@ export const useNexusStore = create<NexusState>()(
       addedAt: Date.now(),
       currentPage: 0 // Reseta progresso para a comunidade
     }, { merge: true });
+  },
+
+  updateBookDetails: async (bookId, details) => {
+    const { books, setBooks } = get();
+    const updated = books.map(b => b.id === bookId ? { ...b, ...details } : b);
+    await setBooks(updated);
+  },
+
+  deleteBook: async (bookId) => {
+    const { books, setBooks } = get();
+    const updated = books.filter(b => b.id !== bookId);
+    await setBooks(updated);
   }
 }), {
   name: 'hubcrm-nexus-storage',

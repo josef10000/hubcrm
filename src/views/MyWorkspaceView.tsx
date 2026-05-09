@@ -52,7 +52,7 @@ export default function MyWorkspaceView() {
   const { teamProfiles, vacations, appointments, leads, clients } = useCRM();
   const { confirm, alert } = useDialog();
   
-  // Zustand Store
+  // Zustand Store - Seletores
   const folders = useNexusStore(state => state.folders);
   const links = useNexusStore(state => state.links);
   const goals = useNexusStore(state => state.goals);
@@ -61,6 +61,12 @@ export default function MyWorkspaceView() {
   const books = useNexusStore(state => state.books);
   const loading = useNexusStore(state => state.loading);
   const initNexus = useNexusStore(state => state.init);
+  
+  // Zustand Store - Ações
+  const shareBookAction = useNexusStore(state => state.shareBook);
+  const publishToCommunityAction = useNexusStore(state => state.publishToCommunity);
+  const updateBookDetails = useNexusStore(state => state.updateBookDetails);
+  const storeDeleteBook = useNexusStore(state => state.deleteBook);
   const setFolders = useNexusStore(state => state.setFolders);
   const setLinks = useNexusStore(state => state.setLinks);
   const setGoals = useNexusStore(state => state.setGoals);
@@ -68,16 +74,12 @@ export default function MyWorkspaceView() {
   const setNotes = useNexusStore(state => state.setNotes);
   const setBooks = useNexusStore(state => state.setBooks);
 
+  // Estados Locais
+  const [activeTab, setActiveTab] = useState<'links' | 'goals' | 'notes' | 'tasks' | 'library'>('links');
   const [librarySubTab, setLibrarySubTab] = useState<'my' | 'shared' | 'community'>('my');
   const [communityBooks, setCommunityBooks] = useState<NexusBook[]>([]);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [sharingBook, setSharingBook] = useState<NexusBook | null>(null);
-
-  // Actions from store
-  const shareBookAction = useNexusStore(state => state.shareBook);
-  const publishToCommunityAction = useNexusStore(state => state.publishToCommunity);
-
-  const [activeTab, setActiveTab] = useState<'links' | 'goals' | 'notes' | 'tasks' | 'library'>('links');
   const [dailyQuote, setDailyQuote] = useState<{content: string, author: string} | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
@@ -89,15 +91,98 @@ export default function MyWorkspaceView() {
   const [isSearchingBook, setIsSearchingBook] = useState(false);
   const [librarySearchQuery, setLibrarySearchQuery] = useState('');
   const [libraryPage, setLibraryPage] = useState(1);
+  const [isAddBookLinkOpen, setIsAddBookLinkOpen] = useState(false);
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    type: 'folder' | 'link' | 'goal' | 'task' | 'note' | 'book';
+    mode: 'add' | 'edit';
+    data?: any;
+  }>({ isOpen: false, type: 'folder', mode: 'add' });
 
-  // Seleciona a primeira nota automaticamente se houver e nenhuma estiver selecionada
+  // Funções Locais
+  const deleteBook = async (id: string) => {
+    const ok = await confirm({
+      title: 'Remover Livro',
+      message: 'Deseja remover este livro da sua biblioteca?',
+      variant: 'danger',
+      confirmText: 'Remover'
+    });
+    if (ok) {
+      await storeDeleteBook(id);
+      toast.success('Livro removido');
+    }
+  };
+
+  const updateBookCover = async (bookId: string) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async (e: any) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      toast.loading('Fazendo upload da capa...');
+      try {
+        const formData = new FormData();
+        formData.append('image', file);
+        const res = await fetch(`https://api.imgbb.com/1/upload?key=67f6b96e5792d44933a3880486c99c35`, {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        await updateBookDetails(bookId, { coverUrl: data.data.url });
+        toast.dismiss();
+        toast.success('Capa atualizada!');
+      } catch (err) {
+        toast.dismiss();
+        toast.error('Erro ao fazer upload da capa');
+      }
+    };
+    input.click();
+  };
+
+  const searchBooks = async (query: string) => {
+    if (query.length < 3) return;
+    setIsSearchingBook(true);
+    try {
+      const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=5`);
+      const data = await response.json();
+      const items = data.items || [];
+      const formatted = items.map((item: any) => ({
+        title: item.volumeInfo.title,
+        author: item.volumeInfo.authors?.join(', ') || 'Autor Desconhecido',
+        description: item.volumeInfo.description || '',
+        publishedAt: item.volumeInfo.publishedDate || '',
+        coverUrl: item.volumeInfo.imageLinks?.thumbnail?.replace('http:', 'https:') || ''
+      }));
+      setBookSearchResults(formatted);
+    } catch (error) {
+      console.error('Error searching books:', error);
+      toast.error('Erro ao buscar no catálogo do Google');
+    } finally {
+      setIsSearchingBook(false);
+    }
+  };
+
+  const handleConfirmShare = async (targetUserId: string, targetUserName: string) => {
+    if (!sharingBook || !userProfile) return;
+
+    try {
+      await shareBookAction(sharingBook, targetUserId, userProfile.displayName || 'Um Hubber');
+      setIsShareModalOpen(false);
+      setSharingBook(null);
+      toast.success(`Livro compartilhado com ${targetUserName.split(' ')[0]}!`);
+    } catch (err) {
+      toast.error('Erro ao compartilhar livro');
+    }
+  };
+
+  // Efeitos
   useEffect(() => {
     if (activeTab === 'notes' && !selectedNoteId && notes.length > 0) {
       setSelectedNoteId(notes[0].id);
     }
   }, [activeTab, notes, selectedNoteId]);
 
-  // Inicializa a Store
   useEffect(() => {
     if (user?.uid) {
       const unsubscribe = initNexus(user.uid);
@@ -105,7 +190,6 @@ export default function MyWorkspaceView() {
     }
   }, [user?.uid, initNexus]);
 
-  // Busca Livros da Comunidade
   useEffect(() => {
     const orgId = userProfile?.orgId;
     if (activeTab === 'library' && librarySubTab === 'community' && orgId) {
@@ -118,17 +202,6 @@ export default function MyWorkspaceView() {
     }
   }, [activeTab, librarySubTab, userProfile?.orgId]);
 
-  // Modal States
-  const [modalConfig, setModalConfig] = useState<{
-    isOpen: boolean;
-    type: 'folder' | 'link' | 'goal' | 'task' | 'note' | 'book';
-    mode: 'add' | 'edit';
-    data?: any;
-  }>({ isOpen: false, type: 'folder', mode: 'add' });
-
-  const [isAddBookLinkOpen, setIsAddBookLinkOpen] = useState(false);
-
-  // Biblioteca interna de frases premium
   const MOTIVATIONAL_QUOTES = [
     { content: "O sucesso não é o final, o fracasso não é fatal: é a coragem de continuar que conta.", author: "Winston Churchill" },
     { content: "Acredite que você pode e você estará no meio do caminho.", author: "Theodore Roosevelt" },
@@ -149,21 +222,9 @@ export default function MyWorkspaceView() {
     setDailyQuote(MOTIVATIONAL_QUOTES[index]);
   }, [user]);
 
-  const handleConfirmShare = async (targetUserId: string, targetUserName: string) => {
-    if (!sharingBook || !userProfile) return;
-
-    try {
-      await shareBookAction(sharingBook, targetUserId, userProfile.displayName || 'Um Hubber');
-      setIsShareModalOpen(false);
-      setSharingBook(null);
-      toast.success(`Livro compartilhado com ${targetUserName.split(' ')[0]}!`);
-    } catch (err) {
-      toast.error('Erro ao compartilhar livro');
-    }
-  };
-
   // Sincroniza abas e skeletons
   const isSyncing = loading && books.length === 0;
+
 
   // Data: Agenda & Stats
   const todayStr = format(new Date(), 'yyyy-MM-dd');

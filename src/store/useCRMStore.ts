@@ -382,7 +382,11 @@ export const useCRMStore = create<CRMState>()(
     const diff = (renewal.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
     return diff <= 15 && diff >= 0;
   },
-
+  syncPayments: async () => {
+    toast.promise(new Promise(r => setTimeout(r, 2000)), {
+      loading: 'Sincronizando pagamentos...',
+      success: 'Pagamentos sincronizados!',
+      error: 'Erro na sincronização.'
     });
   }
 }), {
@@ -395,3 +399,4 @@ export const useCRMStore = create<CRMState>()(
     tags: state.tags
   }),
 }));
+

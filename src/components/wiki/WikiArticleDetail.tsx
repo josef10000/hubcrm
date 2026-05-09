@@ -136,10 +136,10 @@ export default function WikiArticleDetail({ article, onBack, onEdit }: WikiArtic
         <div className="flex flex-wrap items-center gap-6 py-4 border-y border-white/10">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-purple-600 flex items-center justify-center text-white font-bold border border-white/20 shadow-lg capitalize">
-              {article.authorName[0]}
+              {article.authorName?.charAt(0) || '?'}
             </div>
             <div>
-              <p className="text-sm font-medium text-white">{article.authorName}</p>
+              <p className="text-sm font-medium text-white">{article.authorName || 'Autor Desconhecido'}</p>
               <p className="text-xs text-gray-500">Autor do Artigo</p>
             </div>
           </div>
@@ -150,7 +150,16 @@ export default function WikiArticleDetail({ article, onBack, onEdit }: WikiArtic
             </div>
             <div>
               <p className="text-sm font-medium text-white">
-                {format(article.updatedAt, "dd 'de' MMMM, yyyy", { locale: ptBR })}
+                {(() => {
+                  if (!article.updatedAt) return 'Data indisponível';
+                  try {
+                    const date = (article.updatedAt as any)?.toDate?.() || new Date(article.updatedAt);
+                    if (isNaN(date.getTime())) return 'Data inválida';
+                    return format(date, "dd 'de' MMMM, yyyy", { locale: ptBR });
+                  } catch (e) {
+                    return 'Erro na data';
+                  }
+                })()}
               </p>
               <p className="text-xs text-gray-500">Última atualização</p>
             </div>
