@@ -152,39 +152,39 @@ export default function WikiEditorModal({ isOpen, onClose, initialData }: WikiEd
                   )}
                 </div>
 
-                  <div className="flex items-center gap-3 p-3 bg-white/5 rounded-2xl cursor-pointer hover:bg-white/10 transition-all border border-transparent hover:border-white/10">
-                    <input
-                      type="checkbox"
-                      checked={formData.isPopular}
-                      onChange={e => setFormData({ ...formData, isPopular: e.target.checked })}
-                      className="w-5 h-5 rounded-lg border-white/10 bg-black/40 text-primary-500 focus:ring-primary-500"
-                    />
-                    <div>
-                      <span className="text-sm font-medium text-white">Destaque</span>
-                      <p className="text-xs text-gray-500">Exibir na seção de populares</p>
-                    </div>
-                  </label>
-                </div>
-
-                <div className="p-6 bg-white/5 border border-white/10 rounded-3xl space-y-4">
-                  <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                    <Book className="w-4 h-4" /> Nexus Library
-                  </h3>
+                <label className="flex items-center gap-3 p-3 bg-white/5 rounded-2xl cursor-pointer hover:bg-white/10 transition-all border border-transparent hover:border-white/10">
+                  <input
+                    type="checkbox"
+                    checked={formData.isPopular}
+                    onChange={e => setFormData({ ...formData, isPopular: e.target.checked })}
+                    className="w-5 h-5 rounded-lg border-white/10 bg-black/40 text-primary-500 focus:ring-primary-500"
+                  />
                   <div>
-                    <label className="block text-[10px] font-medium text-gray-500 mb-2 uppercase tracking-widest">Vincular Livro</label>
-                    <select
-                      value={formData.relatedBookId || ''}
-                      onChange={e => setFormData({ ...formData, relatedBookId: e.target.value })}
-                      className="w-full px-4 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:ring-1 focus:ring-primary-500 outline-none transition-all"
-                    >
-                      <option value="">Nenhum livro vinculado</option>
-                      {books.map(book => (
-                        <option key={book.id} value={book.id}>{book.title}</option>
-                      ))}
-                    </select>
-                    <p className="mt-2 text-[10px] text-gray-500 italic">Exibirá a capa do livro no artigo.</p>
+                    <span className="text-sm font-medium text-white">Destaque</span>
+                    <p className="text-xs text-gray-500">Exibir na seção de populares</p>
                   </div>
+                </label>
+              </div>
+
+              <div className="p-6 bg-white/5 border border-white/10 rounded-3xl space-y-4">
+                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                  <Book className="w-4 h-4" /> Nexus Library
+                </h3>
+                <div>
+                  <label className="block text-[10px] font-medium text-gray-500 mb-2 uppercase tracking-widest">Vincular Livro</label>
+                  <select
+                    value={formData.relatedBookId || ''}
+                    onChange={e => setFormData({ ...formData, relatedBookId: e.target.value })}
+                    className="w-full px-4 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:ring-1 focus:ring-primary-500 outline-none transition-all"
+                  >
+                    <option value="">Nenhum livro vinculado</option>
+                    {books.map(book => (
+                      <option key={book.id} value={book.id}>{book.title}</option>
+                    ))}
+                  </select>
+                  <p className="mt-2 text-[10px] text-gray-500 italic">Exibirá a capa do livro no artigo.</p>
                 </div>
+              </div>
 
               <div className="p-6 bg-white/5 border border-white/10 rounded-3xl space-y-4">
                 <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2">
