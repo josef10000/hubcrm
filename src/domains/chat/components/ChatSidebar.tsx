@@ -3,8 +3,8 @@ import { Search, Plus, MessageCircle, User, Users, Star, Bookmark, Calendar, Bel
 import { db } from '@/lib/firebase';
 import { doc, updateDoc, deleteDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
 import { toast } from 'sonner';
-import { Chat } from '../../types/chat.types';
-import { formatChatTime } from '../../helpers/chatHelpers';
+import { Chat } from '@/types/chat.types';
+import { formatChatTime } from '@/helpers/chatHelpers';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
 import CreateGroupModal from './CreateGroupModal';

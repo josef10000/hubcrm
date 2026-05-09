@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
-import { useAuth } from '../contexts/AuthContext';
+import { db } from '@/lib/firebase';
+import { useAuth } from '@auth/contexts/AuthContext';
 
 export function usePresence() {
   const { userProfile } = useAuth();

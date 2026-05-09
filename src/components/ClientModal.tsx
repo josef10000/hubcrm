@@ -4,11 +4,11 @@ import {
   Paperclip, Copy, MessageCircle, Trash2, Snowflake, Globe, Image as ImageIcon, Sparkles, Wand2, Star, Zap,
   RefreshCw, Link as LinkIcon, AlertTriangle, TrendingDown, Eye, EyeOff, Edit2, Loader2, Download, FileSignature, FileUp, Mail, Bell, BellOff
 } from 'lucide-react';
-import { auth, db, storage } from '../lib/firebase';
+import { auth, db, storage } from '@/lib/firebase';
 import { collection, doc, setDoc, onSnapshot, deleteDoc, addDoc, updateDoc } from 'firebase/firestore';
 import { User } from 'firebase/auth';
 import { toast } from 'sonner';
-import { authFetch } from '../lib/authFetch';
+import { authFetch } from '@/lib/authFetch';
 import { Client, ClientLog, ClientCredential, ClientStage, OnboardingQuestion, Offer, SiteStatus, ClientContract } from '../types';
 import { getPlanPrice, getSetupPrice } from '../helpers';
 import { useCRM } from '@crm/contexts/CRMContext';

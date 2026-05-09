@@ -1,4 +1,4 @@
-import { db } from '../lib/firebase';
+import { db } from '@/lib/firebase';
 import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { Lead, LeadActivity, LeadStatus } from '../types';
 import { auditService } from './auditService';

@@ -4,14 +4,14 @@ import {
   Copy, Globe, Star, BookOpen, Settings 
 } from 'lucide-react';
 import { useCRM } from '@crm/contexts/CRMContext';
-import { db } from '../lib/firebase';
+import { db } from '@/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
 import { OnboardingQuestion } from '../types';
 import { usePermissions } from '@auth/hooks/usePermissions';
-import { useDialog } from '../contexts/DialogContext';
-import TagManager from '../components/settings/TagManager';
-import RoleManagement from '../components/settings/RoleManagement';
+import { useDialog } from '@auth/contexts/DialogContext';
+import TagManager from '@/components/settings/TagManager';
+import RoleManagement from '@/components/settings/RoleManagement';
 
 export default function AdministrativeView() {
   const {

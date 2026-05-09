@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '@auth/contexts/AuthContext';
 
 type SoundType = 'success' | 'click' | 'notification' | 'error';
 

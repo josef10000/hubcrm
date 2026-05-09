@@ -1,5 +1,5 @@
 import React from 'react';
-import { BotCommand } from '../../helpers/botCommands';
+import { BotCommand } from '@/helpers/botCommands';
 import { Bot } from 'lucide-react';
 
 interface SlashCommandSuggestionsProps {

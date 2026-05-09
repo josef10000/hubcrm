@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { Lead, LeadStatus } from '../types';
 import { Plus, DollarSign, Target, UserPlus, Search, TrendingUp, Users } from 'lucide-react';
-import { useLeads } from '../hooks/useLeads';
-import { LeadCard } from '../components/leads/LeadCard';
-import { LeadFormModal } from '../components/leads/LeadFormModal';
+import { useLeads } from '@/hooks/useLeads';
+import { LeadCard } from '@crm/components/leads/LeadCard';
+import { LeadFormModal } from '@crm/components/leads/LeadFormModal';
 
 const LEAD_COLUMNS: { status: LeadStatus; label: string; color: string; bgColor: string }[] = [
   { status: 'Novo', label: 'Novo', color: 'text-blue-400', bgColor: 'bg-blue-500/10 border-blue-500/20' },

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { collection, doc, setDoc, deleteDoc } from 'firebase/firestore';
-import { auth, db } from '../lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { Offer } from '../types';
 import { toast } from 'sonner';
 

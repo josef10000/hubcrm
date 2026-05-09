@@ -2,8 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { Bell, Search, Filter, Info, Mail, LayoutGrid, List, SlidersHorizontal, RefreshCw } from 'lucide-react';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
-import { useUI } from '../contexts/UIContext';
-import ClientNotificationCard from '../components/notifications/ClientNotificationCard';
+import { useUI } from '@/contexts/UIContext';
+import ClientNotificationCard from '@/components/notifications/ClientNotificationCard';
 
 export default function NotificationsView() {
   const { clients, isSyncing, syncPayments } = useCRM();

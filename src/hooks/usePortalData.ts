@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { doc, collection, query, where, onSnapshot, getDocs, getDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db } from '@/lib/firebase';
 
 export function usePortalData(orgId: string | undefined, initialClientId: string | undefined) {
   const [activeClientId, setActiveClientId] = useState<string | undefined>(initialClientId);

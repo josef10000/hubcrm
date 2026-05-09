@@ -3,13 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Star, X } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
-import { useUI } from '../contexts/UIContext';
+import { useUI } from '@/contexts/UIContext';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
-import { useGlobalChatAlerts } from '../hooks/useGlobalChatAlerts';
+import { useGlobalChatAlerts } from '@/hooks/useGlobalChatAlerts';
 import NavItem from './NavItem';
 import AvatarFrame from './AvatarFrame';
-import { navGroups } from '../constants/navigation';
+import { navGroups } from '@/constants/navigation';
 
 // Mapeador de Ícones Premium (Phosphor Duotone)
 export const PremiumIcon = ({ iconName, size = 22, className = "" }: { iconName: string, size?: number, className?: string }) => {

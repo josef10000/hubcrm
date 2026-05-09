@@ -9,7 +9,7 @@ import {
   doc,
   getDoc
 } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db } from '@/lib/firebase';
 import { UserProfile, Client, Transaction } from '../types';
 import { getPlanPrice } from '../helpers';
 

@@ -1,30 +1,30 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db } from '@/lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
-import { useNexusStore } from '../store/useNexusStore';
-import { useDialog } from '../contexts/DialogContext';
+import { useNexusStore } from '@store/useNexusStore';
+import { useDialog } from '@auth/contexts/DialogContext';
 import { toast } from 'sonner';
-import { PremiumDialog } from '../components/PremiumDialog';
+import { PremiumDialog } from '@/components/PremiumDialog';
 import { format, isToday } from 'date-fns';
-import { uploadImageToImgBB } from '../lib/imgbb';
-import { uploadToCloudinary } from '../lib/cloudinary';
+import { uploadImageToImgBB } from '@/lib/imgbb';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 
 // Novos Componentes Modulares
-import ErrorBoundary from '../components/common/ErrorBoundary';
-import { VaultSkeleton, GoalsSkeleton, LibrarySkeleton } from '../components/nexus/NexusSkeleton';
+import ErrorBoundary from '@/components/common/ErrorBoundary';
+import { VaultSkeleton, GoalsSkeleton, LibrarySkeleton } from '@nexus/components/NexusSkeleton';
 
 // Imports dinâmicos para performance
-const VaultTab = React.lazy(() => import('../components/nexus/VaultTab').then(m => ({ default: m.VaultTab })));
-const GoalsTab = React.lazy(() => import('../components/nexus/GoalsTab').then(m => ({ default: m.GoalsTab })));
-const TasksTab = React.lazy(() => import('../components/nexus/TasksTab').then(m => ({ default: m.TasksTab })));
-const NotesTab = React.lazy(() => import('../components/nexus/NotesTab').then(m => ({ default: m.NotesTab })));
-const LibraryTab = React.lazy(() => import('../components/nexus/LibraryTab').then(m => ({ default: m.LibraryTab })));
+const VaultTab = React.lazy(() => import('@nexus/components/VaultTab').then(m => ({ default: m.VaultTab })));
+const GoalsTab = React.lazy(() => import('@nexus/components/GoalsTab').then(m => ({ default: m.GoalsTab })));
+const TasksTab = React.lazy(() => import('@nexus/components/TasksTab').then(m => ({ default: m.TasksTab })));
+const NotesTab = React.lazy(() => import('@nexus/components/NotesTab').then(m => ({ default: m.NotesTab })));
+const LibraryTab = React.lazy(() => import('@nexus/components/LibraryTab').then(m => ({ default: m.LibraryTab })));
 
 // Interfaces importadas da Store
-import type { PersonalLink, LinkFolder, PersonalGoal, NexusTask, NexusNote, NexusBook } from '../store/useNexusStore';
+import type { PersonalLink, LinkFolder, PersonalGoal, NexusTask, NexusNote, NexusBook } from '@store/useNexusStore';
 
 // Helper para ícones de sites comuns
 const getUrlIcon = (url: string) => {

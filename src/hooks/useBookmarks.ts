@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '../lib/firebase';
-import { useAuth } from '../contexts/AuthContext';
-import { MessageBookmark } from '../types/chat.types';
+import { db } from '@/lib/firebase';
+import { useAuth } from '@auth/contexts/AuthContext';
+import { MessageBookmark } from '@/types/chat.types';
 
 export function useBookmarks() {
   const { userProfile } = useAuth();

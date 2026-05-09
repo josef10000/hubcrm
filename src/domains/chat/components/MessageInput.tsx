@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Paperclip, Smile, X, Loader2, Calendar, LayoutGrid, Image as ImageIcon, Clock } from 'lucide-react';
-import { parseMentions } from '../../helpers/chatHelpers';
-import { filterCommands, findCommand, BotCommand, BotContext } from '../../helpers/botCommands';
+import { parseMentions } from '@/helpers/chatHelpers';
+import { filterCommands, findCommand, BotCommand, BotContext } from '@/helpers/botCommands';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
-import { ChatMessage } from '../../types/chat.types';
+import { ChatMessage } from '@/types/chat.types';
 import MentionSuggestions from './MentionSuggestions';
 import SlashCommandSuggestions from './SlashCommandSuggestions';
 import { uploadImageToImgBB } from '@/lib/imgbb';

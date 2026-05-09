@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useUI } from '../contexts/UIContext';
-import { useChatList } from '../hooks/useChatList';
-import ChatSidebar from '../components/chat/ChatSidebar';
-import ChatWindow from '../components/chat/ChatWindow';
-import { Chat } from '../types/chat.types';
+import { useUI } from '@/contexts/UIContext';
+import { useChatList } from '@/hooks/useChatList';
+import ChatSidebar from '@chat/components/ChatSidebar';
+import ChatWindow from '@chat/components/ChatWindow';
+import { Chat } from '@/types/chat.types';
 
 export default function ChatView() {
   const { setFocusMode, focusMode, setSidebarOpen } = useUI();

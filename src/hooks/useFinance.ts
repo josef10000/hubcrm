@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db } from '@/lib/firebase';
 import { Expense, Transaction, TransactionCategory, Budget } from '../types';
 
 export function useFinance(userId: string) {

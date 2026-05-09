@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Settings, LogOut, Image as ImageIcon, Volume2, Crown } from 'lucide-react';
 import { useCRM } from '@crm/contexts/CRMContext';
-import { useUI } from '../contexts/UIContext';
+import { useUI } from '@/contexts/UIContext';
 import { useAuth } from '@auth/contexts/AuthContext';
-import { auth, db } from '../lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { toast } from 'sonner';

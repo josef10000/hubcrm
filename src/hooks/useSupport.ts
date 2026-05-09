@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
 import { supportService } from '../services/supportService';
-import { useCRM } from '../contexts/CRMContext';
-import { useAuth } from '../contexts/AuthContext';
-import { useDialog } from '../contexts/DialogContext';
+import { useCRM } from '@crm/contexts/CRMContext';
+import { useAuth } from '@auth/contexts/AuthContext';
+import { useDialog } from '@auth/contexts/DialogContext';
 import { differenceInHours } from 'date-fns';
 import { toast } from 'sonner';
 

@@ -1,4 +1,4 @@
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '@auth/contexts/AuthContext';
 import { CustomRole, defaultRoles, AppPermission } from '@/constants/permissions';
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';

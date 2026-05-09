@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Lead } from '@/types';
 import { LeadTimeline } from './LeadTimeline';
-import { calculateHealthScore, getHealthColor } from '../../helpers/healthCalculation';
+import { calculateHealthScore, getHealthColor } from '@/helpers/healthCalculation';
 
 interface LeadCardProps {
   lead: Lead;

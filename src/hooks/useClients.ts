@@ -2,8 +2,8 @@ import { useState, useMemo, useCallback } from 'react';
 import { collection, doc, setDoc, deleteDoc, updateDoc, query, where, getDocs } from 'firebase/firestore';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { auth, db } from '../lib/firebase';
-import { authFetch } from '../lib/authFetch';
+import { auth, db } from '@/lib/firebase';
+import { authFetch } from '@/lib/authFetch';
 import { Client, Offer, PlanType, SiteStatus, clientSchema } from '../types';
 import { getPlanPrice, getSetupPrice, calculateDiscount, updateReferrerSubscription } from '../helpers';
 

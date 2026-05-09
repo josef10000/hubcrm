@@ -13,7 +13,7 @@ import { ptBR } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, DollarSign, Package, Calendar as CalendarIcon, X, AlertTriangle, Users } from 'lucide-react';
 import { getPlanPrice } from '../helpers';
 import { Client, UserProfile } from '../types';
-import { VacationPeriod } from '../types/people';
+import { VacationPeriod } from '@/types/people';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
 

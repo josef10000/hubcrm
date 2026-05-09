@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Asset } from '../types/people';
+import { Asset } from '@/types/people';
 import { assetService } from '../services/assetService';
-import { useCRM } from '../contexts/CRMContext';
-import { useAuth } from '../contexts/AuthContext';
+import { useCRM } from '@crm/contexts/CRMContext';
+import { useAuth } from '@auth/contexts/AuthContext';
 import { toast } from 'sonner';
 
 import { usePermissions } from './usePermissions';

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { useChatStore } from '../store/useChatStore';
-import { useAuth } from '../contexts/AuthContext';
-import { useCRM } from '../contexts/CRMContext';
+import { useChatStore } from '@store/useChatStore';
+import { useAuth } from '@auth/contexts/AuthContext';
+import { useCRM } from '@crm/contexts/CRMContext';
 import { useSoundEffect } from './useSoundEffect';
 
 export function useChatList() {

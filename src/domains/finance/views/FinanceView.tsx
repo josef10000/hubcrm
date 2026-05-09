@@ -7,11 +7,11 @@ import { db } from '@/lib/firebase';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
 import { Transaction } from '@/types';
-import DRETable from '../components/DRETable';
-import DREChart from '../components/DREChart';
-import CashFlowProjected from '../components/CashFlowProjected';
-import BudgetPanel from '../components/BudgetPanel';
-import ROIAnalysis from '../components/ROIAnalysis';
+import DRETable from '@/components/DRETable';
+import DREChart from '@/components/DREChart';
+import CashFlowProjected from '@/components/CashFlowProjected';
+import BudgetPanel from '@/components/BudgetPanel';
+import ROIAnalysis from '@/components/ROIAnalysis';
 import { usePermissions } from '@auth/hooks/usePermissions';
 
 export default function FinanceView() {

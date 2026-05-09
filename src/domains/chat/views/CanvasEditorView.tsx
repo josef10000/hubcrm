@@ -6,7 +6,7 @@ import { canvasService, CanvasDocument } from '../services/canvasService';
 import { ArrowLeft, MonitorPlay, Save, Building2 } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { toast } from 'sonner';
-import { useFirestoreSync } from '../hooks/useFirestoreSync';
+import { useFirestoreSync } from '@/hooks/useFirestoreSync';
 
 
 /**

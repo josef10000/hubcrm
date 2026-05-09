@@ -5,8 +5,8 @@ import {
   addDoc, updateDoc, serverTimestamp, Timestamp, arrayUnion, arrayRemove,
   getDoc, setDoc, deleteDoc, limit, writeBatch
 } from 'firebase/firestore';
-import { db } from '../lib/firebase';
-import { Chat, ChatMessage, TypingIndicator } from '../types/chat.types';
+import { db } from '@/lib/firebase';
+import { Chat, ChatMessage, TypingIndicator } from '@/types/chat.types';
 import { toast } from 'sonner';
 
 interface ChatState {

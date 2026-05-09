@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Star, X, Send } from 'lucide-react';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
 
 interface SupportSatisfactionModalProps {

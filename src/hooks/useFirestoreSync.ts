@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Editor, TLRecord } from 'tldraw';
-import { db } from '../lib/firebase';
+import { db } from '@/lib/firebase';
 import { collection, onSnapshot, doc, writeBatch } from 'firebase/firestore';
 
 export function useFirestoreSync(editor: Editor | null, orgId: string | undefined, canvasId: string | undefined) {

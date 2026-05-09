@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useUI } from '../contexts/UIContext';
+import { useUI } from '@/contexts/UIContext';
 import { PremiumIcon } from './Sidebar';
 
 interface NavItemProps {

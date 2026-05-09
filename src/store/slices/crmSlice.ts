@@ -7,7 +7,7 @@ import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
 import { Client, Offer, Lead, Tag } from '@/types';
 import { CRMStoreState } from '../types';
-import { logger } from '../../core/utils/logger';
+import { logger } from '@core/utils/logger';
 
 export interface CRMSlice {
   clients: Client[];

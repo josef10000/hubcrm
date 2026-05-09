@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
-import { useCRM } from '../contexts/CRMContext';
-import { useAuth } from '../contexts/AuthContext';
-import { useDialog } from '../contexts/DialogContext';
+import { useCRM } from '@crm/contexts/CRMContext';
+import { useAuth } from '@auth/contexts/AuthContext';
+import { useDialog } from '@auth/contexts/DialogContext';
 import { leadService } from '../services/leadService';
 import { Lead, LeadStatus } from '../types';
 import { toast } from 'sonner';

@@ -4,7 +4,7 @@ import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, updateDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
-import { Chat } from '../../types/chat.types';
+import { Chat } from '@/types/chat.types';
 import { toast } from 'sonner';
 
 interface ExploreChannelsModalProps {

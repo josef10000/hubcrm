@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { doc, onSnapshot, updateDoc, getDoc, setDoc, collection } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db } from '@/lib/firebase';
 
 export interface PersonalLink {
   id: string;

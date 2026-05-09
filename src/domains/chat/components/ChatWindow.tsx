@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ExternalLink, MoreVertical, Phone, Video, Search, MessageSquare, Megaphone, Info, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Chat, ChatMessage } from '../../types/chat.types';
+import { Chat, ChatMessage } from '@/types/chat.types';
 import { useChat } from '@/hooks/useChat';
 import { useBookmarks } from '@/hooks/useBookmarks';
-import { isSameDay, formatChatDividerDate } from '../../helpers/chatHelpers';
+import { isSameDay, formatChatDividerDate } from '@/helpers/chatHelpers';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
 import MessageBubble from './MessageBubble';

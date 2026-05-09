@@ -1,6 +1,6 @@
 import React from 'react';
 import { ShieldAlert, LogOut, Clock, Mail } from 'lucide-react';
-import { auth } from '../lib/firebase';
+import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { toast } from 'sonner';
 

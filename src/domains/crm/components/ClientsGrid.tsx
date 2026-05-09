@@ -4,7 +4,7 @@ import SupportRequestModal from '../SupportRequestModal';
 import { Client } from '@/types';
 import { getPlanPrice } from '@/helpers';
 import { toast } from 'sonner';
-import { calculateHealthScore, getHealthColor, getHealthLabel } from '../../helpers/healthCalculation';
+import { calculateHealthScore, getHealthColor, getHealthLabel } from '@/helpers/healthCalculation';
 import { useCRM } from '@crm/contexts/CRMContext';
 
 

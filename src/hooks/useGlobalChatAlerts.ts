@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
-import { db } from '../lib/firebase';
+import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { useAuth } from '../contexts/AuthContext';
-import { useCRM } from '../contexts/CRMContext';
-import { Chat } from '../types/chat.types';
+import { useAuth } from '@auth/contexts/AuthContext';
+import { useCRM } from '@crm/contexts/CRMContext';
+import { Chat } from '@/types/chat.types';
 
 export function useGlobalChatAlerts() {
   const { userProfile } = useAuth();

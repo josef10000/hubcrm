@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useUI } from '../contexts/UIContext';
+import { useUI } from '@/contexts/UIContext';
 import { Star, Heart, Leaf, Sparkles, Snowflake } from 'lucide-react';
 
 const Particle = ({ children, delay, duration, x, y, size, opacity = 1 }: any) => (

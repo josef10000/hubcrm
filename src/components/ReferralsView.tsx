@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { RefreshCw, Users } from 'lucide-react';
 import { collection, doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { User } from 'firebase/auth';
-import { db } from '../lib/firebase';
+import { db } from '@/lib/firebase';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { toast } from 'sonner';
 import { Client, SiteStatus } from '../types';

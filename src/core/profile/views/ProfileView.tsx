@@ -7,26 +7,26 @@ import {
   Target, ChevronDown, CheckCircle2, Circle, Star, Wallet, TrendingUp, Clock, Plane, AlertTriangle, CalendarDays
 } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
-import { useDialog } from '../contexts/DialogContext';
+import { useDialog } from '@auth/contexts/DialogContext';
 import { useCRM } from '@crm/contexts/CRMContext';
-import AvailabilityCalendar from '../components/people/AvailabilityCalendar';
-import { db } from '../lib/firebase';
+import AvailabilityCalendar from '@people/components/AvailabilityCalendar';
+import { db } from '@/lib/firebase';
 import { doc, getDoc, collection, setDoc, query, where, onSnapshot } from 'firebase/firestore';
-import { uploadToCloudinary } from '../lib/cloudinary';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 import { usePermissions } from '@auth/hooks/usePermissions';
-import { VacationPeriod } from '../types/people';
+import { VacationPeriod } from '@/types/people';
 import { UserProfile } from '../types';
-import { PDICategory } from '../types/people';
+import { PDICategory } from '@/types/people';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
-import MoodTracker from '../components/people/MoodTracker';
-import SkillRadarChart from '../components/people/SkillRadarChart';
-import CareerTimeline from '../components/people/CareerTimeline';
-import FeedbackMural from '../components/people/FeedbackMural';
-import InventorySection from '../components/people/InventorySection';
-import { EnergyScoreCard } from '../components/people/EnergyScoreCard';
-import { PDIKanban } from '../components/people/PDIKanban';
+import MoodTracker from '@people/components/MoodTracker';
+import SkillRadarChart from '@people/components/SkillRadarChart';
+import CareerTimeline from '@people/components/CareerTimeline';
+import FeedbackMural from '@people/components/FeedbackMural';
+import InventorySection from '@people/components/InventorySection';
+import { EnergyScoreCard } from '@people/components/EnergyScoreCard';
+import { PDIKanban } from '@people/components/PDIKanban';
 import { 
   Plus, 
   Trash2, 
@@ -41,10 +41,10 @@ import {
   Inbox,
   BellRing
 } from 'lucide-react';
-import AddFeedbackModal from '../components/people/AddFeedbackModal';
-import AddAssetModal from '../components/people/AddAssetModal';
-import AddMilestoneModal from '../components/people/AddMilestoneModal';
-import EditSkillsModal from '../components/people/EditSkillsModal';
+import AddFeedbackModal from '@people/components/AddFeedbackModal';
+import AddAssetModal from '@people/components/AddAssetModal';
+import AddMilestoneModal from '@people/components/AddMilestoneModal';
+import EditSkillsModal from '@people/components/EditSkillsModal';
 import { updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 
 export default function ProfileView() {

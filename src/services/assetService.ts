@@ -1,6 +1,6 @@
-import { db } from '../lib/firebase';
+import { db } from '@/lib/firebase';
 import { collection, query, onSnapshot, addDoc, deleteDoc, doc, QuerySnapshot, DocumentData } from 'firebase/firestore';
-import { Asset } from '../types/people';
+import { Asset } from '@/types/people';
 
 /**
  * Service to handle all Firestore operations related to Assets.

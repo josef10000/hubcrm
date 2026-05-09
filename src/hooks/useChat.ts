@@ -1,9 +1,9 @@
 import { useEffect, useCallback } from 'react';
-import { useChatStore } from '../store/useChatStore';
-import { useAuth } from '../contexts/AuthContext';
-import { useCRM } from '../contexts/CRMContext';
-import type { ChatMessage } from '../types/chat.types';
-import { Chat } from '../types/chat.types';
+import { useChatStore } from '@store/useChatStore';
+import { useAuth } from '@auth/contexts/AuthContext';
+import { useCRM } from '@crm/contexts/CRMContext';
+import type { ChatMessage } from '@/types/chat.types';
+import { Chat } from '@/types/chat.types';
 import { Timestamp } from 'firebase/firestore';
 
 export function useChat(chatId: string | null) {

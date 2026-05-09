@@ -4,7 +4,7 @@ import {
   AlignLeft, AlignCenter, AlignRight, Link2, 
   Maximize2, Minimize2 
 } from 'lucide-react';
-import { useDialog } from '../contexts/DialogContext';
+import { useDialog } from '@auth/contexts/DialogContext';
 import { toast } from 'sonner';
 
 interface RichTextEditorProps {

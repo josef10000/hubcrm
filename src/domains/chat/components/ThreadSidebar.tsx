@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, MessageSquareText, Hash } from 'lucide-react';
-import { ChatMessage, Chat } from '../../types/chat.types';
+import { ChatMessage, Chat } from '@/types/chat.types';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
 import { useChat } from '@/hooks/useChat';

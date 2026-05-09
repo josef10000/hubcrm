@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Users, Mail, UserPlus, Shield, X, Check, Loader2, Trash2, GitGraph, List, ChevronRight, Edit2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@auth/contexts/AuthContext';
-import { useDialog } from '../contexts/DialogContext';
+import { useDialog } from '@auth/contexts/DialogContext';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
 import { toast } from 'sonner';

@@ -4,7 +4,7 @@ import { Plus, LayoutTemplate, MoreVertical, Trash2, Globe, Lock, Search, X } fr
 import { canvasService, CanvasDocument } from '../services/canvasService';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
-import { useDialog } from '../contexts/DialogContext';
+import { useDialog } from '@auth/contexts/DialogContext';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
