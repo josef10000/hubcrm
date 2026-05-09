@@ -1,5 +1,5 @@
 /** Intranet Hub Symples - Gestão Interna (Build Test: Vercel Limits Check) */
-import React, { useMemo } from 'react';
+import React, { useMemo, lazy, Suspense } from 'react';
 import {
   LayoutDashboard, Users, Plus, X, DollarSign,
   Search, BarChart3, Calendar, MessageCircle, Globe,
@@ -63,9 +63,9 @@ import { CRMProvider, useCRM } from '@crm/contexts/CRMContext';
 import { DialogProvider } from '@auth/contexts/DialogContext';
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { usePermissions } from '@auth/hooks/usePermissions';
-import ClientPortal from './components/portal/ClientPortalLayout';
-import OnboardingForm from './components/OnboardingForm';
-import PublicCheckoutPage from './components/PublicCheckoutPage';
+import ClientPortal from '@portal/components/ClientPortalLayout';
+import OnboardingForm from '@auth/components/OnboardingForm';
+import PublicCheckoutPage from '@finance/views/PublicCheckoutPage';
 
 function CRMInner() {
   const { user, userProfile, isBirthday, unreadAlertsCount } = useAuth();

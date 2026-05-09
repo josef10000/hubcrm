@@ -5,7 +5,7 @@ import { db } from '@/lib/firebase';
 import { getPlanPrice, getSetupPrice, calculateDiscount } from '@/helpers';
 import { Globe, CreditCard, CheckCircle, Clock, AlertCircle, ExternalLink, FileText, MessageSquare, Send, X, ChevronDown, ChevronUp, Calendar, Users, Copy, HelpCircle, Search, ShoppingCart, Star } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
-import SupportSatisfactionModal from './SupportSatisfactionModal';
+import SupportSatisfactionModal from '@support/components/SupportSatisfactionModal';
 
 export default function ClientPortal() {
   const { orgId, clientId } = useParams<{ orgId: string; clientId: string }>();

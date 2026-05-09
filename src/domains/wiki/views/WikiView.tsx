@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { WikiArticle, WikiCategory } from '@/types';
 import WikiEditorModal from '@wiki/components/WikiEditorModal';
 import WikiArticleDetail from '@wiki/components/WikiArticleDetail';
-import Pagination from '@/components/common/Pagination';
+import Pagination from '@shared/components/Pagination';
 import { usePermissions } from '@auth/hooks/usePermissions';
 
 const ITEMS_PER_PAGE = 6;

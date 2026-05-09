@@ -7,13 +7,13 @@ import { useCRM } from '@crm/contexts/CRMContext';
 import { useNexusStore } from '@store/useNexusStore';
 import { useDialog } from '@auth/contexts/DialogContext';
 import { toast } from 'sonner';
-import { PremiumDialog } from '@/components/PremiumDialog';
+import { PremiumDialog } from '@shared/components/PremiumDialog';
 import { format, isToday } from 'date-fns';
 import { uploadImageToImgBB } from '@/lib/imgbb';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 
 // Novos Componentes Modulares
-import ErrorBoundary from '@/components/common/ErrorBoundary';
+import ErrorBoundary from '@shared/components/ErrorBoundary';
 import { VaultSkeleton, GoalsSkeleton, LibrarySkeleton } from '@nexus/components/NexusSkeleton';
 
 // Imports dinâmicos para performance

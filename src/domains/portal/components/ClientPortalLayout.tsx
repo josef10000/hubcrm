@@ -16,11 +16,11 @@ import { usePortalData } from '@/hooks/usePortalData';
 import { Toaster } from 'sonner';
 
 // Importando as views
-import PortalHome from './views/PortalHome';
-import PortalFinance from './views/PortalFinance';
-import PortalServices from './views/PortalServices';
-import PortalDocuments from './views/PortalDocuments';
-import PortalSupport from './views/PortalSupport';
+import PortalHome from '../views/PortalHome';
+import PortalFinance from '../views/PortalFinance';
+import PortalServices from '../views/PortalServices';
+import PortalDocuments from '../views/PortalDocuments';
+import PortalSupport from '../views/PortalSupport';
 
 export default function ClientPortalLayout() {
   const { orgId, clientId } = useParams<{ orgId: string; clientId: string }>();
