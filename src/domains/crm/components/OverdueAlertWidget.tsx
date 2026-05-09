@@ -19,7 +19,7 @@ export function OverdueAlertWidget({ clients }: OverdueAlertWidgetProps) {
 
   // Clientes inadimplentes com mais de 30 dias
   const criticalOverdue = useMemo(() => {
-    return clients
+    return (clients || [])
       .filter(c => c.status === 'Inadimplente' && c.nextDueDate)
       .map(c => ({
         ...c,

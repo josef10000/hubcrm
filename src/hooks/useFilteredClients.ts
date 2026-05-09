@@ -12,7 +12,7 @@ export function useFilteredClients(
   const deferredSearchTerm = useDeferredValue(searchTerm);
 
   return useMemo(() => {
-    let result = clients.filter((c) => {
+    let result = (clients || []).filter((c) => {
       const searchLower = deferredSearchTerm.toLowerCase();
       const matchesSearch =
         c.name.toLowerCase().includes(searchLower) ||

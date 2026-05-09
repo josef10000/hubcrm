@@ -12,7 +12,7 @@ interface CashFlowProjectionProps {
 
 export function CashFlowProjection({ clients }: CashFlowProjectionProps) {
   const projectionData = useMemo(() => {
-    const activeClients = clients.filter(c => c.status === 'Ativo');
+    const activeClients = (clients || []).filter(c => c.status === 'Ativo');
     const monthlyMrr = activeClients.reduce((acc, c) => acc + getPlanPrice(c.plan, 'MONTHLY', c), 0);
     const yearlyRevPerMonth = activeClients
       .filter(c => c.billingCycle === 'YEARLY')

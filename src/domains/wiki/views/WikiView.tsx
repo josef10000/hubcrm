@@ -44,7 +44,7 @@ export default function WikiView() {
   // Contador dinâmico por categoria v4.1.4
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    wikiArticles.forEach(article => {
+    (wikiArticles || []).forEach(article => {
       const cats = article.categories || [];
       cats.forEach(cat => {
         if (cat) counts[cat] = (counts[cat] || 0) + 1;
@@ -55,7 +55,7 @@ export default function WikiView() {
 
   // Filtro de visibilidade e busca
   const filteredArticles = useMemo(() => {
-    return wikiArticles.filter(article => {
+    return (wikiArticles || []).filter(article => {
       // 1. RBAC Check
       const hasRole = !article.allowedRoles || article.allowedRoles.length === 0 || article.allowedRoles.includes(userProfile?.roleId) || article.allowedRoles.includes(userProfile?.role);
       const isUserAllowed = !article.allowedUserIds || article.allowedUserIds.length === 0 || article.allowedUserIds.includes(userProfile?.uid);
