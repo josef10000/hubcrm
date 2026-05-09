@@ -6,6 +6,16 @@
   --color-primary-400: var(--primary-400);
   --color-primary-500: var(--primary-500);
   --color-primary-600: var(--primary-600);
+  
+  /* Semantic Tokens */
+  --color-surface-bg: var(--surface-bg);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-surface-glass: var(--surface-glass);
+  --color-text-main: var(--text-main);
+  --color-text-muted: var(--text-muted);
+  --color-accent-success: var(--color-success);
+  --color-accent-warning: var(--color-warning);
+  --color-accent-error: var(--color-error);
 }
 
 @layer base {
@@ -14,13 +24,30 @@
     --primary-400: #fbbf24; /* amber-400 */
     --primary-500: #f97316; /* orange-500 */
     --primary-600: #ea580c; /* orange-600 */
-    background-color: #f9fafb; /* gray-50 */
-    color: #111827; /* gray-900 */
+    
+    --surface-bg: #f9fafb;
+    --surface-elevated: #ffffff;
+    --surface-glass: rgba(255, 255, 255, 0.7);
+    --text-main: #111827;
+    --text-muted: #6b7280;
+    
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-error: #ef4444;
+
+    background-color: var(--surface-bg);
+    color: var(--text-main);
   }
 
   :root.dark {
-    background-color: #030712; /* gray-950 - Absolute Black */
-    color: #f3f4f6; /* gray-100 */
+    --surface-bg: #030712;
+    --surface-elevated: #0f172a;
+    --surface-glass: rgba(15, 23, 42, 0.7);
+    --text-main: #f3f4f6;
+    --text-muted: #9ca3af;
+    
+    background-color: var(--surface-bg);
+    color: var(--text-main);
   }
 
   /* Global Selects & Inputs for Premium Dark Look */
