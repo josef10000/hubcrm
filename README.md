@@ -116,6 +116,7 @@ O Hub Central segue diretrizes rígidas de design para manter seu status premium
 - [x] **v7.3.9.0** — **Wiki Notification Stability** (Fixed article read-status tracking, field unification & star logic persistence).
 - [x] **v7.5.0** — **Architecture & Performance Update** (React.lazy, Suspense, Zustand Persistence & Firestore Offline Support).
 - [x] **v8.0.5** — **Modular Architecture (DDD)** (Refactored directory structure, standardized Path Aliases & fixed cross-domain imports).
+- [x] **v8.0.9** — **Runtime Stability & Resilience** (Implemented exhaustive Null-Safety, Zustand Versioning (v3) and Defensive State Merging to prevent white-screen crashes).
 - [ ] **v8.1.0** — IA Integrada: Nexus Copilot para automação de tarefas.
 
 ---
