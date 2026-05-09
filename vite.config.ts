@@ -23,6 +23,7 @@ export default defineConfig(({mode}) => {
         '@core': path.resolve(__dirname, './src/core'),
         '@auth': path.resolve(__dirname, './src/core/auth'),
         '@admin': path.resolve(__dirname, './src/core/admin'),
+        '@portal': path.resolve(__dirname, './src/domains/portal'),
         '@support': path.resolve(__dirname, './src/domains/support'),
         '@store': path.resolve(__dirname, './src/store'),
       },

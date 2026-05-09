@@ -28,6 +28,7 @@
       "@core/*": ["./src/core/*"],
       "@auth/*": ["./src/core/auth/*"],
       "@admin/*": ["./src/core/admin/*"],
+      "@portal/*": ["./src/domains/portal/*"],
       "@support/*": ["./src/domains/support/*"],
       "@store/*": ["./src/store/*"]
     },
