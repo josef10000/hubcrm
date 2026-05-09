@@ -57,6 +57,15 @@ export default function MyWorkspaceView() {
   const setNotes = useNexusStore(state => state.setNotes);
   const setBooks = useNexusStore(state => state.setBooks);
 
+  const [librarySubTab, setLibrarySubTab] = useState<'my' | 'shared' | 'community'>('my');
+  const [communityBooks, setCommunityBooks] = useState<NexusBook[]>([]);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [sharingBook, setSharingBook] = useState<NexusBook | null>(null);
+
+  // Actions from store
+  const shareBookAction = useNexusStore(state => state.shareBook);
+  const publishToCommunityAction = useNexusStore(state => state.publishToCommunity);
+
   const [activeTab, setActiveTab] = useState<'links' | 'goals' | 'notes' | 'tasks' | 'library'>('links');
   const [dailyQuote, setDailyQuote] = useState<{content: string, author: string} | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
@@ -69,10 +78,6 @@ export default function MyWorkspaceView() {
   const [isSearchingBook, setIsSearchingBook] = useState(false);
   const [librarySearchQuery, setLibrarySearchQuery] = useState('');
   const [libraryPage, setLibraryPage] = useState(1);
-  const [librarySubTab, setLibrarySubTab] = useState<'my' | 'shared' | 'community'>('my');
-  const [communityBooks, setCommunityBooks] = useState<NexusBook[]>([]);
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [sharingBook, setSharingBook] = useState<NexusBook | null>(null);
 
   // Seleciona a primeira nota automaticamente se houver e nenhuma estiver selecionada
   useEffect(() => {
@@ -428,6 +433,39 @@ export default function MyWorkspaceView() {
     e.stopPropagation();
     navigator.clipboard.writeText(text);
     toast.success('Link copiado para a área de transferência!');
+  };
+
+  const handlePublishBook = async (book: NexusBook) => {
+    if (!userProfile?.orgId) return;
+    
+    const ok = await confirm({
+      title: 'Publicar na Comunidade',
+      message: 'Deseja tornar este livro disponível para todos na sua organização?',
+      confirmText: 'Publicar',
+      variant: 'primary'
+    });
+
+    if (ok) {
+      try {
+        await publishToCommunityAction(book, userProfile.orgId);
+        toast.success('Livro publicado na comunidade!');
+      } catch (err) {
+        toast.error('Erro ao publicar livro');
+      }
+    }
+  };
+
+  const handleConfirmShare = async (targetUserId: string, targetUserName: string) => {
+    if (!sharingBook || !userProfile) return;
+
+    try {
+      await shareBookAction(sharingBook, targetUserId, userProfile.displayName || 'Um Hubber');
+      setIsShareModalOpen(false);
+      setSharingBook(null);
+      toast.success(`Livro compartilhado com ${targetUserName.split(' ')[0]}!`);
+    } catch (err) {
+      toast.error('Erro ao compartilhar livro');
+    }
   };
 
   // Data: Agenda & Stats
