@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { doc, onSnapshot, updateDoc, getDoc, setDoc, collection } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
@@ -100,17 +101,19 @@ const DEFAULT_LINKS: PersonalLink[] = [
   { id: '2', label: 'Figma Design', url: 'https://figma.com', icon: 'ph-figma-logo', folderId: '1' }
 ];
 
-export const useNexusStore = create<NexusState>((set, get) => ({
-  folders: [],
-  links: [],
-  goals: [],
-  tasks: [],
-  notes: [],
-  books: [],
-  loading: true,
-  initialized: false,
-  error: null,
-  uid: null,
+export const useNexusStore = create<NexusState>()(
+  persist(
+    (set, get) => ({
+      folders: [],
+      links: [],
+      goals: [],
+      tasks: [],
+      notes: [],
+      books: [],
+      loading: true,
+      initialized: false,
+      error: null,
+      uid: null,
 
   init: (uid: string) => {
     if (get().initialized && get().uid === uid) return () => {};
@@ -247,4 +250,14 @@ export const useNexusStore = create<NexusState>((set, get) => ({
       currentPage: 0 // Reseta progresso para a comunidade
     }, { merge: true });
   }
+}), {
+  name: 'hubcrm-nexus-storage',
+  partialize: (state) => ({
+    folders: state.folders,
+    links: state.links,
+    goals: state.goals,
+    tasks: state.tasks,
+    notes: state.notes,
+    books: state.books
+  })
 }));
