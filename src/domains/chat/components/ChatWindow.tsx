@@ -10,7 +10,7 @@ import { useCRM } from '@crm/contexts/CRMContext';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
 import GroupSettingsModal from './GroupSettingsModal';
-import SupportRequestModal from '../SupportRequestModal';
+import SupportRequestModal from '@support/components/SupportRequestModal';
 import { toast } from 'sonner';
 import { Pin, ChevronRight, Bookmark, Archive, Folder } from 'lucide-react';
 import { Timestamp } from 'firebase/firestore';
@@ -126,7 +126,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
 
     const fetchPinnedMessages = async () => {
       const { doc: fireDoc, getDoc } = await import('firebase/firestore');
-      const { db } = await import('../../lib/firebase');
+      const { db } = await import('@/lib/firebase');
       const orgId = userProfile?.orgId;
       if (!orgId) return;
 

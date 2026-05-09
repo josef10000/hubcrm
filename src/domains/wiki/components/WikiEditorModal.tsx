@@ -4,7 +4,7 @@ import { WikiArticle, WikiCategory, UserRole } from '@/types';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useNexusStore } from '@store/useNexusStore';
-import RichTextEditor from '../RichTextEditor';
+import RichTextEditor from '@shared/components/RichTextEditor';
 
 interface WikiEditorModalProps {
   isOpen: boolean;

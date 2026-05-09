@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { UserProfile, OnboardingQuestion } from '@/types';
 import { VacationPeriod, Appointment } from '@/types/people';
 import { CustomRole } from '@/constants/permissions';
-import { CRMStoreState } from '../types';
+import { CRMStoreState } from '@/types';
 
 export interface PeopleSlice {
   teamProfiles: UserProfile[];
