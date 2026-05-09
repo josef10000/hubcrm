@@ -41,6 +41,16 @@ O **Hub Nexus** é o novo cockpit pessoal do colaborador. Uma área de alta perf
 
 ---
 
+## 📚 Wiki Central Pro
+A base de conhecimento da Hub Symples, agora com rastreamento inteligente.
+
+*   **Read Tracking:** Notificações em tempo real para novos artigos com persistência de leitura vinculada ao perfil.
+*   **Nexus Binding:** Artigos podem ser vinculados a obras na Nexus Library para aprofundamento técnico.
+*   **Interaction Loop:** Sistema de estrelas (favoritos) e comentários com suporte a menções.
+*   **Access Control:** Filtros por cargo (RBAC) para garantir que cada setor veja o conteúdo pertinente.
+
+---
+
 ## 💬 Hub Chat Pro v3.5 (Optimistic UI)
 A comunicação interna elevada ao nível de ferramenta de trabalho, agora com **Zustand**.
 
@@ -103,6 +113,7 @@ O Hub Central segue diretrizes rígidas de design para manter seu status premium
 - [x] **v7.3.7.0** — **Nexus Multi-Notes** (Implementation of collection of notes in Workspace with sidebar navigation).
 - [x] **v7.3.8.0** — **Nexus Digital Library** (PDF book storage & immersive reader).
 - [x] **v7.3.8.5** — **Google Books Integration & Cloudinary Migration** (Auto-cataloging & performance-focused asset storage).
+- [x] **v7.3.9.0** — **Wiki Notification Stability** (Fixed article read-status tracking, field unification & star logic persistence).
 - [x] **v7.5.0** — **Architecture & Performance Update** (React.lazy, Suspense, Zustand Persistence & Firestore Offline Support).
 - [ ] **v7.6.0** — IA Integrada: Nexus Copilot para automação de tarefas.
 
