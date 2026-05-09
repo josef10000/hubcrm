@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, LayoutTemplate, MoreVertical, Trash2, Globe, Lock, Search, X } from 'lucide-react';
-import { canvasService, CanvasDocument } from '../services/canvasService';
+import { canvasService, CanvasDocument } from '@/services/canvasService';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useDialog } from '@auth/contexts/DialogContext';
