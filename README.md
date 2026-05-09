@@ -103,7 +103,8 @@ O Hub Central segue diretrizes rígidas de design para manter seu status premium
 - [x] **v7.3.7.0** — **Nexus Multi-Notes** (Implementation of collection of notes in Workspace with sidebar navigation).
 - [x] **v7.3.8.0** — **Nexus Digital Library** (PDF book storage & immersive reader).
 - [x] **v7.3.8.5** — **Google Books Integration & Cloudinary Migration** (Auto-cataloging & performance-focused asset storage).
-- [ ] **v7.5.0** — IA Integrada: Nexus Copilot para automação de tarefas.
+- [x] **v7.5.0** — **Architecture & Performance Update** (React.lazy, Suspense, Zustand Persistence & Firestore Offline Support).
+- [ ] **v7.6.0** — IA Integrada: Nexus Copilot para automação de tarefas.
 
 ---
 
