@@ -205,7 +205,7 @@ const DashboardView = React.memo(function DashboardView() {
                 className="pl-9 pr-6 py-2 bg-transparent text-sm text-gray-400 hover:text-white outline-none cursor-pointer appearance-none min-w-[120px]"
               >
                 <option value="all" className="bg-gray-900">Todas as Tags</option>
-                {tags.map(tag => (
+                {(tags || []).map(tag => (
                   <option key={tag.id} value={tag.id} className="bg-gray-900">{tag.name}</option>
                 ))}
               </select>

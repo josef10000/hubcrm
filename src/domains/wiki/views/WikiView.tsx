@@ -94,12 +94,13 @@ export default function WikiView() {
   }, [filteredArticles, currentPage]);
 
   const popularArticles = useMemo(() => {
-    return wikiArticles
+    return (wikiArticles || [])
       .filter(a => a.isPopular)
       .slice(0, 3);
   }, [wikiArticles]);
+
   const selectedArticle = useMemo(() => 
-    wikiArticles.find(a => a.id === selectedArticleId), 
+    (wikiArticles || []).find(a => a.id === selectedArticleId), 
     [wikiArticles, selectedArticleId]
   );
 

@@ -63,9 +63,9 @@ export default function CalendarView({ clients, onClientClick, role }: CalendarV
   const getEventsForDay = (day: Date) => {
     const dayString = format(day, 'yyyy-MM-dd');
     if (mode === 'finance') {
-      return clients.filter(client => client.nextDueDate === dayString);
+      return (clients || []).filter(client => client.nextDueDate === dayString);
     } else if (mode === 'production') {
-      return clients.filter(client => client.deliveryDate === dayString);
+      return (clients || []).filter(client => client.deliveryDate === dayString);
     } else {
       // People Mode combine vacations and anniversaries
       return []; // We handle this separately in render because they are different types
@@ -79,16 +79,16 @@ export default function CalendarView({ clients, onClientClick, role }: CalendarV
     const monthDayStr = `${month.toString().padStart(2, '0')}-${dayOfMonth.toString().padStart(2, '0')}`;
     const dayStr = format(day, 'yyyy-MM-dd');
     
-    const dayVacations = vacations.filter(v => v.status === 'Aprovado' && dayStr >= v.start && dayStr <= v.end);
+    const dayVacations = (vacations || []).filter(v => v.status === 'Aprovado' && dayStr >= v.start && dayStr <= v.end);
     
-    const dayAnniversaries = teamProfiles.filter(p => {
+    const dayAnniversaries = (teamProfiles || []).filter(p => {
       if (!p.birthDate) return false;
       // Garante que pegamos os últimos 5 caracteres (MM-DD) independente do prefixo
       const bDate = p.birthDate.includes('/') ? p.birthDate.split('/').reverse().join('-') : p.birthDate;
       return bDate.endsWith(monthDayStr);
     });
 
-    const dayWorkAnniversaries = teamProfiles.filter(p => {
+    const dayWorkAnniversaries = (teamProfiles || []).filter(p => {
       if (!p.startDate) return false;
       const sDate = p.startDate.includes('/') ? p.startDate.split('/').reverse().join('-') : p.startDate;
       // Compara MM-dd e ignora o ano da contratação (só mostra se não for o ano atual)

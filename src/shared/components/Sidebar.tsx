@@ -54,7 +54,7 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const { user, userProfile, unreadAlertsCount, isBirthday } = useAuth();
   const { sidebarOpen, setSidebarOpen, pinnedItems } = useUI();
-  const { activeLeadsCount, supportRequests, wikiArticles, pendingVacationsCount } = useCRM();
+  const { activeLeadsCount = 0, supportRequests = [], wikiArticles = [], pendingVacationsCount = 0 } = useCRM();
   const { hasPermission } = usePermissions();
   const { totalUnread: chatUnreadCount } = useGlobalChatAlerts();
 
@@ -63,10 +63,10 @@ export default function Sidebar() {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Contadores para badges
-  const openTicketCount = useMemo(() => supportRequests.filter(r => r.status === 'aberto' || r.status === 'em_analise').length, [supportRequests]);
+  const openTicketCount = useMemo(() => (supportRequests || []).filter(r => r.status === 'aberto' || r.status === 'em_analise').length, [supportRequests]);
   const newWikiCount = useMemo(() => {
-    if (!userProfile?.viewedWikiArticles) return wikiArticles.length;
-    return wikiArticles.filter(art => !userProfile.viewedWikiArticles?.includes(art.id)).length;
+    if (!userProfile?.viewedWikiArticles) return (wikiArticles || []).length;
+    return (wikiArticles || []).filter(art => !userProfile.viewedWikiArticles?.includes(art.id)).length;
   }, [wikiArticles, userProfile?.viewedWikiArticles]);
 
   const getBadgeForPath = (path: string) => {

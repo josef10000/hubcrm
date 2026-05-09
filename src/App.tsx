@@ -104,7 +104,7 @@ function CRMInner() {
   const { totalUnread: chatUnreadCount } = useGlobalChatAlerts();
 
   const newWikiCount = useMemo(() => {
-    return (wikiArticles || []).filter(art => !userProfile.viewedWikiArticles?.includes(art.id)).length;
+    return (wikiArticles || []).filter(art => !userProfile?.viewedWikiArticles?.includes(art.id)).length;
   }, [wikiArticles, userProfile?.viewedWikiArticles]);
 
   const titleCount = useMemo(() => {

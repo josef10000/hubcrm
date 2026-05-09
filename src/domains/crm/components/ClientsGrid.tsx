@@ -51,7 +51,7 @@ export default function ClientsGrid({
               {client.tagIds && client.tagIds.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-1 mb-2">
                   {client.tagIds.map(tagId => {
-                    const tag = tags.find(t => t.id === tagId);
+                    const tag = (tags || []).find(t => t.id === tagId);
                     if (!tag) return null;
                     return (
                       <span 

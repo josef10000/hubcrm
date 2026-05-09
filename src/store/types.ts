@@ -8,6 +8,7 @@ import { CRMSlice } from './slices/crmSlice';
 import { WikiSlice } from './slices/wikiSlice';
 import { FinanceSlice } from './slices/financeSlice';
 import { PeopleSlice } from './slices/peopleSlice';
+import { SupportSlice } from './slices/supportSlice';
 
 export interface BaseState {
   currentUserId: string | null;
@@ -30,4 +31,4 @@ export interface ConfigState {
   errorMsg: string | null;
 }
 
-export type CRMStoreState = BaseState & BaseActions & ConfigState & CRMSlice & WikiSlice & FinanceSlice & PeopleSlice;
+export type CRMStoreState = BaseState & BaseActions & ConfigState & CRMSlice & WikiSlice & FinanceSlice & PeopleSlice & SupportSlice;

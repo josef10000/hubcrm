@@ -25,7 +25,7 @@ export default function WikiArticleDetail({ article, onBack, onEdit }: WikiArtic
   const { hasPermission } = usePermissions();
   const { handleToggleWikiStar, handleDeleteWikiArticle, handleSaveWikiArticle } = useCRM();
   const { confirm } = useDialog();
-  const allBooks = useNexusStore(state => state.books);
+  const allBooks = useNexusStore(state => state.books) || [];
   const relatedBook = allBooks.find(b => b.id === article.relatedBookId);
 
   const isStarred = article.stars?.includes(user?.uid || '');

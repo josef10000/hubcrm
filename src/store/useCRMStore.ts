@@ -7,6 +7,7 @@ import { createCRMSlice } from './slices/crmSlice';
 import { createWikiSlice } from './slices/wikiSlice';
 import { createFinanceSlice } from './slices/financeSlice';
 import { createPeopleSlice } from './slices/peopleSlice';
+import { createSupportSlice } from './slices/supportSlice';
 import { CRMStoreState } from './types';
 
 export const useCRMStore = create<CRMStoreState>()(
@@ -29,6 +30,7 @@ export const useCRMStore = create<CRMStoreState>()(
       ...createWikiSlice(set, get, api),
       ...createFinanceSlice(set, get, api),
       ...createPeopleSlice(set, get, api),
+      ...createSupportSlice(set, get, api),
 
       // Base Actions
       setLoading: (loading) => set({ loading }),
@@ -99,6 +101,7 @@ export const useCRMStore = create<CRMStoreState>()(
         setupListener('budgets', (data) => set({ budgets: data }));
         setupListener('roles', (data) => set({ orgRoles: data }));
         setupListener('onboarding_questions', (data) => set({ onboardingQuestions: data }), (a, b) => (a.order || 0) - (b.order || 0));
+        setupListener('supportRequests', (data) => set({ supportRequests: data }), (a, b) => b.createdAt - a.createdAt);
 
         // Global Team Profiles
         try {
@@ -123,13 +126,26 @@ export const useCRMStore = create<CRMStoreState>()(
     }),
     {
       name: 'hubcrm-crm-storage',
+      version: 3, // Incrementado para invalidar caches antigos/bugados
       partialize: (state) => ({ 
         clients: state.clients, 
         leads: state.leads, 
         teamProfiles: state.teamProfiles,
         offers: state.offers,
-        tags: state.tags
+        tags: state.tags,
+        supportRequests: state.supportRequests
       }),
+      // Garante que, se algo vier nulo do storage, mantenha o valor padrão (array vazio)
+      merge: (persistedState: any, currentState) => ({
+        ...currentState,
+        ...(persistedState || {}),
+        clients: persistedState?.clients || [],
+        leads: persistedState?.leads || [],
+        teamProfiles: persistedState?.teamProfiles || [],
+        offers: persistedState?.offers || [],
+        tags: persistedState?.tags || [],
+        supportRequests: persistedState?.supportRequests || []
+      })
     }
   )
 );
