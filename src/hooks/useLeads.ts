@@ -5,7 +5,7 @@ import { useDialog } from '@auth/contexts/DialogContext';
 import { leadService } from '../services/leadService';
 import { Lead, LeadStatus } from '@/types';
 import { toast } from 'sonner';
-import { usePermissions } from './usePermissions';
+import { usePermissions } from '@auth/hooks/usePermissions';
 
 export type LeadFilterMode = 'all' | 'mine';
 

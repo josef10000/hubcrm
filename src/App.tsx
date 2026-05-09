@@ -7,10 +7,10 @@ import {
   Megaphone, Package, Map as MapIcon, Target, Menu, Bell, Shield, HeartHandshake, BookOpen, Rocket, Focus, ShieldCheck, LayoutTemplate
 } from 'lucide-react';
 import { isFirebaseConfigured } from './lib/firebase';
-import Auth from './components/Auth';
-import CalendarView from './components/CalendarView';
-import MonitoringView from './components/MonitoringView';
-import ClientMapView from './components/ClientMapView';
+import Auth from '@auth/components/Auth';
+import CalendarView from '@shared/components/CalendarView';
+import MonitoringView from '@crm/components/MonitoringView';
+import ClientMapView from '@crm/components/ClientMapView';
 import { Toaster } from 'sonner';
 import { Analytics } from '@vercel/analytics/react';
 
@@ -26,11 +26,11 @@ import MyWorkspaceView from '@nexus/views/MyWorkspaceView';
 import { useGlobalChatAlerts } from './hooks/useGlobalChatAlerts';
 import { usePresence } from './hooks/usePresence';
 
-import ConfirmationModal from './components/ConfirmationModal';
-import OfferModal from './components/OfferModal';
-import ClientModal from './components/ClientModal';
+import ConfirmationModal from '@shared/components/ConfirmationModal';
+import OfferModal from '@crm/components/OfferModal';
+import ClientModal from '@crm/components/ClientModal';
 import ReferralsView from './components/ReferralsView';
-import Sidebar from './components/Sidebar';
+import Sidebar from '@shared/components/Sidebar';
 import { navGroups } from './constants/navigation';
 
 import DashboardView from '@crm/views/DashboardView';
@@ -48,8 +48,8 @@ import PeopleView from '@people/views/PeopleView';
 import AcceptInviteView from '@auth/views/AcceptInviteView';
 import ProfileView from '@core/profile/views/ProfileView';
 import BirthdayCelebration from './components/BirthdayCelebration';
-import AvatarFrame from './components/AvatarFrame';
-import ThemeEffects from './components/ThemeEffects';
+import AvatarFrame from '@shared/components/AvatarFrame';
+import ThemeEffects from '@shared/components/ThemeEffects';
 import EmployeeSurveyModal from './components/EmployeeSurveyModal';
 import WaitingInviteView from '@auth/views/WaitingInviteView';
 import ChatView from '@chat/views/ChatView';

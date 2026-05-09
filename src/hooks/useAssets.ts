@@ -5,7 +5,7 @@ import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { toast } from 'sonner';
 
-import { usePermissions } from './usePermissions';
+import { usePermissions } from '@auth/hooks/usePermissions';
 
 /**
  * Custom Hook to manage assets business logic.

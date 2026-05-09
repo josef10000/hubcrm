@@ -1,7 +1,7 @@
 import { doc, updateDoc } from 'firebase/firestore';
-import { auth, db } from './lib/firebase';
-import { authFetch } from './lib/authFetch';
-import { Client } from './types';
+import { auth, db } from '@/lib/firebase';
+import { authFetch } from '@/lib/authFetch';
+import { Client } from '@/types';
 
 export const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 

@@ -10,8 +10,8 @@ import { toast } from 'sonner';
 import { OnboardingQuestion } from '@/types';
 import { usePermissions } from '@auth/hooks/usePermissions';
 import { useDialog } from '@auth/contexts/DialogContext';
-import TagManager from '@/components/settings/TagManager';
-import RoleManagement from '@/components/settings/RoleManagement';
+import TagManager from '@admin/components/TagManager';
+import RoleManagement from '@admin/components/RoleManagement';
 
 export default function AdministrativeView() {
   const {

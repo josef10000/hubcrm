@@ -6,7 +6,7 @@ import {
 import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
 import { WikiArticle, WikiComment } from '@/types';
-import { CRMStoreState } from '@/types';
+import { CRMStoreState } from '../types';
 
 export interface WikiSlice {
   wikiArticles: WikiArticle[];
