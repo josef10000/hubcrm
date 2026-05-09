@@ -1,4 +1,4 @@
-import { Client } from '../types';
+import { Client } from '@/types';
 
 /**
  * Calcula o Health Score de um cliente (0-100)

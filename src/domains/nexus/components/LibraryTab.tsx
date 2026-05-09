@@ -1,5 +1,6 @@
 import React from 'react';
-import { useNexusStore, NexusBook } from '@store/useNexusStore';
+import { useNexusStore } from '@store/useNexusStore';
+import type { NexusBook } from '@store/useNexusStore';
 import { toast } from 'sonner';
 
 interface LibraryTabProps {

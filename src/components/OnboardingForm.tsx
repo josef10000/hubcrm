@@ -4,7 +4,7 @@ import { doc, getDoc, setDoc, updateDoc, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { CheckCircle, Globe, Building2, Mail, Phone, User as UserIcon, FileText, Upload, Image as ImageIcon, X } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
-import { getPlanPrice, getSetupPrice } from '../helpers';
+import { getPlanPrice, getSetupPrice } from '@/helpers';
 import { uploadImageToImgBB } from '@/lib/imgbb';
 
 export default function OnboardingForm() {

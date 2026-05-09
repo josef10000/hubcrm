@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Clock, MessageSquare, CheckCircle, Trash2, User, Phone, Image as ImageIcon, Download } from 'lucide-react';
-import { useDialog } from '@/contexts/DialogContext';
+import { useDialog } from '@auth/contexts/DialogContext';
 
 interface SupportCardProps {
   req: any;

@@ -4,7 +4,7 @@ import {
   BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer 
 } from 'recharts';
 import { useCRM } from '@crm/contexts/CRMContext';
-import { getPlanPrice } from '../helpers';
+import { getPlanPrice } from '@/helpers';
 
 export default function AnalyticsView() {
   const { clients = [] } = useCRM();

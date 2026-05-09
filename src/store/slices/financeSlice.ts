@@ -6,7 +6,7 @@ import {
 import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
 import { Transaction, TransactionCategory, Budget } from '@/types';
-import { CRMStoreState } from '../types';
+import { CRMStoreState } from '@/types';
 
 export interface FinanceSlice {
   transactions: Transaction[];

@@ -8,7 +8,7 @@ import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useDialog } from '@/contexts/DialogContext';
+import { useDialog } from '@auth/contexts/DialogContext';
 
 interface WikiCommentSectionProps {
   articleId: string;

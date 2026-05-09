@@ -12,7 +12,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import WikiCommentSection from './WikiCommentSection';
 import { usePermissions } from '@auth/hooks/usePermissions';
-import { useDialog } from '@/contexts/DialogContext';
+import { useDialog } from '@auth/contexts/DialogContext';
 
 interface WikiArticleDetailProps {
   article: WikiArticle;

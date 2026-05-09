@@ -6,7 +6,7 @@ import { useDialog } from '@auth/contexts/DialogContext';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
 import { toast } from 'sonner';
-import { UserRole } from '../types';
+import { UserRole } from '@/types';
 
 interface Member {
   uid: string;

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { CreditCard, AlertTriangle, UserCheck, Activity, CheckCircle, Trash2, TrendingDown } from 'lucide-react';
 import { useCRM } from '@crm/contexts/CRMContext';
-import { getPlanPrice } from '../helpers';
+import { getPlanPrice } from '@/helpers';
 import BankReconciliation from '@/components/finance/BankReconciliation';
 import CategoryManager from '@/components/finance/CategoryManager';
 

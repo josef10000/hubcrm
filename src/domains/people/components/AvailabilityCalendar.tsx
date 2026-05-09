@@ -7,7 +7,7 @@ import { Appointment, AvailabilityBlock } from '@/types/people';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { clsx } from 'clsx';
-import { useDialog } from '@/contexts/DialogContext';
+import { useDialog } from '@auth/contexts/DialogContext';
 
 interface AvailabilityCalendarProps {
   userId: string;

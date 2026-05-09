@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Offer, Client, ClientPlan } from '../types';
+import { Offer, Client, ClientPlan } from '@/types';
 import { authFetch } from '@/lib/authFetch';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';

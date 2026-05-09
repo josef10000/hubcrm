@@ -2,7 +2,7 @@ import React from 'react';
 import { LifeBuoy, Clock, Users, ArrowRightLeft, Star, CheckCircle } from 'lucide-react';
 import { useSupport } from '@/hooks/useSupport';
 import { SupportCard } from '@support/components/SupportCard';
-import SupportRequestModal from '@/components/SupportRequestModal';
+import SupportRequestModal from '@support/components/SupportRequestModal';
 import { QuickTicketButton } from '@support/components/QuickTicketButton';
 import { useState } from 'react';
 

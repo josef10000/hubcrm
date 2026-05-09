@@ -13,7 +13,7 @@ import UserStatusSelector from './UserStatusSelector';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import CreateChannelModal from './CreateChannelModal';
 import ExploreChannelsModal from './ExploreChannelsModal';
-import { useDialog } from '@/contexts/DialogContext';
+import { useDialog } from '@auth/contexts/DialogContext';
 
 interface ChatSidebarProps {
   chats: Chat[];

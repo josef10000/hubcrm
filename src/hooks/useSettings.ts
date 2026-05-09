@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { OnboardingQuestion } from '../types';
+import { OnboardingQuestion } from '@/types';
 
 export function useSettings(userId: string) {
   // ── Theme ──

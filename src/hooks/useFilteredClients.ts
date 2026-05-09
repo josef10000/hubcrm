@@ -1,6 +1,6 @@
 import { useMemo, useDeferredValue } from 'react';
-import { Client, SiteStatus } from '../types';
-import { getPlanPrice } from '../helpers';
+import { Client, SiteStatus } from '@/types';
+import { getPlanPrice } from '@/helpers';
 
 export function useFilteredClients(
   clients: Client[],

@@ -25,12 +25,12 @@ import {
   Globe
 } from 'lucide-react';
 import { usePermissions } from '@auth/hooks/usePermissions';
-import AssetManager from '@/components/AssetManager';
-import FeedbackBoard from '@/components/FeedbackBoard';
-import CareerTimeline from '@/components/CareerTimeline';
-import AddMilestoneModal from '@/components/AddMilestoneModal';
-import SkillRadar from '@/components/SkillRadar';
-import EditSkillsModal from '@/components/EditSkillsModal';
+import AssetManager from '@people/components/AssetManager';
+import FeedbackBoard from '@people/components/FeedbackBoard';
+import CareerTimeline from '@people/components/CareerTimeline';
+import AddMilestoneModal from '@people/components/AddMilestoneModal';
+import SkillRadar from '@people/components/SkillRadar';
+import EditSkillsModal from '@people/components/EditSkillsModal';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, doc, updateDoc, setDoc, deleteDoc, arrayUnion, arrayRemove, orderBy } from 'firebase/firestore';
@@ -40,8 +40,8 @@ import { useCRM } from '@crm/contexts/CRMContext';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { VacationPeriod, PDICategory, PDIAction } from '@/types/people';
-import { PDIKanban } from '@/components/PDIKanban';
-import { EnergyScoreCard } from '@/components/EnergyScoreCard';
+import { PDIKanban } from '@people/components/PDIKanban';
+import { EnergyScoreCard } from '@people/components/EnergyScoreCard';
 
 type PeopleSubTab = 'dashboard' | 'onboarding' | 'development' | 'career' | 'mural' | 'assets' | 'vacations' | 'climate';
 

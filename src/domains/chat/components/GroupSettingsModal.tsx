@@ -4,7 +4,7 @@ import { uploadImageToImgBB } from '@/lib/imgbb';
 import { Chat } from '@/types/chat.types';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
-import { useDialog } from '@/contexts/DialogContext';
+import { useDialog } from '@auth/contexts/DialogContext';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { toast } from 'sonner';

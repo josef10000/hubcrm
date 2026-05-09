@@ -8,15 +8,15 @@ import { useFilteredClients } from '@/hooks/useFilteredClients';
 import { getPlanPrice } from '@/helpers';
 import { usePermissions } from '@auth/hooks/usePermissions';
 
-import AlertPanels from '@/components/AlertPanels';
-import MetricsGrid from '@/components/MetricsGrid';
-import FinancialCharts from '@/components/FinancialCharts';
-import ClientsGrid from '@/components/ClientsGrid';
-import { OverdueAlertWidget } from '@/components/OverdueAlertWidget';
-import { CashFlowProjection } from '@/components/CashFlowProjection';
-import { RecentKudosWidget } from '@/components/RecentKudosWidget';
+import AlertPanels from '@crm/components/AlertPanels';
+import MetricsGrid from '@crm/components/MetricsGrid';
+import FinancialCharts from '@crm/components/FinancialCharts';
+import ClientsGrid from '@crm/components/ClientsGrid';
+import { OverdueAlertWidget } from '@crm/components/OverdueAlertWidget';
+import { CashFlowProjection } from '@crm/components/CashFlowProjection';
+import { RecentKudosWidget } from '@crm/components/RecentKudosWidget';
 import { calculateHealthScore } from '@/helpers/healthCalculation';
-import MyCornerWidget from '@/components/MyCornerWidget';
+import MyCornerWidget from '@crm/components/MyCornerWidget';
 
 const COLORS = ['#f97316', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#f43f5e'];
 

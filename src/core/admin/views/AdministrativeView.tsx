@@ -7,7 +7,7 @@ import { useCRM } from '@crm/contexts/CRMContext';
 import { db } from '@/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
-import { OnboardingQuestion } from '../types';
+import { OnboardingQuestion } from '@/types';
 import { usePermissions } from '@auth/hooks/usePermissions';
 import { useDialog } from '@auth/contexts/DialogContext';
 import TagManager from '@/components/settings/TagManager';

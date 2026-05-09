@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
 import { ChatMessage } from '@/types/chat.types';
 import { useAuth } from '@auth/contexts/AuthContext';
-import { useDialog } from '@/contexts/DialogContext';
+import { useDialog } from '@auth/contexts/DialogContext';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { formatChatTime, formatChatDateTime, highlightMentions } from '@/helpers/chatHelpers';
 import { ReminderModal } from './ReminderModal';

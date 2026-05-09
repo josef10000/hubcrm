@@ -3,7 +3,7 @@ import { MessageSquare, Star, Heart, AlertCircle, Plus, Trash2, Shield, Lock, Gl
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, orderBy, limit } from 'firebase/firestore';
 import { useAuth } from '@auth/contexts/AuthContext';
-import { useDialog } from '@/contexts/DialogContext';
+import { useDialog } from '@auth/contexts/DialogContext';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
 import { FeedbackNote } from '@/types/people';

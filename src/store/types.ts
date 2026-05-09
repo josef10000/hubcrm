@@ -2,7 +2,7 @@ import {
   Client, Offer, Lead, UserProfile, Tag, WikiArticle, 
   Transaction, TransactionCategory, Budget, CommissionEntry,
   SupportRequest, OnboardingQuestion
-} from '../types';
+} from '@/types';
 import { VacationPeriod, Appointment } from '@/types/people';
 import { CRMSlice } from './slices/crmSlice';
 import { WikiSlice } from './slices/wikiSlice';

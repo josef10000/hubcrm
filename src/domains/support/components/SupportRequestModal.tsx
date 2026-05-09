@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { toast } from 'sonner';
-import { Client, WikiArticle } from '../types';
+import { Client, WikiArticle } from '@/types';
 
 interface SupportRequestModalProps {
   isOpen: boolean;

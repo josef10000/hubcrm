@@ -9,8 +9,8 @@ import { collection, doc, setDoc, onSnapshot, deleteDoc, addDoc, updateDoc } fro
 import { User } from 'firebase/auth';
 import { toast } from 'sonner';
 import { authFetch } from '@/lib/authFetch';
-import { Client, ClientLog, ClientCredential, ClientStage, OnboardingQuestion, Offer, SiteStatus, ClientContract } from '../types';
-import { getPlanPrice, getSetupPrice } from '../helpers';
+import { Client, ClientLog, ClientCredential, ClientStage, OnboardingQuestion, Offer, SiteStatus, ClientContract } from '@/types';
+import { getPlanPrice, getSetupPrice } from '@/helpers';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { usePermissions } from '@auth/hooks/usePermissions';

@@ -5,7 +5,7 @@ import { db, storage } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { CheckCircle, Globe, Building2, Mail, Phone, User as UserIcon, FileText, Check, ArrowRight, ArrowLeft, Loader2, Upload } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
-import { Offer } from '../types';
+import { Offer } from '@/types';
 import { uploadImageToImgBB } from '@/lib/imgbb';
 
 export default function PublicCheckoutPage() {

@@ -1,4 +1,4 @@
-import { UserRole, UserProfile } from '../types';
+import { UserRole, UserProfile } from '@/types';
 
 export interface OnboardingTask {
   id: string;

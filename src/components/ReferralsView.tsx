@@ -5,8 +5,8 @@ import { User } from 'firebase/auth';
 import { db } from '@/lib/firebase';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { toast } from 'sonner';
-import { Client, SiteStatus } from '../types';
-import { getPlanPrice, updateReferrerSubscription } from '../helpers';
+import { Client, SiteStatus } from '@/types';
+import { getPlanPrice, updateReferrerSubscription } from '@/helpers';
 
 export default
 function ReferralsView({ clients, user }: { clients: Client[], user: User }) {

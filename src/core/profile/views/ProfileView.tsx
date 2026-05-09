@@ -15,7 +15,7 @@ import { doc, getDoc, collection, setDoc, query, where, onSnapshot } from 'fireb
 import { uploadToCloudinary } from '@/lib/cloudinary';
 import { usePermissions } from '@auth/hooks/usePermissions';
 import { VacationPeriod } from '@/types/people';
-import { UserProfile } from '../types';
+import { UserProfile } from '@/types';
 import { PDICategory } from '@/types/people';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';

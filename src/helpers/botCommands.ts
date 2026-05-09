@@ -10,8 +10,8 @@ import {
   getDoc
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { UserProfile, Client, Transaction } from '../types';
-import { getPlanPrice } from '../helpers';
+import { UserProfile, Client, Transaction } from '@/types';
+import { getPlanPrice } from '@/helpers';
 
 /**
  * Função utilitária para converter strings de data flexíveis (DD/MM/YYYY, YYYY-MM-DD, DD/MM) 

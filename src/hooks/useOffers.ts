@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { collection, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
-import { Offer } from '../types';
+import { Offer } from '@/types';
 import { toast } from 'sonner';
 
 export function useOffers(userId: string, offers: Offer[], setOffers: React.Dispatch<React.SetStateAction<Offer[]>>) {

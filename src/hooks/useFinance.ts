@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Expense, Transaction, TransactionCategory, Budget } from '../types';
+import { Expense, Transaction, TransactionCategory, Budget } from '@/types';
 
 export function useFinance(userId: string) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);

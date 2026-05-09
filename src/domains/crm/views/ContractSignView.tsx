@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Client, ClientContract, ClientLog } from '../types';
+import { Client, ClientContract, ClientLog } from '@/types';
 import { FileSignature, ShieldCheck, CheckCircle, Clock, Loader2, FileUp, AlertCircle, FileText } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '@auth/contexts/AuthContext';
-import { Lead, LeadStatus } from '../types';
+import { Lead, LeadStatus } from '@/types';
 import { Plus, DollarSign, Target, UserPlus, Search, TrendingUp, Users } from 'lucide-react';
 import { useLeads } from '@/hooks/useLeads';
 import { LeadCard } from '@crm/components/leads/LeadCard';

@@ -1,4 +1,4 @@
-import { Client, Offer, CommissionEntry } from '../types';
+import { Client, Offer, CommissionEntry } from '@/types';
 
 /**
  * Calcula a comissão para um cliente baseado na oferta associada.

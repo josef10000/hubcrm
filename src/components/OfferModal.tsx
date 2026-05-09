@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Star } from 'lucide-react';
-import { Offer } from '../types';
+import { Offer } from '@/types';
 
 export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Offer>) => void, onDelete?: (id: string) => void, initialData: Partial<Offer> | null }) {
   const [formData, setFormData] = useState<Partial<Offer>>({
