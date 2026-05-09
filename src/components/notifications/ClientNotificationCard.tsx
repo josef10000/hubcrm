@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Clock, CheckCircle2, AlertCircle, Send, Loader2, Calendar, UserCheck, FileText, AlertTriangle, ChevronDown, ChevronUp, Bell, BellOff } from 'lucide-react';
-import { Client } from '../../types';
-import { useCRM } from '../../contexts/CRMContext';
+import { Client } from '@/types';
+import { useCRM } from '@crm/contexts/CRMContext';
 import { toast } from 'sonner';
 
 interface ClientNotificationCardProps {

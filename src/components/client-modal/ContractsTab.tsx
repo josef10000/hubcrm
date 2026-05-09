@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Plus, FileSignature, FileUp, CheckCircle, Loader2, Trash2, Eye, Link as LinkIcon, Copy } from 'lucide-react';
-import { useDialog } from '../../contexts/DialogContext';
+import { useDialog } from '@/contexts/DialogContext';
 import { doc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../lib/firebase';
 import { toast } from 'sonner';
-import { Client, ClientContract } from '../../types';
+import { Client, ClientContract } from '@/types';
 import { User } from 'firebase/auth';
 
 interface ContractsTabProps {

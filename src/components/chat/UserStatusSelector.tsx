@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { usePresence } from '../../hooks/usePresence';
+import { useAuth } from '@auth/contexts/AuthContext';
+import { usePresence } from '@/hooks/usePresence';
 import { ChevronDown, Circle, Coffee, Users, Clock, Globe } from 'lucide-react';
 
 export default function UserStatusSelector() {

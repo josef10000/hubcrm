@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '@auth/contexts/AuthContext';
 
 interface AvatarFrameProps {
   children: React.ReactNode;

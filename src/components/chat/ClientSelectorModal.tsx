@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Search, X, User, Hash, Globe, Building2 } from 'lucide-react';
-import { useCRM } from '../../contexts/CRMContext';
-import { Client } from '../../types';
+import { useCRM } from '@crm/contexts/CRMContext';
+import { Client } from '@/types';
 
 interface ClientSelectorModalProps {
   isOpen: boolean;

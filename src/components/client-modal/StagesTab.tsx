@@ -1,6 +1,6 @@
 import React from 'react';
 import { CheckCircle } from 'lucide-react';
-import { ClientStage } from '../../types';
+import { ClientStage } from '@/types';
 
 interface StagesTabProps {
   stages: ClientStage[];

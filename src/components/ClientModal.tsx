@@ -11,9 +11,9 @@ import { toast } from 'sonner';
 import { authFetch } from '../lib/authFetch';
 import { Client, ClientLog, ClientCredential, ClientStage, OnboardingQuestion, Offer, SiteStatus, ClientContract } from '../types';
 import { getPlanPrice, getSetupPrice } from '../helpers';
-import { useCRM } from '../contexts/CRMContext';
-import { useAuth } from '../contexts/AuthContext';
-import { usePermissions } from '../hooks/usePermissions';
+import { useCRM } from '@crm/contexts/CRMContext';
+import { useAuth } from '@auth/contexts/AuthContext';
+import { usePermissions } from '@auth/hooks/usePermissions';
 import { Tag as LucideTag } from 'lucide-react';
 
 // ── Tab Components ──

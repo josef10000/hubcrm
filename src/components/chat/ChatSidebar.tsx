@@ -5,15 +5,15 @@ import { doc, updateDoc, deleteDoc, collection, getDocs, writeBatch } from 'fire
 import { toast } from 'sonner';
 import { Chat } from '../../types/chat.types';
 import { formatChatTime } from '../../helpers/chatHelpers';
-import { useAuth } from '../../contexts/AuthContext';
-import { useCRM } from '../../contexts/CRMContext';
+import { useAuth } from '@auth/contexts/AuthContext';
+import { useCRM } from '@crm/contexts/CRMContext';
 import CreateGroupModal from './CreateGroupModal';
 import NewChatModal from './NewChatModal';
 import UserStatusSelector from './UserStatusSelector';
-import { useBookmarks } from '../../hooks/useBookmarks';
+import { useBookmarks } from '@/hooks/useBookmarks';
 import CreateChannelModal from './CreateChannelModal';
 import ExploreChannelsModal from './ExploreChannelsModal';
-import { useDialog } from '../../contexts/DialogContext';
+import { useDialog } from '@/contexts/DialogContext';
 
 interface ChatSidebarProps {
   chats: Chat[];

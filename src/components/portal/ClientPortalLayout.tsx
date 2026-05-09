@@ -12,7 +12,7 @@ import {
   X,
   Bell
 } from 'lucide-react';
-import { usePortalData } from '../../hooks/usePortalData';
+import { usePortalData } from '@/hooks/usePortalData';
 import { Toaster } from 'sonner';
 
 // Importando as views

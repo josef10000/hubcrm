@@ -3,8 +3,8 @@ import { Smile, Send, X, CheckCircle } from 'lucide-react';
 import { db } from '../lib/firebase';
 import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
-import { useAuth } from '../contexts/AuthContext';
-import { useCRM } from '../contexts/CRMContext';
+import { useAuth } from '@auth/contexts/AuthContext';
+import { useCRM } from '@crm/contexts/CRMContext';
 import { differenceInDays } from 'date-fns';
 
 export default function EmployeeSurveyModal() {

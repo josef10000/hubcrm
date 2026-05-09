@@ -4,7 +4,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { authFetch } from '../../lib/authFetch';
 import { toast } from 'sonner';
-import { Client } from '../../types';
+import { Client } from '@/types';
 import { User } from 'firebase/auth';
 
 interface ReferralsTabProps {

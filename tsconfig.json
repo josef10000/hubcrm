@@ -16,9 +16,18 @@
     "allowJs": true,
     "jsx": "react-jsx",
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./src/*"],
+      "@crm/*": ["./src/domains/crm/*"],
+      "@chat/*": ["./src/domains/chat/*"],
+      "@nexus/*": ["./src/domains/nexus/*"],
+      "@wiki/*": ["./src/domains/wiki/*"],
+      "@finance/*": ["./src/domains/finance/*"],
+      "@people/*": ["./src/domains/people/*"],
+      "@shared/*": ["./src/shared/*"],
+      "@core/*": ["./src/core/*"],
+      "@auth/*": ["./src/core/auth/*"],
+      "@store/*": ["./src/store/*"],
+      "@/*": ["./src/*"]
     },
     "allowImportingTsExtensions": true,
     "noEmit": true

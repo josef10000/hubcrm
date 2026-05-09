@@ -10,7 +10,7 @@ import {
   Zap,
   Users
 } from 'lucide-react';
-import { Client, ClientPlan } from '../../types';
+import { Client, ClientPlan } from '@/types';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 

@@ -1,6 +1,6 @@
 import React from 'react';
-import { useNexusStore } from '../../store/useNexusStore';
-import type { NexusTask } from '../../store/useNexusStore';
+import { useNexusStore } from '@store/useNexusStore';
+import type { NexusTask } from '@store/useNexusStore';
 
 export const TasksTab: React.FC = () => {
   const tasks = useNexusStore(state => state.tasks);

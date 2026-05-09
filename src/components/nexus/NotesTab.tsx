@@ -1,6 +1,6 @@
 import React from 'react';
-import { useNexusStore } from '../../store/useNexusStore';
-import type { NexusNote } from '../../store/useNexusStore';
+import { useNexusStore } from '@store/useNexusStore';
+import type { NexusNote } from '@store/useNexusStore';
 import { toast } from 'sonner';
 
 interface NotesTabProps {

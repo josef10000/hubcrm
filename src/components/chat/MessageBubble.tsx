@@ -2,9 +2,9 @@ import { User, Paperclip, Check, CheckCheck, Trash2, Reply, Smile, Bookmark, Pin
 import { useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
 import { ChatMessage } from '../../types/chat.types';
-import { useAuth } from '../../contexts/AuthContext';
-import { useDialog } from '../../contexts/DialogContext';
-import { useCRM } from '../../contexts/CRMContext';
+import { useAuth } from '@auth/contexts/AuthContext';
+import { useDialog } from '@/contexts/DialogContext';
+import { useCRM } from '@crm/contexts/CRMContext';
 import { formatChatTime, formatChatDateTime, highlightMentions } from '../../helpers/chatHelpers';
 import { ReminderModal } from './ReminderModal';
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Search, MessageCircle, User } from 'lucide-react';
-import { useCRM } from '../../contexts/CRMContext';
-import { useAuth } from '../../contexts/AuthContext';
+import { useCRM } from '@crm/contexts/CRMContext';
+import { useAuth } from '@auth/contexts/AuthContext';
 import { db } from '../../lib/firebase';
 import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { toast } from 'sonner';

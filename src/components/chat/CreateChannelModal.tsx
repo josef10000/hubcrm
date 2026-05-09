@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { X, Hash, Lock, Globe, Camera, Loader2 } from 'lucide-react';
 import { db } from '../../lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { useAuth } from '../../contexts/AuthContext';
-import { useCRM } from '../../contexts/CRMContext';
+import { useAuth } from '@auth/contexts/AuthContext';
+import { useCRM } from '@crm/contexts/CRMContext';
 import { toast } from 'sonner';
 import { uploadImageToImgBB } from '../../lib/imgbb';
-import { useChatStore } from '../../store/useChatStore';
+import { useChatStore } from '@store/useChatStore';
 
 interface CreateChannelModalProps {
   isOpen: boolean;

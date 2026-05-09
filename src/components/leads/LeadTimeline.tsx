@@ -1,5 +1,5 @@
 import React from 'react';
-import { LeadActivity, LeadStatus } from '../../types';
+import { LeadActivity, LeadStatus } from '@/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { PhoneCall, Users, MessageSquare, ArrowRight, FileText, Star } from 'lucide-react';

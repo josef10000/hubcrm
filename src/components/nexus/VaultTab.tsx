@@ -1,6 +1,6 @@
 import React from 'react';
-import { useNexusStore } from '../../store/useNexusStore';
-import type { LinkFolder, PersonalLink } from '../../store/useNexusStore';
+import { useNexusStore } from '@store/useNexusStore';
+import type { LinkFolder, PersonalLink } from '@store/useNexusStore';
 import { toast } from 'sonner';
 
 interface VaultTabProps {

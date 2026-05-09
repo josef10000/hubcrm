@@ -2,7 +2,7 @@ import React from 'react';
 import { Phone, Mail, GripVertical, TrendingUp, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Lead } from '../../types';
+import { Lead } from '@/types';
 import { LeadTimeline } from './LeadTimeline';
 import { calculateHealthScore, getHealthColor } from '../../helpers/healthCalculation';
 

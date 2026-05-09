@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useNexusStore } from '../../store/useNexusStore';
+import { useNexusStore } from '@store/useNexusStore';
 import { toast } from 'sonner';
 
 interface GoalsTabProps {

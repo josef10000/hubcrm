@@ -1,6 +1,6 @@
 import React from 'react';
 import { ShoppingBag, Calendar, ExternalLink, CreditCard } from 'lucide-react';
-import { Client, ClientPlan } from '../../types';
+import { Client, ClientPlan } from '@/types';
 
 interface PurchasesTabProps {
   client: Client;

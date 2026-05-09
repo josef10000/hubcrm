@@ -3,7 +3,7 @@ import { Plus, Copy, Trash2, AlertTriangle } from 'lucide-react';
 import { auth, db } from '../../lib/firebase';
 import { collection, doc, setDoc, onSnapshot, deleteDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
-import { ClientCredential } from '../../types';
+import { ClientCredential } from '@/types';
 
 interface CredentialsTabProps {
   clientId: string;

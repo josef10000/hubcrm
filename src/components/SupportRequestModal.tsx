@@ -6,7 +6,7 @@ import {
   History, Send, Info, Clock, ShieldAlert,
   Hash, Globe, Phone, Mail
 } from 'lucide-react';
-import { useCRM } from '../contexts/CRMContext';
+import { useCRM } from '@crm/contexts/CRMContext';
 import { toast } from 'sonner';
 import { Client, WikiArticle } from '../types';
 

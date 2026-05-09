@@ -14,8 +14,8 @@ import { ChevronLeft, ChevronRight, DollarSign, Package, Calendar as CalendarIco
 import { getPlanPrice } from '../helpers';
 import { Client, UserProfile } from '../types';
 import { VacationPeriod } from '../types/people';
-import { useCRM } from '../contexts/CRMContext';
-import { usePermissions } from '../hooks/usePermissions';
+import { useCRM } from '@crm/contexts/CRMContext';
+import { usePermissions } from '@auth/hooks/usePermissions';
 
 interface CalendarViewProps {
   clients: Client[];

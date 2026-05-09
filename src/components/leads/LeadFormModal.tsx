@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { X, Calendar, UserCircle, ChevronDown, History, PhoneCall, Users, ArrowRight, MessageSquare, Send } from 'lucide-react';
 import { format } from 'date-fns';
-import { Lead } from '../../types';
+import { Lead } from '@/types';
 import { leadService } from '../../services/leadService';
 import { toast } from 'sonner';
-import { usePermissions } from '../../hooks/usePermissions';
+import { usePermissions } from '@auth/hooks/usePermissions';
 import { defaultRoles } from '../../constants/permissions';
 
 interface LeadFormModalProps {

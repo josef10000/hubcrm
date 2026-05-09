@@ -1,6 +1,6 @@
 import React from 'react';
 import { CheckCircle, Clock, Trash2 } from 'lucide-react';
-import { ClientLog } from '../../types';
+import { ClientLog } from '@/types';
 
 interface HistoryTabProps {
   logs: ClientLog[];

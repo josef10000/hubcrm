@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FileText, Sparkles, Wand2, Download, Copy, X, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
-import { OnboardingQuestion } from '../../types';
+import { OnboardingQuestion } from '@/types';
 
 interface OnboardingTabProps {
   onboardingAnswers: Record<string, any> | undefined;

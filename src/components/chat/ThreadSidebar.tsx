@@ -3,8 +3,8 @@ import { X, MessageSquareText, Hash } from 'lucide-react';
 import { ChatMessage, Chat } from '../../types/chat.types';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
-import { useChat } from '../../hooks/useChat';
-import { useAuth } from '../../contexts/AuthContext';
+import { useChat } from '@/hooks/useChat';
+import { useAuth } from '@auth/contexts/AuthContext';
 import { Timestamp } from 'firebase/firestore';
 
 interface ThreadSidebarProps {
