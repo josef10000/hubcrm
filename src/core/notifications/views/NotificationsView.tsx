@@ -3,7 +3,7 @@ import { Bell, Search, Filter, Info, Mail, LayoutGrid, List, SlidersHorizontal, 
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useUI } from '@/contexts/UIContext';
-import ClientNotificationCard from '@core/notifications/components/ClientNotificationCard';
+import ClientNotificationCard from '@crm/components/notifications/ClientNotificationCard';
 
 export default function NotificationsView() {
   const { clients, isSyncing, syncPayments } = useCRM();

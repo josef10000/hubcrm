@@ -15,6 +15,7 @@
     "moduleDetection": "force",
     "allowJs": true,
     "jsx": "react-jsx",
+    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "@crm/*": ["./src/domains/crm/*"],
@@ -26,6 +27,7 @@
       "@shared/*": ["./src/shared/*"],
       "@core/*": ["./src/core/*"],
       "@auth/*": ["./src/core/auth/*"],
+      "@admin/*": ["./src/core/admin/*"],
       "@support/*": ["./src/domains/support/*"],
       "@store/*": ["./src/store/*"]
     },

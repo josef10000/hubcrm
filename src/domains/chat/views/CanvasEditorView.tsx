@@ -41,7 +41,7 @@ export default function CanvasEditorView() {
   const assetStore = useMemo(() => ({
     async upload(_asset: any, file: File) {
       try {
-        const { uploadImageToImgBB } = await import('../lib/imgbb');
+        const { uploadImageToImgBB } = await import('@/lib/imgbb');
         const url = await uploadImageToImgBB(file);
         if (url) return { src: url };
         throw new Error("Upload failed");
