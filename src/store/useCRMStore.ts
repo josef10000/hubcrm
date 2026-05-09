@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { 
-  collection, doc, setDoc, addDoc, deleteDoc, onSnapshot, 
+  collection, doc, setDoc, addDoc, deleteDoc, updateDoc, onSnapshot, 
   query, where, serverTimestamp, arrayUnion, arrayRemove, getDoc 
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -58,8 +58,9 @@ interface CRMState {
   // Wiki Actions
   handleSaveWikiArticle: (articleData: Partial<WikiArticle>) => Promise<void>;
   handleDeleteWikiArticle: (articleId: string) => Promise<void>;
-  handleToggleWikiStar: (articleId: string, userId: string) => Promise<void>;
+  handleToggleWikiStar: (articleId: string) => Promise<void>;
   handleAddWikiComment: (articleId: string, comment: Partial<WikiComment>) => Promise<void>;
+  handleMarkWikiArticleAsRead: (articleId: string) => Promise<void>;
   
   // People/HR Actions
   handleSaveVacationRequest: (vacationData: Partial<VacationPeriod>) => Promise<void>;
@@ -299,14 +300,25 @@ export const useCRMStore = create<CRMState>()(
     toast.success('Artigo removido.');
   },
 
-  handleToggleWikiStar: async (articleId, userId) => {
+  handleToggleWikiStar: async (articleId) => {
     const orgId = get().effectiveOrgId;
-    if (!orgId) return;
+    const userId = get().currentUserId;
+    if (!orgId || !userId) return;
+    
     const article = get().wikiArticles.find(a => a.id === articleId);
     if (!article) return;
+    
     const stars = article.stars || [];
-    const newStars = stars.includes(userId) ? stars.filter(u => u !== userId) : [...stars, userId];
-    await setDoc(doc(db, 'organizations', orgId, 'wikiArticles', articleId), { stars: newStars }, { merge: true });
+    const isStarred = stars.includes(userId);
+    const newStars = isStarred ? stars.filter(u => u !== userId) : [...stars, userId];
+    
+    try {
+      await setDoc(doc(db, 'organizations', orgId, 'wikiArticles', articleId), { 
+        stars: newStars 
+      }, { merge: true });
+    } catch (err) {
+      console.error("[CRMStore] Error toggling wiki star:", err);
+    }
   },
 
   handleAddWikiComment: async (articleId, comment) => {
@@ -318,6 +330,19 @@ export const useCRMStore = create<CRMState>()(
       id: commentId,
       createdAt: Date.now()
     });
+  },
+
+  handleMarkWikiArticleAsRead: async (articleId) => {
+    const userId = get().currentUserId;
+    if (!userId) return;
+    try {
+      const profileRef = doc(db, 'profiles', userId);
+      await updateDoc(profileRef, {
+        viewedWikiArticles: arrayUnion(articleId)
+      });
+    } catch (err) {
+      console.error("[CRMStore] Error marking wiki as read:", err);
+    }
   },
 
   handleSaveVacationRequest: async (vacationData) => {
