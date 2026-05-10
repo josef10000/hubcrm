@@ -1,7 +1,7 @@
 # <p align="center">🔐 HUB CENTRAL — INTELLIGENCE ECOSYSTEM</p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Enterprise_OS-v8.0.10-3b82f6?style=for-the-badge&labelColor=0a0a0a" alt="Version" />
+  <img src="https://img.shields.io/badge/Enterprise_OS-v8.1.0-3b82f6?style=for-the-badge&labelColor=0a0a0a" alt="Version" />
   <img src="https://img.shields.io/badge/Architecture-Collaboration_Bots-blueviolet?style=for-the-badge&labelColor=0a0a0a" alt="Architecture" />
   <img src="https://img.shields.io/badge/Status-Pro_Collaboration-emerald?style=for-the-badge&labelColor=0a0a0a" alt="Status" />
 </p>
@@ -27,16 +27,17 @@ Nossa arquitetura descentralizada garante que cada cargo (dos 13 níveis sistêm
 
 ---
 
-## ✨ Estrela da Versão: Hub Modular v8.0.10
-O **Hub Central v8** representa o maior salto arquitetural do ecossistema, implementando uma estrutura modular (DDD) para escala industrial e performance de latência zero.
+## ✨ Estrela da Versão: Hub Architecture v8.1.0 (Modular Evolution)
+O **Hub Central v8.1** consolida a transição para uma plataforma enterprise, focando em **desacoplamento total** e **integridade de dados industrial**.
 
-- **Arquitetura por Domínios:** Separação estrita entre `crm`, `finance`, `wiki` e `support` para eliminar conflitos e facilitar a manutenção.
-- **Context Governance:** Separação total entre estados de UI (`UIContext`) e lógica de persistência (`CRMContext`).
-- **Performance Pro:** Implementação agressiva de `React.lazy` e `Suspense`, reduzindo o bundle inicial e acelerando o LCP (Largest Contentful Paint).
-- **Zustand Core:** Gerenciamento de estado global ultra-leve com persistência inteligente e versionamento de store (v3).
+### 🏗️ Pilares Técnicos
+- **Event-Driven Architecture:** Implementação de um `EventBus` centralizado. Módulos agora se comunicam via eventos (`lead.created`, `invoice.paid`), eliminando dependências circulares.
+- **Domain Integrity (Zod):** Camada de Entidades robusta. Todo dado que flui pelo sistema é validado em runtime por schemas Zod, garantindo 100% de segurança contra `undefined`.
+- **Infrastructure Decoupling:** Serviços de Auditoria, Logs e Notificações agora são ouvintes (listeners) passivos, tornando o core de negócio mais limpo e rápido.
+- **Design System Tokens:** Consolidação do padrão **Dark Absolute** via `HUB_TOKENS`, garantindo consistência visual em todo o ecossistema Glassmorphism.
 
 > [!TIP]
-> Confira a [Documentação de APIs Externas](file:///c:/Users/Jos%C3%A9Fraz%C3%A3odaSilvaNet/OneDrive%20-%2039985%20-%20DIGITAL%20TECH%20LTDA/%C3%81rea%20de%20Trabalho/Clonecrm/hubcrm/README_APIS.md) para detalhes técnicos sobre integrações e as [Diretrizes de Engenharia](file:///c:/Users/Jos%C3%A9Fraz%C3%A3odaSilvaNet/OneDrive%20-%2039985%20-%20DIGITAL%20TECH%20LTDA/%C3%81rea%20de%20Trabalho/Clonecrm/hubcrm/ENGINEERING_GUIDELINES.md) para padrões de código.
+> Confira as [Diretrizes de Engenharia](file:///c:/Users/Jos%C3%A9Fraz%C3%A3odaSilvaNet/OneDrive%20-%2039985%20-%20DIGITAL%20TECH%20LTDA/%C3%81rea%20de%20Trabalho/Clonecrm/hubcrm/ENGINEERING_GUIDELINES.md) e a [Evolução de Arquitetura](file:///c:/Users/Jos%C3%A9Fraz%C3%A3odaSilvaNet/OneDrive%20-%2039985%20-%20DIGITAL%20TECH%20LTDA/%C3%81rea%20de%20Trabalho/Clonecrm/hubcrm/ARCHITECTURE_EVOLUTION.md) para detalhes sobre os novos padrões.
 
 ---
 
@@ -117,7 +118,8 @@ O Hub Central segue diretrizes rígidas de design para manter seu status premium
 - [x] **v8.0.5** — **Modular Architecture (DDD)** (Refactored directory structure, standardized Path Aliases & fixed cross-domain imports).
 - [x] **v8.0.9** — **Runtime Stability & Resilience** (Implemented exhaustive Null-Safety, Zustand Versioning (v3) and Defensive State Merging to prevent white-screen crashes).
 - [x] **v8.0.10** — **Resilience & Governance** (Fixed store argument swap, centralized permission hooks and implemented Context Governance).
-- [ ] **v8.1.0** — IA Integrada: Nexus Copilot para automação de tarefas.
+- [x] **v8.1.0** — **Modular Evolution** (Event Architecture, Zod Entities & Design System Consolidation).
+- [ ] **v8.2.0** — **IA Integrada**: Nexus Copilot para automação de tarefas.
 
 ---
 
