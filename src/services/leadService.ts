@@ -97,6 +97,11 @@ export const leadService = {
   /**
    * Cleans up ghost leads (leads with invalid statuses).
    */
+  cleanupGhostLeads: async (orgId: string, ghostLeads: Lead[]) => {
+    const deletePromises = ghostLeads.map(l => deleteDoc(doc(db, 'organizations', orgId, 'leads', l.id)));
+    return await Promise.all(deletePromises);
+  },
+
   /**
    * Fetches a lead by ID.
    */
