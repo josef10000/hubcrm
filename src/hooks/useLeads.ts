@@ -66,17 +66,17 @@ export function useLeads() {
       const payload: any = {
         name: formData.name.trim(),
         whatsapp: formData.whatsapp.trim(),
-        email: formData.email.trim() || undefined,
-        leadSource: formData.leadSource || undefined,
-        estimatedValue: formData.estimatedValue ? parseFloat(formData.estimatedValue) : undefined,
-        notes: formData.notes.trim() || undefined,
-        plan: formData.plan || undefined,
-        niche: formData.niche.trim() || undefined,
-        nextFollowUp: formData.nextFollowUp ? new Date(formData.nextFollowUp).getTime() : undefined,
+        email: formData.email?.trim() || null,
+        leadSource: formData.leadSource || null,
+        estimatedValue: formData.estimatedValue ? parseFloat(formData.estimatedValue) : null,
+        notes: formData.notes?.trim() || null,
+        plan: formData.plan || null,
+        niche: formData.niche?.trim() || null,
+        nextFollowUp: formData.nextFollowUp ? new Date(formData.nextFollowUp).getTime() : null,
         assignedTo: hasPermission('MANAGE_TEAM') 
           ? (formData.assignedTo || user?.uid) 
           : (user?.uid),
-        tagIds: formData.tagIds
+        tagIds: formData.tagIds || []
       };
 
       if (editingLead) {
