@@ -1,3 +1,5 @@
+import { logger } from '../utils/logger';
+
 type Handler<T = any> = (data: T) => void;
 
 class EventBus {
@@ -25,6 +27,13 @@ class EventBus {
    * Emite um evento com dados opcionais.
    */
   emit<T = any>(event: string, data?: T): void {
+    // Registro na "Caixa Preta" de Eventos
+    logger.info(`Event Emitted: ${event}`, { 
+      domain: 'EVENT_BUS', 
+      context: 'BlackBox',
+      data 
+    });
+
     const eventHandlers = this.handlers.get(event);
     if (eventHandlers) {
       eventHandlers.forEach(handler => {

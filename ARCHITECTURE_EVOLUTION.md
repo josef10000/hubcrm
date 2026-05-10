@@ -33,6 +33,10 @@ Módulos não devem chamar funções de outros domínios diretamente se houver e
 - `UIContext`: Apenas estados visuais (modais, sidebars).
 - `CRMContext`: Apenas dados e bridge para a Store.
 
+### 4. Black Box Tracking (Debugging)
+Toda emissão de evento é automaticamente registrada no console via `Logger`.
+- Para debugar fluxos assíncronos, abra o console do navegador e filtre por `[EVENT_BUS]`. Isso revelará a "caixa preta" da sequência de eventos que levou ao estado atual da aplicação.
+
 ---
 
 ## 📋 Checkpoint de Progresso (Evolução v8.1)
