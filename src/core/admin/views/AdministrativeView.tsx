@@ -43,7 +43,16 @@ export default function AdministrativeView() {
   
   const { hasPermission } = usePermissions();
   const { confirm, alert } = useDialog();
+  const { publishReleaseNote } = useCRM();
   const [newSoftSkill, setNewSoftSkill] = React.useState('');
+  
+  // State para o formulário de novidades
+  const [newNote, setNewNote] = React.useState({
+    version: '',
+    title: '',
+    content: '',
+    type: 'feature' as const
+  });
   
   if (!hasPermission('MANAGE_SETTINGS')) {
     return (
@@ -290,28 +299,61 @@ export default function AdministrativeView() {
 
                 <div className="bg-black/20 border border-gray-200 dark:border-white/10 rounded-3xl p-8">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
-                        <BookOpen className="mr-2 text-primary-500" size={20} />
-                        Wiki Hub - Boas Vindas
+                        <Plus className="mr-2 text-primary-500" size={20} />
+                        Publicar Novidade (Release Notes)
                     </h3>
-                    <div className="flex gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <input
                             type="text"
-                            value={beginnerGuideArticleId}
-                            onChange={(e) => setBeginnerGuideArticleId(e.target.value)}
-                            className="flex-1 px-4 py-2 bg-black/40 border border-white/10 rounded-xl"
-                            placeholder="ID do artigo..."
+                            value={newNote.version}
+                            onChange={e => setNewNote({ ...newNote, version: e.target.value })}
+                            className="px-4 py-2 bg-black/40 border border-white/10 rounded-xl"
+                            placeholder="Versão (ex: v1.2.0)"
                         />
-                        <button
-                            onClick={async () => {
-                                await setDoc(doc(db, 'organizations', effectiveOrgId, 'settings', 'preferences'), { beginnerGuideArticleId }, { merge: true });
-                                toast.success('ID da Wiki salvo!');
-                            }}
-                            className="px-6 py-2 bg-primary-500 text-white rounded-xl font-bold"
+                        <select
+                            value={newNote.type}
+                            onChange={e => setNewNote({ ...newNote, type: e.target.value as any })}
+                            className="px-4 py-2 bg-black/40 border border-white/10 rounded-xl text-gray-400"
                         >
-                            Salvar
-                        </button>
+                            <option value="feature">🚀 Novidade (Feature)</option>
+                            <option value="improvement">✨ Melhoria (Improvement)</option>
+                            <option value="fix">🛠️ Correção (Fix)</option>
+                            <option value="security">🔒 Segurança (Security)</option>
+                        </select>
                     </div>
+                    <input
+                        type="text"
+                        value={newNote.title}
+                        onChange={e => setNewNote({ ...newNote, title: e.target.value })}
+                        className="w-full px-4 py-2 bg-black/40 border border-white/10 rounded-xl mb-4"
+                        placeholder="Título chamativo..."
+                    />
+                    <textarea
+                        value={newNote.content}
+                        onChange={e => setNewNote({ ...newNote, content: e.target.value })}
+                        className="w-full h-32 px-4 py-2 bg-black/40 border border-white/10 rounded-xl mb-6 resize-none custom-scrollbar"
+                        placeholder="Descreva o que mudou em detalhes..."
+                    />
+                    <button
+                        onClick={async () => {
+                            if (!newNote.version || !newNote.title || !newNote.content) {
+                                toast.error('Preencha todos os campos da nota.');
+                                return;
+                            }
+                            await publishReleaseNote({
+                                ...newNote,
+                                author: userProfile?.displayName || 'Admin'
+                            });
+                            setNewNote({ version: '', title: '', content: '', type: 'feature' });
+                            toast.success('Novidade publicada para todos!');
+                        }}
+                        className="w-full py-3 bg-primary-500 text-white rounded-xl font-bold hover:bg-primary-600 transition-colors shadow-lg shadow-primary-500/20"
+                    >
+                        Publicar Atualização
+                    </button>
                 </div>
+
+                <div className="bg-black/20 border border-gray-200 dark:border-white/10 rounded-3xl p-8">
             </div>
         </div>
       </div>
