@@ -239,8 +239,8 @@ export default function AnalyticsView() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           <div className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Crescimento do MRR ({currentYear})</h3>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <AreaChart data={monthlyData.filter(d => d.mrr !== null)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorMrr" x1="0" y1="0" x2="0" y2="1">
@@ -264,8 +264,8 @@ export default function AnalyticsView() {
 
           <div className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Aquisição de Clientes ({currentYear})</h3>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
@@ -286,8 +286,8 @@ export default function AnalyticsView() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Projeção de Caixa</h3>
-            <div className="h-48">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="h-48 w-full">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart data={cashFlowData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
@@ -305,8 +305,8 @@ export default function AnalyticsView() {
 
           <div className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Distribuição por Plano</h3>
-            <div className="h-48">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="h-48 w-full">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <PieChart>
                   <Pie data={planData} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={5} dataKey="value">
                     {planData.map((entry, index) => (
@@ -332,8 +332,8 @@ export default function AnalyticsView() {
 
           <div className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Status dos Clientes</h3>
-            <div className="h-48">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="h-48 w-full">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart data={statusData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
                   <XAxis type="number" hide />
                   <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} width={120} />
@@ -353,8 +353,8 @@ export default function AnalyticsView() {
 
           <div className="bg-gray-200 dark:bg-white/10 backdrop-blur-2xl border border-gray-300 dark:border-white/20 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Formas de Pagamento</h3>
-            <div className="h-48">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="h-48 w-full">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <PieChart>
                   <Pie data={paymentMethodData} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={5} dataKey="value">
                     {paymentMethodData.map((entry, index) => (
