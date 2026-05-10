@@ -1,5 +1,5 @@
 import { db } from '@/lib/firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, getDoc } from 'firebase/firestore';
 import { Lead, LeadActivity, LeadStatus } from '@/types';
 import { eventBus, HUB_EVENTS } from '@core/events/eventBus';
 
@@ -97,8 +97,12 @@ export const leadService = {
   /**
    * Cleans up ghost leads (leads with invalid statuses).
    */
-  cleanupGhostLeads: async (orgId: string, ghostLeads: Lead[]) => {
-    const deletePromises = ghostLeads.map(l => deleteDoc(doc(db, 'organizations', orgId, 'leads', l.id)));
-    return await Promise.all(deletePromises);
+  /**
+   * Fetches a lead by ID.
+   */
+  getLeadById: async (orgId: string, leadId: string) => {
+    const snap = await getDoc(doc(db, 'organizations', orgId, 'leads', leadId));
+    if (!snap.exists()) return null;
+    return { id: snap.id, ...snap.data() } as Lead;
   }
 };

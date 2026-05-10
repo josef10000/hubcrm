@@ -13,9 +13,10 @@ interface LeadCardProps {
   onDragStart: (lead: Lead) => void;
   onDragEnd: () => void;
   onClick: (lead: Lead) => void;
+  onGenerateProposal: (lead: Lead) => void;
 }
 
-export function LeadCard({ lead, isDragged, tags, onDragStart, onDragEnd, onClick }: LeadCardProps) {
+export function LeadCard({ lead, isDragged, tags, onDragStart, onDragEnd, onClick, onGenerateProposal }: LeadCardProps) {
   // Pulse Red: Follow-up vencido é urgente
   const isOverdue = lead.nextFollowUp && new Date(lead.nextFollowUp) < new Date() && lead.status !== 'Convertido' && lead.status !== 'Perdido';
 
@@ -71,7 +72,7 @@ export function LeadCard({ lead, isDragged, tags, onDragStart, onDragEnd, onClic
       {/* Quick Actions */}
       <div className="flex items-center gap-2 mt-3 mb-2">
         <button
-          onClick={(e) => { e.stopPropagation(); }}
+          onClick={(e) => { e.stopPropagation(); onGenerateProposal(lead); }}
           className="flex-1 flex items-center justify-center gap-2 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 rounded-lg text-[10px] font-bold transition-all shadow-sm active:scale-95"
         >
           <TrendingUp size={12} />

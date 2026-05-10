@@ -2,6 +2,8 @@ import { eventBus, HUB_EVENTS } from './eventBus';
 import { auditService } from '@/services/auditService';
 import { logger } from '@core/utils/logger';
 import { toast } from 'sonner';
+import { leadService } from '@/services/leadService';
+import { clientService } from '@/domains/crm/services/clientService';
 
 /**
  * Inicializa todos os ouvintes de eventos globais da aplicação.
@@ -50,5 +52,30 @@ export function initGlobalEventHandlers() {
   
   eventBus.on(HUB_EVENTS.SYSTEM.NOTIFICATION_RECEIVED, (notif: any) => {
     logger.info(`Nova notificação: ${notif.title}`, { domain: 'SYSTEM' });
+  });
+
+  // --- Commercial Events ---
+
+  eventBus.on('PROPOSAL_APPROVED', async (data: any) => {
+    const { proposalId, leadId, totalAmount, orgId } = data;
+    logger.info('Proposal approved! Starting automatic conversion...', { domain: 'COMMERCIAL', data: proposalId });
+
+    try {
+      // 1. Buscar o Lead
+      const lead = await leadService.getLeadById(orgId, leadId);
+      if (!lead) throw new Error('Lead not found for conversion');
+
+      // 2. Converter Lead para Cliente
+      await clientService.createFromLead(orgId, lead, totalAmount);
+
+      // 3. Mover Lead no Funil
+      await leadService.moveLead(orgId, lead, 'Convertido', 'Sistema (Proposta Web)');
+
+      toast.success('Proposta aprovada! Cliente criado com sucesso.');
+      logger.success('Lead converted to client automatically via web proposal', { domain: 'COMMERCIAL' });
+    } catch (error) {
+      logger.error('Error in automatic conversion process', { domain: 'COMMERCIAL', data: error });
+      toast.error('Erro ao processar conversão automática.');
+    }
   });
 }
