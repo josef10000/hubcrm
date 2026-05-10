@@ -1,7 +1,7 @@
 import React from 'react';
 import { AppProviders } from './app/providers/AppProviders';
 import { AppRouter } from './app/router/AppRouter';
-import ErrorBoundary from './components/common/ErrorBoundary';
+import ErrorBoundary from './shared/components/ErrorBoundary';
 
 /**
  * 🚀 Hub Central — Bootstrapper

@@ -17,7 +17,7 @@ export function WorkspaceShell({ children, isBirthday }: WorkspaceShellProps) {
   const { user, userProfile } = useAuth();
   
   // Ativa o rastreamento de presença global
-  usePresence(user?.uid);
+  usePresence();
 
   return (
     <div className="flex h-screen bg-[#030712] font-sans overflow-hidden text-gray-900 dark:text-gray-100 relative">
