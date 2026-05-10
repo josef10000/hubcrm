@@ -9,6 +9,7 @@ import { usePermissions } from '@auth/hooks/usePermissions';
 import { useGlobalChatAlerts } from '@/hooks/useGlobalChatAlerts';
 import NavItem from './NavItem';
 import AvatarFrame from './AvatarFrame';
+import { useCRMStore } from '@/store/useCRMStore';
 import { navGroups } from '@/constants/navigation';
 
 // Mapeador de Ícones Premium (Phosphor Duotone)

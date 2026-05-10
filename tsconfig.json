@@ -30,7 +30,9 @@
       "@admin/*": ["./src/core/admin/*"],
       "@portal/*": ["./src/domains/portal/*"],
       "@support/*": ["./src/domains/support/*"],
-      "@store/*": ["./src/store/*"]
+      "@store/*": ["./src/store/*"],
+      "@domains/*": ["./src/domains/*"],
+      "@commercial/*": ["./src/domains/commercial/*"]
     },
     "allowImportingTsExtensions": true,
     "noEmit": true

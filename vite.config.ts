@@ -26,6 +26,8 @@ export default defineConfig(({mode}) => {
         '@portal': path.resolve(__dirname, './src/domains/portal'),
         '@support': path.resolve(__dirname, './src/domains/support'),
         '@store': path.resolve(__dirname, './src/store'),
+        '@domains': path.resolve(__dirname, './src/domains'),
+        '@commercial': path.resolve(__dirname, './src/domains/commercial'),
       },
     },
     build: {
