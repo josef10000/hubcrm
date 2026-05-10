@@ -26,7 +26,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   // Sincroniza a Store com o Firestore
   useEffect(() => {
     if (orgId && user?.uid && orgId !== 'pending') {
-      const unsubscribe = store.init(orgId, user.uid, permissions);
+      const unsubscribe = store.init(user.uid, orgId, permissions);
       return () => unsubscribe();
     }
   }, [orgId, user?.uid, permissionsKey]);
@@ -45,6 +45,10 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     editingClient, setEditingClient,
     isDeleteOfferConfirmOpen, setIsDeleteOfferConfirmOpen,
     offerToDelete, setOfferToDelete,
+    
+    // Permissions Bridge
+    hasPermission,
+    hasAnyPermission: (perms: any[]) => perms.some(p => permissions.includes(p)),
     
     // Fallbacks e mapeamentos de ações
     handleExportCSV: (data: any[]) => {

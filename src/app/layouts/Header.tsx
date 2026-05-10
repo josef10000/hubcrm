@@ -25,10 +25,9 @@ export function Header({ currentPath, navigate }: HeaderProps) {
   const { 
     clients,
     setEditingClient,
-    handleExportCSV,
-    hasAnyPermission 
+    handleExportCSV
   } = useCRM();
-  const { hasPermission } = usePermissions();
+  const { hasPermission, hasAnyPermission } = usePermissions();
 
   const filteredClientsForExport = useFilteredClients(clients, searchTerm, filterStatus, sortBy, filterTagId);
 

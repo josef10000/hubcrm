@@ -70,5 +70,19 @@ Antes de cada implementação significativa:
 
 ---
 
+## 🧬 7. Governança de Contexto e Estado
+
+Para evitar erros de `undefined` e conflitos de renderização, os estados devem ser estritamente segmentados:
+
+1.  **`UIContext`**: Exclusivo para estados efêmeros de interface.
+    - Ex: Modais abertos, Sidebar aberta, Termos de busca visual, Modo Foco, Tema.
+    - **NUNCA** coloque lógica de Firestore aqui.
+2.  **`CRMContext`**: Exclusivo para dados de domínio e persistência.
+    - Ex: Lista de clientes, chamados, permissões, lógica de sincronização com Firestore.
+    - Serve como uma ponte estável para a `Zustand Store`.
+3.  **Hooks de Permissão**: Use `usePermissions()` para qualquer lógica de controle de acesso. Evite duplicar verificações de permissão manualmente.
+
+---
+
 > [!IMPORTANT]
 > **A regra de ouro:** Se você precisar dar scroll mais de 3 vezes para entender um componente, ele está grande demais. Quebre-o.

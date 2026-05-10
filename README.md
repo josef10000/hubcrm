@@ -37,7 +37,7 @@ O **Hub Nexus** é o novo cockpit pessoal do colaborador. Uma área de alta perf
 - **Sincronização Total:** Todos os dados do workspace são salvos no perfil do usuário no Firestore.
 
 > [!TIP]
-> Confira a [Documentação de APIs Externas](file:///c:/Users/Jos%C3%A9Fraz%C3%A3odaSilvaNet/OneDrive%20-%2039985%20-%20DIGITAL%20TECH%20LTDA/%C3%81rea%20de%20Trabalho/Clonecrm/hubcrm/README_APIS.md) para detalhes técnicos sobre integrações.
+> Confira a [Documentação de APIs Externas](file:///c:/Users/Jos%C3%A9Fraz%C3%A3odaSilvaNet/OneDrive%20-%2039985%20-%20DIGITAL%20TECH%20LTDA/%C3%81rea%20de%20Trabalho/Clonecrm/hubcrm/README_APIS.md) para detalhes técnicos sobre integrações e as [Diretrizes de Engenharia](file:///c:/Users/Jos%C3%A9Fraz%C3%A3odaSilvaNet/OneDrive%20-%2039985%20-%20DIGITAL%20TECH%20LTDA/%C3%81rea%20de%20Trabalho/Clonecrm/hubcrm/ENGINEERING_GUIDELINES.md) para padrões de código.
 
 ---
 
@@ -117,6 +117,7 @@ O Hub Central segue diretrizes rígidas de design para manter seu status premium
 - [x] **v7.5.0** — **Architecture & Performance Update** (React.lazy, Suspense, Zustand Persistence & Firestore Offline Support).
 - [x] **v8.0.5** — **Modular Architecture (DDD)** (Refactored directory structure, standardized Path Aliases & fixed cross-domain imports).
 - [x] **v8.0.9** — **Runtime Stability & Resilience** (Implemented exhaustive Null-Safety, Zustand Versioning (v3) and Defensive State Merging to prevent white-screen crashes).
+- [x] **v8.0.10** — **Resilience & Governance** (Fixed store argument swap, centralized permission hooks and implemented Context Governance).
 - [ ] **v8.1.0** — IA Integrada: Nexus Copilot para automação de tarefas.
 
 ---
