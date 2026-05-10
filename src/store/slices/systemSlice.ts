@@ -60,8 +60,12 @@ export const createSystemSlice: StateCreator<
         hasUnreadNotes: latestNoteDate > lastReadDate,
         isSystemLoading: false 
       });
-    } catch (err) {
-      logger.error("Error fetching release notes", { domain: 'SYSTEM', data: err });
+    } catch (err: any) {
+      if (err.code === 'permission-denied') {
+        console.warn("[SYSTEM] Release notes access denied. Skipping.");
+      } else {
+        logger.error("Error fetching release notes", { domain: 'SYSTEM', data: err });
+      }
       set({ isSystemLoading: false });
     }
   },

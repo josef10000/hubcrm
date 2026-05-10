@@ -35,6 +35,11 @@ export default function AdministrativeView() {
     setBeginnerGuideArticleId,
     effectiveOrgId,
   } = useCRM();
+
+  // Fallbacks para evitar erro de .map() em undefined
+  const stages = defaultStages || [];
+  const skills = softSkillsPool || [];
+  const questions = onboardingQuestions || [];
   
   const { hasPermission } = usePermissions();
   const { confirm, alert } = useDialog();
@@ -115,13 +120,13 @@ export default function AdministrativeView() {
                         Etapas do Projeto
                     </h3>
                     <div className="space-y-4">
-                        {defaultStages.map((stage, index) => (
+                        {stages.map((stage: any, index: number) => (
                             <div key={stage.id} className="flex items-center gap-3">
                                 <input
                                     type="text"
                                     value={stage.name}
                                     onChange={(e) => {
-                                        const newStages = [...defaultStages];
+                                        const newStages = [...stages];
                                         newStages[index].name = e.target.value;
                                         setDefaultStages(newStages);
                                     }}
@@ -136,7 +141,7 @@ export default function AdministrativeView() {
                                             variant: 'danger'
                                         });
                                         if (ok) {
-                                            setDefaultStages(defaultStages.filter(s => s.id !== stage.id));
+                                            setDefaultStages(stages.filter((s: any) => s.id !== stage.id));
                                         }
                                     }} 
                                     className="text-gray-400 hover:text-red-500"
@@ -147,14 +152,14 @@ export default function AdministrativeView() {
                         ))}
 
                         <button
-                            onClick={() => setDefaultStages([...defaultStages, { id: Math.random().toString(36).substring(7), name: 'Nova Etapa' }])}
+                            onClick={() => setDefaultStages([...stages, { id: Math.random().toString(36).substring(7), name: 'Nova Etapa' }])}
                             className="w-full py-2 bg-white/5 border border-white/10 rounded-xl text-sm"
                         >
                             + Adicionar Etapa
                         </button>
                         <button
                             onClick={async () => {
-                                await setDoc(doc(db, 'organizations', effectiveOrgId, 'settings', 'preferences'), { defaultStages }, { merge: true });
+                                await setDoc(doc(db, 'organizations', effectiveOrgId, 'settings', 'preferences'), { defaultStages: stages }, { merge: true });
                                 toast.success('Etapas salvas!');
                             }}
                             className="w-full py-2 bg-primary-500 text-white rounded-xl font-bold"
@@ -274,7 +279,7 @@ export default function AdministrativeView() {
                         <button onClick={handleAddSoftSkill} className="p-2 bg-primary-500 text-white rounded-xl"><Plus size={20} /></button>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                        {softSkillsPool.map(skill => (
+                        {skills.map((skill: string) => (
                             <div key={skill} className="flex items-center gap-2 px-3 py-1.5 bg-primary-500/10 border border-primary-500/20 text-primary-500 rounded-lg text-xs font-bold">
                                 {skill}
                                 <button onClick={() => handleRemoveSoftSkill(skill)}><Trash2 size={12} /></button>

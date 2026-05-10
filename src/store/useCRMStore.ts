@@ -9,6 +9,7 @@ import { createFinanceSlice } from './slices/financeSlice';
 import { createPeopleSlice } from './slices/peopleSlice';
 import { createSupportSlice } from './slices/supportSlice';
 import { createSystemSlice } from './slices/systemSlice';
+import { createPreferencesSlice } from './slices/preferencesSlice';
 import { CRMStoreState } from './types';
 
 export const useCRMStore = create<CRMStoreState>()(
@@ -33,6 +34,7 @@ export const useCRMStore = create<CRMStoreState>()(
       ...createPeopleSlice(set, get, api),
       ...createSupportSlice(set, get, api),
       ...createSystemSlice(set, get, api),
+      ...createPreferencesSlice(set, get, api),
 
       // Base Actions
       setLoading: (loading) => set({ loading }),
@@ -104,6 +106,21 @@ export const useCRMStore = create<CRMStoreState>()(
         setupListener('roles', (data) => set({ orgRoles: data }));
         setupListener('onboarding_questions', (data) => set({ onboardingQuestions: data }), (a, b) => (a.order || 0) - (b.order || 0));
         setupListener('supportRequests', (data) => set({ supportRequests: data }), (a, b) => b.createdAt - a.createdAt);
+
+        // Preferences Document Listener (Single Doc)
+        try {
+          const prefRef = doc(db, 'organizations', orgId, 'settings', 'preferences');
+          const unsubPrefs = onSnapshot(prefRef, (docSnap) => {
+            if (docSnap.exists()) {
+              set({ ...docSnap.data() });
+            }
+          }, (err) => {
+            console.warn("[CRMStore] Preferences listener failed (likely empty or permissions):", err);
+          });
+          unsubscribers.push(unsubPrefs);
+        } catch (err) {
+          console.error("[CRMStore] Failed to setup Preferences listener:", err);
+        }
 
         // Global Team Profiles
         try {
