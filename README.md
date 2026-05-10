@@ -1,7 +1,7 @@
 # <p align="center">🔐 HUB CENTRAL — INTELLIGENCE ECOSYSTEM</p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Enterprise_OS-v8.0.5-3b82f6?style=for-the-badge&labelColor=0a0a0a" alt="Version" />
+  <img src="https://img.shields.io/badge/Enterprise_OS-v8.0.10-3b82f6?style=for-the-badge&labelColor=0a0a0a" alt="Version" />
   <img src="https://img.shields.io/badge/Architecture-Collaboration_Bots-blueviolet?style=for-the-badge&labelColor=0a0a0a" alt="Architecture" />
   <img src="https://img.shields.io/badge/Status-Pro_Collaboration-emerald?style=for-the-badge&labelColor=0a0a0a" alt="Status" />
 </p>
@@ -27,14 +27,13 @@ Nossa arquitetura descentralizada garante que cada cargo (dos 13 níveis sistêm
 
 ---
 
-## ✨ Estrela da Versão: Hub Nexus v7.2.3
-O **Hub Nexus** é o novo cockpit pessoal do colaborador. Uma área de alta performance onde a produtividade individual encontra a sincronização em nuvem.
+## ✨ Estrela da Versão: Hub Modular v8.0.10
+O **Hub Central v8** representa o maior salto arquitetural do ecossistema, implementando uma estrutura modular (DDD) para escala industrial e performance de latência zero.
 
-- **Tarefas & Checklist:** Aba dedicada para gestão de pendências diárias com sincronização em nuvem.
-- **Agenda Inteligente:** Visualização consolidada de eventos, aniversários e ausências da equipe.
-- **Vault de Links & Metas:** Organização em pastas, metas com progresso visual e notas persistentes.
-- **Digital Library (Nexus Books):** Catalogação inteligente de PDFs via **Google Books API** e armazenamento imersivo.
-- **Sincronização Total:** Todos os dados do workspace são salvos no perfil do usuário no Firestore.
+- **Arquitetura por Domínios:** Separação estrita entre `crm`, `finance`, `wiki` e `support` para eliminar conflitos e facilitar a manutenção.
+- **Context Governance:** Separação total entre estados de UI (`UIContext`) e lógica de persistência (`CRMContext`).
+- **Performance Pro:** Implementação agressiva de `React.lazy` e `Suspense`, reduzindo o bundle inicial e acelerando o LCP (Largest Contentful Paint).
+- **Zustand Core:** Gerenciamento de estado global ultra-leve com persistência inteligente e versionamento de store (v3).
 
 > [!TIP]
 > Confira a [Documentação de APIs Externas](file:///c:/Users/Jos%C3%A9Fraz%C3%A3odaSilvaNet/OneDrive%20-%2039985%20-%20DIGITAL%20TECH%20LTDA/%C3%81rea%20de%20Trabalho/Clonecrm/hubcrm/README_APIS.md) para detalhes técnicos sobre integrações e as [Diretrizes de Engenharia](file:///c:/Users/Jos%C3%A9Fraz%C3%A3odaSilvaNet/OneDrive%20-%2039985%20-%20DIGITAL%20TECH%20LTDA/%C3%81rea%20de%20Trabalho/Clonecrm/hubcrm/ENGINEERING_GUIDELINES.md) para padrões de código.
