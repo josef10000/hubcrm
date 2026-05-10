@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
+import { useUI } from '@/contexts/UIContext';
 import ClientModal from '@crm/components/ClientModal';
 import OfferModal from '@crm/components/OfferModal';
 import ConfirmationModal from '@shared/components/ConfirmationModal';
@@ -8,8 +9,8 @@ import EmployeeSurveyModal from '@shared/components/EmployeeSurveyModal';
 
 export function GlobalModals() {
   const { user } = useAuth();
+  const { isModalOpen, setIsModalOpen } = useUI();
   const { 
-    isModalOpen, setIsModalOpen,
     isOfferModalOpen, setIsOfferModalOpen,
     isDeleteOfferConfirmOpen, setIsDeleteOfferConfirmOpen,
     editingClient, handleSaveClient, handleDeleteClient,

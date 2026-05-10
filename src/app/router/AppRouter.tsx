@@ -52,9 +52,9 @@ import { useAppTitle } from './useAppTitle';
 
 export function AppRouter() {
   const { user, userProfile, isBirthday } = useAuth();
-  const { clients, setIsModalOpen, setEditingClient } = useCRM();
+  const { clients, setEditingClient } = useCRM();
+  const { isModalOpen, setIsModalOpen, setFocusMode } = useUI();
   const { hasPermission } = usePermissions();
-  const { setFocusMode } = useUI();
   const location = useLocation();
 
   // Gerencia o título dinâmico da aba (notificações)

@@ -4,6 +4,7 @@ import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
 import { useUI } from '@/contexts/UIContext';
+import { useFilteredClients } from '@/hooks/useFilteredClients';
 
 interface HeaderProps {
   currentPath: string;
@@ -16,15 +17,20 @@ export function Header({ currentPath, navigate }: HeaderProps) {
     searchTerm, setSearchTerm, 
     globalSearch, setGlobalSearch,
     focusMode, setFocusMode,
-    setSidebarOpen
+    setSidebarOpen,
+    isModalOpen, setIsModalOpen,
+    filterStatus, sortBy, filterTagId
   } = useUI();
   
   const { 
-    setIsModalOpen, setEditingClient,
-    handleExportCSV, filteredClientsForExport,
+    clients,
+    setEditingClient,
+    handleExportCSV,
     hasAnyPermission 
   } = useCRM();
   const { hasPermission } = usePermissions();
+
+  const filteredClientsForExport = useFilteredClients(clients, searchTerm, filterStatus, sortBy, filterTagId);
 
   const isWiki = currentPath === '/wiki';
   const isDashboard = currentPath === '/';
