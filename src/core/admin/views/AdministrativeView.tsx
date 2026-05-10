@@ -352,11 +352,8 @@ export default function AdministrativeView() {
                         Publicar Atualização
                     </button>
                 </div>
-
-                <div className="bg-black/20 border border-gray-200 dark:border-white/10 rounded-3xl p-8">
             </div>
         </div>
       </div>
-    </div>
-  );
+    );
 }
