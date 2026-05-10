@@ -37,7 +37,8 @@ export const PremiumIcon = ({ iconName, size = 22, className = "" }: { iconName:
     'ShieldCheck': 'ph-shield-check',
     'Star': 'ph-star',
     'Search': 'ph-magnifying-glass',
-    'X': 'ph-x-circle'
+    'X': 'ph-x-circle',
+    'Zap': 'ph-lightning'
   };
 
   const phClass = mapping[iconName] || 'ph-question';
@@ -57,6 +58,7 @@ export default function Sidebar() {
   const { activeLeadsCount = 0, supportRequests = [], wikiArticles = [], pendingVacationsCount = 0 } = useCRM();
   const { hasPermission } = usePermissions();
   const { totalUnread: chatUnreadCount } = useGlobalChatAlerts();
+  const { hasUnreadNotes } = useCRMStore();
 
   // Estado para o menu Flyout
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
@@ -75,6 +77,7 @@ export default function Sidebar() {
     if (path === '/chat') return chatUnreadCount > 0 ? chatUnreadCount : undefined;
     if (path === '/wiki') return newWikiCount > 0 ? newWikiCount : undefined;
     if (path === '/people') return pendingVacationsCount > 0 ? pendingVacationsCount : undefined;
+    if (path === '/release-notes') return hasUnreadNotes ? 'NEW' : undefined;
     return undefined;
   };
 

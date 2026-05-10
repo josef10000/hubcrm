@@ -8,6 +8,7 @@ import { createWikiSlice } from './slices/wikiSlice';
 import { createFinanceSlice } from './slices/financeSlice';
 import { createPeopleSlice } from './slices/peopleSlice';
 import { createSupportSlice } from './slices/supportSlice';
+import { createSystemSlice } from './slices/systemSlice';
 import { CRMStoreState } from './types';
 
 export const useCRMStore = create<CRMStoreState>()(
@@ -31,6 +32,7 @@ export const useCRMStore = create<CRMStoreState>()(
       ...createFinanceSlice(set, get, api),
       ...createPeopleSlice(set, get, api),
       ...createSupportSlice(set, get, api),
+      ...createSystemSlice(set, get, api),
 
       // Base Actions
       setLoading: (loading) => set({ loading }),

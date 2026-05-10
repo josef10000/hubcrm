@@ -1,5 +1,5 @@
 import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 
 export interface AuditLog {
   userId: string;
@@ -30,6 +30,30 @@ export const auditService = {
     } catch (error) {
       console.error('[AUDIT_SERVICE] Error logging activity:', error);
       return null;
+    }
+  },
+
+  /**
+   * Recupera os logs de auditoria mais recentes de uma organização.
+   */
+  getLogs: async (orgId: string, maxResults: number = 50) => {
+    try {
+      if (!orgId) return [];
+      
+      const q = query(
+        collection(db, 'organizations', orgId, 'audit_logs'),
+        orderBy('timestamp', 'desc'),
+        limit(maxResults)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as (AuditLog & { id: string; timestamp: number })[];
+    } catch (error) {
+      console.error('[AUDIT_SERVICE] Error fetching logs:', error);
+      return [];
     }
   }
 };
