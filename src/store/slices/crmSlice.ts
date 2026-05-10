@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { Client, Offer, Lead, Tag } from '@/types';
 import { CRMStoreState } from '../types';
 import { logger } from '@core/utils/logger';
+import { eventBus, HUB_EVENTS } from '@core/events/eventBus';
 
 export interface CRMSlice {
   clients: Client[];
@@ -55,6 +56,10 @@ export const createCRMSlice: StateCreator<
       }
 
       await setDoc(doc(db, 'organizations', effectiveOrgId, 'clients', id), finalData, { merge: true });
+      
+      // Emit Business Event
+      eventBus.emit(isNew ? HUB_EVENTS.CRM.CLIENT_CREATED : HUB_EVENTS.CRM.CLIENT_UPDATED, finalData);
+      
       toast.success('Cliente salvo com sucesso!');
     } catch (err) {
       logger.error("Error saving client", { domain: 'CRM', data: err });

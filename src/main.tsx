@@ -3,6 +3,10 @@ import {createRoot} from 'react-dom/client';
 import * as Sentry from "@sentry/react";
 import App from './App.tsx';
 import './index.css';
+import { initGlobalEventHandlers } from '@core/events/handlers';
+
+// Inicializa o barramento de eventos de negócio
+initGlobalEventHandlers();
 
 // Inicialização da Sentinela de Erros (v3.7.0)
 Sentry.init({

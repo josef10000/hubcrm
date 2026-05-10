@@ -3,6 +3,8 @@ import { useCRMStore } from '@store/useCRMStore';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
 import { Client, Offer } from '@/types';
+import { ClientMapper } from '../entities/client.entity';
+import { LeadMapper } from '../entities/lead.entity';
 
 const CRMContext = createContext<any>(null);
 
@@ -31,11 +33,24 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     }
   }, [orgId, user?.uid, permissionsKey]);
 
+  // Mapeamento de dados para Entidades robustas
+  const clients = React.useMemo(() => 
+    (store.clients || []).map(ClientMapper.toEntity), 
+    [store.clients]
+  );
+
+  const leads = React.useMemo(() => 
+    (store.leads || []).map(LeadMapper.toEntity), 
+    [store.leads]
+  );
+
   // Adaptador para manter compatibilidade com o código legado que usa useCRM()
   const value = {
     ...store,
+    clients,
+    leads,
     // Mapeamentos de nomes se necessário para componentes legados
-    activeLeadsCount: (store.leads || []).filter(l => !['Convertido', 'Perdido'].includes(l.status || '')).length,
+    activeLeadsCount: (leads || []).filter(l => !['Convertido', 'Perdido'].includes(l.status || '')).length,
     effectiveOrgId: orgId,
     userProfile,
     
