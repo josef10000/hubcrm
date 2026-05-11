@@ -60,72 +60,82 @@ export const createCRMSlice: StateCreator<
       const cleanCpfCnpj = client.cpfCnpj?.replace(/\D/g, '') || '';
       const hasValidDoc = cleanCpfCnpj.length === 11 || cleanCpfCnpj.length === 14;
 
-      if (client.email && hasValidDoc && client.status !== 'Cancelado' && !client.invoiceUrl) {
+      if (client.email && hasValidDoc && client.status !== 'Cancelado') {
         try {
           const { asaasService } = await import('@/services/asaasService');
           const { getPlanPrice, calculateDiscount } = await import('@/helpers');
 
-          // 1. Criar/Buscar Cliente (Obrigatório)
-          let asaasCustomerId = client.asaasCustomerId;
-          if (!asaasCustomerId) {
-            const customer = await asaasService.getOrCreateCustomer({
-              id: client.id,
-              name: client.name,
-              email: client.email,
-              cpfCnpj: client.cpfCnpj,
-              whatsapp: client.whatsapp,
-              notificationsEnabled: client.asaasNotificationsEnabled
-            });
-            asaasCustomerId = customer.id;
-            client.asaasCustomerId = customer.id;
-          }
-
-          // 2. Preparar Valores
-          const today = new Date();
-          const firstPaymentDate = client.firstPaymentDate || today.toISOString().split('T')[0];
-          let monthlyValue = getPlanPrice(client.plan, client.billingCycle, client);
-          monthlyValue -= calculateDiscount(client as Client, clients);
-
-          const selectedOffer = offers.find((o) => o.id === client.offerId) || offers.find((o) => o.name === client.plan);
-          const isSinglePayment = selectedOffer?.type === 'SINGLE';
-          const bType = client.billingType || 'UNDEFINED';
-
-          // 3. Criar Cobrança ou Assinatura (Sempre vinculado ao Customer)
-          if (client.isCombo || isSinglePayment) {
-            const totalValue = isSinglePayment ? Math.max(0, monthlyValue + (client.setupPrice || 0)) : monthlyValue;
-            
-            const paymentLink = await asaasService.createPaymentLink({
-              name: isSinglePayment ? `Pagamento Único - ${client.plan}` : `Combo - ${client.plan}`,
-              description: isSinglePayment ? `Oferta ${client.plan}` : `Acesso anual + Setup`,
-              value: totalValue,
-              billingType: bType,
-              chargeType: bType === 'PIX' ? 'DETACHED' : 'INSTALLMENT',
-              maxInstallments: client.maxInstallments || 12,
-              customer: asaasCustomerId,
-              dueDateLimitDays: 3
-            });
-            client.invoiceUrl = paymentLink.url;
-            client.nextDueDate = firstPaymentDate;
-          } else {
-            // Assinatura Padrão
-            const sub = await asaasService.createSubscription({
-              customer: asaasCustomerId,
-              billingType: bType,
-              cycle: client.billingCycle === 'YEARLY' ? 'YEARLY' : 'MONTHLY',
-              value: monthlyValue,
-              nextDueDate: firstPaymentDate,
-              description: `Assinatura - Plano ${client.plan}`
-            });
-            client.asaasSubscriptionId = sub.id;
-            client.nextDueDate = firstPaymentDate;
-            client.invoiceUrl = sub.invoiceUrl || sub.bankSlipUrl;
-          }
+          // Só processar se não tiver invoiceUrl OU se o usuário alterou plano/valores (podemos simplificar processando sempre que houver doc)
+          const needsInvoice = !client.invoiceUrl || client.invoiceUrl.includes('manual');
           
-          toast.success('Faturamento sincronizado com o Asaas!');
+          if (needsInvoice) {
+            // 1. Criar/Buscar Cliente (Obrigatório)
+            let asaasCustomerId = client.asaasCustomerId;
+            if (!asaasCustomerId) {
+              const customer = await asaasService.getOrCreateCustomer({
+                id: client.id,
+                name: client.name,
+                email: client.email,
+                cpfCnpj: client.cpfCnpj,
+                whatsapp: client.whatsapp,
+                notificationsEnabled: client.asaasNotificationsEnabled
+              });
+              asaasCustomerId = customer.id;
+              client.asaasCustomerId = customer.id;
+            }
+
+            // 2. Preparar Valores
+            const today = new Date();
+            const firstPaymentDate = client.firstPaymentDate || today.toISOString().split('T')[0];
+            let monthlyValue = getPlanPrice(client.plan, client.billingCycle, client);
+            monthlyValue -= calculateDiscount(client as Client, clients);
+
+            const selectedOffer = offers.find((o) => o.id === client.offerId) || offers.find((o) => o.name === client.plan);
+            const isSinglePayment = selectedOffer?.type === 'SINGLE';
+            const bType = client.billingType || 'UNDEFINED';
+
+            // 3. Criar Cobrança ou Assinatura
+            if (client.isCombo || isSinglePayment) {
+              const totalValue = (client.isCombo || isSinglePayment) 
+                ? Math.max(0, monthlyValue + (client.setupPrice || 0)) 
+                : monthlyValue;
+              
+              const paymentLink = await asaasService.createPaymentLink({
+                name: isSinglePayment ? `Pagamento Único - ${client.plan}` : `Combo - ${client.plan}`,
+                description: isSinglePayment ? `Oferta ${client.plan}` : `Acesso anual + Setup`,
+                value: totalValue,
+                billingType: bType,
+                chargeType: bType === 'PIX' ? 'DETACHED' : 'INSTALLMENT',
+                maxInstallments: client.maxInstallments || 12,
+                customer: asaasCustomerId,
+                dueDateLimitDays: 3
+              });
+              client.invoiceUrl = paymentLink.url;
+              client.nextDueDate = firstPaymentDate;
+            } else {
+              const sub = await asaasService.createSubscription({
+                customer: asaasCustomerId,
+                billingType: bType,
+                cycle: client.billingCycle === 'YEARLY' ? 'YEARLY' : 'MONTHLY',
+                value: monthlyValue,
+                nextDueDate: firstPaymentDate,
+                description: `Assinatura - Plano ${client.plan}`
+              });
+              client.asaasSubscriptionId = sub.id;
+              client.nextDueDate = firstPaymentDate;
+              client.invoiceUrl = sub.invoiceUrl || sub.bankSlipUrl;
+            }
+            
+            toast.success('Faturamento sincronizado com o Asaas!');
+          }
         } catch (asaasErr: any) {
           logger.warn("Asaas Integration error", { domain: 'CRM', data: asaasErr });
           toast.error(`Erro na integração Asaas: ${asaasErr.message}`);
         }
+      } else if (client.status !== 'Cancelado' && !client.invoiceUrl) {
+        // Log para ajudar o usuário a entender por que o link não foi gerado
+        if (!client.email) logger.info("Asaas: E-mail ausente", { domain: 'CRM' });
+        if (!hasValidDoc) logger.info("Asaas: CPF/CNPJ inválido ou ausente", { domain: 'CRM' });
       }
 
       // Limpar campos undefined para não quebrar o Firestore

@@ -53,39 +53,42 @@ export default function PortalFinance({
         description: 'Mensalidade'
        });
 
-  // Função para garantir que temos uma URL de pagamento válida do Asaas
+  // Função para garantir que temos uma URL de pagamento válida
+  const isPortalLink = (url: string) => {
+    if (!url || url === '#' || url === 'undefined') return true;
+    try {
+      const currentOrigin = window.location.origin;
+      const urlObj = new URL(url, currentOrigin);
+      return urlObj.origin === currentOrigin && (urlObj.pathname === '/' || urlObj.pathname.includes('/portal/'));
+    } catch (e) {
+      return url.startsWith('/') || url.includes('localhost') || url.includes('vercel.app');
+    }
+  };
+
   const getPaymentUrl = (invoice: any) => {
+    if (!invoice) return null;
+
     const isAsaasUrl = (url: string) => {
-      if (!url) return false;
+      if (!url || typeof url !== 'string') return false;
       const domains = ['asaas.com', 'billing.asaas.com', 'cobranca.asaas.com.br', 'sandbox.asaas.com'];
-      return domains.some(domain => url.includes(domain));
+      return domains.some(d => url.includes(d));
     };
 
-    const isPortalLink = (url: string) => {
-      if (!url || url === '#' || url === 'undefined') return true;
-      if (isAsaasUrl(url)) return false; 
+    const urls = [
+      invoice.invoiceUrl,
+      invoice.paymentLink,
+      invoice.bankSlipUrl,
+      invoice.invoiceHtmlUrl,
+      client?.paymentLink,
+      client?.invoiceUrl
+    ].filter(url => url && typeof url === 'string' && url !== 'undefined' && url !== '#');
 
-      try {
-        const currentOrigin = window.location.origin;
-        const urlObj = new URL(url, currentOrigin);
-        
-        // Bloquear se for o mesmo domínio e contiver /portal/ ou se for apenas a raiz
-        return urlObj.origin === currentOrigin && (urlObj.pathname === '/' || urlObj.pathname.includes('/portal/'));
-      } catch (e) {
-        // Se falhar o parse da URL (ex: link relativo), checar se começa com /
-        return url.startsWith('/') || url.includes('localhost') || url.includes('vercel.app');
-      }
-    };
-    
-    // Priorizar URLs da fatura específica
-    if (invoice?.invoiceUrl && !isPortalLink(invoice.invoiceUrl)) return invoice.invoiceUrl;
-    if (invoice?.bankSlipUrl && !isPortalLink(invoice.bankSlipUrl)) return invoice.bankSlipUrl;
-    if (invoice?.invoiceHtmlUrl && !isPortalLink(invoice.invoiceHtmlUrl)) return invoice.invoiceHtmlUrl;
-    
-    // Fallback para dados do cliente
-    if (client.paymentLink && !isPortalLink(client.paymentLink)) return client.paymentLink;
-    if (client.invoiceUrl && !isPortalLink(client.invoiceUrl)) return client.invoiceUrl;
-    
+    const asaasUrl = urls.find(u => isAsaasUrl(u));
+    if (asaasUrl) return asaasUrl;
+
+    const externalUrl = urls.find(u => !isPortalLink(u));
+    if (externalUrl) return externalUrl;
+
     return null;
   };
 
