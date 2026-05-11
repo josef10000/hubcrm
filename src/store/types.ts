@@ -3,7 +3,7 @@ import {
   Transaction, TransactionCategory, Budget, CommissionEntry,
   SupportRequest, OnboardingQuestion
 } from '@/types';
-import { VacationPeriod, Appointment } from '@/types/people';
+import { VacationPeriod, Appointment, AvailabilityBlock } from '@/types/people';
 import { CRMSlice } from './slices/crmSlice';
 import { WikiSlice } from './slices/wikiSlice';
 import { FinanceSlice } from './slices/financeSlice';
