@@ -42,6 +42,23 @@ function ClientModal({
   const activeOffers = offers.filter(o => o.active);
   const defaultOffer = activeOffers.length > 0 ? activeOffers[0] : null;
 
+  const availableSellers = useMemo(() => {
+    const list = [...teamProfiles];
+    if (userProfile && !list.find(p => p.uid === userProfile.uid)) {
+      list.push({
+        uid: userProfile.uid,
+        displayName: userProfile.displayName || userProfile.email,
+        role: userProfile.role || 'Admin',
+        roleId: userProfile.roleId
+      });
+    }
+    return list.filter(p => {
+      if (p.uid === userProfile?.uid) return true;
+      const role = orgRoles.find(r => r.id === p.roleId || r.name === p.role);
+      return role?.permissions?.includes('MANAGE_LEADS') || p.role === 'Vendedor';
+    });
+  }, [teamProfiles, userProfile, orgRoles]);
+
   const [formData, setFormData] = useState<Partial<Client>>({ 
     plan: defaultOffer?.name || 'Essencial',
     offerId: defaultOffer?.id,
@@ -342,17 +359,11 @@ function ClientModal({
                       className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all"
                     >
                       <option value="">Selecione o responsável</option>
-                      {teamProfiles
-                        .filter(p => {
-                          const role = orgRoles.find(r => r.id === p.roleId || r.name === p.role);
-                          return role?.permissions?.includes('MANAGE_LEADS') || p.role === 'Vendedor';
-                        })
-                        .map(member => (
-                          <option key={member.uid} value={member.uid} className="bg-gray-900">
-                            {member.displayName}
-                          </option>
-                        ))
-                      }
+                      {availableSellers.map(member => (
+                        <option key={member.uid} value={member.uid} className="bg-gray-900">
+                          {member.uid === userProfile?.uid ? `Eu mesmo (${member.displayName})` : member.displayName}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
