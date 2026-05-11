@@ -6,7 +6,7 @@ import {
 import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
 import { UserProfile, OnboardingQuestion } from '@/types';
-import { VacationPeriod, Appointment } from '@/types/people';
+import { VacationPeriod, Appointment, AvailabilityBlock } from '@/types/people';
 import { CustomRole } from '@/constants/permissions';
 import { CRMStoreState } from '../types';
 
