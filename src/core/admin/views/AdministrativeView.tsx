@@ -9,6 +9,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
 import { OnboardingQuestion } from '@/types';
 import { usePermissions } from '@auth/hooks/usePermissions';
+import { useAuth } from '@auth/contexts/AuthContext';
 import { useDialog } from '@auth/contexts/DialogContext';
 import TagManager from '@admin/components/TagManager';
 import RoleManagement from '@admin/components/RoleManagement';
@@ -41,6 +42,7 @@ export default function AdministrativeView() {
   const skills = softSkillsPool || [];
   const questions = onboardingQuestions || [];
   
+  const { userProfile } = useAuth();
   const { hasPermission } = usePermissions();
   const { confirm, alert } = useDialog();
   const { publishReleaseNote } = useCRM();
