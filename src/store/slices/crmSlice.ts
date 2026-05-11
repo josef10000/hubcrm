@@ -126,7 +126,26 @@ export const createCRMSlice: StateCreator<
               });
               client.asaasSubscriptionId = sub.id;
               client.nextDueDate = firstPaymentDate;
-              client.invoiceUrl = sub.invoiceUrl || sub.bankSlipUrl;
+              
+              // Em assinaturas, o link de pagamento fica na cobrança gerada, não na assinatura.
+              // Vamos buscar o pagamento pendente mais recente para pegar a URL.
+              try {
+                const pRes = await fetch(`/api/portal_finance?orgId=${effectiveOrgId}&clientId=${client.id}&asaasCustomerId=${asaasCustomerId}`);
+                if (pRes.ok) {
+                  const pData = await pRes.json();
+                  const payments = pData.data || [];
+                  // Pegar o primeiro pagamento (mais recente vindo do Asaas)
+                  const latestPayment = payments[0];
+                  if (latestPayment) {
+                    client.invoiceUrl = latestPayment.invoiceUrl || latestPayment.bankSlipUrl || latestPayment.invoiceHtmlUrl;
+                    console.log("[Asaas] Link da fatura capturado do histórico:", client.invoiceUrl);
+                  }
+                }
+              } catch (e) {
+                console.warn("[Asaas] Erro ao buscar link da primeira fatura:", e);
+              }
+
+
             }
             
             console.log("[Asaas] Integração concluída com sucesso. URL:", client.invoiceUrl);

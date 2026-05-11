@@ -7,6 +7,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const uid = await verifyAuth(req, res);
   if (!uid) return;
 
+  if (req.method === 'GET') {
+    try {
+      const { id } = req.query;
+      if (!id) {
+        return res.status(400).json({ error: 'Subscription ID is required' });
+      }
+      const data = await asaasRequest(`/subscriptions/${id}`, "GET");
+      return res.status(200).json(data);
+    } catch (error: any) {
+      return safeErrorResponse(res, error, 'Erro ao buscar assinatura');
+    }
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
