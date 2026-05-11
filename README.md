@@ -1,7 +1,7 @@
 # <p align="center">🔐 HUB CENTRAL — INTELLIGENCE ECOSYSTEM</p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Enterprise_OS-v8.1.0-3b82f6?style=for-the-badge&labelColor=0a0a0a" alt="Version" />
+  <img src="https://img.shields.io/badge/Enterprise_OS-v8.1.1-3b82f6?style=for-the-badge&labelColor=0a0a0a" alt="Version" />
   <img src="https://img.shields.io/badge/Architecture-Collaboration_Bots-blueviolet?style=for-the-badge&labelColor=0a0a0a" alt="Architecture" />
   <img src="https://img.shields.io/badge/Status-Pro_Collaboration-emerald?style=for-the-badge&labelColor=0a0a0a" alt="Status" />
 </p>
@@ -118,7 +118,7 @@ O Hub Central segue diretrizes rígidas de design para manter seu status premium
 - [x] **v8.0.5** — **Modular Architecture (DDD)** (Refactored directory structure, standardized Path Aliases & fixed cross-domain imports).
 - [x] **v8.0.9** — **Runtime Stability & Resilience** (Implemented exhaustive Null-Safety, Zustand Versioning (v3) and Defensive State Merging to prevent white-screen crashes).
 - [x] **v8.0.10** — **Resilience & Governance** (Fixed store argument swap, centralized permission hooks and implemented Context Governance).
-- [x] **v8.1.0** — **Modular Evolution** (Event Architecture, Zod Entities & Design System Consolidation).
+- [x] **v8.1.1** — **CRM Unified Dashboard** (Migration to dashboard-centric workflow, vendor auto-linking & One-Click Proposals).
 - [ ] **v8.2.0** — **IA Integrada**: Nexus Copilot para automação de tarefas.
 
 ---

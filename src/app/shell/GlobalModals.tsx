@@ -16,7 +16,8 @@ export function GlobalModals() {
     editingClient, handleSaveClient, handleDeleteClient,
     editingOffer, handleSaveOffer, handleDeleteOffer,
     offerToDelete, setOfferToDelete,
-    onboardingQuestions, offers
+    onboardingQuestions, offers,
+    teamProfiles, orgRoles
   } = useCRM();
 
   if (!user) return null;
@@ -32,6 +33,8 @@ export function GlobalModals() {
         onboardingQuestions={onboardingQuestions}
         user={user}
         offers={offers}
+        teamProfiles={teamProfiles}
+        orgRoles={orgRoles}
       />
       <OfferModal
         isOpen={isOfferModalOpen}

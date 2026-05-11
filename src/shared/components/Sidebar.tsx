@@ -56,7 +56,7 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const { user, userProfile, unreadAlertsCount, isBirthday } = useAuth();
   const { sidebarOpen, setSidebarOpen, pinnedItems } = useUI();
-  const { activeLeadsCount = 0, supportRequests = [], wikiArticles = [], pendingVacationsCount = 0 } = useCRM();
+  const { supportRequests = [], wikiArticles = [], pendingVacationsCount = 0 } = useCRM();
   const { hasPermission } = usePermissions();
   const { totalUnread: chatUnreadCount } = useGlobalChatAlerts();
   const { hasUnreadNotes } = useCRMStore();
@@ -73,7 +73,6 @@ export default function Sidebar() {
   }, [wikiArticles, userProfile?.viewedWikiArticles]);
 
   const getBadgeForPath = (path: string) => {
-    if (path === '/leads') return activeLeadsCount;
     if (path === '/support') return openTicketCount;
     if (path === '/chat') return chatUnreadCount > 0 ? chatUnreadCount : undefined;
     if (path === '/wiki') return newWikiCount > 0 ? newWikiCount : undefined;
@@ -93,7 +92,7 @@ export default function Sidebar() {
       items: group.items.filter(item => !item.permission || hasPermission(item.permission as any)),
       totalBadges: group.items.reduce((acc, item) => acc + (getBadgeForPath(item.path) || 0), 0)
     })).filter(g => g.items.length > 0);
-  }, [hasPermission, activeLeadsCount, openTicketCount, chatUnreadCount, newWikiCount, pendingVacationsCount]);
+  }, [hasPermission, openTicketCount, chatUnreadCount, newWikiCount, pendingVacationsCount]);
 
   const activeGroupData = useMemo(() => {
     if (activeGroupId === 'favorites') return { label: 'Favoritos', items: pinnedNavItems };

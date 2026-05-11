@@ -27,7 +27,15 @@ import PlansTab from './client-modal/PlansTab';
 import PurchasesTab from './client-modal/PurchasesTab';
 
 export default
-function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardingQuestions, user, offers }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, onDelete?: (id: string) => void, initialData: Client | null, onboardingQuestions: OnboardingQuestion[], user: User, offers: Offer[] }) {
+function ClientModal({ 
+  isOpen, onClose, onSave, onDelete, initialData, onboardingQuestions, user, offers,
+  teamProfiles = [], orgRoles = []
+}: { 
+  isOpen: boolean, onClose: () => void, onSave: (data: Partial<Client>) => void, 
+  onDelete?: (id: string) => void, initialData: Client | null, 
+  onboardingQuestions: OnboardingQuestion[], user: User, offers: Offer[],
+  teamProfiles?: any[], orgRoles?: any[]
+}) {
   const { userProfile } = useAuth();
   const { hasPermission } = usePermissions();
   const { defaultContractText, effectiveOrgId, tags } = useCRM();
@@ -321,6 +329,30 @@ function ClientModal({ isOpen, onClose, onSave, onDelete, initialData, onboardin
                       <option value="Instagram">Instagram</option>
                       <option value="WhatsApp Direto">WhatsApp Direto</option>
                       <option value="Parceiro">Parceiro</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Responsável / Vendedor *</label>
+                    <select 
+                      required 
+                      name="assignedTo" 
+                      value={formData.assignedTo || ''} 
+                      onChange={handleChange} 
+                      className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                    >
+                      <option value="">Selecione o responsável</option>
+                      {teamProfiles
+                        .filter(p => {
+                          const role = orgRoles.find(r => r.id === p.roleId || r.name === p.role);
+                          return role?.permissions?.includes('MANAGE_LEADS') || p.role === 'Vendedor';
+                        })
+                        .map(member => (
+                          <option key={member.uid} value={member.uid} className="bg-gray-900">
+                            {member.displayName}
+                          </option>
+                        ))
+                      }
                     </select>
                   </div>
 

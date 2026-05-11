@@ -12,7 +12,6 @@ import { AuthGuard, PendingInviteGuard } from './RouteGuards';
 
 // Eager Loaded Components (Core Views)
 import DashboardView from '@crm/views/DashboardView';
-import LeadsView from '@crm/views/LeadsView';
 import SupportView from '@support/views/SupportView';
 import ChatView from '@chat/views/ChatView';
 import NotificationsView from '@core/notifications/views/NotificationsView';
@@ -94,7 +93,6 @@ export function AppRouter() {
                 <AppLayout>
                   <Routes>
                     <Route path="/" element={<DashboardView />} />
-                    <Route path="/leads" element={<LeadsView />} />
                     <Route path="/support" element={<SupportView />} />
                     <Route path="/chat" element={<ChatView />} />
                     <Route path="/notifications" element={<NotificationsView />} />

@@ -50,7 +50,6 @@ export function Header({ currentPath, navigate }: HeaderProps) {
       case '/products': return 'Produtos';
       case '/monitoring': return 'Monitoramento';
       case '/map': return 'Mapa de Clientes';
-      case '/leads': return 'Funil de Vendas';
       case '/notifications': return 'Notificações';
       case '/team': return 'Gestão de Equipe';
       case '/people': return 'Pessoas & Cultura';

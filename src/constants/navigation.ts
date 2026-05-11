@@ -19,7 +19,6 @@ export const navGroups = [
     icon: Target,
     items: [
       { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-      { icon: Target, label: 'Funil de Vendas', path: '/leads', permission: 'MANAGE_LEADS' },
       { icon: Package, label: 'Produtos', path: '/products' },
       { icon: Users, label: 'Hub Rewards', path: '/referrals' },
       { icon: Megaphone, label: 'Marketing', path: '/marketing', permission: 'MANAGE_SETTINGS' },

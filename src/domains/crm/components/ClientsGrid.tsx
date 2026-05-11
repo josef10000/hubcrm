@@ -16,6 +16,10 @@ interface ClientsGridProps {
   setIsModalOpen: (open: boolean) => void;
   isChurnRisk: (client: Client, churnRiskDays: number) => boolean;
   churnRiskDays: number;
+  teamProfiles?: any[];
+  orgRoles?: any[];
+  onGenerateProposal?: (client: Client) => void;
+  onAssignSeller?: (client: Client, sellerId: string) => void;
 }
 
 export default function ClientsGrid({
@@ -25,7 +29,11 @@ export default function ClientsGrid({
   setEditingClient,
   setIsModalOpen,
   isChurnRisk,
-  churnRiskDays
+  churnRiskDays,
+  teamProfiles = [],
+  orgRoles = [],
+  onGenerateProposal,
+  onAssignSeller
 }: ClientsGridProps) {
   const { tags, effectiveOrgId } = useCRM();
   const [supportModalClientId, setSupportModalClientId] = React.useState<string | null>(null);
@@ -151,6 +159,17 @@ export default function ClientsGrid({
                   </a>
                 </div>
               )}
+
+              {/* Atribuição de Vendedor */}
+              <div className="flex items-center text-gray-600 dark:text-gray-300 text-sm border-t border-white/5 pt-3 mt-2">
+                <Users size={16} className="mr-3 text-primary-400 opacity-80 shrink-0" />
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase font-bold text-gray-500">Responsável</span>
+                  <span className="font-medium">
+                    {teamProfiles.find(p => p.uid === client.assignedTo)?.displayName || 'Sem Responsável'}
+                  </span>
+                </div>
+              </div>
             </div>
 
             <div className="mt-6 pt-4 border-t border-gray-200 dark:border-white/10 flex flex-col gap-2">
@@ -216,6 +235,53 @@ export default function ClientsGrid({
                 <Copy size={18} className="mr-2" />
                 Link do Portal
               </button>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onGenerateProposal?.(client);
+                  }}
+                  className="flex items-center justify-center py-2.5 rounded-xl bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 border border-orange-500/30 transition-colors text-[11px] font-bold uppercase tracking-wider"
+                >
+                  <Zap size={14} className="mr-2" />
+                  Proposta
+                </button>
+                <div className="relative group/seller">
+                  <button
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-full flex items-center justify-center py-2.5 rounded-xl bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 border border-purple-500/30 transition-colors text-[11px] font-bold uppercase tracking-wider"
+                  >
+                    <UserPlus size={14} className="mr-2" />
+                    Vincular
+                  </button>
+                  
+                  {/* Seller Dropdown on Hover/Click */}
+                  <div className="absolute bottom-full left-0 mb-2 w-48 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl opacity-0 invisible group-hover/seller:opacity-100 group-hover/seller:visible transition-all z-50 p-2 space-y-1">
+                    <p className="text-[9px] text-gray-500 font-bold uppercase px-2 mb-1">Selecionar Vendedor</p>
+                    {teamProfiles
+                      .filter(p => {
+                        const role = orgRoles.find(r => r.id === p.roleId || r.name === p.role);
+                        // Permitir qualquer um que tenha permissão de leads ou seja vendedor
+                        return role?.permissions?.includes('MANAGE_LEADS') || p.role === 'Vendedor';
+                      })
+                      .map(member => (
+                        <button
+                          key={member.uid}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onAssignSeller?.(client, member.uid);
+                          }}
+                          className={`w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/5 transition-colors flex items-center justify-between ${client.assignedTo === member.uid ? 'text-primary-400 bg-primary-500/10' : 'text-gray-300'}`}
+                        >
+                          <span className="truncate">{member.displayName}</span>
+                          {client.assignedTo === member.uid && <div className="w-1.5 h-1.5 rounded-full bg-primary-500" />}
+                        </button>
+                      ))
+                    }
+                  </div>
+                </div>
+              </div>
+
               <button
                 onClick={(e) => {
                   e.stopPropagation();
