@@ -47,6 +47,7 @@ const ReleaseNotesView = lazy(() => import('@domains/system/views/ReleaseNotesVi
 import ClientPortal from '@portal/components/ClientPortalLayout';
 import OnboardingForm from '@auth/components/OnboardingForm';
 import PublicCheckoutPage from '@finance/views/PublicCheckoutPage';
+import ProposalPublicView from '@commercial/views/ProposalPublicView';
 import AcceptInviteView from '@auth/views/AcceptInviteView';
 import { GlobalModals } from '../shell/GlobalModals';
 import { useAppTitle } from './useAppTitle';
