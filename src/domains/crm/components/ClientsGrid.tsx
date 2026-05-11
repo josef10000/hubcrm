@@ -245,7 +245,7 @@ export default function ClientsGrid({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  const url = `${window.location.origin}/cliente/${effectiveOrgId}/${client.id}`;
+                  const url = `${window.location.origin}/portal/${effectiveOrgId}/${client.id}`;
                   navigator.clipboard.writeText(url);
                   toast.success('Link do Portal copiado para a área de transferência!');
                 }}

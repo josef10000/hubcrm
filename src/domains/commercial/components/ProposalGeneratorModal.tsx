@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   X, Plus, Minus, Send, Link, 
-  Copy, CheckCircle2, Zap, DollarSign 
+  Copy, CheckCircle2, Zap, DollarSign, ExternalLink
 } from 'lucide-react';
 import { Lead } from '@/types';
 import { proposalService } from '../services/proposalService';
@@ -59,12 +59,12 @@ const ProposalGeneratorModal: React.FC<ProposalGeneratorModalProps> = ({
         orgId
       });
 
-      const link = `${window.location.origin}/release-notes#/p/${proposalId}`; // Usando release-notes como base temporária de rota pública
+      const link = `${window.location.origin}/p/${proposalId}`;
       setProposalLink(link);
       toast.success('Link da proposta gerado!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating proposal:', error);
-      toast.error('Erro ao gerar link da proposta.');
+      toast.error(`Erro ao gerar proposta: ${error.message || 'Erro desconhecido'}`);
     } finally {
       setGenerating(false);
     }
@@ -166,9 +166,19 @@ const ProposalGeneratorModal: React.FC<ProposalGeneratorModalProps> = ({
                 <button 
                   onClick={copyToClipboard}
                   className="p-2 bg-primary-500 text-gray-900 rounded-lg hover:bg-primary-400 transition-all"
+                  title="Copiar Link"
                 >
                   <Copy size={16} />
                 </button>
+                <a 
+                  href={proposalLink} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="p-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-all"
+                  title="Abrir Proposta"
+                >
+                  <ExternalLink size={16} />
+                </a>
               </div>
             </div>
           )}

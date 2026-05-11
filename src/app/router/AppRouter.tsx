@@ -80,7 +80,8 @@ export function AppRouter() {
     }>
       <Routes>
         {/* Public & External Routes */}
-        <Route path="/portal/*" element={<ClientPortal />} />
+        <Route path="/portal/:orgId/:clientId/*" element={<ClientPortal />} />
+        <Route path="/p/:proposalId" element={<ProposalPublicView />} />
         <Route path="/onboarding" element={<OnboardingForm />} />
         <Route path="/checkout/:id" element={<PublicCheckoutPage />} />
         <Route path="/invite/:id" element={<AcceptInviteView />} />
