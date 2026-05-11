@@ -235,6 +235,14 @@ function ClientModal({
       setFormData(prev => ({ ...prev, [name]: v }));
       if (v.replace(/\D/g, '').length === 8) fetchCep(v);
     } else {
+      // Bloquear links do portal sendo salvos como links de pagamento
+      if (name === 'invoiceUrl' || name === 'paymentLink') {
+        const isPortalLink = (value as string)?.includes('/portal/') || (value as string)?.includes(window.location.origin);
+        if (isPortalLink) {
+          toast.error("O link do portal não pode ser usado como link de pagamento.");
+          return;
+        }
+      }
       setFormData(prev => ({ ...prev, [name]: value }));
     }
   };

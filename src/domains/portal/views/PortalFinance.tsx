@@ -55,7 +55,18 @@ export default function PortalFinance({
 
   // Função para garantir que temos uma URL de pagamento válida do Asaas
   const getPaymentUrl = (invoice: any) => {
-    return invoice?.invoiceUrl || invoice?.bankSlipUrl || invoice?.invoiceHtmlUrl || client.paymentLink || client.invoiceUrl || '#';
+    const isPortalLink = (url: string) => !url || url === '#' || url?.includes('/portal/') || url?.includes(window.location.origin);
+    
+    // Priorizar URLs da fatura específica
+    if (invoice?.invoiceUrl && !isPortalLink(invoice.invoiceUrl)) return invoice.invoiceUrl;
+    if (invoice?.bankSlipUrl && !isPortalLink(invoice.bankSlipUrl)) return invoice.bankSlipUrl;
+    if (invoice?.invoiceHtmlUrl && !isPortalLink(invoice.invoiceHtmlUrl)) return invoice.invoiceHtmlUrl;
+    
+    // Fallback para dados do cliente, mas validando se não é link do portal
+    if (client.paymentLink && !isPortalLink(client.paymentLink)) return client.paymentLink;
+    if (client.invoiceUrl && !isPortalLink(client.invoiceUrl)) return client.invoiceUrl;
+    
+    return null;
   };
 
   const isSetupFocus = currentInvoice?.description?.includes('Setup') || (setupValue > 0 && !isSetupPaid && paymentsHistory.length === 0);
@@ -133,15 +144,22 @@ export default function PortalFinance({
 
             <div className="flex flex-col sm:flex-row items-center gap-4">
               {(currentInvoice?.status === 'PENDING' || currentInvoice?.status === 'OVERDUE') ? (
-                <a 
-                  href={getPaymentUrl(currentInvoice)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-full sm:w-auto px-8 lg:px-10 py-4 bg-white text-primary-600 font-black rounded-2xl flex items-center justify-center gap-2 hover:bg-gray-100 transition-all active:scale-95 shadow-xl text-sm lg:text-base"
-                >
-                  Pagar {isSetupFocus ? 'Setup' : 'Fatura'}
-                  <ArrowUpRight size={20} />
-                </a>
+                getPaymentUrl(currentInvoice) ? (
+                  <a 
+                    href={getPaymentUrl(currentInvoice)!}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full sm:w-auto px-8 lg:px-10 py-4 bg-white text-primary-600 font-black rounded-2xl flex items-center justify-center gap-2 hover:bg-gray-100 transition-all active:scale-95 shadow-xl text-sm lg:text-base"
+                  >
+                    Pagar {isSetupFocus ? 'Setup' : 'Fatura'}
+                    <ArrowUpRight size={20} />
+                  </a>
+                ) : (
+                  <div className="w-full sm:w-auto px-8 lg:px-10 py-4 bg-amber-500/20 border border-amber-400/30 text-amber-400 font-bold rounded-2xl flex items-center justify-center gap-2 text-sm lg:text-base italic">
+                    <AlertCircle size={20} />
+                    Link de Pagamento Indisponível
+                  </div>
+                )
               ) : (
                 <div className="w-full sm:w-auto px-8 lg:px-10 py-4 bg-emerald-500/20 border border-emerald-400/30 text-emerald-400 font-bold rounded-2xl flex items-center justify-center gap-2 text-sm lg:text-base">
                   <CheckCircle2 size={20} />
@@ -242,9 +260,9 @@ export default function PortalFinance({
                         </span>
                       </td>
                       <td className="py-5 px-4 rounded-r-2xl border-y border-r border-white/5 text-right">
-                        {getPaymentUrl(payment) !== '#' && (
+                        {getPaymentUrl(payment) ? (
                           <a 
-                            href={getPaymentUrl(payment)} 
+                            href={getPaymentUrl(payment)!} 
                             target="_blank" 
                             rel="noreferrer"
                             className="inline-flex items-center gap-2 p-2 px-4 bg-white/5 hover:bg-primary-500 text-gray-400 hover:text-white rounded-xl transition-all text-xs font-bold"
@@ -252,6 +270,8 @@ export default function PortalFinance({
                             {payment.status === 'RECEIVED' ? <Download size={14} /> : <ExternalLink size={14} />}
                             {payment.status === 'RECEIVED' ? 'Comprovante' : 'Pagar'}
                           </a>
+                        ) : (
+                          <span className="text-[10px] text-gray-500 italic">Link indisponível</span>
                         )}
                       </td>
                     </motion.tr>
