@@ -66,7 +66,6 @@ export const navGroups = [
     icon: Settings,
     items: [
       { icon: Bell, label: 'Notificações', path: '/notifications' },
-      { icon: Zap, label: 'Novidades do Hub', path: '/release-notes' },
       { icon: ShieldCheck, label: 'Auditoria & Compliance', path: '/compliance', permission: 'MANAGE_SETTINGS' },
       { icon: ShieldCheck, label: 'Administrativo', path: '/admin', permission: 'MANAGE_SETTINGS' },
       { icon: Settings, label: 'Configurações', path: '/settings' },

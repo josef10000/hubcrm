@@ -41,7 +41,6 @@ const CanvasListView = lazy(() => import('@chat/views/CanvasListView'));
 const CanvasEditorView = lazy(() => import('@chat/views/CanvasEditorView'));
 const ReferralsView = lazy(() => import('@crm/components/ReferralsView'));
 const AuditDashboard = lazy(() => import('@domains/core/views/AuditDashboard'));
-const ReleaseNotesView = lazy(() => import('@domains/system/views/ReleaseNotesView'));
 
 // Public / External Views
 import ClientPortal from '@portal/components/ClientPortalLayout';
@@ -134,7 +133,6 @@ export function AppRouter() {
                     <Route path="/settings" element={<SettingsView />} />
                     <Route path="/profile/:uid" element={<ProfileView />} />
                     <Route path="/workspace" element={<MyWorkspaceView />} />
-                    <Route path="/release-notes" element={<ReleaseNotesView />} />
                     
                     {/* Security Based Route */}
                     <Route path="/compliance" element={hasPermission('MANAGE_SETTINGS') ? <AuditDashboard /> : <Navigate to="/" />} />

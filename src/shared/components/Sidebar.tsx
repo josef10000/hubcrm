@@ -59,7 +59,6 @@ export default function Sidebar() {
   const { supportRequests = [], wikiArticles = [], pendingVacationsCount = 0 } = useCRM();
   const { hasPermission } = usePermissions();
   const { totalUnread: chatUnreadCount } = useGlobalChatAlerts();
-  const { hasUnreadNotes } = useCRMStore();
 
   // Estado para o menu Flyout
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
@@ -77,7 +76,6 @@ export default function Sidebar() {
     if (path === '/chat') return chatUnreadCount > 0 ? chatUnreadCount : undefined;
     if (path === '/wiki') return newWikiCount > 0 ? newWikiCount : undefined;
     if (path === '/people') return pendingVacationsCount > 0 ? pendingVacationsCount : undefined;
-    if (path === '/release-notes') return hasUnreadNotes ? 'NEW' : undefined;
     return undefined;
   };
 
