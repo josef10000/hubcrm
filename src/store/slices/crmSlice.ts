@@ -57,7 +57,7 @@ export const createCRMSlice: StateCreator<
       }
 
       // 🚀 Integração com Asaas (Somente se houver dados mínimos)
-      if (!client.asaasCustomerId && client.cpfCnpj && client.email && client.status !== 'Cancelado') {
+      if (!client.asaasCustomerId && client.email && client.status !== 'Cancelado') {
         try {
           const { asaasService } = await import('@/services/asaasService');
           const { getPlanPrice, calculateDiscount } = await import('@/helpers');
@@ -67,7 +67,7 @@ export const createCRMSlice: StateCreator<
             id: client.id,
             name: client.name,
             email: client.email,
-            cpfCnpj: client.cpfCnpj,
+            cpfCnpj: client.cpfCnpj, // Passa se tiver, mas não bloqueia mais
             whatsapp: client.whatsapp,
             notificationsEnabled: client.asaasNotificationsEnabled
           });
@@ -83,14 +83,17 @@ export const createCRMSlice: StateCreator<
           const selectedOffer = offers.find((o) => o.id === client.offerId) || offers.find((o) => o.name === client.plan);
           const isSinglePayment = selectedOffer?.type === 'SINGLE';
 
+          // Usar UNDEFINED por padrão para dar flexibilidade ao cliente, a menos que já tenha escolhido
+          const bType = client.billingType || 'UNDEFINED';
+
           if (client.isCombo || isSinglePayment) {
             const totalValue = isSinglePayment ? Math.max(0, monthlyValue + (client.setupPrice || 0)) : monthlyValue;
             const paymentLink = await asaasService.createPaymentLink({
               name: isSinglePayment ? `Pagamento Único - ${client.plan}` : `Combo - ${client.plan}`,
               description: isSinglePayment ? `Oferta ${client.plan}` : `Acesso anual + Setup`,
               value: totalValue,
-              billingType: client.billingType || 'CREDIT_CARD',
-              chargeType: client.billingType === 'PIX' ? 'DETACHED' : 'INSTALLMENT',
+              billingType: bType,
+              chargeType: bType === 'PIX' ? 'DETACHED' : 'INSTALLMENT',
               maxInstallments: client.maxInstallments || 12,
               customer: customer.id,
               dueDateLimitDays: 3
@@ -101,7 +104,7 @@ export const createCRMSlice: StateCreator<
             // Assinatura Padrão
             const sub = await asaasService.createSubscription({
               customer: customer.id,
-              billingType: client.billingType || 'CREDIT_CARD',
+              billingType: bType,
               cycle: client.billingCycle === 'YEARLY' ? 'YEARLY' : 'MONTHLY',
               value: monthlyValue,
               nextDueDate: firstPaymentDate,

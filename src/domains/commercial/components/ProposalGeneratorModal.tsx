@@ -22,7 +22,6 @@ const ProposalGeneratorModal: React.FC<ProposalGeneratorModalProps> = ({
 }) => {
   const [items, setItems] = useState<ProposalItem[]>([
     { id: '1', name: 'Plano Corporate Hub', description: 'Licença anual completa', price: 1997, quantity: 1, isOptional: false, isSelected: true },
-    { id: '2', name: 'Máquina de Avaliações', description: 'Sistema de automação de reviews', price: 47, quantity: 1, isOptional: true, isSelected: false },
     { id: '3', name: 'Consultoria de Onboarding', description: 'Implementação assistida', price: 497, quantity: 1, isOptional: true, isSelected: false },
   ]);
 
@@ -57,7 +56,7 @@ const ProposalGeneratorModal: React.FC<ProposalGeneratorModalProps> = ({
         totalAmount,
         createdBy: userId,
         orgId,
-        checkoutUrl: ((lead as any).paymentLink || (lead as any).invoiceUrl || (lead as any).bankSlipUrl || (lead as any).invoiceHtmlUrl) || null
+        checkoutUrl: ((lead as any).paymentLink || (lead as any).invoiceUrl || (lead as any).bankSlipUrl || (lead as any).invoiceHtmlUrl) ?? null
       });
 
       const link = `${window.location.origin}/p/${proposalId}`;

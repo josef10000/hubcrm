@@ -53,40 +53,4 @@ export function initGlobalEventHandlers() {
   eventBus.on(HUB_EVENTS.SYSTEM.NOTIFICATION_RECEIVED, (notif: any) => {
     logger.info(`Nova notificação: ${notif.title}`, { domain: 'SYSTEM' });
   });
-
-  // --- Commercial Events ---
-
-  eventBus.on('PROPOSAL_APPROVED', async (data: any) => {
-    const { proposalId, leadId, totalAmount, orgId } = data;
-    logger.info('Proposal approved! Starting automatic conversion check...', { domain: 'COMMERCIAL', data: proposalId });
-
-    try {
-      // 1. Verificar se o Lead existe (pode ser que já seja um cliente)
-      const lead = await leadService.getLeadById(orgId, leadId);
-      
-      if (!lead) {
-        logger.info('Lead not found. Checking if it is already a client...', { domain: 'COMMERCIAL' });
-        // Se não for lead, provavelmente já é cliente e a proposta foi gerada direto para ele
-        return;
-      }
-
-      // 2. Converter Lead para Cliente
-      await clientService.createFromLead(orgId, lead, totalAmount);
-
-      // 3. Mover Lead no Funil
-      await leadService.moveLead(orgId, lead, 'Convertido', 'Sistema (Proposta Web)');
-
-      toast.success('Proposta aprovada! Cliente criado com sucesso.');
-      logger.success('Lead converted to client automatically via web proposal', { domain: 'COMMERCIAL' });
-    } catch (error: any) {
-      // Silenciar erros de permissão para o cliente final (que não tem permissão de escrita no CRM)
-      if (error?.message?.includes('permission-denied') || error?.code === 'permission-denied') {
-        logger.warn('Conversion skipped: Public user has no permission to write to CRM.', { domain: 'COMMERCIAL' });
-        return;
-      }
-      
-      logger.error('Error in automatic conversion process', { domain: 'COMMERCIAL', data: error });
-      toast.error('Erro ao processar conversão automática.');
-    }
-  });
 }
