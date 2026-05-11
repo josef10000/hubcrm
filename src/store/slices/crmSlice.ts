@@ -48,8 +48,8 @@ export const createCRMSlice: StateCreator<
       const client: any = {
         ...clientData,
         id,
-        updatedAt: serverTimestamp(),
-        createdAt: clientData.createdAt || serverTimestamp()
+        updatedAt: Date.now(),
+        createdAt: clientData.createdAt || Date.now()
       };
 
       if (isNew && !client.assignedTo && currentUserId) {

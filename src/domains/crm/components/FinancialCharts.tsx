@@ -13,7 +13,7 @@ export default function FinancialCharts({ statusData, nicheData, COLORS }: Finan
       <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-5 rounded-2xl shadow-lg">
         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Clientes por Status</h3>
         <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
             <BarChart data={statusData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
               <XAxis dataKey="name" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
@@ -32,7 +32,7 @@ export default function FinancialCharts({ statusData, nicheData, COLORS }: Finan
       <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-5 rounded-2xl shadow-lg">
         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Top Nichos</h3>
         <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
             <PieChart>
               <Pie
                 data={nicheData}

@@ -19,7 +19,14 @@ export const ClientSchema = z.object({
   niche: z.string().optional(),
   paymentStatus: z.enum(['PENDING', 'RECEIVED', 'OVERDUE', 'N/A'] as const).default('N/A'),
   lastContactAt: z.number().optional(),
-});
+  asaasCustomerId: z.string().optional(),
+  invoiceUrl: z.string().optional(),
+  paymentLink: z.string().optional(),
+  bankSlipUrl: z.string().optional(),
+  nextDueDate: z.string().optional(),
+  totalAmount: z.number().optional(),
+  welcomeEmailSent: z.boolean().optional(),
+}).passthrough();
 
 export type ClientEntity = z.infer<typeof ClientSchema>;
 

@@ -57,7 +57,8 @@ export default function PortalFinance({
   const getPaymentUrl = (invoice: any) => {
     const isAsaasUrl = (url: string) => {
       if (!url) return false;
-      return url.includes('asaas.com') || url.includes('billing.asaas.com');
+      const domains = ['asaas.com', 'billing.asaas.com', 'cobranca.asaas.com.br', 'sandbox.asaas.com'];
+      return domains.some(domain => url.includes(domain));
     };
 
     const isPortalLink = (url: string) => {
