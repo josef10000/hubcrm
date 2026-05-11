@@ -87,6 +87,12 @@ export const createCRMSlice: StateCreator<
               client.asaasCustomerId = customer.id;
             }
 
+            // 🚀 PRÉ-SALVAMENTO: Garantir que o cliente existe no Firestore para que a API portal_finance funcione
+            const preSaveData = Object.fromEntries(
+              Object.entries(client).filter(([_, v]) => v !== undefined)
+            );
+            await setDoc(doc(db, 'organizations', effectiveOrgId, 'clients', id), preSaveData, { merge: true });
+
             // 2. Preparar Valores
             const today = new Date();
             const firstPaymentDate = client.firstPaymentDate || today.toISOString().split('T')[0];
@@ -130,6 +136,9 @@ export const createCRMSlice: StateCreator<
               // Em assinaturas, o link de pagamento fica na cobrança gerada, não na assinatura.
               // Vamos buscar o pagamento pendente mais recente para pegar a URL.
               try {
+                // Pequeno delay para dar tempo do Asaas processar a assinatura e gerar o pagamento
+                await new Promise(r => setTimeout(r, 2000));
+                
                 const pRes = await fetch(`/api/portal_finance?orgId=${effectiveOrgId}&clientId=${client.id}&asaasCustomerId=${asaasCustomerId}`);
                 if (pRes.ok) {
                   const pData = await pRes.json();
