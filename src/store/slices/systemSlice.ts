@@ -1,7 +1,7 @@
 import { StateCreator } from 'zustand';
 import { CRMStoreState } from '../types';
 import { db } from '@/lib/firebase';
-import { collection, query, orderBy, limit, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, limit, getDocs, addDoc, serverTimestamp, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { logger } from '@core/utils/logger';
 
 export interface ReleaseNote {
@@ -22,6 +22,8 @@ export interface SystemSlice {
   fetchReleaseNotes: () => Promise<void>;
   markNotesAsRead: () => void;
   publishReleaseNote: (note: Omit<ReleaseNote, 'id' | 'date'>) => Promise<void>;
+  deleteReleaseNote: (id: string) => Promise<void>;
+  updateReleaseNote: (id: string, note: Partial<ReleaseNote>) => Promise<void>;
 }
 
 export const createSystemSlice: StateCreator<
@@ -35,9 +37,6 @@ export const createSystemSlice: StateCreator<
   isSystemLoading: false,
 
   fetchReleaseNotes: async () => {
-    const orgId = get().effectiveOrgId;
-    if (!orgId) return;
-
     set({ isSystemLoading: true });
     try {
       const q = query(
@@ -89,6 +88,29 @@ export const createSystemSlice: StateCreator<
       logger.info(`New Release Note published: ${note.version}`, { domain: 'SYSTEM' });
     } catch (err) {
       logger.error("Error publishing release note", { domain: 'SYSTEM', data: err });
+    }
+  },
+
+  deleteReleaseNote: async (id) => {
+    try {
+      await deleteDoc(doc(db, 'system_updates', id));
+      get().fetchReleaseNotes();
+      logger.info(`Release Note deleted: ${id}`, { domain: 'SYSTEM' });
+    } catch (err) {
+      logger.error("Error deleting release note", { domain: 'SYSTEM', data: err });
+    }
+  },
+
+  updateReleaseNote: async (id, note) => {
+    try {
+      await updateDoc(doc(db, 'system_updates', id), {
+        ...note,
+        updatedAt: serverTimestamp()
+      });
+      get().fetchReleaseNotes();
+      logger.info(`Release Note updated: ${id}`, { domain: 'SYSTEM' });
+    } catch (err) {
+      logger.error("Error updating release note", { domain: 'SYSTEM', data: err });
     }
   }
 });

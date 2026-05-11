@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Rocket, Bug, ShieldCheck, Zap, User, Calendar, Plus, X } from 'lucide-react';
+import { Rocket, Bug, ShieldCheck, Zap, User, Calendar, Plus, X, Pencil, Trash2 } from 'lucide-react';
 import { useCRMStore } from '@/store/useCRMStore';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
@@ -11,8 +11,10 @@ import { toast } from 'sonner';
 const ReleaseNotesView: React.FC = () => {
   const { userProfile } = useAuth();
   const { hasPermission } = usePermissions();
-  const { releaseNotes, fetchReleaseNotes, markNotesAsRead, publishReleaseNote, isSystemLoading } = useCRMStore();
+  const { releaseNotes, fetchReleaseNotes, markNotesAsRead, publishReleaseNote, deleteReleaseNote, updateReleaseNote, isSystemLoading } = useCRMStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingNote, setEditingNote] = useState<any>(null);
   const [newNote, setNewNote] = useState({
     version: '',
     title: '',
@@ -45,6 +47,33 @@ const ReleaseNotesView: React.FC = () => {
       toast.success('Atualização publicada com sucesso!');
     } catch (err) {
       toast.error('Erro ao publicar atualização.');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm('Tem certeza que deseja excluir esta atualização?')) {
+      try {
+        await deleteReleaseNote(id);
+        toast.success('Atualização excluída!');
+      } catch (err) {
+        toast.error('Erro ao excluir.');
+      }
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (!editingNote.version || !editingNote.title || !editingNote.content) {
+      toast.error('Preencha todos os campos!');
+      return;
+    }
+
+    try {
+      await updateReleaseNote(editingNote.id, editingNote);
+      setIsEditModalOpen(false);
+      setEditingNote(null);
+      toast.success('Atualização editada com sucesso!');
+    } catch (err) {
+      toast.error('Erro ao editar atualização.');
     }
   };
 
@@ -123,9 +152,30 @@ const ReleaseNotesView: React.FC = () => {
                     </div>
                   </div>
                   
-                  <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-bold text-gray-400 uppercase">
-                    {getTypeLabel(note.type)}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {hasPermission('MANAGE_SETTINGS') && (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => {
+                            setEditingNote(note);
+                            setIsEditModalOpen(true);
+                          }}
+                          className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-blue-400 transition-all"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(note.id)}
+                          className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-red-400 transition-all"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                    <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-bold text-gray-400 uppercase">
+                      {getTypeLabel(note.type)}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="prose prose-invert prose-sm max-w-none text-gray-400 leading-relaxed">
@@ -227,6 +277,111 @@ const ReleaseNotesView: React.FC = () => {
                   className="flex-1 py-4 bg-primary-500 text-white font-bold rounded-2xl hover:bg-primary-600 shadow-lg shadow-primary-500/20 transition-all active:scale-95"
                 >
                   Publicar Agora
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Edição */}
+      {isEditModalOpen && editingNote && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div 
+            className="absolute inset-0" 
+            onClick={() => {
+              setIsEditModalOpen(false);
+              setEditingNote(null);
+            }} 
+          />
+          
+          <div className="relative w-full max-w-lg bg-gray-900 border border-white/10 rounded-[2.5rem] shadow-2xl p-8 overflow-hidden">
+            <div className="absolute top-0 right-0 p-6">
+              <button 
+                onClick={() => {
+                  setIsEditModalOpen(false);
+                  setEditingNote(null);
+                }}
+                className="p-2 hover:bg-white/5 rounded-full text-gray-500 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-amber-500/10 rounded-2xl">
+                  <Pencil className="w-6 h-6 text-amber-500" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">Editar Novidade</h3>
+                  <p className="text-sm text-gray-500">Ajuste os detalhes da atualização</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Versão</label>
+                  <input
+                    type="text"
+                    value={editingNote.version}
+                    onChange={e => setEditingNote({ ...editingNote, version: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none focus:border-amber-500/50 transition-all"
+                    placeholder="v1.x.x"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Tipo</label>
+                  <select
+                    value={editingNote.type}
+                    onChange={e => setEditingNote({ ...editingNote, type: e.target.value as any })}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none focus:border-amber-500/50 transition-all appearance-none"
+                  >
+                    <option value="feature">🚀 Funcionalidade</option>
+                    <option value="improvement">✨ Melhoria</option>
+                    <option value="fix">🛠️ Correção</option>
+                    <option value="security">🔒 Segurança</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Título</label>
+                <input
+                  type="text"
+                  value={editingNote.title}
+                  onChange={e => setEditingNote({ ...editingNote, title: e.target.value })}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none focus:border-amber-500/50 transition-all"
+                  placeholder="O que mudou?"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Conteúdo</label>
+                <textarea
+                  value={editingNote.content}
+                  onChange={e => setEditingNote({ ...editingNote, content: e.target.value })}
+                  rows={4}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none focus:border-amber-500/50 transition-all resize-none"
+                  placeholder="Descreva os detalhes..."
+                />
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button
+                  onClick={() => {
+                    setIsEditModalOpen(false);
+                    setEditingNote(null);
+                  }}
+                  className="flex-1 py-4 text-gray-400 font-bold hover:bg-white/5 rounded-2xl transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleUpdate}
+                  className="flex-1 py-4 bg-amber-500 text-white font-bold rounded-2xl hover:bg-amber-600 shadow-lg shadow-amber-500/20 transition-all active:scale-95"
+                >
+                  Salvar Alterações
                 </button>
               </div>
             </div>
