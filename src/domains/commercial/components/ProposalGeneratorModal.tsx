@@ -57,7 +57,7 @@ const ProposalGeneratorModal: React.FC<ProposalGeneratorModalProps> = ({
         totalAmount,
         createdBy: userId,
         orgId,
-        checkoutUrl: (lead as any).paymentLink || (lead as any).invoiceUrl || (lead as any).bankSlipUrl || (lead as any).invoiceHtmlUrl
+        checkoutUrl: ((lead as any).paymentLink || (lead as any).invoiceUrl || (lead as any).bankSlipUrl || (lead as any).invoiceHtmlUrl) || null
       });
 
       const link = `${window.location.origin}/p/${proposalId}`;
