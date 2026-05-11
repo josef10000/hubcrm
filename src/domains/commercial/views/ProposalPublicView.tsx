@@ -93,16 +93,31 @@ const ProposalPublicView: React.FC = () => {
   if (approved || proposal.status === 'approved') {
     return (
       <div className="min-h-screen bg-[#030712] flex items-center justify-center p-6 text-center">
-        <div className="max-w-md w-full space-y-6 animate-in zoom-in-95 duration-500">
+        <div className="max-w-md w-full space-y-8 animate-in zoom-in-95 duration-500">
           <div className="w-24 h-24 bg-emerald-500/20 border border-emerald-500/50 rounded-full flex items-center justify-center mx-auto shadow-[0_0_50px_rgba(16,185,129,0.2)]">
             <CheckCircle2 className="w-12 h-12 text-emerald-500" />
           </div>
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-white">Tudo Certo!</h1>
-            <p className="text-gray-400">Sua proposta foi aprovada com sucesso. Nossa equipe já foi notificada e entrará em contato em breve.</p>
+          <div className="space-y-4">
+            <h1 className="text-3xl font-bold text-white">Proposta Aprovada!</h1>
+            <p className="text-gray-400">Excelente escolha! O seu acesso já está sendo preparado. Clique no botão abaixo para concluir o pagamento e ativar sua conta.</p>
           </div>
-          <div style={GLASS_STYLES.base} className="p-4 rounded-2xl text-xs text-emerald-400/70 border-emerald-500/20">
-            Protocolo de Aceite Digital Gerado e Arquivado
+          
+          {proposal.checkoutUrl ? (
+            <a 
+              href={proposal.checkoutUrl}
+              className="w-full py-5 bg-emerald-500 hover:bg-emerald-400 text-gray-900 font-black uppercase tracking-widest rounded-2xl transition-all shadow-[0_10px_30px_rgba(16,185,129,0.3)] hover:-translate-y-1 flex items-center justify-center gap-3"
+            >
+              Ir para Pagamento (Asaas)
+              <ArrowRight className="w-5 h-5" />
+            </a>
+          ) : (
+            <div style={GLASS_STYLES.base} className="p-6 rounded-2xl text-xs text-amber-400/70 border-amber-500/20">
+              Aguardando geração do link de pagamento automático...
+            </div>
+          )}
+
+          <div style={GLASS_STYLES.base} className="p-4 rounded-2xl text-[10px] text-emerald-400/50 border-emerald-500/10 uppercase tracking-widest font-bold">
+            Protocolo de Aceite Digital Arquivado
           </div>
         </div>
       </div>

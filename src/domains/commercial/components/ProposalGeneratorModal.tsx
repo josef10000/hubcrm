@@ -56,7 +56,8 @@ const ProposalGeneratorModal: React.FC<ProposalGeneratorModalProps> = ({
         items: items, // Enviamos todos, o cliente escolhe os opcionais na web
         totalAmount,
         createdBy: userId,
-        orgId
+        orgId,
+        checkoutUrl: (lead as any).paymentLink || (lead as any).invoiceUrl || (lead as any).bankSlipUrl || (lead as any).invoiceHtmlUrl
       });
 
       const link = `${window.location.origin}/p/${proposalId}`;

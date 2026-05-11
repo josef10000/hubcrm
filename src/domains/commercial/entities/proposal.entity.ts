@@ -31,6 +31,7 @@ export const ProposalSchema = z.object({
   }).optional(),
   createdBy: z.string(),
   orgId: z.string(),
+  checkoutUrl: z.string().optional(),
 });
 
 export type Proposal = z.infer<typeof ProposalSchema>;
