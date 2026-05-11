@@ -1,7 +1,7 @@
 # <p align="center">🔐 HUB CENTRAL — INTELLIGENCE ECOSYSTEM</p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Enterprise_OS-v8.1.4-3b82f6?style=for-the-badge&labelColor=0a0a0a" alt="Version" />
+  <img src="https://img.shields.io/badge/Enterprise_OS-v8.1.5-3b82f6?style=for-the-badge&labelColor=0a0a0a" alt="Version" />
   <img src="https://img.shields.io/badge/Architecture-Collaboration_Bots-blueviolet?style=for-the-badge&labelColor=0a0a0a" alt="Architecture" />
   <img src="https://img.shields.io/badge/Status-Pro_Collaboration-emerald?style=for-the-badge&labelColor=0a0a0a" alt="Status" />
 </p>
@@ -122,6 +122,7 @@ O Hub Central segue diretrizes rígidas de design para manter seu status premium
 - [x] **v8.1.2** — **Public Link Stabilization** (Fixed portal link routing, proposal accessibility and detailed error handling).
 - [x] **v8.1.3** — **Security & Payment Integrity** (Added Firestore root rules for proposals and fixed multi-field Asaas payment link resolution).
 - [x] **v8.1.4** — **UX & Conversion Optimization** (Humanized proposal approval success flow and implemented automatic checkout redirection).
+- [x] **v8.1.5** — **Financial Integrity Guard** (Prevented portal link loops in payment buttons and added real-time URL validation in CRM).
 - [ ] **v8.2.0** — **IA Integrada**: Nexus Copilot para automação de tarefas.
 
 ---
