@@ -55,7 +55,12 @@ export default function PortalFinance({
 
   // Função para garantir que temos uma URL de pagamento válida do Asaas
   const getPaymentUrl = (invoice: any) => {
-    const isPortalLink = (url: string) => !url || url === '#' || url?.includes('/portal/') || url?.includes(window.location.origin);
+    const isPortalLink = (url: string) => {
+      if (!url || url === '#') return true;
+      const currentOrigin = window.location.origin;
+      // Bloquear se contiver /portal/ (nosso padrão) OU se for o mesmo domínio exato do portal
+      return url.includes('/portal/') || url === currentOrigin || url === currentOrigin + '/';
+    };
     
     // Priorizar URLs da fatura específica
     if (invoice?.invoiceUrl && !isPortalLink(invoice.invoiceUrl)) return invoice.invoiceUrl;
@@ -155,9 +160,12 @@ export default function PortalFinance({
                     <ArrowUpRight size={20} />
                   </a>
                 ) : (
-                  <div className="w-full sm:w-auto px-8 lg:px-10 py-4 bg-amber-500/20 border border-amber-400/30 text-amber-400 font-bold rounded-2xl flex items-center justify-center gap-2 text-sm lg:text-base italic">
-                    <AlertCircle size={20} />
-                    Link de Pagamento Indisponível
+                  <div className="w-full sm:w-auto px-8 lg:px-10 py-4 bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-2xl flex flex-col items-center justify-center gap-1 shadow-lg backdrop-blur-md">
+                    <div className="flex items-center gap-2 font-black text-sm uppercase tracking-wider">
+                      <AlertCircle size={18} />
+                      Pagamento Manual
+                    </div>
+                    <span className="text-[10px] opacity-70 font-medium">Contate o suporte para receber o link</span>
                   </div>
                 )
               ) : (
