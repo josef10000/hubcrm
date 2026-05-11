@@ -177,12 +177,13 @@ export default function ClientPortal() {
         const linkedList = Array.from(linkedMap.values());
         setAllLinkedClients(linkedList);
 
-        // Aggregate Payments for all customers
+        // Aggregate Payments for all customers (Using the new Public Portal Endpoint)
         const aggregatedPayments: any[] = [];
         for (const c of linkedList) {
           if (c.asaasCustomerId) {
             try {
-              const res = await authFetch(`/api/asaas/payments?customer=${c.asaasCustomerId}`);
+              // We use a regular fetch here because the portal_finance endpoint is public but verified by orgId/clientId
+              const res = await fetch(`/api/portal_finance?orgId=${orgId}&clientId=${c.id}&asaasCustomerId=${c.asaasCustomerId}`);
               if (res.ok) {
                 const data = await res.json();
                 const payments = data.data || [];
