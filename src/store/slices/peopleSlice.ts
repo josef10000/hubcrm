@@ -14,6 +14,7 @@ export interface PeopleSlice {
   teamProfiles: UserProfile[];
   vacations: VacationPeriod[];
   appointments: Appointment[];
+  availabilityBlocks: AvailabilityBlock[];
   orgRoles: CustomRole[];
   onboardingQuestions: OnboardingQuestion[];
   pendingVacationsCount: number;
@@ -22,6 +23,8 @@ export interface PeopleSlice {
   handleDeleteVacationRequest: (id: string) => Promise<void>;
   handleRequestAppointment: (appointment: Partial<Appointment>, userId: string) => Promise<void>;
   handleUpdateAppointmentStatus: (id: string, status: Appointment['status'], userId: string) => Promise<void>;
+  handleSaveAvailabilityBlock: (block: Partial<AvailabilityBlock>) => Promise<void>;
+  handleDeleteAvailabilityBlock: (id: string) => Promise<void>;
 }
 
 export const createPeopleSlice: StateCreator<
@@ -33,6 +36,7 @@ export const createPeopleSlice: StateCreator<
   teamProfiles: [],
   vacations: [],
   appointments: [],
+  availabilityBlocks: [],
   orgRoles: [],
   onboardingQuestions: [],
   pendingVacationsCount: 0,
@@ -93,6 +97,36 @@ export const createPeopleSlice: StateCreator<
       toast.success('Status da reunião atualizado!');
     } catch (err) {
       console.error("[PeopleSlice] Error updating appointment:", err);
+    }
+  },
+
+  handleSaveAvailabilityBlock: async (block) => {
+    const orgId = get().effectiveOrgId;
+    const userId = get().currentUserId;
+    if (!orgId || !userId) return;
+    try {
+      const id = block.id || doc(collection(db, 'organizations', orgId, 'availabilityBlocks')).id;
+      await setDoc(doc(db, 'organizations', orgId, 'availabilityBlocks', id), {
+        ...block,
+        id,
+        userId,
+        orgId,
+        createdAt: Date.now()
+      }, { merge: true });
+      toast.success('Disponibilidade atualizada!');
+    } catch (err) {
+      console.error("[PeopleSlice] Error saving block:", err);
+    }
+  },
+
+  handleDeleteAvailabilityBlock: async (id) => {
+    const orgId = get().effectiveOrgId;
+    if (!orgId) return;
+    try {
+      await deleteDoc(doc(db, 'organizations', orgId, 'availabilityBlocks', id));
+      toast.success('Bloqueio removido.');
+    } catch (err) {
+      console.error("[PeopleSlice] Error deleting block:", err);
     }
   },
 });

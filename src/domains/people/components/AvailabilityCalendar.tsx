@@ -47,9 +47,9 @@ export default function AvailabilityCalendar({ userId, isOwner }: AvailabilityCa
   const monthDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
   // Filtrar dados do usuário selecionado
-  const userAppointments = appointments.filter(a => (a.targetId === userId || a.requesterId === userId) && a.status === 'approved');
-  const userBlocks = availabilityBlocks.filter(b => b.userId === userId);
-  const pendingRequests = appointments.filter(a => a.targetId === userId && a.status === 'pending');
+  const userAppointments = (appointments || []).filter(a => (a.targetId === userId || a.requesterId === userId) && a.status === 'approved');
+  const userBlocks = (availabilityBlocks || []).filter(b => b.userId === userId);
+  const pendingRequests = (appointments || []).filter(a => a.targetId === userId && a.status === 'pending');
 
   const getTimeSlots = () => {
     const slots = [];

@@ -436,11 +436,11 @@ export default function PeopleView() {
               <div className="md:col-span-3 bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-6 shadow-xl">
                  <h3 className="font-bold flex items-center gap-2 mb-6"><Users className="text-blue-500" /> No Radar de Onboarding</h3>
                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    {teamMembers.filter(m => (m.onboardingTasks?.length || 0) > 0 && m.onboardingTasks!.filter(t => t.completed).length < m.onboardingTasks!.length).map(m => (
+                    {teamMembers.filter(m => (m.onboardingTasks?.length || 0) > 0 && (m.onboardingTasks?.filter(t => t.completed).length || 0) < (m.onboardingTasks?.length || 0)).map(m => (
                       <button key={m.uid} onClick={() => { setSelectedMember(m); setActiveTab('onboarding'); }} className="p-4 bg-gray-100/50 dark:bg-white/5 rounded-2xl border border-transparent hover:border-primary-500 transition-all text-left">
                          <p className="text-xs font-bold truncate">{m.displayName}</p>
                          <div className="w-full h-1.5 bg-gray-200 dark:bg-white/10 rounded-full mt-2 overflow-hidden">
-                           <div className="h-full bg-primary-500" style={{ width: `${Math.round((m.onboardingTasks!.filter(t => t.completed).length / m.onboardingTasks!.length) * 100)}%` }}></div>
+                           <div className="h-full bg-primary-500" style={{ width: `${Math.round(((m.onboardingTasks?.filter(t => t.completed).length || 0) / (m.onboardingTasks?.length || 1)) * 100)}%` }}></div>
                          </div>
                       </button>
                     ))}

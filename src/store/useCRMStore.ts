@@ -100,6 +100,7 @@ export const useCRMStore = create<CRMStoreState>()(
         setupListener('wikiArticles', (data) => set({ wikiArticles: data }), (a, b) => b.createdAt - a.createdAt);
         setupListener('vacations', (data) => set({ vacations: data }));
         setupListener('appointments', (data) => set({ appointments: data }), (a, b) => b.startTime - a.startTime);
+        setupListener('availabilityBlocks', (data) => set({ availabilityBlocks: data }));
         setupListener('transactions', (data) => set({ transactions: data }), (a, b) => b.date - a.date);
         setupListener('transactionCategories', (data) => set({ transactionCategories: data }));
         setupListener('budgets', (data) => set({ budgets: data }));
@@ -152,7 +153,8 @@ export const useCRMStore = create<CRMStoreState>()(
         teamProfiles: state.teamProfiles,
         offers: state.offers,
         tags: state.tags,
-        supportRequests: state.supportRequests
+        supportRequests: state.supportRequests,
+        availabilityBlocks: state.availabilityBlocks
       }),
       // Garante que, se algo vier nulo do storage, mantenha o valor padrão (array vazio)
       merge: (persistedState: any, currentState) => ({
@@ -163,7 +165,8 @@ export const useCRMStore = create<CRMStoreState>()(
         teamProfiles: persistedState?.teamProfiles || [],
         offers: persistedState?.offers || [],
         tags: persistedState?.tags || [],
-        supportRequests: persistedState?.supportRequests || []
+        supportRequests: persistedState?.supportRequests || [],
+        availabilityBlocks: persistedState?.availabilityBlocks || []
       })
     }
   )
