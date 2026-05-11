@@ -45,11 +45,14 @@ export const createCRMSlice: StateCreator<
       const isNew = !clientData.id;
       const id = clientData.id || doc(collection(db, 'organizations', effectiveOrgId, 'clients')).id;
       
+      const existingClient = clients.find(c => c.id === id);
+      
       const client: any = {
+        ...(existingClient || {}),
         ...clientData,
         id,
         updatedAt: Date.now(),
-        createdAt: clientData.createdAt || Date.now()
+        createdAt: clientData.createdAt || existingClient?.createdAt || Date.now()
       };
 
       if (isNew && !client.assignedTo && currentUserId) {
@@ -65,8 +68,8 @@ export const createCRMSlice: StateCreator<
           const { asaasService } = await import('@/services/asaasService');
           const { getPlanPrice, calculateDiscount } = await import('@/helpers');
 
-          // Só processar se não tiver invoiceUrl OU se o usuário alterou plano/valores (podemos simplificar processando sempre que houver doc)
-          const needsInvoice = !client.invoiceUrl || client.invoiceUrl.includes('manual');
+          // Só processar se não tiver invoiceUrl OU se o usuário alterou plano/valores
+          const needsInvoice = !client.invoiceUrl || (typeof client.invoiceUrl === 'string' && client.invoiceUrl.includes('manual'));
           
           if (needsInvoice) {
             // 1. Criar/Buscar Cliente (Obrigatório)
@@ -126,16 +129,20 @@ export const createCRMSlice: StateCreator<
               client.invoiceUrl = sub.invoiceUrl || sub.bankSlipUrl;
             }
             
+            console.log("[Asaas] Integração concluída com sucesso. URL:", client.invoiceUrl);
             toast.success('Faturamento sincronizado com o Asaas!');
           }
         } catch (asaasErr: any) {
+          console.error("[Asaas] Erro na integração:", asaasErr);
           logger.warn("Asaas Integration error", { domain: 'CRM', data: asaasErr });
           toast.error(`Erro na integração Asaas: ${asaasErr.message}`);
         }
       } else if (client.status !== 'Cancelado' && !client.invoiceUrl) {
-        // Log para ajudar o usuário a entender por que o link não foi gerado
-        if (!client.email) logger.info("Asaas: E-mail ausente", { domain: 'CRM' });
-        if (!hasValidDoc) logger.info("Asaas: CPF/CNPJ inválido ou ausente", { domain: 'CRM' });
+        console.log("[Asaas] Integração pulada. Dados insuficientes ou status cancelado.", { 
+          email: !!client.email, 
+          hasValidDoc, 
+          status: client.status 
+        });
       }
 
       // Limpar campos undefined para não quebrar o Firestore
@@ -143,6 +150,7 @@ export const createCRMSlice: StateCreator<
         Object.entries(client).filter(([_, v]) => v !== undefined)
       );
 
+      console.log("[CRM] Salvando cliente no Firestore:", id);
       await setDoc(doc(db, 'organizations', effectiveOrgId, 'clients', id), cleanData, { merge: true });
       
       eventBus.emit(isNew ? HUB_EVENTS.CRM.CLIENT_CREATED : HUB_EVENTS.CRM.CLIENT_UPDATED, client);
