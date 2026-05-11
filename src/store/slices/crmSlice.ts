@@ -56,25 +56,31 @@ export const createCRMSlice: StateCreator<
         client.assignedTo = currentUserId;
       }
 
-      // 🚀 Integração com Asaas (Somente se houver dados mínimos)
-      if (!client.asaasCustomerId && client.email && client.status !== 'Cancelado') {
+      // 🚀 Integração com Asaas (Exige CPF/CNPJ e E-mail)
+      const cleanCpfCnpj = client.cpfCnpj?.replace(/\D/g, '') || '';
+      const hasValidDoc = cleanCpfCnpj.length === 11 || cleanCpfCnpj.length === 14;
+
+      if (client.email && hasValidDoc && client.status !== 'Cancelado' && !client.invoiceUrl) {
         try {
           const { asaasService } = await import('@/services/asaasService');
           const { getPlanPrice, calculateDiscount } = await import('@/helpers');
 
-          // 1. Criar Cliente no Asaas
-          const customer = await asaasService.getOrCreateCustomer({
-            id: client.id,
-            name: client.name,
-            email: client.email,
-            cpfCnpj: client.cpfCnpj, // Passa se tiver, mas não bloqueia mais
-            whatsapp: client.whatsapp,
-            notificationsEnabled: client.asaasNotificationsEnabled
-          });
+          // 1. Criar/Buscar Cliente (Obrigatório)
+          let asaasCustomerId = client.asaasCustomerId;
+          if (!asaasCustomerId) {
+            const customer = await asaasService.getOrCreateCustomer({
+              id: client.id,
+              name: client.name,
+              email: client.email,
+              cpfCnpj: client.cpfCnpj,
+              whatsapp: client.whatsapp,
+              notificationsEnabled: client.asaasNotificationsEnabled
+            });
+            asaasCustomerId = customer.id;
+            client.asaasCustomerId = customer.id;
+          }
 
-          client.asaasCustomerId = customer.id;
-
-          // 2. Criar Cobrança/Assinatura
+          // 2. Preparar Valores
           const today = new Date();
           const firstPaymentDate = client.firstPaymentDate || today.toISOString().split('T')[0];
           let monthlyValue = getPlanPrice(client.plan, client.billingCycle, client);
@@ -82,12 +88,12 @@ export const createCRMSlice: StateCreator<
 
           const selectedOffer = offers.find((o) => o.id === client.offerId) || offers.find((o) => o.name === client.plan);
           const isSinglePayment = selectedOffer?.type === 'SINGLE';
-
-          // Usar UNDEFINED por padrão para dar flexibilidade ao cliente, a menos que já tenha escolhido
           const bType = client.billingType || 'UNDEFINED';
 
+          // 3. Criar Cobrança ou Assinatura (Sempre vinculado ao Customer)
           if (client.isCombo || isSinglePayment) {
             const totalValue = isSinglePayment ? Math.max(0, monthlyValue + (client.setupPrice || 0)) : monthlyValue;
+            
             const paymentLink = await asaasService.createPaymentLink({
               name: isSinglePayment ? `Pagamento Único - ${client.plan}` : `Combo - ${client.plan}`,
               description: isSinglePayment ? `Oferta ${client.plan}` : `Acesso anual + Setup`,
@@ -95,7 +101,7 @@ export const createCRMSlice: StateCreator<
               billingType: bType,
               chargeType: bType === 'PIX' ? 'DETACHED' : 'INSTALLMENT',
               maxInstallments: client.maxInstallments || 12,
-              customer: customer.id,
+              customer: asaasCustomerId,
               dueDateLimitDays: 3
             });
             client.invoiceUrl = paymentLink.url;
@@ -103,7 +109,7 @@ export const createCRMSlice: StateCreator<
           } else {
             // Assinatura Padrão
             const sub = await asaasService.createSubscription({
-              customer: customer.id,
+              customer: asaasCustomerId,
               billingType: bType,
               cycle: client.billingCycle === 'YEARLY' ? 'YEARLY' : 'MONTHLY',
               value: monthlyValue,
@@ -115,10 +121,10 @@ export const createCRMSlice: StateCreator<
             client.invoiceUrl = sub.invoiceUrl || sub.bankSlipUrl;
           }
           
-          toast.success('Cobrança gerada no Asaas!');
+          toast.success('Faturamento sincronizado com o Asaas!');
         } catch (asaasErr: any) {
-          logger.warn("Asaas Integration non-blocking error", { domain: 'CRM', data: asaasErr });
-          toast.warning(`Cliente salvo, mas erro no Asaas: ${asaasErr.message}`);
+          logger.warn("Asaas Integration error", { domain: 'CRM', data: asaasErr });
+          toast.error(`Erro na integração Asaas: ${asaasErr.message}`);
         }
       }
 

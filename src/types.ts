@@ -225,7 +225,7 @@ export interface Budget {
   month?: number;
 }
 
-export type LeadStatus = 'Novo' | 'Em Contato' | 'Proposta Enviada' | 'Negociação' | 'Convertido' | 'Perdido';
+export type LeadStatus = 'Novo' | 'Em Contato' | 'Negociação' | 'Convertido' | 'Perdido';
 
 export interface LeadActivity {
   id: string;

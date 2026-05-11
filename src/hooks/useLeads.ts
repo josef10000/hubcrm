@@ -126,7 +126,7 @@ export function useLeads() {
 
   const handleCleanup = async () => {
     if (!effectiveOrgId || !leads.length) return;
-    const validStatuses = ['Novo', 'Em Contato', 'Proposta Enviada', 'Negociação', 'Convertido', 'Perdido'].map(s => s.toLowerCase());
+    const validStatuses = ['Novo', 'Em Contato', 'Negociação', 'Convertido', 'Perdido'].map(s => s.toLowerCase());
     const ghostLeads = leads.filter(l => !l.status || !validStatuses.includes(l.status.toLowerCase()));
     
     if (ghostLeads.length === 0) {

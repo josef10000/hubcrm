@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { PhoneCall, Users, MessageSquare, ArrowRight, FileText, Star } from 'lucide-react';
 
-const STATUS_ORDER: LeadStatus[] = ['Novo', 'Em Contato', 'Proposta Enviada', 'Negociação', 'Convertido', 'Perdido'];
+const STATUS_ORDER: LeadStatus[] = ['Novo', 'Em Contato', 'Negociação', 'Convertido', 'Perdido'];
 
 const ACTIVITY_ICONS: Record<string, React.ReactNode> = {
   call: <PhoneCall size={10} className="text-blue-400" />,

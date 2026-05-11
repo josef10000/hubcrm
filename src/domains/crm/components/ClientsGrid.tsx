@@ -242,55 +242,45 @@ export default function ClientsGrid({
                   </a>
                 )}
               </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const url = `${window.location.origin}/portal/${effectiveOrgId}/${client.id}`;
-                  navigator.clipboard.writeText(url);
-                  toast.success('Link do Portal copiado para a área de transferência!');
-                }}
-                className="flex items-center justify-center w-full py-2.5 rounded-xl bg-primary-500/20 text-primary-400 hover:bg-primary-500/30 border border-primary-500/30 transition-colors text-sm font-medium"
-              >
-                <Copy size={18} className="mr-2" />
-                Link do Portal
-              </button>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="flex gap-2 w-full">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onGenerateProposal?.(client);
+                    const url = `${window.location.origin}/portal/${effectiveOrgId}/${client.id}`;
+                    navigator.clipboard.writeText(url);
+                    toast.success('Link do Portal copiado para a área de transferência!');
                   }}
-                  className="flex items-center justify-center py-2.5 rounded-xl bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 border border-orange-500/30 transition-colors text-[11px] font-bold uppercase tracking-wider"
+                  className="flex items-center justify-center w-full py-2.5 rounded-xl bg-primary-500/20 text-primary-400 hover:bg-primary-500/30 border border-primary-500/30 transition-colors text-sm font-medium"
                 >
-                  <Zap size={14} className="mr-2" />
-                  Proposta
+                  <Copy size={18} className="mr-2" />
+                  Link do Portal
                 </button>
-                <div className="relative group/seller">
-                  <button
-                    onClick={(e) => e.stopPropagation()}
-                    className="w-full flex items-center justify-center py-2.5 rounded-xl bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 border border-purple-500/30 transition-colors text-[11px] font-bold uppercase tracking-wider"
-                  >
-                    <UserPlus size={14} className="mr-2" />
-                    Vincular
-                  </button>
-                  
-                  {/* Seller Dropdown on Hover/Click */}
-                  <div className="absolute bottom-full left-0 mb-2 w-48 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl opacity-0 invisible group-hover/seller:opacity-100 group-hover/seller:visible transition-all z-50 p-2 space-y-1">
-                    <p className="text-[9px] text-gray-500 font-bold uppercase px-2 mb-1">Selecionar Vendedor</p>
-                    {availableSellers.map(member => (
-                      <button
-                        key={member.uid}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onAssignSeller?.(client, member.uid);
-                        }}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/5 transition-colors flex items-center justify-between ${client.assignedTo === member.uid ? 'text-primary-400 bg-primary-500/10' : 'text-gray-300'}`}
-                      >
-                        <span className="truncate">{member.uid === userProfile?.uid ? `Eu mesmo (${member.displayName})` : member.displayName}</span>
-                        {client.assignedTo === member.uid && <div className="w-1.5 h-1.5 rounded-full bg-primary-500" />}
-                      </button>
-                    ))}
-                  </div>
+              </div>
+              <div className="relative group/seller">
+                <button
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-full flex items-center justify-center py-2.5 rounded-xl bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 border border-purple-500/30 transition-colors text-[11px] font-bold uppercase tracking-wider"
+                >
+                  <UserPlus size={14} className="mr-2" />
+                  Vincular Vendedor
+                </button>
+                
+                {/* Seller Dropdown on Hover/Click */}
+                <div className="absolute bottom-full left-0 mb-2 w-48 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl opacity-0 invisible group-hover/seller:opacity-100 group-hover/seller:visible transition-all z-50 p-2 space-y-1">
+                  <p className="text-[9px] text-gray-500 font-bold uppercase px-2 mb-1">Selecionar Vendedor</p>
+                  {availableSellers.map(member => (
+                    <button
+                      key={member.uid}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAssignSeller?.(client, member.uid);
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/5 transition-colors flex items-center justify-between ${client.assignedTo === member.uid ? 'text-primary-400 bg-primary-500/10' : 'text-gray-300'}`}
+                    >
+                      <span className="truncate">{member.uid === userProfile?.uid ? `Eu mesmo (${member.displayName})` : member.displayName}</span>
+                      {client.assignedTo === member.uid && <div className="w-1.5 h-1.5 rounded-full bg-primary-500" />}
+                    </button>
+                  ))}
                 </div>
               </div>
 

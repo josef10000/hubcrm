@@ -5,12 +5,10 @@ import { Plus, DollarSign, Target, UserPlus, Search, TrendingUp, Users } from 'l
 import { useLeads } from '@/hooks/useLeads';
 import { LeadCard } from '@crm/components/leads/LeadCard';
 import { LeadFormModal } from '@crm/components/leads/LeadFormModal';
-import ProposalGeneratorModal from '@commercial/components/ProposalGeneratorModal';
 
 const LEAD_COLUMNS: { status: LeadStatus; label: string; color: string; bgColor: string }[] = [
   { status: 'Novo', label: 'Novo', color: 'text-blue-400', bgColor: 'bg-blue-500/10 border-blue-500/20' },
   { status: 'Em Contato', label: 'Em Contato', color: 'text-cyan-400', bgColor: 'bg-cyan-500/10 border-cyan-500/20' },
-  { status: 'Proposta Enviada', label: 'Proposta Enviada', color: 'text-amber-400', bgColor: 'bg-amber-500/10 border-amber-500/20' },
   { status: 'Negociação', label: 'Negociação', color: 'text-purple-400', bgColor: 'bg-purple-500/10 border-purple-500/20' },
   { status: 'Convertido', label: 'Convertido', color: 'text-emerald-400', bgColor: 'bg-emerald-500/10 border-emerald-500/20' },
   { status: 'Perdido', label: 'Perdido', color: 'text-red-400', bgColor: 'bg-red-500/10 border-red-500/20' },
@@ -54,15 +52,6 @@ export default function LeadsView() {
   const [draggedLead, setDraggedLead] = useState<Lead | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<LeadStatus | null>(null);
   
-  // Estado para Propostas
-  const [isProposalModalOpen, setIsProposalModalOpen] = useState(false);
-  const [selectedProposalLead, setSelectedProposalLead] = useState<Lead | null>(null);
-
-  const openProposalModal = (lead: Lead) => {
-    setSelectedProposalLead(lead);
-    setIsProposalModalOpen(true);
-  };
-
   const openEditModal = (lead: Lead) => {
     setEditingLead(lead);
     setFormData({
@@ -217,7 +206,6 @@ export default function LeadsView() {
                       onDragStart={setDraggedLead}
                       onDragEnd={() => { setDraggedLead(null); setDragOverColumn(null); }}
                       onClick={openEditModal}
-                      onGenerateProposal={openProposalModal}
                     />
                   ))}
                   {columnLeads.length === 0 && <div className="text-center py-8 text-gray-600 text-xs">Nenhum lead</div>}
@@ -242,16 +230,6 @@ export default function LeadsView() {
         onSave={handleSave}
         orgRoles={orgRoles}
       />
-
-      {selectedProposalLead && (
-        <ProposalGeneratorModal 
-          isOpen={isProposalModalOpen}
-          onClose={() => { setIsProposalModalOpen(false); setSelectedProposalLead(null); }}
-          lead={selectedProposalLead}
-          orgId={(userProfile as any)?.orgId || ''}
-          userId={user?.uid || ''}
-        />
-      )}
     </div>
   );
 }

@@ -62,12 +62,19 @@ export default function PortalFinance({
     };
 
     const isPortalLink = (url: string) => {
-      if (!url || url === '#') return true;
-      if (isAsaasUrl(url)) return false; // Links Asaas NUNCA são links do portal
+      if (!url || url === '#' || url === 'undefined') return true;
+      if (isAsaasUrl(url)) return false; 
 
-      const currentOrigin = window.location.origin;
-      // Bloquear se for exatamente o origin ou começar com /portal/
-      return url === currentOrigin || url === currentOrigin + '/' || url.startsWith('/portal/');
+      try {
+        const currentOrigin = window.location.origin;
+        const urlObj = new URL(url, currentOrigin);
+        
+        // Bloquear se for o mesmo domínio e contiver /portal/ ou se for apenas a raiz
+        return urlObj.origin === currentOrigin && (urlObj.pathname === '/' || urlObj.pathname.includes('/portal/'));
+      } catch (e) {
+        // Se falhar o parse da URL (ex: link relativo), checar se começa com /
+        return url.startsWith('/') || url.includes('localhost') || url.includes('vercel.app');
+      }
     };
     
     // Priorizar URLs da fatura específica

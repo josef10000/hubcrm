@@ -3,7 +3,6 @@ import { z } from 'zod';
 export const LeadStatusSchema = z.enum([
   'Novo', 
   'Em Contato', 
-  'Proposta Enviada', 
   'Negociação', 
   'Convertido', 
   'Perdido'

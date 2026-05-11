@@ -12,7 +12,6 @@ import AlertPanels from '@crm/components/AlertPanels';
 import MetricsGrid from '@crm/components/MetricsGrid';
 import FinancialCharts from '@crm/components/FinancialCharts';
 import ClientsGrid from '@crm/components/ClientsGrid';
-import ProposalGeneratorModal from '@commercial/components/ProposalGeneratorModal';
 import { OverdueAlertWidget } from '@crm/components/OverdueAlertWidget';
 import { CashFlowProjection } from '@crm/components/CashFlowProjection';
 import { RecentKudosWidget } from '@crm/components/RecentKudosWidget';
@@ -48,10 +47,6 @@ const DashboardView = React.memo(function DashboardView() {
     searchTerm,
     filterTagId, setFilterTagId
   } = useUI();
-  
-  // 📄 Estado para Propostas
-  const [isProposalModalOpen, setIsProposalModalOpen] = React.useState(false);
-  const [selectedProposalClient, setSelectedProposalClient] = React.useState<any>(null);
   
   const { hasPermission } = usePermissions();
 
@@ -232,28 +227,10 @@ const DashboardView = React.memo(function DashboardView() {
           churnRiskDays={churnRiskDays}
           teamProfiles={teamProfiles}
           orgRoles={orgRoles}
-          onGenerateProposal={(client) => {
-            setSelectedProposalClient(client);
-            setIsProposalModalOpen(true);
-          }}
           onAssignSeller={(client, sellerId) => {
             handleSaveClient({ id: client.id, assignedTo: sellerId });
           }}
         />
-
-        {/* Modal de Proposta Inteligente */}
-        {selectedProposalClient && (
-          <ProposalGeneratorModal 
-            isOpen={isProposalModalOpen}
-            onClose={() => {
-              setIsProposalModalOpen(false);
-              setSelectedProposalClient(null);
-            }}
-            lead={selectedProposalClient} // Usamos o cliente como se fosse um lead para o gerador
-            orgId={effectiveOrgId || ''}
-            userId={user?.uid || ''}
-          />
-        )}
 
         {/* Pagination Controls */}
         {totalPages > 1 && (

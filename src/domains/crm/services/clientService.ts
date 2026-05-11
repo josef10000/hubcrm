@@ -21,7 +21,7 @@ export const clientService = {
       logs: [
         {
           id: Math.random().toString(36).substring(7),
-          text: `Cliente convertido automaticamente via Proposta Web Aprovada. Valor: R$ ${totalAmount}`,
+          text: `Cliente convertido automaticamente via Checkout Direto. Valor: R$ ${totalAmount}`,
           date: Date.now()
         }
       ]
