@@ -43,15 +43,20 @@ export default function PortalFinance({
         value: setupValue,
         status: 'PENDING',
         dueDate: new Date().toISOString().split('T')[0],
-        invoiceUrl: client.paymentLink || client.invoiceUrl,
+        invoiceUrl: client.paymentLink || client.invoiceUrl || client.bankSlipUrl || client.invoiceHtmlUrl,
         description: 'Taxa de Implementação (Setup)'
        } : { 
         value: monthlyValue, 
         status: 'PENDING', 
         dueDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0], // Mês seguinte se for mensalidade nova
-        invoiceUrl: client.paymentLink || client.invoiceUrl,
+        invoiceUrl: client.paymentLink || client.invoiceUrl || client.bankSlipUrl || client.invoiceHtmlUrl,
         description: 'Mensalidade'
        });
+
+  // Função para garantir que temos uma URL de pagamento válida do Asaas
+  const getPaymentUrl = (invoice: any) => {
+    return invoice?.invoiceUrl || invoice?.bankSlipUrl || invoice?.invoiceHtmlUrl || client.paymentLink || client.invoiceUrl || '#';
+  };
 
   const isSetupFocus = currentInvoice?.description?.includes('Setup') || (setupValue > 0 && !isSetupPaid && paymentsHistory.length === 0);
 
@@ -129,7 +134,7 @@ export default function PortalFinance({
             <div className="flex flex-col sm:flex-row items-center gap-4">
               {(currentInvoice?.status === 'PENDING' || currentInvoice?.status === 'OVERDUE') ? (
                 <a 
-                  href={currentInvoice.invoiceUrl || client.paymentLink || '#'}
+                  href={getPaymentUrl(currentInvoice)}
                   target="_blank"
                   rel="noreferrer"
                   className="w-full sm:w-auto px-8 lg:px-10 py-4 bg-white text-primary-600 font-black rounded-2xl flex items-center justify-center gap-2 hover:bg-gray-100 transition-all active:scale-95 shadow-xl text-sm lg:text-base"
@@ -237,9 +242,9 @@ export default function PortalFinance({
                         </span>
                       </td>
                       <td className="py-5 px-4 rounded-r-2xl border-y border-r border-white/5 text-right">
-                        {payment.invoiceUrl && (
+                        {getPaymentUrl(payment) !== '#' && (
                           <a 
-                            href={payment.invoiceUrl} 
+                            href={getPaymentUrl(payment)} 
                             target="_blank" 
                             rel="noreferrer"
                             className="inline-flex items-center gap-2 p-2 px-4 bg-white/5 hover:bg-primary-500 text-gray-400 hover:text-white rounded-xl transition-all text-xs font-bold"
@@ -296,9 +301,9 @@ export default function PortalFinance({
                       <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Valor Total</span>
                       <span className="text-lg font-black text-white">R$ {payment.value.toFixed(2).replace('.', ',')}</span>
                     </div>
-                    {payment.invoiceUrl && (
+                    {getPaymentUrl(payment) !== '#' && (
                       <a 
-                        href={payment.invoiceUrl} 
+                        href={getPaymentUrl(payment)} 
                         target="_blank" 
                         rel="noreferrer"
                         className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-lg shadow-primary-500/20"

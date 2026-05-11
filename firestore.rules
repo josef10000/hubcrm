@@ -171,6 +171,19 @@ service cloud.firestore {
       allow create: if true;
       allow read: if belongsToOrg(orgId);
     }
+
+    // Propostas Comerciais (Root Collection)
+    match /proposals/{proposalId} {
+      // Leitura pública permitida para o link da proposta funcionar
+      allow get: if true;
+      // Listagem permitida apenas para membros da organização
+      allow list: if isAuthenticated() && (isOwnerEmail() || resource.data.orgId == getUserData().orgId);
+      // Criação permitida apenas para membros da organização
+      allow create: if isAuthenticated() && (isOwnerEmail() || request.resource.data.orgId == getUserData().orgId);
+      // Atualização permitida para membros da organização OU pelo cliente (apenas campos de aceite)
+      allow update: if (isAuthenticated() && (isOwnerEmail() || resource.data.orgId == getUserData().orgId)) ||
+                     (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'viewedAt', 'approvedAt', 'acceptanceMetadata', 'items', 'totalAmount']));
+    }
   }
 }
 // Trigger deploy test to verify new GCP permissions
