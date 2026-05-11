@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { doc, getDoc, getDocs, addDoc, collection, serverTimestamp, onSnapshot, query, where, orderBy, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { authFetch } from '@/lib/authFetch';
 import { getPlanPrice, getSetupPrice, calculateDiscount } from '@/helpers';
 import { Globe, CreditCard, CheckCircle, Clock, AlertCircle, ExternalLink, FileText, MessageSquare, Send, X, ChevronDown, ChevronUp, Calendar, Users, Copy, HelpCircle, Search, ShoppingCart, Star } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
@@ -181,7 +182,7 @@ export default function ClientPortal() {
         for (const c of linkedList) {
           if (c.asaasCustomerId) {
             try {
-              const res = await fetch(`/api/asaas/payments?customer=${c.asaasCustomerId}`);
+              const res = await authFetch(`/api/asaas/payments?customer=${c.asaasCustomerId}`);
               if (res.ok) {
                 const data = await res.json();
                 const payments = data.data || [];
@@ -260,7 +261,7 @@ export default function ClientPortal() {
       if (client.asaasSubscriptionId) {
         const monthlyValue = getPlanPrice(client.plan, client.billingCycle, client.customMonthlyPrice, client.customSetupPrice) - discount;
 
-        await fetch('/api/asaas/update-subscription', {
+        await authFetch('/api/asaas/update-subscription', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
