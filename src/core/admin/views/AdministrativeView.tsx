@@ -355,5 +355,6 @@ export default function AdministrativeView() {
             </div>
         </div>
       </div>
-    );
+    </div>
+  );
 }
