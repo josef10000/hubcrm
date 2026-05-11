@@ -1,12 +1,24 @@
-import React, { useEffect } from 'react';
-import { Rocket, Bug, ShieldCheck, Zap, User, Calendar } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Rocket, Bug, ShieldCheck, Zap, User, Calendar, Plus, X } from 'lucide-react';
 import { useCRMStore } from '@/store/useCRMStore';
+import { useAuth } from '@auth/contexts/AuthContext';
+import { usePermissions } from '@auth/hooks/usePermissions';
 import { HUB_TOKENS, GLASS_STYLES } from '@/shared/ui-system/tokens';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 const ReleaseNotesView: React.FC = () => {
-  const { releaseNotes, fetchReleaseNotes, markNotesAsRead, isSystemLoading } = useCRMStore();
+  const { userProfile } = useAuth();
+  const { hasPermission } = usePermissions();
+  const { releaseNotes, fetchReleaseNotes, markNotesAsRead, publishReleaseNote, isSystemLoading } = useCRMStore();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newNote, setNewNote] = useState({
+    version: '',
+    title: '',
+    content: '',
+    type: 'feature' as 'feature' | 'fix' | 'security' | 'improvement'
+  });
 
   useEffect(() => {
     fetchReleaseNotes();
@@ -16,6 +28,25 @@ const ReleaseNotesView: React.FC = () => {
     }, 2000);
     return () => clearTimeout(timer);
   }, []);
+
+  const handlePublish = async () => {
+    if (!newNote.version || !newNote.title || !newNote.content) {
+      toast.error('Preencha todos os campos!');
+      return;
+    }
+
+    try {
+      await publishReleaseNote({
+        ...newNote,
+        author: userProfile?.displayName || 'Admin'
+      });
+      setIsModalOpen(false);
+      setNewNote({ version: '', title: '', content: '', type: 'feature' });
+      toast.success('Atualização publicada com sucesso!');
+    } catch (err) {
+      toast.error('Erro ao publicar atualização.');
+    }
+  };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -36,10 +67,22 @@ const ReleaseNotesView: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-in slide-in-from-bottom-4 duration-700">
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold text-white">Central de Atualizações</h1>
-        <p className="text-gray-400">Acompanhe as novidades e melhorias do HubCRM.</p>
+    <div className="max-w-4xl mx-auto space-y-8 animate-in slide-in-from-bottom-4 duration-700 pb-20">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold text-white">Central de Atualizações</h1>
+          <p className="text-gray-400">Acompanhe as novidades e melhorias do HubCRM.</p>
+        </div>
+
+        {hasPermission('MANAGE_SETTINGS') && (
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 px-6 py-3 bg-primary-500 text-white rounded-2xl font-bold hover:bg-primary-600 transition-all shadow-lg shadow-primary-500/20 active:scale-95"
+          >
+            <Plus className="w-5 h-5" />
+            Novo Post
+          </button>
+        )}
       </div>
 
       {isSystemLoading && releaseNotes.length === 0 ? (
@@ -93,6 +136,101 @@ const ReleaseNotesView: React.FC = () => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+      {/* Modal de Publicação */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div 
+            className="absolute inset-0" 
+            onClick={() => setIsModalOpen(false)} 
+          />
+          
+          <div className="relative w-full max-w-lg bg-gray-900 border border-white/10 rounded-[2.5rem] shadow-2xl p-8 overflow-hidden">
+            <div className="absolute top-0 right-0 p-6">
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="p-2 hover:bg-white/5 rounded-full text-gray-500 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-blue-500/10 rounded-2xl">
+                  <Rocket className="w-6 h-6 text-blue-500" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">Publicar Novidade</h3>
+                  <p className="text-sm text-gray-500">Comunique as melhorias para toda a equipe</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Versão</label>
+                  <input
+                    type="text"
+                    value={newNote.version}
+                    onChange={e => setNewNote({ ...newNote, version: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none focus:border-blue-500/50 transition-all"
+                    placeholder="v1.x.x"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Tipo</label>
+                  <select
+                    value={newNote.type}
+                    onChange={e => setNewNote({ ...newNote, type: e.target.value as any })}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none focus:border-blue-500/50 transition-all appearance-none"
+                  >
+                    <option value="feature">🚀 Funcionalidade</option>
+                    <option value="improvement">✨ Melhoria</option>
+                    <option value="fix">🛠️ Correção</option>
+                    <option value="security">🔒 Segurança</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Título</label>
+                <input
+                  type="text"
+                  value={newNote.title}
+                  onChange={e => setNewNote({ ...newNote, title: e.target.value })}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none focus:border-blue-500/50 transition-all"
+                  placeholder="O que mudou?"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Conteúdo</label>
+                <textarea
+                  value={newNote.content}
+                  onChange={e => setNewNote({ ...newNote, content: e.target.value })}
+                  rows={4}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none focus:border-blue-500/50 transition-all resize-none"
+                  placeholder="Descreva os detalhes..."
+                />
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1 py-4 text-gray-400 font-bold hover:bg-white/5 rounded-2xl transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handlePublish}
+                  className="flex-1 py-4 bg-primary-500 text-white font-bold rounded-2xl hover:bg-primary-600 shadow-lg shadow-primary-500/20 transition-all active:scale-95"
+                >
+                  Publicar Agora
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
