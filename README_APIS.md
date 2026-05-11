@@ -78,9 +78,21 @@ Este documento elenca todas as APIs externas integradas ao sistema HubCRM, expli
 
 ---
 
+## 💳 Faturamento e Cobrança
+
+### 11. Asaas
+- **Contexto**: Gestão Financeira.
+- **Uso**: 
+  - Geração de assinaturas recorrentes.
+  - Cobranças via PIX, Boleto e Cartão de Crédito.
+  - Links de pagamento parcelados para Combos.
+  - Sincronização automática de status via Webhooks.
+- **Documentação Detalhada**: [ASAAS_INTEGRATION.md](docs/ASAAS_INTEGRATION.md)
+- **Status**: Ativo (Crítico).
+
 ## 🔒 Segurança e Rastreabilidade
 
-### 11. Ipify
+### 12. Ipify
 - **Contexto**: Segurança.
 - **Uso**: Captura o IP do usuário no momento da assinatura de contratos e acesso ao portal para fins de auditoria e segurança.
 - **Status**: Ativo.
