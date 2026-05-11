@@ -38,29 +38,96 @@ export const createCRMSlice: StateCreator<
   tags: [],
 
   handleSaveClient: async (clientData) => {
-    const { effectiveOrgId, currentUserId } = get();
+    const { effectiveOrgId, currentUserId, offers, clients } = get();
     if (!effectiveOrgId) return;
+
     try {
       const isNew = !clientData.id;
       const id = clientData.id || doc(collection(db, 'organizations', effectiveOrgId, 'clients')).id;
       
-      const finalData: any = {
+      const client: any = {
         ...clientData,
         id,
         updatedAt: serverTimestamp(),
         createdAt: clientData.createdAt || serverTimestamp()
       };
 
-      if (isNew && !finalData.assignedTo && currentUserId) {
-        finalData.assignedTo = currentUserId;
+      if (isNew && !client.assignedTo && currentUserId) {
+        client.assignedTo = currentUserId;
       }
 
-      await setDoc(doc(db, 'organizations', effectiveOrgId, 'clients', id), finalData, { merge: true });
+      // 🚀 Integração com Asaas (Somente se houver dados mínimos)
+      if (!client.asaasCustomerId && client.cpfCnpj && client.email && client.status !== 'Cancelado') {
+        try {
+          const { asaasService } = await import('@/services/asaasService');
+          const { getPlanPrice, calculateDiscount } = await import('@/helpers');
+
+          // 1. Criar Cliente no Asaas
+          const customer = await asaasService.getOrCreateCustomer({
+            id: client.id,
+            name: client.name,
+            email: client.email,
+            cpfCnpj: client.cpfCnpj,
+            whatsapp: client.whatsapp,
+            notificationsEnabled: client.asaasNotificationsEnabled
+          });
+
+          client.asaasCustomerId = customer.id;
+
+          // 2. Criar Cobrança/Assinatura
+          const today = new Date();
+          const firstPaymentDate = client.firstPaymentDate || today.toISOString().split('T')[0];
+          let monthlyValue = getPlanPrice(client.plan, client.billingCycle, client);
+          monthlyValue -= calculateDiscount(client as Client, clients);
+
+          const selectedOffer = offers.find((o) => o.id === client.offerId) || offers.find((o) => o.name === client.plan);
+          const isSinglePayment = selectedOffer?.type === 'SINGLE';
+
+          if (client.isCombo || isSinglePayment) {
+            const totalValue = isSinglePayment ? Math.max(0, monthlyValue + (client.setupPrice || 0)) : monthlyValue;
+            const paymentLink = await asaasService.createPaymentLink({
+              name: isSinglePayment ? `Pagamento Único - ${client.plan}` : `Combo - ${client.plan}`,
+              description: isSinglePayment ? `Oferta ${client.plan}` : `Acesso anual + Setup`,
+              value: totalValue,
+              billingType: client.billingType || 'CREDIT_CARD',
+              chargeType: client.billingType === 'PIX' ? 'DETACHED' : 'INSTALLMENT',
+              maxInstallments: client.maxInstallments || 12,
+              customer: customer.id,
+              dueDateLimitDays: 3
+            });
+            client.invoiceUrl = paymentLink.url;
+            client.nextDueDate = firstPaymentDate;
+          } else {
+            // Assinatura Padrão
+            const sub = await asaasService.createSubscription({
+              customer: customer.id,
+              billingType: client.billingType || 'CREDIT_CARD',
+              cycle: client.billingCycle === 'YEARLY' ? 'YEARLY' : 'MONTHLY',
+              value: monthlyValue,
+              nextDueDate: firstPaymentDate,
+              description: `Assinatura - Plano ${client.plan}`
+            });
+            client.asaasSubscriptionId = sub.id;
+            client.nextDueDate = firstPaymentDate;
+            client.invoiceUrl = sub.invoiceUrl || sub.bankSlipUrl;
+          }
+          
+          toast.success('Cobrança gerada no Asaas!');
+        } catch (asaasErr: any) {
+          logger.warn("Asaas Integration non-blocking error", { domain: 'CRM', data: asaasErr });
+          toast.warning(`Cliente salvo, mas erro no Asaas: ${asaasErr.message}`);
+        }
+      }
+
+      // Limpar campos undefined para não quebrar o Firestore
+      const cleanData = Object.fromEntries(
+        Object.entries(client).filter(([_, v]) => v !== undefined)
+      );
+
+      await setDoc(doc(db, 'organizations', effectiveOrgId, 'clients', id), cleanData, { merge: true });
       
-      // Emit Business Event
-      eventBus.emit(isNew ? HUB_EVENTS.CRM.CLIENT_CREATED : HUB_EVENTS.CRM.CLIENT_UPDATED, finalData);
-      
-      toast.success('Cliente salvo com sucesso!');
+      eventBus.emit(isNew ? HUB_EVENTS.CRM.CLIENT_CREATED : HUB_EVENTS.CRM.CLIENT_UPDATED, client);
+      toast.success('Cliente processado com sucesso!');
     } catch (err) {
       logger.error("Error saving client", { domain: 'CRM', data: err });
       toast.error('Erro ao salvar cliente.');

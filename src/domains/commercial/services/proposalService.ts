@@ -49,37 +49,21 @@ export const proposalService = {
   },
 
   async approve(id: string, metadata: { ip: string, userAgent: string }, selectedItems: string[]) {
-    const docRef = doc(db, COLLECTION, id);
-    const snap = await getDoc(docRef);
-    if (!snap.exists()) throw new Error('Proposal not found');
-
-    const data = snap.data() as Proposal;
-
-    // Atualizar seleção de itens com base no que o cliente escolheu no checkout
-    const updatedItems = data.items.map(item => ({
-      ...item,
-      isSelected: selectedItems.includes(item.id) || !item.isOptional
-    }));
-
-    const totalAmount = updatedItems
-      .filter(i => i.isSelected)
-      .reduce((acc, curr) => acc + (curr.price * (curr.quantity || 1)), 0);
-
-    await updateDoc(docRef, {
-      status: 'approved',
-      approvedAt: Timestamp.now(),
-      acceptanceMetadata: metadata,
-      items: updatedItems,
-      totalAmount
+    const res = await fetch('/api/proposal_approve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        proposalId: id,
+        metadata,
+        selectedItems
+      })
     });
 
-    // Disparar Evento para automação
-    eventBus.emit('PROPOSAL_APPROVED', {
-      proposalId: id,
-      leadId: data.leadId,
-      orgId: data.orgId,
-      totalAmount,
-      items: updatedItems
-    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Erro ao aprovar proposta no servidor');
+    }
+
+    return await res.json();
   }
 };

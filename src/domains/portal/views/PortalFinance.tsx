@@ -55,11 +55,18 @@ export default function PortalFinance({
 
   // Função para garantir que temos uma URL de pagamento válida do Asaas
   const getPaymentUrl = (invoice: any) => {
+    const isAsaasUrl = (url: string) => {
+      if (!url) return false;
+      return url.includes('asaas.com') || url.includes('billing.asaas.com');
+    };
+
     const isPortalLink = (url: string) => {
       if (!url || url === '#') return true;
+      if (isAsaasUrl(url)) return false; // Links Asaas NUNCA são links do portal
+
       const currentOrigin = window.location.origin;
-      // Bloquear se contiver /portal/ (nosso padrão) OU se for o mesmo domínio exato do portal
-      return url.includes('/portal/') || url === currentOrigin || url === currentOrigin + '/';
+      // Bloquear se for exatamente o origin ou começar com /portal/
+      return url === currentOrigin || url === currentOrigin + '/' || url.startsWith('/portal/');
     };
     
     // Priorizar URLs da fatura específica
@@ -67,7 +74,7 @@ export default function PortalFinance({
     if (invoice?.bankSlipUrl && !isPortalLink(invoice.bankSlipUrl)) return invoice.bankSlipUrl;
     if (invoice?.invoiceHtmlUrl && !isPortalLink(invoice.invoiceHtmlUrl)) return invoice.invoiceHtmlUrl;
     
-    // Fallback para dados do cliente, mas validando se não é link do portal
+    // Fallback para dados do cliente
     if (client.paymentLink && !isPortalLink(client.paymentLink)) return client.paymentLink;
     if (client.invoiceUrl && !isPortalLink(client.invoiceUrl)) return client.invoiceUrl;
     

@@ -58,10 +58,16 @@ const ProposalPublicView: React.FC = () => {
     setApproving(true);
     try {
       const metadata = {
-        ip: 'capture-on-server', // Em uma app real, capturamos o IP aqui
+        ip: 'capture-on-server',
         userAgent: navigator.userAgent
       };
-      await proposalService.approve(proposalId, metadata, selectedAddons);
+      const result = await proposalService.approve(proposalId, metadata, selectedAddons);
+      
+      if (result.checkoutUrl) {
+        // Redirecionamento direto se possível
+        window.location.href = result.checkoutUrl;
+      }
+      
       setApproved(true);
     } catch (error) {
       console.error('Error approving proposal:', error);
