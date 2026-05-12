@@ -48,6 +48,8 @@ export const createPeopleSlice: StateCreator<
   orgRoles: [],
   onboardingQuestions: [],
   pendingVacationsCount: 0,
+  okrs: [],
+  feedbackRequests: [],
 
   handleSaveVacationRequest: async (vacationData) => {
     const orgId = get().effectiveOrgId;
