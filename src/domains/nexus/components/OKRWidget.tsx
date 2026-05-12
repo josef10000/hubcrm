@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Target, ChevronRight, Plus, Trash2 } from 'lucide-react';
+import { Target, ChevronRight, Plus, Trash2, Edit2, X, Check } from 'lucide-react';
 import { useCRMStore } from '@/store/useCRMStore';
 import { Objective, KeyResult } from '@/types';
 import { RadialBarChart, RadialBar, ResponsiveContainer, PolarAngleAxis } from 'recharts';
@@ -12,6 +12,9 @@ export function OKRWidget() {
 
   const [isAdding, setIsAdding] = useState(false);
   const [newTitle, setNewTitle] = useState('');
+  
+  const [editingKR, setEditingKR] = useState<{ objectiveId: string; krId: string } | null>(null);
+  const [krEditForm, setKrEditForm] = useState<{ title: string; targetValue: number; metric: string }>({ title: '', targetValue: 100, metric: '%' });
   
   // Exibiremos os OKRs do usuário e da companhia
   const myOkrs = okrs?.filter(o => o.ownerId === currentUserId || o.type === 'company') || [];
@@ -54,6 +57,42 @@ export function OKRWidget() {
       progress: averageProgress,
       keyResults: updatedKRs
     });
+  };
+
+  const openEditKR = (objectiveId: string, kr: KeyResult) => {
+    setEditingKR({ objectiveId, krId: kr.id });
+    setKrEditForm({ title: kr.title, targetValue: kr.targetValue, metric: kr.metric });
+  };
+
+  const saveEditKR = (objective: Objective) => {
+    if (!editingKR) return;
+    const updatedKRs = objective.keyResults.map(kr => {
+      if (kr.id === editingKR.krId) {
+        return { 
+          ...kr, 
+          title: krEditForm.title, 
+          targetValue: Number(krEditForm.targetValue) || 0, 
+          metric: krEditForm.metric 
+        };
+      }
+      return kr;
+    });
+
+    const totalProgress = updatedKRs.reduce((acc, kr) => {
+      const targetDiff = kr.targetValue - kr.initialValue;
+      if (targetDiff === 0) return acc;
+      const percentage = Math.min(100, Math.max(0, ((kr.currentValue - kr.initialValue) / targetDiff) * 100));
+      return acc + (isNaN(percentage) ? 0 : percentage);
+    }, 0);
+
+    const averageProgress = updatedKRs.length > 0 ? Math.round(totalProgress / updatedKRs.length) : 0;
+
+    handleSaveObjective({
+      ...objective,
+      progress: averageProgress,
+      keyResults: updatedKRs
+    });
+    setEditingKR(null);
   };
 
   const addKeyResult = (objective: Objective) => {
@@ -171,23 +210,71 @@ export function OKRWidget() {
               {/* Key Results */}
               <div className="bg-white/5 px-4 py-3 border-t border-white/5">
                 <div className="space-y-3">
-                  {okr.keyResults?.map(kr => (
-                    <div key={kr.id} className="flex flex-col gap-1">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-300">{kr.title}</span>
-                        <span className="text-gray-400">{kr.currentValue} / {kr.targetValue} {kr.metric}</span>
+                  {okr.keyResults?.map(kr => {
+                    const isEditing = editingKR?.krId === kr.id;
+                    
+                    if (isEditing) {
+                      return (
+                        <div key={kr.id} className="flex flex-col gap-2 p-2 bg-black/40 rounded-lg border border-white/10">
+                          <input 
+                            type="text" 
+                            value={krEditForm.title}
+                            onChange={e => setKrEditForm(prev => ({ ...prev, title: e.target.value }))}
+                            className="bg-transparent border-b border-white/20 text-white text-xs px-1 py-1 focus:outline-none focus:border-blue-500"
+                            placeholder="Título"
+                          />
+                          <div className="flex items-center gap-2">
+                            <input 
+                              type="number" 
+                              value={krEditForm.targetValue}
+                              onChange={e => setKrEditForm(prev => ({ ...prev, targetValue: Number(e.target.value) }))}
+                              className="bg-transparent border-b border-white/20 text-white text-xs px-1 py-1 w-20 focus:outline-none focus:border-blue-500"
+                              placeholder="Meta"
+                            />
+                            <input 
+                              type="text" 
+                              value={krEditForm.metric}
+                              onChange={e => setKrEditForm(prev => ({ ...prev, metric: e.target.value }))}
+                              className="bg-transparent border-b border-white/20 text-white text-xs px-1 py-1 w-16 focus:outline-none focus:border-blue-500"
+                              placeholder="Métrica"
+                            />
+                            <div className="flex ml-auto gap-1">
+                              <button onClick={() => setEditingKR(null)} className="p-1 text-gray-400 hover:text-white"><X className="w-3 h-3" /></button>
+                              <button onClick={() => saveEditKR(okr)} className="p-1 text-blue-400 hover:text-blue-300"><Check className="w-3 h-3" /></button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div key={kr.id} className="flex flex-col gap-1 group">
+                        <div className="flex justify-between items-center text-xs">
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-300">{kr.title}</span>
+                            {okr.type !== 'company' && (
+                              <button 
+                                onClick={() => openEditKR(okr.id, kr)}
+                                className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-white transition-opacity"
+                              >
+                                <Edit2 className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+                          <span className="text-gray-400">{kr.currentValue} / {kr.targetValue} {kr.metric}</span>
+                        </div>
+                        <input 
+                          type="range" 
+                          min={kr.initialValue} 
+                          max={kr.targetValue} 
+                          value={kr.currentValue}
+                          onChange={(e) => handleUpdateKR(okr, kr.id, Number(e.target.value))}
+                          className="w-full h-1.5 bg-black/50 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                          disabled={okr.type === 'company'}
+                        />
                       </div>
-                      <input 
-                        type="range" 
-                        min={kr.initialValue} 
-                        max={kr.targetValue} 
-                        value={kr.currentValue}
-                        onChange={(e) => handleUpdateKR(okr, kr.id, Number(e.target.value))}
-                        className="w-full h-1.5 bg-black/50 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                        disabled={okr.type === 'company'} // Global OKRs não podem ser editados aqui
-                      />
-                    </div>
-                  ))}
+                    );
+                  })}
                   {okr.type !== 'company' && (
                     <button 
                       onClick={() => addKeyResult(okr)}
