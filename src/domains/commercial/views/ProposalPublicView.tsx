@@ -152,7 +152,7 @@ const ProposalPublicView: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-4">
-            <img src="/logo.png" alt="HubCRM" className="h-10 opacity-50 transition-all" />
+            <img src="https://i.imgur.com/zCvL7xy.png" alt="HubCRM" className="h-10 opacity-50 transition-all" />
           </div>
         </header>
 

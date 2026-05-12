@@ -213,7 +213,7 @@ export default function PublicCheckoutPage() {
       <div className="max-w-5xl mx-auto relative z-10">
         <div className="text-center mb-12">
           <div className="flex justify-center mb-8">
-            <img src="/logo.png" alt="Hub Symples Logo" className="h-48 w-auto object-contain drop-shadow-2xl" referrerPolicy="no-referrer" />
+            <img src="https://i.imgur.com/zCvL7xy.png" alt="Hub Symples Logo" className="h-48 w-auto object-contain drop-shadow-2xl" referrerPolicy="no-referrer" />
           </div>
           <h1 className="text-3xl font-bold text-white mb-4">
             {ownerSettings?.checkoutTitle || 'Abertura de Projeto Interno'}

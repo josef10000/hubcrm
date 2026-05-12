@@ -110,7 +110,7 @@ export default function Auth() {
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 text-center px-4">
         <div className="flex justify-center mb-6">
           <img 
-            src="/logo.png" 
+            src="https://i.imgur.com/zCvL7xy.png" 
             alt="Hub Central Logo" 
             className="h-32 w-auto object-contain drop-shadow-[0_0_30px_rgba(var(--primary-rgb),0.3)] hover:scale-105 transition-transform duration-700" 
             referrerPolicy="no-referrer" 
