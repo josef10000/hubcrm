@@ -23,6 +23,9 @@ const TasksTab = React.lazy(() => import('@nexus/components/TasksTab').then(m =>
 const NotesTab = React.lazy(() => import('@nexus/components/NotesTab').then(m => ({ default: m.NotesTab })));
 const LibraryTab = React.lazy(() => import('@nexus/components/LibraryTab').then(m => ({ default: m.LibraryTab })));
 
+import { OKRWidget } from '@nexus/components/OKRWidget';
+import { KudosWall } from '@nexus/components/KudosWall';
+
 // Interfaces importadas da Store
 import type { PersonalLink, LinkFolder, PersonalGoal, NexusTask, NexusNote, NexusBook } from '@store/useNexusStore';
 
@@ -75,7 +78,7 @@ export default function MyWorkspaceView() {
   const setBooks = useNexusStore(state => state.setBooks);
 
   // Estados Locais
-  const [activeTab, setActiveTab] = useState<'links' | 'goals' | 'notes' | 'tasks' | 'library'>('links');
+  const [activeTab, setActiveTab] = useState<'links' | 'goals' | 'notes' | 'tasks' | 'library' | 'culture'>('links');
   const [librarySubTab, setLibrarySubTab] = useState<'my' | 'shared' | 'community'>('my');
   const [communityBooks, setCommunityBooks] = useState<NexusBook[]>([]);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -395,7 +398,8 @@ export default function MyWorkspaceView() {
             { id: 'goals', label: 'Metas', icon: 'ph-target' },
             { id: 'tasks', label: 'Tarefas', icon: 'ph-checks' },
             { id: 'notes', label: 'Notas', icon: 'ph-note-pencil' },
-            { id: 'library', label: 'Biblioteca', icon: 'ph-books' }
+            { id: 'library', label: 'Biblioteca', icon: 'ph-books' },
+            { id: 'culture', label: 'Cultura', icon: 'ph-star' }
           ].map(tab => (
             <button
               key={tab.id}
@@ -485,6 +489,15 @@ export default function MyWorkspaceView() {
                       <iframe src={`${books.find(b => b.id === selectedBookId)?.pdfUrl}#toolbar=0`} className="flex-1 w-full border-none bg-white" title="PDF Viewer" />
                     </div>
                   )}
+                </motion.section>
+              )}
+
+              {activeTab === 'culture' && (
+                <motion.section key="culture" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <OKRWidget />
+                    <KudosWall />
+                  </div>
                 </motion.section>
               )}
             </AnimatePresence>
