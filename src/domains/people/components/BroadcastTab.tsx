@@ -3,6 +3,7 @@ import { UserProfile } from '@/types';
 import { toast } from 'sonner';
 import { Send, CheckSquare, Square, Users, MessageSquare, AlertCircle } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
+import { authFetch } from '@/lib/authFetch';
 
 interface BroadcastTabProps {
   teamMembers: UserProfile[];
@@ -28,10 +29,8 @@ export default function BroadcastTab({ teamMembers }: BroadcastTabProps) {
 
   const toggleAll = () => {
     if (selectedUids.length === filteredMembers.length) {
-      // Se todos estiverem selecionados, limpa
       setSelectedUids([]);
     } else {
-      // Se não, seleciona todos os filtrados
       setSelectedUids(filteredMembers.map(m => m.uid));
     }
   };
@@ -57,15 +56,8 @@ export default function BroadcastTab({ teamMembers }: BroadcastTabProps) {
     setIsSending(true);
 
     try {
-      const idToken = await user?.getIdToken();
-      if (!idToken) throw new Error('Não autenticado');
-
-      const response = await fetch('/api/team_handler?action=broadcast', {
+      const response = await authFetch('/api/team_handler?action=broadcast', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}`
-        },
         body: JSON.stringify({
           uids: selectedUids,
           hasButton,
@@ -73,9 +65,8 @@ export default function BroadcastTab({ teamMembers }: BroadcastTabProps) {
         })
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
         throw new Error(data.error || 'Erro ao disparar broadcast');
       }
 
@@ -87,7 +78,6 @@ export default function BroadcastTab({ teamMembers }: BroadcastTabProps) {
       setSelectedUids([]);
       
     } catch (error: any) {
-      console.error('Erro no broadcast:', error);
       toast.error(error.message || 'Falha ao conectar no servidor.');
     } finally {
       setIsSending(false);

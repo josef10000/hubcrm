@@ -7,6 +7,7 @@ import { useCRM } from '@crm/contexts/CRMContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
 import { toast } from 'sonner';
 import { UserRole } from '@/types';
+import { authFetch } from '@/lib/authFetch';
 
 interface Member {
   uid: string;
@@ -127,10 +128,7 @@ export default function TeamManagementView() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const token = await user?.getIdToken();
-      const res = await fetch('/api/team/list', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const res = await authFetch('/api/team/list');
       const data = await res.json();
       if (data.success) {
         setMembers(data.members);
@@ -139,7 +137,6 @@ export default function TeamManagementView() {
         toast.error(data.error || 'Erro ao carregar equipe');
       }
     } catch (error) {
-      console.error(error);
       toast.error('Erro de conexão');
     } finally {
       setLoading(false);
@@ -154,13 +151,8 @@ export default function TeamManagementView() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const token = await user?.getIdToken();
-      const res = await fetch('/api/team/invite', {
+      const res = await authFetch('/api/team/invite', {
         method: 'POST',
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({
           email: inviteEmail,
           role: inviteRole,
@@ -195,13 +187,8 @@ export default function TeamManagementView() {
     
     setIsCancellingInvite(true);
     try {
-      const token = await user?.getIdToken();
-      const res = await fetch('/api/team/cancel-invite', {
+      const res = await authFetch('/api/team/cancel-invite', {
         method: 'POST',
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({ inviteId })
       });
       
@@ -225,13 +212,8 @@ export default function TeamManagementView() {
     
     setIsSubmitting(true);
     try {
-      const token = await user?.getIdToken();
-      const res = await fetch('/api/team/update-profile', {
+      const res = await authFetch('/api/team/update-profile', {
         method: 'POST',
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({
           targetUid: editingMember.uid,
           profileData: {
@@ -264,13 +246,8 @@ export default function TeamManagementView() {
     
     setIsRemoving(true);
     try {
-      const token = await user?.getIdToken();
-      const res = await fetch('/api/team/remove', {
+      const res = await authFetch('/api/team/remove', {
         method: 'POST',
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({
           targetUid: memberToRemove.uid,
           deleteAllData: deleteAllData

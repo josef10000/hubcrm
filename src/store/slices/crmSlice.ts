@@ -10,6 +10,7 @@ import { CRMStoreState } from '../types';
 import { logger } from '@core/utils/logger';
 import { eventBus, HUB_EVENTS } from '@core/events/eventBus';
 import { auditService } from '@/services/auditService';
+import { apiClient } from '@/lib/apiClient';
 
 export interface CRMSlice {
   clients: Client[];
@@ -140,19 +141,18 @@ export const createCRMSlice: StateCreator<
                 // Pequeno delay para dar tempo do Asaas processar a assinatura e gerar o pagamento
                 await new Promise(r => setTimeout(r, 2000));
                 
-                const pRes = await fetch(`/api/portal_finance?orgId=${effectiveOrgId}&clientId=${client.id}&asaasCustomerId=${asaasCustomerId}`);
-                if (pRes.ok) {
-                  const pData = await pRes.json();
-                  const payments = pData.data || [];
-                  // Pegar o primeiro pagamento (mais recente vindo do Asaas)
-                  const latestPayment = payments[0];
-                  if (latestPayment) {
-                    client.invoiceUrl = latestPayment.invoiceUrl || latestPayment.bankSlipUrl || latestPayment.invoiceHtmlUrl;
-                    console.log("[Asaas] Link da fatura capturado do histórico:", client.invoiceUrl);
-                  }
+                const pData = await apiClient.get<{ data: any[] }>(
+                  `/api/portal_finance?orgId=${effectiveOrgId}&clientId=${client.id}&asaasCustomerId=${asaasCustomerId}`,
+                  { showErrorToast: false }
+                );
+                const payments = pData.data || [];
+                const latestPayment = payments[0];
+                if (latestPayment) {
+                  client.invoiceUrl = latestPayment.invoiceUrl || latestPayment.bankSlipUrl || latestPayment.invoiceHtmlUrl;
+                  logger.info('[Asaas] Link da fatura capturado do histórico', { domain: 'CRM', data: client.invoiceUrl });
                 }
               } catch (e) {
-                console.warn("[Asaas] Erro ao buscar link da primeira fatura:", e);
+                logger.warn('[Asaas] Erro ao buscar link da primeira fatura', { domain: 'CRM', data: e });
               }
 
 

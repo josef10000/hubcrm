@@ -11,6 +11,7 @@ import { PremiumDialog } from '@shared/components/PremiumDialog';
 import { format, isToday } from 'date-fns';
 import { uploadImageToImgBB } from '@/lib/imgbb';
 import { uploadToCloudinary } from '@/lib/cloudinary';
+import { apiClient } from '@/lib/apiClient';
 
 // Novos Componentes Modulares
 import ErrorBoundary from '@shared/components/ErrorBoundary';
@@ -141,8 +142,10 @@ export default function MyWorkspaceView() {
     if (query.length < 3) return;
     setIsSearchingBook(true);
     try {
-      const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=5`);
-      const data = await response.json();
+      const data = await apiClient.get<{ items?: any[] }>(
+        `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=5`,
+        { showErrorToast: false }
+      );
       const items = data.items || [];
       const formatted = items.map((item: any) => ({
         title: item.volumeInfo.title,
@@ -153,7 +156,6 @@ export default function MyWorkspaceView() {
       }));
       setBookSearchResults(formatted);
     } catch (error) {
-      console.error('Error searching books:', error);
       toast.error('Erro ao buscar no catálogo do Google');
     } finally {
       setIsSearchingBook(false);
