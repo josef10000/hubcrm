@@ -37,7 +37,7 @@ O **Hub Central v8.1** consolida a transição para uma plataforma enterprise, f
 - **Design System Tokens:** Consolidação do padrão **Dark Absolute** via `HUB_TOKENS`, garantindo consistência visual em todo o ecossistema Glassmorphism.
 
 > [!TIP]
-> Confira as [Diretrizes de Engenharia](file:///c:/Users/Jos%C3%A9Fraz%C3%A3odaSilvaNet/OneDrive%20-%2039985%20-%20DIGITAL%20TECH%20LTDA/%C3%81rea%20de%20Trabalho/Clonecrm/hubcrm/ENGINEERING_GUIDELINES.md) e a [Evolução de Arquitetura](file:///c:/Users/Jos%C3%A9Fraz%C3%A3odaSilvaNet/OneDrive%20-%2039985%20-%20DIGITAL%20TECH%20LTDA/%C3%81rea%20de%20Trabalho/Clonecrm/hubcrm/ARCHITECTURE_EVOLUTION.md) para detalhes sobre os novos padrões.
+> Confira as [Diretrizes de Engenharia](ENGINEERING_GUIDELINES.md), o novo [Guia de Arquitetura e Padronização](ARCHITECTURE.md) e a [Evolução de Arquitetura](ARCHITECTURE_EVOLUTION.md) para detalhes sobre os novos padrões.
 
 ---
 
