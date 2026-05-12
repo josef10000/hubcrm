@@ -38,7 +38,7 @@ export const broadcastSchema = z.object({
 export const portalFinanceSchema = z.object({
   orgId: z.string().min(1),
   clientId: z.string().min(1),
-  asaasCustomerId: z.string().min(1)
+  token: z.string().min(32, 'Token de segurança inválido ou ausente')
 });
 
 // ── Helper para validação segura na API ──────────────────────────────────────────

@@ -47,7 +47,7 @@ Este documento define os padrões técnicos e a folha de rosto para a evolução
 - [ ] Criação de suite de testes de integração para os fluxos financeiros.
 
 ### Fase 3: Segurança Avançada
-- [ ] Implementação de **Tokens de Acesso Públicos** (signed hashes) para o Checkout e Portal Financeiro.
+- [x] Implementação de **Tokens de Acesso Públicos** (signed hashes) para o Checkout e Portal Financeiro.
 - [ ] Revisão de permissões de segurança do Firestore (Security Rules) para refletir a lógica de `orgId`.
 
 ### Fase 4: Experiência do Desenvolvedor (DX)

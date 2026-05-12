@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { db } from './_utils/firebase.js';
 import { asaasRequest, safeErrorResponse } from './_utils/asaas.js';
 import { sendFaturaEmitidaEmail } from '../src/services/emailService.js';
+import { generatePublicToken } from './_utils/tokens.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS preflight
@@ -116,6 +117,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       email: clientData.email,
       whatsapp: clientData.whatsapp,
       asaasCustomerId: asaasCustomer.id,
+      publicToken: generatePublicToken(),
       status: 'Em Desenvolvimento',
       paymentStatus: 'PENDING',
       plan: offer.name + (isYearly ? ' (Anual)' : ''),

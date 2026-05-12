@@ -8,13 +8,14 @@ export const clientService = {
     const clientRef = doc(collection(db, 'organizations', orgId, 'clients'));
     const clientId = clientRef.id;
 
-    const newClient: Partial<Client> = {
+    const newClient: Partial<Client> & { publicToken: string } = {
       id: clientId,
       name: lead.name,
       email: lead.email,
       whatsapp: lead.whatsapp,
       status: 'Ativo',
       planPrice: totalAmount,
+      publicToken: crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, ''), // 64 chars hex-like
       assignedTo: lead.assignedTo || 'system',
       createdAt: Date.now(),
       updatedAt: Date.now(),

@@ -17,27 +17,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const validation = validateSchema(portalFinanceSchema, req.query);
     if (!validation.success) return res.status(400).json({ error: validation.error });
-    const { orgId, clientId, asaasCustomerId } = validation.data;
+    const { orgId, clientId, token } = validation.data;
 
     // 1. Verify Client in Firestore
-    const clientDoc = await db
+    const clientRef = db
       .collection('organizations')
-      .doc(orgId as string)
+      .doc(orgId)
       .collection('clients')
-      .doc(clientId as string)
-      .get();
+      .doc(clientId);
+    
+    const clientDoc = await clientRef.get();
 
     if (!clientDoc.exists) {
       console.warn(`[PortalFinance] Client not found: ${clientId} in org ${orgId}`);
       return res.status(404).json({ error: 'Cliente não encontrado' });
     }
 
-    const clientData = clientDoc.data() as ClientBase;
+    const clientData = clientDoc.data() as ClientBase & { publicToken?: string };
     
-    // 2. Security Check: Compare Asaas Customer ID
-    if (clientData?.asaasCustomerId !== asaasCustomerId) {
-      console.warn(`[PortalFinance] Security mismatch: Provided ${asaasCustomerId} but found ${clientData?.asaasCustomerId}`);
-      return res.status(403).json({ error: 'Acesso não autorizado aos dados financeiros' });
+    // 2. Security Check: Compare Security Token
+    if (!clientData?.publicToken || clientData.publicToken !== token) {
+      console.warn(`[PortalFinance] Security mismatch: Invalid token for client ${clientId}`);
+      return res.status(403).json({ error: 'Acesso não autorizado ou link expirado' });
+    }
+
+    const asaasCustomerId = clientData.asaasCustomerId;
+    if (!asaasCustomerId) {
+      return res.status(404).json({ error: 'Configuração financeira pendente' });
     }
 
     // 3. Fetch Payments from Asaas
