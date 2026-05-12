@@ -16,13 +16,14 @@ import { PreferencesSlice } from './slices/preferencesSlice';
 export interface BaseState {
   currentUserId: string | null;
   effectiveOrgId: string | null;
+  userProfile: UserProfile | null;
   loading: boolean;
   initialized: boolean;
 }
 
 export interface BaseActions {
-  initialize: (userId: string, orgId: string, permissions: string[]) => () => void;
-  init: (userId: string, orgId: string, permissions: string[]) => () => void;
+  initialize: (userId: string, orgId: string, permissions: string[], profile?: UserProfile) => () => void;
+  init: (userId: string, orgId: string, permissions: string[], profile?: UserProfile) => () => void;
   setLoading: (loading: boolean) => void;
   setNewTransaction: (transaction: Partial<Transaction>) => void;
 }

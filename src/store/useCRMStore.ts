@@ -18,6 +18,7 @@ export const useCRMStore = create<CRMStoreState>()(
       // Base State
       currentUserId: null,
       effectiveOrgId: null,
+      userProfile: null,
       loading: true,
       initialized: false,
 
@@ -40,13 +41,14 @@ export const useCRMStore = create<CRMStoreState>()(
       setLoading: (loading) => set({ loading }),
       setNewTransaction: (newTransaction) => set({ newTransaction }),
 
-      init: (userId, orgId, permissions) => get().initialize(userId, orgId, permissions),
+      init: (userId, orgId, permissions, profile) => get().initialize(userId, orgId, permissions, profile),
 
-      initialize: (userId, orgId, permissions) => {
-        if (get().effectiveOrgId !== orgId || get().currentUserId !== userId) {
+      initialize: (userId, orgId, permissions, profile) => {
+        if (get().effectiveOrgId !== orgId || get().currentUserId !== userId || get().userProfile?.uid !== profile?.uid) {
           set({ 
             effectiveOrgId: orgId, 
             currentUserId: userId, 
+            userProfile: profile || null,
             loading: true, 
             initialized: true,
             errorMsg: null 

@@ -28,7 +28,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   // Sincroniza a Store com o Firestore
   useEffect(() => {
     if (orgId && user?.uid && orgId !== 'pending') {
-      const unsubscribe = store.init(user.uid, orgId, permissions);
+      const unsubscribe = store.init(user.uid, orgId, permissions, userProfile);
       return () => unsubscribe();
     }
   }, [orgId, user?.uid, permissionsKey]);
