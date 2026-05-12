@@ -125,14 +125,8 @@ export default function MyWorkspaceView() {
       if (!file) return;
       toast.loading('Fazendo upload da capa...');
       try {
-        const formData = new FormData();
-        formData.append('image', file);
-        const res = await fetch(`https://api.imgbb.com/1/upload?key=67f6b96e5792d44933a3880486c99c35`, {
-          method: 'POST',
-          body: formData
-        });
-        const data = await res.json();
-        await updateBookDetails(bookId, { coverUrl: data.data.url });
+        const url = await uploadToCloudinary(file);
+        await updateBookDetails(bookId, { coverUrl: url });
         toast.dismiss();
         toast.success('Capa atualizada!');
       } catch (err) {

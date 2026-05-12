@@ -2,6 +2,7 @@ import React from 'react';
 import { useNexusStore } from '@store/useNexusStore';
 import type { NexusBook } from '@store/useNexusStore';
 import { toast } from 'sonner';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 
 interface LibraryTabProps {
   librarySubTab: 'my' | 'shared' | 'community';
@@ -148,7 +149,6 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
     if (ok) {
       setBooks(books.filter(b => b.id !== id));
       toast.success('Livro removido');
-    }
   }, [books, setBooks, confirm]);
 
   const updateBookCover = React.useCallback(async (bookId: string) => {
@@ -161,14 +161,7 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
 
       toast.loading('Fazendo upload da capa...');
       try {
-        const formData = new FormData();
-        formData.append('image', file);
-        const res = await fetch(`https://api.imgbb.com/1/upload?key=67f6b96e5792d44933a3880486c99c35`, {
-          method: 'POST',
-          body: formData
-        });
-        const data = await res.json();
-        const url = data.data.url;
+        const url = await uploadToCloudinary(file);
         setBooks(books.map(b => b.id === bookId ? { ...b, coverUrl: url } : b));
         toast.dismiss();
         toast.success('Capa atualizada!');
