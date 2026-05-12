@@ -149,6 +149,7 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
     if (ok) {
       setBooks(books.filter(b => b.id !== id));
       toast.success('Livro removido');
+    }
   }, [books, setBooks, confirm]);
 
   const updateBookCover = React.useCallback(async (bookId: string) => {
