@@ -42,7 +42,7 @@ Este documento define os padrões técnicos e a folha de rosto para a evolução
 - [ ] Implementação de DTOs (Data Transfer Objects) para evitar envio de campos sensíveis ao front.
 
 ### Fase 2: Robustez da API
-- [ ] Refatoração do `asaas_webhook.ts` em handlers modulares por tipo de evento.
+- [x] Refatoração do `asaas_webhook.ts` em handlers modulares por tipo de evento.
 - [x] Adição de validação Zod nos endpoints `team_handler` e `portal_finance`.
 - [ ] Criação de suite de testes de integração para os fluxos financeiros.
 
