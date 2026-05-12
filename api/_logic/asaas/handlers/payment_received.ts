@@ -35,7 +35,7 @@ export async function handlePaymentReceived(doc: any, clientData: any, paymentDa
       const gatewayFee = Number((amount - netAmount).toFixed(2));
       const pDesc = paymentData.description || 'Fatura Hub Symples';
 
-      await db.collection('organizations').doc(orgId).collection('transactions').doc(transactionId).set({
+      await db.collection(`organizations/${orgId}/transactions`).doc(transactionId).set({
         id: transactionId,
         description: pDesc || `Pagamento Asaas - ${clientData.name}`,
         amount,

@@ -9,6 +9,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const webhookToken = process.env.ASAAS_WEBHOOK_TOKEN;
+    if (!webhookToken) {
+      console.error('CRITICAL: ASAAS_WEBHOOK_TOKEN not configured');
+      return res.status(500).json({ error: 'Webhook not configured' });
+    }
+
     const receivedToken = String(req.headers['asaas-access-token'] || '').replace(/["']/g, '').trim();
     const expectedToken = String(webhookToken || '').replace(/["']/g, '').trim();
 

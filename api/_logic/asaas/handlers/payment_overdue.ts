@@ -25,7 +25,7 @@ export async function handlePaymentOverdue(doc: any, clientData: any, paymentDat
   try {
     const orgId = doc.ref.parent.parent?.id;
     if (orgId) {
-      const ticketRef = db.collection('organizations').doc(orgId).collection('supportRequests').doc();
+      const ticketRef = db.collection(`organizations/${orgId}/supportRequests`).doc();
       await ticketRef.set({
         id: ticketRef.id,
         clientId: doc.id,
