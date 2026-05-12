@@ -109,6 +109,7 @@ export default function CategoryManager() {
                   Despesa
                 </button>
               </div>
+            </div>
             <div className="flex-1 w-full">
               <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Grupo DRE</label>
               <select
