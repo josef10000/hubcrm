@@ -110,6 +110,8 @@ export const useCRMStore = create<CRMStoreState>()(
         setupListener('onboarding_questions', (data) => set({ onboardingQuestions: data }), (a, b) => (a.order || 0) - (b.order || 0));
         setupListener('supportRequests', (data) => set({ supportRequests: data }), (a, b) => b.createdAt - a.createdAt);
         setupListener('cashflow_projections', (data) => set({ cashflowProjections: data }), (a, b) => a.month.localeCompare(b.month));
+        setupListener('okrs', (data) => set({ okrs: data }), (a, b) => b.createdAt - a.createdAt);
+        setupListener('feedbackRequests', (data) => set({ feedbackRequests: data }), (a, b) => b.createdAt - a.createdAt);
 
         // Preferences Document Listener (Single Doc)
         try {
@@ -157,7 +159,9 @@ export const useCRMStore = create<CRMStoreState>()(
         offers: state.offers,
         tags: state.tags,
         supportRequests: state.supportRequests,
-        availabilityBlocks: state.availabilityBlocks
+        availabilityBlocks: state.availabilityBlocks,
+        okrs: state.okrs,
+        feedbackRequests: state.feedbackRequests
       }),
       // Garante que, se algo vier nulo do storage, mantenha o valor padrão (array vazio)
       merge: (persistedState: any, currentState) => ({
@@ -169,7 +173,9 @@ export const useCRMStore = create<CRMStoreState>()(
         offers: persistedState?.offers || [],
         tags: persistedState?.tags || [],
         supportRequests: persistedState?.supportRequests || [],
-        availabilityBlocks: persistedState?.availabilityBlocks || []
+        availabilityBlocks: persistedState?.availabilityBlocks || [],
+        okrs: persistedState?.okrs || [],
+        feedbackRequests: persistedState?.feedbackRequests || []
       })
     }
   )

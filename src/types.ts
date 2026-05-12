@@ -464,6 +464,19 @@ export interface FeedbackItem {
   text: string;
   date: number;
   isPrivate: boolean;
+  tags?: string[]; // Para vincular ao mural de kudos (ex: '#Ownership')
+}
+
+export interface FeedbackRequest {
+  id: string;
+  requesterId: string;
+  requesterName: string;
+  targetId: string; // Para quem o feedback foi solicitado
+  targetName: string;
+  message?: string;
+  status: 'pending' | 'completed' | 'declined';
+  createdAt: number;
+  completedAt?: number;
 }
 
 export interface MoodLog {
@@ -483,5 +496,29 @@ export interface PDIItem {
   completedAt?: number;
   dueDate?: number;
   category?: string;
+}
+
+// ── OKRs (Objectives and Key Results) ──
+
+export interface KeyResult {
+  id: string;
+  title: string;
+  initialValue: number;
+  currentValue: number;
+  targetValue: number;
+  metric: string; // Ex: 'R$', '%', 'unidades'
+  autoUpdateSource?: 'transactions' | 'clients' | 'none'; // Automação futura
+}
+
+export interface Objective {
+  id: string;
+  title: string;
+  ownerId: string; // 'company', 'department', ou 'userId'
+  type: 'company' | 'department' | 'individual';
+  progress: number; // 0 a 100
+  period: string; // Ex: 'Q3 2026'
+  keyResults: KeyResult[];
+  createdAt: number;
+  updatedAt?: number;
 }
 

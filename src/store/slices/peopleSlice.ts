@@ -5,7 +5,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { toast } from 'sonner';
-import { UserProfile, OnboardingQuestion } from '@/types';
+import { UserProfile, OnboardingQuestion, Objective, FeedbackRequest } from '@/types';
 import { VacationPeriod, Appointment, AvailabilityBlock } from '@/types/people';
 import { CustomRole } from '@/constants/permissions';
 import { CRMStoreState } from '../types';
@@ -18,6 +18,8 @@ export interface PeopleSlice {
   orgRoles: CustomRole[];
   onboardingQuestions: OnboardingQuestion[];
   pendingVacationsCount: number;
+  okrs: Objective[];
+  feedbackRequests: FeedbackRequest[];
   
   handleSaveVacationRequest: (vacationData: Partial<VacationPeriod>) => Promise<void>;
   handleDeleteVacationRequest: (id: string) => Promise<void>;
@@ -25,6 +27,12 @@ export interface PeopleSlice {
   handleUpdateAppointmentStatus: (id: string, status: Appointment['status'], userId: string) => Promise<void>;
   handleSaveAvailabilityBlock: (block: Partial<AvailabilityBlock>) => Promise<void>;
   handleDeleteAvailabilityBlock: (id: string) => Promise<void>;
+
+  // OKRs e Feedbacks
+  handleSaveObjective: (objective: Partial<Objective>) => Promise<void>;
+  handleDeleteObjective: (id: string) => Promise<void>;
+  handleRequestFeedback: (request: Partial<FeedbackRequest>) => Promise<void>;
+  handleUpdateFeedbackRequestStatus: (id: string, status: FeedbackRequest['status'], responseText?: string) => Promise<void>;
 }
 
 export const createPeopleSlice: StateCreator<
@@ -127,6 +135,68 @@ export const createPeopleSlice: StateCreator<
       toast.success('Bloqueio removido.');
     } catch (err) {
       console.error("[PeopleSlice] Error deleting block:", err);
+    }
+  },
+
+  handleSaveObjective: async (objective) => {
+    const orgId = get().effectiveOrgId;
+    if (!orgId) return;
+    try {
+      const id = objective.id || doc(collection(db, 'organizations', orgId, 'okrs')).id;
+      await setDoc(doc(db, 'organizations', orgId, 'okrs', id), {
+        ...objective,
+        id,
+        createdAt: objective.createdAt || Date.now(),
+        updatedAt: Date.now()
+      }, { merge: true });
+      toast.success('OKR salvo com sucesso!');
+    } catch (err) {
+      console.error("[PeopleSlice] Error saving OKR:", err);
+      toast.error('Erro ao salvar OKR');
+    }
+  },
+
+  handleDeleteObjective: async (id) => {
+    const orgId = get().effectiveOrgId;
+    if (!orgId) return;
+    try {
+      await deleteDoc(doc(db, 'organizations', orgId, 'okrs', id));
+      toast.success('OKR removido.');
+    } catch (err) {
+      console.error("[PeopleSlice] Error deleting OKR:", err);
+    }
+  },
+
+  handleRequestFeedback: async (request) => {
+    const orgId = get().effectiveOrgId;
+    if (!orgId) return;
+    try {
+      const id = request.id || doc(collection(db, 'organizations', orgId, 'feedbackRequests')).id;
+      await setDoc(doc(db, 'organizations', orgId, 'feedbackRequests', id), {
+        ...request,
+        id,
+        status: request.status || 'pending',
+        createdAt: request.createdAt || Date.now()
+      }, { merge: true });
+      toast.success('Solicitação de feedback enviada!');
+    } catch (err) {
+      console.error("[PeopleSlice] Error requesting feedback:", err);
+      toast.error('Erro ao enviar solicitação');
+    }
+  },
+
+  handleUpdateFeedbackRequestStatus: async (id, status, responseText) => {
+    const orgId = get().effectiveOrgId;
+    if (!orgId) return;
+    try {
+      await setDoc(doc(db, 'organizations', orgId, 'feedbackRequests', id), {
+        status,
+        completedAt: status === 'completed' ? Date.now() : undefined,
+        ...(responseText && { responseText }) // Se for implementar a resposta diretamente no request futuramente
+      }, { merge: true });
+      toast.success('Status da solicitação atualizado!');
+    } catch (err) {
+      console.error("[PeopleSlice] Error updating feedback request:", err);
     }
   },
 });
