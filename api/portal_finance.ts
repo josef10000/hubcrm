@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { asaasRequest, safeErrorResponse } from './_utils/asaas.js';
 import { db } from './_utils/firebase.js';
+import type { ClientBase } from '../shared/types.js';
 
 /**
  * Public endpoint for the Client Portal to fetch payments.
@@ -32,7 +33,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(404).json({ error: 'Cliente não encontrado' });
     }
 
-    const clientData = clientDoc.data();
+    const clientData = clientDoc.data() as ClientBase;
     
     // 2. Security Check: Compare Asaas Customer ID
     if (clientData?.asaasCustomerId !== asaasCustomerId) {

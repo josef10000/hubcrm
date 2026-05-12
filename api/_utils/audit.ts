@@ -1,20 +1,10 @@
 import { db } from './firebase.js';
-
-export interface AuditLogParams {
-  orgId: string;
-  userId: string;
-  userName: string;
-  action: string;
-  targetId: string;
-  targetType: 'lead' | 'client' | 'contract' | 'transaction' | 'role' | 'team';
-  details: string;
-  metadata?: any;
-}
+import type { AuditLogEntry } from '../../shared/types.js';
 
 /**
  * Registra uma atividade no log de auditoria da organização.
  */
-export async function logActivity(params: AuditLogParams) {
+export async function logActivity(params: AuditLogEntry) {
   try {
     const logRef = db.collection('organizations')
       .doc(params.orgId)

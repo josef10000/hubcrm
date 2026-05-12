@@ -1,5 +1,24 @@
 import { z } from 'zod';
 
+// Re-export dos tipos compartilhados entre API e Frontend
+export type { 
+  UserProfileBase, 
+  ClientBase, 
+  InvitationBase, 
+  AuditLogEntry,
+  AuditTargetType,
+  ApiSuccessResponse, 
+  ApiErrorResponse, 
+  ApiResponse,
+  TeamListResponse,
+  TeamInvitePayload,
+  TeamRemovePayload,
+  TeamUpdateProfilePayload,
+  BroadcastPayload,
+  CustomRoleBase,
+  InviteStatus,
+} from '../shared/types';
+
 export const clientSchema = z.object({
   name: z.string().min(3, "O nome deve ter pelo menos 3 caracteres"),
   email: z.string().email("E-mail é obrigatório para notificações e faturamento").min(1, "E-mail é obrigatório"),
