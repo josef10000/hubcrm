@@ -5,6 +5,10 @@ import { Client } from '@/types';
 
 export const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+export const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+};
+
 export const getSetupPrice = (plan?: string, client?: Partial<Client>) => {
   if (client?.setupPrice !== undefined) return client.setupPrice;
   if (client?.customSetupPrice !== undefined) return client.customSetupPrice;
