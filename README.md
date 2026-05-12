@@ -63,70 +63,28 @@ A comunicação interna elevada ao nível de ferramenta de trabalho, agora com *
 ---
 
 ## 🛠️ Stack de Alta Performance
-Construído para escala infinita e latência zero.
 
-### Frontend Moderno
-- **Core:** React 19 + Vite 6
-- **Logic:** TypeScript 5.8 (Strict Type System)
-- **State:** Zustand 5.0 (Selective Re-renders)
-- **UI/UX:** Tailwind CSS 4.0 + Framer Motion
-- **Icons:** Lucide React + Phosphor Duotone
+Construído para escala infinita e latência zero, o Hub Central adota tecnologias Serverless e Bancos de Dados em Tempo Real para garantir sincronização instantânea em qualquer lugar do mundo.
 
-### Cloud Infrastructure
-- **Realtime DB:** Firebase Firestore
-- **Storage:** Cloudinary (Asset Optimization)
-- **Edge Logic:** Vercel Serverless Functions
-- **Payments:** Asaas API Gateway
-- **Mailing:** Resend SDK
-- **Caching:** Upstash Redis (DDoS Protection)
+- **Frontend Core**: React 19 + Vite 6
+- **Architecture & State**: Zustand 5.0 (Gestão Global) + TypeScript 5.8 (Estrita Segurança de Tipos)
+- **Design System & UI**: Tailwind CSS 4.0 + Framer Motion (Glassmorphism & Dark Absolute Identity)
+- **Database & Auth**: Firebase Firestore (Realtime NoSQL) e Firebase Authentication
+- **Edge Computing & API**: Vercel Serverless Functions
+- **Integrações de Parceiros**: Asaas (Gateway de Pagamentos) e Resend (Disparo de E-mails)
 
 ---
 
-## 🎨 Identidade Visual: Dark Absolute
-O Hub Central segue diretrizes rígidas de design para manter seu status premium:
-- **Primary:** Black Absolute (`#030712`)
-- **Surfaces:** Glassmorphism (`backdrop-blur-xl`, `border-white/10`)
-- **Themes:** Cyberpunk, Minimal, Forest, Nordic, Midnight, Barbie.
+## 🏗️ Documentação da API e Arquitetura do Backend
 
----
+Para entender profundamente como o Firebase se conecta com as APIs Serverless (Asaas, Webhooks, CRON Jobs) e para debugar problemas no fluxo de dados, confira a nossa documentação técnica dedicada:
 
-## 🗺️ Roadmap de Evolução
+👉 **[Ver Documentação Completa da Arquitetura (API_ARCHITECTURE.md)](API_ARCHITECTURE.md)**
 
-- [x] **v5.0** — Sistema Global de Dialogs Premium.
-- [x] **v6.0** — HubBots & Canais Públicos no Chat.
-- [x] **v6.0.4** — Resiliência de subcoleções no Firestore.
-- [x] **v7.0** — Lançamento do Hub Nexus (Workspace Pessoal).
-- [x] **v7.1.0** — Nexus Cloud Sync & Premium Dialogs.
-- [x] **v7.2.1** — Nexus Tasks & Smart Agenda.
-- [x] **v7.2.2** — Nexus Workspace Refinement.
-- [x] **v7.2.3** — **Zustand State Migration** (Core Nexus).
-- [x] **v7.2.3.9** — **Global Zustand Sync** (CRM & Chat Optimistic UI).
-- [x] **v7.2.3.15** — **Resilience & Stability Update** (Fixed Permissions & Global State Bridge).
-- [x] **v7.2.3.23** — **Dialog Migration & Performance Cleanup** (Centralized Async Dialogs & Debug Log Purge).
-- [x] **v7.2.4.0** — **Layout & Visibility Refinement** (Compact Sidebar & Client Auto-Assignment Logic).
-- [x] **v7.3.0** — **Collaboration & HubBots** (Thematic Channels, Slash Commands & Smart Notifications).
-- [x] **v7.3.5** — **Payment Intel Commands** (Bot command /pago with client transaction search & arg support).
-- [x] **v7.3.5.1** — **UX Polish** (Fixed ClientModal auto-close after submission).
-- [x] **v7.3.5.5** — **Financial Module Stabilization** (State persistence for Transactions/Budgets & Defensive UI Fallbacks).
-- [x] **v7.3.6.0** — **Referral Flow Update** (Replaced external checkout links with WhatsApp personalized referral messages).
-- [x] **v7.3.6.1** — **Brand Identity Alignment** (Standardized nomenclature to "Hub Symples" across the entire ecosystem).
-- [x] **v7.3.7.0** — **Nexus Multi-Notes** (Implementation of collection of notes in Workspace with sidebar navigation).
-- [x] **v7.3.8.0** — **Nexus Digital Library** (PDF book storage & immersive reader).
-- [x] **v7.3.8.5** — **Google Books Integration & Cloudinary Migration** (Auto-cataloging & performance-focused asset storage).
-- [x] **v7.3.9.0** — **Wiki Notification Stability** (Fixed article read-status tracking, field unification & star logic persistence).
-- [x] **v7.5.0** — **Architecture & Performance Update** (React.lazy, Suspense, Zustand Persistence & Firestore Offline Support).
-- [x] **v8.0.5** — **Modular Architecture (DDD)** (Refactored directory structure, standardized Path Aliases & fixed cross-domain imports).
-- [x] **v8.0.9** — **Runtime Stability & Resilience** (Implemented exhaustive Null-Safety, Zustand Versioning (v3) and Defensive State Merging to prevent white-screen crashes).
-- [x] **v8.0.10** — **Resilience & Governance** (Fixed store argument swap, centralized permission hooks and implemented Context Governance).
-- [x] **v8.1.1** — **CRM Unified Dashboard** (Migration to dashboard-centric workflow, vendor auto-linking & One-Click Proposals).
-- [x] **v8.1.2** — **Public Link Stabilization** (Fixed portal link routing, proposal accessibility and detailed error handling).
-- [x] **v8.1.3** — **Security & Payment Integrity** (Added Firestore root rules for proposals and fixed multi-field Asaas payment link resolution).
-- [x] **v8.1.4** — **UX & Conversion Optimization** (Humanized proposal approval success flow and implemented automatic checkout redirection).
-- [x] **v8.1.5** — **Financial Integrity Guard** (Prevented portal link loops in payment buttons and added real-time URL validation in CRM).
-- [x] **v8.1.6** — **Database Stability Fix** (Resolved Firestore 'undefined' field error during proposal generation by ensuring null-safe value handling).
-- [x] **v8.1.7** — **Financial Orchestration & Automation** (Centralized AsaasService, server-side Proposal-to-Client conversion API and real-time payment link reconciliation).
-- [x] **v8.2.0** — **Finance Engine & BI Intelligence** (Dynamic DRE with drill-down, Cash Flow Forecasting with Runway alerts & Automated BI Cron Job).
-- [ ] **v8.3.0** — **IA Integrada**: Nexus Copilot para automação de tarefas.
+Neste documento você encontrará:
+- O ciclo de vida do Webhook de Pagamentos.
+- Modelos completos do Firestore (Clientes, Transações, Users).
+- Guia definitivo de Troubleshooting.
 
 ---
 
