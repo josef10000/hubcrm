@@ -109,6 +109,7 @@ export const useCRMStore = create<CRMStoreState>()(
         setupListener('roles', (data) => set({ orgRoles: data }));
         setupListener('onboarding_questions', (data) => set({ onboardingQuestions: data }), (a, b) => (a.order || 0) - (b.order || 0));
         setupListener('supportRequests', (data) => set({ supportRequests: data }), (a, b) => b.createdAt - a.createdAt);
+        setupListener('cashflow_projections', (data) => set({ cashflowProjections: data }), (a, b) => a.month.localeCompare(b.month));
 
         // Preferences Document Listener (Single Doc)
         try {

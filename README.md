@@ -125,7 +125,8 @@ O Hub Central segue diretrizes rígidas de design para manter seu status premium
 - [x] **v8.1.5** — **Financial Integrity Guard** (Prevented portal link loops in payment buttons and added real-time URL validation in CRM).
 - [x] **v8.1.6** — **Database Stability Fix** (Resolved Firestore 'undefined' field error during proposal generation by ensuring null-safe value handling).
 - [x] **v8.1.7** — **Financial Orchestration & Automation** (Centralized AsaasService, server-side Proposal-to-Client conversion API and real-time payment link reconciliation).
-- [ ] **v8.2.0** — **IA Integrada**: Nexus Copilot para automação de tarefas.
+- [x] **v8.2.0** — **Finance Engine & BI Intelligence** (Dynamic DRE with drill-down, Cash Flow Forecasting with Runway alerts & Automated BI Cron Job).
+- [ ] **v8.3.0** — **IA Integrada**: Nexus Copilot para automação de tarefas.
 
 ---
 

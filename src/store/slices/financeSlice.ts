@@ -12,6 +12,7 @@ export interface FinanceSlice {
   transactions: Transaction[];
   transactionCategories: TransactionCategory[];
   budgets: Budget[];
+  cashflowProjections: any[];
   
   handleSaveTransaction: (data: Partial<Transaction>) => Promise<void>;
   handleDeleteTransaction: (id: string) => Promise<void>;
@@ -27,6 +28,7 @@ export const createFinanceSlice: StateCreator<
   transactions: [],
   transactionCategories: [],
   budgets: [],
+  cashflowProjections: [],
 
   handleSaveTransaction: async (data) => {
     const orgId = get().effectiveOrgId;

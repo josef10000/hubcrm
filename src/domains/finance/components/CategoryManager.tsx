@@ -15,6 +15,7 @@ export default function CategoryManager() {
   const [isAdding, setIsAdding] = useState(false);
   const [newName, setNewName] = useState('');
   const [newType, setNewType] = useState<TransactionType>('EXPENSE');
+  const [newGroup, setNewGroup] = useState<any>('Despesas Operacionais');
 
   const incomes = transactionCategories.filter(c => c.type === 'INCOME');
   const expenses = transactionCategories.filter(c => c.type === 'EXPENSE');
@@ -29,6 +30,7 @@ export default function CategoryManager() {
         id: catId,
         name: newName.trim(),
         type: newType,
+        group: newGroup,
         isCustom: true
       };
 
@@ -107,6 +109,21 @@ export default function CategoryManager() {
                   Despesa
                 </button>
               </div>
+            <div className="flex-1 w-full">
+              <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Grupo DRE</label>
+              <select
+                value={newGroup}
+                onChange={e => setNewGroup(e.target.value)}
+                className="w-full bg-white dark:bg-black/60 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary-500 outline-none text-gray-900 dark:text-white"
+              >
+                <option value="Receita Bruta">Receita Bruta</option>
+                <option value="Deduções">Deduções</option>
+                <option value="CMV">CMV (Custos Diretos)</option>
+                <option value="Despesas Operacionais">Despesas Operacionais</option>
+                <option value="Despesas Não-Operacionais">Despesas Não-Operacionais</option>
+                <option value="Impostos">Impostos</option>
+                <option value="Investimentos">Investimentos</option>
+              </select>
             </div>
             <button type="submit" className="w-full md:w-auto px-6 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-bold hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors">
               Salvar

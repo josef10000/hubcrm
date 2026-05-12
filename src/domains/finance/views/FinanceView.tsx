@@ -7,9 +7,8 @@ import { db } from '@/lib/firebase';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
 import { Transaction } from '@/types';
-import DRETable from '@finance/components/DRETable';
-import DREChart from '@finance/components/DREChart';
-import CashFlowProjected from '@finance/components/CashFlowProjected';
+import DREWidget from '@finance/components/DREWidget';
+import CashFlowForecastChart from '@finance/components/CashFlowForecastChart';
 import BudgetPanel from '@finance/components/BudgetPanel';
 import ROIAnalysis from '@finance/components/ROIAnalysis';
 import { usePermissions } from '@auth/hooks/usePermissions';
@@ -328,12 +327,11 @@ export default function FinanceView() {
           </>
         ) : activeTab === 'dre' ? (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <DREChart />
-            <DRETable />
+            <DREWidget />
           </div>
         ) : activeTab === 'fluxo' ? (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <CashFlowProjected />
+            <CashFlowForecastChart />
           </div>
         ) : activeTab === 'orcamento' ? (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">

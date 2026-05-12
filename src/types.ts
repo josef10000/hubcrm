@@ -187,10 +187,20 @@ export interface Expense {
 export type TransactionType = 'INCOME' | 'EXPENSE';
 export type TransactionStatus = 'PENDING' | 'PAID' | 'OVERDUE' | 'CANCELLED';
 
+export type TransactionGroup = 
+  | 'Receita Bruta' 
+  | 'Deduções' 
+  | 'CMV' 
+  | 'Despesas Operacionais' 
+  | 'Despesas Não-Operacionais'
+  | 'Impostos'
+  | 'Investimentos';
+
 export interface TransactionCategory {
   id: string;
   name: string;
   type: TransactionType;
+  group?: TransactionGroup;
   color?: string;
   isCustom?: boolean;
 }
