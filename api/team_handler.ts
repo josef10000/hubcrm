@@ -4,7 +4,8 @@ import { verifyAuth } from './_utils/authMiddleware.js';
 import { sendTeamInviteEmail, sendTeamBroadcastEmail } from '../src/services/emailService.js';
 import crypto from 'crypto';
 import { logActivity } from './_utils/audit.js';
-import type { UserProfileBase, InvitationBase, TeamInvitePayload, TeamRemovePayload, TeamUpdateProfilePayload, BroadcastPayload } from '../shared/types.js';
+import type { UserProfileBase, InvitationBase } from '../shared/types.js';
+import { teamInviteSchema, teamRemoveSchema, teamUpdateProfileSchema, broadcastSchema, validateSchema } from '../shared/schemas.js';
 import { SUPER_ADMIN_EMAIL, ADMIN_ROLE_IDS, MANAGEMENT_ROLE_IDS, PEOPLE_MANAGEMENT_ROLE_IDS, MANAGEMENT_ROLE_NAMES, PEOPLE_MANAGEMENT_ROLE_NAMES, ADMIN_ROLE_NAMES } from '../shared/constants.js';
 
 // Helper para extrair o nome do role (compatível com string e objeto)
@@ -103,7 +104,10 @@ async function handleList(req: VercelRequest, res: VercelResponse, uid: string) 
 
 async function handleInvite(req: VercelRequest, res: VercelResponse, uid: string) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido' });
-  const { email, role, collaboratorName } = req.body as TeamInvitePayload;
+  
+  const validation = validateSchema(teamInviteSchema, req.body);
+  if (!validation.success) return res.status(400).json({ error: validation.error });
+  const { email, role, collaboratorName } = validation.data;
 
   const profileSnap = await db.collection('profiles').doc(uid).get();
   const senderData = profileSnap.data() as UserProfileBase;
@@ -136,7 +140,9 @@ async function handleInvite(req: VercelRequest, res: VercelResponse, uid: string
 }
 
 async function handleRemove(req: VercelRequest, res: VercelResponse, uid: string) {
-  const { targetUid, deleteAllData } = req.body as TeamRemovePayload;
+  const validation = validateSchema(teamRemoveSchema, req.body);
+  if (!validation.success) return res.status(400).json({ error: validation.error });
+  const { targetUid, deleteAllData } = validation.data;
   if (uid === targetUid) return res.status(400).json({ error: 'Não pode remover a si mesmo' });
 
   const senderSnap = await db.collection('profiles').doc(uid).get();
@@ -278,7 +284,9 @@ async function handleCancelInvite(req: VercelRequest, res: VercelResponse, uid: 
 }
 
 async function handleUpdateProfile(req: VercelRequest, res: VercelResponse, uid: string) {
-  const { targetUid, profileData } = req.body as TeamUpdateProfilePayload;
+  const validation = validateSchema(teamUpdateProfileSchema, req.body);
+  if (!validation.success) return res.status(400).json({ error: validation.error });
+  const { targetUid, profileData } = validation.data;
   const isEditingSelf = uid === targetUid;
   const editorSnap = await db.collection('profiles').doc(uid).get();
   const editorData = editorSnap.data() as UserProfileBase;
@@ -302,7 +310,9 @@ async function handleUpdateProfile(req: VercelRequest, res: VercelResponse, uid:
 async function handleBroadcast(req: VercelRequest, res: VercelResponse, uid: string) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido' });
   
-  const { uids, hasButton, buttonUrl } = req.body as BroadcastPayload;
+  const validation = validateSchema(broadcastSchema, req.body);
+  if (!validation.success) return res.status(400).json({ error: validation.error });
+  const { uids, hasButton, buttonUrl } = validation.data;
   if (!uids || !Array.isArray(uids) || uids.length === 0) {
     return res.status(400).json({ error: 'Nenhum destinatário informado' });
   }

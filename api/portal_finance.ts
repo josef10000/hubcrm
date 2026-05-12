@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { asaasRequest, safeErrorResponse } from './_utils/asaas.js';
 import { db } from './_utils/firebase.js';
 import type { ClientBase } from '../shared/types.js';
+import { portalFinanceSchema, validateSchema } from '../shared/schemas.js';
 
 /**
  * Public endpoint for the Client Portal to fetch payments.
@@ -14,11 +15,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { orgId, clientId, asaasCustomerId } = req.query;
-
-    if (!orgId || !clientId || !asaasCustomerId) {
-      return res.status(400).json({ error: 'Parâmetros insuficientes' });
-    }
+    const validation = validateSchema(portalFinanceSchema, req.query);
+    if (!validation.success) return res.status(400).json({ error: validation.error });
+    const { orgId, clientId, asaasCustomerId } = validation.data;
 
     // 1. Verify Client in Firestore
     const clientDoc = await db

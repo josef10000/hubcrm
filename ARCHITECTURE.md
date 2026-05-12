@@ -43,7 +43,7 @@ Este documento define os padrões técnicos e a folha de rosto para a evolução
 
 ### Fase 2: Robustez da API
 - [ ] Refatoração do `asaas_webhook.ts` em handlers modulares por tipo de evento.
-- [ ] Adição de validação Zod nos endpoints `team_handler` e `portal_finance`.
+- [x] Adição de validação Zod nos endpoints `team_handler` e `portal_finance`.
 - [ ] Criação de suite de testes de integração para os fluxos financeiros.
 
 ### Fase 3: Segurança Avançada
