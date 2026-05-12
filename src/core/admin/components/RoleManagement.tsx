@@ -7,6 +7,7 @@ import { db } from '@/lib/firebase';
 import { collection, query, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { CustomRole, AppPermission, defaultRoles } from '@/constants/permissions';
 import { toast } from 'sonner';
+import { auditService } from '@/services/auditService';
 
 const PERMISSION_GROUPS: { name: string; keys: AppPermission[] }[] = [
   { name: 'Geral & Dashboard', keys: ['VIEW_DASHBOARD', 'VIEW_REPORTS', 'MANAGE_SETTINGS'] },
@@ -82,6 +83,15 @@ export default function RoleManagement() {
 
       await setDoc(doc(db, `organizations/${userProfile.orgId}/roles`, roleId), roleData);
       
+      auditService.logActivity(userProfile.orgId, {
+        userId: userProfile.uid,
+        userName: userProfile.displayName || 'Admin',
+        action: editingRole ? 'ROLE_UPDATED' : 'ROLE_CREATED',
+        targetId: roleId,
+        targetType: 'role',
+        details: `${editingRole ? 'Atualizado' : 'Criado'} cargo: ${roleData.name} com ${roleData.permissions.length} permissões.`
+      });
+
       toast.success('Cargo salvo com sucesso!');
       setIsModalOpen(false);
       fetchRoles();
@@ -109,6 +119,16 @@ export default function RoleManagement() {
       if (!ok) return;
 
       await deleteDoc(doc(db, `organizations/${userProfile!.orgId}/roles`, role.id));
+      
+      auditService.logActivity(userProfile!.orgId, {
+        userId: userProfile!.uid,
+        userName: userProfile!.displayName || 'Admin',
+        action: 'ROLE_DELETED',
+        targetId: role.id,
+        targetType: 'role',
+        details: `Excluído cargo: ${role.name}.`
+      });
+
       toast.success('Cargo excluído com sucesso!');
       fetchRoles();
     } catch (error) {

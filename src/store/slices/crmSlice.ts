@@ -9,6 +9,7 @@ import { Client, Offer, Lead, Tag } from '@/types';
 import { CRMStoreState } from '../types';
 import { logger } from '@core/utils/logger';
 import { eventBus, HUB_EVENTS } from '@core/events/eventBus';
+import { auditService } from '@/services/auditService';
 
 export interface CRMSlice {
   clients: Client[];
@@ -194,6 +195,17 @@ export const createCRMSlice: StateCreator<
     if (!orgId) return;
     try {
       await deleteDoc(doc(db, 'organizations', orgId, 'clients', clientId));
+      
+      const { userProfile } = get();
+      auditService.logActivity(orgId, {
+        userId: userProfile?.uid || 'unknown',
+        userName: userProfile?.displayName || 'Usuário',
+        action: 'CLIENT_DELETED',
+        targetId: clientId,
+        targetType: 'client',
+        details: `Cliente removido permanentemente do CRM.`
+      });
+
       toast.success('Cliente removido.');
     } catch (err) {
       logger.error("Error deleting client", { domain: 'CRM', data: err });
@@ -238,6 +250,17 @@ export const createCRMSlice: StateCreator<
     if (!orgId) return;
     try {
       await deleteDoc(doc(db, 'organizations', orgId, 'offers', offerId));
+      
+      const { userProfile } = get();
+      auditService.logActivity(orgId, {
+        userId: userProfile?.uid || 'unknown',
+        userName: userProfile?.displayName || 'Usuário',
+        action: 'OFFER_DELETED',
+        targetId: offerId,
+        targetType: 'contract',
+        details: `Oferta/Plano removido das configurações.`
+      });
+
       toast.success('Oferta removida.');
     } catch (err) {
       logger.error("Error deleting offer", { domain: 'CRM', data: err });
