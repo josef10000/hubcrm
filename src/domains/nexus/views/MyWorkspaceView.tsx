@@ -866,7 +866,7 @@ export default function MyWorkspaceView() {
       {/* FOOTER DO WORKSPACE */}
       <footer className="pt-12 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-6 opacity-40">
         <div className="flex items-center gap-4">
-          <img src="https://i.imgur.com/EFBaYb5.png" alt="Hub Central" className="h-6 grayscale" />
+          <img src="/logo.png" alt="Hub Central" className="h-6" />
           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Security: End-to-End Encrypted</span>
         </div>
         <div className="text-[9px] font-black uppercase tracking-[0.5em] text-gray-600">

@@ -115,7 +115,7 @@ export default function ClientPortalLayout() {
           <div className="flex items-center justify-between mb-10 lg:mb-12">
             <div className="flex items-center gap-3">
               <img 
-                src="https://i.imgur.com/EFBaYb5.png" 
+                src="/logo.png" 
                 alt="Hub Symples Logo" 
                 className="w-10 h-10 object-contain drop-shadow-lg" 
                 referrerPolicy="no-referrer"

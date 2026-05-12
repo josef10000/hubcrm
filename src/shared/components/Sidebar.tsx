@@ -128,7 +128,7 @@ export default function Sidebar() {
           
           <div className="relative z-10 mb-4">
             <img 
-              src="https://i.imgur.com/EFBaYb5.png" 
+              src="/logo.png" 
               alt="Logo" 
               className="h-10 w-auto cursor-pointer hover:scale-110 transition-transform duration-500" 
               onClick={() => navigate('/')}

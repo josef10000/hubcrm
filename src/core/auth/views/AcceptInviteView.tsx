@@ -139,7 +139,7 @@ export default function AcceptInviteView() {
       </div>
 
       <div className="mt-8 flex items-center gap-2 opacity-50 grayscale hover:grayscale-0 transition-all cursor-default">
-        <img src="https://i.imgur.com/EFBaYb5.png" alt="Hub Central" className="h-6 w-auto" />
+        <img src="/logo.png" alt="Hub Central" className="h-6 w-auto" />
         <span className="text-sm font-medium text-gray-500">Hub Central by Hub Symples</span>
       </div>
     </div>
