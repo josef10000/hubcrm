@@ -75,7 +75,6 @@ export default function MyWorkspaceView() {
   const setLinks = useNexusStore(state => state.setLinks);
   const setGoals = useNexusStore(state => state.setGoals);
   const setTasks = useNexusStore(state => state.setTasks);
-  const setNotes = useNexusStore(state => state.setNotes);
   const setBooks = useNexusStore(state => state.setBooks);
 
   // Estados Locais

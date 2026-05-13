@@ -15,25 +15,31 @@ export const NotesTab: React.FC<NotesTabProps> = ({
   confirm
 }) => {
   const notes = useNexusStore(state => state.notes);
-  const setNotes = useNexusStore(state => state.setNotes);
+  const addNote = useNexusStore(state => state.addNote);
+  const updateNote = useNexusStore(state => state.updateNote);
+  const deleteNoteAction = useNexusStore(state => state.deleteNote);
 
-  const handleAddNote = () => {
-    const newNote: NexusNote = {
-      id: Date.now().toString(),
-      title: 'Nova Nota',
-      content: '',
-      updatedAt: Date.now()
-    };
-    setNotes([newNote, ...notes]);
-    setSelectedNoteId(newNote.id);
+  const handleAddNote = async () => {
+    try {
+      const newId = await addNote({
+        title: 'Nova Nota',
+        content: '',
+        updatedAt: Date.now()
+      });
+      if (newId) {
+        setSelectedNoteId(newId);
+      }
+    } catch (err) {
+      toast.error('Erro ao criar nota');
+    }
   };
 
   const updateNoteContent = (id: string, content: string) => {
-    setNotes(notes.map(n => n.id === id ? { ...n, content, updatedAt: Date.now() } : n));
+    updateNote(id, { content });
   };
 
   const updateNoteTitle = (id: string, title: string) => {
-    setNotes(notes.map(n => n.id === id ? { ...n, title, updatedAt: Date.now() } : n));
+    updateNote(id, { title });
   };
 
   const deleteNote = async (id: string) => {
@@ -44,12 +50,16 @@ export const NotesTab: React.FC<NotesTabProps> = ({
       confirmText: 'Excluir'
     });
     if (ok) {
-      const newNotes = notes.filter(n => n.id !== id);
-      setNotes(newNotes);
-      if (selectedNoteId === id) {
-        setSelectedNoteId(newNotes.length > 0 ? newNotes[0].id : null);
+      try {
+        await deleteNoteAction(id);
+        if (selectedNoteId === id) {
+          const remaining = notes.filter(n => n.id !== id);
+          setSelectedNoteId(remaining.length > 0 ? remaining[0].id : null);
+        }
+        toast.success('Nota removida');
+      } catch (err) {
+        toast.error('Erro ao excluir nota');
       }
-      toast.success('Nota removida');
     }
   };
 

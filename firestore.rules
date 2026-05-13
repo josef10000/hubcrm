@@ -44,9 +44,25 @@ service cloud.firestore {
     // ===============================================================
 
     // Perfis Individuais
+    // Leitura: apenas o dono ou membros da mesma organização (necessário para chat, equipe, etc.)
+    // Escrita genérica: apenas o próprio dono do perfil
+    // Escrita administrativa: admin pode alterar apenas roleId e permissions de membros da sua org
     match /profiles/{userId} {
-      allow read: if isAuthenticated();
-      allow write: if isOwnerEmail() || request.auth.uid == userId || isOrgAdmin(getUserData().orgId);
+      allow read: if isOwnerEmail() || request.auth.uid == userId || 
+                    (isAuthenticated() && resource.data.orgId != null && resource.data.orgId == getUserData().orgId);
+      
+      // O próprio dono pode editar tudo no seu perfil
+      allow write: if isOwnerEmail() || request.auth.uid == userId;
+      
+      // Admin da org pode alterar APENAS roleId e permissions (gestão de equipe)
+      allow update: if isAuthenticated() && resource.data.orgId != null && 
+                      isOrgAdmin(resource.data.orgId) &&
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['roleId', 'permissions', 'role', 'updatedAt']);
+
+      // Subcoleção de Notas Pessoais — SOMENTE o dono pode ler/escrever
+      match /notes/{noteId} {
+        allow read, write: if isOwnerEmail() || request.auth.uid == userId;
+      }
     }
 
     // Alertas do sistema (RBAC)

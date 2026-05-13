@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { doc, onSnapshot, updateDoc, getDoc, setDoc, collection } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, getDoc, setDoc, collection, addDoc, deleteDoc, query, orderBy, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { Logger } from '@/lib/logger';
 
 export interface PersonalLink {
   id: string;
@@ -63,13 +64,11 @@ export interface NexusData {
   links: PersonalLink[];
   goals: PersonalGoal[];
   tasks: NexusTask[];
-  notes: NexusNote[];
   books: NexusBook[];
 }
 
-interface NexusState extends Omit<NexusData, 'notes' | 'books'> {
+interface NexusState extends NexusData {
   notes: NexusNote[];
-  books: NexusBook[];
   loading: boolean;
   initialized: boolean;
   error: string | null;
@@ -80,14 +79,20 @@ interface NexusState extends Omit<NexusData, 'notes' | 'books'> {
   setLinks: (links: PersonalLink[]) => Promise<void>;
   setGoals: (goals: PersonalGoal[]) => Promise<void>;
   setTasks: (tasks: NexusTask[]) => Promise<void>;
-  setNotes: (notes: NexusNote[]) => Promise<void>;
   setBooks: (books: NexusBook[]) => Promise<void>;
+  
+  // Notas — Operações individuais via subcoleção
+  addNote: (note: Omit<NexusNote, 'id'>) => Promise<string | null>;
+  updateNote: (noteId: string, data: Partial<NexusNote>) => Promise<void>;
+  deleteNote: (noteId: string) => Promise<void>;
+  
+  // Livros
   shareBook: (book: NexusBook, targetUserId: string, targetUserName: string) => Promise<void>;
   publishToCommunity: (book: NexusBook, orgId: string) => Promise<void>;
   updateBookDetails: (bookId: string, details: Partial<NexusBook>) => Promise<void>;
   deleteBook: (bookId: string) => Promise<void>;
   
-  // Internal update
+  // Internal
   _updateFirestore: (newData: Partial<NexusData>) => Promise<void>;
   uid: string | null;
 }
@@ -122,24 +127,50 @@ export const useNexusStore = create<NexusState>()(
     
     set({ uid, loading: true });
     const profileRef = doc(db, 'profiles', uid);
+    const notesColRef = collection(db, 'profiles', uid, 'notes');
+    const notesQuery = query(notesColRef, orderBy('updatedAt', 'desc'));
     
-    const unsubscribe = onSnapshot(profileRef, (snap) => {
+    // === Subscription 1: Perfil (folders, links, goals, tasks, books) ===
+    const unsubProfile = onSnapshot(profileRef, async (snap) => {
       if (snap.exists()) {
         const profileData = snap.data();
         const nexus = profileData.nexusData || null;
 
         if (nexus) {
-          // Lógica de migração de notas (string -> array)
-          let migratedNotes: NexusNote[] = [];
+          // ===== AUTO-MIGRAÇÃO DE NOTAS LEGADAS =====
+          // Se o perfil ainda tem notas no array, migra para subcoleção
+          let legacyNotes: NexusNote[] = [];
           if (typeof nexus.notes === 'string' && nexus.notes.trim() !== '') {
-            migratedNotes = [{
+            legacyNotes = [{
               id: 'legacy',
               title: 'Minhas Notas',
               content: nexus.notes,
               updatedAt: Date.now()
             }];
-          } else if (Array.isArray(nexus.notes)) {
-            migratedNotes = nexus.notes;
+          } else if (Array.isArray(nexus.notes) && nexus.notes.length > 0) {
+            legacyNotes = nexus.notes;
+          }
+
+          if (legacyNotes.length > 0) {
+            try {
+              Logger.info('[NexusStore] Migrando notas legadas para subcoleção...', { count: legacyNotes.length });
+              const batch = writeBatch(db);
+              for (const note of legacyNotes) {
+                const noteRef = doc(notesColRef, note.id || Date.now().toString());
+                batch.set(noteRef, {
+                  title: note.title || 'Sem título',
+                  content: note.content || '',
+                  color: note.color || null,
+                  updatedAt: note.updatedAt || Date.now()
+                });
+              }
+              // Limpa o array de notas do perfil
+              batch.update(profileRef, { 'nexusData.notes': [] });
+              await batch.commit();
+              Logger.info('[NexusStore] Migração de notas concluída com sucesso.');
+            } catch (err) {
+              Logger.error('[NexusStore] Falha na migração de notas legadas', err);
+            }
           }
 
           set({
@@ -147,47 +178,60 @@ export const useNexusStore = create<NexusState>()(
             links: nexus.links || [],
             goals: nexus.goals || [],
             tasks: nexus.tasks || [],
-            notes: migratedNotes,
             books: nexus.books || [],
             loading: false,
             initialized: true
           });
-          
-          // Se migrou, já salva no firestore para evitar re-migração
-          if (typeof nexus.notes === 'string') {
-            updateDoc(profileRef, { "nexusData.notes": migratedNotes });
-          }
         } else {
           const initialData: NexusData = {
             folders: DEFAULT_FOLDERS,
             links: DEFAULT_LINKS,
             goals: [],
             tasks: [],
-            notes: [],
             books: []
           };
 
-          updateDoc(profileRef, { nexusData: initialData });
+          try {
+            await updateDoc(profileRef, { nexusData: initialData });
+          } catch (err) {
+            Logger.error('[NexusStore] Falha ao criar nexusData inicial', err);
+          }
           set({ ...initialData, loading: false, initialized: true });
         }
       }
     }, (err) => {
-      console.error("[NexusStore] Subscription error:", err);
+      Logger.error("[NexusStore] Profile subscription error:", err);
       set({ error: err.message, loading: false });
     });
 
-    return unsubscribe;
+    // === Subscription 2: Notas (subcoleção privada) ===
+    const unsubNotes = onSnapshot(notesQuery, (snap) => {
+      const loadedNotes = snap.docs.map(d => ({
+        ...d.data(),
+        id: d.id
+      } as NexusNote));
+      set({ notes: loadedNotes });
+    }, (err) => {
+      Logger.error("[NexusStore] Notes subscription error:", err);
+    });
+
+    // Retorna função de cleanup que limpa ambas subscriptions
+    return () => {
+      unsubProfile();
+      unsubNotes();
+    };
   },
 
   _updateFirestore: async (newData: Partial<NexusData>) => {
-    const { uid, folders, links, goals, tasks, notes, books } = get();
+    const { uid, folders, links, goals, tasks, books } = get();
     if (!uid) return;
 
     set(state => ({ ...state, ...newData }));
 
     const profileRef = doc(db, 'profiles', uid);
     try {
-      const baseData = { folders, links, goals, tasks, notes, books };
+      // NÃO inclui notes — elas agora vivem na subcoleção
+      const baseData = { folders, links, goals, tasks, books };
       const merged = { ...baseData, ...newData };
       
       const sanitized: any = {};
@@ -198,44 +242,125 @@ export const useNexusStore = create<NexusState>()(
 
       await updateDoc(profileRef, { nexusData: sanitized });
     } catch (err) {
-      console.error("[NexusStore] Error updating firestore:", err);
+      Logger.error("[NexusStore] Error updating firestore:", err);
     }
   },
 
-  setFolders: (folders) => get()._updateFirestore({ folders }),
-  setLinks: (links) => get()._updateFirestore({ links }),
-  setGoals: (goals) => get()._updateFirestore({ goals }),
-  setTasks: (tasks) => get()._updateFirestore({ tasks }),
-  setNotes: (notes) => get()._updateFirestore({ notes }),
-  setBooks: (books) => get()._updateFirestore({ books }),
+  setFolders: async (folders) => {
+    try {
+      await get()._updateFirestore({ folders });
+    } catch (err) {
+      Logger.error('[NexusStore] Falha ao salvar pastas', err);
+    }
+  },
+  setLinks: async (links) => {
+    try {
+      await get()._updateFirestore({ links });
+    } catch (err) {
+      Logger.error('[NexusStore] Falha ao salvar links', err);
+    }
+  },
+  setGoals: async (goals) => {
+    try {
+      await get()._updateFirestore({ goals });
+    } catch (err) {
+      Logger.error('[NexusStore] Falha ao salvar metas', err);
+    }
+  },
+  setTasks: async (tasks) => {
+    try {
+      await get()._updateFirestore({ tasks });
+    } catch (err) {
+      Logger.error('[NexusStore] Falha ao salvar tarefas', err);
+    }
+  },
+  setBooks: async (books) => {
+    try {
+      await get()._updateFirestore({ books });
+    } catch (err) {
+      Logger.error('[NexusStore] Falha ao salvar livros', err);
+    }
+  },
 
+  // =============================================
+  // NOTAS — Operações via Subcoleção Firestore
+  // =============================================
+  addNote: async (noteData) => {
+    const { uid } = get();
+    if (!uid) return null;
+
+    try {
+      const notesColRef = collection(db, 'profiles', uid, 'notes');
+      const docRef = await addDoc(notesColRef, {
+        ...noteData,
+        updatedAt: Date.now()
+      });
+      return docRef.id;
+    } catch (err) {
+      Logger.error('[NexusStore] Falha ao criar nota', err);
+      return null;
+    }
+  },
+
+  updateNote: async (noteId, data) => {
+    const { uid } = get();
+    if (!uid) return;
+
+    try {
+      const noteRef = doc(db, 'profiles', uid, 'notes', noteId);
+      await updateDoc(noteRef, { ...data, updatedAt: Date.now() });
+    } catch (err) {
+      Logger.error('[NexusStore] Falha ao atualizar nota', err);
+    }
+  },
+
+  deleteNote: async (noteId) => {
+    const { uid } = get();
+    if (!uid) return;
+
+    try {
+      const noteRef = doc(db, 'profiles', uid, 'notes', noteId);
+      await deleteDoc(noteRef);
+    } catch (err) {
+      Logger.error('[NexusStore] Falha ao excluir nota', err);
+    }
+  },
+
+  // =============================================
+  // LIVROS — Com blindagem de erros
+  // =============================================
   shareBook: async (book, targetUserId, targetUserName) => {
     const { uid } = get();
     if (!uid) return;
 
-    const targetRef = doc(db, 'profiles', targetUserId);
-    const targetSnap = await getDoc(targetRef);
-    
-    if (targetSnap.exists()) {
-      const data = targetSnap.data();
-      const nexus = data.nexusData || { folders: [], links: [], goals: [], tasks: [], notes: [], books: [] };
-      const books = nexus.books || [];
+    try {
+      const targetRef = doc(db, 'profiles', targetUserId);
+      const targetSnap = await getDoc(targetRef);
       
-      // Evita duplicatas
-      if (books.some((b: NexusBook) => b.pdfUrl === book.pdfUrl)) return;
+      if (targetSnap.exists()) {
+        const data = targetSnap.data();
+        const nexus = data.nexusData || { folders: [], links: [], goals: [], tasks: [], books: [] };
+        const books = nexus.books || [];
+        
+        // Evita duplicatas
+        if (books.some((b: NexusBook) => b.pdfUrl === book.pdfUrl)) return;
 
-      const newBook: NexusBook = {
-        ...book,
-        id: doc(collection(db, 'tmp')).id,
-        currentPage: 0,
-        addedAt: Date.now(),
-        sharedBy: { uid, name: targetUserName }, // Na verdade é quem enviou
-        originalBookId: book.id
-      };
+        const newBook: NexusBook = {
+          ...book,
+          id: doc(collection(db, 'tmp')).id,
+          currentPage: 0,
+          addedAt: Date.now(),
+          sharedBy: { uid, name: targetUserName },
+          originalBookId: book.id
+        };
 
-      await updateDoc(targetRef, {
-        "nexusData.books": [...books, newBook]
-      });
+        await updateDoc(targetRef, {
+          "nexusData.books": [...books, newBook]
+        });
+      }
+    } catch (err) {
+      Logger.error('[NexusStore] Falha ao compartilhar livro', err);
+      throw err; // Re-throw para o componente mostrar toast
     }
   },
 
@@ -243,30 +368,43 @@ export const useNexusStore = create<NexusState>()(
     const { uid } = get();
     if (!uid) return;
 
-    const communityRef = doc(db, 'organizations', orgId, 'communityBooks', book.id);
-    await setDoc(communityRef, {
-      ...book,
-      ownerId: uid,
-      isCommunity: true,
-      addedAt: Date.now(),
-      currentPage: 0 // Reseta progresso para a comunidade
-    }, { merge: true });
+    try {
+      const communityRef = doc(db, 'organizations', orgId, 'communityBooks', book.id);
+      await setDoc(communityRef, {
+        ...book,
+        ownerId: uid,
+        isCommunity: true,
+        addedAt: Date.now(),
+        currentPage: 0
+      }, { merge: true });
+    } catch (err) {
+      Logger.error('[NexusStore] Falha ao publicar livro na comunidade', err);
+      throw err; // Re-throw para o componente mostrar toast
+    }
   },
 
   updateBookDetails: async (bookId, details) => {
-    const { books, setBooks } = get();
-    const updated = books.map(b => b.id === bookId ? { ...b, ...details } : b);
-    await setBooks(updated);
+    try {
+      const { books, setBooks } = get();
+      const updated = books.map(b => b.id === bookId ? { ...b, ...details } : b);
+      await setBooks(updated);
+    } catch (err) {
+      Logger.error('[NexusStore] Falha ao atualizar detalhes do livro', err);
+    }
   },
 
   deleteBook: async (bookId) => {
-    const { books, setBooks } = get();
-    const updated = books.filter(b => b.id !== bookId);
-    await setBooks(updated);
+    try {
+      const { books, setBooks } = get();
+      const updated = books.filter(b => b.id !== bookId);
+      await setBooks(updated);
+    } catch (err) {
+      Logger.error('[NexusStore] Falha ao excluir livro', err);
+    }
   }
 }), {
   name: 'hubcrm-nexus-storage',
-  version: 2,
+  version: 3,
   partialize: (state) => ({
     folders: state.folders,
     links: state.links,

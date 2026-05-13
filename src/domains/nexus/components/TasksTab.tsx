@@ -1,12 +1,13 @@
 import React from 'react';
 import { useNexusStore } from '@store/useNexusStore';
 import type { NexusTask } from '@store/useNexusStore';
+import { toast } from 'sonner';
 
 export const TasksTab: React.FC = () => {
   const tasks = useNexusStore(state => state.tasks);
   const setTasks = useNexusStore(state => state.setTasks);
 
-  const handleAddTask = (e: React.FormEvent) => {
+  const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
     const input = (e.target as any).taskInput;
     if (!input.value.trim()) return;
@@ -16,16 +17,29 @@ export const TasksTab: React.FC = () => {
       completed: false,
       createdAt: Date.now()
     };
-    setTasks([...tasks, newTask]);
-    input.value = '';
+    try {
+      await setTasks([...tasks, newTask]);
+      input.value = '';
+    } catch (err) {
+      toast.error('Erro ao salvar tarefa');
+    }
   };
 
-  const toggleTask = (id: string) => {
-    setTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+  const toggleTask = async (id: string) => {
+    try {
+      await setTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+    } catch (err) {
+      toast.error('Erro ao atualizar tarefa');
+    }
   };
 
-  const deleteTask = (id: string) => {
-    setTasks(tasks.filter(t => t.id !== id));
+  const deleteTask = async (id: string) => {
+    try {
+      await setTasks(tasks.filter(t => t.id !== id));
+      toast.success('Tarefa removida');
+    } catch (err) {
+      toast.error('Erro ao remover tarefa');
+    }
   };
 
   return (
