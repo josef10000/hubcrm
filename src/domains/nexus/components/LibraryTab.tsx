@@ -46,7 +46,7 @@ const BookCard = React.memo(({
   isOwner: boolean;
   isInLibrary: boolean;
 }) => (
-  <div className="group relative">
+  <div className="group relative will-change-transform">
     <motion.div 
       onClick={() => onView(book.id)}
       whileHover={{ 
@@ -278,27 +278,25 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
 
   return (
     <div className="space-y-8 relative overflow-hidden min-h-[600px] p-1">
-      {/* Dynamic Background Blobs */}
+      {/* Dynamic Background Blobs - Optimized */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
         <motion.div 
           animate={{ 
-            x: [0, 50, -50, 0],
-            y: [0, -50, 50, 0],
-            scale: [1, 1.2, 0.9, 1],
+            x: [0, 30, -30, 0],
+            y: [0, -30, 30, 0],
             backgroundColor: currentBlobColor
           }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute -top-20 -left-20 w-[400px] h-[400px] blur-[120px] rounded-full"
+          transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+          className="absolute -top-40 -left-40 w-[600px] h-[600px] blur-[80px] rounded-full opacity-30 will-change-transform"
         />
         <motion.div 
           animate={{ 
-            x: [0, -80, 80, 0],
-            y: [0, 80, -80, 0],
-            scale: [1, 0.8, 1.2, 1],
+            x: [0, -50, 50, 0],
+            y: [0, 50, -50, 0],
             backgroundColor: currentBlobColor
           }}
-          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-          className="absolute -bottom-20 -right-20 w-[500px] h-[500px] blur-[150px] rounded-full opacity-60"
+          transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+          className="absolute -bottom-40 -right-40 w-[700px] h-[700px] blur-[100px] rounded-full opacity-20 will-change-transform"
         />
       </div>
 

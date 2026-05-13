@@ -1048,10 +1048,21 @@ export default function MyWorkspaceView() {
                               href={book.pdfUrl} 
                               target="_blank" 
                               rel="noopener noreferrer"
+                              className="px-8 py-4 bg-white/5 border border-white/10 text-white rounded-2xl text-xs font-black uppercase tracking-widest flex items-center gap-3 hover:bg-white/10 transition-all"
+                            >
+                              <i className="ph-bold ph-arrow-square-out" /> Nova Aba
+                            </a>
+                            <button 
+                              onClick={() => {
+                                setSelectedBookId(book.id);
+                                setViewingBookDetailsId(null);
+                                // Scroll to top of viewer
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                              }}
                               className="px-8 py-4 bg-primary-500 text-white rounded-2xl text-xs font-black uppercase tracking-widest flex items-center gap-3 shadow-xl shadow-primary-500/20 hover:scale-105 transition-all"
                             >
-                              <i className="ph-bold ph-play" /> Começar Leitura
-                            </a>
+                              <i className="ph-bold ph-play" /> Ler no CRM
+                            </button>
                             {isMine && (
                               <button 
                                 onClick={() => { setViewingBookDetailsId(null); setSharingBook(book); setIsShareModalOpen(true); }}
