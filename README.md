@@ -2,89 +2,146 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Enterprise_OS-v8.2.0-3b82f6?style=for-the-badge&labelColor=0a0a0a" alt="Version" />
-  <img src="https://img.shields.io/badge/Architecture-Modular_Subcollections-blueviolet?style=for-the-badge&labelColor=0a0a0a" alt="Architecture" />
-  <img src="https://img.shields.io/badge/Status-Shield_Active-emerald?style=for-the-badge&labelColor=0a0a0a" alt="Status" />
-</p>
-
-<p align="center">
-  <i>"Transformando prospecção em faturamento através de engenharia de dados e automação de alta fidelidade."</i> ✨
+  <img src="https://img.shields.io/badge/Architecture-Modular_DDD-blueviolet?style=for-the-badge&labelColor=0a0a0a" alt="Architecture" />
+  <img src="https://img.shields.io/badge/Security-Axiom_Shield-emerald?style=for-the-badge&labelColor=0a0a0a" alt="Status" />
 </p>
 
 ---
 
-## 💎 A Visão Hub Symples
-O **Hub Central** não é apenas uma intranet; é o sistema operacional da Hub Symples. Projetado sob a estética **Dark Absolute** e fundamentado em **Glassmorphism**, ele une beleza e potência para entregar uma experiência de gestão sem precedentes.
+## 🏗️ Technical Architecture
 
-### 🌌 Ecossistema de 4 Pilares
-Nossa arquitetura descentralizada garante que cada cargo (dos 13 níveis sistêmicos) tenha exatamente o que precisa para vencer.
+O Hub Central utiliza uma arquitetura baseada em **Domain-Driven Design (DDD)** no Frontend e **Serverless Micro-services** no Backend, focada em latência zero e segurança estrita.
 
-| Pilar | Foco Estratégico | Tecnologias Chave |
-| :--- | :--- | :--- |
-| **🚀 COMERCIAL** | Conversão & Growth | Pipeline Kanban, Propostas One-Click, WhatsApp Sync |
-| **🛠️ OPERAÇÃO** | Delivery & SLA | Hub Canvas, Pulse Red Alerts, Central de Contratos |
-| **💰 FINANCEIRO** | Profit & Runway | Billing Automático (Asaas), DRE Realtime, BI Executivo |
-| **🤝 PESSOAS** | Cultura & Retenção | Skill Radar, People Analytics, Celebração Gamificada |
+### 🌐 System Overview
+```mermaid
+graph TD
+    subgraph Client_Layer [Frontend - React 19]
+        UI[Glassmorphism UI] --> Store[Zustand State]
+        Store --> Hooks[Custom Hooks / usePermissions]
+    end
 
----
+    subgraph Service_Layer [Edge Functions - Vercel]
+        Hooks --> API[API Client / authFetch]
+        API --> Serverless[Serverless Functions /api]
+        Serverless --> Middleware[Auth & Rate Limit Middleware]
+    end
 
-## ✨ Estrela da Versão: Hub Architecture v8.2.0 (Shield & Scale)
-A versão **v8.2** foca em **Blindagem de Dados** e **Escalabilidade Industrial**, resolvendo gargalos críticos de infraestrutura NoSQL.
+    subgraph Data_Layer [Persistence - Firebase]
+        Serverless --> Firestore[(Firestore NoSQL)]
+        Hooks --> Realtime[Realtime Listeners / onSnapshot]
+        Realtime --> Firestore
+        Firestore --> SubCollections[Modular Subcollections]
+    end
 
-### 🏗️ Pilares Técnicos (Operação Blindagem)
-- **Modular Subcollections (Nexus v2):** Migração de dados pesados (Notas) do documento de perfil para subcoleções independentes. Isso elimina o limite de 1MB do Firestore e permite crescimento infinito de conteúdo por usuário.
-- **Privacy Shield Rules:** Endurecimento das regras de segurança do Firestore. Perfis agora são restritos ao dono e membros da mesma organização, impedindo vazamentos transversais de dados.
-- **Axiom Observability:** Centralização total de logs e monitoramento de erros em produção via Axiom. O sistema agora "se autocura" ao reportar erros silenciosos de runtime e falhas de rede em tempo real.
-- **Zero-Storage Privacy:** Remoção de dados sensíveis (notas e anotações) do `localStorage`. Toda informação crítica agora vive exclusivamente na nuvem, protegida por autenticação biométrica/tokenizada.
-
-> [!IMPORTANT]
-> **Permissões Centralizadas:** A lógica de RBAC foi migrada de verificações manuais no JSX para o hook `usePermissions`, garantindo que uma mudança de regra no backend reflita instantaneamente em toda a UI.
-
----
-
-## 📚 Nexus Library & Wiki Pro
-A base de conhecimento da Hub Symples, agora com escalabilidade garantida.
-
-*   **Nexus Binding:** Artigos vinculados a obras na Nexus Library para aprofundamento técnico.
-*   **Subcollection Performance:** Notas e reflexões agora carregam via streams independentes, garantindo latência zero mesmo com milhares de registros.
-*   **Access Control:** Filtros por cargo (RBAC) para garantir que cada setor veja o conteúdo pertinente.
+    subgraph Observability [Monitoring]
+        Client_Layer --> Axiom[Axiom Logging]
+        Serverless --> Axiom
+    end
+```
 
 ---
 
-## 💬 Hub Chat Pro v3.5 (Optimistic UI)
-A comunicação interna elevada ao nível de ferramenta de trabalho, agora com **Zustand 5.0**.
+## 📂 Project Structure
 
-*   **Optimistic Updates:** Feedback instantâneo no envio de mensagens antes mesmo da confirmação da rede.
-*   **Canais Temáticos:** Salas públicas e privadas com suporte a **HubBots**.
-*   **Context Linking:** Cards ricos que conectam conversas diretamente a clientes no CRM.
+O projeto segue uma estrutura modular para garantir o desacoplamento entre domínios de negócio.
+
+```text
+├── api/                # Serverless Functions (Backend Logic)
+│   ├── _utils/         # Shared utilities (Auth, DB, Audit)
+│   └── handlers/       # Domain-specific endpoint handlers
+├── src/
+│   ├── core/           # Configurações base (Firebase, Axiom)
+│   ├── domains/        # Lógica de Negócio (CRM, Nexus, Wiki, Finance)
+│   │   ├── components/ # Componentes exclusivos do domínio
+│   │   ├── views/      # Páginas de alto nível
+│   │   └── hooks/      # Hooks específicos do domínio
+│   ├── store/          # Zustand Slices (State Management)
+│   ├── shared/         # Componentes e tipos reutilizáveis
+│   ├── lib/            # Bibliotecas e utilitários (Logger, API Client)
+│   └── hooks/          # Hooks globais (useAuth, usePermissions)
+├── tests/              # Test Suites (E2E & Integration)
+└── firestore.rules     # Segurança Granular de Dados
+```
 
 ---
 
-## 🛠️ Stack de Alta Performance
+## 🔐 Authentication & Security Flow
 
-Construído para escala infinita e latência zero, o Hub Central adota tecnologias Serverless e Bancos de Dados em Tempo Real.
+O fluxo de autenticação é híbrido: Firebase Auth para identidade e JWT/Custom Tokens para integração com APIs externas.
 
-- **Frontend Core**: React 19 + Vite 6
-- **State Management**: Zustand 5.0 (Gestão Global com Persistência Versionada)
-- **Observability**: Axiom (Logging Estruturado & Error Hijacking)
-- **Design System**: Tailwind CSS 4.0 + Framer Motion (Glassmorphism Identity)
-- **Database**: Firebase Firestore (Realtime NoSQL com Modular Subcollections)
-- **Edge Computing**: Vercel Serverless Functions
-- **Integrações**: Asaas (Financeiro) e Resend (E-mails)
+```mermaid
+sequenceDiagram
+    participant User
+    participant App
+    participant Firebase
+    participant API
+
+    User->>App: Login Credentials
+    App->>Firebase: authenticate()
+    Firebase-->>App: Identity Token (IDT)
+    App->>App: Store Session in Zustand
+    App->>API: Request + Bearer IDT
+    API->>API: Middleware: verifyAuth(IDT)
+    API->>API: Middleware: checkRateLimit(IP)
+    API-->>App: Authorized Data
+```
+
+### Security Conventions
+1. **RBAC (Role-Based Access Control):** Centralizado no hook `usePermissions`. Proibido checar strings de roles diretamente no JSX.
+2. **Privacy Shield:** Dados de perfil são restritos a membros da mesma organização via Firestore Rules.
+3. **Audit Log:** Toda ação mutável na API deve invocar `logActivity`.
 
 ---
 
-## 🏗️ Documentação da API e Arquitetura do Backend
+## 📊 State Management Patterns
 
-Para entender profundamente como o Firebase se conecta com as APIs Serverless e para debugar problemas no fluxo de dados:
+Utilizamos **Zustand 5.0** com persistência seletiva e versionamento de cache.
 
-👉 **[Ver Documentação Completa da Arquitetura (API_ARCHITECTURE.md)](API_ARCHITECTURE.md)**
+- **Selective Persistence:** Apenas metadados e configurações são salvos no `localStorage`. Dados sensíveis (como Notas) são mantidos apenas em memória e sincronizados em tempo real com o Firestore.
+- **Middleware:** Persistência configurada com `version` para garantir migrações de esquema seguras entre deploys.
+- **Atomic Selectors:** Sempre utilize seletores atômicos `const value = useStore(state => state.value)` para evitar re-renderizações desnecessárias.
+
+---
+
+## 🧪 Testing & CI/CD Strategy
+
+A qualidade do código é assegurada por três camadas de verificação:
+
+1. **Unit Testing (Vitest):** Focado em helpers, utilitários e lógica de cálculo.
+   - `npm run test:unit`
+2. **Integration Testing:** Validação de fluxos de API e integração com Firestore (via Emulator).
+3. **E2E Testing (Playwright):** Testes de fumaça e fluxos críticos de usuário (Checkout, Login, Cadastro de Lead).
+   - `npm run test:e2e`
+
+### CI/CD Pipeline
+- **Linting:** Pre-commit hooks validam tipos e estilo via ESLint + Prettier.
+- **Preview Deploy:** Toda PR gera um ambiente de preview na Vercel com logs do Axiom ativos para depuração pré-merge.
+- **Production:** Deploy automático após aprovação de testes E2E.
+
+---
+
+## 🛠️ Getting Started
+
+### Prerequisites
+- Node.js (Latest LTS)
+- Firebase CLI
+- Vercel CLI (para local API testing)
+
+### Installation
+```bash
+npm install
+npm run dev
+```
+
+### Environment Variables
+Copie o `.env.example` para `.env` e preencha as chaves do Firebase, Axiom e Upstash.
 
 ---
 
 > [!CAUTION]
 > **PROPRIEDADE INTELECTUAL HUB SYMPLES LTDA**
-> Este software é proprietário e seu uso é restrito a colaboradores autorizados. A distribuição não autorizada é estritamente proibida e sujeita a penalidades legais.
+> Software proprietário. Uso restrito a colaboradores autorizados.
 
 <p align="center">
-  <sub>Hub Central © 2026 — Desenvolvido com ❤️ pela equipe de Engenharia.</sub>
+  <sub>Hub Central © 2026 — Engenharia de Software Enterprise.</sub>
 </p>
