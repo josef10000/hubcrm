@@ -92,6 +92,8 @@ export default function MyWorkspaceView() {
   const [librarySearchQuery, setLibrarySearchQuery] = useState('');
   const [libraryPage, setLibraryPage] = useState(1);
   const [isAddBookLinkOpen, setIsAddBookLinkOpen] = useState(false);
+  const [bookCoverResults, setBookCoverResults] = useState<{url: string, title: string, author?: string}[]>([]);
+  const [selectedPreviewCover, setSelectedPreviewCover] = useState<string | null>(null);
   const [modalConfig, setModalConfig] = useState<{
     isOpen: boolean;
     type: 'folder' | 'link' | 'goal' | 'task' | 'note' | 'book';
@@ -134,19 +136,24 @@ export default function MyWorkspaceView() {
     input.click();
   };
 
-  const buscarCapaSemGoogle = async (titulo: string) => {
+  const buscarCapasOpenLibrary = async (titulo: string) => {
     try {
-      const urlBusca = `https://openlibrary.org/search.json?title=${encodeURIComponent(titulo)}&limit=1`;
+      const urlBusca = `https://openlibrary.org/search.json?title=${encodeURIComponent(titulo)}&limit=12`;
       const resposta = await fetch(urlBusca);
       const dados = await resposta.json();
-      const idDaCapa = dados.docs[0]?.cover_i;
-      if (idDaCapa) {
-        return `https://covers.openlibrary.org/b/id/${idDaCapa}-M.jpg`;
-      }
-      return null;
+
+      const results = dados.docs
+        .filter((doc: any) => doc.cover_i)
+        .map((doc: any) => ({
+          url: `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`,
+          title: doc.title,
+          author: doc.author_name?.[0]
+        }));
+
+      return results;
     } catch (erro) {
-      console.error("Erro ao buscar a capa na Open Library:", erro);
-      return null;
+      console.error("Erro ao buscar capas na Open Library:", erro);
+      return [];
     }
   };
 
@@ -308,6 +315,8 @@ export default function MyWorkspaceView() {
     };
     setBooks([newBook, ...books]);
     setIsAddBookLinkOpen(false);
+    setBookCoverResults([]);
+    setSelectedPreviewCover(null);
     toast.success('Livro catalogado com sucesso!');
   };
 
@@ -705,7 +714,11 @@ export default function MyWorkspaceView() {
                   <h3 className="text-xl font-black text-white uppercase tracking-tighter">Novo Livro</h3>
                   <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">Adicionar obra à sua biblioteca</p>
                 </div>
-                <button onClick={() => setIsAddBookLinkOpen(false)} className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-gray-400 hover:text-white transition-all">
+                <button onClick={() => {
+                  setIsAddBookLinkOpen(false);
+                  setBookCoverResults([]);
+                  setSelectedPreviewCover(null);
+                }} className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-gray-400 hover:text-white transition-all">
                   <i className="ph-bold ph-x" />
                 </button>
               </div>
@@ -732,23 +745,59 @@ export default function MyWorkspaceView() {
                               toast.error('Digite o título para buscar a capa');
                               return;
                             }
-                            const tId = toast.loading('Buscando capa na Open Library...');
-                            const cover = await buscarCapaSemGoogle(title);
+                            const tId = toast.loading('Buscando capas na Open Library...');
+                            const covers = await buscarCapasOpenLibrary(title);
                             toast.dismiss(tId);
-                            if (cover) {
-                              (document.getElementById('book-cover') as HTMLInputElement).value = cover;
-                              toast.success('Capa encontrada e aplicada!');
+                            
+                            if (covers.length > 0) {
+                              setBookCoverResults(covers);
+                              toast.success(`${covers.length} capas encontradas! Escolha uma abaixo.`);
                             } else {
-                              toast.error('Não encontramos uma capa para este título.');
+                              setBookCoverResults([]);
+                              toast.error('Não encontramos capas para este título.');
                             }
                           }}
                           className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/5 hover:bg-primary-500/20 rounded-xl flex items-center justify-center text-gray-400 hover:text-primary-500 transition-all"
-                          title="Buscar Capa Automaticamente"
+                          title="Buscar Capas na Open Library"
                         >
                           <i className="ph-bold ph-magnifying-glass" />
                         </button>
                       </div>
                     </div>
+
+                    {/* Galeria de Capas Encontradas */}
+                    <AnimatePresence>
+                      {bookCoverResults.length > 0 && (
+                        <motion.div 
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="space-y-3 overflow-hidden"
+                        >
+                          <div className="flex items-center justify-between">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-primary-500">Resultados Encontrados</label>
+                            <button onClick={() => setBookCoverResults([])} className="text-[9px] font-black uppercase text-gray-500 hover:text-white">Limpar</button>
+                          </div>
+                          <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
+                            {bookCoverResults.map((cover, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => {
+                                  setSelectedPreviewCover(cover.url);
+                                  (document.getElementById('book-cover') as HTMLInputElement).value = cover.url;
+                                  (document.getElementById('book-author') as HTMLInputElement).value = cover.author || '';
+                                  toast.success('Capa selecionada!');
+                                }}
+                                className={`flex-shrink-0 w-24 aspect-[2/3] rounded-xl overflow-hidden border-2 transition-all ${selectedPreviewCover === cover.url ? 'border-primary-500 scale-105 shadow-xl shadow-primary-500/20' : 'border-white/5 hover:border-white/20'}`}
+                                title={`${cover.title} - ${cover.author || 'Autor desconhecido'}`}
+                              >
+                                <img src={cover.url} alt={cover.title} className="w-full h-full object-cover" />
+                              </button>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">Autor</label>
                       <input id="book-author" type="text" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none" />
