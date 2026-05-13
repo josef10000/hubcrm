@@ -5,6 +5,7 @@ import {
   Briefcase, Code, Headphones, Settings, Info
 } from 'lucide-react';
 import { useCRM } from '@crm/contexts/CRMContext';
+import { useCRMStore } from '@/store/useCRMStore';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { toast } from 'sonner';
 import { WikiArticle, WikiCategory } from '@/types';
@@ -27,7 +28,7 @@ const CATEGORY_MAP = [
 export default function WikiView() {
   const { 
     wikiArticles, loading, userProfile, beginnerGuideArticleId, 
-    handleMarkWikiArticleAsRead 
+    handleMarkWikiArticleAsRead, effectiveOrgId
   } = useCRM();
   const { user } = useAuth();
   
@@ -40,6 +41,14 @@ export default function WikiView() {
 
   const { hasPermission } = usePermissions();
   const canCreate = hasPermission('MANAGE_WIKI');
+
+  const subscribeToWiki = useCRMStore(s => s.subscribeToWiki);
+  
+  React.useEffect(() => {
+    if (effectiveOrgId) {
+      return subscribeToWiki(effectiveOrgId);
+    }
+  }, [effectiveOrgId, subscribeToWiki]);
   
   // Contador dinâmico por categoria v4.1.4
   const categoryCounts = useMemo(() => {

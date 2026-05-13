@@ -37,6 +37,7 @@ import { collection, query, where, onSnapshot, doc, updateDoc, setDoc, deleteDoc
 import { UserProfile, OnboardingTask } from '@/types';
 import { format, differenceInYears, parseISO, isSameDay, addDays } from 'date-fns';
 import { useCRM } from '@crm/contexts/CRMContext';
+import { useCRMStore } from '@/store/useCRMStore';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { VacationPeriod, PDICategory, PDIAction } from '@/types/people';
@@ -49,6 +50,14 @@ export default function PeopleView() {
   const { user } = useAuth();
   const crm = useCRM();
   const { userProfile, teamProfiles: crmTeamProfiles, effectiveOrgId: crmOrgId } = crm;
+
+  const subscribeToPeople = useCRMStore(s => s.subscribeToPeople);
+
+  useEffect(() => {
+    if (crmOrgId) {
+      return subscribeToPeople(crmOrgId);
+    }
+  }, [crmOrgId, subscribeToPeople]);
 
   const [activeTab, setActiveTab] = useState<PeopleSubTab>('dashboard');
   const [searchTerm, setSearchTerm] = useState('');

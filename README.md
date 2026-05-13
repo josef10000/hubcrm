@@ -1,9 +1,9 @@
 # <p align="center">🔐 HUB CENTRAL — INTELLIGENCE ECOSYSTEM</p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Enterprise_OS-v8.2.0-3b82f6?style=for-the-badge&labelColor=0a0a0a" alt="Version" />
+  <img src="https://img.shields.io/badge/Enterprise_OS-v8.3.0--master-3b82f6?style=for-the-badge&labelColor=0a0a0a" alt="Version" />
   <img src="https://img.shields.io/badge/Architecture-Modular_DDD-blueviolet?style=for-the-badge&labelColor=0a0a0a" alt="Architecture" />
-  <img src="https://img.shields.io/badge/Security-Axiom_Shield-emerald?style=for-the-badge&labelColor=0a0a0a" alt="Status" />
+  <img src="https://img.shields.io/badge/Status-Master_Level_Ready-emerald?style=for-the-badge&labelColor=0a0a0a" alt="Status" />
 </p>
 
 ---
@@ -100,6 +100,25 @@ Utilizamos **Zustand 5.0** com persistência seletiva e versionamento de cache.
 - **Selective Persistence:** Apenas metadados e configurações são salvos no `localStorage`. Dados sensíveis (como Notas) são mantidos apenas em memória e sincronizados em tempo real com o Firestore.
 - **Middleware:** Persistência configurada com `version` para garantir migrações de esquema seguras entre deploys.
 - **Atomic Selectors:** Sempre utilize seletores atômicos `const value = useStore(state => state.value)` para evitar re-renderizações desnecessárias.
+
+---
+
+## ⚡ Master Level Evolution
+
+Esta versão marca a transição para o padrão **Enterprise Master**, com foco em três pilares:
+
+### 🚀 Performance (Lazy Listeners)
+Para garantir latência zero em organizações com milhares de registros, implementamos o carregamento sob demanda:
+- **Zero Overload:** Os módulos de Financeiro, Wiki, Suporte e Pessoas não consomem banda até serem acessados.
+- **Lifecycle Management:** Listeners são ativados no `mount` da View e destruídos no `unmount`, garantindo que o banco de dados em tempo real não drene recursos em abas inativas.
+
+### 🛡️ Hard Security (Firestore Hardening)
+- **Isolation by Ownership:** Regras de segurança no Firestore garantem que um usuário só possa ler Leads/Clientes atribuídos a ele (`assignedTo == uid`), a menos que seja um Administrador com permissões explícitas.
+- **Privacy First:** Dados sensíveis (como Notas do Nexus) foram excluídos da persistência local para evitar exposição no `localStorage` do navegador.
+
+### 👁️ Observability (Axiom Shield)
+- **Centralized Logs:** Substituição de todos os `console.error` pelo sistema `Logger.error`, enviando stack traces em tempo real para o Axiom.
+- **Global Hijack:** Captura automática de erros não tratados (`uncaught exceptions`) e rejeições de promises no nível de aplicação.
 
 ---
 

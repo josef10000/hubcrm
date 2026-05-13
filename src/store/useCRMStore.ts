@@ -11,6 +11,30 @@ import { createSupportSlice } from './slices/supportSlice';
 import { createSystemSlice } from './slices/systemSlice';
 import { createPreferencesSlice } from './slices/preferencesSlice';
 import { CRMStoreState } from './types';
+import { Logger } from '@/lib/logger';
+
+const createListener = (
+  orgId: string,
+  collPath: string,
+  setter: (data: any[]) => void,
+  sortFn?: (a: any, b: any) => number,
+  filterFn?: (data: any[]) => any[]
+) => {
+  try {
+    const ref = collection(db, 'organizations', orgId, collPath);
+    return onSnapshot(ref, (snap) => {
+      let data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      if (filterFn) data = filterFn(data);
+      if (sortFn) data.sort(sortFn);
+      setter(data);
+    }, (err) => {
+      Logger.error(`[CRMStore] Error in listener ${collPath}:`, err);
+    });
+  } catch (err: any) {
+    Logger.error(`[CRMStore] Failed to setup listener ${collPath}:`, err);
+    return () => {};
+  }
+};
 
 export const useCRMStore = create<CRMStoreState>()(
   persist(
@@ -57,63 +81,18 @@ export const useCRMStore = create<CRMStoreState>()(
 
         const unsubscribers: (() => void)[] = [];
 
-        const setupListener = (
-          collPath: string, 
-          setter: (data: any[]) => void, 
-          sortFn?: (a: any, b: any) => number, 
-          filterFn?: (data: any[]) => any[],
-          isCritical: boolean = false
-        ) => {
-          try {
-            const ref = collection(db, 'organizations', orgId, collPath);
-            const unsub = onSnapshot(ref, (snap) => {
-              let data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-              if (filterFn) data = filterFn(data);
-              if (sortFn) data.sort(sortFn);
-              setter(data);
-              if (isCritical) set({ loading: false });
-            }, (err) => {
-              console.error(`[CRMStore] Error in listener ${collPath}:`, err);
-              if (isCritical) set({ errorMsg: err.message, loading: false });
-            });
-            unsubscribers.push(unsub);
-          } catch (err: any) {
-            console.error(`[CRMStore] Failed to setup listener ${collPath}:`, err);
-            if (isCritical) set({ loading: false, errorMsg: err.message });
+        // Core Listeners (CRM, Roles, Configs)
+        unsubscribers.push(createListener(orgId, 'clients', (data) => set({ clients: data }), undefined, (data) => {
+          if (!permissions.includes('MANAGE_TEAM') && !permissions.includes('MANAGE_SETTINGS')) {
+            return data.filter(c => c.assignedTo === userId);
           }
-        };
+          return data;
+        }));
+        unsubscribers.push(createListener(orgId, 'leads', (data) => set({ leads: data }), (a, b) => b.createdAt - a.createdAt));
+        unsubscribers.push(createListener(orgId, 'offers', (data) => set({ offers: data }), (a, b) => (a.order || 0) - (b.order || 0)));
+        unsubscribers.push(createListener(orgId, 'tags', (data) => set({ tags: data }), (a, b) => a.name.localeCompare(b.name)));
+        unsubscribers.push(createListener(orgId, 'roles', (data) => set({ orgRoles: data })));
 
-        // Initialize Listeners
-        setupListener('clients', 
-          (data) => set({ clients: data }), 
-          undefined, 
-          (data) => {
-            if (!permissions.includes('MANAGE_TEAM') && !permissions.includes('MANAGE_SETTINGS')) {
-              return data.filter(c => c.assignedTo === userId);
-            }
-            return data;
-          }, 
-          true
-        );
-
-        setupListener('leads', (data) => set({ leads: data }), (a, b) => b.createdAt - a.createdAt);
-        setupListener('offers', (data) => set({ offers: data }), (a, b) => (a.order || 0) - (b.order || 0));
-        setupListener('tags', (data) => set({ tags: data }), (a, b) => a.name.localeCompare(b.name));
-        setupListener('wikiArticles', (data) => set({ wikiArticles: data }), (a, b) => b.createdAt - a.createdAt);
-        setupListener('vacations', (data) => set({ vacations: data }));
-        setupListener('appointments', (data) => set({ appointments: data }), (a, b) => b.startTime - a.startTime);
-        setupListener('availabilityBlocks', (data) => set({ availabilityBlocks: data }));
-        setupListener('transactions', (data) => set({ transactions: data }), (a, b) => b.date - a.date);
-        setupListener('transactionCategories', (data) => set({ transactionCategories: data }));
-        setupListener('budgets', (data) => set({ budgets: data }));
-        setupListener('roles', (data) => set({ orgRoles: data }));
-        setupListener('onboarding_questions', (data) => set({ onboardingQuestions: data }), (a, b) => (a.order || 0) - (b.order || 0));
-        setupListener('supportRequests', (data) => set({ supportRequests: data }), (a, b) => b.createdAt - a.createdAt);
-        setupListener('cashflow_projections', (data) => set({ cashflowProjections: data }), (a, b) => a.month.localeCompare(b.month));
-        setupListener('okrs', (data) => set({ okrs: data }), (a, b) => b.createdAt - a.createdAt);
-        setupListener('feedbackRequests', (data) => set({ feedbackRequests: data }), (a, b) => b.createdAt - a.createdAt);
-
-        // Preferences Document Listener (Single Doc)
         try {
           const prefRef = doc(db, 'organizations', orgId, 'settings', 'preferences');
           const unsubPrefs = onSnapshot(prefRef, (docSnap) => {
@@ -121,14 +100,13 @@ export const useCRMStore = create<CRMStoreState>()(
               set({ ...docSnap.data() });
             }
           }, (err) => {
-            console.warn("[CRMStore] Preferences listener failed (likely empty or permissions):", err);
+            Logger.warn("[CRMStore] Preferences listener failed (likely empty or permissions):", err);
           });
           unsubscribers.push(unsubPrefs);
         } catch (err) {
-          console.error("[CRMStore] Failed to setup Preferences listener:", err);
+          Logger.error("[CRMStore] Failed to setup Preferences listener:", err);
         }
 
-        // Global Team Profiles
         try {
           const qProfiles = query(collection(db, 'profiles'), where('orgId', '==', orgId));
           const unsubProfiles = onSnapshot(qProfiles, (snap) => {
@@ -136,17 +114,49 @@ export const useCRMStore = create<CRMStoreState>()(
           });
           unsubscribers.push(unsubProfiles);
         } catch (err) {
-          console.error("[CRMStore] Team profiles listener failed:", err);
+          Logger.error("[CRMStore] Team profiles listener failed:", err);
         }
 
         const timeout = setTimeout(() => {
           if (get().loading) set({ loading: false });
-        }, 10000);
+        }, 3000);
 
         return () => {
           clearTimeout(timeout);
           unsubscribers.forEach(unsub => unsub());
         };
+      },
+
+      subscribeToFinance: (orgId) => {
+        const unsubscribers: (() => void)[] = [];
+        unsubscribers.push(createListener(orgId, 'transactions', (data) => set({ transactions: data }), (a, b) => b.date - a.date));
+        unsubscribers.push(createListener(orgId, 'transactionCategories', (data) => set({ transactionCategories: data })));
+        unsubscribers.push(createListener(orgId, 'budgets', (data) => set({ budgets: data })));
+        unsubscribers.push(createListener(orgId, 'cashflow_projections', (data) => set({ cashflowProjections: data }), (a, b) => a.month.localeCompare(b.month)));
+        return () => unsubscribers.forEach(unsub => unsub());
+      },
+
+      subscribeToWiki: (orgId) => {
+        const unsubscribers: (() => void)[] = [];
+        unsubscribers.push(createListener(orgId, 'wikiArticles', (data) => set({ wikiArticles: data }), (a, b) => b.createdAt - a.createdAt));
+        return () => unsubscribers.forEach(unsub => unsub());
+      },
+
+      subscribeToSupport: (orgId) => {
+        const unsubscribers: (() => void)[] = [];
+        unsubscribers.push(createListener(orgId, 'supportRequests', (data) => set({ supportRequests: data }), (a, b) => b.createdAt - a.createdAt));
+        return () => unsubscribers.forEach(unsub => unsub());
+      },
+
+      subscribeToPeople: (orgId) => {
+        const unsubscribers: (() => void)[] = [];
+        unsubscribers.push(createListener(orgId, 'vacations', (data) => set({ vacations: data })));
+        unsubscribers.push(createListener(orgId, 'appointments', (data) => set({ appointments: data }), (a, b) => b.startTime - a.startTime));
+        unsubscribers.push(createListener(orgId, 'availabilityBlocks', (data) => set({ availabilityBlocks: data })));
+        unsubscribers.push(createListener(orgId, 'onboarding_questions', (data) => set({ onboardingQuestions: data }), (a, b) => (a.order || 0) - (b.order || 0)));
+        unsubscribers.push(createListener(orgId, 'okrs', (data) => set({ okrs: data }), (a, b) => b.createdAt - a.createdAt));
+        unsubscribers.push(createListener(orgId, 'feedbackRequests', (data) => set({ feedbackRequests: data }), (a, b) => b.createdAt - a.createdAt));
+        return () => unsubscribers.forEach(unsub => unsub());
       },
     }),
     {

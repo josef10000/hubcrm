@@ -4,7 +4,9 @@ import { useSupport } from '@/hooks/useSupport';
 import { SupportCard } from '@support/components/SupportCard';
 import SupportRequestModal from '@support/components/SupportRequestModal';
 import { QuickTicketButton } from '@support/components/QuickTicketButton';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useCRM } from '@crm/contexts/CRMContext';
+import { useCRMStore } from '@/store/useCRMStore';
 
 export default function SupportView() {
   const {
@@ -20,6 +22,15 @@ export default function SupportView() {
     removeRequest,
     getSlaStatus
   } = useSupport();
+
+  const { effectiveOrgId } = useCRM();
+  const subscribeToSupport = useCRMStore(s => s.subscribeToSupport);
+
+  useEffect(() => {
+    if (effectiveOrgId) {
+      return subscribeToSupport(effectiveOrgId);
+    }
+  }, [effectiveOrgId, subscribeToSupport]);
 
   const [isNewRequestModalOpen, setIsNewRequestModalOpen] = useState(false);
 

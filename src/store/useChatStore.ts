@@ -8,6 +8,7 @@ import {
 import { db } from '@/lib/firebase';
 import { Chat, ChatMessage, TypingIndicator } from '@/types/chat.types';
 import { toast } from 'sonner';
+import { Logger } from '@/lib/logger';
 
 interface ChatState {
   // Data
@@ -86,7 +87,7 @@ export const useChatStore = create<ChatState>()(
       } as Chat));
       set({ chats: chatList, loadingChats: false });
     }, (err) => {
-      console.error("[ChatStore] Error loading chats:", err);
+      Logger.error("[ChatStore] Error loading chats:", err);
       set({ error: err.message, loadingChats: false });
     });
 
@@ -238,7 +239,7 @@ export const useChatStore = create<ChatState>()(
 
       await batch.commit();
     } catch (err: any) {
-      console.error("[ChatStore] Error sending message:", err);
+      Logger.error("[ChatStore] Error sending message:", err);
       toast.error(`Erro ao enviar: ${err.message || 'Erro desconhecido'}`);
       
       // Reverter otimismo em caso de erro
@@ -259,7 +260,7 @@ export const useChatStore = create<ChatState>()(
         } : null
       }, { merge: true });
     } catch (err) {
-      console.error("[ChatStore] Error updating typing status:", err);
+      Logger.error("[ChatStore] Error updating typing status:", err);
     }
   },
 
@@ -274,7 +275,7 @@ export const useChatStore = create<ChatState>()(
       });
       return true;
     } catch (err) {
-      console.error("[ChatStore] Error deleting message:", err);
+      Logger.error("[ChatStore] Error deleting message:", err);
       return false;
     }
   },
@@ -459,7 +460,7 @@ export const useChatStore = create<ChatState>()(
 
       await batch.commit();
     } catch (err) {
-      console.error("[ChatStore] Error sending bot message:", err);
+      Logger.error("[ChatStore] Error sending bot message:", err);
     }
   }
 }), {

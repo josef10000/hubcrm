@@ -120,12 +120,12 @@ service cloud.firestore {
       }
 
       match /clients/{id} {
-        allow read: if belongsToOrg(orgId);
+        allow read: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_CLIENTS') || (belongsToOrg(orgId) && resource.data.assignedTo == request.auth.uid);
         allow write: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_CLIENTS');
       }
 
       match /leads/{id} {
-        allow read: if belongsToOrg(orgId);
+        allow read: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_LEADS') || (belongsToOrg(orgId) && resource.data.assignedTo == request.auth.uid);
         allow write: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_LEADS');
       }
 

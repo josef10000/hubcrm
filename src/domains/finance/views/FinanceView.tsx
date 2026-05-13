@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown, DollarSign, Trash2, PieChart, Activity, Target, Tag } from 'lucide-react';
 import { useCRM } from '@crm/contexts/CRMContext';
+import { useCRMStore } from '@/store/useCRMStore';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { getPlanPrice } from '@/helpers';
 import { db } from '@/lib/firebase';
@@ -28,6 +29,14 @@ export default function FinanceView() {
     offers = [] 
   } = useCRM();
   const [activeTab, setActiveTab] = useState<'resumo' | 'dre' | 'fluxo' | 'orcamento' | 'roi' | 'saas'>('resumo');
+
+  const subscribeToFinance = useCRMStore(s => s.subscribeToFinance);
+
+  useEffect(() => {
+    if (effectiveOrgId) {
+      return subscribeToFinance(effectiveOrgId);
+    }
+  }, [effectiveOrgId, subscribeToFinance]);
 
   const { hasPermission } = usePermissions();
 

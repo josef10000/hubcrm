@@ -24,6 +24,10 @@ export interface BaseState {
 export interface BaseActions {
   initialize: (userId: string, orgId: string, permissions: string[], profile?: UserProfile) => () => void;
   init: (userId: string, orgId: string, permissions: string[], profile?: UserProfile) => () => void;
+  subscribeToFinance: (orgId: string) => () => void;
+  subscribeToWiki: (orgId: string) => () => void;
+  subscribeToSupport: (orgId: string) => () => void;
+  subscribeToPeople: (orgId: string) => () => void;
   setLoading: (loading: boolean) => void;
   setNewTransaction: (transaction: Partial<Transaction>) => void;
 }
