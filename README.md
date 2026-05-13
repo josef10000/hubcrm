@@ -61,11 +61,15 @@ graph TD
 
 ## 🌐 Ecossistema de APIs
 
-O Hub Central integra-se com provedores líderes de mercado para garantir escalabilidade e autonomia.
+O Hub Central integra-se com provedores líderes de mercado para garantir escalabilidade, inteligência e autonomia total.
 
 ### 💳 Financeiro & Pagamentos (Asaas)
 - **Escopo:** Geração de boletos, cartões, faturamento recorrente e antecipação.
 - **Automação:** O Hub processa webhooks do Asaas para atualizar status de faturas e liberar acessos instantaneamente.
+
+### 🤖 Inteligência Artificial (Google Gemini)
+- **Escopo:** Processamento de linguagem natural e análise inteligente de dados.
+- **Integração:** Utilizado para geração de insights, resumos de atividades e assistente inteligente dentro do ecossistema.
 
 ### 📧 Comunicação & E-mail (Resend)
 - **Escopo:** Transmissão de e-mails transacionais e de marketing.
@@ -79,21 +83,24 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
 - **Google Drive:** Integração transparente para visualização de PDFs e manuais. O Hub transforma automaticamente links de compartilhamento em links de `preview` otimizados.
 - **Cloudinary / ImgBB:** Armazenamento de ativos de UI, fotos de perfil e comprovantes, com otimização automática de formato (WebP) e redimensionamento.
 
-### 🛡️ Monitoramento & Uptime (UptimeRobot)
-- **Escopo:** Monitoramento de disponibilidade de serviços e sites.
-- **Integração:** O Hub consome dados do UptimeRobot para exibir o status de saúde do ecossistema diretamente no dashboard administrativo.
+### 🛡️ Monitoramento & Uptime (UptimeRobot & Sentry)
+- **UptimeRobot:** Monitoramento de disponibilidade de serviços e sites, com status de saúde exibido no dashboard administrativo.
+- **Sentry:** Rastreamento de erros e monitoramento de performance em tempo real, garantindo que falhas sejam identificadas e corrigidas antes de afetarem o usuário final.
 
 ### 🔐 Persistência & Identidade (Firebase)
 - **Firestore:** Banco NoSQL em tempo real para sincronia multi-usuário.
 - **Auth:** Gestão de sessões segura com suporte a MFA e persistência em memória.
 
-### ⏱️ Automação de Processos (Vercel Cron)
-- **Escopo:** Agendamento de tarefas críticas em background.
-- **Processos:** Envio de mensagens agendadas, disparos de lembretes, processamento de rotinas financeiras diárias e limpeza de logs.
+### ⚡ Performance & Caching (Upstash Redis)
+- **Escopo:** Camada de cache ultrarrápida e controle de taxa de requisições (Rate Limiting).
+- **Finalidade:** Garante a estabilidade da API contra ataques de força bruta e melhora a latência de dados frequentes.
+
+### ⏱️ Automação & Analytics (Vercel)
+- **Vercel Cron:** Agendamento de tarefas críticas (mensagens, lembretes, rotinas financeiras).
+- **Vercel Analytics:** Monitoramento de tráfego e experiência do usuário (Web Vitals) para otimização contínua de performance.
 
 ### 📈 Observabilidade (Axiom)
-- **Escopo:** Centralização de logs do cliente e servidor.
-- **Segurança:** Monitoramento de exceções e performance em tempo real.
+- **Escopo:** Centralização de logs estruturados do cliente e servidor para auditoria e depuração técnica profunda.
 
 ---
 
