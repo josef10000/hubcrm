@@ -4,7 +4,6 @@ import { db } from '@/lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
-import { useNexusStore } from '@store/useNexusStore';
 import { useDialog } from '@auth/contexts/DialogContext';
 import { toast } from 'sonner';
 import { PremiumDialog } from '@shared/components/PremiumDialog';
