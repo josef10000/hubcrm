@@ -263,8 +263,45 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
   const totalPagesCount = Math.ceil(filteredBooks.length / itemsPerPage);
   const currentBooks = filteredBooks.slice((libraryPage - 1) * itemsPerPage, libraryPage * itemsPerPage);
 
+  // Mapeamento de cores para os blobs baseado na categoria
+  const blobColors: Record<string, string> = {
+    'all': 'rgba(100, 100, 255, 0.15)',
+    'Ficção': 'rgba(255, 100, 100, 0.15)',
+    'Não-Ficção': 'rgba(100, 255, 100, 0.15)',
+    'Filosofia': 'rgba(200, 100, 255, 0.15)',
+    'Fantasia': 'rgba(255, 200, 100, 0.15)',
+    'Tecnologia': 'rgba(0, 200, 255, 0.15)',
+    'Negócios & Finanças': 'rgba(100, 150, 100, 0.15)',
+  };
+
+  const currentBlobColor = blobColors[categoryFilter] || blobColors['all'];
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 relative overflow-hidden min-h-[600px] p-1">
+      {/* Dynamic Background Blobs */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
+        <motion.div 
+          animate={{ 
+            x: [0, 50, -50, 0],
+            y: [0, -50, 50, 0],
+            scale: [1, 1.2, 0.9, 1],
+            backgroundColor: currentBlobColor
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute -top-20 -left-20 w-[400px] h-[400px] blur-[120px] rounded-full"
+        />
+        <motion.div 
+          animate={{ 
+            x: [0, -80, 80, 0],
+            y: [0, 80, -80, 0],
+            scale: [1, 0.8, 1.2, 1],
+            backgroundColor: currentBlobColor
+          }}
+          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+          className="absolute -bottom-20 -right-20 w-[500px] h-[500px] blur-[150px] rounded-full opacity-60"
+        />
+      </div>
+
       {/* Sub-Navegação da Biblioteca */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5 w-fit">
@@ -368,10 +405,38 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
       </div>
 
       {filteredBooks.length === 0 ? (
-        <div className="py-20 bg-white/[0.02] border border-dashed border-white/10 rounded-[3rem] flex flex-col items-center justify-center opacity-30">
-          <i className="ph-duotone ph-magnifying-glass text-6xl mb-4" />
-          <p className="text-sm font-bold uppercase tracking-widest">Nenhum livro encontrado</p>
-        </div>
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="py-32 bg-white/[0.02] border border-dashed border-white/5 rounded-[4rem] flex flex-col items-center justify-center text-center px-10 group"
+        >
+          <div className="relative mb-8">
+            <motion.div 
+              animate={{ rotate: 360 }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+              className="w-32 h-32 rounded-full border-2 border-dashed border-primary-500/20"
+            />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <i className="ph-duotone ph-book-open text-7xl text-primary-500/30 group-hover:text-primary-500/50 transition-colors duration-500" />
+            </div>
+            <motion.div 
+              animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+              transition={{ duration: 4, repeat: Infinity }}
+              className="absolute -inset-4 bg-primary-500/5 blur-2xl rounded-full"
+            />
+          </div>
+          <h3 className="text-xl font-black text-white/40 uppercase tracking-[0.3em] mb-3">Sua Estante está em branco</h3>
+          <p className="text-xs text-gray-600 font-bold uppercase tracking-widest max-w-md leading-relaxed">
+            Nenhum livro encontrado para os filtros atuais. <br/>
+            Experimente mudar a categoria ou limpar sua busca.
+          </p>
+          <button 
+            onClick={() => { setLibrarySearchQuery(''); setCategoryFilter('all'); }}
+            className="mt-8 px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+          >
+            Limpar Filtros
+          </button>
+        </motion.div>
       ) : (
         <div className="space-y-10">
           {viewMode === 'alphabetical' && groupedBooks ? (
