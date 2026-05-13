@@ -293,4 +293,3 @@ export const NotesTab: React.FC<NotesTabProps> = ({
     </div>
   );
 };
-};
