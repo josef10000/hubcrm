@@ -16,11 +16,13 @@ O Hub Central utiliza uma arquitetura baseada em **Domain-Driven Design (DDD)** 
 - **[Guia de Arquitetura & Padrões](docs/ARCHITECTURE.md)**: Detalhamento de DDD, Camadas e Regras de Engenharia.
 - **[Referência de API & Webhooks](docs/API.md)**: Documentação completa dos endpoints e automações.
 
-### 🌐 System Overview
 ```mermaid
 graph TD
     subgraph External_Systems [Providers]
         Asaas[Asaas Payment Gateway]
+        OL[Open Library API]
+        GD[Google Drive API]
+        Cloudinary[Cloudinary / ImgBB]
     end
 
     subgraph Client_Layer [Frontend - React 19]
@@ -40,6 +42,7 @@ graph TD
         WH --> Handlers[Logic Handlers]
         Handlers --> Firestore
         Serverless --> Middleware[Auth & Rate Limit Middleware]
+        UI -- Direct Fetch --> OL
     end
 
     subgraph Data_Layer [Persistence - Firebase]
@@ -53,6 +56,32 @@ graph TD
         Service_Layer --> Axiom
     end
 ```
+
+---
+
+## 🌐 Ecossistema de APIs
+
+O Hub Central integra-se com provedores líderes de mercado para garantir escalabilidade e autonomia.
+
+### 💳 Financeiro & Pagamentos (Asaas)
+- **Escopo:** Geração de boletos, cartões, faturamento recorrente e antecipação.
+- **Automação:** O Hub processa webhooks do Asaas para atualizar status de faturas e liberar acessos instantaneamente.
+
+### 📚 Inteligência Bibliográfica (Open Library)
+- **Escopo:** Utilizada pelo módulo **Nexus** para catalogação manual e automática.
+- **Funcionalidade:** Fornece metadados de obras (autor, título, descrição) e busca de capas via `cover_id`, eliminando a dependência do Google Books.
+
+### ☁️ Documentos & Media (Google Drive & Cloudinary)
+- **Google Drive:** Integração transparente para visualização de PDFs e manuais. O Hub transforma automaticamente links de compartilhamento em links de `preview` otimizados.
+- **Cloudinary / ImgBB:** Armazenamento de ativos de UI, fotos de perfil e comprovantes, com otimização automática de formato (WebP) e redimensionamento.
+
+### 🔐 Persistência & Identidade (Firebase)
+- **Firestore:** Banco NoSQL em tempo real para sincronia multi-usuário.
+- **Auth:** Gestão de sessões segura com suporte a MFA e persistência em memória.
+
+### 📈 Observabilidade (Axiom)
+- **Escopo:** Centralização de logs do cliente e servidor.
+- **Segurança:** Monitoramento de exceções e performance em tempo real.
 
 ---
 
