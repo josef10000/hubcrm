@@ -20,6 +20,7 @@ interface LibraryTabProps {
   communityBooks: NexusBook[];
   confirm: (options: any) => Promise<boolean>;
   orgId: string | undefined;
+  userUid: string | undefined;
 }
 
 // Componente de Card Memoizado para evitar re-renderizações inúteis
@@ -132,7 +133,7 @@ const BookCard = React.memo(({
         {!isOwner && !isInLibrary && (
           <button onClick={(e) => { e.stopPropagation(); onAddToLibrary(book); }} className="p-1.5 hover:text-primary-400 transition-all" title="Adicionar à minha estante"><i className="ph-bold ph-plus-circle" /></button>
         )}
-        <button onClick={(e) => { e.stopPropagation(); onDelete(book.id); }} className="p-1.5 hover:text-rose-400 transition-all" title="Excluir"><i className="ph-bold ph-trash" /></button>
+        <button onClick={(e) => { e.stopPropagation(); onDelete(book.id); }} className="p-1.5 hover:text-rose-400 transition-all" title={isOwner && book.isCommunity ? "Remover da Comunidade" : "Excluir"}><i className="ph-bold ph-trash" /></button>
       </div>
     </div>
   </div>
@@ -152,11 +153,13 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
   setIsShareModalOpen,
   communityBooks,
   confirm,
-  orgId
+  orgId,
+  userUid
 }) => {
   const books = useNexusStore(state => state.books);
   const setBooks = useNexusStore(state => state.setBooks);
   const publishToCommunityAction = useNexusStore(state => state.publishToCommunity);
+  const removeFromCommunityAction = useNexusStore(state => (state as any).removeFromCommunity);
   
   const [categoryFilter, setCategoryFilter] = React.useState<string>('all');
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = React.useState(false);
@@ -183,17 +186,33 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
   }, [orgId, confirm, publishToCommunityAction]);
 
   const deleteBook = React.useCallback(async (id: string) => {
+    const isCommunityView = librarySubTab === 'community';
+    
     const ok = await confirm({
-      title: 'Remover Livro',
-      message: 'Deseja remover este livro da sua biblioteca? O arquivo será mantido no servidor, mas o atalho será apagado.',
+      title: isCommunityView ? 'Remover da Comunidade' : 'Remover Livro',
+      message: isCommunityView 
+        ? 'Deseja remover este livro da estante da comunidade? Isso não afetará sua biblioteca pessoal.'
+        : 'Deseja remover este livro da sua biblioteca? O arquivo será mantido no servidor, mas o atalho será apagado.',
       variant: 'danger',
       confirmText: 'Remover'
     });
+
     if (ok) {
-      setBooks(books.filter(b => b.id !== id));
-      toast.success('Livro removido');
+      if (isCommunityView) {
+        if (orgId) {
+          try {
+            await removeFromCommunityAction(id, orgId);
+            toast.success('Livro removido da comunidade');
+          } catch (err) {
+            toast.error('Erro ao remover da comunidade');
+          }
+        }
+      } else {
+        setBooks(books.filter(b => b.id !== id));
+        toast.success('Livro removido da sua estante');
+      }
     }
-  }, [books, setBooks, confirm]);
+  }, [books, setBooks, confirm, librarySubTab, orgId, removeFromCommunityAction]);
 
   const updateBookCover = React.useCallback(async (bookId: string) => {
     const input = document.createElement('input');
@@ -464,7 +483,7 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
                         onEdit={onEditBook!}
                         onDelete={deleteBook}
                         onAddToLibrary={addToMyLibrary}
-                        isOwner={librarySubTab === 'my'}
+                        isOwner={librarySubTab === 'my' || (librarySubTab === 'community' && (book as any).ownerId === userUid)}
                         isInLibrary={books.some(b => b.pdfUrl === book.pdfUrl)}
                       />
                     ))}
@@ -494,7 +513,7 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
                     onEdit={onEditBook!}
                     onDelete={deleteBook}
                     onAddToLibrary={addToMyLibrary}
-                    isOwner={librarySubTab === 'my'}
+                    isOwner={librarySubTab === 'my' || (librarySubTab === 'community' && (book as any).ownerId === userUid)}
                     isInLibrary={books.some(b => b.pdfUrl === book.pdfUrl)}
                   />
                 </motion.div>

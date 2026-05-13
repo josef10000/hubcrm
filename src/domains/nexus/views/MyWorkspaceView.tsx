@@ -522,6 +522,7 @@ export default function MyWorkspaceView() {
                         communityBooks={communityBooks}
                         confirm={confirm}
                         orgId={userProfile?.orgId}
+                        userUid={user?.uid}
                       />
                     )
                   ) : (

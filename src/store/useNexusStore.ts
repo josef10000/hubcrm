@@ -397,7 +397,17 @@ export const useNexusStore = create<NexusState>()(
       }, { merge: true });
     } catch (err) {
       Logger.error('[NexusStore] Falha ao publicar livro na comunidade', err);
-      throw err; // Re-throw para o componente mostrar toast
+      throw err;
+    }
+  },
+
+  removeFromCommunity: async (bookId, orgId) => {
+    try {
+      const communityRef = doc(db, 'organizations', orgId, 'communityBooks', bookId);
+      await deleteDoc(communityRef);
+    } catch (err) {
+      Logger.error('[NexusStore] Falha ao remover livro da comunidade', err);
+      throw err;
     }
   },
 
