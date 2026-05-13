@@ -770,7 +770,7 @@ export default function MyWorkspaceView() {
             <motion.div 
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
-              className="bg-[#0a0c12] border border-white/10 rounded-[3rem] w-full max-w-2xl overflow-hidden shadow-2xl p-10 space-y-8"
+              className="bg-[#0a0c12] border border-white/10 rounded-[3rem] w-full max-w-2xl overflow-visible shadow-2xl p-10 space-y-8 relative"
             >
               <div className="flex items-center justify-between">
                 <div className="space-y-1">

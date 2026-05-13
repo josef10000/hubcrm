@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNexusStore } from '@store/useNexusStore';
+import { useNexusStore, BOOK_CATEGORIES } from '@store/useNexusStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { NexusBook } from '@store/useNexusStore';
 import { toast } from 'sonner';
@@ -299,10 +299,10 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
                       >
                         Todas Categorias
                       </button>
-                      {Array.from(new Set(sourceBooks.map(b => b.category).filter(Boolean))).sort().map(cat => (
+                      {BOOK_CATEGORIES.map(cat => (
                         <button
                           key={cat}
-                          onClick={() => { setCategoryFilter(cat!); setIsFilterDropdownOpen(false); }}
+                          onClick={() => { setCategoryFilter(cat); setIsFilterDropdownOpen(false); }}
                           className={`w-full text-left px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${categoryFilter === cat ? 'bg-primary-500 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
                         >
                           {cat}
