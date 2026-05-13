@@ -134,6 +134,21 @@ export default function MyWorkspaceView() {
     input.click();
   };
 
+  const buscarCapaSemGoogle = async (titulo: string) => {
+    try {
+      const urlBusca = `https://openlibrary.org/search.json?title=${encodeURIComponent(titulo)}&limit=1`;
+      const resposta = await fetch(urlBusca);
+      const dados = await resposta.json();
+      const idDaCapa = dados.docs[0]?.cover_i;
+      if (idDaCapa) {
+        return `https://covers.openlibrary.org/b/id/${idDaCapa}-M.jpg`;
+      }
+      return null;
+    } catch (erro) {
+      console.error("Erro ao buscar a capa na Open Library:", erro);
+      return null;
+    }
+  };
 
   const handleConfirmShare = async (targetUserId: string, targetUserName: string) => {
     if (!sharingBook || !userProfile) return;
@@ -293,8 +308,6 @@ export default function MyWorkspaceView() {
     };
     setBooks([newBook, ...books]);
     setIsAddBookLinkOpen(false);
-    setBookSearchResults([]);
-    setBookSearchTerm('');
     toast.success('Livro catalogado com sucesso!');
   };
 
@@ -710,7 +723,31 @@ export default function MyWorkspaceView() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">Título</label>
-                      <input id="book-title" type="text" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none" />
+                      <div className="relative group">
+                        <input id="book-title" type="text" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none focus:border-primary-500 pr-12 transition-all" />
+                        <button 
+                          onClick={async () => {
+                            const title = (document.getElementById('book-title') as HTMLInputElement).value;
+                            if (!title) {
+                              toast.error('Digite o título para buscar a capa');
+                              return;
+                            }
+                            const tId = toast.loading('Buscando capa na Open Library...');
+                            const cover = await buscarCapaSemGoogle(title);
+                            toast.dismiss(tId);
+                            if (cover) {
+                              (document.getElementById('book-cover') as HTMLInputElement).value = cover;
+                              toast.success('Capa encontrada e aplicada!');
+                            } else {
+                              toast.error('Não encontramos uma capa para este título.');
+                            }
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/5 hover:bg-primary-500/20 rounded-xl flex items-center justify-center text-gray-400 hover:text-primary-500 transition-all"
+                          title="Buscar Capa Automaticamente"
+                        >
+                          <i className="ph-bold ph-magnifying-glass" />
+                        </button>
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">Autor</label>
