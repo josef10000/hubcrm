@@ -31,9 +31,9 @@ export const NotesTab: React.FC<NotesTabProps> = ({
   const handleAddNote = async (folderId?: string) => {
     try {
       const newId = await addNote({
-        title: 'Nova Nota',
+        title: '',
         content: '',
-        folderId,
+        folderId: folderId || '',
         updatedAt: Date.now()
       });
       if (newId) {
@@ -49,7 +49,7 @@ export const NotesTab: React.FC<NotesTabProps> = ({
     try {
       await addNoteFolder({
         name: 'Nova Pasta',
-        parentId,
+        parentId: parentId || '',
         isOpen: true
       });
       toast.success('Pasta criada');
@@ -89,7 +89,7 @@ export const NotesTab: React.FC<NotesTabProps> = ({
 
   const activeNote = notes.find(n => n.id === selectedNoteId);
 
-  // Encontrar backlinks
+  // Backlinks
   const backlinks = useMemo(() => {
     if (!activeNote || !activeNote.title) return [];
     return notes.filter(n => 
@@ -98,14 +98,39 @@ export const NotesTab: React.FC<NotesTabProps> = ({
     );
   }, [activeNote, notes]);
 
+  // Drag & Drop Handlers
+  const handleDragStart = (e: React.DragEvent, id: string, type: 'note' | 'folder') => {
+    e.dataTransfer.setData('id', id);
+    e.dataTransfer.setData('type', type);
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetFolderId: string | null) => {
+    e.preventDefault();
+    const id = e.dataTransfer.getData('id');
+    const type = e.dataTransfer.getData('type');
+
+    if (type === 'note') {
+      await updateNote(id, { folderId: targetFolderId || '' });
+    } else if (type === 'folder' && id !== targetFolderId) {
+      await updateNoteFolder(id, { parentId: targetFolderId || '' });
+    }
+  };
+
   const renderFolder = (folder: NoteFolder, level = 0) => {
     const isExpanded = expandedFolders.has(folder.id);
     const subfolders = noteFolders.filter(f => f.parentId === folder.id);
     const folderNotes = notes.filter(n => n.folderId === folder.id);
 
     return (
-      <div key={folder.id} className="space-y-1">
+      <div 
+        key={folder.id} 
+        className="space-y-1"
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => handleDrop(e, folder.id)}
+      >
         <div 
+          draggable
+          onDragStart={(e) => handleDragStart(e, folder.id, 'folder')}
           className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-white/5 cursor-pointer group transition-all"
           style={{ paddingLeft: `${(level + 1) * 12}px` }}
           onClick={() => toggleFolder(folder.id)}
@@ -133,10 +158,12 @@ export const NotesTab: React.FC<NotesTabProps> = ({
   const renderNoteItem = (note: NexusNote, level = 0) => (
     <button
       key={note.id}
+      draggable
+      onDragStart={(e) => handleDragStart(e, note.id, 'note')}
       onClick={() => { setSelectedNoteId(note.id); setViewMode('editor'); }}
       className={`w-full text-left px-3 py-2 rounded-xl transition-all group flex items-center gap-2 ${
         selectedNoteId === note.id 
-        ? 'bg-primary-500/10 text-primary-400' 
+        ? 'bg-primary-500/10 text-primary-400 border border-primary-500/20' 
         : 'hover:bg-white/5 text-gray-500 hover:text-gray-300'
       }`}
       style={{ paddingLeft: `${(level + 1) * 12 + 18}px` }}
@@ -153,94 +180,59 @@ export const NotesTab: React.FC<NotesTabProps> = ({
   );
 
   return (
-    <div className="flex gap-8 h-[700px] text-white">
-      {/* Sidebar de Notas Estilo Obsidian */}
+    <div className="flex gap-8 h-[750px] text-white">
+      {/* Sidebar Explorer */}
       <div className="w-72 flex flex-col gap-6 overflow-hidden bg-[#0a0c12]/40 rounded-[2.5rem] border border-white/5 p-6 shadow-2xl">
         <div className="flex items-center justify-between px-2">
           <div className="flex flex-col">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500">Workspace</h3>
-            <span className="text-[9px] font-bold text-primary-500/50 uppercase">{notes.length} Objetos</span>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500">Vault</h3>
+            <span className="text-[9px] font-bold text-primary-500/50 uppercase">{notes.length} Notas</span>
           </div>
           <div className="flex items-center gap-1">
-            <button 
-              onClick={() => handleAddFolder()}
-              className="w-7 h-7 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white rounded-lg flex items-center justify-center transition-all"
-              title="Nova Pasta"
-            >
-              <i className="ph-bold ph-folder-plus text-xs" />
-            </button>
-            <button 
-              onClick={() => handleAddNote()}
-              className="w-7 h-7 bg-primary-500/10 hover:bg-primary-500 text-primary-400 hover:text-white rounded-lg flex items-center justify-center transition-all shadow-lg"
-              title="Nova Nota"
-            >
-              <i className="ph-bold ph-plus text-xs" />
-            </button>
+            <button onClick={() => handleAddFolder()} className="w-7 h-7 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white rounded-lg flex items-center justify-center transition-all"><i className="ph-bold ph-folder-plus text-xs" /></button>
+            <button onClick={() => handleAddNote()} className="w-7 h-7 bg-primary-500/10 hover:bg-primary-500 text-primary-400 hover:text-white rounded-lg flex items-center justify-center transition-all shadow-lg"><i className="ph-bold ph-plus text-xs" /></button>
           </div>
         </div>
 
-        {/* View Mode Switcher */}
         <div className="flex bg-white/5 p-1 rounded-xl mx-2">
-           <button 
-            onClick={() => setViewMode('editor')}
-            className={`flex-1 flex items-center justify-center gap-2 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${viewMode === 'editor' ? 'bg-white/10 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
-           >
-              <i className="ph ph-sidebar" /> Explorer
-           </button>
-           <button 
-            onClick={() => setViewMode('graph')}
-            className={`flex-1 flex items-center justify-center gap-2 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${viewMode === 'graph' ? 'bg-white/10 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
-           >
-              <i className="ph ph-graph" /> Graph
-           </button>
+           <button onClick={() => setViewMode('editor')} className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${viewMode === 'editor' ? 'bg-white/10 text-white shadow-lg' : 'text-gray-500'}`}><i className="ph ph-sidebar mr-2" /> Explorer</button>
+           <button onClick={() => setViewMode('graph')} className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${viewMode === 'graph' ? 'bg-white/10 text-white shadow-lg' : 'text-gray-500'}`}><i className="ph ph-graph mr-2" /> Graph</button>
         </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-1 px-1">
+        <div 
+          className="flex-1 overflow-y-auto custom-scrollbar space-y-1 px-1"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => handleDrop(e, null)}
+        >
           {/* Notas na Raiz */}
-          {notes.filter(n => !n.folderId).map(note => renderNoteItem(note))}
+          {notes.filter(n => !n.folderId || n.folderId === '').map(note => renderNoteItem(note))}
           
-          {/* Pastas e seu conteúdo */}
-          {noteFolders.filter(f => !f.parentId).map(folder => renderFolder(folder))}
+          {/* Pastas na Raiz */}
+          {noteFolders.filter(f => !f.parentId || f.parentId === '').map(folder => renderFolder(folder))}
 
           {notes.length === 0 && noteFolders.length === 0 && (
             <div className="py-20 text-center opacity-10">
               <i className="ph-duotone ph-tree text-5xl mb-4" />
-              <p className="text-[10px] font-bold uppercase tracking-[0.3em]">Vault Vazio</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.3em]">Cofre Vazio</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Editor ou Grafo */}
-      <div className="flex-1 flex flex-col gap-6 relative">
+      {/* Editor / Graph View */}
+      <div className="flex-1 relative">
         <AnimatePresence mode="wait">
           {viewMode === 'graph' ? (
-            <motion.div 
-              key="graph"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.05 }}
-              className="w-full h-full"
-            >
-              <NoteGraphView 
-                notes={notes} 
-                selectedNoteId={selectedNoteId}
-                onSelectNote={(id) => { setSelectedNoteId(id); setViewMode('editor'); }}
-              />
+            <motion.div key="graph" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full h-full">
+              <NoteGraphView notes={notes} selectedNoteId={selectedNoteId} onSelectNote={setSelectedNoteId} />
             </motion.div>
           ) : (
-            <motion.div 
-              key="editor"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="flex-1 flex flex-col gap-6"
-            >
-              <div className="flex-1 bg-[#0a0c12]/60 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-10 flex flex-col gap-6 shadow-2xl relative overflow-hidden group/editor">
+            <motion.div key="editor" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="w-full h-full flex flex-col gap-6">
+              <div className="flex-1 bg-[#0a0c12]/60 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-10 flex flex-col gap-6 shadow-2xl relative">
                 {!activeNote ? (
-                  <div className="h-full flex flex-col items-center justify-center text-center space-y-6 opacity-10">
-                    <i className="ph-duotone ph-brain text-9xl" />
-                    <h3 className="text-2xl font-black uppercase tracking-widest">Inicie um fluxo de pensamento</h3>
+                  <div className="h-full flex flex-col items-center justify-center text-center opacity-10">
+                    <i className="ph-duotone ph-brain text-9xl mb-6" />
+                    <h3 className="text-xl font-black uppercase tracking-widest">Selecione uma nota</h3>
                   </div>
                 ) : (
                   <>
@@ -248,38 +240,37 @@ export const NotesTab: React.FC<NotesTabProps> = ({
                        <input 
                         value={activeNote.title}
                         onChange={(e) => updateNote(activeNote.id, { title: e.target.value })}
-                        className="bg-transparent border-none p-0 focus:ring-0 text-3xl font-black text-white uppercase tracking-tighter w-full placeholder-white/10"
-                        placeholder="Sem título"
-                      />
-                      <div className="flex items-center gap-4 text-gray-600 text-xs font-bold uppercase tracking-widest">
-                         <span>{activeNote.content.split(' ').length} Palavras</span>
-                         <div className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse" />
-                      </div>
+                        placeholder="Título da nota..."
+                        className="bg-transparent text-3xl font-black border-none focus:ring-0 w-full placeholder:text-white/5"
+                       />
+                       <div className="flex items-center gap-4">
+                          <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">{activeNote.content.split(/\s+/).filter(x => x).length} Palavras</span>
+                          <button onClick={() => deleteNote(activeNote.id)} className="w-10 h-10 rounded-2xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all"><i className="ph-bold ph-trash" /></button>
+                       </div>
                     </div>
 
                     <textarea 
                       value={activeNote.content}
                       onChange={(e) => updateNote(activeNote.id, { content: e.target.value })}
-                      className="flex-1 bg-transparent border-none p-0 focus:ring-0 text-gray-400 font-medium text-lg leading-relaxed resize-none custom-scrollbar placeholder-white/5 selection:bg-primary-500/30"
-                      placeholder="Conecte suas ideias usando [[Links]]..."
+                      placeholder="Comece a escrever... Use [[Nome da Nota]] para criar conexões."
+                      className="flex-1 bg-transparent border-none focus:ring-0 resize-none custom-scrollbar text-lg text-gray-300 leading-relaxed placeholder:text-white/5"
                     />
 
-                    {/* Backlinks Panel (Bottom) */}
                     {backlinks.length > 0 && (
-                      <div className="mt-8 pt-8 border-t border-white/5">
-                        <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-600 mb-4 flex items-center gap-2">
-                          <i className="ph-bold ph-link" /> Mencionado em ({backlinks.length})
+                      <div className="mt-6 pt-6 border-t border-white/5 animate-in fade-in slide-in-from-bottom-4">
+                        <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary-500 mb-4 flex items-center gap-2">
+                           <i className="ph-bold ph-link" /> Backlinks ({backlinks.length})
                         </h4>
                         <div className="flex flex-wrap gap-2">
                            {backlinks.map(bn => (
-                             <button 
-                              key={bn.id}
-                              onClick={() => setSelectedNoteId(bn.id)}
-                              className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-[10px] font-bold text-gray-400 hover:text-white transition-all flex items-center gap-2"
-                             >
-                                <i className="ph ph-file-text" /> {bn.title}
-                             </button>
-                           ))}
+                              <button 
+                                key={bn.id}
+                                onClick={() => setSelectedNoteId(bn.id)}
+                                className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-[10px] font-bold text-gray-400 hover:text-white transition-all flex items-center gap-2 border border-white/5"
+                              >
+                                 <i className="ph ph-file-text" /> {bn.title || 'Sem título'}
+                              </button>
+                            ))}
                         </div>
                       </div>
                     )}
