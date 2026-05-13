@@ -14,7 +14,7 @@ import SupportRequestModal from '@support/components/SupportRequestModal';
 import { toast } from 'sonner';
 import { Pin, ChevronRight, Bookmark, Archive, Folder } from 'lucide-react';
 import { Timestamp } from 'firebase/firestore';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { AnimatePresence, motion } from 'framer-motion';
 import ImageLightbox from './ImageLightbox';
@@ -125,8 +125,6 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
     }
 
     const fetchPinnedMessages = async () => {
-      const { doc: fireDoc, getDoc } = await import('firebase/firestore');
-      const { db } = await import('@/lib/firebase');
       const orgId = userProfile?.orgId;
       if (!orgId) return;
 
@@ -137,7 +135,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
           loaded.push(msgInBuffer);
         } else {
           try {
-            const msgRef = fireDoc(db, 'organizations', orgId, 'chats', chatId!, 'messages', pid);
+            const msgRef = doc(db, 'organizations', orgId, 'chats', chatId!, 'messages', pid);
             const snap = await getDoc(msgRef);
             if (snap.exists()) {
               loaded.push({ id: snap.id, ...snap.data() } as ChatMessage);

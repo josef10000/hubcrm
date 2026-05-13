@@ -34,11 +34,19 @@ export interface NexusTask {
   createdAt: number;
 }
 
+export interface NoteFolder {
+  id: string;
+  name: string;
+  parentId?: string; // Para subpastas
+  isOpen?: boolean;
+}
+
 export interface NexusNote {
   id: string;
   title: string;
   content: string;
   color?: string;
+  folderId?: string;
   updatedAt: number;
 }
 
@@ -83,6 +91,7 @@ export interface NexusData {
   goals: PersonalGoal[];
   tasks: NexusTask[];
   books: NexusBook[];
+  noteFolders: NoteFolder[];
 }
 
 interface NexusState extends NexusData {
@@ -98,11 +107,15 @@ interface NexusState extends NexusData {
   setGoals: (goals: PersonalGoal[]) => Promise<void>;
   setTasks: (tasks: NexusTask[]) => Promise<void>;
   setBooks: (books: NexusBook[]) => Promise<void>;
+  setNoteFolders: (folders: NoteFolder[]) => Promise<void>;
   
-  // Notas — Operações individuais via subcoleção
-  addNote: (note: Omit<NexusNote, 'id'>) => Promise<string | null>;
-  updateNote: (noteId: string, data: Partial<NexusNote>) => Promise<void>;
-  deleteNote: (noteId: string) => Promise<void>;
+  // Note specific actions
+  addNote: (note: Omit<NexusNote, 'id'>) => Promise<string>;
+  updateNote: (id: string, note: Partial<NexusNote>) => Promise<void>;
+  deleteNote: (id: string) => Promise<void>;
+  addNoteFolder: (folder: Omit<NoteFolder, 'id'>) => Promise<void>;
+  updateNoteFolder: (id: string, folder: Partial<NoteFolder>) => Promise<void>;
+  deleteNoteFolder: (id: string) => Promise<void>;
   
   // Livros
   shareBook: (book: NexusBook, targetUserId: string, targetUserName: string) => Promise<void>;
@@ -135,6 +148,7 @@ export const useNexusStore = create<NexusState>()(
       tasks: [],
       notes: [],
       books: [],
+      noteFolders: [],
       loading: true,
       initialized: false,
       error: null,
@@ -197,6 +211,7 @@ export const useNexusStore = create<NexusState>()(
             goals: nexus.goals || [],
             tasks: nexus.tasks || [],
             books: nexus.books || [],
+            noteFolders: nexus.noteFolders || [],
             loading: false,
             initialized: true
           });
@@ -206,7 +221,8 @@ export const useNexusStore = create<NexusState>()(
             links: DEFAULT_LINKS,
             goals: [],
             tasks: [],
-            books: []
+            books: [],
+            noteFolders: []
           };
 
           try {
@@ -241,7 +257,7 @@ export const useNexusStore = create<NexusState>()(
   },
 
   _updateFirestore: async (newData: Partial<NexusData>) => {
-    const { uid, folders, links, goals, tasks, books } = get();
+    const { uid, folders, links, goals, tasks, books, noteFolders } = get();
     if (!uid) return;
 
     set(state => ({ ...state, ...newData }));
@@ -249,7 +265,7 @@ export const useNexusStore = create<NexusState>()(
     const profileRef = doc(db, 'profiles', uid);
     try {
       // NÃO inclui notes — elas agora vivem na subcoleção
-      const baseData = { folders, links, goals, tasks, books };
+      const baseData = { folders, links, goals, tasks, books, noteFolders };
       const merged = { ...baseData, ...newData };
       
       const sanitized: any = {};
@@ -299,6 +315,13 @@ export const useNexusStore = create<NexusState>()(
       Logger.error('[NexusStore] Falha ao salvar livros', err);
     }
   },
+  setNoteFolders: async (noteFolders) => {
+    try {
+      await get()._updateFirestore({ noteFolders });
+    } catch (err) {
+      Logger.error('[NexusStore] Falha ao salvar pastas de notas', err);
+    }
+  },
 
   // =============================================
   // NOTAS — Operações via Subcoleção Firestore
@@ -342,6 +365,31 @@ export const useNexusStore = create<NexusState>()(
     } catch (err) {
       Logger.error('[NexusStore] Falha ao excluir nota', err);
     }
+  },
+
+  addNoteFolder: async (folderData) => {
+    const { noteFolders, setNoteFolders } = get();
+    const newFolder: NoteFolder = {
+      ...folderData,
+      id: Date.now().toString()
+    };
+    await setNoteFolders([...noteFolders, newFolder]);
+  },
+
+  updateNoteFolder: async (id, data) => {
+    const { noteFolders, setNoteFolders } = get();
+    const updated = noteFolders.map(f => f.id === id ? { ...f, ...data } : f);
+    await setNoteFolders(updated);
+  },
+
+  deleteNoteFolder: async (id) => {
+    const { noteFolders, setNoteFolders, notes, updateNote } = get();
+    const updatedFolders = noteFolders.filter(f => f.id !== id);
+    // Move notas da pasta excluída para a raiz
+    for (const note of notes.filter(n => n.folderId === id)) {
+      await updateNote(note.id, { folderId: undefined });
+    }
+    await setNoteFolders(updatedFolders);
   },
 
   // =============================================

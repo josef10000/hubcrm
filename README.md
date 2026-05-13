@@ -103,6 +103,14 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
 ### 📈 Observabilidade (Axiom)
 - **Escopo:** Centralização de logs estruturados do cliente e servidor para auditoria e depuração técnica profunda.
 
+### 🧠 Nexus Knowledge Engine (Obsidian-Style)
+- **Escopo:** Gestão de conhecimento profundo e conexões de ideias.
+- **Funcionalidades Master:**
+    - **Hierarquia Infinita:** Sistema de pastas e subpastas para organização lógica de pensamentos.
+    - **Knowledge Graph:** Visualização em grafo (Nodes & Edges) das conexões entre notas via `[[Links]]`.
+    - **Backlinks Panel:** Rastreamento automático de onde uma ideia foi mencionada no ecossistema.
+    - **Bidirectional Linking:** Criação instantânea de relacionamentos entre objetos de conhecimento.
+
 ---
 
 ## 📂 Project Structure
