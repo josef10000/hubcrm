@@ -113,6 +113,8 @@ export default function MyWorkspaceView() {
     totalPages: 0
   });
 
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+
   // Funções Locais
   const deleteBook = async (id: string) => {
     const ok = await confirm({
@@ -834,17 +836,44 @@ export default function MyWorkspaceView() {
                       </div>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2 relative">
                       <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">Categoria</label>
-                      <select 
-                        value={bookFormData.category}
-                        onChange={(e) => setBookFormData({ ...bookFormData, category: e.target.value })}
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none focus:border-primary-500 appearance-none cursor-pointer"
+                      <button
+                        onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white text-left flex items-center justify-between hover:border-white/20 transition-all"
                       >
-                        {BOOK_CATEGORIES.map(cat => (
-                          <option key={cat} value={cat} className="bg-[#0a0c12] text-white">{cat}</option>
-                        ))}
-                      </select>
+                        <span className="text-sm font-medium">{bookFormData.category || 'Selecionar Categoria'}</span>
+                        <i className={`ph-bold ph-caret-down transition-transform ${isCategoryDropdownOpen ? 'rotate-180' : ''}`} />
+                      </button>
+                      
+                      <AnimatePresence>
+                        {isCategoryDropdownOpen && (
+                          <>
+                            <div className="fixed inset-0 z-[120]" onClick={() => setIsCategoryDropdownOpen(false)} />
+                            <motion.div
+                              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                              className="absolute top-full left-0 right-0 mt-2 bg-[#0d0f16] border border-white/10 rounded-2xl shadow-2xl z-[130] overflow-hidden"
+                            >
+                              <div className="max-h-[240px] overflow-y-auto custom-scrollbar p-2">
+                                {BOOK_CATEGORIES.map(cat => (
+                                  <button
+                                    key={cat}
+                                    onClick={() => {
+                                      setBookFormData({ ...bookFormData, category: cat });
+                                      setIsCategoryDropdownOpen(false);
+                                    }}
+                                    className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${bookFormData.category === cat ? 'bg-primary-500 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+                                  >
+                                    {cat}
+                                  </button>
+                                ))}
+                              </div>
+                            </motion.div>
+                          </>
+                        )}
+                      </AnimatePresence>
                     </div>
                   </div>
 

@@ -1,5 +1,5 @@
-import React from 'react';
 import { useNexusStore } from '@store/useNexusStore';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { NexusBook } from '@store/useNexusStore';
 import { toast } from 'sonner';
 import { uploadToCloudinary } from '@/lib/cloudinary';
@@ -125,6 +125,7 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
   const publishToCommunityAction = useNexusStore(state => state.publishToCommunity);
   
   const [categoryFilter, setCategoryFilter] = React.useState<string>('all');
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = React.useState(false);
   const [viewMode, setViewMode] = React.useState<'grid' | 'alphabetical'>('grid');
   
   const handlePublishBook = React.useCallback(async (book: NexusBook) => {
@@ -271,16 +272,47 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
             </button>
           </div>
 
-          <select 
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white outline-none focus:border-primary-500 appearance-none cursor-pointer min-w-[140px]"
-          >
-            <option value="all">Todas Categorias</option>
-            {Array.from(new Set(sourceBooks.map(b => b.category).filter(Boolean))).sort().map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
+          <div className="relative">
+            <button
+              onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+              className="bg-white/5 border border-white/10 rounded-2xl px-6 py-3 text-[10px] font-black uppercase tracking-widest text-white flex items-center gap-3 hover:border-white/20 transition-all min-w-[180px] justify-between"
+            >
+              <span>{categoryFilter === 'all' ? 'Todas Categorias' : categoryFilter}</span>
+              <i className={`ph-bold ph-caret-down transition-transform ${isFilterDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            <AnimatePresence>
+              {isFilterDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-[40]" onClick={() => setIsFilterDropdownOpen(false)} />
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute top-full left-0 mt-2 w-full bg-[#0d0f16] border border-white/10 rounded-2xl shadow-2xl z-[50] overflow-hidden"
+                  >
+                    <div className="max-h-[240px] overflow-y-auto custom-scrollbar p-2">
+                      <button
+                        onClick={() => { setCategoryFilter('all'); setIsFilterDropdownOpen(false); }}
+                        className={`w-full text-left px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${categoryFilter === 'all' ? 'bg-primary-500 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+                      >
+                        Todas Categorias
+                      </button>
+                      {Array.from(new Set(sourceBooks.map(b => b.category).filter(Boolean))).sort().map(cat => (
+                        <button
+                          key={cat}
+                          onClick={() => { setCategoryFilter(cat!); setIsFilterDropdownOpen(false); }}
+                          className={`w-full text-left px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${categoryFilter === cat ? 'bg-primary-500 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
 
           <div className="relative flex-1 sm:w-64">
             <i className="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
