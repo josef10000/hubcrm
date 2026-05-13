@@ -404,13 +404,12 @@ export const useNexusStore = create<NexusState>()(
   }
 }), {
   name: 'hubcrm-nexus-storage',
-  version: 3,
+  version: 4,
   partialize: (state) => ({
     folders: state.folders,
     links: state.links,
     goals: state.goals,
     tasks: state.tasks,
-    notes: state.notes,
     books: state.books
   }),
   merge: (persistedState: any, currentState) => ({
@@ -420,7 +419,6 @@ export const useNexusStore = create<NexusState>()(
     links: persistedState?.links || [],
     goals: persistedState?.goals || [],
     tasks: persistedState?.tasks || [],
-    notes: persistedState?.notes || [],
     books: persistedState?.books || []
   })
 }));
