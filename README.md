@@ -1,9 +1,9 @@
 # <p align="center">🔐 HUB CENTRAL — INTELLIGENCE ECOSYSTEM</p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Enterprise_OS-v8.1.6-3b82f6?style=for-the-badge&labelColor=0a0a0a" alt="Version" />
-  <img src="https://img.shields.io/badge/Architecture-Collaboration_Bots-blueviolet?style=for-the-badge&labelColor=0a0a0a" alt="Architecture" />
-  <img src="https://img.shields.io/badge/Status-Pro_Collaboration-emerald?style=for-the-badge&labelColor=0a0a0a" alt="Status" />
+  <img src="https://img.shields.io/badge/Enterprise_OS-v8.2.0-3b82f6?style=for-the-badge&labelColor=0a0a0a" alt="Version" />
+  <img src="https://img.shields.io/badge/Architecture-Modular_Subcollections-blueviolet?style=for-the-badge&labelColor=0a0a0a" alt="Architecture" />
+  <img src="https://img.shields.io/badge/Status-Shield_Active-emerald?style=for-the-badge&labelColor=0a0a0a" alt="Status" />
 </p>
 
 <p align="center">
@@ -27,64 +27,57 @@ Nossa arquitetura descentralizada garante que cada cargo (dos 13 níveis sistêm
 
 ---
 
-## ✨ Estrela da Versão: Hub Architecture v8.1.0 (Modular Evolution)
-O **Hub Central v8.1** consolida a transição para uma plataforma enterprise, focando em **desacoplamento total** e **integridade de dados industrial**.
+## ✨ Estrela da Versão: Hub Architecture v8.2.0 (Shield & Scale)
+A versão **v8.2** foca em **Blindagem de Dados** e **Escalabilidade Industrial**, resolvendo gargalos críticos de infraestrutura NoSQL.
 
-### 🏗️ Pilares Técnicos
-- **Event-Driven Architecture:** Implementação de um `EventBus` centralizado. Módulos agora se comunicam via eventos (`lead.created`, `invoice.paid`), eliminando dependências circulares.
-- **Domain Integrity (Zod):** Camada de Entidades robusta. Todo dado que flui pelo sistema é validado em runtime por schemas Zod, garantindo 100% de segurança contra `undefined`.
-- **Infrastructure Decoupling:** Serviços de Auditoria, Logs e Notificações agora são ouvintes (listeners) passivos, tornando o core de negócio mais limpo e rápido.
-- **Design System Tokens:** Consolidação do padrão **Dark Absolute** via `HUB_TOKENS`, garantindo consistência visual em todo o ecossistema Glassmorphism.
+### 🏗️ Pilares Técnicos (Operação Blindagem)
+- **Modular Subcollections (Nexus v2):** Migração de dados pesados (Notas) do documento de perfil para subcoleções independentes. Isso elimina o limite de 1MB do Firestore e permite crescimento infinito de conteúdo por usuário.
+- **Privacy Shield Rules:** Endurecimento das regras de segurança do Firestore. Perfis agora são restritos ao dono e membros da mesma organização, impedindo vazamentos transversais de dados.
+- **Axiom Observability:** Centralização total de logs e monitoramento de erros em produção via Axiom. O sistema agora "se autocura" ao reportar erros silenciosos de runtime e falhas de rede em tempo real.
+- **Zero-Storage Privacy:** Remoção de dados sensíveis (notas e anotações) do `localStorage`. Toda informação crítica agora vive exclusivamente na nuvem, protegida por autenticação biométrica/tokenizada.
 
-> [!TIP]
-> Confira as [Diretrizes de Engenharia](ENGINEERING_GUIDELINES.md), o novo [Guia de Arquitetura e Padronização](ARCHITECTURE.md) e a [Evolução de Arquitetura](ARCHITECTURE_EVOLUTION.md) para detalhes sobre os novos padrões.
+> [!IMPORTANT]
+> **Permissões Centralizadas:** A lógica de RBAC foi migrada de verificações manuais no JSX para o hook `usePermissions`, garantindo que uma mudança de regra no backend reflita instantaneamente em toda a UI.
 
 ---
 
-## 📚 Wiki Central Pro
-A base de conhecimento da Hub Symples, agora com rastreamento inteligente.
+## 📚 Nexus Library & Wiki Pro
+A base de conhecimento da Hub Symples, agora com escalabilidade garantida.
 
-*   **Read Tracking:** Notificações em tempo real para novos artigos com persistência de leitura vinculada ao perfil.
-*   **Nexus Binding:** Artigos podem ser vinculados a obras na Nexus Library para aprofundamento técnico.
-*   **Interaction Loop:** Sistema de estrelas (favoritos) e comentários com suporte a menções.
+*   **Nexus Binding:** Artigos vinculados a obras na Nexus Library para aprofundamento técnico.
+*   **Subcollection Performance:** Notas e reflexões agora carregam via streams independentes, garantindo latência zero mesmo com milhares de registros.
 *   **Access Control:** Filtros por cargo (RBAC) para garantir que cada setor veja o conteúdo pertinente.
 
 ---
 
 ## 💬 Hub Chat Pro v3.5 (Optimistic UI)
-A comunicação interna elevada ao nível de ferramenta de trabalho, agora com **Zustand**.
+A comunicação interna elevada ao nível de ferramenta de trabalho, agora com **Zustand 5.0**.
 
 *   **Optimistic Updates:** Feedback instantâneo no envio de mensagens antes mesmo da confirmação da rede.
 *   **Canais Temáticos:** Salas públicas e privadas com suporte a **HubBots**.
 *   **Context Linking:** Cards ricos que conectam conversas diretamente a clientes no CRM.
-*   **Controle Anti-Ruído:** Menções inteligentes (`@Financeiro`, `@Diretoria`), threads e reações jumbo.
-*   **Aprovações Nativas:** Autorize fluxos comerciais diretamente da conversa.
 
 ---
 
 ## 🛠️ Stack de Alta Performance
 
-Construído para escala infinita e latência zero, o Hub Central adota tecnologias Serverless e Bancos de Dados em Tempo Real para garantir sincronização instantânea em qualquer lugar do mundo.
+Construído para escala infinita e latência zero, o Hub Central adota tecnologias Serverless e Bancos de Dados em Tempo Real.
 
 - **Frontend Core**: React 19 + Vite 6
-- **Architecture & State**: Zustand 5.0 (Gestão Global) + TypeScript 5.8 (Estrita Segurança de Tipos)
-- **Design System & UI**: Tailwind CSS 4.0 + Framer Motion (Glassmorphism & Dark Absolute Identity)
-- **Database & Auth**: Firebase Firestore (Realtime NoSQL) e Firebase Authentication
-- **Edge Computing & API**: Vercel Serverless Functions
-- **Integrações de Parceiros**: Asaas (Gateway de Pagamentos) e Resend (Disparo de E-mails)
+- **State Management**: Zustand 5.0 (Gestão Global com Persistência Versionada)
+- **Observability**: Axiom (Logging Estruturado & Error Hijacking)
+- **Design System**: Tailwind CSS 4.0 + Framer Motion (Glassmorphism Identity)
+- **Database**: Firebase Firestore (Realtime NoSQL com Modular Subcollections)
+- **Edge Computing**: Vercel Serverless Functions
+- **Integrações**: Asaas (Financeiro) e Resend (E-mails)
 
 ---
 
 ## 🏗️ Documentação da API e Arquitetura do Backend
 
-Para entender profundamente como o Firebase se conecta com as APIs Serverless (Asaas, Webhooks, CRON Jobs) e para debugar problemas no fluxo de dados, confira a nossa documentação técnica dedicada:
+Para entender profundamente como o Firebase se conecta com as APIs Serverless e para debugar problemas no fluxo de dados:
 
 👉 **[Ver Documentação Completa da Arquitetura (API_ARCHITECTURE.md)](API_ARCHITECTURE.md)**
-
-Neste documento você encontrará:
-- O ciclo de vida do Webhook de Pagamentos.
-- Modelos completos do Firestore (Clientes, Transações, Users).
-- Guia definitivo de Troubleshooting.
 
 ---
 
