@@ -79,9 +79,10 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
 - **Escopo:** Utilizada pelo módulo **Nexus** para catalogação manual e automática.
 - **Funcionalidade:** Fornece metadados de obras (autor, título, descrição) e busca de capas via `cover_id`, eliminando a dependência do Google Books.
 
-### ☁️ Documentos & Media (Google Drive & Cloudinary)
+### ☁️ Documentos & Media (Google Drive, Cloudinary & ImgBB)
 - **Google Drive:** Integração transparente para visualização de PDFs e manuais. O Hub transforma automaticamente links de compartilhamento em links de `preview` otimizados.
-- **Cloudinary / ImgBB:** Armazenamento de ativos de UI, fotos de perfil e comprovantes, com otimização automática de formato (WebP) e redimensionamento.
+- **Cloudinary:** Armazenamento robusto para arquivos pesados e PDFs, utilizando `unsigned presets` para uploads seguros e escaláveis.
+- **ImgBB:** CDN de alta performance para armazenamento de imagens de UI, fotos de perfil e comprovantes, eliminando o armazenamento de Base64 no banco de dados.
 
 ### 🛡️ Monitoramento & Uptime (UptimeRobot & Sentry)
 - **UptimeRobot:** Monitoramento de disponibilidade de serviços e sites, com status de saúde exibido no dashboard administrativo.
