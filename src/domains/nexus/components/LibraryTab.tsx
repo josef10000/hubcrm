@@ -13,6 +13,7 @@ interface LibraryTabProps {
   setLibraryPage: (page: number | ((p: number) => number)) => void;
   setViewingBookDetailsId: (id: string | null) => void;
   setIsAddBookLinkOpen: (open: boolean) => void;
+  onEditBook?: (book: NexusBook) => void;
   setSharingBook: (book: NexusBook | null) => void;
   setIsShareModalOpen: (open: boolean) => void;
   communityBooks: NexusBook[];
@@ -27,6 +28,7 @@ const BookCard = React.memo(({
   onShare, 
   onPublish, 
   onUpdateCover, 
+  onEdit,
   onDelete, 
   onAddToLibrary,
   isOwner,
@@ -37,6 +39,7 @@ const BookCard = React.memo(({
   onShare: (book: NexusBook) => void;
   onPublish: (book: NexusBook) => void;
   onUpdateCover: (id: string) => void;
+  onEdit: (book: NexusBook) => void;
   onDelete: (id: string) => void;
   onAddToLibrary: (book: NexusBook) => void;
   isOwner: boolean;
@@ -86,6 +89,7 @@ const BookCard = React.memo(({
       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity items-center">
         {isOwner && (
           <>
+            <button onClick={(e) => { e.stopPropagation(); onEdit(book); }} className="p-1.5 hover:text-primary-400 transition-all" title="Editar Metadados"><i className="ph-bold ph-pencil-simple" /></button>
             <button onClick={(e) => { e.stopPropagation(); onShare(book); }} className="p-1.5 hover:text-primary-400 transition-all" title="Compartilhar"><i className="ph-bold ph-paper-plane-tilt" /></button>
             <button onClick={(e) => { e.stopPropagation(); onPublish(book); }} className={`p-1.5 transition-all ${book.isCommunity ? 'text-primary-400' : 'hover:text-primary-400'}`} title="Publicar na Comunidade"><i className="ph-bold ph-users-three" /></button>
             <button onClick={(e) => { e.stopPropagation(); onUpdateCover(book.id); }} className="p-1.5 hover:text-primary-400 transition-all" title="Alterar Capa"><i className="ph-bold ph-image" /></button>
@@ -109,6 +113,7 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
   setLibraryPage,
   setViewingBookDetailsId,
   setIsAddBookLinkOpen,
+  onEditBook,
   setSharingBook,
   setIsShareModalOpen,
   communityBooks,
@@ -118,6 +123,9 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
   const books = useNexusStore(state => state.books);
   const setBooks = useNexusStore(state => state.setBooks);
   const publishToCommunityAction = useNexusStore(state => state.publishToCommunity);
+  
+  const [categoryFilter, setCategoryFilter] = React.useState<string>('all');
+  const [viewMode, setViewMode] = React.useState<'grid' | 'alphabetical'>('grid');
   
   const handlePublishBook = React.useCallback(async (book: NexusBook) => {
     if (!orgId) return;
@@ -188,10 +196,34 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
     sourceBooks = communityBooks;
   }
 
-  const filteredBooks = sourceBooks.filter(b => 
-    b.title.toLowerCase().includes(librarySearchQuery.toLowerCase()) || 
-    b.author?.toLowerCase().includes(librarySearchQuery.toLowerCase())
-  );
+  const filteredBooks = sourceBooks.filter(b => {
+    const matchesSearch = b.title.toLowerCase().includes(librarySearchQuery.toLowerCase()) || 
+                         b.author?.toLowerCase().includes(librarySearchQuery.toLowerCase());
+    const matchesCategory = categoryFilter === 'all' || b.category === categoryFilter;
+    return matchesSearch && matchesCategory;
+  });
+
+  // Agrupamento A-Z se necessário
+  const groupedBooks = React.useMemo(() => {
+    if (viewMode !== 'alphabetical') return null;
+    
+    const groups: Record<string, NexusBook[]> = {};
+    const sorted = [...filteredBooks].sort((a, b) => a.title.localeCompare(b.title));
+    
+    sorted.forEach(book => {
+      const firstLetter = book.title.charAt(0).toUpperCase();
+      const key = /^[A-Z]/.test(firstLetter) ? firstLetter : '#';
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(book);
+    });
+    
+    return Object.entries(groups).sort(([a], [b]) => {
+      if (a === '#') return 1;
+      if (b === '#') return -1;
+      return a.localeCompare(b);
+    });
+  }, [filteredBooks, viewMode]);
+
   const itemsPerPage = 10;
   const totalPagesCount = Math.ceil(filteredBooks.length / itemsPerPage);
   const currentBooks = filteredBooks.slice((libraryPage - 1) * itemsPerPage, libraryPage * itemsPerPage);
@@ -221,11 +253,39 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
           ))}
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex bg-white/5 p-1 rounded-xl border border-white/5">
+            <button 
+              onClick={() => setViewMode('grid')}
+              className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-primary-500 text-white' : 'text-gray-500 hover:text-white'}`}
+              title="Visualização em Grade"
+            >
+              <i className="ph-bold ph-squares-four" />
+            </button>
+            <button 
+              onClick={() => setViewMode('alphabetical')}
+              className={`p-2 rounded-lg transition-all ${viewMode === 'alphabetical' ? 'bg-primary-500 text-white' : 'text-gray-500 hover:text-white'}`}
+              title="Agrupamento A-Z"
+            >
+              <i className="ph-bold ph-sort-ascending" />
+            </button>
+          </div>
+
+          <select 
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white outline-none focus:border-primary-500 appearance-none cursor-pointer min-w-[140px]"
+          >
+            <option value="all">Todas Categorias</option>
+            {Array.from(new Set(sourceBooks.map(b => b.category).filter(Boolean))).sort().map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
+
           <div className="relative flex-1 sm:w-64">
             <i className="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
             <input 
-              placeholder="Buscar na biblioteca..."
+              placeholder="Buscar por título ou autor..."
               value={librarySearchQuery}
               onChange={(e) => { setLibrarySearchQuery(e.target.value); setLibraryPage(1); }}
               className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-3 text-sm text-white focus:border-primary-500 transition-all outline-none"
@@ -236,7 +296,7 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
             className="flex items-center gap-3 px-6 py-3 bg-primary-500 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl shadow-primary-500/20"
           >
             <i className="ph-bold ph-plus" />
-            <span className="hidden sm:inline">Adicionar</span>
+            <span className="hidden sm:inline">Catalogar</span>
           </button>
         </div>
       </div>
@@ -248,22 +308,55 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
         </div>
       ) : (
         <div className="space-y-10">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
-            {currentBooks.map(book => (
-              <BookCard 
-                key={book.id}
-                book={book}
-                onView={setViewingBookDetailsId}
-                onShare={(b) => { setSharingBook(b); setIsShareModalOpen(true); }}
-                onPublish={handlePublishBook}
-                onUpdateCover={updateBookCover}
-                onDelete={deleteBook}
-                onAddToLibrary={addToMyLibrary}
-                isOwner={librarySubTab === 'my'}
-                isInLibrary={books.some(b => b.pdfUrl === book.pdfUrl)}
-              />
-            ))}
-          </div>
+          {viewMode === 'alphabetical' && groupedBooks ? (
+            <div className="space-y-12">
+              {groupedBooks.map(([letter, groupBooks]) => (
+                <div key={letter} className="space-y-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-primary-500/10 border border-primary-500/20 flex items-center justify-center text-xl font-black text-primary-500">
+                      {letter}
+                    </div>
+                    <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+                    {groupBooks.map(book => (
+                      <BookCard 
+                        key={book.id}
+                        book={book}
+                        onView={setViewingBookDetailsId}
+                        onShare={(b) => { setSharingBook(b); setIsShareModalOpen(true); }}
+                        onPublish={handlePublishBook}
+                        onUpdateCover={updateBookCover}
+                        onEdit={onEditBook!}
+                        onDelete={deleteBook}
+                        onAddToLibrary={addToMyLibrary}
+                        isOwner={librarySubTab === 'my'}
+                        isInLibrary={books.some(b => b.pdfUrl === book.pdfUrl)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+              {currentBooks.map(book => (
+                <BookCard 
+                  key={book.id}
+                  book={book}
+                  onView={setViewingBookDetailsId}
+                  onShare={(b) => { setSharingBook(b); setIsShareModalOpen(true); }}
+                  onPublish={handlePublishBook}
+                  onUpdateCover={updateBookCover}
+                  onEdit={onEditBook!}
+                  onDelete={deleteBook}
+                  onAddToLibrary={addToMyLibrary}
+                  isOwner={librarySubTab === 'my'}
+                  isInLibrary={books.some(b => b.pdfUrl === book.pdfUrl)}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Paginação */}
           {totalPagesCount > 1 && (

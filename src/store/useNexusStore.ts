@@ -42,11 +42,29 @@ export interface NexusNote {
   updatedAt: number;
 }
 
+export const BOOK_CATEGORIES = [
+  'Ficção',
+  'Não-Ficção',
+  'Filosofia',
+  'Fantasia',
+  'Ficção Científica',
+  'Suspense & Thriller',
+  'Terror',
+  'História',
+  'Biologia & Ciências',
+  'Negócios & Finanças',
+  'Tecnologia',
+  'Autoajuda'
+] as const;
+
+export type BookCategory = typeof BOOK_CATEGORIES[number];
+
 export interface NexusBook {
   id: string;
   title: string;
   author?: string;
   description?: string;
+  category?: string;
   publishedAt?: string;
   pdfUrl: string;
   coverUrl?: string;

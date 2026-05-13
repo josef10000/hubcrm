@@ -28,7 +28,8 @@ import { OKRWidget } from '@nexus/components/OKRWidget';
 import { KudosWall } from '@nexus/components/KudosWall';
 
 // Interfaces importadas da Store
-import type { PersonalLink, LinkFolder, PersonalGoal, NexusTask, NexusNote, NexusBook } from '@store/useNexusStore';
+import { useNexusStore, BOOK_CATEGORIES } from '@store/useNexusStore';
+import type { PersonalLink, LinkFolder, PersonalGoal, NexusTask, NexusNote, NexusBook, BookCategory } from '@store/useNexusStore';
 
 // Helper para ícones de sites comuns
 const getUrlIcon = (url: string) => {
@@ -100,6 +101,18 @@ export default function MyWorkspaceView() {
     mode: 'add' | 'edit';
     data?: any;
   }>({ isOpen: false, type: 'folder', mode: 'add' });
+
+  const [bookFormData, setBookFormData] = useState<Partial<NexusBook>>({
+    title: '',
+    author: '',
+    pdfUrl: '',
+    coverUrl: '',
+    category: 'Ficção',
+    description: '',
+    publishedAt: '',
+    currentPage: 0,
+    totalPages: 0
+  });
 
   // Funções Locais
   const deleteBook = async (id: string) => {
@@ -296,28 +309,60 @@ export default function MyWorkspaceView() {
     }
   };
 
-  const handleAddBookByLink = (data: any) => {
-    let finalUrl = data.url;
-    if (finalUrl.includes('drive.google.com')) {
-      finalUrl = finalUrl.replace(/\/view(\?usp=sharing)?$/, '/preview').replace(/\/edit(\?usp=sharing)?$/, '/preview');
+  const handleSaveBook = async () => {
+    if (!bookFormData.title || !bookFormData.pdfUrl) {
+      toast.error('Título e Link são obrigatórios!');
+      return;
     }
-    const newBook: NexusBook = {
-      id: Date.now().toString(),
-      title: data.title,
-      pdfUrl: finalUrl,
-      author: data.author,
-      publishedAt: data.publishedAt,
-      coverUrl: data.coverUrl,
-      description: data.description,
-      currentPage: data.currentPage || 0,
-      totalPages: data.totalPages || 0,
-      addedAt: Date.now()
-    };
-    setBooks([newBook, ...books]);
+
+    let finalUrl = bookFormData.pdfUrl;
+    if (finalUrl.includes('drive.google.com')) {
+      if (finalUrl.includes('/view')) finalUrl = finalUrl.split('/view')[0].replace(/\/$/, '') + '/preview';
+      else if (finalUrl.includes('/edit')) finalUrl = finalUrl.split('/edit')[0].replace(/\/$/, '') + '/preview';
+      else if (!finalUrl.endsWith('/preview')) finalUrl = finalUrl.split('?')[0].replace(/\/$/, '') + '/preview';
+    }
+
+    if (modalConfig.mode === 'edit' && modalConfig.data?.id) {
+      await updateBookDetails(modalConfig.data.id, { ...bookFormData, pdfUrl: finalUrl });
+      toast.success('Livro atualizado!');
+    } else {
+      const newBook: NexusBook = {
+        id: Date.now().toString(),
+        addedAt: Date.now(),
+        ...(bookFormData as NexusBook),
+        pdfUrl: finalUrl,
+        currentPage: bookFormData.currentPage || 0,
+        totalPages: bookFormData.totalPages || 0
+      };
+      setBooks([newBook, ...books]);
+      toast.success('Livro catalogado com sucesso!');
+    }
+
     setIsAddBookLinkOpen(false);
     setBookCoverResults([]);
     setSelectedPreviewCover(null);
-    toast.success('Livro catalogado com sucesso!');
+    setModalConfig({ ...modalConfig, isOpen: false });
+  };
+
+  const openEditBookModal = (book: NexusBook) => {
+    setBookFormData({
+      title: book.title,
+      author: book.author || '',
+      pdfUrl: book.pdfUrl,
+      coverUrl: book.coverUrl || '',
+      category: (book.category as any) || 'Ficção',
+      description: book.description || '',
+      publishedAt: book.publishedAt || '',
+      currentPage: book.currentPage || 0,
+      totalPages: book.totalPages || 0
+    });
+    setModalConfig({
+      isOpen: true,
+      type: 'book',
+      mode: 'edit',
+      data: book
+    });
+    setIsAddBookLinkOpen(true);
   };
 
   return (
@@ -453,7 +498,24 @@ export default function MyWorkspaceView() {
                         librarySearchQuery={librarySearchQuery} setLibrarySearchQuery={setLibrarySearchQuery}
                         libraryPage={libraryPage} setLibraryPage={setLibraryPage}
                         setViewingBookDetailsId={setViewingBookDetailsId}
-                        setIsAddBookLinkOpen={setIsAddBookLinkOpen}
+                        setIsAddBookLinkOpen={(open) => {
+                          if (open) {
+                            setBookFormData({
+                              title: '',
+                              author: '',
+                              pdfUrl: '',
+                              coverUrl: '',
+                              category: 'Ficção',
+                              description: '',
+                              publishedAt: '',
+                              currentPage: 0,
+                              totalPages: 0
+                            });
+                            setModalConfig({ isOpen: true, type: 'book', mode: 'add' });
+                          }
+                          setIsAddBookLinkOpen(open);
+                        }}
+                        onEditBook={openEditBookModal}
                         setSharingBook={setSharingBook}
                         setIsShareModalOpen={setIsShareModalOpen}
                         communityBooks={communityBooks}
@@ -724,29 +786,37 @@ export default function MyWorkspaceView() {
               </div>
 
               <div className="space-y-6">
-
-                {/* Campos de Link e Dados */}
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">1. Link do Documento (Google Drive)</label>
-                    <input id="book-url" type="url" placeholder="https://drive.google.com/..." className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:border-primary-500 outline-none" />
-                    <p className="text-[9px] text-gray-600 font-bold uppercase tracking-tighter ml-2">O Hub ajustará automaticamente o link para modo preview.</p>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">1. Link do Documento (PDF/Google Drive)</label>
+                    <input 
+                      type="url" 
+                      placeholder="https://..." 
+                      value={bookFormData.pdfUrl}
+                      onChange={(e) => setBookFormData({ ...bookFormData, pdfUrl: e.target.value })}
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:border-primary-500 outline-none" 
+                    />
+                    <p className="text-[9px] text-gray-600 font-bold uppercase tracking-tighter ml-2">Links do Drive são ajustados automaticamente para preview.</p>
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">Título</label>
                       <div className="relative group">
-                        <input id="book-title" type="text" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none focus:border-primary-500 pr-12 transition-all" />
+                        <input 
+                          type="text" 
+                          value={bookFormData.title}
+                          onChange={(e) => setBookFormData({ ...bookFormData, title: e.target.value })}
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none focus:border-primary-500 pr-12 transition-all" 
+                        />
                         <button 
                           onClick={async () => {
-                            const title = (document.getElementById('book-title') as HTMLInputElement).value;
-                            if (!title) {
+                            if (!bookFormData.title) {
                               toast.error('Digite o título para buscar a capa');
                               return;
                             }
                             const tId = toast.loading('Buscando capas na Open Library...');
-                            const covers = await buscarCapasOpenLibrary(title);
+                            const covers = await buscarCapasOpenLibrary(bookFormData.title);
                             toast.dismiss(tId);
                             
                             if (covers.length > 0) {
@@ -758,96 +828,110 @@ export default function MyWorkspaceView() {
                             }
                           }}
                           className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/5 hover:bg-primary-500/20 rounded-xl flex items-center justify-center text-gray-400 hover:text-primary-500 transition-all"
-                          title="Buscar Capas na Open Library"
+                          title="Buscar na Open Library"
                         >
                           <i className="ph-bold ph-magnifying-glass" />
                         </button>
                       </div>
                     </div>
 
-                    {/* Galeria de Capas Encontradas */}
-                    <AnimatePresence>
-                      {bookCoverResults.length > 0 && (
-                        <motion.div 
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0 }}
-                          className="space-y-3 overflow-hidden"
-                        >
-                          <div className="flex items-center justify-between">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-primary-500">Resultados Encontrados</label>
-                            <button onClick={() => setBookCoverResults([])} className="text-[9px] font-black uppercase text-gray-500 hover:text-white">Limpar</button>
-                          </div>
-                          <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
-                            {bookCoverResults.map((cover, idx) => (
-                              <button
-                                key={idx}
-                                onClick={() => {
-                                  setSelectedPreviewCover(cover.url);
-                                  (document.getElementById('book-cover') as HTMLInputElement).value = cover.url;
-                                  (document.getElementById('book-author') as HTMLInputElement).value = cover.author || '';
-                                  toast.success('Capa selecionada!');
-                                }}
-                                className={`flex-shrink-0 w-24 aspect-[2/3] rounded-xl overflow-hidden border-2 transition-all ${selectedPreviewCover === cover.url ? 'border-primary-500 scale-105 shadow-xl shadow-primary-500/20' : 'border-white/5 hover:border-white/20'}`}
-                                title={`${cover.title} - ${cover.author || 'Autor desconhecido'}`}
-                              >
-                                <img src={cover.url} alt={cover.title} className="w-full h-full object-cover" />
-                              </button>
-                            ))}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">Categoria</label>
+                      <select 
+                        value={bookFormData.category}
+                        onChange={(e) => setBookFormData({ ...bookFormData, category: e.target.value })}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none focus:border-primary-500 appearance-none cursor-pointer"
+                      >
+                        {BOOK_CATEGORIES.map(cat => (
+                          <option key={cat} value={cat} className="bg-[#0a0c12] text-white">{cat}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <AnimatePresence>
+                    {bookCoverResults.length > 0 && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="space-y-3 overflow-hidden"
+                      >
+                        <div className="flex items-center justify-between">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-primary-500">Capas Sugeridas</label>
+                          <button onClick={() => setBookCoverResults([])} className="text-[9px] font-black uppercase text-gray-500 hover:text-white">Fechar</button>
+                        </div>
+                        <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
+                          {bookCoverResults.map((cover, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => {
+                                setSelectedPreviewCover(cover.url);
+                                setBookFormData({
+                                  ...bookFormData,
+                                  coverUrl: cover.url,
+                                  author: cover.author || bookFormData.author
+                                });
+                                toast.success('Metadados atualizados!');
+                              }}
+                              className={`flex-shrink-0 w-24 aspect-[2/3] rounded-xl overflow-hidden border-2 transition-all ${selectedPreviewCover === cover.url ? 'border-primary-500 scale-105 shadow-xl shadow-primary-500/20' : 'border-white/5 hover:border-white/20'}`}
+                            >
+                              <img src={cover.url} alt={cover.title} className="w-full h-full object-cover" />
+                            </button>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">Autor</label>
-                      <input id="book-author" type="text" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none" />
+                      <input 
+                        type="text" 
+                        value={bookFormData.author}
+                        onChange={(e) => setBookFormData({ ...bookFormData, author: e.target.value })}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none focus:border-primary-500" 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">URL da Capa (Opcional)</label>
+                      <input 
+                        type="text" 
+                        value={bookFormData.coverUrl}
+                        onChange={(e) => setBookFormData({ ...bookFormData, coverUrl: e.target.value })}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none focus:border-primary-500" 
+                      />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">Página Atual</label>
-                      <input id="book-current-page" type="number" defaultValue="0" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none" />
+                      <input 
+                        type="number" 
+                        value={bookFormData.currentPage}
+                        onChange={(e) => setBookFormData({ ...bookFormData, currentPage: parseInt(e.target.value) || 0 })}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none focus:border-primary-500" 
+                      />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">Total de Páginas</label>
-                      <input id="book-total-pages" type="number" defaultValue="0" className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none" />
+                      <input 
+                        type="number" 
+                        value={bookFormData.totalPages}
+                        onChange={(e) => setBookFormData({ ...bookFormData, totalPages: parseInt(e.target.value) || 0 })}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none focus:border-primary-500" 
+                      />
                     </div>
                   </div>
-
-                  <input id="book-cover" type="hidden" />
-                  <input id="book-date" type="hidden" />
-                  <textarea id="book-desc" className="hidden" />
                 </div>
 
                 <button 
-                  onClick={() => {
-                    const title = (document.getElementById('book-title') as HTMLInputElement).value;
-                    let url = (document.getElementById('book-url') as HTMLInputElement).value;
-                    const author = (document.getElementById('book-author') as HTMLInputElement).value;
-                    const publishedAt = (document.getElementById('book-date') as HTMLInputElement).value;
-                    const description = (document.getElementById('book-desc') as HTMLTextAreaElement).value;
-                    const coverUrl = (document.getElementById('book-cover') as HTMLInputElement).value;
-                    const currentPage = parseInt((document.getElementById('book-current-page') as HTMLInputElement).value) || 0;
-                    const totalPages = parseInt((document.getElementById('book-total-pages') as HTMLInputElement).value) || 0;
-
-                    if (!title || !url) {
-                      toast.error('Título e Link são obrigatórios!');
-                      return;
-                    }
-
-                    // Transformação automática do Google Drive para modo Preview
-                    if (url.includes('drive.google.com')) {
-                      if (url.includes('/view')) url = url.split('/view')[0].replace(/\/$/, '') + '/preview';
-                      else if (url.includes('/edit')) url = url.split('/edit')[0].replace(/\/$/, '') + '/preview';
-                      else if (!url.endsWith('/preview')) url = url.split('?')[0].replace(/\/$/, '') + '/preview';
-                    }
-
-                    handleAddBookByLink({ title, url, author, publishedAt, description, coverUrl, currentPage, totalPages });
-                  }}
+                  onClick={handleSaveBook}
                   className="w-full bg-primary-500 text-white py-5 rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-primary-500/30 hover:scale-[1.02] active:scale-95 transition-all"
                 >
-                  Confirmar Catalogação
+                  {modalConfig.mode === 'edit' ? 'Salvar Alterações' : 'Confirmar Catalogação'}
                 </button>
               </div>
             </motion.div>
