@@ -32,13 +32,13 @@ const LinkCard = React.memo(({
       <button onClick={(e) => { e.stopPropagation(); onEdit(link); }} className="p-1.5 bg-white/5 rounded-lg hover:bg-primary-500/20 hover:text-primary-400 transition-all"><i className="ph-bold ph-pencil-simple text-sm" /></button>
       <button onClick={(e) => onDelete(link.id, e)} className="p-1.5 bg-white/5 rounded-lg hover:bg-rose-500/20 hover:text-rose-400 transition-all"><i className="ph-bold ph-trash text-sm" /></button>
     </div>
-    <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-5 relative z-10 pr-24">
+    <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-5 relative z-10 pr-32">
       <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform shadow-lg group-hover:shadow-primary-500/20">
         <i className={`ph-duotone ${link.icon || getUrlIcon(link.url)} text-primary-400`} />
       </div>
       <div className="flex-1 min-w-0">
-        <h4 className="font-bold text-white group-hover:text-primary-400 transition-colors line-clamp-2 leading-tight">{link.label}</h4>
-        <p className="text-[10px] text-gray-500 font-mono mt-1 truncate">{link.url.replace(/https?:\/\/(www\.)?/, '').split('/')[0]}</p>
+        <h4 className="font-bold text-white group-hover:text-primary-400 transition-colors leading-tight">{link.label}</h4>
+        <p className="text-[10px] text-gray-500 font-mono mt-1 break-all">{link.url}</p>
       </div>
     </a>
   </div>
@@ -173,7 +173,7 @@ export const VaultTab: React.FC<VaultTabProps> = ({
           </h3>
           <span className="text-[10px] font-black uppercase tracking-widest text-gray-600">{filteredLinks.length} Itens</span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="flex flex-col gap-4">
           {filteredLinks.map(link => (
             <LinkCard 
               key={link.id}
@@ -184,8 +184,8 @@ export const VaultTab: React.FC<VaultTabProps> = ({
               getUrlIcon={getUrlIcon}
             />
           ))}
-          <button onClick={() => setModalConfig({ isOpen: true, type: 'link', mode: 'add' })} className="p-6 border border-dashed border-white/10 rounded-[2rem] flex flex-col items-center justify-center gap-3 text-gray-500 hover:text-primary-400 hover:border-primary-500/50 transition-all group min-h-[104px]">
-            <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-xl group-hover:rotate-90 transition-transform"><i className="ph-bold ph-plus" /></div>
+          <button onClick={() => setModalConfig({ isOpen: true, type: 'link', mode: 'add' })} className="p-6 border border-dashed border-white/10 rounded-[2rem] flex items-center justify-center gap-3 text-gray-500 hover:text-primary-400 hover:border-primary-500/50 transition-all group min-h-[80px]">
+            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-lg group-hover:rotate-90 transition-transform"><i className="ph-bold ph-plus" /></div>
             <span className="text-xs font-black uppercase tracking-widest">Adicionar Link</span>
           </button>
         </div>
