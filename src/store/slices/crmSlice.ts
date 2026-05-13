@@ -147,18 +147,25 @@ export const createCRMSlice: StateCreator<
               // Em assinaturas, o link de pagamento fica na cobrança gerada, não na assinatura.
               // Vamos buscar o pagamento pendente mais recente para pegar a URL.
               try {
-                // Pequeno delay para dar tempo do Asaas processar a assinatura e gerar o pagamento
-                await new Promise(r => setTimeout(r, 2000));
-                
-                const pData = await apiClient.get<{ data: any[] }>(
-                  `/api/portal_finance?orgId=${effectiveOrgId}&clientId=${client.id}&token=${client.publicToken}`,
-                  { showErrorToast: false }
-                );
-                const payments = pData.data || [];
-                const latestPayment = payments[0];
-                if (latestPayment) {
-                  client.invoiceUrl = latestPayment.invoiceUrl || latestPayment.bankSlipUrl || latestPayment.invoiceHtmlUrl;
-                  logger.info('[Asaas] Link da fatura capturado do histórico', { domain: 'CRM', data: client.invoiceUrl });
+                // Polling de 2 tentativas com delay para dar tempo do Asaas processar
+                for (let i = 0; i < 3; i++) {
+                  await new Promise(r => setTimeout(r, 2500));
+                  
+                  const pData = await apiClient.get<any>(
+                    `/api/portal_finance?orgId=${effectiveOrgId}&clientId=${client.id}&token=${client.publicToken}`,
+                    { showErrorToast: false }
+                  );
+                  
+                  const payments = pData.payments || [];
+                  const latestPayment = payments.find((p: any) => p.status === 'PENDING' || p.status === 'OVERDUE') || payments[0];
+                  
+                  if (latestPayment?.invoiceUrl || latestPayment?.bankSlipUrl) {
+                    client.invoiceUrl = latestPayment.invoiceUrl || latestPayment.bankSlipUrl || latestPayment.invoiceHtmlUrl;
+                    logger.info('[Asaas] Link da fatura capturado com sucesso', { domain: 'CRM', data: client.invoiceUrl });
+                    break;
+                  }
+                  
+                  if (i === 2) logger.warn('[Asaas] Pagamento ainda não gerado após 7s', { domain: 'CRM' });
                 }
               } catch (e) {
                 logger.warn('[Asaas] Erro ao buscar link da primeira fatura', { domain: 'CRM', data: e });
