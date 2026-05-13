@@ -47,13 +47,31 @@ const BookCard = React.memo(({
   isInLibrary: boolean;
 }) => (
   <div className="group relative">
-    <div 
+    <motion.div 
       onClick={() => onView(book.id)}
-      className="aspect-[3/4] bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-primary-500/50 transition-all cursor-pointer shadow-xl relative"
+      whileHover={{ 
+        rotateY: 10, 
+        rotateX: -5, 
+        scale: 1.02,
+        z: 50
+      }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      className="aspect-[3/4] bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-primary-500/50 transition-all cursor-pointer shadow-2xl relative perspective-1000 group-hover:shadow-primary-500/10"
+      style={{ transformStyle: 'preserve-3d' }}
     >
+      {/* Glossy Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20" />
+      
+      {/* Category Badge */}
+      {book.category && (
+        <div className="absolute top-3 right-3 px-2 py-1 bg-primary-500/80 backdrop-blur-md rounded-lg text-[7px] font-black text-white uppercase tracking-tighter z-30 shadow-lg">
+          {book.category}
+        </div>
+      )}
+
       {/* Progress Indicator */}
       {(book.totalPages && book.totalPages > 0) ? (
-        <div className="absolute top-3 left-3 px-2 py-1 bg-black/60 backdrop-blur-md rounded-lg border border-white/10 z-10">
+        <div className="absolute top-3 left-3 px-2 py-1 bg-black/60 backdrop-blur-md rounded-lg border border-white/10 z-30">
           <div className="flex flex-col gap-1">
             <span className="text-[8px] font-black text-white/70 uppercase leading-none">
               {Math.round(((book.currentPage || 0) / book.totalPages) * 100)}% Lido
@@ -65,21 +83,36 @@ const BookCard = React.memo(({
         </div>
       ) : null}
 
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 z-10" />
+      
       {book.coverUrl ? (
-        <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover transition-transform group-hover:scale-110" loading="lazy" />
+        <img 
+          src={book.coverUrl} 
+          alt={book.title} 
+          className="w-full h-full object-cover transition-transform group-hover:scale-105" 
+          loading="lazy" 
+        />
       ) : (
-        <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center gap-4 opacity-30">
-          <i className="ph-duotone ph-book text-5xl" />
-          <span className="text-[10px] font-bold uppercase tracking-widest leading-tight">{book.title}</span>
+        <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center gap-4 bg-gradient-to-br from-white/5 to-white/[0.02]">
+          <i className="ph-duotone ph-book text-5xl text-primary-500/40" />
+          <span className="text-[10px] font-bold uppercase tracking-widest leading-tight opacity-40">{book.title}</span>
         </div>
       )}
-      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
-         <div className="w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center text-white text-xl shadow-xl shadow-primary-500/40">
+      
+      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 z-20">
+         <motion.div 
+           initial={{ scale: 0.5, opacity: 0 }}
+           whileHover={{ scale: 1.1 }}
+           animate={{ scale: 1, opacity: 1 }}
+           className="w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center text-white text-xl shadow-xl shadow-primary-500/40"
+         >
            <i className="ph-bold ph-play" />
-         </div>
+         </motion.div>
       </div>
-    </div>
+
+      {/* Subtle Reflection */}
+      <div className="absolute -bottom-1/2 left-0 right-0 h-1/2 bg-gradient-to-t from-white/5 to-transparent opacity-20 pointer-events-none" />
+    </motion.div>
     <div className="mt-3 px-1 flex justify-between items-start">
       <div className="min-w-0">
         <h4 className="text-xs font-black text-white truncate uppercase tracking-widest leading-none">{book.title}</h4>
@@ -351,7 +384,12 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
                     </div>
                     <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 * groupedBooks.indexOf([letter, groupBooks]) }}
+                    className="grid grid-cols-2 md:grid-cols-5 gap-8"
+                  >
                     {groupBooks.map(book => (
                       <BookCard 
                         key={book.id}
@@ -367,28 +405,38 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
                         isInLibrary={books.some(b => b.pdfUrl === book.pdfUrl)}
                       />
                     ))}
-                  </div>
+                  </motion.div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
-              {currentBooks.map(book => (
-                <BookCard 
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="grid grid-cols-2 md:grid-cols-5 gap-8"
+            >
+              {currentBooks.map((book, idx) => (
+                <motion.div
                   key={book.id}
-                  book={book}
-                  onView={setViewingBookDetailsId}
-                  onShare={(b) => { setSharingBook(b); setIsShareModalOpen(true); }}
-                  onPublish={handlePublishBook}
-                  onUpdateCover={updateBookCover}
-                  onEdit={onEditBook!}
-                  onDelete={deleteBook}
-                  onAddToLibrary={addToMyLibrary}
-                  isOwner={librarySubTab === 'my'}
-                  isInLibrary={books.some(b => b.pdfUrl === book.pdfUrl)}
-                />
+                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                >
+                  <BookCard 
+                    book={book}
+                    onView={setViewingBookDetailsId}
+                    onShare={(b) => { setSharingBook(b); setIsShareModalOpen(true); }}
+                    onPublish={handlePublishBook}
+                    onUpdateCover={updateBookCover}
+                    onEdit={onEditBook!}
+                    onDelete={deleteBook}
+                    onAddToLibrary={addToMyLibrary}
+                    isOwner={librarySubTab === 'my'}
+                    isInLibrary={books.some(b => b.pdfUrl === book.pdfUrl)}
+                  />
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           )}
 
           {/* Paginação */}
