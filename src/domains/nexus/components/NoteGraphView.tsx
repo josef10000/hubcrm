@@ -26,7 +26,7 @@ export const NoteGraphView: React.FC<NoteGraphViewProps> = ({ notes, onSelectNot
   const [zoom, setZoom] = useState(1);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [links, setLinks] = useState<Link[]>([]);
-  const requestRef = useRef<number>();
+  const requestRef = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Inicializar nós e links
