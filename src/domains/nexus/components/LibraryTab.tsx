@@ -1,3 +1,4 @@
+import React from 'react';
 import { useNexusStore } from '@store/useNexusStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { NexusBook } from '@store/useNexusStore';
