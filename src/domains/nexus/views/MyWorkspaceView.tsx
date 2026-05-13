@@ -89,9 +89,6 @@ export default function MyWorkspaceView() {
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [viewingBookDetailsId, setViewingBookDetailsId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [bookSearchTerm, setBookSearchTerm] = useState('');
-  const [bookSearchResults, setBookSearchResults] = useState<any[]>([]);
-  const [isSearchingBook, setIsSearchingBook] = useState(false);
   const [librarySearchQuery, setLibrarySearchQuery] = useState('');
   const [libraryPage, setLibraryPage] = useState(1);
   const [isAddBookLinkOpen, setIsAddBookLinkOpen] = useState(false);
@@ -137,29 +134,6 @@ export default function MyWorkspaceView() {
     input.click();
   };
 
-  const searchBooks = async (query: string) => {
-    if (query.length < 3) return;
-    setIsSearchingBook(true);
-    try {
-      const data = await apiClient.get<{ items?: any[] }>(
-        `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=5`,
-        { showErrorToast: false }
-      );
-      const items = data.items || [];
-      const formatted = items.map((item: any) => ({
-        title: item.volumeInfo.title,
-        author: item.volumeInfo.authors?.join(', ') || 'Autor Desconhecido',
-        description: item.volumeInfo.description || '',
-        publishedAt: item.volumeInfo.publishedDate || '',
-        coverUrl: item.volumeInfo.imageLinks?.thumbnail?.replace('http:', 'https:') || ''
-      }));
-      setBookSearchResults(formatted);
-    } catch (error) {
-      toast.error('Erro ao buscar no catálogo do Google');
-    } finally {
-      setIsSearchingBook(false);
-    }
-  };
 
   const handleConfirmShare = async (targetUserId: string, targetUserName: string) => {
     if (!sharingBook || !userProfile) return;
@@ -716,7 +690,7 @@ export default function MyWorkspaceView() {
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <h3 className="text-xl font-black text-white uppercase tracking-tighter">Novo Livro</h3>
-                  <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">Catalogação via Google Books API</p>
+                  <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">Adicionar obra à sua biblioteca</p>
                 </div>
                 <button onClick={() => setIsAddBookLinkOpen(false)} className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-gray-400 hover:text-white transition-all">
                   <i className="ph-bold ph-x" />
@@ -724,81 +698,11 @@ export default function MyWorkspaceView() {
               </div>
 
               <div className="space-y-6">
-                {/* Busca */}
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">1. Buscar Obra no Catálogo Global</label>
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <input 
-                        type="text"
-                        value={bookSearchTerm}
-                        placeholder="Digite título ou autor (ex: Pai Rico Pai Pobre)"
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:border-primary-500 transition-all outline-none"
-                        onChange={(e) => setBookSearchTerm(e.target.value)}
-                      />
-                      {isSearchingBook && (
-                        <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                          <span className="text-[9px] font-black text-primary-500 uppercase animate-pulse">Buscando...</span>
-                          <div className="w-4 h-4 border-2 border-primary-500/20 border-t-primary-500 rounded-full animate-spin" />
-                        </div>
-                      )}
-                    </div>
-                    <button 
-                      onClick={() => searchBooks(bookSearchTerm)}
-                      disabled={isSearchingBook || bookSearchTerm.length < 3}
-                      className="px-6 bg-white/5 border border-white/10 rounded-2xl text-gray-400 hover:text-white hover:bg-white/10 transition-all disabled:opacity-50"
-                      title="Forçar Busca"
-                    >
-                      <i className="ph-bold ph-magnifying-glass" />
-                    </button>
-                  </div>
-
-                  {/* Resultados da Busca */}
-                  <AnimatePresence>
-                    {bookSearchResults.length > 0 && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden divide-y divide-white/5 max-h-[300px] overflow-y-auto custom-scrollbar"
-                      >
-                        {bookSearchResults.map((res, i) => (
-                          <button 
-                            key={i}
-                            onClick={() => {
-                              // Preencher campos e fechar lista
-                              const titleInput = document.getElementById('book-title') as HTMLInputElement;
-                              const authorInput = document.getElementById('book-author') as HTMLInputElement;
-                              const dateInput = document.getElementById('book-date') as HTMLInputElement;
-                              const descInput = document.getElementById('book-desc') as HTMLTextAreaElement;
-                              const coverInput = document.getElementById('book-cover') as HTMLInputElement;
-                              
-                              if (titleInput) titleInput.value = res.title;
-                              if (authorInput) authorInput.value = res.author;
-                              if (dateInput) dateInput.value = res.publishedAt;
-                              if (descInput) descInput.value = res.description;
-                              if (coverInput) coverInput.value = res.coverUrl;
-                              
-                              setBookSearchResults([]);
-                            }}
-                            className="w-full p-4 flex items-center gap-4 hover:bg-white/10 transition-all text-left group"
-                          >
-                            <img src={res.coverUrl || 'https://via.placeholder.com/40x60'} className="w-10 aspect-[2/3] object-cover rounded-md shadow-lg" />
-                            <div className="min-w-0">
-                              <p className="text-sm font-black text-white truncate uppercase tracking-tighter">{res.title}</p>
-                              <p className="text-[10px] text-gray-500 font-bold uppercase truncate">{res.author}</p>
-                            </div>
-                            <i className="ph-bold ph-plus ml-auto text-primary-500 opacity-0 group-hover:opacity-100 transition-all" />
-                          </button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
 
                 {/* Campos de Link e Dados */}
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">2. Link do Documento (Google Drive)</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">1. Link do Documento (Google Drive)</label>
                     <input id="book-url" type="url" placeholder="https://drive.google.com/..." className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:border-primary-500 outline-none" />
                     <p className="text-[9px] text-gray-600 font-bold uppercase tracking-tighter ml-2">O Hub ajustará automaticamente o link para modo preview.</p>
                   </div>
