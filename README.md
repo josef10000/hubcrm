@@ -67,6 +67,10 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
 - **Escopo:** Geração de boletos, cartões, faturamento recorrente e antecipação.
 - **Automação:** O Hub processa webhooks do Asaas para atualizar status de faturas e liberar acessos instantaneamente.
 
+### 📧 Comunicação & E-mail (Resend)
+- **Escopo:** Transmissão de e-mails transacionais e de marketing.
+- **Funcionalidades:** Disparo de boas-vindas, envio de faturas, convites de equipe, comunicados internos e alertas de aniversário com templates dinâmicos.
+
 ### 📚 Inteligência Bibliográfica (Open Library)
 - **Escopo:** Utilizada pelo módulo **Nexus** para catalogação manual e automática.
 - **Funcionalidade:** Fornece metadados de obras (autor, título, descrição) e busca de capas via `cover_id`, eliminando a dependência do Google Books.
@@ -75,9 +79,17 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
 - **Google Drive:** Integração transparente para visualização de PDFs e manuais. O Hub transforma automaticamente links de compartilhamento em links de `preview` otimizados.
 - **Cloudinary / ImgBB:** Armazenamento de ativos de UI, fotos de perfil e comprovantes, com otimização automática de formato (WebP) e redimensionamento.
 
+### 🛡️ Monitoramento & Uptime (UptimeRobot)
+- **Escopo:** Monitoramento de disponibilidade de serviços e sites.
+- **Integração:** O Hub consome dados do UptimeRobot para exibir o status de saúde do ecossistema diretamente no dashboard administrativo.
+
 ### 🔐 Persistência & Identidade (Firebase)
 - **Firestore:** Banco NoSQL em tempo real para sincronia multi-usuário.
 - **Auth:** Gestão de sessões segura com suporte a MFA e persistência em memória.
+
+### ⏱️ Automação de Processos (Vercel Cron)
+- **Escopo:** Agendamento de tarefas críticas em background.
+- **Processos:** Envio de mensagens agendadas, disparos de lembretes, processamento de rotinas financeiras diárias e limpeza de logs.
 
 ### 📈 Observabilidade (Axiom)
 - **Escopo:** Centralização de logs do cliente e servidor.
