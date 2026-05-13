@@ -17,44 +17,51 @@ O Hub Central utiliza uma arquitetura baseada em **Domain-Driven Design (DDD)** 
 - **[Referência de API & Webhooks](docs/API.md)**: Documentação completa dos endpoints e automações.
 
 ```mermaid
-graph TD
-    subgraph External_Systems [Providers]
-        Asaas[Asaas Payment Gateway]
-        OL[Open Library API]
-        GD[Google Drive API]
-        Cloudinary[Cloudinary / ImgBB]
+graph TB
+    subgraph Users [Interfaces de Usuário]
+        Admin[Dashboard Administrativo]
+        Client[Portal do Cliente]
+        Nexus[Nexus Knowledge Engine]
     end
 
-    subgraph Client_Layer [Frontend - React 19]
-        UI[Glassmorphism UI] --> Store[Zustand State]
-        Store --> Hooks[Custom Hooks / usePermissions]
+    subgraph External_Ecosystem [Ecossistema de APIs & Providers]
+        direction LR
+        Asaas[Asaas Payments]
+        Gemini[Google Gemini AI]
+        Resend[Resend Email]
+        Storage[Cloudinary / ImgBB]
+        OL[Open Library]
+        GD[Google Drive]
     end
 
-    subgraph Shared_Layer [Contracts]
-        ST[Shared Types / shared] --> Client_Layer
-        ST --> Service_Layer
+    subgraph Orchestration [Camada de Orquestração & Automação]
+        Vercel[Vercel Serverless / Edge]
+        CronJob[Cron-Job.org] -- Scheduled Triggers --> Vercel
+        Vercel -- API Calls --> External_Ecosystem
+        Asaas -- Webhooks --> Vercel
     end
 
-    subgraph Service_Layer [Edge Functions - Vercel]
-        Hooks --> API[API Client / authFetch]
-        API --> Serverless[Serverless Functions /api]
-        Asaas -- Webhooks --> WH[Webhook Dispatcher]
-        WH --> Handlers[Logic Handlers]
-        Handlers --> Firestore
-        Serverless --> Middleware[Auth & Rate Limit Middleware]
-        UI -- Direct Fetch --> OL
+    subgraph Data_Persistence [Camada de Dados & Identidade]
+        Firestore[(Firebase Firestore)]
+        Auth[Firebase Auth]
+        Redis[(Upstash Redis Cache)]
     end
 
-    subgraph Data_Layer [Persistence - Firebase]
-        Serverless --> Firestore[(Firestore NoSQL)]
-        Hooks --> Realtime[Realtime Listeners / onSnapshot]
-        Realtime --> Firestore
+    Users -- authFetch / Zustand --> Vercel
+    Vercel -- Read/Write --> Firestore
+    Vercel -- Rate Limit --> Redis
+    Users -- Realtime Sync --> Firestore
+    Users -- Auth Check --> Auth
+    
+    subgraph Observability [Monitoramento & Logs]
+        Axiom[Axiom Logs]
+        Sentry[Sentry Error Tracking]
+        Uptime[UptimeRobot]
     end
 
-    subgraph Observability [Monitoring]
-        Client_Layer --> Axiom[Axiom Logging]
-        Service_Layer --> Axiom
-    end
+    Vercel -- Logs --> Axiom
+    Users -- Errors --> Sentry
+    Uptime -- Health Check --> Vercel
 ```
 
 ---
@@ -96,8 +103,9 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
 - **Escopo:** Camada de cache ultrarrápida e controle de taxa de requisições (Rate Limiting).
 - **Finalidade:** Garante a estabilidade da API contra ataques de força bruta e melhora a latência de dados frequentes.
 
-### ⏱️ Automação & Analytics (Vercel)
-- **Vercel Cron:** Agendamento de tarefas críticas (mensagens, lembretes, rotinas financeiras).
+### ⏱️ Automação, Cron & Analytics (Vercel & Cron-Job.org)
+- **Vercel Cron:** Agendamento de tarefas críticas internas (limpeza de cache, rotinas de sistema).
+- **Cron-Job.org:** Orquestrador de tarefas externas de alta frequência. Utilizado para disparar rotinas de verificação de pagamentos, lembretes de mensagens automáticas e sincronização de dados financeiros que exigem execução pontual garantida.
 - **Vercel Analytics:** Monitoramento de tráfego e experiência do usuário (Web Vitals) para otimização contínua de performance.
 
 ### 📈 Observabilidade (Axiom)
