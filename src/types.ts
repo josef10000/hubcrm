@@ -182,6 +182,7 @@ export interface Client {
   notes?: string;
   logs?: ClientLog[];
   lastContactAt?: number;
+  publicToken?: string;
 }
 
 export interface OnboardingQuestion {

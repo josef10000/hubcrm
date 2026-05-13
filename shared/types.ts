@@ -101,6 +101,16 @@ export interface ClientBase {
   asaasSubscriptionId?: string;
   orgId?: string;
   assignedTo?: string;
+  status?: string;
+  plan?: string;
+  billingCycle?: string;
+  nextDueDate?: string;
+  invoiceUrl?: string;
+  siteLink?: string;
+  niche?: string;
+  createdAt?: any;
+  publicToken?: string;
+  currentDiscount?: number;
 }
 
 // ── Contratos de Resposta da API ────────────────────────────────────────────────
