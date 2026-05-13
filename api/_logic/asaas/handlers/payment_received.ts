@@ -23,6 +23,18 @@ export async function handlePaymentReceived(doc: any, clientData: any, paymentDa
     }
   }
 
+  // Se for uma assinatura, podemos tentar prever a próxima data de vencimento
+  // O Asaas costuma enviar o dueDate da fatura paga.
+  if (paymentData.dueDate && clientData.billingCycle) {
+    const lastDate = new Date(paymentData.dueDate);
+    if (clientData.billingCycle === 'YEARLY') {
+      lastDate.setFullYear(lastDate.getFullYear() + 1);
+    } else {
+      lastDate.setMonth(lastDate.getMonth() + 1);
+    }
+    updates.nextDueDate = lastDate.toISOString().split('T')[0];
+  }
+
   await doc.ref.update(updates);
 
   // --- REGISTRO DE TRANSAÇÃO FINANCEIRA ---

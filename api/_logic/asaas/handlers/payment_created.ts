@@ -36,6 +36,25 @@ export async function handlePaymentCreated(doc: any, clientData: any, paymentDat
       .catch(err => console.error('Erro Boas-vindas:', err));
   }
 
+  // --- ATUALIZAÇÃO DO DOCUMENTO DO CLIENTE ---
+  try {
+    const updates: any = {
+      invoiceUrl: pLink,
+      paymentStatus: 'PENDING',
+      updatedAt: Date.now()
+    };
+
+    // Sincronizar data de vencimento se disponível
+    if (paymentData.dueDate) {
+      updates.nextDueDate = paymentData.dueDate;
+    }
+
+    await doc.ref.update(updates);
+    console.log(`[ASAAS] Cliente ${doc.id} atualizado com nova fatura: ${pLink}`);
+  } catch (updErr) {
+    console.error('[ASAAS] Erro ao atualizar invoiceUrl no cliente:', updErr);
+  }
+
   if (skipInvoiceEmail) return;
 
   // --- ENVIO DE FATURA PADRÃO ---
