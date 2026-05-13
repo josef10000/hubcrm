@@ -1,7 +1,7 @@
 # <p align="center">🔐 HUB CENTRAL — INTELLIGENCE ECOSYSTEM</p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Enterprise_OS-v8.3.0--master-3b82f6?style=for-the-badge&labelColor=0a0a0a" alt="Version" />
+  <img src="https://img.shields.io/badge/Enterprise_OS-v8.4.0--master-3b82f6?style=for-the-badge&labelColor=0a0a0a" alt="Version" />
   <img src="https://img.shields.io/badge/Architecture-Modular_DDD-blueviolet?style=for-the-badge&labelColor=0a0a0a" alt="Architecture" />
   <img src="https://img.shields.io/badge/Status-Master_Level_Ready-emerald?style=for-the-badge&labelColor=0a0a0a" alt="Status" />
 </p>
@@ -10,19 +10,31 @@
 
 ## 🏗️ Technical Architecture
 
-O Hub Central utiliza uma arquitetura baseada em **Domain-Driven Design (DDD)** no Frontend e **Serverless Micro-services** no Backend, focada em latência zero e segurança estrita.
+O Hub Central utiliza uma arquitetura baseada em **Domain-Driven Design (DDD)** no Frontend e **Serverless Micro-services** no Backend, com uma camada de **Event-Driven Automation** para processos financeiros.
 
 ### 🌐 System Overview
 ```mermaid
 graph TD
+    subgraph External_Systems [Providers]
+        Asaas[Asaas Payment Gateway]
+    end
+
     subgraph Client_Layer [Frontend - React 19]
         UI[Glassmorphism UI] --> Store[Zustand State]
         Store --> Hooks[Custom Hooks / usePermissions]
     end
 
+    subgraph Shared_Layer [Contracts]
+        ST[Shared Types / shared] --> Client_Layer
+        ST --> Service_Layer
+    end
+
     subgraph Service_Layer [Edge Functions - Vercel]
         Hooks --> API[API Client / authFetch]
         API --> Serverless[Serverless Functions /api]
+        Asaas -- Webhooks --> WH[Webhook Dispatcher]
+        WH --> Handlers[Logic Handlers]
+        Handlers --> Firestore
         Serverless --> Middleware[Auth & Rate Limit Middleware]
     end
 
@@ -30,12 +42,11 @@ graph TD
         Serverless --> Firestore[(Firestore NoSQL)]
         Hooks --> Realtime[Realtime Listeners / onSnapshot]
         Realtime --> Firestore
-        Firestore --> SubCollections[Modular Subcollections]
     end
 
     subgraph Observability [Monitoring]
         Client_Layer --> Axiom[Axiom Logging]
-        Serverless --> Axiom
+        Service_Layer --> Axiom
     end
 ```
 
@@ -43,25 +54,45 @@ graph TD
 
 ## 📂 Project Structure
 
-O projeto segue uma estrutura modular para garantir o desacoplamento entre domínios de negócio.
+O projeto segue uma estrutura de **Monorepo Híbrido** para garantir a sincronia de contratos entre cliente e servidor.
 
 ```text
+├── shared/             # [NEW] Single Source of Truth (Pure Types & Constants)
 ├── api/                # Serverless Functions (Backend Logic)
+│   ├── _logic/         # Business Logic decoupling (Asaas, Auth)
 │   ├── _utils/         # Shared utilities (Auth, DB, Audit)
 │   └── handlers/       # Domain-specific endpoint handlers
 ├── src/
-│   ├── core/           # Configurações base (Firebase, Axiom)
-│   ├── domains/        # Lógica de Negócio (CRM, Nexus, Wiki, Finance)
-│   │   ├── components/ # Componentes exclusivos do domínio
-│   │   ├── views/      # Páginas de alto nível
-│   │   └── hooks/      # Hooks específicos do domínio
-│   ├── store/          # Zustand Slices (State Management)
-│   ├── shared/         # Componentes e tipos reutilizáveis
-│   ├── lib/            # Bibliotecas e utilitários (Logger, API Client)
-│   └── hooks/          # Hooks globais (useAuth, usePermissions)
-├── tests/              # Test Suites (E2E & Integration)
-└── firestore.rules     # Segurança Granular de Dados
+│   ├── domains/        # Business Domains (CRM, Nexus, Wiki, Finance)
+│   ├── types/          # Frontend-specific types & Zod Schemas
+│   ├── store/          # Zustand State Management
+│   ├── lib/            # Shared libraries (Logger, API Client)
+│   └── hooks/          # Global & Domain Hooks
+├── tests/              # E2E & Unit Test Suites
+└── firestore.rules     # Granular Security Rules
 ```
+
+---
+
+## 💳 Event-Driven Financial Autonomy
+
+O sistema de faturamento é 100% autônomo e orientado a eventos.
+
+- **Webhook Synchronization:** O sistema processa payloads do Asaas em tempo real.
+- **Auto-Sync Logic:**
+    - `PAYMENT_CREATED`: Atualiza automaticamente o `invoiceUrl` e `paymentStatus` no Firestore assim que uma fatura é gerada.
+    - `PAYMENT_RECEIVED`: Calcula a próxima data de vencimento (`nextDueDate`) com base no ciclo (Mensal/Anual) e atualiza o status global do cliente.
+- **Zero Polling:** A interface do usuário reflete o status financeiro instantaneamente via listeners do Firestore, sem necessidade de recarregar a página ou fazer requisições manuais ao Asaas.
+
+---
+
+## 🏗️ Unified Type System (Shared Types)
+
+Implementamos uma camada de tipos compartilhados (`/shared`) que elimina o "Technical Debt" de duplicidade.
+
+- **Contracts:** Interfaces de `Client`, `Lead`, `Transaction` e `UserProfile` são definidas uma única vez.
+- **Type Safety:** Mudanças na estrutura de dados no Backend quebram o build do Frontend em tempo de compilação, garantindo integridade total do contrato.
+- **Zod Integration:** O Frontend consome os tipos puros e adiciona camadas de validação `zod` para formulários e inputs.
 
 ---
 
@@ -82,7 +113,6 @@ sequenceDiagram
     App->>App: Store Session in Zustand
     App->>API: Request + Bearer IDT
     API->>API: Middleware: verifyAuth(IDT)
-    API->>API: Middleware: checkRateLimit(IP)
     API-->>App: Authorized Data
 ```
 
