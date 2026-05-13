@@ -823,7 +823,7 @@ export default function MyWorkspaceView() {
                 <button 
                   onClick={() => {
                     const title = (document.getElementById('book-title') as HTMLInputElement).value;
-                    const url = (document.getElementById('book-url') as HTMLInputElement).value;
+                    let url = (document.getElementById('book-url') as HTMLInputElement).value;
                     const author = (document.getElementById('book-author') as HTMLInputElement).value;
                     const publishedAt = (document.getElementById('book-date') as HTMLInputElement).value;
                     const description = (document.getElementById('book-desc') as HTMLTextAreaElement).value;
@@ -834,6 +834,13 @@ export default function MyWorkspaceView() {
                     if (!title || !url) {
                       toast.error('Título e Link são obrigatórios!');
                       return;
+                    }
+
+                    // Transformação automática do Google Drive para modo Preview
+                    if (url.includes('drive.google.com')) {
+                      if (url.includes('/view')) url = url.split('/view')[0].replace(/\/$/, '') + '/preview';
+                      else if (url.includes('/edit')) url = url.split('/edit')[0].replace(/\/$/, '') + '/preview';
+                      else if (!url.endsWith('/preview')) url = url.split('?')[0].replace(/\/$/, '') + '/preview';
                     }
 
                     handleAddBookByLink({ title, url, author, publishedAt, description, coverUrl, currentPage, totalPages });
