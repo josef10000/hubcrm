@@ -12,6 +12,10 @@
 
 O Hub Central utiliza uma arquitetura baseada em **Domain-Driven Design (DDD)** no Frontend e **Serverless Micro-services** no Backend, com uma camada de **Event-Driven Automation** para processos financeiros.
 
+### 📚 Documentação Técnica Aprofundada
+- **[Guia de Arquitetura & Padrões](docs/ARCHITECTURE.md)**: Detalhamento de DDD, Camadas e Regras de Engenharia.
+- **[Referência de API & Webhooks](docs/API.md)**: Documentação completa dos endpoints e automações.
+
 ### 🌐 System Overview
 ```mermaid
 graph TD

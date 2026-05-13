@@ -50,5 +50,13 @@ O sistema utiliza **Role-Based Access Control** (RBAC) centralizado.
 3. **Notificação:** Webhooks externos (Asaas) ou Event Bus interno notificam mudanças.
 4. **Reflexão:** Frontend atualiza instantaneamente via `onSnapshot`.
 
+## 🛠️ 5. Padrões de Engenharia (Code Control)
+Para manter o sistema sob controle e evitar dívidas técnicas:
+- **Comunicação Segura:** É proibido o uso de `fetch` ou `axios` puro nos componentes. Use `authFetch` (autenticado) ou `apiClient` (público).
+- **Tipagem Estrita:** O uso de `any` é proibido. Utilize as interfaces centralizadas em `/shared`.
+- **Validação de Contratos:** Toda entrada de API deve ter um esquema **Zod** correspondente para validação antes do processamento.
+- **Desacoplamento:** Lógicas complexas não devem residir nos Handlers de API; devem ser movidas para `api/_logic`.
+- **Observabilidade:** Erros críticos e mutações financeiras devem sempre ser registrados via `logActivity` e `Logger.error`.
+
 ---
 *Hub Central © 2026 — Engenharia de Software Enterprise.*
