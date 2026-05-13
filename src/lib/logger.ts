@@ -83,6 +83,21 @@ class LoggerService {
   debug(message: string, context?: Record<string, any>) {
     this.log('debug', message, context);
   }
+
+  /**
+   * Captura erros globais não tratados e rejections de promises
+   */
+  hijackGlobalErrors() {
+    if (typeof window === 'undefined') return;
+
+    window.addEventListener('error', (event) => {
+      this.error('Uncaught global error', event.error || event.message);
+    });
+
+    window.addEventListener('unhandledrejection', (event) => {
+      this.error('Unhandled promise rejection', event.reason);
+    });
+  }
 }
 
 export const Logger = new LoggerService();

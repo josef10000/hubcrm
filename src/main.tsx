@@ -4,9 +4,13 @@ import * as Sentry from "@sentry/react";
 import App from './App.tsx';
 import './index.css';
 import { initGlobalEventHandlers } from '@core/events/handlers';
+import { Logger } from '@/lib/logger';
 
 // Inicializa o barramento de eventos de negócio
 initGlobalEventHandlers();
+
+// Habilita captura global de erros para o Axiom
+Logger.hijackGlobalErrors();
 
 // Inicialização da Sentinela de Erros (v3.7.0)
 Sentry.init({
