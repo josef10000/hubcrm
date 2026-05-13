@@ -81,8 +81,8 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
 
 ### ☁️ Documentos & Media (Google Drive, Cloudinary & ImgBB)
 - **Google Drive:** Integração transparente para visualização de PDFs e manuais. O Hub transforma automaticamente links de compartilhamento em links de `preview` otimizados.
-- **Cloudinary:** Armazenamento robusto para arquivos pesados e PDFs, utilizando `unsigned presets` para uploads seguros e escaláveis.
-- **ImgBB:** CDN de alta performance para armazenamento de imagens de UI, fotos de perfil e comprovantes, eliminando o armazenamento de Base64 no banco de dados.
+- **Cloudinary:** Provider principal para ativos de longo prazo e alta qualidade. Utilizado para o upload e armazenamento de **fotos de perfil dos usuários** e **capas de livros na biblioteca Nexus**, garantindo estabilidade e redimensionamento dinâmico.
+- **ImgBB:** CDN de alta performance focada em ativos transacionais e colaborativos. Utilizada em todo o sistema de **Chat (anexos de mensagens, ícones de grupos e canais)**, imagens do **Quadro Branco (Canvas Editor)**, anexos de **Tickets de Suporte** e logos temporários de onboarding.
 
 ### 🛡️ Monitoramento & Uptime (UptimeRobot & Sentry)
 - **UptimeRobot:** Monitoramento de disponibilidade de serviços e sites, com status de saúde exibido no dashboard administrativo.
