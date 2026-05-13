@@ -29,6 +29,23 @@ export interface CustomRole {
 
 // Para compatibilidade legada
 export type CustomRoleBase = CustomRole;
+export type UserRole = CustomRole;
+
+// ── Auditoria ───────────────────────────────────────────────────────────────────
+
+export type AuditTargetType = 'lead' | 'client' | 'contract' | 'transaction' | 'role' | 'team';
+
+export interface AuditLogEntry {
+  orgId: string;
+  userId: string;
+  userName: string;
+  action: string;
+  targetId: string;
+  targetType: AuditTargetType;
+  details: string;
+  metadata?: Record<string, any>;
+  timestamp?: number;
+}
 
 // ── Perfil de Usuário ───────────────────────────────────────────────────────────
 
@@ -235,6 +252,17 @@ export interface Client {
 }
 
 export type ClientBase = Client;
+
+/** @deprecated Use Transaction with type 'EXPENSE' instead */
+export interface Expense {
+  id: string;
+  description: string;
+  amount: number;
+  date: number;
+  category: string;
+  clientId?: string;
+  offerId?: string;
+}
 
 // ── CRM: Leads ─────────────────────────────────────────────────────────────────
 

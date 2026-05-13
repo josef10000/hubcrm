@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 // 🚀 RE-EXPORT DE TODOS OS TIPOS COMPARTILHADOS
 export * from '../shared/types';
+export type { UserRole, Expense, AuditLogEntry, CustomRole, Client, UserProfile } from '../shared/types';
 
 // ESQUEMAS DE VALIDAÇÃO (Frontend-only / Shared validation logic)
 export const clientSchema = z.object({

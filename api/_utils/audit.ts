@@ -1,5 +1,5 @@
 import { db } from './firebase.js';
-import type { AuditLogEntry } from '../../shared/types.js';
+import type { AuditLogEntry } from '../../shared/types';
 
 /**
  * Registra uma atividade no log de auditoria da organização.
