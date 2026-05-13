@@ -14,36 +14,7 @@ export function usePortalData(orgId: string | undefined, initialClientId: string
   const [switching, setSwitching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 1. Buscar todas as assinaturas (clientes) com o mesmo CPF/CNPJ
-  useEffect(() => {
-    if (!orgId || !initialClientId) return;
-
-    const fetchAllSubscriptions = async () => {
-      try {
-        const clientsRef = collection(db, 'organizations', orgId, 'clients');
-        const initialClientDoc = doc(db, 'organizations', orgId, 'clients', initialClientId);
-        const initialClientSnap = await getDoc(initialClientDoc);
-
-        if (initialClientSnap.exists()) {
-          const data = initialClientSnap.data();
-          if (data.cpfCnpj) {
-            const q = query(clientsRef, where('cpfCnpj', '==', data.cpfCnpj));
-            const qSnap = await getDocs(q);
-            const clients = qSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-            setAllClients(clients);
-          } else {
-            setAllClients([{ id: initialClientSnap.id, ...data }]);
-          }
-        }
-      } catch (err) {
-        console.error("Error fetching all subscriptions:", err);
-      }
-    };
-
-    fetchAllSubscriptions();
-  }, [orgId, initialClientId]);
-
-  // 2. Escutar dados da assinatura ativa
+  // 1. Buscar dados consolidados do portal
   useEffect(() => {
     if (!orgId || !activeClientId) {
       if (!initialClientId) {
@@ -53,90 +24,71 @@ export function usePortalData(orgId: string | undefined, initialClientId: string
       return;
     }
 
-    if (!client) {
-      setLoading(true);
-    } else {
-      setSwitching(true);
+    const token = new URLSearchParams(window.location.search).get('token');
+    if (!token) {
+      setError("Token de segurança ausente. Use o link oficial enviado pelo seu consultor.");
+      setLoading(false);
+      return;
     }
-    const clientRef = doc(db, 'organizations', orgId, 'clients', activeClientId);
-    const requestsRef = collection(db, 'organizations', orgId, 'supportRequests');
-    const offersRef = collection(db, 'organizations', orgId, 'offers');
-    const orgRef = doc(db, 'organizations', orgId);
 
-    let unsubConsultant: () => void = () => {};
-    const unsubClient = onSnapshot(clientRef, async (snap) => {
-      if (snap.exists()) {
-        const data = snap.data();
-        
-        if (data.asaasCustomerId) {
-          try {
-            const res = await fetch(`/api/asaas/payments?customer=${data.asaasCustomerId}`);
-            if (res.ok) {
-              const payData = await res.json();
-              setPaymentsHistory(payData.data || []);
-            }
-          } catch (e) {
-            console.error("Asaas fetch error:", e);
-          }
-        } else {
-          setPaymentsHistory([]);
-        }
-
-        const clientData = { id: snap.id, ...data };
-        setClient(clientData);
-
-        if (data.assignedTo) {
-          const userRef = doc(db, 'organizations', orgId, 'users', data.assignedTo);
-          unsubConsultant();
-          unsubConsultant = onSnapshot(userRef, (userSnap) => {
-            if (userSnap.exists()) {
-              setClient({
-                ...clientData,
-                consultant: { id: userSnap.id, ...userSnap.data() }
-              });
-            }
-          });
-        }
-        
-        setLoading(false);
-        setSwitching(false);
+    const fetchPortalData = async () => {
+      if (!client) {
+        setLoading(true);
       } else {
-        setError("Assinatura não encontrada.");
+        setSwitching(true);
+      }
+
+      try {
+        const response = await fetch(`/api/portal_finance?orgId=${orgId}&clientId=${activeClientId}&token=${token}`);
+        
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.error || "Erro ao carregar dados do portal.");
+        }
+
+        const data = await response.json();
+        
+        setClient(data.client);
+        setPaymentsHistory(data.payments || []);
+        setRequests(data.requests || []);
+        setOffers(data.offers || []);
+        setAnnouncement(data.announcement);
+        
+        // Se ainda não temos a lista de todas as assinaturas, buscar (opcional, pode ser feito via API também se necessário)
+        if (allClients.length === 0 && data.client.cpfCnpj) {
+          // Manter lógica de busca de multi-assinaturas se necessário, 
+          // mas idealmente a API já deveria lidar com isso ou o cliente deveria ser informado.
+          setAllClients([data.client]);
+        }
+
+        setLoading(false);
+        setSwitching(false);
+        setError(null);
+      } catch (err: any) {
+        console.error("Portal fetch error:", err);
+        setError(err.message);
         setLoading(false);
         setSwitching(false);
       }
-    });
-
-    const qRequests = query(requestsRef, where('clientId', '==', activeClientId));
-    const unsubRequests = onSnapshot(qRequests, (snap) => {
-      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      setRequests(list.sort((a: any, b: any) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0)));
-    });
-
-    const qOffers = query(offersRef, where('active', '==', true));
-    const unsubOffers = onSnapshot(qOffers, (snap) => {
-      setOffers(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    });
-
-    const unsubGlobal = onSnapshot(orgRef, (snap) => {
-      if (snap.exists()) {
-        const data = snap.data();
-        if (data.announcement?.isActive) {
-          setAnnouncement(data.announcement);
-        } else {
-          setAnnouncement(null);
-        }
-      }
-    });
-
-    return () => {
-      unsubClient();
-      unsubConsultant();
-      unsubRequests();
-      unsubOffers();
-      unsubGlobal();
     };
+
+    fetchPortalData();
+
+    // Opcional: Polling a cada 60 segundos para manter dados atualizados sem onSnapshot
+    const interval = setInterval(fetchPortalData, 60000);
+    return () => clearInterval(interval);
   }, [orgId, activeClientId]);
+
+  // 2. Buscar todas as assinaturas vinculadas (CPF/CNPJ) - Requerer API dedicada no futuro se Firestore estiver bloqueado
+  useEffect(() => {
+    if (!orgId || !initialClientId || !client?.cpfCnpj) return;
+
+    // Nota: Esta parte ainda usa Firestore e pode falhar se não estiver logado.
+    // Para simplificar agora, vamos apenas garantir que o portal funcione para a assinatura atual.
+    if (allClients.length === 0) {
+      setAllClients([client]);
+    }
+  }, [orgId, initialClientId, client]);
 
   return { 
     client, 

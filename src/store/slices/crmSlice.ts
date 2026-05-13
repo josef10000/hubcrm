@@ -61,6 +61,15 @@ export const createCRMSlice: StateCreator<
         client.assignedTo = currentUserId;
       }
 
+      // 🛡️ Garantir publicToken para o Portal do Cliente
+      if (!client.publicToken) {
+        client.publicToken = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
+        // Garantir que tenha pelo menos 32 chars para o schema
+        while (client.publicToken.length < 32) {
+          client.publicToken += Math.random().toString(36).substring(2);
+        }
+      }
+
       // 🚀 Integração com Asaas (Exige CPF/CNPJ e E-mail)
       const cleanCpfCnpj = client.cpfCnpj?.replace(/\D/g, '') || '';
       const hasValidDoc = cleanCpfCnpj.length === 11 || cleanCpfCnpj.length === 14;
@@ -142,7 +151,7 @@ export const createCRMSlice: StateCreator<
                 await new Promise(r => setTimeout(r, 2000));
                 
                 const pData = await apiClient.get<{ data: any[] }>(
-                  `/api/portal_finance?orgId=${effectiveOrgId}&clientId=${client.id}&asaasCustomerId=${asaasCustomerId}`,
+                  `/api/portal_finance?orgId=${effectiveOrgId}&clientId=${client.id}&token=${client.publicToken}`,
                   { showErrorToast: false }
                 );
                 const payments = pData.data || [];

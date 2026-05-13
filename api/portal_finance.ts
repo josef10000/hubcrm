@@ -47,9 +47,57 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // 3. Fetch Payments from Asaas
-    const data = await asaasRequest(`/payments?customer=${asaasCustomerId}`, "GET");
+    const paymentsData = await asaasRequest(`/payments?customer=${asaasCustomerId}`, "GET");
     
-    return res.status(200).json(data);
+    // 4. Fetch Support Requests
+    const requestsSnap = await db
+      .collection('organizations')
+      .doc(orgId)
+      .collection('supportRequests')
+      .where('clientId', '==', clientId)
+      .limit(20)
+      .get();
+    
+    const requests = requestsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    // 5. Fetch Active Offers
+    const offersSnap = await db
+      .collection('organizations')
+      .doc(orgId)
+      .collection('offers')
+      .where('active', '==', true)
+      .limit(10)
+      .get();
+    
+    const offers = offersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    // 6. Fetch Org Announcement
+    const orgSnap = await db.collection('organizations').doc(orgId).get();
+    const orgData = orgSnap.data();
+    const announcement = orgData?.announcement?.isActive ? orgData.announcement : null;
+
+    return res.status(200).json({
+      client: {
+        id: clientId,
+        name: clientData.name,
+        email: clientData.email,
+        status: clientData.status,
+        plan: clientData.plan,
+        billingCycle: clientData.billingCycle,
+        nextDueDate: clientData.nextDueDate,
+        invoiceUrl: clientData.invoiceUrl,
+        whatsapp: clientData.whatsapp,
+        siteLink: clientData.siteLink,
+        niche: clientData.niche,
+        createdAt: clientData.createdAt,
+        assignedTo: clientData.assignedTo,
+        // Não expor dados sensíveis como notes ou tokens internos
+      },
+      payments: paymentsData.data || [],
+      requests: requests.sort((a: any, b: any) => (b.createdAt?._seconds || 0) - (a.createdAt?._seconds || 0)),
+      offers,
+      announcement
+    });
   } catch (error: any) {
     console.error("[PortalFinance] Critical Error:", error);
     return safeErrorResponse(res, error, 'Erro ao carregar faturamento do portal');
