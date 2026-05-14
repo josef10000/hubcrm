@@ -18,6 +18,7 @@ interface LibraryTabProps {
   setSharingBook: (book: NexusBook | null) => void;
   setIsShareModalOpen: (open: boolean) => void;
   communityBooks: NexusBook[];
+  onAddCategory: () => void;
   confirm: (options: any) => Promise<boolean>;
   orgId: string | undefined;
   userUid: string | undefined;
@@ -152,6 +153,7 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
   setSharingBook,
   setIsShareModalOpen,
   communityBooks,
+  onAddCategory,
   confirm,
   orgId,
   userUid
@@ -399,15 +401,7 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
                       ))}
                       <div className="h-px bg-white/5 my-2" />
                       <button
-                        onClick={async () => {
-                          const newCat = window.prompt('Nome da nova categoria:');
-                          if (newCat && newCat.trim()) {
-                            await addBookCategory(newCat.trim());
-                            setCategoryFilter(newCat.trim());
-                            setIsFilterDropdownOpen(false);
-                            toast.success('Categoria criada!');
-                          }
-                        }}
+                        onClick={onAddCategory}
                         className="w-full text-left px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-primary-400 hover:bg-primary-500/10 transition-all flex items-center gap-2"
                       >
                         <i className="ph-bold ph-plus" />

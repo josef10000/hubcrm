@@ -95,7 +95,7 @@ export default function MyWorkspaceView() {
   const [selectedPreviewCover, setSelectedPreviewCover] = useState<string | null>(null);
   const [modalConfig, setModalConfig] = useState<{
     isOpen: boolean;
-    type: 'folder' | 'link' | 'goal' | 'task' | 'note' | 'book';
+    type: 'folder' | 'link' | 'goal' | 'task' | 'note' | 'book' | 'category';
     mode: 'add' | 'edit';
     data?: any;
   }>({ isOpen: false, type: 'folder', mode: 'add' });
@@ -299,6 +299,17 @@ export default function MyWorkspaceView() {
     }
   };
 
+  const onConfirmCategory = async (values: any) => {
+    if (values.label && values.label.trim()) {
+      await addBookCategory(values.label.trim());
+      // Se estivermos catalogando um livro, selecionamos a nova categoria automaticamente
+      if (isAddBookLinkOpen) {
+        setBookFormData(prev => ({ ...prev, category: values.label.trim() }));
+      }
+      toast.success('Categoria criada!');
+    }
+  };
+
   const handleSaveBook = async () => {
     if (!bookFormData.title || !bookFormData.pdfUrl) {
       toast.error('Título e Link são obrigatórios!');
@@ -478,6 +489,7 @@ export default function MyWorkspaceView() {
                           setIsAddBookLinkOpen(open);
                         }}
                         onEditBook={openEditBookModal}
+                        onAddCategory={() => setModalConfig({ isOpen: true, type: 'category', mode: 'add' })}
                         setSharingBook={setSharingBook}
                         setIsShareModalOpen={setIsShareModalOpen}
                         communityBooks={communityBooks}
@@ -720,6 +732,14 @@ export default function MyWorkspaceView() {
           { id: 'unit', label: 'Unidade (ex: leads)', defaultValue: modalConfig.data?.unit }
         ]}
       />
+      
+      <PremiumDialog
+        isOpen={modalConfig.isOpen && modalConfig.type === 'category'}
+        onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
+        title="Nova Categoria"
+        onConfirm={onConfirmCategory}
+        fields={[{ id: 'label', label: 'Nome da Categoria', placeholder: 'Ex: Literatura Clássica' }]}
+      />
 
       <AnimatePresence>
         {isAddBookLinkOpen && (
@@ -833,14 +853,9 @@ export default function MyWorkspaceView() {
                                 ))}
                                 <div className="h-px bg-white/5 my-2" />
                                 <button
-                                  onClick={async () => {
-                                    const newCat = window.prompt('Nome da nova categoria:');
-                                    if (newCat && newCat.trim()) {
-                                      await addBookCategory(newCat.trim());
-                                      setBookFormData({ ...bookFormData, category: newCat.trim() });
-                                      setIsCategoryDropdownOpen(false);
-                                      toast.success('Categoria criada!');
-                                    }
+                                  onClick={() => {
+                                    setModalConfig({ isOpen: true, type: 'category', mode: 'add' });
+                                    setIsCategoryDropdownOpen(false);
                                   }}
                                   className="w-full text-left px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-widest text-primary-400 hover:bg-primary-500/10 transition-all flex items-center gap-2"
                                 >
