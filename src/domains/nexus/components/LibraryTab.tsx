@@ -49,6 +49,7 @@ const BookCard = React.memo(({
   onDelete: (id: string) => void;
   onAddToLibrary: (book: NexusBook) => void;
   onToggleFavorite: (id: string) => void;
+  onUpdateProgress: (id: string, page: number) => void;
   isOwner: boolean;
   isInLibrary: boolean;
 }) => {
@@ -129,12 +130,25 @@ const BookCard = React.memo(({
         
         {/* Progress Bar (Visual) */}
         {progress > 0 && (
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10 z-30">
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10 z-30 group/progress">
             <motion.div 
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
               className={`h-full ${progress === 100 ? 'bg-emerald-500' : 'bg-primary-500'}`} 
             />
+            {isOwner && (
+              <div 
+                className="absolute bottom-0 right-0 p-1 opacity-0 group-hover/progress:opacity-100 transition-opacity bg-black/60 backdrop-blur-md rounded-tl-lg cursor-pointer flex items-center gap-1"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const newPage = prompt(`Progresso Atual: ${book.currentPage || 0}. Total: ${book.totalPages || '?'}\nNova página:`, (book.currentPage || 0).toString());
+                  if (newPage !== null) onUpdateProgress(book.id, parseInt(newPage) || 0);
+                }}
+              >
+                <i className="ph-bold ph-pencil-line text-[10px] text-white" />
+                <span className="text-[8px] font-black text-white uppercase">Pág</span>
+              </div>
+            )}
           </div>
         )}
 
@@ -187,6 +201,7 @@ const ListViewItem = React.memo(({
   book: NexusBook; 
   onView: (id: string) => void;
   onToggleFavorite: (id: string) => void;
+  onUpdateProgress: (id: string, page: number) => void;
   isOwner: boolean;
 }) => {
   const progress = (book.totalPages && book.totalPages > 0) 
@@ -225,12 +240,24 @@ const ListViewItem = React.memo(({
       </div>
 
       <div className="hidden md:flex flex-col items-end gap-2 w-48 shrink-0">
-        <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+        <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden relative group/prog">
           <motion.div 
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
             className={`h-full ${progress === 100 ? 'bg-emerald-500' : 'bg-primary-500 shadow-[0_0_10px_rgba(100,100,255,0.5)]'}`}
           />
+          {isOwner && (
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                const newPage = prompt(`Progresso Atual: ${book.currentPage || 0}. Total: ${book.totalPages || '?'}\nNova página:`, (book.currentPage || 0).toString());
+                if (newPage !== null) onUpdateProgress(book.id, parseInt(newPage) || 0);
+              }}
+              className="absolute inset-0 bg-primary-600/90 opacity-0 group-hover/prog:opacity-100 transition-opacity flex items-center justify-center text-[8px] font-black text-white uppercase"
+            >
+              Atualizar Pág.
+            </button>
+          )}
         </div>
         <div className="flex justify-between w-full">
           <span className="text-[8px] font-black text-gray-600 uppercase tracking-widest">{progress}% Lido</span>
@@ -692,13 +719,14 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
           {viewLayout === 'list' ? (
             <div className="flex flex-col gap-4">
               {currentBooks.map((book, idx) => (
-                <ListViewItem 
-                  key={book.id}
-                  book={book}
-                  onView={setViewingBookDetailsId}
-                  onToggleFavorite={toggleFavorite}
-                  isOwner={librarySubTab === 'my' || (librarySubTab === 'community' && (book as any).ownerId === userUid)}
-                />
+                  <ListViewItem 
+                    key={book.id}
+                    book={book}
+                    onView={setViewingBookDetailsId}
+                    onToggleFavorite={toggleFavorite}
+                    onUpdateProgress={updateReadingProgress}
+                    isOwner={librarySubTab === 'my' || (librarySubTab === 'community' && (book as any).ownerId === userUid)}
+                  />
               ))}
             </div>
           ) : viewMode === 'alphabetical' && groupedBooks ? (
@@ -729,6 +757,7 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
                         onDelete={deleteBook}
                         onAddToLibrary={addToMyLibrary}
                         onToggleFavorite={toggleFavorite}
+                        onUpdateProgress={updateReadingProgress}
                         isOwner={librarySubTab === 'my' || (librarySubTab === 'community' && (book as any).ownerId === userUid)}
                         isInLibrary={books.some(b => b.pdfUrl === book.pdfUrl)}
                       />
@@ -760,6 +789,7 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
                     onDelete={deleteBook}
                     onAddToLibrary={addToMyLibrary}
                     onToggleFavorite={toggleFavorite}
+                    onUpdateProgress={updateReadingProgress}
                     isOwner={librarySubTab === 'my' || (librarySubTab === 'community' && (book as any).ownerId === userUid)}
                     isInLibrary={books.some(b => b.pdfUrl === book.pdfUrl)}
                   />

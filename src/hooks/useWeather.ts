@@ -14,10 +14,12 @@ export function useWeather() {
 
   // A chave da API deve estar configurada no Vercel/Ambiente
   // O usuário mencionou o nome "HubCrm"
-  const API_KEY = import.meta.env.VITE_HUBCRM || import.meta.env.VITE_OPENWEATHER_KEY;
+  // @ts-ignore
+  const API_KEY = process.env.HubCrm || import.meta.env.VITE_HUBCRM || import.meta.env.VITE_OPENWEATHER_KEY;
 
   useEffect(() => {
     if (!API_KEY) {
+      console.warn('[useWeather] OpenWeather API Key (HubCrm) não encontrada no ambiente.');
       setLoading(false);
       return;
     }

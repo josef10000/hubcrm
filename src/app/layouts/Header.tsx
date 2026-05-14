@@ -98,7 +98,7 @@ export function Header({ currentPath, navigate }: HeaderProps) {
 
         {isDashboard ? (
           <div className="flex items-center gap-8 w-full flex-1">
-            <div className="hidden lg:flex items-center shrink-0 border-l border-white/10 pl-8 gap-4">
+            <div className="flex items-center shrink-0 border-l border-white/10 pl-4 md:pl-8 gap-2 md:gap-4">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-0.5">
                   {new Date().getHours() >= 5 && new Date().getHours() < 12 ? '☀️ Bom dia' : new Date().getHours() >= 12 && new Date().getHours() < 18 ? '🌤️ Boa tarde' : '🌙 Boa noite'}
@@ -109,7 +109,7 @@ export function Header({ currentPath, navigate }: HeaderProps) {
               </div>
 
               {weather && (
-                <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-xl border border-white/5">
+                <div className="flex items-center gap-2 bg-white/5 px-2 md:px-3 py-1 md:py-1.5 rounded-xl border border-white/5 animate-in fade-in slide-in-from-right-4">
                   <img 
                     src={`https://openweathermap.org/img/wn/${weather.icon}.png`} 
                     alt={weather.description}
