@@ -5,6 +5,7 @@ import { useCRM } from '@crm/contexts/CRMContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
 import { useUI } from '@/contexts/UIContext';
 import { useFilteredClients } from '@/hooks/useFilteredClients';
+import { useWeather } from '@/hooks/useWeather';
 
 interface HeaderProps {
   currentPath: string;
@@ -13,6 +14,7 @@ interface HeaderProps {
 
 export function Header({ currentPath, navigate }: HeaderProps) {
   const { userProfile } = useAuth();
+  const { weather } = useWeather();
   const { 
     searchTerm, setSearchTerm, 
     globalSearch, setGlobalSearch,
@@ -96,13 +98,29 @@ export function Header({ currentPath, navigate }: HeaderProps) {
 
         {isDashboard ? (
           <div className="flex items-center gap-8 w-full flex-1">
-            <div className="hidden lg:block shrink-0 border-l border-white/10 pl-8">
-              <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-0.5">
-                {new Date().getHours() >= 5 && new Date().getHours() < 12 ? '☀️ Bom dia' : new Date().getHours() >= 12 && new Date().getHours() < 18 ? '🌤️ Boa tarde' : '🌙 Boa noite'}
-              </p>
-              <h2 className="text-sm font-bold text-white truncate max-w-[150px]">
-                {userProfile?.displayName?.split(' ')[0] || 'Colaborador'}!
-              </h2>
+            <div className="hidden lg:flex items-center shrink-0 border-l border-white/10 pl-8 gap-4">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-0.5">
+                  {new Date().getHours() >= 5 && new Date().getHours() < 12 ? '☀️ Bom dia' : new Date().getHours() >= 12 && new Date().getHours() < 18 ? '🌤️ Boa tarde' : '🌙 Boa noite'}
+                </p>
+                <h2 className="text-sm font-bold text-white truncate max-w-[150px]">
+                  {userProfile?.displayName?.split(' ')[0] || 'Colaborador'}!
+                </h2>
+              </div>
+
+              {weather && (
+                <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-xl border border-white/5">
+                  <img 
+                    src={`https://openweathermap.org/img/wn/${weather.icon}.png`} 
+                    alt={weather.description}
+                    className="w-8 h-8 object-contain"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-black text-white leading-none">{weather.temp}°C</span>
+                    <span className="text-[8px] font-bold text-gray-500 uppercase tracking-tighter leading-none mt-1">{weather.description}</span>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="flex items-center w-full max-w-sm relative" role="search">
               <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" aria-hidden="true" />
