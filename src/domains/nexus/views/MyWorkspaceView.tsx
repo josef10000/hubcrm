@@ -873,6 +873,9 @@ export default function MyWorkspaceView() {
               </button>
 
               {/* Cover Side */}
+                {(() => {
+                  const book = books.find(b => b.id === viewingBookDetailsId) || communityBooks.find(b => b.id === viewingBookDetailsId);
+                  if (!book) return null;
                   return (
                     <div 
                       className="w-full md:w-1/3 h-64 md:h-full bg-white/5 relative group overflow-hidden cursor-pointer"
