@@ -67,6 +67,7 @@ export default function MyWorkspaceView() {
   const shareBookAction = useNexusStore(state => state.shareBook);
   const publishToCommunityAction = useNexusStore(state => state.publishToCommunity);
   const updateBookDetails = useNexusStore(state => state.updateBookDetails);
+  const updateReadingProgress = useNexusStore(state => state.updateReadingProgress);
   const storeDeleteBook = useNexusStore(state => state.deleteBook);
   const setFolders = useNexusStore(state => state.setFolders);
   const setLinks = useNexusStore(state => state.setLinks);
@@ -654,7 +655,7 @@ export default function MyWorkspaceView() {
                             <input 
                               type="number" 
                               value={currentBook.currentPage || 0}
-                              onChange={(e) => updateBookDetails(currentBook.id, { currentPage: parseInt(e.target.value) || 0 })}
+                              onChange={(e) => updateReadingProgress(currentBook.id, parseInt(e.target.value) || 0)}
                               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white font-bold outline-none focus:border-primary-500 transition-all text-center"
                             />
                           </div>

@@ -75,11 +75,7 @@ const BookCard = React.memo(({
   return (
     <div className="group relative will-change-transform">
       <motion.div 
-        onClick={(e) => {
-          e.stopPropagation();
-          const newPage = prompt(`Progresso Atual: ${book.currentPage || 0}. Total: ${book.totalPages || '?'}\nNova página:`, (book.currentPage || 0).toString());
-          if (newPage !== null) onUpdateProgress(book.id, parseInt(newPage) || 0);
-        }}
+        onClick={() => onView(book.id)}
         whileHover={{ 
           rotateY: 10, 
           rotateX: -5, 
@@ -135,37 +131,23 @@ const BookCard = React.memo(({
         
         {/* Progress Bar (Visual) */}
         {progress > 0 && (
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10 z-30 group/progress">
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10 z-30">
             <motion.div 
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
               className={`h-full ${progress === 100 ? 'bg-emerald-500' : 'bg-primary-500'}`} 
             />
-            {isOwner && (
-              <div 
-                className="absolute bottom-0 right-0 p-1 opacity-0 group-hover/progress:opacity-100 transition-opacity bg-black/60 backdrop-blur-md rounded-tl-lg cursor-pointer flex items-center gap-1"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const newPage = prompt(`Progresso Atual: ${book.currentPage || 0}. Total: ${book.totalPages || '?'}\nNova página:`, (book.currentPage || 0).toString());
-                  if (newPage !== null) onUpdateProgress(book.id, parseInt(newPage) || 0);
-                }}
-              >
-                <i className="ph-bold ph-pencil-line text-[10px] text-white" />
-                <span className="text-[8px] font-black text-white uppercase">Pág</span>
-              </div>
-            )}
           </div>
         )}
 
         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 z-20">
            <motion.div 
-             onClick={(e) => { e.stopPropagation(); onView(book.id); }}
              initial={{ scale: 0.5, opacity: 0 }}
              whileHover={{ scale: 1.1 }}
              animate={{ scale: 1, opacity: 1 }}
              className="w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center text-white text-xl shadow-xl shadow-primary-500/40"
            >
-             <i className="ph-bold ph-eye" />
+             <i className="ph-bold ph-play" />
            </motion.div>
         </div>
 
@@ -247,24 +229,12 @@ const ListViewItem = React.memo(({
       </div>
 
       <div className="hidden md:flex flex-col items-end gap-2 w-48 shrink-0">
-        <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden relative group/prog">
+        <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
           <motion.div 
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
             className={`h-full ${progress === 100 ? 'bg-emerald-500' : 'bg-primary-500 shadow-[0_0_10px_rgba(100,100,255,0.5)]'}`}
           />
-          {isOwner && (
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                const newPage = prompt(`Progresso Atual: ${book.currentPage || 0}. Total: ${book.totalPages || '?'}\nNova página:`, (book.currentPage || 0).toString());
-                if (newPage !== null) onUpdateProgress(book.id, parseInt(newPage) || 0);
-              }}
-              className="absolute inset-0 bg-primary-600/90 opacity-0 group-hover/prog:opacity-100 transition-opacity flex items-center justify-center text-[8px] font-black text-white uppercase"
-            >
-              Atualizar Pág.
-            </button>
-          )}
         </div>
         <div className="flex justify-between w-full">
           <span className="text-[8px] font-black text-gray-600 uppercase tracking-widest">{progress}% Lido</span>
@@ -280,11 +250,8 @@ const ListViewItem = React.memo(({
         >
           <i className={`ph-bold ${book.isFavorite ? 'ph-star-fill' : 'ph-star'}`} />
         </button>
-        <button 
-          onClick={(e) => { e.stopPropagation(); onView(book.id); }}
-          className="p-2 rounded-xl bg-primary-500 text-white shadow-lg shadow-primary-500/20 hover:scale-110 transition-all active:scale-95"
-        >
-          <i className="ph-bold ph-eye" />
+        <button className="p-2 rounded-xl bg-primary-500 text-white shadow-lg shadow-primary-500/20 hover:scale-110 transition-all active:scale-95">
+          <i className="ph-bold ph-play" />
         </button>
       </div>
     </motion.div>
