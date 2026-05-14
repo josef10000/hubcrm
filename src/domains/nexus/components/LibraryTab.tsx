@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNexusStore, BOOK_CATEGORIES } from '@store/useNexusStore';
+import { useNexusStore } from '@store/useNexusStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { NexusBook } from '@store/useNexusStore';
 import { toast } from 'sonner';
@@ -158,6 +158,8 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
 }) => {
   const books = useNexusStore(state => state.books);
   const setBooks = useNexusStore(state => state.setBooks);
+  const bookCategories = useNexusStore(state => state.bookCategories);
+  const addBookCategory = useNexusStore(state => state.addBookCategory);
   const publishToCommunityAction = useNexusStore(state => state.publishToCommunity);
   const removeFromCommunityAction = useNexusStore(state => (state as any).removeFromCommunity);
   
@@ -386,7 +388,7 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
                       >
                         Todas Categorias
                       </button>
-                      {BOOK_CATEGORIES.map(cat => (
+                      {bookCategories.map(cat => (
                         <button
                           key={cat}
                           onClick={() => { setCategoryFilter(cat); setIsFilterDropdownOpen(false); }}
@@ -395,6 +397,22 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
                           {cat}
                         </button>
                       ))}
+                      <div className="h-px bg-white/5 my-2" />
+                      <button
+                        onClick={async () => {
+                          const newCat = window.prompt('Nome da nova categoria:');
+                          if (newCat && newCat.trim()) {
+                            await addBookCategory(newCat.trim());
+                            setCategoryFilter(newCat.trim());
+                            setIsFilterDropdownOpen(false);
+                            toast.success('Categoria criada!');
+                          }
+                        }}
+                        className="w-full text-left px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-primary-400 hover:bg-primary-500/10 transition-all flex items-center gap-2"
+                      >
+                        <i className="ph-bold ph-plus" />
+                        Nova Categoria...
+                      </button>
                     </div>
                   </motion.div>
                 </>

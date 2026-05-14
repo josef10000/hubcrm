@@ -24,7 +24,7 @@ import { OKRWidget } from '@nexus/components/OKRWidget';
 import { KudosWall } from '@nexus/components/KudosWall';
 
 // Interfaces importadas da Store
-import { useNexusStore, BOOK_CATEGORIES } from '@store/useNexusStore';
+import { useNexusStore } from '@store/useNexusStore';
 import type { PersonalLink, LinkFolder, PersonalGoal, NexusTask, NexusNote, NexusBook, BookCategory } from '@store/useNexusStore';
 
 // Helper para ícones de sites comuns
@@ -73,6 +73,8 @@ export default function MyWorkspaceView() {
   const setGoals = useNexusStore(state => state.setGoals);
   const setTasks = useNexusStore(state => state.setTasks);
   const setBooks = useNexusStore(state => state.setBooks);
+  const bookCategories = useNexusStore(state => state.bookCategories);
+  const addBookCategory = useNexusStore(state => state.addBookCategory);
 
   // Estados Locais
   const [activeTab, setActiveTab] = useState<'hub' | 'library' | 'culture'>('hub');
@@ -817,7 +819,7 @@ export default function MyWorkspaceView() {
                               className="absolute top-full left-0 right-0 mt-2 bg-[#0d0f16] border border-white/10 rounded-2xl shadow-2xl z-[130] overflow-hidden"
                             >
                               <div className="max-h-[240px] overflow-y-auto custom-scrollbar p-2">
-                                {BOOK_CATEGORIES.map(cat => (
+                                {bookCategories.map(cat => (
                                   <button
                                     key={cat}
                                     onClick={() => {
@@ -829,6 +831,22 @@ export default function MyWorkspaceView() {
                                     {cat}
                                   </button>
                                 ))}
+                                <div className="h-px bg-white/5 my-2" />
+                                <button
+                                  onClick={async () => {
+                                    const newCat = window.prompt('Nome da nova categoria:');
+                                    if (newCat && newCat.trim()) {
+                                      await addBookCategory(newCat.trim());
+                                      setBookFormData({ ...bookFormData, category: newCat.trim() });
+                                      setIsCategoryDropdownOpen(false);
+                                      toast.success('Categoria criada!');
+                                    }
+                                  }}
+                                  className="w-full text-left px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-widest text-primary-400 hover:bg-primary-500/10 transition-all flex items-center gap-2"
+                                >
+                                  <i className="ph-bold ph-plus" />
+                                  Nova Categoria...
+                                </button>
                               </div>
                             </motion.div>
                           </>

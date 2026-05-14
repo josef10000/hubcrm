@@ -50,7 +50,7 @@ export interface NexusNote {
   updatedAt: number;
 }
 
-export const BOOK_CATEGORIES = [
+export const DEFAULT_BOOK_CATEGORIES = [
   'Ficção',
   'Não-Ficção',
   'Filosofia',
@@ -63,9 +63,9 @@ export const BOOK_CATEGORIES = [
   'Negócios & Finanças',
   'Tecnologia',
   'Autoajuda'
-] as const;
+];
 
-export type BookCategory = typeof BOOK_CATEGORIES[number];
+export type BookCategory = string;
 
 export interface NexusBook {
   id: string;
@@ -92,6 +92,7 @@ export interface NexusData {
   tasks: NexusTask[];
   books: NexusBook[];
   noteFolders: NoteFolder[];
+  bookCategories: string[];
 }
 
 interface NexusState extends NexusData {
@@ -108,6 +109,8 @@ interface NexusState extends NexusData {
   setTasks: (tasks: NexusTask[]) => Promise<void>;
   setBooks: (books: NexusBook[]) => Promise<void>;
   setNoteFolders: (folders: NoteFolder[]) => Promise<void>;
+  setBookCategories: (categories: string[]) => Promise<void>;
+  addBookCategory: (category: string) => Promise<void>;
   
   // Note specific actions
   addNote: (note: Omit<NexusNote, 'id'>) => Promise<string>;
@@ -212,6 +215,7 @@ export const useNexusStore = create<NexusState>()(
             tasks: nexus.tasks || [],
             books: nexus.books || [],
             noteFolders: nexus.noteFolders || [],
+            bookCategories: nexus.bookCategories || DEFAULT_BOOK_CATEGORIES,
             loading: false,
             initialized: true
           });
@@ -222,7 +226,8 @@ export const useNexusStore = create<NexusState>()(
             goals: [],
             tasks: [],
             books: [],
-            noteFolders: []
+            noteFolders: [],
+            bookCategories: DEFAULT_BOOK_CATEGORIES
           };
 
           try {
@@ -257,7 +262,7 @@ export const useNexusStore = create<NexusState>()(
   },
 
   _updateFirestore: async (newData: Partial<NexusData>) => {
-    const { uid, folders, links, goals, tasks, books, noteFolders } = get();
+    const { uid, folders, links, goals, tasks, books, noteFolders, bookCategories } = get();
     if (!uid) return;
 
     set(state => ({ ...state, ...newData }));
@@ -265,7 +270,7 @@ export const useNexusStore = create<NexusState>()(
     const profileRef = doc(db, 'profiles', uid);
     try {
       // NÃO inclui notes — elas agora vivem na subcoleção
-      const baseData = { folders, links, goals, tasks, books, noteFolders };
+      const baseData = { folders, links, goals, tasks, books, noteFolders, bookCategories };
       const merged = { ...baseData, ...newData };
       
       const sanitized: any = {};
@@ -321,6 +326,18 @@ export const useNexusStore = create<NexusState>()(
     } catch (err) {
       Logger.error('[NexusStore] Falha ao salvar pastas de notas', err);
     }
+  },
+  setBookCategories: async (bookCategories) => {
+    try {
+      await get()._updateFirestore({ bookCategories });
+    } catch (err) {
+      Logger.error('[NexusStore] Falha ao salvar categorias de livros', err);
+    }
+  },
+  addBookCategory: async (category) => {
+    const { bookCategories, setBookCategories } = get();
+    if (bookCategories.includes(category)) return;
+    await setBookCategories([...bookCategories, category]);
   },
 
   // =============================================
@@ -486,7 +503,8 @@ export const useNexusStore = create<NexusState>()(
     links: state.links,
     goals: state.goals,
     tasks: state.tasks,
-    books: state.books
+    books: state.books,
+    bookCategories: state.bookCategories
   }),
   merge: (persistedState: any, currentState) => ({
     ...currentState,
@@ -495,6 +513,7 @@ export const useNexusStore = create<NexusState>()(
     links: persistedState?.links || [],
     goals: persistedState?.goals || [],
     tasks: persistedState?.tasks || [],
-    books: persistedState?.books || []
+    books: persistedState?.books || [],
+    bookCategories: persistedState?.bookCategories || DEFAULT_BOOK_CATEGORIES
   })
 }));
