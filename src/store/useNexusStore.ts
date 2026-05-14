@@ -134,6 +134,7 @@ interface NexusState extends NexusData {
   publishToCommunity: (book: NexusBook, orgId: string) => Promise<void>;
   updateBookDetails: (bookId: string, details: Partial<NexusBook>) => Promise<void>;
   deleteBook: (bookId: string) => Promise<void>;
+  addBook: (book: NexusBook) => Promise<void>;
   
   // Internal
   _updateFirestore: (newData: Partial<NexusData>) => Promise<void>;
@@ -555,26 +556,6 @@ export const useNexusStore = create<NexusState>()(
       throw err;
     }
   },
-
-  updateBookDetails: async (bookId, details) => {
-    try {
-      const { books, setBooks } = get();
-      const updated = books.map(b => b.id === bookId ? { ...b, ...details } : b);
-      await setBooks(updated);
-    } catch (err) {
-      Logger.error('[NexusStore] Falha ao atualizar detalhes do livro', err);
-    }
-  },
-
-  deleteBook: async (bookId) => {
-    try {
-      const { books, setBooks } = get();
-      const updated = books.filter(b => b.id !== bookId);
-      await setBooks(updated);
-    } catch (err) {
-      Logger.error('[NexusStore] Falha ao excluir livro', err);
-    }
-  }
 }), {
   name: 'hubcrm-nexus-storage',
   version: 4,
