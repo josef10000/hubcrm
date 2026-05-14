@@ -212,7 +212,6 @@ export const NexusHub: React.FC<NexusHubProps> = ({ confirm, setModalConfig }) =
       id: Math.random().toString(36).substr(2, 9),
       label: 'Nova Tarefa',
       completed: false,
-      priority: 'medium',
       createdAt: Date.now()
     };
     await setTasks([...tasks, newTask]);
