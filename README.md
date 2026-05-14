@@ -111,9 +111,13 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
 - **Gerenciamento Total (CRUD):** 
     - Controle completo (Criar, Editar, Renomear, Excluir) de Notas, Pastas, Tarefas e Metas diretamente pela interface principal.
     - Renomeação inline para fluxos de trabalho ininterruptos.
-- **Biblioteca Nexus:**
+- **Biblioteca Nexus Premium:**
     - Catalogação imersiva com busca automática de capas e metadados.
-    - **Categorias Dinâmicas:** Sistema flexível para criação de categorias personalizadas, permitindo organização sob medida para cada usuário.
+    - **Gestão de Progresso:** Acompanhamento visual da leitura (barra de progresso, páginas lidas, estimativa de conclusão).
+    - **Dual-View System:** Alternância instantânea entre visualização em **Grade (Cards Premium)** e **Lista (Visão de Gestão)**.
+    - **Categorias Dinâmicas:** Sistema flexível para criação de categorias personalizadas com gestão CRUD completa via diálogos.
+    - **Smart Filters:** Filtragem avançada por Status de Leitura (Lendo, Quer Ler, Concluído, Abandonado) e Favoritos.
+    - **Reading Analytics:** Dashboard integrado com estatísticas de total de obras, páginas lidas e metas concluídas.
 - **Performance:** Motor de grafo removido para garantir 60fps constantes e foco total na produtividade textual e organizacional.
 
 ---
