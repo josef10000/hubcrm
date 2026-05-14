@@ -23,7 +23,7 @@ interface LibraryTabProps {
   onDeleteCategory: (cat: string) => void;
   confirm: (options: any) => Promise<boolean>;
   orgId: string | undefined;
-  userUid: string | undefined;
+  userUid: string;
 }
 
 // Componente de Card Memoizado para evitar re-renderizações inúteis
@@ -173,9 +173,10 @@ const BookCard = React.memo(({
         )}
         <button onClick={(e) => { e.stopPropagation(); onDelete(book.id); }} className="p-1.5 hover:text-rose-400 transition-all" title={isOwner && book.isCommunity ? "Remover da Comunidade" : "Excluir"}><i className="ph-bold ph-trash" /></button>
       </div>
-    </div>
+    </motion.div>
   </div>
-));
+  );
+});
 
 const ListViewItem = React.memo(({ 
   book, 
@@ -652,7 +653,6 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
             <span className="hidden sm:inline">Catalogar</span>
           </button>
         </div>
-      </div>
 
       {filteredBooks.length === 0 ? (
         <motion.div 
