@@ -111,6 +111,8 @@ interface NexusState extends NexusData {
   setNoteFolders: (folders: NoteFolder[]) => Promise<void>;
   setBookCategories: (categories: string[]) => Promise<void>;
   addBookCategory: (category: string) => Promise<void>;
+  updateBookCategory: (oldCategory: string, newCategory: string) => Promise<void>;
+  deleteBookCategory: (category: string) => Promise<void>;
   
   // Note specific actions
   addNote: (note: Omit<NexusNote, 'id'>) => Promise<string>;
@@ -335,10 +337,40 @@ export const useNexusStore = create<NexusState>()(
       Logger.error('[NexusStore] Falha ao salvar categorias de livros', err);
     }
   },
-  addBookCategory: async (category) => {
-    const { bookCategories, setBookCategories } = get();
-    if (bookCategories.includes(category)) return;
-    await setBookCategories([...bookCategories, category]);
+  addBookCategory: async (category: string) => {
+    const { bookCategories, _updateFirestore } = get();
+    if (!bookCategories.includes(category)) {
+      const newList = [...bookCategories, category];
+      set({ bookCategories: newList });
+      await _updateFirestore({ bookCategories: newList });
+    }
+  },
+
+  updateBookCategory: async (oldCategory: string, newCategory: string) => {
+    const { bookCategories, books, _updateFirestore } = get();
+    
+    // Atualiza a lista de categorias
+    const newList = bookCategories.map(c => c === oldCategory ? newCategory : c);
+    
+    // Atualiza todos os livros que usam essa categoria
+    const newBooks = books.map(b => b.category === oldCategory ? { ...b, category: newCategory } : b);
+    
+    set({ bookCategories: newList, books: newBooks });
+    await _updateFirestore({ bookCategories: newList, books: newBooks });
+  },
+
+  deleteBookCategory: async (category: string) => {
+    const { bookCategories, books, _updateFirestore } = get();
+    
+    // Remove da lista de categorias
+    const newList = bookCategories.filter(c => c !== category);
+    
+    // Opcional: livros com essa categoria voltam para 'Geral' ou ficam sem categoria?
+    // Vou colocar 'Outros' como fallback se for deletada
+    const newBooks = books.map(b => b.category === category ? { ...b, category: 'Outros' } : b);
+    
+    set({ bookCategories: newList, books: newBooks });
+    await _updateFirestore({ bookCategories: newList, books: newBooks });
   },
 
   // =============================================

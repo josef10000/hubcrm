@@ -75,6 +75,8 @@ export default function MyWorkspaceView() {
   const setBooks = useNexusStore(state => state.setBooks);
   const bookCategories = useNexusStore(state => state.bookCategories);
   const addBookCategory = useNexusStore(state => state.addBookCategory);
+  const updateBookCategory = useNexusStore(state => state.updateBookCategory);
+  const deleteBookCategory = useNexusStore(state => state.deleteBookCategory);
 
   // Estados Locais
   const [activeTab, setActiveTab] = useState<'hub' | 'library' | 'culture'>('hub');
@@ -301,12 +303,17 @@ export default function MyWorkspaceView() {
 
   const onConfirmCategory = async (values: any) => {
     if (values.label && values.label.trim()) {
-      await addBookCategory(values.label.trim());
-      // Se estivermos catalogando um livro, selecionamos a nova categoria automaticamente
-      if (isAddBookLinkOpen) {
-        setBookFormData(prev => ({ ...prev, category: values.label.trim() }));
+      if (modalConfig.mode === 'edit' && modalConfig.data) {
+        await updateBookCategory(modalConfig.data, values.label.trim());
+        toast.success('Categoria atualizada!');
+      } else {
+        await addBookCategory(values.label.trim());
+        // Se estivermos catalogando um livro, selecionamos a nova categoria automaticamente
+        if (isAddBookLinkOpen) {
+          setBookFormData(prev => ({ ...prev, category: values.label.trim() }));
+        }
+        toast.success('Categoria criada!');
       }
-      toast.success('Categoria criada!');
     }
   };
 
@@ -490,6 +497,16 @@ export default function MyWorkspaceView() {
                         }}
                         onEditBook={openEditBookModal}
                         onAddCategory={() => setModalConfig({ isOpen: true, type: 'category', mode: 'add' })}
+                        onEditCategory={(cat) => setModalConfig({ isOpen: true, type: 'category', mode: 'edit', data: cat })}
+                        onDeleteCategory={async (cat) => {
+                          if (await confirm({ 
+                            title: 'Excluir Categoria', 
+                            message: `Tem certeza que deseja excluir "${cat}"? Livros vinculados serão movidos para "Outros".` 
+                          })) {
+                            await deleteBookCategory(cat);
+                            toast.success('Categoria removida!');
+                          }
+                        }}
                         setSharingBook={setSharingBook}
                         setIsShareModalOpen={setIsShareModalOpen}
                         communityBooks={communityBooks}
@@ -736,9 +753,9 @@ export default function MyWorkspaceView() {
       <PremiumDialog
         isOpen={modalConfig.isOpen && modalConfig.type === 'category'}
         onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
-        title="Nova Categoria"
+        title={modalConfig.mode === 'add' ? 'Nova Categoria' : 'Editar Categoria'}
         onConfirm={onConfirmCategory}
-        fields={[{ id: 'label', label: 'Nome da Categoria', placeholder: 'Ex: Literatura Clássica' }]}
+        fields={[{ id: 'label', label: 'Nome da Categoria', defaultValue: modalConfig.mode === 'edit' ? modalConfig.data : '', placeholder: 'Ex: Literatura Clássica' }]}
       />
 
       <AnimatePresence>

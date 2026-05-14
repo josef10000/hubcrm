@@ -19,6 +19,8 @@ interface LibraryTabProps {
   setIsShareModalOpen: (open: boolean) => void;
   communityBooks: NexusBook[];
   onAddCategory: () => void;
+  onEditCategory: (cat: string) => void;
+  onDeleteCategory: (cat: string) => void;
   confirm: (options: any) => Promise<boolean>;
   orgId: string | undefined;
   userUid: string | undefined;
@@ -154,6 +156,8 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
   setIsShareModalOpen,
   communityBooks,
   onAddCategory,
+  onEditCategory,
+  onDeleteCategory,
   confirm,
   orgId,
   userUid
@@ -391,13 +395,28 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
                         Todas Categorias
                       </button>
                       {bookCategories.map(cat => (
-                        <button
-                          key={cat}
-                          onClick={() => { setCategoryFilter(cat); setIsFilterDropdownOpen(false); }}
-                          className={`w-full text-left px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${categoryFilter === cat ? 'bg-primary-500 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
-                        >
-                          {cat}
-                        </button>
+                        <div key={cat} className="group relative flex items-center">
+                          <button
+                            onClick={() => { setCategoryFilter(cat); setIsFilterDropdownOpen(false); }}
+                            className={`flex-1 text-left px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${categoryFilter === cat ? 'bg-primary-500 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+                          >
+                            {cat}
+                          </button>
+                          <div className="absolute right-2 opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all">
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); onEditCategory(cat); setIsFilterDropdownOpen(false); }}
+                              className="p-1.5 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-all"
+                            >
+                              <i className="ph-bold ph-pencil-simple" />
+                            </button>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); onDeleteCategory(cat); setIsFilterDropdownOpen(false); }}
+                              className="p-1.5 hover:bg-red-500/10 rounded-lg text-gray-400 hover:text-red-400 transition-all"
+                            >
+                              <i className="ph-bold ph-trash" />
+                            </button>
+                          </div>
+                        </div>
                       ))}
                       <div className="h-px bg-white/5 my-2" />
                       <button
