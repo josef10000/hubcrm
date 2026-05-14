@@ -152,6 +152,7 @@ export const useNexusStore = create<NexusState>()(
       notes: [],
       books: [],
       noteFolders: [],
+      bookCategories: [],
       loading: true,
       initialized: false,
       error: null,
