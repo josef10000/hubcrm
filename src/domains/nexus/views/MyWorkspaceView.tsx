@@ -943,26 +943,28 @@ export default function MyWorkspaceView() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">Página Atual</label>
-                      <input 
-                        type="number" 
-                        value={bookFormData.currentPage}
-                        onChange={(e) => setBookFormData({ ...bookFormData, currentPage: parseInt(e.target.value) || 0 })}
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none focus:border-primary-500" 
-                      />
+                  {modalConfig.mode === 'add' && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">Página Atual</label>
+                        <input 
+                          type="number" 
+                          value={bookFormData.currentPage}
+                          onChange={(e) => setBookFormData({ ...bookFormData, currentPage: parseInt(e.target.value) || 0 })}
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none focus:border-primary-500" 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">Total de Páginas</label>
+                        <input 
+                          type="number" 
+                          value={bookFormData.totalPages}
+                          onChange={(e) => setBookFormData({ ...bookFormData, totalPages: parseInt(e.target.value) || 0 })}
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none focus:border-primary-500" 
+                        />
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">Total de Páginas</label>
-                      <input 
-                        type="number" 
-                        value={bookFormData.totalPages}
-                        onChange={(e) => setBookFormData({ ...bookFormData, totalPages: parseInt(e.target.value) || 0 })}
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none focus:border-primary-500" 
-                      />
-                    </div>
-                  </div>
+                  )}
                 </div>
 
                 <button 

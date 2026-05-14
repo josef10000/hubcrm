@@ -75,7 +75,11 @@ const BookCard = React.memo(({
   return (
     <div className="group relative will-change-transform">
       <motion.div 
-        onClick={() => onView(book.id)}
+        onClick={(e) => {
+          e.stopPropagation();
+          const newPage = prompt(`Progresso Atual: ${book.currentPage || 0}. Total: ${book.totalPages || '?'}\nNova página:`, (book.currentPage || 0).toString());
+          if (newPage !== null) onUpdateProgress(book.id, parseInt(newPage) || 0);
+        }}
         whileHover={{ 
           rotateY: 10, 
           rotateX: -5, 
@@ -155,12 +159,13 @@ const BookCard = React.memo(({
 
         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 z-20">
            <motion.div 
+             onClick={(e) => { e.stopPropagation(); onView(book.id); }}
              initial={{ scale: 0.5, opacity: 0 }}
              whileHover={{ scale: 1.1 }}
              animate={{ scale: 1, opacity: 1 }}
              className="w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center text-white text-xl shadow-xl shadow-primary-500/40"
            >
-             <i className="ph-bold ph-play" />
+             <i className="ph-bold ph-eye" />
            </motion.div>
         </div>
 
@@ -275,8 +280,11 @@ const ListViewItem = React.memo(({
         >
           <i className={`ph-bold ${book.isFavorite ? 'ph-star-fill' : 'ph-star'}`} />
         </button>
-        <button className="p-2 rounded-xl bg-primary-500 text-white shadow-lg shadow-primary-500/20 hover:scale-110 transition-all active:scale-95">
-          <i className="ph-bold ph-play" />
+        <button 
+          onClick={(e) => { e.stopPropagation(); onView(book.id); }}
+          className="p-2 rounded-xl bg-primary-500 text-white shadow-lg shadow-primary-500/20 hover:scale-110 transition-all active:scale-95"
+        >
+          <i className="ph-bold ph-eye" />
         </button>
       </div>
     </motion.div>
@@ -328,7 +336,8 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
     const myBooks = books.filter(b => b.ownerId === userUid || !b.ownerId);
     const totalPages = myBooks.reduce((acc, b) => acc + (b.currentPage || 0), 0);
     const finished = myBooks.filter(b => b.status === 'finished').length;
-    const reading = myBooks.filter(b => b.status === 'reading').length;
+    // Considera lendo se status é 'reading' OU se tem progresso e não está finalizado
+    const reading = myBooks.filter(b => b.status === 'reading' || ((b.currentPage || 0) > 0 && b.status !== 'finished')).length;
     return { total: myBooks.length, totalPages, finished, reading };
   }, [books, userUid]);
 
