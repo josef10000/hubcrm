@@ -66,6 +66,7 @@ export const DEFAULT_BOOK_CATEGORIES = [
 ];
 
 export type BookCategory = string;
+export type ReadingStatus = 'reading' | 'want_to_read' | 'finished' | 'dropped';
 
 export interface NexusBook {
   id: string;
@@ -83,6 +84,9 @@ export interface NexusBook {
   isCommunity?: boolean;
   sharedBy?: { uid: string; name: string };
   originalBookId?: string;
+  status?: ReadingStatus;
+  isFavorite?: boolean;
+  linkedNoteId?: string;
 }
 
 export interface NexusData {
@@ -114,7 +118,10 @@ interface NexusState extends NexusData {
   updateBookCategory: (oldCategory: string, newCategory: string) => Promise<void>;
   deleteBookCategory: (category: string) => Promise<void>;
   
-  // Note specific actions
+  // Book specific actions
+  toggleFavorite: (bookId: string) => Promise<void>;
+  updateBookStatus: (bookId: string, status: ReadingStatus) => Promise<void>;
+  updateReadingProgress: (bookId: string, page: number) => Promise<void>;
   addNote: (note: Omit<NexusNote, 'id'>) => Promise<string>;
   updateNote: (id: string, note: Partial<NexusNote>) => Promise<void>;
   deleteNote: (id: string) => Promise<void>;
@@ -371,6 +378,46 @@ export const useNexusStore = create<NexusState>()(
     
     set({ bookCategories: newList, books: newBooks });
     await _updateFirestore({ bookCategories: newList, books: newBooks });
+  },
+
+  // =============================================
+  // BOOK ACTIONS
+  // =============================================
+  addBook: async (book: NexusBook) => {
+    const { books, _updateFirestore } = get();
+    const newList = [...books, book];
+    set({ books: newList });
+    await _updateFirestore({ books: newList });
+  },
+
+  deleteBook: async (bookId: string) => {
+    const { books, _updateFirestore } = get();
+    const newList = books.filter(b => b.id !== bookId);
+    set({ books: newList });
+    await _updateFirestore({ books: newList });
+  },
+
+  updateBookDetails: async (bookId: string, details: Partial<NexusBook>) => {
+    const { books, _updateFirestore } = get();
+    const newList = books.map(b => b.id === bookId ? { ...b, ...details } : b);
+    set({ books: newList });
+    await _updateFirestore({ books: newList });
+  },
+
+  toggleFavorite: async (bookId: string) => {
+    const { books, updateBookDetails } = get();
+    const book = books.find(b => b.id === bookId);
+    if (book) {
+      await updateBookDetails(bookId, { isFavorite: !book.isFavorite });
+    }
+  },
+
+  updateBookStatus: async (bookId: string, status: ReadingStatus) => {
+    await get().updateBookDetails(bookId, { status });
+  },
+
+  updateReadingProgress: async (bookId: string, page: number) => {
+    await get().updateBookDetails(bookId, { currentPage: page });
   },
 
   // =============================================
