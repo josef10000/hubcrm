@@ -37,6 +37,7 @@ const BookCard = React.memo(({
   onDelete, 
   onAddToLibrary,
   onToggleFavorite,
+  onUpdateProgress,
   isOwner,
   isInLibrary
 }: { 
@@ -196,6 +197,7 @@ const ListViewItem = React.memo(({
   book, 
   onView, 
   onToggleFavorite,
+  onUpdateProgress,
   isOwner 
 }: { 
   book: NexusBook; 
