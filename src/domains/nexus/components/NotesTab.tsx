@@ -224,7 +224,14 @@ export const NotesTab: React.FC<NotesTabProps> = ({
         <AnimatePresence mode="wait">
           {viewMode === 'graph' ? (
             <motion.div key="graph" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full h-full">
-              <NoteGraphView notes={notes} selectedNoteId={selectedNoteId} onSelectNote={setSelectedNoteId} />
+              <NoteGraphView 
+                notes={notes} 
+                goals={[]} 
+                tasks={[]} 
+                links={[]} 
+                selectedId={selectedNoteId} 
+                onSelectNode={(id) => setSelectedNoteId(id)} 
+              />
             </motion.div>
           ) : (
             <motion.div key="editor" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="w-full h-full flex flex-col gap-6">
