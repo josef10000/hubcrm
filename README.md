@@ -18,50 +18,39 @@ O Hub Central utiliza uma arquitetura baseada em **Domain-Driven Design (DDD)** 
 
 ```mermaid
 graph TB
-    subgraph Users [Interfaces de Usuário]
-        Admin[Dashboard Administrativo]
-        Client[Portal do Cliente]
-        Nexus[Nexus Knowledge Engine]
+    subgraph Client_Layer [Interfaces de Experiência]
+        Admin["🖥️ Dashboard Admin (React/Vite)"]
+        Portal["📱 Portal do Cliente (Self-Service)"]
+        Nexus["🧠 Nexus Intelligence Hub (Knowledge Engine)"]
     end
 
-    subgraph External_Ecosystem [Ecossistema de APIs & Providers]
-        direction LR
-        Asaas[Asaas Payments]
-        Gemini[Google Gemini AI]
-        Resend[Resend Email]
-        Storage[Cloudinary / ImgBB]
-        OL[Open Library]
-        GD[Google Drive]
+    subgraph Automation_Orchestra [Orquestração & Eventos]
+        direction TB
+        Vercel["⚡ Vercel Edge Runtime"]
+        Cron["⏱️ Cron-Job.org (High-Precision Triggers)"]
+        Webhooks["🔗 Webhook Listeners (Asaas/Firebase)"]
     end
 
-    subgraph Orchestration [Camada de Orquestração & Automação]
-        Vercel[Vercel Serverless / Edge]
-        CronJob[Cron-Job.org] -- Scheduled Triggers --> Vercel
-        Vercel -- API Calls --> External_Ecosystem
-        Asaas -- Webhooks --> Vercel
+    subgraph AI_Data_Persistence [Inteligência & Dados]
+        Firestore[("🔥 Firestore (Real-time DB)")]
+        Redis[("⚡ Upstash Redis (Rate Limit/Cache)")]
+        Gemini["🤖 Google Gemini AI (Neural Engine)"]
     end
 
-    subgraph Data_Persistence [Camada de Dados & Identidade]
-        Firestore[(Firebase Firestore)]
-        Auth[Firebase Auth]
-        Redis[(Upstash Redis Cache)]
+    subgraph Infrastructure_Providers [Infraestrutura & APIs]
+        Asaas["💳 Asaas (Payment Gateway)"]
+        Resend["📧 Resend (Transactional Email)"]
+        Cloudinary["🖼️ Cloudinary/ImgBB (CDN/Media)"]
     end
 
-    Users -- authFetch / Zustand --> Vercel
-    Vercel -- Read/Write --> Firestore
-    Vercel -- Rate Limit --> Redis
-    Users -- Realtime Sync --> Firestore
-    Users -- Auth Check --> Auth
-    
-    subgraph Observability [Monitoramento & Logs]
-        Axiom[Axiom Logs]
-        Sentry[Sentry Error Tracking]
-        Uptime[UptimeRobot]
-    end
-
-    Vercel -- Logs --> Axiom
-    Users -- Errors --> Sentry
-    Uptime -- Health Check --> Vercel
+    %% Flows
+    Cron -- "HTTPS Trigger (Frequência Custom)" --> Vercel
+    Vercel -- "Business Logic" --> Infrastructure_Providers
+    Client_Layer -- "Zustand / Firebase SDK" --> Firestore
+    Vercel -- "Process Events" --> Firestore
+    Vercel -- "Token Verification" --> Redis
+    Client_Layer -- "Auth" --> Firebase_Auth[Firebase Auth]
+    Vercel -- "Neural Processing" --> Gemini
 ```
 
 ---
@@ -103,23 +92,26 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
 - **Escopo:** Camada de cache ultrarrápida e controle de taxa de requisições (Rate Limiting).
 - **Finalidade:** Garante a estabilidade da API contra ataques de força bruta e melhora a latência de dados frequentes.
 
-### ⏱️ Automação, Cron & Analytics (Vercel & Cron-Job.org)
-- **Vercel Cron:** Agendamento de tarefas críticas internas (limpeza de cache, rotinas de sistema).
-- **Cron-Job.org:** Orquestrador de tarefas externas de alta frequência. Utilizado para disparar rotinas de verificação de pagamentos, lembretes de mensagens automáticas e sincronização de dados financeiros que exigem execução pontual garantida.
-- **Vercel Analytics:** Monitoramento de tráfego e experiência do usuário (Web Vitals) para otimização contínua de performance.
+### ⏱️ Automação & Agendamento (Cron-Job.org)
+- **Papel Crítico:** Diferente dos crons internos da Vercel, o **Cron-Job.org** atua como o metrônomo externo do sistema para tarefas de alta precisão e frequência.
+- **Fluxos Automatizados:**
+    - **Reconciliação Financeira:** Disparo periódico para consultar status de faturas no Asaas e garantir que o Firestore esteja em sincronia absoluta.
+    - **Lembretes de Régua:** Ativação de gatilhos para disparo de e-mails/mensagens de cobrança ou boas-vindas com base em intervalos de tempo.
+    - **Heartbeat de Sistema:** Verificação de integridade de serviços críticos e limpeza de estados temporários no Redis.
+    - **Sincronia de Metas:** Recálculo de progressos globais para o dashboard do Nexus Hub.
 
 ### 📈 Observabilidade (Axiom)
 - **Escopo:** Centralização de logs estruturados do cliente e servidor para auditoria e depuração técnica profunda.
 
-### 🧠 Nexus Intelligence Hub v8.0 (Obsidian Ecosystem)
-- **Escopo:** Gestão de conhecimento profundo e orquestração de produtividade unificada.
-- **Diferencial Master:** O Nexus não é mais apenas um módulo de notas, mas o **Cérebro Operacional** do Hub, onde todos os elementos do Workspace (Metas, Tarefas, Notas e Recursos) coexistem e se conectam.
-- **Funcionalidades Master:**
-    - **Unified Command Center:** Uma única interface de 3 colunas que substitui abas fragmentadas por um fluxo contínuo de inteligência.
-    - **Cross-Entity Knowledge Graph:** Visualização em grafo que mapeia conexões não apenas entre notas, mas entre **Notas -> Metas**, **Tarefas -> Notas** e **Recursos -> Metas** via referências dinâmicas `[[Link]]`.
-    - **Hierarquia de Árvore Recursiva:** Explorer estilo IDE com pastas infinitas, Drag & Drop real e navegação instantânea.
-    - **Neural Sync Dashboard:** Um "Daily Briefing" inteligente que sintetiza Metas Críticas, Tarefas do Dia e Notas Recentes em uma única visão executiva.
-    - **Bidirectional Linking:** Sintaxe universal de conexão para criar uma teia de conhecimento auto-sustentável.
+### 🧠 Nexus Intelligence Hub v9.0 (High-Performance Engine)
+- **Escopo:** Cérebro Operacional do Hub, focado em minimalismo e eficiência extrema.
+- **Arquitetura Dual-View:**
+    - **Neural Dashboard:** Visão sintetizada de Metas Críticas, Tarefas Ativas e Notas Recentes (Daily Briefing).
+    - **Integrated Explorer:** Navegação hierárquica por pastas e notas com Drag & Drop e suporte a links bidirecionais `[[Link]]`.
+- **Gerenciamento Total (CRUD):** 
+    - Controle completo (Criar, Editar, Renomear, Excluir) de Notas, Pastas, Tarefas e Metas diretamente pela interface principal.
+    - Renomeação inline para fluxos de trabalho ininterruptos.
+- **Performance:** Motor de grafo removido para garantir 60fps constantes e foco total na produtividade textual e organizacional.
 
 ---
 

@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNexusStore, NoteFolder, NexusNote, PersonalGoal, NexusTask, PersonalLink } from '@store/useNexusStore';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { NoteGraphView } from './NoteGraphView';
 
 interface NexusHubProps {
   confirm: (options: any) => Promise<boolean>;
@@ -30,10 +29,12 @@ export const NexusHub: React.FC<NexusHubProps> = ({ confirm, setModalConfig }) =
   const setVaultLinks = useNexusStore(state => state.setLinks);
 
   // UI State
-  const [viewMode, setViewMode] = useState<'explorer' | 'graph' | 'dashboard'>('dashboard');
+  const [viewMode, setViewMode] = useState<'explorer' | 'dashboard'>('dashboard');
   const [activeEntity, setActiveEntity] = useState<{ id: string, type: 'note' | 'goal' | 'task' | 'vault' } | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
 
   // Sincronizar folders abertos
   const toggleFolder = (id: string) => {
@@ -56,7 +57,7 @@ export const NexusHub: React.FC<NexusHubProps> = ({ confirm, setModalConfig }) =
       <div className="space-y-1">
         {folder && (
           <div 
-            className="group flex items-center gap-2 p-2 rounded-xl hover:bg-white/5 cursor-pointer transition-all"
+            className="group flex items-center gap-2 p-2 rounded-xl hover:bg-white/5 cursor-pointer transition-all relative"
             style={{ paddingLeft: `${level * 12 + 8}px` }}
             onClick={() => toggleFolder(folderId)}
             onDragOver={e => e.preventDefault()}
@@ -64,13 +65,44 @@ export const NexusHub: React.FC<NexusHubProps> = ({ confirm, setModalConfig }) =
           >
             <i className={`ph-fill ph-caret-right text-[10px] transition-transform ${isExpanded ? 'rotate-90' : ''} text-gray-600`} />
             <i className={`ph-duotone ${isExpanded ? 'ph-folder-open' : 'ph-folder'} text-primary-400`} />
-            <span className="text-[11px] font-bold text-gray-300 truncate flex-1">{folder.name}</span>
-            <button 
-              onClick={(e) => { e.stopPropagation(); handleAddNote(folderId); }} 
-              className="opacity-0 group-hover:opacity-100 p-1 hover:text-primary-400 transition-all"
-            >
-              <i className="ph ph-plus" />
-            </button>
+            
+            {editingId === folderId ? (
+              <input 
+                autoFocus
+                value={editingName}
+                onChange={e => setEditingName(e.target.value)}
+                onBlur={() => handleRenameFolder(folderId)}
+                onKeyDown={e => e.key === 'Enter' && handleRenameFolder(folderId)}
+                className="bg-white/10 border-none rounded px-1 text-[11px] font-bold text-white outline-none w-full"
+                onClick={e => e.stopPropagation()}
+              />
+            ) : (
+              <span className="text-[11px] font-bold text-gray-300 truncate flex-1">{folder.name}</span>
+            )}
+
+            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+              <button 
+                onClick={(e) => { e.stopPropagation(); handleAddNote(folderId); }} 
+                className="p-1 hover:text-primary-400"
+                title="Nova Nota"
+              >
+                <i className="ph ph-plus" />
+              </button>
+              <button 
+                onClick={(e) => { e.stopPropagation(); setEditingId(folderId); setEditingName(folder.name); }} 
+                className="p-1 hover:text-amber-400"
+                title="Renomear"
+              >
+                <i className="ph ph-pencil-simple" />
+              </button>
+              <button 
+                onClick={(e) => { e.stopPropagation(); handleDeleteFolder(folderId); }} 
+                className="p-1 hover:text-rose-500"
+                title="Excluir Pasta"
+              >
+                <i className="ph ph-trash" />
+              </button>
+            </div>
           </div>
         )}
 
@@ -83,17 +115,108 @@ export const NexusHub: React.FC<NexusHubProps> = ({ confirm, setModalConfig }) =
                 draggable
                 onDragStart={(e) => handleDragStart(e, note.id, 'note')}
                 onClick={() => { setActiveEntity({ id: note.id, type: 'note' }); setViewMode('explorer'); }}
-                className={`flex items-center gap-2 p-2 rounded-xl cursor-pointer transition-all ${activeEntity?.id === note.id ? 'bg-primary-500/10 text-primary-400 border border-primary-500/20' : 'hover:bg-white/5 text-gray-500'}`}
+                className={`group flex items-center gap-2 p-2 rounded-xl cursor-pointer transition-all relative ${activeEntity?.id === note.id ? 'bg-primary-500/10 text-primary-400 border border-primary-500/20' : 'hover:bg-white/5 text-gray-500'}`}
                 style={{ paddingLeft: `${(folderId ? level + 1 : level) * 12 + 24}px` }}
               >
                 <i className="ph ph-file-text text-sm opacity-40" />
-                <span className="text-[11px] font-bold truncate">{note.title || 'Sem título'}</span>
+                
+                {editingId === note.id ? (
+                  <input 
+                    autoFocus
+                    value={editingName}
+                    onChange={e => setEditingName(e.target.value)}
+                    onBlur={() => handleRenameNote(note.id)}
+                    onKeyDown={e => e.key === 'Enter' && handleRenameNote(note.id)}
+                    className="bg-white/10 border-none rounded px-1 text-[11px] font-bold text-white outline-none w-full"
+                    onClick={e => e.stopPropagation()}
+                  />
+                ) : (
+                  <span className="text-[11px] font-bold truncate flex-1">{note.title || 'Sem título'}</span>
+                )}
+
+                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setEditingId(note.id); setEditingName(note.title); }} 
+                    className="p-1 hover:text-amber-400"
+                    title="Renomear"
+                  >
+                    <i className="ph ph-pencil-simple" />
+                  </button>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); handleDeleteNote(note.id); }} 
+                    className="p-1 hover:text-rose-500"
+                    title="Excluir Nota"
+                  >
+                    <i className="ph ph-trash" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         )}
       </div>
     );
+  };
+
+  // Handlers de Gerenciamento
+  const handleRenameFolder = async (id: string) => {
+    if (editingName.trim()) await updateNoteFolder(id, { name: editingName });
+    setEditingId(null);
+  };
+
+  const handleRenameNote = async (id: string) => {
+    if (editingName.trim()) await updateNote(id, { title: editingName });
+    setEditingId(null);
+  };
+
+  const handleDeleteFolder = async (id: string) => {
+    const confirmed = await confirm({
+      title: 'Excluir Pasta',
+      message: 'Tem certeza que deseja excluir esta pasta? Todas as subpastas e notas serão movidas para a raiz.',
+      confirmText: 'Sim, Excluir',
+      type: 'danger'
+    });
+    if (confirmed) await deleteNoteFolder(id);
+  };
+
+  const handleDeleteNote = async (id: string) => {
+    const confirmed = await confirm({
+      title: 'Excluir Nota',
+      message: 'Tem certeza que deseja excluir esta nota permanentemente?',
+      confirmText: 'Sim, Excluir',
+      type: 'danger'
+    });
+    if (confirmed) {
+      await deleteNote(id);
+      if (activeEntity?.id === id) setActiveEntity(null);
+    }
+  };
+
+  const handleDeleteTask = async (id: string) => {
+    const confirmed = await confirm({
+      title: 'Excluir Tarefa',
+      message: 'Deseja remover esta tarefa da sua lista?',
+      confirmText: 'Sim, Excluir',
+      type: 'danger'
+    });
+    if (confirmed) {
+      const updatedTasks = tasks.filter(t => t.id !== id);
+      await setTasks(updatedTasks);
+    }
+  };
+
+  const handleDeleteGoal = async (id: string) => {
+    const confirmed = await confirm({
+      title: 'Excluir Meta',
+      message: 'Tem certeza que deseja excluir esta meta estratégica? Esta ação não pode ser desfeita.',
+      confirmText: 'Sim, Excluir',
+      type: 'danger'
+    });
+    if (confirmed) {
+      const updatedGoals = goals.filter(g => g.id !== id);
+      await setGoals(updatedGoals);
+      if (activeEntity?.id === id) setActiveEntity(null);
+    }
   };
 
   // Handlers de Criação
@@ -130,7 +253,6 @@ export const NexusHub: React.FC<NexusHubProps> = ({ confirm, setModalConfig }) =
           </div>
           <div className="flex gap-1">
              <button onClick={() => setViewMode('dashboard')} className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${viewMode === 'dashboard' ? 'bg-primary-500 text-white' : 'bg-white/5 text-gray-500 hover:text-white'}`} title="Dashboard"><i className="ph ph-squares-four" /></button>
-             <button onClick={() => setViewMode('graph')} className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${viewMode === 'graph' ? 'bg-primary-500 text-white' : 'bg-white/5 text-gray-500 hover:text-white'}`} title="Knowledge Graph"><i className="ph ph-graph" /></button>
           </div>
         </div>
 
@@ -154,15 +276,36 @@ export const NexusHub: React.FC<NexusHubProps> = ({ confirm, setModalConfig }) =
                 <button onClick={() => setModalConfig({ isOpen: true, type: 'goal', mode: 'add' })} className="text-gray-700 hover:text-primary-400"><i className="ph-bold ph-plus" /></button>
              </div>
              {goals.map(goal => (
-               <button 
+               <div 
                 key={goal.id}
-                onClick={() => { setActiveEntity({ id: goal.id, type: 'goal' }); setViewMode('explorer'); }}
-                className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all ${activeEntity?.id === goal.id ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'hover:bg-white/5 text-gray-500'}`}
+                className={`group w-full flex items-center gap-3 p-3 rounded-2xl transition-all relative ${activeEntity?.id === goal.id ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'hover:bg-white/5 text-gray-500'}`}
                >
-                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span className="text-[11px] font-bold truncate flex-1 text-left">{goal.label}</span>
-                  <span className="text-[9px] opacity-40">{Math.round((goal.current / goal.target) * 100)}%</span>
-               </button>
+                  <div 
+                    onClick={() => { setActiveEntity({ id: goal.id, type: 'goal' }); setViewMode('explorer'); }}
+                    className="flex-1 flex items-center gap-3 cursor-pointer overflow-hidden"
+                  >
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                    <span className="text-[11px] font-bold truncate">{goal.label}</span>
+                    <span className="text-[9px] opacity-40 ml-auto shrink-0">{Math.round((goal.current / goal.target) * 100)}%</span>
+                  </div>
+                  
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+                    <button 
+                      onClick={() => setModalConfig({ isOpen: true, type: 'goal', mode: 'edit', data: goal })}
+                      className="p-1 hover:text-amber-400"
+                      title="Editar"
+                    >
+                      <i className="ph ph-pencil-simple" />
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteGoal(goal.id)}
+                      className="p-1 hover:text-rose-500"
+                      title="Excluir"
+                    >
+                      <i className="ph ph-trash" />
+                    </button>
+                  </div>
+               </div>
              ))}
           </div>
 
@@ -173,11 +316,20 @@ export const NexusHub: React.FC<NexusHubProps> = ({ confirm, setModalConfig }) =
                 <button onClick={() => setViewMode('dashboard')} className="text-gray-700 hover:text-amber-400"><i className="ph-bold ph-arrow-square-out" /></button>
              </div>
              {tasks.slice(0, 5).map(task => (
-               <div key={task.id} className="flex items-center gap-3 p-3 rounded-2xl hover:bg-white/5 text-gray-500 group">
-                  <div className={`w-4 h-4 rounded-md border-2 border-amber-500/30 flex items-center justify-center ${task.completed ? 'bg-amber-500 border-amber-500' : ''}`}>
+               <div key={task.id} className="flex items-center gap-3 p-3 rounded-2xl hover:bg-white/5 text-gray-500 group relative">
+                  <div 
+                    onClick={() => setTasks(tasks.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t))}
+                    className={`w-4 h-4 rounded-md border-2 border-amber-500/30 flex items-center justify-center cursor-pointer ${task.completed ? 'bg-amber-500 border-amber-500' : ''}`}
+                  >
                     {task.completed && <i className="ph ph-check text-[10px] text-white" />}
                   </div>
                   <span className={`text-[11px] font-bold truncate flex-1 ${task.completed ? 'line-through opacity-30' : ''}`}>{task.label}</span>
+                  <button 
+                    onClick={() => handleDeleteTask(task.id)}
+                    className="opacity-0 group-hover:opacity-100 p-1 hover:text-rose-500 transition-all"
+                  >
+                    <i className="ph ph-trash" />
+                  </button>
                </div>
              ))}
           </div>
@@ -200,15 +352,7 @@ export const NexusHub: React.FC<NexusHubProps> = ({ confirm, setModalConfig }) =
       {/* 2. CENTER: DYNAMIC CANVAS */}
       <div className="flex-1 relative">
         <AnimatePresence mode="wait">
-          {viewMode === 'graph' ? (
-            <motion.div key="graph" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full h-full">
-              <NoteGraphView 
-                notes={notes} goals={goals} tasks={tasks} links={vaultLinks}
-                selectedId={activeEntity?.id || null}
-                onSelectNode={(id, type) => { setActiveEntity({ id, type }); setViewMode('explorer'); }}
-              />
-            </motion.div>
-          ) : viewMode === 'dashboard' ? (
+          {viewMode === 'dashboard' ? (
             <motion.div key="dashboard" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="w-full h-full bg-[#0a0c12]/60 backdrop-blur-3xl border border-white/10 rounded-[3.5rem] p-12 overflow-y-auto custom-scrollbar shadow-2xl">
               <div className="max-w-4xl mx-auto space-y-12">
                 <header className="space-y-2">
@@ -223,10 +367,18 @@ export const NexusHub: React.FC<NexusHubProps> = ({ confirm, setModalConfig }) =
                       </h4>
                       <div className="space-y-4">
                         {goals.slice(0, 3).map(g => (
-                          <div key={g.id} className="space-y-2">
+                          <div key={g.id} className="group space-y-2 relative">
                             <div className="flex justify-between text-[11px] font-bold">
-                              <span>{g.label}</span>
-                              <span className="text-emerald-400">{Math.round((g.current/g.target)*100)}%</span>
+                              <span className="flex-1 truncate">{g.label}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-emerald-400">{Math.round((g.current/g.target)*100)}%</span>
+                                <button 
+                                  onClick={() => handleDeleteGoal(g.id)}
+                                  className="opacity-0 group-hover:opacity-100 p-1 hover:text-rose-500 transition-all"
+                                >
+                                  <i className="ph ph-trash" />
+                                </button>
+                              </div>
                             </div>
                             <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
                               <div className="h-full bg-emerald-500" style={{ width: `${(g.current/g.target)*100}%` }} />
