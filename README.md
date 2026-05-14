@@ -111,13 +111,15 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
 ### 📈 Observabilidade (Axiom)
 - **Escopo:** Centralização de logs estruturados do cliente e servidor para auditoria e depuração técnica profunda.
 
-### 🧠 Nexus Knowledge Engine (Obsidian-Style)
-- **Escopo:** Gestão de conhecimento profundo e conexões de ideias.
+### 🧠 Nexus Intelligence Hub v8.0 (Obsidian Ecosystem)
+- **Escopo:** Gestão de conhecimento profundo e orquestração de produtividade unificada.
+- **Diferencial Master:** O Nexus não é mais apenas um módulo de notas, mas o **Cérebro Operacional** do Hub, onde todos os elementos do Workspace (Metas, Tarefas, Notas e Recursos) coexistem e se conectam.
 - **Funcionalidades Master:**
-    - **Hierarquia Infinita:** Sistema de pastas e subpastas para organização lógica de pensamentos.
-    - **Knowledge Graph:** Visualização em grafo (Nodes & Edges) das conexões entre notas via `[[Links]]`.
-    - **Backlinks Panel:** Rastreamento automático de onde uma ideia foi mencionada no ecossistema.
-    - **Bidirectional Linking:** Criação instantânea de relacionamentos entre objetos de conhecimento.
+    - **Unified Command Center:** Uma única interface de 3 colunas que substitui abas fragmentadas por um fluxo contínuo de inteligência.
+    - **Cross-Entity Knowledge Graph:** Visualização em grafo que mapeia conexões não apenas entre notas, mas entre **Notas -> Metas**, **Tarefas -> Notas** e **Recursos -> Metas** via referências dinâmicas `[[Link]]`.
+    - **Hierarquia de Árvore Recursiva:** Explorer estilo IDE com pastas infinitas, Drag & Drop real e navegação instantânea.
+    - **Neural Sync Dashboard:** Um "Daily Briefing" inteligente que sintetiza Metas Críticas, Tarefas do Dia e Notas Recentes em uma única visão executiva.
+    - **Bidirectional Linking:** Sintaxe universal de conexão para criar uma teia de conhecimento auto-sustentável.
 
 ---
 

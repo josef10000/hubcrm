@@ -1,15 +1,16 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { NexusNote } from '@store/useNexusStore';
+import { NexusNote, PersonalGoal, NexusTask, PersonalLink } from '@store/useNexusStore';
 
 interface Node {
   id: string;
   title: string;
+  type: 'note' | 'goal' | 'task' | 'vault';
   x: number;
   y: number;
   vx: number;
   vy: number;
-  fx?: number; // Força externa (drag)
+  fx?: number;
   fy?: number;
 }
 
@@ -20,11 +21,21 @@ interface Link {
 
 interface NoteGraphViewProps {
   notes: NexusNote[];
-  onSelectNote: (id: string) => void;
-  selectedNoteId: string | null;
+  goals: PersonalGoal[];
+  tasks: NexusTask[];
+  links: PersonalLink[];
+  onSelectNode: (id: string, type: 'note' | 'goal' | 'task' | 'vault') => void;
+  selectedId: string | null;
 }
 
-export const NoteGraphView: React.FC<NoteGraphViewProps> = ({ notes, onSelectNote, selectedNoteId }) => {
+export const NoteGraphView: React.FC<NoteGraphViewProps> = ({ 
+  notes, 
+  goals, 
+  tasks, 
+  links: vaultLinks, 
+  onSelectNode, 
+  selectedId 
+}) => {
   const [zoom, setZoom] = useState(1);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [links, setLinks] = useState<Link[]>([]);
@@ -32,39 +43,52 @@ export const NoteGraphView: React.FC<NoteGraphViewProps> = ({ notes, onSelectNot
   const requestRef = useRef<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
-  // Inicializar/Sincronizar nós e links
+  // Inicializar/Sincronizar todos os tipos de entidades
   useEffect(() => {
     setNodes(prev => {
-      const newNodes = notes.map(note => {
-        const existing = prev.find(p => p.id === note.id);
-        if (existing) return { ...existing, title: note.title || 'Sem título' };
+      const allEntities: { id: string, title: string, type: 'note' | 'goal' | 'task' | 'vault' }[] = [
+        ...notes.map(n => ({ id: n.id, title: n.title || 'Sem título', type: 'note' as const })),
+        ...goals.map(g => ({ id: g.id, title: g.label, type: 'goal' as const })),
+        ...tasks.map(t => ({ id: t.id, title: t.label, type: 'task' as const })),
+        ...vaultLinks.map(l => ({ id: l.id, title: l.label, type: 'vault' as const }))
+      ];
+
+      return allEntities.map(entity => {
+        const existing = prev.find(p => p.id === entity.id);
+        if (existing) return { ...existing, title: entity.title };
         return {
-          id: note.id,
-          title: note.title || 'Sem título',
+          ...entity,
           x: Math.random() * 600 + 200,
           y: Math.random() * 400 + 200,
           vx: 0,
           vy: 0,
         };
       });
-      return newNodes;
     });
 
     const newLinks: Link[] = [];
+    // Conexões via Backlinks [[Link]] nas Notas
     notes.forEach(note => {
       const linkMatches = note.content.match(/\[\[(.*?)\]\]/g);
       if (linkMatches) {
         linkMatches.forEach(match => {
           const targetTitle = match.slice(2, -2).trim().toLowerCase();
-          const targetNote = notes.find(n => (n.title || '').toLowerCase() === targetTitle);
-          if (targetNote && targetNote.id !== note.id) {
-            newLinks.push({ source: note.id, target: targetNote.id });
+          
+          // Procurar em todas as coleções
+          const target = 
+            notes.find(n => (n.title || '').toLowerCase() === targetTitle) ||
+            goals.find(g => g.label.toLowerCase() === targetTitle) ||
+            tasks.find(t => t.label.toLowerCase() === targetTitle) ||
+            vaultLinks.find(l => l.label.toLowerCase() === targetTitle);
+
+          if (target && target.id !== note.id) {
+            newLinks.push({ source: note.id, target: target.id });
           }
         });
       }
     });
     setLinks(newLinks);
-  }, [notes]);
+  }, [notes, goals, tasks, vaultLinks]);
 
   // Simulação de Física
   const simulate = () => {
@@ -74,12 +98,12 @@ export const NoteGraphView: React.FC<NoteGraphViewProps> = ({ notes, onSelectNot
       const nextNodes = prevNodes.map(node => ({ ...node }));
       const centerX = 500;
       const centerY = 400;
-      const friction = 0.85;
-      const repulsion = 1500;
-      const attraction = 0.02;
-      const gravity = 0.005;
+      const friction = 0.88;
+      const repulsion = 1800;
+      const attraction = 0.03;
+      const gravity = 0.004;
 
-      // 1. Repulsão (Coulomb's Law)
+      // 1. Repulsão
       for (let i = 0; i < nextNodes.length; i++) {
         for (let j = i + 1; j < nextNodes.length; j++) {
           const n1 = nextNodes[i];
@@ -96,7 +120,7 @@ export const NoteGraphView: React.FC<NoteGraphViewProps> = ({ notes, onSelectNot
         }
       }
 
-      // 2. Atração (Hooke's Law)
+      // 2. Atração pelos links
       links.forEach(link => {
         const s = nextNodes.find(n => n.id === link.source);
         const t = nextNodes.find(n => n.id === link.target);
@@ -104,7 +128,7 @@ export const NoteGraphView: React.FC<NoteGraphViewProps> = ({ notes, onSelectNot
           const dx = s.x - t.x;
           const dy = s.y - t.y;
           const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-          const f = (dist - 100) * attraction;
+          const f = (dist - 120) * attraction;
           const fx = (dx / dist) * f;
           const fy = (dy / dist) * f;
 
@@ -121,10 +145,8 @@ export const NoteGraphView: React.FC<NoteGraphViewProps> = ({ notes, onSelectNot
           node.vx = 0;
           node.vy = 0;
         } else {
-          // Gravidade central
           node.vx += (centerX - node.x) * gravity;
           node.vy += (centerY - node.y) * gravity;
-
           node.vx *= friction;
           node.vy *= friction;
           node.x += node.vx;
@@ -143,7 +165,6 @@ export const NoteGraphView: React.FC<NoteGraphViewProps> = ({ notes, onSelectNot
     return () => { if (requestRef.current) cancelAnimationFrame(requestRef.current); };
   }, [draggingNodeId, links]);
 
-  // Manipulação de Drag & Drop
   const handleMouseDown = (e: React.MouseEvent, nodeId: string) => {
     e.stopPropagation();
     setDraggingNodeId(nodeId);
@@ -151,13 +172,10 @@ export const NoteGraphView: React.FC<NoteGraphViewProps> = ({ notes, onSelectNot
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!draggingNodeId || !svgRef.current) return;
-    
     const CTM = svgRef.current.getScreenCTM();
     if (!CTM) return;
-    
     const x = (e.clientX - CTM.e) / CTM.a;
     const y = (e.clientY - CTM.f) / CTM.d;
-
     setNodes(prev => prev.map(n => n.id === draggingNodeId ? { ...n, fx: x, fy: y } : n));
   };
 
@@ -165,6 +183,16 @@ export const NoteGraphView: React.FC<NoteGraphViewProps> = ({ notes, onSelectNot
     if (draggingNodeId) {
       setNodes(prev => prev.map(n => n.id === draggingNodeId ? { ...n, fx: undefined, fy: undefined } : n));
       setDraggingNodeId(null);
+    }
+  };
+
+  const getNodeColor = (type: Node['type']) => {
+    switch (type) {
+      case 'note': return '#3b82f6'; // Blue
+      case 'goal': return '#10b981'; // Emerald
+      case 'task': return '#f59e0b'; // Amber
+      case 'vault': return '#8b5cf6'; // Violet
+      default: return 'white';
     }
   };
 
@@ -177,7 +205,6 @@ export const NoteGraphView: React.FC<NoteGraphViewProps> = ({ notes, onSelectNot
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
-      {/* Background Grid Estilo Obsidian */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
         style={{ 
           backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
@@ -185,11 +212,19 @@ export const NoteGraphView: React.FC<NoteGraphViewProps> = ({ notes, onSelectNot
         }} 
       />
 
-      {/* Controles */}
-      <div className="absolute top-8 left-8 z-10 flex flex-col gap-2">
-         <button onClick={() => setZoom(z => Math.min(3, z + 0.2))} className="w-10 h-10 bg-white/5 hover:bg-white/10 rounded-xl flex items-center justify-center border border-white/10 text-white"><i className="ph-bold ph-plus" /></button>
-         <button onClick={() => setZoom(z => Math.max(0.3, z - 0.2))} className="w-10 h-10 bg-white/5 hover:bg-white/10 rounded-xl flex items-center justify-center border border-white/10 text-white"><i className="ph-bold ph-minus" /></button>
-         <button onClick={() => setZoom(1)} className="w-10 h-10 bg-white/5 hover:bg-white/10 rounded-xl flex items-center justify-center border border-white/10 text-white"><i className="ph-bold ph-arrows-out" /></button>
+      {/* Legenda de Tipos */}
+      <div className="absolute top-8 right-8 z-10 bg-black/40 backdrop-blur-md p-4 rounded-3xl border border-white/5 space-y-2">
+         {[
+           { type: 'note', label: 'Notas', color: '#3b82f6' },
+           { type: 'goal', label: 'Metas', color: '#10b981' },
+           { type: 'task', label: 'Tarefas', color: '#f59e0b' },
+           { type: 'vault', label: 'Recursos', color: '#8b5cf6' }
+         ].map(item => (
+           <div key={item.type} className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
+              <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">{item.label}</span>
+           </div>
+         ))}
       </div>
 
       <svg 
@@ -198,7 +233,6 @@ export const NoteGraphView: React.FC<NoteGraphViewProps> = ({ notes, onSelectNot
         className="w-full h-full"
       >
         <g style={{ transform: `scale(${zoom})`, transformOrigin: 'center' }}>
-          {/* Conexões */}
           {links.map((link, i) => {
             const s = getNodePos(link.source);
             const t = getNodePos(link.target);
@@ -207,37 +241,46 @@ export const NoteGraphView: React.FC<NoteGraphViewProps> = ({ notes, onSelectNot
               <line
                 key={`link-${i}`}
                 x1={s.x} y1={s.y} x2={t.x} y2={t.y}
-                stroke="rgba(255,255,255,0.1)"
+                stroke="rgba(255,255,255,0.08)"
                 strokeWidth={1.5 / zoom}
               />
             );
           })}
 
-          {/* Nós */}
           {nodes.map((node) => {
-            const isSelected = selectedNoteId === node.id;
-            const hasLinks = links.some(l => l.source === node.id || l.target === node.id);
+            const isSelected = selectedId === node.id;
+            const color = getNodeColor(node.type);
             
             return (
               <g
                 key={node.id}
                 onMouseDown={(e) => handleMouseDown(e, node.id)}
-                onClick={() => !draggingNodeId && onSelectNote(node.id)}
+                onClick={() => !draggingNodeId && onSelectNode(node.id, node.type)}
                 className="cursor-pointer group/node"
               >
+                {isSelected && (
+                  <circle
+                    cx={node.x}
+                    cy={node.y}
+                    r={18}
+                    fill={color}
+                    className="opacity-20 animate-pulse"
+                  />
+                )}
                 <circle
                   cx={node.x}
                   cy={node.y}
-                  r={isSelected ? 8 : hasLinks ? 5 : 3.5}
-                  fill={isSelected ? '#3b82f6' : 'rgba(255,255,255,0.4)'}
-                  className="transition-all duration-200"
+                  r={isSelected ? 10 : 6}
+                  fill={color}
+                  className="transition-all duration-300 group-hover:scale-125"
+                  style={{ filter: isSelected ? `drop-shadow(0 0 10px ${color})` : 'none' }}
                 />
                 <text
                   x={node.x}
-                  y={node.y + 18}
+                  y={node.y + 22}
                   textAnchor="middle"
-                  className="text-[9px] font-bold pointer-events-none select-none uppercase tracking-widest"
-                  style={{ fill: isSelected ? 'white' : 'rgba(255,255,255,0.3)', opacity: zoom > 0.6 ? 1 : 0 }}
+                  className="text-[10px] font-black uppercase tracking-widest pointer-events-none select-none"
+                  style={{ fill: isSelected ? 'white' : 'rgba(255,255,255,0.3)', opacity: zoom > 0.5 ? 1 : 0 }}
                 >
                   {node.title}
                 </text>
@@ -246,6 +289,11 @@ export const NoteGraphView: React.FC<NoteGraphViewProps> = ({ notes, onSelectNot
           })}
         </g>
       </svg>
+
+      <div className="absolute bottom-8 left-8 z-10 flex gap-2">
+         <button onClick={() => setZoom(z => Math.min(3, z + 0.2))} className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-white border border-white/10"><i className="ph ph-plus" /></button>
+         <button onClick={() => setZoom(z => Math.max(0.3, z - 0.2))} className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-white border border-white/10"><i className="ph ph-minus" /></button>
+      </div>
     </div>
   );
 };

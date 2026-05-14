@@ -15,12 +15,9 @@ import { apiClient } from '@/lib/apiClient';
 // Novos Componentes Modulares
 import ErrorBoundary from '@shared/components/ErrorBoundary';
 import { VaultSkeleton, GoalsSkeleton, LibrarySkeleton } from '@nexus/components/NexusSkeleton';
+import { NexusHub } from '@nexus/components/NexusHub';
 
 // Imports dinâmicos para performance
-const VaultTab = React.lazy(() => import('@nexus/components/VaultTab').then(m => ({ default: m.VaultTab })));
-const GoalsTab = React.lazy(() => import('@nexus/components/GoalsTab').then(m => ({ default: m.GoalsTab })));
-const TasksTab = React.lazy(() => import('@nexus/components/TasksTab').then(m => ({ default: m.TasksTab })));
-const NotesTab = React.lazy(() => import('@nexus/components/NotesTab').then(m => ({ default: m.NotesTab })));
 const LibraryTab = React.lazy(() => import('@nexus/components/LibraryTab').then(m => ({ default: m.LibraryTab })));
 
 import { OKRWidget } from '@nexus/components/OKRWidget';
@@ -78,7 +75,7 @@ export default function MyWorkspaceView() {
   const setBooks = useNexusStore(state => state.setBooks);
 
   // Estados Locais
-  const [activeTab, setActiveTab] = useState<'links' | 'goals' | 'notes' | 'tasks' | 'library' | 'culture'>('links');
+  const [activeTab, setActiveTab] = useState<'hub' | 'library' | 'culture'>('hub');
   const [librarySubTab, setLibrarySubTab] = useState<'my' | 'shared' | 'community'>('my');
   const [communityBooks, setCommunityBooks] = useState<NexusBook[]>([]);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -186,12 +183,6 @@ export default function MyWorkspaceView() {
 
   // Efeitos
   useEffect(() => {
-    if (activeTab === 'notes' && !selectedNoteId && notes.length > 0) {
-      setSelectedNoteId(notes[0].id);
-    }
-  }, [activeTab, notes, selectedNoteId]);
-
-  useEffect(() => {
     if (user?.uid) {
       const unsubscribe = initNexus(user.uid);
       return () => unsubscribe();
@@ -249,10 +240,6 @@ export default function MyWorkspaceView() {
 
   const myLeads = leads.filter(l => l.assignedTo === user?.uid && !['Convertido', 'Perdido'].includes(l.status || ''));
   const myOverdueClients = clients.filter(c => c.assignedTo === user?.uid && c.paymentStatus === 'OVERDUE');
-
-  const filteredLinks = selectedFolderId 
-    ? links.filter(l => l.folderId === selectedFolderId)
-    : links;
 
   if (isSyncing) return (
     <div className="h-full flex items-center justify-center p-20">
@@ -373,11 +360,11 @@ export default function MyWorkspaceView() {
         <div className="space-y-6 flex-1">
           <div className="flex items-center gap-3">
             <div className="px-3 py-1 bg-primary-500/10 border border-primary-500/20 rounded-full">
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary-400">Nexus Workspace v7.2.2</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary-400">Nexus Workspace v8.0 Intelligence Hub</span>
             </div>
             <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-               <span className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-400">Sync Ativo</span>
+               <span className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-400">Neural Sync Ativo</span>
             </div>
           </div>
           
@@ -428,13 +415,10 @@ export default function MyWorkspaceView() {
           </div>
         </div>
 
-        {/* NAVEGAÇÃO DE TABS */}
+        {/* NAVEGAÇÃO DE TABS SIMPLIFICADA */}
         <nav className="flex bg-[#0a0c12]/40 backdrop-blur-2xl p-1.5 rounded-[2rem] border border-white/10 shadow-2xl h-fit">
           {[
-            { id: 'links', label: 'Vault', icon: 'ph-link' },
-            { id: 'goals', label: 'Metas', icon: 'ph-target' },
-            { id: 'tasks', label: 'Tarefas', icon: 'ph-checks' },
-            { id: 'notes', label: 'Notas', icon: 'ph-note-pencil' },
+            { id: 'hub', label: 'Hub Intelligence', icon: 'ph-brain' },
             { id: 'library', label: 'Biblioteca', icon: 'ph-books' },
             { id: 'culture', label: 'Cultura', icon: 'ph-star' }
           ].map(tab => (
@@ -457,41 +441,16 @@ export default function MyWorkspaceView() {
       {/* CONTEÚDO DINÂMICO COM SKELETONS E ERROR BOUNDARY */}
       <main className="min-h-[500px]">
         <ErrorBoundary>
-          <React.Suspense fallback={<div className="h-full flex items-center justify-center p-20"><div className="w-12 h-12 border-4 border-primary-500/20 border-t-primary-500 rounded-full animate-spin" /></div>}>
-            <AnimatePresence mode="wait">
-              {activeTab === 'links' && (
-                <motion.section key="links" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-                  {loading ? <VaultSkeleton /> : (
-                    <VaultTab 
-                      selectedFolderId={selectedFolderId} 
-                      setSelectedFolderId={setSelectedFolderId}
-                      setModalConfig={setModalConfig}
-                      confirm={confirm}
-                    />
-                  )}
-                </motion.section>
-              )}
+          <AnimatePresence mode="wait">
+            {activeTab === 'hub' && (
+              <motion.section key="hub" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}>
+                <NexusHub confirm={confirm} setModalConfig={setModalConfig} />
+              </motion.section>
+            )}
 
-              {activeTab === 'goals' && (
-                <motion.section key="goals" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}>
-                  {loading ? <GoalsSkeleton /> : <GoalsTab setModalConfig={setModalConfig} confirm={confirm} />}
-                </motion.section>
-              )}
-
-              {activeTab === 'tasks' && (
-                <motion.section key="tasks" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-                  <TasksTab />
-                </motion.section>
-              )}
-
-              {activeTab === 'notes' && (
-                <motion.section key="notes" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-                  <NotesTab selectedNoteId={selectedNoteId} setSelectedNoteId={setSelectedNoteId} confirm={confirm} />
-                </motion.section>
-              )}
-
-              {activeTab === 'library' && (
-                <motion.section key="library" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}>
+            {activeTab === 'library' && (
+              <motion.section key="library" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}>
+                <React.Suspense fallback={<div className="h-full flex items-center justify-center p-20"><div className="w-12 h-12 border-4 border-primary-500/20 border-t-primary-500 rounded-full animate-spin" /></div>}>
                   {!selectedBookId ? (
                     loading && communityBooks.length === 0 ? <LibrarySkeleton /> : (
                       <LibraryTab 
@@ -544,19 +503,19 @@ export default function MyWorkspaceView() {
                       <iframe src={`${books.find(b => b.id === selectedBookId)?.pdfUrl}#toolbar=0`} className="flex-1 w-full border-none bg-white" title="PDF Viewer" />
                     </div>
                   )}
-                </motion.section>
-              )}
+                </React.Suspense>
+              </motion.section>
+            )}
 
-              {activeTab === 'culture' && (
-                <motion.section key="culture" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <OKRWidget />
-                    <KudosWall />
-                  </div>
-                </motion.section>
-              )}
-            </AnimatePresence>
-          </React.Suspense>
+            {activeTab === 'culture' && (
+              <motion.section key="culture" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <OKRWidget />
+                  <KudosWall />
+                </div>
+              </motion.section>
+            )}
+          </AnimatePresence>
         </ErrorBoundary>
       </main>
 
