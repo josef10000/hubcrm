@@ -43,6 +43,9 @@ export const NoteGraphView: React.FC<NoteGraphViewProps> = ({
   const requestRef = useRef<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
+  // Física e Simulação
+  const alpha = useRef(1); // Energia da simulação (1 = máximo, 0 = parado)
+  
   // Inicializar/Sincronizar todos os tipos de entidades
   useEffect(() => {
     setNodes(prev => {
@@ -53,7 +56,7 @@ export const NoteGraphView: React.FC<NoteGraphViewProps> = ({
         ...vaultLinks.map(l => ({ id: l.id, title: l.label, type: 'vault' as const }))
       ];
 
-      return allEntities.map(entity => {
+      const newNodes = allEntities.map(entity => {
         const existing = prev.find(p => p.id === entity.id);
         if (existing) return { ...existing, title: entity.title };
         return {
@@ -64,17 +67,17 @@ export const NoteGraphView: React.FC<NoteGraphViewProps> = ({
           vy: 0,
         };
       });
+      
+      if (newNodes.length !== prev.length) alpha.current = 1; // Reinicia se mudar o número de nós
+      return newNodes;
     });
 
     const newLinks: Link[] = [];
-    // Conexões via Backlinks [[Link]] nas Notas
     notes.forEach(note => {
       const linkMatches = note.content.match(/\[\[(.*?)\]\]/g);
       if (linkMatches) {
         linkMatches.forEach(match => {
           const targetTitle = match.slice(2, -2).trim().toLowerCase();
-          
-          // Procurar em todas as coleções
           const target = 
             notes.find(n => (n.title || '').toLowerCase() === targetTitle) ||
             goals.find(g => g.label.toLowerCase() === targetTitle) ||
@@ -90,20 +93,25 @@ export const NoteGraphView: React.FC<NoteGraphViewProps> = ({
     setLinks(newLinks);
   }, [notes, goals, tasks, vaultLinks]);
 
-  // Simulação de Física
+  // Simulação de Física Otimizada
   const simulate = () => {
+    if (alpha.current < 0.005) {
+      requestRef.current = requestAnimationFrame(simulate);
+      return;
+    }
+
     setNodes(prevNodes => {
       if (prevNodes.length === 0) return prevNodes;
 
       const nextNodes = prevNodes.map(node => ({ ...node }));
       const centerX = 500;
       const centerY = 400;
-      const friction = 0.88;
-      const repulsion = 1800;
-      const attraction = 0.03;
-      const gravity = 0.004;
+      const friction = 0.85; // Damping
+      const repulsionStrength = 1500;
+      const attractionStrength = 0.05;
+      const gravityStrength = 0.01;
 
-      // 1. Repulsão
+      // 1. Repulsão (Força de Coulomb simplificada)
       for (let i = 0; i < nextNodes.length; i++) {
         for (let j = i + 1; j < nextNodes.length; j++) {
           const n1 = nextNodes[i];
@@ -111,16 +119,20 @@ export const NoteGraphView: React.FC<NoteGraphViewProps> = ({
           const dx = n1.x - n2.x;
           const dy = n1.y - n2.y;
           const distSq = dx * dx + dy * dy + 1;
-          const f = repulsion / distSq;
-          const fx = (dx / Math.sqrt(distSq)) * f;
-          const fy = (dy / Math.sqrt(distSq)) * f;
+          const dist = Math.sqrt(distSq);
           
-          if (!n1.fx) { n1.vx += fx; n1.vy += fy; }
-          if (!n2.fx) { n2.vx -= fx; n2.vy -= fy; }
+          if (dist < 300) { // Limitar alcance da repulsão para performance
+            const f = (repulsionStrength / distSq) * alpha.current;
+            const fx = (dx / dist) * f;
+            const fy = (dy / dist) * f;
+            
+            if (n1.id !== draggingNodeId) { n1.vx += fx; n1.vy += fy; }
+            if (n2.id !== draggingNodeId) { n2.vx -= fx; n2.vy -= fy; }
+          }
         }
       }
 
-      // 2. Atração pelos links
+      // 2. Atração pelos links (Mola / Hooke)
       links.forEach(link => {
         const s = nextNodes.find(n => n.id === link.source);
         const t = nextNodes.find(n => n.id === link.target);
@@ -128,16 +140,17 @@ export const NoteGraphView: React.FC<NoteGraphViewProps> = ({
           const dx = s.x - t.x;
           const dy = s.y - t.y;
           const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-          const f = (dist - 120) * attraction;
+          const desiredDist = 150;
+          const f = (dist - desiredDist) * attractionStrength * alpha.current;
           const fx = (dx / dist) * f;
           const fy = (dy / dist) * f;
 
-          if (!s.fx) { s.vx -= fx; s.vy -= fy; }
-          if (!t.fx) { t.vx += fx; t.vy += fy; }
+          if (s.id !== draggingNodeId) { s.vx -= fx; s.vy -= fy; }
+          if (t.id !== draggingNodeId) { t.vx += fx; t.vy += fy; }
         }
       });
 
-      // 3. Atualizar Posições
+      // 3. Atualizar Posições e Damping
       nextNodes.forEach(node => {
         if (node.id === draggingNodeId && node.fx !== undefined && node.fy !== undefined) {
           node.x = node.fx;
@@ -145,8 +158,11 @@ export const NoteGraphView: React.FC<NoteGraphViewProps> = ({
           node.vx = 0;
           node.vy = 0;
         } else {
-          node.vx += (centerX - node.x) * gravity;
-          node.vy += (centerY - node.y) * gravity;
+          // Gravidade Central
+          node.vx += (centerX - node.x) * gravityStrength * alpha.current;
+          node.vy += (centerY - node.y) * gravityStrength * alpha.current;
+          
+          // Aplicar Velocidade
           node.vx *= friction;
           node.vy *= friction;
           node.x += node.vx;
@@ -157,6 +173,7 @@ export const NoteGraphView: React.FC<NoteGraphViewProps> = ({
       return nextNodes;
     });
 
+    alpha.current *= 0.985; // Dissipação de energia (Cooling)
     requestRef.current = requestAnimationFrame(simulate);
   };
 
@@ -168,6 +185,7 @@ export const NoteGraphView: React.FC<NoteGraphViewProps> = ({
   const handleMouseDown = (e: React.MouseEvent, nodeId: string) => {
     e.stopPropagation();
     setDraggingNodeId(nodeId);
+    alpha.current = 1; // Reativar simulação ao interagir
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -177,6 +195,7 @@ export const NoteGraphView: React.FC<NoteGraphViewProps> = ({
     const x = (e.clientX - CTM.e) / CTM.a;
     const y = (e.clientY - CTM.f) / CTM.d;
     setNodes(prev => prev.map(n => n.id === draggingNodeId ? { ...n, fx: x, fy: y } : n));
+    alpha.current = 1; // Manter simulação ativa enquanto arrasta
   };
 
   const handleMouseUp = () => {
