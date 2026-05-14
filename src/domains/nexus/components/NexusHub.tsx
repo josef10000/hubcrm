@@ -35,6 +35,8 @@ export const NexusHub: React.FC<NexusHubProps> = ({ confirm, setModalConfig }) =
   const [searchQuery, setSearchQuery] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editingTaskLabel, setEditingTaskLabel] = useState('');
 
   // Sincronizar folders abertos
   const toggleFolder = (id: string) => {
@@ -205,6 +207,27 @@ export const NexusHub: React.FC<NexusHubProps> = ({ confirm, setModalConfig }) =
     }
   };
 
+  const handleAddTask = async () => {
+    const newTask: NexusTask = {
+      id: Math.random().toString(36).substr(2, 9),
+      label: 'Nova Tarefa',
+      completed: false,
+      priority: 'medium',
+      createdAt: Date.now()
+    };
+    await setTasks([...tasks, newTask]);
+    setEditingTaskId(newTask.id);
+    setEditingTaskLabel(newTask.label);
+  };
+
+  const handleRenameTask = async (id: string) => {
+    if (editingTaskLabel.trim()) {
+      const updatedTasks = tasks.map(t => t.id === id ? { ...t, label: editingTaskLabel } : t);
+      await setTasks(updatedTasks);
+    }
+    setEditingTaskId(null);
+  };
+
   const handleDeleteGoal = async (id: string) => {
     const confirmed = await confirm({
       title: 'Excluir Meta',
@@ -313,7 +336,10 @@ export const NexusHub: React.FC<NexusHubProps> = ({ confirm, setModalConfig }) =
           <div className="space-y-1">
              <div className="flex items-center justify-between px-2 mb-2">
                 <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest">Tarefas</span>
-                <button onClick={() => setViewMode('dashboard')} className="text-gray-700 hover:text-amber-400"><i className="ph-bold ph-arrow-square-out" /></button>
+                <div className="flex gap-1">
+                  <button onClick={handleAddTask} className="text-gray-700 hover:text-amber-400" title="Adicionar Tarefa"><i className="ph-bold ph-plus" /></button>
+                  <button onClick={() => setViewMode('dashboard')} className="text-gray-700 hover:text-amber-400" title="Ver Dashboard"><i className="ph-bold ph-arrow-square-out" /></button>
+                </div>
              </div>
              {tasks.slice(0, 5).map(task => (
                <div key={task.id} className="flex items-center gap-3 p-3 rounded-2xl hover:bg-white/5 text-gray-500 group relative">
@@ -389,16 +415,65 @@ export const NexusHub: React.FC<NexusHubProps> = ({ confirm, setModalConfig }) =
                    </div>
 
                    <div className="bg-white/5 border border-white/5 rounded-[2.5rem] p-8 space-y-6">
-                      <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 flex items-center gap-2">
-                        <i className="ph-bold ph-checks" /> Tarefas Críticas
-                      </h4>
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 flex items-center gap-2">
+                          <i className="ph-bold ph-checks" /> Tarefas Críticas
+                        </h4>
+                        <button 
+                          onClick={handleAddTask}
+                          className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center hover:bg-amber-500 hover:text-white transition-all"
+                          title="Nova Tarefa"
+                        >
+                          <i className="ph-bold ph-plus" />
+                        </button>
+                      </div>
                       <div className="space-y-3">
-                        {tasks.filter(t => !t.completed).slice(0, 4).map(t => (
-                          <div key={t.id} className="flex items-center gap-3 p-3 bg-white/5 rounded-2xl border border-white/5">
-                             <div className="w-4 h-4 rounded border-2 border-amber-500/30" />
-                             <span className="text-[11px] font-bold">{t.label}</span>
+                        {tasks.filter(t => !t.completed).slice(0, 5).map(t => (
+                          <div key={t.id} className="group flex items-center gap-3 p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-amber-500/20 transition-all relative">
+                             <div 
+                              onClick={() => setTasks(tasks.map(task => task.id === t.id ? { ...task, completed: true } : task))}
+                              className="w-5 h-5 rounded-md border-2 border-amber-500/30 flex items-center justify-center cursor-pointer hover:border-amber-500 transition-all"
+                             >
+                               <i className="ph ph-check text-[10px] text-amber-500 opacity-0 hover:opacity-100" />
+                             </div>
+                             
+                             {editingTaskId === t.id ? (
+                               <input 
+                                autoFocus
+                                value={editingTaskLabel}
+                                onChange={e => setEditingTaskLabel(e.target.value)}
+                                onBlur={() => handleRenameTask(t.id)}
+                                onKeyDown={e => e.key === 'Enter' && handleRenameTask(t.id)}
+                                className="flex-1 bg-white/10 border-none rounded px-2 py-1 text-sm font-bold text-white outline-none"
+                               />
+                             ) : (
+                               <span className="text-[13px] font-bold text-gray-200 flex-1">{t.label}</span>
+                             )}
+
+                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                <button 
+                                  onClick={() => { setEditingTaskId(t.id); setEditingTaskLabel(t.label); }}
+                                  className="p-1.5 rounded-lg hover:bg-amber-500/20 text-gray-500 hover:text-amber-400 transition-all"
+                                  title="Editar"
+                                >
+                                  <i className="ph ph-pencil-simple" />
+                                </button>
+                                <button 
+                                  onClick={() => handleDeleteTask(t.id)}
+                                  className="p-1.5 rounded-lg hover:bg-rose-500/20 text-gray-500 hover:text-rose-500 transition-all"
+                                  title="Excluir"
+                                >
+                                  <i className="ph ph-trash" />
+                                </button>
+                             </div>
                           </div>
                         ))}
+                        {tasks.filter(t => !t.completed).length === 0 && (
+                          <div className="py-8 text-center space-y-2 opacity-20">
+                            <i className="ph ph-sparkle text-3xl" />
+                            <p className="text-[10px] font-bold uppercase tracking-widest">Tudo em dia!</p>
+                          </div>
+                        )}
                       </div>
                    </div>
                 </div>
