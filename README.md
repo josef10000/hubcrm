@@ -111,6 +111,9 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
 - **Gerenciamento Total (CRUD):** 
     - Controle completo (Criar, Editar, Renomear, Excluir) de Notas, Pastas, Tarefas e Metas diretamente pela interface principal.
     - Renomeação inline para fluxos de trabalho ininterruptos.
+- **Biblioteca Nexus:**
+    - Catalogação imersiva com busca automática de capas e metadados.
+    - **Categorias Dinâmicas:** Sistema flexível para criação de categorias personalizadas, permitindo organização sob medida para cada usuário.
 - **Performance:** Motor de grafo removido para garantir 60fps constantes e foco total na produtividade textual e organizacional.
 
 ---
