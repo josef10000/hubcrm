@@ -397,6 +397,44 @@ function ClientModal({
                   </div>
 
                   {(!selectedOffer || selectedOffer.type === 'SUBSCRIPTION') && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-primary-500/5 rounded-2xl border border-primary-500/10">
+                      <div className="md:col-span-2">
+                         <p className="text-[10px] font-black text-primary-500 uppercase tracking-widest mb-3">Valores Customizados (Opcional)</p>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Mensalidade Customizada</label>
+                        <div className="relative">
+                          <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                          <input 
+                            type="number" 
+                            name="customMonthlyPrice" 
+                            value={formData.customMonthlyPrice || ''} 
+                            onChange={handleChange} 
+                            placeholder="Ex: 450.00"
+                            className="w-full pl-9 pr-4 py-2.5 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all text-sm" 
+                          />
+                        </div>
+                        <p className="text-[9px] text-gray-500 mt-1 italic">Sobrescreve o valor padrão da oferta</p>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Setup Customizado</label>
+                        <div className="relative">
+                          <Zap size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                          <input 
+                            type="number" 
+                            name="customSetupPrice" 
+                            value={formData.customSetupPrice || ''} 
+                            onChange={handleChange} 
+                            placeholder="Ex: 1500.00"
+                            className="w-full pl-9 pr-4 py-2.5 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all text-sm" 
+                          />
+                        </div>
+                        <p className="text-[9px] text-gray-500 mt-1 italic">Sobrescreve a taxa de ativação</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {(!selectedOffer || selectedOffer.type === 'SUBSCRIPTION') && (
                     <>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                         <div>

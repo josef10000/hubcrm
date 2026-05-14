@@ -47,8 +47,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // 3. Fetch Payments from Asaas
-    const paymentsData = await asaasRequest(`/payments?customer=${asaasCustomerId}`, "GET");
+    const paymentsData = await asaasRequest(`/payments?customer=${asaasCustomerId}&limit=100`, "GET");
+    let allPayments = paymentsData.data || [];
+
+    // 🚀 Lógica de Filtro: Remover faturas "lixo" de testes anteriores.
+    // Regra: Mostrar todas as pagas (RECEIVED/CONFIRMED) para histórico.
+    // Regra: Mostrar apenas a MAIS RECENTE das pendentes/vencidas (PENDING/OVERDUE).
+    const paid = allPayments.filter((p: any) => p.status === 'RECEIVED' || p.status === 'CONFIRMED');
+    const pendingOrOverdue = allPayments
+      .filter((p: any) => p.status === 'PENDING' || p.status === 'OVERDUE')
+      .sort((a: any, b: any) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
     
+    // Pegamos apenas a primeira (mais recente) das pendentes/vencidas
+    const currentInvoice = pendingOrOverdue.length > 0 ? [pendingOrOverdue[0]] : [];
+
+    const filteredPayments = [...paid, ...currentInvoice];
     // 4. Fetch Support Requests
     const requestsSnap = await db
       .collection('organizations')
@@ -93,7 +106,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         assignedTo: clientData.assignedTo,
         // Não expor dados sensíveis como notes ou tokens internos
       },
-      payments: paymentsData.data || [],
+      payments: filteredPayments,
       requests: requests.sort((a: any, b: any) => (b.createdAt?._seconds || 0) - (a.createdAt?._seconds || 0)),
       offers,
       announcement

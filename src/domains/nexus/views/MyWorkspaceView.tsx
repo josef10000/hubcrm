@@ -96,6 +96,15 @@ export default function MyWorkspaceView() {
   const [isAddBookLinkOpen, setIsAddBookLinkOpen] = useState(false);
   const [bookCoverResults, setBookCoverResults] = useState<{url: string, title: string, author?: string}[]>([]);
   const [selectedPreviewCover, setSelectedPreviewCover] = useState<string | null>(null);
+  const [weather, setWeather] = useState<{ temp: number; description: string; icon: string } | null>(null);
+
+  // Saudação Dinâmica
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return 'Bom dia';
+    if (hour >= 12 && hour < 18) return 'Boa tarde';
+    return 'Boa noite';
+  };
   const [modalConfig, setModalConfig] = useState<{
     isOpen: boolean;
     type: 'folder' | 'link' | 'goal' | 'task' | 'note' | 'book' | 'category';
@@ -225,6 +234,26 @@ export default function MyWorkspaceView() {
     const index = hash % MOTIVATIONAL_QUOTES.length;
     setDailyQuote(MOTIVATIONAL_QUOTES[index]);
   }, [user]);
+
+  // Fetch Weather
+  useEffect(() => {
+    const fetchWeather = async () => {
+      try {
+        const res = await fetch('/api/weather?city=Sao Paulo');
+        if (res.ok) {
+          const data = await res.json();
+          setWeather({
+            temp: Math.round(data.main.temp),
+            description: data.weather[0].description,
+            icon: data.weather[0].icon
+          });
+        }
+      } catch (err) {
+        console.error('Weather error:', err);
+      }
+    };
+    fetchWeather();
+  }, []);
 
   // Sincroniza abas e skeletons
   const isSyncing = loading && books.length === 0;
@@ -390,8 +419,17 @@ export default function MyWorkspaceView() {
           </div>
           
           <div className="space-y-2">
-            <h1 className="text-5xl font-black text-white tracking-tighter leading-tight">
-              Olá, <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-primary-600">{userProfile?.displayName?.split(' ')[0] || user?.displayName?.split(' ')[0] || 'Hubber'}</span>.
+            <h1 className="text-5xl font-black text-white tracking-tighter leading-tight flex items-center gap-4">
+              {getGreeting()}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-primary-600">{userProfile?.displayName?.split(' ')[0] || user?.displayName?.split(' ')[0] || 'Hubber'}</span>.
+              {weather && (
+                <div className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-2xl ml-4">
+                  <img src={`https://openweathermap.org/img/wn/${weather.icon}.png`} alt="weather" className="w-8 h-8" />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-black text-white">{weather.temp}°C</span>
+                    <span className="text-[8px] font-bold text-gray-500 uppercase tracking-widest">{weather.description}</span>
+                  </div>
+                </div>
+              )}
             </h1>
             
             <div className="flex flex-wrap gap-4 mt-6">
@@ -835,20 +873,28 @@ export default function MyWorkspaceView() {
               </button>
 
               {/* Cover Side */}
-              <div className="w-full md:w-1/3 h-64 md:h-full bg-white/5 relative group overflow-hidden">
-                {(() => {
-                  const book = books.find(b => b.id === viewingBookDetailsId) || communityBooks.find(b => b.id === viewingBookDetailsId);
-                  if (!book) return null;
-                  return book.coverUrl ? (
-                    <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-gray-600">
-                      <i className="ph-duotone ph-book text-8xl opacity-20" />
+                  return (
+                    <div 
+                      className="w-full md:w-1/3 h-64 md:h-full bg-white/5 relative group overflow-hidden cursor-pointer"
+                      onClick={() => updateReadingProgress(book.id, (book.currentPage || 0) + 1)}
+                    >
+                      {book.coverUrl ? (
+                        <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-600">
+                          <i className="ph-duotone ph-book text-8xl opacity-20" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-2">
+                        <div className="w-12 h-12 rounded-full bg-primary-500 flex items-center justify-center text-white shadow-xl shadow-primary-500/40">
+                          <i className="ph-bold ph-plus text-xl" />
+                        </div>
+                        <span className="text-[10px] font-black text-white uppercase tracking-widest bg-black/40 px-3 py-1 rounded-full backdrop-blur-md">Clique para +1 pág</span>
+                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0a0c12] to-transparent opacity-60" />
                     </div>
                   );
                 })()}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0c12] to-transparent opacity-60" />
-              </div>
 
               {/* Content Side */}
               <div className="flex-1 p-10 md:p-14 overflow-y-auto custom-scrollbar flex flex-col">
@@ -889,14 +935,13 @@ export default function MyWorkspaceView() {
                                  className="h-full bg-primary-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]"
                                />
                              </div>
-
-                             <div className="grid grid-cols-2 gap-4">
-                               <div className="space-y-2">
-                                 <label className="text-[9px] font-black text-gray-600 uppercase tracking-widest">Página Atual</label>
+                             <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5">
+                               <div className="flex-1 space-y-2">
+                                 <label className="text-[9px] font-black text-gray-600 uppercase tracking-widest">Ajuste Rápido</label>
                                  <div className="flex items-center gap-2">
                                    <button 
                                      onClick={() => updateReadingProgress(book.id, Math.max(0, (book.currentPage || 0) - 1))}
-                                     className="w-8 h-8 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center text-white hover:bg-white/10"
+                                     className="w-10 h-10 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center text-white hover:bg-white/10"
                                    >
                                      <i className="ph ph-minus" />
                                    </button>
@@ -904,23 +949,24 @@ export default function MyWorkspaceView() {
                                      type="number" 
                                      value={book.currentPage || 0}
                                      onChange={(e) => updateReadingProgress(book.id, parseInt(e.target.value) || 0)}
-                                     className="flex-1 bg-white/5 border border-white/10 rounded-xl px-2 py-2 text-white font-bold text-xs outline-none focus:border-primary-500 text-center"
+                                     className="flex-1 bg-black/20 border border-white/10 rounded-xl px-2 py-2.5 text-white font-bold text-xs outline-none focus:border-primary-500 text-center"
                                    />
                                    <button 
                                      onClick={() => updateReadingProgress(book.id, (book.currentPage || 0) + 1)}
-                                     className="w-8 h-8 bg-primary-500/20 border border-primary-500/30 rounded-lg flex items-center justify-center text-primary-400 hover:bg-primary-500 hover:text-white"
+                                     className="w-10 h-10 bg-primary-500/20 border border-primary-500/30 rounded-xl flex items-center justify-center text-primary-400 hover:bg-primary-500 hover:text-white"
                                    >
                                      <i className="ph ph-plus" />
                                    </button>
                                  </div>
                                </div>
+                               <div className="w-px h-10 bg-white/5" />
                                <div className="space-y-2">
-                                 <label className="text-[9px] font-black text-gray-600 uppercase tracking-widest">Total de Páginas</label>
+                                 <label className="text-[9px] font-black text-gray-600 uppercase tracking-widest">Total</label>
                                  <input 
                                    type="number" 
                                    value={book.totalPages || 0}
                                    onChange={(e) => updateBookDetails(book.id, { totalPages: parseInt(e.target.value) || 0 })}
-                                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white font-bold text-xs outline-none focus:border-primary-500 text-center"
+                                   className="w-16 bg-white/5 border border-white/10 rounded-xl px-2 py-2.5 text-white font-bold text-xs outline-none focus:border-primary-500 text-center"
                                  />
                                </div>
                              </div>

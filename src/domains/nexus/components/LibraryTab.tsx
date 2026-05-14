@@ -300,11 +300,15 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
   const [viewMode, setViewMode] = React.useState<'grid' | 'alphabetical'>('grid');
   
   const stats = React.useMemo(() => {
-    const myBooks = books.filter(b => b.ownerId === userUid || !b.ownerId);
+    // Busca livros do usuário: que ele é dono OU que não têm dono (migração)
+    const myBooks = books.filter(b => !b.ownerId || b.ownerId === userUid);
     const totalPages = myBooks.reduce((acc, b) => acc + (b.currentPage || 0), 0);
     const finished = myBooks.filter(b => b.status === 'finished').length;
-    // Considera lendo se status é 'reading' OU se tem progresso e não está finalizado
-    const reading = myBooks.filter(b => b.status === 'reading' || ((b.currentPage || 0) > 0 && b.status !== 'finished')).length;
+    // Considera lendo se status é 'reading' OU se tem algum progresso e não está finalizado
+    const reading = myBooks.filter(b => 
+      b.status === 'reading' || 
+      ((b.currentPage || 0) > 0 && b.status !== 'finished')
+    ).length;
     return { total: myBooks.length, totalPages, finished, reading };
   }, [books, userUid]);
 
@@ -380,9 +384,17 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
   }, [updateBookDetails]);
 
   const addToMyLibrary = React.useCallback(async (book: NexusBook) => {
-    await addBookAction({ ...book, id: Date.now().toString(), addedAt: Date.now(), isCommunity: false });
+    await addBookAction({ 
+      ...book, 
+      id: Date.now().toString(), 
+      addedAt: Date.now(), 
+      isCommunity: false,
+      ownerId: userUid,
+      status: 'want_to_read',
+      currentPage: 0
+    });
     toast.success('Adicionado à sua estante!');
-  }, [addBookAction]);
+  }, [addBookAction, userUid]);
 
   let sourceBooks = [];
   if (librarySubTab === 'my') {

@@ -174,8 +174,14 @@ export default function ClientPortal() {
           linkedMap.set(d.id, { id: d.id, ...d.data() });
         });
 
-        const linkedList = Array.from(linkedMap.values());
-        setAllLinkedClients(linkedList);
+        const linkedList = Array.from(linkedMap.values()) as any[];
+        // 🚀 FILTRO: Não mostrar cards cancelados se houver cards ativos/em desenvolvimento
+        const hasActiveCards = linkedList.some(c => c.status !== 'Cancelado');
+        const filteredList = hasActiveCards 
+          ? linkedList.filter(c => c.status !== 'Cancelado')
+          : linkedList; // Se todos forem cancelados, mostra pra ele ver o status
+
+        setAllLinkedClients(filteredList);
 
         // Aggregate Payments for all customers (Using the new Public Portal Endpoint)
         const aggregatedPayments: any[] = [];
@@ -183,10 +189,10 @@ export default function ClientPortal() {
           if (c.asaasCustomerId) {
             try {
               // We use a regular fetch here because the portal_finance endpoint is public but verified by orgId/clientId
-              const res = await fetch(`/api/portal_finance?orgId=${orgId}&clientId=${c.id}&asaasCustomerId=${c.asaasCustomerId}`);
+              const res = await fetch(`/api/portal_finance?orgId=${orgId}&clientId=${c.id}&token=${c.publicToken}`);
               if (res.ok) {
                 const data = await res.json();
-                const payments = data.data || [];
+                const payments = data.payments || []; // 🚀 API agora retorna .payments direto
                 payments.forEach((p: any) => {
                   p.planName = c.plan || 'Serviço';
                 });
@@ -506,7 +512,10 @@ export default function ClientPortal() {
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{c.plan}</p>
-                        <p className="text-xl font-black text-white">R$ {(c.planPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} <span className="text-[10px] text-gray-500 font-normal">/ mês</span></p>
+                        <p className="text-xl font-black text-white">
+                          R$ {(c.customMonthlyPrice || c.planPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} 
+                          <span className="text-[10px] text-gray-500 font-normal"> / {c.billingCycle === 'YEARLY' ? 'ano' : 'mês'}</span>
+                        </p>
                       </div>
                       <div className="flex flex-col items-end gap-2">
                         <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-tighter border ${c.paymentStatus === 'RECEIVED' || c.paymentStatus === 'CONFIRMED'

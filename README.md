@@ -113,7 +113,8 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
     - Renomeação inline para fluxos de trabalho ininterruptos.
 - **Biblioteca Nexus Premium:**
     - Catalogação imersiva com busca automática de capas e metadados.
-    - **Gestão de Progresso:** Acompanhamento visual da leitura (barra de progresso, páginas lidas, estimativa de conclusão).
+    - **Gestão de Progresso:** Acompanhamento visual da leitura (barra de progresso, páginas lidas, estimativa de conclusão). Agora com atualização rápida clicando diretamente na capa.
+    - **Neural Greeting & Weather:** Saudação dinâmica baseada no horário e integração em tempo real com OpenWeatherMap para exibir o clima local no dashboard.
     - **Dual-View System:** Alternância instantânea entre visualização em **Grade (Cards Premium)** e **Lista (Visão de Gestão)**.
     - **Categorias Dinâmicas:** Sistema flexível para criação de categorias personalizadas com gestão CRUD completa via diálogos.
     - **Smart Filters:** Filtragem avançada por Status de Leitura (Lendo, Quer Ler, Concluído, Abandonado) e Favoritos.
@@ -152,6 +153,8 @@ O sistema de faturamento é 100% autônomo e orientado a eventos.
 - **Auto-Sync Logic:**
     - `PAYMENT_CREATED`: Atualiza automaticamente o `invoiceUrl` e `paymentStatus` no Firestore assim que uma fatura é gerada.
     - `PAYMENT_RECEIVED`: Calcula a próxima data de vencimento (`nextDueDate`) com base no ciclo (Mensal/Anual) e atualiza o status global do cliente.
+- **Custom Pricing:** Suporte a negociações customizadas com campos de mensalidade e setup que sobrescrevem os valores padrão da oferta, garantindo faturamento preciso no Asaas.
+- **Persona Filtering:** Inteligência no Portal do Cliente que agrupa produtos por CPF/CNPJ mas filtra automaticamente cards cancelados e faturas "lixo" de testes anteriores.
 - **Zero Polling:** A interface do usuário reflete o status financeiro instantaneamente via listeners do Firestore, sem necessidade de recarregar a página ou fazer requisições manuais ao Asaas.
 
 ---
