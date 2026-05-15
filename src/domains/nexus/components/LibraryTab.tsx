@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNexusStore } from '@store/useNexusStore';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import type { NexusBook, ReadingStatus } from '@store/useNexusStore';
 import { toast } from 'sonner';
 import { uploadToCloudinary } from '@/lib/cloudinary';
@@ -26,8 +26,7 @@ interface LibraryTabProps {
   userUid: string;
 }
 
-// Componente de Card Memoizado para evitar re-renderizações inúteis
-const BookCard = React.memo(({ 
+// Componente de Card Memoizado para evitar re-renderizações inúteiconst BookCard = React.memo(({ 
   book, 
   onView, 
   onShare, 
@@ -54,6 +53,32 @@ const BookCard = React.memo(({
   isOwner: boolean;
   isInLibrary: boolean;
 }) => {
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  const mouseXSpring = useSpring(x);
+  const mouseYSpring = useSpring(y);
+
+  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["15deg", "-15deg"]);
+  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-15deg", "15deg"]);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    const xPct = mouseX / width - 0.5;
+    const yPct = mouseY / height - 0.5;
+    x.set(xPct);
+    y.set(yPct);
+  };
+
+  const handleMouseLeave = () => {
+    x.set(0);
+    y.set(0);
+  };
+
   const progress = (book.totalPages && book.totalPages > 0) 
     ? Math.min(Math.round(((book.currentPage || 0) / book.totalPages) * 100), 100)
     : 0;
@@ -76,15 +101,15 @@ const BookCard = React.memo(({
     <div className="group relative" style={{ perspective: '1200px' }}>
       <motion.div 
         onClick={() => onView(book.id)}
-        initial="initial"
-        whileHover="hover"
-        variants={{
-          initial: { rotateY: 0, rotateX: 0, scale: 1, x: 0 },
-          hover: { rotateY: -25, rotateX: 5, scale: 1.05, x: 10 }
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        style={{ 
+          rotateY, 
+          rotateX,
+          transformStyle: 'preserve-3d'
         }}
-        transition={{ type: "spring", stiffness: 260, damping: 20 }}
+        whileHover={{ scale: 1.05 }}
         className="aspect-[3/4] relative cursor-pointer"
-        style={{ transformStyle: 'preserve-3d' }}
       >
         {/* Book Spine (Lombada) - Apenas visível no hover 3D */}
         <div 
@@ -123,8 +148,17 @@ const BookCard = React.memo(({
             backfaceVisibility: 'hidden'
           }}
         >
-          {/* Glossy Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30" />
+          {/* Glossy Overlay (Dinâmico com Tilt) */}
+          <motion.div 
+            style={{
+              background: useTransform(
+                mouseXSpring, 
+                [-0.5, 0.5], 
+                ["linear-gradient(120deg, rgba(255,255,255,0.15) 0%, transparent 50%)", "linear-gradient(240deg, rgba(255,255,255,0.15) 0%, transparent 50%)"]
+              )
+            }}
+            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30" 
+          />
           
           {/* Book Crease (Dobra da Capa) */}
           <div className="absolute inset-y-0 left-[5px] w-[2px] bg-black/20 z-40" />
@@ -182,10 +216,6 @@ const BookCard = React.memo(({
 
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 z-30">
              <motion.div 
-               variants={{
-                 initial: { scale: 0.5, opacity: 0 },
-                 hover: { scale: 1, opacity: 1 }
-               }}
                whileHover={{ scale: 1.1 }}
                className="w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center text-white text-xl shadow-xl shadow-primary-500/40"
              >
@@ -195,8 +225,12 @@ const BookCard = React.memo(({
         </div>
 
         {/* Dynamic Shadow (Sombra projetada) */}
-        <div 
-          className="absolute inset-4 bg-black/60 blur-2xl rounded-sm -z-10 transition-all duration-300 group-hover:translate-x-8 group-hover:translate-y-4 group-hover:opacity-40 opacity-20"
+        <motion.div 
+          style={{
+            x: useTransform(mouseXSpring, [-0.5, 0.5], [20, -20]),
+            y: useTransform(mouseYSpring, [-0.5, 0.5], [20, -20]),
+          }}
+          className="absolute inset-4 bg-black/60 blur-2xl rounded-sm -z-10 transition-all duration-300 group-hover:opacity-40 opacity-20"
         />
       </motion.div>
       <div className="mt-3 px-1 flex justify-between items-start">
@@ -222,7 +256,7 @@ const BookCard = React.memo(({
       </div>
     </div>
   </div>
-  );
+);
 });
 
 const ListViewItem = React.memo(({ 
