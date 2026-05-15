@@ -445,17 +445,28 @@ export const useNexusStore = create<NexusState>()(
   // =============================================
   addNote: async (noteData) => {
     const { uid } = get();
-    if (!uid) return null;
+    if (!uid) {
+      Logger.error('[NexusStore] Falha ao criar nota: UID não encontrado');
+      return null;
+    }
 
     try {
       const notesColRef = collection(db, 'profiles', uid, 'notes');
-      const docRef = await addDoc(notesColRef, {
+      const data = {
         ...noteData,
+        title: noteData.title || 'Sem título',
+        folderId: noteData.folderId || '',
         updatedAt: Date.now()
-      });
+      };
+      
+      Logger.info('[NexusStore] Criando nova nota...', { folderId: data.folderId });
+      
+      const docRef = await addDoc(notesColRef, data);
+      
+      Logger.info('[NexusStore] Nota criada com sucesso:', { id: docRef.id });
       return docRef.id;
     } catch (err) {
-      Logger.error('[NexusStore] Falha ao criar nota', err);
+      Logger.error('[NexusStore] Falha ao criar nota no Firestore', err);
       return null;
     }
   },

@@ -243,8 +243,15 @@ export const NexusHub: React.FC<NexusHubProps> = ({ confirm, setModalConfig }) =
 
   // Handlers de Criação
   const handleAddNote = async (folderId?: string) => {
+    const tId = toast.loading('Criando nota...');
     const id = await addNote({ title: 'Nova Nota', content: '', folderId: folderId || '', updatedAt: Date.now() });
-    if (id) setActiveEntity({ id, type: 'note' });
+    if (id) {
+      setActiveEntity({ id, type: 'note' });
+      if (folderId) toggleFolder(folderId);
+      toast.success('Nota pronta!', { id: tId });
+    } else {
+      toast.error('Erro ao criar nota', { id: tId });
+    }
   };
 
   const handleDragStart = (e: React.DragEvent, id: string, type: 'note' | 'folder') => {

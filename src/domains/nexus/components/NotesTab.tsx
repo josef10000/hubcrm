@@ -29,6 +29,7 @@ export const NotesTab: React.FC<NotesTabProps> = ({
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
   const handleAddNote = async (folderId?: string) => {
+    const tId = toast.loading('Iniciando criação de nota...');
     try {
       const newId = await addNote({
         title: '',
@@ -36,12 +37,20 @@ export const NotesTab: React.FC<NotesTabProps> = ({
         folderId: folderId || '',
         updatedAt: Date.now()
       });
+      
       if (newId) {
         setSelectedNoteId(newId);
-        if (folderId) toggleFolder(folderId, true);
+        if (folderId) {
+          toggleFolder(folderId, true);
+          toast.success('Nota criada dentro da pasta!', { id: tId });
+        } else {
+          toast.success('Nota criada na raiz!', { id: tId });
+        }
+      } else {
+        toast.error('O servidor não retornou um ID para a nota.', { id: tId });
       }
     } catch (err) {
-      toast.error('Erro ao criar nota');
+      toast.error('Erro crítico ao criar nota', { id: tId });
     }
   };
 
