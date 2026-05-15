@@ -13,7 +13,6 @@ export function useWeather() {
   const [error, setError] = useState<string | null>(null);
 
   // A chave da API deve estar configurada no Vercel/Ambiente
-  // O usuário mencionou o nome "HubCrm"
   // @ts-ignore
   const API_KEY = process.env.HubCrm || import.meta.env.VITE_HUBCRM || import.meta.env.VITE_OPENWEATHER_KEY;
 
@@ -38,6 +37,7 @@ export function useWeather() {
             icon: data.weather[0].icon,
             city: data.name
           });
+          setError(null);
         } else {
           setError(data.message);
         }
@@ -55,8 +55,7 @@ export function useWeather() {
             fetchWeather(position.coords.latitude, position.coords.longitude);
           },
           () => {
-            // Fallback para uma cidade padrão (ex: São Paulo) se o usuário negar permissão
-            // lat: -23.5505, lon: -46.6333
+            // Fallback para São Paulo
             fetchWeather(-23.5505, -46.6333);
           }
         );
@@ -65,7 +64,17 @@ export function useWeather() {
       }
     };
 
+    // Executa imediatamente na primeira vez
     getLocation();
+
+    // Configura a atualização automática a cada 60 minutos (1 hora)
+    const interval = setInterval(() => {
+      console.log('[useWeather] Atualizando clima automaticamente...');
+      getLocation();
+    }, 60 * 60 * 1000); // 3.600.000 ms
+
+    // Limpa o intervalo ao desmontar o componente
+    return () => clearInterval(interval);
   }, [API_KEY]);
 
   return { weather, loading, error };
