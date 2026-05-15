@@ -541,7 +541,6 @@ export default function ClientPortal() {
                           </a>
                         )}
                       </div>
-                    </div>
 
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-2 border-t border-white/5">
                       <div className="flex items-center gap-1.5 text-[10px] text-gray-400 uppercase font-black">
@@ -559,8 +558,9 @@ export default function ClientPortal() {
                         </a>
                       )}
                     </div>
-                  );
-                })
+                  </div>
+                );
+              })
               ) : (
                 <div className="p-10 rounded-3xl bg-white/5 border border-white/10 text-center">
                   <CheckCircle className="w-8 h-8 text-emerald-500/30 mx-auto mb-3" />
