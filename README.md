@@ -103,23 +103,25 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
 ### 📈 Observabilidade (Axiom)
 - **Escopo:** Centralização de logs estruturados do cliente e servidor para auditoria e depuração técnica profunda.
 
-### 🧠 Nexus Intelligence Hub v9.0 (High-Performance Engine)
-- **Escopo:** Cérebro Operacional do Hub, focado em minimalismo e eficiência extrema.
+### 🧠 Nexus Intelligence Hub v10.0 (High-Performance Analytics Engine)
+- **Escopo:** Cérebro Operacional do Hub, evoluído para um ecossistema de dados inteligentes e gamificação.
+- **Nexus Analytics Dashboard (Premium Insights):**
+    - **Wisdom Streak:** Contador de dias consecutivos de atividade (leitura ou notas) para incentivo à consistência.
+    - **Knowledge Heatmap:** Visualização anual estilo GitHub que destaca a intensidade de estudo e produção de conhecimento.
+    - **Topics Radar (Spider Chart):** Gráfico de teia que mapeia as áreas de maior foco do usuário baseadas nas categorias catalogadas.
+    - **Retention Ranking:** Métrica avançada que identifica quais obras geraram mais insights (Notas/100 Páginas), priorizando a retenção de conhecimento sobre o volume.
+    - **Monthly Volume:** Gráfico comparativo entre "Páginas Lidas" vs "Notas Criadas", permitindo visualizar o equilíbrio entre consumo e produção.
+    - **Cruise Speed:** Estimativa de velocidade de leitura (Pág/Hora) baseada em logs reais e bônus de consistência.
 - **Arquitetura Dual-View:**
     - **Neural Dashboard:** Visão sintetizada de Metas Críticas, Tarefas Ativas e Notas Recentes (Daily Briefing).
     - **Integrated Explorer:** Navegação hierárquica por pastas e notas com Drag & Drop e suporte a links bidirecionais `[[Link]]`.
 - **Gerenciamento Total (CRUD):** 
     - Controle completo (Criar, Editar, Renomear, Excluir) de Notas, Pastas, Tarefas e Metas diretamente pela interface principal.
-    - Renomeação inline para fluxos de trabalho ininterruptos.
 - **Biblioteca Nexus Premium:**
-    - Catalogação imersiva com busca automática de capas e metadados.
-    - **Gestão de Progresso:** Acompanhamento visual da leitura (barra de progresso, páginas lidas, estimativa de conclusão). Agora com atualização rápida clicando diretamente na capa.
-    - **Neural Greeting & Weather:** Saudação dinâmica baseada no horário e integração em tempo real com OpenWeatherMap para exibir o clima local no dashboard.
-    - **Dual-View System:** Alternância instantânea entre visualização em **Grade (Cards Premium)** e **Lista (Visão de Gestão)**.
-    - **Categorias Dinâmicas:** Sistema flexível para criação de categorias personalizadas com gestão CRUD completa via diálogos.
-    - **Smart Filters:** Filtragem avançada por Status de Leitura (Lendo, Quer Ler, Concluído, Abandonado) e Favoritos.
-    - **Reading Analytics:** Dashboard integrado com estatísticas de total de obras, páginas lidas e metas concluídas.
-- **Performance:** Motor de grafo removido para garantir 60fps constantes e foco total na produtividade textual e organizacional.
+    - Catalogação imersiva com busca automática de capas e metadados via Open Library.
+    - **Gestão de Progresso:** Acompanhamento visual da leitura com atualização instantânea.
+    - **Neural Greeting & Weather:** Saudação dinâmica e clima local integrado ao dashboard.
+    - **Categorias Dinâmicas:** Gestão completa de taxonomia personalizada.
 
 ---
 
