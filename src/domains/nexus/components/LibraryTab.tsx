@@ -70,7 +70,10 @@ const BookCard = React.memo(({
     want_to_read: 'Quero Ler',
     finished: 'Lido',
     dropped: 'Parado'
-  };    <div className="group relative" style={{ perspective: '1200px' }}>
+  };
+
+  return (
+    <div className="group relative" style={{ perspective: '1200px' }}>
       <motion.div 
         onClick={() => onView(book.id)}
         initial="initial"
