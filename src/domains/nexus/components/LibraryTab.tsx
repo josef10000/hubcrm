@@ -70,90 +70,133 @@ const BookCard = React.memo(({
     want_to_read: 'Quero Ler',
     finished: 'Lido',
     dropped: 'Parado'
-  };
-
-  return (
-    <div className="group relative will-change-transform">
+  };    <div className="group relative" style={{ perspective: '1200px' }}>
       <motion.div 
         onClick={() => onView(book.id)}
-        whileHover={{ 
-          rotateY: 10, 
-          rotateX: -5, 
-          scale: 1.02,
-          z: 50
+        initial="initial"
+        whileHover="hover"
+        variants={{
+          initial: { rotateY: 0, rotateX: 0, scale: 1, x: 0 },
+          hover: { rotateY: -25, rotateX: 5, scale: 1.05, x: 10 }
         }}
-        transition={{ type: "spring", stiffness: 300, damping: 20 }}
-        className="aspect-[3/4] bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-primary-500/50 transition-all cursor-pointer shadow-2xl relative perspective-1000 group-hover:shadow-primary-500/10"
+        transition={{ type: "spring", stiffness: 260, damping: 20 }}
+        className="aspect-[3/4] relative cursor-pointer"
         style={{ transformStyle: 'preserve-3d' }}
       >
-        {/* Glossy Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20" />
-        
-        {/* Category Badge */}
-        {book.category && (
-          <div className="absolute top-3 right-3 px-2 py-1 bg-primary-500/80 backdrop-blur-md rounded-lg text-[7px] font-black text-white uppercase tracking-tighter z-30 shadow-lg">
-            {book.category}
-          </div>
-        )}
-
-        {/* Favorite Button */}
-        <button
-          onClick={(e) => { e.stopPropagation(); onToggleFavorite(book.id); }}
-          className={`absolute top-3 left-3 p-1.5 rounded-lg z-30 transition-all ${
-            book.isFavorite ? 'bg-amber-500 text-white shadow-lg' : 'bg-black/40 text-white/40 hover:bg-black/60 hover:text-white'
-          }`}
+        {/* Book Spine (Lombada) - Apenas visível no hover 3D */}
+        <div 
+          className="absolute inset-y-0 left-0 w-[30px] bg-gradient-to-r from-primary-900 to-primary-700 origin-left z-10 rounded-l-sm"
+          style={{ 
+            transform: 'rotateY(-90deg)',
+            boxShadow: 'inset -5px 0 10px rgba(0,0,0,0.5)'
+          }}
         >
-          <i className={`ph-bold ${book.isFavorite ? 'ph-star-fill' : 'ph-star'}`} />
-        </button>
-
-        {/* Status Badge */}
-        {book.status && (
-          <div className={`absolute bottom-3 left-3 px-2 py-1 ${statusColors[book.status]} rounded-lg text-[7px] font-black text-white uppercase tracking-widest z-30 shadow-lg`}>
-            {statusLabels[book.status]}
-          </div>
-        )}
-
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 z-10" />
-        
-        {book.coverUrl ? (
-          <img 
-            src={book.coverUrl} 
-            alt={book.title} 
-            className="w-full h-full object-cover transition-transform group-hover:scale-105" 
-            loading="lazy" 
-          />
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center gap-4 bg-gradient-to-br from-white/5 to-white/[0.02]">
-            <i className="ph-duotone ph-book text-5xl text-primary-500/40" />
-            <span className="text-[10px] font-bold uppercase tracking-widest leading-tight opacity-40">{book.title}</span>
-          </div>
-        )}
-        
-        {/* Progress Bar (Visual) */}
-        {progress > 0 && (
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10 z-30">
-            <motion.div 
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              className={`h-full ${progress === 100 ? 'bg-emerald-500' : 'bg-primary-500'}`} 
-            />
-          </div>
-        )}
-
-        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 z-20">
-           <motion.div 
-             initial={{ scale: 0.5, opacity: 0 }}
-             whileHover={{ scale: 1.1 }}
-             animate={{ scale: 1, opacity: 1 }}
-             className="w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center text-white text-xl shadow-xl shadow-primary-500/40"
-           >
-             <i className="ph-bold ph-play" />
-           </motion.div>
+          <div className="absolute inset-0 bg-white/5 opacity-20" />
         </div>
 
-        {/* Subtle Reflection */}
-        <div className="absolute -bottom-1/2 left-0 right-0 h-1/2 bg-gradient-to-t from-white/5 to-transparent opacity-20 pointer-events-none" />
+        {/* Book Pages (Lado Direito - Miolo) */}
+        <div 
+          className="absolute inset-y-[2%] right-0 w-[25px] bg-[#fdfbf0] origin-right z-0 rounded-r-sm shadow-inner"
+          style={{ 
+            transform: 'rotateY(90deg) translateZ(-1px)',
+            backgroundImage: 'repeating-linear-gradient(transparent, transparent 1px, rgba(0,0,0,0.05) 1px, rgba(0,0,0,0.05) 2px)'
+          }}
+        />
+
+        {/* Bottom Pages (Base) */}
+        <div 
+          className="absolute inset-x-0 bottom-0 h-[25px] bg-[#fdfbf0] origin-bottom z-0 rounded-b-sm"
+          style={{ 
+            transform: 'rotateX(-90deg)',
+            backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 1px, rgba(0,0,0,0.05) 1px, rgba(0,0,0,0.05) 2px)'
+          }}
+        />
+
+        {/* Front Cover (Capa) */}
+        <div 
+          className="absolute inset-0 z-20 rounded-r-sm overflow-hidden border border-white/10 shadow-2xl bg-[#1a1c23]"
+          style={{ 
+            transform: 'translateZ(25px)',
+            backfaceVisibility: 'hidden'
+          }}
+        >
+          {/* Glossy Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30" />
+          
+          {/* Book Crease (Dobra da Capa) */}
+          <div className="absolute inset-y-0 left-[5px] w-[2px] bg-black/20 z-40" />
+
+          {/* Category Badge */}
+          {book.category && (
+            <div className="absolute top-3 right-3 px-2 py-1 bg-primary-500/80 backdrop-blur-md rounded-lg text-[7px] font-black text-white uppercase tracking-tighter z-40 shadow-lg">
+              {book.category}
+            </div>
+          )}
+
+          {/* Favorite Button */}
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleFavorite(book.id); }}
+            className={`absolute top-3 left-4 p-1.5 rounded-lg z-40 transition-all ${
+              book.isFavorite ? 'bg-amber-500 text-white shadow-lg' : 'bg-black/40 text-white/40 hover:bg-black/60 hover:text-white'
+            }`}
+          >
+            <i className={`ph-bold ${book.isFavorite ? 'ph-star-fill' : 'ph-star'}`} />
+          </button>
+
+          {/* Status Badge */}
+          {book.status && (
+            <div className={`absolute bottom-3 left-4 px-2 py-1 ${statusColors[book.status]} rounded-lg text-[7px] font-black text-white uppercase tracking-widest z-40 shadow-lg`}>
+              {statusLabels[book.status]}
+            </div>
+          )}
+
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 z-10" />
+          
+          {book.coverUrl ? (
+            <img 
+              src={book.coverUrl} 
+              alt={book.title} 
+              className="w-full h-full object-cover transition-transform group-hover:scale-105" 
+              loading="lazy" 
+            />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center gap-4 bg-gradient-to-br from-white/5 to-white/[0.02]">
+              <i className="ph-duotone ph-book text-5xl text-primary-500/40" />
+              <span className="text-[10px] font-bold uppercase tracking-widest leading-tight opacity-40">{book.title}</span>
+            </div>
+          )}
+          
+          {/* Progress Bar (Visual) */}
+          {progress > 0 && (
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10 z-40">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${progress}%` }}
+                className={`h-full ${progress === 100 ? 'bg-emerald-500' : 'bg-primary-500'}`} 
+              />
+            </div>
+          )}
+
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 z-30">
+             <motion.div 
+               variants={{
+                 initial: { scale: 0.5, opacity: 0 },
+                 hover: { scale: 1, opacity: 1 }
+               }}
+               whileHover={{ scale: 1.1 }}
+               className="w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center text-white text-xl shadow-xl shadow-primary-500/40"
+             >
+               <i className="ph-bold ph-play" />
+             </motion.div>
+          </div>
+        </div>
+
+        {/* Dynamic Shadow (Sombra projetada) */}
+        <div 
+          className="absolute inset-4 bg-black/60 blur-2xl rounded-sm -z-10 transition-all duration-300 group-hover:translate-x-8 group-hover:translate-y-4 group-hover:opacity-40 opacity-20"
+        />
       </motion.div>
+>
       <div className="mt-3 px-1 flex justify-between items-start">
         <div className="min-w-0">
           <h4 className="text-xs font-black text-white truncate uppercase tracking-widest leading-none">{book.title}</h4>
