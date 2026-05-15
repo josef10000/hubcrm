@@ -218,7 +218,7 @@ export const NexusStats: React.FC = () => {
           className="bg-white/5 border border-white/10 p-6 rounded-[2rem] flex flex-col gap-2 relative overflow-hidden group"
         >
           <div className="absolute -right-4 -top-4 w-24 h-24 bg-emerald-500/10 blur-3xl rounded-full group-hover:scale-150 transition-transform duration-700" />
-          <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Meta de 2024</span>
+          <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Meta de {new Date().getFullYear()}</span>
           <div className="flex items-end gap-2">
             <span className="text-4xl font-black text-emerald-500">{books.filter(b => b.status === 'finished').length}</span>
             <span className="text-xs font-bold text-gray-400 mb-1.5 uppercase">Lidos / 50</span>
@@ -238,7 +238,11 @@ export const NexusStats: React.FC = () => {
           <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Retenção Média</span>
           <div className="flex items-end gap-2">
             <span className="text-4xl font-black text-purple-500">
-              {Math.round((notes.length / Math.max(1, books.reduce((acc, b) => acc + (b.currentPage || 0), 0))) * 100)}
+              {(() => {
+                const totalPages = books.reduce((acc, b) => acc + (b.currentPage || 0), 0);
+                if (totalPages === 0) return 0;
+                return Math.round((notes.length / totalPages) * 100);
+              })()}
             </span>
             <span className="text-xs font-bold text-gray-400 mb-1.5 uppercase">Insights / 100 Pág</span>
           </div>
