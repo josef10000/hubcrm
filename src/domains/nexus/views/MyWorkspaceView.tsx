@@ -11,6 +11,7 @@ import { format, isToday } from 'date-fns';
 import { uploadImageToImgBB } from '@/lib/imgbb';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 import { apiClient } from '@/lib/apiClient';
+import { useWeather } from '@/hooks/useWeather';
 
 // Novos Componentes Modulares
 import ErrorBoundary from '@shared/components/ErrorBoundary';
@@ -96,7 +97,7 @@ export default function MyWorkspaceView() {
   const [isAddBookLinkOpen, setIsAddBookLinkOpen] = useState(false);
   const [bookCoverResults, setBookCoverResults] = useState<{url: string, title: string, author?: string}[]>([]);
   const [selectedPreviewCover, setSelectedPreviewCover] = useState<string | null>(null);
-  const [weather, setWeather] = useState<{ temp: number; description: string; icon: string } | null>(null);
+  const { weather } = useWeather();
 
   // Saudação Dinâmica
   const getGreeting = () => {
@@ -235,25 +236,6 @@ export default function MyWorkspaceView() {
     setDailyQuote(MOTIVATIONAL_QUOTES[index]);
   }, [user]);
 
-  // Fetch Weather
-  useEffect(() => {
-    const fetchWeather = async () => {
-      try {
-        const res = await fetch('/api/weather?city=Sao Paulo');
-        if (res.ok) {
-          const data = await res.json();
-          setWeather({
-            temp: Math.round(data.main.temp),
-            description: data.weather[0].description,
-            icon: data.weather[0].icon
-          });
-        }
-      } catch (err) {
-        console.error('Weather error:', err);
-      }
-    };
-    fetchWeather();
-  }, []);
 
   // Sincroniza abas e skeletons
   const isSyncing = loading && books.length === 0;
