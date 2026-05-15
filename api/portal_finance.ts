@@ -53,8 +53,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 🚀 Lógica de Filtro: Remover faturas "lixo" de testes anteriores.
     // Regra: Mostrar todas as pagas (RECEIVED/CONFIRMED) para histórico.
     // Regra: Mostrar apenas a MAIS RECENTE das pendentes/vencidas (PENDING/OVERDUE).
-    const paid = allPayments.filter((p: any) => p.status === 'RECEIVED' || p.status === 'CONFIRMED');
-    const pendingOrOverdue = allPayments
+    // 🚀 NOVO: Filtramos por externalReference para garantir que só mostramos pagamentos DESTE card/serviço
+    const clientPayments = allPayments.filter((p: any) => p.externalReference === clientId);
+
+    const paid = clientPayments.filter((p: any) => p.status === 'RECEIVED' || p.status === 'CONFIRMED');
+    const pendingOrOverdue = clientPayments
       .filter((p: any) => p.status === 'PENDING' || p.status === 'OVERDUE')
       .sort((a: any, b: any) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
     

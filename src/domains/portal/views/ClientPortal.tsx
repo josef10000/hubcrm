@@ -513,7 +513,7 @@ export default function ClientPortal() {
                       <div>
                         <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{c.plan}</p>
                         <p className="text-xl font-black text-white">
-                          R$ {(c.customMonthlyPrice || c.planPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} 
+                          R$ {getPlanPrice(c.plan, c.billingCycle, c).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} 
                           <span className="text-[10px] text-gray-500 font-normal"> / {c.billingCycle === 'YEARLY' ? 'ano' : 'mês'}</span>
                         </p>
                       </div>
