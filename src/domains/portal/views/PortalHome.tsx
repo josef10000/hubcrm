@@ -168,7 +168,9 @@ export default function PortalHome({ client, announcement, setActiveTab }: Porta
                 </div>
               </div>
               <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Próxima Mensalidade</p>
+                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">
+                  {client.billingCycle === 'YEARLY' ? 'Próxima Renovação' : 'Próxima Mensalidade'}
+                </p>
                 <p className="text-xl font-black text-white">
                   {client.currentDueDate ? new Date(client.currentDueDate + 'T12:00:00').toLocaleDateString('pt-BR') : '--/--/----'}
                 </p>

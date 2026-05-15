@@ -147,7 +147,9 @@ export default function PortalFinance({
             
             <div className="mb-10 lg:mb-12 flex flex-col sm:flex-row sm:items-center gap-6 lg:gap-12">
               <div className="flex-1">
-                <p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-1">Próximo Vencimento</p>
+                <p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-1">
+                  {client.billingCycle === 'YEARLY' ? 'Próxima Renovação' : 'Próximo Vencimento'}
+                </p>
                 <div className="flex items-center gap-3">
                    <Calendar className="w-5 h-5 text-white/40" />
                    <span className="text-3xl lg:text-4xl font-black text-white">
