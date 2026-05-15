@@ -26,7 +26,8 @@ interface LibraryTabProps {
   userUid: string;
 }
 
-// Componente de Card Memoizado para evitar re-renderizações inúteiconst BookCard = React.memo(({ 
+// Componente de Card Memoizado para evitar re-renderizações inúteis
+const BookCard = React.memo(({ 
   book, 
   onView, 
   onShare, 
