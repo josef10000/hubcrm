@@ -23,6 +23,7 @@ const LibraryTab = React.lazy(() => import('@nexus/components/LibraryTab').then(
 
 import { OKRWidget } from '@nexus/components/OKRWidget';
 import { KudosWall } from '@nexus/components/KudosWall';
+import { ReadingCompanion } from '@nexus/components/ReadingCompanion';
 
 // Interfaces importadas da Store
 import { useNexusStore } from '@store/useNexusStore';
@@ -90,6 +91,7 @@ export default function MyWorkspaceView() {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
+  const [isCompanionOpen, setIsCompanionOpen] = useState(true);
   const [viewingBookDetailsId, setViewingBookDetailsId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [librarySearchQuery, setLibrarySearchQuery] = useState('');
@@ -537,22 +539,58 @@ export default function MyWorkspaceView() {
                       />
                     )
                   ) : (
-                    <div className="h-[800px] flex flex-col bg-[#0a0c12]/80 backdrop-blur-3xl border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl">
-                      <div className="flex items-center justify-between px-8 py-4 border-b border-white/5 bg-white/5">
-                        <div className="flex items-center gap-4">
-                          <button onClick={() => setSelectedBookId(null)} className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all">
-                            <i className="ph-bold ph-caret-left" />
-                          </button>
-                          <div>
-                            <h3 className="text-sm font-black text-white uppercase tracking-widest">{books.find(b => b.id === selectedBookId)?.title}</h3>
-                            <p className="text-[9px] font-medium text-gray-500 uppercase tracking-[0.2em]">Visualizador Imersivo v1.0</p>
+                    <div className="h-[850px] flex bg-[#0a0c12]/80 backdrop-blur-3xl border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl transition-all">
+                      {/* Área do PDF */}
+                      <div className="flex-1 flex flex-col min-w-0">
+                        <div className="flex items-center justify-between px-8 py-4 border-b border-white/5 bg-white/5">
+                          <div className="flex items-center gap-4">
+                            <button onClick={() => setSelectedBookId(null)} className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all">
+                              <i className="ph-bold ph-caret-left" />
+                            </button>
+                            <div>
+                              <h3 className="text-sm font-black text-white uppercase tracking-widest truncate max-w-[300px]">
+                                {books.find(b => b.id === selectedBookId)?.title}
+                              </h3>
+                              <p className="text-[9px] font-medium text-gray-500 uppercase tracking-[0.2em]">Nexus Intelligence Reader</p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-3">
+                            <button 
+                              onClick={() => setIsCompanionOpen(!isCompanionOpen)} 
+                              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${isCompanionOpen ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' : 'bg-white/5 text-gray-400 hover:text-white'}`}
+                            >
+                              <i className="ph-bold ph-brain" />
+                              Companion {isCompanionOpen ? 'Ativo' : 'Oculto'}
+                            </button>
+                            <button onClick={() => window.open(books.find(b => b.id === selectedBookId)?.pdfUrl)} className="px-4 py-2 bg-white/5 rounded-xl text-[10px] font-black text-gray-400 hover:text-white transition-all uppercase tracking-widest">
+                              Baixar
+                            </button>
                           </div>
                         </div>
-                        <button onClick={() => window.open(books.find(b => b.id === selectedBookId)?.pdfUrl)} className="px-4 py-2 bg-white/5 rounded-xl text-[10px] font-black text-gray-400 hover:text-white transition-all uppercase tracking-widest">
-                          Baixar Original
-                        </button>
+                        <iframe 
+                          src={`${books.find(b => b.id === selectedBookId)?.pdfUrl}#toolbar=0`} 
+                          className="flex-1 w-full border-none bg-white" 
+                          title="PDF Viewer" 
+                        />
                       </div>
-                      <iframe src={`${books.find(b => b.id === selectedBookId)?.pdfUrl}#toolbar=0`} className="flex-1 w-full border-none bg-white" title="PDF Viewer" />
+
+                      {/* Companion Sidebar */}
+                      <AnimatePresence>
+                        {isCompanionOpen && (
+                          <motion.div
+                            initial={{ width: 0, opacity: 0 }}
+                            animate={{ width: 'auto', opacity: 1 }}
+                            exit={{ width: 0, opacity: 0 }}
+                            className="overflow-hidden"
+                          >
+                            <ReadingCompanion 
+                              book={books.find(b => b.id === selectedBookId)!} 
+                              onClose={() => setIsCompanionOpen(false)} 
+                            />
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   )}
                 </React.Suspense>

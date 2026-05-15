@@ -484,7 +484,7 @@ export const useNexusStore = create<NexusState>()(
   // =============================================
   // NOTAS — Operações via Subcoleção Firestore
   // =============================================
-  addNote: async (noteData) => {
+  addNote: async (noteData: Omit<NexusNote, 'id'> & { bookId?: string }) => {
     const { uid } = get();
     if (!uid) {
       Logger.error('[NexusStore] Falha ao criar nota: UID não encontrado');
@@ -500,6 +500,9 @@ export const useNexusStore = create<NexusState>()(
         updatedAt: Date.now()
       };
       
+      // Remove o bookId do objeto que vai para a coleção de notas para não poluir o schema se não for desejado
+      // ou mantenha se quiser que a nota saiba do livro. Vou manter para facilitar backlinks futuros.
+      
       Logger.info('[NexusStore] Criando nova nota...', { folderId: data.folderId });
       
       const docRef = await addDoc(notesColRef, data);
@@ -509,6 +512,7 @@ export const useNexusStore = create<NexusState>()(
         type: 'note',
         noteId: docRef.id,
         folderId: data.folderId,
+        bookId: noteData.bookId,
         timestamp: Date.now()
       });
 
