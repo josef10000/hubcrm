@@ -25,8 +25,9 @@
     { "source": "/api/team/cancel-invite", "destination": "/api/team_handler?action=cancel-invite" },
     { "source": "/api/team/update-profile", "destination": "/api/team_handler?action=update-profile" },
 
-    { "source": "/api/email/manual-trigger", "destination": "/api/email" },
-    { "source": "/api/uptimerobot/monitors", "destination": "/api/uptime" },
+    { "source": "/api/email/manual-trigger", "destination": "/api/system_handler?action=email" },
+    { "source": "/api/uptimerobot/monitors", "destination": "/api/system_handler?action=uptime" },
+    { "source": "/api/weather", "destination": "/api/system_handler?action=weather" },
     
     { "source": "/((?!api/.*).*)", "destination": "/index.html" }
   ],
