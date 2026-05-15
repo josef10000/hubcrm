@@ -23,6 +23,7 @@ export default function PortalHome({ client, announcement, setActiveTab }: Porta
   const completedStages = client.stages?.filter((s: any) => s.completed).length || 0;
   const totalStages = client.stages?.length || 0;
   const progress = totalStages > 0 ? Math.round((completedStages / totalStages) * 100) : 0;
+  const isSubscription = !!client.asaasSubscriptionId;
 
   const copyReferralLink = () => {
     const message = `Olá! Fui indicado por ${client.name} e gostaria de conhecer os projetos da Hub Symples.`;
@@ -167,14 +168,16 @@ export default function PortalHome({ client, announcement, setActiveTab }: Porta
                   {client.paymentStatus === 'RECEIVED' ? <CheckCircle size={16} className="text-emerald-400" /> : <Clock size={16} className="text-yellow-400" />}
                 </div>
               </div>
-              <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">
-                  {client.billingCycle === 'YEARLY' ? 'Próxima Renovação' : 'Próxima Mensalidade'}
-                </p>
-                <p className="text-xl font-black text-white">
-                  {client.currentDueDate ? new Date(client.currentDueDate + 'T12:00:00').toLocaleDateString('pt-BR') : '--/--/----'}
-                </p>
-              </div>
+              {isSubscription && (
+                <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">
+                    {client.billingCycle === 'YEARLY' ? 'Próxima Renovação' : 'Próxima Mensalidade'}
+                  </p>
+                  <p className="text-xl font-black text-white">
+                    {client.currentDueDate ? new Date(client.currentDueDate + 'T12:00:00').toLocaleDateString('pt-BR') : '--/--/----'}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
           

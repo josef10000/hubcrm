@@ -30,6 +30,7 @@ export default function PortalFinance({
 }: PortalFinanceProps) {
   const setupValue = client.customSetupPrice || client.setupPrice || 0;
   const monthlyValue = client.customMonthlyPrice || client.planPrice || 0;
+  const isSubscription = !!client.asaasSubscriptionId;
   
   // Verificar se o setup já foi pago no histórico
   const isSetupPaid = paymentsHistory.some(p => 
@@ -146,17 +147,19 @@ export default function PortalFinance({
             </div>
             
             <div className="mb-10 lg:mb-12 flex flex-col sm:flex-row sm:items-center gap-6 lg:gap-12">
-              <div className="flex-1">
-                <p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-1">
-                  {client.billingCycle === 'YEARLY' ? 'Próxima Renovação' : 'Próximo Vencimento'}
-                </p>
-                <div className="flex items-center gap-3">
-                   <Calendar className="w-5 h-5 text-white/40" />
-                   <span className="text-3xl lg:text-4xl font-black text-white">
-                     {currentInvoice?.dueDate ? new Date(currentInvoice.dueDate + 'T12:00:00').toLocaleDateString('pt-BR') : '--/--/----'}
-                   </span>
-                </div>
-              </div>
+                {isSubscription && (
+                  <div>
+                    <p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-1">
+                      {client.billingCycle === 'YEARLY' ? 'Próxima Renovação' : 'Próximo Vencimento'}
+                    </p>
+                    <div className="flex items-center gap-3">
+                       <Calendar className="w-5 h-5 text-white/40" />
+                       <span className="text-3xl lg:text-4xl font-black text-white">
+                         {currentInvoice?.dueDate ? new Date(currentInvoice.dueDate + 'T12:00:00').toLocaleDateString('pt-BR') : '--/--/----'}
+                       </span>
+                    </div>
+                  </div>
+                )}
 
               {client.currentDiscount > 0 && !isSetupFocus && (
                 <div className="bg-emerald-400/20 border border-emerald-400/30 px-4 py-2 rounded-2xl flex items-center gap-2">
