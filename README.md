@@ -117,6 +117,11 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
     - **Integrated Explorer:** Navegação hierárquica por pastas e notas com Drag & Drop e suporte a links bidirecionais `[[Link]]`.
 - **Gerenciamento Total (CRUD):** 
     - Controle completo (Criar, Editar, Renomear, Excluir) de Notas, Pastas, Tarefas e Metas diretamente pela interface principal.
+- **Reading Companion (Anotador Imersivo):**
+    - Interface de leitura assistida com barra lateral de insights integrada ao visualizador de PDF.
+    - **Speech-to-Text Integration:** Criação de notas e insights via voz em tempo real (pt-BR).
+    - **Contextual Insights:** Exibição automática de "backlinks" e notas anteriores relacionadas à obra em leitura.
+    - **Sincronia de Progresso:** Atualização instantânea da página atual diretamente pelo companion.
 - **Biblioteca Nexus Premium:**
     - Catalogação imersiva com busca automática de capas e metadados via Open Library.
     - **Gestão de Progresso:** Acompanhamento visual da leitura com atualização instantânea.
