@@ -221,6 +221,7 @@ const BookCard = React.memo(({
         <button onClick={(e) => { e.stopPropagation(); onDelete(book.id); }} className="p-1.5 hover:text-rose-400 transition-all" title={isOwner && book.isCommunity ? "Remover da Comunidade" : "Excluir"}><i className="ph-bold ph-trash" /></button>
       </div>
     </div>
+  </div>
   );
 });
 
