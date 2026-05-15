@@ -4,10 +4,11 @@ import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from
 import type { NexusBook, ReadingStatus } from '@store/useNexusStore';
 import { toast } from 'sonner';
 import { uploadToCloudinary } from '@/lib/cloudinary';
+import { NexusStats } from './NexusStats';
 
 interface LibraryTabProps {
-  librarySubTab: 'my' | 'shared' | 'community';
-  setLibrarySubTab: (tab: 'my' | 'shared' | 'community') => void;
+  librarySubTab: 'my' | 'shared' | 'community' | 'stats';
+  setLibrarySubTab: (tab: 'my' | 'shared' | 'community' | 'stats') => void;
   librarySearchQuery: string;
   setLibrarySearchQuery: (query: string) => void;
   libraryPage: number;
@@ -562,7 +563,8 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
           {[
             { id: 'my', label: 'Minha Estante', icon: 'ph-book' },
             { id: 'shared', label: 'Recomendações', icon: 'ph-share-network' },
-            { id: 'community', label: 'Comunidade', icon: 'ph-users-three' }
+            { id: 'community', label: 'Comunidade', icon: 'ph-users-three' },
+            { id: 'stats', label: 'Estatísticas', icon: 'ph-chart-line-up' }
           ].map(tab => (
             <button
               key={tab.id}
@@ -624,200 +626,236 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
         ))}
       </div>
 
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="flex bg-white/5 p-1 rounded-xl border border-white/5">
-          <button 
-            onClick={() => setViewMode('grid')}
-            className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-primary-500 text-white' : 'text-gray-500 hover:text-white'}`}
-            title="Visualização em Grade"
-          >
-            <i className="ph-bold ph-squares-four" />
-          </button>
-          <button 
-            onClick={() => setViewMode('alphabetical')}
-            className={`p-2 rounded-lg transition-all ${viewMode === 'alphabetical' ? 'bg-primary-500 text-white' : 'text-gray-500 hover:text-white'}`}
-            title="Agrupamento A-Z"
-          >
-            <i className="ph-bold ph-sort-ascending" />
-          </button>
-        </div>
-
-        {/* Filtro de Status */}
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as any)}
-          className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white outline-none hover:border-white/20 transition-all cursor-pointer"
-        >
-          <option value="all" className="bg-[#0d0f16]">Todos Status</option>
-          <option value="reading" className="bg-[#0d0f16]">Lendo Agora</option>
-          <option value="want_to_read" className="bg-[#0d0f16]">Quero Ler</option>
-          <option value="finished" className="bg-[#0d0f16]">Finalizados</option>
-          <option value="dropped" className="bg-[#0d0f16]">Abandonados</option>
-        </select>
-
-        {/* Toggle Favoritos */}
-        <button
-          onClick={() => setFavoriteFilter(!favoriteFilter)}
-          className={`px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border transition-all ${
-            favoriteFilter 
-            ? 'bg-amber-500/10 border-amber-500/50 text-amber-400' 
-            : 'bg-white/5 border-white/10 text-gray-500 hover:text-white'
-          }`}
-        >
-          <i className={`ph-bold ${favoriteFilter ? 'ph-star-fill' : 'ph-star'}`} />
-          Favoritos
-        </button>
-
-        <div className="relative">
-          <button
-            onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-            className="bg-white/5 border border-white/10 rounded-2xl px-6 py-3 text-[10px] font-black uppercase tracking-widest text-white flex items-center gap-3 hover:border-white/20 transition-all min-w-[180px] justify-between"
-          >
-            <span>{categoryFilter === 'all' ? 'Todas Categorias' : categoryFilter}</span>
-            <i className={`ph-bold ph-caret-down transition-transform ${isFilterDropdownOpen ? 'rotate-180' : ''}`} />
-          </button>
-
-            <AnimatePresence>
-              {isFilterDropdownOpen && (
-                <>
-                  <div className="fixed inset-0 z-[40]" onClick={() => setIsFilterDropdownOpen(false)} />
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute top-full left-0 mt-2 w-full bg-[#0d0f16] border border-white/10 rounded-2xl shadow-2xl z-[50] overflow-hidden"
-                  >
-                    <div className="max-h-[240px] overflow-y-auto custom-scrollbar p-2">
-                      <button
-                        onClick={() => { setCategoryFilter('all'); setIsFilterDropdownOpen(false); }}
-                        className={`w-full text-left px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${categoryFilter === 'all' ? 'bg-primary-500 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
-                      >
-                        Todas Categorias
-                      </button>
-                      {bookCategories.map(cat => (
-                        <div key={cat} className="group relative flex items-center">
-                          <button
-                            onClick={() => { setCategoryFilter(cat); setIsFilterDropdownOpen(false); }}
-                            className={`flex-1 text-left px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${categoryFilter === cat ? 'bg-primary-500 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
-                          >
-                            {cat}
-                          </button>
-                          <div className="absolute right-2 opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all">
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); onEditCategory(cat); setIsFilterDropdownOpen(false); }}
-                              className="p-1.5 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-all"
-                            >
-                              <i className="ph-bold ph-pencil-simple" />
-                            </button>
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); onDeleteCategory(cat); setIsFilterDropdownOpen(false); }}
-                              className="p-1.5 hover:bg-red-500/10 rounded-lg text-gray-400 hover:text-red-400 transition-all"
-                            >
-                              <i className="ph-bold ph-trash" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                      <div className="h-px bg-white/5 my-2" />
-                      <button
-                        onClick={onAddCategory}
-                        className="w-full text-left px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-primary-400 hover:bg-primary-500/10 transition-all flex items-center gap-2"
-                      >
-                        <i className="ph-bold ph-plus" />
-                        Nova Categoria...
-                      </button>
-                    </div>
-                  </motion.div>
-                </>
-              )}
-            </AnimatePresence>
-          </div>
-
-          <div className="relative flex-1 sm:w-64">
-            <i className="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-            <input 
-              placeholder="Buscar por título ou autor..."
-              value={librarySearchQuery}
-              onChange={(e) => { setLibrarySearchQuery(e.target.value); setLibraryPage(1); }}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-3 text-sm text-white focus:border-primary-500 transition-all outline-none"
-            />
-          </div>
-          <button 
-            onClick={() => setIsAddBookLinkOpen(true)}
-            className="flex items-center gap-3 px-6 py-3 bg-primary-500 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl shadow-primary-500/20"
-          >
-            <i className="ph-bold ph-plus" />
-            <span className="hidden sm:inline">Catalogar</span>
-          </button>
-        </div>
-
-      {filteredBooks.length === 0 ? (
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="py-32 bg-white/[0.02] border border-dashed border-white/5 rounded-[4rem] flex flex-col items-center justify-center text-center px-10 group"
-        >
-          <div className="relative mb-8">
-            <motion.div 
-              animate={{ rotate: 360 }}
-              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              className="w-32 h-32 rounded-full border-2 border-dashed border-primary-500/20"
-            />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <i className="ph-duotone ph-book-open text-7xl text-primary-500/30 group-hover:text-primary-500/50 transition-colors duration-500" />
-            </div>
-            <motion.div 
-              animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
-              transition={{ duration: 4, repeat: Infinity }}
-              className="absolute -inset-4 bg-primary-500/5 blur-2xl rounded-full"
-            />
-          </div>
-          <h3 className="text-xl font-black text-white/40 uppercase tracking-[0.3em] mb-3">Sua Estante está em branco</h3>
-          <p className="text-xs text-gray-600 font-bold uppercase tracking-widest max-w-md leading-relaxed">
-            Nenhum livro encontrado para os filtros atuais. <br/>
-            Experimente mudar a categoria ou limpar sua busca.
-          </p>
-          <button 
-            onClick={() => { setLibrarySearchQuery(''); setCategoryFilter('all'); }}
-            className="mt-8 px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white hover:bg-white/10 transition-all"
-          >
-            Limpar Filtros
-          </button>
-        </motion.div>
+      {librarySubTab === 'stats' ? (
+        <NexusStats />
       ) : (
-        <div className="space-y-10">
-          {viewLayout === 'list' ? (
-            <div className="flex flex-col gap-4">
-              {currentBooks.map((book, idx) => (
-                  <ListViewItem 
-                    key={book.id}
-                    book={book}
-                    onView={setViewingBookDetailsId}
-                    onToggleFavorite={toggleFavorite}
-                    onUpdateProgress={updateReadingProgress}
-                    isOwner={librarySubTab === 'my' || (librarySubTab === 'community' && (book as any).ownerId === userUid)}
-                  />
-              ))}
+        <>
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex bg-white/5 p-1 rounded-xl border border-white/5">
+              <button 
+                onClick={() => setViewMode('grid')}
+                className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-primary-500 text-white' : 'text-gray-500 hover:text-white'}`}
+                title="Visualização em Grade"
+              >
+                <i className="ph-bold ph-squares-four" />
+              </button>
+              <button 
+                onClick={() => setViewMode('alphabetical')}
+                className={`p-2 rounded-lg transition-all ${viewMode === 'alphabetical' ? 'bg-primary-500 text-white' : 'text-gray-500 hover:text-white'}`}
+                title="Agrupamento A-Z"
+              >
+                <i className="ph-bold ph-sort-ascending" />
+              </button>
             </div>
-          ) : viewMode === 'alphabetical' && groupedBooks ? (
-            <div className="space-y-12">
-              {groupedBooks.map(([letter, groupBooks]) => (
-                <div key={letter} className="space-y-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-primary-500/10 border border-primary-500/20 flex items-center justify-center text-xl font-black text-primary-500">
-                      {letter}
-                    </div>
-                    <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
-                  </div>
-                  <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 * groupedBooks.indexOf([letter, groupBooks]) }}
-                    className="grid grid-cols-2 md:grid-cols-5 gap-8"
-                  >
-                    {groupBooks.map(book => (
-                      <BookCard 
+
+            {/* Filtro de Status */}
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as any)}
+              className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white outline-none hover:border-white/20 transition-all cursor-pointer"
+            >
+              <option value="all" className="bg-[#0d0f16]">Todos Status</option>
+              <option value="reading" className="bg-[#0d0f16]">Lendo Agora</option>
+              <option value="want_to_read" className="bg-[#0d0f16]">Quero Ler</option>
+              <option value="finished" className="bg-[#0d0f16]">Finalizados</option>
+              <option value="dropped" className="bg-[#0d0f16]">Abandonados</option>
+            </select>
+
+            {/* Toggle Favoritos */}
+            <button
+              onClick={() => setFavoriteFilter(!favoriteFilter)}
+              className={`px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border transition-all ${
+                favoriteFilter 
+                ? 'bg-amber-500/10 border-amber-500/50 text-amber-400' 
+                : 'bg-white/5 border-white/10 text-gray-500 hover:text-white'
+              }`}
+            >
+              <i className={`ph-bold ${favoriteFilter ? 'ph-star-fill' : 'ph-star'}`} />
+              Favoritos
+            </button>
+
+            <div className="relative">
+              <button
+                onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+                className="bg-white/5 border border-white/10 rounded-2xl px-6 py-3 text-[10px] font-black uppercase tracking-widest text-white flex items-center gap-3 hover:border-white/20 transition-all min-w-[180px] justify-between"
+              >
+                <span>{categoryFilter === 'all' ? 'Todas Categorias' : categoryFilter}</span>
+                <i className={`ph-bold ph-caret-down transition-transform ${isFilterDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              <AnimatePresence>
+                {isFilterDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-[40]" onClick={() => setIsFilterDropdownOpen(false)} />
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute top-full left-0 mt-2 w-full bg-[#0d0f16] border border-white/10 rounded-2xl shadow-2xl z-[50] overflow-hidden"
+                    >
+                      <div className="max-h-[240px] overflow-y-auto custom-scrollbar p-2">
+                        <button
+                          onClick={() => { setCategoryFilter('all'); setIsFilterDropdownOpen(false); }}
+                          className={`w-full text-left px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${categoryFilter === 'all' ? 'bg-primary-500 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+                        >
+                          Todas Categorias
+                        </button>
+                        {bookCategories.map(cat => (
+                          <div key={cat} className="group relative flex items-center">
+                            <button
+                              onClick={() => { setCategoryFilter(cat); setIsFilterDropdownOpen(false); }}
+                              className={`flex-1 text-left px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${categoryFilter === cat ? 'bg-primary-500 text-white' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+                            >
+                              {cat}
+                            </button>
+                            <div className="absolute right-2 opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all">
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); onEditCategory(cat); setIsFilterDropdownOpen(false); }}
+                                className="p-1.5 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-all"
+                              >
+                                <i className="ph-bold ph-pencil-simple" />
+                              </button>
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); onDeleteCategory(cat); setIsFilterDropdownOpen(false); }}
+                                className="p-1.5 hover:bg-red-500/10 rounded-lg text-gray-400 hover:text-red-400 transition-all"
+                              >
+                                <i className="ph-bold ph-trash" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        <div className="h-px bg-white/5 my-2" />
+                        <button
+                          onClick={onAddCategory}
+                          className="w-full text-left px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-primary-400 hover:bg-primary-500/10 transition-all flex items-center gap-2"
+                        >
+                          <i className="ph-bold ph-plus" />
+                          Nova Categoria...
+                        </button>
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <div className="relative flex-1 sm:w-64">
+              <i className="ph-bold ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+              <input 
+                placeholder="Buscar por título ou autor..."
+                value={librarySearchQuery}
+                onChange={(e) => { setLibrarySearchQuery(e.target.value); setLibraryPage(1); }}
+                className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-3 text-sm text-white focus:border-primary-500 transition-all outline-none"
+              />
+            </div>
+            <button 
+              onClick={() => setIsAddBookLinkOpen(true)}
+              className="flex items-center gap-3 px-6 py-3 bg-primary-500 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl shadow-primary-500/20"
+            >
+              <i className="ph-bold ph-plus" />
+              <span className="hidden sm:inline">Catalogar</span>
+            </button>
+          </div>
+
+          {filteredBooks.length === 0 ? (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="py-32 bg-white/[0.02] border border-dashed border-white/5 rounded-[4rem] flex flex-col items-center justify-center text-center px-10 group"
+            >
+              <div className="relative mb-8">
+                <motion.div 
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                  className="w-32 h-32 rounded-full border-2 border-dashed border-primary-500/20"
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <i className="ph-duotone ph-book-open text-7xl text-primary-500/30 group-hover:text-primary-500/50 transition-colors duration-500" />
+                </div>
+                <motion.div 
+                  animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+                  transition={{ duration: 4, repeat: Infinity }}
+                  className="absolute -inset-4 bg-primary-500/5 blur-2xl rounded-full"
+                />
+              </div>
+              <h3 className="text-xl font-black text-white/40 uppercase tracking-[0.3em] mb-3">Sua Estante está em branco</h3>
+              <p className="text-xs text-gray-600 font-bold uppercase tracking-widest max-w-md leading-relaxed">
+                Nenhum livro encontrado para os filtros atuais. <br/>
+                Experimente mudar a categoria ou limpar sua busca.
+              </p>
+              <button 
+                onClick={() => { setLibrarySearchQuery(''); setCategoryFilter('all'); }}
+                className="mt-8 px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+              >
+                Limpar Filtros
+              </button>
+            </motion.div>
+          ) : (
+            <div className="space-y-10">
+              {viewLayout === 'list' ? (
+                <div className="flex flex-col gap-4">
+                  {currentBooks.map((book, idx) => (
+                      <ListViewItem 
                         key={book.id}
+                        book={book}
+                        onView={setViewingBookDetailsId}
+                        onToggleFavorite={toggleFavorite}
+                        onUpdateProgress={updateReadingProgress}
+                        isOwner={librarySubTab === 'my' || (librarySubTab === 'community' && (book as any).ownerId === userUid)}
+                      />
+                  ))}
+                </div>
+              ) : viewMode === 'alphabetical' && groupedBooks ? (
+                <div className="space-y-12">
+                  {groupedBooks.map(([letter, groupBooks]) => (
+                    <div key={letter} className="space-y-6">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-primary-500/10 border border-primary-500/20 flex items-center justify-center text-xl font-black text-primary-500">
+                          {letter}
+                        </div>
+                        <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
+                      </div>
+                      <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 * groupedBooks.indexOf([letter, groupBooks]) }}
+                        className="grid grid-cols-2 md:grid-cols-5 gap-8"
+                      >
+                        {groupBooks.map(book => (
+                          <BookCard 
+                            key={book.id}
+                            book={book}
+                            onView={setViewingBookDetailsId}
+                            onShare={(b) => { setSharingBook(b); setIsShareModalOpen(true); }}
+                            onPublish={handlePublishBook}
+                            onUpdateCover={updateBookCover}
+                            onEdit={onEditBook!}
+                            onDelete={deleteBook}
+                            onAddToLibrary={addToMyLibrary}
+                            onToggleFavorite={toggleFavorite}
+                            onUpdateProgress={updateReadingProgress}
+                            isOwner={librarySubTab === 'my' || (librarySubTab === 'community' && (book as any).ownerId === userUid)}
+                            isInLibrary={books.some(b => b.pdfUrl === book.pdfUrl)}
+                          />
+                        ))}
+                      </motion.div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="grid grid-cols-2 md:grid-cols-5 gap-8"
+                >
+                  {currentBooks.map((book, idx) => (
+                    <motion.div
+                      key={book.id}
+                      initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                    >
+                      <BookCard 
                         book={book}
                         onView={setViewingBookDetailsId}
                         onShare={(b) => { setSharingBook(b); setIsShareModalOpen(true); }}
@@ -831,78 +869,48 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
                         isOwner={librarySubTab === 'my' || (librarySubTab === 'community' && (book as any).ownerId === userUid)}
                         isInLibrary={books.some(b => b.pdfUrl === book.pdfUrl)}
                       />
-                    ))}
-                  </motion.div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="grid grid-cols-2 md:grid-cols-5 gap-8"
-            >
-              {currentBooks.map((book, idx) => (
-                <motion.div
-                  key={book.id}
-                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                >
-                  <BookCard 
-                    book={book}
-                    onView={setViewingBookDetailsId}
-                    onShare={(b) => { setSharingBook(b); setIsShareModalOpen(true); }}
-                    onPublish={handlePublishBook}
-                    onUpdateCover={updateBookCover}
-                    onEdit={onEditBook!}
-                    onDelete={deleteBook}
-                    onAddToLibrary={addToMyLibrary}
-                    onToggleFavorite={toggleFavorite}
-                    onUpdateProgress={updateReadingProgress}
-                    isOwner={librarySubTab === 'my' || (librarySubTab === 'community' && (book as any).ownerId === userUid)}
-                    isInLibrary={books.some(b => b.pdfUrl === book.pdfUrl)}
-                  />
+                    </motion.div>
+                  ))}
                 </motion.div>
-              ))}
-            </motion.div>
-          )}
+              )}
 
-          {/* Paginação */}
-          {totalPagesCount > 1 && (
-            <div className="flex items-center justify-center gap-4 pt-8">
-              <button 
-                disabled={libraryPage === 1}
-                onClick={() => setLibraryPage(p => p - 1)}
-                className="p-3 bg-white/5 border border-white/10 rounded-xl text-gray-400 hover:text-white disabled:opacity-30 transition-all"
-              >
-                <i className="ph-bold ph-caret-left" />
-              </button>
-              <div className="flex items-center gap-2">
-                {Array.from({ length: totalPagesCount }).map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setLibraryPage(i + 1)}
-                    className={`w-10 h-10 rounded-xl text-xs font-black transition-all ${
-                      libraryPage === i + 1 
-                      ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' 
-                      : 'bg-white/5 text-gray-500 hover:text-white hover:bg-white/10'
-                    }`}
+              {/* Paginação */}
+              {totalPagesCount > 1 && (
+                <div className="flex items-center justify-center gap-4 pt-8">
+                  <button 
+                    disabled={libraryPage === 1}
+                    onClick={() => setLibraryPage(p => p - 1)}
+                    className="p-3 bg-white/5 border border-white/10 rounded-xl text-gray-400 hover:text-white disabled:opacity-30 transition-all"
                   >
-                    {i + 1}
+                    <i className="ph-bold ph-caret-left" />
                   </button>
-                ))}
-              </div>
-              <button 
-                disabled={libraryPage === totalPagesCount}
-                onClick={() => setLibraryPage(p => p + 1)}
-                className="p-3 bg-white/5 border border-white/10 rounded-xl text-gray-400 hover:text-white disabled:opacity-30 transition-all"
-              >
-                <i className="ph-bold ph-caret-right" />
-              </button>
+                  <div className="flex items-center gap-2">
+                    {Array.from({ length: totalPagesCount }).map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setLibraryPage(i + 1)}
+                        className={`w-10 h-10 rounded-xl text-xs font-black transition-all ${
+                          libraryPage === i + 1 
+                          ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' 
+                          : 'bg-white/5 text-gray-500 hover:text-white hover:bg-white/10'
+                        }`}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                  </div>
+                  <button 
+                    disabled={libraryPage === totalPagesCount}
+                    onClick={() => setLibraryPage(p => p + 1)}
+                    className="p-3 bg-white/5 border border-white/10 rounded-xl text-gray-400 hover:text-white disabled:opacity-30 transition-all"
+                  >
+                    <i className="ph-bold ph-caret-right" />
+                  </button>
+                </div>
+              )}
             </div>
           )}
-        </div>
+        </>
       )}
     </div>
   );

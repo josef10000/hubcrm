@@ -50,6 +50,16 @@ export interface NexusNote {
   updatedAt: number;
 }
 
+export interface ActivityLog {
+  id: string;
+  timestamp: number;
+  type: 'reading' | 'note' | 'goal' | 'task';
+  bookId?: string;
+  pagesRead?: number;
+  noteId?: string;
+  folderId?: string;
+}
+
 export const DEFAULT_BOOK_CATEGORIES = [
   'Ficção',
   'Não-Ficção',
@@ -101,6 +111,7 @@ export interface NexusData {
 
 interface NexusState extends NexusData {
   notes: NexusNote[];
+  activityLogs: ActivityLog[];
   loading: boolean;
   initialized: boolean;
   error: string | null;
@@ -128,6 +139,9 @@ interface NexusState extends NexusData {
   addNoteFolder: (folder: Omit<NoteFolder, 'id'>) => Promise<void>;
   updateNoteFolder: (id: string, folder: Partial<NoteFolder>) => Promise<void>;
   deleteNoteFolder: (id: string) => Promise<void>;
+  
+  // Analytics
+  addActivityLog: (log: Omit<ActivityLog, 'id'>) => Promise<void>;
   
   // Livros
   shareBook: (book: NexusBook, targetUserId: string, targetUserName: string) => Promise<void>;
@@ -161,6 +175,7 @@ export const useNexusStore = create<NexusState>()(
       tasks: [],
       notes: [],
       books: [],
+      activityLogs: [],
       noteFolders: [],
       bookCategories: [],
       loading: true,
@@ -175,6 +190,9 @@ export const useNexusStore = create<NexusState>()(
     const profileRef = doc(db, 'profiles', uid);
     const notesColRef = collection(db, 'profiles', uid, 'notes');
     const notesQuery = query(notesColRef, orderBy('updatedAt', 'desc'));
+    
+    const logsColRef = collection(db, 'profiles', uid, 'activity_logs');
+    const logsQuery = query(logsColRef, orderBy('timestamp', 'desc'));
     
     // === Subscription 1: Perfil (folders, links, goals, tasks, books) ===
     const unsubProfile = onSnapshot(profileRef, async (snap) => {
@@ -265,10 +283,21 @@ export const useNexusStore = create<NexusState>()(
       Logger.error("[NexusStore] Notes subscription error:", err);
     });
 
-    // Retorna função de cleanup que limpa ambas subscriptions
+    const unsubLogs = onSnapshot(logsQuery, (snap) => {
+      const loadedLogs = snap.docs.map(d => ({
+        ...d.data(),
+        id: d.id
+      } as ActivityLog));
+      set({ activityLogs: loadedLogs });
+    }, (err) => {
+      Logger.error("[NexusStore] Logs subscription error:", err);
+    });
+
+    // Retorna função de cleanup que limpa as subscriptions
     return () => {
       unsubProfile();
       unsubNotes();
+      unsubLogs();
     };
   },
 
@@ -418,9 +447,12 @@ export const useNexusStore = create<NexusState>()(
   },
 
   updateReadingProgress: async (bookId: string, page: number) => {
-    const { books, updateBookDetails } = get();
+    const { books, updateBookDetails, addActivityLog } = get();
     const book = books.find(b => b.id === bookId);
     if (book) {
+      const oldPage = book.currentPage || 0;
+      const pagesRead = page - oldPage;
+      
       const updates: Partial<NexusBook> = { currentPage: page };
       
       // Se começou a ler e o status era "quero ler" ou nulo, muda para "lendo agora"
@@ -432,11 +464,20 @@ export const useNexusStore = create<NexusState>()(
       if (book.totalPages && page >= book.totalPages) {
         updates.status = 'finished';
       } else if (page > 0 && page < (book.totalPages || Infinity)) {
-        // Garante que se está no meio, o status é "reading"
         updates.status = 'reading';
       }
 
       await updateBookDetails(bookId, updates);
+
+      // Registra a atividade se houve progresso positivo
+      if (pagesRead > 0) {
+        await addActivityLog({
+          type: 'reading',
+          bookId,
+          pagesRead,
+          timestamp: Date.now()
+        });
+      }
     }
   },
 
@@ -463,6 +504,14 @@ export const useNexusStore = create<NexusState>()(
       
       const docRef = await addDoc(notesColRef, data);
       
+      // Registra a atividade de criação de nota
+      await get().addActivityLog({
+        type: 'note',
+        noteId: docRef.id,
+        folderId: data.folderId,
+        timestamp: Date.now()
+      });
+
       Logger.info('[NexusStore] Nota criada com sucesso:', { id: docRef.id });
       return docRef.id;
     } catch (err) {
@@ -518,6 +567,24 @@ export const useNexusStore = create<NexusState>()(
       await updateNote(note.id, { folderId: undefined });
     }
     await setNoteFolders(updatedFolders);
+  },
+
+  // =============================================
+  // ANALYTICS & LOGS
+  // =============================================
+  addActivityLog: async (logData) => {
+    const { uid } = get();
+    if (!uid) return;
+
+    try {
+      const logsColRef = collection(db, 'profiles', uid, 'activity_logs');
+      await addDoc(logsColRef, {
+        ...logData,
+        timestamp: Date.now()
+      });
+    } catch (err) {
+      Logger.error('[NexusStore] Falha ao registrar atividade', err);
+    }
   },
 
   // =============================================
