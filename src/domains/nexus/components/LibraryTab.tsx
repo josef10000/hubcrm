@@ -196,7 +196,6 @@ const BookCard = React.memo(({
           className="absolute inset-4 bg-black/60 blur-2xl rounded-sm -z-10 transition-all duration-300 group-hover:translate-x-8 group-hover:translate-y-4 group-hover:opacity-40 opacity-20"
         />
       </motion.div>
->
       <div className="mt-3 px-1 flex justify-between items-start">
         <div className="min-w-0">
           <h4 className="text-xs font-black text-white truncate uppercase tracking-widest leading-none">{book.title}</h4>
@@ -219,7 +218,6 @@ const BookCard = React.memo(({
         <button onClick={(e) => { e.stopPropagation(); onDelete(book.id); }} className="p-1.5 hover:text-rose-400 transition-all" title={isOwner && book.isCommunity ? "Remover da Comunidade" : "Excluir"}><i className="ph-bold ph-trash" /></button>
       </div>
     </div>
-  </div>
   );
 });
 
