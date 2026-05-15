@@ -144,23 +144,23 @@ export default function PortalFinance({
               </div>
             </div>
             
-            <div className="mb-8 lg:mb-10 flex flex-col sm:flex-row sm:items-center gap-6 lg:gap-12">
-              <div>
-                <span className="text-white/60 text-xs font-medium block mb-1">{isSetupFocus ? 'Taxa de Implementação' : 'Valor da Mensalidade'}</span>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl lg:text-4xl font-black text-white">R$ {currentInvoice?.value.toFixed(2).replace('.', ',') || '0,00'}</span>
-                  {client.currentDiscount > 0 && !isSetupFocus && (
-                    <span className="bg-emerald-400 text-emerald-950 text-[10px] font-black px-2 py-1 rounded-lg uppercase">
-                      -{Math.round((client.currentDiscount / (currentInvoice?.value + client.currentDiscount)) * 100)}% Off
-                    </span>
-                  )}
+            <div className="mb-10 lg:mb-12 flex flex-col sm:flex-row sm:items-center gap-6 lg:gap-12">
+              <div className="flex-1">
+                <p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-1">Próximo Vencimento</p>
+                <div className="flex items-center gap-3">
+                   <Calendar className="w-5 h-5 text-white/40" />
+                   <span className="text-3xl lg:text-4xl font-black text-white">
+                     {currentInvoice?.dueDate ? new Date(currentInvoice.dueDate + 'T12:00:00').toLocaleDateString('pt-BR') : '--/--/----'}
+                   </span>
                 </div>
               </div>
 
-              {isSetupFocus && monthlyValue > 0 && (
-                <div className="sm:pl-12 sm:border-l border-white/10">
-                  <span className="text-white/60 text-xs font-medium block mb-1">Mensalidade (Mês Seguinte)</span>
-                  <span className="text-xl font-bold text-white/90">R$ {monthlyValue.toFixed(2).replace('.', ',')}</span>
+              {client.currentDiscount > 0 && !isSetupFocus && (
+                <div className="bg-emerald-400/20 border border-emerald-400/30 px-4 py-2 rounded-2xl flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-emerald-400 text-xs font-black uppercase tracking-tighter">
+                    Desconto Ativo: {Math.round((client.currentDiscount / (currentInvoice?.value + client.currentDiscount)) * 100)}% Off
+                  </span>
                 </div>
               )}
             </div>

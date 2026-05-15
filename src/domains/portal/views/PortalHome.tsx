@@ -74,46 +74,29 @@ export default function PortalHome({ client, announcement, setActiveTab }: Porta
           <div className="flex flex-col md:flex-row items-center gap-6 lg:gap-10">
             {progress < 100 ? (
               <>
-                {/* Circular Progress */}
-                <div className="relative w-32 h-32 lg:w-48 lg:h-48 shrink-0">
-                  <svg className="w-full h-full transform -rotate-90">
-                    <circle
-                      cx="50%"
-                      cy="50%"
-                      r="42%"
-                      stroke="currentColor"
-                      strokeWidth="10"
-                      fill="transparent"
-                      className="text-white/5"
-                    />
-                    <motion.circle
-                      cx="50%"
-                      cy="50%"
-                      r="42%"
-                      stroke="currentColor"
-                      strokeWidth="10"
-                      fill="transparent"
-                      strokeDasharray="264"
-                      initial={{ strokeDashoffset: 264 }}
-                      animate={{ strokeDashoffset: 264 - (264 * progress) / 100 }}
-                      transition={{ duration: 1.5, ease: "easeOut" }}
-                      strokeLinecap="round"
-                      className="text-primary-500 drop-shadow-[0_0_8px_rgba(242,125,38,0.5)]"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl lg:text-4xl font-black text-white">{progress}%</span>
-                    <span className="text-[8px] lg:text-[10px] text-gray-500 font-bold uppercase tracking-widest">Completo</span>
-                  </div>
-                </div>
-
                 <div className="flex-1 text-center md:text-left">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full mb-4">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full mb-6">
                     <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
                     <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Status do Projeto</span>
                   </div>
-                  <h2 className="text-xl lg:text-3xl font-bold text-white mb-2 lg:mb-3 tracking-tight">Seu site está ganhando vida!</h2>
-                  <p className="text-gray-400 text-xs lg:text-sm leading-relaxed mb-4 lg:mb-6">
+                  <h2 className="text-xl lg:text-3xl font-bold text-white mb-2 lg:mb-4 tracking-tight">Seu site está ganhando vida!</h2>
+                  
+                  <div className="mb-6">
+                    <div className="flex justify-between items-end mb-2">
+                       <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">Progresso Total</span>
+                       <span className="text-xl font-black text-primary-500">{progress}%</span>
+                    </div>
+                    <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+                       <motion.div 
+                         initial={{ width: 0 }}
+                         animate={{ width: `${progress}%` }}
+                         transition={{ duration: 1.5, ease: "easeOut" }}
+                         className="h-full bg-gradient-to-r from-primary-500 to-primary-600 shadow-[0_0_15px_rgba(242,125,38,0.3)]"
+                       />
+                    </div>
+                  </div>
+
+                  <p className="text-gray-400 text-xs lg:text-sm leading-relaxed mb-6">
                     Estamos na etapa de <strong className="text-white">"{client.stages?.find((s: any) => !s.completed)?.name || 'Desenvolvimento'}"</strong>. 
                   </p>
                   
