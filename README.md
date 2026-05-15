@@ -107,11 +107,11 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
 - **Escopo:** Cérebro Operacional do Hub, evoluído para um ecossistema de dados inteligentes e gamificação.
 - **Nexus Analytics Dashboard (Premium Insights):**
     - **Wisdom Streak:** Contador de dias consecutivos de atividade (leitura ou notas) para incentivo à consistência.
-    - **Knowledge Heatmap:** Visualização anual estilo GitHub que destaca a intensidade de estudo e produção de conhecimento.
-    - **Topics Radar (Spider Chart):** Gráfico de teia que mapeia as áreas de maior foco do usuário baseadas nas categorias catalogadas.
-    - **Retention Ranking:** Métrica avançada que identifica quais obras geraram mais insights (Notas/100 Páginas), priorizando a retenção de conhecimento sobre o volume.
-    - **Monthly Volume:** Gráfico comparativo entre "Páginas Lidas" vs "Notas Criadas", permitindo visualizar o equilíbrio entre consumo e produção.
-    - **Cruise Speed:** Estimativa de velocidade de leitura (Pág/Hora) baseada em logs reais e bônus de consistência.
+    - **Knowledge Heatmap:** Visualização anual estilo GitHub que destaca o volume de produção (Páginas Lidas + Notas Criadas com pesos diferenciados).
+    - **Topics Radar (Spider Chart):** Gráfico de teia que mapeia as áreas de maior foco baseado no volume de páginas consumidas por categoria.
+    - **Retention Ranking:** Métrica avançada que identifica quais obras geraram mais insights (Insights/100 Páginas), priorizando a retenção de conhecimento sobre o volume.
+    - **Monthly Volume:** Gráfico comparativo em tempo real entre "Páginas Lidas" vs "Notas Criadas".
+    - **Cruise Speed:** Estimativa de velocidade de leitura média por sessão, com bônus adaptativo por consistência (Streak).
 - **Arquitetura Dual-View:**
     - **Neural Dashboard:** Visão sintetizada de Metas Críticas, Tarefas Ativas e Notas Recentes (Daily Briefing).
     - **Integrated Explorer:** Navegação hierárquica por pastas e notas com Drag & Drop e suporte a links bidirecionais `[[Link]]`.

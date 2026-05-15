@@ -50,19 +50,23 @@ export const NexusStats: React.FC = () => {
   const streak = React.useMemo(() => {
     if (activityLogs.length === 0) return 0;
     
-    const sortedDates = [...new Set(activityLogs.map(log => 
+    // Pega todas as datas únicas com atividade
+    const activityDays = [...new Set(activityLogs.map(log => 
       format(log.timestamp, 'yyyy-MM-dd')
     ))].sort().reverse();
 
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd');
+
+    // Se não leu hoje nem ontem, o streak quebrou
+    if (activityDays[0] !== today && activityDays[0] !== yesterday) return 0;
+
     let currentStreak = 0;
-    let today = format(new Date(), 'yyyy-MM-dd');
-    let yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd');
+    let checkDate = new Date(activityDays[0]);
 
-    if (sortedDates[0] !== today && sortedDates[0] !== yesterday) return 0;
-
-    for (let i = 0; i < sortedDates.length; i++) {
-      const expectedDate = format(subDays(new Date(sortedDates[0]), i), 'yyyy-MM-dd');
-      if (sortedDates[i] === expectedDate) {
+    for (let i = 0; i < activityDays.length; i++) {
+      const expectedDate = format(subDays(checkDate, i), 'yyyy-MM-dd');
+      if (activityDays[i] === expectedDate) {
         currentStreak++;
       } else {
         break;
@@ -80,27 +84,38 @@ export const NexusStats: React.FC = () => {
 
     return days.map(day => {
       const dayLogs = activityLogs.filter(log => isSameDay(log.timestamp, day));
-      const intensity = dayLogs.length; // Pode ser baseado em páginas ou notas
+      const pagesRead = dayLogs.reduce((acc, log) => acc + (log.pagesRead || 0), 0);
+      const notesCreated = dayLogs.filter(log => log.type === 'note').length;
+      
+      // Peso: cada página = 1, cada nota = 5
+      const totalIntensity = pagesRead + (notesCreated * 5);
+      
       return {
         date: day,
-        intensity: Math.min(intensity, 4), // Máximo de 4 níveis de cor
-        count: intensity
+        intensity: Math.min(Math.floor(totalIntensity / 2), 4), // Escala para os 4 níveis de cor
+        count: totalIntensity,
+        pages: pagesRead,
+        notes: notesCreated
       };
     });
   }, [activityLogs]);
 
-  // 3. Radar de Tópicos
+  // 3. Radar de Tópicos (Baseado em páginas lidas por categoria)
   const radarData = React.useMemo(() => {
     const categories: Record<string, number> = {};
     books.forEach(book => {
       const cat = book.category || 'Geral';
-      categories[cat] = (categories[cat] || 0) + 1;
+      const pages = book.currentPage || 0;
+      categories[cat] = (categories[cat] || 0) + pages;
     });
+
+    const values = Object.values(categories);
+    const max = values.length > 0 ? Math.max(...values) : 100;
 
     return Object.entries(categories).map(([name, value]) => ({
       subject: name,
       A: value,
-      fullMark: Math.max(...Object.values(categories)) + 1
+      fullMark: max
     }));
   }, [books]);
 
@@ -161,20 +176,18 @@ export const NexusStats: React.FC = () => {
       .slice(0, 5);
   }, [books, notes, activityLogs]);
 
-  // 6. Velocidade de Cruzeiro (Média ponderada)
+  // 6. Velocidade de Cruzeiro (Páginas por sessão média)
   const cruiseSpeed = React.useMemo(() => {
     const readingLogs = activityLogs.filter(log => log.type === 'reading' && log.pagesRead && log.pagesRead > 0);
     if (readingLogs.length === 0) return 0;
     
     const totalPages = readingLogs.reduce((acc, l) => acc + (l.pagesRead || 0), 0);
+    const avgPagesPerSession = totalPages / readingLogs.length;
     
-    // Estimativa baseada em sessões: 
-    // Se não temos o timer real no log ainda, usamos uma constante de mercado (25 pág/h para leitura técnica)
-    // Mas multiplicamos pela consistência do usuário
-    const consistencyFactor = Math.min(streak / 7, 1.5); // Bônus por consistência
-    const baseSpeed = 30; // Média hubber
+    // Consistência dá um bônus na velocidade percebida (foco)
+    const consistencyFactor = 1 + (Math.min(streak, 30) / 60); // Até 50% de bônus por streak de 30 dias
     
-    return Math.round(baseSpeed * (1 + (activityLogs.length / 100)) * (consistencyFactor || 1));
+    return Math.round(avgPagesPerSession * 2 * consistencyFactor); // Multiplicador para chegar a um valor pág/h estimado
   }, [activityLogs, streak]);
 
   return (
@@ -235,7 +248,7 @@ export const NexusStats: React.FC = () => {
           className="bg-white/5 border border-white/10 p-6 rounded-[2rem] flex flex-col gap-2 relative overflow-hidden group"
         >
           <div className="absolute -right-4 -top-4 w-24 h-24 bg-purple-500/10 blur-3xl rounded-full group-hover:scale-150 transition-transform duration-700" />
-          <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Retenção Média</span>
+          <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Taxa de Retenção</span>
           <div className="flex items-end gap-2">
             <span className="text-4xl font-black text-purple-500">
               {(() => {
@@ -244,9 +257,17 @@ export const NexusStats: React.FC = () => {
                 return Math.round((notes.length / totalPages) * 100);
               })()}
             </span>
-            <span className="text-xs font-bold text-gray-400 mb-1.5 uppercase">Insights / 100 Pág</span>
+            <span className="text-xs font-bold text-gray-400 mb-1.5 uppercase">% Insights</span>
           </div>
-          <i className="ph-fill ph-brain text-purple-500/20 absolute bottom-4 right-4 text-4xl" />
+          <div className="mt-1 flex flex-col">
+            <span className="text-[9px] font-black text-purple-400 uppercase tracking-tighter">Insights por 100 páginas</span>
+            <p className="text-[8px] font-medium text-gray-600 uppercase leading-none mt-0.5">
+              Reflete a densidade de anotações sobre o volume lido
+            </p>
+          </div>
+          <div className="absolute bottom-4 right-4 bg-purple-500/10 w-10 h-10 rounded-xl flex items-center justify-center border border-purple-500/10">
+            <span className="text-[10px] font-black text-purple-400">{notes.length}</span>
+          </div>
         </motion.div>
       </div>
 
@@ -273,7 +294,7 @@ export const NexusStats: React.FC = () => {
                 day.intensity === 3 ? 'bg-primary-500/80' :
                 'bg-primary-400 shadow-[0_0_8px_rgba(100,100,255,0.5)]'
               }`}
-              title={`${format(day.date, 'dd/MM/yyyy')}: ${day.count} atividades`}
+              title={`${format(day.date, 'dd/MM/yyyy')}: ${day.pages} páginas, ${day.notes} notas`}
             />
           ))}
         </div>
