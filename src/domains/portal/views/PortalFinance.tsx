@@ -9,7 +9,8 @@ import {
   AlertCircle,
   Clock,
   ExternalLink,
-  Wallet
+  Wallet,
+  Calendar
 } from 'lucide-react';
 
 interface PortalFinanceProps {

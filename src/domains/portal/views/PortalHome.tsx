@@ -127,7 +127,7 @@ export default function PortalHome({ client, announcement, setActiveTab }: Porta
                 
                 <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4">
                   <a 
-                    href={client.siteUrl || '#'} 
+                    href={client.siteLink ? (client.siteLink.startsWith('http') ? client.siteLink : `https://${client.siteLink}`) : '#'} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="flex-1 md:flex-none px-8 py-4 bg-white text-black font-bold rounded-2xl flex items-center justify-center gap-3 hover:bg-primary-500 hover:text-white transition-all duration-300 shadow-xl group"
