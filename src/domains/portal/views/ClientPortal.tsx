@@ -521,46 +521,47 @@ export default function ClientPortal() {
                             <span className="text-[10px] text-gray-500 font-normal"> / {c.billingCycle === 'YEARLY' ? 'ano' : 'mês'}</span>
                           </p>
                         </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-tighter border ${c.paymentStatus === 'RECEIVED' || c.paymentStatus === 'CONFIRMED'
-                            ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                            : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
-                          }`}>
-                          {c.paymentStatus === 'RECEIVED' || c.paymentStatus === 'CONFIRMED' ? 'PAGO' : 'PENDENTE'}
-                        </span>
+                        <div className="flex flex-col items-end gap-2">
+                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-tighter border ${c.paymentStatus === 'RECEIVED' || c.paymentStatus === 'CONFIRMED'
+                              ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                              : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                            }`}>
+                            {c.paymentStatus === 'RECEIVED' || c.paymentStatus === 'CONFIRMED' ? 'PAGO' : 'PENDENTE'}
+                          </span>
 
-                        {c.invoiceUrl && c.paymentStatus !== 'RECEIVED' && (
+                          {c.invoiceUrl && c.paymentStatus !== 'RECEIVED' && (
+                            <a
+                              href={c.invoiceUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-4 py-2 bg-white/5 hover:bg-primary-500 hover:text-white text-white text-[10px] font-bold rounded-xl border border-white/10 transition-all flex items-center gap-2"
+                            >
+                              <ExternalLink size={14} />
+                              Pagar Mensalidade
+                            </a>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-2 border-t border-white/5">
+                        <div className="flex items-center gap-1.5 text-[10px] text-gray-400 uppercase font-black">
+                          <Clock size={12} className="text-gray-600" />
+                          Próximo: {new Date((c.currentDueDate || c.nextDueDate) + 'T12:00:00').toLocaleDateString('pt-BR')}
+                        </div>
+                        {c.invoiceUrl && (
                           <a
                             href={c.invoiceUrl}
                             target="_blank"
-                            rel="noopener noreferrer"
-                            className="px-4 py-2 bg-white/5 hover:bg-primary-500 hover:text-white text-white text-[10px] font-bold rounded-xl border border-white/10 transition-all flex items-center gap-2"
+                            rel="noreferrer"
+                            className="text-[10px] text-primary-400 hover:text-primary-300 font-black uppercase flex items-center gap-1 transition-colors"
                           >
-                            <ExternalLink size={14} />
-                            Pagar Mensalidade
+                            <FileText size={12} /> Ver Fatura
                           </a>
                         )}
                       </div>
-
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-2 border-t border-white/5">
-                      <div className="flex items-center gap-1.5 text-[10px] text-gray-400 uppercase font-black">
-                        <Clock size={12} className="text-gray-600" />
-                        Próximo: {new Date((c.currentDueDate || c.nextDueDate) + 'T12:00:00').toLocaleDateString('pt-BR')}
-                      </div>
-                      {c.invoiceUrl && (
-                        <a
-                          href={c.invoiceUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-[10px] text-primary-400 hover:text-primary-300 font-black uppercase flex items-center gap-1 transition-colors"
-                        >
-                          <FileText size={12} /> Ver Fatura
-                        </a>
-                      )}
                     </div>
-                  </div>
-                );
-              })
+                  );
+                })
               ) : (
                 <div className="p-10 rounded-3xl bg-white/5 border border-white/10 text-center">
                   <CheckCircle className="w-8 h-8 text-emerald-500/30 mx-auto mb-3" />
