@@ -36,7 +36,8 @@ export const getPlanPrice = (plan?: string, billingCycle?: string, client?: Part
     } else {
       // Priority 2: Fallback to hardcoded defaults for standard plans
       if (plan === 'Profissional') finalMonthlyPrice = 897;
-      else if (plan === 'Ecossistema Essencial') finalMonthlyPrice = 397;
+      else if (plan?.includes('Essencial')) finalMonthlyPrice = 397;
+      else if (plan?.includes('Start')) finalMonthlyPrice = 397;
       else finalMonthlyPrice = 0;
     }
 
