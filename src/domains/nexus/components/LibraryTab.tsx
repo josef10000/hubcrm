@@ -432,9 +432,9 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
     const myBooks = books.filter(b => !b.ownerId || b.ownerId === userUid);
     const totalPages = myBooks.reduce((acc, b) => acc + (b.currentPage || 0), 0);
     const finished = myBooks.filter(b => b.status === 'finished').length;
-    // Considera lendo se status é 'reading' OU se tem algum progresso e não está finalizado
+    // Considera lendo se status é 'reading' e tem páginas lidas > 0, OU se tem algum progresso e não está finalizado
     const reading = myBooks.filter(b => 
-      b.status === 'reading' || 
+      (b.status === 'reading' && (b.currentPage || 0) > 0) || 
       ((b.currentPage || 0) > 0 && b.status !== 'finished')
     ).length;
     return { total: myBooks.length, totalPages, finished, reading };
@@ -537,7 +537,10 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
     const matchesSearch = b.title.toLowerCase().includes(librarySearchQuery.toLowerCase()) || 
                          b.author?.toLowerCase().includes(librarySearchQuery.toLowerCase());
     const matchesCategory = categoryFilter === 'all' || b.category === categoryFilter;
-    const matchesStatus = statusFilter === 'all' || b.status === statusFilter;
+    const matchesStatus = statusFilter === 'all' || 
+                         (statusFilter === 'reading' 
+                           ? (b.status === 'reading' && (b.currentPage || 0) > 0)
+                           : b.status === statusFilter);
     const matchesFavorite = !favoriteFilter || b.isFavorite;
     return matchesSearch && matchesCategory && matchesStatus && matchesFavorite;
   });

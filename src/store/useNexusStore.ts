@@ -460,16 +460,13 @@ export const useNexusStore = create<NexusState>()(
       
       const updates: Partial<NexusBook> = { currentPage: page };
       
-      // Se começou a ler e o status era "quero ler" ou nulo, muda para "lendo agora"
-      if (page > 0 && page < (book.totalPages || Infinity) && (book.status === 'want_to_read' || !book.status)) {
-        updates.status = 'reading';
-      }
-      
       // Se terminou (chegou no total), muda para "finalizado"
       if (book.totalPages && page >= book.totalPages) {
         updates.status = 'finished';
-      } else if (page > 0 && page < (book.totalPages || Infinity)) {
+      } else if (page > 0) {
         updates.status = 'reading';
+      } else if (page === 0) {
+        updates.status = 'want_to_read';
       }
 
       await updateBookDetails(bookId, updates);
