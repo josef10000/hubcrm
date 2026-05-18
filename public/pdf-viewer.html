@@ -297,6 +297,17 @@
     const btnZoomOut = document.getElementById('btn-zoom-out');
     const btnZoomFit = document.getElementById('btn-zoom-fit');
 
+    // Escuta comandos bidirecionais do parent (CRM)
+    window.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'SET_PAGE') {
+        const targetPage = parseInt(event.data.page);
+        if (pdfDoc && !isNaN(targetPage) && targetPage !== pageNum) {
+          pageNum = Math.min(Math.max(1, targetPage), pdfDoc.numPages);
+          queueRenderPage(pageNum);
+        }
+      }
+    });
+
     // Validação inicial do arquivo
     if (!fileUrl) {
       showError("Nenhum arquivo fornecido.");
@@ -308,10 +319,13 @@
     function loadPDF(url) {
       loaderStatus.innerText = "Carregando Documento...";
       
-      // Carregando com configurações robustas
+      // Carregando com compatibilidade CORS aprimorada (disableRange & disableStream)
+      // Isso desativa Range Requests e streams, evitando conflito CORS de cabeçalhos no R2 do Cloudflare
       const loadingTask = pdfjsLib.getDocument({
         url: url,
-        withCredentials: false
+        withCredentials: false,
+        disableRange: true,
+        disableStream: true
       });
 
       loadingTask.promise.then((pdfDoc_) => {

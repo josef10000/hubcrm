@@ -104,6 +104,8 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
   >   }
   > ]
   > ```
+  > 
+  > 🧠 **Leitor Premium & Sincronização Bidirecional (Two-Way Sync):** O Nexus Premium Reader agora conta com sincronização inteligente de progresso em tempo real em duas vias. Mudanças de páginas efetuadas no Companion ou na interface do CRM são transmitidas instantaneamente via `postMessage` para o visualizador (atualizando a visualização do PDF na hora sem sofrer loops de reload no iframe), e a navegação dentro do visualizador sincroniza o progresso no Firestore automaticamente após 2 segundos de inatividade. O leitor premium foi projetado para rodar com Range Requests e streams desabilitados no PDF.js, garantindo compatibilidade absoluta com políticas básicas de CORS no Cloudflare R2 mesmo que os cabeçalhos de faixas não estejam expostos.
 - **Cloudinary:** Provider principal para ativos de longo prazo e alta qualidade. Utilizado para o upload e armazenamento de **fotos de perfil dos usuários** e **capas de livros na biblioteca Nexus**, garantindo estabilidade e redimensionamento dinâmico.
 - **ImgBB:** CDN de alta performance focada em ativos transacionais e colaborativos. Utilizada em todo o sistema de **Chat (anexos de mensagens, ícones de grupos e canais)**, imagens do **Quadro Branco (Canvas Editor)**, anexos de **Tickets de Suporte** e logos temporários de onboarding.
 

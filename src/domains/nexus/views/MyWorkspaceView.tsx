@@ -101,6 +101,20 @@ export default function MyWorkspaceView() {
   const [selectedPreviewCover, setSelectedPreviewCover] = useState<string | null>(null);
   const { weather } = useWeather();
   const [isCustomViewerError, setIsCustomViewerError] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Sync reading progress to PDF viewer iframe dynamically (without reload)
+  useEffect(() => {
+    if (selectedBookId && iframeRef.current && iframeRef.current.contentWindow) {
+      const currentBook = books.find(b => b.id === selectedBookId);
+      if (currentBook && currentBook.currentPage) {
+        iframeRef.current.contentWindow.postMessage({
+          type: 'SET_PAGE',
+          page: currentBook.currentPage
+        }, '*');
+      }
+    }
+  }, [books, selectedBookId]);
 
   // Reset error when selectedBookId changes
   useEffect(() => {
@@ -782,6 +796,7 @@ export default function MyWorkspaceView() {
                           // Otherwise, load our ultra-premium page tracking custom viewer
                           return (
                             <iframe 
+                              ref={iframeRef}
                               key={`premium-${selectedBookId}`}
                               src={iframeUrl} 
                               className="flex-1 w-full border-none" 
