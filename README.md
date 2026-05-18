@@ -118,11 +118,12 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
 - **Gerenciamento Total (CRUD):** 
     - Controle completo (Criar, Editar, Renomear, Excluir) de Notas, Pastas, Tarefas e Metas diretamente pela interface principal.
 - **Reading Companion (Anotador Imersivo):**
-    - Interface de leitura assistida com barra lateral de insights integrada ao visualizador de PDF.
+    - Interface de leitura assistida com barra lateral de insights integrada ao visualizador de PDF ou ao painel de progresso manual.
     - **Speech-to-Text Integration:** Criação de notas e insights via voz em tempo real (pt-BR).
     - **Contextual Insights:** Exibição automática de "backlinks" e notas anteriores relacionadas à obra em leitura.
     - **Sincronia de Progresso:** Atualização instantânea da página atual diretamente pelo companion.
     - **Visualizador PDF Inteligente (Rastreamento Automático):** Leitor PDF customizado e de alto desempenho (PDF.js CDN) com controles *glassmorphic*, atalhos de teclado, zoom integrado e sincronização inteligente via `postMessage`. O leitor salva automaticamente o progresso no Firestore de forma debouncada e restaura a sessão de leitura na última página ao abrir o documento, contando com um *fallback* transparente e imediato para o visualizador padrão do Google Drive caso ocorram restrições de CORS.
+    - **Painel de Foco Estético (Leitura Externa — Kindle & Livros Físicos):** Interface HUD glassmorphic de altíssimo nível estético com capas em 3D, controle e ajuste manual de páginas lidas (passos de -5, -1, +1, +5) e barra de progresso visual. Habilita o rastreamento inteligente de streak, velocidade de cruzeiro e heatmap para leitores de dispositivos físicos ou e-readers com suporte nativo a links de referência hospedados no Google Drive.
 - **Biblioteca Nexus Premium:**
     - Catalogação imersiva com busca automática de capas e metadados via Open Library.
     - **Gestão de Progresso:** Acompanhamento visual da leitura com atualização instantânea.

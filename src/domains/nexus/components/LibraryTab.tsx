@@ -204,6 +204,25 @@ const BookCard = React.memo(({
             <i className={`ph-bold ${book.isFavorite ? 'ph-star-fill' : 'ph-star'}`} />
           </button>
 
+          {/* Format Badge */}
+          <div className="absolute top-3 left-14 flex gap-1 z-40">
+            {book.format === 'kindle' && (
+              <div className="px-2 py-1 bg-amber-500/80 backdrop-blur-md rounded-lg text-[7px] font-black text-white uppercase tracking-widest shadow-lg flex items-center gap-1 border border-white/5">
+                <i className="ph-fill ph-device-mobile" /> Kindle
+              </div>
+            )}
+            {book.format === 'physical' && (
+              <div className="px-2 py-1 bg-emerald-500/80 backdrop-blur-md rounded-lg text-[7px] font-black text-white uppercase tracking-widest shadow-lg flex items-center gap-1 border border-white/5">
+                <i className="ph-fill ph-book-open" /> Físico
+              </div>
+            )}
+            {(book.format === 'pdf' || !book.format) && (
+              <div className="px-2 py-1 bg-blue-500/80 backdrop-blur-md rounded-lg text-[7px] font-black text-white uppercase tracking-widest shadow-lg flex items-center gap-1 border border-white/5">
+                <i className="ph-fill ph-file-pdf" /> PDF
+              </div>
+            )}
+          </div>
+
           {/* Status Badge */}
           {book.status && (
             <div className={`absolute bottom-3 left-4 px-2 py-1 ${statusColors[book.status]} rounded-lg text-[7px] font-black text-white uppercase tracking-widest z-40 shadow-lg`}>
@@ -267,7 +286,7 @@ const BookCard = React.memo(({
         <div className="min-w-0">
           <h4 className="text-xs font-black text-white truncate uppercase tracking-widest leading-none">{book.title}</h4>
           <p className="text-[9px] font-medium text-gray-500 uppercase mt-1">
-            {book.sharedBy ? `Enviado por ${book.sharedBy.name}` : book.isCommunity ? 'Comunidade' : 'Documento PDF'}
+            {book.sharedBy ? `Enviado por ${book.sharedBy.name}` : book.isCommunity ? 'Comunidade' : book.format === 'kindle' ? 'Livro Kindle' : book.format === 'physical' ? 'Livro Físico' : 'Documento PDF'}
           </p>
         </div>
         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity items-center">
@@ -863,7 +882,7 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
                             onToggleFavorite={toggleFavorite}
                             onUpdateProgress={updateReadingProgress}
                             isOwner={librarySubTab === 'my' || (librarySubTab === 'community' && (book as any).ownerId === userUid)}
-                            isInLibrary={books.some(b => b.pdfUrl === book.pdfUrl)}
+                            isInLibrary={books.some(b => b.id === book.id || (book.pdfUrl && b.pdfUrl === book.pdfUrl))}
                           />
                         ))}
                       </motion.div>
@@ -895,7 +914,7 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
                         onToggleFavorite={toggleFavorite}
                         onUpdateProgress={updateReadingProgress}
                         isOwner={librarySubTab === 'my' || (librarySubTab === 'community' && (book as any).ownerId === userUid)}
-                        isInLibrary={books.some(b => b.pdfUrl === book.pdfUrl)}
+                        isInLibrary={books.some(b => b.id === book.id || (book.pdfUrl && b.pdfUrl === book.pdfUrl))}
                       />
                     </motion.div>
                   ))}

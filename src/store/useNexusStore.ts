@@ -85,7 +85,7 @@ export interface NexusBook {
   description?: string;
   category?: string;
   publishedAt?: string;
-  pdfUrl: string;
+  pdfUrl?: string;
   coverUrl?: string;
   currentPage?: number;
   totalPages?: number;
@@ -97,6 +97,7 @@ export interface NexusBook {
   status?: ReadingStatus;
   isFavorite?: boolean;
   linkedNoteId?: string;
+  format?: 'pdf' | 'kindle' | 'physical';
 }
 
 export interface NexusData {

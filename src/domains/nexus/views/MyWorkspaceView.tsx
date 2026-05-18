@@ -148,7 +148,8 @@ export default function MyWorkspaceView() {
     description: '',
     publishedAt: '',
     currentPage: 0,
-    totalPages: 0
+    totalPages: 0,
+    format: 'pdf'
   });
 
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
@@ -356,29 +357,41 @@ export default function MyWorkspaceView() {
   };
 
   const handleSaveBook = async () => {
-    if (!bookFormData.title || !bookFormData.pdfUrl) {
-      toast.error('Título e Link são obrigatórios!');
+    const isExternal = bookFormData.format === 'kindle' || bookFormData.format === 'physical';
+
+    if (!bookFormData.title) {
+      toast.error('O título do livro é obrigatório!');
       return;
     }
 
-    let finalUrl = bookFormData.pdfUrl;
-    if (finalUrl.includes('drive.google.com')) {
+    if (!isExternal && !bookFormData.pdfUrl) {
+      toast.error('O link do PDF/Documento é obrigatório!');
+      return;
+    }
+
+    let finalUrl = bookFormData.pdfUrl || '';
+    if (!isExternal && finalUrl.includes('drive.google.com')) {
       if (finalUrl.includes('/view')) finalUrl = finalUrl.split('/view')[0].replace(/\/$/, '') + '/preview';
       else if (finalUrl.includes('/edit')) finalUrl = finalUrl.split('/edit')[0].replace(/\/$/, '') + '/preview';
       else if (!finalUrl.endsWith('/preview')) finalUrl = finalUrl.split('?')[0].replace(/\/$/, '') + '/preview';
     }
 
     if (modalConfig.mode === 'edit' && modalConfig.data?.id) {
-      await updateBookDetails(modalConfig.data.id, { ...bookFormData, pdfUrl: finalUrl });
+      await updateBookDetails(modalConfig.data.id, { 
+        ...bookFormData, 
+        pdfUrl: isExternal ? '' : finalUrl,
+        format: bookFormData.format || 'pdf'
+      });
       toast.success('Livro atualizado!');
     } else {
       const newBook: NexusBook = {
         id: Date.now().toString(),
         addedAt: Date.now(),
         ...(bookFormData as NexusBook),
-        pdfUrl: finalUrl,
+        pdfUrl: isExternal ? '' : finalUrl,
         currentPage: bookFormData.currentPage || 0,
-        totalPages: bookFormData.totalPages || 0
+        totalPages: bookFormData.totalPages || 0,
+        format: bookFormData.format || 'pdf'
       };
       setBooks([newBook, ...books]);
       toast.success('Livro catalogado com sucesso!');
@@ -394,13 +407,14 @@ export default function MyWorkspaceView() {
     setBookFormData({
       title: book.title,
       author: book.author || '',
-      pdfUrl: book.pdfUrl,
+      pdfUrl: book.pdfUrl || '',
       coverUrl: book.coverUrl || '',
       category: (book.category as any) || 'Ficção',
       description: book.description || '',
       publishedAt: book.publishedAt || '',
       currentPage: book.currentPage || 0,
-      totalPages: book.totalPages || 0
+      totalPages: book.totalPages || 0,
+      format: book.format || 'pdf'
     });
     setModalConfig({
       isOpen: true,
@@ -536,7 +550,8 @@ export default function MyWorkspaceView() {
                               description: '',
                               publishedAt: '',
                               currentPage: 0,
-                              totalPages: 0
+                              totalPages: 0,
+                              format: 'pdf'
                             });
                             setModalConfig({ isOpen: true, type: 'book', mode: 'add' });
                           }
@@ -587,17 +602,141 @@ export default function MyWorkspaceView() {
                               <i className="ph-bold ph-brain" />
                               Companion {isCompanionOpen ? 'Ativo' : 'Oculto'}
                             </button>
-                            <button onClick={() => window.open(books.find(b => b.id === selectedBookId)?.pdfUrl)} className="px-4 py-2 bg-white/5 rounded-xl text-[10px] font-black text-gray-400 hover:text-white transition-all uppercase tracking-widest">
-                              Baixar
-                            </button>
+                            {(() => {
+                              const activeBook = books.find(b => b.id === selectedBookId);
+                              if (activeBook && (activeBook.format === 'pdf' || !activeBook.format)) {
+                                return (
+                                  <button onClick={() => window.open(activeBook.pdfUrl)} className="px-4 py-2 bg-white/5 rounded-xl text-[10px] font-black text-gray-400 hover:text-white transition-all uppercase tracking-widest">
+                                    Baixar
+                                  </button>
+                                );
+                              }
+                              return null;
+                            })()}
                           </div>
                         </div>
                         {(() => {
                           const book = books.find(b => b.id === selectedBookId);
                           if (!book) return null;
+
+                          const isExternal = book.format === 'kindle' || book.format === 'physical';
+                          if (isExternal) {
+                            const progressPercent = book.totalPages && book.totalPages > 0 
+                              ? Math.min(Math.round(((book.currentPage || 0) / book.totalPages) * 100), 100)
+                              : 0;
+                            return (
+                              <div className="flex-1 flex flex-col items-center justify-center p-8 md:p-12 relative overflow-hidden bg-gradient-to-br from-primary-950/20 via-black/40 to-[#0a0c12]">
+                                {/* Capa do livro estilizada no fundo */}
+                                {book.coverUrl && (
+                                  <div 
+                                    className="absolute inset-0 bg-cover bg-center opacity-10 blur-3xl pointer-events-none scale-150"
+                                    style={{ backgroundImage: `url(${book.coverUrl})` }}
+                                  />
+                                )}
+                                
+                                <div className="z-10 max-w-md w-full text-center space-y-8 flex flex-col items-center">
+                                  {/* Selo do Formato */}
+                                  <div className="flex gap-2">
+                                    {book.format === 'kindle' ? (
+                                      <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full text-[10px] font-black text-amber-400 uppercase tracking-widest flex items-center gap-1.5 shadow-lg shadow-amber-500/5">
+                                        <i className="ph-fill ph-device-mobile" /> Registro Kindle
+                                      </span>
+                                    ) : (
+                                      <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[10px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-1.5 shadow-lg shadow-emerald-500/5">
+                                        <i className="ph-fill ph-book-open" /> Registro Físico
+                                      </span>
+                                    )}
+                                    <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                      Leitura Externa
+                                    </span>
+                                  </div>
+
+                                  {/* Capa do Livro em 3D Glassmorphism */}
+                                  <div className="relative group w-48 aspect-[3/4]">
+                                    <motion.div 
+                                      whileHover={{ scale: 1.05, rotateY: -10, rotateX: 5 }}
+                                      transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                                      className="w-full h-full rounded-2xl overflow-hidden border border-white/10 shadow-2xl relative bg-[#1a1c23] transform-style-preserve-3d"
+                                    >
+                                      {book.coverUrl ? (
+                                        <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover" />
+                                      ) : (
+                                        <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center gap-2">
+                                          <i className="ph-duotone ph-book-open text-6xl text-primary-500/30" />
+                                          <span className="text-[10px] font-black uppercase tracking-widest leading-none text-gray-500">{book.title}</span>
+                                        </div>
+                                      )}
+                                      <div className="absolute inset-y-0 left-[5px] w-[2px] bg-black/25 z-40" />
+                                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
+                                    </motion.div>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    <h2 className="text-xl font-black text-white uppercase tracking-tight">{book.title}</h2>
+                                    {book.author && <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Por {book.author}</p>}
+                                  </div>
+
+                                  {/* HUD de Progresso Glassmorphic */}
+                                  <div className="w-full bg-white/[0.02] border border-white/5 backdrop-blur-md rounded-3xl p-6 space-y-6 shadow-inner">
+                                    <div className="flex items-center justify-between text-left">
+                                      <div>
+                                        <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest">Progresso Manual</p>
+                                        <h4 className="text-2xl font-black text-white mt-1">Página {book.currentPage || 0} <span className="text-xs font-bold text-gray-500 uppercase">de {book.totalPages || 0}</span></h4>
+                                      </div>
+                                      <div className="text-right">
+                                        <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest">Percentual</p>
+                                        <h4 className="text-2xl font-black text-primary-400 mt-1">{progressPercent}%</h4>
+                                      </div>
+                                    </div>
+
+                                    {/* Barra de Progresso */}
+                                    <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+                                      <motion.div 
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${progressPercent}%` }}
+                                        className="h-full bg-gradient-to-r from-primary-500 to-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]"
+                                      />
+                                    </div>
+
+                                    {/* Controles de Progresso */}
+                                    <div className="grid grid-cols-4 gap-2">
+                                      <button 
+                                        onClick={() => updateReadingProgress(book.id, Math.max(0, (book.currentPage || 0) - 5))}
+                                        className="py-3 bg-white/5 hover:bg-white/10 rounded-xl text-[10px] font-black text-gray-400 hover:text-white transition-all uppercase tracking-wider flex flex-col items-center justify-center"
+                                      >
+                                        <span>-5</span>
+                                      </button>
+                                      <button 
+                                        onClick={() => updateReadingProgress(book.id, Math.max(0, (book.currentPage || 0) - 1))}
+                                        className="py-3 bg-white/5 hover:bg-white/10 rounded-xl text-[10px] font-black text-gray-400 hover:text-white transition-all uppercase tracking-wider flex flex-col items-center justify-center"
+                                      >
+                                        <span>-1</span>
+                                      </button>
+                                      <button 
+                                        onClick={() => updateReadingProgress(book.id, Math.min(book.totalPages || 0, (book.currentPage || 0) + 1))}
+                                        className="py-3 bg-primary-500/10 hover:bg-primary-500/20 border border-primary-500/20 rounded-xl text-[10px] font-black text-primary-400 hover:text-primary-300 transition-all uppercase tracking-wider flex flex-col items-center justify-center"
+                                      >
+                                        <span>+1</span>
+                                      </button>
+                                      <button 
+                                        onClick={() => updateReadingProgress(book.id, Math.min(book.totalPages || 0, (book.currentPage || 0) + 5))}
+                                        className="py-3 bg-primary-500/15 hover:bg-primary-500/25 border border-primary-500/30 rounded-xl text-[10px] font-black text-primary-400 hover:text-primary-300 transition-all uppercase tracking-wider flex flex-col items-center justify-center"
+                                      >
+                                        <span>+5</span>
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  <p className="text-[9px] text-gray-600 font-bold uppercase tracking-tighter leading-relaxed">
+                                    Ajuste o progresso de suas leituras usando os botões acima ou pela barra lateral do Reading Companion à direita! Seus logs de progresso e heatmap serão atualizados.
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          }
                           
                           // Google Drive links sometimes fail PDF.js load, or links already ended in Google Drive preview
-                          const isGoogleDrive = book.pdfUrl.includes('drive.google.com');
+                          const isGoogleDrive = book.pdfUrl?.includes('drive.google.com') || false;
                           
                           // If there's an error loading, or if it is a Google Drive link, use native preview iframe as fallback
                           if (isCustomViewerError || isGoogleDrive) {
@@ -613,7 +752,7 @@ export default function MyWorkspaceView() {
                           // Otherwise, load our ultra-premium page tracking custom viewer
                           return (
                             <iframe 
-                              src={`/pdf-viewer.html?file=${encodeURIComponent(book.pdfUrl)}&page=${book.currentPage || 1}`} 
+                              src={`/pdf-viewer.html?file=${encodeURIComponent(book.pdfUrl || '')}&page=${book.currentPage || 1}`} 
                               className="flex-1 w-full border-none" 
                               title="Nexus Premium PDF Viewer" 
                             />
@@ -724,17 +863,59 @@ export default function MyWorkspaceView() {
 
               <div className="space-y-6">
                 <div className="grid grid-cols-1 gap-4">
+                  {/* Seletor de Formato de Leitura */}
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">1. Link do Documento (PDF/Google Drive)</label>
-                    <input 
-                      type="url" 
-                      placeholder="https://..." 
-                      value={bookFormData.pdfUrl}
-                      onChange={(e) => setBookFormData({ ...bookFormData, pdfUrl: e.target.value })}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:border-primary-500 outline-none" 
-                    />
-                    <p className="text-[9px] text-gray-600 font-bold uppercase tracking-tighter ml-2">Links do Drive são ajustados automaticamente para preview.</p>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">Formato de Leitura / Registro</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setBookFormData({ ...bookFormData, format: 'pdf' })}
+                        className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border text-[10px] font-black uppercase tracking-wider transition-all ${
+                          bookFormData.format === 'pdf' || !bookFormData.format
+                            ? 'bg-primary-500/20 border-primary-500 text-white shadow-lg shadow-primary-500/10'
+                            : 'bg-white/5 border-white/5 text-gray-400 hover:text-white hover:bg-white/10'
+                        }`}
+                      >
+                        <i className="ph-fill ph-file-pdf text-base" /> PDF / Digital
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBookFormData({ ...bookFormData, format: 'kindle' })}
+                        className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border text-[10px] font-black uppercase tracking-wider transition-all ${
+                          bookFormData.format === 'kindle'
+                            ? 'bg-amber-500/20 border-amber-500 text-white shadow-lg shadow-amber-500/10'
+                            : 'bg-white/5 border-white/5 text-gray-400 hover:text-white hover:bg-white/10'
+                        }`}
+                      >
+                        <i className="ph-fill ph-device-mobile text-base" /> Livro Kindle
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBookFormData({ ...bookFormData, format: 'physical' })}
+                        className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border text-[10px] font-black uppercase tracking-wider transition-all ${
+                          bookFormData.format === 'physical'
+                            ? 'bg-emerald-500/20 border-emerald-500 text-white shadow-lg shadow-emerald-500/10'
+                            : 'bg-white/5 border-white/5 text-gray-400 hover:text-white hover:bg-white/10'
+                        }`}
+                      >
+                        <i className="ph-fill ph-book-open text-base" /> Livro Físico
+                      </button>
+                    </div>
                   </div>
+
+                  {(bookFormData.format === 'pdf' || !bookFormData.format) && (
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-600">Link do Documento (PDF/Google Drive)</label>
+                      <input 
+                        type="url" 
+                        placeholder="https://..." 
+                        value={bookFormData.pdfUrl || ''}
+                        onChange={(e) => setBookFormData({ ...bookFormData, pdfUrl: e.target.value })}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white focus:border-primary-500 outline-none" 
+                      />
+                      <p className="text-[9px] text-gray-600 font-bold uppercase tracking-tighter ml-2">Links do Drive são ajustados automaticamente para preview.</p>
+                    </div>
+                  )}
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -1045,6 +1226,7 @@ export default function MyWorkspaceView() {
                         <div className="pt-8">
                           <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-4">Ações Disponíveis</p>
                           <div className="flex flex-wrap gap-4">
+                            {(book.format === 'pdf' || !book.format) && book.pdfUrl && (
                             <a 
                               href={book.pdfUrl} 
                               target="_blank" 
@@ -1053,9 +1235,13 @@ export default function MyWorkspaceView() {
                             >
                               <i className="ph-bold ph-arrow-square-out" /> Nova Aba
                             </a>
+                            )}
                             <button 
                               onClick={() => {
                                 setSelectedBookId(book.id);
+                                if (book.format === 'kindle' || book.format === 'physical') {
+                                  setIsCompanionOpen(true);
+                                }
                                 setViewingBookDetailsId(null);
                                 // Scroll to top of viewer
                                 window.scrollTo({ top: 0, behavior: 'smooth' });
