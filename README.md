@@ -79,14 +79,28 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
 - **Google Drive:** Integração transparente para visualização de PDFs e manuais. O Hub transforma automaticamente links de compartilhamento em links de `preview` otimizados.
 - **Cloudflare R2:** Provedor de armazenamento em nuvem S3-compatible utilizado para guardar arquivos pesados de PDFs e documentos da biblioteca.
   > [!IMPORTANT]
-  > **Configuração Obrigatória de CORS para R2:** Para que o visualizador de PDF inteligente (Premium Reader) consiga fazer o download dos arquivos via AJAX e renderizá-los com sincronia de progresso e controles avançados de zoom, você **deve** configurar a política de CORS no bucket correspondente no painel do Cloudflare R2:
+  > **Configuração Obrigatória de CORS para R2:** Para que o visualizador de PDF inteligente (Premium Reader) consiga fazer o download dos arquivos via AJAX e renderizá-los com sincronia de progresso e controles avançados de zoom, você **deve** configurar a política de CORS no bucket correspondente no painel do Cloudflare R2.
+  > 
+  > Devido ao validador rígido de segurança do R2 (que rejeita o curinga `"*"` para origens gerais e o método `OPTIONS`), utilize as origens específicas do seu ambiente local e de produção:
   > ```json
   > [
   >   {
-  >     "AllowedOrigins": ["*"],
-  >     "AllowedMethods": ["GET", "HEAD", "OPTIONS"],
-  >     "AllowedHeaders": ["*"],
-  >     "ExposeHeaders": ["Content-Length", "Content-Range", "Accept-Ranges"]
+  >     "AllowedOrigins": [
+  >       "http://localhost:3000",
+  >       "http://localhost:5173",
+  >       "https://hubsymples.com.br",
+  >       "https://www.hubsymples.com.br",
+  >       "https://app.hubsymples.com.br"
+  >     ],
+  >     "AllowedMethods": [
+  >       "GET",
+  >       "HEAD"
+  >     ],
+  >     "ExposeHeaders": [
+  >       "Content-Length",
+  >       "Content-Range",
+  >       "Accept-Ranges"
+  >     ]
   >   }
   > ]
   > ```
