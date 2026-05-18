@@ -98,10 +98,10 @@ const BookCard = React.memo(({
     want_to_read: 'Quero Ler',
     finished: 'Lido',
     dropped: 'Parado'
-  };
+  };  const is3DEnabled = animationMode === 'new' || animationMode === 'fixed_3d';
 
   return (
-    <div className="group relative" style={{ perspective: animationMode === 'new' ? '1200px' : undefined }}>
+    <div className="group relative" style={{ perspective: is3DEnabled ? '1200px' : undefined }}>
       <motion.div 
         onClick={() => onView(book.id)}
         onMouseMove={animationMode === 'new' ? handleMouseMove : undefined}
@@ -109,13 +109,20 @@ const BookCard = React.memo(({
         style={{ 
           rotateY: animationMode === 'new' ? rotateY : 0, 
           rotateX: animationMode === 'new' ? rotateX : 0,
-          transformStyle: animationMode === 'new' ? 'preserve-3d' : undefined
+          transformStyle: is3DEnabled ? 'preserve-3d' : undefined
         }}
-        whileHover={animationMode !== 'none' ? { scale: 1.05 } : undefined}
+        whileHover={
+          animationMode === 'fixed_3d' 
+            ? { scale: 1.05, rotateY: -25, rotateX: 5 } 
+            : animationMode === 'zoom' || animationMode === 'new'
+              ? { scale: 1.05 } 
+              : undefined
+        }
+        transition={{ type: "spring", stiffness: 300, damping: 25 }}
         className="aspect-[3/4] relative cursor-pointer"
       >
         {/* Book Spine (Lombada) - Apenas visível no hover 3D */}
-        {animationMode === 'new' && (
+        {is3DEnabled && (
           <div 
             className="absolute inset-y-0 left-0 w-[30px] bg-gradient-to-r from-primary-900 to-primary-700 origin-left z-10 rounded-l-sm"
             style={{ 
@@ -128,7 +135,7 @@ const BookCard = React.memo(({
         )}
 
         {/* Book Pages (Lado Direito - Miolo) */}
-        {animationMode === 'new' && (
+        {is3DEnabled && (
           <div 
             className="absolute inset-y-[2%] right-0 w-[25px] bg-[#fdfbf0] origin-right z-0 rounded-r-sm shadow-inner"
             style={{ 
@@ -139,7 +146,7 @@ const BookCard = React.memo(({
         )}
 
         {/* Bottom Pages (Base) */}
-        {animationMode === 'new' && (
+        {is3DEnabled && (
           <div 
             className="absolute inset-x-0 bottom-0 h-[25px] bg-[#fdfbf0] origin-bottom z-0 rounded-b-sm"
             style={{ 
@@ -153,8 +160,8 @@ const BookCard = React.memo(({
         <div 
           className="absolute inset-0 z-20 rounded-r-sm overflow-hidden border border-white/10 shadow-2xl bg-[#1a1c23]"
           style={{ 
-            transform: animationMode === 'new' ? 'translateZ(25px)' : undefined,
-            backfaceVisibility: animationMode === 'new' ? 'hidden' : undefined
+            transform: is3DEnabled ? 'translateZ(25px)' : undefined,
+            backfaceVisibility: is3DEnabled ? 'hidden' : undefined
           }}
         >
           {/* Glossy Overlay (Dinâmico com Tilt) */}
@@ -168,6 +175,12 @@ const BookCard = React.memo(({
                 )
               }}
               className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30" 
+            />
+          )}
+
+          {animationMode === 'fixed_3d' && (
+            <div 
+              className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30" 
             />
           )}
           
@@ -227,8 +240,8 @@ const BookCard = React.memo(({
 
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 z-30">
              <motion.div 
-               whileHover={{ scale: 1.1 }}
-               className="w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center text-white text-xl shadow-xl shadow-primary-500/40"
+                whileHover={{ scale: 1.1 }}
+                className="w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center text-white text-xl shadow-xl shadow-primary-500/40"
              >
                <i className="ph-bold ph-play" />
              </motion.div>
@@ -244,6 +257,8 @@ const BookCard = React.memo(({
             }}
             className="absolute inset-4 bg-black/60 blur-2xl rounded-sm -z-10 transition-all duration-300 group-hover:opacity-40 opacity-20"
           />
+        ) : animationMode === 'fixed_3d' ? (
+          <div className="absolute inset-4 bg-black/60 blur-2xl rounded-sm -z-10 group-hover:translate-x-[20px] group-hover:translate-y-[10px] group-hover:opacity-40 opacity-20 transition-all duration-300" />
         ) : (
           <div className="absolute inset-4 bg-black/40 blur-xl rounded-sm -z-10 opacity-0 group-hover:opacity-30 transition-opacity duration-300" />
         )}

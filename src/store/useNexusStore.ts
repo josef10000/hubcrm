@@ -115,8 +115,8 @@ interface NexusState extends NexusData {
   loading: boolean;
   initialized: boolean;
   error: string | null;
-  bookAnimationMode: 'new' | 'legacy' | 'none';
-  setBookAnimationMode: (mode: 'new' | 'legacy' | 'none') => void;
+  bookAnimationMode: 'new' | 'fixed_3d' | 'zoom' | 'none';
+  setBookAnimationMode: (mode: 'new' | 'fixed_3d' | 'zoom' | 'none') => void;
   
   // Actions
   init: (uid: string) => () => void;
@@ -682,6 +682,6 @@ export const useNexusStore = create<NexusState>()(
     tasks: persistedState?.tasks || [],
     books: persistedState?.books || [],
     bookCategories: persistedState?.bookCategories || DEFAULT_BOOK_CATEGORIES,
-    bookAnimationMode: persistedState?.bookAnimationMode || 'new'
+    bookAnimationMode: persistedState?.bookAnimationMode === 'legacy' ? 'zoom' : (persistedState?.bookAnimationMode || 'new')
   })
 }));

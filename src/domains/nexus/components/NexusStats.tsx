@@ -48,8 +48,10 @@ export const NexusStats: React.FC = () => {
 
   const cycleAnimationMode = () => {
     if (bookAnimationMode === 'new') {
-      setBookAnimationMode('legacy');
-    } else if (bookAnimationMode === 'legacy') {
+      setBookAnimationMode('fixed_3d');
+    } else if (bookAnimationMode === 'fixed_3d') {
+      setBookAnimationMode('zoom');
+    } else if (bookAnimationMode === 'zoom') {
       setBookAnimationMode('none');
     } else {
       setBookAnimationMode('new');
@@ -58,17 +60,19 @@ export const NexusStats: React.FC = () => {
 
   const getAnimationLabel = (mode: string) => {
     switch (mode) {
-      case 'new': return '3D Realista (Nova)';
-      case 'legacy': return 'Zoom Clássico (Antiga)';
+      case 'new': return '3D Interativo (Mouse)';
+      case 'fixed_3d': return '3D Fixo (Um Lado)';
+      case 'zoom': return 'Zoom Clássico (Plano)';
       case 'none': return 'Sem Animação (Estático)';
-      default: return '3D Realista (Nova)';
+      default: return '3D Interativo (Mouse)';
     }
   };
 
   const getAnimationIcon = (mode: string) => {
     switch (mode) {
       case 'new': return 'ph-cube-transparent text-primary-400';
-      case 'legacy': return 'ph-arrow-square-out text-blue-400';
+      case 'fixed_3d': return 'ph-cube text-emerald-400';
+      case 'zoom': return 'ph-arrow-square-out text-blue-400';
       case 'none': return 'ph-selection text-gray-500';
       default: return 'ph-cube-transparent';
     }
