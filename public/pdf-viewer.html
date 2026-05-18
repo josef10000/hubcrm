@@ -277,6 +277,7 @@
     let scale = 1.25;
     let fitToWidth = true;
     let updateDebounceTimeout = null;
+    let isInitialLoad = true; // Sinalizador inteligente para primeiro carregamento ou atualização forçada
     
     // Obter parâmetros da URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -302,7 +303,9 @@
       if (event.data && event.data.type === 'SET_PAGE') {
         const targetPage = parseInt(event.data.page);
         if (pdfDoc && !isNaN(targetPage) && targetPage !== pageNum) {
+          console.log("[Nexus PDF Viewer] Recebida instrução externa SET_PAGE para página:", targetPage);
           pageNum = Math.min(Math.max(1, targetPage), pdfDoc.numPages);
+          isInitialLoad = true; // Evitar disparar postMessage de volta
           queueRenderPage(pageNum);
         }
       }
@@ -389,8 +392,13 @@
           btnPrev.disabled = (num <= 1);
           btnNext.disabled = (num >= pdfDoc.numPages);
 
-          // Disparar atualização em background com Debounce (2 segundos)
-          scheduleProgressUpdate(num);
+          // Disparar atualização em background com Debounce apenas se NÃO for o carregamento/sincronismo inicial
+          if (!isInitialLoad) {
+            scheduleProgressUpdate(num);
+          } else {
+            console.log("[Nexus PDF Viewer] Primeiro carregamento ou sincronismo externo. Mantendo progresso inalterado na página:", num);
+            isInitialLoad = false;
+          }
 
           if (pageNumPending !== null) {
             renderPage(pageNumPending);
