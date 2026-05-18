@@ -100,6 +100,30 @@ export default function MyWorkspaceView() {
   const [bookCoverResults, setBookCoverResults] = useState<{url: string, title: string, author?: string}[]>([]);
   const [selectedPreviewCover, setSelectedPreviewCover] = useState<string | null>(null);
   const { weather } = useWeather();
+  const [isCustomViewerError, setIsCustomViewerError] = useState(false);
+
+  // Reset error when selectedBookId changes
+  useEffect(() => {
+    setIsCustomViewerError(false);
+  }, [selectedBookId]);
+
+  // Listener for PDF Viewer messages
+  useEffect(() => {
+    const handlePageMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'PAGE_CHANGE' && selectedBookId) {
+        const newPage = parseInt(event.data.page);
+        if (!isNaN(newPage)) {
+          updateReadingProgress(selectedBookId, newPage);
+        }
+      } else if (event.data && event.data.type === 'PDF_LOAD_ERROR' && selectedBookId) {
+        console.warn("Custom PDF Viewer failed. Gracefully falling back to native iframe.", event.data.message);
+        setIsCustomViewerError(true);
+      }
+    };
+
+    window.addEventListener('message', handlePageMessage);
+    return () => window.removeEventListener('message', handlePageMessage);
+  }, [selectedBookId, updateReadingProgress]);
 
   // Saudação Dinâmica
   const getGreeting = () => {
@@ -568,11 +592,33 @@ export default function MyWorkspaceView() {
                             </button>
                           </div>
                         </div>
-                        <iframe 
-                          src={`${books.find(b => b.id === selectedBookId)?.pdfUrl}#toolbar=0`} 
-                          className="flex-1 w-full border-none bg-white" 
-                          title="PDF Viewer" 
-                        />
+                        {(() => {
+                          const book = books.find(b => b.id === selectedBookId);
+                          if (!book) return null;
+                          
+                          // Google Drive links sometimes fail PDF.js load, or links already ended in Google Drive preview
+                          const isGoogleDrive = book.pdfUrl.includes('drive.google.com');
+                          
+                          // If there's an error loading, or if it is a Google Drive link, use native preview iframe as fallback
+                          if (isCustomViewerError || isGoogleDrive) {
+                            return (
+                              <iframe 
+                                src={`${book.pdfUrl}#toolbar=0&page=${book.currentPage || 1}`} 
+                                className="flex-1 w-full border-none bg-white" 
+                                title="PDF Viewer" 
+                              />
+                            );
+                          }
+                          
+                          // Otherwise, load our ultra-premium page tracking custom viewer
+                          return (
+                            <iframe 
+                              src={`/pdf-viewer.html?file=${encodeURIComponent(book.pdfUrl)}&page=${book.currentPage || 1}`} 
+                              className="flex-1 w-full border-none" 
+                              title="Nexus Premium PDF Viewer" 
+                            />
+                          );
+                        })()}
                       </div>
 
                       {/* Companion Sidebar */}

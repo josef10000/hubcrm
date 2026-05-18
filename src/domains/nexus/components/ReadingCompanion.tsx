@@ -55,6 +55,11 @@ export const ReadingCompanion: React.FC<ReadingCompanionProps> = ({ book, onClos
     }
   }, []);
 
+  // Sincronizar estado local do Companion com alterações externas/automáticas do livro
+  useEffect(() => {
+    setCurrentPage(book.currentPage || 0);
+  }, [book.currentPage]);
+
   const toggleRecording = () => {
     if (isRecording) {
       recognitionRef.current?.stop();

@@ -122,6 +122,7 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
     - **Speech-to-Text Integration:** Criação de notas e insights via voz em tempo real (pt-BR).
     - **Contextual Insights:** Exibição automática de "backlinks" e notas anteriores relacionadas à obra em leitura.
     - **Sincronia de Progresso:** Atualização instantânea da página atual diretamente pelo companion.
+    - **Visualizador PDF Inteligente (Rastreamento Automático):** Leitor PDF customizado e de alto desempenho (PDF.js CDN) com controles *glassmorphic*, atalhos de teclado, zoom integrado e sincronização inteligente via `postMessage`. O leitor salva automaticamente o progresso no Firestore de forma debouncada e restaura a sessão de leitura na última página ao abrir o documento, contando com um *fallback* transparente e imediato para o visualizador padrão do Google Drive caso ocorram restrições de CORS.
 - **Biblioteca Nexus Premium:**
     - Catalogação imersiva com busca automática de capas e metadados via Open Library.
     - **Gestão de Progresso:** Acompanhamento visual da leitura com atualização instantânea.
