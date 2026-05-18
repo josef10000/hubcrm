@@ -420,17 +420,9 @@
       }
     }
 
-    // Debounce para gravação de progresso (2 segundos)
+    // Debounce para gravação de progresso (2 segundos) - DESATIVADO a pedido do usuário (sincronização estritamente manual)
     function scheduleProgressUpdate(num) {
-      if (updateDebounceTimeout) {
-        clearTimeout(updateDebounceTimeout);
-      }
-
-      updateDebounceTimeout = setTimeout(() => {
-        console.log("[Nexus PDF Viewer] Emitindo PAGE_CHANGE para página:", num);
-        // Envia mensagem ao parent com total segurança
-        window.parent.postMessage({ type: 'PAGE_CHANGE', page: num }, '*');
-      }, 2000); // 2 segundos parado na página
+      console.log("[Nexus PDF Viewer] Sincronização automática desativada. Página atual:", num);
     }
 
     // Ações de Página

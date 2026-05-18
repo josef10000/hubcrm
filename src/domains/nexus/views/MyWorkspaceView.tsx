@@ -148,11 +148,8 @@ export default function MyWorkspaceView() {
       if (!selectedBookId) return;
 
       if (event.data && event.data.type === 'PAGE_CHANGE') {
-        const newPage = parseInt(event.data.page);
-        if (!isNaN(newPage)) {
-          console.log("[Nexus Sync] Recebido PAGE_CHANGE para página:", newPage);
-          updateReadingProgress(selectedBookId, newPage);
-        }
+        // Desativado a pedido do usuário - Sincronização estritamente manual pelo CRM
+        console.log("[Nexus Sync] Recebido PAGE_CHANGE (Ignorado - Sincronização Manual Ativa)");
       } else if (event.data && event.data.type === 'PDF_LOAD_SUCCESS') {
         const totalPages = parseInt(event.data.totalPages);
         if (!isNaN(totalPages) && totalPages > 0) {

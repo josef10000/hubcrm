@@ -63,6 +63,11 @@ service cloud.firestore {
       match /notes/{noteId} {
         allow read, write: if isOwnerEmail() || request.auth.uid == userId;
       }
+
+      // Subcoleção de Logs de Atividades — SOMENTE o dono pode ler/escrever
+      match /activity_logs/{logId} {
+        allow read, write: if isOwnerEmail() || request.auth.uid == userId;
+      }
     }
 
     // Alertas do sistema (RBAC)
