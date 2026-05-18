@@ -75,8 +75,21 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
 - **Escopo:** Utilizada pelo módulo **Nexus** para catalogação manual e automática.
 - **Funcionalidade:** Fornece metadados de obras (autor, título, descrição) e busca de capas via `cover_id`, eliminando a dependência do Google Books.
 
-### ☁️ Documentos & Media (Google Drive, Cloudinary & ImgBB)
+### ☁️ Documentos & Media (Google Drive, Cloudflare R2, Cloudinary & ImgBB)
 - **Google Drive:** Integração transparente para visualização de PDFs e manuais. O Hub transforma automaticamente links de compartilhamento em links de `preview` otimizados.
+- **Cloudflare R2:** Provedor de armazenamento em nuvem S3-compatible utilizado para guardar arquivos pesados de PDFs e documentos da biblioteca.
+  > [!IMPORTANT]
+  > **Configuração Obrigatória de CORS para R2:** Para que o visualizador de PDF inteligente (Premium Reader) consiga fazer o download dos arquivos via AJAX e renderizá-los com sincronia de progresso e controles avançados de zoom, você **deve** configurar a política de CORS no bucket correspondente no painel do Cloudflare R2:
+  > ```json
+  > [
+  >   {
+  >     "AllowedOrigins": ["*"],
+  >     "AllowedMethods": ["GET", "HEAD", "OPTIONS"],
+  >     "AllowedHeaders": ["*"],
+  >     "ExposeHeaders": ["Content-Length", "Content-Range", "Accept-Ranges"]
+  >   }
+  > ]
+  > ```
 - **Cloudinary:** Provider principal para ativos de longo prazo e alta qualidade. Utilizado para o upload e armazenamento de **fotos de perfil dos usuários** e **capas de livros na biblioteca Nexus**, garantindo estabilidade e redimensionamento dinâmico.
 - **ImgBB:** CDN de alta performance focada em ativos transacionais e colaborativos. Utilizada em todo o sistema de **Chat (anexos de mensagens, ícones de grupos e canais)**, imagens do **Quadro Branco (Canvas Editor)**, anexos de **Tickets de Suporte** e logos temporários de onboarding.
 

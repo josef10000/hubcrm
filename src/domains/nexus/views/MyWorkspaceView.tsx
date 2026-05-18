@@ -107,6 +107,27 @@ export default function MyWorkspaceView() {
     setIsCustomViewerError(false);
   }, [selectedBookId]);
 
+  const [iframeUrl, setIframeUrl] = useState('');
+
+  // Define initial PDF URL to avoid iframe reload loops during reading page updates
+  useEffect(() => {
+    if (selectedBookId) {
+      const currentBook = useNexusStore.getState().books.find(b => b.id === selectedBookId);
+      if (currentBook) {
+        const isGoogleDrive = currentBook.pdfUrl?.includes('drive.google.com') || false;
+        if (isCustomViewerError || isGoogleDrive) {
+          // Use #toolbar=1 to ensure zoom/controls are visible in fallback native preview
+          setIframeUrl(`${currentBook.pdfUrl}#toolbar=1&page=${currentBook.currentPage || 1}`);
+        } else {
+          setIframeUrl(`/pdf-viewer.html?file=${encodeURIComponent(currentBook.pdfUrl || '')}&page=${currentBook.currentPage || 1}`);
+        }
+      }
+    } else {
+      setIframeUrl('');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedBookId, isCustomViewerError]);
+
   // Listener for PDF Viewer messages
   useEffect(() => {
     const handlePageMessage = (event: MessageEvent) => {
@@ -738,11 +759,20 @@ export default function MyWorkspaceView() {
                           // Google Drive links sometimes fail PDF.js load, or links already ended in Google Drive preview
                           const isGoogleDrive = book.pdfUrl?.includes('drive.google.com') || false;
                           
+                          if (!iframeUrl) {
+                            return (
+                              <div className="flex-1 flex items-center justify-center p-20">
+                                <div className="w-12 h-12 border-4 border-primary-500/20 border-t-primary-500 rounded-full animate-spin" />
+                              </div>
+                            );
+                          }
+
                           // If there's an error loading, or if it is a Google Drive link, use native preview iframe as fallback
                           if (isCustomViewerError || isGoogleDrive) {
                             return (
                               <iframe 
-                                src={`${book.pdfUrl}#toolbar=0&page=${book.currentPage || 1}`} 
+                                key={`fallback-${selectedBookId}`}
+                                src={iframeUrl} 
                                 className="flex-1 w-full border-none bg-white" 
                                 title="PDF Viewer" 
                               />
@@ -752,7 +782,8 @@ export default function MyWorkspaceView() {
                           // Otherwise, load our ultra-premium page tracking custom viewer
                           return (
                             <iframe 
-                              src={`/pdf-viewer.html?file=${encodeURIComponent(book.pdfUrl || '')}&page=${book.currentPage || 1}`} 
+                              key={`premium-${selectedBookId}`}
+                              src={iframeUrl} 
                               className="flex-1 w-full border-none" 
                               title="Nexus Premium PDF Viewer" 
                             />
