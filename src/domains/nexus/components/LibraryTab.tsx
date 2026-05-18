@@ -55,6 +55,7 @@ const BookCard = React.memo(({
   isOwner: boolean;
   isInLibrary: boolean;
 }) => {
+  const animationMode = useNexusStore(state => state.bookAnimationMode || 'new');
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
@@ -100,67 +101,75 @@ const BookCard = React.memo(({
   };
 
   return (
-    <div className="group relative" style={{ perspective: '1200px' }}>
+    <div className="group relative" style={{ perspective: animationMode === 'new' ? '1200px' : undefined }}>
       <motion.div 
         onClick={() => onView(book.id)}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
+        onMouseMove={animationMode === 'new' ? handleMouseMove : undefined}
+        onMouseLeave={animationMode === 'new' ? handleMouseLeave : undefined}
         style={{ 
-          rotateY, 
-          rotateX,
-          transformStyle: 'preserve-3d'
+          rotateY: animationMode === 'new' ? rotateY : 0, 
+          rotateX: animationMode === 'new' ? rotateX : 0,
+          transformStyle: animationMode === 'new' ? 'preserve-3d' : undefined
         }}
-        whileHover={{ scale: 1.05 }}
+        whileHover={animationMode !== 'none' ? { scale: 1.05 } : undefined}
         className="aspect-[3/4] relative cursor-pointer"
       >
         {/* Book Spine (Lombada) - Apenas visível no hover 3D */}
-        <div 
-          className="absolute inset-y-0 left-0 w-[30px] bg-gradient-to-r from-primary-900 to-primary-700 origin-left z-10 rounded-l-sm"
-          style={{ 
-            transform: 'rotateY(-90deg)',
-            boxShadow: 'inset -5px 0 10px rgba(0,0,0,0.5)'
-          }}
-        >
-          <div className="absolute inset-0 bg-white/5 opacity-20" />
-        </div>
+        {animationMode === 'new' && (
+          <div 
+            className="absolute inset-y-0 left-0 w-[30px] bg-gradient-to-r from-primary-900 to-primary-700 origin-left z-10 rounded-l-sm"
+            style={{ 
+              transform: 'rotateY(-90deg)',
+              boxShadow: 'inset -5px 0 10px rgba(0,0,0,0.5)'
+            }}
+          >
+            <div className="absolute inset-0 bg-white/5 opacity-20" />
+          </div>
+        )}
 
         {/* Book Pages (Lado Direito - Miolo) */}
-        <div 
-          className="absolute inset-y-[2%] right-0 w-[25px] bg-[#fdfbf0] origin-right z-0 rounded-r-sm shadow-inner"
-          style={{ 
-            transform: 'rotateY(90deg) translateZ(-1px)',
-            backgroundImage: 'repeating-linear-gradient(transparent, transparent 1px, rgba(0,0,0,0.05) 1px, rgba(0,0,0,0.05) 2px)'
-          }}
-        />
+        {animationMode === 'new' && (
+          <div 
+            className="absolute inset-y-[2%] right-0 w-[25px] bg-[#fdfbf0] origin-right z-0 rounded-r-sm shadow-inner"
+            style={{ 
+              transform: 'rotateY(90deg) translateZ(-1px)',
+              backgroundImage: 'repeating-linear-gradient(transparent, transparent 1px, rgba(0,0,0,0.05) 1px, rgba(0,0,0,0.05) 2px)'
+            }}
+          />
+        )}
 
         {/* Bottom Pages (Base) */}
-        <div 
-          className="absolute inset-x-0 bottom-0 h-[25px] bg-[#fdfbf0] origin-bottom z-0 rounded-b-sm"
-          style={{ 
-            transform: 'rotateX(-90deg)',
-            backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 1px, rgba(0,0,0,0.05) 1px, rgba(0,0,0,0.05) 2px)'
-          }}
-        />
+        {animationMode === 'new' && (
+          <div 
+            className="absolute inset-x-0 bottom-0 h-[25px] bg-[#fdfbf0] origin-bottom z-0 rounded-b-sm"
+            style={{ 
+              transform: 'rotateX(-90deg)',
+              backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 1px, rgba(0,0,0,0.05) 1px, rgba(0,0,0,0.05) 2px)'
+            }}
+          />
+        )}
 
         {/* Front Cover (Capa) */}
         <div 
           className="absolute inset-0 z-20 rounded-r-sm overflow-hidden border border-white/10 shadow-2xl bg-[#1a1c23]"
           style={{ 
-            transform: 'translateZ(25px)',
-            backfaceVisibility: 'hidden'
+            transform: animationMode === 'new' ? 'translateZ(25px)' : undefined,
+            backfaceVisibility: animationMode === 'new' ? 'hidden' : undefined
           }}
         >
           {/* Glossy Overlay (Dinâmico com Tilt) */}
-          <motion.div 
-            style={{
-              background: useTransform(
-                mouseXSpring, 
-                [-0.5, 0.5], 
-                ["linear-gradient(120deg, rgba(255,255,255,0.15) 0%, transparent 50%)", "linear-gradient(240deg, rgba(255,255,255,0.15) 0%, transparent 50%)"]
-              )
-            }}
-            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30" 
-          />
+          {animationMode === 'new' && (
+            <motion.div 
+              style={{
+                background: useTransform(
+                  mouseXSpring, 
+                  [-0.5, 0.5], 
+                  ["linear-gradient(120deg, rgba(255,255,255,0.15) 0%, transparent 50%)", "linear-gradient(240deg, rgba(255,255,255,0.15) 0%, transparent 50%)"]
+                )
+              }}
+              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30" 
+            />
+          )}
           
           {/* Book Crease (Dobra da Capa) */}
           <div className="absolute inset-y-0 left-[5px] w-[2px] bg-black/20 z-40" />
@@ -227,13 +236,17 @@ const BookCard = React.memo(({
         </div>
 
         {/* Dynamic Shadow (Sombra projetada) */}
-        <motion.div 
-          style={{
-            x: useTransform(mouseXSpring, [-0.5, 0.5], [20, -20]),
-            y: useTransform(mouseYSpring, [-0.5, 0.5], [20, -20]),
-          }}
-          className="absolute inset-4 bg-black/60 blur-2xl rounded-sm -z-10 transition-all duration-300 group-hover:opacity-40 opacity-20"
-        />
+        {animationMode === 'new' ? (
+          <motion.div 
+            style={{
+              x: useTransform(mouseXSpring, [-0.5, 0.5], [20, -20]),
+              y: useTransform(mouseYSpring, [-0.5, 0.5], [20, -20]),
+            }}
+            className="absolute inset-4 bg-black/60 blur-2xl rounded-sm -z-10 transition-all duration-300 group-hover:opacity-40 opacity-20"
+          />
+        ) : (
+          <div className="absolute inset-4 bg-black/40 blur-xl rounded-sm -z-10 opacity-0 group-hover:opacity-30 transition-opacity duration-300" />
+        )}
       </motion.div>
       <div className="mt-3 px-1 flex justify-between items-start">
         <div className="min-w-0">

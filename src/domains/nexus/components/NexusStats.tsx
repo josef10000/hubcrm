@@ -44,7 +44,35 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export const NexusStats: React.FC = () => {
-  const { activityLogs, books, notes } = useNexusStore();
+  const { activityLogs, books, notes, bookAnimationMode, setBookAnimationMode } = useNexusStore();
+
+  const cycleAnimationMode = () => {
+    if (bookAnimationMode === 'new') {
+      setBookAnimationMode('legacy');
+    } else if (bookAnimationMode === 'legacy') {
+      setBookAnimationMode('none');
+    } else {
+      setBookAnimationMode('new');
+    }
+  };
+
+  const getAnimationLabel = (mode: string) => {
+    switch (mode) {
+      case 'new': return '3D Realista (Nova)';
+      case 'legacy': return 'Zoom Clássico (Antiga)';
+      case 'none': return 'Sem Animação (Estático)';
+      default: return '3D Realista (Nova)';
+    }
+  };
+
+  const getAnimationIcon = (mode: string) => {
+    switch (mode) {
+      case 'new': return 'ph-cube-transparent text-primary-400';
+      case 'legacy': return 'ph-arrow-square-out text-blue-400';
+      case 'none': return 'ph-selection text-gray-500';
+      default: return 'ph-cube-transparent';
+    }
+  };
 
   // 1. Streak de Sabedoria (Dias seguidos)
   const streak = React.useMemo(() => {
@@ -194,6 +222,30 @@ export const NexusStats: React.FC = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-12 gap-6 pb-20">
       
+      {/* Controladores de Interface */}
+      <div className="md:col-span-12 bg-white/5 border border-white/10 p-6 rounded-[2rem] flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden group">
+        <div className="absolute -left-4 -top-4 w-24 h-24 bg-primary-500/10 blur-3xl rounded-full" />
+        <div className="flex flex-col gap-1 relative z-10">
+          <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Aparência da Biblioteca</span>
+          <h4 className="text-xs font-black text-white uppercase tracking-widest">Efeitos Visuais das Capas</h4>
+          <p className="text-[9px] font-bold text-gray-600 uppercase">Selecione o estilo de transição ao passar o mouse nas capas dos livros</p>
+        </div>
+        
+        <button 
+          onClick={cycleAnimationMode}
+          className="flex items-center gap-4 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 px-6 py-4 rounded-2xl transition-all shadow-xl hover:scale-105 active:scale-95 group/btn cursor-pointer min-w-[280px] relative z-10"
+        >
+          <div className="p-2.5 rounded-xl bg-white/5 group-hover/btn:scale-110 transition-all shrink-0">
+            <i className={`ph-bold ${getAnimationIcon(bookAnimationMode)} text-xl`} />
+          </div>
+          <div className="text-left">
+            <div className="text-[8px] font-black text-gray-500 uppercase tracking-widest">Estilo Ativo (Clique para Mudar)</div>
+            <div className="text-xs font-black text-white uppercase tracking-wider">{getAnimationLabel(bookAnimationMode)}</div>
+          </div>
+          <i className="ph-bold ph-arrows-clockwise text-gray-500 ml-auto group-hover/btn:rotate-180 transition-transform duration-500" />
+        </button>
+      </div>
+
       {/* Header Stats */}
       <div className="md:col-span-12 grid grid-cols-1 sm:grid-cols-4 gap-4">
         <motion.div 

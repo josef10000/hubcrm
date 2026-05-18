@@ -115,6 +115,8 @@ interface NexusState extends NexusData {
   loading: boolean;
   initialized: boolean;
   error: string | null;
+  bookAnimationMode: 'new' | 'legacy' | 'none';
+  setBookAnimationMode: (mode: 'new' | 'legacy' | 'none') => void;
   
   // Actions
   init: (uid: string) => () => void;
@@ -182,6 +184,8 @@ export const useNexusStore = create<NexusState>()(
       initialized: false,
       error: null,
       uid: null,
+      bookAnimationMode: 'new',
+      setBookAnimationMode: (mode) => set({ bookAnimationMode: mode }),
 
   init: (uid: string) => {
     if (get().initialized && get().uid === uid) return () => {};
@@ -666,7 +670,8 @@ export const useNexusStore = create<NexusState>()(
     goals: state.goals,
     tasks: state.tasks,
     books: state.books,
-    bookCategories: state.bookCategories
+    bookCategories: state.bookCategories,
+    bookAnimationMode: state.bookAnimationMode
   }),
   merge: (persistedState: any, currentState) => ({
     ...currentState,
@@ -676,6 +681,7 @@ export const useNexusStore = create<NexusState>()(
     goals: persistedState?.goals || [],
     tasks: persistedState?.tasks || [],
     books: persistedState?.books || [],
-    bookCategories: persistedState?.bookCategories || DEFAULT_BOOK_CATEGORIES
+    bookCategories: persistedState?.bookCategories || DEFAULT_BOOK_CATEGORIES,
+    bookAnimationMode: persistedState?.bookAnimationMode || 'new'
   })
 }));
