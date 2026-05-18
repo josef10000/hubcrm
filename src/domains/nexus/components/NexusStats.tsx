@@ -62,7 +62,8 @@ export const NexusStats: React.FC = () => {
     if (activityDays[0] !== today && activityDays[0] !== yesterday) return 0;
 
     let currentStreak = 0;
-    let checkDate = new Date(activityDays[0]);
+    const [year, month, day] = activityDays[0].split('-').map(Number);
+    let checkDate = new Date(year, month - 1, day);
 
     for (let i = 0; i < activityDays.length; i++) {
       const expectedDate = format(subDays(checkDate, i), 'yyyy-MM-dd');
