@@ -332,6 +332,10 @@
         pdfDoc = pdfDoc_;
         pageTotalText.innerText = pdfDoc.numPages;
         
+        console.log("[Nexus PDF Viewer] Documento carregado com sucesso. Total de páginas:", pdfDoc.numPages);
+        // Notifica o pai que o PDF carregou com sucesso e envia o número total de páginas
+        window.parent.postMessage({ type: 'PDF_LOAD_SUCCESS', totalPages: pdfDoc.numPages }, '*');
+        
         // Valida página de início
         pageNum = Math.min(Math.max(1, startPage), pdfDoc.numPages);
         
@@ -415,6 +419,7 @@
       }
 
       updateDebounceTimeout = setTimeout(() => {
+        console.log("[Nexus PDF Viewer] Emitindo PAGE_CHANGE para página:", num);
         // Envia mensagem ao parent com total segurança
         window.parent.postMessage({ type: 'PAGE_CHANGE', page: num }, '*');
       }, 2000); // 2 segundos parado na página

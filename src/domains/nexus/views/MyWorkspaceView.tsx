@@ -145,20 +145,34 @@ export default function MyWorkspaceView() {
   // Listener for PDF Viewer messages
   useEffect(() => {
     const handlePageMessage = (event: MessageEvent) => {
-      if (event.data && event.data.type === 'PAGE_CHANGE' && selectedBookId) {
+      if (!selectedBookId) return;
+
+      if (event.data && event.data.type === 'PAGE_CHANGE') {
         const newPage = parseInt(event.data.page);
         if (!isNaN(newPage)) {
+          console.log("[Nexus Sync] Recebido PAGE_CHANGE para página:", newPage);
           updateReadingProgress(selectedBookId, newPage);
         }
-      } else if (event.data && event.data.type === 'PDF_LOAD_ERROR' && selectedBookId) {
-        console.warn("Custom PDF Viewer failed. Gracefully falling back to native iframe.", event.data.message);
+      } else if (event.data && event.data.type === 'PDF_LOAD_SUCCESS') {
+        const totalPages = parseInt(event.data.totalPages);
+        if (!isNaN(totalPages) && totalPages > 0) {
+          console.log("[Nexus Sync] Recebido PDF_LOAD_SUCCESS. Total de páginas:", totalPages);
+          // Atualiza o total de páginas na store e Firestore se for diferente do atual
+          const currentBook = books.find(b => b.id === selectedBookId);
+          if (currentBook && currentBook.totalPages !== totalPages) {
+            console.log(`[Nexus Sync] Atualizando totalPages do livro de ${currentBook.totalPages || 0} para ${totalPages}`);
+            updateBookDetails(selectedBookId, { totalPages });
+          }
+        }
+      } else if (event.data && event.data.type === 'PDF_LOAD_ERROR') {
+        console.warn("[Nexus Sync] Custom PDF Viewer failed. Gracefully falling back to native iframe.", event.data.message);
         setIsCustomViewerError(true);
       }
     };
 
     window.addEventListener('message', handlePageMessage);
     return () => window.removeEventListener('message', handlePageMessage);
-  }, [selectedBookId, updateReadingProgress]);
+  }, [selectedBookId, updateReadingProgress, updateBookDetails, books]);
 
   // Saudação Dinâmica
   const getGreeting = () => {

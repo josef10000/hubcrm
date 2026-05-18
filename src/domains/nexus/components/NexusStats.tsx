@@ -43,6 +43,16 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
+const getTimestampMs = (timestamp: any): number => {
+  if (!timestamp) return Date.now();
+  if (typeof timestamp === 'number') return timestamp;
+  if (timestamp instanceof Date) return timestamp.getTime();
+  if (typeof timestamp.toDate === 'function') return timestamp.toDate().getTime();
+  if (timestamp.seconds !== undefined) return timestamp.seconds * 1000;
+  const parsed = new Date(timestamp).getTime();
+  return isNaN(parsed) ? Date.now() : parsed;
+};
+
 export const NexusStats: React.FC = () => {
   const { activityLogs, books, notes, bookAnimationMode, setBookAnimationMode } = useNexusStore();
 
@@ -84,7 +94,7 @@ export const NexusStats: React.FC = () => {
     
     // Pega todas as datas únicas com atividade
     const activityDays = [...new Set(activityLogs.map(log => 
-      format(log.timestamp, 'yyyy-MM-dd')
+      format(getTimestampMs(log.timestamp), 'yyyy-MM-dd')
     ))].sort().reverse();
 
     const today = format(new Date(), 'yyyy-MM-dd');
@@ -116,7 +126,7 @@ export const NexusStats: React.FC = () => {
     });
 
     return days.map(day => {
-      const dayLogs = activityLogs.filter(log => isSameDay(log.timestamp, day));
+      const dayLogs = activityLogs.filter(log => isSameDay(getTimestampMs(log.timestamp), day));
       const pagesRead = dayLogs.reduce((acc, log) => acc + (log.pagesRead || 0), 0);
       const notesCreated = dayLogs.filter(log => log.type === 'note').length;
       
@@ -160,9 +170,10 @@ export const NexusStats: React.FC = () => {
       const monthStart = startOfMonth(month);
       const monthEnd = endOfMonth(month);
       
-      const monthLogs = activityLogs.filter(log => 
-        log.timestamp >= monthStart.getTime() && log.timestamp <= monthEnd.getTime()
-      );
+      const monthLogs = activityLogs.filter(log => {
+        const ms = getTimestampMs(log.timestamp);
+        return ms >= monthStart.getTime() && ms <= monthEnd.getTime();
+      });
 
       const pages = monthLogs.reduce((acc, log) => acc + (log.pagesRead || 0), 0);
       const notesCount = monthLogs.filter(log => log.type === 'note').length;
