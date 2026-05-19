@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, Smile, X, Loader2, Calendar, LayoutGrid, Image as ImageIcon, Clock } from 'lucide-react';
+import { Send, Paperclip, Smile, X, Loader2, Calendar, LayoutGrid, Image as ImageIcon, Clock, Mic, Square, Trash2 } from 'lucide-react';
 import { parseMentions } from '@/helpers/chatHelpers';
 import { filterCommands, findCommand, BotCommand, BotContext } from '@/helpers/botCommands';
 import { useCRM } from '@crm/contexts/CRMContext';
@@ -68,6 +68,133 @@ export default function MessageInput({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout|null>(null);
+
+  // Estados e Refs de Gravação de Áudio e Drag & Drop
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [isDragActive, setIsDragActive] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Limpeza de timers de gravação
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setIsDragActive(true);
+    } else if (e.type === "dragleave") {
+      setIsDragActive(false);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      setUploading(true);
+      const id = toast.loading(`Enviando arquivo arrastado: ${file.name}...`);
+      try {
+        const activeChatId = chatId || 'general';
+        const url = await uploadFileToR2(file, activeChatId);
+        onSend(`Enviou o arquivo: ${file.name}`, [], [url], null, members, "text");
+        toast.success('Anexo enviado com sucesso!', { id });
+      } catch (error: any) {
+        console.error('[DRAG_DROP_UPLOAD_ERROR]', error);
+        toast.error(`Erro ao enviar arquivo: ${error.message || 'tente novamente'}`, { id });
+      } finally {
+        setUploading(false);
+      }
+    }
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunksRef.current = [];
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      mediaRecorderRef.current = mediaRecorder;
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        if (audioChunksRef.current.length === 0) return;
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+
+        setUploading(true);
+        const id = toast.loading('Enviando mensagem de voz...');
+        try {
+          const file = new File([audioBlob], `audio-${Date.now()}.webm`, { type: 'audio/webm' });
+          const activeChatId = chatId || 'general';
+          const url = await uploadFileToR2(file, activeChatId);
+          onSend('Enviou uma mensagem de voz 🎙️', [], [url], null, members, "text");
+          toast.success('Mensagem de voz enviada!', { id });
+        } catch (error: any) {
+          console.error('[AUDIO_RECORD_UPLOAD_ERROR]', error);
+          toast.error(`Erro ao enviar mensagem de voz: ${error.message || 'tente novamente'}`, { id });
+        } finally {
+          setUploading(false);
+        }
+
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start(250);
+      setIsRecording(true);
+      setRecordingTime(0);
+
+      timerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+
+    } catch (err) {
+      console.error('Erro ao acessar microfone:', err);
+      toast.error('Não foi possível acessar o microfone.');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    }
+  };
+
+  const cancelRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      audioChunksRef.current = [];
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      toast.info('Gravação cancelada');
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
 
   // Focus e carregar texto ao editar
   useEffect(() => {
@@ -300,7 +427,25 @@ export default function MessageInput({
   }, []);
 
   return (
-    <div className="p-4 pb-4 bg-white dark:bg-black/20 border-t border-gray-100 dark:border-white/10 relative">
+    <div 
+      onDragEnter={handleDrag}
+      onDragOver={handleDrag}
+      onDragLeave={handleDrag}
+      onDrop={handleDrop}
+      className={`p-4 pb-4 bg-white dark:bg-black/20 border-t border-gray-100 dark:border-white/10 relative transition-all ${
+        isDragActive ? 'bg-primary-500/10 border-t-primary-500 scale-[1.01]' : ''
+      }`}
+    >
+      {/* Overlay Visual de Arrastar Arquivo */}
+      {isDragActive && (
+        <div className="absolute inset-0 bg-primary-500/10 border-2 border-dashed border-primary-500 z-50 flex flex-col items-center justify-center rounded-t-2xl pointer-events-none backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-16 h-16 rounded-full bg-primary-500 text-white flex items-center justify-center shadow-lg shadow-primary-500/20 mb-3">
+            <Paperclip size={28} className="animate-bounce" />
+          </div>
+          <p className="text-sm font-black uppercase tracking-widest text-primary-600 dark:text-primary-400">Solte para enviar arquivo direto para o R2</p>
+          <p className="text-[10px] text-gray-500 font-bold mt-1">Imagens, áudios, PDFs, planilhas e mais</p>
+        </div>
+      )}
       {/* Indicador de Resposta */}
       {replyTo && (
         <div className="absolute bottom-full left-0 right-0 bg-gray-50 dark:bg-white/5 p-3 flex justify-between items-center border-t border-gray-200 dark:border-white/10 animate-in slide-in-from-bottom">
@@ -387,75 +532,115 @@ export default function MessageInput({
 
         {/* Área de Texto + Botão de Enviar */}
         <div className="flex items-end gap-2">
-          <div className="flex-1 relative">
-            {showMentions && (
-              <MentionSuggestions 
-                query={mentionQuery} 
-                members={teamProfiles.map(p => ({ uid: p.uid, displayName: p.displayName, photoURL: p.photoURL }))} 
-                roles={orgRoles.map(r => ({ id: r.id, name: r.name }))}
-                onSelect={handleMentionSelect} 
-                onClose={() => setShowMentions(false)} 
+          {isRecording ? (
+            <div className="flex-1 flex items-center justify-between bg-red-500/10 dark:bg-red-500/5 border border-dashed border-red-500/30 p-3 rounded-2xl animate-pulse min-h-[46px]">
+              <div className="flex items-center gap-3">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
+                <span className="text-xs font-black uppercase tracking-widest text-red-500 dark:text-red-400">Gravando mensagem de voz...</span>
+                <span className="text-xs font-black px-2 py-0.5 bg-black/10 dark:bg-white/10 rounded-lg dark:text-white">{formatTime(recordingTime)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button 
+                  type="button" 
+                  onClick={cancelRecording}
+                  className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                  title="Cancelar gravação"
+                >
+                  <Trash2 size={16} />
+                </button>
+                <button 
+                  type="button" 
+                  onClick={stopRecording}
+                  className="p-1.5 bg-red-500 text-white rounded-xl shadow-lg shadow-red-500/20 hover:scale-105 active:scale-95 transition-all flex items-center justify-center h-8 w-8"
+                  title="Enviar gravação"
+                >
+                  <Send size={14} />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 relative">
+              {showMentions && (
+                <MentionSuggestions 
+                  query={mentionQuery} 
+                  members={teamProfiles.map(p => ({ uid: p.uid, displayName: p.displayName, photoURL: p.photoURL }))} 
+                  roles={orgRoles.map(r => ({ id: r.id, name: r.name }))}
+                  onSelect={handleMentionSelect} 
+                  onClose={() => setShowMentions(false)} 
+                />
+              )}
+              {showSlashCommands && (
+                <SlashCommandSuggestions
+                  commands={filterCommands(slashQuery)}
+                  onSelect={handleSlashCommand}
+                  query={slashQuery}
+                />
+              )}
+              <textarea 
+                ref={textareaRef}
+                rows={1}
+                placeholder="Escreva uma mensagem..."
+                className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-3 pr-12 rounded-2xl text-sm focus:outline-none focus:border-primary-500 transition-all dark:text-white resize-none max-h-32 custom-scrollbar"
+                value={text}
+                onChange={handleChange}
+                onKeyDown={handleKeyDown}
               />
-            )}
-            {showSlashCommands && (
-              <SlashCommandSuggestions
-                commands={filterCommands(slashQuery)}
-                onSelect={handleSlashCommand}
-                query={slashQuery}
+              <button 
+                type="button" 
+                onClick={() => setIsEmojiOpen(!isEmojiOpen)}
+                className="absolute right-3 bottom-3 text-gray-400 hover:text-amber-500 transition-colors"
+              >
+                <Smile size={20} />
+              </button>
+
+              <EmojiPicker 
+                isOpen={isEmojiOpen} 
+                onSelect={handleEmojiSelect} 
+                onClose={() => setIsEmojiOpen(false)} 
               />
-            )}
-            <textarea 
-              ref={textareaRef}
-              rows={1}
-              placeholder="Escreva uma mensagem..."
-              className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-3 pr-12 rounded-2xl text-sm focus:outline-none focus:border-primary-500 transition-all dark:text-white resize-none max-h-32 custom-scrollbar"
-              value={text}
-              onChange={handleChange}
-              onKeyDown={handleKeyDown}
-            />
-            <button 
-              type="button" 
-              onClick={() => setIsEmojiOpen(!isEmojiOpen)}
-              className="absolute right-3 bottom-3 text-gray-400 hover:text-amber-500 transition-colors"
-            >
-              <Smile size={20} />
-            </button>
+            </div>
+          )}
 
-            <EmojiPicker 
-              isOpen={isEmojiOpen} 
-              onSelect={handleEmojiSelect} 
-              onClose={() => setIsEmojiOpen(false)} 
-            />
-          </div>
+          {!isRecording && (
+            <div className="flex items-center gap-1">
+              <button 
+                type="button" 
+                onClick={startRecording}
+                disabled={uploading}
+                className="p-3 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-2xl transition-all h-[46px] w-[46px] flex items-center justify-center shrink-0 disabled:opacity-50"
+                title="Gravar Mensagem de Voz"
+              >
+                <Mic size={20} />
+              </button>
 
-          <div className="flex items-center gap-1">
-            <button 
-              type="button" 
-              onClick={() => setIsSchedulerOpen(true)}
-              className={`p-3 rounded-2xl transition-all h-[46px] w-[46px] flex items-center justify-center shrink-0 ${
-                scheduledAt 
-                  ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' 
-                  : 'text-gray-400 hover:text-amber-500 hover:bg-amber-500/10'
-              }`}
-              title="Agendar Mensagem"
-            >
-              <Clock size={20} />
-            </button>
+              <button 
+                type="button" 
+                onClick={() => setIsSchedulerOpen(true)}
+                className={`p-3 rounded-2xl transition-all h-[46px] w-[46px] flex items-center justify-center shrink-0 ${
+                  scheduledAt 
+                    ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' 
+                    : 'text-gray-400 hover:text-amber-500 hover:bg-amber-500/10'
+                }`}
+                title="Agendar Mensagem"
+              >
+                <Clock size={20} />
+              </button>
 
-            <button 
-              type="submit" 
-              disabled={!text.trim() || uploading}
-              className={`p-3 rounded-2xl shadow-lg transition-all h-[46px] w-[46px] flex items-center justify-center shrink-0 ${
-                text.trim() && !uploading
-                  ? editingMessage 
-                    ? 'bg-amber-500 text-white shadow-amber-500/20 hover:scale-105 active:scale-95'
-                    : 'bg-primary-500 text-white shadow-primary-500/20 hover:scale-105 active:scale-95' 
-                  : 'bg-gray-100 dark:bg-white/5 text-gray-400 cursor-not-allowed'
-              }`}
-            >
-              {editingMessage ? <CheckCircle2 size={20} /> : <Send size={20} />}
-            </button>
-          </div>
+              <button 
+                type="submit" 
+                disabled={!text.trim() || uploading}
+                className={`p-3 rounded-2xl shadow-lg transition-all h-[46px] w-[46px] flex items-center justify-center shrink-0 ${
+                  text.trim() && !uploading
+                    ? editingMessage 
+                      ? 'bg-amber-500 text-white shadow-amber-500/20 hover:scale-105 active:scale-95'
+                      : 'bg-primary-500 text-white shadow-primary-500/20 hover:scale-105 active:scale-95' 
+                    : 'bg-gray-100 dark:bg-white/5 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                {editingMessage ? <CheckCircle2 size={20} /> : <Send size={20} />}
+              </button>
+            </div>
+          )}
         </div>
       </form>
 

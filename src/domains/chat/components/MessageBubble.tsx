@@ -1,4 +1,4 @@
-import { User, Paperclip, Check, CheckCheck, Trash2, Reply, Smile, Bookmark, Pin, LifeBuoy, MessageSquareText, ExternalLink, Hash, ChevronRight, Clock, Bell, Bot } from 'lucide-react';
+import { User, Paperclip, Check, CheckCheck, Trash2, Reply, Smile, Bookmark, Pin, LifeBuoy, MessageSquareText, ExternalLink, Hash, ChevronRight, Clock, Bell, Bot, FileText, Volume2, Download, Play, Video } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
 import { ChatMessage } from '@/types/chat.types';
@@ -29,6 +29,39 @@ interface MessageBubbleProps {
 }
 
 const COMMON_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
+
+const isAudioFile = (url: string) => {
+  return url.match(/\.(mp3|wav|ogg|m4a|webm)($|\?)/i) || url.includes('/audios/');
+};
+
+const isVideoFile = (url: string) => {
+  return url.match(/\.(mp4|mov|webm)($|\?)/i) || url.includes('/videos/');
+};
+
+const isImageFile = (url: string) => {
+  return url.match(/\.(jpeg|jpg|gif|png|webp|svg)($|\?)/i) || url.includes('/images/');
+};
+
+const getFileNameFromUrl = (url: string) => {
+  try {
+    const decoded = decodeURIComponent(url);
+    const parts = decoded.split('/');
+    const lastPart = parts[parts.length - 1];
+    return lastPart.replace(/^\d+-/, '');
+  } catch (e) {
+    return 'Arquivo Anexo';
+  }
+};
+
+const getFileExtension = (url: string) => {
+  try {
+    const filename = getFileNameFromUrl(url);
+    const parts = filename.split('.');
+    return parts.length > 1 ? parts[parts.length - 1].toUpperCase() : 'ARQUIVO';
+  } catch (e) {
+    return 'FILE';
+  }
+};
 
 export default function MessageBubble({ 
   message, isRead, isPinned, isBookmarked, onDelete, onEdit, onReply, onReact, onVote, 
@@ -442,48 +475,139 @@ export default function MessageBubble({
                   </div>
                 )}
                 
-                {/* Anexos de Imagem (Apenas se não for sticker) */}
-                {message.type !== 'sticker' && message.attachments && message.attachments.length > 0 && (
-                  <div className={`mt-3 grid gap-2 ${
-                    message.attachments.length === 1 ? 'grid-cols-1' :
-                    message.attachments.length === 2 ? 'grid-cols-2' :
-                    'grid-cols-2 md:grid-cols-3'
-                  }`}>
-                    {message.attachments.map((url, i) => {
-                      const isSingle = message.attachments?.length === 1;
-                      return (
-                        <div 
-                          key={i} 
-                          onClick={() => onImageClick?.(url)}
-                          className={`block rounded-2xl overflow-hidden border border-black/5 dark:border-white/10 hover:opacity-95 transition-all outline-none cursor-pointer ${
-                            isSingle 
-                              ? 'max-h-[500px] w-full shadow-2xl shadow-black/20' 
-                              : 'aspect-square shadow-sm'
-                          } relative group/img`}
-                        >
-                          {/* Efeito de Fundo Desfocado para Imagens Únicas (Estilo Premium) */}
-                          {isSingle && (
-                            <div 
-                              className="absolute inset-0 bg-cover bg-center blur-3xl opacity-30 scale-110"
-                              style={{ backgroundImage: `url(${url})` }}
-                            />
-                          )}
-                          
-                          <img 
-                            src={url} 
-                            alt="Anexo" 
-                            className={`relative z-10 w-full h-full transition-transform duration-500 group-hover/img:scale-[1.02] ${
-                              isSingle ? 'object-contain max-h-[500px]' : 'object-cover'
-                            }`}
-                          />
-
-                          {/* Overlay de Hover */}
-                          <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/5 transition-colors z-20" />
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                 {/* Anexos Multimídia (Apenas se não for sticker) */}
+                 {message.type !== 'sticker' && message.attachments && message.attachments.length > 0 && (
+                   <div className="mt-3 flex flex-col gap-3 max-w-full relative z-30">
+                     {message.attachments.map((url, i) => {
+                       if (isAudioFile(url)) {
+                         return (
+                           <div 
+                             key={i} 
+                             className="flex flex-col gap-2 p-3 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 max-w-sm shadow-sm"
+                           >
+                             <div className="flex items-center gap-2.5">
+                               <div className="w-9 h-9 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center shrink-0">
+                                 <Volume2 size={18} />
+                               </div>
+                               <div className="min-w-0 flex-1">
+                                 <p className="text-xs font-black truncate dark:text-white leading-tight">
+                                   {getFileNameFromUrl(url)}
+                                 </p>
+                                 <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                                   Mensagem de voz • {getFileExtension(url)}
+                                 </span>
+                               </div>
+                               <a 
+                                 href={url} 
+                                 download 
+                                 target="_blank" 
+                                 rel="noreferrer"
+                                 className="p-1.5 hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg text-gray-400 hover:text-primary-500 transition-colors shrink-0"
+                                 title="Baixar Áudio"
+                               >
+                                 <Download size={14} />
+                               </a>
+                             </div>
+                             <audio 
+                               controls 
+                               src={url} 
+                               className="w-full h-8 mt-1 block outline-none filter dark:invert dark:hue-rotate-180" 
+                             />
+                           </div>
+                         );
+                       }
+ 
+                       if (isVideoFile(url)) {
+                         return (
+                           <div 
+                             key={i} 
+                             className="flex flex-col gap-2 p-3 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 max-w-md shadow-sm"
+                           >
+                             <div className="flex items-center gap-2.5">
+                               <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
+                                 <Video size={18} />
+                               </div>
+                               <div className="min-w-0 flex-1">
+                                 <p className="text-xs font-black truncate dark:text-white leading-tight">
+                                   {getFileNameFromUrl(url)}
+                                 </p>
+                                 <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                                   Vídeo Anexo • {getFileExtension(url)}
+                                 </span>
+                               </div>
+                               <a 
+                                 href={url} 
+                                 download 
+                                 target="_blank" 
+                                 rel="noreferrer"
+                                 className="p-1.5 hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg text-gray-400 hover:text-primary-500 transition-colors shrink-0"
+                                 title="Baixar Vídeo"
+                               >
+                                 <Download size={14} />
+                               </a>
+                             </div>
+                             <video 
+                               controls 
+                               src={url} 
+                               className="w-full rounded-xl overflow-hidden max-h-[300px] border border-black/5 dark:border-white/10 shadow-sm" 
+                             />
+                           </div>
+                         );
+                       }
+ 
+                       if (isImageFile(url)) {
+                         return (
+                           <div 
+                             key={i} 
+                             onClick={() => onImageClick?.(url)}
+                             className="block rounded-2xl overflow-hidden border border-black/5 dark:border-white/10 hover:opacity-95 transition-all outline-none cursor-pointer max-w-md relative group/img shadow-md"
+                           >
+                             <div 
+                               className="absolute inset-0 bg-cover bg-center blur-3xl opacity-20 scale-110"
+                               style={{ backgroundImage: `url(${url})` }}
+                             />
+                             <img 
+                               src={url} 
+                               alt="Anexo" 
+                               className="relative z-10 w-full h-full object-contain max-h-[400px] transition-transform duration-500 group-hover/img:scale-[1.01]"
+                             />
+                             <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/5 transition-colors z-20" />
+                           </div>
+                         );
+                       }
+ 
+                       // Caso padrão: Documentos ou outros arquivos
+                       return (
+                         <div 
+                           key={i} 
+                           className="flex items-center gap-3 p-3 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 max-w-sm shadow-sm"
+                         >
+                           <div className="w-10 h-10 rounded-xl bg-primary-500/10 text-primary-500 flex items-center justify-center shrink-0">
+                             <FileText size={20} />
+                           </div>
+                           <div className="min-w-0 flex-1">
+                             <p className="text-xs font-black truncate dark:text-white leading-tight">
+                               {getFileNameFromUrl(url)}
+                             </p>
+                             <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                               Documento • {getFileExtension(url)}
+                             </span>
+                           </div>
+                           <a 
+                             href={url} 
+                             download 
+                             target="_blank" 
+                             rel="noreferrer"
+                             className="p-2 bg-white dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl text-gray-500 dark:text-gray-300 border border-gray-150 dark:border-white/10 shadow-sm transition-all hover:scale-105 shrink-0 flex items-center justify-center"
+                             title="Baixar Arquivo"
+                           >
+                             <Download size={15} />
+                           </a>
+                         </div>
+                       );
+                     })}
+                   </div>
+                 )}
               </>
             )}
 
