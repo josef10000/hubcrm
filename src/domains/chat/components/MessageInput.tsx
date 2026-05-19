@@ -8,6 +8,7 @@ import { ChatMessage } from '@/types/chat.types';
 import MentionSuggestions from './MentionSuggestions';
 import SlashCommandSuggestions from './SlashCommandSuggestions';
 import { uploadImageToImgBB } from '@/lib/imgbb';
+import { uploadFileToR2 } from '@/lib/r2';
 import { toast } from 'sonner';
 import EmojiPicker from './EmojiPicker';
 
@@ -42,10 +43,11 @@ interface MessageInputProps {
   onUpdate: (messageId: string, text: string) => void;
   members: string[];
   parentMessageId?: string; // Para enviar mensagens em Threads
+  chatId?: string | null;
 }
 
 export default function MessageInput({ 
-  onSend, onTyping, replyTo, onCancelReply, editingMessage, onCancelEdit, onUpdate, members, parentMessageId 
+  onSend, onTyping, replyTo, onCancelReply, editingMessage, onCancelEdit, onUpdate, members, parentMessageId, chatId 
 }: MessageInputProps) {
   const [isPollModalOpen, setIsPollModalOpen] = useState(false);
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
@@ -204,13 +206,15 @@ export default function MessageInput({
     if (!file) return;
 
     setUploading(true);
-    const id = toast.loading('Enviando anexo...');
+    const id = toast.loading(`Enviando anexo: ${file.name}...`);
     try {
-      const url = await uploadImageToImgBB(file);
-      onSend('[Anexo]', [], [url], null, members, "text");
-      toast.success('Anexo enviado!', { id });
-    } catch (error) {
-      toast.error('Erro ao enviar anexo.', { id });
+      const activeChatId = chatId || 'general';
+      const url = await uploadFileToR2(file, activeChatId);
+      onSend(`Enviou o arquivo: ${file.name}`, [], [url], null, members, "text");
+      toast.success('Anexo enviado com sucesso!', { id });
+    } catch (error: any) {
+      console.error('[UPLOAD_ERROR]', error);
+      toast.error(`Erro ao enviar anexo: ${error.message || 'tente novamente'}`, { id });
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -328,7 +332,7 @@ export default function MessageInput({
           type="file" 
           ref={fileInputRef} 
           className="hidden" 
-          accept="image/*,.pdf,.doc,.docx"
+          accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar"
           onChange={handleFileSelect}
         />
         

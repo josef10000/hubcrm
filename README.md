@@ -77,7 +77,7 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
 
 ### ☁️ Documentos & Media (Google Drive, Cloudflare R2, Cloudinary & ImgBB)
 - **Google Drive:** Integração transparente para visualização de PDFs e manuais. O Hub transforma automaticamente links de compartilhamento em links de `preview` otimizados.
-- **Cloudflare R2:** Provedor de armazenamento em nuvem S3-compatible utilizado para guardar arquivos pesados de PDFs e documentos da biblioteca.
+- **Cloudflare R2:** Provedor de armazenamento em nuvem S3-compatible utilizado para guardar arquivos pesados de PDFs e documentos da biblioteca, além de servir como repositório central de mídias de chat (áudios, imagens, PDFs e planilhas).
   > [!IMPORTANT]
   > **Configuração Obrigatória de CORS para R2:** Para que o visualizador de PDF inteligente (Premium Reader) consiga fazer o download dos arquivos via AJAX e renderizá-los com sincronia de progresso e controles avançados de zoom, você **deve** configurar a política de CORS no bucket correspondente no painel do Cloudflare R2.
   > 
@@ -106,8 +106,10 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
   > ```
   > 
   > 🧠 **Leitor Premium & Sincronização Estritamente Manual (Strict Manual Sync):** A fim de evitar qualquer tipo de sobregravação acidental e garantir autonomia total do usuário, a atualização automática de progresso foi desabilitada a partir da navegação do visualizador. O Nexus Premium Reader agora conta com sincronização estritamente manual: o progresso atualiza e salva de forma 100% confiável somente quando o usuário interage com o Companion ou altera ativamente os controles de página no painel do CRM. Os logs de atividade correspondentes são persistidos no Firestore sob uma regra de segurança robusta na subcoleção `activity_logs` (liberada explicitamente no `firestore.rules`), o que garante a perfeita exibição em tempo real do Heatmap de Atividades, Streak de Sabedoria e demais métricas de consistência no Dashboard, eliminando qualquer quebra ou bloqueio silencioso do banco. Para máxima precisão de status, livros sem progresso real (`currentPage == 0`) são filtrados e exibidos de forma inteligente como "Quero Ler" (`want_to_read`), sendo promovidos para "Lendo Agora" (`reading`) apenas quando possuírem páginas lidas de fato maiores que 0. Caso um livro volte para a página 0, seu status retorna automaticamente para "Quero Ler". O visualizador continua otimizado para rodar com Range Requests e streams desabilitados, garantindo compatibilidade absoluta com políticas CORS do Cloudflare R2.
+  >
+  > 💬 **Integração no Hub Chat & Domínio Customizado:** O Hub Chat utiliza o Cloudflare R2 como repositório de mídias de chat. Os usuários podem enviar imagens de alta resolução, planilhas de relatórios, PDFs, vídeos demonstrativos e áudios gravados de voz diretamente no chat. Os uploads são assinados de forma segura e dinâmica no backend por meio de *Presigned URLs* com tempo de expiração de 10 minutos e servidos globalmente de forma ultraveloz sob o domínio customizado **`storage.hubsymples.com.br`**, protegendo chaves privadas e ocultando a infraestrutura com marca corporativa.
 - **Cloudinary:** Provider principal para ativos de longo prazo e alta qualidade. Utilizado para o upload e armazenamento de **fotos de perfil dos usuários** e **capas de livros na biblioteca Nexus**, garantindo estabilidade e redimensionamento dinâmico.
-- **ImgBB:** CDN de alta performance focada em ativos transacionais e colaborativos. Utilizada em todo o sistema de **Chat (anexos de mensagens, ícones de grupos e canais)**, imagens do **Quadro Branco (Canvas Editor)**, anexos de **Tickets de Suporte** e logos temporários de onboarding.
+- **ImgBB:** CDN secundária focada em ativos transacionais leves. Utilizada para imagens do **Quadro Branco (Canvas Editor)**, anexos de **Tickets de Suporte** e logos temporários de onboarding.
 
 ### 🛡️ Monitoramento & Uptime (UptimeRobot & Sentry)
 - **UptimeRobot:** Monitoramento de disponibilidade de serviços e sites, com status de saúde exibido no dashboard administrativo.

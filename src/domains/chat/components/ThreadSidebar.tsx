@@ -124,6 +124,7 @@ export default function ThreadSidebar({ parentMessage, chat, onClose }: ThreadSi
           editingMessage={editingMessage}
           replyTo={null}
           parentMessageId={parentMessage.id}
+          chatId={chat.id}
         />
       </div>
     </div>

@@ -24,6 +24,7 @@
     { "source": "/api/team/accept", "destination": "/api/team_handler?action=accept" },
     { "source": "/api/team/cancel-invite", "destination": "/api/team_handler?action=cancel-invite" },
     { "source": "/api/team/update-profile", "destination": "/api/team_handler?action=update-profile" },
+    { "source": "/api/storage/upload-url", "destination": "/api/storage_handler?action=upload-url" },
 
     { "source": "/api/email/manual-trigger", "destination": "/api/system_handler?action=email" },
     { "source": "/api/uptimerobot/monitors", "destination": "/api/system_handler?action=uptime" },

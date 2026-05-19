@@ -505,6 +505,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
         onCancelEdit={() => setEditingMessage(null)}
         onUpdate={handleUpdate}
         members={chat.members}
+        chatId={chatId}
       />
 
       <GroupSettingsModal 
