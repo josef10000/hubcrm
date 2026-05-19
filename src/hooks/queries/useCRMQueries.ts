@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
 import { collection, query, orderBy, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { useFirestoreQuery } from './useFirestoreRealtime';
+import { useFirestoreQuery } from '../useFirestoreRealtime';
 import { useCRMStore } from '@/store/useCRMStore';
-import { Offer, Tag, UserProfile, Role } from '@/types';
+import { Offer, Tag, UserProfile } from '@/types';
+import { CustomRole } from '@/constants/permissions';
 
 export function useOffers() {
   const orgId = useCRMStore((state) => state.effectiveOrgId);
@@ -69,7 +70,7 @@ export function useOrgRoles() {
     );
   }, [orgId]);
 
-  return useFirestoreQuery<Role>(
+  return useFirestoreQuery<CustomRole>(
     ['orgRoles', orgId],
     firestoreQuery,
     { enabled: !!orgId }

@@ -8,7 +8,8 @@ import { Client, Lead } from '@/types';
 
 export function useClients() {
   const orgId = useCRMStore((state) => state.effectiveOrgId);
-  const { user, permissions } = useAuth();
+  const { user, userProfile } = useAuth();
+  const permissions = userProfile?.permissions || [];
 
   const firestoreQuery = useMemo(() => {
     if (!orgId || !user) return null;

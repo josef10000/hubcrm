@@ -18,6 +18,7 @@ export const createFinanceSlice: StateCreator<
   CRMStoreState,
   [],
   [],
+  FinanceSlice
 > = (set, get) => ({
   handleSaveTransaction: async (data) => {
     const orgId = get().effectiveOrgId;

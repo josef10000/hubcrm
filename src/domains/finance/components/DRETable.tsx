@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { useCRM } from '@crm/contexts/CRMContext';
-import { useCRM } from '@crm/contexts/CRMContext';
 import { useTransactions, useTransactionCategories } from '@/hooks/queries/useFinance';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Transaction, TransactionCategory } from '@/types';
