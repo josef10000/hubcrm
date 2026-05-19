@@ -55,6 +55,9 @@ export default function SettingsView() {
     { id: 'nordic', name: 'Nordic', color: 'bg-[#38bdf8]' },
     { id: 'midnight', name: 'Midnight', color: 'bg-[#8b5cf6]' },
     { id: 'barbie', name: 'Barbie', color: 'bg-[#f472b6]' },
+    { id: 'branco-elite', name: 'Branco Elite', color: 'bg-[#ffffff] border border-gray-300' },
+    { id: 'prata-platinum', name: 'Prata Platinum', color: 'bg-[#cbd5e1]' },
+    { id: 'preto-absoluto', name: 'Preto Absoluto', color: 'bg-[#000000]' },
   ];
 
   return (

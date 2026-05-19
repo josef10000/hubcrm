@@ -134,6 +134,54 @@ export default function ThemeEffects() {
             ))}
           </motion.div>
         )}
+
+        {themeColor === 'branco-elite' && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-0 bg-gradient-to-tr from-slate-50 to-white"
+          >
+            {particles.map(p => (
+              <Particle key={p.id} {...p} opacity={0.35}>
+                <Sparkles size={p.size} className="text-slate-400/25" />
+              </Particle>
+            ))}
+          </motion.div>
+        )}
+
+        {themeColor === 'prata-platinum' && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-0 bg-gradient-to-b from-transparent to-slate-900/10"
+          >
+            {particles.map(p => (
+              <Particle key={p.id} {...p} opacity={0.4}>
+                <Sparkles size={p.size} className="text-zinc-300/35" />
+              </Particle>
+            ))}
+          </motion.div>
+        )}
+
+        {themeColor === 'preto-absoluto' && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-0"
+          >
+            {stars.map(s => (
+              <TwinklingStar key={s.id} {...s} />
+            ))}
+            {particles.map(p => (
+              <Particle key={p.id} {...p} opacity={0.35}>
+                <Sparkles size={p.size} className="text-yellow-400/20 fill-yellow-400/5 animate-pulse" />
+              </Particle>
+            ))}
+          </motion.div>
+        )}
       </AnimatePresence>
     </div>
   );

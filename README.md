@@ -172,6 +172,21 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
     - **Neural Greeting & Weather:** Saudação dinâmica e clima local integrado ao dashboard.
     - **Categorias Dinâmicas:** Gestão completa de taxonomia personalizada.
 
+## 🎨 Personalização & Temas Estéticos Premium
+
+O Hub Central conta com um motor de personalização visual dinâmico que permite ao usuário adaptar o CRM ao seu estilo de trabalho, promovendo foco e bem-estar através de experiências visuais imersivas e micro-animações de partículas de altíssimo nível.
+
+### 🌟 Temas Estéticos Disponíveis
+- **⚪ Branco Elite (`branco-elite`) [NEW]:** Um tema claro super clean e sofisticado. Sobrescreve as propriedades de fundo tradicionais para oferecer um visual minimalista iluminado, com cartões elevados em glassmorphism e sombras extremamente suaves que reduzem a fadiga ocular. Conta com partículas de luz branca e cinza flutuando serenamente no background.
+- **🥈 Prata Platinum (`prata-platinum`) [NEW]:** Um visual metálico futurista de altíssimo padrão, combinando fundos titânio/grafite escuro com realces em platina e cristais metálicos flutuantes que simulam reflexos dinâmicos.
+- **⚫ Preto Absoluto (`preto-absoluto`) [NEW]:** Um tema escuro AMOLED de luxo absoluto. Fundo inteiramente preto puro (`#000000`) integrado a cartões elevados em cinza-escuro (`#09090b`), bordas douradas e estrelas cintilantes e brasas douradas flutuando lentamente pelo ecossistema.
+- **🌐 Cyberpunk (`cyberpunk`):** Interface com brilho neon ciano e lilás, equipada com linhas de varredura (scanlines) retrô e animações eletrizantes.
+- **🌿 Forest (`forest`):** Visual natural e orgânico, com folhas verdes flutuando suavemente pelo painel em um fundo verde-floresta escuro.
+- **❄️ Nordic (`nordic`):** Uma experiência limpa com textura de geada e flocos de neve flutuando em um fundo azul-glacial elegante.
+- **🌌 Midnight (`midnight`):** Um céu estrelado e imersivo com constelações cintilantes em tons de violeta e azul escuro profundo.
+- **🎀 Barbie (`barbie`):** Estética vibrante em rosa neon com corações e brilhos em 3D flutuando no background.
+- **🕶️ Minimalista (`minimalist`):** Visual monocromático de alto contraste focado exclusivamente na eficiência operacional.
+
 ---
 
 ## 📂 Project Structure
