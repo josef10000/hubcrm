@@ -29,9 +29,9 @@ export const getPlanPrice = (plan?: string, billingCycle?: string, client?: Part
     finalSetupPrice = customSetupPrice !== undefined ? Number(customSetupPrice) : getSetupPrice(plan);
   } else {
     // Priority 1: Explicit planPrice or customMonthlyPrice in client record
-    if (client?.customMonthlyPrice !== undefined && client.customMonthlyPrice !== null && client.customMonthlyPrice !== '') {
+    if (client?.customMonthlyPrice != null) {
       finalMonthlyPrice = Number(client.customMonthlyPrice);
-    } else if (client?.planPrice !== undefined && client.planPrice !== null && client.planPrice !== '') {
+    } else if (client?.planPrice != null) {
       finalMonthlyPrice = Number(client.planPrice);
     } else {
       // Priority 2: Fallback to hardcoded defaults for standard plans
@@ -43,9 +43,9 @@ export const getPlanPrice = (plan?: string, billingCycle?: string, client?: Part
     }
 
     // Priority 1: Explicit setupPrice in client record
-    if (client?.customSetupPrice !== undefined && client.customSetupPrice !== null && client.customSetupPrice !== '') {
+    if (client?.customSetupPrice != null) {
       finalSetupPrice = Number(client.customSetupPrice);
-    } else if (client?.setupPrice !== undefined && client.setupPrice !== null && client.setupPrice !== '') {
+    } else if (client?.setupPrice != null) {
       finalSetupPrice = Number(client.setupPrice);
     } else {
       finalSetupPrice = getSetupPrice(plan, client);
