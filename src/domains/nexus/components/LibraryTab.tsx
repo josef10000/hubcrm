@@ -438,12 +438,12 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
     return { total: myBooks.length, totalPages, finished, reading };
   }, [books, userUid]);
 
-  // Currently Reading — Livro em destaque
-  const currentlyReading = React.useMemo(() => {
+  // Currently Reading — Todos os livros em leitura
+  const readingBooks = React.useMemo(() => {
     const myBooks = books.filter(b => !b.ownerId || b.ownerId === userUid);
     return myBooks
       .filter(b => b.status === 'reading' && (b.currentPage || 0) > 0 && (b.totalPages || 0) > 0)
-      .sort((a, b) => (b.currentPage || 0) - (a.currentPage || 0))[0] || null;
+      .sort((a, b) => (b.currentPage || 0) - (a.currentPage || 0));
   }, [books, userUid]);
 
   const handlePublishBook = React.useCallback(async (book: NexusBook) => {
@@ -689,114 +689,123 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
         ))}
       </div>
 
-      {/* HERO — CURRENTLY READING */}
-      {currentlyReading && librarySubTab === 'my' && (() => {
-        const heroProgress = currentlyReading.totalPages! > 0 
-          ? Math.round(((currentlyReading.currentPage || 0) / currentlyReading.totalPages!) * 100) 
-          : 0;
-        const circumference = 2 * Math.PI * 40;
-        const strokeDashoffset = circumference - (heroProgress / 100) * circumference;
-
-        return (
-          <motion.div
+      {/* HERO — CURRENTLY READING (Carrossel) */}
+      {readingBooks.length > 0 && librarySubTab === 'my' && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <motion.div 
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="w-2 h-2 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.6)]"
+              />
+              <span className="text-[10px] font-black text-blue-400 uppercase tracking-[0.3em]">Lendo Agora</span>
+              <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest ml-1">{readingBooks.length} {readingBooks.length === 1 ? 'livro' : 'livros'}</span>
+            </div>
+            {readingBooks.length > 2 && (
+              <span className="text-[8px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1">
+                <i className="ph-bold ph-arrow-left" /> Arraste <i className="ph-bold ph-arrow-right" />
+              </span>
+            )}
+          </div>
+          <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="relative rounded-[2rem] overflow-hidden border border-white/10 group"
+            className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
-            {/* Blurred Background */}
-            {currentlyReading.coverUrl && (
-              <div className="absolute inset-0 z-0">
-                <img 
-                  src={currentlyReading.coverUrl} 
-                  alt="" 
-                  className="w-full h-full object-cover scale-110 blur-[60px] opacity-30" 
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-[#0d0f16]/95 via-[#0d0f16]/80 to-[#0d0f16]/60" />
-              </div>
-            )}
+            {readingBooks.map((book, idx) => {
+              const progress = book.totalPages! > 0 
+                ? Math.round(((book.currentPage || 0) / book.totalPages!) * 100) 
+                : 0;
+              const circumference = 2 * Math.PI * 28;
+              const strokeDashoffset = circumference - (progress / 100) * circumference;
 
-            <div className="relative z-10 flex items-center gap-8 p-8">
-              {/* Cover */}
-              <motion.div 
-                whileHover={{ scale: 1.05, rotateY: -10 }}
-                className="w-28 h-40 rounded-xl overflow-hidden border-2 border-white/10 shadow-2xl shadow-black/50 shrink-0 cursor-pointer"
-                style={{ perspective: '800px' }}
-                onClick={() => setViewingBookDetailsId(currentlyReading.id)}
-              >
-                {currentlyReading.coverUrl ? (
-                  <img src={currentlyReading.coverUrl} alt={currentlyReading.title} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-primary-900 to-primary-700 flex items-center justify-center">
-                    <i className="ph-duotone ph-book text-4xl text-white/30" />
-                  </div>
-                )}
-              </motion.div>
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <motion.div 
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="w-2 h-2 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.6)]"
-                  />
-                  <span className="text-[9px] font-black text-blue-400 uppercase tracking-[0.3em]">Lendo Agora</span>
-                </div>
-                <h2 className="text-xl font-black text-white uppercase tracking-wider truncate">{currentlyReading.title}</h2>
-                {currentlyReading.author && (
-                  <p className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-widest">{currentlyReading.author}</p>
-                )}
-                <div className="flex items-center gap-4 mt-4">
-                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Pág. {currentlyReading.currentPage || 0} de {currentlyReading.totalPages}</span>
-                  <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden max-w-xs">
-                    <motion.div 
-                      initial={{ width: 0 }}
-                      animate={{ width: `${heroProgress}%` }}
-                      transition={{ delay: 0.3, duration: 1, ease: 'easeOut' }}
-                      className="h-full bg-gradient-to-r from-blue-500 to-primary-500 rounded-full shadow-[0_0_12px_rgba(100,100,255,0.4)]"
-                    />
-                  </div>
-                </div>
-                <button 
-                  onClick={() => setViewingBookDetailsId(currentlyReading.id)}
-                  className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 bg-primary-500 hover:bg-primary-400 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary-500/30 hover:scale-105 transition-all"
+              return (
+                <motion.div
+                  key={book.id}
+                  initial={{ opacity: 0, x: 30 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.1 }}
+                  onClick={() => setViewingBookDetailsId(book.id)}
+                  className="relative min-w-[320px] md:min-w-[380px] snap-start rounded-2xl overflow-hidden border border-white/10 cursor-pointer group hover:border-white/20 transition-all flex-shrink-0"
                 >
-                  <i className="ph-bold ph-play" /> Continuar Lendo
-                </button>
-              </div>
+                  {/* Blurred Background */}
+                  {book.coverUrl && (
+                    <div className="absolute inset-0 z-0">
+                      <img src={book.coverUrl} alt="" className="w-full h-full object-cover scale-110 blur-[50px] opacity-25" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-[#0d0f16]/95 via-[#0d0f16]/85 to-[#0d0f16]/70" />
+                    </div>
+                  )}
 
-              {/* Circular Progress */}
-              <div className="hidden md:flex flex-col items-center gap-2 shrink-0">
-                <div className="relative w-24 h-24">
-                  <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="6" />
-                    <motion.circle 
-                      cx="50" cy="50" r="40" fill="none" 
-                      stroke="url(#heroGrad)" 
-                      strokeWidth="6" 
-                      strokeLinecap="round"
-                      strokeDasharray={circumference}
-                      initial={{ strokeDashoffset: circumference }}
-                      animate={{ strokeDashoffset }}
-                      transition={{ delay: 0.5, duration: 1.5, ease: 'easeOut' }}
-                    />
-                    <defs>
-                      <linearGradient id="heroGrad" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0%" stopColor="#3b82f6" />
-                        <stop offset="100%" stopColor="#6366f1" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-xl font-black text-white">{heroProgress}%</span>
+                  <div className="relative z-10 flex items-center gap-5 p-5">
+                    {/* Cover */}
+                    <motion.div 
+                      whileHover={{ scale: 1.08 }}
+                      className="w-16 h-22 rounded-lg overflow-hidden border border-white/10 shadow-xl shadow-black/40 shrink-0"
+                    >
+                      {book.coverUrl ? (
+                        <img src={book.coverUrl} alt={book.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-primary-900 to-primary-700 flex items-center justify-center">
+                          <i className="ph-duotone ph-book text-2xl text-white/30" />
+                        </div>
+                      )}
+                    </motion.div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-black text-white uppercase tracking-wider truncate">{book.title}</h3>
+                      {book.author && (
+                        <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-0.5 truncate">{book.author}</p>
+                      )}
+                      <div className="flex items-center gap-3 mt-3">
+                        <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">{book.currentPage}/{book.totalPages}</span>
+                        <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden">
+                          <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${progress}%` }}
+                            transition={{ delay: 0.3 + idx * 0.1, duration: 0.8, ease: 'easeOut' }}
+                            className="h-full bg-gradient-to-r from-blue-500 to-primary-500 rounded-full shadow-[0_0_8px_rgba(100,100,255,0.3)]"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Circular Progress */}
+                    <div className="shrink-0">
+                      <div className="relative w-14 h-14">
+                        <svg className="w-full h-full -rotate-90" viewBox="0 0 64 64">
+                          <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="4" />
+                          <motion.circle 
+                            cx="32" cy="32" r="28" fill="none" 
+                            stroke="url(#heroGrad)" 
+                            strokeWidth="4" 
+                            strokeLinecap="round"
+                            strokeDasharray={circumference}
+                            initial={{ strokeDashoffset: circumference }}
+                            animate={{ strokeDashoffset }}
+                            transition={{ delay: 0.5 + idx * 0.15, duration: 1.2, ease: 'easeOut' }}
+                          />
+                          <defs>
+                            <linearGradient id="heroGrad" x1="0" y1="0" x2="1" y2="1">
+                              <stop offset="0%" stopColor="#3b82f6" />
+                              <stop offset="100%" stopColor="#6366f1" />
+                            </linearGradient>
+                          </defs>
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="text-[11px] font-black text-white">{progress}%</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <span className="text-[8px] font-black text-gray-500 uppercase tracking-widest">Progresso</span>
-              </div>
-            </div>
+                </motion.div>
+              );
+            })}
           </motion.div>
-        );
-      })()}
+        </div>
+      )}
 
       {librarySubTab === 'stats' ? (
         <NexusStats />
