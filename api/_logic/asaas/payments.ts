@@ -25,14 +25,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { customer, billingType, value, description, dueDate, installmentCount } = req.body;
+    const { customer, billingType, value, description, dueDate, installmentCount, externalReference } = req.body;
     const data = await asaasRequest("/payments", "POST", {
       customer,
       billingType: billingType || "UNDEFINED",
       value,
       dueDate,
       description,
-      installmentCount
+      installmentCount,
+      externalReference
     });
     return res.status(200).json(data);
   } catch (error: any) {

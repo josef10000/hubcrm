@@ -53,6 +53,7 @@ export const asaasService = {
     nextDueDate: string;
     cycle: 'MONTHLY' | 'YEARLY';
     description: string;
+    externalReference?: string;
   }) {
     const res = await authFetch('/api/asaas/subscriptions', {
       method: 'POST',
@@ -77,6 +78,7 @@ export const asaasService = {
     value: number;
     dueDate: string;
     description: string;
+    externalReference?: string;
   }) {
     const res = await authFetch('/api/asaas/payments', {
       method: 'POST',

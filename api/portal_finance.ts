@@ -107,6 +107,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         niche: clientData.niche,
         createdAt: clientData.createdAt,
         assignedTo: clientData.assignedTo,
+        planPrice: clientData.planPrice,
+        setupPrice: clientData.setupPrice,
+        customMonthlyPrice: clientData.customMonthlyPrice,
+        customSetupPrice: clientData.customSetupPrice,
         // Não expor dados sensíveis como notes ou tokens internos
       },
       payments: filteredPayments,

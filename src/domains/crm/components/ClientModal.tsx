@@ -67,7 +67,7 @@ function ClientModal({
     status: 'Em Desenvolvimento',
     isCombo: false,
     maxInstallments: defaultOffer?.maxInstallments ?? 12,
-    billingType: 'CREDIT_CARD'
+    billingType: undefined
   });
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);

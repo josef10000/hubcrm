@@ -26,26 +26,27 @@ export const getPlanPrice = (plan?: string, billingCycle?: string, client?: Part
 
   if (typeof client === 'number') {
     finalMonthlyPrice = client;
-    finalSetupPrice = customSetupPrice !== undefined ? customSetupPrice : getSetupPrice(plan);
+    finalSetupPrice = customSetupPrice !== undefined ? Number(customSetupPrice) : getSetupPrice(plan);
   } else {
     // Priority 1: Explicit planPrice or customMonthlyPrice in client record
-    if (client?.customMonthlyPrice !== undefined) {
-      finalMonthlyPrice = client.customMonthlyPrice;
-    } else if (client?.planPrice !== undefined) {
-      finalMonthlyPrice = client.planPrice;
+    if (client?.customMonthlyPrice !== undefined && client.customMonthlyPrice !== null && client.customMonthlyPrice !== '') {
+      finalMonthlyPrice = Number(client.customMonthlyPrice);
+    } else if (client?.planPrice !== undefined && client.planPrice !== null && client.planPrice !== '') {
+      finalMonthlyPrice = Number(client.planPrice);
     } else {
       // Priority 2: Fallback to hardcoded defaults for standard plans
       if (plan === 'Profissional') finalMonthlyPrice = 897;
       else if (plan?.includes('Essencial')) finalMonthlyPrice = 397;
-      else if (plan?.includes('Start')) finalMonthlyPrice = 397;
+      else if (plan?.includes('Start')) finalMonthlyPrice = 97;
+      else if (plan?.includes('Pro')) finalMonthlyPrice = 150;
       else finalMonthlyPrice = 0;
     }
 
     // Priority 1: Explicit setupPrice in client record
-    if (client?.customSetupPrice !== undefined) {
-      finalSetupPrice = client.customSetupPrice;
-    } else if (client?.setupPrice !== undefined) {
-      finalSetupPrice = client.setupPrice;
+    if (client?.customSetupPrice !== undefined && client.customSetupPrice !== null && client.customSetupPrice !== '') {
+      finalSetupPrice = Number(client.customSetupPrice);
+    } else if (client?.setupPrice !== undefined && client.setupPrice !== null && client.setupPrice !== '') {
+      finalSetupPrice = Number(client.setupPrice);
     } else {
       finalSetupPrice = getSetupPrice(plan, client);
     }

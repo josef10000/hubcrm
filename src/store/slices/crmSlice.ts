@@ -139,7 +139,8 @@ export const createCRMSlice: StateCreator<
                 cycle: client.billingCycle === 'YEARLY' ? 'YEARLY' : 'MONTHLY',
                 value: monthlyValue,
                 nextDueDate: firstPaymentDate,
-                description: `Assinatura - Plano ${client.plan}`
+                description: `Assinatura - Plano ${client.plan}`,
+                externalReference: id
               });
               client.asaasSubscriptionId = sub.id;
               client.nextDueDate = firstPaymentDate;
