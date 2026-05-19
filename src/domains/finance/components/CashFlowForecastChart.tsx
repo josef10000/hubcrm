@@ -3,12 +3,12 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer, Legend, ReferenceLine 
 } from 'recharts';
-import { useCRM } from '@crm/contexts/CRMContext';
+import { useCashflowProjections } from '@/hooks/queries/useFinance';
 import { formatCurrency } from '@/helpers';
 import { TrendingUp, AlertCircle, Calendar } from 'lucide-react';
 
 export default function CashFlowForecastChart() {
-  const { cashflowProjections } = useCRM();
+  const { data: cashflowProjections = [] } = useCashflowProjections();
 
   const data = cashflowProjections.map(p => ({
     name: p.month,

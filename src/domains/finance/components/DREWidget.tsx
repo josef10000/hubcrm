@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { useCRM } from '@crm/contexts/CRMContext';
+import { useCashflowProjections } from '@/hooks/queries/useFinance';
 import { formatCurrency } from '@/helpers';
 import { ChevronDown, ChevronRight, PieChart, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function DREWidget() {
-  const { cashflowProjections } = useCRM();
+  const { data: cashflowProjections = [] } = useCashflowProjections();
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
 
   // Pegamos o mês atual dos dados projetados

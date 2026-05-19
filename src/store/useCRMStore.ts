@@ -128,12 +128,9 @@ export const useCRMStore = create<CRMStoreState>()(
       },
 
       subscribeToFinance: (orgId) => {
-        const unsubscribers: (() => void)[] = [];
-        unsubscribers.push(createListener(orgId, 'transactions', (data) => set({ transactions: data }), (a, b) => b.date - a.date));
-        unsubscribers.push(createListener(orgId, 'transactionCategories', (data) => set({ transactionCategories: data })));
-        unsubscribers.push(createListener(orgId, 'budgets', (data) => set({ budgets: data })));
-        unsubscribers.push(createListener(orgId, 'cashflow_projections', (data) => set({ cashflowProjections: data }), (a, b) => a.month.localeCompare(b.month)));
-        return () => unsubscribers.forEach(unsub => unsub());
+        // Finance server state is now handled by React Query (TanStack Query)
+        // This empty subscription is kept for backwards compatibility if called elsewhere
+        return () => {};
       },
 
       subscribeToWiki: (orgId) => {

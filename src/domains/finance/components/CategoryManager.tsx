@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
+import { useTransactionCategories } from '@/hooks/queries/useFinance';
 import { useDialog } from '@auth/contexts/DialogContext';
 import { db } from '@/lib/firebase';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
@@ -10,7 +11,9 @@ import type { TransactionCategory, TransactionType } from '@/types';
 
 export default function CategoryManager() {
   const { user } = useAuth();
-  const { transactionCategories, effectiveOrgId } = useCRM();
+  const { effectiveOrgId } = useCRM();
+  const { data: categoriesData } = useTransactionCategories();
+  const transactionCategories = categoriesData || [];
   const { confirm } = useDialog();
   const [isAdding, setIsAdding] = useState(false);
   const [newName, setNewName] = useState('');

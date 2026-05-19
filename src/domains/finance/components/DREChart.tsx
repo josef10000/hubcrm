@@ -1,12 +1,11 @@
 import React, { useMemo } from 'react';
 import { useCRM } from '@crm/contexts/CRMContext';
+import { useTransactions } from '@/hooks/queries/useFinance';
 import { getPlanPrice } from '@/helpers';
 
 export default function DREChart() {
-  const { 
-    transactions = [], 
-    clients = [] 
-  } = useCRM();
+  const { data: transactionsData } = useTransactions();
+  const transactions = transactionsData || [];
   
   const currentYear = new Date().getFullYear();
   const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];

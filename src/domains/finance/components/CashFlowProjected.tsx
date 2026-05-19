@@ -1,14 +1,16 @@
 import React, { useMemo, useState } from 'react';
 import { useCRM } from '@crm/contexts/CRMContext';
+import { useClients } from '@/hooks/queries/useClients';
+import { useTransactions } from '@/hooks/queries/useFinance';
 import { getPlanPrice } from '@/helpers';
 import { TrendingUp, TrendingDown, Clock, AlertTriangle } from 'lucide-react';
 
 export default function CashFlowProjected() {
-  const { 
-    clients = [], 
-    transactions = [], 
-    offers = [] 
-  } = useCRM();
+  const { offers = [] } = useCRM();
+  const { data: clientsData } = useClients();
+  const clients = clientsData || [];
+  const { data: transactionsData } = useTransactions();
+  const transactions = transactionsData || [];
   const [currentBalance, setCurrentBalance] = useState<number>(0);
   const [projectionMonths, setProjectionMonths] = useState<number>(3); // 3, 6, 12 meses
 

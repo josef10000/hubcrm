@@ -1,15 +1,16 @@
 import React from 'react';
 import { useCRM } from '@crm/contexts/CRMContext';
+import { useClients } from '@/hooks/queries/useClients';
+import { useTransactions } from '@/hooks/queries/useFinance';
 import { Target, TrendingUp, BarChart3, ArrowUpRight } from 'lucide-react';
 import { getPlanPrice } from '@/helpers';
 
 export default function ROIAnalysis() {
-  const { 
-    clients = [], 
-    transactions = [], 
-    offers = [], 
-    commissions = [] 
-  } = useCRM();
+  const { offers = [], commissions = [] } = useCRM();
+  const { data: clientsData } = useClients();
+  const clients = clientsData || [];
+  const { data: transactionsData } = useTransactions();
+  const transactions = transactionsData || [];
 
   const roiData = (offers || []).map(offer => {
     // 1. Receita direta dessa oferta (MRR atual de clientes ativos)

@@ -1,13 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { useCRM } from '@crm/contexts/CRMContext';
+import { useCRM } from '@crm/contexts/CRMContext';
+import { useTransactions, useTransactionCategories } from '@/hooks/queries/useFinance';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Transaction, TransactionCategory } from '@/types';
 
 export default function DRETable() {
-  const { 
-    transactions = [], 
-    transactionCategories = [] 
-  } = useCRM();
+  const { data: transactionsData } = useTransactions();
+  const transactions = transactionsData || [];
+  const { data: categoriesData } = useTransactionCategories();
+  const transactionCategories = categoriesData || [];
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [drillDown, setDrillDown] = useState<{ categoryName: string; month: number } | null>(null);
 

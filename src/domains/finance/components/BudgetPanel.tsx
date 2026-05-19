@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
+import { useTransactions, useTransactionCategories } from '@/hooks/queries/useFinance';
 import { AlertCircle, Target, TrendingDown, Edit2, Check } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, doc, setDoc, onSnapshot } from 'firebase/firestore';
@@ -8,11 +9,9 @@ import { toast } from 'sonner';
 
 export default function BudgetPanel() {
   const { user } = useAuth();
-  const { 
-    transactions = [], 
-    transactionCategories = [], 
-    effectiveOrgId 
-  } = useCRM();
+  const { effectiveOrgId } = useCRM();
+  const { data: transactions = [] } = useTransactions();
+  const { data: transactionCategories = [] } = useTransactionCategories();
   const [budgets, setBudgets] = useState<Record<string, number>>({});
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState<string>('');

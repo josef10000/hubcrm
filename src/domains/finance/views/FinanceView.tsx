@@ -3,6 +3,8 @@ import { TrendingUp, TrendingDown, DollarSign, Trash2, PieChart, Activity, Targe
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useCRMStore } from '@/store/useCRMStore';
 import { useAuth } from '@auth/contexts/AuthContext';
+import { useTransactions, useTransactionCategories, useBudgets } from '@/hooks/queries/useFinance';
+import { useClients } from '@/hooks/queries/useClients';
 import { getPlanPrice } from '@/helpers';
 import { db } from '@/lib/firebase';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
@@ -17,26 +19,29 @@ import { usePermissions } from '@auth/hooks/usePermissions';
 export default function FinanceView() {
   const { user } = useAuth();
   const { 
-    clients = [], 
     newTransaction, 
     setNewTransaction, 
-    transactionCategories = [], 
-    budgets = [], 
-    transactions = [], 
     effectiveOrgId, 
     userProfile, 
     commissions = [], 
     offers = [] 
   } = useCRM();
+
+  const { data: clientsData } = useClients();
+  const clients = clientsData || [];
+  
+  const { data: transactionsData } = useTransactions();
+  const transactions = transactionsData || [];
+  
+  const { data: categoriesData } = useTransactionCategories();
+  const transactionCategories = categoriesData || [];
+  
+  const { data: budgetsData } = useBudgets();
+  const budgets = budgetsData || [];
   const [activeTab, setActiveTab] = useState<'resumo' | 'dre' | 'fluxo' | 'orcamento' | 'roi' | 'saas'>('resumo');
 
-  const subscribeToFinance = useCRMStore(s => s.subscribeToFinance);
-
-  useEffect(() => {
-    if (effectiveOrgId) {
-      return subscribeToFinance(effectiveOrgId);
-    }
-  }, [effectiveOrgId, subscribeToFinance]);
+  // subscribeToFinance and CRMStore listener initialization are now handled by React Query
+  // Removing manual store subscriptions for finance data
 
   const { hasPermission } = usePermissions();
 
