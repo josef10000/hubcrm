@@ -656,7 +656,7 @@ function ClientModal({
           <div className="flex justify-between items-center p-6 border-t border-gray-200 dark:border-white/10 bg-gray-100 dark:bg-white/5 shrink-0">
             <div className="flex space-x-2">
               {initialData && onDelete && hasPermission('MANAGE_CLIENTS') ? (
-                <button type="button" onClick={() => onDelete(initialData.id)} className="text-red-400 hover:text-red-300 hover:bg-red-400/10 px-4 py-2 rounded-lg transition-colors flex items-center text-sm font-medium">
+                <button type="button" onClick={() => { onDelete(initialData.id); onClose(); }} className="text-red-400 hover:text-red-300 hover:bg-red-400/10 px-4 py-2 rounded-lg transition-colors flex items-center text-sm font-medium">
                   <Trash2 size={18} className="mr-2" /> Excluir
                 </button>
               ) : null}
