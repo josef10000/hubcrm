@@ -21,9 +21,10 @@ import {
   startOfMonth, 
   endOfMonth, 
   isSameDay, 
-  startOfYear,
-  endOfYear,
-  subDays
+  subDays,
+  getDay,
+  addDays,
+  getMonth
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -118,30 +119,97 @@ export const NexusStats: React.FC = () => {
     return currentStreak;
   }, [activityLogs]);
 
-  // 2. Heatmap de Conhecimento (Últimos 12 meses)
-  const heatmapData = React.useMemo(() => {
-    const days = eachDayOfInterval({
-      start: subDays(new Date(), 364),
-      end: new Date()
+  // 2. Heatmap de Calendário GitHub-style (Últimos 12 meses) — Fonte de dados híbrida
+  const [hoveredDay, setHoveredDay] = React.useState<{ date: Date; pages: number; notes: number; x: number; y: number } | null>(null);
+
+  const calendarData = React.useMemo(() => {
+    const today = new Date();
+    const yearAgo = subDays(today, 364);
+    const days = eachDayOfInterval({ start: yearAgo, end: today });
+
+    // Fonte híbrida: activityLogs + fallback de notas updatedAt
+    const notesByDay = new Map<string, number>();
+    notes.forEach(n => {
+      if (n.updatedAt) {
+        const key = format(getTimestampMs(n.updatedAt), 'yyyy-MM-dd');
+        notesByDay.set(key, (notesByDay.get(key) || 0) + 1);
+      }
     });
 
-    return days.map(day => {
+    const dayData = days.map(day => {
+      const key = format(day, 'yyyy-MM-dd');
       const dayLogs = activityLogs.filter(log => isSameDay(getTimestampMs(log.timestamp), day));
-      const pagesRead = dayLogs.reduce((acc, log) => acc + (log.pagesRead || 0), 0);
-      const notesCreated = dayLogs.filter(log => log.type === 'note').length;
+      const pagesFromLogs = dayLogs.reduce((acc, log) => acc + (log.pagesRead || 0), 0);
+      const notesFromLogs = dayLogs.filter(log => log.type === 'note').length;
       
-      // Peso: cada página = 1, cada nota = 5
-      const totalIntensity = pagesRead + (notesCreated * 5);
+      // Fallback: notas editadas/criadas nesse dia
+      const notesFromStore = notesByDay.get(key) || 0;
+      const totalNotes = Math.max(notesFromLogs, notesFromStore);
+      
+      const totalIntensity = pagesFromLogs + (totalNotes * 5);
       
       return {
         date: day,
-        intensity: Math.min(Math.floor(totalIntensity / 2), 4), // Escala para os 4 níveis de cor
-        count: totalIntensity,
-        pages: pagesRead,
-        notes: notesCreated
+        dayOfWeek: getDay(day),
+        intensity: totalIntensity === 0 ? 0 : Math.min(Math.ceil(totalIntensity / 5), 4),
+        pages: pagesFromLogs,
+        notes: totalNotes
       };
     });
-  }, [activityLogs]);
+
+    // Organizar em semanas (colunas) para layout GitHub
+    const weeks: typeof dayData[] = [];
+    let currentWeek: typeof dayData = [];
+    
+    // Preencher dias vazios no início da primeira semana (antes do yearAgo)
+    const firstDayOfWeek = getDay(yearAgo); // 0=Dom, 6=Sáb
+    for (let i = 0; i < firstDayOfWeek; i++) {
+      currentWeek.push({ date: addDays(yearAgo, -(firstDayOfWeek - i)), dayOfWeek: i, intensity: -1, pages: 0, notes: 0 });
+    }
+
+    dayData.forEach(d => {
+      currentWeek.push(d);
+      if (d.dayOfWeek === 6) { // Sábado = fim da semana
+        weeks.push(currentWeek);
+        currentWeek = [];
+      }
+    });
+    if (currentWeek.length > 0) weeks.push(currentWeek);
+
+    return { weeks, dayData };
+  }, [activityLogs, notes]);
+
+  // Resumo do mês atual
+  const monthSummary = React.useMemo(() => {
+    const now = new Date();
+    const mStart = startOfMonth(now);
+    const mEnd = endOfMonth(now);
+    const monthDays = calendarData.dayData.filter(d => d.date >= mStart && d.date <= mEnd);
+    
+    const totalPages = monthDays.reduce((acc, d) => acc + d.pages, 0);
+    const totalNotes = monthDays.reduce((acc, d) => acc + d.notes, 0);
+    const activeDays = monthDays.filter(d => d.intensity > 0).length;
+    const bestDay = monthDays.reduce((best, d) => d.pages > best.pages ? d : best, { pages: 0, date: now, notes: 0, intensity: 0, dayOfWeek: 0 });
+
+    return { totalPages, totalNotes, activeDays, bestDay };
+  }, [calendarData]);
+
+  // Labels dos meses para o eixo superior
+  const monthLabels = React.useMemo(() => {
+    const labels: { label: string; weekIndex: number }[] = [];
+    let lastMonth = -1;
+    calendarData.weeks.forEach((week, wi) => {
+      const firstValidDay = week.find(d => d.intensity >= 0);
+      if (firstValidDay) {
+        const m = getMonth(firstValidDay.date);
+        if (m !== lastMonth) {
+          labels.push({ label: format(firstValidDay.date, 'MMM', { locale: ptBR }), weekIndex: wi });
+          lastMonth = m;
+        }
+      }
+    });
+    return labels;
+  }, [calendarData]);
 
   // 3. Radar de Tópicos (Baseado em páginas lidas por categoria)
   const radarData = React.useMemo(() => {
@@ -339,47 +407,118 @@ export const NexusStats: React.FC = () => {
         </motion.div>
       </div>
 
-      {/* Heatmap Section */}
+      {/* Heatmap de Calendário — GitHub Style */}
       <div className="md:col-span-8 bg-white/5 border border-white/10 p-8 rounded-[2.5rem] relative overflow-hidden">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex flex-col gap-1">
-            <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white">Heatmap de Conhecimento</h3>
-            <p className="text-[10px] font-bold text-gray-500 uppercase">Frequência de leitura e anotações no último ano</p>
+            <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white">Calendário de Leitura</h3>
+            <p className="text-[10px] font-bold text-gray-500 uppercase">Atividade diária de leitura e anotações no último ano</p>
           </div>
         </div>
-        
-        <div className="flex flex-wrap gap-1.5 justify-center">
-          {heatmapData.map((day, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.001 }}
-              className={`w-3 h-3 rounded-[2px] transition-all hover:scale-150 cursor-pointer ${
-                day.intensity === 0 ? 'bg-white/5' :
-                day.intensity === 1 ? 'bg-primary-500/30' :
-                day.intensity === 2 ? 'bg-primary-500/50' :
-                day.intensity === 3 ? 'bg-primary-500/80' :
-                'bg-primary-400 shadow-[0_0_8px_rgba(100,100,255,0.5)]'
-              }`}
-              title={`${format(day.date, 'dd/MM/yyyy')}: ${day.pages} páginas, ${day.notes} notas`}
-            />
-          ))}
-        </div>
-        <div className="mt-4 flex justify-end items-center gap-2">
-          <span className="text-[8px] font-bold text-gray-600 uppercase">Menos</span>
-          <div className="flex gap-1">
-            {[0, 1, 2, 3, 4].map(level => (
-              <div key={level} className={`w-2 h-2 rounded-[1px] ${
-                level === 0 ? 'bg-white/5' :
-                level === 1 ? 'bg-primary-500/30' :
-                level === 2 ? 'bg-primary-500/50' :
-                level === 3 ? 'bg-primary-500/80' :
-                'bg-primary-400'
-              }`} />
+
+        {/* Tooltip flutuante */}
+        {hoveredDay && hoveredDay.pages + hoveredDay.notes > 0 && (
+          <div 
+            className="fixed z-50 pointer-events-none bg-slate-900/95 backdrop-blur-xl border border-white/10 px-3 py-2 rounded-xl shadow-2xl"
+            style={{ left: hoveredDay.x + 12, top: hoveredDay.y - 40 }}
+          >
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">{format(hoveredDay.date, 'dd MMM yyyy', { locale: ptBR })}</p>
+            <p className="text-[10px] font-bold text-primary-400">{hoveredDay.pages} páginas · {hoveredDay.notes} notas</p>
+          </div>
+        )}
+
+        {/* Grid do Calendário */}
+        <div className="overflow-x-auto pb-2">
+          <div className="inline-flex flex-col gap-0">
+            {/* Labels dos meses no topo */}
+            <div className="flex ml-8 mb-1">
+              {calendarData.weeks.map((_, wi) => {
+                const label = monthLabels.find(m => m.weekIndex === wi);
+                return (
+                  <div key={wi} className="w-[13px] flex-shrink-0 mx-[1px]">
+                    {label && (
+                      <span className="text-[8px] font-black text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                        {label.label}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* Linhas dos dias da semana */}
+            {['Dom', '', 'Ter', '', 'Qui', '', 'Sáb'].map((dayLabel, rowIndex) => (
+              <div key={rowIndex} className="flex items-center gap-0">
+                <div className="w-7 text-right pr-1.5 flex-shrink-0">
+                  <span className="text-[8px] font-bold text-gray-600 uppercase">{dayLabel}</span>
+                </div>
+                <div className="flex gap-[2px]">
+                  {calendarData.weeks.map((week, wi) => {
+                    const day = week.find(d => d.dayOfWeek === rowIndex);
+                    if (!day || day.intensity === -1) {
+                      return <div key={wi} className="w-[11px] h-[11px] rounded-[2px]" />;
+                    }
+                    return (
+                      <motion.div
+                        key={wi}
+                        initial={{ opacity: 0, scale: 0 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: wi * 0.003, duration: 0.2 }}
+                        className={`w-[11px] h-[11px] rounded-[2px] transition-all cursor-pointer hover:ring-1 hover:ring-white/30 ${
+                          day.intensity === 0 ? 'bg-white/[0.04]' :
+                          day.intensity === 1 ? 'bg-emerald-500/25' :
+                          day.intensity === 2 ? 'bg-emerald-500/50' :
+                          day.intensity === 3 ? 'bg-emerald-500/75' :
+                          'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.4)]'
+                        }`}
+                        onMouseEnter={(e) => setHoveredDay({ date: day.date, pages: day.pages, notes: day.notes, x: e.clientX, y: e.clientY })}
+                        onMouseLeave={() => setHoveredDay(null)}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
             ))}
           </div>
-          <span className="text-[8px] font-bold text-gray-600 uppercase">Mais</span>
+        </div>
+
+        {/* Legenda + Resumo */}
+        <div className="mt-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          {/* Legenda de cores */}
+          <div className="flex items-center gap-2">
+            <span className="text-[8px] font-bold text-gray-600 uppercase">Menos</span>
+            <div className="flex gap-[3px]">
+              {[0, 1, 2, 3, 4].map(level => (
+                <div key={level} className={`w-[10px] h-[10px] rounded-[2px] ${
+                  level === 0 ? 'bg-white/[0.04]' :
+                  level === 1 ? 'bg-emerald-500/25' :
+                  level === 2 ? 'bg-emerald-500/50' :
+                  level === 3 ? 'bg-emerald-500/75' :
+                  'bg-emerald-400'
+                }`} />
+              ))}
+            </div>
+            <span className="text-[8px] font-bold text-gray-600 uppercase">Mais</span>
+          </div>
+
+          {/* Resumo do mês */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <span className="text-[9px] font-bold text-gray-400">{monthSummary.totalPages} páginas este mês</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+              <span className="text-[9px] font-bold text-gray-400">{monthSummary.totalNotes} notas</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+              <span className="text-[9px] font-bold text-gray-400">{monthSummary.activeDays} dias ativos</span>
+            </div>
+            {monthSummary.bestDay.pages > 0 && (
+              <span className="text-[9px] font-black text-emerald-400">🔥 Melhor dia: {monthSummary.bestDay.pages}p em {format(monthSummary.bestDay.date, 'dd/MM')}</span>
+            )}
+          </div>
         </div>
       </div>
 
