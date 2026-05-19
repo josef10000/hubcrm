@@ -98,7 +98,8 @@ const BookCard = React.memo(({
     want_to_read: 'Quero Ler',
     finished: 'Lido',
     dropped: 'Parado'
-  };  const is3DEnabled = animationMode === 'new' || animationMode === 'fixed_3d';
+  };
+  const is3DEnabled = animationMode === 'new' || animationMode === 'fixed_3d';
 
   return (
     <div className="group relative" style={{ perspective: is3DEnabled ? '1200px' : undefined }}>
@@ -524,7 +525,7 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
       addedAt: Date.now(), 
       isCommunity: false,
       ownerId: userUid,
-      status: 'want_to_read',
+      status: 'reading',
       currentPage: 0
     });
     toast.success('Adicionado à sua estante!');
@@ -544,9 +545,9 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
                          b.author?.toLowerCase().includes(librarySearchQuery.toLowerCase());
     const matchesCategory = categoryFilter === 'all' || b.category === categoryFilter;
     const matchesStatus = statusFilter === 'all' || 
-                         (statusFilter === 'reading' 
-                           ? (b.status === 'reading' && (b.currentPage || 0) > 0)
-                           : b.status === statusFilter);
+                          (statusFilter === 'reading' 
+                            ? (b.status === 'reading' || b.status === 'want_to_read' || !b.status)
+                            : b.status === statusFilter);
     const matchesFavorite = !favoriteFilter || b.isFavorite;
     return matchesSearch && matchesCategory && matchesStatus && matchesFavorite;
   });
@@ -829,18 +830,27 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
               </button>
             </div>
 
-            {/* Filtro de Status */}
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white outline-none hover:border-white/20 transition-all cursor-pointer"
-            >
-              <option value="all" className="bg-[#0d0f16]">Todos Status</option>
-              <option value="reading" className="bg-[#0d0f16]">Lendo Agora</option>
-              <option value="want_to_read" className="bg-[#0d0f16]">Quero Ler</option>
-              <option value="finished" className="bg-[#0d0f16]">Finalizados</option>
-              <option value="dropped" className="bg-[#0d0f16]">Abandonados</option>
-            </select>
+                        {/* Filtro de Status Segmentado */}
+            <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5 gap-1 shadow-inner shadow-black/40">
+              {[
+                { id: 'all', label: 'Todos', icon: 'ph-circles-three' },
+                { id: 'reading', label: 'Lendo Agora', icon: 'ph-book-open' },
+                { id: 'finished', label: 'Finalizados', icon: 'ph-check-circle' }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setStatusFilter(tab.id as any)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
+                    statusFilter === tab.id 
+                      ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' 
+                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <i className={`ph-bold ${tab.icon}`} />
+                  <span>{tab.label}</span>
+                </button>
+              ))}
+            </div>
 
             {/* Toggle Favoritos */}
             <button

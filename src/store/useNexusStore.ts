@@ -76,7 +76,7 @@ export const DEFAULT_BOOK_CATEGORIES = [
 ];
 
 export type BookCategory = string;
-export type ReadingStatus = 'reading' | 'want_to_read' | 'finished' | 'dropped';
+export type ReadingStatus = 'reading' | 'finished';
 
 export interface NexusBook {
   id: string;
@@ -463,10 +463,8 @@ export const useNexusStore = create<NexusState>()(
       // Se terminou (chegou no total), muda para "finalizado"
       if (book.totalPages && page >= book.totalPages) {
         updates.status = 'finished';
-      } else if (page > 0) {
+      } else {
         updates.status = 'reading';
-      } else if (page === 0) {
-        updates.status = 'want_to_read';
       }
 
       await updateBookDetails(bookId, updates);
