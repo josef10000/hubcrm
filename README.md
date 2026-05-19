@@ -96,20 +96,17 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
   >       "GET",
   >       "HEAD",
   >       "PUT",
-  >       "POST",
-  >       "OPTIONS"
+  >       "POST"
   >     ],
   >     "AllowedHeaders": [
-  >       "Content-Type",
-  >       "Content-Length",
-  >       "Accept-Ranges",
-  >       "Content-Range"
+  >       "Content-Type"
   >     ],
   >     "ExposeHeaders": [
   >       "Content-Length",
   >       "Content-Range",
   >       "Accept-Ranges"
-  >     ]
+  >     ],
+  >     "MaxAgeSeconds": 3600
   >   }
   > ]
   > ```
