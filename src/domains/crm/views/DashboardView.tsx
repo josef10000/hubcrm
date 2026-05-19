@@ -4,6 +4,9 @@ import { useCRM } from '@crm/contexts/CRMContext';
 import { useCRMStore } from '@store/useCRMStore';
 import { useUI } from '@/contexts/UIContext';
 import { useAuth } from '@auth/contexts/AuthContext';
+import { useClients } from '@/hooks/queries/useClients';
+import { useTags, useTeamProfiles, useOrgRoles } from '@/hooks/queries/useCRMQueries';
+import { useClients as useClientsActions } from '@/hooks/useClients';
 import { useFilteredClients } from '@/hooks/useFilteredClients';
 import { getPlanPrice } from '@/helpers';
 import { usePermissions } from '@auth/hooks/usePermissions';
@@ -23,21 +26,26 @@ const COLORS = ['#f97316', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#f43f5e'
 const DashboardView = React.memo(function DashboardView() {
   const { user } = useAuth();
   
-  // Seletores individuais do Zustand (Alta Performance)
-  const clients = useCRMStore(s => s.clients);
-  const tags = useCRMStore(s => s.tags);
-  const isSyncing = useCRMStore(s => s.isSyncing);
-  const syncPayments = useCRMStore(s => s.syncPayments);
-  const isChurnRisk = useCRMStore(s => s.isChurnRisk);
-  const isComboNearRenewal = useCRMStore(s => s.isComboNearRenewal);
-  const churnRiskDays = useCRMStore(s => s.churnRiskDays);
-  const teamProfiles = useCRMStore(s => s.teamProfiles);
-  const orgRoles = useCRMStore(s => s.orgRoles);
+  // Zustand Seletor Individual (Somente o necessário)
   const effectiveOrgId = useCRMStore(s => s.effectiveOrgId);
-  const handleSaveClient = useCRMStore(s => s.handleSaveClient);
+  const churnRiskDays = useCRMStore(s => s.churnRiskDays);
+  const defaultStages = useCRMStore(s => s.defaultStages || []);
+  
+  // React Query Hooks (Alta Performance, Desacoplado)
+  const { data: clientsData = [] } = useClients();
+  const clients = clientsData;
+  
+  const { data: tagsData = [] } = useTags();
+  const tags = tagsData;
+  
+  const { data: teamProfilesData = [] } = useTeamProfiles();
+  const teamProfiles = teamProfilesData;
+  
+  const { data: orgRolesData = [] } = useOrgRoles();
+  const orgRoles = orgRolesData;
   
   // Alguns estados ainda vêm do Context (UI Bridge)
-  const { setEditingClient } = useCRM();
+  const { setEditingClient, editingClient } = useCRM();
 
   const {
     currentPage, setCurrentPage, clientsPerPage,
@@ -49,6 +57,25 @@ const DashboardView = React.memo(function DashboardView() {
   } = useUI();
   
   const { hasPermission } = usePermissions();
+
+  // Business Logic Actions
+  const {
+    isSyncing,
+    syncPayments,
+    isChurnRisk,
+    isComboNearRenewal,
+    handleSaveClient
+  } = useClientsActions({
+    userId: effectiveOrgId || '',
+    clients,
+    offers: [], // Offers will be passed if needed
+    editingClient,
+    setEditingClient,
+    setIsModalOpen,
+    defaultStages,
+    churnRiskDays
+  });
+
 
   const filteredClients = useFilteredClients(clients, searchTerm, filterStatus, sortBy, filterTagId);
 
