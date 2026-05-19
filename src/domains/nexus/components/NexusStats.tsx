@@ -288,19 +288,29 @@ export const NexusStats: React.FC = () => {
       .slice(0, 5);
   }, [books, notes, activityLogs]);
 
-  // 6. Velocidade de Cruzeiro (Páginas por sessão média)
-  const cruiseSpeed = React.useMemo(() => {
-    const readingLogs = activityLogs.filter(log => log.type === 'reading' && log.pagesRead && log.pagesRead > 0);
-    if (readingLogs.length === 0) return 0;
-    
-    const totalPages = readingLogs.reduce((acc, l) => acc + (l.pagesRead || 0), 0);
-    const avgPagesPerSession = totalPages / readingLogs.length;
-    
-    // Consistência dá um bônus na velocidade percebida (foco)
-    const consistencyFactor = 1 + (Math.min(streak, 30) / 60); // Até 50% de bônus por streak de 30 dias
-    
-    return Math.round(avgPagesPerSession * 2 * consistencyFactor); // Multiplicador para chegar a um valor pág/h estimado
-  }, [activityLogs, streak]);
+  // 6. Ritmo de Leitura + Consistência (Últimos 30 dias)
+  const readingRhythm = React.useMemo(() => {
+    const today = new Date();
+    const thirtyDaysAgo = subDays(today, 29);
+    const last30 = eachDayOfInterval({ start: thirtyDaysAgo, end: today });
+
+    let totalPages = 0;
+    let activeDays = 0;
+
+    last30.forEach(day => {
+      const dayLogs = activityLogs.filter(log => isSameDay(getTimestampMs(log.timestamp), day));
+      const pages = dayLogs.reduce((acc, log) => acc + (log.pagesRead || 0), 0);
+      const hasNotes = notes.some(n => n.updatedAt && isSameDay(getTimestampMs(n.updatedAt), day));
+      
+      totalPages += pages;
+      if (pages > 0 || dayLogs.length > 0 || hasNotes) activeDays++;
+    });
+
+    const avgPerDay = activeDays > 0 ? Math.round((totalPages / activeDays) * 10) / 10 : 0;
+    const consistencyPercent = Math.round((activeDays / 30) * 100);
+
+    return { avgPerDay, activeDays, consistencyPercent };
+  }, [activityLogs, notes]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-12 gap-6 pb-20">
@@ -349,15 +359,33 @@ export const NexusStats: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white/5 border border-white/10 p-6 rounded-[2rem] flex flex-col gap-2 relative overflow-hidden group"
+          className="bg-white/5 border border-white/10 p-6 rounded-[2rem] flex flex-col gap-3 relative overflow-hidden group"
         >
           <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-500/10 blur-3xl rounded-full group-hover:scale-150 transition-transform duration-700" />
-          <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Velocidade de Cruzeiro</span>
-          <div className="flex items-end gap-2">
-            <span className="text-4xl font-black text-blue-500">{cruiseSpeed}</span>
-            <span className="text-xs font-bold text-gray-400 mb-1.5 uppercase">Pág / Hora</span>
+          {/* Ritmo */}
+          <div>
+            <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Ritmo de Leitura</span>
+            <div className="flex items-end gap-2 mt-1">
+              <span className="text-3xl font-black text-blue-400">{readingRhythm.avgPerDay}</span>
+              <span className="text-[10px] font-bold text-gray-400 mb-1 uppercase">Pág / Dia</span>
+            </div>
           </div>
-          <i className="ph-fill ph-speedometer text-blue-500/20 absolute bottom-4 right-4 text-4xl" />
+          {/* Consistência */}
+          <div className="pt-2 border-t border-white/5">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Consistência</span>
+              <span className={`text-[10px] font-black uppercase ${readingRhythm.consistencyPercent >= 80 ? 'text-emerald-400' : readingRhythm.consistencyPercent >= 50 ? 'text-yellow-400' : 'text-red-400'}`}>{readingRhythm.activeDays}/30 dias</span>
+            </div>
+            <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${readingRhythm.consistencyPercent}%` }}
+                transition={{ delay: 0.5, duration: 0.8, ease: 'easeOut' }}
+                className={`h-full rounded-full ${readingRhythm.consistencyPercent >= 80 ? 'bg-emerald-500' : readingRhythm.consistencyPercent >= 50 ? 'bg-yellow-500' : 'bg-red-500'}`}
+              />
+            </div>
+          </div>
+          <i className="ph-fill ph-chart-line-up text-blue-500/15 absolute bottom-3 right-4 text-3xl" />
         </motion.div>
 
         <motion.div 
