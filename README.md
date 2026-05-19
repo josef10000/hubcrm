@@ -90,7 +90,8 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
   >       "http://localhost:5173",
   >       "https://hubsymples.com.br",
   >       "https://www.hubsymples.com.br",
-  >       "https://app.hubsymples.com.br"
+  >       "https://app.hubsymples.com.br",
+  >       "https://hubcrm.hubsymples.com.br"
   >     ],
   >     "AllowedMethods": [
   >       "GET",
@@ -99,7 +100,7 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
   >       "POST"
   >     ],
   >     "AllowedHeaders": [
-  >       "Content-Type"
+  >       "*"
   >     ],
   >     "ExposeHeaders": [
   >       "Content-Length",
