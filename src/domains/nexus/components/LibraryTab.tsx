@@ -525,7 +525,6 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
       addedAt: Date.now(), 
       isCommunity: false,
       ownerId: userUid,
-      status: 'reading',
       currentPage: 0
     });
     toast.success('Adicionado à sua estante!');
@@ -544,10 +543,7 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
     const matchesSearch = b.title.toLowerCase().includes(librarySearchQuery.toLowerCase()) || 
                          b.author?.toLowerCase().includes(librarySearchQuery.toLowerCase());
     const matchesCategory = categoryFilter === 'all' || b.category === categoryFilter;
-    const matchesStatus = statusFilter === 'all' || 
-                          (statusFilter === 'reading' 
-                            ? (b.status === 'reading' || b.status === 'want_to_read' || !b.status)
-                            : b.status === statusFilter);
+    const matchesStatus = statusFilter === 'all' || b.status === statusFilter;
     const matchesFavorite = !favoriteFilter || b.isFavorite;
     return matchesSearch && matchesCategory && matchesStatus && matchesFavorite;
   });

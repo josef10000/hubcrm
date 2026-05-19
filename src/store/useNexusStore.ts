@@ -463,8 +463,10 @@ export const useNexusStore = create<NexusState>()(
       // Se terminou (chegou no total), muda para "finalizado"
       if (book.totalPages && page >= book.totalPages) {
         updates.status = 'finished';
-      } else {
+      } else if (page > 0) {
         updates.status = 'reading';
+      } else {
+        updates.status = undefined;
       }
 
       await updateBookDetails(bookId, updates);
