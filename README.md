@@ -94,7 +94,16 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
   >     ],
   >     "AllowedMethods": [
   >       "GET",
-  >       "HEAD"
+  >       "HEAD",
+  >       "PUT",
+  >       "POST",
+  >       "OPTIONS"
+  >     ],
+  >     "AllowedHeaders": [
+  >       "Content-Type",
+  >       "Content-Length",
+  >       "Accept-Ranges",
+  >       "Content-Range"
   >     ],
   >     "ExposeHeaders": [
   >       "Content-Length",
