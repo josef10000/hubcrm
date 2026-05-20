@@ -664,9 +664,7 @@ export default function MessageBubble({
                       Agendado para {formatChatDateTime(message.scheduledAt.toDate())}
                     </span>
                   </div>
-
-
-// ... (remaining code)
+                )}
 
                  {/* Anexos Multimídia (Apenas se não for sticker) */}
                  {message.type !== 'sticker' && message.attachments && message.attachments.length > 0 && (
