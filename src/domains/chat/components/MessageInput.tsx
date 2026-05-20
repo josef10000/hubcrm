@@ -76,6 +76,7 @@ export default function MessageInput({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const isCancelledRef = useRef(false);
 
   // Analisador de áudio para waveform em tempo real
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -138,6 +139,39 @@ export default function MessageInput({
     analyserRef.current = null;
   };
 
+  const getThemeColorHex = () => {
+    try {
+      const classList = document.documentElement.classList;
+      const isDark = classList.contains('dark');
+      if (classList.contains('theme-blue')) return { primary: '#3b82f6', primary600: '#2563eb' };
+      if (classList.contains('theme-green')) return { primary: '#22c55e', primary600: '#16a34a' };
+      if (classList.contains('theme-purple')) return { primary: '#a855f7', primary600: '#9333ea' };
+      if (classList.contains('theme-rose')) return { primary: '#f43f5e', primary600: '#e11d48' };
+      if (classList.contains('theme-orange')) return { primary: '#f97316', primary600: '#ea580c' };
+      if (classList.contains('theme-cyberpunk')) return { primary: '#00f3ff', primary600: '#00d8e6' };
+      if (classList.contains('theme-minimalist')) {
+        return isDark ? { primary: '#f9fafb', primary600: '#ffffff' } : { primary: '#111827', primary600: '#000000' };
+      }
+      if (classList.contains('theme-forest')) return { primary: '#10b981', primary600: '#059669' };
+      if (classList.contains('theme-nordic')) return { primary: '#0ea5e9', primary600: '#0284c7' };
+      if (classList.contains('theme-midnight')) return { primary: '#8b5cf6', primary600: '#7c3aed' };
+      if (classList.contains('theme-barbie')) return { primary: '#f472b6', primary600: '#db2777' };
+      if (classList.contains('theme-branco-elite')) return { primary: '#0f172a', primary600: '#020617' };
+    } catch (e) {
+      console.warn('Erro ao ler classList do documentElement:', e);
+    }
+    // Tenta fallback dinâmico pelo getComputedStyle
+    try {
+      const computed500 = getComputedStyle(document.documentElement).getPropertyValue('--primary-500').trim();
+      const computed600 = getComputedStyle(document.documentElement).getPropertyValue('--primary-600').trim();
+      if (computed500) {
+        return { primary: computed500, primary600: computed600 || computed500 };
+      }
+    } catch (e) {}
+    // Fallback padrão se tudo falhar (laranja)
+    return { primary: '#f97316', primary600: '#ea580c' };
+  };
+
   const drawWaveform = () => {
     if (!analyserRef.current || !canvasRef.current) {
       animationFrameRef.current = requestAnimationFrame(drawWaveform);
@@ -168,11 +202,12 @@ export default function MessageInput({
       const totalBarWidth = barWidth + gap;
       const numBars = Math.floor(width / totalBarWidth);
 
-      // Gradiente moderno e vibrante: Violeta -> Rosa -> Azul celeste
+      // Obter cor primária do tema dinâmico de forma ultra robusta
+      const colors = getThemeColorHex();
+
       const gradient = ctx.createLinearGradient(0, 0, width, 0);
-      gradient.addColorStop(0, '#8b5cf6'); // violet-500
-      gradient.addColorStop(0.5, '#ec4899'); // pink-500
-      gradient.addColorStop(1, '#06b6d4'); // cyan-500
+      gradient.addColorStop(0, colors.primary);
+      gradient.addColorStop(1, colors.primary600);
 
       ctx.fillStyle = gradient;
 
@@ -207,6 +242,7 @@ export default function MessageInput({
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       audioChunksRef.current = [];
+      isCancelledRef.current = false;
       const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       mediaRecorderRef.current = mediaRecorder;
 
@@ -218,6 +254,10 @@ export default function MessageInput({
 
       mediaRecorder.onstop = async () => {
         cleanupAudioAnalyser();
+        if (isCancelledRef.current) {
+          stream.getTracks().forEach(track => track.stop());
+          return;
+        }
         if (audioChunksRef.current.length === 0) return;
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
 
@@ -286,8 +326,24 @@ export default function MessageInput({
 
   const cancelRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
+      isCancelledRef.current = true;
       audioChunksRef.current = [];
-      mediaRecorderRef.current.stop();
+      
+      const recorder = mediaRecorderRef.current;
+      recorder.onstop = null; // Previne que o envio ocorra ao disparar stop
+      
+      try {
+        recorder.stop();
+      } catch (e) {
+        console.error('Erro ao parar recorder:', e);
+      }
+      
+      // Garante que todas as faixas da stream sejam paradas imediatamente
+      if (recorder.stream) {
+        recorder.stream.getTracks().forEach(track => track.stop());
+      }
+      
+      cleanupAudioAnalyser();
       setIsRecording(false);
       if (timerRef.current) {
         clearInterval(timerRef.current);
@@ -640,14 +696,14 @@ export default function MessageInput({
         {/* Área de Texto + Botão de Enviar */}
         <div className="flex items-end gap-2">
           {isRecording ? (
-            <div className="flex-1 flex flex-col md:flex-row items-center gap-4 bg-white/70 dark:bg-zinc-950/65 backdrop-blur-2xl border border-white/20 dark:border-white/10 p-4 rounded-[2rem] shadow-2xl shadow-violet-500/5 animate-in fade-in zoom-in-95 duration-300 min-h-[80px]">
+            <div className="flex-1 flex flex-col md:flex-row items-center gap-4 bg-white/70 dark:bg-zinc-950/65 backdrop-blur-2xl border border-white/20 dark:border-white/10 p-4 rounded-[2rem] shadow-2xl shadow-primary-500/5 animate-in fade-in zoom-in-95 duration-300 min-h-[80px]">
               <div className="flex items-center gap-3 shrink-0">
                 <div className="relative flex items-center justify-center">
-                  <span className="absolute inline-flex h-3.5 w-3.5 rounded-full bg-rose-500 opacity-75 animate-ping" />
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500 shadow-md shadow-rose-500/50" />
+                  <span className="absolute inline-flex h-3.5 w-3.5 rounded-full bg-primary-500 opacity-75 animate-ping" />
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-primary-500 shadow-md shadow-primary-500/50" />
                 </div>
-                <span className="text-[10px] font-black uppercase tracking-widest bg-clip-text text-transparent bg-gradient-to-r from-rose-500 to-pink-600">GRAVAÇÃO ATIVA</span>
-                <span className="text-sm font-mono font-black px-3 py-1 bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 rounded-full border border-rose-500/15 shadow-inner">
+                <span className="text-[10px] font-black uppercase tracking-widest bg-clip-text text-transparent bg-gradient-to-r from-primary-500 to-primary-600">GRAVAÇÃO ATIVA</span>
+                <span className="text-sm font-mono font-black px-3 py-1 bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 rounded-full border border-primary-500/15 shadow-inner">
                   {formatTime(recordingTime)}
                 </span>
               </div>
@@ -670,7 +726,7 @@ export default function MessageInput({
                       return (
                         <div 
                           key={idx} 
-                          className="w-1 bg-gradient-to-t from-violet-500 to-rose-500 rounded-full h-3 animate-pulse" 
+                          className="w-1 bg-primary-500 rounded-full h-3 animate-pulse" 
                           style={{ animationDelay: delay, animationDuration: '0.8s' }} 
                         />
                       );
@@ -683,7 +739,7 @@ export default function MessageInput({
                 <button 
                   type="button" 
                   onClick={cancelRecording}
-                  className="px-4 py-2.5 text-gray-500 hover:text-rose-500 hover:bg-rose-500/10 dark:hover:bg-rose-500/20 rounded-2xl transition-all duration-200 flex items-center gap-1.5 text-xs font-black uppercase tracking-wider hover:scale-105 active:scale-95 shadow-sm"
+                  className="px-4 py-2.5 text-gray-500 hover:text-primary-500 hover:bg-primary-500/10 dark:hover:bg-primary-500/20 rounded-2xl transition-all duration-200 flex items-center gap-1.5 text-xs font-black uppercase tracking-wider hover:scale-105 active:scale-95 shadow-sm"
                   title="Cancelar gravação"
                 >
                   <Trash2 size={16} />
@@ -692,7 +748,7 @@ export default function MessageInput({
                 <button 
                   type="button" 
                   onClick={stopRecording}
-                  className="px-5 py-2.5 bg-gradient-to-r from-violet-600 via-rose-500 to-amber-500 text-white rounded-2xl shadow-lg shadow-rose-500/25 hover:shadow-rose-500/35 hover:scale-[1.03] active:scale-95 transition-all duration-200 flex items-center gap-2 text-xs font-black uppercase tracking-wider"
+                  className="px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-2xl shadow-lg shadow-primary-500/20 hover:shadow-primary-500/30 border border-primary-600/10 hover:scale-[1.03] active:scale-95 transition-all duration-200 flex items-center gap-2 text-xs font-black uppercase tracking-wider"
                   title="Enviar gravação"
                 >
                   <Send size={14} />

@@ -161,14 +161,14 @@ const AudioPlayer = ({ url, isMine }: { url: string; isMine: boolean }) => {
 
   const bubbleBg = isMine 
     ? 'bg-zinc-900/95 dark:bg-zinc-950/75 border border-white/10 shadow-xl shadow-zinc-950/20 backdrop-blur-xl hover:border-white/15 transition-all duration-300' 
-    : 'bg-gradient-to-r from-primary-500/10 via-primary-500/5 to-violet-500/5 dark:from-primary-500/5 dark:via-primary-500/2 dark:to-violet-500/3 border border-primary-500/15 shadow-md shadow-primary-500/5 backdrop-blur-xl hover:border-primary-500/25 transition-all duration-300';
+    : 'bg-gradient-to-r from-primary-500/10 via-primary-500/5 to-primary-500/2 dark:from-primary-500/5 dark:via-primary-500/2 dark:to-primary-500/1 border border-primary-500/15 shadow-md shadow-primary-500/5 backdrop-blur-xl hover:border-primary-500/25 transition-all duration-300';
 
   const textColor = isMine ? 'text-white' : 'text-gray-800 dark:text-gray-100';
   const subTextColor = isMine ? 'text-white/60' : 'text-gray-500 dark:text-gray-400';
   
   const playButtonBg = isMine 
     ? 'bg-gradient-to-tr from-white to-zinc-150 text-zinc-950 hover:scale-[1.06] hover:shadow-md hover:shadow-white/10 active:scale-95 transition-all duration-200' 
-    : 'bg-gradient-to-tr from-primary-500 via-rose-500 to-fuchsia-500 text-white hover:scale-[1.06] hover:shadow-lg hover:shadow-primary-500/25 active:scale-95 transition-all duration-200 shadow-md';
+    : 'bg-gradient-to-tr from-primary-500 to-primary-600 text-white hover:scale-[1.06] hover:shadow-lg hover:shadow-primary-500/25 active:scale-95 transition-all duration-200 shadow-md';
 
   return (
     <div className={`p-4 rounded-[2rem] ${bubbleBg} max-w-sm w-full flex flex-col gap-3 shadow-lg animate-in fade-in duration-300 relative z-30`}>
@@ -203,7 +203,7 @@ const AudioPlayer = ({ url, isMine }: { url: string; isMine: boolean }) => {
           onClick={handlePlaybackRateChange}
           className={`h-6 px-2.5 text-[10px] font-black tracking-wider uppercase rounded-full shrink-0 border transition-all duration-200 active:scale-95 flex items-center justify-center ${
             playbackRate !== 1 
-              ? isMine ? 'bg-white text-zinc-950 border-white shadow-md' : 'bg-gradient-to-r from-primary-500 to-rose-500 text-white border-transparent shadow-md'
+              ? isMine ? 'bg-white text-zinc-950 border-white shadow-md' : 'bg-gradient-to-r from-primary-500 to-primary-600 text-white border-transparent shadow-md'
               : isMine ? 'bg-transparent text-white/70 border-white/20 hover:bg-white/10' : 'bg-transparent text-gray-500 dark:text-gray-400 hover:text-primary-500 border-gray-200 dark:border-white/10 hover:border-primary-500/30'
           }`}
         >
@@ -226,7 +226,7 @@ const AudioPlayer = ({ url, isMine }: { url: string; isMine: boolean }) => {
               style={{ 
                 height: `${ht}px`,
                 backgroundColor: isActive 
-                  ? (isMine ? '#ffffff' : '#3b82f6') 
+                  ? (isMine ? '#ffffff' : 'var(--primary-500)') 
                   : (isMine ? 'rgba(255,255,255,0.18)' : 'rgba(156,163,175,0.25)'),
                 opacity: isActive ? 1 : 0.7
               }}
