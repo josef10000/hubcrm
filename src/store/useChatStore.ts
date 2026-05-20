@@ -23,7 +23,7 @@ interface ChatState {
   // Actions
   initChatList: (orgId: string, userId: string) => () => void;
   setActiveChat: (chatId: string | null) => void;
-  loadMessages: (orgId: string, chatId: string) => () => void;
+  loadMessages: (orgId: string, chatId: string, userId?: string) => () => void;
   
   // Optimistic Messaging
   sendMessage: (
@@ -98,7 +98,7 @@ export const useChatStore = create<ChatState>()(
     set({ activeChatId: chatId, messages: [], loadingMessages: !!chatId });
   },
 
-  loadMessages: (orgId: string, chatId: string) => {
+  loadMessages: (orgId: string, chatId: string, userId?: string) => {
     if (!orgId || !chatId) return () => {};
 
     set({ loadingMessages: true });
@@ -118,11 +118,11 @@ export const useChatStore = create<ChatState>()(
       set({ messages: msgs, loadingMessages: false });
 
       // Verificar Notificações (Última mensagem enviada por outros)
-      if (msgs.length > 0) {
+      if (msgs.length > 0 && userId) {
         const lastMsg = msgs[msgs.length - 1];
         
         if (lastMsg.senderId !== userId) {
-          const isMentioned = lastMsg.mentions?.includes(userId || '') || lastMsg.mentionAll;
+          const isMentioned = lastMsg.mentions?.includes(userId) || lastMsg.mentionAll;
           if (isMentioned && Notification.permission === 'granted') {
             new Notification(`${lastMsg.senderName} te mencionou`, {
               body: lastMsg.text,

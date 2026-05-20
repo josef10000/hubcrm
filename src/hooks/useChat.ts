@@ -13,10 +13,10 @@ export function useChat(chatId: string | null) {
 
   useEffect(() => {
     if (effectiveOrgId && chatId) {
-      const unsubscribe = store.loadMessages(effectiveOrgId, chatId);
+      const unsubscribe = store.loadMessages(effectiveOrgId, chatId, userProfile?.uid);
       return () => unsubscribe();
     }
-  }, [effectiveOrgId, chatId]);
+  }, [effectiveOrgId, chatId, userProfile?.uid]);
 
   const sendMessage = useCallback(async (
     text: string, 

@@ -90,7 +90,7 @@ describe('Asaas Webhook Handler', () => {
 
   it('deve retornar 405 para método GET', async () => {
     // Importação dinâmica para que os mocks se apliquem
-    const { default: handler } = await import('../../../api/_logic/asaas/webhook');
+    const { default: handler } = await import('../../api/_logic/asaas/webhook');
     
     const req = createMockReq('GET', {}, {});
     const res = createMockRes();
@@ -102,7 +102,7 @@ describe('Asaas Webhook Handler', () => {
   });
 
   it('deve retornar 401 para token inválido', async () => {
-    const { default: handler } = await import('../../../api/_logic/asaas/webhook');
+    const { default: handler } = await import('../../api/_logic/asaas/webhook');
     
     const req = createMockReq('POST', { 'asaas-access-token': 'wrong-token' }, {
       event: 'PAYMENT_RECEIVED',
@@ -119,7 +119,7 @@ describe('Asaas Webhook Handler', () => {
   it('deve retornar 500 quando ASAAS_WEBHOOK_TOKEN não está configurado', async () => {
     vi.stubEnv('ASAAS_WEBHOOK_TOKEN', '');
     
-    const { default: handler } = await import('../../../api/_logic/asaas/webhook');
+    const { default: handler } = await import('../../api/_logic/asaas/webhook');
     
     const req = createMockReq('POST', { 'asaas-access-token': 'any' }, {});
     const res = createMockRes();
@@ -130,7 +130,7 @@ describe('Asaas Webhook Handler', () => {
   });
 
   it('deve retornar 200 com info quando não há contexto de cliente', async () => {
-    const { default: handler } = await import('../../../api/_logic/asaas/webhook');
+    const { default: handler } = await import('../../api/_logic/asaas/webhook');
     
     const req = createMockReq('POST', { 'asaas-access-token': 'test-secret-token' }, {
       event: 'PAYMENT_RECEIVED',
@@ -148,7 +148,7 @@ describe('Asaas Webhook Handler', () => {
   it('deve retornar 200 com duplicate=true para evento já processado', async () => {
     mockDb.runTransaction.mockResolvedValue(true); // Already processed
     
-    const { default: handler } = await import('../../../api/_logic/asaas/webhook');
+    const { default: handler } = await import('../../api/_logic/asaas/webhook');
     
     const req = createMockReq('POST', { 'asaas-access-token': 'test-secret-token' }, {
       event: 'PAYMENT_RECEIVED',
@@ -167,7 +167,7 @@ describe('Asaas Webhook Handler', () => {
     mockSnapshotResult.empty = true;
     mockSnapshotResult.docs = [];
     
-    const { default: handler } = await import('../../../api/_logic/asaas/webhook');
+    const { default: handler } = await import('../../api/_logic/asaas/webhook');
     
     const req = createMockReq('POST', { 'asaas-access-token': 'test-secret-token' }, {
       event: 'PAYMENT_RECEIVED',

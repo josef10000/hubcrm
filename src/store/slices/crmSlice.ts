@@ -283,9 +283,21 @@ export const createCRMSlice: StateCreator<
 
   isComboNearRenewal: (client) => {
     if (!client.comboRenewalDate) return false;
-    const renewal = new Date(client.comboRenewalDate);
-    const diff = (renewal.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
-    return diff <= 15 && diff >= 0;
+    
+    const parts = client.comboRenewalDate.split('-');
+    if (parts.length !== 3) return false;
+    
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const day = parseInt(parts[2], 10);
+    
+    const renewalZero = new Date(year, month, day);
+    
+    const today = new Date();
+    const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    
+    const diffDays = Math.round((renewalZero.getTime() - todayZero.getTime()) / (1000 * 60 * 60 * 24));
+    return diffDays <= 15 && diffDays >= 0;
   },
 
   syncPayments: async () => {
