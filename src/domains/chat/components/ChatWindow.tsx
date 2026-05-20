@@ -151,6 +151,59 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
     fetchPinnedMessages();
   }, [liveChat?.pinnedMessages, messages, chatId, userProfile?.orgId]);
 
+  const getPinnedMessageText = (msg: ChatMessage): string => {
+    if (!msg) return "Carregando...";
+    
+    // Se for enquete
+    if (msg.type === 'poll' || msg.poll) {
+      return `📊 Enquete: ${msg.poll?.question || msg.text || 'Nova Enquete'}`;
+    }
+    
+    // Se for aprovação
+    if (msg.type === 'approval' || msg.approval) {
+      return `🔑 Aprovação: ${msg.approval?.title || msg.text || 'Aprovação'}`;
+    }
+    
+    // Se for resposta de bot
+    if (msg.type === 'bot_response') {
+      return msg.text ? `🤖 ${msg.text}` : `🤖 Resposta de Assistente`;
+    }
+    
+    // Se tiver anexos
+    if (msg.attachments && msg.attachments.length > 0) {
+      const firstAttachment = msg.attachments[0];
+      if (firstAttachment.match(/\.(jpeg|jpg|gif|png|webp|svg)($|\?)/i) || firstAttachment.includes('/images/')) {
+        return "📷 Imagem / Foto";
+      }
+      if (firstAttachment.match(/\.(mp3|wav|ogg|m4a|webm)($|\?)/i) || firstAttachment.includes('/audios/')) {
+        return "🎙️ Mensagem de Voz / Áudio";
+      }
+      if (firstAttachment.match(/\.(mp4|mov|webm)($|\?)/i) || firstAttachment.includes('/videos/')) {
+        return "🎥 Vídeo Compartilhado";
+      }
+      return "📄 Arquivo Anexo";
+    }
+
+    if (msg.text && msg.text.trim()) {
+      return msg.text;
+    }
+
+    return "Mensagem de Mídia";
+  };
+
+  const scrollToMessage = (messageId: string) => {
+    const element = document.getElementById(`msg-${messageId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      element.classList.add('animate-highlight-message');
+      setTimeout(() => {
+        element.classList.remove('animate-highlight-message');
+      }, 2500);
+    } else {
+      toast.info('Mensagem muito antiga, tente rolar para cima para carregar.');
+    }
+  };
+
   if (!chatId || !chat) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-12 bg-gray-50/50 dark:bg-black/20 relative overflow-hidden">
@@ -391,19 +444,26 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
       {pinnedMessagesData.length > 0 && (
         <div className="bg-primary-500/5 border-b border-primary-500/10 px-4 py-2 flex flex-col gap-2 animate-in slide-in-from-top duration-300">
           {pinnedMessagesData.map((pinnedMsg) => (
-            <div key={pinnedMsg.id} className="flex items-center gap-3">
-              <Pin size={16} className="text-amber-500 fill-current shrink-0" />
+            <div 
+              key={pinnedMsg.id} 
+              onClick={() => scrollToMessage(pinnedMsg.id)}
+              className="flex items-center gap-3 cursor-pointer hover:bg-primary-500/10 p-1.5 rounded-xl transition-all group"
+            >
+              <Pin size={16} className="text-amber-500 fill-current shrink-0 group-hover:scale-110 transition-transform" />
               <div className="flex-1 overflow-hidden">
                 <p className="text-[10px] font-black uppercase tracking-widest text-primary-600 mb-0.5">Mensagem Fixada</p>
                 <div className="flex items-center gap-2">
-                   <p className="text-[15px] font-medium text-gray-800 dark:text-gray-200 truncate max-w-md">
-                     {pinnedMsg.text || "Carregando..."}
+                   <p className="text-[15px] font-medium text-gray-800 dark:text-gray-200 truncate max-w-md group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                     {getPinnedMessageText(pinnedMsg)}
                    </p>
                 </div>
               </div>
               <button 
-                onClick={() => unpinMessage(pinnedMsg.id)}
-                className="p-1.5 shrink-0 hover:bg-primary-500/10 rounded-lg text-primary-400 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  unpinMessage(pinnedMsg.id);
+                }}
+                className="p-1.5 shrink-0 hover:bg-primary-500/20 rounded-lg text-primary-400 hover:text-red-500 transition-colors"
                 title="Desfixar"
               >
                 <X size={14} />

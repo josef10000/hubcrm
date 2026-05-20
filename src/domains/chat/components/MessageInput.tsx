@@ -264,7 +264,7 @@ export default function MessageInput({
         setUploading(true);
         const id = toast.loading('Enviando mensagem de voz...');
         try {
-          const file = new File([audioBlob], `audio-${Date.now()}.webm`, { type: 'audio/webm' });
+          const file = new File([audioBlob], `audio-${Date.now()}_duration_${recordingTime}.webm`, { type: 'audio/webm' });
           const activeChatId = chatId || 'general';
           const url = await uploadFileToR2(file, activeChatId);
           onSend('Enviou uma mensagem de voz 🎙️', [], [url], null, members, "text");

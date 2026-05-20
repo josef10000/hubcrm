@@ -67,7 +67,10 @@ const AudioPlayer = ({ url, isMine }: { url: string; isMine: boolean }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const [duration, setDuration] = useState(() => {
+    const match = url.match(/_duration_(\d+)\./);
+    return match ? parseInt(match[1], 10) : 0;
+  });
   const [playbackRate, setPlaybackRate] = useState(1);
   const [progress, setProgress] = useState(0);
 
@@ -83,8 +86,9 @@ const AudioPlayer = ({ url, isMine }: { url: string; isMine: boolean }) => {
 
     const onTimeUpdate = () => {
       setCurrentTime(audio.currentTime);
-      if (audio.duration && isFinite(audio.duration)) {
-        setProgress((audio.currentTime / audio.duration) * 100);
+      const activeDuration = (audio.duration && isFinite(audio.duration)) ? audio.duration : duration;
+      if (activeDuration) {
+        setProgress((audio.currentTime / activeDuration) * 100);
       }
     };
 
@@ -92,13 +96,15 @@ const AudioPlayer = ({ url, isMine }: { url: string; isMine: boolean }) => {
       if (audio.duration === Infinity) {
         audio.currentTime = 1e9;
         const onTimeUpdateForDuration = () => {
-          setDuration(audio.duration || 0);
+          if (audio.duration && isFinite(audio.duration)) {
+            setDuration(audio.duration);
+          }
           audio.currentTime = 0;
           audio.removeEventListener('timeupdate', onTimeUpdateForDuration);
         };
         audio.addEventListener('timeupdate', onTimeUpdateForDuration);
-      } else {
-        setDuration(audio.duration || 0);
+      } else if (audio.duration && isFinite(audio.duration)) {
+        setDuration(audio.duration);
       }
     };
 
@@ -116,13 +122,15 @@ const AudioPlayer = ({ url, isMine }: { url: string; isMine: boolean }) => {
       if (audio.duration === Infinity) {
         audio.currentTime = 1e9;
         const onTimeUpdateForDuration = () => {
-          setDuration(audio.duration || 0);
+          if (audio.duration && isFinite(audio.duration)) {
+            setDuration(audio.duration);
+          }
           audio.currentTime = 0;
           audio.removeEventListener('timeupdate', onTimeUpdateForDuration);
         };
         audio.addEventListener('timeupdate', onTimeUpdateForDuration);
-      } else {
-        setDuration(audio.duration || 0);
+      } else if (audio.duration && isFinite(audio.duration)) {
+        setDuration(audio.duration);
       }
     }
 
@@ -133,7 +141,7 @@ const AudioPlayer = ({ url, isMine }: { url: string; isMine: boolean }) => {
       audio.removeEventListener('ended', onEnded);
       audioRef.current = null;
     };
-  }, [url]);
+  }, [url, duration]);
 
   const togglePlay = () => {
     if (!audioRef.current) return;
@@ -314,7 +322,8 @@ export default function MessageBubble({
 
   return (
     <div 
-      className={`flex flex-col mb-4 ${isMine ? 'items-end' : 'items-start'} group animate-in fade-in slide-in-from-bottom-2 duration-300`}
+      id={`msg-${message.id}`}
+      className={`flex flex-col mb-4 ${isMine ? 'items-end' : 'items-start'} group animate-in fade-in slide-in-from-bottom-2 duration-300 scroll-mt-12 transition-all duration-300`}
       onDoubleClick={() => !isDeleted && onReply?.(message)}
     >
       {/* Nome do Remetente (Apenas Grupos/Outros) */}
