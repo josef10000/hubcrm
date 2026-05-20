@@ -299,13 +299,14 @@ Para garantir latência zero em organizações com milhares de registros, implem
 
 ## 🧪 Testing & CI/CD Strategy
 
-A qualidade do código é assegurada por três camadas de verificação:
+A qualidade do código é assegurada por testes unitários e de integração de alta cobertura usando **Vitest**:
 
-1. **Unit Testing (Vitest):** Focado em helpers, utilitários e lógica de cálculo.
-   - `npm run test:unit`
-2. **Integration Testing:** Validação de fluxos de API e integração com Firestore (via Emulator).
-3. **E2E Testing (Playwright):** Testes de fumaça e fluxos críticos de usuário (Checkout, Login, Cadastro de Lead).
-   - `npm run test:e2e`
+1. **Unit & Integration Testing (Vitest):** Focado em testar lógicas puras de negócio, estados do Zustand, formatação de dados e rotas serverless do Asaas.
+   - **Comando para executar:** `npm test` (roda `vitest run`)
+   - **Suítes de Testes Principais:**
+     - **[crmSlice.test.ts](src/tests/crmSlice.test.ts):** Valida a lógica de churn (`isChurnRisk`), regras de renovação de combos (`isComboNearRenewal`) e geração segura de tokens criptográficos (`publicToken`).
+     - **[nexusStore.test.ts](src/tests/nexusStore.test.ts):** Testa lógicas puras do Nexus Hub como atualização e remoção de categorias de livros e atualização do status de progresso de leitura.
+     - **[webhook.test.ts](src/tests/webhook.test.ts):** Cobre os comportamentos de segurança e integridade do endpoint serverless de Webhooks do Asaas (idempotência, autenticação via Token, busca de clientes e handlers de eventos).
 
 ### CI/CD Pipeline
 - **Linting:** Pre-commit hooks validam tipos e estilo via ESLint + Prettier.
