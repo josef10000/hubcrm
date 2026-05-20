@@ -103,23 +103,23 @@ export const useChatStore = create<ChatState>()(
 
     set({ loadingMessages: true });
     
-    // Listener de Mensagens
+    // Listener de Mensagens (limitado a 100 mais recentes para performance)
     const qMsg = query(
       collection(db, 'organizations', orgId, 'chats', chatId, 'messages'),
-      orderBy('createdAt', 'asc')
+      orderBy('createdAt', 'desc'),
+      limit(100)
     );
 
     const unsubscribeMsg = onSnapshot(qMsg, (snapshot) => {
       const msgs = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      } as ChatMessage));
+      } as ChatMessage)).reverse(); // Reverte de DESC para ASC para a UI
       set({ messages: msgs, loadingMessages: false });
 
       // Verificar Notificações (Última mensagem enviada por outros)
       if (msgs.length > 0) {
         const lastMsg = msgs[msgs.length - 1];
-        const userId = (window as any).currentUserUid; // Fallback se não tiver no escopo
         
         if (lastMsg.senderId !== userId) {
           const isMentioned = lastMsg.mentions?.includes(userId || '') || lastMsg.mentionAll;
@@ -162,7 +162,7 @@ export const useChatStore = create<ChatState>()(
     if (!orgId || !chatId) return;
 
     // 1. Criar Mensagem Otimista
-    const optimisticId = `opt-${Date.now()}`;
+    const optimisticId = `opt-${crypto.randomUUID()}`;
     const newMessage: ChatMessage = {
       id: optimisticId,
       text,

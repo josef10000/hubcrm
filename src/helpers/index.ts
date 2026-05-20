@@ -2,6 +2,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { authFetch } from '@/lib/authFetch';
 import { Client } from '@/types';
+import { Logger } from '@/lib/logger';
 
 export const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -102,9 +103,9 @@ export const updateReferrerSubscription = async (referrerId: string, updatedClie
       })
     });
     if (!updateRes.ok) {
-      console.error("Failed to update referrer subscription in Asaas");
+      Logger.error('[Referral] Falha ao atualizar subscription do indicador no Asaas');
     }
   } catch (e) {
-    console.error("Error updating referrer subscription", e);
+    Logger.error('[Referral] Erro ao atualizar subscription do indicador', { data: e });
   }
 };

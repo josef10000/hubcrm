@@ -554,7 +554,7 @@ export const useNexusStore = create<NexusState>()(
     const { noteFolders, setNoteFolders } = get();
     const newFolder: NoteFolder = {
       ...folderData,
-      id: Date.now().toString()
+      id: crypto.randomUUID()
     };
     await setNoteFolders([...noteFolders, newFolder]);
   },
@@ -661,24 +661,14 @@ export const useNexusStore = create<NexusState>()(
   },
 }), {
   name: 'hubcrm-nexus-storage',
-  version: 4,
+  version: 5, // v5: removido books do persist (vem do Firestore em tempo real)
   partialize: (state) => ({
-    folders: state.folders,
-    links: state.links,
-    goals: state.goals,
-    tasks: state.tasks,
-    books: state.books,
     bookCategories: state.bookCategories,
     bookAnimationMode: state.bookAnimationMode
   }),
   merge: (persistedState: any, currentState) => ({
     ...currentState,
     ...(persistedState || {}),
-    folders: persistedState?.folders || [],
-    links: persistedState?.links || [],
-    goals: persistedState?.goals || [],
-    tasks: persistedState?.tasks || [],
-    books: persistedState?.books || [],
     bookCategories: persistedState?.bookCategories || DEFAULT_BOOK_CATEGORIES,
     bookAnimationMode: persistedState?.bookAnimationMode === 'legacy' ? 'zoom' : (persistedState?.bookAnimationMode || 'new')
   })

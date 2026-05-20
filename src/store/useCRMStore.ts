@@ -158,31 +158,19 @@ export const useCRMStore = create<CRMStoreState>()(
     }),
     {
       name: 'hubcrm-crm-storage',
-      version: 3, // Incrementado para invalidar caches antigos/bugados
+      version: 4, // v4: removido arrays pesados do persist (clients, leads, teamProfiles)
       partialize: (state) => ({ 
-        clients: state.clients, 
-        leads: state.leads, 
-        teamProfiles: state.teamProfiles,
         offers: state.offers,
         tags: state.tags,
-        supportRequests: state.supportRequests,
-        availabilityBlocks: state.availabilityBlocks,
-        okrs: state.okrs,
-        feedbackRequests: state.feedbackRequests
+        churnRiskDays: state.churnRiskDays,
       }),
       // Garante que, se algo vier nulo do storage, mantenha o valor padrão (array vazio)
       merge: (persistedState: any, currentState) => ({
         ...currentState,
         ...(persistedState || {}),
-        clients: persistedState?.clients || [],
-        leads: persistedState?.leads || [],
-        teamProfiles: persistedState?.teamProfiles || [],
         offers: persistedState?.offers || [],
         tags: persistedState?.tags || [],
-        supportRequests: persistedState?.supportRequests || [],
-        availabilityBlocks: persistedState?.availabilityBlocks || [],
-        okrs: persistedState?.okrs || [],
-        feedbackRequests: persistedState?.feedbackRequests || []
+        churnRiskDays: persistedState?.churnRiskDays || 30,
       })
     }
   )

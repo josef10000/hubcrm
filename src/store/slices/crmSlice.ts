@@ -61,13 +61,9 @@ export const createCRMSlice: StateCreator<
         client.assignedTo = currentUserId;
       }
 
-      // 🛡️ Garantir publicToken para o Portal do Cliente
+      // 🛡️ Garantir publicToken para o Portal do Cliente (UUID criptograficamente seguro)
       if (!client.publicToken) {
-        client.publicToken = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
-        // Garantir que tenha pelo menos 32 chars para o schema
-        while (client.publicToken.length < 32) {
-          client.publicToken += Math.random().toString(36).substring(2);
-        }
+        client.publicToken = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
       }
 
       // 🚀 Integração com Asaas (Exige CPF/CNPJ e E-mail)
@@ -175,20 +171,15 @@ export const createCRMSlice: StateCreator<
 
             }
             
-            console.log("[Asaas] Integração concluída com sucesso. URL:", client.invoiceUrl);
+            logger.info('[Asaas] Integração concluída com sucesso', { domain: 'CRM', data: { invoiceUrl: client.invoiceUrl } });
             toast.success('Faturamento sincronizado com o Asaas!');
           }
         } catch (asaasErr: any) {
-          console.error("[Asaas] Erro na integração:", asaasErr);
-          logger.warn("Asaas Integration error", { domain: 'CRM', data: asaasErr });
+          logger.error('[Asaas] Erro na integração', { domain: 'CRM', data: { message: asaasErr.message, stack: asaasErr.stack } });
           toast.error(`Erro na integração Asaas: ${asaasErr.message}`);
         }
       } else if (client.status !== 'Cancelado' && !client.invoiceUrl) {
-        console.log("[Asaas] Integração pulada. Dados insuficientes ou status cancelado.", { 
-          email: !!client.email, 
-          hasValidDoc, 
-          status: client.status 
-        });
+        logger.info('[Asaas] Integração pulada — dados insuficientes', { domain: 'CRM', data: { hasEmail: !!client.email, hasValidDoc, status: client.status } });
       }
 
       // Limpar campos undefined para não quebrar o Firestore
@@ -196,7 +187,7 @@ export const createCRMSlice: StateCreator<
         Object.entries(client).filter(([_, v]) => v !== undefined)
       );
 
-      console.log("[CRM] Salvando cliente no Firestore:", id);
+      logger.info('[CRM] Salvando cliente no Firestore', { domain: 'CRM', data: { id } });
       await setDoc(doc(db, 'organizations', effectiveOrgId, 'clients', id), cleanData, { merge: true });
       
       eventBus.emit(isNew ? HUB_EVENTS.CRM.CLIENT_CREATED : HUB_EVENTS.CRM.CLIENT_UPDATED, client);

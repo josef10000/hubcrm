@@ -10,7 +10,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const webhookToken = process.env.ASAAS_WEBHOOK_TOKEN;
     if (!webhookToken) {
-      console.error('CRITICAL: ASAAS_WEBHOOK_TOKEN not configured');
+      console.error('[ASAAS WEBHOOK] CRITICAL: ASAAS_WEBHOOK_TOKEN env var not configured');
       return res.status(500).json({ error: 'Webhook not configured' });
     }
 
@@ -18,7 +18,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const expectedToken = String(webhookToken || '').replace(/["']/g, '').trim();
 
     if (receivedToken !== expectedToken) {
-      console.error(`[ASAAS] Token Mismatch!`);
+      console.warn(`[ASAAS WEBHOOK] Token mismatch — request rejected`);
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
@@ -47,7 +47,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // --- BUSCA CLIENTE ---
     const snapshot = await db.collectionGroup('clients').where('asaasCustomerId', '==', asaasCustomerId).limit(1).get();
     if (snapshot.empty) {
-      console.warn(`[ASAAS] Cliente não encontrado para AsaasID: ${asaasCustomerId}`);
+      console.warn(`[ASAAS WEBHOOK] Cliente não encontrado para asaasCustomerId=${asaasCustomerId}`);
       return res.status(200).json({ received: true });
     }
 
@@ -74,13 +74,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         break;
 
       default:
-        console.log(`[ASAAS] Evento não tratado explicitamente: ${event}`);
+        console.log(`[ASAAS WEBHOOK] Evento não tratado explicitamente: ${event}`);
     }
 
     return res.status(200).json({ received: true });
 
   } catch (error: any) {
-    console.error('CRITICAL Webhook Error:', error);
+    console.error('[ASAAS WEBHOOK] CRITICAL error:', { message: error.message, stack: error.stack });
     return res.status(500).json({ error: 'Internal error' });
   }
 }
