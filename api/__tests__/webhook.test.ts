@@ -34,6 +34,20 @@ let collectionGroupResult: any = null;
 let webhookEventsStore: Record<string, boolean> = {};
 
 vi.mock('../_utils/firebase.js', () => {
+  const createDocRef = (id: string) => {
+    const docRef = {
+      id,
+      get: vi.fn().mockResolvedValue({ exists: !!webhookEventsStore[id] }),
+      set: vi.fn().mockImplementation(() => { webhookEventsStore[id] = true; }),
+      update: vi.fn().mockResolvedValue(true),
+      collection: (subName: string) => ({
+        doc: (subId?: string) => createDocRef(subId || 'mock-sub-id'),
+        add: vi.fn().mockResolvedValue({ id: 'mock-sub-id' }),
+      }),
+    };
+    return docRef;
+  };
+
   return {
     admin: {
       firestore: {
@@ -55,11 +69,7 @@ vi.mock('../_utils/firebase.js', () => {
       },
       collectionGroup: () => collectionGroupResult,
       collection: (name: string) => ({
-        doc: (id: string) => ({
-          id,
-          get: vi.fn().mockResolvedValue({ exists: !!webhookEventsStore[id] }),
-          set: vi.fn().mockImplementation(() => { webhookEventsStore[id] = true; }),
-        }),
+        doc: (id: string) => createDocRef(id),
       }),
     },
   };

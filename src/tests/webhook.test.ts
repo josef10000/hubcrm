@@ -15,24 +15,34 @@ const mockHandlePaymentReceived = vi.fn();
 const mockHandlePaymentOverdue = vi.fn();
 const mockHandlePaymentCreated = vi.fn();
 
-// Mock do Firestore (firebase-admin)
-const mockDocRef = {
+// Mock do Firestore (firebase-admin) fluente e recursivo
+const docMock = {
+  get: vi.fn().mockResolvedValue({ exists: false }),
+  set: vi.fn().mockResolvedValue(undefined),
   update: vi.fn().mockResolvedValue(undefined),
+  delete: vi.fn().mockResolvedValue(undefined),
+  collection: vi.fn(),
 };
 
-const mockDocSnapshot = {
-  exists: false,
-  data: () => ({ asaasCustomerId: 'cus_123', name: 'Test Client' }),
-  ref: mockDocRef,
+const collectionMock = {
+  where: vi.fn().mockReturnThis(),
+  limit: vi.fn().mockReturnThis(),
+  get: vi.fn().mockResolvedValue({ empty: true, docs: [] }),
+  add: vi.fn().mockResolvedValue({ id: 'mock-doc-id' }),
+  doc: vi.fn(),
 };
+
+// Encadeamento recursivo infinito
+collectionMock.doc = vi.fn().mockReturnValue(docMock);
+(docMock as any).collection = vi.fn().mockReturnValue(collectionMock);
 
 const mockSnapshotResult = {
   empty: true,
-  docs: [] as typeof mockDocSnapshot[],
+  docs: [] as any[],
 };
 
 const mockDb = {
-  collection: vi.fn().mockReturnThis(),
+  collection: vi.fn().mockReturnValue(collectionMock),
   collectionGroup: vi.fn().mockReturnValue({
     where: vi.fn().mockReturnValue({
       limit: vi.fn().mockReturnValue({
