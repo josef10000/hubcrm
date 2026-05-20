@@ -83,13 +83,23 @@ const AudioPlayer = ({ url, isMine }: { url: string; isMine: boolean }) => {
 
     const onTimeUpdate = () => {
       setCurrentTime(audio.currentTime);
-      if (audio.duration) {
+      if (audio.duration && isFinite(audio.duration)) {
         setProgress((audio.currentTime / audio.duration) * 100);
       }
     };
 
     const onLoadedMetadata = () => {
-      setDuration(audio.duration || 0);
+      if (audio.duration === Infinity) {
+        audio.currentTime = 1e9;
+        const onTimeUpdateForDuration = () => {
+          setDuration(audio.duration || 0);
+          audio.currentTime = 0;
+          audio.removeEventListener('timeupdate', onTimeUpdateForDuration);
+        };
+        audio.addEventListener('timeupdate', onTimeUpdateForDuration);
+      } else {
+        setDuration(audio.duration || 0);
+      }
     };
 
     const onEnded = () => {
@@ -103,7 +113,17 @@ const AudioPlayer = ({ url, isMine }: { url: string; isMine: boolean }) => {
     audio.addEventListener('ended', onEnded);
 
     if (audio.readyState >= 1) {
-      setDuration(audio.duration);
+      if (audio.duration === Infinity) {
+        audio.currentTime = 1e9;
+        const onTimeUpdateForDuration = () => {
+          setDuration(audio.duration || 0);
+          audio.currentTime = 0;
+          audio.removeEventListener('timeupdate', onTimeUpdateForDuration);
+        };
+        audio.addEventListener('timeupdate', onTimeUpdateForDuration);
+      } else {
+        setDuration(audio.duration || 0);
+      }
     }
 
     return () => {
@@ -153,7 +173,7 @@ const AudioPlayer = ({ url, isMine }: { url: string; isMine: boolean }) => {
   };
 
   const formatTime = (time: number) => {
-    if (isNaN(time)) return "00:00";
+    if (isNaN(time) || !isFinite(time)) return "--:--";
     const mins = Math.floor(time / 60);
     const secs = Math.floor(time % 60);
     return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
