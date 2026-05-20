@@ -161,7 +161,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
     
     // Se for aprovação
     if (msg.type === 'approval' || msg.approval) {
-      return `🔑 Aprovação: ${msg.approval?.title || msg.text || 'Aprovação'}`;
+      return `🔑 Aprovação: ${msg.approval?.question || msg.text || 'Aprovação'}`;
     }
     
     // Se for resposta de bot
