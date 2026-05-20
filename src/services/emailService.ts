@@ -1,7 +1,7 @@
 import { Resend } from 'resend';
 
 // Verifica se a chave existe (no Vercel existirá e ficará em process.env.RESEND_API_KEY)
-const apiKey = process.env.RESEND_API_KEY || '';
+const apiKey = process.env.RESEND_API_KEY || (process.env.NODE_ENV === 'test' ? 're_test_123' : '');
 export const resend = new Resend(apiKey);
 
 const FROM_EMAIL = 'Hub Symples <contato@contato.hubsymples.com.br>';

@@ -44,19 +44,19 @@ const mockDb = {
 };
 
 // Mock modules
-vi.mock('../../_utils/firebase.js', () => ({
+vi.mock('../../api/_utils/firebase.js', () => ({
   db: mockDb,
 }));
 
-vi.mock('./handlers/payment_received.js', () => ({
+vi.mock('../../api/_logic/asaas/handlers/payment_received.js', () => ({
   handlePaymentReceived: mockHandlePaymentReceived,
 }));
 
-vi.mock('./handlers/payment_overdue.js', () => ({
+vi.mock('../../api/_logic/asaas/handlers/payment_overdue.js', () => ({
   handlePaymentOverdue: mockHandlePaymentOverdue,
 }));
 
-vi.mock('./handlers/payment_created.js', () => ({
+vi.mock('../../api/_logic/asaas/handlers/payment_created.js', () => ({
   handlePaymentCreated: mockHandlePaymentCreated,
 }));
 
