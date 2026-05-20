@@ -40,7 +40,9 @@ export function AppProviders({ children }: AppProvidersProps) {
           </AuthProvider>
         </DialogProvider>
       </BrowserRouter>
-      <ReactQueryDevtools initialIsOpen={false} position="bottom" buttonPosition="bottom-left" />
+      {import.meta.env.DEV && (
+        <ReactQueryDevtools initialIsOpen={false} position="bottom" buttonPosition="bottom-left" />
+      )}
     </QueryClientProvider>
   );
 }
