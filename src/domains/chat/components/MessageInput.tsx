@@ -77,10 +77,17 @@ export default function MessageInput({
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Limpeza de timers de gravação
+  // Analisador de áudio para waveform em tempo real
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // Limpeza de timers de gravação e animações
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      cleanupAudioAnalyser();
     };
   }, []);
 
@@ -117,6 +124,85 @@ export default function MessageInput({
     }
   };
 
+  const cleanupAudioAnalyser = () => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    if (audioContextRef.current) {
+      if (audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close().catch(() => {});
+      }
+      audioContextRef.current = null;
+    }
+    analyserRef.current = null;
+  };
+
+  const drawWaveform = () => {
+    if (!analyserRef.current || !canvasRef.current) {
+      animationFrameRef.current = requestAnimationFrame(drawWaveform);
+      return;
+    }
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const analyser = analyserRef.current;
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    const draw = () => {
+      if (!analyserRef.current || !canvasRef.current) return;
+      animationFrameRef.current = requestAnimationFrame(draw);
+
+      analyser.getByteFrequencyData(dataArray);
+
+      const width = canvas.width;
+      const height = canvas.height;
+      ctx.clearRect(0, 0, width, height);
+
+      // Desenhar barras simétricas elegantes no centro do canvas
+      const barWidth = 2.5;
+      const gap = 2;
+      const totalBarWidth = barWidth + gap;
+      const numBars = Math.floor(width / totalBarWidth);
+
+      // Gradiente moderno e vibrante: Violeta -> Rosa -> Azul celeste
+      const gradient = ctx.createLinearGradient(0, 0, width, 0);
+      gradient.addColorStop(0, '#8b5cf6'); // violet-500
+      gradient.addColorStop(0.5, '#ec4899'); // pink-500
+      gradient.addColorStop(1, '#06b6d4'); // cyan-500
+
+      ctx.fillStyle = gradient;
+
+      for (let i = 0; i < numBars; i++) {
+        // Mapear o índice da barra para os dados do analisador (espelhado)
+        const dataIdx = i < numBars / 2 
+          ? Math.floor((i / (numBars / 2)) * (bufferLength / 2))
+          : Math.floor(((numBars - i) / (numBars / 2)) * (bufferLength / 2));
+        
+        const value = dataArray[dataIdx] || 0;
+        const percent = value / 255;
+        const barHeight = Math.max(3, percent * height * 0.95);
+
+        const x = i * totalBarWidth;
+        const y = (height - barHeight) / 2; // Centralizado verticalmente
+
+        ctx.beginPath();
+        // Desenhar com cantos levemente arredondados
+        if (ctx.roundRect) {
+          ctx.roundRect(x, y, barWidth, barHeight, 1.25);
+        } else {
+          ctx.rect(x, y, barWidth, barHeight);
+        }
+        ctx.fill();
+      }
+    };
+
+    draw();
+  };
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -131,6 +217,7 @@ export default function MessageInput({
       };
 
       mediaRecorder.onstop = async () => {
+        cleanupAudioAnalyser();
         if (audioChunksRef.current.length === 0) return;
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
 
@@ -159,6 +246,26 @@ export default function MessageInput({
       timerRef.current = setInterval(() => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
+
+      // Inicia a Waveform em tempo real
+      setTimeout(() => {
+        try {
+          const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+          if (AudioContextClass) {
+            const audioCtx = new AudioContextClass();
+            audioContextRef.current = audioCtx;
+            const source = audioCtx.createMediaStreamSource(stream);
+            const analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 64;
+            source.connect(analyser);
+            analyserRef.current = analyser;
+            
+            drawWaveform();
+          }
+        } catch (audioErr) {
+          console.warn('Erro ao inicializar analisador de áudio:', audioErr);
+        }
+      }, 100);
 
     } catch (err) {
       console.error('Erro ao acessar microfone:', err);
@@ -533,28 +640,63 @@ export default function MessageInput({
         {/* Área de Texto + Botão de Enviar */}
         <div className="flex items-end gap-2">
           {isRecording ? (
-            <div className="flex-1 flex items-center justify-between bg-red-500/10 dark:bg-red-500/5 border border-dashed border-red-500/30 p-3 rounded-2xl animate-pulse min-h-[46px]">
-              <div className="flex items-center gap-3">
-                <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
-                <span className="text-xs font-black uppercase tracking-widest text-red-500 dark:text-red-400">Gravando mensagem de voz...</span>
-                <span className="text-xs font-black px-2 py-0.5 bg-black/10 dark:bg-white/10 rounded-lg dark:text-white">{formatTime(recordingTime)}</span>
+            <div className="flex-1 flex flex-col md:flex-row items-center gap-4 bg-white/70 dark:bg-zinc-950/65 backdrop-blur-2xl border border-white/20 dark:border-white/10 p-4 rounded-[2rem] shadow-2xl shadow-violet-500/5 animate-in fade-in zoom-in-95 duration-300 min-h-[80px]">
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="relative flex items-center justify-center">
+                  <span className="absolute inline-flex h-3.5 w-3.5 rounded-full bg-rose-500 opacity-75 animate-ping" />
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500 shadow-md shadow-rose-500/50" />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-widest bg-clip-text text-transparent bg-gradient-to-r from-rose-500 to-pink-600">GRAVAÇÃO ATIVA</span>
+                <span className="text-sm font-mono font-black px-3 py-1 bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 rounded-full border border-rose-500/15 shadow-inner">
+                  {formatTime(recordingTime)}
+                </span>
               </div>
-              <div className="flex items-center gap-2">
+              
+              {/* Waveform em tempo real */}
+              <div className="flex-1 h-12 w-full min-w-[120px] bg-gray-50/50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/5 overflow-hidden p-1.5 flex items-center justify-center relative shadow-inner">
+                <canvas 
+                  ref={canvasRef} 
+                  width={300} 
+                  height={40} 
+                  className="w-full h-full block relative z-10" 
+                />
+                
+                {/* Fallback animado em CSS se a animação do canvas não rodar */}
+                {(!analyserRef.current) && (
+                  <div className="absolute inset-0 flex items-center justify-center gap-1 opacity-40">
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map((idx) => {
+                      const heights = ['h-3', 'h-5', 'h-8', 'h-4', 'h-6', 'h-2', 'h-7', 'h-5', 'h-3', 'h-6', 'h-8', 'h-4', 'h-3', 'h-7', 'h-5', 'h-2'];
+                      const delay = `${(idx * 0.08).toFixed(2)}s`;
+                      return (
+                        <div 
+                          key={idx} 
+                          className="w-1 bg-gradient-to-t from-violet-500 to-rose-500 rounded-full h-3 animate-pulse" 
+                          style={{ animationDelay: delay, animationDuration: '0.8s' }} 
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-3 shrink-0">
                 <button 
                   type="button" 
                   onClick={cancelRecording}
-                  className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                  className="px-4 py-2.5 text-gray-500 hover:text-rose-500 hover:bg-rose-500/10 dark:hover:bg-rose-500/20 rounded-2xl transition-all duration-200 flex items-center gap-1.5 text-xs font-black uppercase tracking-wider hover:scale-105 active:scale-95 shadow-sm"
                   title="Cancelar gravação"
                 >
                   <Trash2 size={16} />
+                  Cancelar
                 </button>
                 <button 
                   type="button" 
                   onClick={stopRecording}
-                  className="p-1.5 bg-red-500 text-white rounded-xl shadow-lg shadow-red-500/20 hover:scale-105 active:scale-95 transition-all flex items-center justify-center h-8 w-8"
+                  className="px-5 py-2.5 bg-gradient-to-r from-violet-600 via-rose-500 to-amber-500 text-white rounded-2xl shadow-lg shadow-rose-500/25 hover:shadow-rose-500/35 hover:scale-[1.03] active:scale-95 transition-all duration-200 flex items-center gap-2 text-xs font-black uppercase tracking-wider"
                   title="Enviar gravação"
                 >
                   <Send size={14} />
+                  Enviar
                 </button>
               </div>
             </div>

@@ -1,6 +1,6 @@
 import { User, Paperclip, Check, CheckCheck, Trash2, Reply, Smile, Bookmark, Pin, LifeBuoy, MessageSquareText, ExternalLink, Hash, ChevronRight, Clock, Bell, Bot, FileText, Volume2, Download, Play, Video } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ChatMessage } from '@/types/chat.types';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useDialog } from '@auth/contexts/DialogContext';
@@ -61,6 +61,197 @@ const getFileExtension = (url: string) => {
   } catch (e) {
     return 'FILE';
   }
+};
+
+const AudioPlayer = ({ url, isMine }: { url: string; isMine: boolean }) => {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const [progress, setProgress] = useState(0);
+
+  // Array fixo de alturas estéticas simétricas para simular a Waveform
+  const waveHeights = [
+    12, 16, 20, 26, 32, 28, 22, 16, 12, 18, 24, 30, 36, 40, 
+    36, 30, 24, 18, 12, 16, 22, 28, 32, 26, 20, 16, 12, 8
+  ];
+
+  useEffect(() => {
+    const audio = new Audio(url);
+    audioRef.current = audio;
+
+    const onTimeUpdate = () => {
+      setCurrentTime(audio.currentTime);
+      if (audio.duration) {
+        setProgress((audio.currentTime / audio.duration) * 100);
+      }
+    };
+
+    const onLoadedMetadata = () => {
+      setDuration(audio.duration || 0);
+    };
+
+    const onEnded = () => {
+      setIsPlaying(false);
+      setProgress(0);
+      setCurrentTime(0);
+    };
+
+    audio.addEventListener('timeupdate', onTimeUpdate);
+    audio.addEventListener('loadedmetadata', onLoadedMetadata);
+    audio.addEventListener('ended', onEnded);
+
+    if (audio.readyState >= 1) {
+      setDuration(audio.duration);
+    }
+
+    return () => {
+      audio.pause();
+      audio.removeEventListener('timeupdate', onTimeUpdate);
+      audio.removeEventListener('loadedmetadata', onLoadedMetadata);
+      audio.removeEventListener('ended', onEnded);
+      audioRef.current = null;
+    };
+  }, [url]);
+
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play().then(() => {
+        setIsPlaying(true);
+      }).catch(err => {
+        console.error("Erro ao tocar áudio:", err);
+      });
+    }
+  };
+
+  const handlePlaybackRateChange = () => {
+    if (!audioRef.current) return;
+    let nextRate = 1;
+    if (playbackRate === 1) nextRate = 1.5;
+    else if (playbackRate === 1.5) nextRate = 2;
+    else nextRate = 1;
+
+    setPlaybackRate(nextRate);
+    audioRef.current.playbackRate = nextRate;
+  };
+
+  const handleWaveformClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!audioRef.current || !duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const width = rect.width;
+    const clickPercent = Math.min(Math.max(0, clickX / width), 1);
+    
+    audioRef.current.currentTime = clickPercent * duration;
+    setCurrentTime(clickPercent * duration);
+    setProgress(clickPercent * 100);
+  };
+
+  const formatTime = (time: number) => {
+    if (isNaN(time)) return "00:00";
+    const mins = Math.floor(time / 60);
+    const secs = Math.floor(time % 60);
+    return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+
+  const bubbleBg = isMine 
+    ? 'bg-zinc-900/95 dark:bg-zinc-950/75 border border-white/10 shadow-xl shadow-zinc-950/20 backdrop-blur-xl hover:border-white/15 transition-all duration-300' 
+    : 'bg-gradient-to-r from-primary-500/10 via-primary-500/5 to-violet-500/5 dark:from-primary-500/5 dark:via-primary-500/2 dark:to-violet-500/3 border border-primary-500/15 shadow-md shadow-primary-500/5 backdrop-blur-xl hover:border-primary-500/25 transition-all duration-300';
+
+  const textColor = isMine ? 'text-white' : 'text-gray-800 dark:text-gray-100';
+  const subTextColor = isMine ? 'text-white/60' : 'text-gray-500 dark:text-gray-400';
+  
+  const playButtonBg = isMine 
+    ? 'bg-gradient-to-tr from-white to-zinc-150 text-zinc-950 hover:scale-[1.06] hover:shadow-md hover:shadow-white/10 active:scale-95 transition-all duration-200' 
+    : 'bg-gradient-to-tr from-primary-500 via-rose-500 to-fuchsia-500 text-white hover:scale-[1.06] hover:shadow-lg hover:shadow-primary-500/25 active:scale-95 transition-all duration-200 shadow-md';
+
+  return (
+    <div className={`p-4 rounded-[2rem] ${bubbleBg} max-w-sm w-full flex flex-col gap-3 shadow-lg animate-in fade-in duration-300 relative z-30`}>
+      <div className="flex items-center gap-3">
+        <button 
+          onClick={togglePlay}
+          className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-sm ${playButtonBg}`}
+        >
+          {isPlaying ? (
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4.5 h-4.5">
+              <path fillRule="evenodd" d="M6.75 5.25a.75.75 0 0 1 .75-.75H9a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H7.5a.75.75 0 0 1-.75-.75V5.25Zm7.5 0A.75.75 0 0 1 15 4.5h1.5a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H15a.75.75 0 0 1-.75-.75V5.25Z" clipRule="evenodd" />
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4.5 h-4.5 ml-0.5 animate-pulse">
+              <path fillRule="evenodd" d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z" clipRule="evenodd" />
+            </svg>
+          )}
+        </button>
+
+        <div className="flex-1 min-w-0">
+          <p className={`text-xs font-black truncate leading-none mb-1.5 tracking-tight ${textColor}`}>
+            Mensagem de voz
+          </p>
+          <div className="flex items-center gap-1.5 leading-none">
+            <span className={`text-[9px] font-black uppercase tracking-widest ${subTextColor}`}>
+              🎙️ {formatTime(currentTime)} / {formatTime(duration)}
+            </span>
+          </div>
+        </div>
+
+        <button
+          onClick={handlePlaybackRateChange}
+          className={`h-6 px-2.5 text-[10px] font-black tracking-wider uppercase rounded-full shrink-0 border transition-all duration-200 active:scale-95 flex items-center justify-center ${
+            playbackRate !== 1 
+              ? isMine ? 'bg-white text-zinc-950 border-white shadow-md' : 'bg-gradient-to-r from-primary-500 to-rose-500 text-white border-transparent shadow-md'
+              : isMine ? 'bg-transparent text-white/70 border-white/20 hover:bg-white/10' : 'bg-transparent text-gray-500 dark:text-gray-400 hover:text-primary-500 border-gray-200 dark:border-white/10 hover:border-primary-500/30'
+          }`}
+        >
+          {playbackRate}x
+        </button>
+      </div>
+
+      <div 
+        onClick={handleWaveformClick}
+        className="h-10 w-full flex items-center justify-between gap-[3px] px-1 cursor-pointer select-none rounded-2xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors group/wave"
+      >
+        {waveHeights.map((ht, idx) => {
+          const barPercent = (idx / waveHeights.length) * 100;
+          const isActive = progress >= barPercent;
+
+          return (
+            <div 
+              key={idx}
+              className="w-1.5 rounded-full transition-all duration-150 hover:scale-y-110"
+              style={{ 
+                height: `${ht}px`,
+                backgroundColor: isActive 
+                  ? (isMine ? '#ffffff' : '#3b82f6') 
+                  : (isMine ? 'rgba(255,255,255,0.18)' : 'rgba(156,163,175,0.25)'),
+                opacity: isActive ? 1 : 0.7
+              }}
+            />
+          );
+        })}
+      </div>
+
+      <div className="flex justify-end pr-1.5 leading-none">
+        <a 
+          href={url} 
+          download 
+          target="_blank" 
+          rel="noreferrer"
+          className={`text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 hover:underline transition-all ${subTextColor}`}
+          title="Baixar arquivo de áudio"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-3 h-3">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+          </svg>
+          Salvar
+        </a>
+      </div>
+    </div>
+  );
 };
 
 export default function MessageBubble({ 
@@ -473,47 +664,21 @@ export default function MessageBubble({
                       Agendado para {formatChatDateTime(message.scheduledAt.toDate())}
                     </span>
                   </div>
-                )}
-                
+
+
+// ... (remaining code)
+
                  {/* Anexos Multimídia (Apenas se não for sticker) */}
                  {message.type !== 'sticker' && message.attachments && message.attachments.length > 0 && (
                    <div className="mt-3 flex flex-col gap-3 max-w-full relative z-30">
                      {message.attachments.map((url, i) => {
                        if (isAudioFile(url)) {
                          return (
-                           <div 
+                           <AudioPlayer 
                              key={i} 
-                             className="flex flex-col gap-2 p-3 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 max-w-sm shadow-sm"
-                           >
-                             <div className="flex items-center gap-2.5">
-                               <div className="w-9 h-9 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center shrink-0">
-                                 <Volume2 size={18} />
-                               </div>
-                               <div className="min-w-0 flex-1">
-                                 <p className="text-xs font-black truncate dark:text-white leading-tight">
-                                   {getFileNameFromUrl(url)}
-                                 </p>
-                                 <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
-                                   Mensagem de voz • {getFileExtension(url)}
-                                 </span>
-                               </div>
-                               <a 
-                                 href={url} 
-                                 download 
-                                 target="_blank" 
-                                 rel="noreferrer"
-                                 className="p-1.5 hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg text-gray-400 hover:text-primary-500 transition-colors shrink-0"
-                                 title="Baixar Áudio"
-                               >
-                                 <Download size={14} />
-                               </a>
-                             </div>
-                             <audio 
-                               controls 
-                               src={url} 
-                               className="w-full h-8 mt-1 block outline-none filter dark:invert dark:hue-rotate-180" 
-                             />
-                           </div>
+                             url={url} 
+                             isMine={isMine} 
+                           />
                          );
                        }
  
