@@ -7,7 +7,7 @@ import { UIProvider } from '@/contexts/UIContext';
 import { CRMProvider } from '@crm/contexts/CRMContext';
 import { DialogProvider } from '@auth/contexts/DialogContext';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+
 import { queryClient } from '@/lib/react-query';
 import { isFirebaseConfigured } from '@/lib/firebase';
 import { AlertTriangle } from 'lucide-react';
@@ -40,9 +40,7 @@ export function AppProviders({ children }: AppProvidersProps) {
           </AuthProvider>
         </DialogProvider>
       </BrowserRouter>
-      {import.meta.env.DEV && (
-        <ReactQueryDevtools initialIsOpen={false} position="bottom" buttonPosition="bottom-left" />
-      )}
+
     </QueryClientProvider>
   );
 }
