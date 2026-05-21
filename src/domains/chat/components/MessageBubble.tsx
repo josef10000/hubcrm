@@ -28,6 +28,7 @@ interface MessageBubbleProps {
   onThreadOpen?: (message: ChatMessage) => void;
   onSetReminder?: (message: ChatMessage, date: Date) => void;
   onForward?: (message: ChatMessage) => void;
+  readByUsers?: { uid: string; displayName: string; photoURL?: string }[];
 }
 
 const COMMON_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
@@ -287,7 +288,7 @@ const AudioPlayer = ({ url, isMine }: { url: string; isMine: boolean }) => {
 export default function MessageBubble({ 
   message, isRead, isPinned, isBookmarked, onDelete, onEdit, onReply, onReact, onVote, 
   onBookmark, onPin, onUnpin, onCreateTicket, onApprove, onImageClick, onThreadOpen, onSetReminder,
-  onForward
+  onForward, readByUsers
 }: MessageBubbleProps) {
   const { userProfile } = useAuth();
   const { teamProfiles } = useCRM();
@@ -812,26 +813,26 @@ export default function MessageBubble({
               <div className={`flex items-center justify-end mt-1`}>
                 <div className="relative">
                   <button 
-                    onClick={() => message.readBy && message.readBy.length > 0 && setShowReadBy(!showReadBy)}
+                    onClick={() => readByUsers && readByUsers.length > 0 && setShowReadBy(!showReadBy)}
                     className="hover:scale-110 transition-transform flex items-center"
+                    title={readByUsers && readByUsers.length > 0 ? `${readByUsers.length} visualizações` : "Enviada"}
                   >
                     {message.createdAt ? (
-                      isRead || (message.readBy && message.readBy.length > 0) ? <CheckCheck size={14} className="text-emerald-400" /> : <Check size={14} className="text-white/40" />
+                      isRead || (readByUsers && readByUsers.length > 0) ? <CheckCheck size={14} className="text-emerald-400" /> : <Check size={14} className="text-white/40" />
                     ) : (
                       <div className="w-2.5 h-2.5 border border-white/40 border-t-transparent rounded-full animate-spin" />
                     )}
                   </button>
                   
-                  {showReadBy && message.readBy && (
+                  {showReadBy && readByUsers && readByUsers.length > 0 && (
                     <div className="absolute bottom-full right-0 mb-2 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-white/10 rounded-2xl shadow-2xl p-3 min-w-[200px] z-[100] animate-in zoom-in-95 overflow-hidden">
                       <p className="text-[10px] font-black uppercase text-gray-400 mb-3 px-1 tracking-widest">Visualizado por</p>
                       <div className="flex flex-col gap-2 max-h-56 overflow-y-auto custom-scrollbar">
-                        {message.readBy.map(uid => {
-                          const reader = teamProfiles.find(p => p.uid === uid);
+                        {readByUsers.map(reader => {
                           return (
-                            <div key={uid} className="flex items-center gap-3 p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 transition-colors group/reader">
+                            <div key={reader.uid} className="flex items-center gap-3 p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 transition-colors group/reader">
                                <div className="w-8 h-8 rounded-lg bg-primary-500/10 flex items-center justify-center overflow-hidden border border-primary-500/20 shrink-0">
-                                 {reader?.photoURL ? (
+                                 {reader.photoURL ? (
                                    <img src={reader.photoURL} alt="" className="w-full h-full object-cover" />
                                  ) : (
                                    <User size={14} className="text-primary-500" />
@@ -839,7 +840,7 @@ export default function MessageBubble({
                                </div>
                                <div className="flex flex-col min-w-0">
                                  <span className="text-[12px] font-bold truncate text-gray-800 dark:text-gray-100">
-                                   {reader?.displayName || 'Usuário Removido'}
+                                   {reader.displayName}
                                  </span>
                                  <span className="text-[9px] text-primary-500 font-bold uppercase tracking-tighter opacity-60">Lido</span>
                                </div>

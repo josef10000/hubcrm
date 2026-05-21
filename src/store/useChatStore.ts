@@ -20,10 +20,13 @@ interface ChatState {
   loadingMessages: boolean;
   error: string | null;
 
+  drafts: { [chatId: string]: string };
+
   // Actions
   initChatList: (orgId: string, userId: string) => () => void;
   setActiveChat: (chatId: string | null) => void;
   loadMessages: (orgId: string, chatId: string, userId?: string) => () => void;
+  setDraft: (chatId: string, text: string) => void;
   
   // Optimistic Messaging
   sendMessage: (
@@ -71,6 +74,7 @@ export const useChatStore = create<ChatState>()(
   loadingChats: true,
   loadingMessages: false,
   error: null,
+  drafts: {},
 
   initChatList: (orgId: string, userId: string) => {
     if (!orgId || !userId) return () => {};
@@ -97,6 +101,15 @@ export const useChatStore = create<ChatState>()(
 
   setActiveChat: (chatId) => {
     set({ activeChatId: chatId, messages: [], loadingMessages: !!chatId });
+  },
+
+  setDraft: (chatId, text) => {
+    set(state => ({
+      drafts: {
+        ...state.drafts,
+        [chatId]: text
+      }
+    }));
   },
 
   loadMessages: (orgId: string, chatId: string, userId?: string) => {
@@ -566,6 +579,7 @@ export const useChatStore = create<ChatState>()(
 }), {
   name: 'hubcrm-chat-storage',
   partialize: (state) => ({ 
-    chats: state.chats 
+    chats: state.chats,
+    drafts: state.drafts
   }),
 }));

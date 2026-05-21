@@ -9,6 +9,7 @@ import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
+import ForwardMessageModal from './ForwardMessageModal';
 import GroupSettingsModal from './GroupSettingsModal';
 import SupportRequestModal from '@support/components/SupportRequestModal';
 import { toast } from 'sonner';
@@ -49,7 +50,14 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [activeThread, setActiveThread] = useState<ChatMessage | null>(null);
+  const [forwardingMessage, setForwardingMessage] = useState<ChatMessage | null>(null);
+  const [hasInteracted, setHasInteracted] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Resetar a interação quando mudar de chat para permitir exibir o divisor de novas mensagens novamente
+  useEffect(() => {
+    setHasInteracted(false);
+  }, [chatId]);
 
   // Filtragem de Mensagens (Busca + Ocultar Threads do fluxo principal)
   const mainMessages = messages.filter(m => !m.parentMessageId);
@@ -125,7 +133,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
     }
 
     const fetchPinnedMessages = async () => {
-      const orgId = userProfile?.orgId;
+      const orgId = effectiveOrgId;
       if (!orgId) return;
 
       const loaded: ChatMessage[] = [];
@@ -149,7 +157,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
     };
 
     fetchPinnedMessages();
-  }, [liveChat?.pinnedMessages, messages, chatId, userProfile?.orgId]);
+  }, [liveChat?.pinnedMessages, messages, chatId, effectiveOrgId]);
 
   const getPinnedMessageText = (msg: ChatMessage): string => {
     if (!msg) return "Carregando...";
@@ -476,6 +484,9 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
       {/* Janela de Mensagens */}
       <div 
         ref={scrollRef}
+        onScroll={() => {
+          if (!hasInteracted) setHasInteracted(true);
+        }}
         className="flex-1 overflow-y-auto overscroll-contain p-6 custom-scrollbar bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] dark:bg-none"
       >
         {loading ? (
@@ -490,13 +501,8 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
           </div>
         ) : (
           <div className="space-y-1">
-            {filteredMessages.map((msg, index) => {
-              // Lógica de divisor de data (Teams Style)
-              const currentDate = (msg.createdAt as any)?.toDate?.() || null;
-              const previousDate = index > 0 ? (filteredMessages[index - 1].createdAt as any)?.toDate?.() || null : null;
-              const showDivider = index === 0 || (currentDate && previousDate && !isSameDay(currentDate, previousDate));
-
-              // Função ultra-segura para extrair milissegundos (Sugerida por DeepSeek R1)
+            {(() => {
+              // Função ultra-segura para extrair milissegundos
               const getSafeMillis = (ts: any) => {
                 if (!ts) return 0;
                 if (typeof ts.toMillis === 'function') return ts.toMillis();
@@ -506,49 +512,96 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
                 return 0;
               };
 
-              // Calcular se a mensagem foi lida por ALGUÉM além de mim
-              const isRead = Object.entries(chat.lastRead || {})
-                .filter(([uid]) => uid !== userProfile?.uid)
-                .some(([_, lastReadTs]) => {
-                  const lrMillis = getSafeMillis(lastReadTs);
-                  const msgMillis = getSafeMillis(msg.createdAt);
-                  return lrMillis >= msgMillis && msgMillis > 0;
-                });
+              const myLastReadTs = chat.lastRead?.[userProfile?.uid || ''];
+              const myLastReadMillis = getSafeMillis(myLastReadTs);
+              let showedNewMessagesDivider = false;
 
-              return (
-                <React.Fragment key={msg.id}>
-                  {showDivider && currentDate && (
-                    <div className="flex items-center gap-4 py-6 px-2">
-                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400 capitalize whitespace-nowrap">
-                        {formatChatDividerDate(currentDate)}
-                      </span>
-                    </div>
-                  )}
-                  <MessageBubble 
-                    message={msg} 
-                    isRead={isRead} 
-                    isPinned={liveChat?.pinnedMessages?.includes(msg.id)}
-                    isBookmarked={bookmarkedIds.includes(msg.id)}
-                    onDelete={deleteMessage}
-                    onReply={setReplyingTo}
-                    onReact={toggleReaction}
-                    onVote={votePoll}
-                    onPin={togglePin}
-                    onUnpin={unpinMessage}
-                    onBookmark={toggleBookmark}
-                    onApprove={respondApproval}
-                    onEdit={setEditingMessage}
-                    onCreateTicket={(text) => {
-                      setInitialTicketMessage(text);
-                      setIsSupportModalOpen(true);
-                    }}
-                    onImageClick={(url) => setLightboxImage(url)}
-                    onThreadOpen={setActiveThread}
-                    onSetReminder={setMessageReminder}
-                  />
-                </React.Fragment>
-              );
-            })}
+              return filteredMessages.map((msg, index) => {
+                // Lógica de divisor de data (Teams Style)
+                const currentDate = (msg.createdAt as any)?.toDate?.() || null;
+                const previousDate = index > 0 ? (filteredMessages[index - 1].createdAt as any)?.toDate?.() || null : null;
+                const showDivider = index === 0 || (currentDate && previousDate && !isSameDay(currentDate, previousDate));
+
+                const msgMillis = getSafeMillis(msg.createdAt);
+
+                // Lógica do divisor de novas mensagens
+                const isNewMessage = myLastReadMillis > 0 && msgMillis > myLastReadMillis && msg.senderId !== userProfile?.uid;
+                const showNewMessagesDivider = isNewMessage && !showedNewMessagesDivider && !hasInteracted;
+
+                if (showNewMessagesDivider) {
+                  showedNewMessagesDivider = true;
+                }
+
+                // Calcular se a mensagem foi lida por ALGUÉM além de mim
+                const isRead = Object.entries(chat.lastRead || {})
+                  .filter(([uid]) => uid !== userProfile?.uid)
+                  .some(([_, lastReadTs]) => {
+                    const lrMillis = getSafeMillis(lastReadTs);
+                    return lrMillis >= msgMillis && msgMillis > 0;
+                  });
+
+                // Calcular a lista de usuários específicos que leram esta mensagem
+                const readByUsers = Object.entries(chat.lastRead || {})
+                  .filter(([uid]) => uid !== msg.senderId)
+                  .filter(([_, lastReadTs]) => {
+                    const lrMillis = getSafeMillis(lastReadTs);
+                    return lrMillis >= msgMillis && msgMillis > 0;
+                  })
+                  .map(([uid]) => {
+                    const profile = teamProfiles.find(p => p.uid === uid);
+                    return {
+                      uid,
+                      displayName: profile?.displayName || 'Membro do CRM',
+                      photoURL: profile?.photoURL || ''
+                    };
+                  });
+
+                return (
+                  <React.Fragment key={msg.id}>
+                    {showDivider && currentDate && (
+                      <div className="flex items-center gap-4 py-6 px-2">
+                        <span className="text-sm font-medium text-gray-500 dark:text-gray-400 capitalize whitespace-nowrap">
+                          {formatChatDividerDate(currentDate)}
+                        </span>
+                      </div>
+                    )}
+                    {showNewMessagesDivider && (
+                      <div className="flex items-center gap-4 py-4 px-2 my-2 select-none animate-in fade-in duration-300">
+                        <div className="h-[2px] flex-1 bg-gradient-to-r from-transparent to-red-500/50" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-red-500 bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20 shadow-[0_0_8px_rgba(239,68,68,0.2)]">
+                          Novas Mensagens
+                        </span>
+                        <div className="h-[2px] flex-1 bg-gradient-to-r from-red-500/50 to-transparent" />
+                      </div>
+                    )}
+                    <MessageBubble 
+                      message={msg} 
+                      isRead={isRead} 
+                      isPinned={liveChat?.pinnedMessages?.includes(msg.id)}
+                      isBookmarked={bookmarkedIds.includes(msg.id)}
+                      onDelete={deleteMessage}
+                      onReply={setReplyingTo}
+                      onReact={toggleReaction}
+                      onVote={votePoll}
+                      onPin={togglePin}
+                      onUnpin={unpinMessage}
+                      onBookmark={toggleBookmark}
+                      onApprove={respondApproval}
+                      onEdit={setEditingMessage}
+                      onCreateTicket={(text) => {
+                        setInitialTicketMessage(text);
+                        setIsSupportModalOpen(true);
+                      }}
+                      onImageClick={(url) => setLightboxImage(url)}
+                      onThreadOpen={setActiveThread}
+                      onSetReminder={setMessageReminder}
+                      onForward={setForwardingMessage}
+                      readByUsers={readByUsers}
+                    />
+                  </React.Fragment>
+                );
+              });
+            })()}
           </div>
         )}
       </div>
@@ -579,6 +632,14 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
         onClose={() => setIsSupportModalOpen(false)}
         initialMessage={initialTicketMessage}
       />
+
+      {forwardingMessage && (
+        <ForwardMessageModal 
+          isOpen={!!forwardingMessage} 
+          onClose={() => setForwardingMessage(null)} 
+          message={forwardingMessage} 
+        />
+      )}
     </div>
 
       {/* Sidebar de Mídia Compartilhada */}
