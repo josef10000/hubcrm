@@ -20,6 +20,7 @@ import { Client } from '@/types';
 import { MessageSchedulerModal } from './MessageSchedulerModal';
 import { Timestamp } from 'firebase/firestore';
 import { GifPickerModal } from './GifPickerModal';
+import { useChatStore } from '@/store/useChatStore';
 
 interface MessageInputProps {
   onSend: (
@@ -49,6 +50,9 @@ interface MessageInputProps {
 export default function MessageInput({ 
   onSend, onTyping, replyTo, onCancelReply, editingMessage, onCancelEdit, onUpdate, members, parentMessageId, chatId 
 }: MessageInputProps) {
+  const drafts = useChatStore(state => state.drafts);
+  const setDraft = useChatStore(state => state.setDraft);
+
   const [isPollModalOpen, setIsPollModalOpen] = useState(false);
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
@@ -359,15 +363,26 @@ export default function MessageInput({
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
-  // Focus e carregar texto ao editar
+  // Restaurar rascunho ao trocar de canal
+  useEffect(() => {
+    if (!editingMessage) {
+      if (chatId) {
+        setText(drafts[chatId] || '');
+      } else {
+        setText('');
+      }
+    }
+  }, [chatId]);
+
+  // Focus e carregar texto ao editar ou restaurar rascunho
   useEffect(() => {
     if (editingMessage) {
       setText(editingMessage.text);
       textareaRef.current?.focus();
     } else {
-      setText('');
+      setText(chatId ? drafts[chatId] || '' : '');
     }
-  }, [editingMessage]);
+  }, [editingMessage, chatId, drafts]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -397,6 +412,9 @@ export default function MessageInput({
       onSend(text, mentions, [], replyTo, members, "text", undefined, undefined, undefined, parentMessageId, scheduledAt || undefined);
     }
     
+    if (chatId) {
+      setDraft(chatId, '');
+    }
     setText('');
     setScheduledAt(null);
     onTyping(false);
@@ -417,6 +435,9 @@ export default function MessageInput({
 
     setShowSlashCommands(false);
     setProcessingBot(true);
+    if (chatId) {
+      setDraft(chatId, '');
+    }
     setText('');
 
     // Envia o comando como mensagem do usuário
@@ -514,6 +535,9 @@ export default function MessageInput({
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
     setText(val);
+    if (chatId) {
+      setDraft(chatId, val);
+    }
     
     // Lógica de Menções
     const cursorPos = e.target.selectionStart;
@@ -553,8 +577,12 @@ export default function MessageInput({
     const beforeAt = text.slice(0, lastAtPos);
     const afterAt = text.slice(cursorPos);
     const mentionText = `@${item.displayName.replace(/\s/g, '')} `;
+    const newVal = beforeAt + mentionText + afterAt;
     
-    setText(beforeAt + mentionText + afterAt);
+    setText(newVal);
+    if (chatId) {
+      setDraft(chatId, newVal);
+    }
     setShowMentions(false);
     textareaRef.current?.focus();
   };
@@ -575,7 +603,11 @@ export default function MessageInput({
     const cursorPos = textareaRef.current?.selectionStart || text.length;
     const before = text.slice(0, cursorPos);
     const after = text.slice(cursorPos);
-    setText(before + emoji + after);
+    const newVal = before + emoji + after;
+    setText(newVal);
+    if (chatId) {
+      setDraft(chatId, newVal);
+    }
     
     // Devolve o foco ao textarea após 10ms
     setTimeout(() => {
@@ -866,6 +898,9 @@ export default function MessageInput({
         onSelect={(timestamp) => {
           if (timestamp && text.trim()) {
             onSend(text, [], [], null, members, "text", undefined, undefined, undefined, parentMessageId, timestamp);
+            if (chatId) {
+              setDraft(chatId, '');
+            }
             setText('');
             setScheduledAt(null);
           } else {
