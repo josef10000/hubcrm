@@ -807,7 +807,7 @@ export const useChatStore = create<ChatState>()(
     }));
 
     try {
-      const res = await fetch('/api/transcribe', {
+      const res = await fetch('/api/chat_handler?action=transcribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ audioUrl })

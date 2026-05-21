@@ -27,7 +27,7 @@ export const LinkPreviewCard: React.FC<LinkPreviewCardProps> = ({ url }) => {
     const fetchMeta = async () => {
       try {
         setLoading(true);
-        const res = await fetch('/api/link-preview', {
+        const res = await fetch('/api/chat_handler?action=preview', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url })
