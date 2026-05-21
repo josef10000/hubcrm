@@ -117,7 +117,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
             className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors"
           >
             <X className="w-4 h-4" />
-          </</button>
+          </button>
         </div>
 
         {/* Barra de Pesquisa */}

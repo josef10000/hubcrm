@@ -237,3 +237,5 @@ export function ForwardMessageModal({ isOpen, onClose, message, isBatch = false 
     </AnimatePresence>
   );
 }
+
+export default ForwardMessageModal;
