@@ -167,6 +167,9 @@ export const useChatStore = create<ChatState>()(
         const lastMsg = msgs[msgs.length - 1];
         
         if (lastMsg.senderId !== userId) {
+          // Marcar como lido no Firestore em tempo real enquanto o chat está aberto
+          get().markAsRead(orgId, chatId, userId);
+
           const isMentioned = lastMsg.mentions?.includes(userId) || lastMsg.mentionAll;
           if (isMentioned && Notification.permission === 'granted') {
             new Notification(`${lastMsg.senderName} te mencionou`, {

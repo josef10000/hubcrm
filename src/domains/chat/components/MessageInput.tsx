@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, Smile, X, Loader2, Calendar, LayoutGrid, Image as ImageIcon, Clock, Mic, Square, Trash2, Zap, AlertTriangle } from 'lucide-react';
+import { Send, Paperclip, Smile, X, Loader2, Calendar, LayoutGrid, Image as ImageIcon, Clock, Mic, Square, Trash2, Zap, AlertTriangle, Settings } from 'lucide-react';
 import { parseMentions } from '@/helpers/chatHelpers';
 import { filterCommands, findCommand, BotCommand, BotContext } from '@/helpers/botCommands';
 import { useCRM } from '@crm/contexts/CRMContext';
@@ -21,6 +21,7 @@ import { MessageSchedulerModal } from './MessageSchedulerModal';
 import { Timestamp } from 'firebase/firestore';
 import { GifPickerModal } from './GifPickerModal';
 import { useChatStore } from '@/store/useChatStore';
+import ManageTemplatesModal from './ManageTemplatesModal';
 
 interface MessageInputProps {
   onSend: (
@@ -60,6 +61,7 @@ export default function MessageInput({
 
   const [priority, setPriority] = useState<'normal' | 'urgent'>('normal');
   const [showTemplates, setShowTemplates] = useState(false);
+  const [isManageTemplatesOpen, setIsManageTemplatesOpen] = useState(false);
 
   const [isPollModalOpen, setIsPollModalOpen] = useState(false);
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
@@ -781,8 +783,19 @@ export default function MessageInput({
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowTemplates(false)} />
                 <div className="absolute left-0 bottom-full mb-2 w-64 bg-white dark:bg-zinc-950 border border-gray-100 dark:border-white/10 rounded-2xl shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-200 max-h-48 overflow-y-auto custom-scrollbar">
-                  <div className="px-3 py-1 text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100 dark:border-white/5 mb-1">
-                    Templates de Resposta
+                  <div className="px-3 py-1 text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100 dark:border-white/5 mb-1 flex items-center justify-between">
+                    <span>Templates de Resposta</span>
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        setShowTemplates(false);
+                        setIsManageTemplatesOpen(true);
+                      }}
+                      className="p-1 hover:bg-gray-100 dark:hover:bg-white/5 rounded text-gray-400 hover:text-primary-500 transition-colors"
+                      title="Gerenciar Templates"
+                    >
+                      <Settings size={12} />
+                    </button>
                   </div>
                   {((quickTemplates && quickTemplates.length > 0) ? quickTemplates : [
                     { id: '1', title: 'Boas-vindas', text: 'Olá! Seja muito bem-vindo ao HubCRM. Como posso te ajudar hoje? 😊' },
@@ -1016,6 +1029,11 @@ export default function MessageInput({
         isOpen={isGifModalOpen}
         onClose={() => setIsGifModalOpen(false)}
         onSelect={handleSelectGif}
+      />
+
+      <ManageTemplatesModal 
+        isOpen={isManageTemplatesOpen}
+        onClose={() => setIsManageTemplatesOpen(false)}
       />
     </div>
   );

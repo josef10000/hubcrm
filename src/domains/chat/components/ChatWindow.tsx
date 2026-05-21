@@ -55,6 +55,14 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
   const [forwardingMessage, setForwardingMessage] = useState<ChatMessage | null>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+
+  const scrollToBottom = () => {
+    scrollRef.current?.scrollTo({
+      top: scrollRef.current.scrollHeight,
+      behavior: 'smooth'
+    });
+  };
 
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
   const [isForwardBatchOpen, setIsForwardBatchOpen] = useState(false);
@@ -385,7 +393,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
 
   return (
     <>
-      <div className="flex-1 flex flex-col bg-white dark:bg-black/40 min-w-0">
+      <div className="flex-1 flex flex-col bg-white dark:bg-black/40 min-w-0 relative">
       {/* Header do Chat */}
       <div className="p-4 border-b border-gray-100 dark:border-white/10 flex items-center justify-between min-h-[73px]">
         <div className="flex items-center gap-3">
@@ -581,8 +589,13 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
       {/* Janela de Mensagens */}
       <div 
         ref={scrollRef}
-        onScroll={() => {
+        onScroll={(e) => {
           if (!hasInteracted) setHasInteracted(true);
+          const el = e.currentTarget;
+          if (el) {
+            const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 350;
+            setShowScrollToBottom(!isNearBottom);
+          }
         }}
         className="flex-1 overflow-y-auto overscroll-contain p-6 custom-scrollbar bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] dark:bg-none"
       >
@@ -765,6 +778,22 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
           onEdit={setEditingMessage}
         />
       )}
+
+      {/* Scroll Rápido Estilo Teams */}
+      <AnimatePresence>
+        {showScrollToBottom && (
+          <motion.button
+            initial={{ opacity: 0, y: 10, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.9 }}
+            onClick={scrollToBottom}
+            className="absolute bottom-24 right-6 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-gray-150 dark:border-white/10 px-4 py-2 rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all text-primary-500 hover:shadow-primary-500/10 flex items-center gap-1.5 z-30 font-black text-[11px] uppercase tracking-wider"
+          >
+            <ChevronDown size={14} className="animate-bounce" />
+            Ir para o fim
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       <GroupSettingsModal 
         isOpen={isSettingsOpen} 

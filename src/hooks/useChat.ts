@@ -13,8 +13,19 @@ export function useChat(chatId: string | null) {
 
   useEffect(() => {
     if (effectiveOrgId && chatId) {
+      // Sincronizar o chat ativo na store global do Zustand
+      store.setActiveChat(chatId);
+
+      // Limpar notificações no Firestore ao carregar o chat
+      store.markAsRead(effectiveOrgId, chatId, userProfile?.uid);
+
       const unsubscribe = store.loadMessages(effectiveOrgId, chatId, userProfile?.uid);
-      return () => unsubscribe();
+      
+      return () => {
+        unsubscribe();
+        // Limpar o chat ativo ao sair
+        store.setActiveChat(null);
+      };
     }
   }, [effectiveOrgId, chatId, userProfile?.uid]);
 
