@@ -1,4 +1,4 @@
-import { User, Paperclip, Check, CheckCheck, Trash2, Reply, Smile, Bookmark, Pin, LifeBuoy, MessageSquareText, ExternalLink, Hash, ChevronRight, Clock, Bell, Bot, FileText, Volume2, Download, Play, Video } from 'lucide-react';
+import { User, Paperclip, Check, CheckCheck, Trash2, Reply, Smile, Bookmark, Pin, LifeBuoy, MessageSquareText, ExternalLink, Hash, ChevronRight, Clock, Bell, Bot, FileText, Volume2, Download, Play, Video, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import React, { useState, useRef, useEffect } from 'react';
 import { ChatMessage } from '@/types/chat.types';
@@ -7,6 +7,7 @@ import { useDialog } from '@auth/contexts/DialogContext';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { formatChatTime, formatChatDateTime, highlightMentions } from '@/helpers/chatHelpers';
 import { ReminderModal } from './ReminderModal';
+import MarkdownText from './MarkdownText';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -26,6 +27,7 @@ interface MessageBubbleProps {
   onImageClick?: (url: string) => void;
   onThreadOpen?: (message: ChatMessage) => void;
   onSetReminder?: (message: ChatMessage, date: Date) => void;
+  onForward?: (message: ChatMessage) => void;
 }
 
 const COMMON_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
@@ -284,7 +286,8 @@ const AudioPlayer = ({ url, isMine }: { url: string; isMine: boolean }) => {
 
 export default function MessageBubble({ 
   message, isRead, isPinned, isBookmarked, onDelete, onEdit, onReply, onReact, onVote, 
-  onBookmark, onPin, onUnpin, onCreateTicket, onApprove, onImageClick, onThreadOpen, onSetReminder 
+  onBookmark, onPin, onUnpin, onCreateTicket, onApprove, onImageClick, onThreadOpen, onSetReminder,
+  onForward
 }: MessageBubbleProps) {
   const { userProfile } = useAuth();
   const { teamProfiles } = useCRM();
@@ -429,6 +432,14 @@ export default function MessageBubble({
                   <Bell size={14} />
                 </button>
 
+                <button 
+                  onClick={() => onForward?.(message)}
+                  className="p-1.5 text-gray-400 hover:text-primary-500 hover:bg-primary-500/10 rounded-full transition-colors"
+                  title="Encaminhar"
+                >
+                  <Send size={14} className="-rotate-45" />
+                </button>
+
                 {isMine && (
                   <>
                     <button 
@@ -491,6 +502,12 @@ export default function MessageBubble({
               </div>
             ) : (
               <>
+                {message.forwardedFrom && (
+                  <div className={`flex items-center gap-1.5 mb-2 text-[10px] font-black uppercase tracking-widest ${isMine ? 'text-white/60' : 'text-primary-500'}`}>
+                    <Reply size={10} className="transform scale-x-[-1]" />
+                    <span>Encaminhada de {message.forwardedFrom}</span>
+                  </div>
+                )}
                 {message.type === 'poll' && message.poll ? (
                   <div className="space-y-4 my-2 min-w-[240px]">
                     <h4 className="font-bold text-lg leading-tight">{message.poll.question}</h4>
@@ -603,20 +620,7 @@ export default function MessageBubble({
                     />
                   </div>
                 ) : (
-                  <p className="text-sm whitespace-pre-wrap break-words leading-relaxed font-medium">
-                    {/* Renderização com Destaque de Menções */}
-                    {highlightMentions(message.text).map((part, i) => {
-                      const mentionRegex = /(@todos|@everyone|@[a-zA-Z0-9_\u00C0-\u017F]+)/;
-                      if (mentionRegex.test(part)) {
-                        return (
-                          <span key={i} className={`font-black tracking-tight ${isMine ? 'text-primary-400' : 'text-primary-600'}`}>
-                            {part}
-                          </span>
-                        );
-                      }
-                      return part;
-                    })}
-                  </p>
+                  <MarkdownText text={message.text} isMine={isMine} />
                 )}
                 
                 {/* Indicador de Thread (Tópico) */}

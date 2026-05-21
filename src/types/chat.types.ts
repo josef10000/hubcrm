@@ -96,6 +96,7 @@ export interface ChatMessage {
     value?: string;
     url: string;
   };
+  forwardedFrom?: string;             // Nome do remetente original se for encaminhada
   createdAt: Timestamp;
 }
 

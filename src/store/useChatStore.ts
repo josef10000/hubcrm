@@ -58,6 +58,7 @@ interface ChatState {
   setMessageReminder: (orgId: string, userId: string, chatId: string, message: ChatMessage, date: Date) => Promise<void>;
   createChannel: (orgId: string, data: Partial<Chat>) => Promise<string>;
   sendBotMessage: (orgId: string, chatId: string, botName: string, text: string, type?: ChatMessage['type'], parentMessageId?: string) => Promise<void>;
+  forwardMessage: (orgId: string, targetChatId: string, userId: string, userName: string, userPhoto: string, message: ChatMessage) => Promise<void>;
 }
 
 export const useChatStore = create<ChatState>()(
@@ -461,6 +462,105 @@ export const useChatStore = create<ChatState>()(
       await batch.commit();
     } catch (err) {
       Logger.error("[ChatStore] Error sending bot message:", err);
+    }
+  },
+
+  forwardMessage: async (orgId, targetChatId, userId, userName, userPhoto, message) => {
+    if (!orgId || !targetChatId) return;
+
+    const optimisticId = `opt-${crypto.randomUUID()}`;
+    const forwardedMsg: ChatMessage = {
+      id: optimisticId,
+      text: message.text,
+      senderId: userId,
+      senderName: userName,
+      senderPhotoURL: userPhoto,
+      attachments: message.attachments || [],
+      mentions: message.mentions || [],
+      mentionAll: message.mentionAll || false,
+      replyTo: null,
+      type: message.type || "text",
+      forwardedFrom: message.forwardedFrom || message.senderName,
+      createdAt: Timestamp.now(),
+    };
+
+    if (message.poll) {
+      forwardedMsg.poll = {
+        question: message.poll.question,
+        options: message.poll.options.map(opt => ({
+          id: opt.id,
+          text: opt.text,
+          votes: []
+        }))
+      };
+    }
+    if (message.approval) {
+      forwardedMsg.approval = {
+        question: message.approval.question,
+        status: 'pending',
+        type: message.approval.type,
+        targetId: message.approval.targetId,
+        value: message.approval.value
+      };
+    }
+    if (message.richPreview) forwardedMsg.richPreview = message.richPreview;
+
+    if (get().activeChatId === targetChatId) {
+      set(state => ({
+        messages: [...state.messages, forwardedMsg]
+      }));
+    }
+
+    try {
+      const messagesRef = collection(db, 'organizations', orgId, 'chats', targetChatId, 'messages');
+      const chatRef = doc(db, 'organizations', orgId, 'chats', targetChatId);
+
+      const batch = writeBatch(db);
+
+      const msgData = {
+        ...forwardedMsg,
+        createdAt: serverTimestamp(),
+        status: "sent"
+      };
+      delete (msgData as any).id;
+
+      const newMsgRef = doc(messagesRef);
+      batch.set(newMsgRef, msgData);
+
+      batch.update(chatRef, {
+        lastMessage: {
+          text: forwardedMsg.type === 'text' ? forwardedMsg.text : `[${forwardedMsg.type}]`,
+          senderId: userId,
+          senderName: userName,
+          createdAt: serverTimestamp()
+        },
+        updatedAt: serverTimestamp()
+      });
+
+      const targetChat = get().chats.find(c => c.id === targetChatId);
+      if (targetChat) {
+        const unreadUpdates: any = {};
+        targetChat.members.forEach(memberId => {
+          if (memberId !== userId) {
+            unreadUpdates[`unreadCount.${memberId}`] = (targetChat.unreadCount?.[memberId] || 0) + 1;
+          }
+        });
+        if (Object.keys(unreadUpdates).length > 0) {
+          batch.update(chatRef, unreadUpdates);
+        }
+      }
+
+      await batch.commit();
+      toast.success("Mensagem encaminhada!");
+    } catch (err: any) {
+      Logger.error("[ChatStore] Error forwarding message:", err);
+      toast.error(`Erro ao encaminhar: ${err.message || 'Erro desconhecido'}`);
+      
+      if (get().activeChatId === targetChatId) {
+        set(state => ({
+          messages: state.messages.filter(m => m.id !== optimisticId)
+        }));
+      }
     }
   }
 }), {
