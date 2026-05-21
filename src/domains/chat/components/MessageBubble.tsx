@@ -79,13 +79,11 @@ const extractFirstUrl = (text: string) => {
 const AudioPlayer = ({ 
   url, 
   isMine, 
-  messageId, 
-  transcription 
+  messageId 
 }: { 
   url: string; 
   isMine: boolean; 
   messageId: string; 
-  transcription?: string; 
 }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -96,12 +94,6 @@ const AudioPlayer = ({
   });
   const [playbackRate, setPlaybackRate] = useState(1);
   const [progress, setProgress] = useState(0);
-  const [transcribing, setTranscribing] = useState(false);
-  const [showTranscription, setShowTranscription] = useState(true);
-
-  const transcribeAudioMessage = useChatStore(state => state.transcribeAudioMessage);
-  const activeChatId = useChatStore(state => state.activeChatId);
-  const { effectiveOrgId } = useCRM();
 
   // Array fixo de alturas estéticas simétricas para simular a Waveform
   const waveHeights = [
@@ -292,34 +284,7 @@ const AudioPlayer = ({
         })}
       </div>
 
-      <div className="flex items-center justify-between px-1.5 mt-1 leading-none select-none">
-        {transcription ? (
-          <button
-            onClick={() => setShowTranscription(!showTranscription)}
-            className={`text-[9px] font-black uppercase tracking-widest flex items-center gap-1 hover:underline ${subTextColor}`}
-          >
-            {showTranscription ? 'Ocultar Transcrição' : 'Mostrar Transcrição 🎙️'}
-          </button>
-        ) : (
-          <button
-            onClick={async () => {
-              if (!effectiveOrgId || !activeChatId || !messageId) return;
-              try {
-                setTranscribing(true);
-                await transcribeAudioMessage(effectiveOrgId, activeChatId, messageId, url);
-              } catch (err) {
-                console.error("Falha ao transcrever:", err);
-              } finally {
-                setTranscribing(false);
-              }
-            }}
-            disabled={transcribing}
-            className="text-[9px] font-black uppercase tracking-widest text-violet-500 dark:text-violet-400 hover:underline flex items-center gap-1"
-          >
-            {transcribing ? 'Transcrevendo...' : 'Transcrever Áudio ✨'}
-          </button>
-        )}
-
+      <div className="flex items-center justify-end px-1.5 mt-1 leading-none select-none">
         <a 
           href={url} 
           download 
@@ -334,12 +299,6 @@ const AudioPlayer = ({
           Salvar
         </a>
       </div>
-
-      {transcription && showTranscription && (
-        <div className="mt-2 p-2.5 rounded-2xl bg-black/10 dark:bg-white/5 border border-white/5 text-[11px] leading-relaxed italic text-zinc-300 dark:text-zinc-450 break-words select-text font-medium">
-          "{transcription}"
-        </div>
-      )}
     </div>
   );
 };
@@ -360,6 +319,7 @@ export default function MessageBubble({
   const isSelectionMode = useChatStore(state => state.isSelectionMode);
   const selectedMessageIds = useChatStore(state => state.selectedMessageIds);
   const toggleSelectMessage = useChatStore(state => state.toggleSelectMessage);
+  const setSelectionMode = useChatStore(state => state.setSelectionMode);
   const activeChatId = useChatStore(state => state.activeChatId);
 
   const isMine = message.senderId === userProfile?.uid;
@@ -406,7 +366,14 @@ export default function MessageBubble({
       className={`flex flex-col mb-4 ${isMine ? 'items-end' : 'items-start'} group animate-in fade-in slide-in-from-bottom-2 duration-300 scroll-mt-12 transition-all duration-300 ${
         isSelectionMode ? 'cursor-pointer select-none hover:bg-zinc-50/10 dark:hover:bg-zinc-950/10 px-2 rounded-2xl py-1' : ''
       }`}
-      onDoubleClick={() => !isDeleted && !isSelectionMode && onReply?.(message)}
+      onDoubleClick={() => {
+        if (!isDeleted) {
+          if (!isSelectionMode) {
+            setSelectionMode(true);
+          }
+          toggleSelectMessage(message.id);
+        }
+      }}
     >
       {/* Nome do Remetente (Apenas Grupos/Outros) */}
       {!isMine && !isDeleted && (
@@ -463,6 +430,15 @@ export default function MessageBubble({
           {!isDeleted && !isSelectionMode && (
             <div className={`absolute -top-8 flex items-center gap-1 opacity-0 group-hover/bubble:opacity-100 transition-all z-20 ${isMine ? 'right-0' : 'left-0'}`}>
               <div className="flex bg-white dark:bg-zinc-900 shadow-xl border border-gray-100 dark:border-white/10 rounded-full py-1 px-2 gap-1 items-center">
+                {/* Botão de Responder */}
+                <button 
+                  onClick={() => onReply?.(message)}
+                  className="p-1.5 text-gray-400 hover:text-primary-500 hover:bg-primary-500/10 rounded-full transition-colors"
+                  title="Responder"
+                >
+                  <Reply size={14} />
+                </button>
+
                 {/* Botão de Reação Rápida (Emoji) */}
                 <div className="relative">
                   <button 
@@ -822,7 +798,6 @@ export default function MessageBubble({
                              url={url} 
                              isMine={isMine} 
                              messageId={message.id}
-                             transcription={message.transcription}
                            />
                          );
                        }

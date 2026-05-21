@@ -70,9 +70,6 @@ interface ChatState {
   // Checklist Colaborativo (Fase 2)
   toggleChecklistItem: (orgId: string, chatId: string, messageId: string, itemId: string, userId: string, userName: string) => Promise<void>;
 
-  // Transcrição de áudio por IA (Fase 3)
-  transcribeAudioMessage: (orgId: string, chatId: string, messageId: string, audioUrl: string) => Promise<void>;
-
   // Other Actions
   setTypingStatus: (orgId: string, chatId: string, userId: string, userName: string, isTyping: boolean) => Promise<void>;
   deleteMessage: (orgId: string, chatId: string, messageId: string) => Promise<boolean>;
@@ -793,43 +790,6 @@ export const useChatStore = create<ChatState>()(
       // Reverte em caso de erro
       set(state => ({
         messages: state.messages.map(m => m.id === messageId ? { ...m, checklist: msg.checklist } : m)
-      }));
-    }
-  },
-
-  // Transcrição de áudio por IA (Fase 3)
-  transcribeAudioMessage: async (orgId, chatId, messageId, audioUrl) => {
-    const msgRef = doc(db, 'organizations', orgId, 'chats', chatId, 'messages', messageId);
-    
-    // Atualização otimista na UI
-    set(state => ({
-      messages: state.messages.map(m => m.id === messageId ? { ...m, transcription: "Transcrevendo áudio..." } : m)
-    }));
-
-    try {
-      const res = await fetch('/api/chat_handler?action=transcribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ audioUrl })
-      });
-      const data = await res.json();
-      
-      if (!res.ok) {
-        throw new Error(data.error || "Erro na transcrição");
-      }
-
-      const transcription = data.transcription;
-      await updateDoc(msgRef, { transcription });
-      
-      set(state => ({
-        messages: state.messages.map(m => m.id === messageId ? { ...m, transcription } : m)
-      }));
-      toast.success("Áudio transcrito!");
-    } catch (err: any) {
-      Logger.error("[ChatStore] Error transcribing audio:", err);
-      toast.error(`Falha ao transcrever: ${err.message}`);
-      set(state => ({
-        messages: state.messages.map(m => m.id === messageId ? { ...m, transcription: undefined } : m)
       }));
     }
   }

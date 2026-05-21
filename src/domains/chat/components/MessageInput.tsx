@@ -784,7 +784,11 @@ export default function MessageInput({
                   <div className="px-3 py-1 text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100 dark:border-white/5 mb-1">
                     Templates de Resposta
                   </div>
-                  {quickTemplates.map(tpl => (
+                  {((quickTemplates && quickTemplates.length > 0) ? quickTemplates : [
+                    { id: '1', title: 'Boas-vindas', text: 'Olá! Seja muito bem-vindo ao HubCRM. Como posso te ajudar hoje? 😊' },
+                    { id: '2', title: 'Agradecimento', text: 'Muito obrigado pelo retorno! Estarei analisando os dados e te retorno em breve. 👍' },
+                    { id: '3', title: 'Aguardando Proposta', text: 'Olá, acabei de enviar uma proposta comercial para sua aprovação no chat. Poderia verificar, por favor? 🚀' }
+                  ]).map(tpl => (
                     <button
                       key={tpl.id}
                       type="button"
