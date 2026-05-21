@@ -44,8 +44,34 @@ interface ChatState {
     approval?: ChatMessage['approval'],
     richPreview?: ChatMessage['richPreview'],
     parentMessageId?: string,
-    scheduledAt?: Timestamp
+    scheduledAt?: Timestamp,
+    priority?: ChatMessage['priority'],
+    checklist?: ChatMessage['checklist']
   ) => Promise<void>;
+
+  // Seleção e lote (Fase 2)
+  selectedMessageIds: string[];
+  isSelectionMode: boolean;
+  toggleSelectMessage: (messageId: string) => void;
+  clearSelection: () => void;
+  setSelectionMode: (enabled: boolean) => void;
+  batchDelete: (orgId: string, chatId: string) => Promise<void>;
+  batchForward: (orgId: string, targetChatIds: string[], userId: string, userName: string, userPhoto: string) => Promise<void>;
+
+  // Templates de Resposta Rápida (Fase 2)
+  quickTemplates: { id: string; title: string; text: string }[];
+  addQuickTemplate: (title: string, text: string) => void;
+  deleteQuickTemplate: (id: string) => void;
+
+  // Skin tones para Emojis (Fase 3)
+  emojiSkinTone: string;
+  setEmojiSkinTone: (skinTone: string) => void;
+
+  // Checklist Colaborativo (Fase 2)
+  toggleChecklistItem: (orgId: string, chatId: string, messageId: string, itemId: string, userId: string, userName: string) => Promise<void>;
+
+  // Transcrição de áudio por IA (Fase 3)
+  transcribeAudioMessage: (orgId: string, chatId: string, messageId: string, audioUrl: string) => Promise<void>;
 
   // Other Actions
   setTypingStatus: (orgId: string, chatId: string, userId: string, userName: string, isTyping: boolean) => Promise<void>;
@@ -75,6 +101,14 @@ export const useChatStore = create<ChatState>()(
   loadingMessages: false,
   error: null,
   drafts: {},
+  selectedMessageIds: [],
+  isSelectionMode: false,
+  quickTemplates: [
+    { id: '1', title: 'Boas-vindas', text: 'Olá! Seja muito bem-vindo ao HubCRM. Como posso te ajudar hoje? 😊' },
+    { id: '2', title: 'Agradecimento', text: 'Muito obrigado pelo retorno! Estarei analisando os dados e te retorno em breve. 👍' },
+    { id: '3', title: 'Aguardando Proposta', text: 'Olá, acabei de enviar uma proposta comercial para sua aprovação no chat. Poderia verificar, por favor? 🚀' }
+  ],
+  emojiSkinTone: 'default',
 
   initChatList: (orgId: string, userId: string) => {
     if (!orgId || !userId) return () => {};
@@ -172,7 +206,7 @@ export const useChatStore = create<ChatState>()(
     };
   },
 
-  sendMessage: async (orgId, chatId, userId, userName, userPhoto, text, mentions, attachments, replyTo, type = "text", poll, approval, richPreview, parentMessageId, scheduledAt) => {
+  sendMessage: async (orgId, chatId, userId, userName, userPhoto, text, mentions, attachments, replyTo, type = "text", poll, approval, richPreview, parentMessageId, scheduledAt, priority, checklist) => {
     if (!orgId || !chatId) return;
 
     // 1. Criar Mensagem Otimista
@@ -197,6 +231,8 @@ export const useChatStore = create<ChatState>()(
     if (richPreview) newMessage.richPreview = richPreview;
     if (parentMessageId) newMessage.parentMessageId = parentMessageId;
     if (scheduledAt) newMessage.scheduledAt = scheduledAt;
+    if (priority) newMessage.priority = priority;
+    if (checklist) newMessage.checklist = checklist;
 
     // 2. Atualizar UI imediatamente
     set(state => ({
@@ -575,11 +611,234 @@ export const useChatStore = create<ChatState>()(
         }));
       }
     }
+  },
+
+  // Seleção e lote (Fase 2)
+  toggleSelectMessage: (messageId) => {
+    set(state => {
+      const isSelected = state.selectedMessageIds.includes(messageId);
+      const selected = isSelected 
+        ? state.selectedMessageIds.filter(id => id !== messageId) 
+        : [...state.selectedMessageIds, messageId];
+      return { 
+        selectedMessageIds: selected,
+        isSelectionMode: selected.length > 0
+      };
+    });
+  },
+  
+  clearSelection: () => {
+    set({ selectedMessageIds: [], isSelectionMode: false });
+  },
+
+  setSelectionMode: (enabled) => {
+    set({ isSelectionMode: enabled, selectedMessageIds: enabled ? get().selectedMessageIds : [] });
+  },
+
+  batchDelete: async (orgId, chatId) => {
+    const selectedIds = get().selectedMessageIds;
+    if (selectedIds.length === 0) return;
+    try {
+      const batch = writeBatch(db);
+      selectedIds.forEach(id => {
+        const msgRef = doc(db, 'organizations', orgId, 'chats', chatId, 'messages', id);
+        batch.update(msgRef, {
+          isDeleted: true,
+          text: "🚫 Esta mensagem foi apagada em lote",
+          attachments: []
+        });
+      });
+      await batch.commit();
+      toast.success(`${selectedIds.length} mensagens apagadas com sucesso.`);
+      get().clearSelection();
+    } catch (err: any) {
+      Logger.error("[ChatStore] Error in batchDelete:", err);
+      toast.error(`Erro ao apagar em lote: ${err.message}`);
+    }
+  },
+
+  batchForward: async (orgId, targetChatIds, userId, userName, userPhoto) => {
+    const selectedIds = get().selectedMessageIds;
+    if (selectedIds.length === 0 || targetChatIds.length === 0) return;
+    
+    // Obter mensagens selecionadas ordenadas por data
+    const msgsToForward = get().messages
+      .filter(m => selectedIds.includes(m.id))
+      .sort((a, b) => {
+        const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+        const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+        return tA - tB;
+      });
+
+    if (msgsToForward.length === 0) return;
+
+    try {
+      for (const targetChatId of targetChatIds) {
+        const batch = writeBatch(db);
+        const messagesRef = collection(db, 'organizations', orgId, 'chats', targetChatId, 'messages');
+        const chatRef = doc(db, 'organizations', orgId, 'chats', targetChatId);
+
+        let lastText = "";
+        for (const message of msgsToForward) {
+          const newMsgRef = doc(messagesRef);
+          const msgData: any = {
+            text: message.text,
+            senderId: userId,
+            senderName: userName,
+            senderPhotoURL: userPhoto,
+            attachments: message.attachments || [],
+            mentions: message.mentions || [],
+            mentionAll: message.mentionAll || false,
+            replyTo: null,
+            type: message.type || "text",
+            forwardedFrom: message.forwardedFrom || message.senderName,
+            createdAt: serverTimestamp(),
+            status: "sent"
+          };
+
+          if (message.poll) msgData.poll = message.poll;
+          if (message.approval) msgData.approval = message.approval;
+          if (message.richPreview) msgData.richPreview = message.richPreview;
+          if (message.checklist) msgData.checklist = message.checklist;
+          if (message.priority) msgData.priority = message.priority;
+
+          batch.set(newMsgRef, msgData);
+          lastText = msgData.type === 'text' ? msgData.text : `[${msgData.type}]`;
+        }
+
+        batch.update(chatRef, {
+          lastMessage: {
+            text: lastText,
+            senderId: userId,
+            senderName: userName,
+            createdAt: serverTimestamp()
+          },
+          updatedAt: serverTimestamp()
+        });
+
+        const targetChat = get().chats.find(c => c.id === targetChatId);
+        if (targetChat) {
+          const unreadUpdates: any = {};
+          targetChat.members.forEach(memberId => {
+            if (memberId !== userId) {
+              unreadUpdates[`unreadCount.${memberId}`] = (targetChat.unreadCount?.[memberId] || 0) + msgsToForward.length;
+            }
+          });
+          if (Object.keys(unreadUpdates).length > 0) {
+            batch.update(chatRef, unreadUpdates);
+          }
+        }
+
+        await batch.commit();
+      }
+
+      toast.success(`${msgsToForward.length} mensagens encaminhadas em lote.`);
+      get().clearSelection();
+    } catch (err: any) {
+      Logger.error("[ChatStore] Error in batchForward:", err);
+      toast.error(`Erro ao encaminhar em lote: ${err.message}`);
+    }
+  },
+
+  // Templates de Resposta Rápida (Fase 2)
+  addQuickTemplate: (title, text) => {
+    set(state => ({
+      quickTemplates: [
+        ...state.quickTemplates,
+        { id: crypto.randomUUID(), title, text }
+      ]
+    }));
+    toast.success("Template adicionado!");
+  },
+
+  deleteQuickTemplate: (id) => {
+    set(state => ({
+      quickTemplates: state.quickTemplates.filter(t => t.id !== id)
+    }));
+    toast.success("Template removido.");
+  },
+
+  // Skin tones para Emojis (Fase 3)
+  setEmojiSkinTone: (skinTone) => {
+    set({ emojiSkinTone: skinTone });
+  },
+
+  // Checklist Colaborativo (Fase 2)
+  toggleChecklistItem: async (orgId, chatId, messageId, itemId, userId, userName) => {
+    const msgRef = doc(db, 'organizations', orgId, 'chats', chatId, 'messages', messageId);
+    const msg = get().messages.find(m => m.id === messageId);
+    if (!msg || !msg.checklist) return;
+
+    const newChecklist = msg.checklist.map(item => {
+      if (item.id === itemId) {
+        return {
+          ...item,
+          completed: !item.completed,
+          completedBy: !item.completed ? userName : undefined
+        };
+      }
+      return item;
+    });
+
+    // Atualização otimista na UI
+    set(state => ({
+      messages: state.messages.map(m => m.id === messageId ? { ...m, checklist: newChecklist } : m)
+    }));
+
+    try {
+      await updateDoc(msgRef, { checklist: newChecklist });
+    } catch (err: any) {
+      Logger.error("[ChatStore] Error updating checklist item:", err);
+      toast.error("Erro ao atualizar item do checklist.");
+      // Reverte em caso de erro
+      set(state => ({
+        messages: state.messages.map(m => m.id === messageId ? { ...m, checklist: msg.checklist } : m)
+      }));
+    }
+  },
+
+  // Transcrição de áudio por IA (Fase 3)
+  transcribeAudioMessage: async (orgId, chatId, messageId, audioUrl) => {
+    const msgRef = doc(db, 'organizations', orgId, 'chats', chatId, 'messages', messageId);
+    
+    // Atualização otimista na UI
+    set(state => ({
+      messages: state.messages.map(m => m.id === messageId ? { ...m, transcription: "Transcrevendo áudio..." } : m)
+    }));
+
+    try {
+      const res = await fetch('/api/transcribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ audioUrl })
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.error || "Erro na transcrição");
+      }
+
+      const transcription = data.transcription;
+      await updateDoc(msgRef, { transcription });
+      
+      set(state => ({
+        messages: state.messages.map(m => m.id === messageId ? { ...m, transcription } : m)
+      }));
+      toast.success("Áudio transcrito!");
+    } catch (err: any) {
+      Logger.error("[ChatStore] Error transcribing audio:", err);
+      toast.error(`Falha ao transcrever: ${err.message}`);
+      set(state => ({
+        messages: state.messages.map(m => m.id === messageId ? { ...m, transcription: undefined } : m)
+      }));
+    }
   }
 }), {
   name: 'hubcrm-chat-storage',
   partialize: (state) => ({ 
     chats: state.chats,
-    drafts: state.drafts
+    drafts: state.drafts,
+    quickTemplates: state.quickTemplates,
+    emojiSkinTone: state.emojiSkinTone
   }),
 }));

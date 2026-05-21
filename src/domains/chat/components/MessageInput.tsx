@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, Smile, X, Loader2, Calendar, LayoutGrid, Image as ImageIcon, Clock, Mic, Square, Trash2 } from 'lucide-react';
+import { Send, Paperclip, Smile, X, Loader2, Calendar, LayoutGrid, Image as ImageIcon, Clock, Mic, Square, Trash2, Zap, AlertTriangle } from 'lucide-react';
 import { parseMentions } from '@/helpers/chatHelpers';
 import { filterCommands, findCommand, BotCommand, BotContext } from '@/helpers/botCommands';
 import { useCRM } from '@crm/contexts/CRMContext';
@@ -29,12 +29,14 @@ interface MessageInputProps {
     attachments: string[], 
     replyTo: ChatMessage['replyTo'] | null, 
     members: string[], 
-    type: "text" | "poll" | "approval" | "rich_link" | "client_card" | "sticker" | "bot_response", 
+    type: "text" | "poll" | "approval" | "rich_link" | "client_card" | "sticker" | "bot_response" | "checklist", 
     poll?: ChatMessage['poll'],
     approval?: ChatMessage['approval'],
     richPreview?: ChatMessage['richPreview'],
     parentMessageId?: string,
-    scheduledAt?: Timestamp
+    scheduledAt?: Timestamp,
+    priority?: ChatMessage['priority'],
+    checklist?: ChatMessage['checklist']
   ) => void;
   onTyping: (isTyping: boolean) => void;
   replyTo: ChatMessage['replyTo'] | null;
@@ -45,13 +47,19 @@ interface MessageInputProps {
   members: string[];
   parentMessageId?: string; // Para enviar mensagens em Threads
   chatId?: string | null;
+  onEdit?: (message: ChatMessage) => void;
 }
 
 export default function MessageInput({ 
-  onSend, onTyping, replyTo, onCancelReply, editingMessage, onCancelEdit, onUpdate, members, parentMessageId, chatId 
+  onSend, onTyping, replyTo, onCancelReply, editingMessage, onCancelEdit, onUpdate, members, parentMessageId, chatId, onEdit 
 }: MessageInputProps) {
   const drafts = useChatStore(state => state.drafts);
   const setDraft = useChatStore(state => state.setDraft);
+  const quickTemplates = useChatStore(state => state.quickTemplates);
+  const messages = useChatStore(state => state.messages);
+
+  const [priority, setPriority] = useState<'normal' | 'urgent'>('normal');
+  const [showTemplates, setShowTemplates] = useState(false);
 
   const [isPollModalOpen, setIsPollModalOpen] = useState(false);
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
@@ -394,6 +402,29 @@ export default function MessageInput({
     } else {
       // Lógica de Slash Commands manuais (ex: /pago Joao)
       if (text.startsWith('/')) {
+        // Comando /checklist
+        if (text.toLowerCase().startsWith('/checklist ')) {
+          const itemsText = text.replace(/^\/checklist\s+/i, '');
+          const items = itemsText.split(',').map(item => item.trim()).filter(item => item.length > 0);
+          if (items.length > 0) {
+            const checklistData = items.map(t => ({
+              id: crypto.randomUUID(),
+              text: t,
+              completed: false
+            }));
+            onSend('', [], [], null, members, 'checklist', undefined, undefined, undefined, parentMessageId, scheduledAt || undefined, priority, checklistData);
+            
+            if (chatId) {
+              setDraft(chatId, '');
+            }
+            setText('');
+            setScheduledAt(null);
+            setPriority('normal');
+            onTyping(false);
+            return;
+          }
+        }
+
         const parts = text.trim().split(' ');
         const cmdName = parts[0].toLowerCase();
         const args = parts.slice(1).join(' ');
@@ -409,7 +440,7 @@ export default function MessageInput({
         teamProfiles.map(p => ({ uid: p.uid, displayName: p.displayName, roleId: p.roleId })),
         orgRoles.map(r => ({ id: r.id, name: r.name }))
       );
-      onSend(text, mentions, [], replyTo, members, "text", undefined, undefined, undefined, parentMessageId, scheduledAt || undefined);
+      onSend(text, mentions, [], replyTo, members, "text", undefined, undefined, undefined, parentMessageId, scheduledAt || undefined, priority);
     }
     
     if (chatId) {
@@ -417,6 +448,7 @@ export default function MessageInput({
     }
     setText('');
     setScheduledAt(null);
+    setPriority('normal');
     onTyping(false);
     setShowMentions(false);
     setShowSlashCommands(false);
@@ -596,6 +628,17 @@ export default function MessageInput({
       setShowMentions(false);
       setShowSlashCommands(false);
       setIsEmojiOpen(false);
+      setShowTemplates(false);
+    }
+    if (e.key === 'ArrowUp' && !text && !showMentions && !showSlashCommands && !editingMessage) {
+      e.preventDefault();
+      if (onEdit && userProfile?.uid) {
+        const myMsgs = messages.filter(m => m.senderId === userProfile.uid && !m.isDeleted);
+        if (myMsgs.length > 0) {
+          const lastMsg = myMsgs[myMsgs.length - 1];
+          onEdit(lastMsg);
+        }
+      }
     }
   };
 
@@ -723,6 +766,57 @@ export default function MessageInput({
           >
             <ImageIcon size={18} />
           </button>
+
+          {/* Templates de Resposta Rápida (⚡) */}
+          <div className="relative">
+            <button 
+              type="button" 
+              onClick={() => setShowTemplates(!showTemplates)}
+              className={`p-2 rounded-lg transition-all ${showTemplates ? 'text-primary-500 bg-primary-500/10' : 'text-gray-400 hover:text-primary-500 hover:bg-primary-500/10'}`}
+              title="Templates Rápidos"
+            >
+              <Zap size={18} />
+            </button>
+            {showTemplates && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowTemplates(false)} />
+                <div className="absolute left-0 bottom-full mb-2 w-64 bg-white dark:bg-zinc-950 border border-gray-100 dark:border-white/10 rounded-2xl shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-200 max-h-48 overflow-y-auto custom-scrollbar">
+                  <div className="px-3 py-1 text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100 dark:border-white/5 mb-1">
+                    Templates de Resposta
+                  </div>
+                  {quickTemplates.map(tpl => (
+                    <button
+                      key={tpl.id}
+                      type="button"
+                      onClick={() => {
+                        setText(tpl.text);
+                        setShowTemplates(false);
+                        textareaRef.current?.focus();
+                      }}
+                      className="w-full text-left px-3 py-2 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-primary-500 hover:text-white transition-colors truncate"
+                      title={tpl.text}
+                    >
+                      ⚡ <span className="font-semibold text-primary-500 dark:text-primary-400 mr-1">[{tpl.title}]</span> {tpl.text}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Seletor de Prioridade (🚨) */}
+          <button 
+            type="button" 
+            onClick={() => setPriority(prev => prev === 'normal' ? 'urgent' : 'normal')}
+            className={`p-2 rounded-lg transition-all ${
+              priority === 'urgent' 
+                ? 'text-red-500 bg-red-500/10 animate-pulse' 
+                : 'text-gray-400 hover:text-red-500 hover:bg-red-500/10'
+            }`}
+            title="Marcar como URGENTE 🚨"
+          >
+            <AlertTriangle size={18} />
+          </button>
         </div>
 
         {/* Área de Texto + Botão de Enviar */}
@@ -810,7 +904,11 @@ export default function MessageInput({
                 ref={textareaRef}
                 rows={1}
                 placeholder="Escreva uma mensagem..."
-                className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-3 pr-12 rounded-2xl text-sm focus:outline-none focus:border-primary-500 transition-all dark:text-white resize-none max-h-32 custom-scrollbar"
+                className={`w-full p-3 pr-12 rounded-2xl text-sm focus:outline-none transition-all dark:text-white resize-none max-h-32 custom-scrollbar ${
+                  priority === 'urgent'
+                    ? 'bg-red-500/5 border-2 border-red-500 focus:border-red-600 shadow-[0_0_12px_rgba(239,68,68,0.2)] animate-pulse'
+                    : 'bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 focus:border-primary-500'
+                }`}
                 value={text}
                 onChange={handleChange}
                 onKeyDown={handleKeyDown}

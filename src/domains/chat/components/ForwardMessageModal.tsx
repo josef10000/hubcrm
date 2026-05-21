@@ -10,16 +10,18 @@ interface ForwardMessageModalProps {
   isOpen: boolean;
   onClose: () => void;
   message: ChatMessage | null;
+  isBatch?: boolean;
 }
 
-export function ForwardMessageModal({ isOpen, onClose, message }: ForwardMessageModalProps) {
+export function ForwardMessageModal({ isOpen, onClose, message, isBatch = false }: ForwardMessageModalProps) {
   const { userProfile } = useAuth();
   const { teamProfiles, effectiveOrgId } = useCRM();
-  const { chats, forwardMessage } = useChatStore();
+  const { chats, forwardMessage, batchForward, clearSelection } = useChatStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [sentChats, setSentChats] = useState<string[]>([]); // Guarda os IDs dos chats para os quais a mensagem já foi enviada
 
-  if (!message || !isOpen) return null;
+  if (!isOpen) return null;
+  if (!isBatch && !message) return null;
 
   const handleForward = async (chatId: string) => {
     if (!effectiveOrgId || !userProfile?.uid) return;
@@ -28,14 +30,25 @@ export function ForwardMessageModal({ isOpen, onClose, message }: ForwardMessage
     if (sentChats.includes(chatId)) return;
 
     try {
-      await forwardMessage(
-        effectiveOrgId,
-        chatId,
-        userProfile.uid,
-        userProfile.displayName || 'Membro do Time',
-        userProfile.photoURL || '',
-        message
-      );
+      if (isBatch) {
+        await batchForward(
+          effectiveOrgId,
+          [chatId],
+          userProfile.uid,
+          userProfile.displayName || 'Membro do Time',
+          userProfile.photoURL || ''
+        );
+      } else {
+        if (!message) return;
+        await forwardMessage(
+          effectiveOrgId,
+          chatId,
+          userProfile.uid,
+          userProfile.displayName || 'Membro do Time',
+          userProfile.photoURL || '',
+          message
+        );
+      }
       setSentChats(prev => [...prev, chatId]);
     } catch (error) {
       // O toast de erro já é tratado no store
@@ -125,10 +138,13 @@ export function ForwardMessageModal({ isOpen, onClose, message }: ForwardMessage
               {/* Preview da Mensagem */}
               <div className="bg-gray-50 dark:bg-white/5 p-3 rounded-2xl border border-gray-100 dark:border-white/5 mb-4">
                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">
-                  Enviada por {message.senderName}:
+                  {isBatch ? 'Encaminhamento em Lote' : `Enviada por ${message?.senderName}:`}
                 </p>
                 <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2 italic">
-                  "{message.text || (message.type === 'poll' ? `📊 Enquete: ${message.poll?.question}` : message.type === 'approval' ? `📝 Aprovação: ${message.approval?.question}` : `[Mídia/Anexo]`)}"
+                  {isBatch 
+                    ? `Encaminhando as mensagens selecionadas (${useChatStore.getState().selectedMessageIds.length} itens)...`
+                    : `"${message?.text || (message?.type === 'poll' ? `📊 Enquete: ${message?.poll?.question}` : message?.type === 'approval' ? `📝 Aprovação: ${message?.approval?.question}` : `[Mídia/Anexo]`)}"`
+                  }
                 </p>
               </div>
 

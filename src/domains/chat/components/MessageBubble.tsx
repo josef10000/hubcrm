@@ -1,4 +1,4 @@
-import { User, Paperclip, Check, CheckCheck, Trash2, Reply, Smile, Bookmark, Pin, LifeBuoy, MessageSquareText, ExternalLink, Hash, ChevronRight, Clock, Bell, Bot, FileText, Volume2, Download, Play, Video, Send } from 'lucide-react';
+import { User, Paperclip, Check, CheckCheck, Trash2, Reply, Smile, Bookmark, Pin, LifeBuoy, MessageSquareText, ExternalLink, Hash, ChevronRight, Clock, Bell, Bot, FileText, Volume2, Download, Play, Video, Send, CheckSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import React, { useState, useRef, useEffect } from 'react';
 import { ChatMessage } from '@/types/chat.types';
@@ -8,6 +8,9 @@ import { useCRM } from '@crm/contexts/CRMContext';
 import { formatChatTime, formatChatDateTime, highlightMentions } from '@/helpers/chatHelpers';
 import { ReminderModal } from './ReminderModal';
 import MarkdownText from './MarkdownText';
+import { ChecklistMessage } from './ChecklistMessage';
+import { LinkPreviewCard } from './LinkPreviewCard';
+import { useChatStore } from '@/store/useChatStore';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -66,7 +69,24 @@ const getFileExtension = (url: string) => {
   }
 };
 
-const AudioPlayer = ({ url, isMine }: { url: string; isMine: boolean }) => {
+const extractFirstUrl = (text: string) => {
+  if (!text) return null;
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const match = text.match(urlRegex);
+  return match ? match[0] : null;
+};
+
+const AudioPlayer = ({ 
+  url, 
+  isMine, 
+  messageId, 
+  transcription 
+}: { 
+  url: string; 
+  isMine: boolean; 
+  messageId: string; 
+  transcription?: string; 
+}) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -76,6 +96,12 @@ const AudioPlayer = ({ url, isMine }: { url: string; isMine: boolean }) => {
   });
   const [playbackRate, setPlaybackRate] = useState(1);
   const [progress, setProgress] = useState(0);
+  const [transcribing, setTranscribing] = useState(false);
+  const [showTranscription, setShowTranscription] = useState(true);
+
+  const transcribeAudioMessage = useChatStore(state => state.transcribeAudioMessage);
+  const activeChatId = useChatStore(state => state.activeChatId);
+  const { effectiveOrgId } = useCRM();
 
   // Array fixo de alturas estéticas simétricas para simular a Waveform
   const waveHeights = [
@@ -266,7 +292,34 @@ const AudioPlayer = ({ url, isMine }: { url: string; isMine: boolean }) => {
         })}
       </div>
 
-      <div className="flex justify-end pr-1.5 leading-none">
+      <div className="flex items-center justify-between px-1.5 mt-1 leading-none select-none">
+        {transcription ? (
+          <button
+            onClick={() => setShowTranscription(!showTranscription)}
+            className={`text-[9px] font-black uppercase tracking-widest flex items-center gap-1 hover:underline ${subTextColor}`}
+          >
+            {showTranscription ? 'Ocultar Transcrição' : 'Mostrar Transcrição 🎙️'}
+          </button>
+        ) : (
+          <button
+            onClick={async () => {
+              if (!effectiveOrgId || !activeChatId || !messageId) return;
+              try {
+                setTranscribing(true);
+                await transcribeAudioMessage(effectiveOrgId, activeChatId, messageId, url);
+              } catch (err) {
+                console.error("Falha ao transcrever:", err);
+              } finally {
+                setTranscribing(false);
+              }
+            }}
+            disabled={transcribing}
+            className="text-[9px] font-black uppercase tracking-widest text-violet-500 dark:text-violet-400 hover:underline flex items-center gap-1"
+          >
+            {transcribing ? 'Transcrevendo...' : 'Transcrever Áudio ✨'}
+          </button>
+        )}
+
         <a 
           href={url} 
           download 
@@ -281,6 +334,12 @@ const AudioPlayer = ({ url, isMine }: { url: string; isMine: boolean }) => {
           Salvar
         </a>
       </div>
+
+      {transcription && showTranscription && (
+        <div className="mt-2 p-2.5 rounded-2xl bg-black/10 dark:bg-white/5 border border-white/5 text-[11px] leading-relaxed italic text-zinc-300 dark:text-zinc-450 break-words select-text font-medium">
+          "{transcription}"
+        </div>
+      )}
     </div>
   );
 };
@@ -291,20 +350,36 @@ export default function MessageBubble({
   onForward, readByUsers
 }: MessageBubbleProps) {
   const { userProfile } = useAuth();
-  const { teamProfiles } = useCRM();
+  const { teamProfiles, effectiveOrgId } = useCRM();
   const { confirm } = useDialog();
   const navigate = useNavigate();
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showReadBy, setShowReadBy] = useState(false);
   const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
+
+  const isSelectionMode = useChatStore(state => state.isSelectionMode);
+  const selectedMessageIds = useChatStore(state => state.selectedMessageIds);
+  const toggleSelectMessage = useChatStore(state => state.toggleSelectMessage);
+  const activeChatId = useChatStore(state => state.activeChatId);
+
   const isMine = message.senderId === userProfile?.uid;
   const isDeleted = message.isDeleted;
   const isBot = message.isBot || message.type === 'bot_response';
+  const isSelected = selectedMessageIds.includes(message.id);
+  const isUrgent = message.priority === 'urgent';
   
   // Se a mensagem for agendada E estiver deletada, não mostrar nada (sumir completamente)
   if (isDeleted && message.status === 'scheduled') return null;
 
   const isMentioned = message.mentions?.includes(userProfile?.uid || '') || message.mentionAll;
+
+  const handleMessageClick = (e: React.MouseEvent) => {
+    if (isSelectionMode && !isDeleted) {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleSelectMessage(message.id);
+    }
+  };
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -327,8 +402,11 @@ export default function MessageBubble({
   return (
     <div 
       id={`msg-${message.id}`}
-      className={`flex flex-col mb-4 ${isMine ? 'items-end' : 'items-start'} group animate-in fade-in slide-in-from-bottom-2 duration-300 scroll-mt-12 transition-all duration-300`}
-      onDoubleClick={() => !isDeleted && onReply?.(message)}
+      onClick={handleMessageClick}
+      className={`flex flex-col mb-4 ${isMine ? 'items-end' : 'items-start'} group animate-in fade-in slide-in-from-bottom-2 duration-300 scroll-mt-12 transition-all duration-300 ${
+        isSelectionMode ? 'cursor-pointer select-none hover:bg-zinc-50/10 dark:hover:bg-zinc-950/10 px-2 rounded-2xl py-1' : ''
+      }`}
+      onDoubleClick={() => !isDeleted && !isSelectionMode && onReply?.(message)}
     >
       {/* Nome do Remetente (Apenas Grupos/Outros) */}
       {!isMine && !isDeleted && (
@@ -343,6 +421,16 @@ export default function MessageBubble({
       )}
 
       <div className={`flex items-end gap-2 max-w-[85%] ${isMine ? 'flex-row-reverse' : ''}`}>
+        {isSelectionMode && !isDeleted && (
+          <div className="flex items-center justify-center shrink-0 px-1.5 self-center select-none">
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={() => toggleSelectMessage(message.id)}
+              className="w-4 h-4 text-violet-600 border-zinc-300 dark:border-zinc-700 rounded focus:ring-violet-500 bg-white dark:bg-zinc-950 cursor-pointer transition-all duration-200"
+            />
+          </div>
+        )}
         {/* Avatar */}
         {!isMine && (
           <div 
@@ -372,7 +460,7 @@ export default function MessageBubble({
           )}
 
           {/* Menu de Ações Flutuante */}
-          {!isDeleted && (
+          {!isDeleted && !isSelectionMode && (
             <div className={`absolute -top-8 flex items-center gap-1 opacity-0 group-hover/bubble:opacity-100 transition-all z-20 ${isMine ? 'right-0' : 'left-0'}`}>
               <div className="flex bg-white dark:bg-zinc-900 shadow-xl border border-gray-100 dark:border-white/10 rounded-full py-1 px-2 gap-1 items-center">
                 {/* Botão de Reação Rápida (Emoji) */}
@@ -483,6 +571,10 @@ export default function MessageBubble({
           <div className={`p-4 rounded-[1.8rem] shadow-sm relative overflow-visible transition-all ${
             isDeleted 
               ? 'bg-gray-50 dark:bg-white/5 border border-dashed border-gray-200 dark:border-white/10 italic text-gray-400 dark:text-gray-500' 
+              : isSelected
+                ? 'bg-violet-50/60 dark:bg-violet-950/20 border-2 border-violet-500 shadow-[0_0_12px_rgba(139,92,246,0.15)] text-zinc-900 dark:text-zinc-100'
+              : isUrgent
+                ? 'bg-red-50 dark:bg-red-950/15 text-red-900 dark:text-red-100 border-2 border-red-500 shadow-[0_0_12px_rgba(239,68,68,0.25)] animate-pulse'
               : isBot
                 ? 'bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 dark:from-violet-500/5 dark:to-fuchsia-500/5 text-gray-800 dark:text-gray-100 border border-violet-500/20 rounded-tl-none'
               : message.type === 'sticker'
@@ -503,6 +595,11 @@ export default function MessageBubble({
               </div>
             ) : (
               <>
+                {isUrgent && (
+                  <div className="flex items-center gap-1.5 mb-2.5 text-[9px] font-black bg-red-500 text-white px-2.5 py-1 rounded-full w-fit shadow-md shadow-red-500/30 tracking-widest uppercase animate-bounce">
+                    <span>🚨 Urgente</span>
+                  </div>
+                )}
                 {message.forwardedFrom && (
                   <div className={`flex items-center gap-1.5 mb-2 text-[10px] font-black uppercase tracking-widest ${isMine ? 'text-white/60' : 'text-primary-500'}`}>
                     <Reply size={10} className="transform scale-x-[-1]" />
@@ -620,8 +717,22 @@ export default function MessageBubble({
                       className="w-[140px] h-auto object-contain rounded-lg"
                     />
                   </div>
+                ) : message.type === 'checklist' && message.checklist ? (
+                  <ChecklistMessage 
+                    messageId={message.id}
+                    chatId={activeChatId || ''}
+                    orgId={effectiveOrgId || ''}
+                    userId={userProfile?.uid || ''}
+                    userName={userProfile?.displayName || ''}
+                    items={message.checklist}
+                  />
                 ) : (
-                  <MarkdownText text={message.text} isMine={isMine} />
+                  <div className="space-y-1.5">
+                    <MarkdownText text={message.text} isMine={isMine} />
+                    {(!message.type || message.type === 'text') && extractFirstUrl(message.text) && (
+                      <LinkPreviewCard url={extractFirstUrl(message.text)!} />
+                    )}
+                  </div>
                 )}
                 
                 {/* Indicador de Thread (Tópico) */}
@@ -710,6 +821,8 @@ export default function MessageBubble({
                              key={i} 
                              url={url} 
                              isMine={isMine} 
+                             messageId={message.id}
+                             transcription={message.transcription}
                            />
                          );
                        }

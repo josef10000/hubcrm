@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ExternalLink, MoreVertical, Phone, Video, Search, MessageSquare, Megaphone, Info, X } from 'lucide-react';
+import { ExternalLink, MoreVertical, Phone, Video, Search, MessageSquare, Megaphone, Info, X, ChevronUp, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Chat, ChatMessage } from '@/types/chat.types';
 import { useChat } from '@/hooks/useChat';
@@ -20,6 +20,8 @@ import { db } from '@/lib/firebase';
 import { AnimatePresence, motion } from 'framer-motion';
 import ImageLightbox from './ImageLightbox';
 import ThreadSidebar from './ThreadSidebar';
+
+  import { useChatStore } from '@/store/useChatStore';
 
 interface ChatWindowProps {
   chatId: string | null;
@@ -54,17 +56,49 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
   const [hasInteracted, setHasInteracted] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
+  const [isForwardBatchOpen, setIsForwardBatchOpen] = useState(false);
+
+  const isSelectionMode = useChatStore(state => state.isSelectionMode);
+  const selectedMessageIds = useChatStore(state => state.selectedMessageIds);
+  const clearSelection = useChatStore(state => state.clearSelection);
+  const batchDelete = useChatStore(state => state.batchDelete);
+
   // Resetar a interação quando mudar de chat para permitir exibir o divisor de novas mensagens novamente
   useEffect(() => {
     setHasInteracted(false);
   }, [chatId]);
 
-  // Filtragem de Mensagens (Busca + Ocultar Threads do fluxo principal)
+  // Filtragem de Mensagens (Ocultar Threads do fluxo principal)
   const mainMessages = messages.filter(m => !m.parentMessageId);
-  const filteredMessages = mainMessages.filter(msg => 
-    msg.text.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    msg.senderName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredMessages = mainMessages;
+
+  const searchMatches = searchTerm 
+    ? mainMessages.filter(msg => 
+        msg.text?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        msg.senderName?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : [];
+
+  // Foco inicial e rolagem para o primeiro match ao buscar
+  useEffect(() => {
+    if (searchMatches.length > 0) {
+      setCurrentMatchIndex(0);
+      scrollToMessage(searchMatches[0].id);
+    }
+  }, [searchTerm]);
+
+  // Atalho global de teclado Ctrl+Shift+F
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
 
   // Lógica de Identidade do Chat
   let displayName = chat?.name || '';
@@ -260,12 +294,14 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
     attachments: string[] = [], 
     replyTo: ChatMessage['replyTo'] = null,
     members: string[] = [],
-    type: "text" | "poll" | "approval" | "rich_link" | "client_card" | "sticker" | "bot_response" = "text",
+    type: ChatMessage['type'] = "text",
     poll?: ChatMessage['poll'],
     approval?: ChatMessage['approval'],
     richPreview?: ChatMessage['richPreview'],
     parentMessageId?: string,
-    scheduledAt?: Timestamp
+    scheduledAt?: Timestamp,
+    priority?: ChatMessage['priority'],
+    checklist?: ChatMessage['checklist']
   ) => {
     if (!chat) return;
     if (!text.trim() && attachments.length === 0 && type === 'text') return;
@@ -284,7 +320,9 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
         approval,
         richPreview,
         parentMessageId,
-        scheduledAt
+        scheduledAt,
+        priority,
+        checklist
       );
     }
     
@@ -295,6 +333,33 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
     await editMessage(messageId, text);
     setEditingMessage(null);
   };
+
+  const handleExportConversation = () => {
+    if (messages.length === 0) {
+      toast.info('Não há mensagens para exportar.');
+      return;
+    }
+    
+    const formattedHistory = messages
+      .map(m => {
+        const date = (m.createdAt as any)?.toDate?.() || new Date();
+        const formattedDate = date.toLocaleString('pt-BR');
+        return `[${formattedDate}] [${m.senderName}]: ${m.text || (m.attachments && m.attachments.length > 0 ? '[Anexo]' : '[Mídia]')}`;
+      })
+      .join('\n');
+
+    const blob = new Blob([formattedHistory], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `historico-chat-${displayName.replace(/[^a-zA-Z0-9]/g, '_')}-${Date.now()}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success('Histórico de conversa exportado com sucesso!');
+  };
+
 
 
   // Coletar todas as URLs de imagem da conversa para navegação no Lightbox
@@ -378,11 +443,40 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
                 autoFocus
                 type="text"
                 placeholder="Buscar na conversa..."
-                className="bg-transparent border-none text-xs focus:outline-none dark:text-white w-40 md:w-64"
+                className="bg-transparent border-none text-xs focus:outline-none dark:text-white w-32 md:w-56"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <button onClick={() => { setIsSearchOpen(false); setSearchTerm(''); }} className="ml-2 text-gray-400 hover:text-gray-600">
+              {searchMatches.length > 0 && (
+                <div className="flex items-center gap-1 border-l border-gray-200 dark:border-white/10 pl-2 mr-2">
+                  <span className="text-[10px] font-bold text-gray-500 whitespace-nowrap">
+                    {currentMatchIndex + 1}/{searchMatches.length}
+                  </span>
+                  <button 
+                    onClick={() => {
+                      const nextIndex = (currentMatchIndex - 1 + searchMatches.length) % searchMatches.length;
+                      setCurrentMatchIndex(nextIndex);
+                      scrollToMessage(searchMatches[nextIndex].id);
+                    }}
+                    className="p-1 hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg text-gray-500 transition-colors"
+                    title="Anterior"
+                  >
+                    <ChevronUp size={12} />
+                  </button>
+                  <button 
+                    onClick={() => {
+                      const nextIndex = (currentMatchIndex + 1) % searchMatches.length;
+                      setCurrentMatchIndex(nextIndex);
+                      scrollToMessage(searchMatches[nextIndex].id);
+                    }}
+                    className="p-1 hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg text-gray-500 transition-colors"
+                    title="Próxima"
+                  >
+                    <ChevronDown size={12} />
+                  </button>
+                </div>
+              )}
+              <button onClick={() => { setIsSearchOpen(false); setSearchTerm(''); }} className="text-gray-400 hover:text-gray-600 transition-colors ml-1">
                 <X size={14} />
               </button>
             </div>
@@ -436,6 +530,9 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
                   </button>
                   <button onClick={() => setIsMenuOpen(false)} className="w-full text-left px-4 py-2 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-primary-500 hover:text-white transition-colors">
                     Ver Membros
+                  </button>
+                  <button onClick={() => { handleExportConversation(); setIsMenuOpen(false); }} className="w-full text-left px-4 py-2 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-primary-500 hover:text-white transition-colors">
+                    Exportar Conversa (.txt)
                   </button>
                   <div className="h-px bg-gray-100 dark:bg-white/5 my-1" />
                   <button onClick={() => setIsMenuOpen(false)} className="w-full text-left px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-500 hover:text-white transition-colors">
@@ -606,20 +703,68 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
         )}
       </div>
 
-      {/* Input de Mensagem */}
-      <MessageInput 
-        onSend={(text, mentions, att, reply, membersList, type, poll, approval, richPreview, parentMessageId, scheduledAt) => 
-          handleSend(text, mentions, att, reply, membersList, type, poll, approval, richPreview, parentMessageId, scheduledAt)
-        } 
-        onTyping={setTypingStatus}
-        replyTo={replyingTo ? { messageId: replyingTo.id, text: replyingTo.text, senderName: replyingTo.senderName } : null}
-        onCancelReply={() => setReplyingTo(null)}
-        editingMessage={editingMessage}
-        onCancelEdit={() => setEditingMessage(null)}
-        onUpdate={handleUpdate}
-        members={chat.members}
-        chatId={chatId}
-      />
+      {/* Input de Mensagem / Barra de Seleção em Lote */}
+      {isSelectionMode ? (
+        <div className="bg-primary-500/10 border-t border-primary-500/20 p-4 flex items-center justify-between animate-in slide-in-from-bottom duration-300 z-10">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={clearSelection}
+              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+              title="Cancelar Seleção"
+            >
+              <X size={20} />
+            </button>
+            <span className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-widest">
+              {selectedMessageIds.length} mensagem{selectedMessageIds.length > 1 ? 's' : ''} selecionada{selectedMessageIds.length > 1 ? 's' : ''}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => {
+                const selectedTexts = messages
+                  .filter(m => selectedMessageIds.includes(m.id))
+                  .map(m => `[${m.senderName}]: ${m.text || '[Mídia/Anexo]'}`)
+                  .join('\n');
+                navigator.clipboard.writeText(selectedTexts);
+                toast.success('Mensagens copiadas para a área de transferência!');
+              }}
+              className="px-4 py-2 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-white/10 rounded-xl text-xs font-black uppercase tracking-widest text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-all flex items-center gap-1.5 shadow-sm"
+            >
+              Copiar
+            </button>
+            <button 
+              onClick={() => setIsForwardBatchOpen(true)}
+              className="px-4 py-2 bg-primary-500 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-primary-600 transition-all flex items-center gap-1.5 shadow-lg shadow-primary-500/20"
+            >
+              Encaminhar
+            </button>
+            <button 
+              onClick={async () => {
+                if (!effectiveOrgId) return;
+                await batchDelete(effectiveOrgId, chatId!);
+              }}
+              className="px-4 py-2 bg-red-500 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-600 transition-all flex items-center gap-1.5 shadow-lg shadow-red-500/20"
+            >
+              Excluir
+            </button>
+          </div>
+        </div>
+      ) : (
+        <MessageInput 
+          onSend={(text, mentions, att, reply, membersList, type, poll, approval, richPreview, parentMessageId, scheduledAt, priority, checklist) => 
+            handleSend(text, mentions, att, reply, membersList, type, poll, approval, richPreview, parentMessageId, scheduledAt, priority, checklist)
+          } 
+          onTyping={setTypingStatus}
+          replyTo={replyingTo ? { messageId: replyingTo.id, text: replyingTo.text, senderName: replyingTo.senderName } : null}
+          onCancelReply={() => setReplyingTo(null)}
+          editingMessage={editingMessage}
+          onCancelEdit={() => setEditingMessage(null)}
+          onUpdate={handleUpdate}
+          members={chat.members}
+          chatId={chatId}
+          onEdit={setEditingMessage}
+        />
+      )}
 
       <GroupSettingsModal 
         isOpen={isSettingsOpen} 
@@ -638,6 +783,15 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
           isOpen={!!forwardingMessage} 
           onClose={() => setForwardingMessage(null)} 
           message={forwardingMessage} 
+        />
+      )}
+
+      {isForwardBatchOpen && (
+        <ForwardMessageModal 
+          isOpen={isForwardBatchOpen} 
+          onClose={() => setIsForwardBatchOpen(false)} 
+          message={null} 
+          isBatch={true}
         />
       )}
     </div>

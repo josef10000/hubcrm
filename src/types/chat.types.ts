@@ -63,7 +63,7 @@ export interface ChatMessage {
   isEdited?: boolean;                 // Flag para mensagens editadas
   readBy?: string[];                  // Lista de UIDs que leram esta mensagem
   mentionAll?: boolean;               // Se @todos foi usado
-  type?: "text" | "poll" | "approval" | "system" | "rich_link" | "client_card" | "sticker" | "bot_response"; // Tipo da mensagem
+  type?: "text" | "poll" | "approval" | "system" | "rich_link" | "client_card" | "sticker" | "bot_response" | "checklist"; // Tipo da mensagem
   isBot?: boolean;                    // Flag para mensagens de bot
   botName?: string;                   // Nome do bot (ex: HubBot)
   parentMessageId?: string;           // Para Threads (ID da mensagem pai)
@@ -88,6 +88,14 @@ export interface ChatMessage {
     processedBy?: string;             // UID de quem aprovou/rejeitou
     processedAt?: Timestamp;
   };
+  checklist?: {                       // Checklist colaborativo
+    id: string;
+    text: string;
+    completed: boolean;
+    completedBy?: string;
+  }[];
+  priority?: 'normal' | 'urgent';     // Prioridade da mensagem
+  transcription?: string;             // Transcrição de áudio por IA
   richPreview?: {                     // Preview de Link Interno
     title: string;
     description: string;
