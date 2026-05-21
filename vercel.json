@@ -1,6 +1,10 @@
 {
   "ignoreCommand": "git diff --quiet HEAD^ HEAD . ':!*.md' ':!.gitignore' ':!.env.example' ':!LICENSE'",
   "rewrites": [
+    { "source": "/api/daily_cron", "destination": "/api/cron_handler?action=daily" },
+    { "source": "/api/cron/finance-engine", "destination": "/api/cron_handler?action=finance" },
+    { "source": "/api/cron/process-scheduler", "destination": "/api/cron_handler?action=scheduler" },
+
     { "source": "/api/asaas/webhook", "destination": "/api/asaas_webhook" },
     
     { "source": "/api/asaas/customers", "destination": "/api/asaas_handler?action=customers" },

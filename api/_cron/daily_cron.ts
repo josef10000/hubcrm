@@ -1,12 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { db } from './_utils/firebase.js';
-import { asaasRequest } from './_utils/asaas.js';
-import { sendBirthdayGreetingEmail } from '../src/services/emailService.js';
+import { db } from '../_utils/firebase.js';
+import { asaasRequest } from '../_utils/asaas.js';
+import { sendBirthdayGreetingEmail } from '../../src/services/emailService.js';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Segurança: Vercel Cron envia um cabeçalho específico (Opcional para debug local)
-  // const isCron = req.headers['x-vercel-cron'] === '1';
-  
+export async function runDailyCron(req: VercelRequest, res: VercelResponse) {
   try {
     const now = new Date();
     const brazilTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));

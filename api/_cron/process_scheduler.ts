@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getFirebaseAdmin, db } from '../_utils/firebase.js';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export async function runProcessScheduler(req: VercelRequest, res: VercelResponse) {
   const { secret } = req.query;
   const admin = getFirebaseAdmin();
 

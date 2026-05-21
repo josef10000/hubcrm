@@ -11,7 +11,7 @@ import { db } from '../_utils/firebase.js';
  * 4. Salvar resultados na subcoleção 'cashflow_projections'
  */
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export async function runFinanceEngine(req: VercelRequest, res: VercelResponse) {
   const { secret } = req.query;
 
   // 1. Validação de Segurança (Mesmo padrão do Chat)
