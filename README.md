@@ -236,7 +236,7 @@ O sistema de faturamento é 100% autônomo e orientado a eventos.
 - **Custom Pricing:** Suporte a negociações customizadas com campos de mensalidade e setup que sobrescrevem os valores padrão da oferta, garantindo faturamento preciso no Asaas.
 - **Persona Filtering:** Inteligência no Portal do Cliente que agrupa produtos por CPF/CNPJ mas filtra automaticamente cards cancelados e faturas "lixo" de testes anteriores.
 - **Zero Polling:** A interface do usuário reflete o status financeiro instantaneamente via listeners do Firestore, sem necessidade de recarregar a página ou fazer requisições manuais ao Asaas.
-- **Serverless Consolidation:** Otimização de recursos na Vercel através de um `system_handler` unificado, permitindo escalar múltiplos serviços sem atingir os limites do plano Hobby.
+- **Serverless Consolidation:** Otimização de recursos na Vercel através de handlers unificados (como o `system_handler` para rotas de utilidades do sistema e o `chat_handler` que consolida as APIs de transcrição de áudio e visualização ricos de links em um único processador), permitindo escalar múltiplos serviços e recursos de chat sem atingir os limites do plano Hobby da Vercel.
 
 ---
 
