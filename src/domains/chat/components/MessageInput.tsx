@@ -720,7 +720,7 @@ export default function MessageInput({
         />
         
         {/* Barra de Ferramentas Superior */}
-        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+        <div className="flex flex-wrap items-center gap-1">
           <button 
             type="button" 
             disabled={uploading}
