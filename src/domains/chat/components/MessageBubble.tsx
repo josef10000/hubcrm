@@ -11,6 +11,7 @@ import MarkdownText from './MarkdownText';
 import { ChecklistMessage } from './ChecklistMessage';
 import { LinkPreviewCard } from './LinkPreviewCard';
 import { useChatStore } from '@/store/useChatStore';
+import { toast } from 'sonner';
 
 interface MessageBubbleProps {
   message: ChatMessage;
