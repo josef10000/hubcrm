@@ -68,6 +68,12 @@ export default function RadioPlayer() {
     if (!audio || !currentStation) return;
 
     const handleSrcChange = async () => {
+      // Se for Spotify, garante que a tag de áudio nativa local pare imediatamente
+      if (currentStation.type === 'spotify') {
+        audio.pause();
+        return;
+      }
+
       // Se trocou de rádio, define a nova origem
       if (audio.src !== currentStation.url) {
         audio.src = currentStation.url;
@@ -89,19 +95,24 @@ export default function RadioPlayer() {
     handleSrcChange();
   }, [currentStation, isPlaying, setPlayingState]);
 
-  // Lida com erros e reconexões de rede automáticas na tag de áudio
+  // Lida com erros e reconexões de rede automáticas na tag de áudio (Apenas para as vibes locais)
   const handleAudioError = (e: any) => {
     console.error('Erro na transmissão do áudio:', e);
-    console.warn(
-      '💡 HUB FOCUS STATION - DICA DE SUPORTE:\n' +
-      'Se o áudio falhar ao carregar, isso geralmente ocorre devido a:\n' +
-      '1. Restrições ativas de Firewall/Proxy em redes corporativas (bloqueando a categoria de streaming de áudio/zeno).\n' +
-      '2. Erro de Mixed Content (bloqueio do navegador para streams HTTP inseguros em páginas HTTPS).\n' +
-      'Tente selecionar uma Focus Vibe (como Chuva) ou uma Rádio Recomendada Pública (.gov.br/.leg.br) que são imunes, ou adicione uma URL HTTPS customizada na aba de Rádios Reais.'
-    );
     // Se estava tocando e deu erro, pausa o estado da rádio para dar feedback ao usuário
     if (isPlaying) {
       setPlayingState(false);
+    }
+  };
+
+  // Helper para converter a URL comum de playlist do Spotify na URL de embed oficial
+  const getSpotifyEmbedUrl = (url: string) => {
+    if (!url) return '';
+    if (!url.includes('spotify.com')) return url;
+    try {
+      const cleanUrl = url.split('?')[0]; // Remove query params como ?si=...
+      return cleanUrl.replace('open.spotify.com/', 'open.spotify.com/embed/');
+    } catch (e) {
+      return url.replace('open.spotify.com/', 'open.spotify.com/embed/');
     }
   };
 
@@ -185,7 +196,7 @@ export default function RadioPlayer() {
               
               <div className="min-w-0 flex-1">
                 <div className="text-[10px] font-bold text-white/30 uppercase tracking-widest font-mono">
-                  {currentStation?.type === 'vibe' ? '🧠 Foco Ativo' : '📻 Estação Real'}
+                  {currentStation?.type === 'vibe' ? '🧠 Foco Ativo' : '🎵 Spotify Playlist'}
                 </div>
                 <div className="text-xs font-bold text-white truncate pr-1">
                   {currentStation?.name || 'Selecione uma estação'}
@@ -193,49 +204,68 @@ export default function RadioPlayer() {
               </div>
             </div>
 
-            {/* Visualizador do Espectro Sonoro */}
-            <div className="relative z-10">
-              <Visualizer isPlaying={isPlaying} />
-            </div>
-
-            {/* Controles de Volume e Play/Pause */}
-            <div className="flex items-center gap-3 relative z-10 bg-white/5 border border-white/5 p-2 rounded-xl">
-              {/* Botão Play/Pause */}
-              <button 
-                onClick={togglePlay}
-                className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg shrink-0 ${
-                  isPlaying 
-                    ? 'bg-white text-slate-900 hover:scale-105 active:scale-95' 
-                    : 'bg-primary text-white hover:bg-primary-hover hover:scale-105 active:scale-95'
-                }`}
-              >
-                {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
-              </button>
-
-              {/* Slider de Volume */}
-              <div className="flex items-center gap-2 flex-1">
-                <button 
-                  onClick={toggleMute}
-                  className="text-white/50 hover:text-white transition-all shrink-0 p-1"
-                >
-                  {isMuted || volume === 0 ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4" />}
-                </button>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.05"
-                  value={isMuted ? 0 : volume}
-                  onChange={(e) => setVolume(parseFloat(e.target.value))}
-                  className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white hover:accent-primary transition-all outline-none"
-                  style={{
-                    background: `linear-gradient(to right, var(--color-primary, #3b82f6) ${
-                      (isMuted ? 0 : volume) * 100
-                    }%, rgba(255,255,255,0.1) ${(isMuted ? 0 : volume) * 100}%)`,
-                  }}
+            {/* Renderização Condicional Híbrida: Spotify (Iframe Embed) ou Focus Vibe (Controles Locais HTML5) */}
+            {currentStation?.type === 'spotify' ? (
+              <div className="relative z-10 w-full overflow-hidden rounded-xl border border-white/10 bg-black/40 backdrop-blur-md">
+                <iframe
+                  src={getSpotifyEmbedUrl(currentStation.url)}
+                  width="100%"
+                  height="80"
+                  frameBorder="0"
+                  allowFullScreen={false}
+                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                  loading="lazy"
+                  title={currentStation.name}
+                  className="rounded-xl shadow-lg"
                 />
               </div>
-            </div>
+            ) : (
+              <>
+                {/* Visualizador do Espectro Sonoro */}
+                <div className="relative z-10">
+                  <Visualizer isPlaying={isPlaying} />
+                </div>
+
+                {/* Controles de Volume e Play/Pause */}
+                <div className="flex items-center gap-3 relative z-10 bg-white/5 border border-white/5 p-2 rounded-xl">
+                  {/* Botão Play/Pause */}
+                  <button 
+                    onClick={togglePlay}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg shrink-0 ${
+                      isPlaying 
+                        ? 'bg-white text-slate-900 hover:scale-105 active:scale-95' 
+                        : 'bg-primary text-white hover:bg-primary-hover hover:scale-105 active:scale-95'
+                    }`}
+                  >
+                    {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
+                  </button>
+
+                  {/* Slider de Volume */}
+                  <div className="flex items-center gap-2 flex-1">
+                    <button 
+                      onClick={toggleMute}
+                      className="text-white/50 hover:text-white transition-all shrink-0 p-1"
+                    >
+                      {isMuted || volume === 0 ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4" />}
+                    </button>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={isMuted ? 0 : volume}
+                      onChange={(e) => setVolume(parseFloat(e.target.value))}
+                      className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white hover:accent-primary transition-all outline-none"
+                      style={{
+                        background: `linear-gradient(to right, var(--color-primary, #3b82f6) ${
+                          (isMuted ? 0 : volume) * 100
+                        }%, rgba(255,255,255,0.1) ${(isMuted ? 0 : volume) * 100}%)`,
+                      }}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
 
             {/* Abas e Listagem */}
             <div className="flex flex-col gap-2 relative z-10 flex-1">
@@ -252,14 +282,14 @@ export default function RadioPlayer() {
                   🧠 Focus Vibes
                 </button>
                 <button
-                  onClick={() => setActiveTab('real')}
+                  onClick={() => setActiveTab('spotify')}
                   className={`flex-1 py-1.5 text-center text-xs font-semibold rounded-md transition-all duration-300 ${
-                    activeTab === 'real'
+                    activeTab === 'spotify'
                       ? 'bg-white/15 text-white font-bold'
                       : 'text-white/50 hover:text-white'
                   }`}
                 >
-                  📻 Rádios Reais
+                  🎵 Spotify
                 </button>
               </div>
 

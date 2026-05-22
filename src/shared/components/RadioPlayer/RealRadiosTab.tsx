@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   useRadioStore, 
-  DEFAULT_REAL_STATIONS, 
+  DEFAULT_SPOTIFY_PLAYLISTS, 
   Station 
 } from '@/store/useRadioStore';
 import { 
@@ -10,7 +10,7 @@ import {
   Play, 
   Pause, 
   Loader2, 
-  Radio,
+  Music,
   Trash2,
   Plus,
   X
@@ -68,17 +68,18 @@ export default function RealRadiosTab() {
     setFormError('');
 
     if (!customName.trim()) {
-      setFormError('Digite o nome da estação.');
+      setFormError('Digite o nome da playlist.');
       return;
     }
 
     if (!customUrl.trim()) {
-      setFormError('Cole o link do streaming.');
+      setFormError('Cole o link do Spotify.');
       return;
     }
 
-    if (!customUrl.trim().toLowerCase().startsWith('https://')) {
-      setFormError('A URL deve começar com https:// (segurança obrigatória).');
+    const lowerUrl = customUrl.trim().toLowerCase();
+    if (!lowerUrl.startsWith('https://open.spotify.com/')) {
+      setFormError('Cole um link válido do Spotify (deve começar com https://open.spotify.com/).');
       return;
     }
 
@@ -88,13 +89,13 @@ export default function RealRadiosTab() {
     setShowAddForm(false);
   };
 
-  // Filtra as rádios recomendadas que o usuário favoritou para exibição na aba de favoritos
+  // Filtra as playlists recomendadas que o usuário favoritou para exibição na aba de favoritos
   const getFavoriteStations = () => {
     // Busca nos resultados da pesquisa + recomendadas padrão + personalizadas
-    const allKnownStations = [...DEFAULT_REAL_STATIONS, ...customStations, ...searchResults];
+    const allKnownPlaylists = [...DEFAULT_SPOTIFY_PLAYLISTS, ...customStations, ...searchResults];
     
     // Filtra e remove duplicatas
-    const uniqueKnown = allKnownStations.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
+    const uniqueKnown = allKnownPlaylists.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
     
     return uniqueKnown.filter(station => favoriteStationIds.includes(station.id));
   };
@@ -117,7 +118,7 @@ export default function RealRadiosTab() {
         }`}
       >
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
-          {/* Favicon da Rádio com fallback de ícone */}
+          {/* Capa da Playlist com fallback de ícone */}
           <div className="relative w-8 h-8 rounded-lg overflow-hidden bg-white/5 flex items-center justify-center border border-white/10 shrink-0">
             {station.favicon ? (
               <img 
@@ -130,7 +131,7 @@ export default function RealRadiosTab() {
                 }}
               />
             ) : null}
-            <Radio className="w-4 h-4 text-white/40 absolute" />
+            <Music className="w-4 h-4 text-white/40 absolute" />
           </div>
 
           {/* Nome e tags */}
@@ -149,13 +150,13 @@ export default function RealRadiosTab() {
                   </span>
                 ))
               ) : (
-                <span className="text-[8px] text-white/30">Nacional</span>
+                <span className="text-[8px] text-white/30">Spotify</span>
               )}
             </div>
           </div>
         </div>
 
-        {/* Ações da Rádio (Favoritar & Play) */}
+        {/* Ações da Playlist (Favoritar & Play) */}
         <div className="flex items-center gap-1.5 shrink-0 pl-2">
           {/* Botão de Excluir (apenas para customizadas) */}
           {station.isCustom && (
@@ -165,7 +166,7 @@ export default function RealRadiosTab() {
                 removeCustomStation(station.id);
               }}
               className="p-1.5 rounded-lg text-white/40 hover:text-red-400 hover:bg-white/10 transition-all duration-300"
-              title="Excluir Rádio"
+              title="Excluir Playlist"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -210,7 +211,7 @@ export default function RealRadiosTab() {
               type="text"
               value={localSearch}
               onChange={(e) => setLocalSearch(e.target.value)}
-              placeholder="Buscar rádio nacional..."
+              placeholder="Buscar playlist..."
               className="w-full bg-white/5 border border-white/10 text-white placeholder-white/30 rounded-xl py-2 pl-9 pr-8 text-xs focus:outline-none focus:border-primary/50 transition-all font-sans"
             />
             <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-white/30" />
@@ -251,7 +252,7 @@ export default function RealRadiosTab() {
             </>
           ) : (
             <>
-              <Plus className="w-3.5 h-3.5" /> Adicionar Rádio Personalizada
+              <Plus className="w-3.5 h-3.5" /> Adicionar Playlist do Spotify
             </>
           )}
         </button>
@@ -263,14 +264,14 @@ export default function RealRadiosTab() {
             className="bg-white/5 border border-white/10 rounded-xl p-3 space-y-2 animate-fade-in relative z-20"
           >
             <div className="text-[10px] font-bold text-white/40 tracking-wider">
-              NOVA RÁDIO PERSONALIZADA
+              NOVA PLAYLIST DO SPOTIFY
             </div>
             
             <input
               type="text"
               value={customName}
               onChange={(e) => setCustomName(e.target.value)}
-              placeholder="Nome da Rádio (ex: Bossa Nova Chill)"
+              placeholder="Nome da Playlist (ex: Lofi e Café)"
               className="w-full bg-black/35 border border-white/5 text-white placeholder-white/30 rounded-lg py-1.5 px-2.5 text-xs focus:outline-none focus:border-emerald-500/40 transition-all font-sans"
             />
             
@@ -278,7 +279,7 @@ export default function RealRadiosTab() {
               type="text"
               value={customUrl}
               onChange={(e) => setCustomUrl(e.target.value)}
-              placeholder="Link do Streaming HTTPS (ex: https://...)"
+              placeholder="Link da Playlist do Spotify (ex: https://open.spotify.com/...)"
               className="w-full bg-black/35 border border-white/5 text-white placeholder-white/30 rounded-lg py-1.5 px-2.5 text-xs focus:outline-none focus:border-emerald-500/40 transition-all font-sans"
             />
 
@@ -292,7 +293,7 @@ export default function RealRadiosTab() {
               type="submit"
               className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-1.5 rounded-lg text-xs font-bold transition-all shadow-md active:scale-95"
             >
-              Salvar Rádio
+              Salvar Playlist
             </button>
           </form>
         )}
@@ -303,7 +304,7 @@ export default function RealRadiosTab() {
         {isSearching ? (
           <div className="flex flex-col items-center justify-center py-6 text-white/40 gap-2">
             <Loader2 className="w-6 h-6 animate-spin text-primary" />
-            <span className="text-[10px] tracking-wide font-mono">PESQUISANDO ESTAÇÕES BRASIL...</span>
+            <span className="text-[10px] tracking-wide font-mono">PESQUISANDO PLAYLISTS...</span>
           </div>
         ) : localSearch.trim() ? (
           // Exibe os resultados da pesquisa
@@ -315,7 +316,7 @@ export default function RealRadiosTab() {
               searchResults.map(renderStationItem)
             ) : (
               <div className="text-center py-6 text-xs text-white/40">
-                Nenhuma rádio encontrada com "{localSearch}".
+                Nenhuma playlist encontrada com "{localSearch}".
               </div>
             )}
           </div>
@@ -326,7 +327,7 @@ export default function RealRadiosTab() {
             {favorites.length > 0 && (
               <div className="space-y-1.5">
                 <div className="text-[10px] font-bold text-red-400 tracking-wider px-1 flex items-center gap-1">
-                  <Heart className="w-3 h-3" fill="currentColor" /> SUAS RÁDIOS FAVORITAS
+                  <Heart className="w-3 h-3" fill="currentColor" /> SUAS PLAYLISTS FAVORITAS
                 </div>
                 <div className="space-y-1.5">
                   {favorites.map(renderStationItem)}
@@ -338,7 +339,7 @@ export default function RealRadiosTab() {
             {customStations.length > 0 && (
               <div className="space-y-1.5">
                 <div className="text-[10px] font-bold text-emerald-400 tracking-wider px-1 flex items-center gap-1">
-                  <Radio className="w-3 h-3 animate-pulse" /> SUAS ESTAÇÕES PERSONALIZADAS ({customStations.length})
+                  <Music className="w-3 h-3 animate-pulse" /> SUAS PLAYLISTS ADICIONADAS ({customStations.length})
                 </div>
                 <div className="space-y-1.5">
                   {customStations.map(renderStationItem)}
@@ -349,10 +350,10 @@ export default function RealRadiosTab() {
             {/* Recomendadas Padrão */}
             <div className="space-y-1.5">
               <div className="text-[10px] font-bold text-white/40 tracking-wider px-1 flex items-center gap-1">
-                <Radio className="w-3 h-3" /> ESTAÇÕES RECOMENDADAS (IMUNES A FIREWALL)
+                <Music className="w-3 h-3" /> PLAYLISTS RECOMENDADAS
               </div>
               <div className="space-y-1.5">
-                {DEFAULT_REAL_STATIONS.map(renderStationItem)}
+                {DEFAULT_SPOTIFY_PLAYLISTS.map(renderStationItem)}
               </div>
             </div>
           </>

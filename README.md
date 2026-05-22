@@ -18,35 +18,35 @@ O Hub Central utiliza uma arquitetura baseada em **Domain-Driven Design (DDD)** 
 
 ```mermaid
 graph TB
-    subgraph Client_Layer ["Interfaces de Experiência"]
-        Admin["🖥️ Dashboard Admin (React/Vite)"]
-        Portal["📱 Portal do Cliente (Self-Service)"]
-        Nexus["🧠 Nexus Intelligence Hub (Knowledge Engine)"]
+    subgraph Client_Layer ["Interfaces de Experiencia"]
+        Admin["🖥️ Dashboard Admin React e Vite"]
+        Portal["📱 Portal do Cliente Self-Service"]
+        Nexus["🧠 Nexus Intelligence Hub - Knowledge Engine"]
     end
 
-    subgraph Automation_Orchestra ["Orquestração & Eventos"]
+    subgraph Automation_Orchestra ["Orquestração e Eventos"]
         direction TB
         Vercel["⚡ Vercel Edge Runtime"]
-        Cron["⏱️ Cron-Job.org (High-Precision Triggers)"]
-        Webhooks["🔗 Webhook Listeners (Asaas/Firebase)"]
+        Cron["⏱️ Cron-Job.org - High-Precision Triggers"]
+        Webhooks["🔗 Webhook Listeners Asaas e Firebase"]
     end
 
-    subgraph AI_Data_Persistence ["Inteligência & Dados"]
-        Firestore[("🔥 Firestore (Real-time DB)")]
-        Redis[("⚡ Upstash Redis (Rate Limit/Cache)")]
-        Gemini["🤖 Google Gemini AI (Neural Engine)"]
+    subgraph AI_Data_Persistence ["Inteligência e Dados"]
+        Firestore[("🔥 Firestore Real-time DB")]
+        Redis[("⚡ Upstash Redis - Rate Limit e Cache")]
+        Gemini["🤖 Google Gemini AI - Neural Engine"]
     end
 
-    subgraph Infrastructure_Providers ["Infraestrutura & APIs"]
-        Asaas["💳 Asaas (Payment Gateway)"]
-        Resend["📧 Resend (Transactional Email)"]
-        Cloudinary["🖼️ Cloudinary/ImgBB (CDN/Media)"]
+    subgraph Infrastructure_Providers ["Infraestrutura e APIs"]
+        Asaas["💳 Asaas - Payment Gateway"]
+        Resend["📧 Resend - Transactional Email"]
+        Cloudinary["🖼️ Cloudinary e ImgBB - CDN e Media"]
     end
 
     %% Flows
-    Cron -- "HTTPS Trigger (Frequência Custom)" --> Vercel
+    Cron -- "HTTPS Trigger Frequência Custom" --> Vercel
     Vercel -- "Business Logic" --> Infrastructure_Providers
-    Client_Layer -- "Zustand / Firebase SDK" --> Firestore
+    Client_Layer -- "Zustand e Firebase SDK" --> Firestore
     Vercel -- "Process Events" --> Firestore
     Vercel -- "Token Verification" --> Redis
     Client_Layer -- "Auth" --> Firebase_Auth[Firebase Auth]
@@ -261,26 +261,26 @@ O sistema de faturamento é 100% autônomo e orientado a eventos.
 
 ```mermaid
 graph TD
-    subgraph Chamadas_Externas ["Requisições HTTP / Webhooks / Crons"]
-        R1["🔗 /api/link-preview"]
-        R2["🎙️ /api/transcribe"]
-        C1["⏱️ /api/daily_cron"]
-        C2["⏱️ /api/cron/finance-engine"]
-        C3["⏱️ /api/cron/process-scheduler"]
+    subgraph Chamadas_Externas ["Requisições HTTP - Webhooks - Crons"]
+        R1["🔗 api-link-preview"]
+        R2["🎙️ api-transcribe"]
+        C1["⏱️ api-daily-cron"]
+        C2["⏱️ api-cron-finance-engine"]
+        C3["⏱️ api-cron-process-scheduler"]
     end
 
-    subgraph Vercel_Rewrites ["Vercel Routers (vercel.json)"]
+    subgraph Vercel_Rewrites ["Vercel Routers - vercel.json"]
         direction TB
         RW_Chat{"URL Rewrites"}
         RW_Cron{"URL Rewrites"}
     end
 
-    subgraph Consolidated_Handlers ["Serverless Functions Ativas (11 Máx)"]
+    subgraph Consolidated_Handlers ["Serverless Functions Ativas - 11 Max"]
         ChatHandler["⚡ api/chat_handler.ts"]
         CronHandler["⚡ api/cron_handler.ts"]
     end
 
-    subgraph Private_Business_Logic ["Módulos Internos (Pasta Privada _cron/)"]
+    subgraph Private_Business_Logic ["Módulos Internos - Pasta Privada _cron"]
         DailyCron["_cron/daily_cron.ts"]
         FinanceEngine["_cron/finance_engine.ts"]
         ProcessSched["_cron/process_scheduler.ts"]
@@ -383,13 +383,16 @@ Implementação de chamadas de voz e vídeo ponto a ponto (P2P) integradas nativ
 - **Glassmorphism Overlay & PiP Interno:** Modal translúcido pulsante para aceitar chamadas e interface de overlay completa com modo Picture-in-Picture (PiP) interno flutuante, permitindo navegar livremente pelo CRM durante a chamada ativa.
 - **Hardware Cleanup Rigoroso:** Ao encerrar a chamada, os streams de câmera e microfone são rigidamente desligados de imediato para total privacidade.
 
-### 🎵 Hub Focus Station (Focus Vibes, Rádios Reais & Customizadas)
+### 🎵 Hub Focus Station (Focus Vibe Lofi & Integração Premium Spotify)
 Integração global e persistente de áudio para produtividade e bem-estar operacional, com design deslumbrante e acoplamento de estados inteligentes:
-- **Focus Vibes Curados (Imunes a Firewall):** 5 canais temáticos instrumentais pré-configurados (Lofi, Synthwave, Chuva, Nordic, Jazz) focados no aumento de produtividade. Para contornar bloqueios estritos de firewalls de rede corporativa (que bloqueiam servidores de streaming como Zeno.fm), as vibes de Chuva, Nordic e Jazz utilizam loops perfeitos em MP3 servidos de forma segura via CDN global **jsDelivr** (`https://cdn.jsdelivr.net`).
-- **Rádios Reais (Domínios Governamentais Protegidos):** Para garantir o funcionamento das rádios reais em redes empresariais fechadas, as emissoras de destaque recomendadas por padrão são transmissões federais oficiais do Brasil (**Rádio Senado FM**, **Rádio Câmara FM** e **Rádio MEC FM**). Os domínios `.gov.br` e `.leg.br` são imunes a firewalls devido a políticas de conectividade pública estatal.
-- **Super Feature — Rádios Personalizadas:** O CRM oferece liberdade total para contornar limitações de rede por meio da aba de Rádios Reais. O usuário pode cadastrar, editar e remover suas próprias estações fornecendo o nome e o link de stream HTTPS. Essas rádios personalizadas são sincronizadas com a aba de Favoritos e persistidas localmente no `localStorage`.
+- **Focus Vibe Lofi Nativa (Lofi Focus Beats):** Um canal instrumental de Lofi relaxante servido diretamente via streaming estável para manter o foco total, operado de forma puramente nativa através de áudio HTML5 local.
+- **Super Feature — Integração Premium Spotify:** Para eliminar por definitivo qualquer bloqueio de TI e firewalls corporativos restritos em transmissões tradicionais de áudio, o Hub Focus Station integrou o ecossistema oficial de **Embed do Spotify** de forma híbrida. 
+  - **Playlist Padrão da Empresa:** A central de foco vem pré-configurada em destaque com a playlist colaborativa oficial da empresa (`https://open.spotify.com/playlist/5kVEIXiuRnwkh5EEfLuFXF`).
+  - **Playlists Customizadas ilimitadas:** Os usuários podem colar livremente qualquer link de playlist pública do Spotify para salvar e gerenciar suas próprias seleções dentro do CRM, com persistência automática no `localStorage`.
+  - **Reprodução Híbrida Inteligente:** Ao dar play em uma playlist do Spotify, a aba de áudio nativa local é pausada imediatamente e o CRM renderiza dinamicamente o reprodutor de Embed compacto oficial do Spotify (`height="80"`) com estilo Glassmorphism.
+  - **Requisito de Conta:** Para escutar as músicas completas e sem restrições, o usuário só precisa estar logado na sua própria conta do Spotify no mesmo navegador onde o CRM está aberto.
 - **Navegação Contínua Ininterrupta:** Widget flutuante com design ultrapremium em Glassmorphism (Dynamic Island style) que pode ser arrastado ou minimizado. Por ser injetado no layout raiz do CRM (`AppLayout`), o fluxo de áudio permanece tocando de forma ininterrupta nas trocas de páginas ou rotas internas.
-- **Pausa Inteligente WebRTC:** Sincronização automática com o `useCallStore`. O reprodutor de áudio pausa instantaneamente a música ao iniciar ou receber uma ligação telefônica e retoma a reprodução assim que a chamada P2P é finalizada.
+- **Pausa Inteligente WebRTC:** Sincronização automática com o `useCallStore`. O reprodutor de áudio (local ou o controle do widget) suspende a reprodução automaticamente ao iniciar ou receber uma ligação telefônica P2P de áudio/vídeo e retoma o estado inicial assim que a chamada é encerrada.
 - **Neon Spectrum Visualizer:** Barras animadas nativamente em CSS com gradientes fluidos neon que pulsam harmonicamente sincronizadas com o estado de áudio (`isPlaying`), simulando um visualizador de espectro sem os problemas tradicionais de segurança CORS de streams externos.
 
 ```mermaid
@@ -400,7 +403,7 @@ sequenceDiagram
     participant Firestore as 🔥 Firestore (Signaling)
     participant PeerB as 🖥️ Team Member B (Receiver)
 
-    Note over FocusStation: Tocando Focus Vibes ou Rádio Real
+    Note over FocusStation: Tocando Focus Vibe ou Spotify
     PeerA->>Firestore: Inicia chamada (Cria documento na col 'calls')
     Firestore-->>PeerB: onSnapshot (Detecta nova chamada)
     Note over PeerB: SoundSynthesizer: Toca bip localmente

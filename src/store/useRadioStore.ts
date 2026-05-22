@@ -4,12 +4,12 @@ import { persist } from 'zustand/middleware';
 export interface Station {
   id: string;
   name: string;
-  url: string;
+  url: string; // URL da playlist ou música do Spotify (ex: https://open.spotify.com/playlist/...)
   favicon?: string;
   tags?: string[];
-  type: 'vibe' | 'real';
-  vibeType?: 'lofi' | 'synthwave' | 'nordic' | 'nature' | 'cafe';
-  isCustom?: boolean; // Identificador para estações adicionadas pelo usuário
+  type: 'vibe' | 'spotify';
+  vibeType?: 'lofi';
+  isCustom?: boolean; // Identificador para playlists adicionadas pelo usuário
 }
 
 interface RadioState {
@@ -18,8 +18,8 @@ interface RadioState {
   isMuted: boolean;
   currentStation: Station | null;
   favoriteStationIds: string[];
-  customStations: Station[]; // Estações personalizadas adicionadas pelo usuário
-  activeTab: 'vibes' | 'real';
+  customStations: Station[]; // Playlists customizadas adicionadas pelo usuário
+  activeTab: 'vibes' | 'spotify';
   searchQuery: string;
   searchResults: Station[];
   isSearching: boolean;
@@ -34,13 +34,13 @@ interface RadioState {
   removeFavorite: (stationId: string) => void;
   addCustomStation: (name: string, url: string) => void;
   removeCustomStation: (id: string) => void;
-  searchStations: (query: string) => Promise<void>;
+  searchStations: (query: string) => void;
   toggleMinimize: () => void;
-  setActiveTab: (tab: 'vibes' | 'real') => void;
+  setActiveTab: (tab: 'vibes' | 'spotify') => void;
   setPlayingState: (isPlaying: boolean) => void;
 }
 
-// Estações curadas de Focus Vibes (totalmente HTTPS e imunes a firewall corporativo via CDN jsDelivr)
+// Focus Vibes (Apenas Lofi conforme solicitado pelo usuário)
 export const FOCUS_VIBES_STATIONS: Station[] = [
   {
     id: 'vibe-lofi',
@@ -50,70 +50,34 @@ export const FOCUS_VIBES_STATIONS: Station[] = [
     tags: ['lofi', 'beats', 'study', 'focus'],
     type: 'vibe',
     vibeType: 'lofi'
-  },
-  {
-    id: 'vibe-synthwave',
-    name: 'Synthwave Pulse',
-    url: 'https://stream.nightride.fm/chillsynth.mp3', // Stream Chillsynth/Synthwave HTTPS super estável da rede Nightride FM
-    favicon: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=80&h=80&fit=crop',
-    tags: ['synthwave', 'electro', 'cyberpunk', 'retro'],
-    type: 'vibe',
-    vibeType: 'synthwave'
-  },
-  {
-    id: 'vibe-nature',
-    name: 'Chuva na Floresta (Sons da Natureza)',
-    url: 'https://cdn.jsdelivr.net/gh/bradtraversy/ambient-sound-mixer@master/sounds/rain.mp3', // Loop estático no GitHub via CDN jsDelivr (totalmente livre de firewalls)
-    favicon: 'https://images.unsplash.com/photo-1437622368342-7a3d73a34c8f?w=80&h=80&fit=crop',
-    tags: ['chuva', 'natureza', 'relax', 'ruído-branco'],
-    type: 'vibe',
-    vibeType: 'nature'
-  },
-  {
-    id: 'vibe-nordic',
-    name: 'Nordic Piano & Ambient',
-    url: 'https://cdn.jsdelivr.net/gh/florinpop17/stream-songs@master/mp3/ambient.mp3', // Loop estático clássico/relaxante no GitHub via CDN jsDelivr
-    favicon: 'https://images.unsplash.com/photo-1485550409059-9afb054cada4?w=80&h=80&fit=crop',
-    tags: ['piano', 'ambient', 'calmo', 'nordic'],
-    type: 'vibe',
-    vibeType: 'nordic'
-  },
-  {
-    id: 'vibe-cafe',
-    name: 'Café Parisienne Jazz',
-    url: 'https://cdn.jsdelivr.net/gh/florinpop17/stream-songs@master/mp3/night-vlog.mp3', // Loop estático Lofi Jazz no GitHub via CDN jsDelivr
-    favicon: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=80&h=80&fit=crop',
-    tags: ['jazz', 'instrumental', 'café', 'smooth'],
-    type: 'vibe',
-    vibeType: 'cafe'
   }
 ];
 
-// Rádios Reais Brasileiras Governamentais/Públicas (totalmente HTTPS e imunes a firewall corporativo via domínios federais .gov.br e .leg.br)
-export const DEFAULT_REAL_STATIONS: Station[] = [
+// Playlists Recomendadas do Spotify (Com a playlist colaborativa oficial da empresa configurada como destaque)
+export const DEFAULT_SPOTIFY_PLAYLISTS: Station[] = [
   {
-    id: 'real-senadofm',
-    name: 'Rádio Senado FM',
-    url: 'https://radioaovivo.senado.leg.br/fm.mp3', // Excelente programação de Jazz, Bossa Nova, MPB e notícias, imune a bloqueios
-    favicon: 'https://static.radios.com.br/img/logo_senado.png',
-    tags: ['mpb', 'jazz', 'bossa-nova', 'notícias'],
-    type: 'real'
+    id: 'spotify-empresa',
+    name: 'Playlist da Empresa',
+    url: 'https://open.spotify.com/playlist/5kVEIXiuRnwkh5EEfLuFXF?si=4ezkB4XdTd-kdRWzjuLESg',
+    favicon: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=80&h=80&fit=crop',
+    tags: ['empresa', 'colaborativa', 'hub'],
+    type: 'spotify'
   },
   {
-    id: 'real-camara',
-    name: 'Rádio Câmara FM',
-    url: 'https://stream3.camara.gov.br/radiocamara1', // Programação musical brasileira de alta qualidade, rock nacional e notícias
-    favicon: 'https://static.radios.com.br/img/logo_camara.png',
-    tags: ['mpb', 'rock-nacional', 'cultura', 'informação'],
-    type: 'real'
+    id: 'spotify-deepfocus',
+    name: 'Foco Profundo (Deep Focus)',
+    url: 'https://open.spotify.com/playlist/37i9dQZF1DWZeKFBTSL5UK',
+    favicon: 'https://images.unsplash.com/photo-1516280440614-37939bbacd6a?w=80&h=80&fit=crop',
+    tags: ['instrumental', 'focus', 'deep'],
+    type: 'spotify'
   },
   {
-    id: 'real-mecfm',
-    name: 'Rádio MEC FM Rio (EBC)',
-    url: 'https://aovivo.ebc.com.br/radiomecfm', // Transmissão oficial da Empresa Brasil de Comunicação - Música Clássica e Jazz
-    favicon: 'https://static.radios.com.br/img/logo_mecfm.png',
-    tags: ['clássica', 'jazz', 'cultural', 'instrumental'],
-    type: 'real'
+    id: 'spotify-bossajazz',
+    name: 'Bossa Nova & Jazz',
+    url: 'https://open.spotify.com/playlist/37i9dQZF1DX4sWSpwq3LiO',
+    favicon: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=80&h=80&fit=crop',
+    tags: ['bossa', 'jazz', 'brazil', 'relax'],
+    type: 'spotify'
   }
 ];
 
@@ -123,14 +87,14 @@ export const useRadioStore = create<RadioState>()(
       isPlaying: false,
       volume: 0.5,
       isMuted: false,
-      currentStation: FOCUS_VIBES_STATIONS[0], // Começa com o Lofi Beats por padrão
+      currentStation: FOCUS_VIBES_STATIONS[0], // Começa com Lofi beats por padrão
       favoriteStationIds: [],
       customStations: [],
       activeTab: 'vibes',
       searchQuery: '',
       searchResults: [],
       isSearching: false,
-      isMinimized: true, // Começa minimizado de forma elegante por padrão
+      isMinimized: true,
 
       playStation: (station) => {
         set({ currentStation: station, isPlaying: true });
@@ -164,12 +128,12 @@ export const useRadioStore = create<RadioState>()(
 
       addCustomStation: (name, url) => {
         const newStation: Station = {
-          id: `custom-${Date.now()}`,
+          id: `spotify-custom-${Date.now()}`,
           name: name.trim(),
           url: url.trim(),
-          favicon: 'https://images.unsplash.com/photo-1484755560693-a4074577af3a?w=80&h=80&fit=crop',
-          tags: ['personalizada', 'stream', 'web'],
-          type: 'real',
+          favicon: 'https://images.unsplash.com/photo-1614680376593-902f74fa0d41?w=80&h=80&fit=crop',
+          tags: ['spotify', 'playlist', 'equipe'],
+          type: 'spotify',
           isCustom: true
         };
 
@@ -182,7 +146,7 @@ export const useRadioStore = create<RadioState>()(
         set((state) => {
           const nextCustom = state.customStations.filter((s) => s.id !== id);
           
-          // Se a rádio deletada era a que estava tocando atualmente, define a primeira vibe como padrão
+          // Se a playlist deletada era a que estava tocando atualmente, define o Lofi como padrão
           const nextCurrent = state.currentStation?.id === id 
             ? FOCUS_VIBES_STATIONS[0] 
             : state.currentStation;
@@ -198,7 +162,8 @@ export const useRadioStore = create<RadioState>()(
         });
       },
 
-      searchStations: async (query) => {
+      // Busca local rápida e resiliente que filtra playlists recomendadas, customizadas e favoritas
+      searchStations: (query) => {
         if (!query.trim()) {
           set({ searchResults: [], searchQuery: '', isSearching: false });
           return;
@@ -206,32 +171,16 @@ export const useRadioStore = create<RadioState>()(
 
         set({ searchQuery: query, isSearching: true });
 
-        try {
-          // Consultando servidores espelhos estáveis da API Radio-Browser comunitária
-          const response = await fetch(
-            `https://de1.api.radio-browser.info/json/stations/search?countrycode=BR&https=true&name=${encodeURIComponent(
-              query
-            )}&order=clickcount&reverse=true&limit=25`
-          );
+        const searchLower = query.toLowerCase().trim();
+        const allKnownPlaylists = [...DEFAULT_SPOTIFY_PLAYLISTS, ...get().customStations];
+        
+        const filtered = allKnownPlaylists.filter((item) => {
+          const matchesName = item.name.toLowerCase().includes(searchLower);
+          const matchesTags = item.tags?.some((t) => t.toLowerCase().includes(searchLower)) || false;
+          return matchesName || matchesTags;
+        });
 
-          if (!response.ok) throw new Error('Falha ao buscar rádios');
-
-          const data = await response.json();
-
-          const formattedStations: Station[] = data.map((item: any) => ({
-            id: item.changeuuid,
-            name: item.name,
-            url: item.url_resolved || item.url,
-            favicon: item.favicon || 'https://images.unsplash.com/photo-1484755560693-a4074577af3a?w=80&h=80&fit=crop',
-            tags: item.tags ? item.tags.split(',').slice(0, 3).map((t: string) => t.trim()) : [],
-            type: 'real',
-          }));
-
-          set({ searchResults: formattedStations, isSearching: false });
-        } catch (error) {
-          console.error('Erro ao buscar rádios online:', error);
-          set({ isSearching: false, searchResults: [] });
-        }
+        set({ searchResults: filtered, isSearching: false });
       },
 
       toggleMinimize: () => {
@@ -252,7 +201,7 @@ export const useRadioStore = create<RadioState>()(
         volume: state.volume,
         isMuted: state.isMuted,
         favoriteStationIds: state.favoriteStationIds,
-        customStations: state.customStations, // Persistir estações personalizadas do usuário
+        customStations: state.customStations,
         currentStation: state.currentStation,
         activeTab: state.activeTab,
       }),
