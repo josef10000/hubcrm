@@ -209,6 +209,19 @@ O Hub Central conta com um motor de personalização visual dinâmico que permit
 - **🎀 Barbie (`barbie`):** Estética vibrante em rosa neon com corações e brilhos em 3D flutuando no background.
 - **🕶️ Minimalista (`minimalist`):** Visual monocromático de alto contraste focado exclusivamente na eficiência operacional.
 
+### 📊 Tabela Comparativa de Experiências Visuais (Temas)
+| Tema Premium | ID Técnico | Paleta de Cores Predominante | Partículas de Background | Proposta de Experiência / UX |
+| :--- | :--- | :--- | :--- | :--- |
+| **⚪ Branco Elite** | `branco-elite` | Neve translúcida, Cinza suave, Platina | Flocos de luz branca e cinza | Minimalista, clean e ideal para reduzir cansaço visual diurno |
+| **🥈 Prata Platinum** | `prata-platinum` | Titânio metálico, Grafite escuro, Platina | Cristais metálicos de platina reflexivos | Sofisticação futurista industrial, acabamento premium e metálico |
+| **⚫ Preto Absoluto** | `preto-absoluto` | Preto AMOLED (`#000000`), Ouro, Grafite | Brasa de carvão e estrelas douradas | Luxo AMOLED absoluto com contraste extremo e conforto noturno |
+| **🌐 Cyberpunk** | `cyberpunk` | Ciano Neon, Violeta Elétrico, Magenta | Scanlines de TV retrô e fagulhas neon | Imersão futurista e vibrante para foco e foco operacional noturno |
+| **🌿 Forest** | `forest` | Verde Floresta, Oliva Escuro, Esmeralda | Folhas verdes flutuando serenamente | Calma orgânica natural e relaxamento mental durante tarefas complexas |
+| **❄️ Nordic** | `nordic` | Azul Glacial, Geada Translúcida, Branco Polar| Flocos de neve caindo levemente | Limpeza nórdica elegante, foco cristalino e bem-estar |
+| **🌌 Midnight** | `midnight` | Violeta Profundo, Azul Escuro, Índigo | Estrelas cadentes e constelações ativas| Sky celestial estrelado e inspiração profunda em sessões noturnas |
+| **🎀 Barbie** | `barbie` | Rosa Vibrante, Rosa Chiclete, Lilás | Corações 3D e brilhos flutuando | Expressividade divertida, dinâmica, calorosa e viva |
+| **🕶️ Minimalista** | `minimalist` | Monocromático, Escala de cinzas, P&B | Nenhuma (Foco estrito em texto) | Foco utilitário absoluto na eficácia de dados de negócio |
+
 ---
 
 ## 📂 Project Structure
@@ -245,6 +258,52 @@ O sistema de faturamento é 100% autônomo e orientado a eventos.
 - **Persona Filtering:** Inteligência no Portal do Cliente que agrupa produtos por CPF/CNPJ mas filtra automaticamente cards cancelados e faturas "lixo" de testes anteriores.
 - **Zero Polling:** A interface do usuário reflete o status financeiro instantaneamente via listeners do Firestore, sem necessidade de recarregar a página ou fazer requisições manuais ao Asaas.
 - **Serverless Consolidation:** Otimização de recursos na Vercel através de handlers unificados (como o `system_handler` para rotas de utilidades do sistema, o `chat_handler` para as APIs de chat e transcrição, e o `cron_handler` que consolida os 3 cron-jobs do ecossistema: auditoria diária, motor financeiro e agendador de processos), garantindo o funcionamento do sistema completo com apenas 11 funções físicas, dentro do limite de 12 Serverless Functions do plano Hobby da Vercel.
+
+```mermaid
+graph TD
+    subgraph Chamadas_Externas [Requisições HTTP / Webhooks / Crons]
+        R1["🔗 /api/link-preview"]
+        R2["🎙️ /api/transcribe"]
+        C1["⏱️ /api/daily_cron"]
+        C2["⏱️ /api/cron/finance-engine"]
+        C3["⏱️ /api/cron/process-scheduler"]
+    end
+
+    subgraph Vercel_Rewrites [Vercel Routers (vercel.json)]
+        direction TB
+        RW_Chat{"URL Rewrites"}
+        RW_Cron{"URL Rewrites"}
+    end
+
+    subgraph Consolidated_Handlers [Serverless Functions Ativas (11 Máx)]
+        ChatHandler["⚡ api/chat_handler.ts"]
+        CronHandler["⚡ api/cron_handler.ts"]
+    end
+
+    subgraph Private_Business_Logic [Módulos Internos (Pasta Privada _cron/)]
+        DailyCron["_cron/daily_cron.ts"]
+        FinanceEngine["_cron/finance_engine.ts"]
+        ProcessSched["_cron/process_scheduler.ts"]
+    end
+
+    %% Flows for Chat
+    R1 --> RW_Chat
+    R2 --> RW_Chat
+    RW_Chat -- "?action=preview" --> ChatHandler
+    RW_Chat -- "?action=transcribe" --> ChatHandler
+
+    %% Flows for Crons
+    C1 --> RW_Cron
+    C2 --> RW_Cron
+    C3 --> RW_Cron
+    RW_Cron -- "?action=daily" --> CronHandler
+    RW_Cron -- "?action=finance" --> CronHandler
+    RW_Cron -- "?action=scheduler" --> CronHandler
+
+    CronHandler -- Import & Delegate --> DailyCron
+    CronHandler -- Import & Delegate --> FinanceEngine
+    CronHandler -- Import & Delegate --> ProcessSched
+```
 
 ---
 
@@ -331,6 +390,51 @@ Integração global e persistente de áudio para produtividade e bem-estar opera
 - **Navegação Contínua Ininterrupta:** Widget flutuante com design ultrapremium em Glassmorphism (Dynamic Island style) que pode ser arrastado ou minimizado. Por ser injetado no layout raiz do CRM (`AppLayout`), o fluxo de áudio permanece tocando de forma ininterrupta nas trocas de páginas ou rotas internas.
 - **Pausa Inteligente WebRTC:** Sincronização automática com o `useCallStore`. O reprodutor de áudio pausa instantaneamente a música ao iniciar ou receber uma ligação telefônica e retoma a reprodução assim que a chamada P2P é finalizada.
 - **Neon Spectrum Visualizer:** Barras animadas nativamente em CSS com gradientes fluidos neon que pulsam harmonicamente sincronizadas com o estado de áudio (`isPlaying`), simulando um visualizador de espectro sem os problemas tradicionais de segurança CORS de streams externos.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant FocusStation as 🎵 Hub Focus Station (Audio)
+    participant PeerA as 🖥️ Team Member A (Caller)
+    participant Firestore as 🔥 Firestore (Signaling)
+    participant PeerB as 🖥️ Team Member B (Receiver)
+
+    Note over FocusStation: Tocando Focus Vibes ou Rádio Real
+    PeerA->>Firestore: Inicia chamada (Cria documento na col 'calls')
+    Firestore-->>PeerB: onSnapshot (Detecta nova chamada)
+    Note over PeerB: SoundSynthesizer: Toca bip localmente
+    
+    %% WebRTC Signaling
+    PeerB->>PeerB: useCallStore (status vira 'ringing' ou 'connecting')
+    PeerB->>FocusStation: useCallStore monitorado -> Pausa Automática!
+    Note over FocusStation: Áudio Pausado (Status: Standby)
+    
+    PeerB->>Firestore: Aceita chamada (Envia Answer & ICE Candidates)
+    Firestore-->>PeerA: onSnapshot (Recebe Answer & ICE)
+    PeerA->>FocusStation: useCallStore monitorado -> Pausa Automática!
+    Note over FocusStation: Áudio Pausado (Status: Standby)
+    
+    Note over PeerA, PeerB: Chamada P2P Ativa (Áudio & Vídeo WebRTC)
+    
+    PeerA->>Firestore: Finaliza chamada (Status: 'ended')
+    Firestore-->>PeerB: onSnapshot (Detecta fim de chamada)
+    PeerA->>PeerA: Cleanup de microfone/câmera
+    PeerB->>PeerB: Cleanup de microfone/câmera
+    
+    PeerA->>FocusStation: useCallStore monitorado -> Retoma Áudio se estava tocando!
+    PeerB->>FocusStation: useCallStore monitorado -> Retoma Áudio se estava tocando!
+```
+
+### ⌨️ Tabela de Atalhos Rápidos do Ecossistema
+| Atalho / Ação Visual | Ação Executada no CRM | Contexto de Aplicação |
+| :--- | :--- | :--- |
+| **`Ctrl` + `Shift` + `F`** | Abre o Modal de Busca Global no Histórico | Janela de Chat Ativa |
+| **`ArrowUp` (Seta para Cima)** | Ativa edição rápida da última mensagem enviada pelo usuário | Campo de entrada de texto vazio |
+| **`Escape` (ESC)** | Cancela o modo de resposta, de edição de mensagem, de seleção múltipla e fecha popups/modais | Interface Global / Ativa |
+| **`Double Click` (Duplo Clique)** | Seleciona mensagem para Ações em Lote (excluir, copiar ou encaminhar em massa) | Bolha de Mensagem no Chat |
+| **`Double Click` (Duplo Clique)** | Abre o campo de edição inline instantâneo para alterar o objetivo | Título de card no Kanban de PDI |
+| **`/checklist`** | Insere o atalho para criação de bloco de tarefas colaborativas | Campo de texto do Chat |
+| **`Enter`** | Confirma e salva a edição de texto inline do card no Firestore | Modo de Edição Inline no PDI |
 
 ---
 
