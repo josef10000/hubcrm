@@ -187,6 +187,12 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
     - **Gestão de Progresso:** Acompanhamento visual da leitura com atualização instantânea.
     - **Neural Greeting & Weather:** Saudação dinâmica e clima local integrado ao dashboard.
     - **Categorias Dinâmicas:** Gestão completa de taxonomia personalizada.
+    - **PDI Kanban Premium (Meu PDI):** Sistema de metas e objetivos interativo 100% reativo e livre de race-conditions.
+      - **Edição Inline de Elite:** Suporte à edição instantânea via duplo clique direto no título do card ou clicando no ícone de lápis (`Edit3`) no hover.
+      - **Exclusão Premium:** Botão de lixeira (`Trash2`) com efeito hover premium para remoção imediata e atrativa.
+      - **Atualizações Atômicas:** Manipulação de array de itens no Firestore com atualização em tempo real de forma atômica síncrona, eliminando perdas por concorrência de escrita ao arrastar cards rapidamente.
+      - **Perfil Altamente Reativo:** Sincronização em tempo real do perfil via listener ativo (`onSnapshot`), com pausa inteligente de reescrita local de `formData` enquanto o usuário está ativamente editando os campos de texto, impedindo perda de foco ou de caracteres.
+      - **Modais com Altura Inteligente:** Padronização robusta de múltiplos modais do chat (Criação de Canais, Grupos, Lembretes, Aprovações e Configurações) com contêineres `max-h-[90vh] flex flex-col` e rolagem interna customizada, garantindo que nenhum modal seja cortado em telas de menor resolução.
 
 ## 🎨 Personalização & Temas Estéticos Premium
 
