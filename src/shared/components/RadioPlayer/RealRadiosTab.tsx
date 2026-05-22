@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   useRadioStore, 
-  Station 
+  Station,
+  DEFAULT_SPOTIFY_PLAYLISTS
 } from '@/store/useRadioStore';
 import { 
   Search, 
@@ -16,7 +17,11 @@ import {
   Pencil
 } from 'lucide-react';
 
-export default function RealRadiosTab() {
+interface RealRadiosTabProps {
+  typeFilter?: 'spotify' | 'youtube';
+}
+
+export default function RealRadiosTab({ typeFilter }: RealRadiosTabProps) {
   const { 
     currentStation, 
     isPlaying, 
@@ -134,13 +139,23 @@ export default function RealRadiosTab() {
     }
 
     if (!customUrl.trim()) {
-      setFormError('Cole o link do Spotify ou do YouTube.');
+      setFormError(`Cole o link do ${typeFilter === 'spotify' ? 'Spotify' : 'YouTube'}.`);
       return;
     }
 
     const lowerUrl = customUrl.trim().toLowerCase();
     const isSpotify = lowerUrl.includes('spotify.com');
     const isYoutube = lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be');
+
+    if (typeFilter === 'spotify' && !isSpotify) {
+      setFormError('Por favor, cole um link de playlist válido do Spotify.');
+      return;
+    }
+
+    if (typeFilter === 'youtube' && !isYoutube) {
+      setFormError('Por favor, cole um link de vídeo ou playlist válido do YouTube.');
+      return;
+    }
 
     if (!isSpotify && !isYoutube) {
       setFormError('Cole um link válido do Spotify ou do YouTube.');
@@ -159,13 +174,23 @@ export default function RealRadiosTab() {
     // Busca nos resultados da pesquisa + personalizadas
     const allKnownPlaylists = [...customStations, ...searchResults];
     
+    // Se o typeFilter for fornecido, filtramos pelo tipo
+    const filteredKnown = typeFilter 
+      ? allKnownPlaylists.filter(s => s.type === typeFilter) 
+      : allKnownPlaylists;
+
     // Filtra e remove duplicatas
-    const uniqueKnown = allKnownPlaylists.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
+    const uniqueKnown = filteredKnown.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
     
     return uniqueKnown.filter(station => favoriteStationIds.includes(station.id));
   };
 
   const favorites = getFavoriteStations();
+
+  // Filtra as playlists personalizadas do usuário com base no typeFilter
+  const filteredCustom = typeFilter 
+    ? customStations.filter(s => s.type === typeFilter) 
+    : customStations;
 
   const renderStationItem = (station: Station) => {
     const isActive = currentStation?.id === station.id;
@@ -357,7 +382,7 @@ export default function RealRadiosTab() {
               type="text"
               value={customName}
               onChange={(e) => setCustomName(e.target.value)}
-              placeholder="Nome do Streaming (ex: Lofi e Café)"
+              placeholder={typeFilter === 'spotify' ? 'Nome da Playlist (ex: Hits de Foco)' : 'Nome do Vídeo/Playlist (ex: Som Ambiente)'}
               className="w-full bg-black/35 border border-white/5 text-white placeholder-white/30 rounded-lg py-1.5 px-2.5 text-xs focus:outline-none focus:border-emerald-500/40 transition-all font-sans"
             />
             
@@ -366,7 +391,7 @@ export default function RealRadiosTab() {
                 type="text"
                 value={customUrl}
                 onChange={(e) => setCustomUrl(e.target.value)}
-                placeholder="Link do Spotify ou YouTube"
+                placeholder={typeFilter === 'spotify' ? 'Link da playlist do Spotify' : 'Link do vídeo ou playlist do YouTube'}
                 className="w-full bg-black/35 border border-white/5 text-white placeholder-white/30 rounded-lg py-1.5 px-2.5 pr-20 text-xs focus:outline-none focus:border-emerald-500/40 transition-all font-sans"
               />
               <button
@@ -435,12 +460,22 @@ export default function RealRadiosTab() {
                 return;
               }
               if (!editUrl.trim()) {
-                setEditError('Cole o link do Spotify ou do YouTube.');
+                setEditError(`Cole o link do ${typeFilter === 'spotify' ? 'Spotify' : 'YouTube'}.`);
                 return;
               }
               const lowerUrl = editUrl.trim().toLowerCase();
               const isSpotify = lowerUrl.includes('spotify.com');
               const isYoutube = lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be');
+
+              if (typeFilter === 'spotify' && !isSpotify) {
+                setEditError('Por favor, cole um link de playlist válido do Spotify.');
+                return;
+              }
+
+              if (typeFilter === 'youtube' && !isYoutube) {
+                setEditError('Por favor, cole um link de vídeo ou playlist válido do YouTube.');
+                return;
+              }
 
               if (!isSpotify && !isYoutube) {
                 setEditError('Cole um link válido do Spotify ou do YouTube.');
@@ -477,7 +512,7 @@ export default function RealRadiosTab() {
               type="text"
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
-              placeholder="Nome da Playlist ou Vídeo"
+              placeholder={typeFilter === 'spotify' ? 'Nome da Playlist do Spotify' : 'Nome da Playlist ou Vídeo do YouTube'}
               className="w-full bg-black/35 border border-white/5 text-white placeholder-white/30 rounded-lg py-1.5 px-2.5 text-xs focus:outline-none focus:border-emerald-500/40 transition-all font-sans"
             />
             
@@ -486,7 +521,7 @@ export default function RealRadiosTab() {
                 type="text"
                 value={editUrl}
                 onChange={(e) => setEditUrl(e.target.value)}
-                placeholder="Link do Spotify ou do YouTube"
+                placeholder={typeFilter === 'spotify' ? 'Link do Spotify' : 'Link do YouTube'}
                 className="w-full bg-black/35 border border-white/5 text-white placeholder-white/30 rounded-lg py-1.5 px-2.5 pr-20 text-xs focus:outline-none focus:border-emerald-500/40 transition-all font-sans"
               />
               <button
@@ -563,18 +598,25 @@ export default function RealRadiosTab() {
           </div>
         ) : localSearch.trim() ? (
           // Exibe os resultados da pesquisa
-          <div className="space-y-1.5">
-            <div className="text-[10px] font-bold text-white/40 tracking-wider px-1">
-              RESULTADO DA PESQUISA ({searchResults.length})
-            </div>
-            {searchResults.length > 0 ? (
-              searchResults.map(renderStationItem)
-            ) : (
-              <div className="text-center py-6 text-xs text-white/40">
-                Nenhuma playlist encontrada com "{localSearch}".
+          (() => {
+            const filteredSearchResults = typeFilter 
+              ? searchResults.filter(s => s.type === typeFilter) 
+              : searchResults;
+            return (
+              <div className="space-y-1.5">
+                <div className="text-[10px] font-bold text-white/40 tracking-wider px-1">
+                  RESULTADO DA PESQUISA ({filteredSearchResults.length})
+                </div>
+                {filteredSearchResults.length > 0 ? (
+                  filteredSearchResults.map(renderStationItem)
+                ) : (
+                  <div className="text-center py-6 text-xs text-white/40">
+                    Nenhuma playlist encontrada com "{localSearch}".
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            );
+          })()
         ) : (
           // Exibe favoritos, personalizadas e recomendadas padrão
           <>
@@ -590,14 +632,26 @@ export default function RealRadiosTab() {
               </div>
             )}
 
-            {/* Estações Personalizadas do Usuário */}
-            {customStations.length > 0 && (
+            {/* Playlist Corporativa Padrão (Hub SiYmples) */}
+            {typeFilter === 'spotify' && (
               <div className="space-y-1.5">
                 <div className="text-[10px] font-bold text-emerald-400 tracking-wider px-1 flex items-center gap-1">
-                  <Music className="w-3 h-3 animate-pulse" /> SUAS PLAYLISTS ADICIONADAS ({customStations.length})
+                  <Music className="w-3 h-3 animate-pulse" /> PLAYLIST DA EMPRESA
                 </div>
                 <div className="space-y-1.5">
-                  {customStations.map(renderStationItem)}
+                  {DEFAULT_SPOTIFY_PLAYLISTS.map(renderStationItem)}
+                </div>
+              </div>
+            )}
+
+            {/* Estações Personalizadas do Usuário */}
+            {filteredCustom.length > 0 && (
+              <div className="space-y-1.5">
+                <div className="text-[10px] font-bold text-emerald-400 tracking-wider px-1 flex items-center gap-1">
+                  <Music className="w-3 h-3 animate-pulse" /> SUAS PLAYLISTS ADICIONADAS ({filteredCustom.length})
+                </div>
+                <div className="space-y-1.5">
+                  {filteredCustom.map(renderStationItem)}
                 </div>
               </div>
             )}

@@ -19,11 +19,18 @@ interface RadioState {
   currentStation: Station | null;
   favoriteStationIds: string[];
   customStations: Station[]; // Playlists customizadas adicionadas pelo usuário
-  activeTab: 'vibes' | 'spotify';
+  activeTab: 'vibes' | 'spotify' | 'youtube';
   searchQuery: string;
   searchResults: Station[];
   isSearching: boolean;
   isMinimized: boolean;
+  
+  // Spotify SDK & Hybrid states
+  spotifyAccessToken: string | null;
+  spotifyDeviceId: string | null;
+  spotifyPlaybackState: any | null;
+  spotifyIsPremium: boolean;
+  spotifyMode: 'embed' | 'sdk';
   
   // Actions
   playStation: (station: Station) => void;
@@ -37,8 +44,15 @@ interface RadioState {
   updateCustomStation: (id: string, updates: Partial<Station>) => void;
   searchStations: (query: string) => void;
   toggleMinimize: () => void;
-  setActiveTab: (tab: 'vibes' | 'spotify') => void;
+  setActiveTab: (tab: 'vibes' | 'spotify' | 'youtube') => void;
   setPlayingState: (isPlaying: boolean) => void;
+  
+  // Spotify SDK Actions
+  setSpotifyAccessToken: (token: string | null) => void;
+  setSpotifyDeviceId: (id: string | null) => void;
+  setSpotifyPlaybackState: (state: any) => void;
+  setSpotifyIsPremium: (isPremium: boolean) => void;
+  setSpotifyMode: (mode: 'embed' | 'sdk') => void;
 }
 
 // Focus Vibes (Apenas Lofi conforme solicitado pelo usuário)
@@ -81,9 +95,17 @@ export const useRadioStore = create<RadioState>()(
       isSearching: false,
       isMinimized: true,
 
+      // Spotify SDK & Hybrid initial states
+      spotifyAccessToken: null,
+      spotifyDeviceId: null,
+      spotifyPlaybackState: null,
+      spotifyIsPremium: false,
+      spotifyMode: 'embed',
+
       playStation: (station) => {
-        const isSpotify = station.type === 'spotify';
-        set({ currentStation: station, isPlaying: isSpotify ? false : true });
+        // Se for Spotify no modo SDK, deixa o SDK iniciar a reprodução antes de dar play global
+        const isSpotifySdk = station.type === 'spotify' && get().spotifyMode === 'sdk';
+        set({ currentStation: station, isPlaying: isSpotifySdk ? false : true });
       },
 
       togglePlay: () => {
@@ -184,7 +206,6 @@ export const useRadioStore = create<RadioState>()(
         });
       },
 
-      // Busca local rápida e resiliente que filtra playlists recomendadas, customizadas e favoritas
       searchStations: (query) => {
         if (!query.trim()) {
           set({ searchResults: [], searchQuery: '', isSearching: false });
@@ -215,6 +236,27 @@ export const useRadioStore = create<RadioState>()(
 
       setPlayingState: (isPlaying) => {
         set({ isPlaying });
+      },
+
+      // Spotify SDK Setters
+      setSpotifyAccessToken: (token) => {
+        set({ spotifyAccessToken: token });
+      },
+
+      setSpotifyDeviceId: (id) => {
+        set({ spotifyDeviceId: id });
+      },
+
+      setSpotifyPlaybackState: (state) => {
+        set({ spotifyPlaybackState: state });
+      },
+
+      setSpotifyIsPremium: (isPremium) => {
+        set({ spotifyIsPremium: isPremium });
+      },
+
+      setSpotifyMode: (mode) => {
+        set({ spotifyMode: mode });
       }
     }),
     {
@@ -226,10 +268,13 @@ export const useRadioStore = create<RadioState>()(
         customStations: state.customStations,
         currentStation: state.currentStation,
         activeTab: state.activeTab,
+        spotifyAccessToken: state.spotifyAccessToken,
+        spotifyMode: state.spotifyMode,
+        spotifyIsPremium: state.spotifyIsPremium
       }),
-      // Garante migração/auto-seed da playlist padrão da empresa para ser 100% editável e deletável
       onRehydrateStorage: () => (state) => {
         if (state) {
+          // Garante a presença da playlist padrão Hub SiYmples
           const hasEmpresa = state.customStations.some((s) => 
             s.url.includes('5kVEIXiuRnwkh5EEfLuFXF')
           );
@@ -252,3 +297,4 @@ export const useRadioStore = create<RadioState>()(
     }
   )
 );
+
