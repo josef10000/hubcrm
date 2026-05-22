@@ -311,6 +311,13 @@ Para garantir latência zero em organizações com milhares de registros, implem
 - **API Consolidation:** O portal não lê mais diretamente do Firestore via `onSnapshot` público. Todas as informações (faturamento, chamados, marketplace) são servidas por uma API centralizada que sanitiza os dados antes de expô-los.
 - **Auto-Sync:** Ao converter um lead ou criar um cliente, o sistema gera automaticamente os tokens de segurança e sincroniza o primeiro link de pagamento do Asaas.
 
+### 📞 WebRTC P2P Real-time Calls (Áudio & Vídeo)
+Implementação de chamadas de voz e vídeo ponto a ponto (P2P) integradas nativamente na interface de chat do HubCRM:
+- **Firestore Signaling:** Troca eficiente de pacotes SDP e candidatos ICE agrupados e serializados dinamicamente via arrays (reduzindo dezenas de leituras/escritas e mantendo o consumo de dados mínimo).
+- **Tons Sintetizados (HTML5 AudioContext):** Tons de discagem e bips gerados de forma puramente matemática e local no navegador, garantindo 100% de confiabilidade sem necessidade de carregar arquivos de áudio estáticos de servidores externos.
+- **Glassmorphism Overlay & PiP Interno:** Modal translúcido pulsante para aceitar chamadas e interface de overlay completa com modo Picture-in-Picture (PiP) interno flutuante, permitindo navegar livremente pelo CRM durante a chamada ativa.
+- **Hardware Cleanup Rigoroso:** Ao encerrar a chamada, os streams de câmera e microfone são rigidamente desligados de imediato para total privacidade.
+
 ---
 
 ## 🧪 Testing & CI/CD Strategy
