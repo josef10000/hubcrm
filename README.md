@@ -18,26 +18,26 @@ O Hub Central utiliza uma arquitetura baseada em **Domain-Driven Design (DDD)** 
 
 ```mermaid
 graph TB
-    subgraph Client_Layer [Interfaces de Experiência]
+    subgraph Client_Layer ["Interfaces de Experiência"]
         Admin["🖥️ Dashboard Admin (React/Vite)"]
         Portal["📱 Portal do Cliente (Self-Service)"]
         Nexus["🧠 Nexus Intelligence Hub (Knowledge Engine)"]
     end
 
-    subgraph Automation_Orchestra [Orquestração & Eventos]
+    subgraph Automation_Orchestra ["Orquestração & Eventos"]
         direction TB
         Vercel["⚡ Vercel Edge Runtime"]
         Cron["⏱️ Cron-Job.org (High-Precision Triggers)"]
         Webhooks["🔗 Webhook Listeners (Asaas/Firebase)"]
     end
 
-    subgraph AI_Data_Persistence [Inteligência & Dados]
+    subgraph AI_Data_Persistence ["Inteligência & Dados"]
         Firestore[("🔥 Firestore (Real-time DB)")]
         Redis[("⚡ Upstash Redis (Rate Limit/Cache)")]
         Gemini["🤖 Google Gemini AI (Neural Engine)"]
     end
 
-    subgraph Infrastructure_Providers [Infraestrutura & APIs]
+    subgraph Infrastructure_Providers ["Infraestrutura & APIs"]
         Asaas["💳 Asaas (Payment Gateway)"]
         Resend["📧 Resend (Transactional Email)"]
         Cloudinary["🖼️ Cloudinary/ImgBB (CDN/Media)"]
@@ -261,7 +261,7 @@ O sistema de faturamento é 100% autônomo e orientado a eventos.
 
 ```mermaid
 graph TD
-    subgraph Chamadas_Externas [Requisições HTTP / Webhooks / Crons]
+    subgraph Chamadas_Externas ["Requisições HTTP / Webhooks / Crons"]
         R1["🔗 /api/link-preview"]
         R2["🎙️ /api/transcribe"]
         C1["⏱️ /api/daily_cron"]
@@ -269,18 +269,18 @@ graph TD
         C3["⏱️ /api/cron/process-scheduler"]
     end
 
-    subgraph Vercel_Rewrites [Vercel Routers (vercel.json)]
+    subgraph Vercel_Rewrites ["Vercel Routers (vercel.json)"]
         direction TB
         RW_Chat{"URL Rewrites"}
         RW_Cron{"URL Rewrites"}
     end
 
-    subgraph Consolidated_Handlers [Serverless Functions Ativas (11 Máx)]
+    subgraph Consolidated_Handlers ["Serverless Functions Ativas (11 Máx)"]
         ChatHandler["⚡ api/chat_handler.ts"]
         CronHandler["⚡ api/cron_handler.ts"]
     end
 
-    subgraph Private_Business_Logic [Módulos Internos (Pasta Privada _cron/)]
+    subgraph Private_Business_Logic ["Módulos Internos (Pasta Privada _cron/)"]
         DailyCron["_cron/daily_cron.ts"]
         FinanceEngine["_cron/finance_engine.ts"]
         ProcessSched["_cron/process_scheduler.ts"]
