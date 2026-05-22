@@ -92,6 +92,13 @@ export default function RadioPlayer() {
   // Lida com erros e reconexões de rede automáticas na tag de áudio
   const handleAudioError = (e: any) => {
     console.error('Erro na transmissão do áudio:', e);
+    console.warn(
+      '💡 HUB FOCUS STATION - DICA DE SUPORTE:\n' +
+      'Se o áudio falhar ao carregar, isso geralmente ocorre devido a:\n' +
+      '1. Restrições ativas de Firewall/Proxy em redes corporativas (bloqueando a categoria de streaming de áudio/zeno).\n' +
+      '2. Erro de Mixed Content (bloqueio do navegador para streams HTTP inseguros em páginas HTTPS).\n' +
+      'Tente selecionar uma Focus Vibe (como Chuva) ou uma Rádio Recomendada Pública (.gov.br/.leg.br) que são imunes, ou adicione uma URL HTTPS customizada na aba de Rádios Reais.'
+    );
     // Se estava tocando e deu erro, pausa o estado da rádio para dar feedback ao usuário
     if (isPlaying) {
       setPlayingState(false);

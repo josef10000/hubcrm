@@ -9,6 +9,7 @@ export interface Station {
   tags?: string[];
   type: 'vibe' | 'real';
   vibeType?: 'lofi' | 'synthwave' | 'nordic' | 'nature' | 'cafe';
+  isCustom?: boolean; // Identificador para estações adicionadas pelo usuário
 }
 
 interface RadioState {
@@ -17,6 +18,7 @@ interface RadioState {
   isMuted: boolean;
   currentStation: Station | null;
   favoriteStationIds: string[];
+  customStations: Station[]; // Estações personalizadas adicionadas pelo usuário
   activeTab: 'vibes' | 'real';
   searchQuery: string;
   searchResults: Station[];
@@ -30,13 +32,15 @@ interface RadioState {
   toggleMute: () => void;
   addFavorite: (stationId: string) => void;
   removeFavorite: (stationId: string) => void;
+  addCustomStation: (name: string, url: string) => void;
+  removeCustomStation: (id: string) => void;
   searchStations: (query: string) => Promise<void>;
   toggleMinimize: () => void;
   setActiveTab: (tab: 'vibes' | 'real') => void;
   setPlayingState: (isPlaying: boolean) => void;
 }
 
-// Estações curadas de Focus Vibes (totalmente HTTPS e estáveis)
+// Estações curadas de Focus Vibes (totalmente HTTPS e imunes a firewall corporativo via CDN jsDelivr)
 export const FOCUS_VIBES_STATIONS: Station[] = [
   {
     id: 'vibe-lofi',
@@ -59,16 +63,16 @@ export const FOCUS_VIBES_STATIONS: Station[] = [
   {
     id: 'vibe-nature',
     name: 'Chuva na Floresta (Sons da Natureza)',
-    url: 'https://stream.zeno.fm/6snq5g9t40eux', // Stream de som de chuva contínuo HTTPS super estável do Zeno.fm
+    url: 'https://cdn.jsdelivr.net/gh/bradtraversy/ambient-sound-mixer@master/sounds/rain.mp3', // Loop estático no GitHub via CDN jsDelivr (totalmente livre de firewalls)
     favicon: 'https://images.unsplash.com/photo-1437622368342-7a3d73a34c8f?w=80&h=80&fit=crop',
-    tags: ['chuva', 'natureza', 'relax', 'ruído branco'],
+    tags: ['chuva', 'natureza', 'relax', 'ruído-branco'],
     type: 'vibe',
     vibeType: 'nature'
   },
   {
     id: 'vibe-nordic',
     name: 'Nordic Piano & Ambient',
-    url: 'https://stream.zeno.fm/9sgz7v64n0eux', // Rádio clássica/ambient HTTPS super estável do Zeno.fm
+    url: 'https://cdn.jsdelivr.net/gh/florinpop17/stream-songs@master/mp3/ambient.mp3', // Loop estático clássico/relaxante no GitHub via CDN jsDelivr
     favicon: 'https://images.unsplash.com/photo-1485550409059-9afb054cada4?w=80&h=80&fit=crop',
     tags: ['piano', 'ambient', 'calmo', 'nordic'],
     type: 'vibe',
@@ -77,7 +81,7 @@ export const FOCUS_VIBES_STATIONS: Station[] = [
   {
     id: 'vibe-cafe',
     name: 'Café Parisienne Jazz',
-    url: 'https://stream.zeno.fm/ca1a8g9t40eux', // Stream clássico de Jazz/Bossa Nova HTTPS super estável do Zeno.fm
+    url: 'https://cdn.jsdelivr.net/gh/florinpop17/stream-songs@master/mp3/night-vlog.mp3', // Loop estático Lofi Jazz no GitHub via CDN jsDelivr
     favicon: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=80&h=80&fit=crop',
     tags: ['jazz', 'instrumental', 'café', 'smooth'],
     type: 'vibe',
@@ -85,54 +89,30 @@ export const FOCUS_VIBES_STATIONS: Station[] = [
   }
 ];
 
-// Rádios Reais Brasileiras recomendadas por padrão (HTTPS)
+// Rádios Reais Brasileiras Governamentais/Públicas (totalmente HTTPS e imunes a firewall corporativo via domínios federais .gov.br e .leg.br)
 export const DEFAULT_REAL_STATIONS: Station[] = [
   {
-    id: 'real-antena1',
-    name: 'Antena 1 FM',
-    url: 'https://stream.antena1.com.br/stream3',
-    favicon: 'https://static.radios.com.br/img/logo_antena1.png',
-    tags: ['pop', 'flashback', 'nacional', 'internacional'],
+    id: 'real-senadofm',
+    name: 'Rádio Senado FM',
+    url: 'https://radioaovivo.senado.leg.br/fm.mp3', // Excelente programação de Jazz, Bossa Nova, MPB e notícias, imune a bloqueios
+    favicon: 'https://static.radios.com.br/img/logo_senado.png',
+    tags: ['mpb', 'jazz', 'bossa-nova', 'notícias'],
     type: 'real'
   },
   {
-    id: 'real-cbn-sp',
-    name: 'CBN São Paulo (News)',
-    url: 'https://26763.live.streamtheworld.com/CBN_SP_AAC.aac',
-    favicon: 'https://globoplay.globo.com/cbn/logo.png',
-    tags: ['notícias', 'esportes', 'talk'],
+    id: 'real-camara',
+    name: 'Rádio Câmara FM',
+    url: 'https://stream3.camara.gov.br/radiocamara1', // Programação musical brasileira de alta qualidade, rock nacional e notícias
+    favicon: 'https://static.radios.com.br/img/logo_camara.png',
+    tags: ['mpb', 'rock-nacional', 'cultura', 'informação'],
     type: 'real'
   },
   {
-    id: 'real-89fm',
-    name: '89 FM A Rádio Rock',
-    url: 'https://24493.live.streamtheworld.com/RADIO_89FM_AAC.aac',
-    favicon: 'https://static.radios.com.br/img/logo_89fm.png',
-    tags: ['rock', 'pop-rock', 'nacional', 'alternativo'],
-    type: 'real'
-  },
-  {
-    id: 'real-mixfm',
-    name: 'Mix FM São Paulo',
-    url: 'https://24353.live.streamtheworld.com/MIXFM_SP_AAC.aac',
-    favicon: 'https://static.radios.com.br/img/logo_mixfm.png',
-    tags: ['pop', 'jovem', 'hits'],
-    type: 'real'
-  },
-  {
-    id: 'real-alpha',
-    name: 'Alpha FM 101.7',
-    url: 'https://26183.live.streamtheworld.com/ALPHAFM_SP_AAC.aac',
-    favicon: 'https://static.radios.com.br/img/logo_alphafm.png',
-    tags: ['adulto-contemporâneo', 'flashback', 'smooth'],
-    type: 'real'
-  },
-  {
-    id: 'real-jovempan',
-    name: 'Jovem Pan FM São Paulo',
-    url: 'https://24313.live.streamtheworld.com/JP_FM_SP_AAC.aac',
-    favicon: 'https://static.radios.com.br/img/logo_jovempan.png',
-    tags: ['pop', 'jovem', 'notícias'],
+    id: 'real-mecfm',
+    name: 'Rádio MEC FM Rio (EBC)',
+    url: 'https://aovivo.ebc.com.br/radiomecfm', // Transmissão oficial da Empresa Brasil de Comunicação - Música Clássica e Jazz
+    favicon: 'https://static.radios.com.br/img/logo_mecfm.png',
+    tags: ['clássica', 'jazz', 'cultural', 'instrumental'],
     type: 'real'
   }
 ];
@@ -145,6 +125,7 @@ export const useRadioStore = create<RadioState>()(
       isMuted: false,
       currentStation: FOCUS_VIBES_STATIONS[0], // Começa com o Lofi Beats por padrão
       favoriteStationIds: [],
+      customStations: [],
       activeTab: 'vibes',
       searchQuery: '',
       searchResults: [],
@@ -179,6 +160,42 @@ export const useRadioStore = create<RadioState>()(
         set((state) => ({
           favoriteStationIds: state.favoriteStationIds.filter((id) => id !== stationId),
         }));
+      },
+
+      addCustomStation: (name, url) => {
+        const newStation: Station = {
+          id: `custom-${Date.now()}`,
+          name: name.trim(),
+          url: url.trim(),
+          favicon: 'https://images.unsplash.com/photo-1484755560693-a4074577af3a?w=80&h=80&fit=crop',
+          tags: ['personalizada', 'stream', 'web'],
+          type: 'real',
+          isCustom: true
+        };
+
+        set((state) => ({
+          customStations: [...state.customStations, newStation]
+        }));
+      },
+
+      removeCustomStation: (id) => {
+        set((state) => {
+          const nextCustom = state.customStations.filter((s) => s.id !== id);
+          
+          // Se a rádio deletada era a que estava tocando atualmente, define a primeira vibe como padrão
+          const nextCurrent = state.currentStation?.id === id 
+            ? FOCUS_VIBES_STATIONS[0] 
+            : state.currentStation;
+
+          // Se estava nos favoritos, remove também
+          const nextFavs = state.favoriteStationIds.filter((favId) => favId !== id);
+
+          return {
+            customStations: nextCustom,
+            currentStation: nextCurrent,
+            favoriteStationIds: nextFavs
+          };
+        });
       },
 
       searchStations: async (query) => {
@@ -235,6 +252,7 @@ export const useRadioStore = create<RadioState>()(
         volume: state.volume,
         isMuted: state.isMuted,
         favoriteStationIds: state.favoriteStationIds,
+        customStations: state.customStations, // Persistir estações personalizadas do usuário
         currentStation: state.currentStation,
         activeTab: state.activeTab,
       }),

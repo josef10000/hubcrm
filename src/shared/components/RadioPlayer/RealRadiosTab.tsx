@@ -10,7 +10,10 @@ import {
   Play, 
   Pause, 
   Loader2, 
-  Radio 
+  Radio,
+  Trash2,
+  Plus,
+  X
 } from 'lucide-react';
 
 export default function RealRadiosTab() {
@@ -24,10 +27,17 @@ export default function RealRadiosTab() {
     searchStations, 
     searchResults, 
     isSearching, 
-    searchQuery 
+    searchQuery,
+    customStations,
+    addCustomStation,
+    removeCustomStation
   } = useRadioStore();
 
   const [localSearch, setLocalSearch] = useState(searchQuery);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [customName, setCustomName] = useState('');
+  const [customUrl, setCustomUrl] = useState('');
+  const [formError, setFormError] = useState('');
 
   // Efeito para sincronizar a busca local com o estado global da store
   useEffect(() => {
@@ -53,10 +63,35 @@ export default function RealRadiosTab() {
     }
   };
 
+  const handleAddCustomStation = (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError('');
+
+    if (!customName.trim()) {
+      setFormError('Digite o nome da estação.');
+      return;
+    }
+
+    if (!customUrl.trim()) {
+      setFormError('Cole o link do streaming.');
+      return;
+    }
+
+    if (!customUrl.trim().toLowerCase().startsWith('https://')) {
+      setFormError('A URL deve começar com https:// (segurança obrigatória).');
+      return;
+    }
+
+    addCustomStation(customName, customUrl);
+    setCustomName('');
+    setCustomUrl('');
+    setShowAddForm(false);
+  };
+
   // Filtra as rádios recomendadas que o usuário favoritou para exibição na aba de favoritos
   const getFavoriteStations = () => {
-    // Busca nos resultados da pesquisa + recomendadas padrão
-    const allKnownStations = [...DEFAULT_REAL_STATIONS, ...searchResults];
+    // Busca nos resultados da pesquisa + recomendadas padrão + personalizadas
+    const allKnownStations = [...DEFAULT_REAL_STATIONS, ...customStations, ...searchResults];
     
     // Filtra e remove duplicatas
     const uniqueKnown = allKnownStations.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
@@ -122,6 +157,20 @@ export default function RealRadiosTab() {
 
         {/* Ações da Rádio (Favoritar & Play) */}
         <div className="flex items-center gap-1.5 shrink-0 pl-2">
+          {/* Botão de Excluir (apenas para customizadas) */}
+          {station.isCustom && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                removeCustomStation(station.id);
+              }}
+              className="p-1.5 rounded-lg text-white/40 hover:text-red-400 hover:bg-white/10 transition-all duration-300"
+              title="Excluir Rádio"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+
           {/* Botão de Favorito (Coração) */}
           <button
             onClick={(e) => handleToggleFavorite(e, station)}
@@ -152,39 +201,105 @@ export default function RealRadiosTab() {
   };
 
   return (
-    <div className="space-y-3">
-      {/* Formulário de Busca */}
-      <form onSubmit={handleSearchSubmit} className="relative flex gap-1.5">
-        <div className="relative flex-1">
-          <input
-            type="text"
-            value={localSearch}
-            onChange={(e) => setLocalSearch(e.target.value)}
-            placeholder="Buscar CBN, Mix FM, Antena 1..."
-            className="w-full bg-white/5 border border-white/10 text-white placeholder-white/30 rounded-xl py-2 pl-9 pr-8 text-xs focus:outline-none focus:border-primary/50 transition-all font-sans"
-          />
-          <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-white/30" />
-          
-          {localSearch && (
-            <button
-              type="button"
-              onClick={handleClearSearch}
-              className="absolute right-2.5 top-2 text-[10px] text-white/40 hover:text-white px-1.5 py-0.5 rounded bg-white/5"
-            >
-              limpar
-            </button>
-          )}
-        </div>
+    <div className="space-y-3 font-sans">
+      {/* Formulário de Busca e Botão de Adicionar Customizada */}
+      <div className="flex flex-col gap-2">
+        <form onSubmit={handleSearchSubmit} className="relative flex gap-1.5">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              value={localSearch}
+              onChange={(e) => setLocalSearch(e.target.value)}
+              placeholder="Buscar rádio nacional..."
+              className="w-full bg-white/5 border border-white/10 text-white placeholder-white/30 rounded-xl py-2 pl-9 pr-8 text-xs focus:outline-none focus:border-primary/50 transition-all font-sans"
+            />
+            <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-white/30" />
+            
+            {localSearch && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="absolute right-2.5 top-2 text-[10px] text-white/40 hover:text-white px-1.5 py-0.5 rounded bg-white/5"
+              >
+                limpar
+              </button>
+            )}
+          </div>
+          <button
+            type="submit"
+            className="bg-primary/20 hover:bg-primary/30 border border-primary/20 text-white px-3 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02]"
+          >
+            {isSearching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Buscar'}
+          </button>
+        </form>
+
+        {/* Botão de Toggle para Adicionar Estação Personalizada */}
         <button
-          type="submit"
-          className="bg-primary/20 hover:bg-primary/30 border border-primary/20 text-white px-3 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02]"
+          onClick={() => {
+            setShowAddForm(!showAddForm);
+            setFormError('');
+          }}
+          className={`w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl border text-[11px] font-semibold transition-all duration-300 ${
+            showAddForm
+              ? 'bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20'
+              : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/30'
+          }`}
         >
-          {isSearching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Buscar'}
+          {showAddForm ? (
+            <>
+              <X className="w-3.5 h-3.5" /> Cancelar Cadastro
+            </>
+          ) : (
+            <>
+              <Plus className="w-3.5 h-3.5" /> Adicionar Rádio Personalizada
+            </>
+          )}
         </button>
-      </form>
+
+        {/* Formulário de Adicionar Rádio Customizada (Glassmorphism) */}
+        {showAddForm && (
+          <form 
+            onSubmit={handleAddCustomStation} 
+            className="bg-white/5 border border-white/10 rounded-xl p-3 space-y-2 animate-fade-in relative z-20"
+          >
+            <div className="text-[10px] font-bold text-white/40 tracking-wider">
+              NOVA RÁDIO PERSONALIZADA
+            </div>
+            
+            <input
+              type="text"
+              value={customName}
+              onChange={(e) => setCustomName(e.target.value)}
+              placeholder="Nome da Rádio (ex: Bossa Nova Chill)"
+              className="w-full bg-black/35 border border-white/5 text-white placeholder-white/30 rounded-lg py-1.5 px-2.5 text-xs focus:outline-none focus:border-emerald-500/40 transition-all font-sans"
+            />
+            
+            <input
+              type="text"
+              value={customUrl}
+              onChange={(e) => setCustomUrl(e.target.value)}
+              placeholder="Link do Streaming HTTPS (ex: https://...)"
+              className="w-full bg-black/35 border border-white/5 text-white placeholder-white/30 rounded-lg py-1.5 px-2.5 text-xs focus:outline-none focus:border-emerald-500/40 transition-all font-sans"
+            />
+
+            {formError && (
+              <div className="text-[9px] text-red-400 font-semibold bg-red-500/10 border border-red-500/20 p-1.5 rounded-md leading-normal">
+                ⚠️ {formError}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-1.5 rounded-lg text-xs font-bold transition-all shadow-md active:scale-95"
+            >
+              Salvar Rádio
+            </button>
+          </form>
+        )}
+      </div>
 
       {/* Conteúdo Dinâmico */}
-      <div className="space-y-3 max-h-[240px] overflow-y-auto pr-1 custom-scrollbar">
+      <div className="space-y-3 max-h-[240px] overflow-y-auto pr-1 custom-scrollbar relative z-10">
         {isSearching ? (
           <div className="flex flex-col items-center justify-center py-6 text-white/40 gap-2">
             <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -205,7 +320,7 @@ export default function RealRadiosTab() {
             )}
           </div>
         ) : (
-          // Exibe favoritos e recomendadas padrão
+          // Exibe favoritos, personalizadas e recomendadas padrão
           <>
             {/* Favoritos */}
             {favorites.length > 0 && (
@@ -219,10 +334,22 @@ export default function RealRadiosTab() {
               </div>
             )}
 
+            {/* Estações Personalizadas do Usuário */}
+            {customStations.length > 0 && (
+              <div className="space-y-1.5">
+                <div className="text-[10px] font-bold text-emerald-400 tracking-wider px-1 flex items-center gap-1">
+                  <Radio className="w-3 h-3 animate-pulse" /> SUAS ESTAÇÕES PERSONALIZADAS ({customStations.length})
+                </div>
+                <div className="space-y-1.5">
+                  {customStations.map(renderStationItem)}
+                </div>
+              </div>
+            )}
+
             {/* Recomendadas Padrão */}
             <div className="space-y-1.5">
               <div className="text-[10px] font-bold text-white/40 tracking-wider px-1 flex items-center gap-1">
-                <Radio className="w-3 h-3" /> ESTAÇÕES RECOMENDADAS
+                <Radio className="w-3 h-3" /> ESTAÇÕES RECOMENDADAS (IMUNES A FIREWALL)
               </div>
               <div className="space-y-1.5">
                 {DEFAULT_REAL_STATIONS.map(renderStationItem)}
