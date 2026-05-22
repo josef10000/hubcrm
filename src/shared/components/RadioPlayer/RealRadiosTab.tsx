@@ -74,6 +74,13 @@ export default function RealRadiosTab() {
     }
   };
 
+  // Helper robusto para obter o ID do vídeo do YouTube
+  const getYoutubeVideoId = (url: string): string | null => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+
   // Helper robusto para puxar a capa do Spotify via endpoint público do oembed
   const fetchSpotifyCover = async (spotifyUrl: string): Promise<string | null> => {
     try {
@@ -94,6 +101,29 @@ export default function RealRadiosTab() {
     return null;
   };
 
+  // Helper unificado para buscar a capa (Spotify ou YouTube)
+  const fetchCover = async (url: string): Promise<string | null> => {
+    const cleanUrl = url.trim();
+    if (!cleanUrl) return null;
+    
+    const isSpotify = cleanUrl.toLowerCase().includes('spotify.com');
+    if (isSpotify) {
+      return await fetchSpotifyCover(cleanUrl);
+    }
+    
+    const isYoutube = cleanUrl.toLowerCase().includes('youtube.com') || cleanUrl.toLowerCase().includes('youtu.be');
+    if (isYoutube) {
+      const videoId = getYoutubeVideoId(cleanUrl);
+      if (videoId) {
+        return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+      } else {
+        // Fallback elegante para capa do YouTube (vermelha padrão do Unsplash)
+        return 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=80&h=80&fit=crop';
+      }
+    }
+    return null;
+  };
+
   const handleAddCustomStation = (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
@@ -104,13 +134,16 @@ export default function RealRadiosTab() {
     }
 
     if (!customUrl.trim()) {
-      setFormError('Cole o link do Spotify.');
+      setFormError('Cole o link do Spotify ou do YouTube.');
       return;
     }
 
     const lowerUrl = customUrl.trim().toLowerCase();
-    if (!lowerUrl.startsWith('https://open.spotify.com/')) {
-      setFormError('Cole um link válido do Spotify (deve começar com https://open.spotify.com/).');
+    const isSpotify = lowerUrl.includes('spotify.com');
+    const isYoutube = lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be');
+
+    if (!isSpotify && !isYoutube) {
+      setFormError('Cole um link válido do Spotify ou do YouTube.');
       return;
     }
 
@@ -176,13 +209,13 @@ export default function RealRadiosTab() {
                 station.tags.map((tag) => (
                   <span 
                     key={tag} 
-                    className="text-[8px] text-white/30 truncate max-w-[60px]"
+                    className="text-[8px] text-white/30 truncate max-w-[60px] capitalize"
                   >
                     {tag}
                   </span>
                 ))
               ) : (
-                <span className="text-[8px] text-white/30">Spotify</span>
+                <span className="text-[8px] text-white/30 capitalize">{station.type}</span>
               )}
             </div>
           </div>
@@ -190,8 +223,8 @@ export default function RealRadiosTab() {
 
         {/* Ações da Playlist (Favoritar & Play) */}
         <div className="flex items-center gap-1.5 shrink-0 pl-2">
-          {/* Botão de Editar (disponível para todas as playlists do Spotify) */}
-          {station.type === 'spotify' && (
+          {/* Botão de Editar (disponível para Spotify e YouTube) */}
+          {(station.type === 'spotify' || station.type === 'youtube') && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -209,8 +242,8 @@ export default function RealRadiosTab() {
             </button>
           )}
 
-          {/* Botão de Excluir (disponível para todas as playlists do Spotify) */}
-          {station.type === 'spotify' && (
+          {/* Botão de Excluir (disponível para Spotify e YouTube) */}
+          {(station.type === 'spotify' || station.type === 'youtube') && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -304,7 +337,7 @@ export default function RealRadiosTab() {
               </>
             ) : (
               <>
-                <Plus className="w-3.5 h-3.5" /> Adicionar Playlist do Spotify
+                <Plus className="w-3.5 h-3.5" /> Adicionar Playlist (Spotify / YouTube)
               </>
             )}
           </button>
@@ -317,14 +350,14 @@ export default function RealRadiosTab() {
             className="bg-white/5 border border-white/10 rounded-xl p-3 space-y-2 animate-fade-in relative z-20"
           >
             <div className="text-[10px] font-bold text-white/40 tracking-wider">
-              NOVA PLAYLIST DO SPOTIFY
+              NOVA PLAYLIST OU VÍDEO
             </div>
             
             <input
               type="text"
               value={customName}
               onChange={(e) => setCustomName(e.target.value)}
-              placeholder="Nome da Playlist (ex: Lofi e Café)"
+              placeholder="Nome do Streaming (ex: Lofi e Café)"
               className="w-full bg-black/35 border border-white/5 text-white placeholder-white/30 rounded-lg py-1.5 px-2.5 text-xs focus:outline-none focus:border-emerald-500/40 transition-all font-sans"
             />
             
@@ -333,7 +366,7 @@ export default function RealRadiosTab() {
                 type="text"
                 value={customUrl}
                 onChange={(e) => setCustomUrl(e.target.value)}
-                placeholder="Link da Playlist do Spotify (ex: https://open.spotify.com/...)"
+                placeholder="Link do Spotify ou YouTube"
                 className="w-full bg-black/35 border border-white/5 text-white placeholder-white/30 rounded-lg py-1.5 px-2.5 pr-20 text-xs focus:outline-none focus:border-emerald-500/40 transition-all font-sans"
               />
               <button
@@ -341,7 +374,7 @@ export default function RealRadiosTab() {
                 onClick={async () => {
                   if (!customUrl.trim()) return;
                   setIsFetchingCustomCover(true);
-                  const cover = await fetchSpotifyCover(customUrl);
+                  const cover = await fetchCover(customUrl);
                   if (cover) {
                     setCustomFavicon(cover);
                   }
@@ -402,12 +435,15 @@ export default function RealRadiosTab() {
                 return;
               }
               if (!editUrl.trim()) {
-                setEditError('Cole o link do Spotify.');
+                setEditError('Cole o link do Spotify ou do YouTube.');
                 return;
               }
               const lowerUrl = editUrl.trim().toLowerCase();
-              if (!lowerUrl.startsWith('https://open.spotify.com/')) {
-                setEditError('Cole um link válido do Spotify.');
+              const isSpotify = lowerUrl.includes('spotify.com');
+              const isYoutube = lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be');
+
+              if (!isSpotify && !isYoutube) {
+                setEditError('Cole um link válido do Spotify ou do YouTube.');
                 return;
               }
               
@@ -426,7 +462,7 @@ export default function RealRadiosTab() {
           >
             <div className="flex justify-between items-center">
               <div className="text-[10px] font-bold text-emerald-400 tracking-wider font-mono">
-                EDITAR PLAYLIST
+                EDITAR STREAMING
               </div>
               <button
                 type="button"
@@ -441,7 +477,7 @@ export default function RealRadiosTab() {
               type="text"
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
-              placeholder="Nome da Playlist"
+              placeholder="Nome da Playlist ou Vídeo"
               className="w-full bg-black/35 border border-white/5 text-white placeholder-white/30 rounded-lg py-1.5 px-2.5 text-xs focus:outline-none focus:border-emerald-500/40 transition-all font-sans"
             />
             
@@ -450,7 +486,7 @@ export default function RealRadiosTab() {
                 type="text"
                 value={editUrl}
                 onChange={(e) => setEditUrl(e.target.value)}
-                placeholder="Link da Playlist do Spotify"
+                placeholder="Link do Spotify ou do YouTube"
                 className="w-full bg-black/35 border border-white/5 text-white placeholder-white/30 rounded-lg py-1.5 px-2.5 pr-20 text-xs focus:outline-none focus:border-emerald-500/40 transition-all font-sans"
               />
               <button
@@ -458,7 +494,7 @@ export default function RealRadiosTab() {
                 onClick={async () => {
                   if (!editUrl.trim()) return;
                   setIsFetchingCover(true);
-                  const cover = await fetchSpotifyCover(editUrl);
+                  const cover = await fetchCover(editUrl);
                   if (cover) {
                     setEditFavicon(cover);
                   }

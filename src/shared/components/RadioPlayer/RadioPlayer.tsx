@@ -19,6 +19,7 @@ import {
 
 export default function RadioPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const youtubeIframeRef = useRef<HTMLIFrameElement | null>(null);
   
   // Chave para forçar o Iframe do Spotify a "resetar" e cessar o som instantaneamente
   const [spotifyKillKey, setSpotifyKillKey] = useState(Date.now());
@@ -93,13 +94,107 @@ export default function RadioPlayer() {
     }
   };
 
+  // Helper robusto para converter URLs do YouTube em URLs de Embed clássicas com API de JS habilitada
+  const getYoutubeEmbedUrl = (url: string) => {
+    if (!url) return '';
+    try {
+      const isPlaylist = url.includes('list=');
+      if (isPlaylist) {
+        const playlistMatch = url.match(/[?&]list=([^#\&\?]+)/);
+        if (playlistMatch) {
+          return `https://www.youtube.com/embed/videoseries?list=${playlistMatch[1]}&enablejsapi=1&autoplay=0`;
+        }
+      }
+      
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      const match = url.match(regExp);
+      const videoId = (match && match[2].length === 11) ? match[2] : null;
+      
+      if (videoId) {
+        return `https://www.youtube.com/embed/${videoId}?enablejsapi=1&autoplay=0`;
+      }
+      return url;
+    } catch (e) {
+      return url;
+    }
+  };
+
+  // Flags condicionais para controle estrito de renderização (DOM Kill Switch)
+  const shouldRenderSpotify = 
+    currentStation?.type === 'spotify' && 
+    !isMuted && 
+    volume > 0 && 
+    callStatus !== 'ringing' && 
+    callStatus !== 'connected';
+
+  const shouldRenderYoutube = 
+    currentStation?.type === 'youtube' && 
+    !isMuted && 
+    volume > 0 && 
+    callStatus !== 'ringing' && 
+    callStatus !== 'connected';
+
+  // Efeito de controle de volume do YouTube via postMessage
+  useEffect(() => {
+    if (shouldRenderYoutube && youtubeIframeRef.current) {
+      const iframe = youtubeIframeRef.current;
+      const targetVolume = isMuted ? 0 : Math.round(volume * 100);
+      
+      const sendVolumeMessage = () => {
+        try {
+          iframe.contentWindow?.postMessage(
+            JSON.stringify({
+              event: 'command',
+              func: 'setVolume',
+              args: [targetVolume]
+            }),
+            '*'
+          );
+        } catch (err) {
+          console.warn('Erro ao sincronizar volume do YouTube via postMessage:', err);
+        }
+      };
+
+      // Pequeno timeout caso o iframe acabe de renderizar
+      const timer = setTimeout(sendVolumeMessage, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [volume, isMuted, shouldRenderYoutube]);
+
+  // Efeito de sincronização de play/pause do YouTube via postMessage
+  useEffect(() => {
+    if (shouldRenderYoutube && youtubeIframeRef.current) {
+      const iframe = youtubeIframeRef.current;
+      const funcName = isPlaying ? 'playVideo' : 'pauseVideo';
+      
+      const sendPlayMessage = () => {
+        try {
+          iframe.contentWindow?.postMessage(
+            JSON.stringify({
+              event: 'command',
+              func: funcName,
+              args: []
+            }),
+            '*'
+          );
+        } catch (err) {
+          console.warn(`Erro ao enviar ${funcName} para o YouTube via postMessage:`, err);
+        }
+      };
+
+      // Pequeno timeout para dar tempo do iframe carregar e a API de JS inicializar
+      const timer = setTimeout(sendPlayMessage, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isPlaying, shouldRenderYoutube]);
+
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !currentStation) return;
 
     const handleSrcChange = async () => {
-      // Se for Spotify, garante que a tag de áudio nativa local pare imediatamente
-      if (currentStation.type === 'spotify') {
+      // Se for Spotify ou YouTube, garante que a tag de áudio nativa local pare imediatamente
+      if (currentStation.type === 'spotify' || currentStation.type === 'youtube') {
         audio.pause();
         return;
       }
@@ -222,7 +317,11 @@ export default function RadioPlayer() {
             
             <div className="min-w-0 flex-1">
               <div className="text-[10px] font-bold text-white/30 uppercase tracking-widest font-mono">
-                {currentStation?.type === 'vibe' ? '🧠 Foco Ativo' : '🎵 Spotify Playlist'}
+                {currentStation?.type === 'vibe' 
+                  ? '🧠 Foco Ativo' 
+                  : currentStation?.type === 'youtube' 
+                    ? '📺 YouTube Player' 
+                    : '🎵 Spotify Playlist'}
               </div>
               <div className="text-xs font-bold text-white truncate pr-1">
                 {currentStation?.name || 'Selecione uma estação'}
@@ -231,30 +330,69 @@ export default function RadioPlayer() {
           </div>
 
           {/* Player do Spotify */}
-          <div className={`space-y-1.5 relative z-10 ${currentStation?.type === 'spotify' ? 'block animate-fade-in' : 'hidden'}`}>
-            <div className="relative w-full overflow-hidden rounded-xl border border-white/10 bg-black/40 backdrop-blur-md">
-              {currentStation?.type === 'spotify' && (
-                <iframe
-                  key={spotifyKillKey}
-                  src={getSpotifyEmbedUrl(currentStation.url)}
-                  width="100%"
-                  height="152"
-                  frameBorder="0"
-                  allowFullScreen={false}
-                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                  loading="lazy"
-                  title={currentStation.name}
-                  className="rounded-xl shadow-lg"
-                />
-              )}
+          {currentStation?.type === 'spotify' && (
+            <div className="space-y-1.5 relative z-10 animate-fade-in">
+              <div className="relative w-full overflow-hidden rounded-xl border border-white/10 bg-black/40 backdrop-blur-md">
+                {shouldRenderSpotify ? (
+                  <iframe
+                    key={spotifyKillKey}
+                    src={getSpotifyEmbedUrl(currentStation.url)}
+                    width="100%"
+                    height="352"
+                    frameBorder="0"
+                    allowFullScreen={false}
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                    loading="lazy"
+                    title={currentStation.name}
+                    className="rounded-xl shadow-lg animate-fade-in"
+                  />
+                ) : (
+                  <div className="h-[352px] w-full flex flex-col items-center justify-center text-white/40 text-center p-4">
+                    <VolumeX className="w-8 h-8 text-red-400 mb-2 animate-bounce" />
+                    <span className="text-xs font-bold font-mono text-red-400">PLAYER MUTADO / LIGAÇÃO ATIVA</span>
+                    <span className="text-[10px] text-white/30 mt-1">O som foi interrompido para sua privacidade.</span>
+                  </div>
+                )}
+              </div>
+              <div className="text-[9px] text-white/40 text-center leading-normal px-1 font-mono">
+                💡 Clique no botão de Play do Spotify acima. Certifique-se de estar conectado à sua conta neste navegador para ouvir faixas completas.
+              </div>
             </div>
-            <div className="text-[9px] text-white/40 text-center leading-normal px-1 font-mono">
-              💡 Clique no botão de Play do Spotify acima. Certifique-se de estar conectado à sua conta neste navegador para ouvir faixas completas.
-            </div>
-          </div>
+          )}
 
-          {/* Controles do Player de Vibes Locais (Estações de Foco) */}
-          <div className={currentStation?.type === 'vibe' ? 'block' : 'hidden'}>
+          {/* Player do YouTube */}
+          {currentStation?.type === 'youtube' && (
+            <div className="space-y-1.5 relative z-10 animate-fade-in">
+              <div className="relative w-full overflow-hidden rounded-xl border border-white/10 bg-black/40 backdrop-blur-md">
+                {shouldRenderYoutube ? (
+                  <iframe
+                    ref={youtubeIframeRef}
+                    src={getYoutubeEmbedUrl(currentStation.url)}
+                    width="100%"
+                    height="200"
+                    frameBorder="0"
+                    allowFullScreen={false}
+                    allow="autoplay; encrypted-media; picture-in-picture"
+                    loading="lazy"
+                    title={currentStation.name}
+                    className="rounded-xl shadow-lg animate-fade-in"
+                  />
+                ) : (
+                  <div className="h-[200px] w-full flex flex-col items-center justify-center text-white/40 text-center p-4">
+                    <VolumeX className="w-8 h-8 text-red-400 mb-2 animate-bounce" />
+                    <span className="text-xs font-bold font-mono text-red-400">PLAYER MUTADO / LIGAÇÃO ATIVA</span>
+                    <span className="text-[10px] text-white/30 mt-1">O som foi interrompido para sua privacidade.</span>
+                  </div>
+                )}
+              </div>
+              <div className="text-[9px] text-white/40 text-center leading-normal px-1 font-mono">
+                💡 Você pode controlar o volume (0-100%) e Play/Pause do YouTube diretamente pelo CRM abaixo!
+              </div>
+            </div>
+          )}
+
+          {/* Controles do Player de Vibes Locais (Estações de Foco) ou YouTube */}
+          <div className={(currentStation?.type === 'vibe' || currentStation?.type === 'youtube') ? 'block' : 'hidden'}>
             {/* Visualizador do Espectro Sonoro */}
             <div className="relative z-10">
               <Visualizer isPlaying={isPlaying} />
@@ -322,7 +460,7 @@ export default function RadioPlayer() {
                     : 'text-white/50 hover:text-white'
                 }`}
               >
-                🎵 Spotify
+                🎵 Streaming
               </button>
             </div>
 

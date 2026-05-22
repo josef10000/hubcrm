@@ -4,10 +4,10 @@ import { persist } from 'zustand/middleware';
 export interface Station {
   id: string;
   name: string;
-  url: string; // URL da playlist ou música do Spotify (ex: https://open.spotify.com/playlist/...)
+  url: string; // URL da playlist ou música (Spotify ou YouTube)
   favicon?: string;
   tags?: string[];
-  type: 'vibe' | 'spotify';
+  type: 'vibe' | 'spotify' | 'youtube';
   vibeType?: 'lofi';
   isCustom?: boolean; // Identificador para playlists adicionadas pelo usuário
 }
@@ -113,13 +113,17 @@ export const useRadioStore = create<RadioState>()(
       },
 
       addCustomStation: (name, url, favicon) => {
+        const isYoutube = url.includes('youtube.com') || url.includes('youtu.be');
+        const type = isYoutube ? 'youtube' : 'spotify';
         const newStation: Station = {
-          id: `spotify-custom-${Date.now()}`,
+          id: `${type}-custom-${Date.now()}`,
           name: name.trim(),
           url: url.trim(),
-          favicon: favicon?.trim() || 'https://images.unsplash.com/photo-1614680376593-902f74fa0d41?w=80&h=80&fit=crop',
-          tags: ['spotify', 'playlist', 'equipe'],
-          type: 'spotify',
+          favicon: favicon?.trim() || (isYoutube 
+            ? 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=80&h=80&fit=crop'
+            : 'https://images.unsplash.com/photo-1614680376593-902f74fa0d41?w=80&h=80&fit=crop'),
+          tags: [type, 'playlist', 'equipe'],
+          type: type,
           isCustom: true
         };
 
@@ -152,14 +156,25 @@ export const useRadioStore = create<RadioState>()(
         set((state) => {
           const nextCustom = state.customStations.map((station) => {
             if (station.id === id) {
-              return { ...station, ...updates };
+              const updatedStation = { ...station, ...updates };
+              // Re-detecta o tipo com base na URL se ela mudou
+              if (updates.url) {
+                const isYoutube = updates.url.includes('youtube.com') || updates.url.includes('youtu.be');
+                updatedStation.type = isYoutube ? 'youtube' : 'spotify';
+                if (!updates.favicon && (!station.favicon || station.favicon.includes('unsplash.com'))) {
+                  updatedStation.favicon = isYoutube
+                    ? 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=80&h=80&fit=crop'
+                    : 'https://images.unsplash.com/photo-1614680376593-902f74fa0d41?w=80&h=80&fit=crop';
+                }
+              }
+              return updatedStation;
             }
             return station;
           });
 
           // Se a playlist editada for a que está tocando no momento, atualiza também a currentStation
           const nextCurrent = state.currentStation?.id === id 
-            ? { ...state.currentStation, ...updates }
+            ? nextCustom.find((s) => s.id === id) || { ...state.currentStation, ...updates }
             : state.currentStation;
 
           return {
