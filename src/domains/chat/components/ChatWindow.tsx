@@ -497,14 +497,14 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
           {chat?.type === 'direct' && otherUserId && !isSearchOpen && (
             <>
               <button 
-                onClick={() => startCall(otherUserId, displayName, displayPhoto, 'audio')}
+                onClick={() => startCall(otherUserId, displayName, 'audio', displayPhoto)}
                 className="p-2.5 text-gray-400 hover:text-emerald-500 hover:bg-emerald-500/5 rounded-xl transition-all"
                 title="Chamada de Áudio"
               >
                 <Phone size={24} />
               </button>
               <button 
-                onClick={() => startCall(otherUserId, displayName, displayPhoto, 'video')}
+                onClick={() => startCall(otherUserId, displayName, 'video', displayPhoto)}
                 className="p-2.5 text-gray-400 hover:text-primary-500 hover:bg-primary-500/5 rounded-xl transition-all"
                 title="Chamada de Vídeo"
               >

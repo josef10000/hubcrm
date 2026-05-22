@@ -238,7 +238,7 @@ export function useWebRTC() {
   };
 
   // INICIAR UMA CHAMADA (Caller)
-  const startCall = async (calleeId: string, calleeName: string, calleeAvatar?: string, type: 'video' | 'audio') => {
+  const startCall = async (calleeId: string, calleeName: string, type: 'video' | 'audio', calleeAvatar?: string) => {
     if (!userProfile) return;
     
     // Configura o estado inicial da store
@@ -281,7 +281,7 @@ export function useWebRTC() {
       await pc.setLocalDescription(offerDescription);
 
       const offer = {
-        type: offerDescription.type,
+        type: offerDescription.type as 'offer',
         sdp: offerDescription.sdp,
       };
 
@@ -386,7 +386,7 @@ export function useWebRTC() {
       await updateDoc(callDocRef, {
         status: 'answered',
         answer: {
-          type: answerDescription.type,
+          type: answerDescription.type as 'answer',
           sdp: answerDescription.sdp
         }
       });

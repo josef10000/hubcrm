@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCallStore } from '@/store/useCallStore';
 import { useWebRTC } from '@/hooks/useWebRTC';
-import { collection, query, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { CallDocument } from '@/types/call.types';
 import { IncomingCallModal } from './IncomingCallModal';
