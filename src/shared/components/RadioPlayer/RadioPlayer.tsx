@@ -110,7 +110,7 @@ export default function RadioPlayer() {
 
       {/* RENDERIZADOR DO WIDGET FLUTUANTE GLOBAL */}
       <div 
-        className={`fixed bottom-6 left-6 z-40 transition-all duration-500 font-sans ${
+        className={`fixed bottom-6 right-6 z-50 transition-all duration-500 font-sans ${
           isMinimized 
             ? 'w-12 h-12 rounded-full cursor-pointer' 
             : 'w-80 rounded-2xl'
