@@ -13,7 +13,8 @@ import {
   Music,
   Trash2,
   Plus,
-  X
+  X,
+  Pencil
 } from 'lucide-react';
 
 export default function RealRadiosTab() {
@@ -30,14 +31,25 @@ export default function RealRadiosTab() {
     searchQuery,
     customStations,
     addCustomStation,
-    removeCustomStation
+    removeCustomStation,
+    updateCustomStation
   } = useRadioStore();
 
   const [localSearch, setLocalSearch] = useState(searchQuery);
   const [showAddForm, setShowAddForm] = useState(false);
   const [customName, setCustomName] = useState('');
   const [customUrl, setCustomUrl] = useState('');
+  const [customFavicon, setCustomFavicon] = useState('');
   const [formError, setFormError] = useState('');
+  
+  // Estados para Edição
+  const [editingStation, setEditingStation] = useState<Station | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editUrl, setEditUrl] = useState('');
+  const [editFavicon, setEditFavicon] = useState('');
+  const [editError, setEditError] = useState('');
+  const [isFetchingCover, setIsFetchingCover] = useState(false);
+  const [isFetchingCustomCover, setIsFetchingCustomCover] = useState(false);
 
   // Efeito para sincronizar a busca local com o estado global da store
   useEffect(() => {
@@ -63,6 +75,26 @@ export default function RealRadiosTab() {
     }
   };
 
+  // Helper robusto para puxar a capa do Spotify via endpoint público do oembed
+  const fetchSpotifyCover = async (spotifyUrl: string): Promise<string | null> => {
+    try {
+      const cleanUrl = spotifyUrl.trim();
+      if (!cleanUrl) return null;
+      
+      const oembedUrl = `https://open.spotify.com/oembed?url=${encodeURIComponent(cleanUrl)}`;
+      const response = await fetch(oembedUrl);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.thumbnail_url) {
+          return data.thumbnail_url;
+        }
+      }
+    } catch (e) {
+      console.warn('Erro ao obter capa do Spotify via oembed:', e);
+    }
+    return null;
+  };
+
   const handleAddCustomStation = (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
@@ -83,9 +115,10 @@ export default function RealRadiosTab() {
       return;
     }
 
-    addCustomStation(customName, customUrl);
+    addCustomStation(customName, customUrl, customFavicon);
     setCustomName('');
     setCustomUrl('');
+    setCustomFavicon('');
     setShowAddForm(false);
   };
 
@@ -158,6 +191,25 @@ export default function RealRadiosTab() {
 
         {/* Ações da Playlist (Favoritar & Play) */}
         <div className="flex items-center gap-1.5 shrink-0 pl-2">
+          {/* Botão de Editar (apenas para customizadas) */}
+          {station.isCustom && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setEditingStation(station);
+                setEditName(station.name);
+                setEditUrl(station.url);
+                setEditFavicon(station.favicon || '');
+                setEditError('');
+                setShowAddForm(false); // Fecha o form de adição
+              }}
+              className="p-1.5 rounded-lg text-white/40 hover:text-emerald-400 hover:bg-white/10 transition-all duration-300"
+              title="Editar Playlist"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
+          )}
+
           {/* Botão de Excluir (apenas para customizadas) */}
           {station.isCustom && (
             <button
@@ -235,30 +287,32 @@ export default function RealRadiosTab() {
         </form>
 
         {/* Botão de Toggle para Adicionar Estação Personalizada */}
-        <button
-          onClick={() => {
-            setShowAddForm(!showAddForm);
-            setFormError('');
-          }}
-          className={`w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl border text-[11px] font-semibold transition-all duration-300 ${
-            showAddForm
-              ? 'bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20'
-              : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/30'
-          }`}
-        >
-          {showAddForm ? (
-            <>
-              <X className="w-3.5 h-3.5" /> Cancelar Cadastro
-            </>
-          ) : (
-            <>
-              <Plus className="w-3.5 h-3.5" /> Adicionar Playlist do Spotify
-            </>
-          )}
-        </button>
+        {!editingStation && (
+          <button
+            onClick={() => {
+              setShowAddForm(!showAddForm);
+              setFormError('');
+            }}
+            className={`w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl border text-[11px] font-semibold transition-all duration-300 ${
+              showAddForm
+                ? 'bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20'
+                : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/30'
+            }`}
+          >
+            {showAddForm ? (
+              <>
+                <X className="w-3.5 h-3.5" /> Cancelar Cadastro
+              </>
+            ) : (
+              <>
+                <Plus className="w-3.5 h-3.5" /> Adicionar Playlist do Spotify
+              </>
+            )}
+          </button>
+        )}
 
         {/* Formulário de Adicionar Rádio Customizada (Glassmorphism) */}
-        {showAddForm && (
+        {showAddForm && !editingStation && (
           <form 
             onSubmit={handleAddCustomStation} 
             className="bg-white/5 border border-white/10 rounded-xl p-3 space-y-2 animate-fade-in relative z-20"
@@ -275,13 +329,53 @@ export default function RealRadiosTab() {
               className="w-full bg-black/35 border border-white/5 text-white placeholder-white/30 rounded-lg py-1.5 px-2.5 text-xs focus:outline-none focus:border-emerald-500/40 transition-all font-sans"
             />
             
+            <div className="relative">
+              <input
+                type="text"
+                value={customUrl}
+                onChange={(e) => setCustomUrl(e.target.value)}
+                placeholder="Link da Playlist do Spotify (ex: https://open.spotify.com/...)"
+                className="w-full bg-black/35 border border-white/5 text-white placeholder-white/30 rounded-lg py-1.5 px-2.5 pr-20 text-xs focus:outline-none focus:border-emerald-500/40 transition-all font-sans"
+              />
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!customUrl.trim()) return;
+                  setIsFetchingCustomCover(true);
+                  const cover = await fetchSpotifyCover(customUrl);
+                  if (cover) {
+                    setCustomFavicon(cover);
+                  }
+                  setIsFetchingCustomCover(false);
+                }}
+                className="absolute right-1 top-1 bg-emerald-500 hover:bg-emerald-600 text-white text-[9px] px-2 py-0.5 rounded font-bold transition-all h-[22px] flex items-center justify-center"
+                disabled={isFetchingCustomCover}
+              >
+                {isFetchingCustomCover ? 'Buscando...' : 'Obter Capa'}
+              </button>
+            </div>
+
             <input
               type="text"
-              value={customUrl}
-              onChange={(e) => setCustomUrl(e.target.value)}
-              placeholder="Link da Playlist do Spotify (ex: https://open.spotify.com/...)"
+              value={customFavicon}
+              onChange={(e) => setCustomFavicon(e.target.value)}
+              placeholder="URL da Capa da Playlist (Opcional)"
               className="w-full bg-black/35 border border-white/5 text-white placeholder-white/30 rounded-lg py-1.5 px-2.5 text-xs focus:outline-none focus:border-emerald-500/40 transition-all font-sans"
             />
+
+            {customFavicon && (
+              <div className="flex items-center gap-2 p-1.5 bg-white/5 rounded-lg border border-white/5">
+                <img src={customFavicon} className="w-8 h-8 rounded object-cover shrink-0" alt="Prévia" />
+                <span className="text-[9px] text-white/50 truncate flex-1 font-mono">{customFavicon}</span>
+                <button 
+                  type="button" 
+                  onClick={() => setCustomFavicon('')} 
+                  className="text-[9px] text-red-400 hover:underline shrink-0"
+                >
+                  Remover
+                </button>
+              </div>
+            )}
 
             {formError && (
               <div className="text-[9px] text-red-400 font-semibold bg-red-500/10 border border-red-500/20 p-1.5 rounded-md leading-normal">
@@ -295,6 +389,132 @@ export default function RealRadiosTab() {
             >
               Salvar Playlist
             </button>
+          </form>
+        )}
+
+        {/* Formulário de Editar Playlist Customizada */}
+        {editingStation && (
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              setEditError('');
+              if (!editName.trim()) {
+                setEditError('Digite o nome da playlist.');
+                return;
+              }
+              if (!editUrl.trim()) {
+                setEditError('Cole o link do Spotify.');
+                return;
+              }
+              const lowerUrl = editUrl.trim().toLowerCase();
+              if (!lowerUrl.startsWith('https://open.spotify.com/')) {
+                setEditError('Cole um link válido do Spotify.');
+                return;
+              }
+              
+              updateCustomStation(editingStation.id, {
+                name: editName.trim(),
+                url: editUrl.trim(),
+                favicon: editFavicon.trim() || 'https://images.unsplash.com/photo-1614680376593-902f74fa0d41?w=80&h=80&fit=crop'
+              });
+              
+              setEditingStation(null);
+              setEditName('');
+              setEditUrl('');
+              setEditFavicon('');
+            }} 
+            className="bg-white/5 border border-emerald-500/30 rounded-xl p-3 space-y-2 animate-fade-in relative z-20"
+          >
+            <div className="flex justify-between items-center">
+              <div className="text-[10px] font-bold text-emerald-400 tracking-wider font-mono">
+                EDITAR PLAYLIST
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingStation(null)}
+                className="text-white/40 hover:text-white"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            
+            <input
+              type="text"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              placeholder="Nome da Playlist"
+              className="w-full bg-black/35 border border-white/5 text-white placeholder-white/30 rounded-lg py-1.5 px-2.5 text-xs focus:outline-none focus:border-emerald-500/40 transition-all font-sans"
+            />
+            
+            <div className="relative">
+              <input
+                type="text"
+                value={editUrl}
+                onChange={(e) => setEditUrl(e.target.value)}
+                placeholder="Link da Playlist do Spotify"
+                className="w-full bg-black/35 border border-white/5 text-white placeholder-white/30 rounded-lg py-1.5 px-2.5 pr-20 text-xs focus:outline-none focus:border-emerald-500/40 transition-all font-sans"
+              />
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!editUrl.trim()) return;
+                  setIsFetchingCover(true);
+                  const cover = await fetchSpotifyCover(editUrl);
+                  if (cover) {
+                    setEditFavicon(cover);
+                  }
+                  setIsFetchingCover(false);
+                }}
+                className="absolute right-1 top-1 bg-emerald-500 hover:bg-emerald-600 text-white text-[9px] px-2 py-0.5 rounded font-bold transition-all h-[22px] flex items-center justify-center"
+                disabled={isFetchingCover}
+              >
+                {isFetchingCover ? 'Buscando...' : 'Obter Capa'}
+              </button>
+            </div>
+
+            <input
+              type="text"
+              value={editFavicon}
+              onChange={(e) => setEditFavicon(e.target.value)}
+              placeholder="URL da Capa da Playlist"
+              className="w-full bg-black/35 border border-white/5 text-white placeholder-white/30 rounded-lg py-1.5 px-2.5 text-xs focus:outline-none focus:border-emerald-500/40 transition-all font-sans"
+            />
+
+            {editFavicon && (
+              <div className="flex items-center gap-2 p-1.5 bg-white/5 rounded-lg border border-white/5">
+                <img src={editFavicon} className="w-8 h-8 rounded object-cover shrink-0" alt="Prévia" />
+                <span className="text-[9px] text-white/50 truncate flex-1 font-mono">{editFavicon}</span>
+                <button 
+                  type="button" 
+                  onClick={() => setEditFavicon('')} 
+                  className="text-[9px] text-red-400 hover:underline shrink-0"
+                >
+                  Remover
+                </button>
+              </div>
+            )}
+
+            {editError && (
+              <div className="text-[9px] text-red-400 font-semibold bg-red-500/10 border border-red-500/20 p-1.5 rounded-md leading-normal">
+                ⚠️ {editError}
+              </div>
+            )}
+
+            <div className="flex gap-1.5">
+              <button
+                type="submit"
+                className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-1.5 rounded-lg text-xs font-bold transition-all shadow-md active:scale-95"
+              >
+                Salvar Alterações
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingStation(null)}
+                className="bg-white/10 hover:bg-white/15 text-white py-1.5 px-3 rounded-lg text-xs font-semibold transition-all active:scale-95"
+              >
+                Cancelar
+              </button>
+            </div>
           </form>
         )}
       </div>

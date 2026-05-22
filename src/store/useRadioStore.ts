@@ -32,8 +32,9 @@ interface RadioState {
   toggleMute: () => void;
   addFavorite: (stationId: string) => void;
   removeFavorite: (stationId: string) => void;
-  addCustomStation: (name: string, url: string) => void;
+  addCustomStation: (name: string, url: string, favicon?: string) => void;
   removeCustomStation: (id: string) => void;
+  updateCustomStation: (id: string, updates: Partial<Station>) => void;
   searchStations: (query: string) => void;
   toggleMinimize: () => void;
   setActiveTab: (tab: 'vibes' | 'spotify') => void;
@@ -110,12 +111,12 @@ export const useRadioStore = create<RadioState>()(
         }));
       },
 
-      addCustomStation: (name, url) => {
+      addCustomStation: (name, url, favicon) => {
         const newStation: Station = {
           id: `spotify-custom-${Date.now()}`,
           name: name.trim(),
           url: url.trim(),
-          favicon: 'https://images.unsplash.com/photo-1614680376593-902f74fa0d41?w=80&h=80&fit=crop',
+          favicon: favicon?.trim() || 'https://images.unsplash.com/photo-1614680376593-902f74fa0d41?w=80&h=80&fit=crop',
           tags: ['spotify', 'playlist', 'equipe'],
           type: 'spotify',
           isCustom: true
@@ -142,6 +143,27 @@ export const useRadioStore = create<RadioState>()(
             customStations: nextCustom,
             currentStation: nextCurrent,
             favoriteStationIds: nextFavs
+          };
+        });
+      },
+
+      updateCustomStation: (id, updates) => {
+        set((state) => {
+          const nextCustom = state.customStations.map((station) => {
+            if (station.id === id) {
+              return { ...station, ...updates };
+            }
+            return station;
+          });
+
+          // Se a playlist editada for a que está tocando no momento, atualiza também a currentStation
+          const nextCurrent = state.currentStation?.id === id 
+            ? { ...state.currentStation, ...updates }
+            : state.currentStation;
+
+          return {
+            customStations: nextCustom,
+            currentStation: nextCurrent
           };
         });
       },
