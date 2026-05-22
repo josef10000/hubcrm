@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
   useRadioStore, 
-  DEFAULT_SPOTIFY_PLAYLISTS, 
   Station 
 } from '@/store/useRadioStore';
 import { 
@@ -124,8 +123,8 @@ export default function RealRadiosTab() {
 
   // Filtra as playlists recomendadas que o usuário favoritou para exibição na aba de favoritos
   const getFavoriteStations = () => {
-    // Busca nos resultados da pesquisa + recomendadas padrão + personalizadas
-    const allKnownPlaylists = [...DEFAULT_SPOTIFY_PLAYLISTS, ...customStations, ...searchResults];
+    // Busca nos resultados da pesquisa + personalizadas
+    const allKnownPlaylists = [...customStations, ...searchResults];
     
     // Filtra e remove duplicatas
     const uniqueKnown = allKnownPlaylists.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
@@ -567,15 +566,6 @@ export default function RealRadiosTab() {
               </div>
             )}
 
-            {/* Recomendadas Padrão */}
-            <div className="space-y-1.5">
-              <div className="text-[10px] font-bold text-white/40 tracking-wider px-1 flex items-center gap-1">
-                <Music className="w-3 h-3" /> PLAYLISTS RECOMENDADAS
-              </div>
-              <div className="space-y-1.5">
-                {DEFAULT_SPOTIFY_PLAYLISTS.map(renderStationItem)}
-              </div>
-            </div>
           </>
         )}
       </div>

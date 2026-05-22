@@ -178,7 +178,7 @@ export const useRadioStore = create<RadioState>()(
         set({ searchQuery: query, isSearching: true });
 
         const searchLower = query.toLowerCase().trim();
-        const allKnownPlaylists = [...DEFAULT_SPOTIFY_PLAYLISTS, ...get().customStations];
+        const allKnownPlaylists = [...get().customStations];
         
         const filtered = allKnownPlaylists.filter((item) => {
           const matchesName = item.name.toLowerCase().includes(searchLower);
@@ -211,6 +211,28 @@ export const useRadioStore = create<RadioState>()(
         currentStation: state.currentStation,
         activeTab: state.activeTab,
       }),
+      // Garante migração/auto-seed da playlist padrão da empresa para ser 100% editável e deletável
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          const hasEmpresa = state.customStations.some((s) => 
+            s.url.includes('5kVEIXiuRnwkh5EEfLuFXF')
+          );
+          if (!hasEmpresa) {
+            state.customStations = [
+              {
+                id: 'spotify-empresa',
+                name: 'Hub SiYmples',
+                url: 'https://open.spotify.com/playlist/5kVEIXiuRnwkh5EEfLuFXF?si=4ezkB4XdTd-kdRWzjuLESg',
+                favicon: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=80&h=80&fit=crop',
+                tags: ['empresa', 'colaborativa', 'hub', 'siymples'],
+                type: 'spotify',
+                isCustom: true
+              },
+              ...state.customStations
+            ];
+          }
+        }
+      }
     }
   )
 );
