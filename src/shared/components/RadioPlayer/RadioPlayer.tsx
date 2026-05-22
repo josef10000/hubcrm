@@ -895,10 +895,3 @@ export default function RadioPlayer() {
     </>
   );
 }
-m: translateY(0) scale(1);
-          }
-        }
-      `}</style>
-    </>
-  );
-}
