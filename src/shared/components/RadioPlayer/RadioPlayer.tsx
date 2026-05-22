@@ -81,7 +81,7 @@ export default function RadioPlayer() {
     }
   };
 
-  // Carrega a API do Spotify Embed Iframe se não estiver carregada
+  // Carrega a API do Spotify Embed Iframe se não estiver carregada com resiliência total
   useEffect(() => {
     if ((window as any).SpotifyIFrameAPIInstance) {
       setIsSpotifyApiReady(true);
@@ -104,16 +104,38 @@ export default function RadioPlayer() {
       (window as any).onSpotifyIframeApiReady = handleReady;
     }
 
-    // Injeta o script se não estiver presente
-    if (!document.querySelector('script[src="https://open.spotify.com/embed/iframe-api"]')) {
-      const script = document.createElement('script');
-      script.src = 'https://open.spotify.com/embed/iframe-api';
-      script.async = true;
-      document.body.appendChild(script);
+    // Injeta o script se não estiver presente, ou reinicia se o script existe mas a API falhou
+    const existingScript = document.querySelector('script[src="https://open.spotify.com/embed/iframe-api"]');
+    if (existingScript && (window as any).SpotifyIFrameAPIInstance) {
+      setIsSpotifyApiReady(true);
+      return;
     }
+
+    if (existingScript && !(window as any).SpotifyIFrameAPIInstance) {
+      // Se o script antigo existe mas o callback falhou ou está travado, remove o script antigo
+      // para forçar uma inicialização totalmente limpa ao reinjetar abaixo
+      existingScript.remove();
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://open.spotify.com/embed/iframe-api';
+    script.async = true;
+    document.body.appendChild(script);
+
+    // Pooling de segurança periódico em SPAs contra cache ou perdas de callback em remontagem
+    const interval = setInterval(() => {
+      if ((window as any).SpotifyIFrameAPIInstance) {
+        setIsSpotifyApiReady(true);
+        clearInterval(interval);
+      }
+    }, 500);
+
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
 
-  // Gerenciamento do controlador de Embed do Spotify
+  // Gerenciamento do controlador de Embed do Spotify (resiliente a remontagens e iframes perdidos)
   useEffect(() => {
     if (!isSpotifyApiReady || !currentStation || currentStation.type !== 'spotify') return;
 
@@ -121,19 +143,29 @@ export default function RadioPlayer() {
     const api = (window as any).SpotifyIFrameAPIInstance;
     if (!api) return;
 
-    if (spotifyControllerRef.current) {
-      // Se o controlador já existe, apenas carrega a nova URI
+    const container = document.getElementById('spotify-player-container');
+    const hasIframe = container?.querySelector('iframe');
+
+    if (spotifyControllerRef.current && hasIframe) {
+      // Se o controlador já existe e o iframe está ativo no DOM real, apenas carrega a nova URI
       try {
         spotifyControllerRef.current.loadUri(spotifyUri);
       } catch (err) {
         console.warn('Erro ao carregar URI no Spotify Embed:', err);
       }
     } else {
-      // Se não existe, cria o controlador no elemento target
-      const element = document.getElementById('spotify-player-container');
-      if (element) {
+      // Se o controlador não existe ou o iframe sumiu do DOM (remontagem ou tabs), recriamos do zero
+      if (container) {
+        // Limpamos o container para evitar iframes órfãos duplicados
+        container.innerHTML = '';
+        
+        // Criamos uma sub-div âncora estável que o Spotify Embed irá substituir.
+        // Isso mantém o elemento pai '#spotify-player-container' com o ID intacto no React
+        const anchor = document.createElement('div');
+        container.appendChild(anchor);
+
         api.createController(
-          element,
+          anchor,
           {
             uri: spotifyUri,
             width: '100%',
@@ -145,7 +177,10 @@ export default function RadioPlayer() {
             // Ouvir atualizações de reprodução do Spotify em tempo real
             controller.addListener('playback_update', (e: any) => {
               const { isPaused } = e.data;
-              setPlayingState(!isPaused);
+              // Validação estrita de tipo para evitar coação de undefined/null para true
+              if (typeof isPaused === 'boolean') {
+                setPlayingState(!isPaused);
+              }
             });
           }
         );

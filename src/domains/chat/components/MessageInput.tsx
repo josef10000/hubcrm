@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, Smile, X, Loader2, Calendar, LayoutGrid, Image as ImageIcon, Clock, Mic, Square, Trash2, Zap, AlertTriangle, Settings } from 'lucide-react';
+import { Send, Paperclip, Smile, X, Loader2, Calendar, LayoutGrid, Image as ImageIcon, Clock, Mic, MicOff, Square, Trash2, Zap, AlertTriangle, Settings } from 'lucide-react';
 import { parseMentions } from '@/helpers/chatHelpers';
 import { filterCommands, findCommand, BotCommand, BotContext } from '@/helpers/botCommands';
 import { useCRM } from '@crm/contexts/CRMContext';
@@ -37,7 +37,8 @@ interface MessageInputProps {
     parentMessageId?: string,
     scheduledAt?: Timestamp,
     priority?: ChatMessage['priority'],
-    checklist?: ChatMessage['checklist']
+    checklist?: ChatMessage['checklist'],
+    transcription?: string
   ) => void;
   onTyping: (isTyping: boolean) => void;
   replyTo: ChatMessage['replyTo'] | null;
@@ -83,6 +84,14 @@ export default function MessageInput({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout|null>(null);
 
+  // Estados para Digitação por Voz no input de texto
+  const [isDictating, setIsDictating] = useState(false);
+  const dictationRecognitionRef = useRef<any>(null);
+
+  // Refs para Transcrição Silenciosa na gravação de áudio
+  const audioSpeechRecognitionRef = useRef<any>(null);
+  const audioTranscriptionRef = useRef<string>('');
+
   // Estados e Refs de Gravação de Áudio e Drag & Drop
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -103,6 +112,16 @@ export default function MessageInput({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       cleanupAudioAnalyser();
+      if (dictationRecognitionRef.current) {
+        try {
+          dictationRecognitionRef.current.stop();
+        } catch (e) {}
+      }
+      if (audioSpeechRecognitionRef.current) {
+        try {
+          audioSpeechRecognitionRef.current.stop();
+        } catch (e) {}
+      }
     };
   }, []);
 
@@ -257,6 +276,7 @@ export default function MessageInput({
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       audioChunksRef.current = [];
       isCancelledRef.current = false;
+      audioTranscriptionRef.current = '';
       const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       mediaRecorderRef.current = mediaRecorder;
 
@@ -268,6 +288,11 @@ export default function MessageInput({
 
       mediaRecorder.onstop = async () => {
         cleanupAudioAnalyser();
+        // Para o reconhecimento de fala silencioso
+        if (audioSpeechRecognitionRef.current) {
+          try { audioSpeechRecognitionRef.current.stop(); } catch (e) {}
+          audioSpeechRecognitionRef.current = null;
+        }
         if (isCancelledRef.current) {
           stream.getTracks().forEach(track => track.stop());
           return;
@@ -275,13 +300,17 @@ export default function MessageInput({
         if (audioChunksRef.current.length === 0) return;
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
 
+        // Captura a transcrição acumulada antes de limpar
+        const finalTranscription = audioTranscriptionRef.current.trim() || undefined;
+        audioTranscriptionRef.current = '';
+
         setUploading(true);
         const id = toast.loading('Enviando mensagem de voz...');
         try {
           const file = new File([audioBlob], `audio-${Date.now()}_duration_${recordingTime}.webm`, { type: 'audio/webm' });
           const activeChatId = chatId || 'general';
           const url = await uploadFileToR2(file, activeChatId);
-          onSend('Enviou uma mensagem de voz 🎙️', [], [url], null, members, "text");
+          onSend('Enviou uma mensagem de voz 🎙️', [], [url], null, members, "text", undefined, undefined, undefined, parentMessageId, undefined, undefined, undefined, finalTranscription);
           toast.success('Mensagem de voz enviada!', { id });
         } catch (error: any) {
           console.error('[AUDIO_RECORD_UPLOAD_ERROR]', error);
@@ -300,6 +329,48 @@ export default function MessageInput({
       timerRef.current = setInterval(() => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
+
+      // Inicia transcrição silenciosa em paralelo (Speech-to-Text)
+      try {
+        const SpeechRecognitionClass = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (SpeechRecognitionClass) {
+          const recognition = new SpeechRecognitionClass();
+          recognition.lang = 'pt-BR';
+          recognition.continuous = true;
+          recognition.interimResults = false;
+          recognition.maxAlternatives = 1;
+
+          recognition.onresult = (event: any) => {
+            let transcript = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+              if (event.results[i].isFinal) {
+                transcript += event.results[i][0].transcript;
+              }
+            }
+            if (transcript) {
+              audioTranscriptionRef.current += (audioTranscriptionRef.current ? ' ' : '') + transcript;
+            }
+          };
+
+          recognition.onerror = (event: any) => {
+            if (event.error !== 'aborted' && event.error !== 'no-speech') {
+              console.warn('[STT_AUDIO] Erro no reconhecimento silencioso:', event.error);
+            }
+          };
+
+          recognition.onend = () => {
+            // Reinicia automaticamente se ainda estiver gravando
+            if (isRecording && !isCancelledRef.current && audioSpeechRecognitionRef.current) {
+              try { recognition.start(); } catch (e) {}
+            }
+          };
+
+          audioSpeechRecognitionRef.current = recognition;
+          recognition.start();
+        }
+      } catch (sttErr) {
+        console.warn('[STT_AUDIO] Speech Recognition não disponível:', sttErr);
+      }
 
       // Inicia a Waveform em tempo real
       setTimeout(() => {
@@ -329,6 +400,7 @@ export default function MessageInput({
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
+      // O STT silencioso será parado no onstop do mediaRecorder
       mediaRecorderRef.current.stop();
       setIsRecording(false);
       if (timerRef.current) {
@@ -342,6 +414,13 @@ export default function MessageInput({
     if (mediaRecorderRef.current && isRecording) {
       isCancelledRef.current = true;
       audioChunksRef.current = [];
+      audioTranscriptionRef.current = '';
+      
+      // Para o reconhecimento de fala silencioso
+      if (audioSpeechRecognitionRef.current) {
+        try { audioSpeechRecognitionRef.current.stop(); } catch (e) {}
+        audioSpeechRecognitionRef.current = null;
+      }
       
       const recorder = mediaRecorderRef.current;
       recorder.onstop = null; // Previne que o envio ocorra ao disparar stop
@@ -371,6 +450,78 @@ export default function MessageInput({
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+
+  // Digitação por Voz — toggle de ditado em tempo real no textarea
+  const toggleDictation = () => {
+    const SpeechRecognitionClass = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognitionClass) {
+      toast.error('Reconhecimento de voz não suportado neste navegador.');
+      return;
+    }
+
+    if (isDictating) {
+      // Parar ditado
+      if (dictationRecognitionRef.current) {
+        try { dictationRecognitionRef.current.stop(); } catch (e) {}
+        dictationRecognitionRef.current = null;
+      }
+      setIsDictating(false);
+      toast.info('Ditado encerrado');
+      return;
+    }
+
+    // Iniciar ditado
+    const recognition = new SpeechRecognitionClass();
+    recognition.lang = 'pt-BR';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    let finalizedText = text; // O texto base no momento de iniciar o ditado
+
+    recognition.onresult = (event: any) => {
+      let interim = '';
+      let newFinal = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          newFinal += transcript;
+        } else {
+          interim += transcript;
+        }
+      }
+      if (newFinal) {
+        finalizedText += (finalizedText ? ' ' : '') + newFinal;
+      }
+      const displayText = finalizedText + (interim ? ' ' + interim : '');
+      setText(displayText);
+      if (chatId) {
+        setDraft(chatId, displayText);
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      if (event.error !== 'aborted' && event.error !== 'no-speech') {
+        console.warn('[STT_DICTATION] Erro:', event.error);
+        toast.error('Erro no reconhecimento de voz: ' + event.error);
+      }
+    };
+
+    recognition.onend = () => {
+      // Reinicia automaticamente se o ditado está ativo
+      if (isDictating && dictationRecognitionRef.current) {
+        try { recognition.start(); } catch (e) {}
+      } else {
+        setIsDictating(false);
+      }
+    };
+
+    dictationRecognitionRef.current = recognition;
+    recognition.start();
+    setIsDictating(true);
+    toast.success('🎤 Ditado ativado — fale agora!');
+    textareaRef.current?.focus();
   };
 
   // Restaurar rascunho ao trocar de canal
@@ -833,6 +984,21 @@ export default function MessageInput({
             title="Marcar como URGENTE 🚨"
           >
             <AlertTriangle size={18} />
+          </button>
+
+          {/* Botão de Digitação por Voz (🎤 Ditar) */}
+          <button 
+            type="button" 
+            onClick={toggleDictation}
+            disabled={isRecording}
+            className={`p-2 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
+              isDictating 
+                ? 'text-emerald-500 bg-emerald-500/15 shadow-sm shadow-emerald-500/20 ring-1 ring-emerald-500/30 animate-pulse' 
+                : 'text-gray-400 hover:text-emerald-500 hover:bg-emerald-500/10'
+            }`}
+            title={isDictating ? 'Parar Ditado' : 'Ditar por Voz'}
+          >
+            {isDictating ? <MicOff size={18} /> : <Mic size={18} />}
           </button>
         </div>
 

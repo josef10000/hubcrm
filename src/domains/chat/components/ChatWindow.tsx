@@ -311,7 +311,8 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
     parentMessageId?: string,
     scheduledAt?: Timestamp,
     priority?: ChatMessage['priority'],
-    checklist?: ChatMessage['checklist']
+    checklist?: ChatMessage['checklist'],
+    transcription?: string
   ) => {
     if (!chat) return;
     if (!text.trim() && attachments.length === 0 && type === 'text') return;
@@ -332,7 +333,8 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
         parentMessageId,
         scheduledAt,
         priority,
-        checklist
+        checklist,
+        transcription
       );
     }
     
@@ -784,8 +786,8 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
         </div>
       ) : (
         <MessageInput 
-          onSend={(text, mentions, att, reply, membersList, type, poll, approval, richPreview, parentMessageId, scheduledAt, priority, checklist) => 
-            handleSend(text, mentions, att, reply, membersList, type, poll, approval, richPreview, parentMessageId, scheduledAt, priority, checklist)
+          onSend={(text, mentions, att, reply, membersList, type, poll, approval, richPreview, parentMessageId, scheduledAt, priority, checklist, transcription) => 
+            handleSend(text, mentions, att, reply, membersList, type, poll, approval, richPreview, parentMessageId, scheduledAt, priority, checklist, transcription)
           } 
           onTyping={setTypingStatus}
           replyTo={replyingTo ? { messageId: replyingTo.id, text: replyingTo.text, senderName: replyingTo.senderName } : null}

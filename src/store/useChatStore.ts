@@ -46,7 +46,8 @@ interface ChatState {
     parentMessageId?: string,
     scheduledAt?: Timestamp,
     priority?: ChatMessage['priority'],
-    checklist?: ChatMessage['checklist']
+    checklist?: ChatMessage['checklist'],
+    transcription?: string
   ) => Promise<void>;
 
   // Seleção e lote (Fase 2)
@@ -206,7 +207,7 @@ export const useChatStore = create<ChatState>()(
     };
   },
 
-  sendMessage: async (orgId, chatId, userId, userName, userPhoto, text, mentions, attachments, replyTo, type = "text", poll, approval, richPreview, parentMessageId, scheduledAt, priority, checklist) => {
+  sendMessage: async (orgId, chatId, userId, userName, userPhoto, text, mentions, attachments, replyTo, type = "text", poll, approval, richPreview, parentMessageId, scheduledAt, priority, checklist, transcription) => {
     if (!orgId || !chatId) return;
 
     // 1. Criar Mensagem Otimista
@@ -233,6 +234,7 @@ export const useChatStore = create<ChatState>()(
     if (scheduledAt) newMessage.scheduledAt = scheduledAt;
     if (priority) newMessage.priority = priority;
     if (checklist) newMessage.checklist = checklist;
+    if (transcription) newMessage.transcription = transcription;
 
     // 2. Atualizar UI imediatamente
     set(state => ({

@@ -42,7 +42,8 @@ export function useChat(chatId: string | null) {
     parentMessageId?: string,
     scheduledAt?: Timestamp,
     priority?: ChatMessage['priority'],
-    checklist?: ChatMessage['checklist']
+    checklist?: ChatMessage['checklist'],
+    transcription?: string
   ) => {
     console.log("[useChat] Chamando sendMessage:", { text, type, chatId, orgId: effectiveOrgId });
     if (!effectiveOrgId || !chatId || !userProfile) {
@@ -52,7 +53,7 @@ export function useChat(chatId: string | null) {
     await store.sendMessage(
       effectiveOrgId, chatId, userProfile.uid, 
       userProfile.displayName || 'Membro', userProfile.photoURL || '',
-      text, mentions, attachments, replyTo, type, poll, approval, richPreview, parentMessageId, scheduledAt, priority, checklist
+      text, mentions, attachments, replyTo, type, poll, approval, richPreview, parentMessageId, scheduledAt, priority, checklist, transcription
     );
   }, [effectiveOrgId, chatId, userProfile]);
 

@@ -190,8 +190,8 @@ export default function RealRadiosTab() {
 
         {/* Ações da Playlist (Favoritar & Play) */}
         <div className="flex items-center gap-1.5 shrink-0 pl-2">
-          {/* Botão de Editar (apenas para customizadas) */}
-          {station.isCustom && (
+          {/* Botão de Editar (disponível para todas as playlists do Spotify) */}
+          {station.type === 'spotify' && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -209,8 +209,8 @@ export default function RealRadiosTab() {
             </button>
           )}
 
-          {/* Botão de Excluir (apenas para customizadas) */}
-          {station.isCustom && (
+          {/* Botão de Excluir (disponível para todas as playlists do Spotify) */}
+          {station.type === 'spotify' && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
