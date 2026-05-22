@@ -50,7 +50,7 @@ export const FOCUS_VIBES_STATIONS: Station[] = [
   {
     id: 'vibe-synthwave',
     name: 'Synthwave Pulse',
-    url: 'https://synthetix.fm/stream', // Rádio Synthwave/Retro HTTPS
+    url: 'https://stream.nightride.fm/chillsynth.mp3', // Stream Chillsynth/Synthwave HTTPS super estável da rede Nightride FM
     favicon: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=80&h=80&fit=crop',
     tags: ['synthwave', 'electro', 'cyberpunk', 'retro'],
     type: 'vibe',
@@ -59,7 +59,7 @@ export const FOCUS_VIBES_STATIONS: Station[] = [
   {
     id: 'vibe-nature',
     name: 'Chuva na Floresta (Sons da Natureza)',
-    url: 'https://ambient.suitemusic.io/rain', // Stream de som de chuva contínuo HTTPS
+    url: 'https://stream.zeno.fm/6snq5g9t40eux', // Stream de som de chuva contínuo HTTPS super estável do Zeno.fm
     favicon: 'https://images.unsplash.com/photo-1437622368342-7a3d73a34c8f?w=80&h=80&fit=crop',
     tags: ['chuva', 'natureza', 'relax', 'ruído branco'],
     type: 'vibe',
@@ -68,7 +68,7 @@ export const FOCUS_VIBES_STATIONS: Station[] = [
   {
     id: 'vibe-nordic',
     name: 'Nordic Piano & Ambient',
-    url: 'https://stream.zeno.fm/9sgz7v64n0eux', // Rádio clássica/ambient HTTPS
+    url: 'https://stream.zeno.fm/9sgz7v64n0eux', // Rádio clássica/ambient HTTPS super estável do Zeno.fm
     favicon: 'https://images.unsplash.com/photo-1485550409059-9afb054cada4?w=80&h=80&fit=crop',
     tags: ['piano', 'ambient', 'calmo', 'nordic'],
     type: 'vibe',
@@ -77,7 +77,7 @@ export const FOCUS_VIBES_STATIONS: Station[] = [
   {
     id: 'vibe-cafe',
     name: 'Café Parisienne Jazz',
-    url: 'https://jazz.streamr.vip/jazz-cafe', // Stream clássico de Jazz HTTPS
+    url: 'https://stream.zeno.fm/ca1a8g9t40eux', // Stream clássico de Jazz/Bossa Nova HTTPS super estável do Zeno.fm
     favicon: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=80&h=80&fit=crop',
     tags: ['jazz', 'instrumental', 'café', 'smooth'],
     type: 'vibe',

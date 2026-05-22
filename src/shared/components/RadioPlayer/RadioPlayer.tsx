@@ -104,7 +104,6 @@ export default function RadioPlayer() {
       <audio 
         ref={audioRef} 
         onError={handleAudioError}
-        crossOrigin="anonymous" 
         preload="auto"
       />
 
