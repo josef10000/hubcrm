@@ -3,6 +3,8 @@ import { useAuth } from '@auth/contexts/AuthContext';
 import ThemeEffects from '@shared/components/ThemeEffects';
 import BirthdayCelebration from '@shared/components/BirthdayCelebration';
 import { usePresence } from '@/hooks/usePresence';
+import GlobalCallListener from '@/domains/chat/components/webrtc/GlobalCallListener';
+import { CallOverlay } from '@/domains/chat/components/webrtc/CallOverlay';
 
 interface WorkspaceShellProps {
   children: React.ReactNode;
@@ -40,6 +42,10 @@ export function WorkspaceShell({ children, isBirthday }: WorkspaceShellProps) {
 
       {/* Application Content Area */}
       {children}
+
+      {/* WebRTC Call Handling Infrastructure */}
+      <GlobalCallListener />
+      <CallOverlay />
     </div>
   );
 }

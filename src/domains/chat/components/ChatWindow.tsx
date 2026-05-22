@@ -22,6 +22,7 @@ import ImageLightbox from './ImageLightbox';
 import ThreadSidebar from './ThreadSidebar';
 
   import { useChatStore } from '@/store/useChatStore';
+  import { useWebRTC } from '@/hooks/useWebRTC';
 
 interface ChatWindowProps {
   chatId: string | null;
@@ -37,6 +38,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
     toggleReaction, votePoll, togglePin, unpinMessage, toggleBookmark, respondApproval,
     editMessage, markMessageAsRead, setMessageReminder, sharedMedia, sendBotMessage 
   } = useChat(chatId);
+  const { startCall } = useWebRTC();
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const [pinnedMessagesData, setPinnedMessagesData] = useState<ChatMessage[]>([]);
   const [liveChat, setLiveChat] = useState<Chat | null>(chat);
@@ -492,6 +494,24 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
         </div>
 
         <div className="flex items-center gap-1">
+          {chat?.type === 'direct' && otherUserId && !isSearchOpen && (
+            <>
+              <button 
+                onClick={() => startCall(otherUserId, displayName, displayPhoto, 'audio')}
+                className="p-2.5 text-gray-400 hover:text-emerald-500 hover:bg-emerald-500/5 rounded-xl transition-all"
+                title="Chamada de Áudio"
+              >
+                <Phone size={24} />
+              </button>
+              <button 
+                onClick={() => startCall(otherUserId, displayName, displayPhoto, 'video')}
+                className="p-2.5 text-gray-400 hover:text-primary-500 hover:bg-primary-500/5 rounded-xl transition-all"
+                title="Chamada de Vídeo"
+              >
+                <Video size={24} />
+              </button>
+            </>
+          )}
           {!isSearchOpen && (
             <button 
               onClick={() => setIsSearchOpen(true)}
