@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from '@shared/components/Sidebar';
 import { useUI } from '@/contexts/UIContext';
 import { Header } from './Header';
+import RadioPlayer from '@shared/components/RadioPlayer/RadioPlayer';
 
 /**
  * AppLayout define a estrutura básica de navegação e conteúdo.
@@ -29,6 +30,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           {children}
         </div>
       </main>
+
+      {/* Reprodutor de Rádio e Focus Station Global */}
+      <RadioPlayer />
 
       {/* Mobile Overlay for Sidebar */}
       {sidebarOpen && (

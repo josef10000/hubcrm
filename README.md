@@ -324,6 +324,14 @@ Implementação de chamadas de voz e vídeo ponto a ponto (P2P) integradas nativ
 - **Glassmorphism Overlay & PiP Interno:** Modal translúcido pulsante para aceitar chamadas e interface de overlay completa com modo Picture-in-Picture (PiP) interno flutuante, permitindo navegar livremente pelo CRM durante a chamada ativa.
 - **Hardware Cleanup Rigoroso:** Ao encerrar a chamada, os streams de câmera e microfone são rigidamente desligados de imediato para total privacidade.
 
+### 🎵 Hub Focus Station (Focus Vibes & Rádios Reais)
+Integração global e persistente de áudio para produtividade e bem-estar operacional, com design deslumbrante e acoplamento de estados inteligentes:
+- **Focus Vibes Curados:** 5 canais temáticos instrumentais pré-configurados e altamente estáveis (Lofi, Synthwave, Chuva, Nordic, Jazz) focados no aumento de produtividade.
+- **Rádios Reais Globais & Busca Ativa:** Mecanismo de busca dinâmico alimentado pela API descentralizada do Radio-Browser. Permite buscar emissoras nacionais e mundiais em tempo real, com filtragem rigorosa de segurança (HTTPS forçado) e salvamento instantâneo de favoritos em persistência local (`localStorage`).
+- **Navegação Contínua Ininterrupta:** Widget flutuante com design ultrapremium em Glassmorphism (Dynamic Island style) que pode ser arrastado ou minimizado. Por ser injetado no layout raiz do CRM (`AppLayout`), o fluxo de áudio permanece tocando de forma ininterrupta nas trocas de páginas ou rotas internas.
+- **Pausa Inteligente WebRTC:** Sincronização automática com o `useCallStore`. O reprodutor de áudio pausa instantaneamente a música ao iniciar ou receber uma ligação telefônica e retoma a reprodução assim que a chamada P2P é finalizada.
+- **Neon Spectrum Visualizer:** Barras animadas nativamente em CSS com gradientes fluidos neon que pulsam harmonicamente sincronizadas com o estado de áudio (`isPlaying`), simulando um visualizador de espectro sem os problemas tradicionais de segurança CORS de streams externos.
+
 ---
 
 ## 🧪 Testing & CI/CD Strategy
