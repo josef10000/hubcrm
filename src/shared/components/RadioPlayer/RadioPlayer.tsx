@@ -325,7 +325,7 @@ export default function RadioPlayer() {
                   ? '🧠 Foco Ativo' 
                   : currentStation?.type === 'youtube' 
                     ? '📺 YouTube Player' 
-                    : `🎵 Spotify ${spotifyMode === 'sdk' ? 'SDK Premium' : 'Embed Gratuito'}`}
+                    : '🎵 Spotify Embed'}
               </div>
               <div className="text-xs font-bold text-white truncate pr-1">
                 {currentStation?.name || 'Selecione uma playlist'}
