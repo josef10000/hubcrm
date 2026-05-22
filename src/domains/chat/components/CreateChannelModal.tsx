@@ -99,9 +99,9 @@ export default function CreateChannelModal({ isOpen, onClose, onSuccess }: Creat
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative bg-white dark:bg-zinc-950 w-full max-w-lg rounded-[2rem] border border-gray-100 dark:border-white/10 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar animate-in zoom-in-95 fade-in duration-300">
+      <div className="relative bg-white dark:bg-zinc-950 w-full max-w-lg rounded-[2rem] border border-gray-100 dark:border-white/10 shadow-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 fade-in duration-300">
         {/* Header */}
-        <div className="sticky top-0 bg-white dark:bg-zinc-950 p-6 pb-4 border-b border-gray-100 dark:border-white/5 z-10 flex items-center justify-between">
+        <div className="bg-white dark:bg-zinc-950 p-6 pb-4 border-b border-gray-100 dark:border-white/5 z-10 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-violet-500/20">
               <Hash size={20} />
@@ -117,7 +117,7 @@ export default function CreateChannelModal({ isOpen, onClose, onSuccess }: Creat
         </div>
 
         {/* Body */}
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar flex-1">
           {/* Nome */}
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Nome do Canal</label>
@@ -254,7 +254,7 @@ export default function CreateChannelModal({ isOpen, onClose, onSuccess }: Creat
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 p-6 pt-4 bg-white dark:bg-zinc-950 border-t border-gray-100 dark:border-white/5 flex justify-end gap-3">
+        <div className="p-6 pt-4 bg-white dark:bg-zinc-950 border-t border-gray-100 dark:border-white/5 flex justify-end gap-3">
           <button onClick={onClose} className="px-6 py-3 text-sm font-bold text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">Cancelar</button>
           <button 
             disabled={loading || !name.trim() || uploadingAvatar}

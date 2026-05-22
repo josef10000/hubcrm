@@ -36,7 +36,7 @@ export function ApprovalCreatorModal({ isOpen, onClose, onSelect }: ApprovalCrea
         className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" 
         onClick={onClose} 
       />
-      <div className="relative bg-white dark:bg-zinc-900 w-full max-w-md rounded-3xl shadow-2xl border border-gray-100 dark:border-white/10 overflow-hidden animate-in zoom-in-95 duration-200">
+      <div className="relative bg-white dark:bg-zinc-900 w-full max-w-md max-h-[90vh] flex flex-col rounded-3xl shadow-2xl border border-gray-100 dark:border-white/10 overflow-hidden animate-in zoom-in-95 duration-200">
         <div className="p-6 border-b border-gray-100 dark:border-white/10 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-600">
@@ -49,7 +49,7 @@ export function ApprovalCreatorModal({ isOpen, onClose, onSelect }: ApprovalCrea
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto custom-scrollbar flex-1">
           <div>
             <label className="text-xs font-black uppercase tracking-widest text-gray-500 mb-2 block">Tipo de Solicitação</label>
             <div className="grid grid-cols-2 gap-2">

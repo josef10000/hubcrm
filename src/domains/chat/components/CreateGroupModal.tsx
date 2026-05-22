@@ -95,7 +95,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateG
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative w-full max-w-lg bg-white dark:bg-zinc-950 rounded-[2.5rem] shadow-2xl overflow-hidden border border-gray-200 dark:border-white/10 animate-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-lg max-h-[90vh] flex flex-col bg-white dark:bg-zinc-950 rounded-[2.5rem] shadow-2xl overflow-hidden border border-gray-200 dark:border-white/10 animate-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="p-8 pb-4 flex items-center justify-between border-b border-gray-100 dark:border-white/5">
           <div className="flex items-center gap-4">
@@ -104,7 +104,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateG
             </div>
             <div>
               <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Novo Grupo</h2>
-              <p className="text-xs text-gray-500 font-medium">Crie um espaço de colaboração para sua equipe</p>
+              <p className="text-xs text-gray-500 font-medium">Crie um space de colaboração para sua equipe</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-xl transition-colors">
@@ -112,7 +112,7 @@ export default function CreateGroupModal({ isOpen, onClose, onSuccess }: CreateG
           </button>
         </div>
 
-        <div className="p-8 space-y-6">
+        <div className="p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
           {/* Nome do Grupo */}
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Nome do Grupo</label>

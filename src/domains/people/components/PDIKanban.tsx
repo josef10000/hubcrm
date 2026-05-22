@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from 'react';
-import { doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@auth/contexts/AuthContext';
-import { GripVertical, Plus, Target, Loader } from 'lucide-react';
+import { GripVertical, Plus, Target, Loader, Edit3, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface PDIItem {
@@ -25,32 +25,33 @@ const COLUMNS: { key: PDIItem['status']; label: string; color: string; dotColor:
   { key: 'done',  label: 'Concluído',    color: 'border-emerald-500/30', dotColor: 'bg-emerald-400' },
 ];
 
-export function PDIKanban({ items, orgId, userId }: PDIKanbanProps) {
+export function PDIKanban({ items = [], orgId, userId }: PDIKanbanProps) {
   const { user } = useAuth();
   const [dragging, setDragging] = useState<PDIItem | null>(null);
   const [newTitle, setNewTitle] = useState('');
   const [adding, setAdding] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  // Estados para edição inline
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
 
   const userDocRef = doc(db, 'profiles', userId);
 
   const moveItem = useCallback(async (item: PDIItem, newStatus: PDIItem['status']) => {
     if (item.status === newStatus) return;
     setLoading(true);
-    const updated: PDIItem = { ...item, status: newStatus };
+    const updatedItems = items.map(i => i.id === item.id ? { ...i, status: newStatus } : i);
     try {
       await updateDoc(userDocRef, {
-        pdiItems: arrayRemove(item),
-      });
-      await updateDoc(userDocRef, {
-        pdiItems: arrayUnion(updated),
+        pdiItems: updatedItems,
       });
     } catch {
       toast.error('Erro ao mover item do PDI');
     } finally {
       setLoading(false);
     }
-  }, [userDocRef]);
+  }, [userDocRef, items]);
 
   const addItem = async () => {
     if (!newTitle.trim()) return;
@@ -62,7 +63,9 @@ export function PDIKanban({ items, orgId, userId }: PDIKanbanProps) {
     };
     setLoading(true);
     try {
-      await updateDoc(userDocRef, { pdiItems: arrayUnion(item) });
+      await updateDoc(userDocRef, { 
+        pdiItems: [...items, item] 
+      });
       setNewTitle('');
       setAdding(false);
       toast.success('Item de PDI adicionado!');
@@ -71,6 +74,51 @@ export function PDIKanban({ items, orgId, userId }: PDIKanbanProps) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const deleteItem = async (itemId: string) => {
+    setLoading(true);
+    const updatedItems = items.filter(i => i.id !== itemId);
+    try {
+      await updateDoc(userDocRef, {
+        pdiItems: updatedItems,
+      });
+      toast.success('Objetivo removido!');
+    } catch {
+      toast.error('Erro ao remover objetivo.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateItemTitle = async (itemId: string, newText: string) => {
+    if (!newText.trim()) return;
+    setLoading(true);
+    const updatedItems = items.map(i => i.id === itemId ? { ...i, title: newText.trim() } : i);
+    try {
+      await updateDoc(userDocRef, {
+        pdiItems: updatedItems,
+      });
+      toast.success('Objetivo atualizado!');
+    } catch {
+      toast.error('Erro ao atualizar objetivo.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const startEditing = (item: PDIItem) => {
+    setEditingId(item.id);
+    setEditTitle(item.title);
+  };
+
+  const handleEditSave = async (item: PDIItem) => {
+    if (editTitle.trim() === item.title) {
+      setEditingId(null);
+      return;
+    }
+    await updateItemTitle(item.id, editTitle);
+    setEditingId(null);
   };
 
   return (
@@ -126,13 +174,53 @@ export function PDIKanban({ items, orgId, userId }: PDIKanbanProps) {
                 {colItems.map(item => (
                   <div
                     key={item.id}
-                    draggable
+                    draggable={editingId !== item.id}
                     onDragStart={() => setDragging(item)}
                     onDragEnd={() => setDragging(null)}
-                    className={`p-2.5 bg-white/5 border border-white/10 rounded-xl cursor-grab active:cursor-grabbing hover:bg-white/10 transition-all group flex items-start gap-1.5 ${dragging?.id === item.id ? 'opacity-40 scale-95' : ''}`}
+                    className={`p-2.5 bg-white/5 border border-white/10 rounded-xl cursor-grab active:cursor-grabbing hover:bg-white/10 transition-all group flex items-start gap-1.5 justify-between ${dragging?.id === item.id ? 'opacity-40 scale-95' : ''}`}
                   >
-                    <GripVertical size={12} className="text-gray-600 mt-0.5 group-hover:text-gray-400 shrink-0" />
-                    <p className="text-xs text-white font-medium leading-relaxed">{item.title}</p>
+                    <div className="flex items-start gap-1.5 flex-1 min-w-0">
+                      <GripVertical size={12} className="text-gray-600 mt-0.5 group-hover:text-gray-400 shrink-0" />
+                      {editingId === item.id ? (
+                        <input
+                          autoFocus
+                          value={editTitle}
+                          onChange={e => setEditTitle(e.target.value)}
+                          onBlur={() => handleEditSave(item)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') handleEditSave(item);
+                            if (e.key === 'Escape') setEditingId(null);
+                          }}
+                          className="flex-1 px-1.5 py-0.5 bg-white/10 border border-primary-500/50 rounded text-xs text-white outline-none"
+                        />
+                      ) : (
+                        <p 
+                          onDoubleClick={() => startEditing(item)}
+                          title="Duplo clique para editar"
+                          className="text-xs text-white font-medium leading-relaxed truncate flex-1 cursor-text"
+                        >
+                          {item.title}
+                        </p>
+                      )}
+                    </div>
+                    {editingId !== item.id && (
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => startEditing(item)}
+                          className="p-1 hover:bg-white/10 rounded text-gray-400 hover:text-white transition-colors"
+                          title="Editar objetivo"
+                        >
+                          <Edit3 size={11} />
+                        </button>
+                        <button
+                          onClick={() => deleteItem(item.id)}
+                          className="p-1 hover:bg-red-500/20 rounded text-gray-400 hover:text-red-400 transition-colors"
+                          title="Excluir objetivo"
+                        >
+                          <Trash2 size={11} />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
                 {colItems.length === 0 && (
@@ -146,3 +234,4 @@ export function PDIKanban({ items, orgId, userId }: PDIKanbanProps) {
     </div>
   );
 }
+

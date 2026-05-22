@@ -141,7 +141,7 @@ export default function GroupSettingsModal({ isOpen, onClose, chat }: GroupSetti
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative w-full max-w-lg bg-white dark:bg-zinc-950 rounded-[2.5rem] shadow-2xl overflow-hidden border border-gray-200 dark:border-white/10 animate-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-lg max-h-[90vh] flex flex-col bg-white dark:bg-zinc-950 rounded-[2.5rem] shadow-2xl overflow-hidden border border-gray-200 dark:border-white/10 animate-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="p-8 pb-4 flex items-center justify-between border-b border-gray-100 dark:border-white/5">
           <div className="flex items-center gap-4">
@@ -175,7 +175,7 @@ export default function GroupSettingsModal({ isOpen, onClose, chat }: GroupSetti
           </button>
         </div>
 
-        <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
+        <div className="p-8 space-y-8 overflow-y-auto custom-scrollbar flex-1">
           {/* Informações Básicas */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">

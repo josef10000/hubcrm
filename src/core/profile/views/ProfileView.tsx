@@ -112,27 +112,32 @@ export default function ProfileView() {
   const canEdit = isOwnProfile || isManagement || isAdmin;
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      if (!uid) return;
-      setLoading(true);
+    if (!uid) return;
+    setLoading(true);
+    const docRef = doc(db, 'profiles', uid);
+    
+    const unsubscribe = onSnapshot(docRef, async (snap) => {
       try {
-        const docRef = doc(db, 'profiles', uid);
-        const snap = await getDoc(docRef);
-        
         if (snap.exists()) {
           const data = snap.data() as UserProfile;
           setProfile(data);
           setError(null);
-          setFormData({
-            displayName: data.displayName || '',
-            jobTitle: data.jobTitle || '',
-            bio: data.bio || '',
-            phoneNumber: data.phoneNumber || '',
-            instagram: data.instagram || '',
-            linkedin: data.linkedin || '',
-            photoURL: data.photoURL || '',
-            birthDate: data.birthDate || '',
-            startDate: data.startDate || ''
+          
+          setIsEditing(editing => {
+            if (!editing) {
+              setFormData({
+                displayName: data.displayName || '',
+                jobTitle: data.jobTitle || '',
+                bio: data.bio || '',
+                phoneNumber: data.phoneNumber || '',
+                instagram: data.instagram || '',
+                linkedin: data.linkedin || '',
+                photoURL: data.photoURL || '',
+                birthDate: data.birthDate || '',
+                startDate: data.startDate || ''
+              });
+            }
+            return editing;
           });
 
           // Buscar superior
@@ -148,7 +153,6 @@ export default function ProfileView() {
         } else {
           setError('Perfil não encontrado no sistema.');
           toast.error('Perfil não encontrado');
-          // Delay navigate para dar chance do toast ser visto
           setTimeout(() => navigate('/team'), 3000);
         }
       } catch (err: any) {
@@ -158,9 +162,14 @@ export default function ProfileView() {
       } finally {
         setLoading(false);
       }
-    };
+    }, (err) => {
+      console.error(err);
+      setError(`Erro ao carregar dados: ${err.message || 'Falha de conexão'}`);
+      toast.error('Erro ao carregar perfil');
+      setLoading(false);
+    });
 
-    fetchProfile();
+    return () => unsubscribe();
   }, [uid, navigate]);
 
   // Listener para ativos em tempo real
@@ -1104,12 +1113,12 @@ export default function ProfileView() {
         {/* Modal de Nova Ausência */}
         {showVacationModal && (
            <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4" onClick={() => setShowVacationModal(false)}>
-              <div className="bg-white dark:bg-[#0a0a0a] rounded-[2.5rem] border border-gray-200 dark:border-white/10 w-full max-w-lg shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
-                 <div className="p-8 border-b border-gray-100 dark:border-white/5 flex justify-between items-center">
+              <div className="bg-white dark:bg-[#0a0a0a] rounded-[2.5rem] border border-gray-200 dark:border-white/10 w-full max-w-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                 <div className="p-8 border-b border-gray-100 dark:border-white/5 flex justify-between items-center shrink-0">
                     <h3 className="text-2xl font-bold">Solicitar Ausência</h3>
                     <button onClick={() => setShowVacationModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full"><X /></button>
                  </div>
-                 <form onSubmit={handleAddVacation} className="p-8 space-y-6">
+                 <form onSubmit={handleAddVacation} className="p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
                     <div className="space-y-2 text-left">
                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Tipo / Motivo</label>
                        <select 

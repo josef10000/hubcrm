@@ -45,7 +45,7 @@ export function ReminderModal({ isOpen, onClose, onConfirm, messageText }: Remin
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-sm bg-white dark:bg-zinc-950 rounded-[2rem] shadow-2xl overflow-hidden border border-gray-100 dark:border-white/10 flex flex-col"
+            className="relative w-full max-w-sm max-h-[90vh] bg-white dark:bg-zinc-950 rounded-[2rem] shadow-2xl overflow-hidden border border-gray-100 dark:border-white/10 flex flex-col"
           >
             {/* Header */}
             <div className="p-6 border-b border-gray-100 dark:border-white/10">
@@ -70,7 +70,7 @@ export function ReminderModal({ isOpen, onClose, onConfirm, messageText }: Remin
             </div>
 
             {/* Content */}
-            <div className="p-6">
+            <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
               {mode === 'quick' ? (
                 <div className="space-y-2">
                   {quickOptions.map((opt, i) => (
