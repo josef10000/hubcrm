@@ -14,14 +14,11 @@ import {
   Minus, 
   Maximize2,
   Headphones,
-  Sliders,
-  Loader2
+  Sliders
 } from 'lucide-react';
 
 export default function RadioPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const spotifyControllerRef = useRef<any>(null);
-  const [isSpotifyApiReady, setIsSpotifyApiReady] = useState(false);
   
   const {
     isPlaying,
@@ -66,127 +63,21 @@ export default function RadioPlayer() {
     audio.muted = isMuted;
   }, [volume, isMuted]);
 
-  // Helper robusto para converter URLs do Spotify em URIs
-  const getSpotifyUri = (url: string) => {
+  // Helper robusto para converter URLs do Spotify em URLs de Embed clássicas
+  const getSpotifyEmbedUrl = (url: string) => {
     if (!url) return '';
     try {
       const match = url.match(/spotify\.com\/(?:[a-zA-Z-]+\/)?(playlist|track|album|artist)\/([a-zA-Z0-9]+)/);
       if (match) {
         const [, type, id] = match;
-        return `spotify:${type}:${id}`;
+        return `https://open.spotify.com/embed/${type}/${id}?utm_source=generator`;
       }
-      return url;
+      const cleanUrl = url.split('?')[0];
+      return cleanUrl.replace('open.spotify.com/', 'open.spotify.com/embed/');
     } catch (e) {
       return url;
     }
   };
-
-  // Carrega a API do Spotify Embed Iframe se não estiver carregada com resiliência total
-  useEffect(() => {
-    if ((window as any).SpotifyIFrameAPIInstance) {
-      setIsSpotifyApiReady(true);
-      return;
-    }
-
-    const handleReady = (IFrameAPI: any) => {
-      (window as any).SpotifyIFrameAPIInstance = IFrameAPI;
-      setIsSpotifyApiReady(true);
-    };
-
-    // Caso a API já esteja em carregamento ou pronta
-    if ((window as any).onSpotifyIframeApiReady) {
-      const oldCallback = (window as any).onSpotifyIframeApiReady;
-      (window as any).onSpotifyIframeApiReady = (IFrameAPI: any) => {
-        oldCallback(IFrameAPI);
-        handleReady(IFrameAPI);
-      };
-    } else {
-      (window as any).onSpotifyIframeApiReady = handleReady;
-    }
-
-    // Injeta o script se não estiver presente, ou reinicia se o script existe mas a API falhou
-    const existingScript = document.querySelector('script[src="https://open.spotify.com/embed/iframe-api"]');
-    if (existingScript && (window as any).SpotifyIFrameAPIInstance) {
-      setIsSpotifyApiReady(true);
-      return;
-    }
-
-    if (existingScript && !(window as any).SpotifyIFrameAPIInstance) {
-      // Se o script antigo existe mas o callback falhou ou está travado, remove o script antigo
-      // para forçar uma inicialização totalmente limpa ao reinjetar abaixo
-      existingScript.remove();
-    }
-
-    const script = document.createElement('script');
-    script.src = 'https://open.spotify.com/embed/iframe-api';
-    script.async = true;
-    document.body.appendChild(script);
-
-    // Pooling de segurança periódico em SPAs contra cache ou perdas de callback em remontagem
-    const interval = setInterval(() => {
-      if ((window as any).SpotifyIFrameAPIInstance) {
-        setIsSpotifyApiReady(true);
-        clearInterval(interval);
-      }
-    }, 500);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, []);
-
-  // Gerenciamento do controlador de Embed do Spotify (resiliente a remontagens e iframes perdidos)
-  useEffect(() => {
-    if (!isSpotifyApiReady || !currentStation || currentStation.type !== 'spotify') return;
-
-    const spotifyUri = getSpotifyUri(currentStation.url);
-    const api = (window as any).SpotifyIFrameAPIInstance;
-    if (!api) return;
-
-    const container = document.getElementById('spotify-player-container');
-    const hasIframe = container?.querySelector('iframe');
-
-    if (spotifyControllerRef.current && hasIframe) {
-      // Se o controlador já existe e o iframe está ativo no DOM real, apenas carrega a nova URI
-      try {
-        spotifyControllerRef.current.loadUri(spotifyUri);
-      } catch (err) {
-        console.warn('Erro ao carregar URI no Spotify Embed:', err);
-      }
-    } else {
-      // Se o controlador não existe ou o iframe sumiu do DOM (remontagem ou tabs), recriamos do zero
-      if (container) {
-        // Limpamos o container para evitar iframes órfãos duplicados
-        container.innerHTML = '';
-        
-        // Criamos uma sub-div âncora estável que o Spotify Embed irá substituir.
-        // Isso mantém o elemento pai '#spotify-player-container' com o ID intacto no React
-        const anchor = document.createElement('div');
-        container.appendChild(anchor);
-
-        api.createController(
-          anchor,
-          {
-            uri: spotifyUri,
-            width: '100%',
-            height: 152
-          },
-          (controller: any) => {
-            spotifyControllerRef.current = controller;
-
-            // Ouvir atualizações de reprodução do Spotify em tempo real
-            controller.addListener('playback_update', (e: any) => {
-              const { isPaused } = e.data;
-              // Validação estrita de tipo para evitar coação de undefined/null para true
-              if (typeof isPaused === 'boolean') {
-                setPlayingState(!isPaused);
-              }
-            });
-          }
-        );
-      }
-    }
-  }, [currentStation, isSpotifyApiReady, setPlayingState]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -197,15 +88,6 @@ export default function RadioPlayer() {
       if (currentStation.type === 'spotify') {
         audio.pause();
         return;
-      }
-
-      // Se trocou para vibe local, garante que o Spotify pause se estiver tocando
-      if (currentStation.type === 'vibe' && spotifyControllerRef.current) {
-        try {
-          spotifyControllerRef.current.pause();
-        } catch (e) {
-          console.warn('Erro ao pausar Spotify ao mudar para rádio local:', e);
-        }
       }
 
       // Se trocou de rádio, define a nova origem
@@ -263,7 +145,7 @@ export default function RadioPlayer() {
               ? 'opacity-100 scale-100 pointer-events-auto' 
               : 'opacity-0 scale-95 pointer-events-none absolute inset-0'
           } ${
-            isPlaying 
+            isPlaying && currentStation?.type === 'vibe'
               ? 'bg-gradient-to-tr from-emerald-500/80 to-teal-600/80 text-white animate-spin-slow' 
               : 'bg-black/60 text-white/70 hover:bg-black/80 hover:text-white'
           }`}
@@ -334,20 +216,22 @@ export default function RadioPlayer() {
             </div>
           </div>
 
-          {/* Player do Spotify (Sempre montado para manter o iframe ativo e tocando, oculto se não for Spotify) */}
+          {/* Player do Spotify */}
           <div className={`space-y-1.5 relative z-10 ${currentStation?.type === 'spotify' ? 'block animate-fade-in' : 'hidden'}`}>
             <div className="relative w-full overflow-hidden rounded-xl border border-white/10 bg-black/40 backdrop-blur-md">
-              <div 
-                id="spotify-player-container" 
-                className="w-full h-[152px] rounded-xl shadow-lg bg-black/20 flex items-center justify-center"
-              >
-                {!isSpotifyApiReady && (
-                  <div className="text-[10px] text-white/40 flex items-center gap-2 font-mono">
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" />
-                    Carregando Player do Spotify...
-                  </div>
-                )}
-              </div>
+              {currentStation?.type === 'spotify' && (
+                <iframe
+                  src={getSpotifyEmbedUrl(currentStation.url)}
+                  width="100%"
+                  height="152"
+                  frameBorder="0"
+                  allowFullScreen={false}
+                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                  loading="lazy"
+                  title={currentStation.name}
+                  className="rounded-xl shadow-lg"
+                />
+              )}
             </div>
             <div className="text-[9px] text-white/40 text-center leading-normal px-1 font-mono">
               💡 Clique no botão de Play do Spotify acima. Certifique-se de estar conectado à sua conta neste navegador para ouvir faixas completas.
