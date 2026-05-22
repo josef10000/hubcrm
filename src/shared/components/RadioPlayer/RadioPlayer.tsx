@@ -20,6 +20,9 @@ import {
 export default function RadioPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
+  // Chave para forçar o Iframe do Spotify a "resetar" e cessar o som instantaneamente
+  const [spotifyKillKey, setSpotifyKillKey] = useState(Date.now());
+  
   const {
     isPlaying,
     volume,
@@ -52,6 +55,17 @@ export default function RadioPlayer() {
       }
     }
   }, [callStatus, isPlaying, setPlayingState]);
+
+  // EFEITO DE CORREÇÃO DO SPOTIFY: 
+  // Força a interrupção da música recarregando o iframe caso o usuário mute, receba ligação ou zere o volume
+  useEffect(() => {
+    if (currentStation?.type === 'spotify') {
+      if (isMuted || volume === 0 || callStatus === 'ringing' || callStatus === 'connected') {
+        // Isso destrói o Iframe atual e cria um novo do zero, cortando o som
+        setSpotifyKillKey(Date.now());
+      }
+    }
+  }, [isMuted, volume, callStatus, currentStation]);
 
   // Sincronização do estado global do Zustand com o elemento de áudio real do navegador
   useEffect(() => {
@@ -221,6 +235,7 @@ export default function RadioPlayer() {
             <div className="relative w-full overflow-hidden rounded-xl border border-white/10 bg-black/40 backdrop-blur-md">
               {currentStation?.type === 'spotify' && (
                 <iframe
+                  key={spotifyKillKey}
                   src={getSpotifyEmbedUrl(currentStation.url)}
                   width="100%"
                   height="152"
