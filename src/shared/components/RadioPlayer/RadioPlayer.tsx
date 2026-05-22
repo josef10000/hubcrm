@@ -104,15 +104,19 @@ export default function RadioPlayer() {
     }
   };
 
-  // Helper para converter a URL comum de playlist do Spotify na URL de embed oficial
+  // Helper robusto para converter URLs do Spotify em embeds oficiais (suporta internacionalização /intl-pt/ e remove queries)
   const getSpotifyEmbedUrl = (url: string) => {
     if (!url) return '';
-    if (!url.includes('spotify.com')) return url;
     try {
-      const cleanUrl = url.split('?')[0]; // Remove query params como ?si=...
+      const match = url.match(/spotify\.com\/(?:[a-zA-Z-]+\/)?(playlist|track|album|artist)\/([a-zA-Z0-9]+)/);
+      if (match) {
+        const [, type, id] = match;
+        return `https://open.spotify.com/embed/${type}/${id}?utm_source=generator`;
+      }
+      const cleanUrl = url.split('?')[0];
       return cleanUrl.replace('open.spotify.com/', 'open.spotify.com/embed/');
     } catch (e) {
-      return url.replace('open.spotify.com/', 'open.spotify.com/embed/');
+      return url;
     }
   };
 
@@ -206,18 +210,23 @@ export default function RadioPlayer() {
 
             {/* Renderização Condicional Híbrida: Spotify (Iframe Embed) ou Focus Vibe (Controles Locais HTML5) */}
             {currentStation?.type === 'spotify' ? (
-              <div className="relative z-10 w-full overflow-hidden rounded-xl border border-white/10 bg-black/40 backdrop-blur-md">
-                <iframe
-                  src={getSpotifyEmbedUrl(currentStation.url)}
-                  width="100%"
-                  height="80"
-                  frameBorder="0"
-                  allowFullScreen={false}
-                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                  loading="lazy"
-                  title={currentStation.name}
-                  className="rounded-xl shadow-lg"
-                />
+              <div className="space-y-1.5 relative z-10">
+                <div className="relative w-full overflow-hidden rounded-xl border border-white/10 bg-black/40 backdrop-blur-md">
+                  <iframe
+                    src={getSpotifyEmbedUrl(currentStation.url)}
+                    width="100%"
+                    height="80"
+                    frameBorder="0"
+                    allowFullScreen={false}
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                    loading="lazy"
+                    title={currentStation.name}
+                    className="rounded-xl shadow-lg"
+                  />
+                </div>
+                <div className="text-[9px] text-white/40 text-center leading-normal px-1 font-mono">
+                  💡 Clique no botão de Play do Spotify acima. Certifique-se de estar conectado à sua conta neste navegador para ouvir faixas completas.
+                </div>
               </div>
             ) : (
               <>

@@ -53,30 +53,14 @@ export const FOCUS_VIBES_STATIONS: Station[] = [
   }
 ];
 
-// Playlists Recomendadas do Spotify (Com a playlist colaborativa oficial da empresa configurada como destaque)
+// Playlists Recomendadas do Spotify (Apenas a playlist oficial Hub SiYmples do cliente)
 export const DEFAULT_SPOTIFY_PLAYLISTS: Station[] = [
   {
     id: 'spotify-empresa',
-    name: 'Playlist da Empresa',
+    name: 'Hub SiYmples',
     url: 'https://open.spotify.com/playlist/5kVEIXiuRnwkh5EEfLuFXF?si=4ezkB4XdTd-kdRWzjuLESg',
     favicon: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=80&h=80&fit=crop',
-    tags: ['empresa', 'colaborativa', 'hub'],
-    type: 'spotify'
-  },
-  {
-    id: 'spotify-deepfocus',
-    name: 'Foco Profundo (Deep Focus)',
-    url: 'https://open.spotify.com/playlist/37i9dQZF1DWZeKFBTSL5UK',
-    favicon: 'https://images.unsplash.com/photo-1516280440614-37939bbacd6a?w=80&h=80&fit=crop',
-    tags: ['instrumental', 'focus', 'deep'],
-    type: 'spotify'
-  },
-  {
-    id: 'spotify-bossajazz',
-    name: 'Bossa Nova & Jazz',
-    url: 'https://open.spotify.com/playlist/37i9dQZF1DX4sWSpwq3LiO',
-    favicon: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=80&h=80&fit=crop',
-    tags: ['bossa', 'jazz', 'brazil', 'relax'],
+    tags: ['empresa', 'colaborativa', 'hub', 'siymples'],
     type: 'spotify'
   }
 ];
