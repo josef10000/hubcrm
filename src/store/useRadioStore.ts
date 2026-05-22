@@ -82,7 +82,8 @@ export const useRadioStore = create<RadioState>()(
       isMinimized: true,
 
       playStation: (station) => {
-        set({ currentStation: station, isPlaying: true });
+        const isSpotify = station.type === 'spotify';
+        set({ currentStation: station, isPlaying: isSpotify ? false : true });
       },
 
       togglePlay: () => {
