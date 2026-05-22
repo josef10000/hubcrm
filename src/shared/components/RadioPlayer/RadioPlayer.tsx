@@ -13,24 +13,14 @@ import {
   Radio, 
   Minus, 
   Maximize2,
-  Headphones,
-  Sliders,
-  SkipBack,
-  SkipForward,
-  LogOut,
-  Chrome,
-  ExternalLink
+  Headphones
 } from 'lucide-react';
 
 export default function RadioPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const youtubeIframeRef = useRef<HTMLIFrameElement | null>(null);
   
-  // Instância do Player do Spotify SDK
-  const [spotifyPlayer, setSpotifyPlayer] = useState<any>(null);
-  const [spotifyPlayerReady, setSpotifyPlayerReady] = useState(false);
   const [spotifyKillKey, setSpotifyKillKey] = useState(Date.now());
-  const [trackProgress, setTrackProgress] = useState(0);
 
   const {
     isPlaying,
@@ -39,166 +29,18 @@ export default function RadioPlayer() {
     currentStation,
     activeTab,
     isMinimized,
-    spotifyAccessToken,
-    spotifyDeviceId,
-    spotifyPlaybackState,
-    spotifyIsPremium,
-    spotifyMode,
     togglePlay,
     setVolume,
     toggleMute,
     toggleMinimize,
     setActiveTab,
-    setPlayingState,
-    setSpotifyAccessToken,
-    setSpotifyDeviceId,
-    setSpotifyPlaybackState,
-    setSpotifyIsPremium,
-    setSpotifyMode
+    setPlayingState
   } = useRadioStore();
 
   const callStatus = useCallStore((state) => state.callStatus);
   const wasPlayingBeforeCallRef = useRef(false);
 
-  // 1. CAPTURAR O TOKEN DO SPOTIFY NA URL (Implicit Grant Flow)
-  useEffect(() => {
-    const hash = window.location.hash;
-    if (hash) {
-      const params = new URLSearchParams(hash.substring(1));
-      const token = params.get('access_token');
-      if (token) {
-        setSpotifyAccessToken(token);
-        setSpotifyIsPremium(true); // O SDK validará em seguida se é premium
-        setSpotifyMode('sdk'); // Ativa o modo SDK na hora
-        setActiveTab('spotify');
-        // Limpa a URL para estética perfeita
-        window.history.replaceState(null, '', window.location.pathname + window.location.search);
-      }
-    }
-  }, [setSpotifyAccessToken, setSpotifyIsPremium, setSpotifyMode, setActiveTab]);
 
-  // 2. MONITORAMENTO DE PROGRESSO DA FAIXA DO SPOTIFY SDK
-  useEffect(() => {
-    if (!spotifyPlaybackState || spotifyPlaybackState.paused) return;
-    
-    // Sincroniza o progresso local a cada segundo
-    setTrackProgress(spotifyPlaybackState.position);
-    
-    const interval = setInterval(() => {
-      setTrackProgress((prev) => {
-        const next = prev + 1000;
-        return next > spotifyPlaybackState.duration ? spotifyPlaybackState.duration : next;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [spotifyPlaybackState]);
-
-  // Sincroniza o progresso quando o estado de reprodução geral muda
-  useEffect(() => {
-    if (spotifyPlaybackState) {
-      setTrackProgress(spotifyPlaybackState.position);
-    }
-  }, [spotifyPlaybackState]);
-
-  // 3. CARREGAMENTO E GERENCIAMENTO DO SPOTIFY WEB PLAYBACK SDK
-  useEffect(() => {
-    if (!spotifyAccessToken || spotifyMode !== 'sdk') {
-      if (spotifyPlayer) {
-        spotifyPlayer.disconnect();
-        setSpotifyPlayer(null);
-        setSpotifyPlayerReady(false);
-        setSpotifyDeviceId(null);
-        setSpotifyPlaybackState(null);
-      }
-      return;
-    }
-
-    // Função de Inicialização do SDK
-    const initSpotifySDK = () => {
-      // Evita duplicar se o player já estiver instanciado
-      if ((window as any).Spotify && !spotifyPlayer) {
-        const player = new (window as any).Spotify.Player({
-          name: 'Hub Focus CRM Player',
-          getOAuthToken: (cb: any) => { cb(spotifyAccessToken); },
-          volume: isMuted ? 0 : volume
-        });
-
-        // Eventos do SDK
-        player.addListener('ready', ({ device_id }: { device_id: string }) => {
-          setSpotifyDeviceId(device_id);
-          setSpotifyPlayerReady(true);
-          setSpotifyIsPremium(true);
-        });
-
-        player.addListener('not_ready', ({ device_id }: { device_id: string }) => {
-          setSpotifyDeviceId(null);
-          setSpotifyPlayerReady(false);
-        });
-
-        player.addListener('player_state_changed', (state: any) => {
-          if (!state) return;
-          setSpotifyPlaybackState(state);
-          setPlayingState(!state.paused);
-        });
-
-        player.addListener('authentication_error', () => {
-          // Token expirou ou é inválido
-          setSpotifyAccessToken(null);
-          setSpotifyDeviceId(null);
-          setSpotifyPlaybackState(null);
-          setSpotifyPlayerReady(false);
-        });
-
-        player.addListener('account_error', () => {
-          // Conta Free/Não-Premium disparará este erro
-          setSpotifyIsPremium(false);
-          setSpotifyMode('embed'); // Força a volta ao Iframe clássico gratuito
-          setSpotifyDeviceId(null);
-          setSpotifyPlayerReady(false);
-        });
-
-        player.connect().then((success: boolean) => {
-          if (success) {
-            setSpotifyPlayer(player);
-          }
-        });
-      }
-    };
-
-    // Carrega o script oficial do SDK se ele não estiver no DOM
-    if (!document.getElementById('spotify-player-script')) {
-      const script = document.createElement('script');
-      script.id = 'spotify-player-script';
-      script.src = 'https://sdk.scdn.co/spotify-player.js';
-      script.async = true;
-      document.body.appendChild(script);
-      (window as any).onSpotifyWebPlaybackSDKReady = initSpotifySDK;
-    } else {
-      initSpotifySDK();
-    }
-
-    return () => {
-      // Limpeza ao desmontar
-      if (spotifyPlayer) {
-        spotifyPlayer.disconnect();
-        setSpotifyPlayer(null);
-        setSpotifyPlayerReady(false);
-        setSpotifyDeviceId(null);
-        setSpotifyPlaybackState(null);
-      }
-    };
-  }, [spotifyAccessToken, spotifyMode]);
-
-  // 4. CONTROLE DE VOLUME DO SPOTIFY SDK
-  useEffect(() => {
-    if (spotifyPlayer && spotifyPlayerReady) {
-      const targetVolume = isMuted ? 0 : volume;
-      spotifyPlayer.setVolume(targetVolume).catch((err: any) => {
-        console.warn('Erro ao ajustar volume do Spotify SDK:', err);
-      });
-    }
-  }, [volume, isMuted, spotifyPlayer, spotifyPlayerReady]);
 
   // 5. ESCUTA DE EVENTOS SILENCIOSOS DO YOUTUBE VIA POSTMESSAGE
   useEffect(() => {
@@ -243,33 +85,23 @@ export default function RadioPlayer() {
       if (isPlaying) {
         wasPlayingBeforeCallRef.current = true;
         setPlayingState(false);
-        
-        // Se for Spotify SDK, pausa explicitamente
-        if (spotifyPlayer && spotifyPlayerReady) {
-          spotifyPlayer.pause();
-        }
       }
     } else if (callStatus === 'idle' || !callStatus) {
       if (wasPlayingBeforeCallRef.current) {
         wasPlayingBeforeCallRef.current = false;
         setPlayingState(true);
-        
-        // Se for Spotify SDK, retoma
-        if (spotifyPlayer && spotifyPlayerReady) {
-          spotifyPlayer.resume();
-        }
       }
     }
-  }, [callStatus, isPlaying, setPlayingState, spotifyPlayer, spotifyPlayerReady]);
+  }, [callStatus, isPlaying, setPlayingState]);
 
   // EFEITO DE CORREÇÃO DO SPOTIFY EMBED (IFRAME)
   useEffect(() => {
-    if (currentStation?.type === 'spotify' && spotifyMode === 'embed') {
+    if (currentStation?.type === 'spotify') {
       if (isMuted || volume === 0 || callStatus === 'ringing' || callStatus === 'connected') {
         setSpotifyKillKey(Date.now());
       }
     }
-  }, [isMuted, volume, callStatus, currentStation, spotifyMode]);
+  }, [isMuted, volume, callStatus, currentStation]);
 
   // 7. SINCRONIZAÇÃO DE ELEMENTO DE ÁUDIO NATIVO (FOCUS VIBES)
   useEffect(() => {
@@ -348,75 +180,9 @@ export default function RadioPlayer() {
     }
   };
 
-  // 9. FUNÇÃO DE LOGIN DO SPOTIFY
-  const handleSpotifyLogin = () => {
-    const scopes = [
-      'streaming',
-      'user-read-email',
-      'user-read-private',
-      'user-read-playback-state',
-      'user-modify-playback-state'
-    ].join(' ');
-
-    const authUrl = `https://accounts.spotify.com/authorize?client_id=f1cc76d9b28b41149a0c296f0760970a&redirect_uri=${encodeURIComponent(
-      'https://hubcrm.hubsymples.com.br/'
-    )}&response_type=token&scope=${encodeURIComponent(scopes)}&show_dialog=true`;
-
-    window.location.href = authUrl;
-  };
-
-  // 10. REQUISITAR REPRODUÇÃO DA PLAYLIST NO SPOTIFY SDK VIA API
-  const playSpotifyPlaylist = async (playlistUrl: string) => {
-    if (!spotifyAccessToken || !spotifyDeviceId) return;
-    
-    let spotifyUri = '';
-    const playlistMatch = playlistUrl.match(/playlist\/([a-zA-Z0-9]+)/);
-    const trackMatch = playlistUrl.match(/track\/([a-zA-Z0-9]+)/);
-    const albumMatch = playlistUrl.match(/album\/([a-zA-Z0-9]+)/);
-    
-    if (playlistMatch) spotifyUri = `spotify:playlist:${playlistMatch[1]}`;
-    else if (trackMatch) spotifyUri = `spotify:track:${trackMatch[1]}`;
-    else if (albumMatch) spotifyUri = `spotify:album:${albumMatch[1]}`;
-    
-    if (!spotifyUri) return;
-    
-    try {
-      const body: any = {};
-      if (spotifyUri.startsWith('spotify:track')) {
-        body.uris = [spotifyUri];
-      } else {
-        body.context_uri = spotifyUri;
-      }
-      
-      await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${spotifyDeviceId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${spotifyAccessToken}`
-        },
-        body: JSON.stringify(body)
-      });
-      setPlayingState(true);
-    } catch (err) {
-      console.error('Erro ao transferir reprodução do Spotify:', err);
-    }
-  };
-
-  // Inicia a música ao selecionar uma playlist do Spotify
-  useEffect(() => {
-    if (currentStation?.type === 'spotify' && spotifyMode === 'sdk' && spotifyPlayerReady && isPlaying) {
-      // Evita disparar loop se a playlist já for a mesma tocando no state do SDK
-      const currentTrackUri = spotifyPlaybackState?.track_window?.current_track?.uri;
-      if (!currentTrackUri) {
-        playSpotifyPlaylist(currentStation.url);
-      }
-    }
-  }, [currentStation, spotifyMode, spotifyPlayerReady]);
-
   // FLAGS DE DOM KILL SWITCH
   const shouldRenderSpotifyEmbed = 
     currentStation?.type === 'spotify' && 
-    spotifyMode === 'embed' &&
     !isMuted && 
     volume > 0 && 
     callStatus !== 'ringing' && 
@@ -569,187 +335,34 @@ export default function RadioPlayer() {
 
           {/* ================= CONTROLE CONDICIONAL DE REPRODUTORES ================= */}
           
-          {/* A: SPOTIFY PLAYER (HÍBRIDO) */}
+          {/* A: SPOTIFY PLAYER (EMBED GRATUITO) */}
           {currentStation?.type === 'spotify' && (
             <div className="space-y-1.5 relative z-10 animate-fade-in">
-              {/* Seletor de Modo no Topo do Widget do Spotify */}
-              <div className="flex bg-black/40 border border-white/5 p-0.5 rounded-lg text-[9px] font-bold tracking-wider font-mono">
-                <button
-                  onClick={() => setSpotifyMode('embed')}
-                  className={`flex-1 py-1 rounded transition-all ${
-                    spotifyMode === 'embed' ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white'
-                  }`}
-                >
-                  Modo Gratuito (Embed)
-                </button>
-                <button
-                  onClick={() => setSpotifyMode('sdk')}
-                  className={`flex-1 py-1 rounded transition-all ${
-                    spotifyMode === 'sdk' ? 'bg-emerald-500/20 text-emerald-400' : 'text-white/40 hover:text-white'
-                  }`}
-                >
-                  Modo Premium (SDK)
-                </button>
-              </div>
-
-              {/* MODO 1: SPOTIFY EMBED (IFRAME) */}
-              {spotifyMode === 'embed' && (
-                <div className="relative w-full overflow-hidden rounded-xl border border-white/10 bg-black/40">
-                  {shouldRenderSpotifyEmbed ? (
-                    <iframe
-                      key={spotifyKillKey}
-                      src={getSpotifyEmbedUrl(currentStation.url)}
-                      width="100%"
-                      height="200"
-                      frameBorder="0"
-                      allowFullScreen={false}
-                      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                      loading="lazy"
-                      title={currentStation.name}
-                      className="rounded-xl shadow-lg"
-                    />
-                  ) : (
-                    <div className="h-[200px] w-full flex flex-col items-center justify-center text-white/40 text-center p-4">
-                      <VolumeX className="w-8 h-8 text-red-400 mb-2 animate-bounce" />
-                      <span className="text-xs font-bold font-mono text-red-400">PLAYER MUTADO / LIGAÇÃO ATIVA</span>
-                      <span className="text-[10px] text-white/30 mt-1">O som foi interrompido para sua privacidade.</span>
-                    </div>
-                  )}
-                  <div className="text-[8px] text-white/30 text-center leading-normal p-1.5 border-t border-white/5 font-mono">
-                    💡 Clique no botão de Play do Spotify acima.
+              <div className="relative w-full overflow-hidden rounded-xl border border-white/10 bg-black/40">
+                {shouldRenderSpotifyEmbed ? (
+                  <iframe
+                    key={spotifyKillKey}
+                    src={getSpotifyEmbedUrl(currentStation.url)}
+                    width="100%"
+                    height="200"
+                    frameBorder="0"
+                    allowFullScreen={false}
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                    loading="lazy"
+                    title={currentStation.name}
+                    className="rounded-xl shadow-lg"
+                  />
+                ) : (
+                  <div className="h-[200px] w-full flex flex-col items-center justify-center text-white/40 text-center p-4">
+                    <VolumeX className="w-8 h-8 text-red-400 mb-2 animate-bounce" />
+                    <span className="text-xs font-bold font-mono text-red-400">PLAYER MUTADO / LIGAÇÃO ATIVA</span>
+                    <span className="text-[10px] text-white/30 mt-1">O som foi interrompido para sua privacidade.</span>
                   </div>
-                </div>
-              )}
-
-              {/* MODO 2: SPOTIFY SDK PREMIUM (CONTROLE INTEGRADO) */}
-              {spotifyMode === 'sdk' && (
-                <div className="w-full bg-black/45 border border-white/5 rounded-xl p-3 flex flex-col gap-2.5 min-h-[200px] justify-center">
-                  {!spotifyAccessToken ? (
-                    /* Tela de Login */
-                    <div className="text-center py-4 flex flex-col items-center gap-2">
-                      <Music className="w-8 h-8 text-emerald-400 animate-bounce" />
-                      <span className="text-xs font-bold text-white font-mono">Spotify SDK Premium</span>
-                      <span className="text-[10px] text-white/40 leading-normal px-2">
-                        Conecte seu Spotify Premium para habilitar o controle total de volume e faixa direto no CRM.
-                      </span>
-                      <button
-                        onClick={handleSpotifyLogin}
-                        className="mt-1.5 w-full bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold py-2 px-4 rounded-xl flex items-center justify-center gap-1.5 transition-all hover:scale-[1.02]"
-                      >
-                        <Chrome className="w-4 h-4" /> Conectar Spotify Premium
-                      </button>
-                    </div>
-                  ) : !spotifyPlayerReady ? (
-                    /* Aguardando Dispositivo do SDK */
-                    <div className="text-center py-6 flex flex-col items-center gap-2">
-                      <div className="w-6 h-6 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
-                      <span className="text-xs font-bold text-emerald-400 font-mono">INICIALIZANDO PLAYER...</span>
-                      <span className="text-[9px] text-white/40 leading-normal px-2">
-                        Se demorar, verifique se seu Spotify oficial está aberto em outro dispositivo para sincronizar.
-                      </span>
-                    </div>
-                  ) : spotifyPlaybackState?.track_window?.current_track ? (
-                    /* Player Nativo Ativo */
-                    <div className="flex flex-col gap-2 animate-fade-in">
-                      {/* Meta da Faixa Tocando */}
-                      <div className="flex gap-2.5 items-center">
-                        <img 
-                          src={spotifyPlaybackState.track_window.current_track.album.images[0]?.url} 
-                          alt="Capa" 
-                          className="w-10 h-10 rounded-lg object-cover border border-white/10 shrink-0" 
-                        />
-                        <div className="min-w-0 flex-1">
-                          <div className="text-xs font-bold text-white truncate select-text">
-                            {spotifyPlaybackState.track_window.current_track.name}
-                          </div>
-                          <div className="text-[10px] text-white/50 truncate select-text">
-                            {spotifyPlaybackState.track_window.current_track.artists.map((a: any) => a.name).join(', ')}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Barra de Progresso da Música */}
-                      <div className="space-y-0.5">
-                        <div className="flex justify-between text-[8px] text-white/40 font-mono">
-                          <span>{formatTime(trackProgress)}</span>
-                          <span>{formatTime(spotifyPlaybackState.duration)}</span>
-                        </div>
-                        <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-emerald-400 transition-all duration-300"
-                            style={{ width: `${(trackProgress / spotifyPlaybackState.duration) * 100}%` }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Botões do Controle do Spotify */}
-                      <div className="flex items-center justify-center gap-4 mt-1 bg-white/5 border border-white/5 p-1 rounded-lg">
-                        <button 
-                          onClick={() => spotifyPlayer.previousTrack()}
-                          className="text-white/60 hover:text-white p-1 hover:bg-white/5 rounded transition-all"
-                        >
-                          <SkipBack className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={togglePlay}
-                          className="w-8 h-8 rounded-full bg-white text-slate-900 flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
-                        >
-                          {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
-                        </button>
-                        <button 
-                          onClick={() => spotifyPlayer.nextTrack()}
-                          className="text-white/60 hover:text-white p-1 hover:bg-white/5 rounded transition-all"
-                        >
-                          <SkipForward className="w-4 h-4" />
-                        </button>
-                      </div>
-
-                      {/* Slider de Volume Premium */}
-                      <div className="flex items-center gap-2 mt-0.5 px-1 bg-white/5 p-1.5 rounded-lg border border-white/5">
-                        <button onClick={toggleMute} className="text-white/50 hover:text-white transition-all shrink-0">
-                          {isMuted || volume === 0 ? <VolumeX className="w-3.5 h-3.5 text-red-400" /> : <Volume2 className="w-3.5 h-3.5" />}
-                        </button>
-                        <input
-                          type="range"
-                          min="0"
-                          max="1"
-                          step="0.05"
-                          value={isMuted ? 0 : volume}
-                          onChange={(e) => setVolume(parseFloat(e.target.value))}
-                          className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-emerald-400 transition-all outline-none"
-                          style={{
-                            background: `linear-gradient(to right, #10b981 ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.1) ${(isMuted ? 0 : volume) * 100}%)`,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    /* Sincronizando Reprodução */
-                    <div className="text-center py-6 flex flex-col items-center gap-2">
-                      <Music className="w-8 h-8 text-emerald-400 animate-pulse" />
-                      <span className="text-xs font-bold text-white font-mono">PRONTO PARA CONECTAR</span>
-                      <span className="text-[9px] text-white/40 leading-normal px-2">
-                        Selecione a playlist `Hub SiYmples` abaixo ou use seu aplicativo Spotify oficial e transfira a reprodução para o dispositivo `Hub Focus CRM Player`.
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Rodapé do SDK - Botão Desconectar */}
-                  {spotifyAccessToken && (
-                    <button
-                      onClick={() => {
-                        setSpotifyAccessToken(null);
-                        setSpotifyDeviceId(null);
-                        setSpotifyPlaybackState(null);
-                        setSpotifyPlayerReady(false);
-                      }}
-                      className="mt-1 w-full border border-white/5 hover:border-red-500/20 hover:bg-red-500/10 text-white/40 hover:text-red-400 text-[9px] py-1 rounded font-bold font-mono transition-all flex items-center justify-center gap-1"
-                    >
-                      <LogOut className="w-3 h-3" /> Desconectar Conta do CRM
-                    </button>
-                  )}
-                </div>
-              )}
+                )}
+              </div>
+              <div className="text-[8px] text-white/30 text-center leading-normal px-1 font-mono">
+                💡 Clique no botão de Play do Spotify acima.
+              </div>
             </div>
           )}
 
@@ -835,28 +448,19 @@ export default function RadioPlayer() {
                 🧠 Vibes Lofi
               </button>
               <button
-                onClick={() => setActiveTab('spotify')}
+                onClick={() => setActiveTab('streaming')}
                 className={`flex-1 py-1 text-center text-[10px] font-bold rounded transition-all duration-300 ${
-                  activeTab === 'spotify' ? 'bg-white/15 text-white' : 'text-white/40 hover:text-white'
+                  activeTab === 'streaming' ? 'bg-white/15 text-white' : 'text-white/40 hover:text-white'
                 }`}
               >
-                🎵 Spotify
-              </button>
-              <button
-                onClick={() => setActiveTab('youtube')}
-                className={`flex-1 py-1 text-center text-[10px] font-bold rounded transition-all duration-300 ${
-                  activeTab === 'youtube' ? 'bg-white/15 text-white' : 'text-white/40 hover:text-white'
-                }`}
-              >
-                📺 YouTube
+                📺 Streaming
               </button>
             </div>
 
             {/* Listas correspondentes */}
             <div className="flex-1 overflow-y-auto max-h-[190px] pr-0.5 custom-scrollbar">
               {activeTab === 'vibes' && <FocusVibesTab />}
-              {activeTab === 'spotify' && <RealRadiosTab typeFilter="spotify" />}
-              {activeTab === 'youtube' && <RealRadiosTab typeFilter="youtube" />}
+              {activeTab === 'streaming' && <RealRadiosTab />}
             </div>
           </div>
           

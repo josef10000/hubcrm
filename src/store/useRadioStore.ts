@@ -19,18 +19,12 @@ interface RadioState {
   currentStation: Station | null;
   favoriteStationIds: string[];
   customStations: Station[]; // Playlists customizadas adicionadas pelo usuário
-  activeTab: 'vibes' | 'spotify' | 'youtube';
+  deletedStationIds: string[]; // Histórico de playlists excluídas para persistência definitiva
+  activeTab: 'vibes' | 'streaming';
   searchQuery: string;
   searchResults: Station[];
   isSearching: boolean;
   isMinimized: boolean;
-  
-  // Spotify SDK & Hybrid states
-  spotifyAccessToken: string | null;
-  spotifyDeviceId: string | null;
-  spotifyPlaybackState: any | null;
-  spotifyIsPremium: boolean;
-  spotifyMode: 'embed' | 'sdk';
   
   // Actions
   playStation: (station: Station) => void;
@@ -44,15 +38,8 @@ interface RadioState {
   updateCustomStation: (id: string, updates: Partial<Station>) => void;
   searchStations: (query: string) => void;
   toggleMinimize: () => void;
-  setActiveTab: (tab: 'vibes' | 'spotify' | 'youtube') => void;
+  setActiveTab: (tab: 'vibes' | 'streaming') => void;
   setPlayingState: (isPlaying: boolean) => void;
-  
-  // Spotify SDK Actions
-  setSpotifyAccessToken: (token: string | null) => void;
-  setSpotifyDeviceId: (id: string | null) => void;
-  setSpotifyPlaybackState: (state: any) => void;
-  setSpotifyIsPremium: (isPremium: boolean) => void;
-  setSpotifyMode: (mode: 'embed' | 'sdk') => void;
 }
 
 // Focus Vibes (Apenas Lofi conforme solicitado pelo usuário)
@@ -89,23 +76,15 @@ export const useRadioStore = create<RadioState>()(
       currentStation: FOCUS_VIBES_STATIONS[0], // Começa com Lofi beats por padrão
       favoriteStationIds: [],
       customStations: [],
+      deletedStationIds: [],
       activeTab: 'vibes',
       searchQuery: '',
       searchResults: [],
       isSearching: false,
       isMinimized: true,
 
-      // Spotify SDK & Hybrid initial states
-      spotifyAccessToken: null,
-      spotifyDeviceId: null,
-      spotifyPlaybackState: null,
-      spotifyIsPremium: false,
-      spotifyMode: 'embed',
-
       playStation: (station) => {
-        // Se for Spotify no modo SDK, deixa o SDK iniciar a reprodução antes de dar play global
-        const isSpotifySdk = station.type === 'spotify' && get().spotifyMode === 'sdk';
-        set({ currentStation: station, isPlaying: isSpotifySdk ? false : true });
+        set({ currentStation: station, isPlaying: true });
       },
 
       togglePlay: () => {
@@ -157,6 +136,9 @@ export const useRadioStore = create<RadioState>()(
       removeCustomStation: (id) => {
         set((state) => {
           const nextCustom = state.customStations.filter((s) => s.id !== id);
+          const nextDeleted = state.deletedStationIds.includes(id)
+            ? state.deletedStationIds
+            : [...state.deletedStationIds, id];
           
           // Se a playlist deletada era a que estava tocando atualmente, define o Lofi como padrão
           const nextCurrent = state.currentStation?.id === id 
@@ -168,6 +150,7 @@ export const useRadioStore = create<RadioState>()(
 
           return {
             customStations: nextCustom,
+            deletedStationIds: nextDeleted,
             currentStation: nextCurrent,
             favoriteStationIds: nextFavs
           };
@@ -236,27 +219,6 @@ export const useRadioStore = create<RadioState>()(
 
       setPlayingState: (isPlaying) => {
         set({ isPlaying });
-      },
-
-      // Spotify SDK Setters
-      setSpotifyAccessToken: (token) => {
-        set({ spotifyAccessToken: token });
-      },
-
-      setSpotifyDeviceId: (id) => {
-        set({ spotifyDeviceId: id });
-      },
-
-      setSpotifyPlaybackState: (state) => {
-        set({ spotifyPlaybackState: state });
-      },
-
-      setSpotifyIsPremium: (isPremium) => {
-        set({ spotifyIsPremium: isPremium });
-      },
-
-      setSpotifyMode: (mode) => {
-        set({ spotifyMode: mode });
       }
     }),
     {
@@ -266,19 +228,18 @@ export const useRadioStore = create<RadioState>()(
         isMuted: state.isMuted,
         favoriteStationIds: state.favoriteStationIds,
         customStations: state.customStations,
+        deletedStationIds: state.deletedStationIds,
         currentStation: state.currentStation,
-        activeTab: state.activeTab,
-        spotifyAccessToken: state.spotifyAccessToken,
-        spotifyMode: state.spotifyMode,
-        spotifyIsPremium: state.spotifyIsPremium
+        activeTab: state.activeTab
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {
-          // Garante a presença da playlist padrão Hub SiYmples
+          // Garante a presença da playlist padrão Hub SiYmples se ela não tiver sido deletada deliberadamente
+          const isDeleted = state.deletedStationIds?.includes('spotify-empresa');
           const hasEmpresa = state.customStations.some((s) => 
-            s.url.includes('5kVEIXiuRnwkh5EEfLuFXF')
+            s.id === 'spotify-empresa' || s.url.includes('5kVEIXiuRnwkh5EEfLuFXF')
           );
-          if (!hasEmpresa) {
+          if (!hasEmpresa && !isDeleted) {
             state.customStations = [
               {
                 id: 'spotify-empresa',

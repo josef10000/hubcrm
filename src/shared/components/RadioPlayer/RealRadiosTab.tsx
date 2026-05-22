@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   useRadioStore, 
-  Station,
-  DEFAULT_SPOTIFY_PLAYLISTS
+  Station
 } from '@/store/useRadioStore';
 import { 
   Search, 
@@ -54,6 +53,9 @@ export default function RealRadiosTab({ typeFilter }: RealRadiosTabProps) {
   const [editError, setEditError] = useState('');
   const [isFetchingCover, setIsFetchingCover] = useState(false);
   const [isFetchingCustomCover, setIsFetchingCustomCover] = useState(false);
+  
+  // Estado para Confirmação de Exclusão
+  const [playlistToDelete, setPlaylistToDelete] = useState<Station | null>(null);
 
   // Efeito para sincronizar a busca local com o estado global da store
   useEffect(() => {
@@ -139,7 +141,7 @@ export default function RealRadiosTab({ typeFilter }: RealRadiosTabProps) {
     }
 
     if (!customUrl.trim()) {
-      setFormError(`Cole o link do ${typeFilter === 'spotify' ? 'Spotify' : 'YouTube'}.`);
+      setFormError('Cole o link do Spotify ou do YouTube.');
       return;
     }
 
@@ -158,7 +160,7 @@ export default function RealRadiosTab({ typeFilter }: RealRadiosTabProps) {
     }
 
     if (!isSpotify && !isYoutube) {
-      setFormError('Cole um link válido do Spotify ou do YouTube.');
+      setFormError('Por favor, cole um link válido do Spotify ou do YouTube.');
       return;
     }
 
@@ -187,10 +189,14 @@ export default function RealRadiosTab({ typeFilter }: RealRadiosTabProps) {
 
   const favorites = getFavoriteStations();
 
-  // Filtra as playlists personalizadas do usuário com base no typeFilter
+  // Playlist corporativa padrão (obtida dinamicamente da store)
+  const empresaStation = customStations.find(s => s.id === 'spotify-empresa');
+
+  // Filtra as outras playlists personalizadas do usuário (ignorando a da empresa) com base no typeFilter
+  const userCustomStations = customStations.filter(s => s.id !== 'spotify-empresa');
   const filteredCustom = typeFilter 
-    ? customStations.filter(s => s.type === typeFilter) 
-    : customStations;
+    ? userCustomStations.filter(s => s.type === typeFilter) 
+    : userCustomStations;
 
   const renderStationItem = (station: Station) => {
     const isActive = currentStation?.id === station.id;
@@ -272,7 +278,7 @@ export default function RealRadiosTab({ typeFilter }: RealRadiosTabProps) {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                removeCustomStation(station.id);
+                setPlaylistToDelete(station);
               }}
               className="p-1.5 rounded-lg text-white/40 hover:text-red-400 hover:bg-white/10 transition-all duration-300"
               title="Excluir Playlist"
@@ -311,7 +317,7 @@ export default function RealRadiosTab({ typeFilter }: RealRadiosTabProps) {
   };
 
   return (
-    <div className="space-y-3 font-sans">
+    <div className="space-y-3 font-sans relative">
       {/* Formulário de Busca e Botão de Adicionar Customizada */}
       <div className="flex flex-col gap-2">
         <form onSubmit={handleSearchSubmit} className="relative flex gap-1.5">
@@ -382,7 +388,7 @@ export default function RealRadiosTab({ typeFilter }: RealRadiosTabProps) {
               type="text"
               value={customName}
               onChange={(e) => setCustomName(e.target.value)}
-              placeholder={typeFilter === 'spotify' ? 'Nome da Playlist (ex: Hits de Foco)' : 'Nome do Vídeo/Playlist (ex: Som Ambiente)'}
+              placeholder={typeFilter === 'spotify' ? 'Nome da Playlist (ex: Hits de Foco)' : typeFilter === 'youtube' ? 'Nome do Vídeo/Playlist (ex: Som Ambiente)' : 'Nome da Playlist ou Vídeo (ex: Hits de Foco)'}
               className="w-full bg-black/35 border border-white/5 text-white placeholder-white/30 rounded-lg py-1.5 px-2.5 text-xs focus:outline-none focus:border-emerald-500/40 transition-all font-sans"
             />
             
@@ -391,7 +397,7 @@ export default function RealRadiosTab({ typeFilter }: RealRadiosTabProps) {
                 type="text"
                 value={customUrl}
                 onChange={(e) => setCustomUrl(e.target.value)}
-                placeholder={typeFilter === 'spotify' ? 'Link da playlist do Spotify' : 'Link do vídeo ou playlist do YouTube'}
+                placeholder={typeFilter === 'spotify' ? 'Link da playlist do Spotify' : typeFilter === 'youtube' ? 'Link do vídeo ou playlist do YouTube' : 'Link do Spotify ou do YouTube'}
                 className="w-full bg-black/35 border border-white/5 text-white placeholder-white/30 rounded-lg py-1.5 px-2.5 pr-20 text-xs focus:outline-none focus:border-emerald-500/40 transition-all font-sans"
               />
               <button
@@ -512,7 +518,7 @@ export default function RealRadiosTab({ typeFilter }: RealRadiosTabProps) {
               type="text"
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
-              placeholder={typeFilter === 'spotify' ? 'Nome da Playlist do Spotify' : 'Nome da Playlist ou Vídeo do YouTube'}
+              placeholder={typeFilter === 'spotify' ? 'Nome da Playlist do Spotify' : typeFilter === 'youtube' ? 'Nome da Playlist ou Vídeo do YouTube' : 'Nome da Playlist ou Vídeo'}
               className="w-full bg-black/35 border border-white/5 text-white placeholder-white/30 rounded-lg py-1.5 px-2.5 text-xs focus:outline-none focus:border-emerald-500/40 transition-all font-sans"
             />
             
@@ -521,7 +527,7 @@ export default function RealRadiosTab({ typeFilter }: RealRadiosTabProps) {
                 type="text"
                 value={editUrl}
                 onChange={(e) => setEditUrl(e.target.value)}
-                placeholder={typeFilter === 'spotify' ? 'Link do Spotify' : 'Link do YouTube'}
+                placeholder={typeFilter === 'spotify' ? 'Link do Spotify' : typeFilter === 'youtube' ? 'Link do YouTube' : 'Link do Spotify ou YouTube'}
                 className="w-full bg-black/35 border border-white/5 text-white placeholder-white/30 rounded-lg py-1.5 px-2.5 pr-20 text-xs focus:outline-none focus:border-emerald-500/40 transition-all font-sans"
               />
               <button
@@ -633,13 +639,13 @@ export default function RealRadiosTab({ typeFilter }: RealRadiosTabProps) {
             )}
 
             {/* Playlist Corporativa Padrão (Hub SiYmples) */}
-            {typeFilter === 'spotify' && (
+            {empresaStation && (typeFilter === 'spotify' || !typeFilter) && (
               <div className="space-y-1.5">
                 <div className="text-[10px] font-bold text-emerald-400 tracking-wider px-1 flex items-center gap-1">
                   <Music className="w-3 h-3 animate-pulse" /> PLAYLIST DA EMPRESA
                 </div>
                 <div className="space-y-1.5">
-                  {DEFAULT_SPOTIFY_PLAYLISTS.map(renderStationItem)}
+                  {renderStationItem(empresaStation)}
                 </div>
               </div>
             )}
@@ -659,6 +665,44 @@ export default function RealRadiosTab({ typeFilter }: RealRadiosTabProps) {
           </>
         )}
       </div>
+
+      {/* Modal de Confirmação de Exclusão */}
+      {playlistToDelete && (
+        <div className="absolute inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-3 rounded-2xl animate-fade-in">
+          <div className="bg-zinc-950 border border-white/10 rounded-xl p-4 shadow-2xl max-w-[240px] w-full text-center space-y-3 transform transition-all duration-300 scale-95 hover:scale-100">
+            <div className="flex flex-col items-center gap-1.5">
+              <div className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/20 text-red-400">
+                <Trash2 className="w-4 h-4" />
+              </div>
+              <h3 className="text-[11px] font-bold text-white tracking-wide mt-1 font-sans">Excluir Playlist</h3>
+            </div>
+            
+            <p className="text-[10px] text-white/60 leading-normal font-sans px-1">
+              Tem certeza que deseja excluir a playlist <strong className="text-white">"{playlistToDelete.name}"</strong>?
+            </p>
+
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setPlaylistToDelete(null)}
+                className="flex-1 bg-white/5 hover:bg-white/10 border border-white/5 text-white/80 py-1.5 rounded-lg text-[9px] font-semibold transition-all active:scale-95 cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  removeCustomStation(playlistToDelete.id);
+                  setPlaylistToDelete(null);
+                }}
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white py-1.5 rounded-lg text-[9px] font-bold transition-all shadow-md shadow-red-500/10 active:scale-95 cursor-pointer"
+              >
+                Excluir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
