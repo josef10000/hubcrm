@@ -233,7 +233,7 @@ export function Connect4Board({ match, isLocal, aiDifficulty = 3, onExit }: Conn
               <button
                 key={col}
                 onClick={() => handleColumnClick(col)}
-                disabled={!isMyTurn || winnerInfo || isDraw || isColFull}
+                disabled={!isMyTurn || !!winnerInfo || isDraw || isColFull}
                 className={`w-8 h-8 rounded-full border border-white/5 flex items-center justify-center transition-all ${
                   isMyTurn && !winnerInfo && !isDraw && !isColFull
                   ? 'bg-white/5 hover:bg-primary-500/20 hover:border-primary-500/30 text-gray-500 hover:text-white cursor-pointer hover:-translate-y-1' 

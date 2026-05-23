@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useArenaStore, GameMatch } from '@store/useArenaStore';
-import { ChessBoardState, ChessMove, ChessPieceType, getChessValidMoves, applyChessMove, checkChessWinner, getBestChessMove } from '../helpers/chessLogic';
+import { ChessBoardState, ChessMove, ChessPieceType, ChessPiece, getChessValidMoves, applyChessMove, checkChessWinner, getBestChessMove } from '../helpers/chessLogic';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
@@ -23,7 +23,7 @@ export function ChessBoard({ match, isLocal, aiDifficulty = 3, onExit }: ChessBo
   const exitActiveMatch = useArenaStore(state => state.exitActiveMatch);
 
   // Estado inicial padrão do tabuleiro
-  const initialPieces = {
+  const initialPieces: Record<string, ChessPiece> = {
     // Peças brancas (Jogador 1) - Linhas 6 e 7
     '6,0': { player: 1, type: 'pawn' }, '6,1': { player: 1, type: 'pawn' }, '6,2': { player: 1, type: 'pawn' }, '6,3': { player: 1, type: 'pawn' },
     '6,4': { player: 1, type: 'pawn' }, '6,5': { player: 1, type: 'pawn' }, '6,6': { player: 1, type: 'pawn' }, '6,7': { player: 1, type: 'pawn' },
