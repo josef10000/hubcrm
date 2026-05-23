@@ -124,7 +124,6 @@ function Desk3D({ currentlyReading, onOpenBook, onOpenNotes, lampOn, setLampOn }
               color="white"
               maxWidth={0.6}
               textAlign="center"
-              font="https://fonts.gstatic.com/s/outfit/v11/Q3pwMX5abSIu8CHeMGBO.woff"
             >
               {book.title.length > 15 ? book.title.substring(0, 15) + '...' : book.title}
             </Text>
