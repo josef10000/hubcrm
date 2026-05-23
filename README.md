@@ -388,7 +388,7 @@ Para garantir latência zero em organizações com milhares de registros, implem
 - **API Consolidation:** O portal não lê mais diretamente do Firestore via `onSnapshot` público. Todas as informações (faturamento, chamados, marketplace) são servidas por uma API centralizada que sanitiza os dados antes de expô-los.
 - **Auto-Sync:** Ao converter um lead ou criar um cliente, o sistema gera automaticamente os tokens de segurança e sincroniza o primeiro link de pagamento do Asaas.
 
-### 📞 WebRTC P2P Real-time Calls (�### 🎵 Hub Focus Station v3.0 (Streaming Unificado: Spotify Embed, YouTube & Lofi Focus Beats) [UPDATED]
+### 📞 WebRTC P2P Real-time Calls (### 🎵 Hub Focus Station v3.0 (Streaming Unificado: Spotify Embed, YouTube & Lofi Focus Beats) [UPDATED]
 
 Integração global, reativa e persistente de áudio para produtividade e bem-estar operacional, com design deslumbrante em **Vidro Líquido (Liquid Glass)** e acoplamento de estados inteligentes:
 - **Design Liquid Glass Premium:** Uma interface visual deslumbrante revestida em um contêiner glassmorphic com desfoque profundo (`backdrop-blur-[24px]`), fundo translúcido suave (`bg-slate-950/40`), bordas reflexivas finas (`border-white/10`) e sombras flutuantes 3D.
@@ -452,6 +452,27 @@ sequenceDiagram
 | **`Double Click` (Duplo Clique)** | Abre o campo de edição inline instantâneo para alterar o objetivo | Título de card no Kanban de PDI |
 | **`/checklist`** | Insere o atalho para criação de bloco de tarefas colaborativas | Campo de texto do Chat |
 | **`Enter`** | Confirma e salva a edição de texto inline do card no Firestore | Modo de Edição Inline no PDI |
+
+---
+
+## 🎮 Hub Arena - Gamificação & Entretenimento em Tempo Real
+
+A **Hub Arena** é o centro de entretenimento e integração social integrada diretamente na interface principal do Hub Central. Projetada para aproximar os colaboradores através de uma experiência gamificada de alto padrão, ela permite partidas em tempo real contra colegas ou contra a inteligência artificial.
+
+### 🏆 Jogos Disponíveis & Regras Avançadas
+
+| Jogo | Tipo | Tecnologias & Regras Aplicadas | Destaques Visuais & Efeitos |
+| :--- | :--- | :--- | :--- |
+| **Chess (Xadrez)** | Multiplayer / CPU | • Mecanismo de regras puras com validação de xeque/mate.<br>• **Movimento de Roque (Castling)** disponível sob regras clássicas da FIDE.<br>• Relógio de tempo profissional duplo integrado (10 min). | Peças em relevo, turnos marcados por efeitos de cor e luz neon e som procedural de movimento de peça. |
+| **Checkers (Damas)** | Multiplayer / CPU | • **Regras Oficiais Brasileiras**: tabuleiro 8x8 e a dinâmica da **Dama Voadora (Long-Range Flying King)**.<br>• Captura obrigatória de peças com prioridade de maior quantidade de capturas. | Destaque neon das rotas e caminhos válidos, transição suave de promoção de peça e vibração visual. |
+| **Ludo 4-Player** | Multiplayer / 3 CPUs | • Suporta 4 jogadores simultâneos no mesmo tabuleiro ou contra 3 CPUs inteligentes independentes.<br>• Mecânica orbital de rota de células com regras completas (barreira, zona segura e captura). | Dado com animação de rotação 3D acelerada por hardware, layout glassmorphic vibrante com destaque orbital das peças. |
+| **Connect 4** | Multiplayer / CPU | • IA baseada no algoritmo **Minimax** com profundidade configurável.<br>• Tabuleiro de grade clássico de gravidade de fichas. | Efeito físico realístico de quique da peça caindo na grade (CSS transitions rápidas) e feedback sonoro premium. |
+
+### ⚡ Características Técnicas & Matchmaking
+1. **Matchmaking via Firestore**: Convites dinâmicos gerados em tempo real através da coleção `invites` com sincronização instantânea.
+2. **Dynamic Island de Convite**: Pop-up global no topo da tela (`MatchInviteListener`) com aceitação instantânea de partidas online e redirecionamento automático.
+3. **Leaderboard Real (Hall da Fama)**: Exibição dinâmica contendo exclusivamente vitórias reais da coleção `matches` do Firestore (`winnerId == user.uid && status == 'finished'`).
+4. **Modo CPU Autônomo com Recomeço**: IA local avançada em cada jogo e botão inteligente `🔄 Recomeçar Partida` sob demanda para partidas singleplayer.
 
 ---
 

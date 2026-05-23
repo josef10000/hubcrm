@@ -16,12 +16,17 @@ env:
   # Garante compatibilidade com versões recentes do Node
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
+permissions:
+  contents: read
+
 jobs:
   deploy_rules:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout do Código
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy Firestore Rules
         uses: w9jds/firebase-action@master

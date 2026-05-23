@@ -23,11 +23,16 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
+permissions:
+  contents: read
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Instalar Node.js
         uses: actions/setup-node@v4
