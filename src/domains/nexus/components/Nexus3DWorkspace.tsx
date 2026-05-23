@@ -133,8 +133,6 @@ function DeskMonitors3D() {
         fontSize={0.09}
         color="#3b82f6"
         fontWeight="bold"
-        emissive="#3b82f6"
-        emissiveIntensity={0.8}
       >
         HUB CENTRAL
       </Text>
@@ -157,7 +155,7 @@ function OfficePlant3D() {
       {/* Vaso de Cerâmica Branca */}
       <mesh castShadow>
         <cylinderGeometry args={[0.3, 0.22, 0.76, 32]} />
-        <meshStandardMaterial color="#f8fafc" roughness={0.1} clearcoat={1.0} />
+        <meshPhysicalMaterial color="#f8fafc" roughness={0.1} clearcoat={1.0} />
       </mesh>
       
       {/* Terra Escura */}
