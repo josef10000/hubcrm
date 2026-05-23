@@ -207,7 +207,7 @@ function Desk3D({ currentlyReading, onOpenBook, onOpenNotes, lampOn, setLampOn }
         {/* Caneca */}
         <mesh castShadow>
           <cylinderGeometry args={[0.1, 0.1, 0.18]} />
-          <meshStandardMaterial color="#0f172a" roughness={0.2} clearcoat={1.0} />
+          <meshPhysicalMaterial color="#0f172a" roughness={0.2} clearcoat={1.0} />
         </mesh>
         {/* Asa da Caneca */}
         <mesh position={[-0.1, 0, 0]} rotation={[0, 0, Math.PI/2]}>
