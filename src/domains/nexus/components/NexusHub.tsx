@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNexusStore, NoteFolder, NexusNote, PersonalGoal, NexusTask, PersonalLink } from '@store/useNexusStore';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { NexusBrainGraph } from './NexusBrainGraph';
 
 interface NexusHubProps {
   confirm: (options: any) => Promise<boolean>;
@@ -31,7 +30,7 @@ export const NexusHub: React.FC<NexusHubProps> = ({ confirm, setModalConfig }) =
   const setVaultLinks = useNexusStore(state => state.setLinks);
 
   // UI State (Inicia OBRIGATORIAMENTE em 'dashboard' 2D clássico para evitar travamentos)
-  const [viewMode, setViewMode] = useState<'explorer' | 'dashboard' | 'brain'>('dashboard');
+  const [viewMode, setViewMode] = useState<'explorer' | 'dashboard'>('dashboard');
   const [activeEntity, setActiveEntity] = useState<{ id: string, type: 'note' | 'goal' | 'task' | 'vault' } | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
@@ -284,7 +283,6 @@ export const NexusHub: React.FC<NexusHubProps> = ({ confirm, setModalConfig }) =
           </div>
           <div className="flex gap-1">
              <button onClick={() => setViewMode('dashboard')} className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${viewMode === 'dashboard' ? 'bg-primary-500 text-white' : 'bg-white/5 text-gray-500 hover:text-white'}`} title="Dashboard"><i className="ph ph-squares-four" /></button>
-             <button onClick={() => setViewMode('brain')} className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${viewMode === 'brain' ? 'bg-primary-500 text-white' : 'bg-white/5 text-gray-500 hover:text-white hover:bg-primary-500/10 hover:text-primary-400'}`} title="Cérebro (Constelação de Conhecimento)"><i className="ph-bold ph-brain text-base" /></button>
           </div>
         </div>
 
@@ -506,17 +504,6 @@ export const NexusHub: React.FC<NexusHubProps> = ({ confirm, setModalConfig }) =
                   </div>
                 </div>
               </div>
-            </motion.div>
-          ) : viewMode === 'brain' ? (
-            <motion.div 
-              key="brain" 
-              initial={{ opacity: 0, scale: 0.95 }} 
-              animate={{ opacity: 1, scale: 1 }} 
-              exit={{ opacity: 0, scale: 0.95 }} 
-              transition={{ duration: 0.35, ease: 'easeOut' }}
-              className="w-full h-full"
-            >
-              <NexusBrainGraph />
             </motion.div>
           ) : (
             <motion.div key="explorer" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="w-full h-full">

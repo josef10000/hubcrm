@@ -28,6 +28,7 @@ import { ReadingCompanion } from '@nexus/components/ReadingCompanion';
 // Interfaces importadas da Store
 import { useNexusStore } from '@store/useNexusStore';
 import type { PersonalLink, LinkFolder, PersonalGoal, NexusTask, NexusNote, NexusBook, BookCategory } from '@store/useNexusStore';
+import { PHILOSOPHICAL_QUOTES } from '../constants/philosophicalQuotes';
 
 // Helper para ícones de sites comuns
 const getUrlIcon = (url: string) => {
@@ -289,24 +290,13 @@ export default function MyWorkspaceView() {
     }
   }, [activeTab, librarySubTab, userProfile?.orgId]);
 
-  const MOTIVATIONAL_QUOTES = [
-    { content: "O sucesso não é o final, o fracasso não é fatal: é a coragem de continuar que conta.", author: "Winston Churchill" },
-    { content: "Acredite que você pode e você estará no meio do caminho.", author: "Theodore Roosevelt" },
-    { content: "Trabalhe duro em silêncio, deixe seu sucesso ser seu barulho.", author: "Frank Ocean" },
-    { content: "Sonhe alto. Comece pequeno. Mas, acima de tudo, comece.", author: "Simon Sinek" },
-    { content: "Não espere por oportunidades. Crie-as.", author: "Autor Desconhecido" },
-    { content: "Sua única competição é quem você era ontem.", author: "Autor Desconhecido" },
-    { content: "O melhor momento para plantar uma árvore foi há 20 anos. O segundo melhor é agora.", author: "Provérbio Chinês" },
-    { content: "O que você faz hoje pode melhorar todos os seus amanhãs.", author: "Ralph Marston" }
-  ];
-
   useEffect(() => {
     if (!user) return;
     const today = new Date().toISOString().split('T')[0];
     const seed = today.replace(/-/g, '') + user.uid.substring(0, 4);
     const hash = Array.from(seed).reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const index = hash % MOTIVATIONAL_QUOTES.length;
-    setDailyQuote(MOTIVATIONAL_QUOTES[index]);
+    const index = hash % PHILOSOPHICAL_QUOTES.length;
+    setDailyQuote(PHILOSOPHICAL_QUOTES[index]);
   }, [user]);
 
 
