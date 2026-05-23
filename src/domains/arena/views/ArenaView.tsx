@@ -5,6 +5,9 @@ import { useArenaStore, GameType } from '@store/useArenaStore';
 import { Connect4Board } from '../components/Connect4Board';
 import { CheckersBoard } from '../components/CheckersBoard';
 import { ChessBoard } from '../components/ChessBoard';
+import { LudoBoard } from '../components/LudoBoard';
+import { db } from '@/lib/firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -27,6 +30,22 @@ export default function ArenaView() {
   const [gameMode, setGameMode] = useState<'single' | 'multi'>('single');
   const [aiDifficulty, setAiDifficulty] = useState<number>(3); // 2 = Fácil, 3 = Médio, 4 = Difícil
   const [localActiveSingleMatch, setLocalActiveSingleMatch] = useState<{ active: boolean; gameType: GameType } | null>(null);
+  const [realWins, setRealWins] = useState<number>(0);
+
+  // Escuta vitórias reais do usuário logado na Arena
+  useEffect(() => {
+    if (user?.uid) {
+      const q = query(
+        collection(db, 'matches'),
+        where('winnerId', '==', user.uid),
+        where('status', '==', 'finished')
+      );
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        setRealWins(snapshot.size);
+      });
+      return () => unsubscribe();
+    }
+  }, [user?.uid]);
 
   // Escuta os convites recebidos na montagem da tela
   useEffect(() => {
@@ -90,6 +109,9 @@ export default function ArenaView() {
         {activeMatch.gameType === 'chess' && (
           <ChessBoard match={activeMatch} isLocal={false} />
         )}
+        {activeMatch.gameType === 'ludo' && (
+          <LudoBoard match={activeMatch} isLocal={false} />
+        )}
       </div>
     );
   }
@@ -121,6 +143,9 @@ export default function ArenaView() {
         )}
         {localActiveSingleMatch.gameType === 'chess' && (
           <ChessBoard match={mockMatch} isLocal={true} aiDifficulty={aiDifficulty} onExit={handleExitLocalGame} />
+        )}
+        {localActiveSingleMatch.gameType === 'ludo' && (
+          <LudoBoard match={mockMatch} isLocal={true} aiDifficulty={aiDifficulty} onExit={handleExitLocalGame} />
         )}
       </div>
     );
@@ -178,53 +203,69 @@ export default function ArenaView() {
           </div>
 
           {/* Cards de Seleção de Jogos */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mt-4">
             
             {/* Connect 4 Card */}
             <button 
               onClick={() => setSelectedGame('connect4')}
-              className={`p-6 border rounded-[2rem] text-left transition-all relative overflow-hidden group flex flex-col justify-between h-44 ${
+              className={`p-5 border rounded-[2rem] text-left transition-all relative overflow-hidden group flex flex-col justify-between h-44 ${
                 selectedGame === 'connect4' 
                 ? 'bg-blue-500/10 border-blue-500/40 shadow-[0_0_30px_rgba(59,130,246,0.15)]' 
                 : 'bg-slate-950/40 hover:bg-slate-950/70 border-white/5 hover:border-white/10'
               }`}
             >
-              <div className="text-3xl">🔴</div>
+              <div className="text-2xl">🔴</div>
               <div className="space-y-1">
-                <h4 className="text-sm font-black text-white uppercase tracking-wider">Connect 4</h4>
-                <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest leading-relaxed">Conecte 4 fichas neon em linha. Rápido e estratégico.</p>
+                <h4 className="text-xs font-black text-white uppercase tracking-wider">Connect 4</h4>
+                <p className="text-[8px] text-gray-500 font-bold uppercase tracking-widest leading-relaxed">Conecte 4 fichas neon em linha. Rápido e estratégico.</p>
               </div>
             </button>
 
             {/* Damas Card */}
             <button 
               onClick={() => setSelectedGame('checkers')}
-              className={`p-6 border rounded-[2rem] text-left transition-all relative overflow-hidden group flex flex-col justify-between h-44 ${
+              className={`p-5 border rounded-[2rem] text-left transition-all relative overflow-hidden group flex flex-col justify-between h-44 ${
                 selectedGame === 'checkers' 
                 ? 'bg-amber-500/10 border-amber-500/40 shadow-[0_0_30px_rgba(245,158,11,0.15)]' 
                 : 'bg-slate-950/40 hover:bg-slate-950/70 border-white/5 hover:border-white/10'
               }`}
             >
-              <div className="text-3xl">🏆</div>
+              <div className="text-2xl">🏆</div>
               <div className="space-y-1">
-                <h4 className="text-sm font-black text-white uppercase tracking-wider">Damas</h4>
-                <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest leading-relaxed">Salte, coma as peças do adversário e domine o tabuleiro.</p>
+                <h4 className="text-xs font-black text-white uppercase tracking-wider">Damas</h4>
+                <p className="text-[8px] text-gray-500 font-bold uppercase tracking-widest leading-relaxed">Salte, coma as peças do adversário e domine o tabuleiro.</p>
               </div>
             </button>
 
             {/* Xadrez Card */}
             <button 
               onClick={() => setSelectedGame('chess')}
-              className={`p-6 border rounded-[2rem] text-left transition-all relative overflow-hidden group flex flex-col justify-between h-44 ${
+              className={`p-5 border rounded-[2rem] text-left transition-all relative overflow-hidden group flex flex-col justify-between h-44 ${
                 selectedGame === 'chess' 
                 ? 'bg-purple-500/10 border-purple-500/40 shadow-[0_0_30px_rgba(168,85,247,0.15)]' 
                 : 'bg-slate-950/40 hover:bg-slate-950/70 border-white/5 hover:border-white/10'
               }`}
             >
-              <div className="text-3xl">👑</div>
+              <div className="text-2xl">👑</div>
               <div className="space-y-1">
-                <h4 className="text-sm font-black text-white uppercase tracking-wider">Xadrez</h4>
-                <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest leading-relaxed">Xeque-mate com peças metálicas e tabuleiro luxuoso.</p>
+                <h4 className="text-xs font-black text-white uppercase tracking-wider">Xadrez</h4>
+                <p className="text-[8px] text-gray-500 font-bold uppercase tracking-widest leading-relaxed">Xeque-mate com peças metálicas e tabuleiro luxuoso.</p>
+              </div>
+            </button>
+
+            {/* Ludo Card */}
+            <button 
+              onClick={() => setSelectedGame('ludo')}
+              className={`p-5 border rounded-[2rem] text-left transition-all relative overflow-hidden group flex flex-col justify-between h-44 ${
+                selectedGame === 'ludo' 
+                ? 'bg-indigo-500/10 border-indigo-500/40 shadow-[0_0_30px_rgba(99,102,241,0.15)]' 
+                : 'bg-slate-950/40 hover:bg-slate-950/70 border-white/5 hover:border-white/10'
+              }`}
+            >
+              <div className="text-2xl">🎲</div>
+              <div className="space-y-1">
+                <h4 className="text-xs font-black text-white uppercase tracking-wider">Ludo</h4>
+                <p className="text-[8px] text-gray-500 font-bold uppercase tracking-widest leading-relaxed">Role dados, tire peças da base e capture o oponente.</p>
               </div>
             </button>
 
@@ -362,20 +403,17 @@ export default function ArenaView() {
                 <span>Vitórias</span>
               </div>
               
-              <div className="flex items-center justify-between p-2 rounded-xl bg-amber-500/5 border border-amber-500/10 text-amber-500">
-                <span className="text-[10px] font-black uppercase tracking-wider flex items-center gap-2">🥇 1º José Frazão</span>
-                <span className="text-xs font-black">28</span>
-              </div>
-
-              <div className="flex items-center justify-between p-2 rounded-xl bg-slate-500/5 border border-slate-500/10 text-slate-400">
-                <span className="text-[10px] font-black uppercase tracking-wider flex items-center gap-2">🥈 2º Ana Paula</span>
-                <span className="text-xs font-black">19</span>
-              </div>
-
-              <div className="flex items-center justify-between p-2 rounded-xl bg-amber-700/5 border border-amber-700/10 text-amber-600">
-                <span className="text-[10px] font-black uppercase tracking-wider flex items-center gap-2">🥉 3º Rodrigo S.</span>
-                <span className="text-xs font-black">12</span>
-              </div>
+              {realWins > 0 ? (
+                <div className="flex items-center justify-between p-2 rounded-xl bg-amber-500/5 border border-amber-500/10 text-amber-500 animate-pulse">
+                  <span className="text-[10px] font-black uppercase tracking-wider flex items-center gap-2">🥇 1º {user?.displayName || 'Você'}</span>
+                  <span className="text-xs font-black">{realWins}</span>
+                </div>
+              ) : (
+                <div className="py-6 text-center opacity-35 space-y-1">
+                  <i className="ph ph-shield-star text-xl text-primary-500" />
+                  <p className="text-[8px] font-bold uppercase tracking-widest">Nenhuma vitória real online no momento.</p>
+                </div>
+              )}
             </div>
           </div>
 

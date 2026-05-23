@@ -20,14 +20,16 @@ export function CheckersBoard({ match, isLocal, aiDifficulty = 3, onExit }: Chec
   // Estados locais para modo offline (singleplayer)
   const [localGrid, setLocalGrid] = useState<CheckersGrid>(() => {
     const grid = Array(8).fill(null).map(() => Array(8).fill(null));
+    // Jogador 2 (Pretas/Metálicas) começa no topo (linhas 0..2)
     for (let r = 0; r < 3; r++) {
       for (let c = 0; c < 8; c++) {
-        if ((r + c) % 2 === 1) grid[r][c] = { player: 1, type: 'normal' };
+        if ((r + c) % 2 === 1) grid[r][c] = { player: 2, type: 'normal' };
       }
     }
+    // Jogador 1 (Vermelhas/Você) começa na base (linhas 5..7)
     for (let r = 5; r < 8; r++) {
       for (let c = 0; c < 8; c++) {
-        if ((r + c) % 2 === 1) grid[r][c] = { player: 2, type: 'normal' };
+        if ((r + c) % 2 === 1) grid[r][c] = { player: 1, type: 'normal' };
       }
     }
     return grid;
@@ -188,6 +190,26 @@ export function CheckersBoard({ match, isLocal, aiDifficulty = 3, onExit }: Chec
     }
   };
 
+  const handleRestartLocalGame = () => {
+    const grid = Array(8).fill(null).map(() => Array(8).fill(null));
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 8; c++) {
+        if ((r + c) % 2 === 1) grid[r][c] = { player: 2, type: 'normal' };
+      }
+    }
+    for (let r = 5; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        if ((r + c) % 2 === 1) grid[r][c] = { player: 1, type: 'normal' };
+      }
+    }
+    setLocalGrid(grid);
+    setLocalTurn(user?.uid || 'player1');
+    setSelectedPiece(null);
+    setWinnerPlayer(null);
+    setIsAiThinking(false);
+    toast.success('Partida de Damas reiniciada!');
+  };
+
   const getOpponentName = () => {
     if (isLocal) return 'Computador';
     return match.player1Id === user?.uid ? match.player2Name : match.player1Name;
@@ -239,6 +261,15 @@ export function CheckersBoard({ match, isLocal, aiDifficulty = 3, onExit }: Chec
               {winnerPlayer === 1 ? 'VERMELHAS VENCERAM!' : 'METÁLICAS VENCERAM!'}
             </p>
           </div>
+        )}
+
+        {isLocal && (
+          <button 
+            onClick={handleRestartLocalGame}
+            className="py-3.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/30 text-[9px] font-black text-emerald-400 uppercase tracking-widest rounded-xl transition-all cursor-pointer text-center"
+          >
+            🔄 Recomeçar Partida
+          </button>
         )}
 
         <button 

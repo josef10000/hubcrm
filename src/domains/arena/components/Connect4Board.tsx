@@ -161,6 +161,15 @@ export function Connect4Board({ match, isLocal, aiDifficulty = 3, onExit }: Conn
     }
   };
 
+  const handleRestartLocalGame = () => {
+    setLocalGrid(Array(6).fill(null).map(() => Array(7).fill(null)));
+    setLocalTurn(user?.uid || 'player1');
+    setWinnerInfo(null);
+    setIsDraw(false);
+    setIsAiThinking(false);
+    toast.success('Partida reiniciada!');
+  };
+
   const getOpponentName = () => {
     if (isLocal) return 'Computador';
     return match.player1Id === user?.uid ? match.player2Name : match.player1Name;
@@ -212,6 +221,15 @@ export function Connect4Board({ match, isLocal, aiDifficulty = 3, onExit }: Conn
               {isDraw ? 'EMPATE!' : winnerInfo?.winner === 1 ? 'JOGADOR 1 VENCEU!' : 'JOGADOR 2 VENCEU!'}
             </p>
           </div>
+        )}
+
+        {isLocal && (
+          <button 
+            onClick={handleRestartLocalGame}
+            className="py-3.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/30 text-[9px] font-black text-emerald-400 uppercase tracking-widest rounded-xl transition-all cursor-pointer text-center"
+          >
+            🔄 Recomeçar Partida
+          </button>
         )}
 
         <button 

@@ -217,6 +217,30 @@ export function ChessBoard({ match, isLocal, aiDifficulty = 3, onExit }: ChessBo
     }
   };
 
+  const handleRestartLocalGame = () => {
+    const defaultPieces = {
+      // Peças brancas (Jogador 1) - Linhas 6 e 7
+      '6,0': { player: 1, type: 'pawn' as const }, '6,1': { player: 1, type: 'pawn' as const }, '6,2': { player: 1, type: 'pawn' as const }, '6,3': { player: 1, type: 'pawn' as const },
+      '6,4': { player: 1, type: 'pawn' as const }, '6,5': { player: 1, type: 'pawn' as const }, '6,6': { player: 1, type: 'pawn' as const }, '6,7': { player: 1, type: 'pawn' as const },
+      '7,0': { player: 1, type: 'rook' as const }, '7,1': { player: 1, type: 'knight' as const }, '7,2': { player: 1, type: 'bishop' as const }, '7,3': { player: 1, type: 'queen' as const },
+      '7,4': { player: 1, type: 'king' as const }, '7,5': { player: 1, type: 'bishop' as const }, '7,6': { player: 1, type: 'knight' as const }, '7,7': { player: 1, type: 'rook' as const },
+      
+      // Peças pretas (Jogador 2) - Linhas 0 e 1
+      '0,0': { player: 2, type: 'rook' as const }, '0,1': { player: 2, type: 'knight' as const }, '0,2': { player: 2, type: 'bishop' as const }, '0,3': { player: 2, type: 'queen' as const },
+      '0,4': { player: 2, type: 'king' as const }, '0,5': { player: 2, type: 'bishop' as const }, '0,6': { player: 2, type: 'knight' as const }, '0,7': { player: 2, type: 'rook' as const },
+      '1,0': { player: 2, type: 'pawn' as const }, '1,1': { player: 2, type: 'pawn' as const }, '1,2': { player: 2, type: 'pawn' as const }, '1,3': { player: 2, type: 'pawn' as const },
+      '1,4': { player: 2, type: 'pawn' as const }, '1,5': { player: 2, type: 'pawn' as const }, '1,6': { player: 2, type: 'pawn' as const }, '1,7': { player: 2, type: 'pawn' as const }
+    };
+    setLocalBoard({ pieces: defaultPieces });
+    setLocalTurn(user?.uid || 'player1');
+    setSelectedCell(null);
+    setWinnerPlayer(null);
+    setIsAiThinking(false);
+    setP1Clock(600);
+    setP2Clock(600);
+    toast.success('Partida de Xadrez reiniciada!');
+  };
+
   const formatClock = (seconds: number) => {
     const min = Math.floor(seconds / 60);
     const sec = seconds % 60;
@@ -276,6 +300,15 @@ export function ChessBoard({ match, isLocal, aiDifficulty = 3, onExit }: ChessBo
               {winnerPlayer === 1 ? 'BRANCAS VENCERAM!' : 'PRETAS VENCERAM!'}
             </p>
           </div>
+        )}
+
+        {isLocal && (
+          <button 
+            onClick={handleRestartLocalGame}
+            className="py-3.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/30 text-[9px] font-black text-emerald-400 uppercase tracking-widest rounded-xl transition-all cursor-pointer text-center"
+          >
+            🔄 Recomeçar Partida
+          </button>
         )}
 
         <button 

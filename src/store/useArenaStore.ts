@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { db } from '@/lib/firebase';
 import { doc, onSnapshot, updateDoc, setDoc, collection, query, where, getDocs, deleteDoc, arrayUnion } from 'firebase/firestore';
 
-export type GameType = 'chess' | 'checkers' | 'connect4';
+export type GameType = 'chess' | 'checkers' | 'connect4' | 'ludo';
 export type MatchStatus = 'waiting' | 'playing' | 'declined' | 'finished';
 
 export interface GameMatch {
@@ -134,6 +134,19 @@ export const useArenaStore = create<ArenaState>((set, get) => {
             },
             castling: { p1: { kingSide: true, queenSide: true }, p2: { kingSide: true, queenSide: true } },
             halfMoves: 0
+          };
+        } else if (match.gameType === 'ludo') {
+          const tokens = [];
+          for (let i = 0; i < 4; i++) {
+            tokens.push({ id: i, color: 'red', position: -1 });
+            tokens.push({ id: i, color: 'green', position: -1 });
+          }
+          boardState = {
+            tokens,
+            diceValue: null,
+            hasRolled: false,
+            consecutiveSixes: 0,
+            winnerColor: null
           };
         }
 
