@@ -506,6 +506,7 @@ export const NexusHub: React.FC<NexusHubProps> = ({ confirm, setModalConfig }) =
                   </div>
                 </div>
               </div>
+            </motion.div>
           ) : viewMode === 'immersive3d' ? (
             <motion.div 
               key="immersive3d" 
