@@ -221,34 +221,39 @@ export const useArenaStore = create<ArenaState>((set, get) => {
     listenToMatch: (matchId) => {
       if (matchUnsubscribe) matchUnsubscribe();
 
-      matchUnsubscribe = onSnapshot(doc(db, 'matches', matchId), (snapshot) => {
-        if (snapshot.exists()) {
-          const matchData = snapshot.data() as GameMatch;
-          
-          // Se foi recusado, limpa
-          if (matchData.status === 'declined') {
-            set({ activeMatch: null, sentInvite: null, receivedInvite: null });
-            if (matchUnsubscribe) {
-              matchUnsubscribe();
-              matchUnsubscribe = null;
+      matchUnsubscribe = onSnapshot(doc(db, 'matches', matchId), 
+        (snapshot) => {
+          if (snapshot.exists()) {
+            const matchData = snapshot.data() as GameMatch;
+            
+            // Se foi recusado, limpa
+            if (matchData.status === 'declined') {
+              set({ activeMatch: null, sentInvite: null, receivedInvite: null });
+              if (matchUnsubscribe) {
+                matchUnsubscribe();
+                matchUnsubscribe = null;
+              }
+              return;
             }
-            return;
-          }
 
-          // Se iniciou, vira a partida ativa
-          if (matchData.status === 'playing') {
-            set({ activeMatch: matchData, sentInvite: null });
-          } else if (matchData.status === 'finished') {
-            set({ activeMatch: matchData });
+            // Se iniciou, vira a partida ativa
+            if (matchData.status === 'playing') {
+              set({ activeMatch: matchData, sentInvite: null });
+            } else if (matchData.status === 'finished') {
+              set({ activeMatch: matchData });
+            } else {
+              // Caso em espera
+              set({ sentInvite: matchData });
+            }
           } else {
-            // Caso em espera
-            set({ sentInvite: matchData });
+            // Deletado
+            set({ activeMatch: null, sentInvite: null });
           }
-        } else {
-          // Deletado
-          set({ activeMatch: null, sentInvite: null });
+        },
+        (error) => {
+          console.warn('Firestore: escuta de partida desativada por seguranca:', error.message);
         }
-      });
+      );
 
       return () => {
         if (matchUnsubscribe) {
@@ -268,19 +273,24 @@ export const useArenaStore = create<ArenaState>((set, get) => {
         where('status', '==', 'waiting')
       );
 
-      invitesUnsubscribe = onSnapshot(q, (snapshot) => {
-        if (!snapshot.empty) {
-          // Pega o convite mais recente
-          const docData = snapshot.docs[0].data() as GameMatch;
-          
-          // Só define se não for o próprio jogador enviando para si e se o convite é recente (limite de 1 min)
-          if (docData.player1Id !== uid && (Date.now() - docData.createdAt) < 60000) {
-            set({ receivedInvite: docData });
+      invitesUnsubscribe = onSnapshot(q, 
+        (snapshot) => {
+          if (!snapshot.empty) {
+            // Pega o convite mais recente
+            const docData = snapshot.docs[0].data() as GameMatch;
+            
+            // Só define se não for o próprio jogador enviando para si e se o convite é recente (limite de 1 min)
+            if (docData.player1Id !== uid && (Date.now() - docData.createdAt) < 60000) {
+              set({ receivedInvite: docData });
+            }
+          } else {
+            set({ receivedInvite: null });
           }
-        } else {
-          set({ receivedInvite: null });
+        },
+        (error) => {
+          console.warn('Firestore: escuta de convites desativada por seguranca:', error.message);
         }
-      });
+      );
 
       return () => {
         if (invitesUnsubscribe) {

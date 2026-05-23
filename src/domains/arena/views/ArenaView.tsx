@@ -40,9 +40,15 @@ export default function ArenaView() {
         where('winnerId', '==', user.uid),
         where('status', '==', 'finished')
       );
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        setRealWins(snapshot.size);
-      });
+      const unsubscribe = onSnapshot(q, 
+        (snapshot) => {
+          setRealWins(snapshot.size);
+        },
+        (error) => {
+          console.warn('Firestore: ranking de vitórias desativado por regras de segurança:', error.message);
+          setRealWins(0);
+        }
+      );
       return () => unsubscribe();
     }
   }, [user?.uid]);

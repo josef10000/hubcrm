@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useArenaStore, GameMatch } from '@store/useArenaStore';
-import { LudoBoardState, LudoToken, LudoColor, createInitialLudoState, getLudoValidMoves, applyLudoMove, getBestLudoMove, getLudoCoords } from '../helpers/ludoLogic';
+import { LudoBoardState, LudoToken, LudoColor, createInitialLudoState, getLudoValidMoves, applyLudoMove, getBestLudoMove, getLudoCoords, canLudoTokenMove } from '../helpers/ludoLogic';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 
