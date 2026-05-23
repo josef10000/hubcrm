@@ -11,6 +11,7 @@ export const navGroups = [
     icon: Rocket, // Usando Rocket como placeholder elegante
     items: [
       { icon: LayoutTemplate, label: 'Meu Workspace', path: '/workspace' },
+      { icon: Zap, label: 'Hub Arena', path: '/arena' },
     ]
   },
   {

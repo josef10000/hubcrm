@@ -5,6 +5,7 @@ import BirthdayCelebration from '@shared/components/BirthdayCelebration';
 import { usePresence } from '@/hooks/usePresence';
 import GlobalCallListener from '@/domains/chat/components/webrtc/GlobalCallListener';
 import { CallOverlay } from '@/domains/chat/components/webrtc/CallOverlay';
+import { MatchInviteListener } from '@/domains/arena/components/MatchInviteListener';
 
 interface WorkspaceShellProps {
   children: React.ReactNode;
@@ -46,6 +47,9 @@ export function WorkspaceShell({ children, isBirthday }: WorkspaceShellProps) {
       {/* WebRTC Call Handling Infrastructure */}
       <GlobalCallListener />
       <CallOverlay />
+
+      {/* Hub Arena Match Invitation Listener */}
+      <MatchInviteListener />
     </div>
   );
 }
