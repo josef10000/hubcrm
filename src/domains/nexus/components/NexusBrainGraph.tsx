@@ -112,12 +112,16 @@ export function NexusBrainGraph() {
           details: note
         });
 
-        // Conexão Nota ➔ Livro
-        if (note.bookId && filter.books) {
-          createdLinks.push({
-            source: id,
-            target: `book-${note.bookId}`,
-            type: 'note-book'
+        // Conexão Nota ➔ Livro (mapeada a partir da propriedade do livro linkedNoteId)
+        if (filter.books) {
+          books.forEach(book => {
+            if (book.linkedNoteId === note.id) {
+              createdLinks.push({
+                source: id,
+                target: `book-${book.id}`,
+                type: 'note-book'
+              });
+            }
           });
         }
 
@@ -147,7 +151,7 @@ export function NexusBrainGraph() {
         const pos = getInitialPos(id, idx, goals.length || 1);
         nodes.push({
           id,
-          label: goal.title,
+          label: goal.label,
           type: 'goal',
           ...pos,
           radius: 28,
@@ -159,8 +163,8 @@ export function NexusBrainGraph() {
         // Conexão de Metas com Livros/Notas com base em tags ou títulos citados
         if (filter.books) {
           books.forEach(book => {
-            if (goal.title.toLowerCase().includes(book.title.toLowerCase()) || 
-                (book.category && goal.title.toLowerCase().includes(book.category.toLowerCase()))) {
+            if (goal.label.toLowerCase().includes(book.title.toLowerCase()) || 
+                (book.category && goal.label.toLowerCase().includes(book.category.toLowerCase()))) {
               createdLinks.push({
                 source: `book-${book.id}`,
                 target: id,
@@ -689,13 +693,13 @@ export function NexusBrainGraph() {
 
             {selectedNode.type === 'goal' && (
               <div className="flex flex-col gap-3">
-                <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Detalhes do Objetivo</span>
+                <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Progresso da Meta</span>
                 <p className="text-[10px] font-semibold text-gray-300 leading-relaxed uppercase">
-                  {selectedNode.details.description || 'ESTA META NÃO POSSUI DESCRIÇÃO ADICIONAL.'}
+                  ESTA META POSSUI O ALVO DE ATINGIR {selectedNode.details.target} {selectedNode.details.unit.toUpperCase()} E O PROGRESSO ATUAL É DE {selectedNode.details.current} {selectedNode.details.unit.toUpperCase()}.
                 </p>
                 <div className="flex justify-between text-[8px] font-bold text-gray-500 uppercase pt-2 border-t border-white/5">
-                  <span>Coluna</span>
-                  <span className="text-amber-500">{selectedNode.details.status || 'PDI'}</span>
+                  <span>Alvo do PDI</span>
+                  <span className="text-amber-500">{Math.round((selectedNode.details.current / selectedNode.details.target) * 100)}% CONCLUÍDO</span>
                 </div>
               </div>
             )}
