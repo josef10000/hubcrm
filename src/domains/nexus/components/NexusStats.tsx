@@ -61,6 +61,8 @@ export const NexusStats: React.FC = () => {
     if (bookAnimationMode === 'new') {
       setBookAnimationMode('fixed_3d');
     } else if (bookAnimationMode === 'fixed_3d') {
+      setBookAnimationMode('parallax_2.5d');
+    } else if (bookAnimationMode === 'parallax_2.5d') {
       setBookAnimationMode('zoom');
     } else if (bookAnimationMode === 'zoom') {
       setBookAnimationMode('none');
@@ -73,6 +75,7 @@ export const NexusStats: React.FC = () => {
     switch (mode) {
       case 'new': return '3D Interativo (Mouse)';
       case 'fixed_3d': return '3D Fixo (Um Lado)';
+      case 'parallax_2.5d': return '2.5D Clássico (Glass Parallax)';
       case 'zoom': return 'Zoom Clássico (Plano)';
       case 'none': return 'Sem Animação (Estático)';
       default: return '3D Interativo (Mouse)';
@@ -83,6 +86,7 @@ export const NexusStats: React.FC = () => {
     switch (mode) {
       case 'new': return 'ph-cube-transparent text-primary-400';
       case 'fixed_3d': return 'ph-cube text-emerald-400';
+      case 'parallax_2.5d': return 'ph-sparkles text-amber-400';
       case 'zoom': return 'ph-arrow-square-out text-blue-400';
       case 'none': return 'ph-selection text-gray-500';
       default: return 'ph-cube-transparent';

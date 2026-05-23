@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNexusStore, NoteFolder, NexusNote, PersonalGoal, NexusTask, PersonalLink } from '@store/useNexusStore';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { Nexus3DWorkspace } from './Nexus3DWorkspace';
+import { NexusBrainGraph } from './NexusBrainGraph';
 
 interface NexusHubProps {
   confirm: (options: any) => Promise<boolean>;
@@ -31,7 +31,7 @@ export const NexusHub: React.FC<NexusHubProps> = ({ confirm, setModalConfig }) =
   const setVaultLinks = useNexusStore(state => state.setLinks);
 
   // UI State (Inicia OBRIGATORIAMENTE em 'dashboard' 2D clássico para evitar travamentos)
-  const [viewMode, setViewMode] = useState<'explorer' | 'dashboard' | 'immersive3d'>('dashboard');
+  const [viewMode, setViewMode] = useState<'explorer' | 'dashboard' | 'brain'>('dashboard');
   const [activeEntity, setActiveEntity] = useState<{ id: string, type: 'note' | 'goal' | 'task' | 'vault' } | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
@@ -284,7 +284,7 @@ export const NexusHub: React.FC<NexusHubProps> = ({ confirm, setModalConfig }) =
           </div>
           <div className="flex gap-1">
              <button onClick={() => setViewMode('dashboard')} className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${viewMode === 'dashboard' ? 'bg-primary-500 text-white' : 'bg-white/5 text-gray-500 hover:text-white'}`} title="Dashboard"><i className="ph ph-squares-four" /></button>
-             <button onClick={() => setViewMode('immersive3d')} className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${viewMode === 'immersive3d' ? 'bg-amber-500 text-white' : 'bg-white/5 text-gray-500 hover:text-white hover:bg-amber-500/10 hover:text-amber-400'}`} title="Escritório Virtual 3D"><i className="ph-duotone ph-cube text-base" /></button>
+             <button onClick={() => setViewMode('brain')} className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${viewMode === 'brain' ? 'bg-primary-500 text-white' : 'bg-white/5 text-gray-500 hover:text-white hover:bg-primary-500/10 hover:text-primary-400'}`} title="Cérebro (Constelação de Conhecimento)"><i className="ph-bold ph-brain text-base" /></button>
           </div>
         </div>
 
@@ -507,44 +507,16 @@ export const NexusHub: React.FC<NexusHubProps> = ({ confirm, setModalConfig }) =
                 </div>
               </div>
             </motion.div>
-          ) : viewMode === 'immersive3d' ? (
+          ) : viewMode === 'brain' ? (
             <motion.div 
-              key="immersive3d" 
+              key="brain" 
               initial={{ opacity: 0, scale: 0.95 }} 
               animate={{ opacity: 1, scale: 1 }} 
               exit={{ opacity: 0, scale: 0.95 }} 
-              transition={{ duration: 0.5, ease: 'easeOut' }}
+              transition={{ duration: 0.35, ease: 'easeOut' }}
               className="w-full h-full"
             >
-              <Nexus3DWorkspace 
-                onOpenBook={(bookId) => {
-                  const targetBook = books.find(b => b.id === bookId);
-                  if (targetBook) {
-                    if (targetBook.linkedNoteId) {
-                      setActiveEntity({ id: targetBook.linkedNoteId, type: 'note' });
-                      setViewMode('explorer');
-                    } else {
-                      toast.info(`Selecionado: "${targetBook.title}". Abra-o no leitor 2D ou vincule uma anotação.`);
-                    }
-                  }
-                }}
-                onOpenNote={(noteId) => {
-                  setActiveEntity({ id: noteId, type: 'note' });
-                  setViewMode('explorer');
-                }}
-                onOpenNotesTab={() => {
-                  const firstNote = notes[0];
-                  if (firstNote) {
-                    setActiveEntity({ id: firstNote.id, type: 'note' });
-                    setViewMode('explorer');
-                  } else {
-                    handleAddNote();
-                  }
-                }}
-                onOpenLinksTab={() => {
-                  toast.success("Pastas de recursos ativas! Você pode gerenciá-las através dos favoritos e da central de conhecimento.");
-                }}
-              />
+              <NexusBrainGraph />
             </motion.div>
           ) : (
             <motion.div key="explorer" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="w-full h-full">

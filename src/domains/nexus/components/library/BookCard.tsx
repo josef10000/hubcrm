@@ -78,22 +78,23 @@ export const BookCard = React.memo(({
     dropped: 'Parado'
   };
   const is3DEnabled = animationMode === 'new' || animationMode === 'fixed_3d';
+  const isParallaxEnabled = animationMode === 'parallax_2.5d';
 
   return (
-    <div className="group relative" style={{ perspective: is3DEnabled ? '1200px' : undefined }}>
+    <div className="group relative" style={{ perspective: is3DEnabled || isParallaxEnabled ? '1200px' : undefined }}>
       <motion.div 
         onClick={() => onView(book.id)}
-        onMouseMove={animationMode === 'new' ? handleMouseMove : undefined}
-        onMouseLeave={animationMode === 'new' ? handleMouseLeave : undefined}
+        onMouseMove={animationMode === 'new' || isParallaxEnabled ? handleMouseMove : undefined}
+        onMouseLeave={animationMode === 'new' || isParallaxEnabled ? handleMouseLeave : undefined}
         style={{ 
-          rotateY: animationMode === 'new' ? rotateY : 0, 
-          rotateX: animationMode === 'new' ? rotateX : 0,
-          transformStyle: is3DEnabled ? 'preserve-3d' : undefined
+          rotateY: animationMode === 'new' || isParallaxEnabled ? rotateY : 0, 
+          rotateX: animationMode === 'new' || isParallaxEnabled ? rotateX : 0,
+          transformStyle: is3DEnabled || isParallaxEnabled ? 'preserve-3d' : undefined
         }}
         whileHover={
           animationMode === 'fixed_3d' 
             ? { scale: 1.05, rotateY: -25, rotateX: 5 } 
-            : animationMode === 'zoom' || animationMode === 'new'
+            : animationMode === 'zoom' || animationMode === 'new' || isParallaxEnabled
               ? { scale: 1.05 } 
               : undefined
         }
@@ -139,19 +140,24 @@ export const BookCard = React.memo(({
         <div 
           className="absolute inset-0 z-20 rounded-r-sm overflow-hidden border border-white/10 shadow-2xl bg-[#1a1c23]"
           style={{ 
-            transform: is3DEnabled ? 'translateZ(25px)' : undefined,
-            backfaceVisibility: is3DEnabled ? 'hidden' : undefined
+            transform: is3DEnabled ? 'translateZ(25px)' : isParallaxEnabled ? 'translateZ(15px)' : undefined,
+            transformStyle: isParallaxEnabled ? 'preserve-3d' : undefined,
+            backfaceVisibility: is3DEnabled || isParallaxEnabled ? 'hidden' : undefined
           }}
         >
-          {/* Glossy Overlay (Dinâmico com Tilt) */}
-          {animationMode === 'new' && (
+          {/* Glossy Overlay (Dinâmico com Tilt/Vidro) */}
+          {(animationMode === 'new' || isParallaxEnabled) && (
             <motion.div 
               style={{
                 background: useTransform(
                   mouseXSpring, 
                   [-0.5, 0.5], 
-                  ["linear-gradient(120deg, rgba(255,255,255,0.15) 0%, transparent 50%)", "linear-gradient(240deg, rgba(255,255,255,0.15) 0%, transparent 50%)"]
-                )
+                  [
+                    "linear-gradient(120deg, rgba(255,255,255,0.2) 0%, transparent 50%)", 
+                    "linear-gradient(240deg, rgba(255,255,255,0.2) 0%, transparent 50%)"
+                  ]
+                ),
+                transform: isParallaxEnabled ? 'translateZ(40px)' : undefined
               }}
               className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30" 
             />
@@ -168,7 +174,10 @@ export const BookCard = React.memo(({
 
           {/* Category Badge */}
           {book.category && (
-            <div className="absolute top-3 right-3 px-2 py-1 bg-primary-500/80 backdrop-blur-md rounded-lg text-[7px] font-black text-white uppercase tracking-tighter z-40 shadow-lg">
+            <div 
+              className="absolute top-3 right-3 px-2 py-1 bg-primary-500/80 backdrop-blur-md rounded-lg text-[7px] font-black text-white uppercase tracking-tighter z-40 shadow-lg"
+              style={{ transform: isParallaxEnabled ? 'translateZ(30px)' : undefined }}
+            >
               {book.category}
             </div>
           )}
@@ -179,12 +188,16 @@ export const BookCard = React.memo(({
             className={`absolute top-3 left-4 p-1.5 rounded-lg z-40 transition-all ${
               book.isFavorite ? 'bg-amber-500 text-white shadow-lg' : 'bg-black/40 text-white/40 hover:bg-black/60 hover:text-white'
             }`}
+            style={{ transform: isParallaxEnabled ? 'translateZ(30px)' : undefined }}
           >
             <i className={`ph-bold ${book.isFavorite ? 'ph-star-fill' : 'ph-star'}`} />
           </button>
 
           {/* Format Badge */}
-          <div className="absolute top-3 left-14 flex gap-1 z-40">
+          <div 
+            className="absolute top-3 left-14 flex gap-1 z-40"
+            style={{ transform: isParallaxEnabled ? 'translateZ(30px)' : undefined }}
+          >
             {book.format === 'kindle' && (
               <div className="px-2 py-1 bg-amber-500/80 backdrop-blur-md rounded-lg text-[7px] font-black text-white uppercase tracking-widest shadow-lg flex items-center gap-1 border border-white/5">
                 <i className="ph-fill ph-device-mobile" /> Kindle
@@ -204,7 +217,10 @@ export const BookCard = React.memo(({
 
           {/* Status Badge */}
           {book.status && (
-            <div className={`absolute bottom-3 left-4 px-2 py-1 ${statusColors[book.status]} rounded-lg text-[7px] font-black text-white uppercase tracking-widest z-40 shadow-lg`}>
+            <div 
+              className={`absolute bottom-3 left-4 px-2 py-1 ${statusColors[book.status]} rounded-lg text-[7px] font-black text-white uppercase tracking-widest z-40 shadow-lg`}
+              style={{ transform: isParallaxEnabled ? 'translateZ(30px)' : undefined }}
+            >
               {statusLabels[book.status]}
             </div>
           )}
@@ -227,7 +243,10 @@ export const BookCard = React.memo(({
           
           {/* Progress Bar (Visual) */}
           {progress > 0 && (
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10 z-40">
+            <div 
+              className="absolute bottom-0 left-0 right-0 h-1 bg-white/10 z-40"
+              style={{ transform: isParallaxEnabled ? 'translateZ(30px)' : undefined }}
+            >
               <motion.div 
                 initial={{ width: 0 }}
                 animate={{ width: `${progress}%` }}
@@ -236,7 +255,10 @@ export const BookCard = React.memo(({
             </div>
           )}
 
-          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 z-30">
+          <div 
+            className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 z-30"
+            style={{ transform: isParallaxEnabled ? 'translateZ(35px)' : undefined }}
+          >
              <motion.div 
                 whileHover={{ scale: 1.1 }}
                 className="w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center text-white text-xl shadow-xl shadow-primary-500/40"
@@ -247,7 +269,7 @@ export const BookCard = React.memo(({
         </div>
 
         {/* Dynamic Shadow (Sombra projetada) */}
-        {animationMode === 'new' ? (
+        {animationMode === 'new' || isParallaxEnabled ? (
           <motion.div 
             style={{
               x: useTransform(mouseXSpring, [-0.5, 0.5], [20, -20]),

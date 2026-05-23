@@ -116,8 +116,8 @@ interface NexusState extends NexusData {
   loading: boolean;
   initialized: boolean;
   error: string | null;
-  bookAnimationMode: 'new' | 'fixed_3d' | 'zoom' | 'none';
-  setBookAnimationMode: (mode: 'new' | 'fixed_3d' | 'zoom' | 'none') => void;
+  bookAnimationMode: 'new' | 'fixed_3d' | 'zoom' | 'none' | 'parallax_2.5d';
+  setBookAnimationMode: (mode: 'new' | 'fixed_3d' | 'zoom' | 'none' | 'parallax_2.5d') => void;
   
   // Actions
   init: (uid: string) => () => void;
