@@ -1,7 +1,8 @@
-// Damas (Checkers) - Motor de Regras e Inteligência Artificial (Minimax)
+// Damas (Checkers) - Motor de Regras Oficial (Regra Brasileira de Longo Alcance) e IA Minimax
+// Suporta a movimentação e capturas de longo alcance da Dama ("Dama Voadora")
 
 export interface CheckersPiece {
-  player: number; // 1 = Vermelhas (Embaixo), 2 = Pretas (Em cima)
+  player: number; // 1 = Vermelhas (Embaixo / Você), 2 = Pretas/Metálicas (Em cima / CPU)
   type: 'normal' | 'king';
 }
 
@@ -10,7 +11,7 @@ export type CheckersGrid = (CheckersPiece | null)[][];
 export interface CheckersMove {
   from: [number, number];
   to: [number, number];
-  captures?: [number, number]; // Coordenadas da peça capturada, se houver
+  captures?: [number, number]; // Coordenadas da peça capturada
 }
 
 // Retorna todos os movimentos válidos para uma determinada peça no tabuleiro
@@ -20,55 +21,97 @@ export function getCheckersPieceMoves(board: CheckersGrid, r: number, c: number)
 
   const moves: CheckersMove[] = [];
   const player = piece.player;
+  const oppPlayer = player === 1 ? 2 : 1;
   const isKing = piece.type === 'king';
 
-  // Direções de avanço baseadas no jogador
-  // Jogador 1 (vermelhas) avança de baixo para cima (r diminui: -1)
-  // Jogador 2 (pretas) avança de cima para baixo (r aumenta: +1)
-  const forwardDirections = player === 1 ? [-1] : [1];
-  // Reis podem se mover em qualquer direção diagonal
-  const directions = isKing ? [-1, 1] : forwardDirections;
+  // Direções de diagonais
+  const diagonals = [
+    [-1, -1], [-1, 1],
+    [1, -1],  [1, 1]
+  ];
 
-  // 1. Verificar movimentos normais (diagonais simples de 1 casa)
-  for (const dr of directions) {
+  // Direção de avanço para peças normais
+  // Jogador 1 (Vermelho/Você) começa embaixo (linhas 5..7) e sobe (-1)
+  // Jogador 2 (CPU/Preto) começa em cima (linhas 0..2) e desce (+1)
+  const forwardDir = player === 1 ? -1 : 1;
+
+  if (!isKing) {
+    // ----------------------------------------------------
+    // PEÇA NORMAL: Anda 1 casa para frente diagonalmente
+    // ----------------------------------------------------
     for (const dc of [-1, 1]) {
-      const nr = r + dr;
+      const nr = r + forwardDir;
       const nc = c + dc;
-
-      // Dentro dos limites e destino vazio
       if (nr >= 0 && nr < 8 && nc >= 0 && nc < 8) {
         if (board[nr][nc] === null) {
           moves.push({ from: [r, c], to: [nr, nc] });
         }
       }
     }
-  }
 
-  // 2. Verificar movimentos de captura (diagonais duplas de 2 casas pulando uma peça adversária)
-  const captureDirections = [-1, 1]; // Capturas podem acontecer para trás mesmo para peças normais em várias regras
-  for (const dr of captureDirections) {
-    for (const dc of [-1, 1]) {
-      const nr = r + dr;
-      const nc = c + dc;
-      const jumpR = r + dr * 2;
-      const jumpC = c + dc * 2;
+    // Peça normal captura saltando 2 casas sobre o oponente (pode capturar para trás)
+    for (const [dr, dc] of diagonals) {
+      const enemyR = r + dr;
+      const enemyC = c + dc;
+      const destR = r + dr * 2;
+      const destC = c + dc * 2;
 
-      // Dentro dos limites da mesa
-      if (jumpR >= 0 && jumpR < 8 && jumpC >= 0 && jumpC < 8) {
-        const midPiece = board[nr][nc];
-        const destPiece = board[jumpR][jumpC];
+      if (destR >= 0 && destR < 8 && destC >= 0 && destC < 8) {
+        const mid = board[enemyR][enemyC];
+        const dest = board[destR][destC];
+        if (mid && mid.player === oppPlayer && dest === null) {
+          moves.push({
+            from: [r, c],
+            to: [destR, destC],
+            captures: [enemyR, enemyC]
+          });
+        }
+      }
+    }
+  } else {
+    // ----------------------------------------------------
+    // DAMA VOADORA (REGRA BRASILEIRA): Anda múltiplas casas livres diagonalmente
+    // ----------------------------------------------------
+    for (const [dr, dc] of diagonals) {
+      let step = 1;
+      let encounteredEnemy = false;
+      let enemyPos: [number, number] | null = null;
 
-        // Peça no meio é do oponente e casa de destino está vazia
-        if (midPiece && midPiece.player !== player && destPiece === null) {
-          // Peças normais só podem capturar na direção de movimento, a menos que seja rei (ou regra flexível de captura total)
-          if (isKing || forwardDirections.includes(dr) || true) { // Permitir captura para trás como padrão dinâmico intuitivo
+      while (true) {
+        const nr = r + dr * step;
+        const nc = c + dc * step;
+
+        // Limite do tabuleiro
+        if (nr < 0 || nr >= 8 || nc < 0 || nc >= 8) break;
+
+        const target = board[nr][nc];
+
+        if (!encounteredEnemy) {
+          if (target === null) {
+            // Casa livre: movimento normal de Dama
+            moves.push({ from: [r, c], to: [nr, nc] });
+          } else if (target.player === player) {
+            // Bloqueado por peça própria
+            break;
+          } else {
+            // Encontrou peça adversária
+            encounteredEnemy = true;
+            enemyPos = [nr, nc];
+          }
+        } else {
+          // Já pulamos a peça inimiga. Casas vazias após ela são locais de pouso de captura válidos.
+          if (target === null) {
             moves.push({
               from: [r, c],
-              to: [jumpR, jumpC],
-              captures: [nr, nc]
+              to: [nr, nc],
+              captures: enemyPos!
             });
+          } else {
+            // Bloqueado por outra peça após a capturada (só pode pular 1 por diagonal)
+            break;
           }
         }
+        step++;
       }
     }
   }
@@ -76,7 +119,7 @@ export function getCheckersPieceMoves(board: CheckersGrid, r: number, c: number)
   return moves;
 }
 
-// Retorna todos os movimentos válidos de um jogador (se existirem capturas, as regras de damas exigem que as capturas sejam obrigatórias)
+// Retorna todos os movimentos válidos de um jogador (com capturas obrigatórias se disponíveis)
 export function getCheckersValidMoves(board: CheckersGrid, player: number): CheckersMove[] {
   let allMoves: CheckersMove[] = [];
   
@@ -89,14 +132,14 @@ export function getCheckersValidMoves(board: CheckersGrid, player: number): Chec
     }
   }
 
-  // Filtrar para capturas obrigatórias se alguma captura estiver disponível
+  // Filtrar para capturas obrigatórias (regra oficial de damas)
   const captures = allMoves.filter(m => m.captures);
   if (captures.length > 0) return captures;
 
   return allMoves;
 }
 
-// Executa um movimento no grid e promove a rei se chegar à última fileira
+// Executa um movimento no grid e promove a Dama
 export function applyCheckersMove(board: CheckersGrid, move: CheckersMove): CheckersGrid {
   const newGrid = board.map(row => [...row]);
   const [fr, fc] = move.from;
@@ -109,13 +152,15 @@ export function applyCheckersMove(board: CheckersGrid, move: CheckersMove): Chec
   newGrid[tr][tc] = piece;
   newGrid[fr][fc] = null;
 
-  // Remove peça capturada se houver
+  // Remove a peça capturada se houver
   if (move.captures) {
     const [cr, cc] = move.captures;
     newGrid[cr][cc] = null;
   }
 
-  // Promoção a Dama (King): jogador 1 chega ao topo (r=0), jogador 2 chega ao fundo (r=7)
+  // Promoção a Dama (King):
+  // Jogador 1 (Vermelho) vira Dama ao alcançar o topo (linha 0)
+  // Jogador 2 (CPU/Preto) vira Dama ao alcançar o fundo (linha 7)
   if (piece.player === 1 && tr === 0 && piece.type === 'normal') {
     newGrid[tr][tc] = { ...piece, type: 'king' };
   } else if (piece.player === 2 && tr === 7 && piece.type === 'normal') {
@@ -125,12 +170,11 @@ export function applyCheckersMove(board: CheckersGrid, move: CheckersMove): Chec
   return newGrid;
 }
 
-// Verifica se há um vencedor (ou se um jogador ficou sem peças/movimentos)
+// Verifica se há um vencedor
 export function checkCheckersWinner(board: CheckersGrid): number | null {
   const p1Moves = getCheckersValidMoves(board, 1);
   const p2Moves = getCheckersValidMoves(board, 2);
 
-  // Contagem de peças
   let p1Pieces = 0;
   let p2Pieces = 0;
 
@@ -154,26 +198,21 @@ export function checkCheckersWinner(board: CheckersGrid): number | null {
 export function getBestCheckersMove(board: CheckersGrid, depth: number = 4, aiPlayer: number = 2): CheckersMove | null {
   const humanPlayer = aiPlayer === 1 ? 2 : 1;
 
-  // Heurística de avaliação do tabuleiro para Damas
   const scoreBoard = (b: CheckersGrid) => {
     let score = 0;
     for (let r = 0; r < 8; r++) {
       for (let c = 0; c < 8; c++) {
         const piece = b[r][c];
         if (piece) {
-          let value = piece.type === 'king' ? 14 : 10;
+          let value = piece.type === 'king' ? 25 : 10;
           
-          // Favorecer avançar peças normais e manter a base sólida
           if (piece.player === aiPlayer) {
-            // Pontuar posições avançadas
-            if (aiPlayer === 2) value += r * 0.5; // pretas avançam para baixo
-            else value += (7 - r) * 0.5;
-            
+            if (aiPlayer === 2) value += r * 0.4;
+            else value += (7 - r) * 0.4;
             score += value;
           } else {
-            if (humanPlayer === 2) value += r * 0.5;
-            else value += (7 - r) * 0.5;
-            
+            if (humanPlayer === 2) value += r * 0.4;
+            else value += (7 - r) * 0.4;
             score -= value;
           }
         }

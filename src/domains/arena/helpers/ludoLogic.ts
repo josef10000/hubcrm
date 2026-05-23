@@ -1,7 +1,7 @@
-// Ludo - Motor de Regras e Inteligência Artificial Local em TypeScript
-// Focado em Duelo de 2 Jogadores: Vermelho (Jogador 1 / Humano) vs Verde (Jogador 2 / CPU ou Oponente)
+// Ludo de 4 Jogadores - Motor de Regras Clássico e Inteligência Artificial Local
+// Suporta Vermelho (Jogador 1 / Humano), Verde (CPU), Amarelo (CPU/Multi), Azul (CPU/Multi)
 
-export type LudoColor = 'red' | 'green';
+export type LudoColor = 'red' | 'green' | 'yellow' | 'blue';
 
 export interface LudoToken {
   id: number; // 0..3 (4 peças por jogador)
@@ -22,20 +22,23 @@ export interface LudoBoardState {
 
 // Casa de saída para cada cor
 export const LUDO_START_POSITION: Record<LudoColor, number> = {
-  red: 0,
-  green: 26
+  red: 0,     // Vermelho sai na casa 0
+  green: 13,  // Verde sai na casa 13
+  blue: 26,   // Azul sai na casa 26
+  yellow: 39  // Amarelo sai na casa 39
 };
 
 // Casa limite antes de entrar na reta final
 export const LUDO_ENTRY_LIMIT: Record<LudoColor, number> = {
   red: 50,
-  green: 24
+  green: 11,
+  blue: 24,
+  yellow: 37
 };
 
-// Mapeamento de coordenadas X,Y de cada casa no tabuleiro tradicional 15x15 de Ludo
-// Isso nos permite desenhar um tabuleiro perfeito e com responsividade usando Grid e coordenadas 2D.
+// Mapeamento de coordenadas X,Y de cada casa no tabuleiro de Ludo 15x15
 export function getLudoCoords(color: LudoColor, token: LudoToken): { x: number; y: number } {
-  // Se está na base, posiciona nos ninhos específicos dos cantos
+  // Se está na base, posiciona nos ninhos específicos de cada canto
   if (token.position === -1) {
     const offsets = [
       { dx: 0, dy: 0 }, { dx: 1, dy: 0 },
@@ -43,9 +46,13 @@ export function getLudoCoords(color: LudoColor, token: LudoToken): { x: number; 
     ];
     const off = offsets[token.id];
     if (color === 'red') {
-      return { x: 2 + off.dx * 1.5, y: 2 + off.dy * 1.5 }; // Quadrante Superior Esquerdo
+      return { x: 2 + off.dx * 1.5, y: 2 + off.dy * 1.5 }; // Quadrante Superior Esquerdo (Vermelho)
+    } else if (color === 'green') {
+      return { x: 11 + off.dx * 1.5, y: 2 + off.dy * 1.5 }; // Quadrante Superior Direito (Verde)
+    } else if (color === 'yellow') {
+      return { x: 2 + off.dx * 1.5, y: 11 + off.dy * 1.5 }; // Quadrante Inferior Esquerdo (Amarelo)
     } else {
-      return { x: 11 + off.dx * 1.5, y: 2 + off.dy * 1.5 }; // Quadrante Superior Direito (Verde no duelo)
+      return { x: 11 + off.dx * 1.5, y: 11 + off.dy * 1.5 }; // Quadrante Inferior Direito (Azul)
     }
   }
 
@@ -58,15 +65,19 @@ export function getLudoCoords(color: LudoColor, token: LudoToken): { x: number; 
   if (token.position >= 100 && token.position < 105) {
     const index = token.position - 100;
     if (color === 'red') {
-      return { x: 1 + index, y: 7 }; // Linha vermelha subindo na horizontal da esquerda
+      return { x: 1 + index, y: 7 }; // Reta vermelha (esquerda para direita)
+    } else if (color === 'green') {
+      return { x: 7, y: 1 + index }; // Reta verde (vertical do topo para baixo)
+    } else if (color === 'yellow') {
+      return { x: 7, y: 13 - index }; // Reta amarela (vertical de baixo para cima)
     } else {
-      return { x: 7, y: 1 + index }; // Linha verde descendo na vertical do topo
+      return { x: 13 - index, y: 7 }; // Reta azul (direita para esquerda)
     }
   }
 
   // Posições do circuito comum externo de 52 casas (indexados de 0 a 51)
   const circuitCoords: { x: number; y: number }[] = [
-    // Lado esquerdo (Pistas horizontais)
+    // Lado esquerdo superior (de esquerda para a direita)
     { x: 1, y: 6 }, { x: 2, y: 6 }, { x: 3, y: 6 }, { x: 4, y: 6 }, { x: 5, y: 6 },
     // Topo esquerdo (subindo verticalmente)
     { x: 6, y: 5 }, { x: 6, y: 4 }, { x: 6, y: 3 }, { x: 6, y: 2 }, { x: 6, y: 1 }, { x: 6, y: 0 },
@@ -74,35 +85,38 @@ export function getLudoCoords(color: LudoColor, token: LudoToken): { x: number; 
     { x: 7, y: 0 },
     // Topo direito (descendo verticalmente)
     { x: 8, y: 0 }, { x: 8, y: 1 }, { x: 8, y: 2 }, { x: 8, y: 3 }, { x: 8, y: 4 }, { x: 8, y: 5 },
-    // Lado direito superior
+    // Lado direito superior (indo pra direita)
     { x: 9, y: 6 }, { x: 10, y: 6 }, { x: 11, y: 6 }, { x: 12, y: 6 }, { x: 13, y: 6 }, { x: 14, y: 6 },
     // Meio direito
     { x: 14, y: 7 },
-    // Lado direito inferior
+    // Lado direito inferior (voltando para a esquerda)
     { x: 14, y: 8 }, { x: 13, y: 8 }, { x: 12, y: 8 }, { x: 11, y: 8 }, { x: 10, y: 8 }, { x: 9, y: 8 },
-    // Lado inferior direito (descendo)
+    // Lado inferior direito (descendo verticalmente)
     { x: 8, y: 9 }, { x: 8, y: 10 }, { x: 8, y: 11 }, { x: 8, y: 12 }, { x: 8, y: 13 }, { x: 8, y: 14 },
     // Meio inferior
     { x: 7, y: 14 },
-    // Lado inferior esquerdo (subindo)
+    // Lado inferior esquerdo (subindo verticalmente)
     { x: 6, y: 14 }, { x: 6, y: 13 }, { x: 6, y: 12 }, { x: 6, y: 11 }, { x: 6, y: 10 }, { x: 6, y: 9 },
-    // Lado esquerdo inferior (esquerda)
+    // Lado esquerdo inferior (voltando para a esquerda)
     { x: 5, y: 8 }, { x: 4, y: 8 }, { x: 3, y: 8 }, { x: 2, y: 8 }, { x: 1, y: 8 }, { x: 0, y: 8 },
     // Meio esquerdo
     { x: 0, y: 7 },
-    // Primeira casa
+    // Primeira casa de todas
     { x: 0, y: 6 }
   ];
 
   return circuitCoords[token.position % 52] || { x: 0, y: 0 };
 }
 
-// Cria o estado inicial padrão de uma partida de Ludo
+// Cria o estado inicial padrão de uma partida de Ludo com 4 cores de fichas!
 export function createInitialLudoState(): LudoBoardState {
   const tokens: LudoToken[] = [];
-  for (let i = 0; i < 4; i++) {
-    tokens.push({ id: i, color: 'red', position: -1 });
-    tokens.push({ id: i, color: 'green', position: -1 });
+  const colors: LudoColor[] = ['red', 'green', 'yellow', 'blue'];
+  
+  for (const color of colors) {
+    for (let i = 0; i < 4; i++) {
+      tokens.push({ id: i, color, position: -1 });
+    }
   }
 
   return {
@@ -148,7 +162,7 @@ export function applyLudoMove(board: LudoBoardState, tokenToMove: LudoToken, dic
     if (t.color === tokenToMove.color && t.id === tokenToMove.id) {
       const copy = { ...t };
       
-      // Caso 1: Sair da Base
+      // Caso 1: Sair da Base com 6
       if (copy.position === -1 && diceValue === 6) {
         copy.position = LUDO_START_POSITION[copy.color];
         return copy;
@@ -162,8 +176,6 @@ export function applyLudoMove(board: LudoBoardState, tokenToMove: LudoToken, dic
       }
 
       // Caso 3: Movimentação no Percurso Comum
-      // Precisamos verificar se ele vai passar pela entrada da sua reta final
-      const startPos = LUDO_START_POSITION[copy.color];
       const entryLimit = LUDO_ENTRY_LIMIT[copy.color];
       
       let stepCount = 0;
@@ -185,9 +197,8 @@ export function applyLudoMove(board: LudoBoardState, tokenToMove: LudoToken, dic
     return t;
   });
 
-  // Lógica de "Comer" (Capture)
-  // Se a peça que se moveu caiu em uma casa do percurso comum que já tem uma peça adversária,
-  // essa peça adversária é capturada e volta para a base (-1).
+  // Lógica de Captura ("Comer")
+  // Se caímos em uma casa comum ocupada por fichas inimigas, mandamos elas de volta para a base (-1)
   const movedToken = newTokens.find(t => t.color === tokenToMove.color && t.id === tokenToMove.id)!;
   
   if (movedToken.position !== -1 && movedToken.position < 100) {
@@ -197,7 +208,7 @@ export function applyLudoMove(board: LudoBoardState, tokenToMove: LudoToken, dic
         other.color !== movedToken.color && 
         other.position === movedToken.position
       ) {
-        // Captura! Manda de volta para a base
+        // Encontrou inimigo: manda de volta
         newTokens[i] = { ...other, position: -1 };
       }
     }
@@ -205,11 +216,14 @@ export function applyLudoMove(board: LudoBoardState, tokenToMove: LudoToken, dic
 
   // Verifica se há vitória (todas as 4 peças de uma cor chegaram no 105)
   let winnerColor: LudoColor | null = null;
-  const isRedWinner = newTokens.filter(t => t.color === 'red' && t.position === 105).length === 4;
-  const isGreenWinner = newTokens.filter(t => t.color === 'green' && t.position === 105).length === 4;
-
-  if (isRedWinner) winnerColor = 'red';
-  else if (isGreenWinner) winnerColor = 'green';
+  const colors: LudoColor[] = ['red', 'green', 'yellow', 'blue'];
+  for (const color of colors) {
+    const wins = newTokens.filter(t => t.color === color && t.position === 105).length;
+    if (wins === 4) {
+      winnerColor = color;
+      break;
+    }
+  }
 
   return {
     ...board,
@@ -220,45 +234,38 @@ export function applyLudoMove(board: LudoBoardState, tokenToMove: LudoToken, dic
   };
 }
 
-// Algoritmo de Inteligência Artificial para o Computador no Ludo (Verde / Player 2)
-// Heurística baseada em prioridade de ações:
-// 1. Matar/Capturar peça adversária (Prioridade 1)
-// 2. Colocar peça em jogo ao tirar 6 da base (Prioridade 2)
-// 3. Salvar uma peça própria de ser comida ou avançar a peça mais perto de vencer (Prioridade 3)
-export function getBestLudoMove(board: LudoBoardState, diceValue: number, aiColor: LudoColor = 'green'): LudoToken | null {
+// Algoritmo de IA heurístico para os oponentes virtuais
+export function getBestLudoMove(board: LudoBoardState, diceValue: number, aiColor: LudoColor): LudoToken | null {
   const validTokens = board.tokens.filter(t => t.color === aiColor && canLudoTokenMove(t, diceValue));
   if (validTokens.length === 0) return null;
 
-  // Heurística: Simula cada movimento possível e atribui uma nota
   let bestToken: LudoToken | null = null;
   let maxScore = -9999;
 
   for (const token of validTokens) {
     let score = 0;
 
-    // 1. Se pode sair da base
+    // Sair da base
     if (token.position === -1 && diceValue === 6) {
       score += 500;
     }
 
-    // Simula a nova posição
     const simulatedBoard = applyLudoMove({ ...board, tokens: board.tokens.map(t => ({ ...t })) }, token, diceValue);
     const newPos = simulatedBoard.tokens.find(t => t.color === aiColor && t.id === token.id)!.position;
 
-    // 2. Se comeu alguém (captura)
-    const opponentColor: LudoColor = aiColor === 'red' ? 'green' : 'red';
-    const originalOpponentsInBase = board.tokens.filter(t => t.color === opponentColor && t.position === -1).length;
-    const newOpponentsInBase = simulatedBoard.tokens.filter(t => t.color === opponentColor && t.position === -1).length;
+    // Capturas
+    const originalInBase = board.tokens.filter(t => t.color !== aiColor && t.position === -1).length;
+    const newInBase = simulatedBoard.tokens.filter(t => t.color !== aiColor && t.position === -1).length;
 
-    if (newOpponentsInBase > originalOpponentsInBase) {
-      score += 1000; // Alta prioridade para captura
+    if (newInBase > originalInBase) {
+      score += 1200; // Capturar é prioridade máxima
     }
 
-    // 3. Se avançou rumo ao fim
+    // Reta final
     if (newPos >= 100) {
-      score += 200 + (newPos - 100) * 50; // Prefere colocar peças na zona segura/final
+      score += 300 + (newPos - 100) * 80;
     } else {
-      score += newPos * 2; // Prefere avançar peças mais à frente
+      score += newPos * 2.5;
     }
 
     if (score > maxScore) {

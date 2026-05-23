@@ -1,9 +1,10 @@
-// Xadrez (Chess) - Motor de Regras e Inteligência Artificial (Minimax) puro em TypeScript
+// Xadrez (Chess) - Motor de Regras e Inteligência Artificial (Minimax) em TypeScript
+// Suporta a movimentação especial do Roque (Castling)
 
 export type ChessPieceType = 'pawn' | 'knight' | 'bishop' | 'rook' | 'queen' | 'king';
 
 export interface ChessPiece {
-  player: number; // 1 = Brancas (Embaixo / R_6 e 7), 2 = Pretas (Em cima / R_0 e 1)
+  player: number; // 1 = Brancas (Você), 2 = Pretas/Metálicas (CPU)
   type: ChessPieceType;
 }
 
@@ -46,7 +47,7 @@ export function getChessPieceMoves(board: ChessBoardState, fromKey: string): Che
 
     if (target === null) {
       moves.push({ from: fromKey, to: toKey, piece });
-      return true; // Casa vazia, pode continuar se for bispo/torre
+      return true; // Casa vazia, pode continuar
     } else if (target.player === oppPlayer) {
       moves.push({ from: fromKey, to: toKey, piece, capturedPiece: target });
       return false; // Capturou, para o avanço
@@ -56,14 +57,12 @@ export function getChessPieceMoves(board: ChessBoardState, fromKey: string): Che
 
   switch (piece.type) {
     case 'pawn': {
-      // Direção do peão: jogador 1 (Brancas) sobe (-1), jogador 2 (Pretas) desce (+1)
       const dir = player === 1 ? -1 : 1;
       const startRow = player === 1 ? 6 : 1;
 
       // 1. Avanço simples
       const nextR = r + dir;
       if (nextR >= 0 && nextR <= 7 && getPiece(nextR, c) === null) {
-        // Suporta promoção
         const isPromotion = player === 1 ? nextR === 0 : nextR === 7;
         if (isPromotion) {
           moves.push({ from: fromKey, to: `${nextR},${c}`, piece, promotion: 'queen' });
@@ -98,21 +97,17 @@ export function getChessPieceMoves(board: ChessBoardState, fromKey: string): Che
     }
 
     case 'knight': {
-      // Cavalo: 8 movimentos em L
       const knightOffsets = [
         [-2, -1], [-2, 1], [-1, -2], [-1, 2],
         [1, -2], [1, 2], [2, -1], [2, 1]
       ];
       for (const [dr, dc] of knightOffsets) {
-        const nr = r + dr;
-        const nc = c + dc;
-        addMoveIfLegal(nr, nc);
+        addMoveIfLegal(r + dr, c + dc);
       }
       break;
     }
 
     case 'bishop': {
-      // Bispo: 4 direções diagonais continuadas
       const directions = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
       for (const [dr, dc] of directions) {
         let step = 1;
@@ -128,7 +123,6 @@ export function getChessPieceMoves(board: ChessBoardState, fromKey: string): Che
     }
 
     case 'rook': {
-      // Torre: 4 direções retilíneas continuadas
       const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
       for (const [dr, dc] of directions) {
         let step = 1;
@@ -144,7 +138,6 @@ export function getChessPieceMoves(board: ChessBoardState, fromKey: string): Che
     }
 
     case 'queen': {
-      // Rainha: Combinação de Bispo + Torre
       const directions = [
         [-1, -1], [-1, 1], [1, -1], [1, 1],
         [-1, 0], [1, 0], [0, -1], [0, 1]
@@ -163,7 +156,7 @@ export function getChessPieceMoves(board: ChessBoardState, fromKey: string): Che
     }
 
     case 'king': {
-      // Rei: 1 casa em qualquer direção
+      // Rei: 1 casa diagonal ou adjacente
       const directions = [
         [-1, -1], [-1, 0], [-1, 1],
         [0, -1],           [0, 1],
@@ -173,8 +166,40 @@ export function getChessPieceMoves(board: ChessBoardState, fromKey: string): Che
         addMoveIfLegal(r + dr, c + dc);
       }
       
-      // Roque básico simplificado pode ser adicionado se necessário, mas para evitar bugs,
-      // manter os movimentos fundamentais garante compatibilidade total e velocidade perfeita.
+      // ----------------------------------------------------
+      // JOGADA ESPECIAL: O ROQUE (CASTLING)
+      // ----------------------------------------------------
+      if (player === 1 && r === 7 && c === 4) {
+        // 1. Roque ala do Rei (King Side)
+        const rookKingSide = getPiece(7, 7);
+        if (rookKingSide && rookKingSide.player === 1 && rookKingSide.type === 'rook') {
+          if (getPiece(7, 5) === null && getPiece(7, 6) === null) {
+            moves.push({ from: '7,4', to: '7,6', piece });
+          }
+        }
+        // 2. Roque ala da Rainha (Queen Side)
+        const rookQueenSide = getPiece(7, 0);
+        if (rookQueenSide && rookQueenSide.player === 1 && rookQueenSide.type === 'rook') {
+          if (getPiece(7, 1) === null && getPiece(7, 2) === null && getPiece(7, 3) === null) {
+            moves.push({ from: '7,4', to: '7,2', piece });
+          }
+        }
+      } else if (player === 2 && r === 0 && c === 4) {
+        // 1. Roque ala do Rei (King Side)
+        const rookKingSide = getPiece(0, 7);
+        if (rookKingSide && rookKingSide.player === 2 && rookKingSide.type === 'rook') {
+          if (getPiece(0, 5) === null && getPiece(0, 6) === null) {
+            moves.push({ from: '0,4', to: '0,6', piece });
+          }
+        }
+        // 2. Roque ala da Rainha (Queen Side)
+        const rookQueenSide = getPiece(0, 0);
+        if (rookQueenSide && rookQueenSide.player === 2 && rookQueenSide.type === 'rook') {
+          if (getPiece(0, 1) === null && getPiece(0, 2) === null && getPiece(0, 3) === null) {
+            moves.push({ from: '0,4', to: '0,2', piece });
+          }
+        }
+      }
       break;
     }
   }
@@ -192,13 +217,10 @@ export function getChessValidMoves(board: ChessBoardState, player: number): Ches
       allMoves.push(...getChessPieceMoves(board, key));
     }
   }
-
-  // Filtra movimentos que resultam no auto-xeque (o rei não pode ser colocado em perigo de morte)
-  // Para manter o motor leve e à prova de lentidão, podemos apenas checar se a casa de destino contém o Rei oponente no turno seguinte.
   return allMoves;
 }
 
-// Aplica um movimento ao tabuleiro de xadrez
+// Aplica um movimento ao tabuleiro de xadrez (suporta Roque)
 export function applyChessMove(board: ChessBoardState, move: ChessMove): ChessBoardState {
   const newPieces = { ...board.pieces };
   
@@ -212,12 +234,34 @@ export function applyChessMove(board: ChessBoardState, move: ChessMove): ChessBo
     newPieces[move.to] = move.piece;
   }
 
+  // ----------------------------------------------------
+  // MOVIMENTO DE ROQUE: Move a respectiva Torre junto
+  // ----------------------------------------------------
+  if (move.piece.type === 'king') {
+    // Brancas
+    if (move.from === '7,4' && move.to === '7,6') {
+      delete newPieces['7,7'];
+      newPieces['7,5'] = { player: 1, type: 'rook' };
+    } else if (move.from === '7,4' && move.to === '7,2') {
+      delete newPieces['7,0'];
+      newPieces['7,3'] = { player: 1, type: 'rook' };
+    }
+    // Pretas
+    else if (move.from === '0,4' && move.to === '0,6') {
+      delete newPieces['0,7'];
+      newPieces['0,5'] = { player: 2, type: 'rook' };
+    } else if (move.from === '0,4' && move.to === '0,2') {
+      delete newPieces['0,0'];
+      newPieces['0,3'] = { player: 2, type: 'rook' };
+    }
+  }
+
   return {
     pieces: newPieces
   };
 }
 
-// Verifica se há vitória (Xeque-mate ou se o Rei de um jogador foi capturado/não tem mais movimentos)
+// Verifica se há vitória
 export function checkChessWinner(board: ChessBoardState): number | null {
   let hasKing1 = false;
   let hasKing2 = false;
@@ -236,11 +280,10 @@ export function checkChessWinner(board: ChessBoardState): number | null {
   return null;
 }
 
-// IA Local: Minimax de profundidade 2 com poda Alfa-Beta para Xadrez
+// IA Local: Minimax de profundidade 2
 export function getBestChessMove(board: ChessBoardState, aiPlayer: number = 2): ChessMove | null {
   const humanPlayer = aiPlayer === 1 ? 2 : 1;
 
-  // Valores das peças para a heurística material
   const pieceValues: Record<ChessPieceType, number> = {
     pawn: 10,
     knight: 30,
@@ -250,7 +293,6 @@ export function getBestChessMove(board: ChessBoardState, aiPlayer: number = 2): 
     king: 1000
   };
 
-  // Avaliação heurística do tabuleiro de Xadrez
   const scoreBoard = (b: ChessBoardState) => {
     let score = 0;
     for (const key of Object.keys(b.pieces)) {
@@ -258,7 +300,6 @@ export function getBestChessMove(board: ChessBoardState, aiPlayer: number = 2): 
       const [r] = key.split(',').map(Number);
       let value = pieceValues[piece.type];
 
-      // Bônus posicional simples (avançar peças rumo ao centro)
       if (piece.type === 'pawn') {
         if (piece.player === 2) value += r * 0.4;
         else value += (7 - r) * 0.4;
@@ -321,6 +362,6 @@ export function getBestChessMove(board: ChessBoardState, aiPlayer: number = 2): 
     }
   };
 
-  const result = minimax(board, 2, -Infinity, Infinity, true); // Profundidade 2 para velocidade impecável
+  const result = minimax(board, 2, -Infinity, Infinity, true);
   return result.move;
 }

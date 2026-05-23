@@ -137,9 +137,11 @@ export const useArenaStore = create<ArenaState>((set, get) => {
           };
         } else if (match.gameType === 'ludo') {
           const tokens = [];
-          for (let i = 0; i < 4; i++) {
-            tokens.push({ id: i, color: 'red', position: -1 });
-            tokens.push({ id: i, color: 'green', position: -1 });
+          const colors = ['red', 'green', 'yellow', 'blue'];
+          for (const color of colors) {
+            for (let i = 0; i < 4; i++) {
+              tokens.push({ id: i, color, position: -1 });
+            }
           }
           boardState = {
             tokens,
