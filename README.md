@@ -188,7 +188,16 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
     - **Gestão de Progresso:** Acompanhamento visual da leitura com atualização instantânea.
     - **Neural Greeting & Weather:** Saudação dinâmica e clima local integrado ao dashboard.
     - **Categorias Dinâmicas:** Gestão completa de taxonomia personalizada.
-    - **PDI Kanban Premium (Meu PDI):** Sistema de metas e objetivos interativo 100% reativo e livre de race-conditions.
+    - **Biblioteca Imersiva 3D Monumental (Harvard Clássica) [NEW]:**
+    - **Estilo Harvard Vitoriano:** Uma belíssima e luxuosa biblioteca 3D clássica monumental renderizada em WebGL, contendo estantes monumentais de carvalho escuro/mogno, colunas verticais entalhadas, piso de madeira nobre e um tapete clássico de veludo borgonha.
+    - **Modelagem Física Ultra-Realista de Livros:** Livros representados com modelagem física de capa dura sobressalente de 1mm, páginas recuadas em tom bege-antigo, lombada arredondada com três nervuras tridimensionais clássicas de couro e plaqueta metálica de latão gravada com iniciais estilizadas em fonte clássica serifada.
+    - **Iluminação Clássica Banker Lamps:** Focos e cones de luz quente âmbar projetados por arandelas clássicas Banker em bronze e vidro verde-esmeralda translúcido com sombras realistas sobre as estantes.
+    - **Disposição e Irregularidade Orgânica:** Organização natural e humana dos livros com variações realistas de espessura e altura, inclinações orgânicas (livros apoiados no vizinho) e pilhas de livros deitadas servindo como aparadores.
+    - **Construção Progressiva Imersiva:** Efeito visual cinematográfico de "assemble" onde a estante, livros e decoração são montados dinamicamente ao transicionar da visualização 2D clássica.
+    - **Alternância Segura contra Lags:** O painel inicia obrigatoriamente no modo clássico 2D para proteger computadores e notebooks de baixo desempenho, habilitando o 3D sob demanda através do acionamento do botão do Cubo 3D (`ph-cube`) na barra lateral.
+    - **Imunidade Absoluta a CORS e Rede:** Modelos, cores e materiais são gerados de forma puramente matemática e procedimental no canvas Three.js (React Three Fiber), eliminando requisições a servidores externos ou riscos de falhas de proxy de rede corporativa.
+
+- **PDI Kanban Premium (Meu PDI):** Sistema de metas e objetivos interativo 100% reativo e livre de race-conditions.
       - **Edição Inline de Elite:** Suporte à edição instantânea via duplo clique direto no título do card ou clicando no ícone de lápis (`Edit3`) no hover.
       - **Exclusão Premium:** Botão de lixeira (`Trash2`) com efeito hover premium para remoção imediata e atrativa.
       - **Atualizações Atômicas:** Manipulação de array de itens no Firestore com atualização em tempo real de forma atômica síncrona, eliminando perdas por concorrência de escrita ao arrastar cards rapidamente.
