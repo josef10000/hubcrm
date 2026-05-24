@@ -43,6 +43,7 @@ interface ArenaState {
   listenToInvites: (uid: string) => () => void;
   exitActiveMatch: () => void;
   toggleVoice: () => Promise<void>;
+  unlockAchievement: (uid: string, achievementId: string, title: string, description: string, icon: string) => Promise<void>;
 }
 
 export const useArenaStore = create<ArenaState>((set, get) => {
@@ -320,6 +321,23 @@ export const useArenaStore = create<ArenaState>((set, get) => {
         });
       } catch (err) {
         console.error('Erro ao alternar áudio:', err);
+      }
+    },
+    
+    unlockAchievement: async (uid, achievementId, title, description, icon) => {
+      try {
+        const userAchievementsRef = doc(db, 'arenaAchievements', uid);
+        await setDoc(userAchievementsRef, {
+          unlocked: arrayUnion({
+            id: achievementId,
+            title,
+            description,
+            icon,
+            unlockedAt: Date.now()
+          })
+        }, { merge: true });
+      } catch (err) {
+        console.error('Erro ao salvar conquista no Firestore:', err);
       }
     }
   };

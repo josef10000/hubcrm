@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useArenaStore, GameMatch } from '@store/useArenaStore';
 import { ChessBoardState, ChessMove, ChessPieceType, ChessPiece, getChessValidMoves, applyChessMove, checkChessWinner, getBestChessMove } from '../helpers/chessLogic';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 
 interface ChessBoardProps {
@@ -17,20 +17,122 @@ const CHESS_PIECES_UNICODE: Record<string, string> = {
   'pawn': '♟', 'knight': '♞', 'bishop': '♝', 'rook': '♜', 'queen': '♛', 'king': '♚'
 };
 
+// -----------------------------------------------------------------
+// SISTEMA DE ÁUDIO PROCEDURAL INTEGRADO (WEB AUDIO API)
+// -----------------------------------------------------------------
+let chessAudioCtx: AudioContext | null = null;
+let chessMusicInterval: any = null;
+
+function stopChessProceduralMusic() {
+  if (chessMusicInterval) {
+    clearInterval(chessMusicInterval);
+    chessMusicInterval = null;
+  }
+  if (chessAudioCtx) {
+    try {
+      chessAudioCtx.close();
+    } catch (e) {}
+    chessAudioCtx = null;
+  }
+}
+
+function playChessProceduralMusic() {
+  stopChessProceduralMusic();
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    chessAudioCtx = new AudioContextClass();
+    
+    // Acordes cíclicos espaciais e aveludados Lofi: Cmaj9 -> Fmaj9 -> Am9 -> G6
+    const chords = [
+      [261.63, 329.63, 392.00, 493.88, 587.33], // Cmaj9
+      [349.23, 440.00, 523.25, 659.25, 783.99], // Fmaj9
+      [220.00, 261.63, 329.63, 392.00, 493.88], // Am9
+      [196.00, 246.94, 293.66, 392.00, 440.00]  // G6
+    ];
+    let step = 0;
+
+    const playNextChord = () => {
+      if (!chessAudioCtx || chessAudioCtx.state === 'suspended') return;
+      const now = chessAudioCtx.currentTime;
+      const notes = chords[step % chords.length];
+      
+      notes.forEach((freq, idx) => {
+        const osc = chessAudioCtx!.createOscillator();
+        const gain = chessAudioCtx!.createGain();
+        const filter = chessAudioCtx!.createBiquadFilter();
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+        osc.frequency.linearRampToValueAtTime(freq + Math.sin(idx) * 2, now + 5.5);
+        
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(650 + idx * 80, now);
+        
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.012, now + 1.8);
+        gain.gain.setValueAtTime(0.012, now + 4.0);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 5.8);
+        
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(chessAudioCtx!.destination);
+        
+        osc.start(now);
+        osc.stop(now + 6.0);
+      });
+      step++;
+    };
+
+    playNextChord();
+    chessMusicInterval = setInterval(playNextChord, 6000);
+  } catch (e) {
+    console.warn('Áudio procedural suspenso:', e);
+  }
+}
+
+// -----------------------------------------------------------------
+// SKINS E TEMAS ESTÉTICOS DE LUXO
+// -----------------------------------------------------------------
+type ChessSkin = 'cyberpunk' | 'wood' | 'holographic';
+
+const THEME_SKINS = {
+  cyberpunk: {
+    boardBg: 'bg-[#07090f] border-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.6)]',
+    darkSquare: 'bg-[#151928]',
+    lightSquare: 'bg-[#2a3045]',
+    p1Piece: 'text-white drop-shadow-[0_2px_6px_rgba(255,255,255,0.45)]',
+    p2Piece: 'text-amber-500 drop-shadow-[0_2px_8px_rgba(245,158,11,0.6)]'
+  },
+  wood: {
+    boardBg: 'bg-[#3b2314] border-[#29170c] shadow-[0_20px_50px_rgba(0,0,0,0.8)]',
+    darkSquare: 'bg-[#5e381b]',
+    lightSquare: 'bg-[#d7a15c]',
+    p1Piece: 'text-[#f5ebd7] drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]',
+    p2Piece: 'text-[#241205] drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)]'
+  },
+  holographic: {
+    boardBg: 'bg-[#0f1124] border-indigo-500/15 shadow-[0_20px_50px_rgba(0,0,0,0.5)]',
+    darkSquare: 'bg-indigo-950/45 border-white/[0.02]',
+    lightSquare: 'bg-white/5 border-white/[0.02]',
+    p1Piece: 'text-purple-300 drop-shadow-[0_0_10px_rgba(192,132,252,0.65)]',
+    p2Piece: 'text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.7)]'
+  }
+};
+
 export function ChessBoard({ match, isLocal, aiDifficulty = 3, onExit }: ChessBoardProps) {
   const { user } = useAuth();
   const makeMove = useArenaStore(state => state.makeMove);
   const exitActiveMatch = useArenaStore(state => state.exitActiveMatch);
+  const unlockAchievement = useArenaStore(state => state.unlockAchievement);
 
-  // Estado inicial padrão do tabuleiro
+  // Peças iniciais padrão
   const initialPieces: Record<string, ChessPiece> = {
-    // Peças brancas (Jogador 1) - Linhas 6 e 7
     '6,0': { player: 1, type: 'pawn' }, '6,1': { player: 1, type: 'pawn' }, '6,2': { player: 1, type: 'pawn' }, '6,3': { player: 1, type: 'pawn' },
     '6,4': { player: 1, type: 'pawn' }, '6,5': { player: 1, type: 'pawn' }, '6,6': { player: 1, type: 'pawn' }, '6,7': { player: 1, type: 'pawn' },
     '7,0': { player: 1, type: 'rook' }, '7,1': { player: 1, type: 'knight' }, '7,2': { player: 1, type: 'bishop' }, '7,3': { player: 1, type: 'queen' },
     '7,4': { player: 1, type: 'king' }, '7,5': { player: 1, type: 'bishop' }, '7,6': { player: 1, type: 'knight' }, '7,7': { player: 1, type: 'rook' },
     
-    // Peças pretas (Jogador 2) - Linhas 0 e 1
     '0,0': { player: 2, type: 'rook' }, '0,1': { player: 2, type: 'knight' }, '0,2': { player: 2, type: 'bishop' }, '0,3': { player: 2, type: 'queen' },
     '0,4': { player: 2, type: 'king' }, '0,5': { player: 2, type: 'bishop' }, '0,6': { player: 2, type: 'knight' }, '0,7': { player: 2, type: 'rook' },
     '1,0': { player: 2, type: 'pawn' }, '1,1': { player: 2, type: 'pawn' }, '1,2': { player: 2, type: 'pawn' }, '1,3': { player: 2, type: 'pawn' },
@@ -39,31 +141,36 @@ export function ChessBoard({ match, isLocal, aiDifficulty = 3, onExit }: ChessBo
 
   const [localBoard, setLocalBoard] = useState<ChessBoardState>({ pieces: initialPieces });
   const [localTurn, setLocalTurn] = useState<string>(user?.uid || 'player1');
-
-  const [selectedCell, setSelectedCell] = useState<string | null>(null); // "r,c"
+  const [selectedCell, setSelectedCell] = useState<string | null>(null);
   const [winnerPlayer, setWinnerPlayer] = useState<number | null>(null);
   const [isAiThinking, setIsAiThinking] = useState(false);
+  const [currentSkin, setCurrentSkin] = useState<ChessSkin>('cyberpunk');
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
 
-  // Relógios de jogo (segundos)
-  const [p1Clock, setP1Clock] = useState(600); // 10 min de relógio
+  // Efeitos especiais de reações e partículas
+  const [floatingEmojis, setFloatingEmojis] = useState<{ id: string; emoji: string; x: number; y: number }[]>([]);
+  const [particles, setParticles] = useState<{ id: string; color: string; x: number; y: number; dx: number; dy: number }[]>([]);
+
+  const [p1Clock, setP1Clock] = useState(600);
   const [p2Clock, setP2Clock] = useState(600);
 
-  // Sincronização em tempo real para jogos online multiplayer
   const currentBoard = isLocal ? localBoard : (match.boardState || localBoard) as ChessBoardState;
   const currentTurn = isLocal ? localTurn : match.turn;
   const isMyTurn = isLocal ? localTurn === user?.uid : match.turn === user?.uid;
   const myPlayerNum = isLocal ? 1 : (match.player1Id === user?.uid ? 1 : 2);
 
-  // Calcula movimentos legais totais para o jogador da vez
   const activePlayerNum = isLocal ? (localTurn === 'computer' ? 2 : 1) : (match.turn === match.player1Id ? 1 : 2);
   const validMoves = getChessValidMoves(currentBoard, activePlayerNum);
+  const selectedMoves = selectedCell ? validMoves.filter(m => m.from === selectedCell) : [];
 
-  // Movimentos da peça atualmente selecionada
-  const selectedMoves = selectedCell 
-    ? validMoves.filter(m => m.from === selectedCell)
-    : [];
+  const theme = THEME_SKINS[currentSkin];
 
-  // Efeitos sonoros procedimentais do Xadrez (som seco clássico de peça tocando madeira)
+  useEffect(() => {
+    return () => {
+      stopChessProceduralMusic();
+    };
+  }, []);
+
   const playChessSound = (isCapture: boolean) => {
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -71,25 +178,69 @@ export function ChessBoard({ match, isLocal, aiDifficulty = 3, onExit }: ChessBo
       const ctx = new AudioCtx();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(isCapture ? 480 : 320, ctx.currentTime);
       osc.frequency.linearRampToValueAtTime(isCapture ? 200 : 250, ctx.currentTime + 0.12);
-      
       gain.gain.setValueAtTime(0.18, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
-      
       osc.connect(gain);
       gain.connect(ctx.destination);
-      
       osc.start();
       osc.stop(ctx.currentTime + 0.12);
-    } catch (e) {
-      console.warn('Audio Context indisponível:', e);
+    } catch (e) {}
+  };
+
+  const toggleMusic = () => {
+    if (isMusicPlaying) {
+      stopChessProceduralMusic();
+      setIsMusicPlaying(false);
+      toast.info('Música ambiente pausada');
+    } else {
+      playChessProceduralMusic();
+      setIsMusicPlaying(true);
+      toast.success('Música ambiente procedural ativada 🎵');
     }
   };
 
-  // Temporizador para relógios
+  // Dispara explosão visual no Xadrez
+  const triggerExplosion = (x: number, y: number, color: string) => {
+    const newParticles: any[] = [];
+    const count = 14;
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * 2 * Math.PI;
+      const speed = 1.2 + Math.random() * 2;
+      newParticles.push({
+        id: `${Date.now()}-${i}-${Math.random()}`,
+        color,
+        x: x * 48 + 24, // escala de pixel aproximada para grade 8x8 de 384px
+        y: y * 48 + 24,
+        dx: Math.cos(angle) * speed,
+        dy: Math.sin(angle) * speed
+      });
+    }
+    setParticles(prev => [...prev, ...newParticles]);
+    setTimeout(() => {
+      setParticles(prev => prev.filter(p => !newParticles.find(np => np.id === p.id)));
+    }, 750);
+  };
+
+  const triggerReaction = (emoji: string) => {
+    const id = `${Date.now()}-${Math.random()}`;
+    const x = 50 + Math.random() * 100;
+    const newReaction = { id, emoji, x, y: 350 };
+    setFloatingEmojis(prev => [...prev, newReaction]);
+    setTimeout(() => {
+      setFloatingEmojis(prev => prev.filter(re => re.id !== id));
+    }, 2000);
+  };
+
+  const checkChessAchievements = (id: string, title: string, desc: string, icon: string) => {
+    if (user?.uid) {
+      unlockAchievement(user.uid, id, title, desc, icon);
+    }
+  };
+
+  // Clocks
   useEffect(() => {
     if (winnerPlayer) return;
     const timer = setInterval(() => {
@@ -100,26 +251,65 @@ export function ChessBoard({ match, isLocal, aiDifficulty = 3, onExit }: ChessBo
         setP2Clock(prev => (prev > 0 ? prev - 1 : 0));
       }
     }, 1000);
-
     return () => clearInterval(timer);
   }, [currentTurn, isLocal, user?.uid, match.player1Id, winnerPlayer]);
 
-  // Se algum relógio zerar, determina o vencedor
   useEffect(() => {
     if (p1Clock === 0) {
       setWinnerPlayer(2);
-      toast.error('O tempo do Jogador 1 acabou!');
+      toast.error('O tempo acabou! As Pretas venceram.');
     } else if (p2Clock === 0) {
       setWinnerPlayer(1);
-      toast.success('O tempo do Jogador 2 acabou!');
+      toast.success('O tempo acabou! As Brancas venceram.');
     }
   }, [p1Clock, p2Clock]);
 
+  // UX de Clique
   const handleCellClick = (r: number, c: number) => {
     if (!isMyTurn || winnerPlayer || isAiThinking) return;
 
     const cellKey = `${r},${c}`;
     const piece = currentBoard.pieces[cellKey];
+
+    // --- UX PREMIUM: ROQUE INTELIGENTE CLICANDO NA TORRE ALIANÇA ---
+    if (selectedCell && piece && piece.player === myPlayerNum && piece.type === 'rook') {
+      const selectedPiece = currentBoard.pieces[selectedCell];
+      if (selectedPiece && selectedPiece.type === 'king' && selectedPiece.player === myPlayerNum) {
+        if (selectedCell === '7,4') {
+          if (cellKey === '7,7') {
+            const hasMove = selectedMoves.find(m => m.to === '7,6');
+            if (hasMove) {
+              handleTargetCellClick(7, 6);
+              checkChessAchievements('chess_cast', 'A Fortaleza', 'Realizou o movimento de Roque na Hub Arena.', '🏰');
+              return;
+            }
+          } else if (cellKey === '7,0') {
+            const hasMove = selectedMoves.find(m => m.to === '7,2');
+            if (hasMove) {
+              handleTargetCellClick(7, 2);
+              checkChessAchievements('chess_cast', 'A Fortaleza', 'Realizou o movimento de Roque na Hub Arena.', '🏰');
+              return;
+            }
+          }
+        } else if (selectedCell === '0,4') {
+          if (cellKey === '0,7') {
+            const hasMove = selectedMoves.find(m => m.to === '0,6');
+            if (hasMove) {
+              handleTargetCellClick(0, 6);
+              checkChessAchievements('chess_cast', 'A Fortaleza', 'Realizou o movimento de Roque na Hub Arena.', '🏰');
+              return;
+            }
+          } else if (cellKey === '0,0') {
+            const hasMove = selectedMoves.find(m => m.to === '0,2');
+            if (hasMove) {
+              handleTargetCellClick(0, 2);
+              checkChessAchievements('chess_cast', 'A Fortaleza', 'Realizou o movimento de Roque na Hub Arena.', '🏰');
+              return;
+            }
+          }
+        }
+      }
+    }
 
     if (piece && piece.player === myPlayerNum) {
       setSelectedCell(cellKey);
@@ -133,7 +323,6 @@ export function ChessBoard({ match, isLocal, aiDifficulty = 3, onExit }: ChessBo
     const targetMove = selectedMoves.find(m => m.to === targetKey);
 
     if (!targetMove) {
-      // Se clicou em outra peça aliada, troca seleção
       const piece = currentBoard.pieces[targetKey];
       if (piece && piece.player === myPlayerNum) {
         setSelectedCell(targetKey);
@@ -144,6 +333,7 @@ export function ChessBoard({ match, isLocal, aiDifficulty = 3, onExit }: ChessBo
     }
 
     const nextBoard = applyChessMove(currentBoard, targetMove);
+    triggerExplosion(c, r, targetMove.capturedPiece ? '#ef4444' : '#10b981');
     playChessSound(!!targetMove.capturedPiece);
     setSelectedCell(null);
 
@@ -153,7 +343,8 @@ export function ChessBoard({ match, isLocal, aiDifficulty = 3, onExit }: ChessBo
       setLocalBoard(nextBoard);
       if (winResult) {
         setWinnerPlayer(winResult);
-        toast.success('Parabéns! Você venceu a inteligência artificial do Hub!');
+        toast.success('Parabéns! Você venceu a inteligência artificial do Hub! 🏆');
+        checkChessAchievements('chess_win', 'Grão-Mestre', 'Venceu a inteligência artificial no Xadrez.', '👑');
         return;
       }
       setLocalTurn('computer');
@@ -162,21 +353,24 @@ export function ChessBoard({ match, isLocal, aiDifficulty = 3, onExit }: ChessBo
       await makeMove(nextBoard, `${targetMove.from}-${targetMove.to}`, winnerUserId);
       if (winResult) {
         toast.success('Vitória e Xeque-mate na Hub Arena!');
+        checkChessAchievements('chess_win', 'Grão-Mestre', 'Venceu uma partida de Xadrez na Arena.', '👑');
       }
     }
   };
 
-  // Efeito de IA do Computador no modo local (singleplayer)
+  // Efeito da IA no Xadrez
   useEffect(() => {
     if (isLocal && localTurn === 'computer' && !winnerPlayer) {
       setIsAiThinking(true);
 
       const timer = setTimeout(() => {
-        // Computa o melhor movimento (CPU = Jogador 2)
         const bestMove = getBestChessMove(localBoard, 2);
         
         if (bestMove) {
           const nextBoard = applyChessMove(localBoard, bestMove);
+          
+          const [toR, toC] = bestMove.to.split(',').map(Number);
+          triggerExplosion(toC, toR, bestMove.capturedPiece ? '#ef4444' : '#6366f1');
           playChessSound(!!bestMove.capturedPiece);
           
           setLocalBoard(nextBoard);
@@ -189,11 +383,10 @@ export function ChessBoard({ match, isLocal, aiDifficulty = 3, onExit }: ChessBo
             setLocalTurn(user?.uid || 'player1');
           }
         } else {
-          // Sem movimentos, computador perde
           setWinnerPlayer(1);
-          toast.success('Você venceu por Xeque-mate / Afogamento!');
+          toast.success('Você venceu por Xeque-mate!');
+          checkChessAchievements('chess_win', 'Grão-Mestre', 'Venceu o computador no Xadrez.', '👑');
         }
-        
         setIsAiThinking(false);
       }, 900);
 
@@ -201,7 +394,6 @@ export function ChessBoard({ match, isLocal, aiDifficulty = 3, onExit }: ChessBo
     }
   }, [isLocal, localTurn, localBoard, winnerPlayer, user?.uid]);
 
-  // Sincroniza finais de jogo online
   useEffect(() => {
     if (!isLocal && match.boardState) {
       const winResult = checkChessWinner(match.boardState as ChessBoardState);
@@ -218,20 +410,7 @@ export function ChessBoard({ match, isLocal, aiDifficulty = 3, onExit }: ChessBo
   };
 
   const handleRestartLocalGame = () => {
-    const defaultPieces = {
-      // Peças brancas (Jogador 1) - Linhas 6 e 7
-      '6,0': { player: 1, type: 'pawn' as const }, '6,1': { player: 1, type: 'pawn' as const }, '6,2': { player: 1, type: 'pawn' as const }, '6,3': { player: 1, type: 'pawn' as const },
-      '6,4': { player: 1, type: 'pawn' as const }, '6,5': { player: 1, type: 'pawn' as const }, '6,6': { player: 1, type: 'pawn' as const }, '6,7': { player: 1, type: 'pawn' as const },
-      '7,0': { player: 1, type: 'rook' as const }, '7,1': { player: 1, type: 'knight' as const }, '7,2': { player: 1, type: 'bishop' as const }, '7,3': { player: 1, type: 'queen' as const },
-      '7,4': { player: 1, type: 'king' as const }, '7,5': { player: 1, type: 'bishop' as const }, '7,6': { player: 1, type: 'knight' as const }, '7,7': { player: 1, type: 'rook' as const },
-      
-      // Peças pretas (Jogador 2) - Linhas 0 e 1
-      '0,0': { player: 2, type: 'rook' as const }, '0,1': { player: 2, type: 'knight' as const }, '0,2': { player: 2, type: 'bishop' as const }, '0,3': { player: 2, type: 'queen' as const },
-      '0,4': { player: 2, type: 'king' as const }, '0,5': { player: 2, type: 'bishop' as const }, '0,6': { player: 2, type: 'knight' as const }, '0,7': { player: 2, type: 'rook' as const },
-      '1,0': { player: 2, type: 'pawn' as const }, '1,1': { player: 2, type: 'pawn' as const }, '1,2': { player: 2, type: 'pawn' as const }, '1,3': { player: 2, type: 'pawn' as const },
-      '1,4': { player: 2, type: 'pawn' as const }, '1,5': { player: 2, type: 'pawn' as const }, '1,6': { player: 2, type: 'pawn' as const }, '1,7': { player: 2, type: 'pawn' as const }
-    };
-    setLocalBoard({ pieces: defaultPieces });
+    setLocalBoard({ pieces: initialPieces });
     setLocalTurn(user?.uid || 'player1');
     setSelectedCell(null);
     setWinnerPlayer(null);
@@ -253,17 +432,61 @@ export function ChessBoard({ match, isLocal, aiDifficulty = 3, onExit }: ChessBo
   };
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col md:flex-row gap-8 items-center justify-center py-6 select-none animate-in fade-in duration-300">
+    <div className="max-w-4xl mx-auto flex flex-col md:flex-row gap-8 items-center justify-center py-6 select-none animate-in fade-in duration-300 relative">
       
       {/* 📊 PAINEL ESTATÍSTICO DE JOGO (ESQUERDA) */}
-      <div className="w-64 bg-slate-950/65 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-6 flex flex-col gap-6 select-none shadow-2xl">
+      <div className="w-64 bg-slate-950/65 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-6 flex flex-col gap-6 select-none shadow-2xl z-10">
         <div className="space-y-1">
           <span className="text-[8px] font-black text-purple-500 uppercase tracking-widest">Xadrez Estratégico</span>
           <h3 className="text-sm font-black text-white uppercase tracking-widest mt-1">Status da Arena</h3>
         </div>
 
+        {/* 🎨 SELETOR DE SKINS */}
+        <div className="space-y-1.5">
+          <span className="text-[7px] font-black text-gray-500 uppercase">Tema do Tabuleiro</span>
+          <div className="grid grid-cols-3 gap-1 bg-white/[0.02] border border-white/5 rounded-xl p-1">
+            {(['cyberpunk', 'wood', 'holographic'] as ChessSkin[]).map(skin => (
+              <button
+                key={skin}
+                onClick={() => setCurrentSkin(skin)}
+                className={`py-1.5 text-[7px] font-black uppercase rounded-lg transition-all cursor-pointer ${
+                  currentSkin === skin
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'text-gray-500 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                {skin === 'cyberpunk' ? 'Tron' : skin === 'wood' ? 'Madeira' : 'Holog'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 🎵 BOTÃO DA MÚSICA AMBIENTE */}
+        <div className="flex items-center justify-between bg-white/[0.02] border border-white/5 rounded-xl p-3.5">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[7px] font-black text-gray-500 uppercase">Som da Arena</span>
+            <span className="text-[8px] font-bold text-white">Música Lofi</span>
+          </div>
+
+          <button
+            onClick={toggleMusic}
+            className={`w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+              isMusicPlaying
+              ? 'bg-gradient-to-br from-purple-500 to-rose-500 text-white shadow-[0_0_12px_rgba(168,85,247,0.4)]'
+              : 'bg-white/5 text-gray-400 border border-white/5'
+            }`}
+          >
+            {isMusicPlaying ? (
+              <div className="flex gap-0.5 items-end h-3">
+                <span className="w-0.5 bg-white rounded-full animate-bounce h-2" style={{ animationDelay: '0.1s' }} />
+                <span className="w-0.5 bg-white rounded-full animate-bounce h-3" style={{ animationDelay: '0.3s' }} />
+                <span className="w-0.5 bg-white rounded-full animate-bounce h-1.5" style={{ animationDelay: '0.5s' }} />
+              </div>
+            ) : '🎵'}
+          </button>
+        </div>
+
         <div className="flex flex-col gap-3">
-          {/* Card do Jogador 1 (Você / Peças Claras) */}
           <div className={`p-4 rounded-xl border flex flex-col gap-1 relative overflow-hidden ${
             currentTurn === (isLocal ? user?.uid : match.player1Id) 
             ? 'bg-purple-500/10 border-purple-500/30' 
@@ -277,7 +500,6 @@ export function ChessBoard({ match, isLocal, aiDifficulty = 3, onExit }: ChessBo
             )}
           </div>
 
-          {/* Card do Jogador 2 (Oponente / Peças Escuras / CPU) */}
           <div className={`p-4 rounded-xl border flex flex-col gap-1 relative overflow-hidden ${
             currentTurn === (isLocal ? 'computer' : match.player2Id) 
             ? 'bg-amber-500/10 border-amber-500/30' 
@@ -292,7 +514,6 @@ export function ChessBoard({ match, isLocal, aiDifficulty = 3, onExit }: ChessBo
           </div>
         </div>
 
-        {/* Notificação de Vencedor */}
         {winnerPlayer && (
           <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center space-y-1.5 animate-bounce">
             <span className="text-[8px] font-black text-emerald-400 uppercase tracking-widest">Partida Encerrada</span>
@@ -320,14 +541,62 @@ export function ChessBoard({ match, isLocal, aiDifficulty = 3, onExit }: ChessBo
       </div>
 
       {/* 👑 TABULEIRO DE XADREZ CIBERNÉTICO (DIREITA) */}
-      <div className="flex-1 flex flex-col items-center justify-center">
+      <div className="flex-1 flex flex-col items-center justify-center z-10 relative">
         
-        <div className="relative p-6 bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-[3rem] shadow-[0_25px_60px_rgba(0,0,0,0.5)]">
+        {/* REAÇÕES FLUTUANTES */}
+        <div className="absolute inset-0 z-50 pointer-events-none overflow-hidden">
+          <AnimatePresence>
+            {floatingEmojis.map(re => (
+              <motion.div
+                key={re.id}
+                initial={{ opacity: 0, y: re.y, scale: 0.5, x: re.x }}
+                animate={{ 
+                  opacity: [0, 1, 1, 0], 
+                  y: re.y - 180, 
+                  scale: [0.5, 1.2, 1.2, 0.8],
+                  x: re.x + Math.sin(re.y) * 15
+                }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.8, ease: 'easeOut' }}
+                className="absolute text-4xl select-none"
+              >
+                {re.emoji}
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+
+        {/* PARTÍCULAS NEON HSL */}
+        <div className="absolute inset-0 z-40 pointer-events-none overflow-hidden">
+          {particles.map(p => (
+            <motion.div
+              key={p.id}
+              initial={{ x: p.x, y: p.y, opacity: 1, scale: 1 }}
+              animate={{ 
+                x: p.x + p.dx * 12, 
+                y: p.y + p.dy * 12, 
+                opacity: 0,
+                scale: 0.2
+              }}
+              transition={{ duration: 0.75, ease: 'easeOut' }}
+              style={{
+                position: 'absolute',
+                width: '5px',
+                height: '5px',
+                borderRadius: '50%',
+                backgroundColor: p.color,
+                boxShadow: `0 0 8px ${p.color}, 0 0 16px ${p.color}`
+              }}
+            />
+          ))}
+        </div>
+
+        <div className="relative p-6 bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-[3rem]">
           {/* Luz de Fundo Neon */}
           <div className="absolute inset-0 bg-purple-500/5 rounded-[3rem] blur-2xl z-0 pointer-events-none" />
 
           {/* Grid do Tabuleiro de Xadrez */}
-          <div className="relative z-10 grid grid-rows-8 gap-0.5 w-[384px] h-[384px] bg-[#07090f] rounded-2xl p-1 overflow-hidden border border-white/5">
+          <div className={`relative z-10 grid grid-rows-8 gap-0.5 w-[384px] h-[384px] p-1.5 overflow-hidden border rounded-2xl ${theme.boardBg}`}>
             {Array(8).fill(null).map((_, rIdx) => (
               <div key={rIdx} className="grid grid-cols-8 gap-0.5">
                 {Array(8).fill(null).map((_, cIdx) => {
@@ -336,7 +605,6 @@ export function ChessBoard({ match, isLocal, aiDifficulty = 3, onExit }: ChessBo
                   const isBlackSquare = (rIdx + cIdx) % 2 === 1;
                   const isSelected = selectedCell === cellKey;
                   
-                  // Verifica se esta casa é um destino válido para a peça selecionada
                   const isValidTarget = selectedMoves.find(m => m.to === cellKey);
 
                   return (
@@ -345,15 +613,15 @@ export function ChessBoard({ match, isLocal, aiDifficulty = 3, onExit }: ChessBo
                       onClick={() => piece ? handleCellClick(rIdx, cIdx) : isValidTarget && handleTargetCellClick(rIdx, cIdx)}
                       className={`w-11 h-11 flex items-center justify-center relative select-none cursor-pointer transition-all ${
                         isBlackSquare 
-                        ? 'bg-[#151928]' // Azul grafite
-                        : 'bg-[#2a3045]' // Cinza azulado claro
+                        ? theme.darkSquare 
+                        : theme.lightSquare
                       }`}
                     >
                       {/* Destaque de destino válido */}
                       {isValidTarget && (
                         <div 
                           onClick={() => handleTargetCellClick(rIdx, cIdx)}
-                          className="absolute inset-1.5 border-2 border-emerald-500/60 rounded-full animate-pulse shadow-[0_0_12px_rgba(16,185,129,0.3)] z-20 cursor-pointer" 
+                          className="absolute inset-1.5 border-2 border-emerald-500/60 rounded-full animate-pulse shadow-[0_0_12px_rgba(16,185,129,0.35)] z-20 cursor-pointer" 
                         />
                       )}
 
@@ -363,9 +631,7 @@ export function ChessBoard({ match, isLocal, aiDifficulty = 3, onExit }: ChessBo
                           layoutId={`chess-piece-${cellKey}`}
                           onClick={() => piece.player === myPlayerNum ? handleCellClick(rIdx, cIdx) : isValidTarget && handleTargetCellClick(rIdx, cIdx)}
                           className={`w-10 h-10 flex items-center justify-center text-3xl font-bold cursor-pointer transition-all z-10 ${
-                            piece.player === 1
-                            ? 'text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] hover:scale-105'
-                            : 'text-amber-500 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] hover:scale-105 filter brightness-95'
+                            piece.player === 1 ? theme.p1Piece : theme.p2Piece
                           } ${
                             isSelected ? 'scale-110 -translate-y-1 ring-2 ring-primary-500 rounded-lg bg-primary-500/10' : ''
                           }`}
@@ -379,6 +645,19 @@ export function ChessBoard({ match, isLocal, aiDifficulty = 3, onExit }: ChessBo
               </div>
             ))}
           </div>
+        </div>
+
+        {/* 💬 CHAT DE EMOJIS RÁPIDOS */}
+        <div className="flex gap-2 mt-4 bg-slate-950/60 backdrop-blur-xl border border-white/10 rounded-full px-4 py-2 shadow-lg">
+          {(['😂', '🤔', '😎', '🤯', '🎲', '🏆']).map(emoji => (
+            <button
+              key={emoji}
+              onClick={() => triggerReaction(emoji)}
+              className="text-xl hover:scale-135 active:scale-95 transition-all cursor-pointer select-none"
+            >
+              {emoji}
+            </button>
+          ))}
         </div>
 
       </div>

@@ -7,9 +7,19 @@ import { CheckersBoard } from '../components/CheckersBoard';
 import { ChessBoard } from '../components/ChessBoard';
 import { LudoBoard } from '../components/LudoBoard';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc } from 'firebase/firestore';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const ACHIEVEMENTS_LIST = [
+  { id: 'chess_win', title: 'Grão-Mestre', desc: 'Venceu no Xadrez na Arena', icon: '👑' },
+  { id: 'ludo_win', title: 'Campeão Ludo', desc: 'Venceu no Ludo 4P na Arena', icon: '🎲' },
+  { id: 'c4_win', title: 'Conexão Superior', desc: 'Venceu no Connect 4 na Arena', icon: '🏆' },
+  { id: 'chk_win', title: 'Mestre Damas', desc: 'Venceu no Damas na Arena', icon: '🏅' },
+  { id: 'chess_cast', title: 'A Fortaleza', desc: 'Realizou o movimento de Roque no Xadrez', icon: '🏰' },
+  { id: 'ludo_cap', title: 'Predador', desc: 'Capturou uma ficha inimiga no Ludo', icon: '💥' },
+  { id: 'chk_king', title: 'Voo Majestoso', desc: 'Promoveu uma peça a Dama Brasileira', icon: '👑' }
+];
 
 export default function ArenaView() {
   const { user } = useAuth();
@@ -28,9 +38,10 @@ export default function ArenaView() {
   // Estados locais
   const [selectedGame, setSelectedGame] = useState<GameType>('connect4');
   const [gameMode, setGameMode] = useState<'single' | 'multi'>('single');
-  const [aiDifficulty, setAiDifficulty] = useState<number>(3); // 2 = Fácil, 3 = Médio, 4 = Difícil
+  const [aiDifficulty, setAiDifficulty] = useState<number>(3); // 2 = Fácil, 3 = Médio, 4 = Lendário
   const [localActiveSingleMatch, setLocalActiveSingleMatch] = useState<{ active: boolean; gameType: GameType } | null>(null);
   const [realWins, setRealWins] = useState<number>(0);
+  const [achievements, setAchievements] = useState<any[]>([]);
 
   // Escuta vitórias reais do usuário logado na Arena
   useEffect(() => {
@@ -47,6 +58,26 @@ export default function ArenaView() {
         (error) => {
           console.warn('Firestore: ranking de vitórias desativado por regras de segurança:', error.message);
           setRealWins(0);
+        }
+      );
+      return () => unsubscribe();
+    }
+  }, [user?.uid]);
+
+  // Escuta conquistas (Achievements) no Firestore em tempo real
+  useEffect(() => {
+    if (user?.uid) {
+      const unsubscribe = onSnapshot(doc(db, 'arenaAchievements', user.uid), 
+        (snapshot) => {
+          if (snapshot.exists()) {
+            const data = snapshot.data();
+            if (data && data.unlocked) {
+              setAchievements(data.unlocked);
+            }
+          }
+        },
+        (error) => {
+          console.warn('Firestore: conquistas desativadas por seguranca:', error.message);
         }
       );
       return () => unsubscribe();
@@ -123,7 +154,6 @@ export default function ArenaView() {
   }
 
   if (localActiveSingleMatch?.active) {
-    // Mock de objeto match para compatibilidade com o componente local
     const mockMatch = {
       id: 'local_game',
       gameType: localActiveSingleMatch.gameType,
@@ -158,7 +188,7 @@ export default function ArenaView() {
   }
 
   return (
-    <div className="w-full min-h-[calc(100vh-100px)] p-8 bg-[#030712]/40 relative overflow-hidden select-none">
+    <div className="w-full min-h-[calc(100vh-100px)] p-8 bg-[#030712]/40 relative overflow-hidden select-none animate-in fade-in duration-300">
       
       {/* 🚀 MODAL FLUTUANTE DE ESPERA DE CONVITE */}
       <AnimatePresence>
@@ -201,7 +231,6 @@ export default function ArenaView() {
         {/* 🎮 1. SELEÇÃO DE JOGOS & MODOS (ESQUERDA) */}
         <div className="flex-1 flex flex-col gap-6">
           
-          {/* Header Visual */}
           <div className="space-y-2">
             <span className="text-[10px] font-black text-primary-500 uppercase tracking-[0.4em]">Hub Arena</span>
             <h1 className="text-4xl font-black text-white tracking-tight leading-none">CENTRAL DE JOGOS & DESCOMPRESSÃO</h1>
@@ -348,17 +377,17 @@ export default function ArenaView() {
 
         </div>
 
-        {/* 👥 2. STATUS DE CONTATOS & LEADERBOARD (DIREITA) */}
+        {/* 👥 2. STATUS DE CONTATOS, LEADERBOARD & CONQUISTAS (DIREITA) */}
         <div className="w-80 shrink-0 flex flex-col gap-6">
           
           {/* Caixa de Funcionários Online */}
-          <div className="bg-slate-950/30 border border-white/5 rounded-[2.5rem] p-6 flex flex-col gap-5 select-none min-h-[300px]">
+          <div className="bg-slate-950/30 border border-white/5 rounded-[2.5rem] p-6 flex flex-col gap-5 select-none min-h-[250px]">
             <div>
               <span className="text-[8px] font-black text-gray-500 uppercase tracking-widest">Integrantes Online</span>
               <h3 className="text-xs font-black text-white uppercase tracking-widest mt-1">Colegas Conectados</h3>
             </div>
 
-            <div className="flex flex-col gap-2 overflow-y-auto max-h-[350px] custom-scrollbar pr-1">
+            <div className="flex flex-col gap-2 overflow-y-auto max-h-[250px] custom-scrollbar pr-1">
               {onlinePlayers.length > 0 ? (
                 onlinePlayers.map(player => (
                   <div 
@@ -388,9 +417,9 @@ export default function ArenaView() {
                   </div>
                 ))
               ) : (
-                <div className="py-12 text-center opacity-30 space-y-2">
+                <div className="py-8 text-center opacity-30 space-y-2">
                   <i className="ph ph-user-circle-minus text-3xl" />
-                  <p className="text-[9px] font-bold uppercase tracking-widest">Nenhum colega conectado no momento.</p>
+                  <p className="text-[9px] font-bold uppercase tracking-widest">Nenhum colega online.</p>
                 </div>
               )}
             </div>
@@ -417,9 +446,44 @@ export default function ArenaView() {
               ) : (
                 <div className="py-6 text-center opacity-35 space-y-1">
                   <i className="ph ph-shield-star text-xl text-primary-500" />
-                  <p className="text-[8px] font-bold uppercase tracking-widest">Nenhuma vitória real online no momento.</p>
+                  <p className="text-[8px] font-bold uppercase tracking-widest">Nenhuma vitória online.</p>
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* 🏆 MURAL DE CONQUISTAS (ACHIEVEMENTS) DOURADO */}
+          <div className="bg-slate-950/30 border border-white/5 rounded-[2.5rem] p-6 flex flex-col gap-4 select-none">
+            <div>
+              <span className="text-[8px] font-black text-gray-500 uppercase tracking-widest">Mural de Emblemas</span>
+              <h3 className="text-xs font-black text-white uppercase tracking-widest mt-1">Suas Conquistas</h3>
+            </div>
+
+            <div className="grid grid-cols-4 gap-2">
+              {ACHIEVEMENTS_LIST.map(ach => {
+                const isUnlocked = achievements.some(a => a.id === ach.id);
+                return (
+                  <div
+                    key={ach.id}
+                    title={`${ach.title}: ${ach.desc}`}
+                    className={`h-14 rounded-2xl border flex flex-col items-center justify-center relative cursor-help transition-all ${
+                      isUnlocked
+                      ? 'bg-gradient-to-br from-amber-500/10 to-yellow-500/20 border-amber-500/30 text-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.25)] hover:scale-105'
+                      : 'bg-white/[0.01] border-white/5 text-gray-700 opacity-30 filter grayscale'
+                    }`}
+                  >
+                    <span className="text-2xl">{ach.icon}</span>
+                    <span className="text-[5px] font-black uppercase text-center mt-1 w-full truncate px-1">
+                      {ach.title.split(' ')[0]}
+                    </span>
+                    {isUnlocked && (
+                      <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-500 rounded-full border border-slate-950 flex items-center justify-center text-[5px] text-gray-950 font-black">
+                        ✓
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 

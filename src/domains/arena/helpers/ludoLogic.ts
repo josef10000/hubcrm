@@ -46,13 +46,13 @@ export function getLudoCoords(color: LudoColor, token: LudoToken): { x: number; 
     ];
     const off = offsets[token.id];
     if (color === 'red') {
-      return { x: 2 + off.dx * 1.5, y: 2 + off.dy * 1.5 }; // Quadrante Superior Esquerdo (Vermelho)
+      return { x: 2 + off.dx, y: 2 + off.dy }; // Quadrante Superior Esquerdo (Vermelho)
     } else if (color === 'green') {
-      return { x: 11 + off.dx * 1.5, y: 2 + off.dy * 1.5 }; // Quadrante Superior Direito (Verde)
+      return { x: 11 + off.dx, y: 2 + off.dy }; // Quadrante Superior Direito (Verde)
     } else if (color === 'yellow') {
-      return { x: 2 + off.dx * 1.5, y: 11 + off.dy * 1.5 }; // Quadrante Inferior Esquerdo (Amarelo)
+      return { x: 2 + off.dx, y: 11 + off.dy }; // Quadrante Inferior Esquerdo (Amarelo)
     } else {
-      return { x: 11 + off.dx * 1.5, y: 11 + off.dy * 1.5 }; // Quadrante Inferior Direito (Azul)
+      return { x: 11 + off.dx, y: 11 + off.dy }; // Quadrante Inferior Direito (Azul)
     }
   }
 

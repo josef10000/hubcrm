@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useArenaStore, GameMatch } from '@store/useArenaStore';
 import { LudoBoardState, LudoToken, LudoColor, createInitialLudoState, getLudoValidMoves, applyLudoMove, getBestLudoMove, getLudoCoords, canLudoTokenMove } from '../helpers/ludoLogic';
@@ -12,29 +12,155 @@ interface LudoBoardProps {
   onExit?: () => void;
 }
 
+// -----------------------------------------------------------------
+// SISTEMA DE ÁUDIO PROCEDURAL INTEGRADO (WEB AUDIO API)
+// -----------------------------------------------------------------
+let ludoAudioCtx: AudioContext | null = null;
+let ludoMusicInterval: any = null;
+
+function stopLudoProceduralMusic() {
+  if (ludoMusicInterval) {
+    clearInterval(ludoMusicInterval);
+    ludoMusicInterval = null;
+  }
+  if (ludoAudioCtx) {
+    try {
+      ludoAudioCtx.close();
+    } catch (e) {}
+    ludoAudioCtx = null;
+  }
+}
+
+function playLudoProceduralMusic() {
+  stopLudoProceduralMusic();
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    ludoAudioCtx = new AudioContextClass();
+    
+    // Acordes cíclicos espaciais e aveludados Lofi: Cmaj9 -> Fmaj9 -> Am9 -> G6
+    const chords = [
+      [261.63, 329.63, 392.00, 493.88, 587.33], // Cmaj9
+      [349.23, 440.00, 523.25, 659.25, 783.99], // Fmaj9
+      [220.00, 261.63, 329.63, 392.00, 493.88], // Am9
+      [196.00, 246.94, 293.66, 392.00, 440.00]  // G6
+    ];
+    let step = 0;
+
+    const playNextChord = () => {
+      if (!ludoAudioCtx || ludoAudioCtx.state === 'suspended') return;
+      const now = ludoAudioCtx.currentTime;
+      const notes = chords[step % chords.length];
+      
+      notes.forEach((freq, idx) => {
+        const osc = ludoAudioCtx!.createOscillator();
+        const gain = ludoAudioCtx!.createGain();
+        const filter = ludoAudioCtx!.createBiquadFilter();
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+        osc.frequency.linearRampToValueAtTime(freq + Math.sin(idx) * 2, now + 5.5);
+        
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(650 + idx * 80, now);
+        
+        // Attack lento e Decay/Release longo de Pad aveludado
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.012, now + 1.8);
+        gain.gain.setValueAtTime(0.012, now + 4.0);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 5.8);
+        
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(ludoAudioCtx!.destination);
+        
+        osc.start(now);
+        osc.stop(now + 6.0);
+      });
+      step++;
+    };
+
+    playNextChord();
+    ludoMusicInterval = setInterval(playNextChord, 6000);
+  } catch (e) {
+    console.warn('Áudio procedural suspenso pelo navegador:', e);
+  }
+}
+
+// -----------------------------------------------------------------
+// SKINS E TEMAS ESTÉTICOS DE LUXO
+// -----------------------------------------------------------------
+type LudoSkin = 'cyberpunk' | 'wood' | 'holographic';
+
+const THEME_SKINS = {
+  cyberpunk: {
+    boardBg: 'bg-[#07090f] border-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.6)]',
+    trackBg: 'bg-[#151928]/60 border-white/[0.04] shadow-inner',
+    redBase: 'bg-rose-500/10 border-rose-500/20 shadow-[inset_0_0_20px_rgba(244,63,94,0.05)]',
+    greenBase: 'bg-emerald-500/10 border-emerald-500/20 shadow-[inset_0_0_20px_rgba(16,185,129,0.05)]',
+    yellowBase: 'bg-amber-500/10 border-amber-500/20 shadow-[inset_0_0_20px_rgba(245,158,11,0.05)]',
+    blueBase: 'bg-indigo-500/10 border-indigo-500/20 shadow-[inset_0_0_20px_rgba(99,102,241,0.05)]',
+    centerBg: 'bg-indigo-950/40 border-white/10 shadow-[0_0_30px_rgba(99,102,241,0.15)]',
+    socketBg: 'border-2 border-white/5 bg-slate-950/80 shadow-[inset_0_2px_5px_rgba(0,0,0,0.8)]',
+    cellBorder: 'border-white/[0.02]'
+  },
+  wood: {
+    boardBg: 'bg-[#3b2314] border-[#29170c] shadow-[0_20px_50px_rgba(0,0,0,0.8)]',
+    trackBg: 'bg-[#d7a15c]/95 border-[#85512b] shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)] rounded-md',
+    redBase: 'bg-[#8f2d24]/90 border-[#57140f] shadow-inner rounded-xl',
+    greenBase: 'bg-[#2b593f]/90 border-[#12301e] shadow-inner rounded-xl',
+    yellowBase: 'bg-[#d49b2c]/90 border-[#7a5410] shadow-inner rounded-xl',
+    blueBase: 'bg-[#294c7a]/90 border-[#0e223d] shadow-inner rounded-xl',
+    centerBg: 'bg-[#5e381b] border-[#2b170c] shadow-inner rounded-xl',
+    socketBg: 'border-[#2b170c] bg-[#1e0f07] shadow-[inset_0_3px_6px_rgba(0,0,0,0.9)]',
+    cellBorder: 'border-[#85512b]/55'
+  },
+  holographic: {
+    boardBg: 'bg-[#0f1124] border-indigo-500/15 shadow-[0_20px_50px_rgba(0,0,0,0.5)]',
+    trackBg: 'bg-white/5 border-white/10 shadow-[inset_0_1px_3px_rgba(255,255,255,0.05)] backdrop-blur-sm rounded-md',
+    redBase: 'bg-gradient-to-br from-rose-500/10 to-transparent border-rose-500/20 backdrop-blur-md rounded-xl',
+    greenBase: 'bg-gradient-to-br from-emerald-500/10 to-transparent border-emerald-500/20 backdrop-blur-md rounded-xl',
+    yellowBase: 'bg-gradient-to-br from-amber-500/10 to-transparent border-amber-500/20 backdrop-blur-md rounded-xl',
+    blueBase: 'bg-gradient-to-br from-indigo-500/10 to-transparent border-indigo-500/20 backdrop-blur-md rounded-xl',
+    centerBg: 'bg-gradient-to-tr from-rose-500/10 via-indigo-500/10 to-emerald-500/10 border-white/10 backdrop-blur-xl rounded-xl',
+    socketBg: 'border border-indigo-500/25 bg-indigo-950/50 shadow-[inset_0_1px_4px_rgba(99,102,241,0.35)]',
+    cellBorder: 'border-white/5'
+  }
+};
+
 export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoardProps) {
   const { user } = useAuth();
   const makeMove = useArenaStore(state => state.makeMove);
   const exitActiveMatch = useArenaStore(state => state.exitActiveMatch);
+  const unlockAchievement = useArenaStore(state => state.unlockAchievement);
 
-  // Estado centralizado do Ludo com 4 cores ativas
+  // Estados dos Jogos e Visuais
   const [localBoard, setLocalBoard] = useState<LudoBoardState>(createInitialLudoState());
-  const [localTurn, setLocalTurn] = useState<LudoColor>('red'); // Turnos locais: red -> green -> yellow -> blue
+  const [localTurn, setLocalTurn] = useState<LudoColor>('red');
   const [isAiThinking, setIsAiThinking] = useState(false);
   const [diceRolling, setDiceRolling] = useState(false);
+  const [currentSkin, setCurrentSkin] = useState<LudoSkin>('cyberpunk');
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
 
-  // Sincronização em tempo real para multiplayer e singleplayer
+  // Efeitos Especiais: Emojis flutuantes e Partículas
+  const [floatingEmojis, setFloatingEmojis] = useState<{ id: string; emoji: string; x: number; y: number }[]>([]);
+  const [particles, setParticles] = useState<{ id: string; color: string; x: number; y: number; dx: number; dy: number }[]>([]);
+
   const currentBoard = isLocal ? localBoard : (match.boardState || localBoard) as LudoBoardState;
-  
-  // No modo local, o jogador humano é a cor 'red' (Vermelho)
-  // No modo online, o Player 1 (criador) joga com 'red' e o Player 2 joga com 'green'. Amarelo e Azul são robôs cooperativos.
   const myColor: LudoColor = isLocal ? 'red' : (match.player1Id === user?.uid ? 'red' : 'green');
-  
-  // Quem é o jogador ativo da vez
   const activeColor: LudoColor = isLocal ? localTurn : (match.turn as LudoColor || 'red');
   const isMyTurn = isLocal ? localTurn === 'red' : (match.turn === user?.uid && activeColor === myColor);
 
-  // Efeitos Sonoros Procedimentais Premium
+  const theme = THEME_SKINS[currentSkin];
+
+  // Desativa música ao desmontar
+  useEffect(() => {
+    return () => {
+      stopLudoProceduralMusic();
+    };
+  }, []);
+
+  // Efeitos Sonoros Procedimentais Puros
   const playDiceSound = () => {
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -43,17 +169,15 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'triangle';
-      osc.frequency.setValueAtTime(80, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(550, ctx.currentTime + 0.35);
-      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      osc.frequency.setValueAtTime(90, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.35);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.start();
       osc.stop(ctx.currentTime + 0.35);
-    } catch (e) {
-      console.warn('Audio Context indisponível:', e);
-    }
+    } catch (e) {}
   };
 
   const playMoveSound = (isCapture: boolean) => {
@@ -64,27 +188,80 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(isCapture ? 680 : 360, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(isCapture ? 180 : 260, ctx.currentTime + 0.22);
-      gain.gain.setValueAtTime(0.18, ctx.currentTime);
+      osc.frequency.setValueAtTime(isCapture ? 700 : 380, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(isCapture ? 150 : 250, ctx.currentTime + 0.22);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.22);
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.start();
       osc.stop(ctx.currentTime + 0.22);
-    } catch (e) {
-      console.warn('Audio Context indisponível:', e);
+    } catch (e) {}
+  };
+
+  // Trilha sonora controle
+  const toggleMusic = () => {
+    if (isMusicPlaying) {
+      stopLudoProceduralMusic();
+      setIsMusicPlaying(false);
+      toast.info('Música ambiente pausada');
+    } else {
+      playLudoProceduralMusic();
+      setIsMusicPlaying(true);
+      toast.success('Música ambiente procedural ativada 🎵');
     }
   };
 
-  // Turno rotativo clássico do Ludo de 4 cores
+  // Efeito de Partículas Neon (Disparo)
+  const triggerExplosion = (x: number, y: number, particleColor: string) => {
+    const newParticles: any[] = [];
+    const count = 16;
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * 2 * Math.PI;
+      const speed = 1.5 + Math.random() * 2.5;
+      newParticles.push({
+        id: `${Date.now()}-${i}-${Math.random()}`,
+        color: particleColor,
+        x: x * 25.6 + 12.8, // converte coordenadas de grade para pixel aproximado no tabuleiro
+        y: y * 25.6 + 12.8,
+        dx: Math.cos(angle) * speed,
+        dy: Math.sin(angle) * speed
+      });
+    }
+    setParticles(prev => [...prev, ...newParticles]);
+
+    // Limpa partículas após 800ms
+    setTimeout(() => {
+      setParticles(prev => prev.filter(p => !newParticles.find(np => np.id === p.id)));
+    }, 800);
+  };
+
+  // Chat de Reações Rápidas (Emojis Flutuantes)
+  const triggerReaction = (emoji: string) => {
+    const id = `${Date.now()}-${Math.random()}`;
+    const x = 50 + Math.random() * 100; // posição x inicial na área do tabuleiro
+    const newReaction = { id, emoji, x, y: 350 };
+    setFloatingEmojis(prev => [...prev, newReaction]);
+
+    // Limpa reação
+    setTimeout(() => {
+      setFloatingEmojis(prev => prev.filter(re => re.id !== id));
+    }, 2000);
+  };
+
+  // Lógica de Conquistas
+  const checkLudoAchievements = (id: string, title: string, desc: string, icon: string) => {
+    if (user?.uid) {
+      unlockAchievement(user.uid, id, title, desc, icon);
+    }
+  };
+
   const getNextLudoColorTurn = (current: LudoColor): LudoColor => {
     const sequence: LudoColor[] = ['red', 'green', 'yellow', 'blue'];
     const idx = sequence.indexOf(current);
     return sequence[(idx + 1) % 4];
   };
 
-  // Rola o dado do Ludo com micro-animação acelerada luxuosa
   const handleRollDice = async () => {
     if (!isMyTurn || currentBoard.hasRolled || diceRolling || currentBoard.winnerColor) return;
 
@@ -104,7 +281,7 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
       const potentialMoves = getLudoValidMoves(nextBoard, activeColor);
 
       if (potentialMoves.length === 0) {
-        toast.info(`Rolou ${rolledValue}! Sem movimentos válidos para Vermelho.`);
+        toast.info(`Rolou ${rolledValue}! Sem movimentos para Vermelho.`);
         nextBoard.diceValue = null;
         nextBoard.hasRolled = false;
 
@@ -114,7 +291,6 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
           setLocalBoard(nextBoard);
           setLocalTurn(nextColorTurn);
         } else {
-          // No multiplayer, passa o turno das cores ou dos jogadores
           await makeMove(nextBoard, `roll-${rolledValue}-no-moves`);
         }
       } else {
@@ -127,7 +303,6 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
     }, 550);
   };
 
-  // Humano move a peça escolhida
   const handleSelectToken = async (token: LudoToken) => {
     if (!isMyTurn || !currentBoard.hasRolled || currentBoard.diceValue === null || diceRolling) return;
     if (token.color !== activeColor) return;
@@ -135,20 +310,27 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
     const oldBoard = currentBoard;
     const nextBoard = applyLudoMove(currentBoard, token, currentBoard.diceValue);
     
+    // Dispara explosão visual na coordenada de destino do token
+    const coords = getLudoCoords(token.color, token);
+    triggerExplosion(coords.x, coords.y, token.color === 'red' ? '#ef4444' : token.color === 'green' ? '#10b981' : token.color === 'yellow' ? '#f59e0b' : '#6366f1');
+
     const isCapture = nextBoard.tokens.filter(t => t.position === -1).length > oldBoard.tokens.filter(t => t.position === -1).length;
     playMoveSound(isCapture);
 
     if (isCapture) {
-      toast.success('💥 Captura espetacular! Ficha oponente retornou para o ninho.');
+      toast.success('💥 Captura! Ficha oponente retornou para o ninho.');
+      // Conquista de Captura
+      checkLudoAchievements('ludo_cap', 'Predador da Arena', 'Mandou uma ficha oponente de volta para a base no Ludo.', '💥');
     }
 
     if (nextBoard.winnerColor) {
       setLocalBoard(nextBoard);
       toast.success(`👑 Vitória Consagrada! O jogador ${nextBoard.winnerColor.toUpperCase()} venceu o Ludo!`);
+      // Conquista de Vitória
+      checkLudoAchievements('ludo_win', 'Campeão Real do Ludo', 'Venceu uma partida completa de Ludo 4P.', '👑');
       return;
     }
 
-    // Regra clássica de Ludo: Obter 6 ou capturar dá uma jogada extra!
     const rollAgain = currentBoard.diceValue === 6 || isCapture;
     
     nextBoard.diceValue = null;
@@ -162,18 +344,16 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
         toast.success('Rode o dado novamente! Bônus de jogada extra.');
       }
     } else {
-      // Sincroniza online
       await makeMove(nextBoard, `move-${token.color}-${token.id}`);
     }
   };
 
-  // Efeito recursivo de Inteligência Artificial para as 3 CPUs do Ludo offline (green, yellow, blue)
+  // Efeito IA para as 3 CPUs offline
   useEffect(() => {
     if (isLocal && localTurn !== 'red' && !currentBoard.winnerColor) {
       setIsAiThinking(true);
 
       const aiTimer = setTimeout(() => {
-        // 1. CPU Rola o Dado
         playDiceSound();
         const aiDice = Math.floor(Math.random() * 6) + 1;
         
@@ -186,7 +366,6 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
         const validAiMoves = getLudoValidMoves(boardWithDice, localTurn);
 
         if (validAiMoves.length === 0) {
-          // Sem movimentos: passa para a próxima CPU ou volta para o jogador
           boardWithDice.diceValue = null;
           boardWithDice.hasRolled = false;
           setLocalBoard(boardWithDice);
@@ -195,12 +374,14 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
           return;
         }
 
-        // 2. CPU Escolhe a melhor jogada
         setTimeout(() => {
           const bestToken = getBestLudoMove(boardWithDice, aiDice, localTurn);
           if (bestToken) {
             const nextBoard = applyLudoMove(boardWithDice, bestToken, aiDice);
             
+            const coords = getLudoCoords(bestToken.color, bestToken);
+            triggerExplosion(coords.x, coords.y, bestToken.color === 'green' ? '#10b981' : bestToken.color === 'yellow' ? '#f59e0b' : '#6366f1');
+
             const isCapture = nextBoard.tokens.filter(t => t.position === -1).length > boardWithDice.tokens.filter(t => t.position === -1).length;
             playMoveSound(isCapture);
 
@@ -213,7 +394,6 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
             } else {
               const rollAgain = aiDice === 6 || isCapture;
               if (rollAgain) {
-                // Ganhou jogada extra: mantém a CPU ativa
                 setLocalTurn(localTurn);
               } else {
                 setLocalTurn(getNextLudoColorTurn(localTurn));
@@ -245,16 +425,23 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
     }
   };
 
-  // Cores CSS Estilizadas Neon para as 4 Cores do Ludo
-  const LUDO_COLORS_THEME: Record<LudoColor, { bg: string; text: string; shadow: string; label: string; border: string }> = {
-    red: { bg: 'bg-rose-500', text: 'text-rose-400', shadow: 'shadow-[0_0_15px_rgba(244,63,94,0.5)]', label: 'Vermelho (Você)', border: 'border-rose-500/30' },
-    green: { bg: 'bg-emerald-500', text: 'text-emerald-400', shadow: 'shadow-[0_0_15px_rgba(16,185,129,0.5)]', label: 'Verde (CPU)', border: 'border-emerald-500/30' },
-    yellow: { bg: 'bg-amber-500', text: 'text-amber-400', shadow: 'shadow-[0_0_15px_rgba(245,158,11,0.5)]', label: 'Amarelo (CPU)', border: 'border-amber-500/30' },
-    blue: { bg: 'bg-indigo-500', text: 'text-indigo-400', shadow: 'shadow-[0_0_15px_rgba(99,102,241,0.5)]', label: 'Azul (CPU)', border: 'border-indigo-500/30' }
+  const LUDO_COLORS_THEME: Record<LudoColor, { text: string; shadow: string; label: string; border: string }> = {
+    red: { text: 'text-rose-400', shadow: 'shadow-[0_0_15px_rgba(244,63,94,0.5)]', label: 'Vermelho (Você)', border: 'border-rose-500/30' },
+    green: { text: 'text-emerald-400', shadow: 'shadow-[0_0_15px_rgba(16,185,129,0.5)]', label: 'Verde (CPU)', border: 'border-emerald-500/30' },
+    yellow: { text: 'text-amber-400', shadow: 'shadow-[0_0_15px_rgba(245,158,11,0.5)]', label: 'Amarelo (CPU)', border: 'border-amber-500/30' },
+    blue: { text: 'text-indigo-400', shadow: 'shadow-[0_0_15px_rgba(99,102,241,0.5)]', label: 'Azul (CPU)', border: 'border-indigo-500/30' }
   };
 
-  // Renderização 2D inteligente das células do tabuleiro clássico de Ludo 15x15
-  const renderLudoCell = (x: number, y: number) => {
+  // Coordenadas de nichos/soquetes de garagem reais base
+  const isLudoSocketCell = (x: number, y: number): LudoColor | null => {
+    if (x >= 2 && x <= 3 && y >= 2 && y <= 3) return 'red';
+    if (x >= 11 && x <= 12 && y >= 2 && y <= 3) return 'green';
+    if (x >= 2 && x <= 3 && y >= 11 && y <= 12) return 'yellow';
+    if (x >= 11 && x <= 12 && y >= 11 && y <= 12) return 'blue';
+    return null;
+  };
+
+  const renderLudoCellDesign = (x: number, y: number) => {
     const isRedBase = x < 6 && y < 6;
     const isGreenBase = x >= 9 && y < 6;
     const isYellowBase = x < 6 && y >= 9;
@@ -272,53 +459,129 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
 
     const isCenter = x >= 6 && x <= 8 && y >= 6 && y <= 8;
 
-    if (isRedBase) return 'bg-rose-500/10 border-rose-500/20';
-    if (isGreenBase) return 'bg-emerald-500/10 border-emerald-500/20';
-    if (isYellowBase) return 'bg-amber-500/10 border-amber-500/20';
-    if (isBlueBase) return 'bg-indigo-500/10 border-indigo-500/20';
+    // Se for Base de Canto, aplica molduras elegantes com cantos arredondados luxo
+    if (isRedBase) {
+      let rounded = '';
+      if (x === 0 && y === 0) rounded = 'rounded-tl-2xl';
+      return `${theme.redBase} ${rounded} ${theme.cellBorder}`;
+    }
+    if (isGreenBase) {
+      let rounded = '';
+      if (x === 14 && y === 0) rounded = 'rounded-tr-2xl';
+      return `${theme.greenBase} ${rounded} ${theme.cellBorder}`;
+    }
+    if (isYellowBase) {
+      let rounded = '';
+      if (x === 0 && y === 14) rounded = 'rounded-bl-2xl';
+      return `${theme.yellowBase} ${rounded} ${theme.cellBorder}`;
+    }
+    if (isBlueBase) {
+      let rounded = '';
+      if (x === 14 && y === 14) rounded = 'rounded-br-2xl';
+      return `${theme.blueBase} ${rounded} ${theme.cellBorder}`;
+    }
 
-    if (isRedHome) return 'bg-rose-500/40 border-rose-500/30';
-    if (isGreenHome) return 'bg-emerald-500/40 border-emerald-500/30';
-    if (isYellowHome) return 'bg-amber-500/40 border-amber-500/30';
-    if (isBlueHome) return 'bg-indigo-500/40 border-indigo-500/30';
+    // Se está na Reta Final segura
+    if (isRedHome) return 'bg-rose-500/35 border-rose-500/30';
+    if (isGreenHome) return 'bg-emerald-500/35 border-emerald-500/30';
+    if (isYellowHome) return 'bg-amber-500/35 border-amber-500/30';
+    if (isBlueHome) return 'bg-indigo-500/35 border-indigo-500/30';
 
-    if (isRedStart) return 'bg-rose-500/60 border-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.4)]';
-    if (isGreenStart) return 'bg-emerald-500/60 border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]';
-    if (isYellowStart) return 'bg-amber-500/60 border-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.4)]';
-    if (isBlueStart) return 'bg-indigo-500/60 border-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.4)]';
+    // Se são Casas de Saída (Starts)
+    if (isRedStart) return 'bg-rose-500/75 border-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.5)]';
+    if (isGreenStart) return 'bg-emerald-500/75 border-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]';
+    if (isYellowStart) return 'bg-amber-500/75 border-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.5)]';
+    if (isBlueStart) return 'bg-indigo-500/75 border-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.5)]';
 
-    if (isCenter) return 'bg-indigo-950/80 border-indigo-500/30';
+    // Centro do Tabuleiro (Grande Chegada)
+    if (isCenter) {
+      let rounded = '';
+      if (x === 6 && y === 6) rounded = 'rounded-tl-xl';
+      if (x === 8 && y === 6) rounded = 'rounded-tr-xl';
+      if (x === 6 && y === 8) rounded = 'rounded-bl-xl';
+      if (x === 8 && y === 8) rounded = 'rounded-br-xl';
+      return `${theme.centerBg} ${rounded} ${theme.cellBorder}`;
+    }
 
-    return 'bg-[#0f121d] border-white/[0.03]';
+    // Trilha Comum Normal (Acrílico Translúcido de Vidro)
+    const isTrack = (x >= 6 && x <= 8) || (y >= 6 && y <= 8);
+    if (isTrack) return `${theme.trackBg} ${theme.cellBorder}`;
+
+    return `bg-transparent ${theme.cellBorder}`;
   };
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col md:flex-row gap-8 items-center justify-center py-6 select-none animate-in fade-in duration-300">
+    <div className="max-w-4xl mx-auto flex flex-col md:flex-row gap-8 items-center justify-center py-6 select-none animate-in fade-in duration-300 relative">
       
       {/* 📊 PAINEL ESTATÍSTICO DE JOGO (ESQUERDA) */}
-      <div className="w-64 bg-slate-950/65 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-6 flex flex-col gap-6 select-none shadow-2xl">
+      <div className="w-64 bg-slate-950/65 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-6 flex flex-col gap-6 select-none shadow-2xl z-10">
         <div className="space-y-1">
           <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest">Ludo de 4 Jogadores</span>
           <h3 className="text-sm font-black text-white uppercase tracking-widest mt-1">Status da Arena</h3>
         </div>
 
+        {/* 🎨 SELETOR DE SKINS E TEMAS ESTÉTICOS */}
+        <div className="space-y-1.5">
+          <span className="text-[7px] font-black text-gray-500 uppercase">Tema do Tabuleiro</span>
+          <div className="grid grid-cols-3 gap-1 bg-white/[0.02] border border-white/5 rounded-xl p-1">
+            {(['cyberpunk', 'wood', 'holographic'] as LudoSkin[]).map(skin => (
+              <button
+                key={skin}
+                onClick={() => setCurrentSkin(skin)}
+                className={`py-1.5 text-[7px] font-black uppercase rounded-lg transition-all cursor-pointer ${
+                  currentSkin === skin
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'text-gray-500 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                {skin === 'cyberpunk' ? 'Tron' : skin === 'wood' ? 'Madeira' : 'Holog'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 🎵 BOTÃO DE CONTROLE DE MÚSICA PROCEDURAL COM EQUALIZADOR */}
+        <div className="flex items-center justify-between bg-white/[0.02] border border-white/5 rounded-xl p-3.5">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[7px] font-black text-gray-500 uppercase">Som da Arena</span>
+            <span className="text-[8px] font-bold text-white">Música Lofi</span>
+          </div>
+
+          <button
+            onClick={toggleMusic}
+            className={`w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+              isMusicPlaying
+              ? 'bg-gradient-to-br from-indigo-500 to-rose-500 text-white shadow-[0_0_12px_rgba(99,102,241,0.4)]'
+              : 'bg-white/5 text-gray-400 border border-white/5'
+            }`}
+          >
+            {isMusicPlaying ? (
+              <div className="flex gap-0.5 items-end h-3">
+                <span className="w-0.5 bg-white rounded-full animate-bounce h-2" style={{ animationDelay: '0.1s' }} />
+                <span className="w-0.5 bg-white rounded-full animate-bounce h-3" style={{ animationDelay: '0.3s' }} />
+                <span className="w-0.5 bg-white rounded-full animate-bounce h-1.5" style={{ animationDelay: '0.5s' }} />
+              </div>
+            ) : '🎵'}
+          </button>
+        </div>
+
         {/* Listagem das 4 Cores e Turnos */}
         <div className="flex flex-col gap-2">
           {(['red', 'green', 'yellow', 'blue'] as LudoColor[]).map(color => {
-            const theme = LUDO_COLORS_THEME[color];
+            const themeInfo = LUDO_COLORS_THEME[color];
             const isTurn = activeColor === color;
             const wins = currentBoard.tokens.filter(t => t.color === color && t.position === 105).length;
             
             return (
-              <div key={color} className={`p-3.5 rounded-2xl border flex flex-col gap-1 relative overflow-hidden transition-all ${
-                isTurn ? `${theme.border} bg-white/5` : 'bg-transparent border-white/5 opacity-40'
+              <div key={color} className={`p-3 rounded-2xl border flex flex-col gap-1 relative overflow-hidden transition-all ${
+                isTurn ? `${themeInfo.border} bg-white/5` : 'bg-transparent border-white/5 opacity-40'
               }`}>
                 <div className="flex justify-between items-center">
-                  <span className={`text-[8px] font-black uppercase ${theme.text}`}>{theme.label}</span>
+                  <span className={`text-[8px] font-black uppercase ${themeInfo.text}`}>{themeInfo.label}</span>
                   <span className="text-[9px] font-black text-white">{wins}/4 Finalizadas</span>
                 </div>
                 {isTurn && (
-                  <span className={`text-[7px] font-black uppercase mt-1 animate-pulse ${theme.text}`}>
+                  <span className={`text-[7px] font-black uppercase mt-1 animate-pulse ${themeInfo.text}`}>
                     {color === 'red' ? 'Sua Vez!' : 'Pensando (CPU)...'}
                   </span>
                 )}
@@ -327,7 +590,7 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
           })}
         </div>
 
-        {/* 🎲 DADO 3D MULTICOR DINÂMICO COM GIRO PREMIUM */}
+        {/* 🎲 DADO DA SORTE */}
         <div className="flex flex-col items-center gap-3 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
           <span className="text-[8px] font-black text-gray-500 uppercase">Dado da Sorte</span>
           
@@ -336,7 +599,7 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
             whileTap={isMyTurn && !currentBoard.hasRolled ? { scale: 0.95 } : {}}
             onClick={handleRollDice}
             disabled={!isMyTurn || currentBoard.hasRolled || diceRolling || !!currentBoard.winnerColor}
-            className={`w-16 h-16 rounded-2xl border flex items-center justify-center text-3xl font-black transition-all relative ${
+            className={`w-14 h-14 rounded-2xl border flex items-center justify-center text-2xl font-black transition-all relative ${
               isMyTurn && !currentBoard.hasRolled
               ? 'bg-gradient-to-br from-indigo-500 via-purple-600 to-rose-600 border-indigo-400/40 text-white cursor-pointer shadow-lg shadow-indigo-500/35'
               : 'bg-slate-900 border-white/5 text-gray-600'
@@ -368,7 +631,7 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
         {isLocal && (
           <button 
             onClick={handleRestartLocalGame}
-            className="py-3.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/30 text-[9px] font-black text-emerald-400 uppercase tracking-widest rounded-xl transition-all cursor-pointer text-center"
+            className="py-3 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/30 text-[9px] font-black text-emerald-400 uppercase tracking-widest rounded-xl transition-all cursor-pointer text-center"
           >
             🔄 Recomeçar Partida
           </button>
@@ -376,25 +639,74 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
 
         <button 
           onClick={handleLeaveGame}
-          className="mt-auto py-3.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 hover:border-rose-500/30 text-[9px] font-black text-rose-400 uppercase tracking-widest rounded-xl transition-all cursor-pointer text-center"
+          className="mt-auto py-3 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 hover:border-rose-500/30 text-[9px] font-black text-rose-400 uppercase tracking-widest rounded-xl transition-all cursor-pointer text-center"
         >
           🏳️ Abandonar Arena
         </button>
       </div>
 
       {/* 👑 TABULEIRO DE LUDO 15X15 LUXUOSO NEON (DIREITA) */}
-      <div className="flex-1 flex flex-col items-center justify-center">
+      <div className="flex-1 flex flex-col items-center justify-center z-10 relative">
         
-        <div className="relative p-6 bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-[3rem] shadow-[0_25px_60px_rgba(0,0,0,0.5)]">
+        {/* REAÇÕES FLUTUANTES (Balões de fala que sobem flutuando) */}
+        <div className="absolute inset-0 z-50 pointer-events-none overflow-hidden">
+          <AnimatePresence>
+            {floatingEmojis.map(re => (
+              <motion.div
+                key={re.id}
+                initial={{ opacity: 0, y: re.y, scale: 0.5, x: re.x }}
+                animate={{ 
+                  opacity: [0, 1, 1, 0], 
+                  y: re.y - 180, 
+                  scale: [0.5, 1.2, 1.2, 0.8],
+                  x: re.x + Math.sin(re.y) * 15
+                }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.8, ease: 'easeOut' }}
+                className="absolute text-4xl select-none"
+              >
+                {re.emoji}
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+
+        {/* PARTÍCULAS NEON HSL */}
+        <div className="absolute inset-0 z-40 pointer-events-none overflow-hidden">
+          {particles.map(p => (
+            <motion.div
+              key={p.id}
+              initial={{ x: p.x, y: p.y, opacity: 1, scale: 1 }}
+              animate={{ 
+                x: p.x + p.dx * 12, 
+                y: p.y + p.dy * 12, 
+                opacity: 0,
+                scale: 0.2
+              }}
+              transition={{ duration: 0.75, ease: 'easeOut' }}
+              style={{
+                position: 'absolute',
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                backgroundColor: p.color,
+                boxShadow: `0 0 10px ${p.color}, 0 0 20px ${p.color}`
+              }}
+            />
+          ))}
+        </div>
+        
+        <div className="relative p-6 bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-[3rem]">
           {/* Luz de fundo de efeito premium */}
           <div className="absolute inset-0 bg-indigo-500/5 rounded-[3rem] blur-3xl z-0 pointer-events-none" />
 
           {/* Grid do Tabuleiro de Ludo 15x15 */}
-          <div className="relative z-10 grid grid-cols-15 grid-rows-15 w-[384px] h-[384px] bg-[#07090f] rounded-2xl p-1 overflow-hidden border border-white/5">
+          <div className={`relative z-10 grid grid-cols-15 grid-rows-15 w-[384px] h-[384px] p-1.5 overflow-hidden border rounded-2xl ${theme.boardBg}`}>
             {Array(15).fill(null).map((_, y) => (
               <React.Fragment key={y}>
                 {Array(15).fill(null).map((_, x) => {
-                  const cellClass = renderLudoCell(x, y);
+                  const cellClass = renderLudoCellDesign(x, y);
+                  const socketColor = isLudoSocketCell(x, y);
 
                   // Encontra as fichas localizadas nesta coordenada do circuito
                   const tokensHere = currentBoard.tokens.filter(t => {
@@ -407,9 +719,14 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
                       key={x}
                       className={`w-full h-full border-[0.5px] flex items-center justify-center relative transition-all ${cellClass}`}
                     >
+                      {/* Desenha nicho/soquete de garagem se for uma coordenada de base circular */}
+                      {socketColor && (
+                        <div className={`absolute w-7 h-7 rounded-full ${theme.socketBg} z-0`} />
+                      )}
+
                       {/* Efeito visual na reta final e centro */}
                       {x === 7 && y === 7 && (
-                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 animate-pulse z-0" />
+                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 animate-pulse z-0" />
                       )}
 
                       {/* Desenha as fichas da casa atual de forma empilhada ou orbitando */}
@@ -418,14 +735,13 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
                           {tokensHere.map((token, tIdx) => {
                             const isMyToken = token.color === myColor;
                             const isClickable = isMyTurn && currentBoard.hasRolled && canLudoTokenMove(token, currentBoard.diceValue!) && isMyToken;
-                            const theme = LUDO_COLORS_THEME[token.color];
 
                             // Posicionamento de Órbita Circular elegante se houver múltiplas fichas na mesma casa!
                             const count = tokensHere.length;
                             let transformStyle = 'none';
                             if (count > 1) {
                               const angle = (tIdx / count) * 2 * Math.PI;
-                              const radius = 6; // pixels de deslocamento orbital
+                              const radius = 6;
                               const tx = Math.round(Math.cos(angle) * radius);
                               const ty = Math.round(Math.sin(angle) * radius);
                               transformStyle = `translate(${tx}px, ${ty}px)`;
@@ -466,6 +782,19 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
               </React.Fragment>
             ))}
           </div>
+        </div>
+
+        {/* 💬 BARRA DE CHAT DE REAÇÕES DE EMOJIS RÁPIDOS */}
+        <div className="flex gap-2 mt-4 bg-slate-950/60 backdrop-blur-xl border border-white/10 rounded-full px-4 py-2 shadow-lg">
+          {(['😂', '🤔', '😎', '🤯', '🎲', '🏆']).map(emoji => (
+            <button
+              key={emoji}
+              onClick={() => triggerReaction(emoji)}
+              className="text-xl hover:scale-135 active:scale-95 transition-all cursor-pointer select-none"
+            >
+              {emoji}
+            </button>
+          ))}
         </div>
 
       </div>
