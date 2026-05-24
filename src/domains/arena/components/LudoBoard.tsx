@@ -4,6 +4,7 @@ import { useArenaStore, GameMatch } from '@store/useArenaStore';
 import { LudoBoardState, LudoToken, LudoColor, createInitialLudoState, getLudoValidMoves, applyLudoMove, getBestLudoMove, getLudoCoords, canLudoTokenMove } from '../helpers/ludoLogic';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import confetti from 'canvas-confetti';
 
 interface LudoBoardProps {
   match: Partial<GameMatch>;
@@ -13,7 +14,7 @@ interface LudoBoardProps {
 }
 
 // -----------------------------------------------------------------
-// SISTEMA DE ÁUDIO PROCEDURAL INTEGRADO (WEB AUDIO API)
+// SISTEMA DE ÁUDIO RETRÔ 8-BITS PROCEDURAL (WEB AUDIO API)
 // -----------------------------------------------------------------
 let ludoAudioCtx: AudioContext | null = null;
 let ludoMusicInterval: any = null;
@@ -38,59 +39,120 @@ function playLudoProceduralMusic() {
     if (!AudioContextClass) return;
     ludoAudioCtx = new AudioContextClass();
     
-    // Acordes cíclicos espaciais e aveludados Lofi: Cmaj9 -> Fmaj9 -> Am9 -> G6
-    const chords = [
-      [261.63, 329.63, 392.00, 493.88, 587.33], // Cmaj9
-      [349.23, 440.00, 523.25, 659.25, 783.99], // Fmaj9
-      [220.00, 261.63, 329.63, 392.00, 493.88], // Am9
-      [196.00, 246.94, 293.66, 392.00, 440.00]  // G6
+    // Uma progressão chiptune nostálgica suave C -> G -> Am -> F
+    const arpeggios = [
+      [261.63, 329.63, 392.00, 523.25], // C
+      [196.00, 246.94, 293.66, 392.00], // G
+      [220.00, 261.63, 329.63, 440.00], // Am
+      [174.61, 220.00, 261.63, 349.23]  // F
     ];
-    let step = 0;
+    let chordIdx = 0;
+    let noteIdx = 0;
 
-    const playNextChord = () => {
+    const playNote = () => {
       if (!ludoAudioCtx || ludoAudioCtx.state === 'suspended') return;
       const now = ludoAudioCtx.currentTime;
-      const notes = chords[step % chords.length];
+      const chord = arpeggios[chordIdx % arpeggios.length];
+      const freq = chord[noteIdx % chord.length];
       
-      notes.forEach((freq, idx) => {
-        const osc = ludoAudioCtx!.createOscillator();
-        const gain = ludoAudioCtx!.createGain();
-        const filter = ludoAudioCtx!.createBiquadFilter();
-        
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, now);
-        osc.frequency.linearRampToValueAtTime(freq + Math.sin(idx) * 2, now + 5.5);
-        
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(650 + idx * 80, now);
-        
-        // Attack lento e Decay/Release longo de Pad aveludado
-        gain.gain.setValueAtTime(0, now);
-        gain.gain.linearRampToValueAtTime(0.012, now + 1.8);
-        gain.gain.setValueAtTime(0.012, now + 4.0);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + 5.8);
-        
-        osc.connect(filter);
-        filter.connect(gain);
-        gain.connect(ludoAudioCtx!.destination);
-        
-        osc.start(now);
-        osc.stop(now + 6.0);
-      });
-      step++;
+      const osc = ludoAudioCtx.createOscillator();
+      const gain = ludoAudioCtx.createGain();
+      
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now);
+      
+      gain.gain.setValueAtTime(0.004, now); // muito sutil de fundo
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+      
+      osc.connect(gain);
+      gain.connect(ludoAudioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.20);
+      
+      noteIdx++;
+      if (noteIdx % 8 === 0) {
+        chordIdx++;
+      }
     };
-
-    playNextChord();
-    ludoMusicInterval = setInterval(playNextChord, 6000);
+    
+    playNote();
+    ludoMusicInterval = setInterval(playNote, 240);
   } catch (e) {
-    console.warn('Áudio procedural suspenso pelo navegador:', e);
+    console.warn('Erro ao reproduzir chiptune:', e);
   }
 }
 
+// Efeitos sonoros Chiptune 8-Bits para Ludo
+function playLudoRetroSound(type: 'dice' | 'move' | 'capture' | 'win') {
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+
+    if (type === 'dice') {
+      const times = [0, 0.05, 0.1, 0.15, 0.2, 0.25];
+      times.forEach((t, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        const freq = 280 + Math.random() * 350;
+        osc.frequency.setValueAtTime(freq, now + t);
+        gain.gain.setValueAtTime(0.04, now + t);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + t + 0.04);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + t);
+        osc.stop(now + t + 0.04);
+      });
+    } else if (type === 'move') {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(200, now);
+      osc.frequency.exponentialRampToValueAtTime(400, now + 0.06);
+      gain.gain.setValueAtTime(0.02, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.06);
+    } else if (type === 'capture') {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(300, now);
+      osc.frequency.linearRampToValueAtTime(60, now + 0.18);
+      gain.gain.setValueAtTime(0.05, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.18);
+    } else if (type === 'win') {
+      const notes = [
+        { f: 261.63, t: 0 }, { f: 329.63, t: 0.08 }, { f: 392.00, t: 0.16 }, { f: 523.25, t: 0.24 }
+      ];
+      notes.forEach(note => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(note.f, now + note.t);
+        gain.gain.setValueAtTime(0.04, now + note.t);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + note.t + 0.22);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + note.t);
+        osc.stop(now + note.t + 0.22);
+      });
+    }
+  } catch (e) {}
+}
+
 // -----------------------------------------------------------------
-// SKINS E TEMAS ESTÉTICOS DE LUXO
+// SKINS E TEMAS ESTÉTICOS DE LUXO COM FILTRO RETRÔ ARCADE CRT
 // -----------------------------------------------------------------
-type LudoSkin = 'cyberpunk' | 'wood' | 'holographic';
+type LudoSkin = 'cyberpunk' | 'wood' | 'holographic' | 'arcade';
 
 const THEME_SKINS = {
   cyberpunk: {
@@ -125,6 +187,17 @@ const THEME_SKINS = {
     centerBg: 'bg-gradient-to-tr from-rose-500/10 via-indigo-500/10 to-emerald-500/10 border-white/10 backdrop-blur-xl rounded-xl',
     socketBg: 'border border-indigo-500/25 bg-indigo-950/50 shadow-[inset_0_1px_4px_rgba(99,102,241,0.35)]',
     cellBorder: 'border-white/5'
+  },
+  arcade: {
+    boardBg: 'bg-[#120324] border-purple-500/30 shadow-[0_20px_50px_rgba(236,72,153,0.18)] relative overflow-hidden after:content-[""] after:absolute after:inset-0 after:bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.2)_50%),linear-gradient(90deg,rgba(255,0,0,0.04),rgba(0,255,0,0.01),rgba(0,0,255,0.04))] after:bg-[length:100%_4px,3px_100%] after:pointer-events-none after:animate-pulse',
+    trackBg: 'bg-[#21094e]/90 border-purple-500/20 shadow-[inset_0_1px_4px_rgba(236,72,153,0.3)] rounded-sm',
+    redBase: 'bg-rose-950/45 border-rose-500/40 shadow-[0_0_15px_rgba(244,63,94,0.15)] rounded-lg',
+    greenBase: 'bg-emerald-950/45 border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.15)] rounded-lg',
+    yellowBase: 'bg-amber-950/45 border-amber-500/40 shadow-[0_0_15px_rgba(245,158,11,0.15)] rounded-lg',
+    blueBase: 'bg-indigo-950/45 border-indigo-500/40 shadow-[0_0_15px_rgba(99,102,241,0.15)] rounded-lg',
+    centerBg: 'bg-purple-950/50 border-purple-500/30 rounded-lg',
+    socketBg: 'border-2 border-purple-500/20 bg-purple-950/90 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)]',
+    cellBorder: 'border-purple-500/10'
   }
 };
 
@@ -160,43 +233,13 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
     };
   }, []);
 
-  // Efeitos Sonoros Procedimentais Puros
+  // Efeitos Sonoros Chiptune Locais
   const playDiceSound = () => {
-    try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(90, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.35);
-      gain.gain.setValueAtTime(0.12, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.35);
-    } catch (e) {}
+    playLudoRetroSound('dice');
   };
 
   const playMoveSound = (isCapture: boolean) => {
-    try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(isCapture ? 700 : 380, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(isCapture ? 150 : 250, ctx.currentTime + 0.22);
-      gain.gain.setValueAtTime(0.15, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.22);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.22);
-    } catch (e) {}
+    playLudoRetroSound(isCapture ? 'capture' : 'move');
   };
 
   // Trilha sonora controle
@@ -208,7 +251,7 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
     } else {
       playLudoProceduralMusic();
       setIsMusicPlaying(true);
-      toast.success('Música ambiente procedural ativada 🎵');
+      toast.success('Música ambiente chiptune ativada 🎵');
     }
   };
 
@@ -310,11 +353,15 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
     const oldBoard = currentBoard;
     const nextBoard = applyLudoMove(currentBoard, token, currentBoard.diceValue);
     
-    // Dispara explosão visual na coordenada de destino do token
-    const coords = getLudoCoords(token.color, token);
-    triggerExplosion(coords.x, coords.y, token.color === 'red' ? '#ef4444' : token.color === 'green' ? '#10b981' : token.color === 'yellow' ? '#f59e0b' : '#6366f1');
-
     const isCapture = nextBoard.tokens.filter(t => t.position === -1).length > oldBoard.tokens.filter(t => t.position === -1).length;
+    const hasReachedGoal = token.position !== 105 && nextBoard.tokens.find(t => t.id === token.id)?.position === 105;
+
+    // Dispara explosão visual apenas em capturas ou chegada triunfante
+    if (isCapture || hasReachedGoal) {
+      const coords = getLudoCoords(token.color, token);
+      triggerExplosion(coords.x, coords.y, token.color === 'red' ? '#ef4444' : token.color === 'green' ? '#10b981' : token.color === 'yellow' ? '#f59e0b' : '#6366f1');
+    }
+
     playMoveSound(isCapture);
 
     if (isCapture) {
@@ -325,6 +372,10 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
 
     if (nextBoard.winnerColor) {
       setLocalBoard(nextBoard);
+      playLudoRetroSound('win');
+      if (nextBoard.winnerColor === 'red') {
+        confetti({ particleCount: 180, spread: 90, origin: { y: 0.6 } });
+      }
       toast.success(`👑 Vitória Consagrada! O jogador ${nextBoard.winnerColor.toUpperCase()} venceu o Ludo!`);
       // Conquista de Vitória
       checkLudoAchievements('ludo_win', 'Campeão Real do Ludo', 'Venceu uma partida completa de Ludo 4P.', '👑');
@@ -379,10 +430,14 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
           if (bestToken) {
             const nextBoard = applyLudoMove(boardWithDice, bestToken, aiDice);
             
-            const coords = getLudoCoords(bestToken.color, bestToken);
-            triggerExplosion(coords.x, coords.y, bestToken.color === 'green' ? '#10b981' : bestToken.color === 'yellow' ? '#f59e0b' : '#6366f1');
-
             const isCapture = nextBoard.tokens.filter(t => t.position === -1).length > boardWithDice.tokens.filter(t => t.position === -1).length;
+            const hasReachedGoal = bestToken.position !== 105 && nextBoard.tokens.find(t => t.id === bestToken.id)?.position === 105;
+
+            if (isCapture || hasReachedGoal) {
+              const coords = getLudoCoords(bestToken.color, bestToken);
+              triggerExplosion(coords.x, coords.y, bestToken.color === 'green' ? '#10b981' : bestToken.color === 'yellow' ? '#f59e0b' : '#6366f1');
+            }
+
             playMoveSound(isCapture);
 
             nextBoard.diceValue = null;
@@ -390,6 +445,7 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
             setLocalBoard(nextBoard);
 
             if (nextBoard.winnerColor) {
+              playLudoRetroSound('win');
               toast.error(`A CPU ${nextBoard.winnerColor.toUpperCase()} venceu a partida de Ludo!`);
             } else {
               const rollAgain = aiDice === 6 || isCapture;

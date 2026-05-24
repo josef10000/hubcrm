@@ -4,6 +4,7 @@ import { useArenaStore, GameMatch } from '@store/useArenaStore';
 import { checkConnect4Winner, getConnect4FreeRow, getBestConnect4Move, isConnect4Draw, BoardGrid } from '../helpers/connect4Logic';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import confetti from 'canvas-confetti';
 
 interface Connect4BoardProps {
   match: Partial<GameMatch>;
@@ -13,7 +14,7 @@ interface Connect4BoardProps {
 }
 
 // -----------------------------------------------------------------
-// SISTEMA DE ÁUDIO PROCEDURAL INTEGRADO (WEB AUDIO API)
+// SISTEMA DE ÁUDIO RETRÔ 8-BITS PROCEDURAL (WEB AUDIO API)
 // -----------------------------------------------------------------
 let c4AudioCtx: AudioContext | null = null;
 let c4MusicInterval: any = null;
@@ -38,58 +39,94 @@ function playC4ProceduralMusic() {
     if (!AudioContextClass) return;
     c4AudioCtx = new AudioContextClass();
     
-    // Acordes cíclicos espaciais e aveludados Lofi
-    const chords = [
-      [261.63, 329.63, 392.00, 493.88, 587.33], // Cmaj9
-      [349.23, 440.00, 523.25, 659.25, 783.99], // Fmaj9
-      [220.00, 261.63, 329.63, 392.00, 493.88], // Am9
-      [196.00, 246.94, 293.66, 392.00, 440.00]  // G6
+    // Uma progressão chiptune nostálgica suave C -> G -> Am -> F
+    const arpeggios = [
+      [261.63, 329.63, 392.00, 523.25], // C
+      [196.00, 246.94, 293.66, 392.00], // G
+      [220.00, 261.63, 329.63, 440.00], // Am
+      [174.61, 220.00, 261.63, 349.23]  // F
     ];
-    let step = 0;
+    let chordIdx = 0;
+    let noteIdx = 0;
 
-    const playNextChord = () => {
+    const playNote = () => {
       if (!c4AudioCtx || c4AudioCtx.state === 'suspended') return;
       const now = c4AudioCtx.currentTime;
-      const notes = chords[step % chords.length];
+      const chord = arpeggios[chordIdx % arpeggios.length];
+      const freq = chord[noteIdx % chord.length];
       
-      notes.forEach((freq, idx) => {
-        const osc = c4AudioCtx!.createOscillator();
-        const gain = c4AudioCtx!.createGain();
-        const filter = c4AudioCtx!.createBiquadFilter();
-        
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, now);
-        osc.frequency.linearRampToValueAtTime(freq + Math.sin(idx) * 2, now + 5.5);
-        
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(650 + idx * 80, now);
-        
-        gain.gain.setValueAtTime(0, now);
-        gain.gain.linearRampToValueAtTime(0.012, now + 1.8);
-        gain.gain.setValueAtTime(0.012, now + 4.0);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + 5.8);
-        
-        osc.connect(filter);
-        filter.connect(gain);
-        gain.connect(c4AudioCtx!.destination);
-        
-        osc.start(now);
-        osc.stop(now + 6.0);
-      });
-      step++;
+      const osc = c4AudioCtx.createOscillator();
+      const gain = c4AudioCtx.createGain();
+      
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now);
+      
+      gain.gain.setValueAtTime(0.004, now); // muito sutil de fundo
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+      
+      osc.connect(gain);
+      gain.connect(c4AudioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.20);
+      
+      noteIdx++;
+      if (noteIdx % 8 === 0) {
+        chordIdx++;
+      }
     };
-
-    playNextChord();
-    c4MusicInterval = setInterval(playNextChord, 6000);
+    
+    playNote();
+    c4MusicInterval = setInterval(playNote, 240);
   } catch (e) {
-    console.warn('Áudio procedural suspenso:', e);
+    console.warn('Erro ao reproduzir chiptune:', e);
   }
 }
 
+// Efeitos sonoros Chiptune 8-Bits para Connect 4
+function playC4RetroSound(type: 'drop' | 'win') {
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+
+    if (type === 'drop') {
+      // Som de queda e encaixe: deslize rápido + plop chiptune
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(350, now);
+      osc.frequency.exponentialRampToValueAtTime(120, now + 0.15);
+      gain.gain.setValueAtTime(0.06, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.15);
+    } else if (type === 'win') {
+      const notes = [
+        { f: 261.63, t: 0 }, { f: 329.63, t: 0.08 }, { f: 392.00, t: 0.16 }, { f: 523.25, t: 0.24 }
+      ];
+      notes.forEach(note => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(note.f, now + note.t);
+        gain.gain.setValueAtTime(0.04, now + note.t);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + note.t + 0.22);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + note.t);
+        osc.stop(now + note.t + 0.22);
+      });
+    }
+  } catch (e) {}
+}
+
 // -----------------------------------------------------------------
-// SKINS E TEMAS ESTÉTICOS DE LUXO
+// SKINS E TEMAS ESTÉTICOS DE LUXO COM MODO CRT ARCADE
 // -----------------------------------------------------------------
-type Connect4Skin = 'cyberpunk' | 'wood' | 'holographic';
+type Connect4Skin = 'cyberpunk' | 'wood' | 'holographic' | 'arcade';
 
 const THEME_SKINS = {
   cyberpunk: {
@@ -112,6 +149,13 @@ const THEME_SKINS = {
     slotBg: 'bg-indigo-950/60 border-indigo-500/20 shadow-[inset_0_1px_4px_rgba(99,102,241,0.3)]',
     p1Piece: 'bg-gradient-to-br from-cyan-300 to-cyan-500 shadow-[0_0_15px_rgba(34,211,238,0.6)]',
     p2Piece: 'bg-gradient-to-br from-purple-400 to-purple-600 shadow-[0_0_15px_rgba(192,132,252,0.6)]'
+  },
+  arcade: {
+    boardBg: 'bg-[#120324] border-purple-500/30 shadow-[0_20px_50px_rgba(236,72,153,0.18)] relative overflow-hidden after:content-[""] after:absolute after:inset-0 after:bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.2)_50%),linear-gradient(90deg,rgba(255,0,0,0.04),rgba(0,255,0,0.01),rgba(0,0,255,0.04))] after:bg-[length:100%_4px,3px_100%] after:pointer-events-none after:animate-pulse',
+    gridBg: 'bg-[#21094e]/90 border-purple-500/20 shadow-[inset_0_1px_4px_rgba(236,72,153,0.3)]',
+    slotBg: 'bg-[#120324] border-purple-500/10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]',
+    p1Piece: 'bg-gradient-to-br from-[#00ffff] to-[#00cccc] shadow-[0_0_15px_rgba(0,255,255,0.7)]',
+    p2Piece: 'bg-gradient-to-br from-[#ff00ff] to-[#cc00cc] shadow-[0_0_15px_rgba(255,0,255,0.7)]'
   }
 };
 
@@ -131,6 +175,10 @@ export function Connect4Board({ match, isLocal, aiDifficulty = 3, onExit }: Conn
   const [currentSkin, setCurrentSkin] = useState<Connect4Skin>('cyberpunk');
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
 
+  // Estados Premium de Física de Impacto (Connect 4)
+  const [isShaking, setIsShaking] = useState(false);
+  const [shockwaves, setShockwaves] = useState<{ id: string; x: number; y: number; color: string }[]>([]);
+
   // Efeitos visuais (Partículas e Emojis flutuantes)
   const [floatingEmojis, setFloatingEmojis] = useState<{ id: string; emoji: string; x: number; y: number }[]>([]);
   const [particles, setParticles] = useState<{ id: string; color: string; x: number; y: number; dx: number; dy: number }[]>([]);
@@ -148,22 +196,7 @@ export function Connect4Board({ match, isLocal, aiDifficulty = 3, onExit }: Conn
   }, []);
 
   const playClickSound = () => {
-    try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(380, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.12);
-      gain.gain.setValueAtTime(0.15, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.12);
-    } catch (e) {}
+    playC4RetroSound('drop');
   };
 
   const toggleMusic = () => {
@@ -174,23 +207,37 @@ export function Connect4Board({ match, isLocal, aiDifficulty = 3, onExit }: Conn
     } else {
       playC4ProceduralMusic();
       setIsMusicPlaying(true);
-      toast.success('Música ambiente procedural ativada 🎵');
+      toast.success('Música ambiente chiptune ativada 🎵');
     }
   };
 
   const triggerExplosion = (x: number, y: number, color: string) => {
+    // Tremer a grade
+    setIsShaking(true);
+    setTimeout(() => setIsShaking(false), 200);
+
+    // Adicionar shockwave
+    const swId = `${Date.now()}-${Math.random()}`;
+    const swX = x * 56 + 28;
+    const swY = y * 50 + 25;
+    setShockwaves(prev => [...prev, { id: swId, x: swX, y: swY, color }]);
+    setTimeout(() => {
+      setShockwaves(prev => prev.filter(sw => sw.id !== swId));
+    }, 600);
+
+    // Efeito sutil de poeira neon na colisão de impacto
     const newParticles: any[] = [];
-    const count = 12;
+    const count = 10;
     for (let i = 0; i < count; i++) {
-      const angle = (i / count) * 2 * Math.PI;
-      const speed = 1.0 + Math.random() * 2;
+      const angle = Math.PI + (i / count) * Math.PI; // cospe poeira neon para cima (leque superior)
+      const speed = 0.8 + Math.random() * 1.5;
       newParticles.push({
         id: `${Date.now()}-${i}-${Math.random()}`,
         color,
-        x: x * 56 + 28, // grade de 390px, aproximadamente 56px por coluna
-        y: y * 50 + 25,
+        x: swX,
+        y: swY,
         dx: Math.cos(angle) * speed,
-        dy: Math.sin(angle) * speed
+        dy: Math.sin(angle) * speed - 0.5 // empurra poeira levemente para cima
       });
     }
     setParticles(prev => [...prev, ...newParticles]);
@@ -238,6 +285,8 @@ export function Connect4Board({ match, isLocal, aiDifficulty = 3, onExit }: Conn
       setLocalGrid(nextGrid);
       if (winResult) {
         setWinnerInfo(winResult);
+        playC4RetroSound('win');
+        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
         toast.success('Parabéns! Você venceu a máquina! 🏆');
         checkC4Achievements('c4_win', 'Conexão Superior', 'Venceu a IA em uma partida de Connect 4.', '🏆');
         return;
@@ -252,6 +301,8 @@ export function Connect4Board({ match, isLocal, aiDifficulty = 3, onExit }: Conn
       const winnerUserId = winResult ? user?.uid : undefined;
       await makeMove(nextGrid, `${row},${col}`, winnerUserId);
       if (winResult) {
+        playC4RetroSound('win');
+        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
         toast.success('Vitória espetacular!');
         checkC4Achievements('c4_win', 'Conexão Superior', 'Venceu na Hub Arena no Connect 4.', '🏆');
       }
@@ -512,47 +563,69 @@ export function Connect4Board({ match, isLocal, aiDifficulty = 3, onExit }: Conn
         </div>
 
         {/* Grade do Connect 4 */}
-        <div className={`relative p-6 border rounded-[3rem] ${theme.boardBg}`}>
+        <motion.div 
+          animate={isShaking ? { x: [-4, 4, -4, 4, 0] } : {}}
+          transition={{ duration: 0.2 }}
+          className={`relative p-6 border rounded-[3rem] ${theme.boardBg}`}
+        >
           {/* Luz de Fundo Neon */}
           <div className="absolute inset-0 bg-blue-500/5 rounded-[3rem] blur-2xl z-0 pointer-events-none" />
 
-          <div className={`relative z-10 grid grid-rows-6 gap-4 w-[390px] h-[340px] p-2.5 rounded-2xl ${theme.gridBg}`}>
-            {currentGrid.map((row, rIdx) => (
-              <div key={rIdx} className="grid grid-cols-7 gap-4">
-                {row.map((cell, cIdx) => {
-                  const isWinningCell = winnerInfo?.line.some(([winR, winC]) => winR === rIdx && winC === cIdx);
-                  
-                  return (
-                    <div 
-                      key={cIdx}
-                      onClick={() => handleColumnClick(cIdx)}
-                      className={`w-10 h-10 rounded-full flex items-center justify-center relative overflow-hidden cursor-pointer transition-all ${theme.slotBg} ${
-                        isWinningCell ? 'ring-2 ring-emerald-500 ring-offset-2 ring-offset-slate-950 scale-105' : ''
-                      }`}
-                    >
-                      <div className="absolute inset-1 rounded-full border border-white/5 shadow-inner" />
-                      
-                      {cell !== null && (
-                        <motion.div 
-                          initial={{ y: -300, scale: 0.2 }}
-                          animate={{ y: 0, scale: 1 }}
-                          transition={{ type: 'spring', stiffness: 220, damping: 14 }}
-                          className={`absolute inset-0.5 rounded-full flex items-center justify-center relative ${
-                            cell === 1 ? theme.p1Piece : theme.p2Piece
-                          }`}
-                        >
-                          <div className="w-6 h-6 rounded-full border border-white/10 flex items-center justify-center opacity-70">
-                            <div className="w-2 h-2 rounded-full bg-white/20" />
-                          </div>
-                        </motion.div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
+          <div className="relative">
+            <div className={`relative z-10 grid grid-rows-6 gap-4 w-[390px] h-[340px] p-2.5 rounded-2xl ${theme.gridBg}`}>
+              {currentGrid.map((row, rIdx) => (
+                <div key={rIdx} className="grid grid-cols-7 gap-4">
+                  {row.map((cell, cIdx) => {
+                    const isWinningCell = winnerInfo?.line.some(([winR, winC]) => winR === rIdx && winC === cIdx);
+                    
+                    return (
+                      <div 
+                        key={cIdx}
+                        onClick={() => handleColumnClick(cIdx)}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center relative overflow-hidden cursor-pointer transition-all ${theme.slotBg} ${
+                          isWinningCell ? 'ring-2 ring-emerald-500 ring-offset-2 ring-offset-slate-950 scale-105' : ''
+                        }`}
+                      >
+                        <div className="absolute inset-1 rounded-full border border-white/5 shadow-inner" />
+                        
+                        {cell !== null && (
+                          <motion.div 
+                            initial={{ y: -300, scale: 0.2 }}
+                            animate={{ y: 0, scale: 1 }}
+                            transition={{ type: 'spring', stiffness: 220, damping: 14 }}
+                            className={`absolute inset-0.5 rounded-full flex items-center justify-center relative ${
+                              cell === 1 ? theme.p1Piece : theme.p2Piece
+                            }`}
+                          >
+                            <div className="w-6 h-6 rounded-full border border-white/10 flex items-center justify-center opacity-70">
+                              <div className="w-2 h-2 rounded-full bg-white/20" />
+                            </div>
+                          </motion.div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+
+            {/* Painel SVG de Shockwaves alinhado com a grade */}
+            <svg className="absolute inset-0 w-full h-full pointer-events-none z-20">
+              {shockwaves.map(sw => (
+                <motion.circle
+                  key={sw.id}
+                  cx={sw.x}
+                  cy={sw.y}
+                  initial={{ r: 4, opacity: 0.8, strokeWidth: 4 }}
+                  animate={{ r: 45, opacity: 0, strokeWidth: 1 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  fill="none"
+                  stroke={sw.color}
+                />
+              ))}
+            </svg>
           </div>
-        </div>
+        </motion.div>
 
         {/* 💬 CHAT DE EMOJIS RÁPIDOS */}
         <div className="flex gap-2 mt-4 bg-slate-950/60 backdrop-blur-xl border border-white/10 rounded-full px-4 py-2 shadow-lg">

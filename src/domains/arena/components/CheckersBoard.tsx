@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useArenaStore, GameMatch } from '@store/useArenaStore';
-import { CheckersGrid, CheckersMove, getCheckersValidMoves, applyCheckersMove, checkCheckersWinner, getBestCheckersMove } from '../helpers/checkersLogic';
+import { CheckersGrid, CheckersMove, getCheckersValidMoves, applyCheckersMove, checkCheckersWinner, getBestCheckersMove, getCheckersMaxCaptureSequences } from '../helpers/checkersLogic';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import confetti from 'canvas-confetti';
 
 interface CheckersBoardProps {
   match: Partial<GameMatch>;
@@ -13,7 +14,7 @@ interface CheckersBoardProps {
 }
 
 // -----------------------------------------------------------------
-// SISTEMA DE ÁUDIO PROCEDURAL INTEGRADO (WEB AUDIO API)
+// SISTEMA DE ÁUDIO RETRÔ 8-BITS PROCEDURAL (WEB AUDIO API)
 // -----------------------------------------------------------------
 let checkersAudioCtx: AudioContext | null = null;
 let checkersMusicInterval: any = null;
@@ -38,58 +39,121 @@ function playCheckersProceduralMusic() {
     if (!AudioContextClass) return;
     checkersAudioCtx = new AudioContextClass();
     
-    // Acordes cíclicos espaciais e aveludados Lofi
-    const chords = [
-      [261.63, 329.63, 392.00, 493.88, 587.33], // Cmaj9
-      [349.23, 440.00, 523.25, 659.25, 783.99], // Fmaj9
-      [220.00, 261.63, 329.63, 392.00, 493.88], // Am9
-      [196.00, 246.94, 293.66, 392.00, 440.00]  // G6
+    // Uma progressão chiptune nostálgica suave C -> G -> Am -> F
+    const arpeggios = [
+      [261.63, 329.63, 392.00, 523.25], // C
+      [196.00, 246.94, 293.66, 392.00], // G
+      [220.00, 261.63, 329.63, 440.00], // Am
+      [174.61, 220.00, 261.63, 349.23]  // F
     ];
-    let step = 0;
+    let chordIdx = 0;
+    let noteIdx = 0;
 
-    const playNextChord = () => {
+    const playNote = () => {
       if (!checkersAudioCtx || checkersAudioCtx.state === 'suspended') return;
       const now = checkersAudioCtx.currentTime;
-      const notes = chords[step % chords.length];
+      const chord = arpeggios[chordIdx % arpeggios.length];
+      const freq = chord[noteIdx % chord.length];
       
-      notes.forEach((freq, idx) => {
-        const osc = checkersAudioCtx!.createOscillator();
-        const gain = checkersAudioCtx!.createGain();
-        const filter = checkersAudioCtx!.createBiquadFilter();
-        
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, now);
-        osc.frequency.linearRampToValueAtTime(freq + Math.sin(idx) * 2, now + 5.5);
-        
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(650 + idx * 80, now);
-        
-        gain.gain.setValueAtTime(0, now);
-        gain.gain.linearRampToValueAtTime(0.012, now + 1.8);
-        gain.gain.setValueAtTime(0.012, now + 4.0);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + 5.8);
-        
-        osc.connect(filter);
-        filter.connect(gain);
-        gain.connect(checkersAudioCtx!.destination);
-        
-        osc.start(now);
-        osc.stop(now + 6.0);
-      });
-      step++;
+      const osc = checkersAudioCtx.createOscillator();
+      const gain = checkersAudioCtx.createGain();
+      
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now);
+      
+      gain.gain.setValueAtTime(0.005, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.20);
+      
+      osc.connect(gain);
+      gain.connect(checkersAudioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.22);
+      
+      noteIdx++;
+      if (noteIdx % 8 === 0) {
+        chordIdx++;
+      }
     };
-
-    playNextChord();
-    checkersMusicInterval = setInterval(playNextChord, 6000);
+    
+    playNote();
+    checkersMusicInterval = setInterval(playNote, 240);
   } catch (e) {
-    console.warn('Áudio procedural suspenso:', e);
+    console.warn('Erro ao reproduzir chiptune:', e);
   }
 }
 
+// Efeitos sonoros Chiptune 8-Bits para Damas
+function playCheckersRetroSound(type: 'move' | 'capture' | 'crown' | 'win') {
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+
+    if (type === 'move') {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(180, now);
+      osc.frequency.exponentialRampToValueAtTime(360, now + 0.07);
+      gain.gain.setValueAtTime(0.03, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.07);
+    } else if (type === 'capture') {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(250, now);
+      osc.frequency.linearRampToValueAtTime(40, now + 0.16);
+      gain.gain.setValueAtTime(0.06, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.16);
+    } else if (type === 'crown') {
+      const notes = [
+        { f: 293.66, t: 0 }, { f: 349.23, t: 0.06 }, { f: 440.00, t: 0.12 }, { f: 587.33, t: 0.18 }
+      ];
+      notes.forEach(note => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(note.f, now + note.t);
+        gain.gain.setValueAtTime(0.04, now + note.t);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + note.t + 0.12);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + note.t);
+        osc.stop(now + note.t + 0.12);
+      });
+    } else if (type === 'win') {
+      const notes = [
+        { f: 261.63, t: 0 }, { f: 329.63, t: 0.08 }, { f: 392.00, t: 0.16 }, { f: 523.25, t: 0.24 }
+      ];
+      notes.forEach(note => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(note.f, now + note.t);
+        gain.gain.setValueAtTime(0.04, now + note.t);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + note.t + 0.25);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + note.t);
+        osc.stop(now + note.t + 0.25);
+      });
+    }
+  } catch (e) {}
+}
+
 // -----------------------------------------------------------------
-// SKINS E TEMAS ESTÉTICOS DE LUXO
+// SKINS E TEMAS ESTÉTICOS DE LUXO COM FILTRO RETRÔ ARCADE CRT
 // -----------------------------------------------------------------
-type CheckersSkin = 'cyberpunk' | 'wood' | 'holographic';
+type CheckersSkin = 'cyberpunk' | 'wood' | 'holographic' | 'arcade';
 
 const THEME_SKINS = {
   cyberpunk: {
@@ -112,6 +176,13 @@ const THEME_SKINS = {
     lightSquare: 'bg-white/5 border-white/[0.02]',
     p1Piece: 'bg-gradient-to-br from-purple-400 to-purple-600 shadow-[0_0_15px_rgba(192,132,252,0.6)]',
     p2Piece: 'bg-gradient-to-br from-cyan-400 to-cyan-600 shadow-[0_0_15px_rgba(34,211,238,0.6)]'
+  },
+  arcade: {
+    boardBg: 'bg-[#120324] border-purple-500/30 shadow-[0_20px_50px_rgba(236,72,153,0.18)] relative overflow-hidden after:content-[""] after:absolute after:inset-0 after:bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.2)_50%),linear-gradient(90deg,rgba(255,0,0,0.04),rgba(0,255,0,0.01),rgba(0,0,255,0.04))] after:bg-[length:100%_4px,3px_100%] after:pointer-events-none after:animate-pulse',
+    darkSquare: 'bg-[#2a085c]',
+    lightSquare: 'bg-[#4c1c8c]',
+    p1Piece: 'bg-gradient-to-br from-[#00ffff] to-[#00cccc] shadow-[0_0_15px_rgba(0,255,255,0.7)]',
+    p2Piece: 'bg-gradient-to-br from-[#ff00ff] to-[#cc00cc] shadow-[0_0_15px_rgba(255,0,255,0.7)]'
   }
 };
 
@@ -143,6 +214,13 @@ export function CheckersBoard({ match, isLocal, aiDifficulty = 3, onExit }: Chec
   const [currentSkin, setCurrentSkin] = useState<CheckersSkin>('cyberpunk');
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
 
+  // Estados para gerenciar as capturas em cadeia de maioria
+  const [chainMoves, setChainMoves] = useState<CheckersMove[]>([]);
+  const [chainPiece, setChainPiece] = useState<[number, number] | null>(null);
+  const [pendingCaptures, setPendingCaptures] = useState<[number, number][]>([]);
+  const [comboStreak, setComboStreak] = useState(0);
+  const [comboMessage, setComboMessage] = useState<string | null>(null);
+
   // Efeitos visuais
   const [floatingEmojis, setFloatingEmojis] = useState<{ id: string; emoji: string; x: number; y: number }[]>([]);
   const [particles, setParticles] = useState<{ id: string; color: string; x: number; y: number; dx: number; dy: number }[]>([]);
@@ -164,25 +242,6 @@ export function CheckersBoard({ match, isLocal, aiDifficulty = 3, onExit }: Chec
     };
   }, []);
 
-  const playMoveSound = (isCapture: boolean) => {
-    try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(isCapture ? 280 : 180, ctx.currentTime);
-      osc.frequency.linearRampToValueAtTime(isCapture ? 420 : 250, ctx.currentTime + 0.15);
-      gain.gain.setValueAtTime(0.12, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.15);
-    } catch (e) {}
-  };
-
   const toggleMusic = () => {
     if (isMusicPlaying) {
       stopCheckersProceduralMusic();
@@ -191,7 +250,7 @@ export function CheckersBoard({ match, isLocal, aiDifficulty = 3, onExit }: Chec
     } else {
       playCheckersProceduralMusic();
       setIsMusicPlaying(true);
-      toast.success('Música ambiente procedural ativada 🎵');
+      toast.success('Música ambiente chiptune ativada 🎵');
     }
   };
 
@@ -235,13 +294,19 @@ export function CheckersBoard({ match, isLocal, aiDifficulty = 3, onExit }: Chec
   const handlePieceClick = (r: number, c: number) => {
     if (!isMyTurn || winnerPlayer || isAiThinking) return;
 
+    // Se a cadeia estiver ativa, o jogador só pode clicar na peça da cadeia!
+    if (chainPiece && (chainPiece[0] !== r || chainPiece[1] !== c)) {
+      toast.warning('Você deve continuar a captura em cadeia com a mesma peça!');
+      return;
+    }
+
     const piece = currentGrid[r][c];
     if (piece && piece.player === myPlayerNum) {
       const hasCaptures = validMoves.some(m => m.captures);
       const pieceMoves = validMoves.filter(m => m.from[0] === r && m.from[1] === c);
       
       if (hasCaptures && pieceMoves.length === 0) {
-        toast.warning('Você é obrigado a capturar peças adversárias nesta rodada!');
+        toast.warning('Você é obrigado a capturar peças adversárias nesta rodada! (Regra da Maioria)');
         return;
       }
       
@@ -252,9 +317,17 @@ export function CheckersBoard({ match, isLocal, aiDifficulty = 3, onExit }: Chec
   const handleCellClick = async (r: number, c: number) => {
     if (!selectedPiece) return;
 
+    // Se a cadeia estiver ativa, o jogador só pode mover a peça da cadeia!
+    if (chainPiece && (selectedPiece[0] !== chainPiece[0] || selectedPiece[1] !== chainPiece[1])) {
+      toast.warning('Você deve continuar a captura em cadeia com a mesma peça!');
+      return;
+    }
+
     const targetMove = selectedMoves.find(m => m.to[0] === r && m.to[1] === c);
     if (!targetMove) {
       const piece = currentGrid[r][c];
+      if (chainPiece) return; // Impede mudar de seleção no meio da cadeia
+
       if (piece && piece.player === myPlayerNum) {
         handlePieceClick(r, c);
       } else {
@@ -263,39 +336,119 @@ export function CheckersBoard({ match, isLocal, aiDifficulty = 3, onExit }: Chec
       return;
     }
 
+    // Executa a jogada intermediária
     const nextGrid = applyCheckersMove(currentGrid, targetMove);
-    playMoveSound(!!targetMove.captures);
-    triggerExplosion(c, r, targetMove.captures ? '#ef4444' : '#10b981');
-    setSelectedPiece(null);
-
-    const winResult = checkCheckersWinner(nextGrid);
-
-    // Conquista ao virar Dama
-    const isPromoted = nextGrid[r][c]?.type === 'king' && currentGrid[selectedPiece[0]][selectedPiece[1]]?.type === 'normal';
-    if (isPromoted) {
-      checkCheckersAchievements('chk_king', 'Voo Majestoso', 'Promoveu uma peça a Dama Brasileira de longo alcance.', '👑');
+    
+    if (targetMove.captures) {
+      playCheckersRetroSound('capture');
+      triggerExplosion(c, r, '#ef4444');
+    } else {
+      playCheckersRetroSound('move');
     }
 
-    if (isLocal) {
-      setLocalGrid(nextGrid);
-      if (winResult) {
-        setWinnerPlayer(winResult);
-        toast.success('Parabéns! Você venceu o computador! 🏆');
-        checkCheckersAchievements('chk_win', 'Mestre das Damas', 'Venceu uma partida de Damas na Hub Arena.', '🏆');
+    // Se for uma captura, verifica se faz parte de uma sequência mais longa (captura em cadeia)
+    if (targetMove.captures) {
+      const nextPending = [...pendingCaptures, targetMove.captures];
+      
+      // Encontrar as sequências máximas que iniciam com o caminho de movimentos atual
+      const maxSeqs = getCheckersMaxCaptureSequences(currentGrid, myPlayerNum);
+      const currentPath = [...chainMoves, targetMove];
+      
+      const matchingSeqs = maxSeqs.filter(seq => {
+        if (seq.length < currentPath.length) return false;
+        for (let i = 0; i < currentPath.length; i++) {
+          if (seq[i].from[0] !== currentPath[i].from[0] || seq[i].from[1] !== currentPath[i].from[1] ||
+              seq[i].to[0] !== currentPath[i].to[0] || seq[i].to[1] !== currentPath[i].to[1]) {
+            return false;
+          }
+        }
+        return true;
+      });
+
+      if (matchingSeqs.length > 0 && matchingSeqs[0].length > currentPath.length) {
+        // A cadeia CONTINUA!
+        setChainMoves(currentPath);
+        setChainPiece([r, c]);
+        setPendingCaptures(nextPending);
+        setLocalGrid(nextGrid);
+        
+        const nextStreak = comboStreak + 1;
+        setComboStreak(nextStreak);
+        setComboMessage(nextStreak === 1 ? 'DOUBLE CAPTURE! 💥' : `COMBO STREAK x${nextStreak + 1}! 🔥`);
+        setTimeout(() => setComboMessage(null), 1500);
+
+        setSelectedPiece([r, c]);
+        toast.info('💥 Captura múltipla! Continue saltando.');
         return;
+      } else {
+        // A cadeia TERMINOU!
+        // Remove as peças comidas definitivamente
+        const finalGrid = nextGrid.map(row => [...row]);
+        for (const [capR, capC] of nextPending) {
+          finalGrid[capR][capC] = null;
+        }
+
+        // Verifica promoção
+        const isPromoted = finalGrid[r][c]?.type === 'king' && currentGrid[selectedPiece[0]][selectedPiece[1]]?.type === 'normal';
+        if (isPromoted) {
+          playCheckersRetroSound('crown');
+          checkCheckersAchievements('chk_king', 'Voo Majestoso', 'Promoveu uma peça a Dama Brasileira de longo alcance.', '👑');
+          toast.success('👑 Coroação da Dama! Voo de longo alcance desbloqueado.');
+        }
+
+        setChainMoves([]);
+        setChainPiece(null);
+        setPendingCaptures([]);
+        setComboStreak(0);
+        setSelectedPiece(null);
+
+        const winResult = checkCheckersWinner(finalGrid);
+        if (isLocal) {
+          setLocalGrid(finalGrid);
+          if (winResult) {
+            setWinnerPlayer(winResult);
+            playCheckersRetroSound('win');
+            confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+            toast.success('Parabéns! Você venceu o computador! 🏆');
+            checkCheckersAchievements('chk_win', 'Mestre das Damas', 'Venceu uma partida de Damas na Hub Arena.', '🏆');
+            return;
+          }
+          setLocalTurn('computer');
+        } else {
+          const winnerUserId = winResult ? user?.uid : undefined;
+          await makeMove(finalGrid, `${targetMove.from.join(',')}-${targetMove.to.join(',')}`, winnerUserId);
+          if (winResult) {
+            playCheckersRetroSound('win');
+            confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+          }
+        }
       }
-      setLocalTurn('computer');
     } else {
-      const winnerUserId = winResult ? user?.uid : undefined;
-      await makeMove(nextGrid, `${targetMove.from.join(',')}-${targetMove.to.join(',')}`, winnerUserId);
-      if (winResult) {
-        toast.success('Vitória espetacular na Dama!');
-        checkCheckersAchievements('chk_win', 'Mestre das Damas', 'Venceu uma partida de Damas na Hub Arena.', '🏆');
+      // Movimento comum
+      setSelectedPiece(null);
+      const winResult = checkCheckersWinner(nextGrid);
+      if (isLocal) {
+        setLocalGrid(nextGrid);
+        if (winResult) {
+          setWinnerPlayer(winResult);
+          playCheckersRetroSound('win');
+          confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+          toast.success('Parabéns! Você venceu! 🏆');
+          return;
+        }
+        setLocalTurn('computer');
+      } else {
+        const winnerUserId = winResult ? user?.uid : undefined;
+        await makeMove(nextGrid, `${targetMove.from.join(',')}-${targetMove.to.join(',')}`, winnerUserId);
+        if (winResult) {
+          playCheckersRetroSound('win');
+          confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+        }
       }
     }
   };
 
-  // Efeito da IA no Damas
+  // Efeito da IA no Damas (capturas em cadeia visuais integradas de maioria)
   useEffect(() => {
     if (isLocal && localTurn === 'computer' && !winnerPlayer) {
       setIsAiThinking(true);
@@ -304,25 +457,87 @@ export function CheckersBoard({ match, isLocal, aiDifficulty = 3, onExit }: Chec
         const bestMove = getBestCheckersMove(localGrid, aiDifficulty, 2);
         
         if (bestMove) {
-          const nextGrid = applyCheckersMove(localGrid, bestMove);
-          playMoveSound(!!bestMove.captures);
-          
-          triggerExplosion(bestMove.to[1], bestMove.to[0], bestMove.captures ? '#ef4444' : '#6366f1');
-          setLocalGrid(nextGrid);
+          if (bestMove.captures) {
+            const aiSeqs = getCheckersMaxCaptureSequences(localGrid, 2);
+            const matchingAiSeqs = aiSeqs.filter(seq => 
+              seq[0].from[0] === bestMove.from[0] && seq[0].from[1] === bestMove.from[1] &&
+              seq[0].to[0] === bestMove.to[0] && seq[0].to[1] === bestMove.to[1]
+            );
+            const selectedSeq = matchingAiSeqs.length > 0 ? matchingAiSeqs[0] : [bestMove];
+            
+            let stepIdx = 0;
+            let currentBoardSim = localGrid;
+            const capturedCoordsAccum: [number, number][] = [];
 
-          const winResult = checkCheckersWinner(nextGrid);
-          if (winResult) {
-            setWinnerPlayer(winResult);
-            toast.error('O computador venceu a partida!');
+            const executeAiStep = () => {
+              if (stepIdx < selectedSeq.length) {
+                const stepMove = selectedSeq[stepIdx];
+                currentBoardSim = applyCheckersMove(currentBoardSim, stepMove);
+                
+                playCheckersRetroSound('capture');
+                triggerExplosion(stepMove.to[1], stepMove.to[0], '#ef4444');
+                
+                if (stepMove.captures) {
+                  capturedCoordsAccum.push(stepMove.captures);
+                }
+
+                setLocalGrid(currentBoardSim);
+                stepIdx++;
+                setTimeout(executeAiStep, 450);
+              } else {
+                // Finaliza turno CPU e remove comidas definitivamente
+                const finalAiGrid = currentBoardSim.map(row => [...row]);
+                for (const [cr, cc] of capturedCoordsAccum) {
+                  finalAiGrid[cr][cc] = null;
+                }
+
+                const lastMove = selectedSeq[selectedSeq.length - 1];
+                const isPromoted = finalAiGrid[lastMove.to[0]][lastMove.to[1]]?.type === 'king' &&
+                                   localGrid[bestMove.from[0]][bestMove.from[1]]?.type === 'normal';
+                
+                if (isPromoted) {
+                  playCheckersRetroSound('crown');
+                  toast.error('👑 A CPU promoveu uma peça a Dama!');
+                }
+
+                setLocalGrid(finalAiGrid);
+                
+                const winResult = checkCheckersWinner(finalAiGrid);
+                if (winResult) {
+                  setWinnerPlayer(winResult);
+                  playCheckersRetroSound('win');
+                  toast.error('O computador venceu a partida!');
+                } else {
+                  setLocalTurn(user?.uid || 'player1');
+                }
+                setIsAiThinking(false);
+              }
+            };
+            
+            executeAiStep();
           } else {
-            setLocalTurn(user?.uid || 'player1');
+            const nextGrid = applyCheckersMove(localGrid, bestMove);
+            playCheckersRetroSound('move');
+            setLocalGrid(nextGrid);
+
+            const winResult = checkCheckersWinner(nextGrid);
+            if (winResult) {
+              setWinnerPlayer(winResult);
+              playCheckersRetroSound('win');
+              toast.error('O computador venceu a partida!');
+            } else {
+              setLocalTurn(user?.uid || 'player1');
+            }
+            setIsAiThinking(false);
           }
         } else {
           setWinnerPlayer(1);
+          playCheckersRetroSound('win');
+          confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
           toast.success('Você venceu! O computador ficou bloqueado.');
           checkCheckersAchievements('chk_win', 'Mestre das Damas', 'Venceu a IA bloqueando seus movimentos.', '🏆');
+          setIsAiThinking(false);
         }
-        setIsAiThinking(false);
       }, 800);
 
       return () => clearTimeout(timer);
@@ -479,6 +694,20 @@ export function CheckersBoard({ match, isLocal, aiDifficulty = 3, onExit }: Chec
       {/* 🏆 TABULEIRO DE DAMAS CLÁSSICO 8X8 (DIREITA) */}
       <div className="flex-1 flex flex-col items-center justify-center z-10 relative">
         
+        {/* Banner de Combo Streak */}
+        <AnimatePresence>
+          {comboMessage && (
+            <motion.div
+              initial={{ scale: 0.3, opacity: 0, y: -40 }}
+              animate={{ scale: 1.2, opacity: 1, y: 0 }}
+              exit={{ scale: 0.5, opacity: 0, y: 40 }}
+              className="absolute top-12 bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 border border-white/20 px-6 py-2.5 rounded-2xl shadow-[0_0_25px_rgba(236,72,153,0.5)] z-50 text-center font-black tracking-widest text-[9px] text-white uppercase animate-pulse select-none"
+            >
+              {comboMessage}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* REAÇÕES FLUTUANTES */}
         <div className="absolute inset-0 z-50 pointer-events-none overflow-hidden">
           <AnimatePresence>
@@ -540,6 +769,7 @@ export function CheckersBoard({ match, isLocal, aiDifficulty = 3, onExit }: Chec
                   const isSelected = selectedPiece?.[0] === rIdx && selectedPiece?.[1] === cIdx;
                   
                   const isValidTarget = selectedMoves.find(m => m.to[0] === rIdx && m.to[1] === cIdx);
+                  const isPendingCap = pendingCaptures.some(([pr, pc]) => pr === rIdx && pc === cIdx);
 
                   return (
                     <div
@@ -564,8 +794,17 @@ export function CheckersBoard({ match, isLocal, aiDifficulty = 3, onExit }: Chec
                             piece.player === 1 ? theme.p1Piece : theme.p2Piece
                           } ${
                             isSelected ? 'ring-2 ring-white scale-105 z-30' : ''
+                          } ${
+                            isPendingCap ? 'opacity-30 scale-90 ring-1 ring-rose-500/50' : ''
                           }`}
                         >
+                          {/* Marcação de captura pendente de retirada (✕) */}
+                          {isPendingCap && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-rose-500/25 rounded-full z-20 pointer-events-none">
+                              <span className="text-rose-500 text-lg font-black leading-none">✕</span>
+                            </div>
+                          )}
+
                           <div className="w-7 h-7 rounded-full border border-white/10 flex items-center justify-center opacity-60">
                             <div className="w-5 h-5 rounded-full border border-dashed border-white/20 flex items-center justify-center">
                               {piece.type === 'king' ? (

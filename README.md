@@ -461,18 +461,23 @@ A **Hub Arena** é o centro de entretenimento e integração social integrada di
 
 ### 🏆 Jogos Disponíveis & Regras Avançadas
 
-| Jogo | Tipo | Tecnologias & Regras Aplicadas | Destaques Visuais & Efeitos |
+| Jogo | Tipo | Tecnologias & Regras Aplicadas | Destaques Visuais, Sons & Efeitos Retro |
 | :--- | :--- | :--- | :--- |
-| **Chess (Xadrez)** | Multiplayer / CPU | • Mecanismo de regras puras com validação de xeque/mate.<br>• **Movimento de Roque (Castling)** disponível sob regras clássicas da FIDE.<br>• Relógio de tempo profissional duplo integrado (10 min). | Peças em relevo, turnos marcados por efeitos de cor e luz neon e som procedural de movimento de peça. |
-| **Checkers (Damas)** | Multiplayer / CPU | • **Regras Oficiais Brasileiras**: tabuleiro 8x8 e a dinâmica da **Dama Voadora (Long-Range Flying King)**.<br>• Captura obrigatória de peças com prioridade de maior quantidade de capturas. | Destaque neon das rotas e caminhos válidos, transição suave de promoção de peça e vibração visual. |
-| **Ludo 4-Player** | Multiplayer / 3 CPUs | • Suporta 4 jogadores simultâneos no mesmo tabuleiro ou contra 3 CPUs inteligentes independentes.<br>• Mecânica orbital de rota de células com regras completas (barreira, zona segura e captura). | Dado com animação de rotação 3D acelerada por hardware, layout glassmorphic vibrante com destaque orbital das peças. |
-| **Connect 4** | Multiplayer / CPU | • IA baseada no algoritmo **Minimax** com profundidade configurável.<br>• Tabuleiro de grade clássico de gravidade de fichas. | Efeito físico realístico de quique da peça caindo na grade (CSS transitions rápidas) e feedback sonoro premium. |
+| **Chess (Xadrez)** | Multiplayer / CPU | • Mecanismo de regras puras com validação de xeque/mate.<br>• **Roque Inteligente**: O jogador pode fazer o roque simplesmente clicando no **Rei** e na **Torre aliada** correspondente.<br>• Relógio de tempo profissional duplo integrado (10 min). | • Turnos marcados por luzes e efeitos HSL neon.<br>• Sons 8-bits: blip de movimento, impacto de captura, alerta chiptune de Xeque.<br>• Chuva de confetes triunfantes e fanfarra ao vencer o oponente. |
+| **Checkers (Damas)** | Multiplayer / CPU | • **Damas Brasileiras Estritas**: tabuleiro 8x8 e a dinâmica de **Dama Voadora de Longo Alcance**.<br>• **Regra da Maioria**: Obrigatoriedade recursiva de capturar a maior quantidade de peças possíveis.<br>• **Retirada Tardia**: Peças puladas ganham opacidade e "✕" vermelho pendentes de eliminação física definitiva apenas no fim do combo. | • Destaque luminoso neon das diagonais de saltos válidos.<br>• Animação de **Coroação Majestosa** com flash dourado e coroa pixelada.<br>• Combo Streak Chiptune flutuante ("DOUBLE CAPTURE!" e "COMBO STREAK!").<br>• Confetes reais e fanfarra na vitória. |
+| **Ludo 4-Player** | Multiplayer / 3 CPUs | • Suporta 4 jogadores simultâneos no mesmo tabuleiro ou contra 3 CPUs inteligentes independentes.<br>• Mecânica orbital com regras de barreira, zona segura e capturas tradicionais. | • Garagens base com nichos/soquetes circulares 3D de relevo.<br>• Trilhas comuns desenhadas em acrílico translúcido de vidro.<br>• Sons 8-bits: dado arpejado contínuo e passos digitais curtos.<br>• Confetes reais e faíscas ao atingir o triângulo central de chegada. |
+| **Connect 4** | Multiplayer / CPU | • IA baseada no algoritmo **Minimax** com profundidade ajustável.<br>• Tabuleiro de grade clássico com física elástica e de colisão. | • **Física Vibracional Premium**: grade de tabuleiro que treme (shake) no impacto e expande shockwaves SVG de poeira neon HSL.<br>• Queda de ficha com plop chiptune e vitória celebrada com chuva de confetes reais e fanfarra. |
 
-### ⚡ Características Técnicas & Matchmaking
+### ⚡ Características Técnicas, Áudio Procedural & Skins CRT Retro
 1. **Matchmaking via Firestore**: Convites dinâmicos gerados em tempo real através da coleção `invites` com sincronização instantânea.
 2. **Dynamic Island de Convite**: Pop-up global no topo da tela (`MatchInviteListener`) com aceitação instantânea de partidas online e redirecionamento automático.
-3. **Leaderboard Real (Hall da Fama)**: Exibição dinâmica contendo exclusivamente vitórias reais da coleção `matches` do Firestore (`winnerId == user.uid && status == 'finished'`).
-4. **Modo CPU Autônomo com Recomeço**: IA local avançada em cada jogo e botão inteligente `🔄 Recomeçar Partida` sob demanda para partidas singleplayer.
+3. **Leaderboard Real (Hall da Fama)**: Exibição dinâmica contendo vitórias reais da coleção `matches` do Firestore (`winnerId == user.uid && status == 'finished'`).
+4. **Motor Chiptune Procedural 8-Bits (Web Audio API)**:
+   * **Trilha de Fundo**: Síntese de ondas triangulares e arpejos arrojados contínuos de fundo (*C -> G -> Am -> F*) de baixa amplitude, eliminando trilhas sonoras pesadas locais.
+   * **Efeitos Clássicos (Sound Effects)**: Sintetizadores baseados em ondas quadradas, triangulares e dentes de serra gerados dinamicamente com filtros e decay exponencial para movimentos, capturas, arpejos de rolagens e comemorações.
+   * **Mute Dinâmico**: Botão e barras de equalizador neon integrados ao painel lateral para cessar sons e músicas de forma unificada.
+5. **Skin Premium Arcade CRT**: Skin visual opcional `"arcade"` que reveste a arena em um contêiner de gabinete de fliperama retro, sobrepondo uma cintilação fosforescente animada de scanlines analógicos e textura CRT clássica (Tailwind + CSS Keyframes).
+6. **Modo CPU Autônomo com Recomeço**: IA local avançada em cada jogo e botão inteligente `🔄 Recomeçar Partida` sob demanda para partidas de um jogador.
 
 ---
 

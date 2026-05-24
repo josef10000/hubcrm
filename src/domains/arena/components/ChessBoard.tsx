@@ -4,6 +4,7 @@ import { useArenaStore, GameMatch } from '@store/useArenaStore';
 import { ChessBoardState, ChessMove, ChessPieceType, ChessPiece, getChessValidMoves, applyChessMove, checkChessWinner, getBestChessMove } from '../helpers/chessLogic';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import confetti from 'canvas-confetti';
 
 interface ChessBoardProps {
   match: Partial<GameMatch>;
@@ -18,7 +19,7 @@ const CHESS_PIECES_UNICODE: Record<string, string> = {
 };
 
 // -----------------------------------------------------------------
-// SISTEMA DE ÁUDIO PROCEDURAL INTEGRADO (WEB AUDIO API)
+// SISTEMA DE ÁUDIO RETRÔ 8-BITS PROCEDURAL (WEB AUDIO API)
 // -----------------------------------------------------------------
 let chessAudioCtx: AudioContext | null = null;
 let chessMusicInterval: any = null;
@@ -43,58 +44,117 @@ function playChessProceduralMusic() {
     if (!AudioContextClass) return;
     chessAudioCtx = new AudioContextClass();
     
-    // Acordes cíclicos espaciais e aveludados Lofi: Cmaj9 -> Fmaj9 -> Am9 -> G6
-    const chords = [
-      [261.63, 329.63, 392.00, 493.88, 587.33], // Cmaj9
-      [349.23, 440.00, 523.25, 659.25, 783.99], // Fmaj9
-      [220.00, 261.63, 329.63, 392.00, 493.88], // Am9
-      [196.00, 246.94, 293.66, 392.00, 440.00]  // G6
+    // Uma progressão chiptune clássica: C -> G -> Am -> F em arpejos GameBoy
+    const arpeggios = [
+      [261.63, 329.63, 392.00, 523.25], // C
+      [196.00, 246.94, 293.66, 392.00], // G
+      [220.00, 261.63, 329.63, 440.00], // Am
+      [174.61, 220.00, 261.63, 349.23]  // F
     ];
-    let step = 0;
+    let chordIdx = 0;
+    let noteIdx = 0;
 
-    const playNextChord = () => {
+    const playNote = () => {
       if (!chessAudioCtx || chessAudioCtx.state === 'suspended') return;
       const now = chessAudioCtx.currentTime;
-      const notes = chords[step % chords.length];
+      const chord = arpeggios[chordIdx % arpeggios.length];
+      const freq = chord[noteIdx % chord.length];
       
-      notes.forEach((freq, idx) => {
-        const osc = chessAudioCtx!.createOscillator();
-        const gain = chessAudioCtx!.createGain();
-        const filter = chessAudioCtx!.createBiquadFilter();
-        
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, now);
-        osc.frequency.linearRampToValueAtTime(freq + Math.sin(idx) * 2, now + 5.5);
-        
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(650 + idx * 80, now);
-        
-        gain.gain.setValueAtTime(0, now);
-        gain.gain.linearRampToValueAtTime(0.012, now + 1.8);
-        gain.gain.setValueAtTime(0.012, now + 4.0);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + 5.8);
-        
-        osc.connect(filter);
-        filter.connect(gain);
-        gain.connect(chessAudioCtx!.destination);
-        
-        osc.start(now);
-        osc.stop(now + 6.0);
-      });
-      step++;
+      const osc = chessAudioCtx.createOscillator();
+      const gain = chessAudioCtx.createGain();
+      
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now);
+      
+      gain.gain.setValueAtTime(0.005, now); // extremamente sutil de fundo
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.20);
+      
+      osc.connect(gain);
+      gain.connect(chessAudioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.22);
+      
+      noteIdx++;
+      if (noteIdx % 8 === 0) {
+        chordIdx++;
+      }
     };
-
-    playNextChord();
-    chessMusicInterval = setInterval(playNextChord, 6000);
+    
+    playNote();
+    chessMusicInterval = setInterval(playNote, 240);
   } catch (e) {
-    console.warn('Áudio procedural suspenso:', e);
+    console.warn('Erro ao reproduzir chiptune:', e);
   }
 }
 
+// Efeitos sonoros Chiptune 8-Bits
+function playChessRetroSound(type: 'move' | 'capture' | 'alert' | 'win') {
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+
+    if (type === 'move') {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(160, now);
+      osc.frequency.exponentialRampToValueAtTime(320, now + 0.08);
+      gain.gain.setValueAtTime(0.03, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.08);
+    } else if (type === 'capture') {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(260, now);
+      osc.frequency.linearRampToValueAtTime(50, now + 0.15);
+      gain.gain.setValueAtTime(0.05, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.15);
+    } else if (type === 'alert') {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(300, now);
+      osc.frequency.setValueAtTime(450, now + 0.06);
+      gain.gain.setValueAtTime(0.03, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.14);
+    } else if (type === 'win') {
+      const notes = [
+        { f: 261.63, t: 0 }, { f: 329.63, t: 0.08 }, { f: 392.00, t: 0.16 }, { f: 523.25, t: 0.24 }
+      ];
+      notes.forEach(note => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(note.f, now + note.t);
+        gain.gain.setValueAtTime(0.04, now + note.t);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + note.t + 0.2);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + note.t);
+        osc.stop(now + note.t + 0.2);
+      });
+    }
+  } catch (e) {}
+}
+
 // -----------------------------------------------------------------
-// SKINS E TEMAS ESTÉTICOS DE LUXO
+// SKINS E TEMAS ESTÉTICOS DE LUXO COM MODO CRT RETRÔ
 // -----------------------------------------------------------------
-type ChessSkin = 'cyberpunk' | 'wood' | 'holographic';
+type ChessSkin = 'cyberpunk' | 'wood' | 'holographic' | 'arcade';
 
 const THEME_SKINS = {
   cyberpunk: {
@@ -117,6 +177,13 @@ const THEME_SKINS = {
     lightSquare: 'bg-white/5 border-white/[0.02]',
     p1Piece: 'text-purple-300 drop-shadow-[0_0_10px_rgba(192,132,252,0.65)]',
     p2Piece: 'text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.7)]'
+  },
+  arcade: {
+    boardBg: 'bg-[#120324] border-purple-500/30 shadow-[0_20px_50px_rgba(236,72,153,0.18)] relative overflow-hidden after:content-[""] after:absolute after:inset-0 after:bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.2)_50%),linear-gradient(90deg,rgba(255,0,0,0.04),rgba(0,255,0,0.01),rgba(0,0,255,0.04))] after:bg-[length:100%_4px,3px_100%] after:pointer-events-none after:animate-pulse',
+    darkSquare: 'bg-[#2a085c]',
+    lightSquare: 'bg-[#4c1c8c]',
+    p1Piece: 'text-[#00ffff] drop-shadow-[0_0_8px_rgba(0,255,255,0.85)]',
+    p2Piece: 'text-[#ff00ff] drop-shadow-[0_0_8px_rgba(255,0,255,0.85)]'
   }
 };
 
