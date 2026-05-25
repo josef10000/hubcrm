@@ -5,6 +5,8 @@ import { LudoBoardState, LudoToken, LudoColor, createInitialLudoState, getLudoVa
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
+import { HelpCircle } from 'lucide-react';
+import { GameHelpModal } from './GameHelpModal';
 
 interface LudoBoardProps {
   match: Partial<GameMatch>;
@@ -212,6 +214,7 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
   const [localTurn, setLocalTurn] = useState<LudoColor>('red');
   const [isAiThinking, setIsAiThinking] = useState(false);
   const [diceRolling, setDiceRolling] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [currentSkin, setCurrentSkin] = useState<LudoSkin>('cyberpunk');
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
 
@@ -571,9 +574,18 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
       
       {/* 📊 PAINEL ESTATÍSTICO DE JOGO (ESQUERDA) */}
       <div className="w-64 bg-slate-950/65 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-6 flex flex-col gap-6 select-none shadow-2xl z-10">
-        <div className="space-y-1">
-          <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest">Ludo de 4 Jogadores</span>
-          <h3 className="text-sm font-black text-white uppercase tracking-widest mt-1">Status da Arena</h3>
+        <div className="flex justify-between items-start w-full">
+          <div className="space-y-1">
+            <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest">Ludo de 4 Jogadores</span>
+            <h3 className="text-sm font-black text-white uppercase tracking-widest mt-1">Status da Arena</h3>
+          </div>
+          <button 
+            onClick={() => setShowHelp(true)}
+            className="p-2 bg-white/5 border border-white/5 rounded-xl text-gray-400 hover:text-white transition-all cursor-pointer flex items-center justify-center"
+            title="Como Jogar"
+          >
+            <HelpCircle size={14} />
+          </button>
         </div>
 
         {/* 🎨 SELETOR DE SKINS E TEMAS ESTÉTICOS */}
@@ -855,6 +867,15 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
 
       </div>
 
+      <AnimatePresence>
+        {showHelp && (
+          <GameHelpModal 
+            gameType="ludo" 
+            skin={currentSkin === 'cyberpunk' ? 'cyberpunk' : 'classic'} 
+            onClose={() => setShowHelp(false)} 
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

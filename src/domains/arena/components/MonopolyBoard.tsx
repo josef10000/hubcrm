@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, RefreshCw, AlertTriangle, ArrowRight, DollarSign, Eye, ShieldAlert, Award, Volume2, VolumeX } from 'lucide-react';
+import { Star, RefreshCw, AlertTriangle, ArrowRight, DollarSign, Eye, ShieldAlert, Award, Volume2, VolumeX, HelpCircle } from 'lucide-react';
 import { useArenaStore } from '@store/useArenaStore';
+import { GameHelpModal } from './GameHelpModal';
 import { MONOPOLY_SQUARES, MONOPOLY_SQUARES as squares, CHANCE_CARDS, MonopolySquare } from '../helpers/monopolyConstants';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -23,6 +24,7 @@ export function MonopolyBoard({ match, isLocal, aiDifficulty = 3, onExit }: Mono
   const [isRolling, setIsRolling] = useState(false);
   const [dice, setDice] = useState<[number, number] | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [showHelp, setShowHelp] = useState(false);
   const [activeChanceCard, setActiveChanceCard] = useState<any | null>(null);
   const [showManageModal, setShowManageModal] = useState(false);
   const [selectedPropertyForUpgrade, setSelectedPropertyForUpgrade] = useState<MonopolySquare | null>(null);
@@ -366,6 +368,15 @@ export function MonopolyBoard({ match, isLocal, aiDifficulty = 3, onExit }: Mono
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Botão de Ajuda */}
+          <button 
+            onClick={() => setShowHelp(true)}
+            className="p-2.5 bg-white/5 border border-white/5 rounded-xl text-gray-400 hover:text-white transition-all cursor-pointer flex items-center justify-center"
+            title="Como Jogar"
+          >
+            <HelpCircle size={14} />
+          </button>
+
           {/* Botão de Som */}
           <button 
             onClick={() => setSoundEnabled(!soundEnabled)}
@@ -657,6 +668,16 @@ export function MonopolyBoard({ match, isLocal, aiDifficulty = 3, onExit }: Mono
 
         </div>
       </div>
+
+      <AnimatePresence>
+        {showHelp && (
+          <GameHelpModal 
+            gameType="monopoly" 
+            skin={skin} 
+            onClose={() => setShowHelp(false)} 
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

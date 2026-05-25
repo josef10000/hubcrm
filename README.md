@@ -479,6 +479,7 @@ A **Hub Arena** é o centro de entretenimento e integração social integrada di
    * **Mute Dinâmico**: Botão e barras de equalizador neon integrados ao painel lateral para cessar sons e músicas de forma unificada.
 5. **Skin Premium Arcade CRT**: Skin visual opcional `"arcade"` que reveste a arena em um contêiner de gabinete de fliperama retro, sobrepondo uma cintilação fosforescente animada de scanlines analógicos e textura CRT clássica (Tailwind + CSS Keyframes).
 6. **Modo CPU Autônomo com Recomeço**: IA local avançada em cada jogo e botão inteligente `🔄 Recomeçar Partida` sob demanda para partidas de um jogador.
+7. **Central de Ajuda & Regras Unificadas**: Cada um dos 6 jogos da Arena possui um botão interativo de ajuda (`HelpCircle`) que exibe de forma premium, fluida (framer-motion) e reativa a regras, objetivos e dicas táticas oficiais formatadas de acordo com o tema selecionado (Clássico ou Cyberpunk).
 
 ---
 

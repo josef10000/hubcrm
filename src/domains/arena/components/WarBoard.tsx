@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Swords, RefreshCw, AlertTriangle, ShieldAlert, Award, Volume2, VolumeX, Compass, Map, User, HelpCircle } from 'lucide-react';
 import { useArenaStore } from '@store/useArenaStore';
+import { GameHelpModal } from './GameHelpModal';
 import { WAR_TERRITORIES, WAR_OBJECTIVES, CONTINENT_BONUSES } from '../helpers/warConstants';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -21,6 +22,7 @@ export function WarBoard({ match, isLocal, aiDifficulty = 3, onExit }: WarBoardP
   // Estados Locais
   const [skin, setSkin] = useState<'classic' | 'cyberpunk'>('cyberpunk');
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [showHelp, setShowHelp] = useState(false);
   const [selectedOrigin, setSelectedOrigin] = useState<string | null>(null);
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
   const [battleDice, setBattleDice] = useState<{ atk: number[]; def: number[] } | null>(null);
@@ -30,6 +32,7 @@ export function WarBoard({ match, isLocal, aiDifficulty = 3, onExit }: WarBoardP
   const players = match.boardState?.players || [];
   const territories = match.boardState?.territories || {};
   const objectives = match.boardState?.playerObjectives || {};
+  const log = match.boardState?.log || [];
   const currentPhase = match.boardState?.phase || 'distribute'; // distribute | attack | fortify
   const armiesToDistribute = match.boardState?.armiesToDistribute || {};
   const currentTurn = match.turn;
@@ -407,6 +410,15 @@ export function WarBoard({ match, isLocal, aiDifficulty = 3, onExit }: WarBoardP
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Botão de Ajuda */}
+          <button 
+            onClick={() => setShowHelp(true)}
+            className="p-2.5 bg-white/5 border border-white/5 rounded-xl text-gray-400 hover:text-white transition-all cursor-pointer flex items-center justify-center"
+            title="Como Jogar"
+          >
+            <HelpCircle size={14} />
+          </button>
+
           {/* Botão de Som */}
           <button 
             onClick={() => setSoundEnabled(!soundEnabled)}
@@ -629,6 +641,16 @@ export function WarBoard({ match, isLocal, aiDifficulty = 3, onExit }: WarBoardP
 
         </div>
       </div>
+
+      <AnimatePresence>
+        {showHelp && (
+          <GameHelpModal 
+            gameType="war" 
+            skin={skin} 
+            onClose={() => setShowHelp(false)} 
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -5,6 +5,8 @@ import { ChessBoardState, ChessMove, ChessPieceType, ChessPiece, getChessValidMo
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
+import { HelpCircle } from 'lucide-react';
+import { GameHelpModal } from './GameHelpModal';
 
 interface ChessBoardProps {
   match: Partial<GameMatch>;
@@ -211,6 +213,7 @@ export function ChessBoard({ match, isLocal, aiDifficulty = 3, onExit }: ChessBo
   const [selectedCell, setSelectedCell] = useState<string | null>(null);
   const [winnerPlayer, setWinnerPlayer] = useState<number | null>(null);
   const [isAiThinking, setIsAiThinking] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [currentSkin, setCurrentSkin] = useState<ChessSkin>('cyberpunk');
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
 
@@ -503,9 +506,18 @@ export function ChessBoard({ match, isLocal, aiDifficulty = 3, onExit }: ChessBo
       
       {/* 📊 PAINEL ESTATÍSTICO DE JOGO (ESQUERDA) */}
       <div className="w-64 bg-slate-950/65 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-6 flex flex-col gap-6 select-none shadow-2xl z-10">
-        <div className="space-y-1">
-          <span className="text-[8px] font-black text-purple-500 uppercase tracking-widest">Xadrez Estratégico</span>
-          <h3 className="text-sm font-black text-white uppercase tracking-widest mt-1">Status da Arena</h3>
+        <div className="flex justify-between items-start w-full">
+          <div className="space-y-1">
+            <span className="text-[8px] font-black text-purple-500 uppercase tracking-widest">Xadrez Estratégico</span>
+            <h3 className="text-sm font-black text-white uppercase tracking-widest mt-1">Status da Arena</h3>
+          </div>
+          <button 
+            onClick={() => setShowHelp(true)}
+            className="p-2 bg-white/5 border border-white/5 rounded-xl text-gray-400 hover:text-white transition-all cursor-pointer flex items-center justify-center"
+            title="Como Jogar"
+          >
+            <HelpCircle size={14} />
+          </button>
         </div>
 
         {/* 🎨 SELETOR DE SKINS */}
@@ -729,6 +741,15 @@ export function ChessBoard({ match, isLocal, aiDifficulty = 3, onExit }: ChessBo
 
       </div>
 
+      <AnimatePresence>
+        {showHelp && (
+          <GameHelpModal 
+            gameType="chess" 
+            skin={currentSkin === 'cyberpunk' ? 'cyberpunk' : 'classic'} 
+            onClose={() => setShowHelp(false)} 
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

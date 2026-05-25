@@ -5,6 +5,8 @@ import { checkConnect4Winner, getConnect4FreeRow, getBestConnect4Move, isConnect
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
+import { HelpCircle } from 'lucide-react';
+import { GameHelpModal } from './GameHelpModal';
 
 interface Connect4BoardProps {
   match: Partial<GameMatch>;
@@ -172,6 +174,7 @@ export function Connect4Board({ match, isLocal, aiDifficulty = 3, onExit }: Conn
   const [winnerInfo, setWinnerInfo] = useState<{ winner: number; line: [number, number][] } | null>(null);
   const [isDraw, setIsDraw] = useState(false);
   const [isAiThinking, setIsAiThinking] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [currentSkin, setCurrentSkin] = useState<Connect4Skin>('cyberpunk');
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
 
@@ -388,9 +391,18 @@ export function Connect4Board({ match, isLocal, aiDifficulty = 3, onExit }: Conn
       
       {/* 📊 PAINEL ESTATÍSTICO DE JOGO (ESQUERDA) */}
       <div className="w-64 bg-slate-950/65 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-6 flex flex-col gap-6 select-none shadow-2xl z-10">
-        <div className="space-y-1">
-          <span className="text-[8px] font-black text-blue-500 uppercase tracking-widest">Connect 4</span>
-          <h3 className="text-sm font-black text-white uppercase tracking-widest mt-1">Status da Arena</h3>
+        <div className="flex justify-between items-start w-full">
+          <div className="space-y-1">
+            <span className="text-[8px] font-black text-blue-500 uppercase tracking-widest">Connect 4</span>
+            <h3 className="text-sm font-black text-white uppercase tracking-widest mt-1">Status da Arena</h3>
+          </div>
+          <button 
+            onClick={() => setShowHelp(true)}
+            className="p-2 bg-white/5 border border-white/5 rounded-xl text-gray-400 hover:text-white transition-all cursor-pointer flex items-center justify-center"
+            title="Como Jogar"
+          >
+            <HelpCircle size={14} />
+          </button>
         </div>
 
         {/* 🎨 SELETOR DE SKINS */}
@@ -642,6 +654,15 @@ export function Connect4Board({ match, isLocal, aiDifficulty = 3, onExit }: Conn
 
       </div>
 
+      <AnimatePresence>
+        {showHelp && (
+          <GameHelpModal 
+            gameType="connect4" 
+            skin={currentSkin === 'cyberpunk' ? 'cyberpunk' : 'classic'} 
+            onClose={() => setShowHelp(false)} 
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
