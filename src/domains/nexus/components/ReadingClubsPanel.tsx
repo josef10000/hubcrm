@@ -172,14 +172,28 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
     
     const unsubscribe = onSnapshot(clubsColRef, async (snapshot) => {
       if (snapshot.empty) {
-        // Se a coleção estiver vazia, vamos auto-inicializar dados mockados corporativos
-        console.log('[Clube de Leitura] Coleção vazia. Auto-inicializando dados corporativos...');
-        await initializeMockClubs();
+        setClubs([]);
+        setLoading(false);
       } else {
-        const loadedClubs = snapshot.docs.map(doc => ({
-          ...doc.data(),
-          id: doc.id
-        } as ReadingClub));
+        const loadedClubs = snapshot.docs
+          .map(doc => ({
+            ...doc.data(),
+            id: doc.id
+          } as ReadingClub))
+          .filter(c => !c.isDemo);
+
+        // Remove de forma proativa mocks físicos no Firestore
+        snapshot.docs.forEach(async (docSnapshot) => {
+          const data = docSnapshot.data();
+          if (data.isDemo) {
+            try {
+              await deleteDoc(docSnapshot.ref);
+            } catch (err) {
+              console.warn('[Clube de Leitura] Falha ao expurgar mock no Firestore:', err);
+            }
+          }
+        });
+
         setClubs(loadedClubs);
         setLoading(false);
       }
@@ -540,6 +554,177 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
       <div className="py-20 flex flex-col items-center justify-center gap-4">
         <div className="w-12 h-12 border-4 border-primary-500/20 border-t-primary-500 rounded-full animate-spin" />
         <span className="text-xs font-black uppercase tracking-[0.4em] text-gray-500">Conectando Clubes...</span>
+      </div>
+    );
+  }
+
+  // Estado Vazio Premium se não houver nenhum clube de leitura real criado
+  if (!loading && clubs.length === 0) {
+    return (
+      <div className="space-y-12 select-none animate-in fade-in duration-300">
+        {/* HEADER DE INTRODUÇÃO DA DINÂMICA */}
+        <div className="relative overflow-hidden rounded-[2.5rem] bg-[#0d0f16]/80 border border-white/10 p-8 shadow-2xl">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 blur-[60px] rounded-full pointer-events-none" />
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="space-y-3 max-w-2xl text-center md:text-left">
+              <span className="px-3 py-1 bg-primary-500/15 border border-primary-500/30 text-primary-400 rounded-full text-[9px] font-black uppercase tracking-widest">
+                Nexus Hub & Arena Synergy
+              </span>
+              <h2 className="text-3xl font-black text-white uppercase tracking-tight">
+                Clubes de Leitura Nexus Coletivos
+              </h2>
+              <p className="text-xs text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
+                Una-se ao seu departamento e devore livros técnicos! Cada time tem uma meta acumulada de leitura no livro do mês. Ao bater 100%, todos ganham <span className="text-amber-400">200 Fliperama Coins 🪙</span> para gastar na Arena!
+              </p>
+            </div>
+            <div className="px-6 py-4 bg-white/5 border border-white/10 rounded-3xl flex items-center gap-4 w-full sm:w-auto">
+              <div className="w-12 h-16 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-400 text-2xl font-bold shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+                🪙
+              </div>
+              <div>
+                <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Seu Saldo</p>
+                <h3 className="text-2xl font-black text-white">{userProfile?.arenaCredits || 0} <span className="text-xs font-bold text-gray-500">Coins</span></h3>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* CONTAINER DO EMPTY STATE NEON */}
+        <div className="relative overflow-hidden rounded-[3rem] bg-[#0d0f16]/90 border border-white/5 p-12 text-center flex flex-col items-center gap-6 shadow-2xl max-w-3xl mx-auto border-dashed">
+          <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.01)_0%,rgba(6,182,212,0.02)_50%,rgba(255,255,255,0.01)_100%)] pointer-events-none" />
+          <div className="w-20 h-20 rounded-full bg-primary-500/10 border border-primary-500/20 flex items-center justify-center text-4xl shadow-[0_0_30px_rgba(6,182,212,0.2)] animate-pulse">
+            📚
+          </div>
+          <div className="space-y-3 max-w-md">
+            <h3 className="text-xl font-black text-white uppercase tracking-wider">Nenhum Clube de Leitura Criado</h3>
+            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
+              Não existem metas coletivas de leitura ativas na organização. Seja o pioneiro e crie a primeira meta do seu departamento hoje mesmo!
+            </p>
+          </div>
+          <button
+            onClick={handleOpenCreateModal}
+            className="px-8 py-4 bg-primary-500 hover:bg-primary-400 hover:scale-105 active:scale-95 transition-all rounded-3xl text-[10px] font-black uppercase tracking-widest text-white flex items-center justify-center gap-2 shadow-2xl shadow-primary-500/20 cursor-pointer"
+          >
+            <i className="ph-bold ph-plus" />
+            Criar Primeiro Clube
+          </button>
+        </div>
+
+        {/* MODAL DE FORMULÁRIO DE CADASTRO/EDIÇÃO */}
+        <AnimatePresence>
+          {isFormOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.6 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsFormOpen(false)}
+                className="fixed inset-0 bg-black z-[100] backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-[#0d0f16] border border-white/10 rounded-[2.5rem] shadow-2xl p-8 z-[101] overflow-hidden"
+              >
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/10 blur-[40px] rounded-full pointer-events-none" />
+
+                <div className="space-y-6">
+                  <div>
+                    <span className="px-3 py-1 bg-primary-500/15 border border-primary-500/30 text-primary-400 rounded-full text-[9px] font-black uppercase tracking-widest">
+                      {formMode === 'create' ? 'NOVO CLUBE' : 'EDITAR CLUBE'}
+                    </span>
+                    <h3 className="text-xl font-black text-white uppercase tracking-tight mt-3">
+                      {formMode === 'create' ? 'Criar Clube de Leitura' : 'Editar Clube de Leitura'}
+                    </h3>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest leading-relaxed mt-1">
+                      Configure a obra oficial e a meta de leitura coletiva para o departamento selecionado.
+                    </p>
+                  </div>
+
+                  {/* Campos do Formulário */}
+                  <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block">Título do Livro</label>
+                      <input
+                        type="text"
+                        value={formData.bookTitle}
+                        onChange={(e) => setFormData(prev => ({ ...prev, bookTitle: e.target.value }))}
+                        placeholder="Ex: Trabalho Focado"
+                        className="w-full bg-[#151722] border border-white/10 rounded-2xl px-5 py-3.5 text-sm text-white focus:border-primary-500 outline-none transition-all"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block">Autor</label>
+                      <input
+                        type="text"
+                        value={formData.bookAuthor}
+                        onChange={(e) => setFormData(prev => ({ ...prev, bookAuthor: e.target.value }))}
+                        placeholder="Ex: Cal Newport"
+                        className="w-full bg-[#151722] border border-white/10 rounded-2xl px-5 py-3.5 text-sm text-white focus:border-primary-500 outline-none transition-all"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block">Link da Imagem de Capa (URL)</label>
+                      <input
+                        type="text"
+                        value={formData.bookCoverUrl}
+                        onChange={(e) => setFormData(prev => ({ ...prev, bookCoverUrl: e.target.value }))}
+                        placeholder="Ex: https://link-da-imagem.jpg (opcional)"
+                        className="w-full bg-[#151722] border border-white/10 rounded-2xl px-5 py-3.5 text-sm text-white focus:border-primary-500 outline-none transition-all"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block">Departamento</label>
+                        <select
+                          value={formData.department}
+                          onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value }))}
+                          disabled={formMode === 'edit'}
+                          className="w-full bg-[#151722] border border-white/10 rounded-2xl px-5 py-3.5 text-sm text-white focus:border-primary-500 outline-none transition-all"
+                        >
+                          {Object.keys(DEPARTMENTS_CONFIG).map(dept => (
+                            <option key={dept} value={dept} className="bg-[#0d0f16]">{dept}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block">Meta de Páginas</label>
+                        <input
+                          type="number"
+                          min={1}
+                          value={formData.targetPages}
+                          onChange={(e) => setFormData(prev => ({ ...prev, targetPages: parseInt(e.target.value) || 0 }))}
+                          placeholder="Ex: 300"
+                          className="w-full bg-[#151722] border border-white/10 rounded-2xl px-5 py-3.5 text-sm text-white focus:border-primary-500 outline-none transition-all"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                    <button
+                      onClick={() => setIsFormOpen(false)}
+                      className="py-4 bg-white/5 hover:bg-white/10 rounded-2xl text-[10px] font-black text-gray-400 hover:text-white uppercase tracking-widest transition-all border border-white/5"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={handleSaveClub}
+                      className="py-4 bg-primary-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary-500/20 hover:scale-105 transition-all"
+                    >
+                      Salvar Clube
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </div>
     );
   }
