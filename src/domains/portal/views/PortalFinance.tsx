@@ -30,6 +30,9 @@ export default function PortalFinance({
   setActiveClientId 
 }: PortalFinanceProps) {
   const isCourtesy = client.isCourtesy === true;
+  const setupValue = client.customSetupPrice || client.setupPrice || 0;
+  const monthlyValue = client.customMonthlyPrice || client.planPrice || 0;
+  const isSubscription = !!client.asaasSubscriptionId;
   
   // Verificar se o setup já foi pago no histórico
   const isSetupPaid = paymentsHistory.some(p => 
