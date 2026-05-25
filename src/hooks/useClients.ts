@@ -79,7 +79,7 @@ export function useClients(opts: UseClientsOptions) {
   const syncPayments = async () => {
     setIsSyncing(true);
     try {
-      const clientsToSync = clients.filter((c) => c.asaasCustomerId && c.status !== 'Cancelado');
+      const clientsToSync = clients.filter((c) => c.asaasCustomerId && c.status !== 'Cancelado' && !c.isCourtesy);
       let updatedCount = 0;
 
       for (const client of clientsToSync) {
@@ -196,13 +196,14 @@ export function useClients(opts: UseClientsOptions) {
       isCombo: clientData.isCombo,
       maxInstallments: clientData.maxInstallments,
       comboRenewalDate: clientData.comboRenewalDate,
+      isCourtesy: clientData.isCourtesy || false,
       asaasNotificationsEnabled: clientData.asaasNotificationsEnabled || false,
       referralRewardType: clientData.billingCycle === 'YEARLY' || clientData.isCombo ? 'commission' : clientData.referralRewardType || editingClient?.referralRewardType || 'discount',
     };
 
     try {
       // Ensure Asaas notifications are disabled for existing customers
-      if (client.asaasCustomerId && !isNew) {
+      if (client.asaasCustomerId && !isNew && !client.isCourtesy) {
         authFetch('/api/asaas/update-customer', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -214,7 +215,7 @@ export function useClients(opts: UseClientsOptions) {
       }
 
       // Handle Update Subscription
-      if (!isNew && client.asaasSubscriptionId && editingClient && (editingClient.recurringPaymentDay !== client.recurringPaymentDay || editingClient.billingType !== client.billingType || editingClient.billingCycle !== client.billingCycle || editingClient.plan !== client.plan)) {
+      if (!isNew && !client.isCourtesy && client.asaasSubscriptionId && editingClient && (editingClient.recurringPaymentDay !== client.recurringPaymentDay || editingClient.billingType !== client.billingType || editingClient.billingCycle !== client.billingCycle || editingClient.plan !== client.plan)) {
         let monthlyValue = getPlanPrice(client.plan, client.billingCycle, client);
         monthlyValue -= calculateDiscount(client as Client, clients);
 
@@ -245,6 +246,43 @@ export function useClients(opts: UseClientsOptions) {
         } else {
           if (nextSubDateStr) client.nextDueDate = nextSubDateStr;
         }
+      }
+
+      // Handle transition from paid client to Courtesy VIP
+      if (!isNew && client.isCourtesy && editingClient && !editingClient.isCourtesy) {
+        if (client.asaasCustomerId) {
+          if (client.asaasSubscriptionId) {
+            const delRes = await authFetch('/api/asaas/delete-subscription', { 
+              method: 'POST', 
+              headers: { 'Content-Type': 'application/json' }, 
+              body: JSON.stringify({ subscriptionId: client.asaasSubscriptionId }) 
+            });
+            if (delRes.ok) {
+              client.asaasSubscriptionId = undefined;
+            }
+          }
+          try {
+            const paymentsRes = await authFetch(`/api/asaas/payments?customer=${client.asaasCustomerId}`);
+            if (paymentsRes.ok) {
+              const paymentsData = await paymentsRes.json();
+              const payments = paymentsData.data || [];
+              for (const payment of payments) {
+                if (payment.status === 'PENDING' || payment.status === 'OVERDUE') {
+                  await authFetch('/api/asaas/delete-payment', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ paymentId: payment.id }) 
+                  });
+                }
+              }
+            }
+          } catch (e) {
+            console.error('Error cancelling pending payments for new courtesy client', e);
+          }
+        }
+        client.paymentStatus = 'N/A';
+        client.invoiceUrl = undefined;
+        client.nextDueDate = undefined;
       }
 
       // Handle Cancellation
@@ -302,7 +340,7 @@ export function useClients(opts: UseClientsOptions) {
       }
 
       // Integrate with Asaas for new clients
-      if (!client.asaasCustomerId && client.cpfCnpj && client.email && client.status !== 'Cancelado') {
+      if (!client.isCourtesy && !client.asaasCustomerId && client.cpfCnpj && client.email && client.status !== 'Cancelado') {
         const phoneClean = client.whatsapp ? client.whatsapp.replace(/\D/g, '') : '';
         const isMobile = phoneClean.length === 11;
         const isLandline = phoneClean.length === 10;

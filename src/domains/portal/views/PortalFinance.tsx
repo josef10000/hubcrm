@@ -10,7 +10,8 @@ import {
   Clock,
   ExternalLink,
   Wallet,
-  Calendar
+  Calendar,
+  Star
 } from 'lucide-react';
 
 interface PortalFinanceProps {
@@ -28,9 +29,7 @@ export default function PortalFinance({
   activeClientId, 
   setActiveClientId 
 }: PortalFinanceProps) {
-  const setupValue = client.customSetupPrice || client.setupPrice || 0;
-  const monthlyValue = client.customMonthlyPrice || client.planPrice || 0;
-  const isSubscription = !!client.asaasSubscriptionId;
+  const isCourtesy = client.isCourtesy === true;
   
   // Verificar se o setup já foi pago no histórico
   const isSetupPaid = paymentsHistory.some(p => 
@@ -39,21 +38,29 @@ export default function PortalFinance({
   );
 
   // Fatura prioritária (Setup se não pago, senão a próxima pendente/recorrente)
-  const currentInvoice = paymentsHistory.find(p => p.status === 'PENDING' || p.status === 'OVERDUE') 
-    || paymentsHistory[0]
-    || (setupValue > 0 && !isSetupPaid ? {
-        value: setupValue,
-        status: 'PENDING',
-        dueDate: new Date().toISOString().split('T')[0],
-        invoiceUrl: client.paymentLink || client.invoiceUrl || client.bankSlipUrl || client.invoiceHtmlUrl,
-        description: 'Taxa de Implementação (Setup)'
-       } : { 
-        value: monthlyValue, 
-        status: 'PENDING', 
-        dueDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0], // Mês seguinte se for mensalidade nova
-        invoiceUrl: client.paymentLink || client.invoiceUrl || client.bankSlipUrl || client.invoiceHtmlUrl,
-        description: 'Mensalidade'
-       });
+  const currentInvoice = isCourtesy 
+    ? {
+        value: 0,
+        status: 'RECEIVED',
+        dueDate: null,
+        description: 'Acesso Cortesia VIP',
+        invoiceUrl: null
+      }
+    : (paymentsHistory.find(p => p.status === 'PENDING' || p.status === 'OVERDUE') 
+        || paymentsHistory[0]
+        || (setupValue > 0 && !isSetupPaid ? {
+            value: setupValue,
+            status: 'PENDING',
+            dueDate: new Date().toISOString().split('T')[0],
+            invoiceUrl: client.paymentLink || client.invoiceUrl || client.bankSlipUrl || client.invoiceHtmlUrl,
+            description: 'Taxa de Implementação (Setup)'
+           } : { 
+            value: monthlyValue, 
+            status: 'PENDING', 
+            dueDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0], // Mês seguinte se for mensalidade nova
+            invoiceUrl: client.paymentLink || client.invoiceUrl || client.bankSlipUrl || client.invoiceHtmlUrl,
+            description: 'Mensalidade'
+           }));
 
   // Função para garantir que temos uma URL de pagamento válida
   const isPortalLink = (url: string) => {
@@ -97,6 +104,9 @@ export default function PortalFinance({
   const isSetupFocus = currentInvoice?.description?.includes('Setup') || (setupValue > 0 && !isSetupPaid && paymentsHistory.length === 0);
 
   const getStatusStyle = (status: string) => {
+    if (isCourtesy) {
+      return { label: 'Isento / VIP', class: 'bg-purple-500/10 text-purple-400 border-purple-500/20', icon: Star };
+    }
     switch (status) {
       case 'RECEIVED':
       case 'CONFIRMED':
@@ -133,21 +143,39 @@ export default function PortalFinance({
       )}
       {/* Active Invoice Card */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-gradient-to-br from-primary-600 to-primary-800 p-6 lg:p-8 rounded-[2rem] lg:rounded-[2.5rem] shadow-2xl shadow-primary-500/20 relative overflow-hidden group">
+        <div className={`lg:col-span-2 p-6 lg:p-8 rounded-[2rem] lg:rounded-[2.5rem] shadow-2xl relative overflow-hidden group ${
+          isCourtesy 
+            ? 'bg-gradient-to-br from-purple-600 to-indigo-800 shadow-purple-500/20' 
+            : 'bg-gradient-to-br from-primary-600 to-primary-800 shadow-primary-500/20'
+        }`}>
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-[80px] -mr-32 -mt-32 transition-transform duration-700 group-hover:scale-110" />
           <div className="relative z-10">
             <div className="flex justify-between items-start mb-8 lg:mb-12">
               <div className="p-3 bg-white/20 backdrop-blur-md rounded-2xl">
-                <Wallet className="text-white w-5 h-5 lg:w-6 lg:h-6" />
+                {isCourtesy ? <Star className="text-white w-5 h-5 lg:w-6 lg:h-6 fill-white" /> : <Wallet className="text-white w-5 h-5 lg:w-6 lg:h-6" />}
               </div>
               <div className="flex flex-col items-end text-right">
-                <span className="text-white/60 text-[10px] font-bold uppercase tracking-widest leading-none mb-1">{isSetupFocus ? 'Serviço Profissional' : 'Plano Recorrente'}</span>
+                <span className="text-white/60 text-[10px] font-bold uppercase tracking-widest leading-none mb-1">
+                  {isCourtesy ? 'Parceria VIP' : isSetupFocus ? 'Serviço Profissional' : 'Plano Recorrente'}
+                </span>
                 <span className="text-base lg:text-xl font-bold text-white uppercase truncate max-w-[150px] lg:max-w-none">{client.plan}</span>
               </div>
             </div>
             
             <div className="mb-10 lg:mb-12 flex flex-col sm:flex-row sm:items-center gap-6 lg:gap-12">
-                {isSubscription && (
+                {isCourtesy ? (
+                  <div>
+                    <p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-1">
+                      Status da Assinatura
+                    </p>
+                    <div className="flex items-center gap-3">
+                       <Star className="w-5 h-5 text-purple-300 fill-purple-300 animate-pulse" />
+                       <span className="text-3xl lg:text-4xl font-black text-white">
+                         Acesso VIP Ativo
+                       </span>
+                    </div>
+                  </div>
+                ) : isSubscription && (
                   <div>
                     <p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-1">
                       {client.billingCycle === 'YEARLY' ? 'Próxima Renovação' : 'Próximo Vencimento'}
@@ -161,7 +189,7 @@ export default function PortalFinance({
                   </div>
                 )}
 
-              {client.currentDiscount > 0 && !isSetupFocus && (
+              {client.currentDiscount > 0 && !isSetupFocus && !isCourtesy && (
                 <div className="bg-emerald-400/20 border border-emerald-400/30 px-4 py-2 rounded-2xl flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                   <span className="text-emerald-400 text-xs font-black uppercase tracking-tighter">
@@ -172,7 +200,12 @@ export default function PortalFinance({
             </div>
 
             <div className="flex flex-col sm:flex-row items-center gap-4">
-              {(currentInvoice?.status === 'PENDING' || currentInvoice?.status === 'OVERDUE') ? (
+              {isCourtesy ? (
+                <div className="w-full sm:w-auto px-8 lg:px-10 py-4 bg-purple-500/20 border border-purple-400/30 text-purple-300 font-bold rounded-2xl flex items-center justify-center gap-2 text-sm lg:text-base">
+                  <Star size={20} className="fill-purple-400 text-purple-400" />
+                  Isento de Cobranças
+                </div>
+              ) : (currentInvoice?.status === 'PENDING' || currentInvoice?.status === 'OVERDUE') ? (
                 getPaymentUrl(currentInvoice) ? (
                   <a 
                     href={getPaymentUrl(currentInvoice)!}
@@ -199,9 +232,11 @@ export default function PortalFinance({
                 </div>
               )}
               <div className="flex flex-col items-center sm:items-start">
-                <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Vencimento</span>
+                <span className="text-white/50 text-[10px] font-bold uppercase tracking-widest">
+                  {isCourtesy ? 'Renovação' : 'Vencimento'}
+                </span>
                 <span className="text-white font-bold text-sm lg:text-base">
-                  {currentInvoice?.dueDate ? new Date(currentInvoice.dueDate + 'T12:00:00').toLocaleDateString('pt-BR') : '--/--/----'}
+                  {isCourtesy ? 'Vitalício / Isento' : currentInvoice?.dueDate ? new Date(currentInvoice.dueDate + 'T12:00:00').toLocaleDateString('pt-BR') : '--/--/----'}
                 </span>
               </div>
             </div>
@@ -226,13 +261,13 @@ export default function PortalFinance({
             <div className="space-y-1">
               <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Meio de Pagamento</p>
               <p className="text-white font-medium flex items-center gap-2 text-sm lg:text-base">
-                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                PIX / Cartão (Asaas)
+                <span className={`w-2 h-2 rounded-full animate-pulse ${isCourtesy ? 'bg-purple-500' : 'bg-emerald-500'}`} />
+                {isCourtesy ? 'Cortesia / Parceria' : 'PIX / Cartão (Asaas)'}
               </p>
             </div>
           </div>
           <p className="mt-6 text-[10px] text-gray-500 leading-relaxed italic hidden lg:block">
-            * Suas faturas são processadas com segurança através do ecossistema Asaas.
+            {isCourtesy ? '* Acesso concedido via parceria ou cortesia especial.' : '* Suas faturas são processadas com segurança através do ecossistema Asaas.'}
           </p>
         </div>
       </div>
@@ -312,7 +347,7 @@ export default function PortalFinance({
               ) : (
                 <tr>
                   <td colSpan={5} className="py-20 text-center text-gray-500 italic">
-                    Nenhum histórico de faturamento encontrado.
+                    {isCourtesy ? 'Sua conta possui acesso de cortesia VIP. Não há cobranças ativas ou faturas pendentes.' : 'Nenhum histórico de faturamento encontrado.'}
                   </td>
                 </tr>
               )}
@@ -370,7 +405,7 @@ export default function PortalFinance({
             })
           ) : (
             <div className="py-12 text-center text-gray-500 italic text-sm">
-              Nenhum histórico de faturamento encontrado.
+              {isCourtesy ? 'Sua conta possui acesso de cortesia VIP. Não há cobranças ativas ou faturas pendentes.' : 'Nenhum histórico de faturamento encontrado.'}
             </div>
           )}
         </div>

@@ -508,7 +508,30 @@ export default function ClientPortal() {
                   const offer = offers.find(o => o.id === c.offerId || o.name === c.plan);
                   const basePrice = c.customMonthlyPrice || c.planPrice || offer?.price || 0;
                   
-                  return (
+                  return c.isCourtesy ? (
+                    <div key={c.id} className="p-4 rounded-2xl border bg-purple-500/10 border-purple-500/20 shadow-lg shadow-purple-500/5">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{c.plan}</p>
+                          <p className="text-xl font-black text-white">
+                            Isento / Cortesia
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end gap-2">
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-tighter border bg-purple-500/20 text-purple-400 border-purple-500/30">
+                            VIP / CORTESIA
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-2 border-t border-white/5">
+                        <div className="flex items-center gap-1.5 text-[10px] text-purple-400 uppercase font-black">
+                          <Star size={12} className="text-purple-400 fill-purple-400" />
+                          Acesso Vitalício Ativo
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
                     <div key={c.id} className={`p-4 rounded-2xl border transition-all ${c.paymentStatus === 'RECEIVED' || c.paymentStatus === 'CONFIRMED'
                         ? 'bg-emerald-500/5 border-emerald-500/10'
                         : 'bg-primary-500/10 border-primary-500/20 shadow-lg shadow-primary-500/5'

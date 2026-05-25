@@ -41,30 +41,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(403).json({ error: 'Acesso não autorizado ou link expirado' });
     }
 
-    const asaasCustomerId = clientData.asaasCustomerId;
-    if (!asaasCustomerId) {
-      return res.status(404).json({ error: 'Configuração financeira pendente' });
+    const isCourtesy = clientData.isCourtesy === true;
+    let filteredPayments: any[] = [];
+
+    if (!isCourtesy) {
+      const asaasCustomerId = clientData.asaasCustomerId;
+      if (!asaasCustomerId) {
+        return res.status(404).json({ error: 'Configuração financeira pendente' });
+      }
+
+      // 3. Fetch Payments from Asaas
+      const paymentsData = await asaasRequest(`/payments?customer=${asaasCustomerId}&limit=100`, "GET");
+      let allPayments = paymentsData.data || [];
+
+      // 🚀 Lógica de Filtro: Remover faturas "lixo" de testes anteriores.
+      // Regra: Mostrar todas as pagas (RECEIVED/CONFIRMED) para histórico.
+      // Regra: Mostrar apenas a MAIS RECENTE das pendentes/vencidas (PENDING/OVERDUE).
+      // 🚀 NOVO: Filtramos por externalReference para garantir que só mostramos pagamentos DESTE card/serviço
+      const clientPayments = allPayments.filter((p: any) => p.externalReference === clientId);
+
+      const paid = clientPayments.filter((p: any) => p.status === 'RECEIVED' || p.status === 'CONFIRMED');
+      const pendingOrOverdue = clientPayments
+        .filter((p: any) => p.status === 'PENDING' || p.status === 'OVERDUE')
+        .sort((a: any, b: any) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
+      
+      // Pegamos apenas a primeira (mais recente) das pendentes/vencidas
+      const currentInvoice = pendingOrOverdue.length > 0 ? [pendingOrOverdue[0]] : [];
+
+      filteredPayments = [...paid, ...currentInvoice];
     }
-
-    // 3. Fetch Payments from Asaas
-    const paymentsData = await asaasRequest(`/payments?customer=${asaasCustomerId}&limit=100`, "GET");
-    let allPayments = paymentsData.data || [];
-
-    // 🚀 Lógica de Filtro: Remover faturas "lixo" de testes anteriores.
-    // Regra: Mostrar todas as pagas (RECEIVED/CONFIRMED) para histórico.
-    // Regra: Mostrar apenas a MAIS RECENTE das pendentes/vencidas (PENDING/OVERDUE).
-    // 🚀 NOVO: Filtramos por externalReference para garantir que só mostramos pagamentos DESTE card/serviço
-    const clientPayments = allPayments.filter((p: any) => p.externalReference === clientId);
-
-    const paid = clientPayments.filter((p: any) => p.status === 'RECEIVED' || p.status === 'CONFIRMED');
-    const pendingOrOverdue = clientPayments
-      .filter((p: any) => p.status === 'PENDING' || p.status === 'OVERDUE')
-      .sort((a: any, b: any) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
-    
-    // Pegamos apenas a primeira (mais recente) das pendentes/vencidas
-    const currentInvoice = pendingOrOverdue.length > 0 ? [pendingOrOverdue[0]] : [];
-
-    const filteredPayments = [...paid, ...currentInvoice];
     // 4. Fetch Support Requests
     const requestsSnap = await db
       .collection('organizations')
@@ -111,6 +116,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         setupPrice: clientData.setupPrice,
         customMonthlyPrice: clientData.customMonthlyPrice,
         customSetupPrice: clientData.customSetupPrice,
+        isCourtesy: clientData.isCourtesy,
         // Não expor dados sensíveis como notes ou tokens internos
       },
       payments: filteredPayments,

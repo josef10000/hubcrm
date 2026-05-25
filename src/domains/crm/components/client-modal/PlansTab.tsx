@@ -8,7 +8,8 @@ import {
   RefreshCw,
   Package,
   Zap,
-  Users
+  Users,
+  Star
 } from 'lucide-react';
 import { Client, ClientPlan } from '@/types';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -76,7 +77,13 @@ export default function PlansTab({ client, orgId }: PlansTabProps) {
         </div>
       </div>
 
-      {plans.length === 0 ? (
+      {client.isCourtesy ? (
+        <div className="bg-purple-500/10 border border-purple-500/20 rounded-2xl p-10 text-center">
+          <Star className="mx-auto text-purple-400 mb-4 animate-pulse fill-purple-400" size={48} />
+          <h4 className="text-white font-bold text-lg mb-2">Acesso Cortesia VIP Ativo</h4>
+          <p className="text-gray-400 text-sm max-w-md mx-auto">Este cliente possui isenção total de cobranças e faturamento. Todas as funcionalidades e acessos estão liberados sem geração de faturas no Asaas.</p>
+        </div>
+      ) : plans.length === 0 ? (
         <div className="bg-black/20 border border-white/5 rounded-2xl p-10 text-center">
           <RefreshCw className="mx-auto text-gray-700 mb-4" size={48} />
           <p className="text-gray-500 italic">Este card não possui assinaturas recorrentes vinculadas.</p>

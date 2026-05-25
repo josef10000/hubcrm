@@ -377,158 +377,202 @@ function ClientModal({
 
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mt-8 mb-4 border-b border-gray-200 dark:border-white/10 pb-2">Configurações de Pagamento</h3>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Oferta / Produto *</label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto custom-scrollbar pr-2">
-                      {offers.filter(o => o.active).map(offer => (
-                        <button key={offer.id} type="button" onClick={() => setFormData(prev => ({ ...prev, offerId: offer.id, plan: offer.name, planPrice: offer.price, setupPrice: offer.setupPrice, maxInstallments: offer.maxInstallments || prev.maxInstallments, billingCycle: offer.type === 'SINGLE' ? undefined : (prev.billingCycle || 'MONTHLY') }))}
-                          className={`p-4 rounded-xl border text-left transition-all ${formData.offerId === offer.id || (!formData.offerId && formData.plan === offer.name) ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}>
-                          <div className="font-semibold mb-1">{offer.name}</div>
-                          {offer.type === 'SUBSCRIPTION' ? (
-                            <><div className="text-xs opacity-80">Setup: R$ {(offer.setupPrice || 0).toLocaleString('pt-BR')}</div>
-                            <div className="text-sm font-bold mt-1">R$ {(offer.price || 0).toLocaleString('pt-BR')}/mês</div></>
-                          ) : (
-                            <><div className="text-xs opacity-80">Pagamento Único</div>
-                            <div className="text-sm font-bold mt-1">R$ {((offer.price || 0) + (offer.setupPrice || 0)).toLocaleString('pt-BR')}</div></>
-                          )}
-                        </button>
-                      ))}
-                    </div>
+                  {/* Cliente Cortesia Switch */}
+                  <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-2xl mb-6">
+                    <label className="flex items-center justify-between cursor-pointer">
+                      <div className="flex items-start gap-2.5">
+                        <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400 mt-0.5">
+                          <Star size={16} className="fill-purple-400" />
+                        </div>
+                        <div>
+                          <span className="text-sm font-bold text-purple-400">Cliente Cortesia / VIP</span>
+                          <p className="text-[10px] text-gray-500 dark:text-gray-400">Acesso livre isento de cobranças e faturas no Asaas</p>
+                        </div>
+                      </div>
+                      <div className="relative inline-flex items-center cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          className="sr-only peer" 
+                          checked={formData.isCourtesy || false} 
+                          onChange={(e) => {
+                            const val = e.target.checked;
+                            setFormData(prev => ({ 
+                              ...prev, 
+                              isCourtesy: val, 
+                              status: val ? 'Ativo' : prev.status,
+                              paymentStatus: val ? 'N/A' : 'PENDING'
+                            }));
+                          }} 
+                        />
+                        <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-500"></div>
+                      </div>
+                    </label>
                   </div>
 
-                  {(!selectedOffer || selectedOffer.type === 'SUBSCRIPTION') && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-primary-500/5 rounded-2xl border border-primary-500/10">
-                      <div className="md:col-span-2">
-                         <p className="text-[10px] font-black text-primary-500 uppercase tracking-widest mb-3">Valores Customizados (Opcional)</p>
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Mensalidade Customizada</label>
-                        <div className="relative">
-                          <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                          <input 
-                            type="number" 
-                            name="customMonthlyPrice" 
-                            value={formData.customMonthlyPrice || ''} 
-                            onChange={handleChange} 
-                            placeholder="Ex: 450.00"
-                            className="w-full pl-9 pr-4 py-2.5 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all text-sm" 
-                          />
-                        </div>
-                        <p className="text-[9px] text-gray-500 mt-1 italic">Sobrescreve o valor padrão da oferta</p>
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Setup Customizado</label>
-                        <div className="relative">
-                          <Zap size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                          <input 
-                            type="number" 
-                            name="customSetupPrice" 
-                            value={formData.customSetupPrice || ''} 
-                            onChange={handleChange} 
-                            placeholder="Ex: 1500.00"
-                            className="w-full pl-9 pr-4 py-2.5 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all text-sm" 
-                          />
-                        </div>
-                        <p className="text-[9px] text-gray-500 mt-1 italic">Sobrescreve a taxa de ativação</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {(!selectedOffer || selectedOffer.type === 'SUBSCRIPTION') && (
+                  {!formData.isCourtesy ? (
                     <>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Data do Primeiro Pagamento</label>
-                          <input type="date" name="firstPaymentDate" value={formData.firstPaymentDate || new Date().toISOString().split('T')[0]} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all" />
-                          <p className="text-xs text-gray-500 mt-1">Data da primeira cobrança (padrão: hoje)</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Dia de Vencimento (Próximos Meses)</label>
-                          <input type="number" min="1" max="31" name="recurringPaymentDay" value={formData.recurringPaymentDay || ''} onChange={(e) => setFormData(prev => ({ ...prev, recurringPaymentDay: e.target.value ? parseInt(e.target.value) : undefined }))} placeholder="Ex: 15" className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
-                          <p className="text-xs text-gray-500 mt-1">
-                            {getNextPaymentDateText() ? <span className="text-primary-500 dark:text-primary-400 font-medium">{getNextPaymentDateText()}</span> : "Opcional. Se vazio, será o mesmo dia do primeiro pagamento."}
-                          </p>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Oferta / Produto *</label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto custom-scrollbar pr-2">
+                          {offers.filter(o => o.active).map(offer => (
+                            <button key={offer.id} type="button" onClick={() => setFormData(prev => ({ ...prev, offerId: offer.id, plan: offer.name, planPrice: offer.price, setupPrice: offer.setupPrice, maxInstallments: offer.maxInstallments || prev.maxInstallments, billingCycle: offer.type === 'SINGLE' ? undefined : (prev.billingCycle || 'MONTHLY') }))}
+                              className={`p-4 rounded-xl border text-left transition-all ${formData.offerId === offer.id || (!formData.offerId && formData.plan === offer.name) ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}>
+                              <div className="font-semibold mb-1">{offer.name}</div>
+                              {offer.type === 'SUBSCRIPTION' ? (
+                                <><div className="text-xs opacity-80">Setup: R$ {(offer.setupPrice || 0).toLocaleString('pt-BR')}</div>
+                                <div className="text-sm font-bold mt-1">R$ {(offer.price || 0).toLocaleString('pt-BR')}/mês</div></>
+                              ) : (
+                                <><div className="text-xs opacity-80">Pagamento Único</div>
+                                <div className="text-sm font-bold mt-1">R$ {((offer.price || 0) + (offer.setupPrice || 0)).toLocaleString('pt-BR')}</div></>
+                              )}
+                            </button>
+                          ))}
                         </div>
                       </div>
 
-                      <div className="mt-6">
-                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Ciclo de Cobrança *</label>
-                        <div className="grid grid-cols-2 gap-3">
-                          <button type="button" onClick={() => setFormData(prev => ({ ...prev, billingCycle: 'MONTHLY', isCombo: false }))}
-                            className={`p-4 rounded-xl border text-center transition-all ${formData.billingCycle === 'MONTHLY' || !formData.billingCycle ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}>
-                            <div className="font-semibold text-sm">Mensal</div>
-                          </button>
-                          <button type="button" onClick={() => setFormData(prev => ({ ...prev, billingCycle: 'YEARLY' }))}
-                            className={`p-4 rounded-xl border text-center transition-all ${formData.billingCycle === 'YEARLY' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}>
-                            <div className="font-semibold text-sm">Anual</div>
-                          </button>
+                      {(!selectedOffer || selectedOffer.type === 'SUBSCRIPTION') && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-primary-500/5 rounded-2xl border border-primary-500/10">
+                          <div className="md:col-span-2">
+                             <p className="text-[10px] font-black text-primary-500 uppercase tracking-widest mb-3">Valores Customizados (Opcional)</p>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Mensalidade Customizada</label>
+                            <div className="relative">
+                              <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                              <input 
+                                type="number" 
+                                name="customMonthlyPrice" 
+                                value={formData.customMonthlyPrice || ''} 
+                                onChange={handleChange} 
+                                placeholder="Ex: 450.00"
+                                className="w-full pl-9 pr-4 py-2.5 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all text-sm" 
+                              />
+                            </div>
+                            <p className="text-[9px] text-gray-500 mt-1 italic">Sobrescreve o valor padrão da oferta</p>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Setup Customizado</label>
+                            <div className="relative">
+                              <Zap size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                              <input 
+                                type="number" 
+                                name="customSetupPrice" 
+                                value={formData.customSetupPrice || ''} 
+                                onChange={handleChange} 
+                                placeholder="Ex: 1500.00"
+                                className="w-full pl-9 pr-4 py-2.5 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all text-sm" 
+                              />
+                            </div>
+                            <p className="text-[9px] text-gray-500 mt-1 italic">Sobrescreve a taxa de ativação</p>
+                          </div>
                         </div>
+                      )}
 
-                        {formData.billingCycle === 'YEARLY' && (
-                          <div className="mt-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-                            <label className="flex items-center justify-between cursor-pointer">
-                              <div>
-                                <span className="text-sm font-bold text-emerald-400">Pagamento Combo (Setup + Anual)</span>
-                                <p className="text-[10px] text-gray-400">Permite parcelar o valor total no cartão</p>
-                              </div>
-                              <div className="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" className="sr-only peer" checked={formData.isCombo || false} onChange={(e) => setFormData(prev => ({ ...prev, isCombo: e.target.checked, billingType: e.target.checked ? 'CREDIT_CARD' : prev.billingType }))} />
-                                <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-                              </div>
-                            </label>
-                            {formData.isCombo && (
-                              <div className="mt-3 pt-3 border-t border-emerald-500/10">
-                                <div className="flex justify-between items-center mb-2">
-                                  <span className="text-[10px] text-gray-400 uppercase font-bold">Valor Total do Combo</span>
-                                  <span className="text-sm font-bold text-emerald-400">R$ {getPlanPrice(formData.plan, 'YEARLY', formData).toLocaleString('pt-BR')}</span>
-                                </div>
-                                <p className="text-[10px] text-emerald-400 font-medium">O cliente receberá o link de pagamento e poderá escolher o parcelamento em até 12x no checkout. O valor inclui o Setup + 9 parcelas (desconto de 3 meses).</p>
+                      {(!selectedOffer || selectedOffer.type === 'SUBSCRIPTION') && (
+                        <>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Data do Primeiro Pagamento</label>
+                              <input type="date" name="firstPaymentDate" value={formData.firstPaymentDate || new Date().toISOString().split('T')[0]} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all" />
+                              <p className="text-xs text-gray-500 mt-1">Data da primeira cobrança (padrão: hoje)</p>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Dia de Vencimento (Próximos Meses)</label>
+                              <input type="number" min="1" max="31" name="recurringPaymentDay" value={formData.recurringPaymentDay || ''} onChange={(e) => setFormData(prev => ({ ...prev, recurringPaymentDay: e.target.value ? parseInt(e.target.value) : undefined }))} placeholder="Ex: 15" className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
+                              <p className="text-xs text-gray-500 mt-1">
+                                {getNextPaymentDateText() ? <span className="text-primary-500 dark:text-primary-400 font-medium">{getNextPaymentDateText()}</span> : "Opcional. Se vazio, será o mesmo dia do primeiro pagamento."}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="mt-6">
+                            <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Ciclo de Cobrança *</label>
+                            <div className="grid grid-cols-2 gap-3">
+                              <button type="button" onClick={() => setFormData(prev => ({ ...prev, billingCycle: 'MONTHLY', isCombo: false }))}
+                                className={`p-4 rounded-xl border text-center transition-all ${formData.billingCycle === 'MONTHLY' || !formData.billingCycle ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}>
+                                <div className="font-semibold text-sm">Mensal</div>
+                              </button>
+                              <button type="button" onClick={() => setFormData(prev => ({ ...prev, billingCycle: 'YEARLY' }))}
+                                className={`p-4 rounded-xl border text-center transition-all ${formData.billingCycle === 'YEARLY' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}>
+                                <div className="font-semibold text-sm">Anual</div>
+                              </button>
+                            </div>
+
+                            {formData.billingCycle === 'YEARLY' && (
+                              <div className="mt-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                                <label className="flex items-center justify-between cursor-pointer">
+                                  <div>
+                                    <span className="text-sm font-bold text-emerald-400">Pagamento Combo (Setup + Anual)</span>
+                                    <p className="text-[10px] text-gray-400">Permite parcelar o valor total no cartão</p>
+                                  </div>
+                                  <div className="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" className="sr-only peer" checked={formData.isCombo || false} onChange={(e) => setFormData(prev => ({ ...prev, isCombo: e.target.checked, billingType: e.target.checked ? 'CREDIT_CARD' : prev.billingType }))} />
+                                    <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                                  </div>
+                                </label>
+                                {formData.isCombo && (
+                                  <div className="mt-3 pt-3 border-t border-emerald-500/10">
+                                    <div className="flex justify-between items-center mb-2">
+                                      <span className="text-[10px] text-gray-400 uppercase font-bold">Valor Total do Combo</span>
+                                      <span className="text-sm font-bold text-emerald-400">R$ {getPlanPrice(formData.plan, 'YEARLY', formData).toLocaleString('pt-BR')}</span>
+                                    </div>
+                                    <p className="text-[10px] text-emerald-400 font-medium">O cliente receberá o link de pagamento e poderá escolher o parcelamento em até 12x no checkout. O valor inclui o Setup + 9 parcelas (desconto de 3 meses).</p>
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>
-                        )}
-                      </div>
-                    </>
-                  )}
+                        </>
+                      )}
 
-                  <div className="mt-6">
-                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Forma de Pagamento *</label>
-                    <div className="grid grid-cols-3 gap-3">
-                      <button type="button" onClick={() => setFormData(prev => ({ ...prev, billingType: 'PIX' }))} className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'PIX' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}>
-                        <div className="font-semibold text-[10px] uppercase tracking-wider">Apenas PIX</div>
-                      </button>
-                      <button type="button" onClick={() => setFormData(prev => ({ ...prev, billingType: 'CREDIT_CARD' }))} className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'CREDIT_CARD' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}>
-                        <div className="font-semibold text-[10px] uppercase tracking-wider">Apenas Cartão</div>
-                      </button>
-                      <button type="button" disabled={selectedOffer?.type === 'SINGLE'} onClick={() => setFormData(prev => ({ ...prev, billingType: undefined }))} className={`p-4 rounded-xl border text-center transition-all ${!formData.billingType ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'} ${selectedOffer?.type === 'SINGLE' ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                        <div className="font-semibold text-[10px] uppercase tracking-wider">Cliente Escolhe</div>
-                      </button>
-                    </div>
-                  </div>
-
-                  {(formData.isCombo || selectedOffer?.type === 'SINGLE') && (formData.billingType === 'CREDIT_CARD' || !formData.billingType) && (
-                    <div className="mt-6">
-                      <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Máximo de Parcelas (Cartão de Crédito)</label>
-                      <select value={formData.maxInstallments || 12} onChange={(e) => setFormData(prev => ({ ...prev, maxInstallments: Number(e.target.value) }))}
-                        className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
-                        {Array.from({ length: selectedOffer?.maxInstallments || 12 }, (_, i) => i + 1).map(num => (
-                          <option key={num} value={num} className="bg-white dark:bg-gray-900">{num === 1 ? 'À vista (1x)' : `Até ${num}x`}</option>
-                        ))}
-                      </select>
-                      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">O cliente poderá escolher no checkout parcelar em até {formData.maxInstallments || 12} vezes.</p>
-                    </div>
-                  )}
-
-                    {formData.isCombo && formData.comboRenewalDate && (
-                      <div className="mt-6 p-4 bg-purple-500/10 border border-purple-500/30 rounded-2xl flex items-center gap-3">
-                        <Zap size={20} className="text-purple-400" />
-                        <div>
-                          <p className="text-xs text-purple-300 font-medium uppercase tracking-wider">Renovação do Combo</p>
-                          <p className="text-sm text-white font-bold">{new Date(formData.comboRenewalDate + 'T12:00:00Z').toLocaleDateString('pt-BR')}</p>
+                      <div className="mt-6">
+                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Forma de Pagamento *</label>
+                        <div className="grid grid-cols-3 gap-3">
+                          <button type="button" onClick={() => setFormData(prev => ({ ...prev, billingType: 'PIX' }))} className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'PIX' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}>
+                            <div className="font-semibold text-[10px] uppercase tracking-wider">Apenas PIX</div>
+                          </button>
+                          <button type="button" onClick={() => setFormData(prev => ({ ...prev, billingType: 'CREDIT_CARD' }))} className={`p-4 rounded-xl border text-center transition-all ${formData.billingType === 'CREDIT_CARD' ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'}`}>
+                            <div className="font-semibold text-[10px] uppercase tracking-wider">Apenas Cartão</div>
+                          </button>
+                          <button type="button" disabled={selectedOffer?.type === 'SINGLE'} onClick={() => setFormData(prev => ({ ...prev, billingType: undefined }))} className={`p-4 rounded-xl border text-center transition-all ${!formData.billingType ? 'bg-primary-500/20 border-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20' : 'bg-black/20 border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-500/20 dark:bg-white/5'} ${selectedOffer?.type === 'SINGLE' ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                            <div className="font-semibold text-[10px] uppercase tracking-wider">Cliente Escolhe</div>
+                          </button>
                         </div>
                       </div>
-                    )}
-                  </div>
+
+                      {(formData.isCombo || selectedOffer?.type === 'SINGLE') && (formData.billingType === 'CREDIT_CARD' || !formData.billingType) && (
+                        <div className="mt-6">
+                          <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Máximo de Parcelas (Cartão de Crédito)</label>
+                          <select value={formData.maxInstallments || 12} onChange={(e) => setFormData(prev => ({ ...prev, maxInstallments: Number(e.target.value) }))}
+                            className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
+                            {Array.from({ length: selectedOffer?.maxInstallments || 12 }, (_, i) => i + 1).map(num => (
+                              <option key={num} value={num} className="bg-white dark:bg-gray-900">{num === 1 ? 'À vista (1x)' : `Até ${num}x`}</option>
+                            ))}
+                          </select>
+                          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">O cliente poderá escolher no checkout parcelar em até {formData.maxInstallments || 12} vezes.</p>
+                        </div>
+                      )}
+
+                        {formData.isCombo && formData.comboRenewalDate && (
+                          <div className="mt-6 p-4 bg-purple-500/10 border border-purple-500/30 rounded-2xl flex items-center gap-3">
+                            <Zap size={20} className="text-purple-400" />
+                            <div>
+                              <p className="text-xs text-purple-300 font-medium uppercase tracking-wider">Renovação do Combo</p>
+                              <p className="text-sm text-white font-bold">{new Date(formData.comboRenewalDate + 'T12:00:00Z').toLocaleDateString('pt-BR')}</p>
+                            </div>
+                          </div>
+                        )}
+                    </>
+                  ) : (
+                    <div className="p-5 bg-purple-500/5 border border-purple-500/20 rounded-2xl flex items-start gap-3 mt-4">
+                      <Star size={18} className="text-purple-400 fill-purple-400 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-xs font-bold text-purple-400 uppercase tracking-widest mb-1">Acesso VIP Ativo</p>
+                        <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">Este cliente possui isenção total de cobranças recorrentes e taxas. Nenhuma fatura será emitida no Asaas e todas as funcionalidades do Portal do Cliente estarão liberadas sem bloqueios.</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* Right Column: Status & Notes */}
                 <div className="space-y-4">

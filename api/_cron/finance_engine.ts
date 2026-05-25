@@ -88,6 +88,7 @@ async function processOrganizationFinance(orgId: string) {
   
   const activeClients = clientsSnapshot.docs.map(doc => doc.data());
   const monthlyRecurringRevenue = activeClients.reduce((acc, client) => {
+    if (client.isCourtesy) return acc;
     return acc + (client.customMonthlyPrice || client.planPrice || 0);
   }, 0);
 

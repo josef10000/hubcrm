@@ -248,6 +248,7 @@ export interface Client {
   logs?: ClientLog[];
   lastContactAt?: number;
   publicToken?: string;
+  isCourtesy?: boolean;
   orgId?: string;
 }
 

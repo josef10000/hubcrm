@@ -26,6 +26,7 @@ export const ClientSchema = z.object({
   nextDueDate: z.string().optional(),
   totalAmount: z.number().optional(),
   welcomeEmailSent: z.boolean().optional(),
+  isCourtesy: z.boolean().optional(),
 }).passthrough();
 
 export type ClientEntity = z.infer<typeof ClientSchema>;
