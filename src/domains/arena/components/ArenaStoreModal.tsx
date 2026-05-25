@@ -167,7 +167,7 @@ export function ArenaStoreModal({ onClose }: ArenaStoreModalProps) {
           <div className="flex items-center gap-2 px-4 py-2 bg-yellow-500/5 border border-yellow-500/20 rounded-2xl">
             <Coins size={16} className="text-yellow-400 animate-bounce" />
             <span className="text-sm font-black text-yellow-400 tracking-wider">{credits}</span>
-            <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Coins</span>
+            <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Hub Coins</span>
           </div>
 
           <button
@@ -263,7 +263,7 @@ export function ArenaStoreModal({ onClose }: ArenaStoreModalProps) {
                             }`}
                           >
                             <Coins size={10} />
-                            Comprar por {item.cost} Coins
+                            Comprar por {item.cost} Hub Coins
                           </button>
                         ) : (
                           <button
@@ -342,7 +342,7 @@ export function ArenaStoreModal({ onClose }: ArenaStoreModalProps) {
                             }`}
                           >
                             <Coins size={10} />
-                            Comprar por {item.cost} Coins
+                            Comprar por {item.cost} Hub Coins
                           </button>
                         ) : (
                           <button

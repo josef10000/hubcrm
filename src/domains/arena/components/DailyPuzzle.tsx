@@ -164,7 +164,7 @@ export function DailyPuzzle({ onBack, onSolved }: DailyPuzzleProps) {
         });
       }
 
-      toast.success('Desafio do Dia Concluído! Recompensa de +50 moedas garantida.', { id: tId });
+      toast.success('Desafio do Dia Concluído! Recompensa de +50 Hub Coins garantida.', { id: tId });
       if (onSolved) onSolved();
     } catch (err) {
       toast.error('Erro ao computar recompensa.', { id: tId });
@@ -287,7 +287,7 @@ export function DailyPuzzle({ onBack, onSolved }: DailyPuzzleProps) {
             <span className="text-[7px] font-black text-gray-500 uppercase tracking-widest block">Recompensa</span>
             <span className="text-xs font-black text-yellow-400 flex items-center gap-1">
               <Coins size={12} className="text-yellow-400 animate-bounce" />
-              +50 Coins
+              +50 Hub Coins
             </span>
           </div>
         </div>

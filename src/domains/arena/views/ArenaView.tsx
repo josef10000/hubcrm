@@ -338,7 +338,7 @@ export default function ArenaView() {
                   <div className="flex items-center gap-2 px-3 py-2 bg-yellow-500/5 border border-yellow-500/20 rounded-2xl">
                     <Coins size={14} className="text-yellow-400 animate-bounce" />
                     <span className="text-xs font-black text-yellow-400 tracking-wider">{userProfile?.arenaCredits || 0}</span>
-                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Coins</span>
+                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Hub Coins</span>
                   </div>
                   <button
                     onClick={() => setIsStoreOpen(true)}

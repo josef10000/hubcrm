@@ -367,7 +367,7 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
       });
 
       setTimeout(() => playRetroSound('success'), 200);
-      toast.success('🏆 Parabéns! +200 Fliperama Coins adicionadas ao seu saldo!');
+      toast.success('🏆 Parabéns! +200 Hub Coins adicionadas ao seu saldo!');
     } catch (e) {
       toast.error('Erro ao resgatar moedas. Tente novamente.');
       console.error(e);
@@ -574,7 +574,7 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
                 Clubes de Leitura Nexus Coletivos
               </h2>
               <p className="text-xs text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
-                Una-se ao seu departamento e devore livros técnicos! Cada time tem uma meta acumulada de leitura no livro do mês. Ao bater 100%, todos ganham <span className="text-amber-400">200 Fliperama Coins 🪙</span> para gastar na Arena!
+                Una-se ao seu departamento e devore livros técnicos! Cada time tem uma meta acumulada de leitura no livro do mês. Ao bater 100%, todos ganham <span className="text-amber-400">200 Hub Coins 🪙</span> para gastar na Arena!
               </p>
             </div>
             <div className="px-6 py-4 bg-white/5 border border-white/10 rounded-3xl flex items-center gap-4 w-full sm:w-auto">
@@ -583,7 +583,7 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
               </div>
               <div>
                 <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Seu Saldo</p>
-                <h3 className="text-2xl font-black text-white">{userProfile?.arenaCredits || 0} <span className="text-xs font-bold text-gray-500">Coins</span></h3>
+                <h3 className="text-2xl font-black text-white">{userProfile?.arenaCredits || 0} <span className="text-xs font-bold text-gray-500">Hub Coins</span></h3>
               </div>
             </div>
           </div>
@@ -746,7 +746,7 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
               Clubes de Leitura Nexus Coletivos
             </h2>
             <p className="text-xs text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
-              Una-se ao seu departamento e devore livros técnicos! Cada time tem uma meta acumulada de leitura no livro do mês. Ao bater 100%, todos ganham <span className="text-amber-400">200 Fliperama Coins 🪙</span> para gastar na Arena!
+              Una-se ao seu departamento e devore livros técnicos! Cada time tem uma meta acumulada de leitura no livro do mês. Ao bater 100%, todos ganham <span className="text-amber-400">200 Hub Coins 🪙</span> para gastar na Arena!
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-4 shrink-0">
@@ -763,7 +763,7 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
               </div>
               <div>
                 <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Seu Saldo</p>
-                <h3 className="text-2xl font-black text-white">{userProfile?.arenaCredits || 0} <span className="text-xs font-bold text-gray-500">Coins</span></h3>
+                <h3 className="text-2xl font-black text-white">{userProfile?.arenaCredits || 0} <span className="text-xs font-bold text-gray-500">Hub Coins</span></h3>
               </div>
             </div>
           </div>
@@ -1013,7 +1013,7 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
                         </h4>
                         <p className="text-xs text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
                           {isUserClub
-                            ? 'Parabéns a todos os leitores do time por manterem o foco técnico! Reivindique sua bonificação especial de Fliperama Coins na carteira agora mesmo.'
+                            ? 'Parabéns a todos os leitores do time por manterem o foco técnico! Reivindique sua bonificação especial de Hub Coins na carteira agora mesmo.'
                             : 'O time de leitores do departamento atingiu 100% de leitura acumulada no livro oficial do mês!'}
                         </p>
                       </div>
@@ -1036,7 +1036,7 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
                           ) : (
                             <span className="flex items-center gap-2">
                               <i className="ph-fill ph-gift text-base" />
-                              Reivindicar Coins (+200 🪙)
+                              Reivindicar Hub Coins (+200 🪙)
                             </span>
                           )}
                         </button>
