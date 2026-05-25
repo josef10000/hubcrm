@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { doc, onSnapshot, updateDoc, setDoc, collection, getDocs, arrayUnion } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, setDoc, collection, getDocs, arrayUnion, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
@@ -25,6 +25,7 @@ interface ReadingClub {
   progress: Record<string, number>; // [uid]: currentPage
   metaCompleted: boolean;
   deadline: number;
+  isDemo?: boolean;
 }
 
 // Configurações visuais dos departamentos
@@ -91,6 +92,19 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
   const [loading, setLoading] = useState(true);
   const [isUpdatingProgress, setIsUpdatingProgress] = useState(false);
   const [newProgressPage, setNewProgressPage] = useState<number>(0);
+
+  // Estados locais para Criação e Edição de Clubes
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
+  const [editingClubId, setEditingClubId] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    bookTitle: '',
+    bookAuthor: '',
+    bookCoverUrl: '',
+    department: 'Desenvolvimento',
+    targetPages: 200,
+    deadlineDays: 30
+  });
 
   // Zustand Actions
   const addArenaCredits = useArenaStore(state => state.addArenaCredits);
@@ -286,7 +300,8 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
         await setDoc(clubDocRef, {
           ...rawClub,
           participants,
-          progress
+          progress,
+          isDemo: true
         });
       }
     } catch (e) {
@@ -397,6 +412,129 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
     setIsUpdatingProgress(true);
   };
 
+  // CRUD handlers para Clubes de Leitura
+  const handleOpenCreateModal = () => {
+    playRetroSound('click');
+    setFormData({
+      bookTitle: '',
+      bookAuthor: '',
+      bookCoverUrl: '',
+      department: selectedDept || 'Desenvolvimento',
+      targetPages: 200,
+      deadlineDays: 30
+    });
+    setFormMode('create');
+    setIsFormOpen(true);
+  };
+
+  const handleOpenEditModal = (club: ReadingClub) => {
+    playRetroSound('click');
+    setFormData({
+      bookTitle: club.bookTitle,
+      bookAuthor: club.bookAuthor,
+      bookCoverUrl: club.bookCoverUrl || '',
+      department: club.department,
+      targetPages: club.targetPages,
+      deadlineDays: 30
+    });
+    setEditingClubId(club.id);
+    setFormMode('edit');
+    setIsFormOpen(true);
+  };
+
+  const handleSaveClub = async () => {
+    if (!orgId) return;
+
+    if (!formData.bookTitle.trim() || !formData.bookAuthor.trim()) {
+      toast.error('Título e autor do livro são obrigatórios!');
+      return;
+    }
+
+    if (formData.targetPages <= 0) {
+      toast.error('O total de páginas deve ser maior que zero!');
+      return;
+    }
+
+    playRetroSound('click');
+    try {
+      if (formMode === 'create') {
+        const clubId = `${orgId}_${Date.now()}`;
+        const bookId = `custom_book_${Date.now()}`;
+        
+        // Agrupar membros e criar progresso
+        const deptMembers = teamProfiles.filter(p => (p.department || 'Geral') === formData.department);
+        const participants = deptMembers.map(m => m.uid);
+        if (!participants.includes(userUid) && formData.department === userDept) {
+          participants.push(userUid);
+        }
+
+        const progress: Record<string, number> = {};
+        participants.forEach(uid => {
+          progress[uid] = 0;
+        });
+
+        const newClub: ReadingClub = {
+          id: clubId,
+          bookId,
+          bookTitle: formData.bookTitle.trim(),
+          bookAuthor: formData.bookAuthor.trim(),
+          bookCoverUrl: formData.bookCoverUrl.trim() || undefined,
+          department: formData.department,
+          targetPages: formData.targetPages,
+          participants,
+          progress,
+          metaCompleted: false,
+          deadline: Date.now() + formData.deadlineDays * 24 * 60 * 60 * 1000,
+          isDemo: false
+        };
+
+        await setDoc(doc(db, 'organizations', orgId, 'readingClubs', clubId), newClub);
+        setSelectedDept(formData.department); // Seleciona o departamento do novo clube
+        toast.success('📖 Novo clube de leitura criado com sucesso!');
+      } else {
+        if (!editingClubId) return;
+        const clubDocRef = doc(db, 'organizations', orgId, 'readingClubs', editingClubId);
+        
+        await updateDoc(clubDocRef, {
+          bookTitle: formData.bookTitle.trim(),
+          bookAuthor: formData.bookAuthor.trim(),
+          bookCoverUrl: formData.bookCoverUrl.trim() || null,
+          department: formData.department,
+          targetPages: formData.targetPages,
+          deadline: Date.now() + formData.deadlineDays * 24 * 60 * 60 * 1000
+        });
+        toast.success('📖 Clube de leitura atualizado!');
+      }
+
+      setIsFormOpen(false);
+    } catch (e) {
+      toast.error('Erro ao salvar clube de leitura.');
+      console.error(e);
+    }
+  };
+
+  const handleDeleteClub = async (clubId: string) => {
+    if (!orgId) return;
+
+    const ok = await window.confirm('Deseja realmente excluir este clube de leitura permanentemente? Isso apagará todo o histórico de progresso do time.');
+    if (!ok) return;
+
+    playRetroSound('click');
+    try {
+      await deleteDoc(doc(db, 'organizations', orgId, 'readingClubs', clubId));
+      toast.success('🗑️ Clube de leitura excluído.');
+      
+      // Mudar a aba para outro clube existente
+      const remaining = clubs.filter(c => c.id !== clubId);
+      if (remaining.length > 0) {
+        setSelectedDept(remaining[0].department);
+      }
+    } catch (e) {
+      toast.error('Erro ao excluir clube de leitura.');
+      console.error(e);
+    }
+  };
+
   if (loading && clubs.length === 0) {
     return (
       <div className="py-20 flex flex-col items-center justify-center gap-4">
@@ -426,13 +564,22 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
               Una-se ao seu departamento e devore livros técnicos! Cada time tem uma meta acumulada de leitura no livro do mês. Ao bater 100%, todos ganham <span className="text-amber-400">200 Fliperama Coins 🪙</span> para gastar na Arena!
             </p>
           </div>
-          <div className="shrink-0 px-6 py-4 bg-white/5 border border-white/10 rounded-3xl flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-400 text-2xl font-bold shadow-[0_0_15px_rgba(245,158,11,0.2)]">
-              🪙
-            </div>
-            <div>
-              <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Seu Saldo</p>
-              <h3 className="text-2xl font-black text-white">{userProfile?.arenaCredits || 0} <span className="text-xs font-bold text-gray-500">Coins</span></h3>
+          <div className="flex flex-col sm:flex-row items-center gap-4 shrink-0">
+            <button
+              onClick={handleOpenCreateModal}
+              className="w-full sm:w-auto px-6 py-4 bg-primary-500 hover:bg-primary-400 hover:scale-105 active:scale-95 transition-all rounded-3xl text-[10px] font-black uppercase tracking-widest text-white flex items-center justify-center gap-2 shadow-xl shadow-primary-500/20"
+            >
+              <i className="ph-bold ph-plus" />
+              Criar Clube
+            </button>
+            <div className="px-6 py-4 bg-white/5 border border-white/10 rounded-3xl flex items-center gap-4 w-full sm:w-auto">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-400 text-2xl font-bold shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+                🪙
+              </div>
+              <div>
+                <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Seu Saldo</p>
+                <h3 className="text-2xl font-black text-white">{userProfile?.arenaCredits || 0} <span className="text-xs font-bold text-gray-500">Coins</span></h3>
+              </div>
             </div>
           </div>
         </div>
@@ -542,9 +689,30 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
                   {/* Topo do Cartão */}
                   <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
                     <div>
-                      <span className={`px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[9px] font-black uppercase tracking-widest ${config.textColor}`}>
-                        Time: {activeClub.department}
-                      </span>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className={`px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[9px] font-black uppercase tracking-widest ${config.textColor}`}>
+                          Time: {activeClub.department}
+                        </span>
+                        {!activeClub.isDemo && (
+                          <div className="flex items-center gap-1.5 bg-white/5 px-2 py-0.5 rounded-full border border-white/5">
+                            <button
+                              onClick={() => handleOpenEditModal(activeClub)}
+                              className="p-1 hover:bg-white/10 rounded text-gray-400 hover:text-white transition-all"
+                              title="Editar Clube de Leitura"
+                            >
+                              <i className="ph-bold ph-pencil-simple text-[10px]" />
+                            </button>
+                            <div className="w-px h-3 bg-white/10" />
+                            <button
+                              onClick={() => handleDeleteClub(activeClub.id)}
+                              className="p-1 hover:bg-red-500/10 rounded text-gray-400 hover:text-red-400 transition-all"
+                              title="Excluir Clube de Leitura"
+                            >
+                              <i className="ph-bold ph-trash text-[10px]" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
                       <h3 className="text-2xl font-black text-white uppercase tracking-tight mt-3">
                         Leitura Oficial do Mês
                       </h3>
@@ -854,6 +1022,125 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
                     className="py-4.5 bg-primary-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary-500/20 hover:scale-105 transition-all"
                   >
                     Salvar Progresso
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+
+        {isFormOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.6 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsFormOpen(false)}
+              className="fixed inset-0 bg-black z-[100] backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-[#0d0f16] border border-white/10 rounded-[2.5rem] shadow-2xl p-8 z-[101] overflow-hidden animate-pulse-none"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/10 blur-[40px] rounded-full pointer-events-none" />
+
+              <div className="space-y-6">
+                <div>
+                  <span className="px-3 py-1 bg-primary-500/15 border border-primary-500/30 text-primary-400 rounded-full text-[9px] font-black uppercase tracking-widest">
+                    {formMode === 'create' ? 'NOVO CLUBE' : 'EDITAR CLUBE'}
+                  </span>
+                  <h3 className="text-xl font-black text-white uppercase tracking-tight mt-3">
+                    {formMode === 'create' ? 'Criar Clube de Leitura' : 'Editar Clube de Leitura'}
+                  </h3>
+                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest leading-relaxed mt-1">
+                    Configure a obra oficial e a meta de leitura coletiva para o departamento selecionado.
+                  </p>
+                </div>
+
+                {/* Campos do Formulário */}
+                <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+                  {/* Título do Livro */}
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block">Título do Livro</label>
+                    <input
+                      type="text"
+                      value={formData.bookTitle}
+                      onChange={(e) => setFormData(prev => ({ ...prev, bookTitle: e.target.value }))}
+                      placeholder="Ex: Trabalho Focado"
+                      className="w-full bg-[#151722] border border-white/10 rounded-2xl px-5 py-3.5 text-sm text-white focus:border-primary-500 outline-none transition-all"
+                    />
+                  </div>
+
+                  {/* Autor */}
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block">Autor</label>
+                    <input
+                      type="text"
+                      value={formData.bookAuthor}
+                      onChange={(e) => setFormData(prev => ({ ...prev, bookAuthor: e.target.value }))}
+                      placeholder="Ex: Cal Newport"
+                      className="w-full bg-[#151722] border border-white/10 rounded-2xl px-5 py-3.5 text-sm text-white focus:border-primary-500 outline-none transition-all"
+                    />
+                  </div>
+
+                  {/* Link da Capa */}
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block">Link da Imagem de Capa (URL)</label>
+                    <input
+                      type="text"
+                      value={formData.bookCoverUrl}
+                      onChange={(e) => setFormData(prev => ({ ...prev, bookCoverUrl: e.target.value }))}
+                      placeholder="Ex: https://link-da-imagem.jpg (opcional)"
+                      className="w-full bg-[#151722] border border-white/10 rounded-2xl px-5 py-3.5 text-sm text-white focus:border-primary-500 outline-none transition-all"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Departamento */}
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block">Departamento</label>
+                      <select
+                        value={formData.department}
+                        onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value }))}
+                        disabled={formMode === 'edit'} // Não permite mudar de departamento na edição
+                        className="w-full bg-[#151722] border border-white/10 rounded-2xl px-5 py-3.5 text-sm text-white focus:border-primary-500 outline-none transition-all"
+                      >
+                        {Object.keys(DEPARTMENTS_CONFIG).map(dept => (
+                          <option key={dept} value={dept} className="bg-[#0d0f16]">{dept}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Total de Páginas */}
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block">Meta de Páginas</label>
+                      <input
+                        type="number"
+                        min={1}
+                        value={formData.targetPages}
+                        onChange={(e) => setFormData(prev => ({ ...prev, targetPages: parseInt(e.target.value) || 0 }))}
+                        placeholder="Ex: 300"
+                        className="w-full bg-[#151722] border border-white/10 rounded-2xl px-5 py-3.5 text-sm text-white focus:border-primary-500 outline-none transition-all"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Botoes */}
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                  <button
+                    onClick={() => setIsFormOpen(false)}
+                    className="py-4 bg-white/5 hover:bg-white/10 rounded-2xl text-[10px] font-black text-gray-400 hover:text-white uppercase tracking-widest transition-all border border-white/5"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleSaveClub}
+                    className="py-4 bg-primary-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary-500/20 hover:scale-105 transition-all"
+                  >
+                    Salvar Clube
                   </button>
                 </div>
               </div>
