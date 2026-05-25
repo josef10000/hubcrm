@@ -496,6 +496,22 @@ Expandindo os horizontes da Hub Arena, as novas funcionalidades de engajamento c
    - **Gerenciamento Seguro & Sorteios**: O chaveamento e confrontos iniciais são gerados e embaralhados automaticamente ao esgotar as vagas do torneio.
    - **Início e Avanço de Lutas Inteligentes**: Partidas de torneios eliminatórios (`tournament_`) pulam o fluxo de aceite, iniciando diretamente para os oponentes. A vitória é interceptada reativamente para atualizar o bracket e conceder o prêmio de **+300 moedas** ao campeão na final.
 
+### 🧩 Desafios Diários de Tabuleiro (Daily Puzzles)
+
+Uma dinâmica leve de aquecimento lógico e competição de agilidade intelectual para os colaboradores:
+* **Banco de Puzzles Offline**: Problemas pré-definidos de **Xadrez (Mate em 1)** e **Connect 4 (Alinhamento tático)** com rotatividade inteligente local baseada no dia do mês, garantindo carregamento instantâneo.
+* **Cronômetro Neon de Alta Precisão**: Calcula em tempo real os segundos gastos pelo colaborador para resolver a tática diária.
+* **Tabela Diária de Cérebros Rápidos**: O lobby exibe um Leaderboard diário específico do puzzle classificando os solucionadores pelo menor tempo de conclusão, coroando os mais rápidos com medalhas de ouro (🥇), prata (🥈) e bronze (🥉).
+* **Bonificação Econômica**: Solucionar o puzzle do dia concede automaticamente **+50 Fliperama Coins** diretamente na conta do colaborador no Firestore, limitado a uma resolução premiada por dia.
+
+### 📚 Clubes de Leitura do Nexus Hub & Metas Coletivas
+
+Integração de alta sinergia unindo desenvolvimento profissional contínuo à economia gamificada da Arena:
+* **Divisão de Times Corporativos**: Sincronização automática com a propriedade `department` (Vendas, Desenvolvimento, Suporte, Recursos Humanos, Marketing e Geral) do perfil do colaborador no Firestore.
+* **Termômetros de Vidro Neon (Progress Thermometers)**: Barras de progresso cilíndricas 3D tridimensionais translúcidas e neon desenhadas em **Glassmorphism**, onde o fluido neon reflete com brilho a cor do respectivo time e o progresso médio acumulado de páginas lidas.
+* **Meta Coletiva Batida**: Quando o departamento atinge 100% de progresso acumulado no livro oficial do mês, um painel especial holográfico de celebração é liberado para todos os participantes do time.
+* **Resgate de Recompensas Enterprise**: Botão neon arco-íris pulsante que concede **+200 Fliperama Coins** ao colaborador ao bater a meta coletiva. Possui validação atômica para impedir resgates múltiplos e reproduz efeitos procedural de arpejo de triunfo via Web Audio API.
+
 ---
 
 ## 🧪 Testing & CI/CD Strategy

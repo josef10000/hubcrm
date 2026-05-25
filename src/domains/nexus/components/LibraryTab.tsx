@@ -6,10 +6,11 @@ import { toast } from 'sonner';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 import { NexusStats } from './NexusStats';
 import { BookCard, ListViewItem } from './library';
+import { ReadingClubsPanel } from './ReadingClubsPanel';
 
 interface LibraryTabProps {
-  librarySubTab: 'my' | 'shared' | 'community' | 'stats';
-  setLibrarySubTab: (tab: 'my' | 'shared' | 'community' | 'stats') => void;
+  librarySubTab: 'my' | 'shared' | 'community' | 'stats' | 'clubs';
+  setLibrarySubTab: (tab: 'my' | 'shared' | 'community' | 'stats' | 'clubs') => void;
   librarySearchQuery: string;
   setLibrarySearchQuery: (query: string) => void;
   libraryPage: number;
@@ -259,6 +260,7 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
             { id: 'my', label: 'Minha Estante', icon: 'ph-book' },
             { id: 'shared', label: 'Recomendações', icon: 'ph-share-network' },
             { id: 'community', label: 'Comunidade', icon: 'ph-users-three' },
+            { id: 'clubs', label: 'Clubes de Leitura', icon: 'ph-users-four' },
             { id: 'stats', label: 'Estatísticas', icon: 'ph-chart-line-up' }
           ].map(tab => (
             <button
@@ -448,6 +450,8 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
 
       {librarySubTab === 'stats' ? (
         <NexusStats />
+      ) : librarySubTab === 'clubs' ? (
+        <ReadingClubsPanel userUid={userUid} orgId={orgId} />
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-4">

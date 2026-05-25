@@ -84,7 +84,7 @@ export default function MyWorkspaceView() {
 
   // Estados Locais
   const [activeTab, setActiveTab] = useState<'hub' | 'library' | 'culture'>('hub');
-  const [librarySubTab, setLibrarySubTab] = useState<'my' | 'shared' | 'community' | 'stats'>('my');
+  const [librarySubTab, setLibrarySubTab] = useState<'my' | 'shared' | 'community' | 'stats' | 'clubs'>('my');
   const [communityBooks, setCommunityBooks] = useState<NexusBook[]>([]);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [sharingBook, setSharingBook] = useState<NexusBook | null>(null);
