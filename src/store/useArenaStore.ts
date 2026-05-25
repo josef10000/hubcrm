@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { db } from '@/lib/firebase';
 import { doc, onSnapshot, updateDoc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc, arrayUnion } from 'firebase/firestore';
+import { Tournament } from '@/types';
 
 export type GameType = 'chess' | 'checkers' | 'connect4' | 'ludo';
 export type MatchStatus = 'waiting' | 'playing' | 'declined' | 'finished';
@@ -30,6 +31,7 @@ interface ArenaState {
   sentInvite: GameMatch | null;
   onlinePlayers: { uid: string; displayName: string; photoURL?: string; presenceStatus?: string }[];
   matchHistory: { id: string; gameType: GameType; opponentName: string; result: 'win' | 'loss' | 'draw'; date: number }[];
+  tournaments: Tournament[];
   loading: boolean;
   
   // Actions
@@ -47,6 +49,11 @@ interface ArenaState {
   addArenaCredits: (uid: string, amount: number) => Promise<void>;
   purchaseCosmetic: (uid: string, itemId: string, itemType: 'frame' | 'title', cost: number) => Promise<void>;
   equipCosmetic: (uid: string, itemId: string, itemType: 'frame' | 'title') => Promise<void>;
+  listenToTournaments: (orgId: string) => () => void;
+  createTournament: (orgId: string, name: string, gameType: GameType, maxPlayers: 4 | 8) => Promise<void>;
+  registerInTournament: (tournamentId: string, uid: string, displayName: string) => Promise<void>;
+  startTournamentMatch: (tournamentId: string, roundKey: 'quarterfinals' | 'semifinals' | 'final', matchIdx: number, p1Id: string, p1Name: string, p2Id: string, p2Name: string, gameType: GameType) => Promise<void>;
+  advanceTournamentBracket: (tournamentId: string, roundKey: 'quarterfinals' | 'semifinals' | 'final', matchIdx: number, winnerId: string) => Promise<void>;
 }
 
 export const useArenaStore = create<ArenaState>((set, get) => {
@@ -59,6 +66,7 @@ export const useArenaStore = create<ArenaState>((set, get) => {
     sentInvite: null,
     onlinePlayers: [],
     matchHistory: [],
+    tournaments: [],
     loading: false,
 
     setOnlinePlayers: (players) => set({ onlinePlayers: players }),
@@ -226,6 +234,18 @@ export const useArenaStore = create<ArenaState>((set, get) => {
         if (winnerId) {
           updates.status = 'finished';
           updates.winnerId = winnerId;
+
+          // Se for partida de torneio, avança no bracket automaticamente
+          if (activeMatch.id.startsWith('tournament_')) {
+            const parts = activeMatch.id.split('_');
+            if (parts.length >= 5) {
+              const tournamentId = parts[1];
+              const roundKey = parts[2] as 'quarterfinals' | 'semifinals' | 'final';
+              const matchIdx = parseInt(parts[3]);
+              
+              await get().advanceTournamentBracket(tournamentId, roundKey, matchIdx, winnerId);
+            }
+          }
         }
 
         await updateDoc(docRef, updates);
@@ -429,6 +449,279 @@ export const useArenaStore = create<ArenaState>((set, get) => {
         await updateDoc(userRef, updates);
       } catch (err) {
         console.error('Erro ao equipar cosmético:', err);
+      }
+    },
+
+    listenToTournaments: (orgId) => {
+      const q = query(
+        collection(db, 'tournaments'),
+        where('orgId', '==', orgId)
+      );
+
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Tournament));
+        set({ tournaments: list });
+      }, (err) => {
+        console.warn('Firestore: escuta de torneios indisponível:', err.message);
+      });
+
+      return unsubscribe;
+    },
+
+    createTournament: async (orgId, name, gameType, maxPlayers) => {
+      try {
+        const id = `tournament_${Date.now()}`;
+        const newTour: Tournament = {
+          id,
+          name,
+          gameType,
+          status: 'registration',
+          maxPlayers,
+          participants: [],
+          bracket: {
+            semifinals: Array(2).fill(null).map(() => ({ matchId: null, p1: null, p2: null, winnerId: null })),
+            final: { matchId: null, p1: null, p2: null, winnerId: null }
+          },
+          orgId,
+          createdAt: Date.now()
+        };
+
+        if (maxPlayers === 8) {
+          newTour.bracket.quarterfinals = Array(4).fill(null).map(() => ({ matchId: null, p1: null, p2: null, winnerId: null }));
+        }
+
+        await setDoc(doc(db, 'tournaments', id), newTour);
+        toast.success('Torneio criado e aberto para inscrições!');
+      } catch (err) {
+        console.error('Erro ao criar torneio:', err);
+        toast.error('Erro ao criar torneio.');
+      }
+    },
+
+    registerInTournament: async (tournamentId, uid, displayName) => {
+      try {
+        const tourRef = doc(db, 'tournaments', tournamentId);
+        const tourSnap = await getDoc(tourRef);
+        if (!tourSnap.exists()) return;
+
+        const tourData = tourSnap.data() as Tournament;
+        if (tourData.status !== 'registration') {
+          throw new Error('Inscrições encerradas para este torneio');
+        }
+
+        if (tourData.participants.includes(uid)) {
+          throw new Error('Você já está inscrito');
+        }
+
+        const participants = [...tourData.participants, uid];
+        const updates: any = { participants };
+
+        // Ao preencher todas as vagas, inicia o torneio e sorteia os confrontos
+        if (participants.length === tourData.maxPlayers) {
+          updates.status = 'active';
+
+          const shuffled = [...participants].sort(() => Math.random() - 0.5);
+          const nameMap: Record<string, string> = {};
+          
+          for (const pId of shuffled) {
+            const pSnap = await getDoc(doc(db, 'profiles', pId));
+            nameMap[pId] = pSnap.exists() ? pSnap.data().displayName || 'Jogador' : 'Jogador';
+          }
+
+          const bracket = { ...tourData.bracket };
+
+          if (tourData.maxPlayers === 8) {
+            bracket.quarterfinals = [];
+            for (let i = 0; i < 4; i++) {
+              const p1 = shuffled[i * 2];
+              const p2 = shuffled[i * 2 + 1];
+              bracket.quarterfinals.push({
+                matchId: null,
+                p1,
+                p1Name: nameMap[p1],
+                p2,
+                p2Name: nameMap[p2],
+                winnerId: null
+              });
+            }
+          } else {
+            // 4 Jogadores
+            bracket.semifinals = [];
+            for (let i = 0; i < 2; i++) {
+              const p1 = shuffled[i * 2];
+              const p2 = shuffled[i * 2 + 1];
+              bracket.semifinals.push({
+                matchId: null,
+                p1,
+                p1Name: nameMap[p1],
+                p2,
+                p2Name: nameMap[p2],
+                winnerId: null
+              });
+            }
+          }
+
+          updates.bracket = bracket;
+        }
+
+        await updateDoc(tourRef, updates);
+        toast.success('Inscrição efetuada com sucesso!');
+      } catch (err: any) {
+        toast.error(err.message || 'Erro ao realizar inscrição.');
+        throw err;
+      }
+    },
+
+    startTournamentMatch: async (tournamentId, roundKey, matchIdx, p1Id, p1Name, p2Id, p2Name, gameType) => {
+      try {
+        const matchId = `tournament_${tournamentId}_${roundKey}_${matchIdx}_${Date.now()}`;
+        
+        let boardState: any = null;
+        if (gameType === 'connect4') {
+          boardState = Array(6).fill(null).map(() => Array(7).fill(null));
+        } else if (gameType === 'checkers') {
+          boardState = Array(8).fill(null).map(() => Array(8).fill(null));
+          for (let r = 0; r < 3; r++) {
+            for (let c = 0; c < 8; c++) {
+              if ((r + c) % 2 === 1) boardState[r][c] = { player: 1, type: 'normal' };
+            }
+          }
+          for (let r = 5; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+              if ((r + c) % 2 === 1) boardState[r][c] = { player: 2, type: 'normal' };
+            }
+          }
+        } else if (gameType === 'chess') {
+          boardState = {
+            pieces: {
+              '0,0': { player: 2, type: 'rook' }, '0,1': { player: 2, type: 'knight' }, '0,2': { player: 2, type: 'bishop' }, '0,3': { player: 2, type: 'queen' },
+              '0,4': { player: 2, type: 'king' }, '0,5': { player: 2, type: 'bishop' }, '0,6': { player: 2, type: 'knight' }, '0,7': { player: 2, type: 'rook' },
+              '1,0': { player: 2, type: 'pawn' }, '1,1': { player: 2, type: 'pawn' }, '1,2': { player: 2, type: 'pawn' }, '1,3': { player: 2, type: 'pawn' },
+              '1,4': { player: 2, type: 'pawn' }, '1,5': { player: 2, type: 'pawn' }, '1,6': { player: 2, type: 'pawn' }, '1,7': { player: 2, type: 'pawn' },
+              '6,0': { player: 1, type: 'pawn' }, '6,1': { player: 1, type: 'pawn' }, '6,2': { player: 1, type: 'pawn' }, '6,3': { player: 1, type: 'pawn' },
+              '6,4': { player: 1, type: 'pawn' }, '6,5': { player: 1, type: 'pawn' }, '6,6': { player: 1, type: 'pawn' }, '6,7': { player: 1, type: 'pawn' },
+              '7,0': { player: 1, type: 'rook' }, '7,1': { player: 1, type: 'knight' }, '7,2': { player: 1, type: 'bishop' }, '7,3': { player: 1, type: 'queen' },
+              '7,4': { player: 1, type: 'king' }, '7,5': { player: 1, type: 'bishop' }, '7,6': { player: 1, type: 'knight' }, '7,7': { player: 1, type: 'rook' }
+            },
+            castling: { p1: { kingSide: true, queenSide: true }, p2: { kingSide: true, queenSide: true } },
+            halfMoves: 0
+          };
+        } else if (gameType === 'ludo') {
+          const tokens = [];
+          const colors = ['red', 'green', 'yellow', 'blue'];
+          for (const color of colors) {
+            for (let i = 0; i < 4; i++) {
+              tokens.push({ id: i, color, position: -1 });
+            }
+          }
+          boardState = { tokens, diceValue: null, hasRolled: false, consecutiveSixes: 0, winnerColor: null };
+        }
+
+        const initialMatch: GameMatch = {
+          id: matchId,
+          gameType,
+          player1Id: p1Id,
+          player1Name: p1Name,
+          player2Id: p2Id,
+          player2Name: p2Name,
+          status: 'playing',
+          turn: p1Id,
+          boardState,
+          moves: [],
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        };
+
+        await setDoc(doc(db, 'matches', matchId), initialMatch);
+
+        const tourRef = doc(db, 'tournaments', tournamentId);
+        const tourSnap = await getDoc(tourRef);
+        if (tourSnap.exists()) {
+          const tourData = tourSnap.data() as Tournament;
+          const bracket = { ...tourData.bracket };
+
+          if (roundKey === 'quarterfinals' && bracket.quarterfinals) {
+            bracket.quarterfinals[matchIdx].matchId = matchId;
+          } else if (roundKey === 'semifinals') {
+            bracket.semifinals[matchIdx].matchId = matchId;
+          } else if (roundKey === 'final') {
+            bracket.final.matchId = matchId;
+          }
+
+          await updateDoc(tourRef, { bracket });
+        }
+
+        set({ activeMatch: initialMatch });
+        get().listenToMatch(matchId);
+      } catch (err) {
+        console.error('Erro ao iniciar partida de torneio:', err);
+      }
+    },
+
+    advanceTournamentBracket: async (tournamentId, roundKey, matchIdx, winnerId) => {
+      try {
+        const tourRef = doc(db, 'tournaments', tournamentId);
+        const tourSnap = await getDoc(tourRef);
+        if (!tourSnap.exists()) return;
+
+        const tourData = tourSnap.data() as Tournament;
+        const bracket = { ...tourData.bracket };
+
+        let pName = '';
+        const winnerProfileSnap = await getDoc(doc(db, 'profiles', winnerId));
+        if (winnerProfileSnap.exists()) {
+          pName = winnerProfileSnap.data().displayName || 'Jogador';
+        }
+
+        if (roundKey === 'quarterfinals' && bracket.quarterfinals) {
+          bracket.quarterfinals[matchIdx].winnerId = winnerId;
+          
+          const nextMatchIdx = Math.floor(matchIdx / 2);
+          const isP1 = matchIdx % 2 === 0;
+
+          if (isP1) {
+            bracket.semifinals[nextMatchIdx].p1 = winnerId;
+            bracket.semifinals[nextMatchIdx].p1Name = pName;
+          } else {
+            bracket.semifinals[nextMatchIdx].p2 = winnerId;
+            bracket.semifinals[nextMatchIdx].p2Name = pName;
+          }
+        } else if (roundKey === 'semifinals') {
+          bracket.semifinals[matchIdx].winnerId = winnerId;
+
+          const isP1 = matchIdx === 0;
+          if (isP1) {
+            bracket.final.p1 = winnerId;
+            bracket.final.p1Name = pName;
+          } else {
+            bracket.final.p2 = winnerId;
+            bracket.final.p2Name = pName;
+          }
+        } else if (roundKey === 'final') {
+          bracket.final.winnerId = winnerId;
+
+          await updateDoc(tourRef, {
+            status: 'finished',
+            winnerId,
+            bracket
+          });
+
+          // Dar 300 moedas de prêmio ao campeão do torneio
+          const userRef = doc(db, 'profiles', winnerId);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            const currentCredits = userSnap.data().arenaCredits || 0;
+            await updateDoc(userRef, {
+              arenaCredits: currentCredits + 300
+            });
+          }
+          toast.success(`Torneio concluído! Campeão: ${pName}! Prêmio de 300 coins concedido.`);
+          return;
+        }
+
+        await updateDoc(tourRef, { bracket });
+      } catch (err) {
+        console.error('Erro ao avançar bracket do torneio:', err);
       }
     }
   };

@@ -481,6 +481,21 @@ A **Hub Arena** é o centro de entretenimento e integração social integrada di
 6. **Modo CPU Autônomo com Recomeço**: IA local avançada em cada jogo e botão inteligente `🔄 Recomeçar Partida` sob demanda para partidas de um jogador.
 7. **Central de Ajuda & Regras Unificadas**: Cada um dos 4 jogos da Arena possui um botão interativo de ajuda (`HelpCircle`) que exibe de forma premium, fluida (framer-motion) e reativa a regras, objetivos e dicas táticas oficiais formatadas de acordo com o tema selecionado (Clássico ou Cyberpunk).
 
+### 🛍️ Loja de Cosméticos & Torneios Eliminatórios (Copa)
+
+Expandindo os horizontes da Hub Arena, as novas funcionalidades de engajamento cíclico corporativo unem competitividade e personalização visual premium:
+
+1. **Loja de Fliperama Retro (`ArenaStoreModal`)**:
+   - Um modal arcade estilizado com sons procedurais de arpejo melódico e blips 8-bits sintetizados por **Web Audio API**.
+   - Colaboradores podem gastar **Fliperama Coins** para adquirir cosméticos exclusivos.
+2. **Molduras & Títulos de Chat Neon**:
+   - **Títulos de Chat Neon Cyberpunk**: Títulos como "Grão-Mestre de Vendas", "Estrategista" ou "Lenda do Connect 4" com animações pulse neon e gradientes HSL no chat de equipe.
+   - **Molduras de Avatar Restritas**: Desbloqueio e seleção de molduras exclusivas (Neon, Cyberpunk, Gold, etc.) para o perfil.
+3. **Torneios Eliminatórios Assíncronos (Brackets)**:
+   - **Árvore de Brackets Neon**: Um painel dinâmico responsivo que monta a grade da copa (4 ou 8 competidores) conectada por fluxos SVG neon iluminados com a cor do vencedor.
+   - **Gerenciamento Seguro & Sorteios**: O chaveamento e confrontos iniciais são gerados e embaralhados automaticamente ao esgotar as vagas do torneio.
+   - **Início e Avanço de Lutas Inteligentes**: Partidas de torneios eliminatórios (`tournament_`) pulam o fluxo de aceite, iniciando diretamente para os oponentes. A vitória é interceptada reativamente para atualizar o bracket e conceder o prêmio de **+300 moedas** ao campeão na final.
+
 ---
 
 ## 🧪 Testing & CI/CD Strategy

@@ -635,3 +635,33 @@ export interface BroadcastPayload {
   hasButton: boolean;
   buttonUrl?: string;
 }
+
+// ── Torneios Eliminatórios (Hub Arena) ──────────────────────────────────────────
+
+export interface TournamentMatch {
+  matchId: string | null;
+  p1: string | null;
+  p1Name?: string;
+  p2: string | null;
+  p2Name?: string;
+  winnerId?: string | null;
+}
+
+export interface TournamentBracket {
+  quarterfinals?: TournamentMatch[];
+  semifinals: TournamentMatch[];
+  final: TournamentMatch;
+}
+
+export interface Tournament {
+  id: string;
+  name: string;
+  gameType: 'chess' | 'checkers' | 'connect4' | 'ludo';
+  status: 'registration' | 'active' | 'finished';
+  maxPlayers: 4 | 8;
+  participants: string[];
+  bracket: TournamentBracket;
+  winnerId?: string | null;
+  orgId: string;
+  createdAt: number;
+}
