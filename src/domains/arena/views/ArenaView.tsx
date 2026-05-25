@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useArenaStore, GameType } from '@store/useArenaStore';
+import { ArenaStoreModal } from '../components/ArenaStoreModal';
+import { Coins, ShoppingBag } from 'lucide-react';
 import { Connect4Board } from '../components/Connect4Board';
 import { CheckersBoard } from '../components/CheckersBoard';
 import { ChessBoard } from '../components/ChessBoard';
@@ -22,7 +24,7 @@ const ACHIEVEMENTS_LIST = [
 ];
 
 export default function ArenaView() {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const { teamProfiles = [] } = useCRM();
   
   // Zustand Store
@@ -42,6 +44,7 @@ export default function ArenaView() {
   const [localActiveSingleMatch, setLocalActiveSingleMatch] = useState<{ active: boolean; gameType: GameType } | null>(null);
   const [realWins, setRealWins] = useState<number>(0);
   const [achievements, setAchievements] = useState<any[]>([]);
+  const [isStoreOpen, setIsStoreOpen] = useState(false);
 
   // Escuta vitórias reais do usuário logado na Arena
   useEffect(() => {
@@ -231,10 +234,28 @@ export default function ArenaView() {
         {/* 🎮 1. SELEÇÃO DE JOGOS & MODOS (ESQUERDA) */}
         <div className="flex-1 flex flex-col gap-6">
           
-          <div className="space-y-2">
-            <span className="text-[10px] font-black text-primary-500 uppercase tracking-[0.4em]">Hub Arena</span>
-            <h1 className="text-4xl font-black text-white tracking-tight leading-none">CENTRAL DE JOGOS & DESCOMPRESSÃO</h1>
-            <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">DESAFIE COLEGAS DE EQUIPE OU JOGUE CONTRA A MÁQUINA</p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="space-y-2">
+              <span className="text-[10px] font-black text-primary-500 uppercase tracking-[0.4em]">Hub Arena</span>
+              <h1 className="text-4xl font-black text-white tracking-tight leading-none">CENTRAL DE JOGOS & DESCOMPRESSÃO</h1>
+              <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">DESAFIE COLEGAS DE EQUIPE OU JOGUE CONTRA A MÁQUINA</p>
+            </div>
+
+            {/* Balanço de Moedas e Botão da Loja */}
+            <div className="flex items-center gap-3 shrink-0 self-start sm:self-center">
+              <div className="flex items-center gap-2 px-3 py-2 bg-yellow-500/5 border border-yellow-500/20 rounded-2xl">
+                <Coins size={14} className="text-yellow-400 animate-bounce" />
+                <span className="text-xs font-black text-yellow-400 tracking-wider">{userProfile?.arenaCredits || 0}</span>
+                <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Coins</span>
+              </div>
+              <button
+                onClick={() => setIsStoreOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-wider shadow-lg shadow-purple-500/20 active:scale-95 transition-all cursor-pointer border border-purple-400/20"
+              >
+                <ShoppingBag size={14} />
+                Loja da Arena
+              </button>
+            </div>
           </div>
 
           {/* Cards de Seleção de Jogos */}
@@ -491,6 +512,11 @@ export default function ArenaView() {
 
       </div>
 
+      <AnimatePresence>
+        {isStoreOpen && (
+          <ArenaStoreModal onClose={() => setIsStoreOpen(false)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

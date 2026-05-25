@@ -19,6 +19,7 @@ interface Member {
   photoURL?: string;
   reportsTo?: string;
   birthDate?: string;
+  department?: string;
 }
 
 interface Invitation {
@@ -124,6 +125,7 @@ export default function TeamManagementView() {
   const [editReportsTo, setEditReportsTo] = useState('');
   const [editRole, setEditRole] = useState('');
   const [editBirthDate, setEditBirthDate] = useState('');
+  const [editDepartment, setEditDepartment] = useState('');
 
   const fetchData = async () => {
     try {
@@ -220,7 +222,8 @@ export default function TeamManagementView() {
             jobTitle: editJobTitle,
             roleId: editRole,
             reportsTo: editReportsTo || null,
-            birthDate: editBirthDate || null
+            birthDate: editBirthDate || null,
+            department: editDepartment || null
           }
         })
       });
@@ -386,6 +389,7 @@ export default function TeamManagementView() {
                                   setEditReportsTo(member.reportsTo || '');
                                   setEditRole(member.uid === user?.uid ? (member as any).roleId || member.role : (member as any).roleId || member.role);
                                   setEditBirthDate(member.birthDate || '');
+                                  setEditDepartment(member.department || '');
                                   setIsEditModalOpen(true); 
                                 }}
                                 className="p-2 text-gray-400 hover:text-primary-500 hover:bg-primary-500/10 rounded-lg transition-all"
@@ -543,6 +547,22 @@ export default function TeamManagementView() {
                     ))}
                   </select>
                   {editingMember.uid === user?.uid && <p className="text-[10px] text-amber-500 mt-1">Você não pode alterar seu próprio cargo por aqui.</p>}
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 uppercase">Departamento / Time</label>
+                  <select 
+                    value={editDepartment} 
+                    onChange={e => setEditDepartment(e.target.value)} 
+                    className="w-full bg-black/40 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white"
+                  >
+                    <option value="">Nenhum</option>
+                    <option value="Vendas">Vendas</option>
+                    <option value="Desenvolvimento">Desenvolvimento</option>
+                    <option value="Suporte">Suporte</option>
+                    <option value="RH">Recursos Humanos (RH)</option>
+                    <option value="Marketing">Marketing</option>
+                    <option value="Geral">Geral</option>
+                  </select>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 uppercase">Superior Imediato</label>

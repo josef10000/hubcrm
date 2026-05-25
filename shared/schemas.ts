@@ -23,7 +23,8 @@ export const teamUpdateProfileSchema = z.object({
     jobTitle: z.string().optional(),
     roleId: z.string().optional(),
     reportsTo: z.string().nullable().optional(),
-    birthDate: z.string().nullable().optional()
+    birthDate: z.string().nullable().optional(),
+    department: z.string().nullable().optional()
   })
 });
 

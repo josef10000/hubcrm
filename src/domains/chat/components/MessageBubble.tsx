@@ -447,13 +447,28 @@ export default function MessageBubble({
     >
       {/* Nome do Remetente (Apenas Grupos/Outros) */}
       {!isMine && !isDeleted && (
-        <span className="text-base font-semibold text-gray-500 mb-1 ml-11 tracking-tight flex items-center gap-2">
+        <span className="text-[13px] font-semibold text-gray-500 mb-1 ml-11 tracking-tight flex items-center gap-2 flex-wrap">
           {isBot ? (
             <>
               <span className="text-violet-500 font-black">HubBot</span>
               <span className="text-[8px] font-black uppercase tracking-widest bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white px-2 py-0.5 rounded-full shadow-sm">BOT</span>
             </>
-          ) : message.senderName}
+          ) : (
+            <>
+              <span>{message.senderName}</span>
+              {(() => {
+                const senderProfile = teamProfiles.find(p => p.uid === message.senderId);
+                if (senderProfile?.activeTitle) {
+                  return (
+                    <span className="text-[7px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded border border-purple-500/30 bg-purple-500/5 text-purple-400">
+                      🎮 {senderProfile.activeTitle}
+                    </span>
+                  );
+                }
+                return null;
+              })()}
+            </>
+          )}
         </span>
       )}
 

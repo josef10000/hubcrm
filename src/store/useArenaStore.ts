@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { db } from '@/lib/firebase';
-import { doc, onSnapshot, updateDoc, setDoc, collection, query, where, getDocs, deleteDoc, arrayUnion } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc, arrayUnion } from 'firebase/firestore';
 
 export type GameType = 'chess' | 'checkers' | 'connect4' | 'ludo';
 export type MatchStatus = 'waiting' | 'playing' | 'declined' | 'finished';
@@ -44,6 +44,9 @@ interface ArenaState {
   exitActiveMatch: () => void;
   toggleVoice: () => Promise<void>;
   unlockAchievement: (uid: string, achievementId: string, title: string, description: string, icon: string) => Promise<void>;
+  addArenaCredits: (uid: string, amount: number) => Promise<void>;
+  purchaseCosmetic: (uid: string, itemId: string, itemType: 'frame' | 'title', cost: number) => Promise<void>;
+  equipCosmetic: (uid: string, itemId: string, itemType: 'frame' | 'title') => Promise<void>;
 }
 
 export const useArenaStore = create<ArenaState>((set, get) => {
@@ -346,8 +349,86 @@ export const useArenaStore = create<ArenaState>((set, get) => {
             unlockedAt: Date.now()
           })
         }, { merge: true });
+
+        // Dar 50 moedas virtuais por conquista
+        const userRef = doc(db, 'profiles', uid);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          const currentCredits = userSnap.data().arenaCredits || 0;
+          await updateDoc(userRef, {
+            arenaCredits: currentCredits + 50
+          });
+        }
       } catch (err) {
         console.error('Erro ao salvar conquista no Firestore:', err);
+      }
+    },
+    
+    addArenaCredits: async (uid, amount) => {
+      try {
+        const userRef = doc(db, 'profiles', uid);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          const currentCredits = userSnap.data().arenaCredits || 0;
+          await updateDoc(userRef, {
+            arenaCredits: currentCredits + amount
+          });
+        }
+      } catch (err) {
+        console.error('Erro ao adicionar moedas:', err);
+      }
+    },
+
+    purchaseCosmetic: async (uid, itemId, itemType, cost) => {
+      try {
+        const userRef = doc(db, 'profiles', uid);
+        const userSnap = await getDoc(userRef);
+        if (!userSnap.exists()) throw new Error('Usuário não encontrado');
+
+        const userData = userSnap.data();
+        const currentCredits = userData.arenaCredits || 0;
+
+        if (currentCredits < cost) {
+          throw new Error('Créditos insuficientes');
+        }
+
+        const updates: any = {
+          arenaCredits: currentCredits - cost
+        };
+
+        if (itemType === 'frame') {
+          const unlockedFrames = userData.unlockedFrames || ['none'];
+          if (unlockedFrames.includes(itemId)) {
+            throw new Error('Cosmético já desbloqueado');
+          }
+          updates.unlockedFrames = arrayUnion(itemId);
+        } else if (itemType === 'title') {
+          const unlockedTitles = userData.unlockedTitles || [];
+          if (unlockedTitles.includes(itemId)) {
+            throw new Error('Título já desbloqueado');
+          }
+          updates.unlockedTitles = arrayUnion(itemId);
+        }
+
+        await updateDoc(userRef, updates);
+      } catch (err: any) {
+        console.error('Erro ao comprar cosmético:', err);
+        throw err;
+      }
+    },
+
+    equipCosmetic: async (uid, itemId, itemType) => {
+      try {
+        const userRef = doc(db, 'profiles', uid);
+        const updates: any = {};
+        if (itemType === 'frame') {
+          updates.avatarFrame = itemId;
+        } else if (itemType === 'title') {
+          updates.activeTitle = itemId;
+        }
+        await updateDoc(userRef, updates);
+      } catch (err) {
+        console.error('Erro ao equipar cosmético:', err);
       }
     }
   };

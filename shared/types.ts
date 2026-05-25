@@ -109,6 +109,13 @@ export interface UserProfile {
 
   // Library Integration
   readingProgress?: Record<string, { currentPage: number; totalPages: number }>;
+
+  // Arena Gamification & Economy
+  arenaCredits?: number;
+  unlockedTitles?: string[];
+  activeTitle?: string;
+  unlockedFrames?: string[];
+  department?: string;
 }
 
 export type UserProfileBase = UserProfile;

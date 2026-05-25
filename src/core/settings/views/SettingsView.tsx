@@ -85,15 +85,26 @@ export default function SettingsView() {
                   className="w-full bg-white dark:bg-black/20 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary-500 outline-none text-sm"
                 >
                   <option value="none">Nenhuma</option>
-                  <option value="neon">Neon Purple</option>
-                  <option value="gold">Gold Premium</option>
-                  <option value="cyberpunk">Cyberpunk Cyan</option>
-                  <option value="floral">Eco Floral</option>
-                  <option value="ruby">Ruby Red</option>
-                  <option value="ocean">Ocean Blue</option>
-                  <option value="dark">Dark Minimalist</option>
-                  <option value="rainbow">Rainbow Glow</option>
-                  <option value="silver">Silver Platinum</option>
+                  {Array.from(new Set(['none', ...(userProfile?.unlockedFrames || []), userProfile?.avatarFrame].filter(Boolean))).map(frameKey => {
+                    const frameNames: Record<string, string> = {
+                      none: 'Nenhuma',
+                      neon: 'Neon Purple (Loja)',
+                      gold: 'Gold Premium (Loja)',
+                      cyberpunk: 'Cyberpunk Cyan (Loja)',
+                      floral: 'Eco Floral (Loja)',
+                      ruby: 'Ruby Red (Loja)',
+                      ocean: 'Ocean Blue (Loja)',
+                      dark: 'Dark Minimalist (Loja)',
+                      rainbow: 'Rainbow Glow (Loja)',
+                      silver: 'Silver Platinum (Loja)'
+                    };
+                    if (frameKey === 'none') return null;
+                    return (
+                      <option key={frameKey} value={frameKey}>
+                        {frameNames[frameKey] || frameKey}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
             </div>

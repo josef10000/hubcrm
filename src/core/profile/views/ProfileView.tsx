@@ -451,6 +451,13 @@ export default function ProfileView() {
               </div>
 
               <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-1">{profile.displayName}</h2>
+              {profile.activeTitle && (
+                <div className="mb-2">
+                  <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border border-purple-500/20 bg-purple-500/5 text-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.15)] inline-block">
+                    🎮 {profile.activeTitle}
+                  </span>
+                </div>
+              )}
               <p className="text-sm font-bold text-primary-500 uppercase tracking-widest mb-4">{profile.jobTitle || (typeof profile.role === 'string' ? profile.role : profile.role?.name)}</p>
               
               <div className="flex items-center justify-center gap-4 mb-8">
