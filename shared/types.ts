@@ -116,6 +116,7 @@ export interface UserProfile {
   activeTitle?: string;
   unlockedFrames?: string[];
   department?: string;
+  claimedReadingClubs?: string[];
 }
 
 export type UserProfileBase = UserProfile;

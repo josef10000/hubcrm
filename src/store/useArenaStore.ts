@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { db } from '@/lib/firebase';
 import { doc, onSnapshot, updateDoc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc, arrayUnion } from 'firebase/firestore';
 import { Tournament } from '@/types';
+import { toast } from 'sonner';
 
 export type GameType = 'chess' | 'checkers' | 'connect4' | 'ludo';
 export type MatchStatus = 'waiting' | 'playing' | 'declined' | 'finished';
