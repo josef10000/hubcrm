@@ -6,7 +6,7 @@ import { ArenaStoreModal } from '../components/ArenaStoreModal';
 import { TournamentBrackets } from '../components/TournamentBrackets';
 import { DailyPuzzle } from '../components/DailyPuzzle';
 import { usePermissions } from '@auth/hooks/usePermissions';
-import { Coins, ShoppingBag, Trophy, Plus, ArrowLeft, Crown, Swords, Users, ShieldAlert } from 'lucide-react';
+import { Coins, ShoppingBag, Trophy, Plus, ArrowLeft, Crown, Swords, Users, ShieldAlert, Clock } from 'lucide-react';
 import { Connect4Board } from '../components/Connect4Board';
 import { CheckersBoard } from '../components/CheckersBoard';
 import { ChessBoard } from '../components/ChessBoard';
@@ -622,6 +622,7 @@ export default function ArenaView() {
           ) : (
             <DailyPuzzle onBack={() => setActiveTab('games')} />
           )}
+        </div>
 
         {/* 👥 2. STATUS DE CONTATOS, LEADERBOARD & CONQUISTAS (DIREITA) */}
         <div className="w-80 shrink-0 flex flex-col gap-6">
