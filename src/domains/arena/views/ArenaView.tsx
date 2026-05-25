@@ -485,7 +485,7 @@ export default function ArenaView() {
                 )}
               </div>
             </>
-          ) : (
+          ) : activeTab === 'tournaments' ? (
             // Visualização de Torneios Eliminatórios
             <div className="flex flex-col gap-6 animate-in fade-in duration-300">
               {selectedTournamentId && tournaments.find(t => t.id === selectedTournamentId) ? (
@@ -620,7 +620,6 @@ export default function ArenaView() {
               )}
             </div>
           ) : (
-            // Visualização do Desafio Diário (Puzzle)
             <DailyPuzzle onBack={() => setActiveTab('games')} />
           )}
 
