@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { db } from '@/lib/firebase';
 import { doc, onSnapshot, updateDoc, setDoc, collection, query, where, getDocs, deleteDoc, arrayUnion } from 'firebase/firestore';
 
-export type GameType = 'chess' | 'checkers' | 'connect4' | 'ludo' | 'monopoly' | 'war';
+export type GameType = 'chess' | 'checkers' | 'connect4' | 'ludo';
 export type MatchStatus = 'waiting' | 'playing' | 'declined' | 'finished';
 
 export interface GameMatch {
@@ -150,77 +150,6 @@ export const useArenaStore = create<ArenaState>((set, get) => {
             hasRolled: false,
             consecutiveSixes: 0,
             winnerColor: null
-          };
-        } else if (match.gameType === 'monopoly') {
-          const monopolyPlayers = [
-            { id: match.player1Id, name: match.player1Name, money: 1500, position: 0, color: 'red', isBot: false },
-            { id: match.player2Id, name: match.player2Name, money: 1500, position: 0, color: 'blue', isBot: false },
-            { id: 'bot_1', name: 'Bot Investidor', money: 1500, position: 0, color: 'yellow', isBot: true },
-            { id: 'bot_2', name: 'Bot Capitalista', money: 1500, position: 0, color: 'green', isBot: true }
-          ];
-          boardState = {
-            players: monopolyPlayers,
-            properties: {},
-            chanceCards: [],
-            dice: null,
-            hasRolled: false,
-            consecutiveDoubles: 0,
-            jailTurns: {},
-            log: ['Partida iniciada! M$ 1.500 distribuídos.'],
-            activeSkin: 'classic'
-          };
-        } else if (match.gameType === 'war') {
-          const warPlayers = [
-            { id: match.player1Id, name: match.player1Name, color: 'red', isBot: false },
-            { id: match.player2Id, name: match.player2Name, color: 'blue', isBot: false },
-            { id: 'bot_1', name: 'General Bot A', color: 'yellow', isBot: true },
-            { id: 'bot_2', name: 'General Bot B', color: 'green', isBot: true }
-          ];
-
-          const objectives = [
-            'Conquistar a Europa, a América do Sul e mais um terceiro continente.',
-            'Conquistar a América do Norte e a África.',
-            'Conquistar 24 territórios à sua escolha.',
-            'Conquistar a Ásia e a América do Sul.'
-          ];
-
-          const territoryNames = [
-            'brasil', 'argentina', 'colombia', 'chile',
-            'alaska', 'canada', 'groelandia', 'eua_leste', 'eua_oeste', 'mexico',
-            'reino_unido', 'europa_leste', 'europa_oeste', 'europa_norte', 'islandia',
-            'egito', 'argelia', 'congo', 'africa_sul', 'madagascar',
-            'russia', 'china', 'india', 'japao', 'siberia', 'mongolia', 'oriente_medio',
-            'australia', 'nova_guine', 'sumatra'
-          ];
-
-          const territories: any = {};
-          territoryNames.forEach((name, idx) => {
-            const playerIdx = idx % 4;
-            const player = warPlayers[playerIdx];
-            territories[name] = {
-              ownerId: player.id,
-              armies: 3
-            };
-          });
-
-          boardState = {
-            players: warPlayers,
-            territories,
-            playerObjectives: {
-              [match.player1Id]: objectives[0],
-              [match.player2Id]: objectives[1],
-              'bot_1': objectives[2],
-              'bot_2': objectives[3]
-            },
-            phase: 'distribute',
-            armiesToDistribute: {
-              [match.player1Id]: 3,
-              [match.player2Id]: 3,
-              'bot_1': 3,
-              'bot_2': 3
-            },
-            activeSkin: 'classic',
-            dice: null
           };
         }
 

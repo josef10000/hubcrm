@@ -62,34 +62,5 @@ export const GAME_RULES: Record<string, GameHelpRule> = {
       'Priorize tirar todas as suas peças da base o quanto antes se rolar o número 6.',
       'Posicione suas fichas nas casas com estrelas (zonas seguras) para evitar capturas do oponente.'
     ]
-  },
-  monopoly: {
-    title: 'Monopoly (Banco Imobiliário)',
-    objective: 'Acumular o maior império imobiliário e financeiro corporativo, forçando todos os oponentes à falência.',
-    steps: [
-      'Role os dados e avance a quantidade correspondente de casas no tabuleiro 11x11.',
-      'Ao cair em uma propriedade sem dono, você pode comprá-la. Ao cair em uma de oponente, você deve pagar aluguel.',
-      'Tire dados duplos para jogar de novo. Três duplos seguidos mandam você para a prisão.',
-      'Forme um Monopólio: obter todas as propriedades do mesmo grupo de cor dobra o aluguel e libera a construção de casas/hotéis.',
-      'Cartas Sorte/Revés executam transações, prêmios ou multas fiscais reativas imediatamente.'
-    ],
-    tips: [
-      'As propriedades laranja e vermelhas são as mais visitadas no tabuleiro devido à distância da prisão.',
-      'Não hesite em comprar companhias de serviços, pois fornecem renda passiva excelente no início da partida.'
-    ]
-  },
-  war: {
-    title: 'War (Estratégia Militar)',
-    objective: 'Cumprir inteiramente o seu Objetivo Secreto de dominação continental antes dos generais oponentes.',
-    steps: [
-      '📍 Distribuição: Receba e aloque exércitos extras baseados na quantidade de territórios e bônus de continentes dominados.',
-      '⚔️ Ataque: Use um território com >= 2 exércitos para invadir um vizinho oponente. Dados de ataque (até 3) duelam contra dados de defesa.',
-      '🛡️ Remanejamento: Transfira exércitos entre seus territórios conectados para blindar suas fronteiras desprotegidas.',
-      '🃏 Troca de Cartas: Combine símbolos (Triângulo, Círculo, Quadrado) para receber contingentes massivos de reforços.'
-    ],
-    tips: [
-      'A América do Sul e a Oceania são excelentes continentes para dominar no início por terem poucas fronteiras de ataque.',
-      'Evite espalhar muito seus exércitos. Concentrar uma grande tropa de ataque é mais eficiente do que manter exércitos fracos.'
-    ]
   }
 };

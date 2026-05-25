@@ -6,8 +6,6 @@ import { Connect4Board } from '../components/Connect4Board';
 import { CheckersBoard } from '../components/CheckersBoard';
 import { ChessBoard } from '../components/ChessBoard';
 import { LudoBoard } from '../components/LudoBoard';
-import { MonopolyBoard } from '../components/MonopolyBoard';
-import { WarBoard } from '../components/WarBoard';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, doc } from 'firebase/firestore';
 import { toast } from 'sonner';
@@ -20,11 +18,7 @@ const ACHIEVEMENTS_LIST = [
   { id: 'chk_win', title: 'Mestre Damas', desc: 'Venceu no Damas na Arena', icon: '🏅' },
   { id: 'chess_cast', title: 'A Fortaleza', desc: 'Realizou o movimento de Roque no Xadrez', icon: '🏰' },
   { id: 'ludo_cap', title: 'Predador', desc: 'Capturou uma ficha inimiga no Ludo', icon: '💥' },
-  { id: 'chk_king', title: 'Voo Majestoso', desc: 'Promoveu uma peça a Dama Brasileira', icon: '👑' },
-  { id: 'monopoly_win', title: 'Barão Imobiliário', desc: 'Venceu no Monopoly faliendo oponentes', icon: '🏦' },
-  { id: 'monopoly_hotel', title: 'Império Neon', desc: 'Construiu hotel na skin futurista', icon: '🏨' },
-  { id: 'war_win', title: 'General Supremo', desc: 'Cumpriu seu objetivo e venceu no War', icon: '⚔️' },
-  { id: 'war_conquer', title: 'Globalização', desc: 'Conquistou um continente inteiro no War', icon: '🗺️' }
+  { id: 'chk_king', title: 'Voo Majestoso', desc: 'Promoveu uma peça a Dama Brasileira', icon: '👑' }
 ];
 
 export default function ArenaView() {
@@ -155,12 +149,6 @@ export default function ArenaView() {
         {activeMatch.gameType === 'ludo' && (
           <LudoBoard match={activeMatch} isLocal={false} />
         )}
-        {activeMatch.gameType === 'monopoly' && (
-          <MonopolyBoard match={activeMatch} isLocal={false} />
-        )}
-        {activeMatch.gameType === 'war' && (
-          <WarBoard match={activeMatch} isLocal={false} />
-        )}
       </div>
     );
   }
@@ -194,12 +182,6 @@ export default function ArenaView() {
         )}
         {localActiveSingleMatch.gameType === 'ludo' && (
           <LudoBoard match={mockMatch} isLocal={true} aiDifficulty={aiDifficulty} onExit={handleExitLocalGame} />
-        )}
-        {localActiveSingleMatch.gameType === 'monopoly' && (
-          <MonopolyBoard match={mockMatch} isLocal={true} aiDifficulty={aiDifficulty} onExit={handleExitLocalGame} />
-        )}
-        {localActiveSingleMatch.gameType === 'war' && (
-          <WarBoard match={mockMatch} isLocal={true} aiDifficulty={aiDifficulty} onExit={handleExitLocalGame} />
         )}
       </div>
     );
@@ -319,38 +301,6 @@ export default function ArenaView() {
               <div className="space-y-1">
                 <h4 className="text-xs font-black text-white uppercase tracking-wider">Ludo</h4>
                 <p className="text-[8px] text-gray-500 font-bold uppercase tracking-widest leading-relaxed">Role dados, tire peças da base e capture o oponente.</p>
-              </div>
-            </button>
-
-            {/* Monopoly Card */}
-            <button 
-              onClick={() => setSelectedGame('monopoly')}
-              className={`p-5 border rounded-[2rem] text-left transition-all relative overflow-hidden group flex flex-col justify-between h-44 ${
-                selectedGame === 'monopoly' 
-                ? 'bg-purple-500/10 border-purple-500/40 shadow-[0_0_30px_rgba(168,85,247,0.15)]' 
-                : 'bg-slate-950/40 hover:bg-slate-950/70 border-white/5 hover:border-white/10'
-              }`}
-            >
-              <div className="text-2xl">💰</div>
-              <div className="space-y-1">
-                <h4 className="text-xs font-black text-white uppercase tracking-wider">Monopoly</h4>
-                <p className="text-[8px] text-gray-500 font-bold uppercase tracking-widest leading-relaxed">Compre propriedades, cobre aluguéis e construa seu império corporativo.</p>
-              </div>
-            </button>
-
-            {/* War Card */}
-            <button 
-              onClick={() => setSelectedGame('war')}
-              className={`p-5 border rounded-[2rem] text-left transition-all relative overflow-hidden group flex flex-col justify-between h-44 ${
-                selectedGame === 'war' 
-                ? 'bg-red-500/10 border-red-500/40 shadow-[0_0_30px_rgba(239,68,68,0.15)]' 
-                : 'bg-slate-950/40 hover:bg-slate-950/70 border-white/5 hover:border-white/10'
-              }`}
-            >
-              <div className="text-2xl">🪖</div>
-              <div className="space-y-1">
-                <h4 className="text-xs font-black text-white uppercase tracking-wider">War</h4>
-                <p className="text-[8px] text-gray-500 font-bold uppercase tracking-widest leading-relaxed">Conquiste territórios, aloque exércitos e cumpra seu objetivo tático.</p>
               </div>
             </button>
 
