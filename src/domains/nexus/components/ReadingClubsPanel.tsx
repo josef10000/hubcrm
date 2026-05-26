@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { doc, onSnapshot, updateDoc, setDoc, collection, getDocs, arrayUnion, deleteDoc } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, setDoc, collection, getDocs, arrayUnion, deleteDoc, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useArenaStore } from '@store/useArenaStore';
+import { useNexusStore } from '@store/useNexusStore';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 
@@ -93,21 +94,51 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
   const [isUpdatingProgress, setIsUpdatingProgress] = useState(false);
   const [newProgressPage, setNewProgressPage] = useState<number>(0);
 
+  // Livros da Comunidade e Pessoais (Nexus Hub)
+  const [communityBooks, setCommunityBooks] = useState<any[]>([]);
+  const personalBooks = useNexusStore(state => state.books);
+  const updateReadingProgress = useNexusStore(state => state.updateReadingProgress);
+
   // Estados locais para Criação e Edição de Clubes
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
   const [editingClubId, setEditingClubId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    bookTitle: string;
+    bookAuthor: string;
+    bookCoverUrl: string;
+    department: string;
+    targetPages: number;
+    deadlineDays: number;
+    selectedBookRefId?: string;
+  }>({
     bookTitle: '',
     bookAuthor: '',
     bookCoverUrl: '',
     department: 'Desenvolvimento',
     targetPages: 200,
-    deadlineDays: 30
+    deadlineDays: 30,
+    selectedBookRefId: undefined
   });
 
   // Zustand Actions
   const addArenaCredits = useArenaStore(state => state.addArenaCredits);
+
+  // Efeito para carregar livros da comunidade em tempo real do Firestore
+  useEffect(() => {
+    if (!orgId) return;
+    const q = query(collection(db, 'organizations', orgId, 'communityBooks'), orderBy('addedAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const loaded = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setCommunityBooks(loaded);
+    }, (err) => {
+      console.error('[Clube de Leitura] Erro ao escutar livros da comunidade:', err);
+    });
+    return () => unsubscribe();
+  }, [orgId]);
 
   // Efeito para sincronizar e inferir departamento do usuário
   useEffect(() => {
@@ -404,6 +435,16 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
         metaCompleted
       });
 
+      // SINCRONIZAÇÃO COM A BIBLIOTECA PESSOAL (CLUBE ➡️ BIBLIOTECA)
+      const matchingBook = personalBooks.find(b => 
+        b.id === club.bookId || 
+        b.originalBookId === club.bookId ||
+        b.title.toLowerCase().trim() === club.bookTitle.toLowerCase().trim()
+      );
+      if (matchingBook) {
+        await updateReadingProgress(matchingBook.id, newProgressPage);
+      }
+
       setIsUpdatingProgress(false);
       toast.success('Seu progresso de leitura foi sincronizado!');
       
@@ -435,7 +476,8 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
       bookCoverUrl: '',
       department: selectedDept || 'Desenvolvimento',
       targetPages: 200,
-      deadlineDays: 30
+      deadlineDays: 30,
+      selectedBookRefId: undefined
     });
     setFormMode('create');
     setIsFormOpen(true);
@@ -449,7 +491,8 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
       bookCoverUrl: club.bookCoverUrl || '',
       department: club.department,
       targetPages: club.targetPages,
-      deadlineDays: 30
+      deadlineDays: 30,
+      selectedBookRefId: club.bookId
     });
     setEditingClubId(club.id);
     setFormMode('edit');
@@ -473,7 +516,7 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
     try {
       if (formMode === 'create') {
         const clubId = `${orgId}_${Date.now()}`;
-        const bookId = `custom_book_${Date.now()}`;
+        const bookId = formData.selectedBookRefId || `custom_book_${Date.now()}`;
         
         // Agrupar membros e criar progresso
         const deptMembers = teamProfiles.filter(p => (p.department || 'Geral') === formData.department);
@@ -510,6 +553,7 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
         const clubDocRef = doc(db, 'organizations', orgId, 'readingClubs', editingClubId);
         
         await updateDoc(clubDocRef, {
+          bookId: formData.selectedBookRefId || `custom_book_${Date.now()}`,
           bookTitle: formData.bookTitle.trim(),
           bookAuthor: formData.bookAuthor.trim(),
           bookCoverUrl: formData.bookCoverUrl.trim() || null,
@@ -644,6 +688,60 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
 
                   {/* Campos do Formulário */}
                   <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+                    {/* Seleção do Livro (Dropdown) */}
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block">Selecionar Livro Cadastrado (Opcional)</label>
+                      <select
+                        value={formData.selectedBookRefId || 'manual'}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === 'manual') {
+                            setFormData(prev => ({
+                              ...prev,
+                              selectedBookRefId: undefined,
+                              bookTitle: '',
+                              bookAuthor: '',
+                              bookCoverUrl: '',
+                              targetPages: 200
+                            }));
+                          } else {
+                            const book = communityBooks.find(b => b.id === val) || personalBooks.find(b => b.id === val);
+                            if (book) {
+                              setFormData(prev => ({
+                                ...prev,
+                                selectedBookRefId: val,
+                                bookTitle: book.title || '',
+                                bookAuthor: book.author || '',
+                                bookCoverUrl: book.coverUrl || '',
+                                targetPages: book.totalPages || 200
+                              }));
+                            }
+                          }
+                        }}
+                        className="w-full bg-[#151722] border border-white/10 rounded-2xl px-5 py-3.5 text-sm text-white focus:border-primary-500 outline-none transition-all cursor-pointer"
+                      >
+                        <option value="manual" className="bg-[#0d0f16]">-- Escrever livro manualmente --</option>
+                        {communityBooks.length > 0 && (
+                          <optgroup label="Aba Comunidade" className="bg-[#0d0f16] text-primary-400">
+                            {communityBooks.map(b => (
+                              <option key={b.id} value={b.id} className="bg-[#0d0f16] text-white">
+                                {b.title} {b.author ? `(Por ${b.author})` : ''}
+                              </option>
+                            ))}
+                          </optgroup>
+                        )}
+                        {personalBooks.length > 0 && (
+                          <optgroup label="Sua Biblioteca Pessoal" className="bg-[#0d0f16] text-emerald-400">
+                            {personalBooks.map(b => (
+                              <option key={b.id} value={b.id} className="bg-[#0d0f16] text-white">
+                                {b.title} {b.author ? `(Por ${b.author})` : ''}
+                              </option>
+                            ))}
+                          </optgroup>
+                        )}
+                      </select>
+                    </div>
+
                     <div className="space-y-1.5">
                       <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block">Título do Livro</label>
                       <input
@@ -1246,6 +1344,60 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
 
                 {/* Campos do Formulário */}
                 <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+                  {/* Seleção do Livro (Dropdown) */}
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block">Selecionar Livro Cadastrado (Opcional)</label>
+                    <select
+                      value={formData.selectedBookRefId || 'manual'}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'manual') {
+                          setFormData(prev => ({
+                            ...prev,
+                            selectedBookRefId: undefined,
+                            bookTitle: '',
+                            bookAuthor: '',
+                            bookCoverUrl: '',
+                            targetPages: 200
+                          }));
+                        } else {
+                          const book = communityBooks.find(b => b.id === val) || personalBooks.find(b => b.id === val);
+                          if (book) {
+                            setFormData(prev => ({
+                              ...prev,
+                              selectedBookRefId: val,
+                              bookTitle: book.title || '',
+                              bookAuthor: book.author || '',
+                              bookCoverUrl: book.coverUrl || '',
+                              targetPages: book.totalPages || 200
+                            }));
+                          }
+                        }
+                      }}
+                      className="w-full bg-[#151722] border border-white/10 rounded-2xl px-5 py-3.5 text-sm text-white focus:border-primary-500 outline-none transition-all cursor-pointer"
+                    >
+                      <option value="manual" className="bg-[#0d0f16]">-- Escrever livro manualmente --</option>
+                      {communityBooks.length > 0 && (
+                        <optgroup label="Aba Comunidade" className="bg-[#0d0f16] text-primary-400">
+                          {communityBooks.map(b => (
+                            <option key={b.id} value={b.id} className="bg-[#0d0f16] text-white">
+                              {b.title} {b.author ? `(Por ${b.author})` : ''}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                      {personalBooks.length > 0 && (
+                        <optgroup label="Sua Biblioteca Pessoal" className="bg-[#0d0f16] text-emerald-400">
+                          {personalBooks.map(b => (
+                            <option key={b.id} value={b.id} className="bg-[#0d0f16] text-white">
+                              {b.title} {b.author ? `(Por ${b.author})` : ''}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                    </select>
+                  </div>
+
                   {/* Título do Livro */}
                   <div className="space-y-1.5">
                     <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest block">Título do Livro</label>

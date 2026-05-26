@@ -473,12 +473,63 @@ export const useNexusStore = create<NexusState>()(
 
       // Registra a atividade se houve progresso positivo
       if (pagesRead > 0) {
-        await addActivityLog({
+        await get().addActivityLog({
           type: 'reading',
           bookId,
           pagesRead,
           timestamp: Date.now()
         });
+      }
+
+      // Sincronização com o Clube de Leitura correspondente (Biblioteca ➡️ Clube)
+      const uid = get().uid;
+      if (uid) {
+        try {
+          const profileRef = doc(db, 'profiles', uid);
+          const profileSnap = await getDoc(profileRef);
+          if (profileSnap.exists()) {
+            const orgId = profileSnap.data().orgId;
+            if (orgId) {
+              const clubsColRef = collection(db, 'organizations', orgId, 'readingClubs');
+              const clubsSnap = await getDocs(clubsColRef);
+              
+              // Localiza o clube correspondente
+              const matchingClubDoc = clubsSnap.docs.find(d => {
+                const data = d.data();
+                return data.bookId === book.id || 
+                       data.bookId === book.originalBookId ||
+                       (book.originalBookId && data.bookId === book.originalBookId) ||
+                       data.bookTitle.toLowerCase().trim() === book.title.toLowerCase().trim();
+              });
+
+              if (matchingClubDoc) {
+                const clubData = matchingClubDoc.data();
+                const clubRef = doc(db, 'organizations', orgId, 'readingClubs', matchingClubDoc.id);
+                
+                // Só atualiza se o progresso gravado for estritamente divergente
+                const currentClubPage = clubData.progress?.[uid] || 0;
+                if (currentClubPage !== page) {
+                  const newProgressMap = {
+                    ...clubData.progress,
+                    [uid]: page
+                  };
+
+                  const totalTarget = clubData.targetPages * Math.max(1, (clubData.participants || []).length);
+                  const currentRead = Object.values(newProgressMap).reduce((acc: number, p: any) => acc + (parseInt(p) || 0), 0);
+                  const metaCompleted = currentRead >= totalTarget;
+
+                  await updateDoc(clubRef, {
+                    progress: newProgressMap,
+                    metaCompleted
+                  });
+                  Logger.info('[NexusStore] Progresso sincronizado com o Clube de Leitura corporativo.');
+                }
+              }
+            }
+          }
+        } catch (err) {
+          Logger.error('[NexusStore] Falha ao sincronizar progresso com o Clube de Leitura:', err);
+        }
       }
     }
   },

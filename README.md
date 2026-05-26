@@ -509,8 +509,10 @@ Uma dinâmica leve de aquecimento lógico e competição de agilidade intelectua
 Integração de alta sinergia unindo desenvolvimento profissional contínuo à economia gamificada da Arena:
 * **Divisão de Times Corporativos**: Sincronização automática com a propriedade `department` (Vendas, Desenvolvimento, Suporte, Recursos Humanos, Marketing e Geral) do perfil do colaborador no Firestore.
 * **Termômetros de Vidro Neon (Progress Thermometers)**: Barras de progresso cilíndricas 3D tridimensionais translúcidas e neon desenhadas em **Glassmorphism**, onde o fluido neon reflete com brilho a cor do respectivo time e o progresso médio acumulado de páginas lidas.
+* **Dropdown Seletor de Livros Integrado**: O formulário de criação/edição de clubes conta com um dropdown que lista de forma reativa os livros disponíveis na **Aba Comunidade** (Firestore `/communityBooks`) e na **Biblioteca Pessoal** do usuário (`useNexusStore`) organizados por categoria. Ao selecionar uma obra, todos os dados do livro (Título, Autor, Imagem de Capa e Meta de Páginas) são preenchidos e associados de forma automática.
+* **Sincronização Bidirecional de Progresso em Tempo Real**: Conexão inteligente em tempo real entre a estante pessoal e o clube. Ao avançar a leitura de um livro correspondente na Biblioteca Pessoal ou ReadingCompanion, o progresso do time no Clube de Leitura correspondente é atualizado de imediato. Do mesmo modo, registrar leituras diretamente no painel do clube atualiza instantaneamente a biblioteca pessoal correspondente do usuário logado, mantendo a integridade absoluta dos dados sem loops de rede.
 * **Meta Coletiva Batida**: Quando o departamento atinge 100% de progresso acumulado no livro oficial do mês, um painel especial holográfico de celebração é liberado para todos os participantes do time.
-* **Resgate de Recompensas Enterprise**: Botão neon arco-íris pulsante que concede **+200 Fliperama Coins** ao colaborador ao bater a meta coletiva. Possui validação atômica para impedir resgates múltiplos e reproduz efeitos procedural de arpejo de triunfo via Web Audio API.
+* **Resgate de Recompensas Enterprise**: Botão neon arco-íris pulsante que concede **+200 Hub Coins** ao colaborador ao bater a meta coletiva. Possui validação atômica para impedir resgates múltiplos e reproduz efeitos procedural de arpejo de triunfo via Web Audio API.
 
 ---
 
