@@ -516,8 +516,8 @@ export const useNexusStore = create<NexusState>()(
 
                   const targetPages = Number(clubData.targetPages) || 200;
                   const participantsList = (clubData.participants as string[]) || [];
-                  const totalTarget = targetPages * Math.max(1, participantsList.length);
-                  const currentRead = Object.values(newProgressMap).reduce((acc: number, p: any) => acc + (parseInt(p) || 0), 0);
+                  const totalTarget: number = targetPages * Math.max(1, participantsList.length);
+                  const currentRead: number = Object.values(newProgressMap).reduce((acc: number, p: any) => acc + (parseInt(p) || 0), 0) as number;
                   const metaCompleted = currentRead >= totalTarget;
 
                   await updateDoc(clubRef, {
