@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { doc, onSnapshot, updateDoc, getDoc, setDoc, collection, addDoc, deleteDoc, query, orderBy, writeBatch } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, getDoc, getDocs, setDoc, collection, addDoc, deleteDoc, query, orderBy, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Logger } from '@/lib/logger';
 
@@ -514,7 +514,9 @@ export const useNexusStore = create<NexusState>()(
                     [uid]: page
                   };
 
-                  const totalTarget = clubData.targetPages * Math.max(1, (clubData.participants || []).length);
+                  const targetPages = Number(clubData.targetPages) || 200;
+                  const participantsList = (clubData.participants as string[]) || [];
+                  const totalTarget = targetPages * Math.max(1, participantsList.length);
                   const currentRead = Object.values(newProgressMap).reduce((acc: number, p: any) => acc + (parseInt(p) || 0), 0);
                   const metaCompleted = currentRead >= totalTarget;
 
