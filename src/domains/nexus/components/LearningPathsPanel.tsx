@@ -24,11 +24,12 @@ export interface LearningPath {
 export interface UserPathProgress {
   pathId: string;
   userId: string;
-  status: 'ACTIVE' | 'COMPLETED';
+  status: 'ACTIVE' | 'COMPLETED' | 'PAUSED' | 'NOT_STARTED';
   startedAt: number;
   completedAt: number | null;
   completedBookIds: string[];
   progressPercentage: number;
+  welcomeRewardClaimed?: boolean;
 }
 
 export function LearningPathsPanel() {
@@ -88,14 +89,31 @@ export function LearningPathsPanel() {
     };
   }, [orgId, uid]);
 
-  // Função para aceitar e iniciar uma trilha
+  // Função para aceitar e iniciar uma trilha com bônus de aceite antifraude
   const handleStartPath = async (path: LearningPath) => {
     if (!uid || !orgId) return;
 
     const tId = toast.loading(`Iniciando missão "${path.name}"...`);
     try {
-      // 1. Cria o registro de progresso
+      // 1. Verifica se o progresso já existia e se o bônus de aceite já foi coletado
       const progressRef = doc(db, 'organizations', orgId, 'users', uid, 'learningPaths', path.id);
+      const progressSnap = await getDoc(progressRef);
+      const hasClaimedBefore = progressSnap.exists() ? !!progressSnap.data()?.welcomeRewardClaimed : false;
+
+      let welcomeRewardClaimed = hasClaimedBefore;
+
+      // Se for o primeiro aceite, concede o bônus de aceite (+50 HubCoins)
+      if (!hasClaimedBefore) {
+        try {
+          await useArenaStore.getState().addArenaCredits(uid, 50);
+          welcomeRewardClaimed = true;
+          toast.success(`🎉 BÔNUS DE ACEITE: Você ganhou +50 HubCoins de boas-vindas à missão! 🪙`, { duration: 6000 });
+        } catch (coinErr) {
+          console.error('Erro ao conceder bônus de aceite:', coinErr);
+        }
+      }
+
+      // 2. Cria ou reescreve o registro de progresso com status ACTIVE
       const initialProgress: UserPathProgress = {
         pathId: path.id,
         userId: uid,
@@ -103,11 +121,12 @@ export function LearningPathsPanel() {
         startedAt: Date.now(),
         completedAt: null,
         completedBookIds: [],
-        progressPercentage: 0
+        progressPercentage: 0,
+        welcomeRewardClaimed
       };
       await setDoc(progressRef, initialProgress);
 
-      // 2. Busca e clona os livros da trilha para a biblioteca pessoal do colaborador
+      // 3. Busca e clona os livros da trilha para a biblioteca pessoal do colaborador
       const booksCol = collection(db, 'organizations', orgId, 'communityBooks');
       const booksSnap = await getDocs(booksCol);
       const communityBooksMap = booksSnap.docs.map(d => ({ id: d.id, ...d.data() } as NexusBook));
@@ -125,21 +144,24 @@ export function LearningPathsPanel() {
         const existingIdx = updatedBooks.findIndex(b => b.originalBookId === comBook.id || b.title.toLowerCase().trim() === comBook.title.toLowerCase().trim());
         
         if (existingIdx !== -1) {
-          // Atualiza para incluir os campos da trilha e a aura neon
+          // Atualiza para incluir os campos da trilha, aura neon e zera progresso/maxPageRead se ele estiver reiniciando do zero
           updatedBooks[existingIdx] = {
             ...updatedBooks[existingIdx],
             learningPathId: path.id,
-            neonColor: path.neonColor
+            neonColor: path.neonColor,
+            currentPage: 0,
+            maxPageRead: 0 // Permite ganhar moedas novamente ao ler do zero de forma justa
           };
           hasUpdates = true;
         } else {
-          // Caso não exista na biblioteca particular, clona do livro da comunidade com neon
+          // Caso não exista na biblioteca particular, clona o livro com neon
           const clonedBook: NexusBook = {
             ...comBook,
             id: `path_${path.id}_${comBook.id}_${Date.now()}`,
             originalBookId: comBook.id,
             addedAt: Date.now(),
             currentPage: 0,
+            maxPageRead: 0,
             status: 'want_to_read',
             learningPathId: path.id,
             neonColor: path.neonColor,
@@ -163,6 +185,136 @@ export function LearningPathsPanel() {
     } catch (err: any) {
       console.error('Erro ao iniciar trilha:', err);
       toast.error('Falha ao iniciar trilha corporativa.', { id: tId });
+    }
+  };
+
+  // Função para pausar uma trilha (Cessa o brilho neon reativamente)
+  const handlePausePath = async (path: LearningPath) => {
+    if (!uid || !orgId) return;
+
+    const tId = toast.loading(`Pausando missão "${path.name}"...`);
+    try {
+      // 1. Atualiza o status do progresso para PAUSED
+      const progressRef = doc(db, 'organizations', orgId, 'users', uid, 'learningPaths', path.id);
+      await updateDoc(progressRef, { status: 'PAUSED' });
+
+      // 2. Remove temporariamente a aura neon dos livros vinculados na estante
+      const currentBooks = [...useNexusStore.getState().books];
+      const updatedBooks = currentBooks.map(b => {
+        if (b.learningPathId === path.id) {
+          return {
+            ...b,
+            neonColor: undefined // Cessar o neon reativamente
+          };
+        }
+        return b;
+      });
+
+      const profileRef = doc(db, 'profiles', uid);
+      await updateDoc(profileRef, {
+        'nexusData.books': updatedBooks
+      });
+      useNexusStore.getState().setBooks(updatedBooks);
+
+      toast.success(`Missão Pausada! A aura neon dos livros foi suspensa temporariamente na sua estante. ⏸️`, { id: tId, duration: 5000 });
+    } catch (err) {
+      console.error('Erro ao pausar trilha:', err);
+      toast.error('Falha ao pausar trilha corporativa.', { id: tId });
+    }
+  };
+
+  // Função para retomar uma trilha (Restabelece o brilho neon reativamente)
+  const handleResumePath = async (path: LearningPath) => {
+    if (!uid || !orgId) return;
+
+    const tId = toast.loading(`Retomando missão "${path.name}"...`);
+    try {
+      // 1. Atualiza o status do progresso para ACTIVE
+      const progressRef = doc(db, 'organizations', orgId, 'users', uid, 'learningPaths', path.id);
+      await updateDoc(progressRef, { status: 'ACTIVE' });
+
+      // 2. Restabelece o neon dos livros vinculados na estante
+      const currentBooks = [...useNexusStore.getState().books];
+      const updatedBooks = currentBooks.map(b => {
+        if (b.learningPathId === path.id) {
+          return {
+            ...b,
+            neonColor: path.neonColor // Volta a brilhar de forma premium
+          };
+        }
+        return b;
+      });
+
+      const profileRef = doc(db, 'profiles', uid);
+      await updateDoc(profileRef, {
+        'nexusData.books': updatedBooks
+      });
+      useNexusStore.getState().setBooks(updatedBooks);
+
+      toast.success(`Missão Retomada! Os livros na sua biblioteca voltaram a brilhar com aura neon! ⚡`, { id: tId, duration: 5000 });
+    } catch (err) {
+      console.error('Erro ao retomar trilha:', err);
+      toast.error('Falha ao retomar trilha corporativa.', { id: tId });
+    }
+  };
+
+  // Função para desistir da trilha (Desassocia, apaga neon e reseta progresso de leitura seguro)
+  const handleAbandonPath = async (path: LearningPath) => {
+    if (!uid || !orgId) return;
+
+    const confirmAbandon = confirm(
+      `Deseja realmente desistir da missão "${path.name}"?\n\n` +
+      `• Suas HubCoins obtidas continuam com você na sua carteira! 🪙\n` +
+      `• As auras neon e os vínculos dos livros serão removidos da sua estante.\n` +
+      `• O progresso de leitura destes livros será redefinido para zero.\n` +
+      `• Você poderá recomeçar do zero no futuro quando quiser!`
+    );
+    if (!confirmAbandon) return;
+
+    const tId = toast.loading(`Cancelando missão "${path.name}"...`);
+    try {
+      const progressRef = doc(db, 'organizations', orgId, 'users', uid, 'learningPaths', path.id);
+      const progressSnap = await getDoc(progressRef);
+      const welcomeRewardClaimed = progressSnap.exists() ? !!progressSnap.data()?.welcomeRewardClaimed : false;
+
+      // 1. Reseta o progresso para NOT_STARTED preservando a flag welcomeRewardClaimed
+      await setDoc(progressRef, {
+        pathId: path.id,
+        userId: uid,
+        status: 'NOT_STARTED',
+        startedAt: 0,
+        completedAt: null,
+        completedBookIds: [],
+        progressPercentage: 0,
+        welcomeRewardClaimed
+      });
+
+      // 2. Limpa os vínculos, auras e progresso de leitura dos livros vinculados na estante
+      const currentBooks = [...useNexusStore.getState().books];
+      const updatedBooks = currentBooks.map(b => {
+        if (b.learningPathId === path.id) {
+          return {
+            ...b,
+            learningPathId: undefined,
+            neonColor: undefined,
+            currentPage: 0,
+            maxPageRead: 0, // Permite ler e pontuar do zero ao reiniciar
+            status: 'want_to_read' as const
+          };
+        }
+        return b;
+      });
+
+      const profileRef = doc(db, 'profiles', uid);
+      await updateDoc(profileRef, {
+        'nexusData.books': updatedBooks
+      });
+      useNexusStore.getState().setBooks(updatedBooks);
+
+      toast.success(`Você desistiu da missão. Suas HubCoins foram salvas e seus livros foram limpos na estante! 🛑`, { id: tId, duration: 6000 });
+    } catch (err) {
+      console.error('Erro ao desistir da trilha:', err);
+      toast.error('Falha ao desistir da trilha corporativa.', { id: tId });
     }
   };
 
@@ -411,8 +563,9 @@ export function LearningPathsPanel() {
             {paths.length > 0 ? (
               paths.map(path => {
                 const progress = userProgresses[path.id];
-                const isStarted = !!progress;
+                const isStarted = progress && progress.status !== 'NOT_STARTED';
                 const isCompleted = progress?.status === 'COMPLETED';
+                const isPaused = progress?.status === 'PAUSED';
                 const aura = NEON_AURA_MAP[path.neonColor] || NEON_AURA_MAP['acid-lime'];
 
                 return (
@@ -421,13 +574,15 @@ export function LearningPathsPanel() {
                     className={`bg-slate-950/40 border backdrop-blur-2xl rounded-[2.5rem] p-6 md:p-8 flex flex-col justify-between transition-all duration-500 hover:shadow-2xl relative overflow-hidden group min-h-[320px] ${
                       isCompleted
                         ? 'border-yellow-500/30 shadow-[0_0_20px_rgba(234,179,8,0.1)] bg-yellow-500/[0.01]'
-                        : isStarted
-                          ? `${aura.border} shadow-[0_0_25px_rgba(255,255,255,0.02)]`
-                          : 'border-white/5 hover:border-white/10'
+                        : isPaused
+                          ? 'border-white/5 bg-slate-950/15'
+                          : isStarted
+                            ? `${aura.border} shadow-[0_0_25px_rgba(255,255,255,0.02)]`
+                            : 'border-white/5 hover:border-white/10'
                     }`}
                   >
-                    {/* Efeito Glow Pulsante Traseiro sutil apenas se estiver ativa ou concluída */}
-                    {isStarted && (
+                    {/* Efeito Glow Pulsante Traseiro sutil apenas se estiver ativa ou concluída e não pausada */}
+                    {isStarted && !isPaused && (
                       <div className={`absolute top-0 right-0 w-32 h-32 rounded-full blur-[80px] -mr-8 -mt-8 ${isCompleted ? 'bg-yellow-500 opacity-15 animate-pulse' : `bg-gradient-to-br ${aura.gradient} opacity-20 animate-pulse`} pointer-events-none`} />
                     )}
 
@@ -436,9 +591,9 @@ export function LearningPathsPanel() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="space-y-1 min-w-0 flex-1">
                           <span className={`text-[8px] font-black uppercase tracking-[0.25em] ${
-                            isCompleted ? 'text-yellow-400' : isStarted ? 'text-cyan-400' : 'text-slate-500'
+                            isCompleted ? 'text-yellow-400' : isPaused ? 'text-gray-500' : isStarted ? 'text-cyan-400' : 'text-slate-500'
                           }`}>
-                            {isCompleted ? '🏆 Trilha Concluída' : isStarted ? '⚡ Missão Ativa' : '📖 Trilha Disponível'}
+                            {isCompleted ? '🏆 Trilha Concluída' : isPaused ? '⏸️ Missão Pausada' : isStarted ? '⚡ Missão Ativa' : '📖 Trilha Disponível'}
                           </span>
                           <h3 className="text-base font-black text-white uppercase tracking-wider truncate leading-tight group-hover:text-primary-400 transition-colors">
                             {path.name}
@@ -502,28 +657,69 @@ export function LearningPathsPanel() {
                     </div>
 
                     {/* Rodapé / Ações */}
-                    <div className="mt-8 pt-4 border-t border-white/5 flex items-center justify-between gap-4">
+                    <div className="mt-8 pt-4 border-t border-white/5 flex flex-col gap-4">
                       {isStarted ? (
-                        <div className="flex-1 space-y-2">
-                          <div className="flex justify-between items-center text-[9px] font-black text-gray-500 uppercase tracking-wider">
-                            <span>Progresso Cognitivo</span>
-                            <span className="text-white font-mono">{progress?.progressPercentage || 0}%</span>
+                        <div className="space-y-4 w-full">
+                          {/* Barra de Progresso e Info */}
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center text-[9px] font-black text-gray-500 uppercase tracking-wider">
+                              <span>Progresso Cognitivo</span>
+                              <div className="flex items-center gap-2">
+                                {isPaused && <span className="text-[8px] px-1.5 py-0.5 bg-white/5 border border-white/5 rounded-md text-gray-400 animate-pulse">Pausada</span>}
+                                <span className="text-white font-mono">{progress?.progressPercentage || 0}%</span>
+                              </div>
+                            </div>
+                            
+                            {/* Barra de Progresso */}
+                            <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+                              <div
+                                className={`h-full transition-all duration-700 ${
+                                  isCompleted
+                                    ? 'bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.3)]'
+                                    : isPaused
+                                      ? 'bg-slate-600 shadow-none'
+                                      : `bg-gradient-to-r ${aura.gradient} shadow-[0_0_10px_rgba(255,255,255,0.05)]`
+                                }`}
+                                style={{ width: `${progress?.progressPercentage || 0}%` }}
+                              />
+                            </div>
                           </div>
-                          
-                          {/* Barra de Progresso */}
-                          <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
-                            <div
-                              className={`h-full transition-all duration-700 ${
-                                isCompleted
-                                  ? 'bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.3)]'
-                                  : `bg-gradient-to-r ${aura.gradient} shadow-[0_0_10px_rgba(255,255,255,0.05)]`
-                              }`}
-                              style={{ width: `${progress?.progressPercentage || 0}%` }}
-                            />
-                          </div>
+
+                          {/* Botões de Ação para Trilhas Ativas / Pausadas */}
+                          {!isCompleted && (
+                            <div className="flex items-center gap-2 w-full">
+                              {isPaused ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleResumePath(path)}
+                                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white text-[9px] font-black uppercase tracking-widest text-center cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-md shadow-emerald-500/10 border border-emerald-400/20"
+                                >
+                                  Retomar Missão ⚡
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => handlePausePath(path)}
+                                  className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 text-[9px] font-black uppercase tracking-widest text-center cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+                                >
+                                  Pausar ⏸️
+                                </button>
+                              )}
+
+                              <button
+                                type="button"
+                                onClick={() => handleAbandonPath(path)}
+                                className="px-3.5 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 hover:border-rose-500/30 text-rose-400 text-[9px] font-black uppercase tracking-widest text-center cursor-pointer flex items-center justify-center gap-1 active:scale-95 transition-all"
+                                title="Desistir da Trilha"
+                              >
+                                Desistir 🛑
+                              </button>
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <button
+                          type="button"
                           onClick={() => handleStartPath(path)}
                           className={`w-full py-3.5 rounded-2xl text-[9px] font-black uppercase tracking-widest text-center cursor-pointer flex items-center justify-center gap-2 border transition-all ${
                             path.bookIds.length === 0
@@ -540,8 +736,9 @@ export function LearningPathsPanel() {
                       {/* Exclusão pelo Admin */}
                       {isAdmin && (
                         <button
+                          type="button"
                           onClick={() => handleDeletePath(path.id)}
-                          className="p-3 bg-white/5 hover:bg-rose-500/10 border border-white/5 hover:border-rose-500/20 text-gray-500 hover:text-rose-400 rounded-2xl transition-all cursor-pointer shrink-0"
+                          className="p-3 bg-white/5 hover:bg-rose-500/10 border border-white/5 hover:border-rose-500/20 text-gray-500 hover:text-rose-400 rounded-2xl transition-all cursor-pointer shrink-0 mt-2 self-end"
                           title="Excluir Trilha"
                         >
                           <Trash2 size={14} />

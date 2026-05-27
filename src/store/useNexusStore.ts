@@ -102,6 +102,8 @@ export interface NexusBook {
   format?: 'pdf' | 'kindle' | 'physical';
   learningPathId?: string;
   neonColor?: string;
+  maxPageRead?: number;
+  lastProgressUpdateAt?: number;
 }
 
 export interface NexusData {
@@ -460,9 +462,30 @@ export const useNexusStore = create<NexusState>()(
     const book = books.find(b => b.id === bookId);
     if (book) {
       const oldPage = book.currentPage || 0;
-      const pagesRead = page - oldPage;
       
-      const updates: Partial<NexusBook> = { currentPage: page };
+      // Se não houve alteração real, não faz nada
+      if (page === oldPage) return;
+
+      // 1. Trava temporal de 24 horas: se o progresso for alterado, não pode ser em menos de 24 horas
+      const lastUpdate = book.lastProgressUpdateAt || 0;
+      const diffMs = Date.now() - lastUpdate;
+      const oneDayMs = 24 * 60 * 60 * 1000;
+      
+      if (lastUpdate > 0 && diffMs < oneDayMs) {
+        const hoursLeft = Math.ceil((oneDayMs - diffMs) / (1000 * 60 * 60));
+        toast.error(`Atenção: Por diretrizes de gamificação e ritmo de estudo cognitivo, você só pode registrar progresso de leitura a cada 24 horas para cada obra. Tente novamente em ${hoursLeft}h! ⏳`);
+        return;
+      }
+
+      // 2. Cálculo seguro de moedas baseado no recorde maxPageRead
+      const maxPage = book.maxPageRead || 0;
+      const pagesToReward = Math.max(0, page - maxPage);
+      
+      const updates: Partial<NexusBook> = { 
+        currentPage: page,
+        lastProgressUpdateAt: Date.now(),
+        maxPageRead: Math.max(maxPage, page)
+      };
       
       // Se terminou (chegou no total), muda para "finalizado"
       if (book.totalPages && page >= book.totalPages) {
@@ -476,23 +499,25 @@ export const useNexusStore = create<NexusState>()(
       await updateBookDetails(bookId, updates);
 
       // Registra a atividade se houve progresso positivo e concede HubCoins
-      if (pagesRead > 0) {
+      if (pagesToReward > 0) {
         await get().addActivityLog({
           type: 'reading',
           bookId,
-          pagesRead,
+          pagesRead: pagesToReward,
           timestamp: Date.now()
         });
 
         const uid = get().uid;
         if (uid) {
           try {
-            await useArenaStore.getState().addArenaCredits(uid, pagesRead);
-            toast.success(`Você ganhou +${pagesRead} HubCoins por ler ${pagesRead} páginas! 🪙`);
+            await useArenaStore.getState().addArenaCredits(uid, pagesToReward);
+            toast.success(`Você ganhou +${pagesToReward} HubCoins por ler ${pagesToReward} páginas novas! 🪙`);
           } catch (err) {
             Logger.error('[NexusStore] Falha ao conceder HubCoins por leitura:', err);
           }
         }
+      } else if (page > oldPage) {
+        toast.info(`Progresso de leitura salvo! Você já havia recebido HubCoins pelas páginas lidas até a página ${maxPage}. 📖`);
       }
 
       // Sincronização com o Clube de Leitura correspondente (Biblioteca ➡️ Clube)

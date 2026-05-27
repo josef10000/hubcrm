@@ -517,9 +517,17 @@ Integração de alta sinergia unindo desenvolvimento profissional contínuo à e
 
 ### 📚 Trilhas de Conhecimento (Learning Paths) [NEW]
 
-Ecossistema voltado para capacitação técnica, metas de carreira e desenvolvimento contínuo:
-* **Construção de Trilhas (Admin):** Administradores podem consolidar jornadas de aprendizado dando um nome, descrição, benefício e recompensa de HubCoins, e selecionando a aura neon temática.
-* **Auras e Bordas Neon Dinâmicas:** Ao aceitar e iniciar uma trilha, o progresso individualizado é ativado. Os livros pertencentes àquela trilha são clonados na estante do usuário e ganham **fundo, bordas e lombada neon pulsantes** na cor específica da trilha. Livros avulsos ou de trilhas não aceitas permanecem com o design padrão (sem luminosidade).
+Ecossistema voltado para capacitação técnica, metas de carreira e desenvolvimento contínuo dos colaboradores:
+* **Construção de Trilhas (Admin):** Administradores podem consolidar jornadas de aprendizado dando um nome, descrição, meta cognitiva e recompensa de HubCoins, e selecionando a aura neon temática.
+* **Bônus de Aceite e Antifraude:** Ao aceitar uma trilha pela primeira vez, o colaborador é contemplado com um bônus imediato de `+50 HubCoins` para incentivar a sua jornada. A flag `welcomeRewardClaimed: true` é persistida no Firestore para impedir que ele ganhe esse bônus repetidamente caso desista e reinicie a mesma trilha futuramente.
+* **Ciclo de Vida Dinâmico (Pausar, Retomar e Desistir):**
+  * **Pausar Missão ⏸️:** Altera o status da trilha para `'PAUSED'`, congelando o progresso mas **removendo reativamente as auras neon** de todos os livros vinculados àquela trilha na estante do usuário para indicar visualmente a pausa.
+  * **Retomar Missão ⚡:** Retorna o status para `'ACTIVE'`, **restabelecendo reativamente o brilho neon** original e vibrante em todas as capas e lombadas de livros da missão.
+  * **Desistir da Trilha 🛑:** Zera o progresso no Firestore (mantendo a flag antifraude de aceite), desvincula e limpa totalmente as auras neon dos livros na estante, resetando o progresso das páginas lidas daquele livro para zero. As HubCoins já adquiridas continuam com o usuário de forma protegida (sem diminuição de saldo), e ele poderá recomeçar do zero futuramente quando quiser.
+* **Auras e Bordas Neon Dinâmicas:** Ao aceitar e iniciar uma trilha, o progresso individualizado é ativado. Os livros pertencentes àquela trilha são clonados na estante do usuário e ganham **fundo, bordas e lombada neon pulsantes** na cor específica da trilha. Livros avulsos ou de trilhas não ativas permanecem com o design padrão (sem luminosidade).
+* **Proteções Estritas Contra Fraude de Leitura (Strict Anti-Fraud Engine):**
+  * **Trava de 24 Horas:** Uma vez que o progresso de leitura (página) de um livro é alterado, o usuário fica impedido de realizar novas alterações nesse livro nas próximas 24 horas. Tentativas de fraude acionam um toast educativo bloqueando a gravação.
+  * **Anti-Fraude de "Voltar Páginas" (`maxPageRead`):** O ganho de moedas (`+1 HubCoin` por página lida) é calculado de forma atômica com base no recorde histórico de páginas lidas para cada obra. Caso o colaborador retroceda o livro e depois avance de novo, ele **não** recebe moedas de forma duplicada. A recompensa só é ativada quando ele ultrapassa a marca recorde registrada (`currentPage > maxPageRead`). Ao desistir da trilha, esse recorde é redefinido para zero, permitindo que ele aprenda e ganhe moedas relendo do zero futuramente.
 * **Unificação Econômica de HubCoins:** Concluir cada página dos livros de trilhas ativas concede automaticamente `+1 HubCoin`. Compartilhar insights concede `+20 HubCoins`. Bater a maestria da trilha finalizando todos os livros integrantes confere um jackpot de conclusão de `+200 HubCoins` com toasters e comemorações reativas na tela.
 
 ### 🛒 HubShop - Loja Corporativa [NEW]
