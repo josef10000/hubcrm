@@ -119,6 +119,30 @@ service cloud.firestore {
       }
 
       // Outros dados dentro da organização (Regras Granulares)
+
+      // 🟢 HUB SHOP — Loja de Recompensas
+      match /hubShopItems/{itemId} {
+        allow read: if isOwnerEmail() || belongsToOrg(orgId);
+        allow write: if isOwnerEmail() || isOrgAdmin(orgId);
+      }
+
+      match /hubShopOrders/{orderId} {
+        allow read: if isOwnerEmail() || belongsToOrg(orgId) && (request.auth.uid == resource.data.userId || isOrgAdmin(orgId));
+        allow create: if isOwnerEmail() || belongsToOrg(orgId) && request.auth.uid == request.resource.data.userId;
+        allow update, delete: if isOwnerEmail() || isOrgAdmin(orgId);
+      }
+
+      // 📚 TRILHAS DE CONHECIMENTO — Nexus Core
+      match /learningPaths/{pathId} {
+        allow read: if isOwnerEmail() || belongsToOrg(orgId);
+        allow write: if isOwnerEmail() || isOrgAdmin(orgId);
+      }
+
+      match /users/{userId}/learningPaths/{pathId} {
+        allow read: if isOwnerEmail() || belongsToOrg(orgId);
+        allow write: if isOwnerEmail() || (belongsToOrg(orgId) && request.auth.uid == userId);
+      }
+
       match /transactions/{id} {
         allow read: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_FINANCE');
         allow write: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_FINANCE');

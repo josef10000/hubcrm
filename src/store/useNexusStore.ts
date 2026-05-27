@@ -3,6 +3,8 @@ import { persist } from 'zustand/middleware';
 import { doc, onSnapshot, updateDoc, getDoc, getDocs, setDoc, collection, addDoc, deleteDoc, query, orderBy, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Logger } from '@/lib/logger';
+import { useArenaStore } from './useArenaStore';
+import { toast } from 'sonner';
 
 export interface PersonalLink {
   id: string;
@@ -471,7 +473,7 @@ export const useNexusStore = create<NexusState>()(
 
       await updateBookDetails(bookId, updates);
 
-      // Registra a atividade se houve progresso positivo
+      // Registra a atividade se houve progresso positivo e concede HubCoins
       if (pagesRead > 0) {
         await get().addActivityLog({
           type: 'reading',
@@ -479,6 +481,16 @@ export const useNexusStore = create<NexusState>()(
           pagesRead,
           timestamp: Date.now()
         });
+
+        const uid = get().uid;
+        if (uid) {
+          try {
+            await useArenaStore.getState().addArenaCredits(uid, pagesRead);
+            toast.success(`Você ganhou +${pagesRead} HubCoins por ler ${pagesRead} páginas! 🪙`);
+          } catch (err) {
+            Logger.error('[NexusStore] Falha ao conceder HubCoins por leitura:', err);
+          }
+        }
       }
 
       // Sincronização com o Clube de Leitura correspondente (Biblioteca ➡️ Clube)
