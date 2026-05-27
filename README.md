@@ -139,8 +139,8 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
 - **Cloudinary:** Provider principal para ativos de longo prazo e alta qualidade. Utilizado para o upload e armazenamento de **fotos de perfil dos usuários** e **capas de livros na biblioteca Nexus**, garantindo estabilidade e redimensionamento dinâmico.
 - **ImgBB:** CDN secundária focada em ativos transacionais leves. Utilizada para imagens do **Quadro Branco (Canvas Editor)**, anexos de **Tickets de Suporte** e logos temporários de onboarding.
 
-### 🛡️ Monitoramento & Uptime (UptimeRobot & Sentry)
-- **UptimeRobot:** Monitoramento de disponibilidade de serviços e sites, com status de saúde exibido no dashboard administrativo.
+### 🛡️ Monitoramento & Uptime (Hub Uptime Engine & Sentry)
+- **Hub Uptime Engine (Nativo):** Motor de monitoramento de sites de clientes integrado diretamente no Firestore e executado em background por pings paralelos assíncronos. Elimina limites de cota ou chaves externas, suporta sanitização inteligente contra domínios locais e emite alertas vermelhos em tempo real (`system_alerts`) se um site ativo sair do ar.
 - **Sentry:** Rastreamento de erros e monitoramento de performance em tempo real, garantindo que falhas sejam identificadas e corrigidas antes de afetarem o usuário final.
 
 ### 🔐 Persistência & Identidade (Firebase)
@@ -154,6 +154,7 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
 ### ⏱️ Automação & Agendamento (Cron-Job.org)
 - **Papel Crítico:** Diferente dos crons internos da Vercel, o **Cron-Job.org** atua como o metrônomo externo do sistema para tarefas de alta precisão e frequência.
 - **Fluxos Automatizados:**
+    - **Monitoramento de Sites (Hub Uptime Engine):** Pings periódicos paralelos que testam a integridade dos sites ativos no CRM, calculam a latência em tempo real (ms) e geram alertas críticos (`system_alerts`) se o serviço sair do ar.
     - **Reconciliação Financeira:** Disparo periódico para consultar status de faturas no Asaas e garantir que o Firestore esteja em sincronia absoluta.
     - **Lembretes de Régua:** Ativação de gatilhos para disparo de e-mails/mensagens de cobrança ou boas-vindas com base em intervalos de tempo.
     - **Heartbeat de Sistema:** Verificação de integridade de serviços críticos e limpeza de estados temporários no Redis.

@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getFirebaseAdmin, db } from '../_utils/firebase.js';
+import fetch from 'node-fetch';
 
 export async function runProcessScheduler(req: VercelRequest, res: VercelResponse) {
   const { secret } = req.query;
@@ -99,6 +100,101 @@ export async function runProcessScheduler(req: VercelRequest, res: VercelRespons
         results.errors.push(`Erro no lembrete ${reminderDoc.id}: ${err.message}`);
       }
     }
+
+    // --- PARTE C: MONITORAMENTO DE UPTIME NATIVO (HUB UPTIME ENGINE) ---
+    const monitoredClients = await db.collectionGroup('clients')
+      .where('isMonitored', '==', true)
+      .get();
+
+    console.log(`[Cron] Checando uptime para ${monitoredClients.size} sites de clientes...`);
+
+    const uptimeChecks = monitoredClients.docs.map(async (doc) => {
+      const clientData = doc.data();
+      let url = clientData.siteLink || '';
+      if (!url) return;
+
+      // Sanitizar URL
+      url = url.trim().replace(/\s+/g, '');
+      if (!url.startsWith('http')) {
+        url = `https://${url}`;
+      }
+
+      // Evitar bater em URLs locais
+      if (url.includes('localhost') || url.includes('127.0.0.1')) {
+        await doc.ref.update({
+          'monitoring.status': 'paused',
+          'monitoring.error': 'Endereço local não monitorável'
+        });
+        return;
+      }
+
+      const start = Date.now();
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000); // 6s timeout
+
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'User-Agent': 'HubCrm-UptimeBot/1.0',
+            'Accept': '*/*'
+          },
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+        const latency = Date.now() - start;
+        const status = response.status >= 200 && response.status < 400 ? 'up' : 'down';
+
+        await doc.ref.update({
+          'monitoring.status': status,
+          'monitoring.lastChecked': Date.now(),
+          'monitoring.latency': latency,
+          'monitoring.statusCode': response.status,
+          'monitoring.error': null
+        });
+
+        // Alerta crítico se cair
+        if (status === 'down' && clientData.monitoring?.status === 'up') {
+          const orgRef = doc.ref.parent.parent;
+          if (orgRef) {
+            await db.collection('system_alerts').add({
+              title: `🚨 Site Fora do Ar: ${clientData.name}`,
+              message: `O site ${url} do cliente ${clientData.name} está fora do ar ou retornou erro (HTTP ${response.status}).`,
+              type: 'error',
+              targetRoles: ['*'],
+              createdAt: Date.now(),
+              orgId: orgRef.id
+            });
+          }
+        }
+      } catch (err: any) {
+        const latency = Date.now() - start;
+        await doc.ref.update({
+          'monitoring.status': 'down',
+          'monitoring.lastChecked': Date.now(),
+          'monitoring.latency': latency,
+          'monitoring.statusCode': null,
+          'monitoring.error': err.message || 'Timeout'
+        });
+
+        if (clientData.monitoring?.status === 'up') {
+          const orgRef = doc.ref.parent.parent;
+          if (orgRef) {
+            await db.collection('system_alerts').add({
+              title: `🚨 Site Fora do Ar: ${clientData.name}`,
+              message: `O site ${url} do cliente ${clientData.name} está fora do ar ou não respondeu a tempo (Erro: ${err.message || 'Timeout'}).`,
+              type: 'error',
+              targetRoles: ['*'],
+              createdAt: Date.now(),
+              orgId: orgRef.id
+            });
+          }
+        }
+      }
+    });
+
+    await Promise.all(uptimeChecks);
 
     return res.status(200).json({
       success: true,

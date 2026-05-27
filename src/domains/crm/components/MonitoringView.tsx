@@ -52,6 +52,14 @@ export default function MonitoringView({ clients }: { clients: Client[] }) {
   const createMonitor = async (client: Client) => {
     if (!client.siteLink) return;
     
+    // Sanitização e validação de segurança da URL
+    const sanitizedUrl = client.siteLink.trim().replace(/\s+/g, '');
+    
+    if (sanitizedUrl.includes('localhost') || sanitizedUrl.includes('127.0.0.1')) {
+      toast.warning('O motor de monitoramento exige um domínio público de produção (ex: https://meusite.com) e não aceita monitoramento de endereços locais (localhost).');
+      return;
+    }
+
     try {
       setSyncing(true);
       const res = await fetch('/api/uptimerobot/monitors', {
@@ -61,7 +69,7 @@ export default function MonitoringView({ clients }: { clients: Client[] }) {
         },
         body: JSON.stringify({
           friendly_name: client.name,
-          url: client.siteLink.startsWith('http') ? client.siteLink : `https://${client.siteLink}`,
+          url: sanitizedUrl.startsWith('http') ? sanitizedUrl : `https://${sanitizedUrl}`,
         }),
       });
 

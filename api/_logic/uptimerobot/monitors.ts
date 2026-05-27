@@ -1,111 +1,106 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import dotenv from 'dotenv';
-
-dotenv.config();
+import { getFirebaseAdmin, db } from '../../_utils/firebase.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Puxa a chave diretamente das variáveis de ambiente (Vercel, AI Studio, etc)
-  const apiKey = process.env.UPTIMEROBOT_API_KEY;
-  console.log('API Key loaded:', apiKey ? 'Yes' : 'No');
-
-  if (!apiKey) {
-    return res.status(500).json({ error: 'UPTIMEROBOT_API_KEY is not configured in environment variables.' });
-  }
-
-  const baseUrl = 'https://api.uptimerobot.com/v2';
+  // Inicializa o Firebase Admin SDK local
+  getFirebaseAdmin();
 
   try {
     if (req.method === 'GET') {
-      // Get all monitors
-      const response = await fetch(`${baseUrl}/getMonitors`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Cache-Control': 'no-cache',
-        },
-        body: new URLSearchParams({
-          api_key: apiKey,
-          format: 'json',
-          logs: '1',
-        }),
+      // 1. Obter todos os clientes marcados como monitorados
+      const monitoredClients = await db.collectionGroup('clients')
+        .where('isMonitored', '==', true)
+        .get();
+
+      const monitors = monitoredClients.docs.map(doc => {
+        const clientData = doc.data();
+        const monitoring = clientData.monitoring || {};
+        
+        let status = 1; // Checking / Not checked yet
+        if (monitoring.status === 'up') status = 2; // Online
+        else if (monitoring.status === 'down') status = 9; // Offline
+        else if (monitoring.status === 'paused') status = 0; // Paused
+
+        return {
+          id: doc.id, // Retorna o ID do documento do cliente para ser usado na deleção
+          friendly_name: clientData.name,
+          url: clientData.siteLink,
+          type: 1, // HTTP
+          status: status,
+          interval: 300,
+          latency: monitoring.latency || 0,
+          lastChecked: monitoring.lastChecked || null
+        };
       });
 
-      const data = await response.json();
-      
-      if (response.status === 429) {
-        return res.status(429).json({ 
-          error: 'Rate limit exceeded', 
-          retryAfter: response.headers.get('Retry-After') 
-        });
-      }
-
-      if (data.stat === 'ok') {
-        return res.status(200).json(data.monitors);
-      } else {
-        return res.status(400).json({ error: data.error?.message || 'Failed to fetch monitors' });
-      }
+      return res.status(200).json(monitors);
     } 
     
     else if (req.method === 'POST') {
-      // Create a new monitor
+      // 2. Ativar o monitoramento de um cliente por URL ou Nome
       const { friendly_name, url } = req.body;
       
       if (!friendly_name || !url) {
         return res.status(400).json({ error: 'friendly_name and url are required' });
       }
 
-      const response = await fetch(`${baseUrl}/newMonitor`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Cache-Control': 'no-cache',
-        },
-        body: new URLSearchParams({
-          api_key: apiKey,
-          format: 'json',
-          type: '1', // HTTP(s)
-          url: url,
-          friendly_name: friendly_name,
-        }),
+      // Buscar o cliente pelo nome para ativar o monitoramento
+      const clientsSnapshot = await db.collectionGroup('clients')
+        .where('name', '==', friendly_name)
+        .get();
+
+      if (clientsSnapshot.empty) {
+        return res.status(404).json({ error: 'Cliente não encontrado no CRM' });
+      }
+
+      const clientDoc = clientsSnapshot.docs[0];
+      
+      // Atualiza o cliente para monitoramento nativo
+      await clientDoc.ref.update({
+        isMonitored: true,
+        siteLink: url.trim(),
+        monitoring: {
+          status: 'checking',
+          lastChecked: Date.now(),
+          latency: 0,
+          statusCode: null,
+          error: null
+        }
       });
 
-      const data = await response.json();
-
-      if (data.stat === 'ok') {
-        return res.status(200).json(data.monitor);
-      } else {
-        return res.status(400).json({ error: data.error?.message || 'Failed to create monitor' });
-      }
+      return res.status(200).json({
+        id: clientDoc.id,
+        friendly_name,
+        url,
+        status: 1
+      });
     }
 
     else if (req.method === 'DELETE') {
-      // Delete a monitor
+      // 3. Desativar o monitoramento do cliente
       const { id } = req.body;
       
       if (!id) {
         return res.status(400).json({ error: 'monitor id is required' });
       }
 
-      const response = await fetch(`${baseUrl}/deleteMonitor`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Cache-Control': 'no-cache',
-        },
-        body: new URLSearchParams({
-          api_key: apiKey,
-          format: 'json',
-          id: id.toString(),
-        }),
+      // Localiza o cliente monitorado
+      const clientsSnapshot = await db.collectionGroup('clients')
+        .get();
+
+      const clientDoc = clientsSnapshot.docs.find(d => d.id === id.toString());
+      
+      if (!clientDoc) {
+        return res.status(404).json({ error: 'Monitor não encontrado ou já deletado' });
+      }
+
+      // Desativa a flag de monitoramento
+      await clientDoc.ref.update({
+        isMonitored: false,
+        'monitoring.status': 'paused'
       });
 
-      const data = await response.json();
-
-      if (data.stat === 'ok') {
-        return res.status(200).json({ success: true });
-      } else {
-        return res.status(400).json({ error: data.error?.message || 'Failed to delete monitor' });
-      }
+      return res.status(200).json({ success: true });
     }
 
     else {
@@ -113,7 +108,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(405).end(`Method ${req.method} Not Allowed`);
     }
   } catch (error: any) {
-    console.error('UptimeRobot API Error:', error);
-    return res.status(500).json({ error: 'Erro interno ao acessar UptimeRobot' });
+    console.error('[Wrapper Uptime monitors] Error:', error);
+    return res.status(500).json({ error: 'Erro interno no motor nativo de uptime', details: error.message });
   }
 }
