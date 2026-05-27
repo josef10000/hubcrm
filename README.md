@@ -1,7 +1,7 @@
 # <p align="center">🔐 HUB CENTRAL — INTELLIGENCE ECOSYSTEM</p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Enterprise_OS-v8.4.0--master-3b82f6?style=for-the-badge&labelColor=0a0a0a" alt="Version" />
+  <img src="https://img.shields.io/badge/Enterprise_OS-v10.0.0--master-3b82f6?style=for-the-badge&labelColor=0a0a0a" alt="Version" />
   <img src="https://img.shields.io/badge/Architecture-Modular_DDD-blueviolet?style=for-the-badge&labelColor=0a0a0a" alt="Architecture" />
   <img src="https://img.shields.io/badge/Status-Master_Level_Ready-emerald?style=for-the-badge&labelColor=0a0a0a" alt="Status" />
 </p>
@@ -18,7 +18,7 @@ O Hub Central utiliza uma arquitetura baseada em **Domain-Driven Design (DDD)** 
 
 ```mermaid
 graph TB
-    subgraph Client_Layer ["Interfaces de Experiencia"]
+    subgraph Client_Layer ["Interfaces de Experiência"]
         Admin["🖥️ Dashboard Admin React e Vite"]
         Portal["📱 Portal do Cliente Self-Service"]
         Nexus["🧠 Nexus Intelligence Hub - Knowledge Engine"]
@@ -72,12 +72,13 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
 - **Funcionalidades:** Disparo de boas-vindas, envio de faturas, convites de equipe, comunicados internos e alertas de aniversário com templates dinâmicos.
 
 ### 📚 Inteligência Bibliográfica (Open Library)
-- **Escopo:** Utilizada pelo módulo **Nexus** para catalogação manual e automática.
-- **Funcionalidade:** Fornece metadados de obras (autor, título, descrição) e busca de capas via `cover_id`, eliminando a dependência do Google Books.
+- **Escopo:** Utilizada pelo módulo **Nexus** para catalogação manual e automática de livros.
+- **Funcionalidade:** Fornece metadados de obras (autor, título, descrição) e busca de capas via `cover_id`, eliminando a dependência de APIs externas de terceiros.
 
 ### ☁️ Documentos & Media (Google Drive, Cloudflare R2, Cloudinary & ImgBB)
 - **Google Drive:** Integração transparente para visualização de PDFs e manuais. O Hub transforma automaticamente links de compartilhamento em links de `preview` otimizados.
-- **Cloudflare R2:** Provedor de armazenamento em nuvem S3-compatible utilizado para guardar arquivos pesados de PDFs e documentos da biblioteca, além de servir como repositório central de mídias de chat (áudios, imagens, PDFs e planilhas).
+- **Cloudflare R2:** Provedor de armazenamento em nuvem S3-compatible utilizado para guardar arquivos de PDFs e documentos da biblioteca, além de servir como repositório central de mídias de chat (áudios, imagens, PDFs e planilhas).
+  
   > [!IMPORTANT]
   > **Configuração Obrigatória de CORS para R2:** Para que o visualizador de PDF inteligente (Premium Reader) consiga fazer o download dos arquivos via AJAX e renderizá-los com sincronia de progresso e controles avançados de zoom, você **deve** configurar a política de CORS no bucket correspondente no painel do Cloudflare R2.
   > 
@@ -136,7 +137,7 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
   >     - 🔔 **Sincronização Ativa de Notificações de Bots:** Correção definitiva no listener do Firestore e na store do Zustand que marca chats como lidos automaticamente ao abrir a conversa ou receber mensagens de bots (como o comando `/ajuda`) em tempo real, zerando definitivamente notificações fantasma na barra lateral.
   >
   > 🛠️ **Configuração Local do Servidor (.env):** Para que o servidor local (emulação da Vercel) consiga fazer o upload e a assinatura das URLs para o R2 com sucesso, certifique-se de copiar as credenciais do R2 para o seu arquivo `.env` local na raiz do projeto, baseado nas chaves especificadas no arquivo `.env.example`.
-- **Cloudinary:** Provider principal para ativos de longo prazo e alta qualidade. Utilizado para o upload e armazenamento de **fotos de perfil dos usuários** e **capas de livros na biblioteca Nexus**, garantindo estabilidade e redimensionamento dinâmico.
+- **Cloudinary:** Provider principal para ativos de longo prazo e alta qualidade. Utilizado para o upload e armazenamento de **fotos de perfil dos usuários**, **imagens cadastradas de prêmios do HubShop** e **capas de livros na biblioteca Nexus**, garantindo estabilidade e redimensionamento dinâmico.
 - **ImgBB:** CDN secundária focada em ativos transacionais leves. Utilizada para imagens do **Quadro Branco (Canvas Editor)**, anexos de **Tickets de Suporte** e logos temporários de onboarding.
 
 ### 🛡️ Monitoramento & Uptime (Hub Uptime Engine & Sentry)
@@ -163,58 +164,58 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
 ### 📈 Observabilidade (Axiom)
 - **Escopo:** Centralização de logs estruturados do cliente e servidor para auditoria e depuração técnica profunda.
 
+---
+
 ### 🧠 Nexus Intelligence Hub v10.0 (High-Performance Analytics Engine)
-- **Escopo:** Cérebro Operacional do Hub, evoluído para um ecossistema de dados inteligentes e gamificação.
-- **Nexus Analytics Dashboard (Premium Insights):**
-    - **Wisdom Streak:** Contador de dias consecutivos de atividade (leitura ou notas) para incentivo à consistência.
-    - **Knowledge Heatmap:** Visualização anual estilo GitHub que destaca o volume de produção (Páginas Lidas + Notas Criadas com pesos diferenciados).
-    - **Topics Radar (Spider Chart):** Gráfico de teia que mapeia as áreas de maior foco baseado no volume de páginas consumidas por categoria.
-    - **Retention Ranking:** Métrica avançada que identifica quais obras geraram mais insights (Insights/100 Páginas), priorizando a retenção de conhecimento sobre o volume.
-    - **Monthly Volume:** Gráfico comparativo em tempo real entre "Páginas Lidas" vs "Notas Criadas".
-    - **Cruise Speed:** Estimativa de velocidade de leitura média por sessão, com bônus adaptativo por consistência (Streak).
-- **Arquitetura Dual-View:**
-    - **Neural Dashboard:** Visão sintetizada de Metas Críticas, Tarefas Ativas e Notas Recentes (Daily Briefing).
-    - **Integrated Explorer:** Navegação hierárquica por pastas e notas com Drag & Drop e suporte a links bidirecionais `[[Link]]`.
-- **Gerenciamento Total (CRUD):** 
-    - Controle completo (Criar, Editar, Renomear, Excluir) de Notas, Pastas, Tarefas e Metas diretamente pela interface principal.
-- **Reading Companion (Anotador Imersivo):**
-    - Interface de leitura assistida com barra lateral de insights integrada ao visualizador de PDF ou ao painel de progresso manual.
-    - **Speech-to-Text Integration:** Criação de notas e insights via voz em tempo real (pt-BR).
-    - **Contextual Insights:** Exibição automática de "backlinks" e notas anteriores relacionadas à obra em leitura.
-    - **Sincronia de Progresso:** Atualização instantânea da página atual diretamente pelo companion.
-    - **Visualizador PDF Inteligente (Rastreamento Automático):** Leitor PDF customizado e de alto desempenho (PDF.js CDN) com controles *glassmorphic*, atalhos de teclado, zoom integrado e sincronização inteligente via `postMessage`. O leitor salva automaticamente o progresso no Firestore de forma debouncada e restaura a sessão de leitura na última página ao abrir o documento, contando com um *fallback* transparente e imediato para o visualizador padrão do Google Drive caso ocorram restrições de CORS.
-    - **Painel de Foco Estético (Leitura Externa — Kindle & Livros Físicos):** Interface HUD glassmorphic de altíssimo nível estético com capas em 3D, controle e ajuste manual de páginas lidas (passos de -5, -1, +1, +5) e barra de progresso visual. Habilita o rastreamento inteligente de streak, velocidade de cruzeiro e heatmap para leitores de dispositivos físicos ou e-readers com suporte nativo a links de referência hospedados no Google Drive.
-- **Biblioteca Nexus Premium:**
-    - Catalogação imersiva com busca automática de capas e metadados via Open Library.
-    - **Gestão de Progresso:** Acompanhamento visual da leitura com atualização instantânea.
-    - **Neural Greeting & Weather:** Saudação dinâmica e clima local integrado ao dashboard.
-    - **Categorias Dinâmicas:** Gestão completa de taxonomia personalizada.
-    - **Mapeador de Conexões Inteligente (Cérebro do Nexus) [NEW]:**
-    - **Constelação de Conhecimento 2D:** Uma representação interativa em grafo que mapeia de forma visualmente incrível todas as conexões entre Livros, Notas, Metas do PDI e Links no ecossistema do HubCRM.
-    - **Física Elástica de Molas (Force-Directed Graph):** Desenvolvido em Canvas HTML5 nativo de alta performance (100% imune a bloqueios de CORS e rede), simulando repulsão magnética e atração por mola para auto-organização da rede em tempo real.
-    - **Interações Completas:** Arrastar e arremessar nós com o mouse de forma elástica, suporte a gestos de arrastar tela (Pan) e rolagem de mouse para zoom-in/zoom-out infinito.
-    - **Pesquisa e Destaque Neon:** Digitar na barra flutuante superior ilumina os nós correspondentes e suas conexões com uma aura neon intensa, suavizando a opacidade do restante do mapa.
-    - **Painel Lateral Glassmorphic:** Exibição elegante à direita de detalhes do nó selecionado com resumos rápidos e botões de ação instantâneos (como "Iniciar Leitura").
-- **Visualização de Capas 2.5D Clássica (Glass Parallax) [NEW]:**
-    - **Opção Adicional Premium:** Integrada como a 4ª opção de visualização de capas na biblioteca (junto ao Padrão, 3D Fixo e 3D Interativo).
-    - **Paralaxe Multicamadas:** Elementos como badges de formato, status, progresso e botões flutuam sobre a capa com profundidade real e se movem em velocidades diferentes ao passar o mouse.
-    - **Efeito Glass Reflection:** Um gradiente brilhante dinâmico simulando luz refletida em vidro polido acompanha a posição exata do cursor sobre o livro, entregando extrema sofisticação tátil.
 
-- **PDI Kanban Premium (Meu PDI):** Sistema de metas e objetivos interativo 100% reativo e livre de race-conditions.
-      - **Edição Inline de Elite:** Suporte à edição instantânea via duplo clique direto no título do card ou clicando no ícone de lápis (`Edit3`) no hover.
-      - **Exclusão Premium:** Botão de lixeira (`Trash2`) com efeito hover premium para remoção imediata e atrativa.
-      - **Atualizações Atômicas:** Manipulação de array de itens no Firestore com atualização em tempo real de forma atômica síncrona, eliminando perdas por concorrência de escrita ao arrastar cards rapidamente.
-      - **Perfil Altamente Reativo:** Sincronização em tempo real do perfil via listener ativo (`onSnapshot`), com pausa inteligente de reescrita local de `formData` enquanto o usuário está ativamente editando os campos de texto, impedindo perda de foco ou de caracteres.
-      - **Modais com Altura Inteligente:** Padronização robusta de múltiplos modais do chat (Criação de Canais, Grupos, Lembretes, Aprovações e Configurações) com contêineres `max-h-[90vh] flex flex-col` e rolagem interna customizada, garantindo que nenhum modal seja cortado em telas de menor resolução.
+O Nexus é o cérebro operacional do Hub Central, oferecendo um ecossistema completo de dados inteligentes, gestão de notas wiki e gamificação de leitura.
 
-## 🎨 Personalização & Temas Estéticos Premium
+#### 📈 Nexus Analytics & Stats (Premium Insights)
+O painel de estatísticas (`NexusStats.tsx`) consolida as seguintes métricas visuais avançadas:
+- **Wisdom Streak:** Contador de dias consecutivos de leitura ou criação de notas de estudo para incentivo à consistência profissional.
+- **Knowledge Heatmap:** Calendário anual interativo estilo GitHub que destaca com intensidade de cores a densidade das atividades do usuário (páginas lidas e notas criadas com pesos ponderados).
+- **Topics Radar (Spider Chart):** Gráfico de teia (Radar) que mapeia a distribuição temática do conhecimento consumido baseado no volume de páginas por categoria literária.
+- **Retention Ranking:** Métrica de qualidade de aprendizagem que ranqueia as obras com maior densidade de insights gerados (fórmula: `Insights / 100 Páginas`), valorizando a retenção qualitativa frente ao volume de leitura.
+- **Monthly Volume:** Gráfico de barras comparativo (`BarChart`) que exibe nos últimos 6 meses a relação de "Páginas Lidas" contra "Notas Criadas".
+- **Ritmo de Leitura & Consistência:** Monitora a média diária de páginas absorvidas no mês e o percentual de dias consistentes.
 
-O Hub Central conta com um motor de personalização visual dinâmico que permite ao usuário adaptar o CRM ao seu estilo de trabalho, promovendo foco e bem-estar através de experiências visuais imersivas e micro-animações de partículas de altíssimo nível.
+#### 📚 Biblioteca Nexus Premium & Visualização
+- **Busca de Metas via Open Library:** Catalogação rápida com busca automática de capas e metadados via Open Library API.
+- **Design de Visualização de Capas 2.5D (Glass Parallax):** Efeito visual sofisticado onde badges, progresso e botões flutuam sobre a capa do livro com profundidade 3D real e se movem com as coordenadas do mouse, criando reflexos de luz dinâmica sobre o vidro.
+- **Estrutura de Categorias Dinâmicas:** Edição, criação e deleção centralizada de categorias taxonômicas. Ao renomear ou excluir categorias no `useNexusStore`, todos os livros associados são migrados atomicamente para garantir a integridade dos dados.
 
-### 🌟 Temas Estéticos Disponíveis
-- **⚪ Branco Elite (`branco-elite`) [NEW]:** Um tema claro super clean e sofisticado. Sobrescreve as propriedades de fundo tradicionais para oferecer um visual minimalista iluminado, com cartões elevados em glassmorphism e sombras extremamente suaves que reduzem a fadiga ocular. Conta com partículas de luz branca e cinza flutuando serenamente no background.
-- **🥈 Prata Platinum (`prata-platinum`) [NEW]:** Um visual metálico futurista de altíssimo padrão, combinando fundos titânio/grafite escuro com realces em platina e cristais metálicos flutuantes que simulam reflexos dinâmicos.
-- **⚫ Preto Absoluto (`preto-absoluto`) [NEW]:** Um tema escuro AMOLED de luxo absoluto. Fundo inteiramente preto puro (`#000000`) integrado a cartões elevados em cinza-escuro (`#09090b`), bordas douradas e estrelas cintilantes e brasas douradas flutuando lentamente pelo ecossistema.
+#### 🧠 Note Graph View (Grafo de Conexões Force-Directed)
+Mapeador interativo de conexões mentais implementado em **SVG nativo de alta performance**:
+- **Simulação de Física Real:** Aplicação de física elástica (Repulsão magnética de Coulomb + Atração por mola de Hooke + Gravidade central) para a auto-organização dinâmica dos nós em tempo real.
+- **Mapeamento de Relacionamentos:** Conecta Notas, Metas, Tarefas e referências cruzadas bidirecionais de links wiki (`[[Link]]`).
+- **Interações Fluidas:** Suporte a gestos de arrastar tela (Pan), rolagem de mouse para zoom-in/zoom-out infinito, arremesso elástico de nós com o cursor e barra superior de pesquisa neon para iluminar nós selecionados.
+
+#### 📝 Estante Wiki & Reading Companion (Anotador Imersivo)
+- **Reading Companion:** Barra lateral de insights com suporte a controle manual passo a passo de páginas e vinculação direta de anotações no contexto do livro.
+- **Digitação por Voz (Speech-to-Text):** Criação de anotações e insights ditados pelo usuário por voz nativa (Web Speech API no idioma `pt-BR`) no Reading Companion.
+- **Links Bidirecionais & Backlinks:** Suporte nativo ao processamento de tags `[[Link]]` que conectam notas entre si, exibindo de forma reflexiva as notas anteriores relacionadas.
+- **Estrutura Hierárquica Drag & Drop:** Movimentação e organização visual ágil de notas e subpastas via Drag & Drop na árvore central do workspace.
+
+---
+
+### 👥 Módulo de Pessoas & PDI Kanban
+
+Localizado no domínio de Pessoas (`src/domains/people/`), este módulo centraliza o desenvolvimento de times e acompanhamento de metas de carreira.
+- **PDI Kanban Premium (Meu PDI):** Sistema interativo de metas e objetivos 100% reativo e livre de race-conditions.
+- **Edição Inline de Elite:** Suporte à edição instantânea via duplo clique direto no título do card ou clicando no ícone de lápis (`Edit3`) no hover.
+- **Exclusão Premium:** Botão de lixeira (`Trash2`) com efeito hover premium para remoção imediata e atrativa.
+- **Atualizações Atômicas:** Manipulação de array de itens no Firestore com atualização em tempo real de forma atômica síncrona, eliminando perdas por concorrência de escrita ao arrastar cards rapidamente.
+
+---
+
+### 🎨 Personalização & Temas Estéticos Premium
+
+O Hub Central conta com um motor de personalização visual dinâmico que permite ao usuário adaptar o CRM ao seu estilo de trabalho, promovendo foco e bem-estar através de experiências visuais imersivas e micro-animações de partículas de altíssimo nível (`ThemeEffects.tsx`).
+
+#### 🌟 Temas Estéticos Disponíveis
+- **⚪ Branco Elite (`branco-elite`):** Um tema claro super clean e sofisticado. Sobrescreve as propriedades de fundo tradicionais para oferecer um visual minimalista iluminado, com cartões elevados em glassmorphism e sombras extremamente suaves que reduzem a fadiga ocular. Conta com partículas de luz branca e cinza flutuando serenamente no background.
+- **🥈 Prata Platinum (`prata-platinum`):** Um visual metálico futurista de altíssimo padrão, combinando fundos titânio/grafite escuro com realces em platina e cristais metálicos flutuantes que simulam reflexos dinâmicos.
+- **⚫ Preto Absoluto (`preto-absoluto`):** Um tema escuro AMOLED de luxo absoluto. Fundo inteiramente preto puro (`#000000`) integrado a cartões elevados em cinza-escuro (`#09090b`), bordas douradas e estrelas cintilantes e brasas douradas flutuando lentamente pelo ecossistema.
 - **🌐 Cyberpunk (`cyberpunk`):** Interface com brilho neon ciano e lilás, equipada com linhas de varredura (scanlines) retrô e animações eletrizantes.
 - **🌿 Forest (`forest`):** Visual natural e orgânico, com folhas verdes flutuando suavemente pelo painel em um fundo verde-floresta escuro.
 - **❄️ Nordic (`nordic`):** Uma experiência limpa com textura de geada e flocos de neve flutuando em um fundo azul-glacial elegante.
@@ -222,7 +223,7 @@ O Hub Central conta com um motor de personalização visual dinâmico que permit
 - **🎀 Barbie (`barbie`):** Estética vibrante em rosa neon com corações e brilhos em 3D flutuando no background.
 - **🕶️ Minimalista (`minimalist`):** Visual monocromático de alto contraste focado exclusivamente na eficiência operacional.
 
-### 📊 Tabela Comparativa de Experiências Visuais (Temas)
+#### 📊 Tabela Comparativa de Experiências Visuais (Temas)
 | Tema Premium | ID Técnico | Paleta de Cores Predominante | Partículas de Background | Proposta de Experiência / UX |
 | :--- | :--- | :--- | :--- | :--- |
 | **⚪ Branco Elite** | `branco-elite` | Neve translúcida, Cinza suave, Platina | Flocos de luz branca e cinza | Minimalista, clean e ideal para reduzir cansaço visual diurno |
@@ -237,23 +238,25 @@ O Hub Central conta com um motor de personalização visual dinâmico que permit
 
 ---
 
-## 📂 Project Structure
+## 📂 Estrutura de Pastas do Projeto
 
 O projeto segue uma estrutura de **Monorepo Híbrido** para garantir a sincronia de contratos entre cliente e servidor.
 
 ```text
-├── shared/             # [NEW] Single Source of Truth (Pure Types & Constants)
+├── shared/             # Single Source of Truth (Pure Types & Constants)
 ├── api/                # Serverless Functions (Backend Logic)
 │   ├── _logic/         # Business Logic decoupling (Asaas, Auth)
-│   ├── _utils/         # Shared utilities (Auth, DB, Audit)
+│   ├── _utils/         # Shared utilities (Auth, DB, Tokens)
 │   └── handlers/       # Domain-specific endpoint handlers
 ├── src/
-│   ├── domains/        # Business Domains (CRM, Nexus, Wiki, Finance)
+│   ├── core/           # Core Shell & Global Settings
+│   ├── domains/        # Business Domains (CRM, Nexus, Chat, Shop, Portal, Arena, People)
 │   ├── types/          # Frontend-specific types & Zod Schemas
-│   ├── store/          # Zustand State Management
+│   ├── store/          # Zustand State Management (Zustand 5.x)
 │   ├── lib/            # Shared libraries (Logger, API Client)
-│   └── hooks/          # Global & Domain Hooks
-├── tests/              # E2E & Unit Test Suites
+│   ├── hooks/          # Global & Domain Hooks (WebRTC, Permissions)
+│   └── tests/          # Unit Test Suite (Vitest)
+├── vitest.config.ts    # Vitest Testing Configuration
 └── firestore.rules     # Granular Security Rules
 ```
 
@@ -331,7 +334,7 @@ Implementamos uma camada de tipos compartilhados (`/shared`) que elimina o "Tech
 
 ---
 
-## 🔐 Authentication & Security Flow
+## 🔐 Flow de Autenticação e Segurança
 
 O fluxo de autenticação é híbrido: Firebase Auth para identidade e JWT/Custom Tokens para integração com APIs externas.
 
@@ -351,7 +354,7 @@ sequenceDiagram
     API-->>App: Authorized Data
 ```
 
-### Security Conventions
+### Convenções de Segurança
 1. **RBAC (Role-Based Access Control):** Centralizado no hook `usePermissions`. Proibido checar strings de roles diretamente no JSX.
 2. **Privacy Shield:** Dados de perfil são restritos a membros da mesma organização via Firestore Rules.
 3. **Audit Log:** Toda ação mutável na API deve invocar `logActivity`.
@@ -390,7 +393,9 @@ Para garantir latência zero em organizações com milhares de registros, implem
 - **API Consolidation:** O portal não lê mais diretamente do Firestore via `onSnapshot` público. Todas as informações (faturamento, chamados, marketplace) são servidas por uma API centralizada que sanitiza os dados antes de expô-los.
 - **Auto-Sync:** Ao converter um lead ou criar um cliente, o sistema gera automaticamente os tokens de segurança e sincroniza o primeiro link de pagamento do Asaas.
 
-### 📞 WebRTC P2P Real-time Calls (### 🎵 Hub Focus Station v3.0 (Streaming Unificado: Spotify Embed, YouTube & Lofi Focus Beats) [UPDATED]
+---
+
+### 🎵 Hub Focus Station (Streaming Unificado: Spotify Embed, YouTube & Lofi Focus Beats)
 
 Integração global, reativa e persistente de áudio para produtividade e bem-estar operacional, com design deslumbrante em **Vidro Líquido (Liquid Glass)** e acoplamento de estados inteligentes:
 - **Design Liquid Glass Premium:** Uma interface visual deslumbrante revestida em um contêiner glassmorphic com desfoque profundo (`backdrop-blur-[24px]`), fundo translúcido suave (`bg-slate-950/40`), bordas reflexivas finas (`border-white/10`) e sombras flutuantes 3D.
@@ -406,9 +411,7 @@ Integração global, reativa e persistente de áudio para produtividade e bem-es
 - **Navegação Contínua Ininterrupta:** Widget flutuante com design ultrapremium em Glassmorphism (Dynamic Island style) que pode ser arrastado ou minimizado. Por coexistência simultânea de estados no DOM (controlados por opacidade e escala CSS), o áudio do Spotify, do YouTube e das Vibes Locais permanece tocando de forma ininterrupta nas trocas de páginas ou rotas internas, mesmo quando o widget é minimizado.
 - **Pausa Inteligente WebRTC:** Sincronização automática com o `useCallStore`. O reprodutor de áudio (local ou o controle do widget) suspende a reprodução automaticamente ao iniciar ou receber uma ligação telefônica P2P de áudio/vídeo e retoma o estado inicial assim que a chamada é encerrada.
 - **Intelligent Iframe DOM Kill Switch (Spotify & YouTube):** Por rodarem em sandbox cross-origin protegida contra CORS, os reprodutores de terceiros impedem que a aplicação externa regule ou corte seu som em situações críticas. Para garantir privacidade absoluta no ambiente de trabalho corporativo, implementamos um estado de renderização física estrita (`shouldRenderSpotify` / `shouldRenderYoutube`). Se o sistema for mutado, o volume geral for zerado (`0`) ou uma chamada WebRTC estiver ativa (`ringing` ou `connected`), o React remove e destrói fisicamente os elementos iframe do DOM de imediato, cortando o áudio de forma 100% limpa, instantânea e infalível.
-- **Neon Spectrum Visualizer:** Barras animadas nativamente em CSS com gradientes fluidos neon que pulsam harmonicamente sincronizadas com o estado de áudio (`isPlaying`), simulando um visualizador de espectro sem os problemas tradicionais de segurança CORS de streams externos.niciar ou receber uma ligação telefônica P2P de áudio/vídeo e retoma o estado inicial assim que a chamada é encerrada.
-- **Intelligent Iframe DOM Kill Switch (Spotify & YouTube):** Por rodarem em sandbox cross-origin protegida contra CORS, os reprodutores de terceiros impedem que a aplicação externa regule ou corte seu som em situações críticas. Para garantir privacidade absoluta no ambiente de trabalho corporativo, implementamos um estado de renderização física estrita (`shouldRenderSpotify` / `shouldRenderYoutube`). Se o sistema for mutado, o volume geral for zerado (`0`) ou uma chamada WebRTC estiver ativa (`ringing` ou `connected`), o React remove e destrói fisicamente os elementos iframe do DOM de imediato, cortando o áudio de forma 100% limpa, instantânea e infalível.
-- **Neon Spectrum Visualizer:** Barras animadas nativamente em CSS com gradientes fluidos neon que pulsam harmonicamente sincronizadas com o estado de áudio (`isPlaying`), simulando um visualizador de espectro sem os problemas tradicionais de segurança CORS de streams externos.
+- **Neon Visualizer:** Barras animadas nativamente em CSS com gradientes fluidos neon no player (`Visualizer.tsx`) que pulsam harmonicamente de acordo com o estado de reprodução (`isPlaying`), fornecendo feedback de equalização gráfica premium.
 
 ```mermaid
 sequenceDiagram
@@ -473,39 +476,31 @@ A **Hub Arena** é o centro de entretenimento e integração social integrada di
 ### ⚡ Características Técnicas, Áudio Procedural & Skins CRT Retro
 1. **Matchmaking via Firestore**: Convites dinâmicos gerados em tempo real através da coleção `invites` com sincronização instantânea.
 2. **Dynamic Island de Convite**: Pop-up global no topo da tela (`MatchInviteListener`) com aceitação instantânea de partidas online e redirecionamento automático.
-3. **Leaderboard Real (Hall da Fama)**: Exibição dinâmica contendo vitórias reais da coleção `matches` do Firestore (`winnerId == user.uid && status == 'finished'`).
+3. **Leaderboard Real**: Exibição dinâmica contendo recordes de solução dos Puzzles no Firestore (`winnerId == user.uid && status == 'finished'`).
 4. **Motor Chiptune Procedural 8-Bits (Web Audio API)**:
-   * **Trilha de Fundo**: Síntese de ondas triangulares e arpejos arrojados contínuos de fundo (*C -> G -> Am -> F*) de baixa amplitude, eliminando trilhas sonoras pesadas locais.
+   * **Trilha de Fundo**: Síntese de ondas triangulares e arpejos arrojados contínuos de fundo (*C -> G -> Am -> F*) de baixa amplitude, eliminando arquivos pesados de áudio locais.
    * **Efeitos Clássicos (Sound Effects)**: Sintetizadores baseados em ondas quadradas, triangulares e dentes de serra gerados dinamicamente com filtros e decay exponencial para movimentos, capturas, arpejos de rolagens e comemorações.
-   * **Mute Dinâmico**: Botão e barras de equalizador neon integrados ao painel lateral para cessar sons e músicas de forma unificada.
-5. **Skin Premium Arcade CRT**: Skin visual opcional `"arcade"` que reveste a arena em um contêiner de gabinete de fliperama retro, sobrepondo uma cintilação fosforescente animada de scanlines analógicos e textura CRT clássica (Tailwind + CSS Keyframes).
+   * **Mute Dinâmico**: Botão e barras de equalizador neon integrados ao painel lateral para silenciar sons e músicas de forma unificada.
+5. **Skin Premium Arcade CRT**: Skin visual opcional `"arcade"` que reveste a arena em um contêiner de fliperama retrô, sobrepondo uma cintilação fosforescente animada de scanlines analógicos e textura CRT clássica (Tailwind + CSS Keyframes).
 6. **Modo CPU Autônomo com Recomeço**: IA local avançada em cada jogo e botão inteligente `🔄 Recomeçar Partida` sob demanda para partidas de um jogador.
-7. **Central de Ajuda & Regras Unificadas**: Cada um dos 4 jogos da Arena possui um botão interativo de ajuda (`HelpCircle`) que exibe de forma premium, fluida (framer-motion) e reativa a regras, objetivos e dicas táticas oficiais formatadas de acordo com o tema selecionado (Clássico ou Cyberpunk).
+7. **Central de Ajuda & Regras Unificadas**: Cada um dos 4 jogos da Arena possui um botão interativo de ajuda (`HelpCircle`) que exibe de forma premium, fluida (framer-motion) e reativa a regras, objetivos e dicas táticas oficiais formatadas de acordo com o tema selecionado.
 
-### 🛍️ Loja de Cosméticos & Torneios Eliminatórios (Copa)
-
-Expandindo os horizontes da Hub Arena, as novas funcionalidades de engajamento cíclico corporativo unem competitividade e personalização visual premium:
-
-1. **Loja de Fliperama Retro (`ArenaStoreModal`)**:
-   - Um modal arcade estilizado com sons procedurais de arpejo melódico e blips 8-bits sintetizados por **Web Audio API**.
-   - Colaboradores podem gastar **Fliperama Coins** para adquirir cosméticos exclusivos.
-2. **Molduras & Títulos de Chat Neon**:
-   - **Títulos de Chat Neon Cyberpunk**: Títulos como "Grão-Mestre de Vendas", "Estrategista" ou "Lenda do Connect 4" com animações pulse neon e gradientes HSL no chat de equipe.
-   - **Molduras de Avatar Restritas**: Desbloqueio e seleção de molduras exclusivas (Neon, Cyberpunk, Gold, etc.) para o perfil.
-3. **Torneios Eliminatórios Assíncronos (Brackets)**:
-   - **Árvore de Brackets Neon**: Um painel dinâmico responsivo que monta a grade da copa (4 ou 8 competidores) conectada por fluxos SVG neon iluminados com a cor do vencedor.
-   - **Gerenciamento Seguro & Sorteios**: O chaveamento e confrontos iniciais são gerados e embaralhados automaticamente ao esgotar as vagas do torneio.
-   - **Início e Avanço de Lutas Inteligentes**: Partidas de torneios eliminatórios (`tournament_`) pulam o fluxo de aceite, iniciando diretamente para os oponentes. A vitória é interceptada reativamente para atualizar o bracket e conceder o prêmio de **+300 moedas** ao campeão na final.
+### 🛍️ Arena Store - Cosméticos Premium
+A **Arena Store** (`ArenaStoreModal.tsx`) é integrada à gamificação da equipe com efeitos chiptune e Web Audio API integrados:
+* **Resgate de Molduras de Avatar:** Molduras exclusivas para personalizar a foto de perfil do usuário (Cyberpunk, Gold, Ruby, Ocean, Rainbow, Silver, Neon).
+* **Resgate de Títulos de Chat:** Títulos neon com realce em gradiente e auras pulsantes que acompanham as bolhas de chat do usuário logado (ex: "Grão-Mestre de Vendas", "Lenda do Connect 4").
+* **Transação Segura:** A moeda utilizada é unificada como **Hub Coins**. A compra desconta o saldo do Firestore de forma atômica e atualiza instantaneamente a moldura equipada no perfil do usuário e no chat.
 
 ### 🧩 Desafios Diários de Tabuleiro (Daily Puzzles)
-
 Uma dinâmica leve de aquecimento lógico e competição de agilidade intelectual para os colaboradores:
 * **Banco de Puzzles Offline**: Problemas pré-definidos de **Xadrez (Mate em 1)** e **Connect 4 (Alinhamento tático)** com rotatividade inteligente local baseada no dia do mês, garantindo carregamento instantâneo.
 * **Cronômetro Neon de Alta Precisão**: Calcula em tempo real os segundos gastos pelo colaborador para resolver a tática diária.
-* **Tabela Diária de Cérebros Rápidos**: O lobby exibe um Leaderboard diário específico do puzzle classificando os solucionadores pelo menor tempo de conclusão, coroando os mais rápidos com medalhas de ouro (🥇), prata (🥈) e bronze (🥉).
-* **Bonificação Econômica**: Solucionar o puzzle do dia concede automaticamente **+50 Fliperama Coins** diretamente na conta do colaborador no Firestore, limitado a uma resolução premiada por dia.
+* **Tabela Diária de Cérebros Rápidos (Leaderboard)**: O lobby exibe um ranking diário específico do puzzle classificando os solucionadores pelo menor tempo de conclusão.
+* **Bonificação Econômica**: Solucionar o puzzle do dia concede automaticamente **+50 Hub Coins** na conta do colaborador no Firestore, limitado a uma resolução premiada por dia.
 
-### 📚 Clubes de Leitura do Nexus Hub & Metas Coletivas
+---
+
+### 📚 Clubes de Leitura & Metas Coletivas (Nexus)
 
 Integração de alta sinergia unindo desenvolvimento profissional contínuo à economia gamificada da Arena:
 * **Divisão de Times Corporativos**: Sincronização automática com a propriedade `department` (Vendas, Desenvolvimento, Suporte, Recursos Humanos, Marketing e Geral) do perfil do colaborador no Firestore.
@@ -515,9 +510,11 @@ Integração de alta sinergia unindo desenvolvimento profissional contínuo à e
 * **Meta Coletiva Batida**: Quando o departamento atinge 100% de progresso acumulado no livro oficial do mês, um painel especial holográfico de celebração é liberado para todos os participantes do time.
 * **Resgate de Recompensas Enterprise**: Botão neon arco-íris pulsante que concede **+200 Hub Coins** ao colaborador ao bater a meta coletiva. Possui validação atômica para impedir resgates múltiplos e reproduz efeitos procedural de arpejo de triunfo via Web Audio API.
 
-### 📚 Trilhas de Conhecimento (Learning Paths) [NEW]
+---
 
-Ecossistema voltado para capacitação técnica, metas de carreira e desenvolvimento contínuo dos colaboradores:
+### 📚 Trilhas de Conhecimento (Learning Paths)
+
+Ecossistema voltado para capacitação técnica, metas de carreira e desenvolvimento contínuo dos colaboradores (`LearningPathsPanel.tsx`):
 * **Construção de Trilhas (Admin):** Administradores podem consolidar jornadas de aprendizado dando um nome, descrição, meta cognitiva e recompensa de HubCoins, e selecionando a aura neon temática.
 * **Bônus de Aceite e Antifraude:** Ao aceitar uma trilha pela primeira vez, o colaborador é contemplado com um bônus imediato de `+50 HubCoins` para incentivar a sua jornada. A flag `welcomeRewardClaimed: true` é persistida no Firestore para impedir que ele ganhe esse bônus repetidamente caso desista e reinicie a mesma trilha futuramente.
 * **Ciclo de Vida Dinâmico (Pausar, Retomar e Desistir):**
@@ -527,15 +524,17 @@ Ecossistema voltado para capacitação técnica, metas de carreira e desenvolvim
 * **Auras e Bordas Neon Dinâmicas:** Ao aceitar e iniciar uma trilha, o progresso individualizado é ativado. Os livros pertencentes àquela trilha são clonados na estante do usuário e ganham **fundo, bordas e lombada neon pulsantes** na cor específica da trilha. Livros avulsos ou de trilhas não ativas permanecem com o design padrão (sem luminosidade).
 * **Proteções Estritas Contra Fraude de Leitura (Strict Anti-Fraud Engine):**
   * **Trava de 24 Horas:** Uma vez que o progresso de leitura (página) de um livro é alterado, o usuário fica impedido de realizar novas alterações nesse livro nas próximas 24 horas. Tentativas de fraude acionam um toast educativo bloqueando a gravação.
-  * **Anti-Fraude de "Voltar Páginas" (`maxPageRead`):** O ganho de moedas (`+1 HubCoin` por página lida) é calculado de forma atômica com base no recorde histórico de páginas lidas para cada obra. Caso o colaborador retroceda o livro e depois avance de novo, ele **não** recebe moedas de forma duplicada. A recompensa só é ativada quando ele ultrapassa a marca recorde registrada (`currentPage > maxPageRead`). Ao desistir da trilha, esse recorde é redefinido para zero, permitindo que ele aprenda e ganhe moedas relendo do zero futuramente.
+  * **Anti-Fraude de "Voltar Páginas" (`maxPageRead`):** O ganho de moedas (`+1 HubCoin` por página lida) é calculado de forma atômica com base no recorde histórico de páginas lidas para cada obra. Caso o colaborador retroceda o livro e depois avance de novo, ele **não** recebe moedas de forma duplicada. A recompensa só é ativada quando ele ultrapassa a marca recorde registrada (`currentPage > maxPageRead`). Ao desistir da trilha, esse recorde é redefinido para zero, permitindo que ele ganhe moedas relendo do zero futuramente.
 * **Unificação Econômica de HubCoins:** Concluir cada página dos livros de trilhas ativas concede automaticamente `+1 HubCoin`. Compartilhar insights concede `+20 HubCoins`. Bater a maestria da trilha finalizando todos os livros integrantes confere um jackpot de conclusão de `+200 HubCoins` com toasters e comemorações reativas na tela.
 
-### 🛒 HubShop - Loja Corporativa [NEW]
+---
 
-A nova e-commerce central de resgates corporativos por HubCoins:
+### 🛒 HubShop - Loja Corporativa
+
+A e-commerce central de resgates corporativos por HubCoins (`HubShopView.tsx`):
 * **Vitrine Premium de Prêmios:** Um grid de cartões Glassmorphism exibindo prêmios físicos (canecas, moletons), vouchers digitais (Ifood, Uber) e experiências de prestígio (almoço com CEO, folgas).
 * **Upload Integrado via Cloudinary:** O administrador pode cadastrar novos prêmios instantaneamente anexando imagens reais que são salvas de forma segura na CDN do **Cloudinary** e retornam URLs públicas otimizadas.
-* **Transação Segura e Controle de Estoque:** O sistema valida o saldo em tempo real, debuta as HubCoins do colaborador, decrementa o estoque atómicamente e registra o pedido em `/hubShopOrders` com status pendente de entrega pelo time de RH/Gestão.
+* **Transação Segura e Controle de Estoque:** O sistema valida o saldo em tempo real, debita as HubCoins do colaborador, decrementa o estoque atómicamente e registra o pedido em `/hubShopOrders` com status pendente de entrega pelo time de RH/Gestão.
 
 ---
 
