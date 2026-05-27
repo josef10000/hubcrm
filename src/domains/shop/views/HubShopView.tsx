@@ -58,7 +58,7 @@ export default function HubShopView() {
 
   const orgId = userProfile?.orgId;
   const uid = user?.uid;
-  const isAdmin = userProfile?.permissions?.['MANAGE_TEAM'] || userProfile?.role === 'admin' || userProfile?.role?.id === 'admin';
+  const isAdmin = userProfile?.permissions?.['MANAGE_TEAM'] || userProfile?.role === 'admin' || (userProfile?.role as any)?.id === 'admin';
   const credits = userProfile?.arenaCredits || 0;
 
   // Escuta os itens da loja e pedidos do Firestore

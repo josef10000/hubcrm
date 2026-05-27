@@ -78,7 +78,7 @@ export const DEFAULT_BOOK_CATEGORIES = [
 ];
 
 export type BookCategory = string;
-export type ReadingStatus = 'reading' | 'finished';
+export type ReadingStatus = 'reading' | 'finished' | 'want_to_read' | 'dropped';
 
 export interface NexusBook {
   id: string;
