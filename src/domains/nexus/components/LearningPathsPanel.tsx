@@ -9,6 +9,8 @@ import { useNexusStore, NexusBook } from '@store/useNexusStore';
 import { useArenaStore } from '@store/useArenaStore';
 import { NEON_AURA_MAP } from './library/BookCard';
 
+import { usePermissions } from '@auth/hooks/usePermissions';
+
 export interface LearningPath {
   id: string;
   name: string;
@@ -34,6 +36,7 @@ export interface UserPathProgress {
 
 export function LearningPathsPanel() {
   const { userProfile, user } = useAuth();
+  const { hasPermission } = usePermissions();
   const [paths, setPaths] = useState<LearningPath[]>([]);
   const [userProgresses, setUserProgresses] = useState<Record<string, UserPathProgress>>({});
   const [communityBooks, setCommunityBooks] = useState<NexusBook[]>([]);
@@ -50,7 +53,7 @@ export function LearningPathsPanel() {
 
   const orgId = userProfile?.orgId;
   const uid = user?.uid;
-  const isAdmin = userProfile?.permissions?.['MANAGE_TEAM'] || userProfile?.role === 'admin' || (userProfile?.role as any)?.id === 'admin';
+  const isAdmin = hasPermission('MANAGE_SETTINGS') || hasPermission('MANAGE_TEAM');
 
   // Carrega as trilhas e o progresso do usuário logado
   useEffect(() => {

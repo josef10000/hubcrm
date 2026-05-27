@@ -9,6 +9,8 @@ import { toast } from 'sonner';
 import { useArenaStore } from '@store/useArenaStore';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 
+import { usePermissions } from '@auth/hooks/usePermissions';
+
 export interface HubShopItem {
   id: string;
   title: string;
@@ -37,6 +39,7 @@ export interface HubShopOrder {
 export default function HubShopView() {
   const { userProfile, user } = useAuth();
   const { teamProfiles = [] } = useCRM();
+  const { hasPermission } = usePermissions();
 
   // Estados dos Itens da Loja e Pedidos
   const [items, setItems] = useState<HubShopItem[]>([]);
@@ -58,7 +61,7 @@ export default function HubShopView() {
 
   const orgId = userProfile?.orgId;
   const uid = user?.uid;
-  const isAdmin = userProfile?.permissions?.['MANAGE_TEAM'] || userProfile?.role === 'admin' || (userProfile?.role as any)?.id === 'admin';
+  const isAdmin = hasPermission('MANAGE_SETTINGS') || hasPermission('MANAGE_TEAM');
   const credits = userProfile?.arenaCredits || 0;
 
   // Escuta os itens da loja e pedidos do Firestore
