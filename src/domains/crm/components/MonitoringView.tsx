@@ -188,10 +188,18 @@ export default function MonitoringView({ clients }: { clients: Client[] }) {
                         </a>
                       </td>
                       <td className="py-4">
-                        {monitor ? getStatusBadge(monitor.status) : <span className="text-xs text-gray-400">Não monitorado</span>}
+                        {loading ? (
+                          <span className="flex items-center gap-1.5 text-xs text-gray-400 font-medium">
+                            <RefreshCw size={12} className="animate-spin" /> Carregando status...
+                          </span>
+                        ) : monitor ? (
+                          getStatusBadge(monitor.status)
+                        ) : (
+                          <span className="text-xs text-gray-400">Não monitorado</span>
+                        )}
                       </td>
                       <td className="py-4 text-right">
-                        {!monitor && (
+                        {!loading && !monitor && (
                           <button
                             onClick={() => createMonitor(client)}
                             disabled={syncing}
