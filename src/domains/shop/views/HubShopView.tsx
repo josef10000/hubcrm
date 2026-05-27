@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Coins, ShoppingBag, Plus, X, Lock, CheckCircle, Package, ArrowRight, Tag, Gift, Trash2, Eye, EyeOff, Sparkles, AlertTriangle } from 'lucide-react';
+import { Coins, ShoppingBag, Plus, X, Lock, CheckCircle, Package, ArrowRight, Tag, Gift, Trash2, Eye, EyeOff, Sparkles, AlertTriangle, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
 import { collection, doc, onSnapshot, setDoc, updateDoc, deleteDoc, query, orderBy, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@auth/contexts/AuthContext';
@@ -46,8 +46,9 @@ export default function HubShopView() {
   const [orders, setOrders] = useState<HubShopOrder[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Estados locais do Administrador (Novo Prêmio)
+  // Estados locais do Administrador (Novo Prêmio / Edição)
   const [isAdding, setIsAdding] = useState(false);
+  const [editingItem, setEditingItem] = useState<HubShopItem | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState(100);
@@ -56,12 +57,40 @@ export default function HubShopView() {
   const [stock, setStock] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
+  // Paginação dos produtos
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
   // Seletor de visualização (Visualização Geral ou Gestão de Pedidos)
   const [activeView, setActiveView] = useState<'shop' | 'my-orders' | 'admin-orders'>('shop');
 
   const orgId = userProfile?.orgId;
   const uid = user?.uid;
   const isAdmin = hasPermission('MANAGE_SETTINGS') || hasPermission('MANAGE_TEAM');
+
+  // Limpa o formulário e fecha o modal de cadastro/edição
+  const handleCloseModal = () => {
+    setTitle('');
+    setDescription('');
+    setPrice(100);
+    setImageUrl('');
+    setType('PHYSICAL');
+    setStock(null);
+    setIsAdding(false);
+    setEditingItem(null);
+  };
+
+  // Carrega dados para edição e abre o modal
+  const handleOpenEdit = (item: HubShopItem) => {
+    setEditingItem(item);
+    setTitle(item.title);
+    setDescription(item.description);
+    setPrice(item.price);
+    setImageUrl(item.imageUrl);
+    setType(item.type);
+    setStock(item.stock);
+    setIsAdding(true);
+  };
   const credits = userProfile?.arenaCredits || 0;
 
   // Escuta os itens da loja e pedidos do Firestore
@@ -110,8 +139,8 @@ export default function HubShopView() {
     }
   };
 
-  // Função para cadastrar novo prêmio (Admin)
-  const handleCreateItem = async (e: React.FormEvent) => {
+  // Função para cadastrar ou editar prêmio (Admin)
+  const handleCreateOrUpdateItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!orgId) return;
 
@@ -119,9 +148,10 @@ export default function HubShopView() {
     if (!imageUrl) return toast.error('A foto do prêmio é obrigatória.');
     if (price <= 0) return toast.error('O preço deve ser superior a zero.');
 
-    const tId = toast.loading('Salvando nova premiação no HubShop...');
+    const isEdit = !!editingItem;
+    const tId = toast.loading(isEdit ? 'Atualizando premiação no HubShop...' : 'Salvando nova premiação no HubShop...');
     try {
-      const itemId = `shop_${Date.now()}`;
+      const itemId = isEdit ? editingItem.id : `shop_${Date.now()}`;
       const itemData: HubShopItem = {
         id: itemId,
         title,
@@ -130,25 +160,17 @@ export default function HubShopView() {
         imageUrl,
         type,
         stock: stock !== null && stock >= 0 ? stock : null,
-        isActive: true,
-        createdAt: Date.now()
+        isActive: isEdit ? editingItem.isActive : true,
+        createdAt: isEdit ? editingItem.createdAt : Date.now()
       };
 
       await setDoc(doc(db, 'organizations', orgId, 'hubShopItems', itemId), itemData);
       
-      // Limpa formulário
-      setTitle('');
-      setDescription('');
-      setPrice(100);
-      setImageUrl('');
-      setType('PHYSICAL');
-      setStock(null);
-      setIsAdding(false);
-
-      toast.success('Prêmio adicionado ao catálogo do HubShop! 🎁', { id: tId });
+      handleCloseModal();
+      toast.success(isEdit ? 'Prêmio atualizado com sucesso! 🎁' : 'Prêmio adicionado ao catálogo do HubShop! 🎁', { id: tId });
     } catch (err) {
       console.error(err);
-      toast.error('Erro ao cadastrar prêmio.', { id: tId });
+      toast.error(isEdit ? 'Erro ao atualizar prêmio.' : 'Erro ao cadastrar prêmio.', { id: tId });
     }
   };
 
@@ -348,272 +370,375 @@ export default function HubShopView() {
               👑 Gestão de Pedidos
               {pendingOrders.length > 0 && (
                 <span className="ml-1.5 px-1.5 py-0.5 bg-red-500 text-white text-[8px] font-black rounded-md animate-pulse">
-                  {pendingOrders.length}
-                </span>
-              )}
-            </button>
-          )}
-        </div>
-
-        <AnimatePresence mode="wait">
-          
-          {/* MODO GESTÃO/CADASTRO DE NOVO PRÊMIO (ADMIN) */}
-          {isAdding && isAdmin ? (
-            <motion.form
-              key="add-form"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              onSubmit={handleCreateItem}
-              className="bg-slate-950/40 border border-white/10 rounded-[2.5rem] p-8 md:p-10 space-y-6 shadow-2xl relative"
+                  {pendingOrders.len        <AnimatePresence>
+          {/* MODAL FLUTUANTE DE CADASTRO/EDIÇÃO (ADMIN) */}
+          {isAdding && isAdmin && (
+            <div 
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-200"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) handleCloseModal();
+              }}
             >
-              <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-[80px] -mr-10 -mt-10 bg-purple-600 opacity-15 pointer-events-none" />
-              
-              <h3 className="text-lg font-black uppercase tracking-widest text-white">Adicionar Prêmio Corporativo</h3>
+              <motion.form
+                key="add-form"
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                onSubmit={handleCreateOrUpdateItem}
+                className="bg-[#0b0d14] border border-white/10 rounded-[2rem] p-6 md:p-8 space-y-4 shadow-2xl relative w-full max-w-lg max-h-[90vh] overflow-y-auto custom-scrollbar flex flex-col justify-between"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Botão de Fechar X no topo */}
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Título da Recompensa</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Caneca Oficial e Camiseta HubCRM"
-                    value={title}
-                    onChange={e => setTitle(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:border-purple-500 outline-none transition-all"
-                  />
-                </div>
+                <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-[80px] -mr-10 -mt-10 bg-purple-600 opacity-15 pointer-events-none" />
+                
+                <h3 className="text-md font-black uppercase tracking-widest text-white">
+                  {editingItem ? 'Editar Prêmio Corporativo' : 'Adicionar Prêmio Corporativo'}
+                </h3>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Preço em HubCoins</label>
-                  <input
-                    type="number"
-                    placeholder="Ex: 500"
-                    value={price}
-                    onChange={e => setPrice(Math.max(1, parseInt(e.target.value) || 0))}
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:border-purple-500 outline-none transition-all"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Tipo da Premiação</label>
-                  <select
-                    value={type}
-                    onChange={e => setType(e.target.value as any)}
-                    className="w-full bg-slate-900 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:border-purple-500 outline-none transition-all"
-                  >
-                    <option value="PHYSICAL">Produto Físico</option>
-                    <option value="VOUCHER">Voucher Digital (Ifood, Uber, etc.)</option>
-                    <option value="EXPERIENCE">Experiência (Mentoria com CEO, Folga, etc.)</option>
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Estoque (Opcional - Em Branco para Ilimitado)</label>
-                  <input
-                    type="number"
-                    placeholder="Sem Limite"
-                    value={stock === null ? '' : stock}
-                    onChange={e => setStock(e.target.value === '' ? null : Math.max(0, parseInt(e.target.value) || 0))}
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:border-purple-500 outline-none transition-all"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Breve Declaração ou Regra de Resgate</label>
-                <textarea
-                  placeholder="Descreva as características do prêmio e como o colaborador fará para retirar ou utilizar..."
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                  rows={3}
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:border-purple-500 outline-none transition-all resize-none"
-                />
-              </div>
-
-              {/* Upload de Foto no Cloudinary */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Foto do Prêmio (Cloudinary Integrado)</label>
-                <div className="flex flex-col sm:flex-row items-center gap-4">
-                  <div className="w-full flex-1 relative group">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-gray-500">Título da Recompensa</label>
                     <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handlePhotoUpload}
-                      disabled={isUploading}
-                      className="hidden"
-                      id="reward-photo-input"
+                      type="text"
+                      placeholder="Ex: Caneca e Camiseta Hub"
+                      value={title}
+                      onChange={e => setTitle(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:border-purple-500 outline-none transition-all"
                     />
-                    <label
-                      htmlFor="reward-photo-input"
-                      className={`w-full py-4 px-6 border border-dashed border-white/15 hover:border-purple-500/50 rounded-2xl bg-white/[0.02] flex items-center justify-center gap-2 cursor-pointer transition-all ${
-                        isUploading ? 'opacity-50 cursor-wait' : ''
-                      }`}
-                    >
-                      <ShoppingBag size={14} className="text-gray-400" />
-                      <span className="text-[10px] font-black text-gray-400 group-hover:text-purple-400 uppercase tracking-widest">
-                        {isUploading ? 'Fazendo Upload...' : 'Selecionar Capa do Prêmio'}
-                      </span>
-                    </label>
                   </div>
 
-                  {imageUrl && (
-                    <div className="w-20 h-20 rounded-2xl border border-white/10 overflow-hidden shrink-0 shadow-lg">
-                      <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
-                    </div>
-                  )}
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-gray-500">Preço em HubCoins</label>
+                    <input
+                      type="number"
+                      placeholder="Ex: 500"
+                      value={price}
+                      onChange={e => setPrice(Math.max(1, parseInt(e.target.value) || 0))}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:border-purple-500 outline-none transition-all"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <button
-                type="submit"
-                disabled={isUploading}
-                className="w-full py-4.5 rounded-2xl bg-purple-500 hover:bg-purple-600 text-white font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer shadow-lg shadow-purple-500/20 disabled:opacity-50"
-              >
-                🚀 Catalogar no HubShop
-              </button>
-            </motion.form>
-          ) : activeView === 'shop' ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-gray-500">Tipo da Premiação</label>
+                    <select
+                      value={type}
+                      onChange={e => setType(e.target.value as any)}
+                      className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:border-purple-500 outline-none transition-all"
+                    >
+                      <option value="PHYSICAL">Produto Físico</option>
+                      <option value="VOUCHER">Voucher Digital</option>
+                      <option value="EXPERIENCE">Experiência</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-gray-500">Estoque (Opcional)</label>
+                    <input
+                      type="number"
+                      placeholder="Sem Limite"
+                      value={stock === null ? '' : stock}
+                      onChange={e => setStock(e.target.value === '' ? null : Math.max(0, parseInt(e.target.value) || 0))}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:border-purple-500 outline-none transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-gray-500">Regra de Resgate</label>
+                  <textarea
+                    placeholder="Descreva as características do prêmio..."
+                    value={description}
+                    onChange={e => setDescription(e.target.value)}
+                    rows={2.5}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:border-purple-500 outline-none transition-all resize-none"
+                  />
+                </div>
+
+                {/* Upload de Foto no Cloudinary */}
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-gray-500">Foto do Prêmio (Cloudinary)</label>
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 relative group">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoUpload}
+                        disabled={isUploading}
+                        className="hidden"
+                        id="reward-photo-input"
+                      />
+                      <label
+                        htmlFor="reward-photo-input"
+                        className={`w-full py-3 px-4 border border-dashed border-white/15 hover:border-purple-500/50 rounded-xl bg-white/[0.02] flex items-center justify-center gap-2 cursor-pointer transition-all ${
+                          isUploading ? 'opacity-50 cursor-wait' : ''
+                        }`}
+                      >
+                        <ShoppingBag size={12} className="text-gray-400" />
+                        <span className="text-[9px] font-black text-gray-400 group-hover:text-purple-400 uppercase tracking-widest">
+                          {isUploading ? 'Enviando...' : 'Selecionar Capa'}
+                        </span>
+                      </label>
+                    </div>
+
+                    {imageUrl && (
+                      <div className="w-14 h-14 rounded-xl border border-white/10 overflow-hidden shrink-0 shadow-lg">
+                        <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Ações Inferiores */}
+                <div className="flex gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={handleCloseModal}
+                    className="flex-1 py-3.5 rounded-xl border border-white/10 text-gray-400 hover:text-white text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer text-center bg-white/5"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isUploading}
+                    className="flex-1 py-3.5 rounded-xl bg-purple-500 hover:bg-purple-600 text-white font-black text-[9px] uppercase tracking-widest transition-all cursor-pointer shadow-lg shadow-purple-500/20 disabled:opacity-50"
+                  >
+                    {editingItem ? 'Salvar Alterações' : 'Catalogar no HubShop'}
+                  </button>
+                </div>
+              </motion.form>
+            </div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence mode="wait">
+          {activeView === 'shop' ? (
             // VITRINE PRINCIPAL DE PRÊMIOS
             <motion.div
               key="vitrine"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+              className="space-y-8"
             >
-              {items.length > 0 ? (
-                items.filter(item => item.isActive || isAdmin).map(item => {
-                  const canAfford = credits >= item.price;
-                  const hasStock = item.stock === null || item.stock > 0;
+              {/* Grid 25% Menor - 5 Colunas */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {items.length > 0 ? (
+                  (() => {
+                    const filteredItems = items.filter(item => item.isActive || isAdmin);
+                    const totalPages = Math.ceil(filteredItems.length / itemsPerPage) || 1;
+                    const validCurrentPage = Math.min(currentPage, totalPages);
+                    const paginatedItems = filteredItems.slice((validCurrentPage - 1) * itemsPerPage, validCurrentPage * itemsPerPage);
 
-                  return (
-                    <div
-                      key={item.id}
-                      className={`bg-[#0a0c10]/40 backdrop-blur-2xl border rounded-[2.5rem] overflow-hidden flex flex-col justify-between transition-all duration-300 hover:shadow-2xl relative group ${
-                        !item.isActive
-                          ? 'border-white/5 opacity-50 grayscale'
-                          : canAfford && hasStock
-                            ? 'border-white/5 hover:border-purple-500/30'
-                            : 'border-white/5'
-                      }`}
-                    >
-                      {/* Selo do Tipo */}
-                      <span className="absolute top-4 left-4 z-20 px-2.5 py-1 bg-black/60 backdrop-blur-md rounded-lg text-[8px] font-black text-purple-400 border border-purple-500/20 uppercase tracking-widest shadow-lg">
-                        {item.type === 'PHYSICAL' ? '📦 Físico' : item.type === 'VOUCHER' ? '🎟️ Voucher' : '🌟 Experiência'}
-                      </span>
+                    return paginatedItems.map(item => {
+                      const canAfford = credits >= item.price;
+                      const hasStock = item.stock === null || item.stock > 0;
 
-                      {/* Selo de Estoque */}
-                      {item.stock !== null && (
-                        <span className={`absolute top-4 right-4 z-20 px-2.5 py-1 rounded-lg text-[8px] font-black border uppercase tracking-widest shadow-lg ${
-                          item.stock > 0
-                            ? 'bg-black/60 backdrop-blur-md border-emerald-500/20 text-emerald-400'
-                            : 'bg-red-500/20 border-red-500/30 text-red-400'
-                        }`}>
-                          {item.stock > 0 ? `Estoque: ${item.stock}` : 'Sem estoque'}
-                        </span>
-                      )}
+                      return (
+                        <div
+                          key={item.id}
+                          className={`bg-[#0a0c10]/40 backdrop-blur-2xl border rounded-[1.75rem] overflow-hidden flex flex-col justify-between transition-all duration-300 hover:shadow-xl relative group ${
+                            !item.isActive
+                              ? 'border-white/5 opacity-50 grayscale'
+                              : canAfford && hasStock
+                                ? 'border-white/5 hover:border-purple-500/30'
+                                : 'border-white/5'
+                          }`}
+                        >
+                          {/* Selo do Tipo */}
+                          <span className="absolute top-3 left-3 z-20 px-2 py-0.5 bg-black/60 backdrop-blur-md rounded-md text-[7px] font-black text-purple-400 border border-purple-500/20 uppercase tracking-widest shadow-md">
+                            {item.type === 'PHYSICAL' ? '📦 Físico' : item.type === 'VOUCHER' ? '🎟️ Voucher' : '🌟 Exp.'}
+                          </span>
 
-                      {/* Imagem do Produto */}
-                      <div className="aspect-video w-full bg-[#16181f] relative overflow-hidden shrink-0">
-                        {item.imageUrl ? (
-                          <img
-                            src={item.imageUrl}
-                            alt={item.title}
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center opacity-20">
-                            <Gift size={48} className="text-gray-500" />
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-65 z-10" />
-                      </div>
-
-                      {/* Detalhes */}
-                      <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-start gap-2">
-                            <h3 className="text-sm font-black uppercase tracking-wider text-white truncate max-w-[200px] leading-tight">
-                              {item.title}
-                            </h3>
-                            <div className="flex items-center gap-1 shrink-0 bg-yellow-500/5 px-2.5 py-1 border border-yellow-500/20 rounded-xl">
-                              <Coins size={12} className="text-yellow-400" />
-                              <span className="text-[10px] font-black text-yellow-400">{item.price}</span>
-                            </div>
-                          </div>
-                          
-                          <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider leading-relaxed line-clamp-3">
-                            {item.description}
-                          </p>
-                        </div>
-
-                        {/* Botão de Compra / Resgate */}
-                        <div className="pt-4 border-t border-white/5 flex gap-2">
-                          {isAdmin && (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => handleToggleItemActive(item)}
-                                className={`p-3 rounded-2xl border transition-all cursor-pointer ${
-                                  item.isActive
-                                    ? 'bg-white/5 border-white/5 text-gray-400 hover:text-white hover:bg-white/10'
-                                    : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-                                }`}
-                                title={item.isActive ? 'Pausar prêmio na loja' : 'Ativar prêmio na loja'}
-                              >
-                                {item.isActive ? <EyeOff size={14} /> : <Eye size={14} />}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteItem(item.id)}
-                                className="p-3 bg-white/5 hover:bg-rose-500/10 border border-white/5 hover:border-rose-500/20 text-gray-500 hover:text-rose-400 rounded-2xl transition-all cursor-pointer"
-                                title="Excluir prêmio"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </>
+                          {/* Selo de Estoque */}
+                          {item.stock !== null && (
+                            <span className={`absolute top-3 right-3 z-20 px-2 py-0.5 rounded-md text-[7px] font-black border uppercase tracking-widest shadow-md ${
+                              item.stock > 0
+                                ? 'bg-black/60 backdrop-blur-md border-emerald-500/20 text-emerald-400'
+                                : 'bg-red-500/20 border-red-500/30 text-red-400'
+                            }`}>
+                              {item.stock > 0 ? `Estoque: ${item.stock}` : 'Sem estoque'}
+                            </span>
                           )}
 
-                          <button
-                            onClick={() => handleRedeemItem(item)}
-                            disabled={!canAfford || !hasStock || !item.isActive}
-                            className={`flex-1 py-3.5 rounded-2xl text-[9px] font-black uppercase tracking-widest text-center cursor-pointer flex items-center justify-center gap-2 border transition-all ${
-                              !item.isActive
-                                ? 'bg-white/5 border-white/5 text-gray-600 cursor-not-allowed'
-                                : !hasStock
-                                  ? 'bg-red-500/5 border-red-500/10 text-red-500 cursor-not-allowed'
-                                  : canAfford
-                                    ? 'bg-purple-500 hover:bg-purple-600 text-white shadow-lg shadow-purple-500/25 border-purple-400/20 active:scale-95'
-                                    : 'bg-white/5 border-white/5 text-gray-600 cursor-not-allowed'
-                            }`}
-                          >
-                            {!item.isActive ? (
-                              'Pausado'
-                            ) : !hasStock ? (
-                              'Sem Estoque'
-                            ) : canAfford ? (
-                              <>
-                                Resgatar Prêmio
-                                <ArrowRight size={12} />
-                              </>
+                          {/* Imagem do Produto (Aspect 4:3 para ser 25% mais compacto) */}
+                          <div className="aspect-[4/3] w-full bg-[#16181f] relative overflow-hidden shrink-0">
+                            {item.imageUrl ? (
+                              <img
+                                src={item.imageUrl}
+                                alt={item.title}
+                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                              />
                             ) : (
-                              <div className="flex items-center gap-1 text-red-500/60 font-black">
-                                <Lock size={10} /> Saldo Insuficiente (-{item.price - credits})
+                              <div className="w-full h-full flex items-center justify-center opacity-20">
+                                <Gift size={32} className="text-gray-500" />
                               </div>
                             )}
-                          </button>
+                            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-65 z-10" />
+                          </div>
+
+                          {/* Detalhes (Padding menor p-4, e fontes text-xs) */}
+                          <div className="p-4.5 space-y-3 flex-1 flex flex-col justify-between">
+                            <div className="space-y-1.5">
+                              <div className="flex justify-between items-start gap-1">
+                                <h3 className="text-xs font-black uppercase tracking-wider text-white truncate max-w-[120px] leading-tight" title={item.title}>
+                                  {item.title}
+                                </h3>
+                                <div className="flex items-center gap-0.5 shrink-0 bg-yellow-500/5 px-2 py-0.5 border border-yellow-500/20 rounded-lg">
+                                  <Coins size={10} className="text-yellow-400" />
+                                  <span className="text-[9px] font-black text-yellow-400">{item.price}</span>
+                                </div>
+                              </div>
+                              
+                              <p className="text-[9px] text-gray-500 font-bold uppercase tracking-wider leading-relaxed line-clamp-2 min-h-[26px]">
+                                {item.description}
+                              </p>
+                            </div>
+
+                            {/* Botão de Compra / Resgate e Ações Admin */}
+                            <div className="pt-3 border-t border-white/5 flex gap-1.5">
+                              {isAdmin && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleItemActive(item)}
+                                    className={`p-2 rounded-xl border transition-all cursor-pointer shrink-0 ${
+                                      item.isActive
+                                        ? 'bg-white/5 border-white/5 text-gray-400 hover:text-white hover:bg-white/10'
+                                        : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                                    }`}
+                                    title={item.isActive ? 'Pausar prêmio na loja' : 'Ativar prêmio na loja'}
+                                  >
+                                    {item.isActive ? <EyeOff size={11} /> : <Eye size={11} />}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenEdit(item)}
+                                    className="p-2 bg-white/5 hover:bg-purple-500/10 border border-white/5 hover:border-purple-500/20 text-gray-500 hover:text-purple-400 rounded-xl transition-all cursor-pointer shrink-0"
+                                    title="Editar prêmio"
+                                  >
+                                    <Pencil size={11} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteItem(item.id)}
+                                    className="p-2 bg-white/5 hover:bg-rose-500/10 border border-white/5 hover:border-rose-500/20 text-gray-500 hover:text-rose-400 rounded-xl transition-all cursor-pointer shrink-0"
+                                    title="Excluir prêmio"
+                                  >
+                                    <Trash2 size={11} />
+                                  </button>
+                                </>
+                              )}
+
+                              <button
+                                onClick={() => handleRedeemItem(item)}
+                                disabled={!canAfford || !hasStock || !item.isActive}
+                                className={`flex-1 py-2.5 rounded-xl text-[8px] font-black uppercase tracking-widest text-center cursor-pointer flex items-center justify-center gap-1.5 border transition-all ${
+                                  !item.isActive
+                                    ? 'bg-white/5 border-white/5 text-gray-600 cursor-not-allowed'
+                                    : !hasStock
+                                      ? 'bg-red-500/5 border-red-500/10 text-red-500 cursor-not-allowed'
+                                      : canAfford
+                                        ? 'bg-purple-500 hover:bg-purple-600 text-white shadow-md shadow-purple-500/20 border-purple-400/20 active:scale-95'
+                                        : 'bg-white/5 border-white/5 text-gray-600 cursor-not-allowed'
+                                }`}
+                              >
+                                {!item.isActive ? (
+                                  'Pausado'
+                                ) : !hasStock ? (
+                                  'Esgotado'
+                                ) : canAfford ? (
+                                  <>
+                                    Resgatar
+                                    <ArrowRight size={10} />
+                                  </>
+                                ) : (
+                                  <div className="flex items-center gap-0.5 text-red-500/60 font-black">
+                                    <Lock size={8} /> -{item.price - credits}
+                                  </div>
+                                )}
+                              </button>
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      );
+                    });
+                  })()
+                ) : (
+                  <div className="py-24 text-center border border-dashed border-white/5 bg-slate-950/10 rounded-[3rem] opacity-60 col-span-5 select-none w-full">
+                    <ShoppingBag size={48} className="text-gray-600 mx-auto mb-4" />
+                    <h4 className="text-base font-black text-gray-400 uppercase tracking-widest">Loja Vazia</h4>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-1">O administrador ainda não cadastrou prêmios para resgate.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* BARRA DE PAGINAÇÃO DE ELITE */}
+              {(() => {
+                const filteredItems = items.filter(item => item.isActive || isAdmin);
+                const totalPages = Math.ceil(filteredItems.length / itemsPerPage) || 1;
+                
+                if (totalPages <= 1) return null;
+                
+                return (
+                  <div className="flex items-center justify-between border-t border-white/5 pt-6 select-none">
+                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">
+                      Mostrando {Math.min(filteredItems.length, (currentPage - 1) * itemsPerPage + 1)}-{Math.min(filteredItems.length, currentPage * itemsPerPage)} de {filteredItems.length} prêmios
+                    </span>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                        className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
+                          currentPage === 1
+                            ? 'border-white/5 text-gray-600 bg-white/2 cursor-not-allowed'
+                            : 'border-white/10 text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 active:scale-95'
+                        }`}
+                      >
+                        <ChevronLeft size={14} />
+                      </button>
+
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`w-9 h-9 rounded-xl border text-[9px] font-black transition-all cursor-pointer active:scale-95 ${
+                            currentPage === page
+                              ? 'bg-purple-500 border-purple-400 text-white shadow-md shadow-purple-500/25'
+                              : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:bg-white/10'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ))}
+
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        disabled={currentPage === totalPages}
+                        className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
+                          currentPage === totalPages
+                            ? 'border-white/5 text-gray-600 bg-white/2 cursor-not-allowed'
+                            : 'border-white/10 text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 active:scale-95'
+                        }`}
+                      >
+                        <ChevronRight size={14} />
+                      </button>
                     </div>
-                  );
-                })
-              ) : (
-                <div className="py-24 text-center border border-dashed border-white/5 bg-slate-950/10 rounded-[3rem] opacity-60 col-span-3">
-                  <ShoppingBag size={48} className="text-gray-600 mx-auto mb-4" />
-                  <h4 className="text-base font-black text-gray-400 uppercase tracking-widest">Loja Vazia</h4>
-                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-1">O administrador ainda não cadastrou prêmios para resgate.</p>
+                  </div>
+                );
+              })()}
+            </motion.div>
+          ) : activeView === 'my-orders' ? (prêmios para resgate.</p>
                 </div>
               )}
             </motion.div>

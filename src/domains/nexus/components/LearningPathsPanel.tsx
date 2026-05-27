@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Trophy, Sparkles, Plus, CheckCircle, ArrowRight, Flame, ShieldAlert, Award, Trash2 } from 'lucide-react';
+import { BookOpen, Trophy, Sparkles, Plus, CheckCircle, ArrowRight, Flame, ShieldAlert, Award, Trash2, Pencil } from 'lucide-react';
 import { doc, collection, onSnapshot, setDoc, updateDoc, deleteDoc, query, orderBy, getDocs, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@auth/contexts/AuthContext';
@@ -42,8 +42,9 @@ export function LearningPathsPanel() {
   const [communityBooks, setCommunityBooks] = useState<NexusBook[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Estados locais do Administrador (Criação de Trilhas)
+  // Estados locais do Administrador (Criação/Edição de Trilhas)
   const [isCreating, setIsCreating] = useState(false);
+  const [editingPath, setEditingPath] = useState<LearningPath | null>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [benefit, setBenefit] = useState('');
@@ -54,6 +55,30 @@ export function LearningPathsPanel() {
   const orgId = userProfile?.orgId;
   const uid = user?.uid;
   const isAdmin = hasPermission('MANAGE_SETTINGS') || hasPermission('MANAGE_TEAM');
+
+  // Limpa o formulário e fecha o modal
+  const handleCloseModal = () => {
+    setName('');
+    setDescription('');
+    setBenefit('');
+    setSelectedBookIds([]);
+    setNeonColor('acid-lime');
+    setHubCoinReward(200);
+    setIsCreating(false);
+    setEditingPath(null);
+  };
+
+  // Carrega os dados da trilha para o modal de edição
+  const handleOpenEdit = (path: LearningPath) => {
+    setEditingPath(path);
+    setName(path.name);
+    setDescription(path.description);
+    setBenefit(path.benefit);
+    setSelectedBookIds(path.bookIds);
+    setNeonColor(path.neonColor);
+    setHubCoinReward(path.hubCoinReward);
+    setIsCreating(true);
+  };
 
   // Carrega as trilhas e o progresso do usuário logado
   useEffect(() => {
@@ -321,17 +346,18 @@ export function LearningPathsPanel() {
     }
   };
 
-  // Função para criar uma nova trilha (Admin)
-  const handleCreatePath = async (e: React.FormEvent) => {
+  // Função para criar ou editar uma nova trilha (Admin)
+  const handleCreateOrUpdatePath = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!orgId || !uid) return;
 
     if (!name.trim()) return toast.error('O nome da trilha é obrigatório.');
     if (selectedBookIds.length === 0) return toast.error('Selecione pelo menos um livro para a trilha.');
 
-    const tId = toast.loading('Registrando nova trilha...');
+    const isEdit = !!editingPath;
+    const tId = toast.loading(isEdit ? 'Atualizando trilha...' : 'Registrando nova trilha...');
     try {
-      const pathId = `path_${Date.now()}`;
+      const pathId = isEdit ? editingPath.id : `path_${Date.now()}`;
       const pathData: LearningPath = {
         id: pathId,
         name,
@@ -340,24 +366,17 @@ export function LearningPathsPanel() {
         neonColor,
         bookIds: selectedBookIds,
         hubCoinReward,
-        createdAt: Date.now(),
-        createdBy: uid
+        createdAt: isEdit ? editingPath.createdAt : Date.now(),
+        createdBy: isEdit ? editingPath.createdBy : uid
       };
 
       await setDoc(doc(db, 'organizations', orgId, 'learningPaths', pathId), pathData);
       
-      // Limpa formulário
-      setName('');
-      setDescription('');
-      setBenefit('');
-      setSelectedBookIds([]);
-      setNeonColor('acid-lime');
-      setIsCreating(false);
-      
-      toast.success('Trilha de Conhecimento registrada com sucesso! 📚', { id: tId });
+      handleCloseModal();
+      toast.success(isEdit ? 'Trilha de Conhecimento atualizada com sucesso! 📚' : 'Trilha de Conhecimento registrada com sucesso! 📚', { id: tId });
     } catch (err) {
-      console.error('Erro ao criar trilha:', err);
-      toast.error('Erro ao registrar trilha.', { id: tId });
+      console.error('Erro ao salvar trilha:', err);
+      toast.error(isEdit ? 'Erro ao atualizar trilha.' : 'Erro ao registrar trilha.', { id: tId });
     }
   };
 
@@ -411,158 +430,181 @@ export function LearningPathsPanel() {
         )}
       </div>
 
-      <AnimatePresence mode="wait">
-        {isCreating && isAdmin ? (
-          // FORMULÁRIO DE CRIAÇÃO (ADMIN)
-          <motion.form
-            key="create-form"
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
-            onSubmit={handleCreatePath}
-            className="bg-slate-950/40 border border-white/10 rounded-[2.5rem] p-8 md:p-10 space-y-6 shadow-2xl relative overflow-hidden"
+      <AnimatePresence>
+        {isCreating && isAdmin && (
+          <div 
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) handleCloseModal();
+            }}
           >
-            <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-[80px] -mr-10 -mt-10 bg-primary-500 opacity-20 pointer-events-none" />
-            
-            <h3 className="text-lg font-black uppercase tracking-widest text-white">Criar Trilha Estratégica</h3>
+            <motion.form
+              key="create-form"
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              onSubmit={handleCreateOrUpdatePath}
+              className="bg-[#0b0d14] border border-white/10 rounded-[2rem] p-6 md:p-8 space-y-4 shadow-2xl relative w-full max-w-lg max-h-[90vh] overflow-y-auto custom-scrollbar flex flex-col justify-between"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Botão de Fechar X no topo */}
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-[80px] -mr-10 -mt-10 bg-primary-500 opacity-20 pointer-events-none" />
+              
+              <h3 className="text-md font-black uppercase tracking-widest text-white">
+                {editingPath ? 'Editar Trilha Estratégica' : 'Criar Trilha Estratégica'}
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-gray-500">Nome da Trilha</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Mestre da Negociação"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:border-primary-500 outline-none transition-all"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-gray-500">Prêmio de HubCoins</label>
+                  <input
+                    type="number"
+                    placeholder="Ex: 200"
+                    value={hubCoinReward}
+                    onChange={e => setHubCoinReward(Math.max(1, parseInt(e.target.value) || 0))}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:border-primary-500 outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-gray-500">Declaração (Meta)</label>
+                  <textarea
+                    placeholder="Explique o foco desta trilha..."
+                    value={description}
+                    onChange={e => setDescription(e.target.value)}
+                    rows={2.5}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:border-primary-500 outline-none transition-all resize-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-gray-500">Benefício Cognitivo</label>
+                  <textarea
+                    placeholder="Ex: Esta trilha capacitará para reverter objeções..."
+                    value={benefit}
+                    onChange={e => setBenefit(e.target.value)}
+                    rows={2.5}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:border-primary-500 outline-none transition-all resize-none"
+                  />
+                </div>
+              </div>
+
+              {/* Seletor de Aura Neon */}
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Nome da Trilha</label>
-                <input
-                  type="text"
-                  placeholder="Ex: Mestre da Negociação e Fechamentos"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:border-primary-500 outline-none transition-all"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Prêmio de HubCoins</label>
-                <input
-                  type="number"
-                  placeholder="Ex: 200"
-                  value={hubCoinReward}
-                  onChange={e => setHubCoinReward(Math.max(1, parseInt(e.target.value) || 0))}
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:border-primary-500 outline-none transition-all"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Declaração e Explicação (Meta)</label>
-                <textarea
-                  placeholder="Explique detalhadamente o foco desta trilha..."
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                  rows={3}
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:border-primary-500 outline-none transition-all resize-none"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">O que ela vai ajudar (Benefício Cognitivo)</label>
-                <textarea
-                  placeholder="Ex: Esta trilha o capacitará para reverter objeções e aumentar as taxas de fechamento de combos em 15%."
-                  value={benefit}
-                  onChange={e => setBenefit(e.target.value)}
-                  rows={3}
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:border-primary-500 outline-none transition-all resize-none"
-                />
-              </div>
-            </div>
-
-            {/* Seletor de Aura Neon */}
-            <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Aura Neon Exclusiva (Identidade Visual da Capa)</label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-                {Object.keys(NEON_AURA_MAP).map(key => {
-                  const aura = NEON_AURA_MAP[key];
-                  return (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => setNeonColor(key)}
-                      className={`p-3 rounded-2xl border text-[9px] font-black uppercase tracking-widest transition-all flex flex-col items-center gap-2 cursor-pointer ${
-                        neonColor === key
-                          ? `bg-white/10 ${aura.border} text-white shadow-lg`
-                          : 'bg-white/5 border-white/5 text-gray-500 hover:text-white'
-                      }`}
-                    >
-                      <span className={`w-4 h-4 rounded-full bg-gradient-to-br ${aura.gradient} ${aura.glow}`} />
-                      {key.replace('-', ' ')}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Seleção de Livros da Comunidade */}
-            <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Vincular Livros da Comunidade (Selecione os Livros Integrantes)</label>
-              {communityBooks.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[220px] overflow-y-auto custom-scrollbar pr-2">
-                  {communityBooks.map(book => {
-                    const isSelected = selectedBookIds.includes(book.id);
+                <label className="text-[9px] font-black uppercase tracking-widest text-gray-500">Aura Neon Exclusiva</label>
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                  {Object.keys(NEON_AURA_MAP).map(key => {
+                    const aura = NEON_AURA_MAP[key];
                     return (
-                      <div
-                        key={book.id}
-                        onClick={() => toggleBookSelection(book.id)}
-                        className={`p-3 border rounded-2xl flex items-center justify-between cursor-pointer transition-all ${
-                          isSelected
-                            ? 'bg-primary-500/10 border-primary-500/40 text-primary-400'
-                            : 'bg-white/[0.02] border-white/5 text-gray-400 hover:bg-white/5'
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => setNeonColor(key)}
+                        className={`p-2.5 rounded-xl border text-[8px] font-black uppercase tracking-widest transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
+                          neonColor === key
+                            ? `bg-white/10 ${aura.border} text-white shadow-md`
+                            : 'bg-white/5 border-white/5 text-gray-500 hover:text-white'
                         }`}
                       >
-                        <div className="flex items-center gap-3 overflow-hidden pr-2">
-                          <div className="w-8 h-10 bg-slate-900 border border-white/10 rounded-md overflow-hidden shrink-0 flex items-center justify-center text-[6px]">
-                            {book.coverUrl ? (
-                              <img src={book.coverUrl} alt="Capa" className="w-full h-full object-cover" />
-                            ) : (
-                              'CAPA'
-                            )}
-                          </div>
-                          <div className="min-w-0">
-                            <h4 className="text-[10px] font-black uppercase tracking-wider truncate">{book.title}</h4>
-                            <p className="text-[8px] opacity-50 truncate uppercase font-bold">{book.author || 'Sem Autor'}</p>
-                          </div>
-                        </div>
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          readOnly
-                          className="w-3.5 h-3.5 rounded border-white/15 accent-primary-500 shrink-0"
-                        />
-                      </div>
+                        <span className={`w-3.5 h-3.5 rounded-full bg-gradient-to-br ${aura.gradient} ${aura.glow}`} />
+                        {key.replace('-', ' ')}
+                      </button>
                     );
                   })}
                 </div>
-              ) : (
-                <div className="p-8 text-center border border-dashed border-white/5 rounded-2xl opacity-60">
-                  <BookOpen size={24} className="mx-auto mb-2 text-gray-600" />
-                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Nenhum livro publicado na comunidade do Nexus ainda.</p>
-                </div>
-              )}
-            </div>
+              </div>
 
-            <button
-              type="submit"
-              className="w-full py-4.5 rounded-2xl bg-primary-500 hover:bg-primary-600 text-white font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer shadow-lg shadow-primary-500/20"
-            >
-              🚀 Registrar Trilha de Conhecimento
-            </button>
-          </motion.form>
-        ) : (
-          // VISUALIZADOR GERAL DE TRILHAS
-          <motion.div
-            key="paths-grid"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="grid grid-cols-1 md:grid-cols-2 gap-6"
-          >
+              {/* Seleção de Livros da Comunidade */}
+              <div className="space-y-2">
+                <label className="text-[9px] font-black uppercase tracking-widest text-gray-500">Vincular Livros da Comunidade</label>
+                {communityBooks.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[140px] overflow-y-auto custom-scrollbar pr-1.5">
+                    {communityBooks.map(book => {
+                      const isSelected = selectedBookIds.includes(book.id);
+                      return (
+                        <div
+                          key={book.id}
+                          onClick={() => toggleBookSelection(book.id)}
+                          className={`p-2.5 border rounded-xl flex items-center justify-between cursor-pointer transition-all ${
+                            isSelected
+                              ? 'bg-primary-500/10 border-primary-500/40 text-primary-400'
+                              : 'bg-white/[0.02] border-white/5 text-gray-400 hover:bg-white/5'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 overflow-hidden pr-2">
+                            <div className="w-6 h-8 bg-slate-900 border border-white/10 rounded overflow-hidden shrink-0 flex items-center justify-center text-[5px]">
+                              {book.coverUrl ? (
+                                <img src={book.coverUrl} alt="Capa" className="w-full h-full object-cover" />
+                              ) : (
+                                'CAPA'
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <h4 className="text-[9px] font-black uppercase tracking-wider truncate leading-tight">{book.title}</h4>
+                              <p className="text-[7.5px] opacity-50 truncate uppercase font-bold">{book.author || 'Sem Autor'}</p>
+                            </div>
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            readOnly
+                            className="w-3 h-3 rounded border-white/15 accent-primary-500 shrink-0"
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="p-6 text-center border border-dashed border-white/5 rounded-xl opacity-60">
+                    <BookOpen size={20} className="mx-auto mb-1 text-gray-600" />
+                    <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Nenhum livro publicado no Nexus.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Botões de Ação Inferiores */}
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  className="flex-1 py-3.5 rounded-xl border border-white/10 text-gray-400 hover:text-white text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer text-center bg-white/5"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-3.5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-black text-[9px] uppercase tracking-widest transition-all cursor-pointer shadow-lg shadow-primary-500/20"
+                >
+                  {editingPath ? 'Salvar Alterações' : 'Registrar Trilha de Conhecimento'}
+                </button>
+              </div>
+            </motion.form>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {paths.length > 0 ? (
               paths.map(path => {
                 const progress = userProgresses[path.id];
@@ -736,16 +778,26 @@ export function LearningPathsPanel() {
                         </button>
                       )}
 
-                      {/* Exclusão pelo Admin */}
+                      {/* Ações pelo Admin */}
                       {isAdmin && (
-                        <button
-                          type="button"
-                          onClick={() => handleDeletePath(path.id)}
-                          className="p-3 bg-white/5 hover:bg-rose-500/10 border border-white/5 hover:border-rose-500/20 text-gray-500 hover:text-rose-400 rounded-2xl transition-all cursor-pointer shrink-0 mt-2 self-end"
-                          title="Excluir Trilha"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        <div className="flex items-center gap-1.5 mt-3 self-end shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEdit(path)}
+                            className="p-2.5 bg-white/5 hover:bg-primary-500/10 border border-white/5 hover:border-primary-500/20 text-gray-500 hover:text-primary-400 rounded-xl transition-all cursor-pointer"
+                            title="Editar Trilha"
+                          >
+                            <Pencil size={12} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeletePath(path.id)}
+                            className="p-2.5 bg-white/5 hover:bg-rose-500/10 border border-white/5 hover:border-rose-500/20 text-gray-500 hover:text-rose-400 rounded-xl transition-all cursor-pointer"
+                            title="Excluir Trilha"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
