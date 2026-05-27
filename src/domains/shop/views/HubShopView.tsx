@@ -745,10 +745,6 @@ export default function HubShopView() {
                 );
               })()}
             </motion.div>
-          ) : activeView === 'my-orders' ? (prêmios para resgate.</p>
-                </div>
-              )}
-            </motion.div>
           ) : activeView === 'my-orders' ? (
             // LISTA DE RESGATES DO PRÓPRIO COLABORADOR
             <motion.div
