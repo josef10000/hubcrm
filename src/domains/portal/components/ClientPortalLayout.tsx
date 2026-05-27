@@ -41,8 +41,10 @@ export default function ClientPortalLayout() {
 
   const navItems = [
     { id: 'home', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'finance', label: 'Financeiro', icon: CreditCard },
-    { id: 'services', label: 'Marketplace', icon: ShoppingBag },
+    ...(client && !client.isCourtesy ? [
+      { id: 'finance', label: 'Financeiro', icon: CreditCard },
+      { id: 'services', label: 'Marketplace', icon: ShoppingBag }
+    ] : []),
     { id: 'docs', label: 'Documentos', icon: Files },
     { id: 'support', label: 'Atendimento', icon: MessageCircle },
   ];
@@ -196,10 +198,7 @@ export default function ClientPortalLayout() {
                 <span className="text-[10px] text-gray-500 truncate lowercase">{client.email}</span>
               </div>
             </div>
-            <button className="w-full flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-red-400 transition-colors group">
-              <LogOut size={18} className="group-hover:translate-x-1 transition-transform" />
-              <span className="font-medium text-sm">Sair do Portal</span>
-            </button>
+            {/* Botão de sair inativo removido */}
           </div>
         </div>
       </aside>

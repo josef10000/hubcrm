@@ -11,6 +11,7 @@ export const formatCurrency = (value: number) => {
 };
 
 export const getSetupPrice = (plan?: string, client?: Partial<Client>) => {
+  if (client?.isCourtesy) return 0;
   if (client?.setupPrice !== undefined) return client.setupPrice;
   if (client?.customSetupPrice !== undefined) return client.customSetupPrice;
   
@@ -22,6 +23,11 @@ export const getSetupPrice = (plan?: string, client?: Partial<Client>) => {
 };
 
 export const getPlanPrice = (plan?: string, billingCycle?: string, client?: Partial<Client> | number, customSetupPrice?: number) => {
+  // Se for VIP / Cortesia, o valor é 0 automático!
+  if (client && typeof client === 'object' && client.isCourtesy) {
+    return 0;
+  }
+
   let finalMonthlyPrice: number = 0;
   let finalSetupPrice: number = 0;
 

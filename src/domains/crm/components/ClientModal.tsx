@@ -144,7 +144,7 @@ function ClientModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.offerId && !formData.plan) {
+    if (!formData.isCourtesy && !formData.offerId && !formData.plan) {
       toast.error("Por favor, selecione uma Oferta / Produto.");
       return;
     }
@@ -400,7 +400,25 @@ function ClientModal({
                               ...prev, 
                               isCourtesy: val, 
                               status: val ? 'Ativo' : prev.status,
-                              paymentStatus: val ? 'N/A' : 'PENDING'
+                              paymentStatus: val ? 'N/A' : 'PENDING',
+                              // Se for VIP / Cortesia, purga os dados financeiros
+                              ...(val ? {
+                                plan: 'Isento / VIP',
+                                offerId: 'vip',
+                                planPrice: 0,
+                                setupPrice: 0,
+                                customMonthlyPrice: 0,
+                                customSetupPrice: 0,
+                                billingCycle: undefined,
+                                billingType: 'UNDEFINED'
+                              } : {
+                                plan: prev.plan === 'Isento / VIP' ? '' : prev.plan,
+                                offerId: prev.offerId === 'vip' ? '' : prev.offerId,
+                                planPrice: prev.planPrice === 0 ? undefined : prev.planPrice,
+                                setupPrice: prev.setupPrice === 0 ? undefined : prev.setupPrice,
+                                customMonthlyPrice: undefined,
+                                customSetupPrice: undefined
+                              })
                             }));
                           }} 
                         />

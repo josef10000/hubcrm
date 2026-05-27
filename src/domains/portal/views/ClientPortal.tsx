@@ -441,7 +441,7 @@ export default function ClientPortal() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
           {/* Status Card (contextual to active selection) */}
-          <div className="group bg-white/[0.03] backdrop-blur-2xl border border-white/10 p-6 md:p-8 rounded-[2rem] shadow-2xl hover:border-white/20 transition-all duration-300">
+          <div className={`group bg-white/[0.03] backdrop-blur-2xl border border-white/10 p-6 md:p-8 rounded-[2rem] shadow-2xl hover:border-white/20 transition-all duration-300 ${client.isCourtesy ? 'md:col-span-2' : ''}`}>
             <h2 className="text-base md:text-lg font-semibold mb-6 flex items-center gap-2 text-gray-200">
               <div className="p-1.5 bg-primary-500/10 rounded-lg">
                 <Globe className="w-4 h-4 md:w-5 md:h-5 text-primary-400" />
@@ -471,7 +471,7 @@ export default function ClientPortal() {
                   </div>
                 )}
 
-                {client.siteLink && client.status === 'Ativo' && (
+                {client.siteLink && (client.status === 'Ativo' || client.isCourtesy) && (
                   <div className="mt-4 p-4 bg-white/5 rounded-2xl border border-white/5">
                     <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-2">Link de acesso:</p>
                     <a
@@ -492,8 +492,9 @@ export default function ClientPortal() {
           </div>
 
           {/* Finance Card */}
-          <div className="group bg-white/[0.03] backdrop-blur-2xl border border-white/10 p-6 md:p-8 rounded-[2rem] shadow-2xl relative overflow-hidden hover:border-white/20 transition-all duration-300">
-            <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-primary-500/10 rounded-full blur-3xl group-hover:bg-primary-500/20 transition-colors duration-500"></div>
+          {!client.isCourtesy && (
+            <div className="group bg-white/[0.03] backdrop-blur-2xl border border-white/10 p-6 md:p-8 rounded-[2rem] shadow-2xl relative overflow-hidden hover:border-white/20 transition-all duration-300">
+              <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-primary-500/10 rounded-full blur-3xl group-hover:bg-primary-500/20 transition-colors duration-500"></div>
 
             <h2 className="text-base md:text-lg font-semibold mb-6 flex items-center gap-2 text-gray-200">
               <div className="p-1.5 bg-primary-500/10 rounded-lg">
@@ -594,9 +595,10 @@ export default function ClientPortal() {
             </div>
           </div>
         </div>
+      )}
 
         {/* Payment History Card */}
-        {paymentsHistory.length > 0 && (
+        {paymentsHistory.length > 0 && !client.isCourtesy && (
           <div className="mt-6 bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
             <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
               <FileText className="w-5 h-5 text-primary-400" />
@@ -660,7 +662,7 @@ export default function ClientPortal() {
         )}
 
         {/* Project Stages - Only show if not all are completed */}
-        {client.stages && client.stages.length > 0 && !client.stages.every((s: any) => s.completed) && (
+        {client.stages && client.stages.length > 0 && !client.stages.every((s: any) => s.completed) && !client.isCourtesy && (
           <div className="mt-6 bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
             <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-primary-400" />
@@ -787,8 +789,9 @@ export default function ClientPortal() {
           </div>
         )}
 
-        {/* Referral Program - Indique e Ganhe */}
-        <div className="mt-6 bg-gradient-to-br from-emerald-500/20 to-emerald-600/5 backdrop-blur-xl border border-emerald-500/30 p-8 rounded-3xl shadow-2xl">
+        {/* Referral Program - Indique e Ganhe (Ocultado temporariamente) */}
+        {false && (
+          <div className="mt-6 bg-gradient-to-br from-emerald-500/20 to-emerald-600/5 backdrop-blur-xl border border-emerald-500/30 p-8 rounded-3xl shadow-2xl">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
               <Users className="w-6 h-6 text-white" />
@@ -886,11 +889,12 @@ export default function ClientPortal() {
               </p>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Planos Disponíveis */}
-        <div className="mt-8 bg-white/[0.03] backdrop-blur-2xl border border-white/10 p-6 md:p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/5 blur-[100px] -z-10 group-hover:bg-primary-500/10 transition-colors duration-700"></div>
+        {!client.isCourtesy && (
+          <div className="mt-8 bg-white/[0.03] backdrop-blur-2xl border border-white/10 p-6 md:p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/5 blur-[100px] -z-10 group-hover:bg-primary-500/10 transition-colors duration-700"></div>
 
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
             <div>
@@ -1050,7 +1054,7 @@ export default function ClientPortal() {
               </div>
             )}
           </div>
-        </div>
+        )}
 
         {/* Support Request Form */}
         <div className="mt-8 bg-white/[0.03] backdrop-blur-2xl border border-white/10 p-6 md:p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden group" id="support-form">
