@@ -515,6 +515,20 @@ Integração de alta sinergia unindo desenvolvimento profissional contínuo à e
 * **Meta Coletiva Batida**: Quando o departamento atinge 100% de progresso acumulado no livro oficial do mês, um painel especial holográfico de celebração é liberado para todos os participantes do time.
 * **Resgate de Recompensas Enterprise**: Botão neon arco-íris pulsante que concede **+200 Hub Coins** ao colaborador ao bater a meta coletiva. Possui validação atômica para impedir resgates múltiplos e reproduz efeitos procedural de arpejo de triunfo via Web Audio API.
 
+### 📚 Trilhas de Conhecimento (Learning Paths) [NEW]
+
+Ecossistema voltado para capacitação técnica, metas de carreira e desenvolvimento contínuo:
+* **Construção de Trilhas (Admin):** Administradores podem consolidar jornadas de aprendizado dando um nome, descrição, benefício e recompensa de HubCoins, e selecionando a aura neon temática.
+* **Auras e Bordas Neon Dinâmicas:** Ao aceitar e iniciar uma trilha, o progresso individualizado é ativado. Os livros pertencentes àquela trilha são clonados na estante do usuário e ganham **fundo, bordas e lombada neon pulsantes** na cor específica da trilha. Livros avulsos ou de trilhas não aceitas permanecem com o design padrão (sem luminosidade).
+* **Unificação Econômica de HubCoins:** Concluir cada página dos livros de trilhas ativas concede automaticamente `+1 HubCoin`. Compartilhar insights concede `+20 HubCoins`. Bater a maestria da trilha finalizando todos os livros integrantes confere um jackpot de conclusão de `+200 HubCoins` com toasters e comemorações reativas na tela.
+
+### 🛒 HubShop - Loja Corporativa [NEW]
+
+A nova e-commerce central de resgates corporativos por HubCoins:
+* **Vitrine Premium de Prêmios:** Um grid de cartões Glassmorphism exibindo prêmios físicos (canecas, moletons), vouchers digitais (Ifood, Uber) e experiências de prestígio (almoço com CEO, folgas).
+* **Upload Integrado via Cloudinary:** O administrador pode cadastrar novos prêmios instantaneamente anexando imagens reais que são salvas de forma segura na CDN do **Cloudinary** e retornam URLs públicas otimizadas.
+* **Transação Segura e Controle de Estoque:** O sistema valida o saldo em tempo real, debuta as HubCoins do colaborador, decrementa o estoque atómicamente e registra o pedido em `/hubShopOrders` com status pendente de entrega pelo time de RH/Gestão.
+
 ---
 
 ## 🧪 Testing & CI/CD Strategy

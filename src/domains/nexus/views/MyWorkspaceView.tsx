@@ -24,6 +24,7 @@ const LibraryTab = React.lazy(() => import('@nexus/components/LibraryTab').then(
 import { OKRWidget } from '@nexus/components/OKRWidget';
 import { KudosWall } from '@nexus/components/KudosWall';
 import { ReadingCompanion } from '@nexus/components/ReadingCompanion';
+import { LearningPathsPanel } from '@nexus/components/LearningPathsPanel';
 
 // Interfaces importadas da Store
 import { useNexusStore } from '@store/useNexusStore';
@@ -830,7 +831,8 @@ export default function MyWorkspaceView() {
             )}
 
             {activeTab === 'culture' && (
-              <motion.section key="culture" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+              <motion.section key="culture" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-12 animate-in fade-in duration-500">
+                <LearningPathsPanel />
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   <OKRWidget />
                   <KudosWall />

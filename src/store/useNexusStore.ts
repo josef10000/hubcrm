@@ -100,6 +100,8 @@ export interface NexusBook {
   isFavorite?: boolean;
   linkedNoteId?: string;
   format?: 'pdf' | 'kindle' | 'physical';
+  learningPathId?: string;
+  neonColor?: string;
 }
 
 export interface NexusData {
@@ -543,6 +545,65 @@ export const useNexusStore = create<NexusState>()(
           }
         } catch (err) {
           Logger.error('[NexusStore] Falha ao sincronizar progresso com o Clube de Leitura:', err);
+        }
+      }
+
+      // 📚 Sincronização e Reatividade de Trilhas de Conhecimento
+      if (uid && book.learningPathId && updates.status === 'finished' && book.status !== 'finished') {
+        try {
+          const profileRef = doc(db, 'profiles', uid);
+          const profileSnap = await getDoc(profileRef);
+          if (profileSnap.exists()) {
+            const orgId = profileSnap.data().orgId;
+            if (orgId) {
+              const pathRef = doc(db, 'organizations', orgId, 'learningPaths', book.learningPathId);
+              const pathSnap = await getDoc(pathRef);
+              
+              if (pathSnap.exists()) {
+                const pathData = pathSnap.data();
+                const progressRef = doc(db, 'organizations', orgId, 'users', uid, 'learningPaths', book.learningPathId);
+                const progressSnap = await getDoc(progressRef);
+                
+                if (progressSnap.exists()) {
+                  const progressData = progressSnap.data();
+                  const completedBookIds = progressData.completedBookIds || [];
+                  const bookOriginalId = book.originalBookId || book.id;
+                  
+                  if (!completedBookIds.includes(bookOriginalId)) {
+                    const newCompletedList = [...completedBookIds, bookOriginalId];
+                    const totalBooks = pathData.bookIds?.length || 1;
+                    const progressPercentage = Math.min(Math.round((newCompletedList.length / totalBooks) * 100), 100);
+                    const isCompleted = progressPercentage >= 100;
+                    
+                    const progressUpdate: any = {
+                      completedBookIds: newCompletedList,
+                      progressPercentage,
+                      status: isCompleted ? 'COMPLETED' : 'ACTIVE'
+                    };
+                    
+                    if (isCompleted) {
+                      progressUpdate.completedAt = Date.now();
+                    }
+                    
+                    await updateDoc(progressRef, progressUpdate);
+                    
+                    // Se concluiu a trilha agora
+                    if (isCompleted && progressData.status !== 'COMPLETED') {
+                      const reward = pathData.hubCoinReward || 200;
+                      await useArenaStore.getState().addArenaCredits(uid, reward);
+                      toast.success(`🎉 TRILHA CONCLUÍDA! Você finalizou a trilha "${pathData.name}" e faturou +${reward} HubCoins! 🪙`, {
+                        duration: 8000
+                      });
+                    } else {
+                      toast.success(`Livro concluído! Progresso na trilha "${pathData.name}": ${progressPercentage}% 📚`);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } catch (err) {
+          Logger.error('[NexusStore] Falha ao sincronizar progresso com a Trilha de Conhecimento:', err);
         }
       }
     }

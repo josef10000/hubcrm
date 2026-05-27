@@ -31,6 +31,7 @@ const BillingView = lazy(() => import('@finance/views/BillingView'));
 const AdministrativeView = lazy(() => import('@core/admin/views/AdministrativeView'));
 const MyWorkspaceView = lazy(() => import('@nexus/views/MyWorkspaceView'));
 const ArenaView = lazy(() => import('@/domains/arena/views/ArenaView'));
+const HubShopView = lazy(() => import('@/domains/shop/views/HubShopView'));
 const ProjectsView = lazy(() => import('@crm/views/ProjectsView'));
 const OnboardingHubView = lazy(() => import('@crm/views/OnboardingHubView'));
 const ContractsView = lazy(() => import('@crm/views/ContractsView'));
@@ -135,6 +136,7 @@ export function AppRouter() {
                     <Route path="/profile/:uid" element={<ProfileView />} />
                     <Route path="/workspace" element={<MyWorkspaceView />} />
                     <Route path="/arena" element={<ArenaView />} />
+                    <Route path="/shop" element={<HubShopView />} />
                     
                     {/* Security Based Route */}
                     <Route path="/compliance" element={hasPermission('MANAGE_SETTINGS') ? <AuditDashboard /> : <Navigate to="/" />} />

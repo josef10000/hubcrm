@@ -18,6 +18,39 @@ export interface BookCardProps {
   isInLibrary: boolean;
 }
 
+export const NEON_AURA_MAP: Record<string, { gradient: string; glow: string; border: string }> = {
+  'acid-lime': {
+    gradient: 'from-lime-400 to-emerald-500',
+    glow: 'shadow-[0_0_25px_rgba(163,230,53,0.55)]',
+    border: 'border-lime-400/50'
+  },
+  'cyberpunk-pink': {
+    gradient: 'from-pink-500 to-rose-600',
+    glow: 'shadow-[0_0_25px_rgba(244,63,94,0.55)]',
+    border: 'border-pink-500/50'
+  },
+  'cobalt-wave': {
+    gradient: 'from-blue-500 to-indigo-600',
+    glow: 'shadow-[0_0_25px_rgba(59,130,246,0.55)]',
+    border: 'border-blue-500/50'
+  },
+  'amber-gold': {
+    gradient: 'from-amber-400 to-orange-500',
+    glow: 'shadow-[0_0_25px_rgba(245,158,11,0.55)]',
+    border: 'border-amber-400/50'
+  },
+  'purple-haze': {
+    gradient: 'from-purple-500 to-violet-600',
+    glow: 'shadow-[0_0_25px_rgba(168,85,247,0.55)]',
+    border: 'border-purple-500/50'
+  },
+  'crimson-pulse': {
+    gradient: 'from-red-500 to-rose-700',
+    glow: 'shadow-[0_0_25px_rgba(239,68,68,0.55)]',
+    border: 'border-red-500/50'
+  }
+};
+
 // Componente de Card Memoizado para evitar re-renderizações inúteis
 export const BookCard = React.memo(({ 
   book, 
@@ -42,6 +75,8 @@ export const BookCard = React.memo(({
 
   const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["15deg", "-15deg"]);
   const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-15deg", "15deg"]);
+
+  const aura = book.neonColor && NEON_AURA_MAP[book.neonColor] ? NEON_AURA_MAP[book.neonColor] : null;
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -104,12 +139,17 @@ export const BookCard = React.memo(({
         {/* Book Spine (Lombada) - Apenas visível no hover 3D */}
         {is3DEnabled && (
           <div 
-            className="absolute inset-y-0 left-0 w-[30px] bg-gradient-to-r from-primary-900 to-primary-700 origin-left z-10 rounded-l-sm"
+            className={`absolute inset-y-0 left-0 w-[30px] bg-gradient-to-r origin-left z-10 rounded-l-sm ${
+              aura ? `from-slate-900 to-slate-800 border-l border-t border-b ${aura.border}` : 'from-primary-900 to-primary-700'
+            }`}
             style={{ 
               transform: 'rotateY(-90deg)',
               boxShadow: 'inset -5px 0 10px rgba(0,0,0,0.5)'
             }}
           >
+            {aura && (
+              <div className={`absolute inset-0 bg-gradient-to-r ${aura.gradient} opacity-20`} />
+            )}
             <div className="absolute inset-0 bg-white/5 opacity-20" />
           </div>
         )}
@@ -136,9 +176,22 @@ export const BookCard = React.memo(({
           />
         )}
 
+        {/* Neon Glow Pulsante de Fundo (Apenas para livros vinculados à trilha ativa) */}
+        {aura && (
+          <div 
+            className={`absolute inset-0 rounded-r-sm ${aura.glow} opacity-70 group-hover:opacity-100 transition-opacity duration-500 animate-pulse`}
+            style={{ 
+              transform: is3DEnabled ? 'translateZ(23px)' : isParallaxEnabled ? 'translateZ(13px)' : undefined,
+              zIndex: 15
+            }}
+          />
+        )}
+
         {/* Front Cover (Capa) */}
         <div 
-          className="absolute inset-0 z-20 rounded-r-sm overflow-hidden border border-white/10 shadow-2xl bg-[#1a1c23]"
+          className={`absolute inset-0 z-20 rounded-r-sm overflow-hidden border shadow-2xl bg-[#1a1c23] ${
+            aura ? `${aura.border} border-2` : 'border-white/10'
+          }`}
           style={{ 
             transform: is3DEnabled ? 'translateZ(25px)' : isParallaxEnabled ? 'translateZ(15px)' : undefined,
             transformStyle: isParallaxEnabled ? 'preserve-3d' : undefined,
@@ -235,9 +288,11 @@ export const BookCard = React.memo(({
               loading="lazy" 
             />
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center gap-4 bg-gradient-to-br from-white/5 to-white/[0.02]">
-              <i className="ph-duotone ph-book text-5xl text-primary-500/40" />
-              <span className="text-[10px] font-bold uppercase tracking-widest leading-tight opacity-40">{book.title}</span>
+            <div className={`w-full h-full flex flex-col items-center justify-center p-6 text-center gap-4 ${
+              aura ? `bg-gradient-to-br ${aura.gradient} text-slate-950` : 'bg-gradient-to-br from-white/5 to-white/[0.02]'
+            }`}>
+              <i className={`ph-duotone ph-book text-5xl ${aura ? 'text-slate-950/60' : 'text-primary-500/40'}`} />
+              <span className={`text-[10px] font-black uppercase tracking-widest leading-tight ${aura ? 'text-slate-950/85' : 'opacity-40'}`}>{book.title}</span>
             </div>
           )}
           

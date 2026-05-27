@@ -12,6 +12,7 @@ export const navGroups = [
     items: [
       { icon: LayoutTemplate, label: 'Meu Workspace', path: '/workspace' },
       { icon: Zap, label: 'Hub Arena', path: '/arena' },
+      { icon: Package, label: 'HubShop', path: '/shop' },
     ]
   },
   {
