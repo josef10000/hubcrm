@@ -19,6 +19,7 @@ import {
 export default function RadioPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const youtubeIframeRef = useRef<HTMLIFrameElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   
   const [spotifyKillKey, setSpotifyKillKey] = useState(Date.now());
 
@@ -233,6 +234,20 @@ export default function RadioPlayer() {
     if (isPlaying) setPlayingState(false);
   };
 
+  // EFEITO PARA MINIMIZAR AO CLICAR FORA (CLICK OUTSIDE)
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!isMinimized && containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        toggleMinimize();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMinimized, toggleMinimize]);
+
   // FORMATADOR DE TEMPO (mm:ss)
   const formatTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -247,6 +262,7 @@ export default function RadioPlayer() {
 
       {/* RENDERIZADOR DO WIDGET FLUTUANTE GLOBAL (DESIGN LIQUID GLASS) */}
       <div 
+        ref={containerRef}
         className={`fixed bottom-6 right-6 z-50 transition-all duration-500 font-sans ${
           isMinimized 
             ? 'w-12 h-12 rounded-full cursor-pointer' 
