@@ -370,7 +370,14 @@ export default function HubShopView() {
               👑 Gestão de Pedidos
               {pendingOrders.length > 0 && (
                 <span className="ml-1.5 px-1.5 py-0.5 bg-red-500 text-white text-[8px] font-black rounded-md animate-pulse">
-                  {pendingOrders.len        <AnimatePresence>
+                  {pendingOrders.length}
+                </span>
+              )}
+            </button>
+          )}
+        </div>
+
+        <AnimatePresence>
           {/* MODAL FLUTUANTE DE CADASTRO/EDIÇÃO (ADMIN) */}
           {isAdding && isAdmin && (
             <div 

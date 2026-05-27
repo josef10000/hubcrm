@@ -810,9 +810,7 @@ export function LearningPathsPanel() {
                 <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-1">Fique de olho! O administrador lançará metas de carreira e leitura em breve.</p>
               </div>
             )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      </div>
     </div>
   );
 }
