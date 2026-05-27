@@ -298,14 +298,14 @@ function ClientModal({
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">WhatsApp *</label>
-                    <input required type="text" name="whatsapp" value={formData.whatsapp || ''} onChange={handleChange} placeholder="(11) 99999-9999" className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">WhatsApp {!formData.isCourtesy ? '*' : ''}</label>
+                    <input required={!formData.isCourtesy} type="text" name="whatsapp" value={formData.whatsapp || ''} onChange={handleChange} placeholder="(11) 99999-9999" className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">CPF/CNPJ *</label>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">CPF/CNPJ {!formData.isCourtesy ? '*' : ''}</label>
                     <div className="relative">
-                      <input required type="text" name="cpfCnpj" value={formData.cpfCnpj || ''} onChange={handleChange} onBlur={handleCpfCnpjBlur} placeholder="999.999.999-99" className={`w-full px-4 py-3 pr-10 bg-black/20 border text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500 ${cpfCnpjStatus === 'valid' ? 'border-emerald-500' : cpfCnpjStatus === 'invalid' ? 'border-red-500' : 'border-gray-200 dark:border-white/10'}`} />
+                      <input required={!formData.isCourtesy} type="text" name="cpfCnpj" value={formData.cpfCnpj || ''} onChange={handleChange} onBlur={handleCpfCnpjBlur} placeholder="999.999.999-99" className={`w-full px-4 py-3 pr-10 bg-black/20 border text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500 ${cpfCnpjStatus === 'valid' ? 'border-emerald-500' : cpfCnpjStatus === 'invalid' ? 'border-red-500' : 'border-gray-200 dark:border-white/10'}`} />
                       {cpfCnpjStatus === 'loading' && <Loader2 size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 animate-spin" />}
                       {cpfCnpjStatus === 'valid' && <CheckCircle size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500" />}
                       {cpfCnpjStatus === 'invalid' && <X size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500" />}
@@ -313,8 +313,8 @@ function ClientModal({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">E-mail *</label>
-                    <input required type="email" name="email" value={formData.email || ''} onChange={handleChange} placeholder="cliente@email.com" className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">E-mail {!formData.isCourtesy ? '*' : ''}</label>
+                    <input required={!formData.isCourtesy} type="email" name="email" value={formData.email || ''} onChange={handleChange} placeholder="cliente@email.com" className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
                   </div>
 
                   <div>
@@ -344,8 +344,8 @@ function ClientModal({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Origem do Lead *</label>
-                    <select required name="leadSource" value={formData.leadSource || ''} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all">
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Origem do Lead {!formData.isCourtesy ? '*' : ''}</label>
+                    <select required={!formData.isCourtesy} name="leadSource" value={formData.leadSource || ''} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all">
                       <option value="">Selecione a origem</option>
                       <option value="Indicação">Indicação</option>
                       <option value="Google Ads">Google Ads</option>
@@ -358,9 +358,9 @@ function ClientModal({
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Responsável / Vendedor *</label>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Responsável / Vendedor {!formData.isCourtesy ? '*' : ''}</label>
                     <select 
-                      required 
+                      required={!formData.isCourtesy} 
                       name="assignedTo" 
                       value={formData.assignedTo || ''} 
                       onChange={handleChange} 
