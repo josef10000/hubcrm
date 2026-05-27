@@ -68,6 +68,7 @@ export default function MonitoringView({ clients }: { clients: Client[] }) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          id: client.id,
           friendly_name: client.name,
           url: sanitizedUrl.startsWith('http') ? sanitizedUrl : `https://${sanitizedUrl}`,
         }),

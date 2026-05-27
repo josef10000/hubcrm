@@ -7,12 +7,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     if (req.method === 'GET') {
-      // 1. Obter todos os clientes marcados como monitorados
-      const monitoredClients = await db.collectionGroup('clients')
-        .where('isMonitored', '==', true)
-        .get();
+      // 1. Obter todos os clientes (sem where para não exigir índices no Firestore)
+      const allClients = await db.collectionGroup('clients').get();
+      const monitoredClients = allClients.docs.filter(doc => doc.data().isMonitored === true);
 
-      const monitors = monitoredClients.docs.map(doc => {
+      const monitors = monitoredClients.map(doc => {
         const clientData = doc.data();
         const monitoring = clientData.monitoring || {};
         
@@ -37,23 +36,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } 
     
     else if (req.method === 'POST') {
-      // 2. Ativar o monitoramento de um cliente por URL ou Nome
-      const { friendly_name, url } = req.body;
+      // 2. Ativar o monitoramento de um cliente por ID, URL ou Nome
+      const { id, friendly_name, url } = req.body;
       
       if (!friendly_name || !url) {
         return res.status(400).json({ error: 'friendly_name and url are required' });
       }
 
-      // Buscar o cliente pelo nome para ativar o monitoramento
-      const clientsSnapshot = await db.collectionGroup('clients')
-        .where('name', '==', friendly_name)
-        .get();
+      // Buscar todos os clientes via collectionGroup (não exige índice)
+      const allClients = await db.collectionGroup('clients').get();
 
-      if (clientsSnapshot.empty) {
-        return res.status(404).json({ error: 'Cliente não encontrado no CRM' });
+      // Localizar o cliente em memória (pelo ID se fornecido, ou pelo nome)
+      let clientDoc = null;
+      if (id) {
+        clientDoc = allClients.docs.find(d => d.id === id.toString());
+      }
+      
+      if (!clientDoc) {
+        clientDoc = allClients.docs.find(d => d.data().name === friendly_name);
       }
 
-      const clientDoc = clientsSnapshot.docs[0];
+      if (!clientDoc) {
+        return res.status(404).json({ error: 'Cliente não encontrado no CRM' });
+      }
       
       // Atualiza o cliente para monitoramento nativo
       await clientDoc.ref.update({

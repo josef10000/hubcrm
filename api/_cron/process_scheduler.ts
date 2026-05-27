@@ -102,13 +102,12 @@ export async function runProcessScheduler(req: VercelRequest, res: VercelRespons
     }
 
     // --- PARTE C: MONITORAMENTO DE UPTIME NATIVO (HUB UPTIME ENGINE) ---
-    const monitoredClients = await db.collectionGroup('clients')
-      .where('isMonitored', '==', true)
-      .get();
+    const allClients = await db.collectionGroup('clients').get();
+    const monitoredClientsDocs = allClients.docs.filter(doc => doc.data().isMonitored === true);
 
-    console.log(`[Cron] Checando uptime para ${monitoredClients.size} sites de clientes...`);
+    console.log(`[Cron] Checando uptime para ${monitoredClientsDocs.length} sites de clientes...`);
 
-    const uptimeChecks = monitoredClients.docs.map(async (doc) => {
+    const uptimeChecks = monitoredClientsDocs.map(async (doc) => {
       const clientData = doc.data();
       let url = clientData.siteLink || '';
       if (!url) return;
