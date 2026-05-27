@@ -594,8 +594,8 @@ export default function ClientPortal() {
               )}
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
         {/* Payment History Card */}
         {paymentsHistory.length > 0 && !client.isCourtesy && (
@@ -889,7 +889,8 @@ export default function ClientPortal() {
               </p>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
         {/* Planos Disponíveis */}
         {!client.isCourtesy && (
@@ -1054,7 +1055,8 @@ export default function ClientPortal() {
               </div>
             )}
           </div>
-        )}
+        </div>
+      )}
 
         {/* Support Request Form */}
         <div className="mt-8 bg-white/[0.03] backdrop-blur-2xl border border-white/10 p-6 md:p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden group" id="support-form">
