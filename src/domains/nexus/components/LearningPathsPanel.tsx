@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Trophy, Sparkles, Plus, CheckCircle, ArrowRight, Flame, ShieldAlert, Award, Trash2, Pencil } from 'lucide-react';
+import { BookOpen, Trophy, Sparkles, Plus, CheckCircle, ArrowRight, Flame, ShieldAlert, Award, Trash2, Pencil, X } from 'lucide-react';
 import { doc, collection, onSnapshot, setDoc, updateDoc, deleteDoc, query, orderBy, getDocs, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@auth/contexts/AuthContext';
