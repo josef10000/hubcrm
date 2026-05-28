@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useUI } from '@/contexts/UIContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
+import { AppPermission } from '@/constants/permissions';
 import { 
   Search, 
   LayoutDashboard, 
@@ -37,7 +38,7 @@ interface CommandItem {
   path: string;
   shortcut: string;
   icon: React.ComponentType<any>;
-  permission?: string;
+  permission?: AppPermission;
 }
 
 export function CommandPalette() {
