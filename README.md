@@ -86,6 +86,10 @@ graph TB
 *   **Motor Chiptune Procedural (Web Audio API):** Áudio 8-bits sintetizado dinamicamente direto na CPU do usuário via osciladores senoidais e dentes de serra, eliminando o download de arquivos pesados de mídia de terceiros.
 *   **Arena Store:** Resgate atômico no Firestore de títulos personalizados neon no chat e molduras holográficas de avatar utilizando moedas virtuais do ecossistema.
 
+### ⚡ 5. Hub Quick Jump (Command Palette Global)
+*   **Atalho Spotlight Inteligente:** Ativação instantânea através da tecla `/` (barra) globalmente, abrindo uma barra de busca Spotlight premium com desfoque de fundo (backdrop glassmorphism) e glow reativo baseado no tema ativo do CRM.
+*   **Navegação Rápida Completa:** Mapeamento inteligente de todas as 27 rotas internas do CRM com autocompletação reativa na linha de texto (Tab/Seta Direita), controle total por setas do teclado e respeito dinâmico às regras de permissão (RBAC) do colaborador logado.
+
 ---
 
 ## ⚡ Otimizações Recentes de Performance (Master Level)

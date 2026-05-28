@@ -6,6 +6,7 @@ import { usePresence } from '@/hooks/usePresence';
 import GlobalCallListener from '@/domains/chat/components/webrtc/GlobalCallListener';
 import { CallOverlay } from '@/domains/chat/components/webrtc/CallOverlay';
 import { MatchInviteListener } from '@/domains/arena/components/MatchInviteListener';
+import { CommandPalette } from '@shared/components/CommandPalette';
 
 interface WorkspaceShellProps {
   children: React.ReactNode;
@@ -50,6 +51,9 @@ export function WorkspaceShell({ children, isBirthday }: WorkspaceShellProps) {
 
       {/* Hub Arena Match Invitation Listener */}
       <MatchInviteListener />
+
+      {/* Global Shortcut Command Palette & Search */}
+      <CommandPalette />
     </div>
   );
 }
