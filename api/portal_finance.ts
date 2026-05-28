@@ -41,6 +41,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(403).json({ error: 'Acesso não autorizado ou link expirado' });
     }
 
+    const isCourtesy = clientData.isCourtesy === true;
     const asaasCustomerId = clientData.asaasCustomerId;
     if (!isCourtesy && !asaasCustomerId) {
       return res.status(404).json({ error: 'Configuração financeira pendente' });
