@@ -23,7 +23,7 @@ export async function runDailyCron(req: VercelRequest, res: VercelResponse) {
     // 1. Buscar todas as organizações
     const orgsSnapshot = await db.collection('organizations').get();
     
-    for (const orgDoc of orgsSnapshot.docs) {
+    const orgPromises = orgsSnapshot.docs.map(async (orgDoc) => {
       const orgId = orgDoc.id;
       const orgData = orgDoc.data();
       results.processedOrgs++;
@@ -124,7 +124,9 @@ export async function runDailyCron(req: VercelRequest, res: VercelResponse) {
       } catch (err) {
         console.error(`[Cron] Erro na auditoria de suporte da Org ${orgId}:`, err);
       }
-    }
+    });
+
+    await Promise.allSettled(orgPromises);
 
     return res.status(200).json({ 
       success: true, 

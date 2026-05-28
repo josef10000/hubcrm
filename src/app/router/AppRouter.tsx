@@ -10,19 +10,21 @@ import { AppLayout } from '../layouts/AppLayout';
 import { WorkspaceShell } from '../shell/WorkspaceShell';
 import { AuthGuard, PendingInviteGuard } from './RouteGuards';
 
-// Eager Loaded Components (Core Views)
+// Eager Loaded Components (Core Views - Dashboard stays eager for instant load)
 import DashboardView from '@crm/views/DashboardView';
-import SupportView from '@support/views/SupportView';
-import ChatView from '@chat/views/ChatView';
-import NotificationsView from '@core/notifications/views/NotificationsView';
-import WikiView from '@wiki/views/WikiView';
-import SettingsView from '@core/settings/views/SettingsView';
-import ProfileView from '@core/profile/views/ProfileView';
 
-// Shared / Infrastructure
-import CalendarView from '@shared/components/CalendarView';
-import ClientMapView from '@crm/components/ClientMapView';
-import MonitoringView from '@crm/components/MonitoringView';
+// Lazy Loaded Core Views
+const SupportView = lazy(() => import('@support/views/SupportView'));
+const ChatView = lazy(() => import('@chat/views/ChatView'));
+const NotificationsView = lazy(() => import('@core/notifications/views/NotificationsView'));
+const WikiView = lazy(() => import('@wiki/views/WikiView'));
+const SettingsView = lazy(() => import('@core/settings/views/SettingsView'));
+const ProfileView = lazy(() => import('@core/profile/views/ProfileView'));
+
+// Shared / Infrastructure (Lazy Loaded)
+const CalendarView = lazy(() => import('@shared/components/CalendarView'));
+const ClientMapView = lazy(() => import('@crm/components/ClientMapView'));
+const MonitoringView = lazy(() => import('@crm/components/MonitoringView'));
 
 // Lazy Loaded Components (Heavier or specific views)
 const AnalyticsView = lazy(() => import('@crm/views/AnalyticsView'));
@@ -44,12 +46,12 @@ const CanvasEditorView = lazy(() => import('@chat/views/CanvasEditorView'));
 const ReferralsView = lazy(() => import('@crm/components/ReferralsView'));
 const AuditDashboard = lazy(() => import('@domains/core/views/AuditDashboard'));
 
-// Public / External Views
-import ClientPortal from '@portal/components/ClientPortalLayout';
-import OnboardingForm from '@auth/components/OnboardingForm';
-import PublicCheckoutPage from '@finance/views/PublicCheckoutPage';
-import ProposalPublicView from '@commercial/views/ProposalPublicView';
-import AcceptInviteView from '@auth/views/AcceptInviteView';
+// Public / External Views (Lazy Loaded)
+const ClientPortal = lazy(() => import('@portal/components/ClientPortalLayout'));
+const OnboardingForm = lazy(() => import('@auth/components/OnboardingForm'));
+const PublicCheckoutPage = lazy(() => import('@finance/views/PublicCheckoutPage'));
+const ProposalPublicView = lazy(() => import('@commercial/views/ProposalPublicView'));
+const AcceptInviteView = lazy(() => import('@auth/views/AcceptInviteView'));
 import { GlobalModals } from '../shell/GlobalModals';
 import { useAppTitle } from './useAppTitle';
 

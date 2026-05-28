@@ -34,7 +34,7 @@ export async function runFinanceEngine(req: VercelRequest, res: VercelResponse) 
     // 2. Buscar todas as organizações para processamento
     const orgsSnapshot = await db.collection('organizations').get();
     
-    for (const orgDoc of orgsSnapshot.docs) {
+    const promises = orgsSnapshot.docs.map(async (orgDoc) => {
       try {
         const orgId = orgDoc.id;
         await processOrganizationFinance(orgId);
@@ -42,7 +42,9 @@ export async function runFinanceEngine(req: VercelRequest, res: VercelResponse) 
       } catch (err: any) {
         results.errors.push(`Erro na Org ${orgDoc.id}: ${err.message}`);
       }
-    }
+    });
+
+    await Promise.allSettled(promises);
 
     return res.status(200).json({
       success: true,

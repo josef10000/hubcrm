@@ -41,23 +41,46 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(403).json({ error: 'Acesso não autorizado ou link expirado' });
     }
 
-    const isCourtesy = clientData.isCourtesy === true;
+    const asaasCustomerId = clientData.asaasCustomerId;
+    if (!isCourtesy && !asaasCustomerId) {
+      return res.status(404).json({ error: 'Configuração financeira pendente' });
+    }
+
+    // Criamos as Promises para rodar todas em paralelo
+    const asaasPromise = !isCourtesy && asaasCustomerId
+      ? asaasRequest(`/payments?customer=${asaasCustomerId}&limit=100`, "GET")
+      : Promise.resolve({ data: [] });
+
+    const requestsPromise = db
+      .collection('organizations')
+      .doc(orgId)
+      .collection('supportRequests')
+      .where('clientId', '==', clientId)
+      .limit(20)
+      .get();
+
+    const offersPromise = db
+      .collection('organizations')
+      .doc(orgId)
+      .collection('offers')
+      .where('active', '==', true)
+      .limit(10)
+      .get();
+
+    const orgPromise = db.collection('organizations').doc(orgId).get();
+
+    // Executamos todas as chamadas em paralelo
+    const [paymentsData, requestsSnap, offersSnap, orgSnap] = await Promise.all([
+      asaasPromise,
+      requestsPromise,
+      offersPromise,
+      orgPromise
+    ]);
+
+    // 3. Processamento de Pagamentos do Asaas
     let filteredPayments: any[] = [];
-
     if (!isCourtesy) {
-      const asaasCustomerId = clientData.asaasCustomerId;
-      if (!asaasCustomerId) {
-        return res.status(404).json({ error: 'Configuração financeira pendente' });
-      }
-
-      // 3. Fetch Payments from Asaas
-      const paymentsData = await asaasRequest(`/payments?customer=${asaasCustomerId}&limit=100`, "GET");
       let allPayments = paymentsData.data || [];
-
-      // 🚀 Lógica de Filtro: Remover faturas "lixo" de testes anteriores.
-      // Regra: Mostrar todas as pagas (RECEIVED/CONFIRMED) para histórico.
-      // Regra: Mostrar apenas a MAIS RECENTE das pendentes/vencidas (PENDING/OVERDUE).
-      // 🚀 NOVO: Filtramos por externalReference para garantir que só mostramos pagamentos DESTE card/serviço
       const clientPayments = allPayments.filter((p: any) => p.externalReference === clientId);
 
       const paid = clientPayments.filter((p: any) => p.status === 'RECEIVED' || p.status === 'CONFIRMED');
@@ -65,35 +88,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .filter((p: any) => p.status === 'PENDING' || p.status === 'OVERDUE')
         .sort((a: any, b: any) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
       
-      // Pegamos apenas a primeira (mais recente) das pendentes/vencidas
       const currentInvoice = pendingOrOverdue.length > 0 ? [pendingOrOverdue[0]] : [];
-
       filteredPayments = [...paid, ...currentInvoice];
     }
-    // 4. Fetch Support Requests
-    const requestsSnap = await db
-      .collection('organizations')
-      .doc(orgId)
-      .collection('supportRequests')
-      .where('clientId', '==', clientId)
-      .limit(20)
-      .get();
-    
+
+    // 4. Processamento de chamados de suporte
     const requests = requestsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-    // 5. Fetch Active Offers
-    const offersSnap = await db
-      .collection('organizations')
-      .doc(orgId)
-      .collection('offers')
-      .where('active', '==', true)
-      .limit(10)
-      .get();
-    
+    // 5. Processamento de ofertas
     const offers = offersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-    // 6. Fetch Org Announcement
-    const orgSnap = await db.collection('organizations').doc(orgId).get();
+    // 6. Processamento de anúncio da organização
     const orgData = orgSnap.data();
     const announcement = orgData?.announcement?.isActive ? orgData.announcement : null;
 

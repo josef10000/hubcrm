@@ -2,6 +2,23 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
+// Singleton para o S3Client para reaproveitamento de conexões e redução de overhead
+let s3ClientInstance: S3Client | null = null;
+
+function getS3Client(accountId: string, accessKeyId: string, secretAccessKey: string): S3Client {
+  if (!s3ClientInstance) {
+    s3ClientInstance = new S3Client({
+      region: 'auto',
+      endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+      credentials: {
+        accessKeyId,
+        secretAccessKey,
+      },
+    });
+  }
+  return s3ClientInstance;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Habilitar CORS
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -58,15 +75,8 @@ async function handleUploadUrl(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // 2. Inicializar o S3Client apontando para o Cloudflare R2
-    const s3 = new S3Client({
-      region: 'auto',
-      endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
-      credentials: {
-        accessKeyId,
-        secretAccessKey,
-      },
-    });
+    // 2. Obter o S3Client apontando para o Cloudflare R2 via Singleton
+    const s3 = getS3Client(accountId, accessKeyId, secretAccessKey);
 
     // 3. Definir a chave (pasta e nome do arquivo) no Bucket
     // Formato: chat/channels/[channelId]/[category]/[timestamp]-[fileName]

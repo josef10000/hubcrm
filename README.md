@@ -148,9 +148,17 @@ O Hub Central integra-se com provedores líderes de mercado para garantir escala
 - **Firestore:** Banco NoSQL em tempo real para sincronia multi-usuário.
 - **Auth:** Gestão de sessões segura com suporte a MFA e persistência em memória.
 
-### ⚡ Performance & Caching (Upstash Redis)
-- **Escopo:** Camada de cache ultrarrápida e controle de taxa de requisições (Rate Limiting).
-- **Finalidade:** Garante a estabilidade da API contra ataques de força bruta e melhora a latência de dados frequentes.
+### ⚡ Performance & Otimização Arquitetural (Fases 1 & 2 💻)
+- **Escopo:** Camada de cache ultrarrápida (Upstash Redis), controle de taxa de requisições, e otimização total de código (Frontend/Backend).
+- **Finalidade:** Garante a estabilidade da API, velocidade instantânea de carregamento e redução drástica de processamento em memória e banco de dados.
+- **Otimizações Recentes (Master Level 🚀):**
+  - **Remoção de Bibliotecas de IA Inativas:** Limpeza completa no `package.json`, removendo o `@google/genai` (Gemini) e outras dependências de servidor indevidas, enxugando o bundle final.
+  - **Lazy-Loading de Views Pesadas:** Roteamento do `AppRouter.tsx` otimizado para carregar views pesadas (Chat, Suporte, Calendário, Mapas, Monitoramento e Portais Públicos) via `React.lazy()`, acelerando o primeiro carregamento (Time-To-Interactive).
+  - **Isolamento de Chunks Manuais (Vite/Rollup):** Separação de bibliotecas grandes (`tldraw`, `three`, `recharts`) em chunks dedicados para proteger o chunk principal e otimizar o cache de navegador.
+  - **Fim dos Waterfalls de API:** Paralelização de requisições no Firestore e requests externos na API `portal_finance.ts` com `Promise.all()`, reduzindo o tempo de carregamento pela metade.
+  - **Paralelização de Crons com Concorrência:** Modificados os scripts de crons (`daily_cron.ts` e `finance_engine.ts`) de loop serial N+1 para concorrência concorrente utilizando `Promise.allSettled()`, evitando timeouts no ambiente Serverless da Vercel.
+  - **Conexão Persistente de Storage (S3 Singleton):** API `storage_handler.ts` agora utiliza cache singleton do `S3Client` para assinar uploads no Cloudflare R2, eliminando o overhead de re-instanciação de conexões.
+  - **Índices Firestore Estruturados:** Configuração de índices de `collectionGroup` e compostos em `firestore.indexes.json` para suportar queries reativas e crons de forma estável.
 
 ### ⏱️ Automação & Agendamento (Cron-Job.org)
 - **Papel Crítico:** Diferente dos crons internos da Vercel, o **Cron-Job.org** atua como o metrônomo externo do sistema para tarefas de alta precisão e frequência.
