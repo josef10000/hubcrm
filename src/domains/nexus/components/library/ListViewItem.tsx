@@ -1,6 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useNexusStore } from '@store/useNexusStore';
 import type { NexusBook } from '@store/useNexusStore';
+import { NEON_AURA_MAP } from './BookCard';
 
 export interface ListViewItemProps {
   book: NexusBook;
@@ -17,6 +19,31 @@ export const ListViewItem = React.memo(({
   onUpdateProgress,
   isOwner 
 }: ListViewItemProps) => {
+  const learningPaths = useNexusStore(state => state.learningPaths || []);
+  const userPathsProgress = useNexusStore(state => state.userPathsProgress || {});
+
+  const activeNeonColor = (() => {
+    // 1. Se o próprio livro já tem um neon ativo associado a uma trilha na estante pessoal
+    if (book.learningPathId && book.neonColor) {
+      const progress = userPathsProgress[book.learningPathId];
+      if (progress && progress.status === 'ACTIVE') {
+        return book.neonColor;
+      }
+      return null;
+    }
+    
+    // 2. Se o livro está na comunidade (ou recomendação), busca se o originalBookId (ou id) faz parte de alguma trilha ativa do usuário logado
+    const bookOriginalId = book.originalBookId || book.id;
+    const activePath = learningPaths.find(path => {
+      const progress = userPathsProgress[path.id];
+      return progress && progress.status === 'ACTIVE' && path.bookIds.includes(bookOriginalId);
+    });
+    
+    return activePath ? activePath.neonColor : null;
+  })();
+
+  const aura = activeNeonColor && NEON_AURA_MAP[activeNeonColor] ? NEON_AURA_MAP[activeNeonColor] : null;
+
   const progress = (book.totalPages && book.totalPages > 0) 
     ? Math.min(Math.round(((book.currentPage || 0) / book.totalPages) * 100), 100)
     : 0;
@@ -28,7 +55,9 @@ export const ListViewItem = React.memo(({
       animate={{ opacity: 1, x: 0 }}
       className="group bg-white/5 border border-white/5 p-4 rounded-2xl flex items-center gap-6 hover:bg-white/10 transition-all cursor-pointer"
     >
-      <div className="w-12 h-16 rounded-lg overflow-hidden bg-white/5 border border-white/10 shrink-0 shadow-lg">
+      <div className={`w-12 h-16 rounded-lg overflow-hidden shrink-0 shadow-lg transition-all ${
+        aura ? `${aura.border} border-2` : 'bg-white/5 border border-white/10'
+      }`}>
         {book.coverUrl ? (
           <img src={book.coverUrl} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
         ) : (

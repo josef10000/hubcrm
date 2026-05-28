@@ -80,6 +80,29 @@ export const DEFAULT_BOOK_CATEGORIES = [
 export type BookCategory = string;
 export type ReadingStatus = 'reading' | 'finished' | 'want_to_read' | 'dropped';
 
+export interface LearningPath {
+  id: string;
+  name: string;
+  description: string;
+  benefit: string;
+  neonColor: string;
+  bookIds: string[];
+  hubCoinReward: number;
+  createdAt: number;
+  createdBy: string;
+}
+
+export interface UserPathProgress {
+  pathId: string;
+  userId: string;
+  status: 'ACTIVE' | 'COMPLETED' | 'PAUSED' | 'NOT_STARTED';
+  startedAt: number;
+  completedAt: number | null;
+  completedBookIds: string[];
+  progressPercentage: number;
+  welcomeRewardClaimed?: boolean;
+}
+
 export interface NexusBook {
   id: string;
   title: string;
@@ -119,6 +142,8 @@ export interface NexusData {
 interface NexusState extends NexusData {
   notes: NexusNote[];
   activityLogs: ActivityLog[];
+  learningPaths: LearningPath[];
+  userPathsProgress: Record<string, UserPathProgress>;
   loading: boolean;
   initialized: boolean;
   error: string | null;
@@ -187,6 +212,8 @@ export const useNexusStore = create<NexusState>()(
       activityLogs: [],
       noteFolders: [],
       bookCategories: [],
+      learningPaths: [],
+      userPathsProgress: {},
       loading: true,
       initialized: false,
       error: null,
@@ -205,10 +232,39 @@ export const useNexusStore = create<NexusState>()(
     const logsColRef = collection(db, 'profiles', uid, 'activity_logs');
     const logsQuery = query(logsColRef, orderBy('timestamp', 'desc'));
     
+    let unsubPaths: (() => void) | null = null;
+    let unsubProgress: (() => void) | null = null;
+    let pathsSubscribed = false;
+    
     // === Subscription 1: Perfil (folders, links, goals, tasks, books) ===
     const unsubProfile = onSnapshot(profileRef, async (snap) => {
       if (snap.exists()) {
         const profileData = snap.data();
+        const orgId = profileData.orgId;
+        
+        if (orgId && !pathsSubscribed) {
+          pathsSubscribed = true;
+          
+          const pathsCol = collection(db, 'organizations', orgId, 'learningPaths');
+          const qPaths = query(pathsCol, orderBy('createdAt', 'desc'));
+          unsubPaths = onSnapshot(qPaths, (snap) => {
+            const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as LearningPath));
+            set({ learningPaths: list });
+          }, (err) => {
+            console.warn('[useNexusStore] Firestore: escuta de trilhas desativada:', err.message);
+          });
+
+          const progressCol = collection(db, 'organizations', orgId, 'users', uid, 'learningPaths');
+          unsubProgress = onSnapshot(progressCol, (snap) => {
+            const map: Record<string, UserPathProgress> = {};
+            snap.docs.forEach(d => {
+              map[d.id] = d.data() as UserPathProgress;
+            });
+            set({ userPathsProgress: map });
+          }, (err) => {
+            console.warn('[useNexusStore] Firestore: escuta de progressos desativada:', err.message);
+          });
+        }
         const nexus = profileData.nexusData || null;
 
         if (nexus) {
@@ -309,6 +365,8 @@ export const useNexusStore = create<NexusState>()(
       unsubProfile();
       unsubNotes();
       unsubLogs();
+      if (unsubPaths) unsubPaths();
+      if (unsubProgress) unsubProgress();
     };
   },
 

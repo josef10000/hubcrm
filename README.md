@@ -535,6 +535,16 @@ A e-commerce central de resgates corporativos por HubCoins (`HubShopView.tsx`):
 * **Vitrine Premium de Prêmios:** Um grid de cartões Glassmorphism exibindo prêmios físicos (canecas, moletons), vouchers digitais (Ifood, Uber) e experiências de prestígio (almoço com CEO, folgas).
 * **Upload Integrado via Cloudinary:** O administrador pode cadastrar novos prêmios instantaneamente anexando imagens reais que são salvas de forma segura na CDN do **Cloudinary** e retornam URLs públicas otimizadas.
 * **Transação Segura e Controle de Estoque:** O sistema valida o saldo em tempo real, debita as HubCoins do colaborador, decrementa o estoque atómicamente e registra o pedido em `/hubShopOrders` com status pendente de entrega pelo time de RH/Gestão.
+* **Modais Customizados Premium (Zero Diálogos Nativos):** Todas as confirmações cruciais de resgate de prêmios e exclusão de itens do catálogo foram substituídas por overlays customizados de alta estética com blur translúcido (`backdrop-blur-sm`), bordas reflexivas finas e micro-animações do Framer Motion em português do Brasil.
+* **Ajuste de Carteira de Testes (Admin):** Administradores (`isAdmin`) contam com uma ferramenta de governança financeira na carteira para reduzir ou zerar seu saldo de HubCoins na loja física de testes, calculando e sincronizando a diferença negativa com o Firestore de forma transparente e evitando a injeção indevida de saldo positivo por esse caminho.
+
+---
+
+### 🏆 Gamificação Cognitiva & Trilhas de Conhecimento (Nexus)
+
+O sistema de trilhas corporativas gamificadas (`LearningPathsPanel.tsx`):
+* **Modais Personalizados de Missão:** Substituição das caixas `confirm` nativas de desistência de trilhas (abandono) e de exclusão de trilhas pelo Administrador por modais de alta fidelidade visual. O modal de abandono de missão detalha claramente que as HubCoins obtidas permanecem com o usuário, enquanto os livros vinculados perdem o glow e têm o progresso de leitura zerado de forma segura para futuro reinício.
+* **Borda Neon de Trilhas Ativas nos Livros:** Todos os livros pertencentes a uma trilha ativa pelo usuário recebem uma borda neon brilhante de `2.5px` (estilo neon grosso e contornos coloridos reativos baseados em `NEON_AURA_MAP`) tanto em sua estante particular quanto na aba da Comunidade. Caso a missão seja pausada ou abandonada, o glow e a borda neon cessam reativamente de forma automática em todas as visões (2D Clássico, 2.5D Glass Parallax, 3D Realista e Lista).
 
 ---
 

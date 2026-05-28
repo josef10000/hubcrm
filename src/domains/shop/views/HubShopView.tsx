@@ -64,9 +64,99 @@ export default function HubShopView() {
   // Seletor de visualização (Visualização Geral ou Gestão de Pedidos)
   const [activeView, setActiveView] = useState<'shop' | 'my-orders' | 'admin-orders'>('shop');
 
+  // Estados para Modais de Confirmação Personalizados e Ajuste de Moedas (Admin)
+  const [itemToRedeem, setItemToRedeem] = useState<HubShopItem | null>(null);
+  const [itemIdToDelete, setItemIdToDelete] = useState<string | null>(null);
+  const [isAdjustingCoins, setIsAdjustingCoins] = useState(false);
+  const [newAdminCoins, setNewAdminCoins] = useState<number | ''>('');
+
   const orgId = userProfile?.orgId;
   const uid = user?.uid;
   const isAdmin = hasPermission('MANAGE_SETTINGS') || hasPermission('MANAGE_TEAM');
+
+  // Executar ajuste de saldo do Admin (apenas redução)
+  const handleAdjustAdminCoins = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uid || !orgId || newAdminCoins === '') return;
+
+    const credits = userProfile?.arenaCredits || 0;
+    if (newAdminCoins > credits) {
+      return toast.error('Apenas redução do saldo de HubCoins é permitida para garantir testes justos.');
+    }
+    if (newAdminCoins < 0) {
+      return toast.error('O saldo mínimo permitido é 0 HubCoins.');
+    }
+
+    const tId = toast.loading('Atualizando carteira do Administrador...');
+    try {
+      const diff = newAdminCoins - credits;
+      await useArenaStore.getState().addArenaCredits(uid, diff);
+      setIsAdjustingCoins(false);
+      setNewAdminCoins('');
+      toast.success('Saldo da sua carteira ajustado com sucesso!', { id: tId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao ajustar moedas virtuais.', { id: tId });
+    }
+  };
+
+  // Executar exclusão confirmada de item (Admin)
+  const confirmDeleteItem = async () => {
+    if (!itemIdToDelete || !orgId) return;
+    const id = itemIdToDelete;
+    setItemIdToDelete(null);
+
+    try {
+      await deleteDoc(doc(db, 'organizations', orgId, 'hubShopItems', id));
+      toast.success('Prêmio excluído do catálogo.');
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao excluir prêmio.');
+    }
+  };
+
+  // Executar resgate confirmado de item (Colaborador)
+  const confirmRedeemItem = async () => {
+    if (!itemToRedeem || !uid || !orgId || !userProfile) return;
+    const item = itemToRedeem;
+    setItemToRedeem(null);
+
+    const credits = userProfile?.arenaCredits || 0;
+    const tId = toast.loading('Processando resgate de moedas...');
+    try {
+      // 1. Cria a Ordem de Pedido no Firestore
+      const orderId = `order_${Date.now()}`;
+      const orderData: HubShopOrder = {
+        id: orderId,
+        userId: uid,
+        userName: userProfile.displayName || 'Hubber',
+        userPhoto: userProfile.photoURL || undefined,
+        itemId: item.id,
+        itemTitle: item.title,
+        itemImageUrl: item.imageUrl,
+        pricePaid: item.price,
+        status: 'PENDING',
+        createdAt: Date.now()
+      };
+
+      await setDoc(doc(db, 'organizations', orgId, 'hubShopOrders', orderId), orderData);
+
+      // 2. Deduz as moedas do saldo do colaborador
+      await useArenaStore.getState().addArenaCredits(uid, -item.price);
+
+      // 3. Atualiza o estoque do item se houver limite
+      if (item.stock !== null) {
+        await updateDoc(doc(db, 'organizations', orgId, 'hubShopItems', item.id), {
+          stock: Math.max(0, item.stock - 1)
+        });
+      }
+
+      toast.success(`🎉 RESGATE EFETUADO! Você resgatou "${item.title}"! Procure o RH para retirar seu prêmio.`, { id: tId, duration: 6000 });
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao processar transação.', { id: tId });
+    }
+  };
 
   // Limpa o formulário e fecha o modal de cadastro/edição
   const handleCloseModal = () => {
@@ -175,9 +265,10 @@ export default function HubShopView() {
   };
 
   // Função para resgatar um prêmio (Colaborador)
-  const handleRedeemItem = async (item: HubShopItem) => {
+  const handleRedeemItem = (item: HubShopItem) => {
     if (!uid || !orgId || !userProfile) return;
 
+    const credits = userProfile?.arenaCredits || 0;
     if (credits < item.price) {
       return toast.error('Saldo de HubCoins insuficiente.');
     }
@@ -186,43 +277,7 @@ export default function HubShopView() {
       return toast.error('Este prêmio está temporariamente sem estoque.');
     }
 
-    const confirmRedeem = confirm(`Deseja confirmar o resgate de "${item.title}" por ${item.price} HubCoins?`);
-    if (!confirmRedeem) return;
-
-    const tId = toast.loading('Processando resgate de moedas...');
-    try {
-      // 1. Cria a Ordem de Pedido no Firestore
-      const orderId = `order_${Date.now()}`;
-      const orderData: HubShopOrder = {
-        id: orderId,
-        userId: uid,
-        userName: userProfile.displayName || 'Hubber',
-        userPhoto: userProfile.photoURL || undefined,
-        itemId: item.id,
-        itemTitle: item.title,
-        itemImageUrl: item.imageUrl,
-        pricePaid: item.price,
-        status: 'PENDING',
-        createdAt: Date.now()
-      };
-
-      await setDoc(doc(db, 'organizations', orgId, 'hubShopOrders', orderId), orderData);
-
-      // 2. Deduz as moedas do saldo do colaborador
-      await useArenaStore.getState().addArenaCredits(uid, -item.price);
-
-      // 3. Atualiza o estoque do item se houver limite
-      if (item.stock !== null) {
-        await updateDoc(doc(db, 'organizations', orgId, 'hubShopItems', item.id), {
-          stock: Math.max(0, item.stock - 1)
-        });
-      }
-
-      toast.success(`🎉 RESGATE EFETUADO! Você resgatou "${item.title}"! Procure o RH para retirar seu prêmio.`, { id: tId, duration: 6000 });
-    } catch (err) {
-      console.error(err);
-      toast.error('Erro ao processar transação.', { id: tId });
-    }
+    setItemToRedeem(item);
   };
 
   // Função para aprovar ou dar baixa em pedidos (Admin)
@@ -256,17 +311,9 @@ export default function HubShopView() {
   };
 
   // Função para deletar item da loja (Admin)
-  const handleDeleteItem = async (itemId: string) => {
+  const handleDeleteItem = (itemId: string) => {
     if (!orgId) return;
-    if (!confirm('Deseja realmente remover este prêmio da loja?')) return;
-
-    try {
-      await deleteDoc(doc(db, 'organizations', orgId, 'hubShopItems', itemId));
-      toast.success('Prêmio excluído do catálogo.');
-    } catch (err) {
-      console.error(err);
-      toast.error('Erro ao excluir prêmio.');
-    }
+    setItemIdToDelete(itemId);
   };
 
   const myOrders = orders.filter(o => o.userId === uid);
@@ -305,17 +352,30 @@ export default function HubShopView() {
           {/* Saldo de Moedas & Botão de Criação */}
           <div className="flex flex-wrap items-center gap-3 shrink-0">
             {/* Carteira Translúcida Premium */}
-            <div className="flex items-center gap-3.5 px-5 py-3 bg-[#0a0c10]/60 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-xl shadow-black/20">
+            <div className="flex items-center gap-3.5 px-5 py-3 bg-[#0a0c10]/60 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-xl shadow-black/20 relative group">
               <div className="p-2 bg-yellow-500/10 rounded-xl">
                 <Coins size={18} className="text-yellow-400 animate-bounce" />
               </div>
-              <div>
+              <div className="flex-1 pr-6">
                 <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none block">Carteira Hub</span>
                 <span className="text-lg font-black text-yellow-400 tracking-wider flex items-center gap-1.5 mt-0.5">
                   {credits}
                   <span className="text-[8px] font-black text-yellow-500/60 uppercase tracking-widest leading-none">HubCoins</span>
                 </span>
               </div>
+              
+              {isAdmin && (
+                <button
+                  onClick={() => {
+                    setNewAdminCoins(credits);
+                    setIsAdjustingCoins(true);
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-400 hover:text-yellow-300 rounded-lg cursor-pointer border border-yellow-500/10"
+                  title="Ajustar Saldo de Testes (Admin)"
+                >
+                  <Pencil size={11} />
+                </button>
+              )}
             </div>
 
             {isAdmin && (
@@ -899,6 +959,165 @@ export default function HubShopView() {
                 </div>
               )}
             </motion.div>
+          )}
+
+          {itemToRedeem && (
+            <div 
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-200"
+              onClick={() => setItemToRedeem(null)}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="bg-[#0b0d14] border border-white/10 rounded-[2rem] p-6 max-w-sm w-full space-y-6 shadow-2xl relative"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-[80px] -mr-10 -mt-10 bg-purple-600 opacity-15 pointer-events-none" />
+                <div className="flex flex-col items-center text-center space-y-3">
+                  <div className="p-3 bg-yellow-500/10 rounded-full animate-pulse">
+                    <ShoppingBag size={24} className="text-yellow-400" />
+                  </div>
+                  <h3 className="text-xs font-black uppercase tracking-widest text-white">Confirmar Resgate</h3>
+                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
+                    Deseja confirmar o resgate de <span className="text-white font-black">"{itemToRedeem.title}"</span> por <span className="text-yellow-400 font-black">{itemToRedeem.price} HubCoins</span>?
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setItemToRedeem(null)}
+                    className="flex-1 py-3 rounded-xl border border-white/10 text-gray-400 hover:text-white text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer bg-white/5"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmRedeemItem}
+                    className="flex-1 py-3 rounded-xl bg-purple-500 hover:bg-purple-600 text-white font-black text-[9px] uppercase tracking-widest transition-all cursor-pointer shadow-lg shadow-purple-500/20"
+                  >
+                    Confirmar
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+
+          {itemIdToDelete && (
+            <div 
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-200"
+              onClick={() => setItemIdToDelete(null)}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="bg-[#0b0d14] border border-white/10 rounded-[2rem] p-6 max-w-sm w-full space-y-6 shadow-2xl relative"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-[80px] -mr-10 -mt-10 bg-red-600 opacity-15 pointer-events-none" />
+                <div className="flex flex-col items-center text-center space-y-3">
+                  <div className="p-3 bg-red-500/10 rounded-full animate-bounce">
+                    <AlertTriangle size={24} className="text-red-400" />
+                  </div>
+                  <h3 className="text-xs font-black uppercase tracking-widest text-white">Excluir Premiação</h3>
+                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
+                    Atenção: Esta ação é irreversível. Deseja realmente remover este prêmio da loja?
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setItemIdToDelete(null)}
+                    className="flex-1 py-3 rounded-xl border border-white/10 text-gray-400 hover:text-white text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer bg-white/5"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmDeleteItem}
+                    className="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-black text-[9px] uppercase tracking-widest transition-all cursor-pointer shadow-lg shadow-red-500/20"
+                  >
+                    Remover
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+
+          {isAdjustingCoins && isAdmin && (
+            <div 
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-200"
+              onClick={() => setIsAdjustingCoins(false)}
+            >
+              <motion.form
+                onSubmit={handleAdjustAdminCoins}
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="bg-[#0b0d14] border border-white/10 rounded-[2rem] p-6 max-w-sm w-full space-y-4 shadow-2xl relative"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-[80px] -mr-10 -mt-10 bg-yellow-600 opacity-15 pointer-events-none" />
+                
+                <div className="flex items-center gap-3 border-b border-white/5 pb-3">
+                  <div className="p-2 bg-yellow-500/10 rounded-xl">
+                    <Coins size={18} className="text-yellow-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-black uppercase tracking-widest text-white">Carteira de Testes</h3>
+                    <span className="text-[7px] font-black text-gray-500 uppercase tracking-widest">Ferramenta do Administrador</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[8px] font-black uppercase tracking-widest text-gray-500 block">Saldo Atual de Testes</label>
+                  <span className="text-xs font-black text-yellow-400 font-mono block">{credits} HubCoins</span>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[8px] font-black uppercase tracking-widest text-gray-500 block">Definir Novo Saldo (Apenas Redução)</label>
+                  <input
+                    type="number"
+                    max={credits}
+                    min={0}
+                    placeholder="Novo saldo (menor que o atual)"
+                    value={newAdminCoins}
+                    onChange={(e) => {
+                      const val = e.target.value === '' ? '' : Math.max(0, parseInt(e.target.value) || 0);
+                      setNewAdminCoins(val);
+                    }}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white focus:border-yellow-500 outline-none transition-all font-mono"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setNewAdminCoins(0)}
+                  className="w-full py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[8px] font-black uppercase tracking-widest rounded-xl transition-all border border-red-500/10 cursor-pointer"
+                >
+                  Zerar Carteira de Testes
+                </button>
+
+                <div className="flex gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsAdjustingCoins(false)}
+                    className="flex-1 py-3 rounded-xl border border-white/10 text-gray-400 hover:text-white text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer bg-white/5"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 py-3 rounded-xl bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-black text-[9px] uppercase tracking-widest transition-all cursor-pointer shadow-lg shadow-yellow-500/15"
+                  >
+                    Salvar Alterações
+                  </button>
+                </div>
+              </motion.form>
+            </div>
           )}
 
         </AnimatePresence>

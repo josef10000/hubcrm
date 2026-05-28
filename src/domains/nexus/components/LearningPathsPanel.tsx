@@ -52,9 +52,81 @@ export function LearningPathsPanel() {
   const [selectedBookIds, setSelectedBookIds] = useState<string[]>([]);
   const [hubCoinReward, setHubCoinReward] = useState(200);
 
+  // Estados para Modais de Confirmação Personalizados
+  const [pathToAbandon, setPathToAbandon] = useState<LearningPath | null>(null);
+  const [pathIdToDelete, setPathIdToDelete] = useState<string | null>(null);
+
   const orgId = userProfile?.orgId;
   const uid = user?.uid;
   const isAdmin = hasPermission('MANAGE_SETTINGS') || hasPermission('MANAGE_TEAM');
+
+  // Executar abandono confirmado de trilha
+  const confirmAbandonPath = async () => {
+    if (!pathToAbandon || !uid || !orgId) return;
+    const path = pathToAbandon;
+    setPathToAbandon(null);
+
+    const tId = toast.loading(`Cancelando missão "${path.name}"...`);
+    try {
+      const progressRef = doc(db, 'organizations', orgId, 'users', uid, 'learningPaths', path.id);
+      const progressSnap = await getDoc(progressRef);
+      const welcomeRewardClaimed = progressSnap.exists() ? !!progressSnap.data()?.welcomeRewardClaimed : false;
+
+      // 1. Reseta o progresso para NOT_STARTED preservando a flag welcomeRewardClaimed
+      await setDoc(progressRef, {
+        pathId: path.id,
+        userId: uid,
+        status: 'NOT_STARTED',
+        startedAt: 0,
+        completedAt: null,
+        completedBookIds: [],
+        progressPercentage: 0,
+        welcomeRewardClaimed
+      });
+
+      // 2. Limpa os vínculos, auras e progresso de leitura dos livros vinculados na estante
+      const currentBooks = [...useNexusStore.getState().books];
+      const updatedBooks = currentBooks.map(b => {
+        if (b.learningPathId === path.id) {
+          return {
+            ...b,
+            learningPathId: undefined,
+            neonColor: undefined,
+            currentPage: 0,
+            maxPageRead: 0, // Permite ler e pontuar do zero ao reiniciar
+            status: 'want_to_read' as const
+          };
+        }
+        return b;
+      });
+
+      const profileRef = doc(db, 'profiles', uid);
+      await updateDoc(profileRef, {
+        'nexusData.books': updatedBooks
+      });
+      useNexusStore.getState().setBooks(updatedBooks);
+
+      toast.success(`Você desistiu da missão. Suas HubCoins foram salvas e seus livros foram limpos na estante! 🛑`, { id: tId, duration: 6000 });
+    } catch (err) {
+      console.error('Erro ao desistir da trilha:', err);
+      toast.error('Falha ao desistir da trilha corporativa.', { id: tId });
+    }
+  };
+
+  // Executar exclusão confirmada de trilha (Admin)
+  const confirmDeletePath = async () => {
+    if (!pathIdToDelete || !orgId) return;
+    const pathId = pathIdToDelete;
+    setPathIdToDelete(null);
+
+    try {
+      await deleteDoc(doc(db, 'organizations', orgId, 'learningPaths', pathId));
+      toast.success('Trilha excluída com sucesso.');
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao excluir trilha.');
+    }
+  };
 
   // Limpa o formulário e fecha o modal
   const handleCloseModal = () => {
@@ -286,64 +358,10 @@ export function LearningPathsPanel() {
     }
   };
 
-  // Função para desistir da trilha (Desassocia, apaga neon e reseta progresso de leitura seguro)
-  const handleAbandonPath = async (path: LearningPath) => {
+  // Função para abrir o modal de abandono de trilha
+  const handleAbandonPath = (path: LearningPath) => {
     if (!uid || !orgId) return;
-
-    const confirmAbandon = confirm(
-      `Deseja realmente desistir da missão "${path.name}"?\n\n` +
-      `• Suas HubCoins obtidas continuam com você na sua carteira! 🪙\n` +
-      `• As auras neon e os vínculos dos livros serão removidos da sua estante.\n` +
-      `• O progresso de leitura destes livros será redefinido para zero.\n` +
-      `• Você poderá recomeçar do zero no futuro quando quiser!`
-    );
-    if (!confirmAbandon) return;
-
-    const tId = toast.loading(`Cancelando missão "${path.name}"...`);
-    try {
-      const progressRef = doc(db, 'organizations', orgId, 'users', uid, 'learningPaths', path.id);
-      const progressSnap = await getDoc(progressRef);
-      const welcomeRewardClaimed = progressSnap.exists() ? !!progressSnap.data()?.welcomeRewardClaimed : false;
-
-      // 1. Reseta o progresso para NOT_STARTED preservando a flag welcomeRewardClaimed
-      await setDoc(progressRef, {
-        pathId: path.id,
-        userId: uid,
-        status: 'NOT_STARTED',
-        startedAt: 0,
-        completedAt: null,
-        completedBookIds: [],
-        progressPercentage: 0,
-        welcomeRewardClaimed
-      });
-
-      // 2. Limpa os vínculos, auras e progresso de leitura dos livros vinculados na estante
-      const currentBooks = [...useNexusStore.getState().books];
-      const updatedBooks = currentBooks.map(b => {
-        if (b.learningPathId === path.id) {
-          return {
-            ...b,
-            learningPathId: undefined,
-            neonColor: undefined,
-            currentPage: 0,
-            maxPageRead: 0, // Permite ler e pontuar do zero ao reiniciar
-            status: 'want_to_read' as const
-          };
-        }
-        return b;
-      });
-
-      const profileRef = doc(db, 'profiles', uid);
-      await updateDoc(profileRef, {
-        'nexusData.books': updatedBooks
-      });
-      useNexusStore.getState().setBooks(updatedBooks);
-
-      toast.success(`Você desistiu da missão. Suas HubCoins foram salvas e seus livros foram limpos na estante! 🛑`, { id: tId, duration: 6000 });
-    } catch (err) {
-      console.error('Erro ao desistir da trilha:', err);
-      toast.error('Falha ao desistir da trilha corporativa.', { id: tId });
-    }
+    setPathToAbandon(path);
   };
 
   // Função para criar ou editar uma nova trilha (Admin)
@@ -380,18 +398,10 @@ export function LearningPathsPanel() {
     }
   };
 
-  // Função para deletar uma trilha (Admin)
-  const handleDeletePath = async (pathId: string) => {
+  // Função para abrir o modal de exclusão de trilha (Admin)
+  const handleDeletePath = (pathId: string) => {
     if (!orgId) return;
-    if (!confirm('Deseja realmente excluir esta trilha? O progresso da equipe será arquivado.')) return;
-
-    try {
-      await deleteDoc(doc(db, 'organizations', orgId, 'learningPaths', pathId));
-      toast.success('Trilha excluída com sucesso.');
-    } catch (err) {
-      console.error(err);
-      toast.error('Erro ao excluir trilha.');
-    }
+    setPathIdToDelete(pathId);
   };
 
   const toggleBookSelection = (id: string) => {
@@ -811,6 +821,141 @@ export function LearningPathsPanel() {
               </div>
             )}
       </div>
+
+      {/* Modal de Confirmação de Abandono (Desistência) */}
+      <AnimatePresence>
+        {pathToAbandon && (
+          <div 
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={() => setPathToAbandon(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-[#0b0d14] border border-rose-500/20 rounded-[2.5rem] p-6 md:p-8 space-y-6 shadow-2xl shadow-rose-950/20 relative w-full max-w-md overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-[80px] -mr-10 -mt-10 bg-rose-500 opacity-20 pointer-events-none" />
+
+              <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+                <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-2xl animate-pulse">
+                  <ShieldAlert size={20} />
+                </div>
+                <div>
+                  <span className="text-[9px] font-black text-rose-400 uppercase tracking-widest">Confirmação Crítica</span>
+                  <h3 className="text-md font-black uppercase tracking-wider text-white">Desistir da Missão</h3>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider leading-relaxed">
+                  Tem certeza que deseja desistir da missão corporativa <span className="text-white">"{pathToAbandon.name}"</span>?
+                </p>
+
+                <div className="space-y-2.5 p-4 bg-white/[0.02] border border-white/5 rounded-2xl text-[10px] text-gray-500 font-medium">
+                  <div className="flex gap-2">
+                    <span className="text-emerald-400">✓</span>
+                    <span>Suas <strong>HubCoins</strong> acumuladas na carteira <strong>não serão alteradas</strong>. 🪙</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="text-rose-400">✗</span>
+                    <span>As <strong>auras neon</strong> e o destaque visual dos livros vinculados serão removidos da sua estante.</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="text-rose-400">✗</span>
+                    <span>O <strong>progresso de leitura</strong> destes livros será redefinido para zero.</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="text-cyan-400">ℹ</span>
+                    <span>Você poderá aceitar esta trilha e reiniciar o progresso quando quiser.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPathToAbandon(null)}
+                  className="flex-1 py-3 rounded-xl border border-white/10 text-gray-400 hover:text-white text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer text-center bg-white/5 active:scale-95"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmAbandonPath}
+                  className="flex-1 py-3 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-black text-[9px] uppercase tracking-widest transition-all cursor-pointer shadow-lg shadow-rose-500/10 active:scale-95 border border-rose-400/20"
+                >
+                  Confirmar Desistência
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal de Exclusão de Trilha (Admin) */}
+      <AnimatePresence>
+        {pathIdToDelete && (
+          <div 
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={() => setPathIdToDelete(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-[#0b0d14] border border-rose-600/30 rounded-[2.5rem] p-6 md:p-8 space-y-6 shadow-2xl shadow-rose-950/30 relative w-full max-w-md overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-[80px] -mr-10 -mt-10 bg-red-600 opacity-20 pointer-events-none" />
+
+              <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+                <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl animate-bounce">
+                  <Trash2 size={20} />
+                </div>
+                <div>
+                  <span className="text-[9px] font-black text-red-400 uppercase tracking-widest">Ação Destrutiva</span>
+                  <h3 className="text-md font-black uppercase tracking-wider text-white">Excluir Trilha Estratégica</h3>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider leading-relaxed">
+                  Deseja realmente <strong>excluir de forma permanente</strong> esta trilha de conhecimento corporativa?
+                </p>
+
+                <div className="p-4 bg-red-500/5 border border-red-500/10 rounded-2xl flex gap-2.5 items-start">
+                  <ShieldAlert size={16} className="text-red-400 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <span className="text-[8px] font-black text-red-400 uppercase tracking-widest">Aviso de Impacto</span>
+                    <p className="text-[10px] text-gray-500 font-medium leading-relaxed">
+                      Esta ação é irreversível. O progresso de leitura e as auras neon de todos os colaboradores associados a esta trilha serão arquivados ou suspensos permanentemente.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPathIdToDelete(null)}
+                  className="flex-1 py-3 rounded-xl border border-white/10 text-gray-400 hover:text-white text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer text-center bg-white/5 active:scale-95"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDeletePath}
+                  className="flex-1 py-3 rounded-xl bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 text-white font-black text-[9px] uppercase tracking-widest transition-all cursor-pointer shadow-lg shadow-red-500/25 active:scale-95 border border-red-500/30"
+                >
+                  Excluir Permanentemente
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

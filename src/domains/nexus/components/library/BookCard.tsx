@@ -22,32 +22,32 @@ export const NEON_AURA_MAP: Record<string, { gradient: string; glow: string; bor
   'acid-lime': {
     gradient: 'from-lime-400 to-emerald-500',
     glow: 'shadow-[0_0_25px_rgba(163,230,53,0.55)]',
-    border: 'border-lime-400/50'
+    border: 'border-lime-400 shadow-[0_0_15px_rgba(163,230,53,0.65)]'
   },
   'cyberpunk-pink': {
     gradient: 'from-pink-500 to-rose-600',
     glow: 'shadow-[0_0_25px_rgba(244,63,94,0.55)]',
-    border: 'border-pink-500/50'
+    border: 'border-pink-500 shadow-[0_0_15px_rgba(244,63,94,0.65)]'
   },
   'cobalt-wave': {
     gradient: 'from-blue-500 to-indigo-600',
     glow: 'shadow-[0_0_25px_rgba(59,130,246,0.55)]',
-    border: 'border-blue-500/50'
+    border: 'border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.65)]'
   },
   'amber-gold': {
     gradient: 'from-amber-400 to-orange-500',
     glow: 'shadow-[0_0_25px_rgba(245,158,11,0.55)]',
-    border: 'border-amber-400/50'
+    border: 'border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.65)]'
   },
   'purple-haze': {
     gradient: 'from-purple-500 to-violet-600',
     glow: 'shadow-[0_0_25px_rgba(168,85,247,0.55)]',
-    border: 'border-purple-500/50'
+    border: 'border-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.65)]'
   },
   'crimson-pulse': {
     gradient: 'from-red-500 to-rose-700',
     glow: 'shadow-[0_0_25px_rgba(239,68,68,0.55)]',
-    border: 'border-red-500/50'
+    border: 'border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.65)]'
   }
 };
 
@@ -76,7 +76,30 @@ export const BookCard = React.memo(({
   const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["15deg", "-15deg"]);
   const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-15deg", "15deg"]);
 
-  const aura = book.neonColor && NEON_AURA_MAP[book.neonColor] ? NEON_AURA_MAP[book.neonColor] : null;
+  const learningPaths = useNexusStore(state => state.learningPaths || []);
+  const userPathsProgress = useNexusStore(state => state.userPathsProgress || {});
+
+  const activeNeonColor = (() => {
+    // 1. Se o próprio livro já tem um neon ativo associado a uma trilha na estante pessoal
+    if (book.learningPathId && book.neonColor) {
+      const progress = userPathsProgress[book.learningPathId];
+      if (progress && progress.status === 'ACTIVE') {
+        return book.neonColor;
+      }
+      return null;
+    }
+    
+    // 2. Se o livro está na comunidade (ou recomendação), busca se o originalBookId (ou id) faz parte de alguma trilha ativa do usuário logado
+    const bookOriginalId = book.originalBookId || book.id;
+    const activePath = learningPaths.find(path => {
+      const progress = userPathsProgress[path.id];
+      return progress && progress.status === 'ACTIVE' && path.bookIds.includes(bookOriginalId);
+    });
+    
+    return activePath ? activePath.neonColor : null;
+  })();
+
+  const aura = activeNeonColor && NEON_AURA_MAP[activeNeonColor] ? NEON_AURA_MAP[activeNeonColor] : null;
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -190,7 +213,7 @@ export const BookCard = React.memo(({
         {/* Front Cover (Capa) */}
         <div 
           className={`absolute inset-0 z-20 rounded-r-sm overflow-hidden border shadow-2xl bg-[#1a1c23] ${
-            aura ? `${aura.border} border-2` : 'border-white/10'
+            aura ? `${aura.border} border-[2.5px]` : 'border-white/10'
           }`}
           style={{ 
             transform: is3DEnabled ? 'translateZ(25px)' : isParallaxEnabled ? 'translateZ(15px)' : undefined,
