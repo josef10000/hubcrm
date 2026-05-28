@@ -17,13 +17,6 @@
       ]
     },
     {
-      "collectionGroup": "clients",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        { "fieldPath": "isMonitored", "order": "ASCENDING" }
-      ]
-    },
-    {
       "collectionGroup": "supportRequests",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
@@ -32,5 +25,20 @@
       ]
     }
   ],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    {
+      "collectionGroup": "clients",
+      "fieldPath": "isMonitored",
+      "indexes": [
+        {
+          "queryScope": "COLLECTION_GROUP",
+          "order": "ASCENDING"
+        },
+        {
+          "queryScope": "COLLECTION_GROUP",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ]
 }
