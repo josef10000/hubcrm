@@ -143,11 +143,10 @@ export function Header({ currentPath, navigate }: HeaderProps) {
       <div className="flex items-center gap-3">
         <button
           onClick={() => setIsRecorderOpen(true)}
-          className="p-2.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 hover:border-rose-500/50 text-rose-500 rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer relative group shrink-0"
+          className="p-2.5 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0"
           title="Gravar Tela (Loom Nativo)"
         >
           <Video size={16} />
-          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
         </button>
         {!isDashboard && (
           <div className="hidden md:flex items-center w-52 lg:w-72 relative" role="search">
