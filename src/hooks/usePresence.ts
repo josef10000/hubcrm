@@ -22,6 +22,12 @@ export function usePresence() {
   const updateStatus = async (status: 'online' | 'away' | 'offline' | 'lunch' | 'meeting', isManual = false) => {
     if (!userProfileRef.current?.uid) return;
 
+    // Se o expediente do dia já foi concluído, o colaborador deve permanecer offline no chat.
+    // Ignoramos qualquer transição automática ou manual para outro status.
+    if (store.todayLog?.status === 'completed' && status !== 'offline') {
+      return;
+    }
+
     try {
       const profileDocRef = doc(db, 'profiles', userProfileRef.current.uid);
       await updateDoc(profileDocRef, {
@@ -75,6 +81,9 @@ export function usePresence() {
   const resetInactivityTimer = () => {
     if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
     
+    // Se o expediente já foi concluído hoje, abortamos o timer de inatividade
+    if (store.todayLog?.status === 'completed') return;
+    
     const currentProfile = userProfileRef.current;
     
     // Se for um status manual (Almoço/Reunião/etc), não voltamos para Online automaticamente
@@ -116,6 +125,7 @@ export function usePresence() {
 
     const trackActivityForAutoClockIn = () => {
       const currentLog = store.todayLog;
+      if (currentLog?.status === 'completed') return;
       if (hasCheckedAutoClock || currentLog || store.loadingTimeLog) return;
 
       if (!activityTimer) {
@@ -151,6 +161,7 @@ export function usePresence() {
     };
 
     const handleUserInteraction = () => {
+      if (store.todayLog?.status === 'completed') return;
       resetInactivityTimer();
       trackActivityForAutoClockIn();
     };
@@ -159,6 +170,8 @@ export function usePresence() {
     resetInactivityTimer();
 
     const handleVisibilityChange = () => {
+      if (store.todayLog?.status === 'completed') return;
+      
       // Só alteramos automaticamente se não for um status manual
       if (!userProfileRef.current?.isManualStatus) {
         if (document.visibilityState === 'visible') {
