@@ -22,6 +22,9 @@ export function usePresence() {
   const updateStatus = async (status: 'online' | 'away' | 'offline' | 'lunch' | 'meeting', isManual = false) => {
     if (!userProfileRef.current?.uid) return;
 
+    // Se o ponto ainda está carregando do Firestore, bloqueamos qualquer alteração para evitar race conditions
+    if (store.loadingTimeLog) return;
+
     // Se o expediente do dia já foi concluído, o colaborador deve permanecer offline no chat.
     // Ignoramos qualquer transição automática ou manual para outro status.
     if (store.todayLog?.status === 'completed' && status !== 'offline') {
@@ -81,6 +84,9 @@ export function usePresence() {
   const resetInactivityTimer = () => {
     if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
     
+    // Se o ponto ainda está carregando, não faz nada
+    if (store.loadingTimeLog) return;
+
     // Se o expediente já foi concluído hoje, abortamos o timer de inatividade
     if (store.todayLog?.status === 'completed') return;
     
@@ -111,16 +117,19 @@ export function usePresence() {
     // Assina em tempo real o log de hoje para mantê-lo sincronizado no Zustand
     const unsubLog = store.loadTodayLog(userProfile.uid);
 
-    const initPresence = () => {
-      // Aguarda um pequeno intervalo para garantir a leitura do todayLog sincronizado do Firestore
-      setTimeout(async () => {
-        const currentLog = store.todayLog;
-        if (currentLog?.status === 'completed') {
-          await updateStatus('offline', false);
-        } else if (!userProfile.presenceStatus || userProfile.presenceStatus === 'offline') {
-          await updateStatus('online', false);
-        }
-      }, 1000);
+    const initPresence = async () => {
+      // Se ainda está carregando o log do Firestore, não faz nada e tenta novamente mais tarde
+      if (store.loadingTimeLog) {
+        setTimeout(initPresence, 200);
+        return;
+      }
+
+      const currentLog = store.todayLog;
+      if (currentLog?.status === 'completed') {
+        await updateStatus('offline', false);
+      } else if (!userProfile.presenceStatus || userProfile.presenceStatus === 'offline') {
+        await updateStatus('online', false);
+      }
     };
 
     const trackActivityForAutoClockIn = () => {
