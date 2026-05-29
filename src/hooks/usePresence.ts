@@ -49,10 +49,6 @@ export function usePresence() {
         if (log && log.status === 'active') {
           await currentStore.registerPause('lunch');
         }
-      } else if (status === 'away') {
-        if (log && log.status === 'active') {
-          await currentStore.registerPause('away');
-        }
       } else if (status === 'meeting') {
         if (log && log.status === 'active') {
           await currentStore.registerPause('meeting');
@@ -68,11 +64,6 @@ export function usePresence() {
         } else if (log.status === 'paused') {
           // Se estava pausado e voltou, retoma contagem de horas
           await currentStore.resumeExpediente();
-        }
-      } else if (status === 'offline') {
-        if (log && log.status !== 'completed') {
-          // Se ficou offline no chat e o ponto estava aberto, fecha expediente
-          await currentStore.endExpediente();
         }
       }
     } catch (error) {
