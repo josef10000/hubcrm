@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 export function usePresence() {
   const { userProfile } = useAuth();
   const store = useCRMStore();
+  const effectiveOrgId = useCRMStore(state => state.effectiveOrgId);
   const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Ref para garantir que os listeners sempre tenham acesso ao estado mais recente do perfil
@@ -112,7 +113,7 @@ export function usePresence() {
   };
 
   useEffect(() => {
-    if (!userProfile?.uid) return;
+    if (!userProfile?.uid || !effectiveOrgId) return;
 
     const sessionStartTime = Date.now();
     let hasCheckedAutoClock = false;
@@ -224,7 +225,7 @@ export function usePresence() {
       if (activityTimer) clearTimeout(activityTimer);
       unsubLog();
     };
-  }, [userProfile?.uid]);
+  }, [userProfile?.uid, effectiveOrgId]);
 
   return { updateStatus, manualSetStatus };
 }
