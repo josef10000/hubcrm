@@ -28,7 +28,7 @@ import InventorySection from '@people/components/InventorySection';
 import { EnergyScoreCard } from '@people/components/EnergyScoreCard';
 import { useCRMStore } from '@/store/useCRMStore';
 import { TimeLog, calculateNetDuration } from '@/store/slices/timeTrackingSlice';
-import { parseISO } from 'date-fns';
+import { parseISO, format } from 'date-fns';
 import { PDIKanban } from '@people/components/PDIKanban';
 import { 
   Plus, 
@@ -113,7 +113,22 @@ export default function ProfileView() {
   // Lógica de Ponto Eletrônico Individual (Meu Expediente)
   const todayLog = useCRMStore(s => s.todayLog);
   const [myTimeLogs, setMyTimeLogs] = useState<TimeLog[]>([]);
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => format(new Date(), 'yyyy-MM'));
+
+  const getMonthOptions = () => {
+    const options = [];
+    const currentDate = new Date();
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+      const value = format(d, 'yyyy-MM');
+      const label = d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+      const capitalizedLabel = label.charAt(0).toUpperCase() + label.slice(1);
+      options.push({ value, label: capitalizedLabel });
+    }
+    return options;
+  };
   const [elapsedToday, setElapsedToday] = useState(0);
+  const myMonthlyLogs = myTimeLogs.filter(l => l.date.startsWith(selectedMonth));
 
   useEffect(() => {
     if (!uid || !currentUserProfile?.orgId) return;
@@ -1384,6 +1399,28 @@ export default function ProfileView() {
 
               {activeTab === 'expediente' && (isOwnProfile || isManagement || isAdmin) && (
                 <div className="space-y-6 animate-in slide-in-from-bottom duration-500">
+                  {/* Barra de Período do Espelho de Ponto */}
+                  <div className="flex flex-col md:flex-row md:justify-between md:items-center bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-6 shadow-xl gap-4">
+                    <div className="text-left">
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-white">Espelho de Ponto Eletrônico</h3>
+                      <p className="text-xs text-gray-500">Consulte seus horários de entrada, saída, intervalos e totais trabalhados.</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">Período:</span>
+                      <select 
+                        value={selectedMonth}
+                        onChange={(e) => setSelectedMonth(e.target.value)}
+                        className="bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-1.5 text-xs text-gray-800 dark:text-gray-300 focus:outline-none focus:border-primary-500 transition-all font-bold cursor-pointer"
+                      >
+                        {getMonthOptions().map(opt => (
+                          <option key={opt.value} value={opt.value} className="bg-[#0f1117] text-white">
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
                     {/* Card 1: Status Atual e Timer */}
                     <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-6 shadow-xl flex flex-col justify-between min-h-[180px]">
@@ -1421,7 +1458,7 @@ export default function ProfileView() {
                         <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Total Líquido do Mês</span>
                         <h3 className="text-3xl font-black font-mono tracking-tight text-primary-500">
                           {(() => {
-                            const totalMs = myTimeLogs.reduce((acc, curr) => acc + (curr.totalDuration || 0), 0);
+                            const totalMs = myMonthlyLogs.reduce((acc, curr) => acc + (curr.totalDuration || 0), 0);
                             const totalHours = Math.floor(totalMs / (1000 * 60 * 60));
                             const totalMins = Math.floor((totalMs % (1000 * 60 * 60)) / (1000 * 60));
                             return `${totalHours}h ${totalMins}m`;
@@ -1508,7 +1545,7 @@ export default function ProfileView() {
                           </tr>
                         </thead>
                         <tbody className="text-sm">
-                          {myTimeLogs.map(log => (
+                          {myMonthlyLogs.map(log => (
                             <tr key={log.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                               <td className="py-4 px-2 font-bold">{formatLocalDateStr(log.date)}</td>
                               <td className="py-4 px-2 font-mono">{formatToBrasiliaTime(log.startTime, 'HH:mm:ss')}</td>
@@ -1534,10 +1571,10 @@ export default function ProfileView() {
                               </td>
                             </tr>
                           ))}
-                          {myTimeLogs.length === 0 && (
+                          {myMonthlyLogs.length === 0 && (
                             <tr>
                               <td colSpan={5} className="py-12 text-center opacity-30 italic text-sm">
-                                Nenhum registro de expediente encontrado.
+                                Nenhum registro de expediente encontrado para este período.
                               </td>
                             </tr>
                           )}

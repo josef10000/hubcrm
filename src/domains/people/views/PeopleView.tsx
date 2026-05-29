@@ -106,6 +106,20 @@ export default function PeopleView() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [selectedMemberForAttendance, setSelectedMemberForAttendance] = useState<UserProfile | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => format(new Date(), 'yyyy-MM'));
+
+  const getMonthOptions = () => {
+    const options = [];
+    const currentDate = new Date();
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+      const value = format(d, 'yyyy-MM');
+      const label = d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+      const capitalizedLabel = label.charAt(0).toUpperCase() + label.slice(1);
+      options.push({ value, label: capitalizedLabel });
+    }
+    return options;
+  };
 
   const allLogs = useCRMStore(s => s.allLogs);
   const loadAllLogs = useCRMStore(s => s.loadAllLogs);
@@ -1058,78 +1072,91 @@ export default function PeopleView() {
                </div>
             </div>
           )}
-        </div>
+          {selectedMemberForAttendance && (() => {
+                         const member = selectedMemberForAttendance;
+                         const isMemberAdminOrRH = member.role === 'admin' || member.roleId === 'admin' || member.permissions?.includes('MANAGE_SETTINGS') || member.permissions?.includes('MANAGE_TEAM');
+                         const memberContract = isMemberAdminOrRH ? 'PJ' : (member.contractType || 'PJ');
 
-         {selectedMemberForAttendance && (() => {
-           const member = selectedMemberForAttendance;
-           const isMemberAdminOrRH = member.role === 'admin' || member.roleId === 'admin' || member.permissions?.includes('MANAGE_SETTINGS') || member.permissions?.includes('MANAGE_TEAM');
-           const memberContract = isMemberAdminOrRH ? 'PJ' : (member.contractType || 'PJ');
+                         const memberLogs = allLogs.filter(l => l.userId === member.uid);
+                         memberLogs.sort((a, b) => b.startTime - a.startTime);
 
-           const memberLogs = allLogs.filter(l => l.userId === member.uid);
-           memberLogs.sort((a, b) => b.startTime - a.startTime);
+                         const monthlyLogs = memberLogs.filter(l => l.date.startsWith(selectedMonth));
 
-           const todayStr = getLocalDateString();
-           const todayLog = memberLogs.find(l => l.date === todayStr);
+                         const todayStr = getLocalDateString();
+                         const todayLog = memberLogs.find(l => l.date === todayStr);
 
-           const formatMs = (ms: number) => {
-             const totalSecs = Math.floor(ms / 1000);
-             const hours = Math.floor(totalSecs / 3600);
-             const minutes = Math.floor((totalSecs % 3600) / 60);
-             const seconds = totalSecs % 60;
-             return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-           };
+                         const formatMs = (ms: number) => {
+                           const totalSecs = Math.floor(ms / 1000);
+                           const hours = Math.floor(totalSecs / 3600);
+                           const minutes = Math.floor((totalSecs % 3600) / 60);
+                           const seconds = totalSecs % 60;
+                           return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                         };
 
-           const formatMsToHours = (ms: number) => {
-             const totalSecs = Math.floor(ms / 1000);
-             const hours = Math.floor(totalSecs / 3600);
-             const minutes = Math.floor((totalSecs % 3600) / 60);
-             return `${hours}h ${minutes}m`;
-           };
+                         const formatMsToHours = (ms: number) => {
+                           const totalSecs = Math.floor(ms / 1000);
+                           const hours = Math.floor(totalSecs / 3600);
+                           const minutes = Math.floor((totalSecs % 3600) / 60);
+                           return `${hours}h ${minutes}m`;
+                         };
 
-           const totalMsMonth = memberLogs.reduce((acc, curr) => acc + (curr.totalDuration || 0), 0);
+                         const totalMsMonth = monthlyLogs.reduce((acc, curr) => acc + (curr.totalDuration || 0), 0);
 
-           // Calcula a média das pausas de almoço
-           let totalLunchMinutes = 0;
-           let lunchCount = 0;
-           memberLogs.forEach(l => {
-             let dayLunch = 0;
-             l.pauses.forEach(p => {
-               if (p.type === 'lunch') {
-                 const end = p.endTime || Date.now();
-                 dayLunch += (end - p.startTime);
-               }
-             });
-             if (dayLunch > 0) {
-               totalLunchMinutes += Math.floor(dayLunch / 60000);
-               lunchCount++;
-             }
-           });
+                         // Calcula a média das pausas de almoço
+                         let totalLunchMinutes = 0;
+                         let lunchCount = 0;
+                         monthlyLogs.forEach(l => {
+                           let dayLunch = 0;
+                           l.pauses.forEach(p => {
+                             if (p.type === 'lunch') {
+                               const end = p.endTime || Date.now();
+                               dayLunch += (end - p.startTime);
+                             }
+                           });
+                           if (dayLunch > 0) {
+                             totalLunchMinutes += Math.floor(dayLunch / 60000);
+                             lunchCount++;
+                           }
+                         });
 
-           return (
-             <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-4" onClick={() => setSelectedMemberForAttendance(null)}>
-               <div className="bg-[#0f1117] border border-white/10 rounded-[2.5rem] w-full max-w-4xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col animate-in scale-in duration-300" onClick={e => e.stopPropagation()}>
-                 {/* Header */}
-                 <div className="p-8 border-b border-white/5 flex justify-between items-center shrink-0">
-                   <div className="flex items-center space-x-4">
-                     <div className="w-12 h-12 rounded-full bg-primary-500/20 flex items-center justify-center text-primary-400 font-bold overflow-hidden border border-primary-500/30 shadow-inner">
-                       {member.photoURL ? <img src={member.photoURL} alt={member.displayName} /> : member.displayName?.[0] || 'U'}
-                     </div>
-                     <div className="text-left">
-                       <div className="flex items-center gap-2">
-                         <h3 className="text-xl font-bold text-white">{member.displayName}</h3>
-                         <span className={`text-[9px] px-2 py-0.5 rounded-lg font-black tracking-wider uppercase ${
-                           memberContract === 'CLT'
-                             ? 'bg-blue-500/10 border border-blue-500/20 text-blue-400'
-                             : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
-                         }`}>
-                           {memberContract}
-                         </span>
-                       </div>
-                       <p className="text-xs text-gray-400">{member.jobTitle || 'Colaborador'}</p>
-                     </div>
-                   </div>
-                   <button onClick={() => setSelectedMemberForAttendance(null)} className="p-2.5 bg-white/5 hover:bg-white/10 rounded-full border border-white/5 text-gray-400 hover:text-white transition-all"><X size={18} /></button>
-                 </div>
+                         return (
+                           <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-4" onClick={() => setSelectedMemberForAttendance(null)}>
+                             <div className="bg-[#0f1117] border border-white/10 rounded-[2.5rem] w-full max-w-4xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col animate-in scale-in duration-300" onClick={e => e.stopPropagation()}>
+                               {/* Header */}
+                               <div className="p-8 border-b border-white/5 flex justify-between items-center shrink-0">
+                                 <div className="flex items-center space-x-4">
+                                   <div className="w-12 h-12 rounded-full bg-primary-500/20 flex items-center justify-center text-primary-400 font-bold overflow-hidden border border-primary-500/30 shadow-inner">
+                                     {member.photoURL ? <img src={member.photoURL} alt={member.displayName} /> : member.displayName?.[0] || 'U'}
+                                   </div>
+                                   <div className="text-left">
+                                     <div className="flex items-center gap-2">
+                                       <h3 className="text-xl font-bold text-white">{member.displayName}</h3>
+                                       <span className={`text-[9px] px-2 py-0.5 rounded-lg font-black tracking-wider uppercase ${
+                                         memberContract === 'CLT'
+                                           ? 'bg-blue-500/10 border border-blue-500/20 text-blue-400'
+                                           : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
+                                       }`}>
+                                         {memberContract}
+                                       </span>
+                                     </div>
+                                     <p className="text-xs text-gray-400">{member.jobTitle || 'Colaborador'}</p>
+                                   </div>
+                                 </div>
+                                 <div className="flex items-center gap-3">
+                                   <select 
+                                     value={selectedMonth}
+                                     onChange={(e) => setSelectedMonth(e.target.value)}
+                                     className="bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-primary-500 transition-all font-bold cursor-pointer"
+                                   >
+                                     {getMonthOptions().map(opt => (
+                                       <option key={opt.value} value={opt.value} className="bg-[#0f1117] text-white">
+                                         {opt.label}
+                                       </option>
+                                     ))}
+                                   </select>
+                                   <button onClick={() => setSelectedMemberForAttendance(null)} className="p-2.5 bg-white/5 hover:bg-white/10 rounded-full border border-white/5 text-gray-400 hover:text-white transition-all"><X size={18} /></button>
+                                 </div>
+                               </div>
 
                  {/* Modal Content */}
                  <div className="p-8 space-y-8 overflow-y-auto custom-scrollbar flex-1">
@@ -1251,7 +1278,7 @@ export default function PeopleView() {
                            </tr>
                          </thead>
                          <tbody className="text-sm">
-                           {memberLogs.map(l => {
+                           {monthlyLogs.map(l => {
                              const lIsOvertime = !!l.isOvertime;
                              let lIsLate = false;
                              let lLateMinutes = 0;
@@ -1325,7 +1352,7 @@ export default function PeopleView() {
                                </tr>
                              );
                            })}
-                           {memberLogs.length === 0 && (
+                           {monthlyLogs.length === 0 && (
                              <tr>
                                <td colSpan={6} className="py-12 text-center opacity-30 italic text-sm">Sem registros este mês.</td>
                              </tr>
