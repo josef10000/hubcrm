@@ -769,6 +769,7 @@ export default function PeopleView() {
                                  <span>{v.start}</span><span>{v.end}</span>
                               </div>
                              {isAdminOrGerente && <button onClick={() => deleteVacation(v.id)} className="mt-2 text-[8px] text-red-500/40 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100 uppercase font-black">Remover do Histórico</button>}
+                            </div>
                          ))}
                       </div>
                    </div>
@@ -1010,10 +1011,7 @@ export default function PeopleView() {
                  </div>
                </div>
              </div>
-           )}      </div>
-              </div>
-            </div>
-          )}
+           )}
 
           {activeTab === 'climate' && isAdminOrGerente && (
             <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] p-8 shadow-xl">
