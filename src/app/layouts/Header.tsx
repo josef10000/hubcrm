@@ -1,11 +1,12 @@
 import React from 'react';
-import { Search, Menu, X, Plus, Download, Focus, Video } from 'lucide-react';
+import { Search, Menu, X, Plus, Download, Focus, Video, Clock } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
 import { useUI } from '@/contexts/UIContext';
 import { useFilteredClients } from '@/hooks/useFilteredClients';
 import { useWeather } from '@/hooks/useWeather';
+import { useCRMStore } from '@/store/useCRMStore';
 
 interface HeaderProps {
   currentPath: string;
@@ -30,6 +31,7 @@ export function Header({ currentPath, navigate }: HeaderProps) {
     setEditingClient,
     handleExportCSV
   } = useCRM();
+  const store = useCRMStore();
   const { hasPermission, hasAnyPermission } = usePermissions();
 
   const filteredClientsForExport = useFilteredClients(clients, searchTerm, filterStatus, sortBy, filterTagId);
@@ -141,6 +143,53 @@ export function Header({ currentPath, navigate }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-3">
+        {userProfile && (
+          <button
+            onClick={async () => {
+              if (store.loadingTimeLog) return;
+              const log = store.todayLog;
+              if (!log) {
+                await store.startExpediente(
+                  userProfile.uid,
+                  userProfile.displayName || 'Colaborador',
+                  userProfile.photoURL || ''
+                );
+              } else if (log.status === 'completed') {
+                alert('Seu expediente de hoje já foi encerrado. Obrigado pelo trabalho!');
+              } else {
+                if (confirm('Deseja realmente encerrar seu expediente de trabalho de hoje?')) {
+                  await store.endExpediente();
+                }
+              }
+            }}
+            disabled={store.loadingTimeLog}
+            className={`p-2.5 border rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0 flex items-center justify-center gap-1.5 ${
+              !store.todayLog
+                ? 'bg-gray-100 dark:bg-white/5 border-gray-200 dark:border-white/10 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
+                : store.todayLog.status === 'active'
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/20'
+                : store.todayLog.status === 'paused'
+                ? 'bg-amber-500/10 border-amber-500/30 text-amber-500 hover:bg-amber-500/20'
+                : 'bg-rose-500/10 border-rose-500/30 text-rose-500 opacity-60 cursor-not-allowed'
+            }`}
+            title={
+              !store.todayLog
+                ? 'Iniciar Expediente (Entrada)'
+                : store.todayLog.status === 'active'
+                ? 'Expediente Ativo (Clique para encerrar)'
+                : store.todayLog.status === 'paused'
+                ? 'Expediente em Intervalo (Clique para encerrar)'
+                : 'Expediente Concluído Hoje'
+            }
+          >
+            <Clock size={16} />
+            {store.todayLog && store.todayLog.status !== 'completed' && (
+              <span className={`w-1.5 h-1.5 rounded-full ${
+                store.todayLog.status === 'active' ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
+              }`} />
+            )}
+          </button>
+        )}
         <button
           onClick={() => setIsRecorderOpen(true)}
           className="p-2.5 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0"

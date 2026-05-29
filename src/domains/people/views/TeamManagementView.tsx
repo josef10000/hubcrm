@@ -8,6 +8,9 @@ import { usePermissions } from '@auth/hooks/usePermissions';
 import { toast } from 'sonner';
 import { UserRole } from '@/types';
 import { authFetch } from '@/lib/authFetch';
+import { useCRMStore } from '@/store/useCRMStore';
+import { TimeLog, calculateNetDuration, getLocalDateString } from '@/store/slices/timeTrackingSlice';
+import { format, parseISO } from 'date-fns';
 
 interface Member {
   uid: string;
@@ -102,7 +105,38 @@ export default function TeamManagementView() {
   const [members, setMembers] = useState<Member[]>([]);
   const [invites, setInvites] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<'list' | 'org'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'org' | 'expediente'>('list');
+  const store = useCRMStore();
+  const allLogs = useCRMStore(s => s.allLogs);
+  const [elapsedTimes, setElapsedTimes] = useState<{ [userId: string]: number }>({});
+
+  useEffect(() => {
+    if (viewMode !== 'expediente') return;
+
+    const unsub = store.loadAllLogs();
+
+    const timer = setInterval(() => {
+      const todayStr = getLocalDateString();
+      const newElapsed: { [userId: string]: number } = {};
+
+      store.allLogs.forEach(log => {
+        if (log.date === todayStr) {
+          if (log.status === 'active') {
+            newElapsed[log.userId] = calculateNetDuration(log.startTime, undefined, log.pauses);
+          } else {
+            newElapsed[log.userId] = log.totalDuration;
+          }
+        }
+      });
+
+      setElapsedTimes(newElapsed);
+    }, 1000);
+
+    return () => {
+      unsub();
+      clearInterval(timer);
+    };
+  }, [viewMode, store.allLogs]);
   
   // Invite form state
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -316,6 +350,13 @@ export default function TeamManagementView() {
                 <GitGraph size={18} />
                 <span>Organograma</span>
               </button>
+              <button 
+                onClick={() => setViewMode('expediente')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium ${viewMode === 'expediente' ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+              >
+                <Clock size={18} />
+                <span>Expediente Ao Vivo</span>
+              </button>
             </div>
             {hasPermission('MANAGE_TEAM') && (
               <button 
@@ -452,7 +493,7 @@ export default function TeamManagementView() {
                 </div>
               )}
             </div>
-          ) : (
+          ) : viewMode === 'org' ? (
             <div className="bg-white/50 dark:bg-white/5 backdrop-blur-3xl border border-gray-200 dark:border-white/10 rounded-[3rem] p-4 md:p-12 overflow-x-auto custom-scrollbar animate-in zoom-in duration-500 min-h-[600px] flex justify-center">
               {(() => {
                 const roots = members.filter(m => !m.reportsTo || !members.find(x => x.uid === m.reportsTo));
@@ -466,6 +507,144 @@ export default function TeamManagementView() {
                   </div>
                 );
               })()}
+            </div>
+          ) : (
+            <div className="space-y-6 animate-in fade-in duration-500">
+              <div className="bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl overflow-hidden shadow-xl">
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-white/10 flex items-center justify-between bg-gray-50/50 dark:bg-white/5">
+                  <div className="flex items-center">
+                    <Clock size={20} className="text-primary-500 mr-2 animate-spin-slow" />
+                    <h2 className="font-bold text-gray-900 dark:text-white">Expediente dos Colaboradores Ao Vivo</h2>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      try {
+                        const headers = ['Data', 'Colaborador', 'Entrada', 'Saída', 'Pausas', 'Tempo Líquido (Segundos)', 'Tempo Líquido Formatado'];
+                        
+                        const rows = store.allLogs.map(log => {
+                          const netMs = log.totalDuration || calculateNetDuration(log.startTime, log.endTime, log.pauses);
+                          const netSecs = Math.floor(netMs / 1000);
+                          const hours = Math.floor(netSecs / 3600);
+                          const mins = Math.floor((netSecs % 3600) / 60);
+                          const formatted = `${hours}h ${mins}m`;
+                          
+                          const pausesStr = log.pauses.map(p => {
+                            const pStart = format(p.startTime, 'HH:mm');
+                            const pEnd = p.endTime ? format(p.endTime, 'HH:mm') : '...';
+                            return `${p.type === 'lunch' ? 'Almoço' : p.type === 'meeting' ? 'Reunião' : 'Ausente'} (${pStart} - ${pEnd})`;
+                          }).join(' | ');
+
+                          return [
+                            log.date,
+                            log.userName,
+                            format(log.startTime, 'HH:mm:ss'),
+                            log.endTime ? format(log.endTime, 'HH:mm:ss') : 'Ativo',
+                            pausesStr || 'Nenhuma',
+                            netSecs,
+                            formatted
+                          ];
+                        });
+
+                        const csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
+                          + [headers.join(','), ...rows.map(r => r.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))].join('\n');
+                        
+                        const encodedUri = encodeURI(csvContent);
+                        const link = document.createElement("a");
+                        link.setAttribute("href", encodedUri);
+                        link.setAttribute("download", `Espelho_Ponto_HubCRM_${new Date().getFullYear()}_${new Date().getMonth() + 1}.csv`);
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        toast.success('Relatório de logs de ponto exportado!');
+                      } catch (e) {
+                        console.error('Erro ao exportar logs de ponto:', e);
+                        toast.error('Erro ao exportar logs.');
+                      }
+                    }}
+                    className="flex items-center space-x-2 bg-primary-500/10 hover:bg-primary-500/20 border border-primary-500/30 text-primary-500 px-4 py-2.5 rounded-xl transition-all font-bold text-xs shadow-lg cursor-pointer"
+                  >
+                    <span>Exportar Logs Consolidados (CSV)</span>
+                  </button>
+                </div>
+                <div className="divide-y divide-gray-200 dark:divide-white/10">
+                  {members.map(member => {
+                    const todayStr = getLocalDateString();
+                    const log = allLogs.find(l => l.userId === member.uid && l.date === todayStr);
+                    const elapsed = elapsedTimes[member.uid] || 0;
+                    
+                    const formatMs = (ms: number) => {
+                      const totalSecs = Math.floor(ms / 1000);
+                      const hours = Math.floor(totalSecs / 3600);
+                      const minutes = Math.floor((totalSecs % 3600) / 60);
+                      const seconds = totalSecs % 60;
+                      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                    };
+
+                    return (
+                      <div key={member.uid} className="px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-gray-100 dark:hover:bg-white/5 transition-colors gap-4">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-10 h-10 rounded-full bg-primary-500/20 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold overflow-hidden shadow-inner">
+                            {member.photoURL ? <img src={member.photoURL} alt={member.displayName} /> : member.displayName?.[0] || 'U'}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900 dark:text-white">{member.displayName}</p>
+                            <p className="text-xs text-gray-500">{member.jobTitle || getRoleDisplayName(member.role)}</p>
+                          </div>
+                        </div>
+
+                        {/* Status do Ponto Ao Vivo */}
+                        <div className="flex items-center gap-3">
+                          <span className={`w-2.5 h-2.5 rounded-full ${
+                            !log
+                              ? 'bg-gray-400'
+                              : log.status === 'active'
+                              ? 'bg-emerald-500 animate-pulse'
+                              : log.status === 'paused'
+                              ? 'bg-amber-500'
+                              : 'bg-rose-500'
+                          }`} />
+                          <div className="flex flex-col">
+                            <span className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-tight">
+                              {!log
+                                ? 'Offline'
+                                : log.status === 'active'
+                                ? 'Trabalhando Ao Vivo'
+                                : log.status === 'paused'
+                                ? (() => {
+                                    const activePause = log.pauses.find(p => !p.endTime);
+                                    if (activePause?.type === 'lunch') return '🍱 Em Almoço';
+                                    if (activePause?.type === 'meeting') return '👥 Em Reunião';
+                                    return '🕒 Ausente';
+                                  })()
+                                : 'Expediente Encerrado'}
+                            </span>
+                            <span className="text-[10px] text-gray-500 font-mono">
+                              {log ? `Entrada: ${format(log.startTime, 'HH:mm:ss')}` : 'Sem registros hoje'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Contador de Tempo dinâmico */}
+                        <div className="flex flex-col items-end text-right">
+                          <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-0.5">Tempo Líquido Hoje</p>
+                          <p className={`text-sm font-bold font-mono ${
+                            log?.status === 'active' 
+                              ? 'text-emerald-500' 
+                              : log?.status === 'paused' 
+                              ? 'text-amber-500' 
+                              : 'text-gray-500'
+                          }`}>
+                            {log ? formatMs(elapsed) : '00:00:00'}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {members.length === 0 && (
+                    <div className="p-12 text-center opacity-30 italic">Nenhum membro ativo cadastrado.</div>
+                  )}
+                </div>
+              </div>
             </div>
           )
         )}

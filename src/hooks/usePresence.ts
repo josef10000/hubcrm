@@ -2,9 +2,11 @@ import { useEffect, useRef } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@auth/contexts/AuthContext';
+import { useCRMStore } from '@/store/useCRMStore';
 
 export function usePresence() {
   const { userProfile } = useAuth();
+  const store = useCRMStore();
   const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Ref para garantir que os listeners sempre tenham acesso ao estado mais recente do perfil
@@ -25,6 +27,40 @@ export function usePresence() {
         isManualStatus: isManual,
         lastSeen: Date.now()
       });
+
+      // Sincronização com o Módulo de Ponto Eletrônico
+      const log = store.todayLog;
+
+      if (status === 'lunch') {
+        if (log && log.status === 'active') {
+          await store.registerPause('lunch');
+        }
+      } else if (status === 'away') {
+        if (log && log.status === 'active') {
+          await store.registerPause('away');
+        }
+      } else if (status === 'meeting') {
+        if (log && log.status === 'active') {
+          await store.registerPause('meeting');
+        }
+      } else if (status === 'online') {
+        if (!log) {
+          // Se ficou online e não tem ponto batido hoje, abre o expediente!
+          await store.startExpediente(
+            userProfileRef.current.uid,
+            userProfileRef.current.displayName || 'Colaborador',
+            userProfileRef.current.photoURL || ''
+          );
+        } else if (log.status === 'paused') {
+          // Se estava pausado e voltou, retoma contagem de horas
+          await store.resumeExpediente();
+        }
+      } else if (status === 'offline') {
+        if (log && log.status !== 'completed') {
+          // Se ficou offline no chat e o ponto estava aberto, fecha expediente
+          await store.endExpediente();
+        }
+      }
     } catch (error) {
       console.error('Error updating presence:', error);
     }
@@ -57,11 +93,22 @@ export function usePresence() {
   useEffect(() => {
     if (!userProfile?.uid) return;
 
-    // Se não houver status definido ou se for offline, inicia como online (automático)
-    if (!userProfile.presenceStatus || userProfile.presenceStatus === 'offline') {
-      updateStatus('online', false);
-    }
-    
+    // Assina em tempo real o log de hoje para mantê-lo sincronizado no Zustand
+    const unsubLog = store.loadTodayLog(userProfile.uid);
+
+    const initPresence = () => {
+      // Aguarda um pequeno intervalo para garantir a leitura do todayLog sincronizado do Firestore
+      setTimeout(async () => {
+        const currentLog = store.todayLog;
+        if (currentLog?.status === 'completed') {
+          await updateStatus('offline', false);
+        } else if (!userProfile.presenceStatus || userProfile.presenceStatus === 'offline') {
+          await updateStatus('online', false);
+        }
+      }, 1000);
+    };
+
+    initPresence();
     resetInactivityTimer();
 
     const handleVisibilityChange = () => {
@@ -94,6 +141,7 @@ export function usePresence() {
       window.removeEventListener('keydown', resetInactivityTimer);
       window.removeEventListener('click', resetInactivityTimer);
       if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
+      unsubLog();
     };
   }, [userProfile?.uid]);
 

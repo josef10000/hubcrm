@@ -12,6 +12,7 @@ import { SupportSlice } from './slices/supportSlice';
 import { SystemSlice } from './slices/systemSlice';
 
 import { PreferencesSlice } from './slices/preferencesSlice';
+import { TimeTrackingSlice } from './slices/timeTrackingSlice';
 
 export interface BaseState {
   currentUserId: string | null;
@@ -39,4 +40,4 @@ export interface ConfigState {
   errorMsg: string | null;
 }
 
-export type CRMStoreState = BaseState & BaseActions & ConfigState & CRMSlice & WikiSlice & FinanceSlice & PeopleSlice & SupportSlice & SystemSlice & PreferencesSlice;
+export type CRMStoreState = BaseState & BaseActions & ConfigState & CRMSlice & WikiSlice & FinanceSlice & PeopleSlice & SupportSlice & SystemSlice & PreferencesSlice & TimeTrackingSlice;

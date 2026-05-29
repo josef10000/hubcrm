@@ -10,6 +10,7 @@ import { createPeopleSlice } from './slices/peopleSlice';
 import { createSupportSlice } from './slices/supportSlice';
 import { createSystemSlice } from './slices/systemSlice';
 import { createPreferencesSlice } from './slices/preferencesSlice';
+import { createTimeTrackingSlice } from './slices/timeTrackingSlice';
 import { CRMStoreState } from './types';
 import { Logger } from '@/lib/logger';
 
@@ -60,6 +61,7 @@ export const useCRMStore = create<CRMStoreState>()(
       ...createSupportSlice(set, get, api),
       ...createSystemSlice(set, get, api),
       ...createPreferencesSlice(set, get, api),
+      ...createTimeTrackingSlice(set, get, api),
 
       // Base Actions
       setLoading: (loading) => set({ loading }),
