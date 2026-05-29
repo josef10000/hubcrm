@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   HeartHandshake, 
   Users, 
@@ -97,16 +97,27 @@ export default function PeopleView() {
   const loadAllLogs = useCRMStore(s => s.loadAllLogs);
   const [elapsedTimes, setElapsedTimes] = useState<{ [userId: string]: number }>({});
 
+  const allLogsRef = useRef(allLogs);
+  useEffect(() => {
+    allLogsRef.current = allLogs;
+  }, [allLogs]);
+
+  // Efeito 1: Assinatura estável dos logs do Firestore
   useEffect(() => {
     if (activeTab !== 'expediente' || !effectiveOrgId) return;
-
     const unsub = loadAllLogs();
+    return () => unsub();
+  }, [activeTab, effectiveOrgId]);
+
+  // Efeito 2: Timer reativo independente de re-assinatura
+  useEffect(() => {
+    if (activeTab !== 'expediente' || !effectiveOrgId) return;
 
     const timer = setInterval(() => {
       const todayStr = getLocalDateString();
       const newElapsed: { [userId: string]: number } = {};
 
-      allLogs.forEach(log => {
+      allLogsRef.current.forEach(log => {
         if (log.date === todayStr) {
           if (log.status === 'active') {
             newElapsed[log.userId] = calculateNetDuration(log.startTime, undefined, log.pauses);
@@ -119,11 +130,8 @@ export default function PeopleView() {
       setElapsedTimes(newElapsed);
     }, 1000);
 
-    return () => {
-      unsub();
-      clearInterval(timer);
-    };
-  }, [activeTab, allLogs, effectiveOrgId]);
+    return () => clearInterval(timer);
+  }, [activeTab, effectiveOrgId]);
 
   const formatDuration = (ms: number) => {
     const totalSecs = Math.floor(ms / 1000);
