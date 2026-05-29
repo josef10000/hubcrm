@@ -22,12 +22,16 @@ export function usePresence() {
   const updateStatus = async (status: 'online' | 'away' | 'offline' | 'lunch' | 'meeting', isManual = false) => {
     if (!userProfileRef.current?.uid) return;
 
+    const currentStore = useCRMStore.getState();
+
     // Se o ponto ainda está carregando do Firestore, bloqueamos qualquer alteração para evitar race conditions
-    if (store.loadingTimeLog) return;
+    if (currentStore.loadingTimeLog) return;
+
+    const log = currentStore.todayLog;
 
     // Se o expediente do dia já foi concluído, o colaborador deve permanecer offline no chat.
     // Ignoramos qualquer transição automática ou manual para outro status.
-    if (store.todayLog?.status === 'completed' && status !== 'offline') {
+    if (log?.status === 'completed' && status !== 'offline') {
       return;
     }
 
@@ -40,36 +44,34 @@ export function usePresence() {
       });
 
       // Sincronização com o Módulo de Ponto Eletrônico
-      const log = store.todayLog;
-
       if (status === 'lunch') {
         if (log && log.status === 'active') {
-          await store.registerPause('lunch');
+          await currentStore.registerPause('lunch');
         }
       } else if (status === 'away') {
         if (log && log.status === 'active') {
-          await store.registerPause('away');
+          await currentStore.registerPause('away');
         }
       } else if (status === 'meeting') {
         if (log && log.status === 'active') {
-          await store.registerPause('meeting');
+          await currentStore.registerPause('meeting');
         }
       } else if (status === 'online') {
         if (!log) {
           // Se ficou online e não tem ponto batido hoje, abre o expediente!
-          await store.startExpediente(
+          await currentStore.startExpediente(
             userProfileRef.current.uid,
             userProfileRef.current.displayName || 'Colaborador',
             userProfileRef.current.photoURL || ''
           );
         } else if (log.status === 'paused') {
           // Se estava pausado e voltou, retoma contagem de horas
-          await store.resumeExpediente();
+          await currentStore.resumeExpediente();
         }
       } else if (status === 'offline') {
         if (log && log.status !== 'completed') {
           // Se ficou offline no chat e o ponto estava aberto, fecha expediente
-          await store.endExpediente();
+          await currentStore.endExpediente();
         }
       }
     } catch (error) {
@@ -84,11 +86,13 @@ export function usePresence() {
   const resetInactivityTimer = () => {
     if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
     
+    const currentStore = useCRMStore.getState();
+
     // Se o ponto ainda está carregando, não faz nada
-    if (store.loadingTimeLog) return;
+    if (currentStore.loadingTimeLog) return;
 
     // Se o expediente já foi concluído hoje, abortamos o timer de inatividade
-    if (store.todayLog?.status === 'completed') return;
+    if (currentStore.todayLog?.status === 'completed') return;
     
     const currentProfile = userProfileRef.current;
     
@@ -118,13 +122,15 @@ export function usePresence() {
     const unsubLog = store.loadTodayLog(userProfile.uid);
 
     const initPresence = async () => {
+      const currentStore = useCRMStore.getState();
+
       // Se ainda está carregando o log do Firestore, não faz nada e tenta novamente mais tarde
-      if (store.loadingTimeLog) {
+      if (currentStore.loadingTimeLog) {
         setTimeout(initPresence, 200);
         return;
       }
 
-      const currentLog = store.todayLog;
+      const currentLog = currentStore.todayLog;
       if (currentLog?.status === 'completed') {
         await updateStatus('offline', false);
       } else if (!userProfile.presenceStatus || userProfile.presenceStatus === 'offline') {
@@ -133,18 +139,21 @@ export function usePresence() {
     };
 
     const trackActivityForAutoClockIn = () => {
-      const currentLog = store.todayLog;
+      const currentStore = useCRMStore.getState();
+      const currentLog = currentStore.todayLog;
+
       if (currentLog?.status === 'completed') return;
-      if (hasCheckedAutoClock || currentLog || store.loadingTimeLog) return;
+      if (hasCheckedAutoClock || currentLog || currentStore.loadingTimeLog) return;
 
       if (!activityTimer) {
         activityTimer = setTimeout(async () => {
-          const checkLog = store.todayLog;
+          const checkStore = useCRMStore.getState();
+          const checkLog = checkStore.todayLog;
           if (!checkLog && !hasCheckedAutoClock) {
             hasCheckedAutoClock = true;
 
             // Inicia o expediente de forma automática no Zustand/Firestore
-            await store.startExpediente(
+            await checkStore.startExpediente(
               userProfile.uid,
               userProfile.displayName || 'Colaborador',
               userProfile.photoURL || ''
@@ -153,7 +162,7 @@ export function usePresence() {
             // Ajusta o startTime retroativamente para a hora em que o colaborador abriu a aba do CRM
             const todayStr = getLocalDateString();
             const docId = `${todayStr}_${userProfile.uid}`;
-            const orgId = store.effectiveOrgId;
+            const orgId = checkStore.effectiveOrgId;
             if (orgId) {
               try {
                 const docRef = doc(db, 'organizations', orgId, 'time_logs', docId);
@@ -170,7 +179,8 @@ export function usePresence() {
     };
 
     const handleUserInteraction = () => {
-      if (store.todayLog?.status === 'completed') return;
+      const currentStore = useCRMStore.getState();
+      if (currentStore.todayLog?.status === 'completed') return;
       resetInactivityTimer();
       trackActivityForAutoClockIn();
     };
@@ -179,7 +189,8 @@ export function usePresence() {
     resetInactivityTimer();
 
     const handleVisibilityChange = () => {
-      if (store.todayLog?.status === 'completed') return;
+      const currentStore = useCRMStore.getState();
+      if (currentStore.todayLog?.status === 'completed') return;
       
       // Só alteramos automaticamente se não for um status manual
       if (!userProfileRef.current?.isManualStatus) {
