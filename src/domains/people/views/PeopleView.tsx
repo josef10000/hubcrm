@@ -736,7 +736,7 @@ export default function PeopleView() {
                               <div className="flex justify-between text-[10px] text-gray-500 border-t border-white/5 pt-2">
                                  <span>{v.start}</span><span>{v.end}</span>
                               </div>
-                              {isAdminOrGerente && <button onClick={() => deleteVacation(v.id)} className="mt-2 text-[8px] text-red-500/40 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100 uppercase font-black">Remover do Histórico</button>}
+                             {isAdminOrGerente && <button onClick={() => deleteVacation(v.id)} className="mt-2 text-[8px] text-red-500/40 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100 uppercase font-black">Remover do Histórico</button>}
                            </div>
                          ))}
                       </div>
@@ -744,6 +744,7 @@ export default function PeopleView() {
                  )}
                </div>
             </div>
+          )}
           {activeTab === 'expediente' && (
             <div className="space-y-6 animate-in slide-in-from-bottom duration-500">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

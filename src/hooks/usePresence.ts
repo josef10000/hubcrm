@@ -3,6 +3,8 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRMStore } from '@/store/useCRMStore';
+import { getLocalDateString } from '@/store/slices/timeTrackingSlice';
+import { toast } from 'sonner';
 
 export function usePresence() {
   const { userProfile } = useAuth();
@@ -93,6 +95,10 @@ export function usePresence() {
   useEffect(() => {
     if (!userProfile?.uid) return;
 
+    const sessionStartTime = Date.now();
+    let hasCheckedAutoClock = false;
+    let activityTimer: NodeJS.Timeout | null = null;
+
     // Assina em tempo real o log de hoje para mantê-lo sincronizado no Zustand
     const unsubLog = store.loadTodayLog(userProfile.uid);
 
@@ -106,6 +112,47 @@ export function usePresence() {
           await updateStatus('online', false);
         }
       }, 1000);
+    };
+
+    const trackActivityForAutoClockIn = () => {
+      const currentLog = store.todayLog;
+      if (hasCheckedAutoClock || currentLog || store.loadingTimeLog) return;
+
+      if (!activityTimer) {
+        activityTimer = setTimeout(async () => {
+          const checkLog = store.todayLog;
+          if (!checkLog && !hasCheckedAutoClock) {
+            hasCheckedAutoClock = true;
+
+            // Inicia o expediente de forma automática no Zustand/Firestore
+            await store.startExpediente(
+              userProfile.uid,
+              userProfile.displayName || 'Colaborador',
+              userProfile.photoURL || ''
+            );
+
+            // Ajusta o startTime retroativamente para a hora em que o colaborador abriu a aba do CRM
+            const todayStr = getLocalDateString();
+            const docId = `${todayStr}_${userProfile.uid}`;
+            const orgId = store.effectiveOrgId;
+            if (orgId) {
+              try {
+                const docRef = doc(db, 'organizations', orgId, 'time_logs', docId);
+                await updateDoc(docRef, { startTime: sessionStartTime });
+              } catch (e) {
+                console.error('[AutoClockIn] Erro ao aplicar retroatividade:', e);
+              }
+            }
+
+            toast.info('Auto-Clock In: Identificamos atividade contínua no CRM e iniciamos seu expediente!');
+          }
+        }, 60 * 1000); // 1 minuto de atividade no site
+      }
+    };
+
+    const handleUserInteraction = () => {
+      resetInactivityTimer();
+      trackActivityForAutoClockIn();
     };
 
     initPresence();
@@ -130,17 +177,18 @@ export function usePresence() {
 
     window.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('beforeunload', handleBeforeUnload);
-    window.addEventListener('mousemove', resetInactivityTimer);
-    window.addEventListener('keydown', resetInactivityTimer);
-    window.addEventListener('click', resetInactivityTimer);
+    window.addEventListener('mousemove', handleUserInteraction);
+    window.addEventListener('keydown', handleUserInteraction);
+    window.addEventListener('click', handleUserInteraction);
 
     return () => {
       window.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      window.removeEventListener('mousemove', resetInactivityTimer);
-      window.removeEventListener('keydown', resetInactivityTimer);
-      window.removeEventListener('click', resetInactivityTimer);
+      window.removeEventListener('mousemove', handleUserInteraction);
+      window.removeEventListener('keydown', handleUserInteraction);
+      window.removeEventListener('click', handleUserInteraction);
       if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
+      if (activityTimer) clearTimeout(activityTimer);
       unsubLog();
     };
   }, [userProfile?.uid]);
