@@ -147,13 +147,22 @@ export async function runProcessScheduler(req: VercelRequest, res: VercelRespons
         const latency = Date.now() - start;
         const status = response.status >= 200 && response.status < 400 ? 'up' : 'down';
 
-        await doc.ref.update({
-          'monitoring.status': status,
-          'monitoring.lastChecked': Date.now(),
-          'monitoring.latency': latency,
-          'monitoring.statusCode': response.status,
-          'monitoring.error': null
-        });
+        const lastStatus = clientData.monitoring?.status;
+        const lastChecked = clientData.monitoring?.lastChecked || 0;
+        const timeSinceLastCheck = Date.now() - lastChecked;
+        const MIN_CHECK_INTERVAL = 15 * 60 * 1000; // 15 minutos em ms
+
+        const shouldUpdateDb = status !== lastStatus || timeSinceLastCheck >= MIN_CHECK_INTERVAL;
+
+        if (shouldUpdateDb) {
+          await doc.ref.update({
+            'monitoring.status': status,
+            'monitoring.lastChecked': Date.now(),
+            'monitoring.latency': latency,
+            'monitoring.statusCode': response.status,
+            'monitoring.error': null
+          });
+        }
 
         // Alerta crítico se cair
         if (status === 'down' && clientData.monitoring?.status === 'up') {
@@ -171,13 +180,24 @@ export async function runProcessScheduler(req: VercelRequest, res: VercelRespons
         }
       } catch (err: any) {
         const latency = Date.now() - start;
-        await doc.ref.update({
-          'monitoring.status': 'down',
-          'monitoring.lastChecked': Date.now(),
-          'monitoring.latency': latency,
-          'monitoring.statusCode': null,
-          'monitoring.error': err.message || 'Timeout'
-        });
+        const status = 'down';
+
+        const lastStatus = clientData.monitoring?.status;
+        const lastChecked = clientData.monitoring?.lastChecked || 0;
+        const timeSinceLastCheck = Date.now() - lastChecked;
+        const MIN_CHECK_INTERVAL = 15 * 60 * 1000; // 15 minutos em ms
+
+        const shouldUpdateDb = status !== lastStatus || timeSinceLastCheck >= MIN_CHECK_INTERVAL;
+
+        if (shouldUpdateDb) {
+          await doc.ref.update({
+            'monitoring.status': 'down',
+            'monitoring.lastChecked': Date.now(),
+            'monitoring.latency': latency,
+            'monitoring.statusCode': null,
+            'monitoring.error': err.message || 'Timeout'
+          });
+        }
 
         if (clientData.monitoring?.status === 'up') {
           const orgRef = doc.ref.parent.parent;

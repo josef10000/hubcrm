@@ -91,6 +91,7 @@ graph TB
 3.  **Paralelização de Queries & Loops:** APIs (`portal_finance.ts`) e Cron Jobs (`daily_cron.ts` e `finance_engine.ts`) otimizados usando `Promise.all()` e `Promise.allSettled()` para evitar chamadas síncronas sequenciais (waterfalls).
 4.  **Limpeza de Bundle:** Remoção completa de dependências mortas e módulos legados de IA (como SDK do Gemini).
 5.  **Indexação do Firestore:** Mapeamento explícito de índices de `collectionGroup` e compostos em `firestore.indexes.json` para suportar consultas complexas de monitoramento e crons.
+6.  **Otimização de Escritas no Uptime (Debounce do Firestore):** API do scheduler (`process_scheduler.ts`) otimizada para monitorar sites a cada 1 minuto mas atualizar o status no Firestore apenas a cada 15 minutos (ou em caso de mudança de status), reduzindo as operações de escrita em 93.3% para blindar o projeto contra o estouro de cotas no plano gratuito.
 
 ---
 
