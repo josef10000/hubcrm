@@ -38,7 +38,7 @@ import { UserProfile, OnboardingTask } from '@/types';
 import { format, differenceInYears, parseISO, isSameDay, addDays } from 'date-fns';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useCRMStore } from '@/store/useCRMStore';
-import { TimeLog, calculateNetDuration } from '@/store/slices/timeTrackingSlice';
+import { TimeLog, calculateNetDuration, getLocalDateString } from '@/store/slices/timeTrackingSlice';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { VacationPeriod, PDICategory, PDIAction } from '@/types/people';
@@ -65,41 +65,37 @@ export default function PeopleView() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
 
-  const todayLog = useCRMStore(s => s.todayLog);
-  const [myTimeLogs, setMyTimeLogs] = useState<TimeLog[]>([]);
-  const [elapsedToday, setElapsedToday] = useState(0);
+  const allLogs = useCRMStore(s => s.allLogs);
+  const loadAllLogs = useCRMStore(s => s.loadAllLogs);
+  const [elapsedTimes, setElapsedTimes] = useState<{ [userId: string]: number }>({});
 
   useEffect(() => {
-    if (!userProfile?.uid || !crmOrgId) return;
-    const q = query(
-      collection(db, 'organizations', crmOrgId, 'time_logs'),
-      where('userId', '==', userProfile.uid)
-    );
-    const unsub = onSnapshot(q, (snap) => {
-      const logs = snap.docs.map(d => d.data() as TimeLog);
-      logs.sort((a, b) => b.startTime - a.startTime);
-      setMyTimeLogs(logs);
-    });
-    return () => unsub();
-  }, [userProfile?.uid, crmOrgId]);
+    if (activeTab !== 'expediente' || !effectiveOrgId) return;
 
-  useEffect(() => {
-    if (!todayLog || todayLog.status !== 'active') {
-      if (todayLog) {
-        setElapsedToday(todayLog.totalDuration);
-      } else {
-        setElapsedToday(0);
-      }
-      return;
-    }
+    const unsub = loadAllLogs();
 
     const timer = setInterval(() => {
-      const duration = calculateNetDuration(todayLog.startTime, undefined, todayLog.pauses);
-      setElapsedToday(duration);
+      const todayStr = getLocalDateString();
+      const newElapsed: { [userId: string]: number } = {};
+
+      allLogs.forEach(log => {
+        if (log.date === todayStr) {
+          if (log.status === 'active') {
+            newElapsed[log.userId] = calculateNetDuration(log.startTime, undefined, log.pauses);
+          } else {
+            newElapsed[log.userId] = log.totalDuration;
+          }
+        }
+      });
+
+      setElapsedTimes(newElapsed);
     }, 1000);
 
-    return () => clearInterval(timer);
-  }, [todayLog]);
+    return () => {
+      unsub();
+      clearInterval(timer);
+    };
+  }, [activeTab, allLogs, effectiveOrgId]);
 
   const formatDuration = (ms: number) => {
     const totalSecs = Math.floor(ms / 1000);
@@ -448,7 +444,7 @@ export default function PeopleView() {
             { id: 'mural', icon: MessageSquare, label: 'Mural' },
             { id: 'assets', icon: Package, label: 'Ativos' },
             { id: 'vacations', icon: Calendar, label: 'Ausências' },
-            { id: 'expediente', icon: Clock, label: 'Meu Expediente' },
+            { id: 'expediente', icon: Clock, label: 'Expediente Ao Vivo' },
             { id: 'climate', icon: Smile, label: 'Clima', restricted: true }
           ].filter(t => !t.restricted || isAdminOrGerente).map(t => (
             <button key={t.id} onClick={() => setActiveTab(t.id as PeopleSubTab)} className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium shrink-0 ${activeTab === t.id ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}>
@@ -747,165 +743,139 @@ export default function PeopleView() {
           )}
           {activeTab === 'expediente' && (
             <div className="space-y-6 animate-in slide-in-from-bottom duration-500">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Card 1: Status Atual e Timer */}
-                <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-6 shadow-xl flex flex-col justify-between min-h-[180px]">
-                  <div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Tempo Hoje</span>
-                    <h3 className="text-3xl font-black font-mono tracking-tight text-gray-900 dark:text-white">
-                      {formatDuration(elapsedToday)}
-                    </h3>
+              <div className="bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl overflow-hidden shadow-xl">
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-white/10 flex items-center justify-between bg-gray-50/50 dark:bg-white/5">
+                  <div className="flex items-center">
+                    <Clock size={20} className="text-primary-500 mr-2 animate-spin-slow" />
+                    <h2 className="font-bold text-gray-900 dark:text-white">Expediente dos Colaboradores Ao Vivo</h2>
                   </div>
-                  <div className="flex items-center gap-2 mt-4">
-                    <span className={`w-2.5 h-2.5 rounded-full ${
-                      !todayLog
-                        ? 'bg-gray-400'
-                        : todayLog.status === 'active'
-                        ? 'bg-emerald-500 animate-pulse'
-                        : todayLog.status === 'paused'
-                        ? 'bg-amber-500'
-                        : 'bg-rose-500'
-                    }`} />
-                    <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                      {!todayLog
-                        ? 'Fora de Expediente'
-                        : todayLog.status === 'active'
-                        ? 'Ativo & Trabalhando'
-                        : todayLog.status === 'paused'
-                        ? 'Em Intervalo (Pausa)'
-                        : 'Expediente Concluído'}
-                    </span>
-                  </div>
-                </div>
+                  <button 
+                    onClick={() => {
+                      try {
+                        const headers = ['Data', 'Colaborador', 'Entrada', 'Saída', 'Pausas', 'Tempo Líquido (Segundos)', 'Tempo Líquido Formatado'];
+                        
+                        const rows = allLogs.map(log => {
+                          const netMs = log.totalDuration || calculateNetDuration(log.startTime, log.endTime, log.pauses);
+                          const netSecs = Math.floor(netMs / 1000);
+                          const hours = Math.floor(netSecs / 3600);
+                          const mins = Math.floor((netSecs % 3600) / 60);
+                          const formatted = `${hours}h ${mins}m`;
+                          
+                          const pausesStr = log.pauses.map(p => {
+                            const pStart = format(p.startTime, 'HH:mm');
+                            const pEnd = p.endTime ? format(p.endTime, 'HH:mm') : '...';
+                            return `${p.type === 'lunch' ? 'Almoço' : p.type === 'meeting' ? 'Reunião' : 'Ausente'} (${pStart} - ${pEnd})`;
+                          }).join(' | ');
 
-                {/* Card 2: Horas Líquidas no Mês */}
-                <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-6 shadow-xl flex flex-col justify-between min-h-[180px]">
-                  <div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Total Líquido do Mês</span>
-                    <h3 className="text-3xl font-black font-mono tracking-tight text-primary-500">
-                      {(() => {
-                        const totalMs = myTimeLogs.reduce((acc, curr) => acc + (curr.totalDuration || 0), 0);
-                        const totalHours = Math.floor(totalMs / (1000 * 60 * 60));
-                        const totalMins = Math.floor((totalMs % (1000 * 60 * 60)) / (1000 * 60));
-                        return `${totalHours}h ${totalMins}m`;
-                      })()}
-                    </h3>
-                  </div>
-                  <p className="text-xs text-gray-400">Total acumulado de horas produtivas registradas.</p>
-                </div>
+                          return [
+                            log.date,
+                            log.userName,
+                            format(log.startTime, 'HH:mm:ss'),
+                            log.endTime ? format(log.endTime, 'HH:mm:ss') : 'Ativo',
+                            pausesStr || 'Nenhuma',
+                            netSecs,
+                            formatted
+                          ];
+                        });
 
-                {/* Card 3: Pausas Feitas Hoje */}
-                <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-6 shadow-xl flex flex-col justify-between min-h-[180px]">
-                  <div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Pausas Hoje</span>
-                    <h3 className="text-3xl font-black text-amber-500">
-                      {todayLog?.pauses?.length || 0}
-                    </h3>
-                  </div>
-                  <p className="text-xs text-gray-400">Intervalos de almoço, café ou reuniões do dia.</p>
-                </div>
-              </div>
-
-              {/* Gráfico de Horas Semanais */}
-              <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] p-8 shadow-xl">
-                <h3 className="font-bold flex items-center gap-2 mb-6"><TrendingUp className="text-primary-500" /> Histórico Semanal de Horas</h3>
-                <div className="h-64 flex items-end gap-4 md:gap-8 pt-8 px-4 border-b border-white/5">
-                  {(() => {
-                    const daysOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-                    const logsByDay = new Array(7).fill(0);
-                    
-                    // Pega os logs da semana atual (últimos 7 dias)
-                    const now = new Date();
-                    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay())); // Domingo
-                    
-                    myTimeLogs.forEach(log => {
-                      const logDate = parseISO(log.date);
-                      const diff = Math.floor((logDate.getTime() - startOfWeek.getTime()) / (1000 * 60 * 60 * 24));
-                      if (diff >= 0 && diff < 7) {
-                        logsByDay[diff] = log.totalDuration;
+                        const csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
+                          + [headers.join(','), ...rows.map(r => r.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))].join('\n');
+                        
+                        const encodedUri = encodeURI(csvContent);
+                        const link = document.createElement("a");
+                        link.setAttribute("href", encodedUri);
+                        link.setAttribute("download", `Espelho_Ponto_HubCRM_${new Date().getFullYear()}_${new Date().getMonth() + 1}.csv`);
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        toast.success('Relatório de logs de ponto exportado com sucesso!');
+                      } catch (e) {
+                        console.error('Erro ao exportar logs de ponto:', e);
+                        toast.error('Erro ao exportar logs.');
                       }
-                    });
-
-                    const maxDuration = Math.max(...logsByDay, 1000 * 60 * 60 * 8); // Pelo menos 8 horas como escala máxima
-
-                    return logsByDay.map((duration, idx) => {
-                      const percentage = Math.min((duration / maxDuration) * 100, 100);
-                      const hours = (duration / (1000 * 60 * 60)).toFixed(1);
-                      return (
-                        <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group relative">
-                          {/* Tooltip */}
-                          <div className="absolute bottom-full mb-2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded shadow opacity-0 group-hover:opacity-100 transition-all font-mono pointer-events-none shrink-0 z-20">
-                            {hours}h
-                          </div>
-                          {/* Barra do Gráfico */}
-                          <div 
-                            style={{ height: `${percentage}%` }}
-                            className={`w-full max-w-[40px] rounded-t-xl transition-all duration-500 ${
-                              duration === 0 
-                                ? 'bg-white/5' 
-                                : idx === new Date().getDay()
-                                ? 'bg-gradient-to-t from-primary-600 to-primary-400 shadow-lg shadow-primary-500/20'
-                                : 'bg-gradient-to-t from-zinc-800 to-zinc-600 dark:from-white/10 dark:to-white/20'
-                            }`}
-                          />
-                          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-1">{daysOfWeek[idx]}</span>
-                        </div>
-                      );
-                    });
-                  })()}
+                    }}
+                    className="flex items-center space-x-2 bg-primary-500/10 hover:bg-primary-500/20 border border-primary-500/30 text-primary-500 px-4 py-2.5 rounded-xl transition-all font-bold text-xs shadow-lg cursor-pointer"
+                  >
+                    <span>Exportar Logs Consolidados (CSV)</span>
+                  </button>
                 </div>
-              </div>
+                <div className="divide-y divide-gray-200 dark:divide-white/10">
+                  {teamMembers.map(member => {
+                    const todayStr = getLocalDateString();
+                    const log = allLogs.find(l => l.userId === member.uid && l.date === todayStr);
+                    const elapsed = elapsedTimes[member.uid] || 0;
+                    
+                    const formatMs = (ms: number) => {
+                      const totalSecs = Math.floor(ms / 1000);
+                      const hours = Math.floor(totalSecs / 3600);
+                      const minutes = Math.floor((totalSecs % 3600) / 60);
+                      const seconds = totalSecs % 60;
+                      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                    };
 
-              {/* Tabela de Logs de Ponto */}
-              <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] p-8 shadow-xl">
-                <h3 className="font-bold flex items-center gap-2 mb-6"><Clock className="text-pink-500" /> Registro de Presenças do Mês</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="border-b border-white/5 text-xs text-gray-400 font-black uppercase tracking-widest">
-                        <th className="py-4 px-2">Data</th>
-                        <th className="py-4 px-2">Entrada</th>
-                        <th className="py-4 px-2">Saída</th>
-                        <th className="py-4 px-2">Intervalos/Pausas</th>
-                        <th className="py-4 px-2">Total Líquido</th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-sm">
-                      {myTimeLogs.map(log => (
-                        <tr key={log.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                          <td className="py-4 px-2 font-bold">{format(parseISO(log.date), 'dd/MM/yyyy')}</td>
-                          <td className="py-4 px-2 font-mono">{format(log.startTime, 'HH:mm:ss')}</td>
-                          <td className="py-4 px-2 font-mono">
-                            {log.endTime ? format(log.endTime, 'HH:mm:ss') : <span className="text-emerald-500 font-bold">Ativo</span>}
-                          </td>
-                          <td className="py-4 px-2">
-                            {log.pauses.length > 0 ? (
-                              <div className="flex flex-wrap gap-1.5 font-mono">
-                                {log.pauses.map((p, idx) => (
-                                  <span key={idx} className="text-[10px] px-2 py-0.5 rounded-lg bg-white/5 border border-white/10 text-gray-400 flex items-center gap-1 font-mono">
-                                    {p.type === 'lunch' ? '🍱 Almoço' : p.type === 'meeting' ? '👥 Reunião' : '🕒 Ausente'}:{' '}
-                                    {format(p.startTime, 'HH:mm')} - {p.endTime ? format(p.endTime, 'HH:mm') : '...'}
-                                  </span>
-                                ))}
-                              </div>
-                            ) : (
-                              <span className="text-xs text-gray-500 italic">Sem intervalos</span>
-                            )}
-                          </td>
-                          <td className="py-4 px-2 font-mono font-bold text-primary-500">
-                            {formatDuration(log.totalDuration || calculateNetDuration(log.startTime, log.endTime, log.pauses))}
-                          </td>
-                        </tr>
-                      ))}
-                      {myTimeLogs.length === 0 && (
-                        <tr>
-                          <td colSpan={5} className="py-12 text-center opacity-30 italic text-sm">
-                            Nenhum registro de expediente encontrado.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+                    return (
+                      <div key={member.uid} className="px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-gray-100 dark:hover:bg-white/5 transition-colors gap-4">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-10 h-10 rounded-full bg-primary-500/20 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold overflow-hidden shadow-inner">
+                            {member.photoURL ? <img src={member.photoURL} alt={member.displayName} /> : member.displayName?.[0] || 'U'}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900 dark:text-white">{member.displayName}</p>
+                            <p className="text-xs text-gray-500">{member.jobTitle || 'Colaborador'}</p>
+                          </div>
+                        </div>
+
+                        {/* Status do Ponto Ao Vivo */}
+                        <div className="flex items-center gap-3">
+                          <span className={`w-2.5 h-2.5 rounded-full ${
+                            !log
+                              ? 'bg-gray-400'
+                              : log.status === 'active'
+                              ? 'bg-emerald-500 animate-pulse'
+                              : log.status === 'paused'
+                              ? 'bg-amber-500'
+                              : 'bg-rose-500'
+                          }`} />
+                          <div className="flex flex-col">
+                            <span className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-tight">
+                              {!log
+                                ? 'Offline'
+                                : log.status === 'active'
+                                ? 'Trabalhando Ao Vivo'
+                                : log.status === 'paused'
+                                ? (() => {
+                                    const activePause = log.pauses.find(p => !p.endTime);
+                                    if (activePause?.type === 'lunch') return '🍱 Em Almoço';
+                                    if (activePause?.type === 'meeting') return '👥 Em Reunião';
+                                    return '🕒 Ausente';
+                                  })()
+                                : 'Expediente Encerrado'}
+                            </span>
+                            <span className="text-[10px] text-gray-500 font-mono">
+                              {log ? `Entrada: ${format(log.startTime, 'HH:mm:ss')}` : 'Sem registros hoje'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Contador de Tempo dinâmico */}
+                        <div className="flex flex-col items-end text-right">
+                          <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-0.5">Tempo Líquido Hoje</p>
+                          <p className={`text-sm font-bold font-mono ${
+                            log?.status === 'active' 
+                              ? 'text-emerald-500' 
+                              : log?.status === 'paused' 
+                              ? 'text-amber-500' 
+                              : 'text-gray-500'
+                          }`}>
+                            {log ? formatMs(elapsed) : '00:00:00'}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {teamMembers.length === 0 && (
+                    <div className="p-12 text-center opacity-30 italic">Nenhum membro ativo cadastrado.</div>
+                  )}
                 </div>
               </div>
             </div>

@@ -26,6 +26,9 @@ import CareerTimeline from '@people/components/CareerTimeline';
 import FeedbackMural from '@people/components/FeedbackMural';
 import InventorySection from '@people/components/InventorySection';
 import { EnergyScoreCard } from '@people/components/EnergyScoreCard';
+import { useCRMStore } from '@/store/useCRMStore';
+import { TimeLog, calculateNetDuration } from '@/store/slices/timeTrackingSlice';
+import { parseISO } from 'date-fns';
 import { PDIKanban } from '@people/components/PDIKanban';
 import { 
   Plus, 
@@ -70,7 +73,52 @@ export default function ProfileView() {
   const [isSaving, setIsSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [superior, setSuperior] = useState<UserProfile | null>(null);
-  const [activeTab, setActiveTab] = useState<'info' | 'pdi' | 'comissoes' | 'inventory' | 'feedbacks' | 'history' | 'alerts' | 'vacations' | 'availability'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'pdi' | 'comissoes' | 'inventory' | 'feedbacks' | 'history' | 'alerts' | 'vacations' | 'availability' | 'expediente'>('info');
+
+  // Lógica de Ponto Eletrônico Individual (Meu Expediente)
+  const todayLog = useCRMStore(s => s.todayLog);
+  const [myTimeLogs, setMyTimeLogs] = useState<TimeLog[]>([]);
+  const [elapsedToday, setElapsedToday] = useState(0);
+
+  useEffect(() => {
+    if (!uid || !currentUserProfile?.orgId) return;
+    const q = query(
+      collection(db, 'organizations', currentUserProfile.orgId, 'time_logs'),
+      where('userId', '==', uid)
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      const logs = snap.docs.map(d => d.data() as TimeLog);
+      logs.sort((a, b) => b.startTime - a.startTime);
+      setMyTimeLogs(logs);
+    });
+    return () => unsub();
+  }, [uid, currentUserProfile?.orgId]);
+
+  useEffect(() => {
+    if (!todayLog || todayLog.status !== 'active') {
+      if (todayLog) {
+        setElapsedToday(todayLog.totalDuration);
+      } else {
+        setElapsedToday(0);
+      }
+      return;
+    }
+
+    const timer = setInterval(() => {
+      const duration = calculateNetDuration(todayLog.startTime, undefined, todayLog.pauses);
+      setElapsedToday(duration);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [todayLog]);
+
+  const formatDuration = (ms: number) => {
+    const totalSecs = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSecs / 3600);
+    const minutes = Math.floor((totalSecs % 3600) / 60);
+    const seconds = totalSecs % 60;
+    return `${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
+  };
   const { businessAlerts = [], unreadAlertsCount = 0, markAlertAsRead } = useAuth();
   const { commissions = [] } = useCRM();
   const [showVacationModal, setShowVacationModal] = useState(false);
@@ -598,6 +646,14 @@ export default function ProfileView() {
                     </span>
                   )}
                 </button>
+                {(isOwnProfile || isManagement || isAdmin) && (
+                  <button 
+                    onClick={() => setActiveTab('expediente')}
+                    className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'expediente' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
+                  >
+                    Expediente
+                  </button>
+                )}
               </div>
 
               {activeTab === 'availability' && (
@@ -1111,6 +1167,172 @@ export default function ProfileView() {
                     )}
                   </div>
                   <CareerTimeline milestones={profile.careerTimeline || []} />
+                </div>
+              )}
+
+              {activeTab === 'expediente' && (
+                <div className="space-y-6 animate-in slide-in-from-bottom duration-500">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+                    {/* Card 1: Status Atual e Timer */}
+                    <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-6 shadow-xl flex flex-col justify-between min-h-[180px]">
+                      <div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Tempo Hoje</span>
+                        <h3 className="text-3xl font-black font-mono tracking-tight text-gray-900 dark:text-white">
+                          {formatDuration(elapsedToday)}
+                        </h3>
+                      </div>
+                      <div className="flex items-center gap-2 mt-4">
+                        <span className={`w-2.5 h-2.5 rounded-full ${
+                          !todayLog
+                            ? 'bg-gray-400'
+                            : todayLog.status === 'active'
+                            ? 'bg-emerald-500 animate-pulse'
+                            : todayLog.status === 'paused'
+                            ? 'bg-amber-500'
+                            : 'bg-rose-500'
+                        }`} />
+                        <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                          {!todayLog
+                            ? 'Fora de Expediente'
+                            : todayLog.status === 'active'
+                            ? 'Ativo & Trabalhando'
+                            : todayLog.status === 'paused'
+                            ? 'Em Intervalo (Pausa)'
+                            : 'Expediente Concluído'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Card 2: Horas Líquidas no Mês */}
+                    <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-6 shadow-xl flex flex-col justify-between min-h-[180px]">
+                      <div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Total Líquido do Mês</span>
+                        <h3 className="text-3xl font-black font-mono tracking-tight text-primary-500">
+                          {(() => {
+                            const totalMs = myTimeLogs.reduce((acc, curr) => acc + (curr.totalDuration || 0), 0);
+                            const totalHours = Math.floor(totalMs / (1000 * 60 * 60));
+                            const totalMins = Math.floor((totalMs % (1000 * 60 * 60)) / (1000 * 60));
+                            return `${totalHours}h ${totalMins}m`;
+                          })()}
+                        </h3>
+                      </div>
+                      <p className="text-xs text-gray-400">Total acumulado de horas produtivas registradas.</p>
+                    </div>
+
+                    {/* Card 3: Pausas Feitas Hoje */}
+                    <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-6 shadow-xl flex flex-col justify-between min-h-[180px]">
+                      <div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Pausas Hoje</span>
+                        <h3 className="text-3xl font-black text-amber-500">
+                          {todayLog?.pauses?.length || 0}
+                        </h3>
+                      </div>
+                      <p className="text-xs text-gray-400">Intervalos de almoço, café ou reuniões do dia.</p>
+                    </div>
+                  </div>
+
+                  {/* Gráfico de Horas Semanais */}
+                  <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] p-8 shadow-xl">
+                    <h3 className="font-bold flex items-center gap-2 mb-6 text-left"><TrendingUp className="text-primary-500" /> Histórico Semanal de Horas</h3>
+                    <div className="h-64 flex items-end gap-4 md:gap-8 pt-8 px-4 border-b border-white/5">
+                      {(() => {
+                        const daysOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+                        const logsByDay = new Array(7).fill(0);
+                        
+                        // Pega os logs da semana atual (últimos 7 dias)
+                        const now = new Date();
+                        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay())); // Domingo
+                        
+                        myTimeLogs.forEach(log => {
+                          const logDate = parseISO(log.date);
+                          const diff = Math.floor((logDate.getTime() - startOfWeek.getTime()) / (1000 * 60 * 60 * 24));
+                          if (diff >= 0 && diff < 7) {
+                            logsByDay[diff] = log.totalDuration;
+                          }
+                        });
+
+                        const maxDuration = Math.max(...logsByDay, 1000 * 60 * 60 * 8); // Pelo menos 8 horas como escala máxima
+
+                        return logsByDay.map((duration, idx) => {
+                          const percentage = Math.min((duration / maxDuration) * 100, 100);
+                          const hours = (duration / (1000 * 60 * 60)).toFixed(1);
+                          return (
+                            <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group relative text-center">
+                              {/* Tooltip */}
+                              <div className="absolute bottom-full mb-2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded shadow opacity-0 group-hover:opacity-100 transition-all font-mono pointer-events-none shrink-0 z-20">
+                                {hours}h
+                              </div>
+                              {/* Barra do Gráfico */}
+                              <div 
+                                style={{ height: `${percentage}%` }}
+                                className={`w-full max-w-[40px] rounded-t-xl transition-all duration-500 ${
+                                  duration === 0 
+                                    ? 'bg-white/5' 
+                                    : idx === new Date().getDay()
+                                    ? 'bg-gradient-to-t from-primary-600 to-primary-400 shadow-lg shadow-primary-500/20'
+                                    : 'bg-gradient-to-t from-zinc-800 to-zinc-600 dark:from-white/10 dark:to-white/20'
+                                }`}
+                              />
+                              <span className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-1">{daysOfWeek[idx]}</span>
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Tabela de Logs de Ponto */}
+                  <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] p-8 shadow-xl">
+                    <h3 className="font-bold flex items-center gap-2 mb-6 text-left"><Clock className="text-pink-500" /> Registro de Presenças do Mês</h3>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="border-b border-white/5 text-xs text-gray-400 font-black uppercase tracking-widest">
+                            <th className="py-4 px-2">Data</th>
+                            <th className="py-4 px-2">Entrada</th>
+                            <th className="py-4 px-2">Saída</th>
+                            <th className="py-4 px-2">Intervalos/Pausas</th>
+                            <th className="py-4 px-2">Total Líquido</th>
+                          </tr>
+                        </thead>
+                        <tbody className="text-sm">
+                          {myTimeLogs.map(log => (
+                            <tr key={log.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                              <td className="py-4 px-2 font-bold">{format(parseISO(log.date), 'dd/MM/yyyy')}</td>
+                              <td className="py-4 px-2 font-mono">{format(log.startTime, 'HH:mm:ss')}</td>
+                              <td className="py-4 px-2 font-mono">
+                                {log.endTime ? format(log.endTime, 'HH:mm:ss') : <span className="text-emerald-500 font-bold">Ativo</span>}
+                              </td>
+                              <td className="py-4 px-2">
+                                {log.pauses.length > 0 ? (
+                                  <div className="flex flex-wrap gap-1.5 font-mono">
+                                    {log.pauses.map((p, idx) => (
+                                      <span key={idx} className="text-[10px] px-2 py-0.5 rounded-lg bg-white/5 border border-white/10 text-gray-400 flex items-center gap-1 font-mono">
+                                        {p.type === 'lunch' ? '🍱 Almoço' : p.type === 'meeting' ? '👥 Reunião' : '🕒 Ausente'}:{' '}
+                                        {format(p.startTime, 'HH:mm')} - {p.endTime ? format(p.endTime, 'HH:mm') : '...'}
+                                      </span>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-gray-500 italic">Sem intervalos</span>
+                                )}
+                              </td>
+                              <td className="py-4 px-2 font-mono font-bold text-primary-500">
+                                {formatDuration(log.totalDuration || calculateNetDuration(log.startTime, log.endTime, log.pauses))}
+                              </td>
+                            </tr>
+                          ))}
+                          {myTimeLogs.length === 0 && (
+                            <tr>
+                              <td colSpan={5} className="py-12 text-center opacity-30 italic text-sm">
+                                Nenhum registro de expediente encontrado.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
