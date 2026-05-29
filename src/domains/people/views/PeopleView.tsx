@@ -1443,5 +1443,6 @@ export default function PeopleView() {
         )}
       </div>
     </div>
+  </div>
   );
 }
