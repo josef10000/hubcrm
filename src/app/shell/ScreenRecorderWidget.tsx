@@ -277,6 +277,44 @@ export function ScreenRecorderWidget() {
 
   if (!isRecorderOpen) return null;
 
+  if (recordingState === 'recording' || recordingState === 'paused') {
+    return (
+      <div className="fixed bottom-6 left-6 z-50 flex items-center gap-3 p-3 bg-zinc-950/95 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-md animate-in slide-in-from-bottom duration-300">
+        <div className="flex items-center gap-2 pr-3 border-r border-white/10">
+          <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
+          <span className="text-xs font-mono font-black text-white leading-none tracking-wider">{formatTime(time)}</span>
+        </div>
+        
+        <div className="flex items-center text-zinc-500 mr-1">
+          {micEnabled ? <Mic size={14} className="text-emerald-400 animate-pulse" /> : <MicOff size={14} className="text-rose-400" />}
+        </div>
+
+        <button
+          onClick={recordingState === 'recording' ? pauseRecording : resumeRecording}
+          className="p-2 hover:bg-white/5 text-zinc-300 hover:text-white rounded-lg transition-all cursor-pointer"
+          title={recordingState === 'recording' ? "Pausar" : "Retomar"}
+        >
+          {recordingState === 'recording' ? <Pause size={14} /> : <Play size={14} />}
+        </button>
+        <button
+          onClick={stopRecording}
+          className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shadow-lg shadow-emerald-500/20"
+          title="Finalizar e Salvar"
+        >
+          <Square size={12} className="fill-current animate-pulse" />
+          <span className="text-[10px] font-black uppercase tracking-wider">Finalizar</span>
+        </button>
+        <button
+          onClick={discardRecording}
+          className="p-2 hover:bg-red-500/10 text-zinc-400 hover:text-red-500 rounded-lg transition-all cursor-pointer"
+          title="Descartar"
+        >
+          <Trash2 size={14} />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
       <div className="relative w-full max-w-lg overflow-hidden bg-zinc-900/90 border border-white/10 rounded-[2.5rem] shadow-2xl shadow-rose-500/10 backdrop-blur-2xl">
@@ -341,57 +379,6 @@ export function ScreenRecorderWidget() {
               >
                 Começar Gravação
               </button>
-            </div>
-          )}
-
-          {(recordingState === 'recording' || recordingState === 'paused') && (
-            <div className="w-full flex flex-col items-center space-y-6">
-              <div className="relative flex items-center justify-center">
-                {/* Círculo pulsante de gravação */}
-                <div className="absolute inset-[-15px] bg-rose-500/20 rounded-full animate-ping" />
-                <div className="w-20 h-20 bg-rose-500 rounded-[2rem] flex items-center justify-center text-white shadow-xl shadow-rose-500/40">
-                  {recordingState === 'recording' ? <Video size={36} className="animate-pulse" /> : <Pause size={36} />}
-                </div>
-              </div>
-
-              <div className="text-center space-y-2">
-                <span className="text-3xl font-black font-mono text-white tracking-wider">{formatTime(time)}</span>
-                <p className="text-[10px] font-black uppercase tracking-wider text-rose-500 flex items-center gap-1.5 justify-center">
-                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-                  {recordingState === 'recording' ? 'Gravando Tela + Voz' : 'Gravação Pausada'}
-                </p>
-              </div>
-
-              {/* Botões de Ação da Gravação */}
-              <div className="flex items-center gap-3 w-full max-w-sm justify-center">
-                <button
-                  onClick={recordingState === 'recording' ? pauseRecording : resumeRecording}
-                  className="flex-1 py-3.5 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-2xl font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  {recordingState === 'recording' ? (
-                    <>
-                      <Pause size={14} /> Pausar
-                    </>
-                  ) : (
-                    <>
-                      <Play size={14} /> Retomar
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={stopRecording}
-                  className="flex-1 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-wider text-xs transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 cursor-pointer"
-                >
-                  <Square size={14} className="fill-current" /> Finalizar
-                </button>
-                <button
-                  onClick={discardRecording}
-                  className="p-3.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-2xl transition-all cursor-pointer"
-                  title="Descartar Gravação"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
             </div>
           )}
 
