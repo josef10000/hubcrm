@@ -13,7 +13,7 @@ import ForwardMessageModal from './ForwardMessageModal';
 import GroupSettingsModal from './GroupSettingsModal';
 import SupportRequestModal from '@support/components/SupportRequestModal';
 import { toast } from 'sonner';
-import { Pin, ChevronRight, Bookmark, Archive, Folder, CheckSquare, Trash } from 'lucide-react';
+import { Pin, ChevronRight, Bookmark, Archive, Folder, CheckSquare, Trash, Check } from 'lucide-react';
 import { Timestamp } from 'firebase/firestore';
 import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -745,7 +745,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
                           id: crypto.randomUUID(),
                           label: `${message.text.replace(/^\[AVISO\]\s*/i, '')} (Chat de ${message.senderName})`,
                           completed: false,
-                          createdAt: new Date().toISOString()
+                          createdAt: Date.now()
                         };
                         await setNexusTasks([...nexusTasks, newTask]);
                         toast.success("Mensagem convertida em Tarefa Rápida com sucesso!");
@@ -954,7 +954,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
                         id: crypto.randomUUID(),
                         label: newTaskText,
                         completed: false,
-                        createdAt: new Date().toISOString()
+                        createdAt: Date.now()
                       };
                       await setNexusTasks([...nexusTasks, newTask]);
                       setNewTaskText('');
@@ -970,7 +970,7 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
                       id: crypto.randomUUID(),
                       label: newTaskText,
                       completed: false,
-                      createdAt: new Date().toISOString()
+                      createdAt: Date.now()
                     };
                     await setNexusTasks([...nexusTasks, newTask]);
                     setNewTaskText('');

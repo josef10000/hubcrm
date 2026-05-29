@@ -11,7 +11,7 @@ export function ScreenRecorderWidget() {
   const { isRecorderOpen, setIsRecorderOpen, recorderDefaultChannelId, setRecorderDefaultChannelId } = useUI();
   const { chats, sendMessage } = useChatStore();
   const { userProfile } = useAuth();
-  const { effectiveOrgId } = useCRM();
+  const { effectiveOrgId, teamProfiles } = useCRM();
 
   const [micEnabled, setMicEnabled] = useState(true);
   const [recordingState, setRecordingState] = useState<'idle' | 'recording' | 'paused' | 'uploading' | 'success'>('idle');
@@ -446,7 +446,7 @@ export function ScreenRecorderWidget() {
                     let chatName = c.name || '';
                     if (c.type === 'direct') {
                       const otherUserId = c.members.find(id => id !== userProfile?.uid);
-                      const otherUser = otherUserId ? useCRM.getState().teamProfiles.find(p => p.uid === otherUserId) : null;
+                      const otherUser = otherUserId ? teamProfiles.find(p => p.uid === otherUserId) : null;
                       chatName = otherUser?.displayName || 'Chat Privado';
                     } else if (c.type === 'self') {
                       chatName = 'Meu Espaço (Você)';
