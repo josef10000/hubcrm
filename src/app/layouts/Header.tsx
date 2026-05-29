@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Menu, X, Plus, Download, Focus } from 'lucide-react';
+import { Search, Menu, X, Plus, Download, Focus, Video } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
@@ -21,6 +21,7 @@ export function Header({ currentPath, navigate }: HeaderProps) {
     focusMode, setFocusMode,
     setSidebarOpen,
     isModalOpen, setIsModalOpen,
+    isRecorderOpen, setIsRecorderOpen,
     filterStatus, sortBy, filterTagId
   } = useUI();
   
@@ -140,6 +141,14 @@ export function Header({ currentPath, navigate }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-3">
+        <button
+          onClick={() => setIsRecorderOpen(true)}
+          className="flex items-center gap-2 px-3 py-2 bg-rose-500/10 dark:bg-rose-500/20 border border-rose-500/30 text-rose-500 hover:bg-rose-600 hover:text-white dark:hover:bg-rose-600 rounded-xl text-xs font-bold transition-all shadow-lg hover:shadow-rose-500/20 cursor-pointer animate-pulse shrink-0"
+          title="Gravar Tela (Loom Nativo)"
+        >
+          <Video size={14} />
+          <span className="hidden sm:inline">Gravar</span>
+        </button>
         {!isDashboard && (
           <div className="hidden md:flex items-center w-52 lg:w-72 relative" role="search">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" aria-hidden="true" />

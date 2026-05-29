@@ -6,6 +6,7 @@ import ClientModal from '@crm/components/ClientModal';
 import OfferModal from '@crm/components/OfferModal';
 import ConfirmationModal from '@shared/components/ConfirmationModal';
 import EmployeeSurveyModal from '@shared/components/EmployeeSurveyModal';
+import { ScreenRecorderWidget } from './ScreenRecorderWidget';
 
 export function GlobalModals() {
   const { user } = useAuth();
@@ -53,6 +54,7 @@ export function GlobalModals() {
         cancelText="Cancelar"
       />
       <EmployeeSurveyModal />
+      <ScreenRecorderWidget />
     </>
   );
 }

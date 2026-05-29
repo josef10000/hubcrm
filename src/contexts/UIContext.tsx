@@ -44,6 +44,12 @@ interface UIContextType {
   // Modals (Client)
   isModalOpen: boolean;
   setIsModalOpen: (open: boolean) => void;
+
+  // Screen Recorder (Loom Nativo)
+  isRecorderOpen: boolean;
+  setIsRecorderOpen: (open: boolean) => void;
+  recorderDefaultChannelId: string | null;
+  setRecorderDefaultChannelId: (channelId: string | null) => void;
 }
 
 const UIContext = createContext<UIContextType | null>(null);
@@ -60,6 +66,8 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
   const [view, setView] = useState<CRMView>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isRecorderOpen, setIsRecorderOpen] = useState(false);
+  const [recorderDefaultChannelId, setRecorderDefaultChannelId] = useState<string | null>(null);
   const [focusMode, setFocusMode] = useState(() => localStorage.getItem('hubcrm-focus') === 'true');
   const [globalSearch, setGlobalSearch] = useState('');
 
@@ -117,6 +125,8 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
     focusMode, setFocusMode,
     globalSearch, setGlobalSearch,
     isModalOpen, setIsModalOpen,
+    isRecorderOpen, setIsRecorderOpen,
+    recorderDefaultChannelId, setRecorderDefaultChannelId,
     searchTerm, setSearchTerm,
     filterStatus, setFilterStatus,
     sortBy, setSortBy,

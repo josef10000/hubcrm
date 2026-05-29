@@ -12,6 +12,7 @@ import { ChecklistMessage } from './ChecklistMessage';
 import { LinkPreviewCard } from './LinkPreviewCard';
 import { useChatStore } from '@/store/useChatStore';
 import { toast } from 'sonner';
+import confetti from 'canvas-confetti';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -32,6 +33,7 @@ interface MessageBubbleProps {
   onThreadOpen?: (message: ChatMessage) => void;
   onSetReminder?: (message: ChatMessage, date: Date) => void;
   onForward?: (message: ChatMessage) => void;
+  onConvertToTask?: (message: ChatMessage) => void;
   readByUsers?: { uid: string; displayName: string; photoURL?: string }[];
 }
 
@@ -376,7 +378,7 @@ const AudioPlayer = ({
 export default function MessageBubble({ 
   message, isRead, isPinned, isBookmarked, onDelete, onEdit, onReply, onReact, onVote, 
   onBookmark, onPin, onUnpin, onCreateTicket, onApprove, onImageClick, onThreadOpen, onSetReminder,
-  onForward, readByUsers
+  onForward, onConvertToTask, readByUsers
 }: MessageBubbleProps) {
   const { userProfile } = useAuth();
   const { teamProfiles, effectiveOrgId } = useCRM();
@@ -397,6 +399,7 @@ export default function MessageBubble({
   const isBot = message.isBot || message.type === 'bot_response';
   const isSelected = selectedMessageIds.includes(message.id);
   const isUrgent = message.priority === 'urgent';
+  const isNotice = !isDeleted && message.text?.trim().startsWith('[AVISO]');
   
   // Se a mensagem for agendada E estiver deletada, não mostrar nada (sumir completamente)
   if (isDeleted && message.status === 'scheduled') return null;
@@ -425,6 +428,26 @@ export default function MessageBubble({
   };
 
   const handleReact = (emoji: string) => {
+    try {
+      const scalar = 2.5;
+      const emojiShape = confetti.shapeFromText({ text: emoji, scalar });
+      confetti({
+        shapes: [emojiShape],
+        scalar,
+        particleCount: 20,
+        spread: 50,
+        origin: { y: 0.8 }
+      });
+    } catch (e) {
+      try {
+        confetti({
+          particleCount: 30,
+          spread: 60,
+          origin: { y: 0.8 }
+        });
+      } catch (err) {}
+    }
+
     onReact?.(message.id, emoji);
     setShowEmojiPicker(false);
   };
@@ -616,6 +639,14 @@ export default function MessageBubble({
                 >
                   <MessageSquareText size={14} />
                 </button>
+
+                <button 
+                  onClick={() => onConvertToTask?.(message)}
+                  className="p-1.5 text-gray-400 hover:text-teal-500 hover:bg-teal-500/10 rounded-full transition-colors"
+                  title="Converter em Tarefa Rápida"
+                >
+                  <CheckSquare size={14} />
+                </button>
               </div>
             </div>
           )}
@@ -634,6 +665,8 @@ export default function MessageBubble({
               ? 'bg-gray-50 dark:bg-white/5 border border-dashed border-gray-200 dark:border-white/10 italic text-gray-400 dark:text-gray-500' 
               : isSelected
                 ? 'bg-violet-50/60 dark:bg-violet-950/20 border-2 border-violet-500 shadow-[0_0_12px_rgba(139,92,246,0.15)] text-zinc-900 dark:text-zinc-100'
+              : isNotice
+                ? 'bg-amber-500/10 dark:bg-amber-500/5 text-amber-900 dark:text-amber-100 border-2 border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.4)] ring-1 ring-amber-500/50 rounded-tl-none animate-pulse'
               : isUrgent
                 ? 'bg-red-50 dark:bg-red-950/15 text-red-900 dark:text-red-100 border-2 border-red-500 shadow-[0_0_12px_rgba(239,68,68,0.25)] animate-pulse'
               : isBot
@@ -656,6 +689,11 @@ export default function MessageBubble({
               </div>
             ) : (
               <>
+                {isNotice && (
+                  <div className="flex items-center gap-1.5 mb-2.5 text-[9px] font-black bg-gradient-to-r from-amber-500 to-orange-600 text-white px-2.5 py-1 rounded-full w-fit shadow-md shadow-amber-500/30 tracking-widest uppercase animate-pulse">
+                    <span>📢 COMUNICADO IMPORTANTE</span>
+                  </div>
+                )}
                 {isUrgent && (
                   <div className="flex items-center gap-1.5 mb-2.5 text-[9px] font-black bg-red-500 text-white px-2.5 py-1 rounded-full w-fit shadow-md shadow-red-500/30 tracking-widest uppercase animate-bounce">
                     <span>🚨 Urgente</span>

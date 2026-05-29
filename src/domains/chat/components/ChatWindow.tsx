@@ -13,7 +13,7 @@ import ForwardMessageModal from './ForwardMessageModal';
 import GroupSettingsModal from './GroupSettingsModal';
 import SupportRequestModal from '@support/components/SupportRequestModal';
 import { toast } from 'sonner';
-import { Pin, ChevronRight, Bookmark, Archive, Folder } from 'lucide-react';
+import { Pin, ChevronRight, Bookmark, Archive, Folder, CheckSquare, Trash } from 'lucide-react';
 import { Timestamp } from 'firebase/firestore';
 import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -23,6 +23,7 @@ import ThreadSidebar from './ThreadSidebar';
 
   import { useChatStore } from '@/store/useChatStore';
   import { useWebRTC } from '@/hooks/useWebRTC';
+  import { useNexusStore } from '@store/useNexusStore';
 
 interface ChatWindowProps {
   chatId: string | null;
@@ -51,6 +52,10 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
   const [initialTicketMessage, setInitialTicketMessage] = useState('');
   const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
   const [isMediaOpen, setIsMediaOpen] = useState(false);
+  const [isTasksOpen, setIsTasksOpen] = useState(false);
+  const nexusTasks = useNexusStore(state => state.tasks);
+  const setNexusTasks = useNexusStore(state => state.setTasks);
+  const [newTaskText, setNewTaskText] = useState('');
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [activeThread, setActiveThread] = useState<ChatMessage | null>(null);
@@ -523,11 +528,18 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
             </button>
           )}
           <button 
-            onClick={() => setIsMediaOpen(!isMediaOpen)}
+            onClick={() => { setIsMediaOpen(!isMediaOpen); setIsTasksOpen(false); }}
             className={`p-2.5 rounded-xl transition-all ${isMediaOpen ? 'text-primary-500 bg-primary-500/10' : 'text-gray-400 hover:text-primary-500 hover:bg-primary-500/5'}`}
             title="Mídia Compartilhada"
           >
             <Folder size={24} />
+          </button>
+          <button 
+            onClick={() => { setIsTasksOpen(!isTasksOpen); setIsMediaOpen(false); }}
+            className={`p-2.5 rounded-xl transition-all ${isTasksOpen ? 'text-teal-500 bg-teal-500/10' : 'text-gray-400 hover:text-teal-500 hover:bg-teal-500/5'}`}
+            title="Tarefas Rápidas"
+          >
+            <CheckSquare size={24} />
           </button>
           <button 
             onClick={() => setIsSettingsOpen(true)}
@@ -728,6 +740,17 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
                       onThreadOpen={setActiveThread}
                       onSetReminder={setMessageReminder}
                       onForward={setForwardingMessage}
+                      onConvertToTask={async (message) => {
+                        const newTask = {
+                          id: crypto.randomUUID(),
+                          label: `${message.text.replace(/^\[AVISO\]\s*/i, '')} (Chat de ${message.senderName})`,
+                          completed: false,
+                          createdAt: new Date().toISOString()
+                        };
+                        await setNexusTasks([...nexusTasks, newTask]);
+                        toast.success("Mensagem convertida em Tarefa Rápida com sucesso!");
+                        setIsTasksOpen(true);
+                      }}
                       readByUsers={readByUsers}
                     />
                   </React.Fragment>
@@ -891,6 +914,125 @@ export default function ChatWindow({ chatId, chat }: ChatWindowProps) {
             )}
           </div>
         </div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Sidebar de Tarefas Rápidas */}
+      <AnimatePresence>
+        {isTasksOpen && (
+          <>
+            {/* Backdrop para mobile (clique fora para fechar) */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsTasksOpen(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+            />
+            <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-80 lg:relative lg:inset-auto lg:z-0 border-l border-gray-100 dark:border-white/10 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-xl animate-in slide-in-from-right duration-300 flex flex-col h-full">
+              <div className="p-4 border-b border-gray-100 dark:border-white/10 flex justify-between items-center bg-white/10">
+                <div className="flex items-center gap-2">
+                  <CheckSquare size={16} className="text-teal-500" />
+                  <h4 className="text-sm font-black uppercase tracking-widest text-gray-900 dark:text-white">Tarefas Rápidas</h4>
+                </div>
+                <button onClick={() => setIsTasksOpen(false)} className="p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded-full transition-colors">
+                  <X size={16} className="text-gray-400" />
+                </button>
+              </div>
+
+              {/* Input de Nova Tarefa */}
+              <div className="p-4 border-b border-gray-100 dark:border-white/5 bg-white/5 flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Nova tarefa rápida..."
+                  value={newTaskText}
+                  onChange={(e) => setNewTaskText(e.target.value)}
+                  onKeyDown={async (e) => {
+                    if (e.key === 'Enter' && newTaskText.trim()) {
+                      const newTask = {
+                        id: crypto.randomUUID(),
+                        label: newTaskText,
+                        completed: false,
+                        createdAt: new Date().toISOString()
+                      };
+                      await setNexusTasks([...nexusTasks, newTask]);
+                      setNewTaskText('');
+                      toast.success("Tarefa rápida adicionada!");
+                    }
+                  }}
+                  className="flex-1 bg-white/5 border border-white/10 text-xs rounded-xl px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-teal-500/50"
+                />
+                <button
+                  onClick={async () => {
+                    if (!newTaskText.trim()) return;
+                    const newTask = {
+                      id: crypto.randomUUID(),
+                      label: newTaskText,
+                      completed: false,
+                      createdAt: new Date().toISOString()
+                    };
+                    await setNexusTasks([...nexusTasks, newTask]);
+                    setNewTaskText('');
+                    toast.success("Tarefa rápida adicionada!");
+                  }}
+                  className="px-3 bg-teal-500 hover:bg-teal-600 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-teal-500/20"
+                >
+                  +
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-2">
+                {nexusTasks.map((task) => (
+                  <div 
+                    key={task.id} 
+                    className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/5 hover:border-teal-500/20 transition-all group/task"
+                  >
+                    <button
+                      onClick={async () => {
+                        const updated = nexusTasks.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t);
+                        await setNexusTasks(updated);
+                        if (!task.completed) {
+                          toast.success("Tarefa concluída! 🎉");
+                        }
+                      }}
+                      className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all ${
+                        task.completed 
+                          ? 'bg-teal-500 border-teal-500 text-white' 
+                          : 'border-zinc-500/30 hover:border-teal-500/50'
+                      }`}
+                    >
+                      {task.completed && <Check size={12} className="stroke-[3]" />}
+                    </button>
+                    <span 
+                      className={`text-xs font-semibold flex-1 leading-tight ${
+                        task.completed ? 'line-through text-zinc-500 opacity-60' : 'text-zinc-800 dark:text-zinc-200'
+                      }`}
+                    >
+                      {task.label}
+                    </span>
+                    <button
+                      onClick={async () => {
+                        const filtered = nexusTasks.filter(t => t.id !== task.id);
+                        await setNexusTasks(filtered);
+                        toast.info("Tarefa removida.");
+                      }}
+                      className="opacity-0 group-hover/task:opacity-100 p-1.5 hover:bg-red-500/10 text-zinc-500 hover:text-red-500 rounded-lg transition-all"
+                      title="Excluir"
+                    >
+                      <Trash size={12} />
+                    </button>
+                  </div>
+                ))}
+
+                {nexusTasks.length === 0 && (
+                  <div className="flex flex-col items-center justify-center mt-20 opacity-30 text-center px-4">
+                    <CheckSquare size={40} className="mb-4 text-zinc-400" />
+                    <p className="text-xs font-bold uppercase tracking-widest leading-relaxed">Nenhuma tarefa rápida pendente.</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </>
         )}
       </AnimatePresence>

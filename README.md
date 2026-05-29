@@ -4,6 +4,26 @@ Plataforma corporativa de CRM de alta performance construída com arquitetura **
 
 ---
 
+## 💎 Recursos Premium Recentes (Chat & UX)
+
+Recentemente, adicionamos uma série de recursos de ponta no **Hub Chat** e no CRM para elevar a produtividade e a colaboração da equipe a um patamar corporativo elite:
+
+1.  **🎥 Loom Nativo (Widget de Gravação Global):**
+    *   Widget flutuante avançado ativado diretamente a partir do Header de qualquer tela do CRM.
+    *   Captura inteligente de tela + voz (microfone) com alta definição usando Web APIs nativas.
+    *   Upload assíncrono otimizado direto para o **Cloudflare R2 Object Storage** via *Presigned URLs*.
+    *   Cópia automática do link público para a Área de Transferência e menu rápido para compartilhamento direto em canais de chat recentes com 1 clique.
+2.  **🎉 Física de Emojis Festivos:**
+    *   Reações com física de partículas realista na tela ao clicar em emojis, usando `canvas-confetti` com formas de emojis customizadas.
+3.  **📢 Glow/Neon para Comunicados:**
+    *   Destaques visuais vibrantes estilo neon dourado/âmbar com pulsação suave em bolhas de chat com prefixo `[AVISO]`.
+4.  **📋 Conversão em Tarefas Rápidas:**
+    *   Checklist lateral retrátil e integrado no chat.
+    *   Menu rápido de contexto em cada mensagem para convertê-la instantaneamente em uma Tarefa Rápida.
+    *   Sincronização reativa bidirecional e persistente com o **Nexus Store** (Firestore).
+
+---
+
 ## 🏗️ Arquitetura Técnica
 
 O sistema utiliza persistência reativa orientada a eventos em tempo real no Firestore, com camada de cache/rate-limiting via Upstash Redis e automações via Vercel Serverless Functions.
