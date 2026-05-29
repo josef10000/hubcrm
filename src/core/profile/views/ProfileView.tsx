@@ -50,6 +50,41 @@ import AddMilestoneModal from '@people/components/AddMilestoneModal';
 import EditSkillsModal from '@people/components/EditSkillsModal';
 import { updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 
+const formatToBrasiliaTime = (timestamp: number, formatStr: 'HH:mm:ss' | 'HH:mm' | 'dd/MM/yyyy'): string => {
+  const date = new Date(timestamp);
+  if (formatStr === 'HH:mm:ss') {
+    return new Intl.DateTimeFormat('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).format(date);
+  }
+  if (formatStr === 'HH:mm') {
+    return new Intl.DateTimeFormat('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).format(date);
+  }
+  return new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  }).format(date);
+};
+
+const formatLocalDateStr = (dateStr: string): string => {
+  const parts = dateStr.split('-');
+  if (parts.length === 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  return dateStr;
+};
+
 export default function ProfileView() {
   const { uid } = useParams();
   const { user, userProfile: currentUserProfile, refreshProfile } = useAuth();
@@ -158,6 +193,13 @@ export default function ProfileView() {
   const isAdmin = hasPermission('MANAGE_SETTINGS');
   const isManagement = hasPermission('MANAGE_TEAM');
   const canEdit = isOwnProfile || isManagement || isAdmin;
+
+  // Redefine a aba ativa para 'info' se o colaborador acessar o perfil de outra pessoa estando em uma aba pessoal protegida
+  useEffect(() => {
+    if (!isOwnProfile && activeTab !== 'info' && activeTab !== 'availability') {
+      setActiveTab('info');
+    }
+  }, [isOwnProfile, uid, activeTab]);
 
   useEffect(() => {
     if (!uid) return;
@@ -605,54 +647,58 @@ export default function ProfileView() {
                 >
                   Disponibilidade
                 </button>
-                <button 
-                  onClick={() => setActiveTab('pdi')}
-                  className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'pdi' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
-                >
-                  Meu PDI
-                </button>
-                <button 
-                  onClick={() => setActiveTab('inventory')}
-                  className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'inventory' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
-                >
-                  Ativos
-                </button>
-                <button 
-                  onClick={() => setActiveTab('feedbacks')}
-                  className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'feedbacks' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
-                >
-                  Mural
-                </button>
-                <button 
-                  onClick={() => setActiveTab('history')}
-                  className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'history' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
-                >
-                  Carreira
-                </button>
-                <button 
-                  onClick={() => setActiveTab('vacations')}
-                  className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'vacations' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
-                >
-                  Ausências
-                </button>
-                <button 
-                  onClick={() => setActiveTab('alerts')}
-                  className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all relative ${activeTab === 'alerts' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
-                >
-                  Alertas
-                  {unreadAlertsCount > 0 && isOwnProfile && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[8px] rounded-full flex items-center justify-center border-2 border-zinc-900">
-                      {unreadAlertsCount}
-                    </span>
-                  )}
-                </button>
-                {(isOwnProfile || isManagement || isAdmin) && (
-                  <button 
-                    onClick={() => setActiveTab('expediente')}
-                    className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'expediente' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
-                  >
-                    Expediente
-                  </button>
+                {isOwnProfile && (
+                  <>
+                    <button 
+                      onClick={() => setActiveTab('pdi')}
+                      className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'pdi' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
+                    >
+                      Meu PDI
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('inventory')}
+                      className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'inventory' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
+                    >
+                      Ativos
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('feedbacks')}
+                      className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'feedbacks' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
+                    >
+                      Mural
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('history')}
+                      className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'history' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
+                    >
+                      Carreira
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('vacations')}
+                      className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'vacations' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
+                    >
+                      Ausências
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('alerts')}
+                      className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all relative ${activeTab === 'alerts' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
+                    >
+                      Alertas
+                      {unreadAlertsCount > 0 && (
+                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[8px] rounded-full flex items-center justify-center border-2 border-zinc-900">
+                          {unreadAlertsCount}
+                        </span>
+                      )}
+                    </button>
+                    {(isOwnProfile || isManagement || isAdmin) && (
+                      <button 
+                        onClick={() => setActiveTab('expediente')}
+                        className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'expediente' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
+                      >
+                        Expediente
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -862,7 +908,7 @@ export default function ProfileView() {
                 </div>
               )}
 
-              {activeTab === 'pdi' && (
+              {activeTab === 'pdi' && isOwnProfile && (
                 <div className="animate-in slide-in-from-right duration-500">
                   <div className="flex items-center gap-3 mb-8">
                     <div className="p-3 bg-indigo-500/10 rounded-2xl text-indigo-500">
@@ -894,7 +940,7 @@ export default function ProfileView() {
                 </div>
               )}
 
-              {activeTab === 'comissoes' && (
+              {activeTab === 'comissoes' && isOwnProfile && (
                 <div className="animate-in slide-in-from-right duration-500 space-y-8">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="p-6 bg-emerald-500/10 border border-emerald-500/20 rounded-3xl">
@@ -969,7 +1015,7 @@ export default function ProfileView() {
                 </div>
               )}
 
-              {activeTab === 'inventory' && (
+              {activeTab === 'inventory' && isOwnProfile && (
                 <div className="animate-in slide-in-from-right duration-500">
                   <InventorySection 
                     inventory={userAssets} 
@@ -979,7 +1025,7 @@ export default function ProfileView() {
                 </div>
               )}
 
-              {activeTab === 'feedbacks' && (
+              {activeTab === 'feedbacks' && isOwnProfile && (
                 <div className="animate-in slide-in-from-right duration-500">
                   <div className="flex items-center justify-between mb-8">
                     <h4 className="text-sm font-bold text-gray-500 uppercase tracking-widest">Mural de Feedbacks</h4>
@@ -1000,7 +1046,7 @@ export default function ProfileView() {
                 </div>
               )}
 
-              {activeTab === 'vacations' && (
+              {activeTab === 'vacations' && isOwnProfile && (
                 <div className="animate-in slide-in-from-right duration-500 space-y-6 text-left">
                    <div className="flex items-center gap-3 mb-4">
                      <div className="p-3 bg-amber-500/10 rounded-2xl text-amber-500">
@@ -1073,7 +1119,7 @@ export default function ProfileView() {
                 </div>
               )}
 
-              {activeTab === 'alerts' && (
+              {activeTab === 'alerts' && isOwnProfile && (
                 <div className="animate-in slide-in-from-right duration-500 space-y-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
@@ -1153,7 +1199,7 @@ export default function ProfileView() {
                 </div>
               )}
 
-              {activeTab === 'history' && (
+              {activeTab === 'history' && isOwnProfile && (
                 <div className="animate-in slide-in-from-right duration-500">
                   <div className="flex items-center justify-between mb-8">
                     <h4 className="text-sm font-bold text-gray-500 uppercase tracking-widest">Linha do Tempo de Carreira</h4>
@@ -1170,7 +1216,7 @@ export default function ProfileView() {
                 </div>
               )}
 
-              {activeTab === 'expediente' && (
+              {activeTab === 'expediente' && isOwnProfile && (
                 <div className="space-y-6 animate-in slide-in-from-bottom duration-500">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
                     {/* Card 1: Status Atual e Timer */}
@@ -1298,10 +1344,10 @@ export default function ProfileView() {
                         <tbody className="text-sm">
                           {myTimeLogs.map(log => (
                             <tr key={log.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                              <td className="py-4 px-2 font-bold">{format(parseISO(log.date), 'dd/MM/yyyy')}</td>
-                              <td className="py-4 px-2 font-mono">{format(log.startTime, 'HH:mm:ss')}</td>
+                              <td className="py-4 px-2 font-bold">{formatLocalDateStr(log.date)}</td>
+                              <td className="py-4 px-2 font-mono">{formatToBrasiliaTime(log.startTime, 'HH:mm:ss')}</td>
                               <td className="py-4 px-2 font-mono">
-                                {log.endTime ? format(log.endTime, 'HH:mm:ss') : <span className="text-emerald-500 font-bold">Ativo</span>}
+                                {log.endTime ? formatToBrasiliaTime(log.endTime, 'HH:mm:ss') : <span className="text-emerald-500 font-bold">Ativo</span>}
                               </td>
                               <td className="py-4 px-2">
                                 {log.pauses.length > 0 ? (
@@ -1309,7 +1355,7 @@ export default function ProfileView() {
                                     {log.pauses.map((p, idx) => (
                                       <span key={idx} className="text-[10px] px-2 py-0.5 rounded-lg bg-white/5 border border-white/10 text-gray-400 flex items-center gap-1 font-mono">
                                         {p.type === 'lunch' ? '🍱 Almoço' : p.type === 'meeting' ? '👥 Reunião' : '🕒 Ausente'}:{' '}
-                                        {format(p.startTime, 'HH:mm')} - {p.endTime ? format(p.endTime, 'HH:mm') : '...'}
+                                        {formatToBrasiliaTime(p.startTime, 'HH:mm')} - {p.endTime ? formatToBrasiliaTime(p.endTime, 'HH:mm') : '...'}
                                       </span>
                                     ))}
                                   </div>

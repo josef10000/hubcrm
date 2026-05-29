@@ -37,13 +37,15 @@ export interface TimeTrackingSlice {
   loadAllLogs: () => () => void;
 }
 
-// Auxiliar para obter a data local no formato YYYY-MM-DD
+// Auxiliar para obter a data local no formato YYYY-MM-DD no Horário de Brasília
 export function getLocalDateString(): string {
-  const d = new Date();
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  const formatter = new Intl.DateTimeFormat('fr-CA', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  return formatter.format(new Date());
 }
 
 // Auxiliar para calcular duração líquida trabalhada até o momento

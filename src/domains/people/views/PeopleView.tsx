@@ -47,6 +47,33 @@ import { EnergyScoreCard } from '@people/components/EnergyScoreCard';
 
 type PeopleSubTab = 'dashboard' | 'onboarding' | 'development' | 'career' | 'mural' | 'assets' | 'vacations' | 'climate' | 'expediente';
 
+const formatToBrasiliaTime = (timestamp: number, formatStr: 'HH:mm:ss' | 'HH:mm' | 'dd/MM/yyyy'): string => {
+  const date = new Date(timestamp);
+  if (formatStr === 'HH:mm:ss') {
+    return new Intl.DateTimeFormat('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).format(date);
+  }
+  if (formatStr === 'HH:mm') {
+    return new Intl.DateTimeFormat('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).format(date);
+  }
+  return new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  }).format(date);
+};
+
 export default function PeopleView() {
   const { user } = useAuth();
   const crm = useCRM();
@@ -762,16 +789,16 @@ export default function PeopleView() {
                           const formatted = `${hours}h ${mins}m`;
                           
                           const pausesStr = log.pauses.map(p => {
-                            const pStart = format(p.startTime, 'HH:mm');
-                            const pEnd = p.endTime ? format(p.endTime, 'HH:mm') : '...';
+                            const pStart = formatToBrasiliaTime(p.startTime, 'HH:mm');
+                            const pEnd = p.endTime ? formatToBrasiliaTime(p.endTime, 'HH:mm') : '...';
                             return `${p.type === 'lunch' ? 'Almoço' : p.type === 'meeting' ? 'Reunião' : 'Ausente'} (${pStart} - ${pEnd})`;
                           }).join(' | ');
 
                           return [
                             log.date,
                             log.userName,
-                            format(log.startTime, 'HH:mm:ss'),
-                            log.endTime ? format(log.endTime, 'HH:mm:ss') : 'Ativo',
+                            formatToBrasiliaTime(log.startTime, 'HH:mm:ss'),
+                            log.endTime ? formatToBrasiliaTime(log.endTime, 'HH:mm:ss') : 'Ativo',
                             pausesStr || 'Nenhuma',
                             netSecs,
                             formatted
@@ -852,7 +879,7 @@ export default function PeopleView() {
                                 : 'Expediente Encerrado'}
                             </span>
                             <span className="text-[10px] text-gray-500 font-mono">
-                              {log ? `Entrada: ${format(log.startTime, 'HH:mm:ss')}` : 'Sem registros hoje'}
+                              {log ? `Entrada: ${formatToBrasiliaTime(log.startTime, 'HH:mm:ss')}` : 'Sem registros hoje'}
                             </span>
                           </div>
                         </div>
