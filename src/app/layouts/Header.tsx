@@ -1,4 +1,5 @@
 import React from 'react';
+import { toast } from 'sonner';
 import { Search, Menu, X, Plus, Download, Focus, Video, Clock } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';

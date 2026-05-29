@@ -74,6 +74,19 @@ const formatToBrasiliaTime = (timestamp: number, formatStr: 'HH:mm:ss' | 'HH:mm'
   }).format(date);
 };
 
+const formatLocalDateStr = (dateStr: string): string => {
+  const parts = dateStr.split('-');
+  if (parts.length === 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  return dateStr;
+};
+
+const timeToMinutes = (timeStr: string): number => {
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  return hours * 60 + minutes;
+};
+
 export default function PeopleView() {
   const { user } = useAuth();
   const crm = useCRM();
