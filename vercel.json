@@ -4,6 +4,7 @@
     { "source": "/api/daily_cron", "destination": "/api/cron_handler?action=daily" },
     { "source": "/api/cron/finance-engine", "destination": "/api/cron_handler?action=finance" },
     { "source": "/api/cron/process-scheduler", "destination": "/api/cron_handler?action=scheduler" },
+    { "source": "/api/cron/finance-reconciler", "destination": "/api/cron_handler?action=reconciler" },
 
     { "source": "/api/asaas/webhook", "destination": "/api/asaas_webhook" },
     
@@ -40,6 +41,10 @@
     {
       "path": "/api/daily_cron",
       "schedule": "0 11 * * *"
+    },
+    {
+      "path": "/api/cron/finance-reconciler",
+      "schedule": "0 7 * * *"
     }
   ]
 }
