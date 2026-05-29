@@ -774,6 +774,10 @@ export default function PeopleView() {
                       </div>
                    </div>
                  )}
+               </div>
+             </div>
+           )}
+
                   {activeTab === 'expediente' && (
             <div className="space-y-6 animate-in slide-in-from-bottom duration-500">
                <div className="bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl overflow-hidden shadow-xl">
