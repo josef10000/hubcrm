@@ -7,6 +7,7 @@ import { useUI } from '@/contexts/UIContext';
 import { useFilteredClients } from '@/hooks/useFilteredClients';
 import { useWeather } from '@/hooks/useWeather';
 import { useCRMStore } from '@/store/useCRMStore';
+import { useDialog } from '@auth/contexts/DialogContext';
 
 interface HeaderProps {
   currentPath: string;
@@ -32,6 +33,7 @@ export function Header({ currentPath, navigate }: HeaderProps) {
     handleExportCSV
   } = useCRM();
   const store = useCRMStore();
+  const { confirm: customConfirm, alert: customAlert } = useDialog();
   const { hasPermission, hasAnyPermission } = usePermissions();
 
   const filteredClientsForExport = useFilteredClients(clients, searchTerm, filterStatus, sortBy, filterTagId);
@@ -155,9 +157,20 @@ export function Header({ currentPath, navigate }: HeaderProps) {
                   userProfile.photoURL || ''
                 );
               } else if (log.status === 'completed') {
-                alert('Seu expediente de hoje já foi encerrado. Obrigado pelo trabalho!');
+                await customAlert({
+                  title: 'Expediente Concluído',
+                  message: 'Seu expediente de hoje já foi encerrado. Obrigado pelo excelente trabalho!',
+                  variant: 'success'
+                });
               } else {
-                if (confirm('Deseja realmente encerrar seu expediente de trabalho de hoje?')) {
+                const confirmed = await customConfirm({
+                  title: 'Encerrar Expediente',
+                  message: 'Deseja realmente encerrar seu expediente de trabalho de hoje?',
+                  confirmText: 'Sim, Encerrar',
+                  cancelText: 'Continuar Trabalhando',
+                  variant: 'danger'
+                });
+                if (confirmed) {
                   await store.endExpediente();
                 }
               }

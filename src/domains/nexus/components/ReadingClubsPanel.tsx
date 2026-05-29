@@ -8,6 +8,7 @@ import { useArenaStore } from '@store/useArenaStore';
 import { useNexusStore } from '@store/useNexusStore';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
+import { useDialog } from '@auth/contexts/DialogContext';
 
 interface ReadingClubsPanelProps {
   userUid: string;
@@ -86,6 +87,7 @@ const DEFAULT_DEPT = 'Desenvolvimento';
 export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, orgId }) => {
   const { userProfile } = useAuth();
   const { teamProfiles } = useCRM();
+  const { confirm: customConfirm } = useDialog();
   
   const [clubs, setClubs] = useState<ReadingClub[]>([]);
   const [selectedDept, setSelectedDept] = useState<string>(DEFAULT_DEPT);
@@ -574,7 +576,13 @@ export const ReadingClubsPanel: React.FC<ReadingClubsPanelProps> = ({ userUid, o
   const handleDeleteClub = async (clubId: string) => {
     if (!orgId) return;
 
-    const ok = await window.confirm('Deseja realmente excluir este clube de leitura permanentemente? Isso apagará todo o histórico de progresso do time.');
+    const ok = await customConfirm({
+      title: 'Excluir Clube de Leitura',
+      message: 'Deseja realmente excluir este clube de leitura permanentemente? Isso apagará todo o histórico de progresso do time.',
+      confirmText: 'Sim, Excluir',
+      cancelText: 'Cancelar',
+      variant: 'danger'
+    });
     if (!ok) return;
 
     playRetroSound('click');

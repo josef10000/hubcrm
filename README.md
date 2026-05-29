@@ -17,10 +17,13 @@ Recentemente, adicionamos uma série de recursos de ponta no **Hub Chat** e no C
     *   Reações com física de partículas realista na tela ao clicar em emojis, usando `canvas-confetti` com formas de emojis customizadas.
 3.  **📢 Glow/Neon para Comunicados:**
     *   Destaques visuais vibrantes estilo neon dourado/âmbar com pulsação suave em bolhas de chat com prefixo `[AVISO]`.
-4.  **📋 Conversão em Tarefas Rápidas:**
-    *   Checklist lateral retrátil e integrado no chat.
-    *   Menu rápido de contexto em cada mensagem para convertê-la instantaneamente em uma Tarefa Rápida.
-    *   Sincronização reativa bidirecional e persistente com o **Nexus Store** (Firestore).
+5.  **🕰️ Sistema de Ponto Eletrônico & Time Tracking Integrado:**
+    *   Botão minimalista e reativo no Header com indicador de estado (ativo/inativo).
+    *   Sincronização bidirecional automática com o status de presença do Chat (Online, Almoço, Reunião, Ausente, Offline).
+    *   Auto-Clock In inteligente com ativação silenciosa e retroativa após 1 minuto de atividade na plataforma.
+    *   Espelho de ponto pessoal com timer de horas trabalhadas no dia atual, gráfico semanal de desempenho de horas e histórico mensal completo de entradas, saídas e pausas no perfil do colaborador (`PeopleView.tsx`).
+    *   Painel "Expediente Ao Vivo" em tempo real para administradores, contendo monitoramento da jornada do time ao vivo e exportação de logs em formato CSV (`TeamManagementView.tsx`).
+    *   Substituição completa de diálogos de alerta e confirmação nativos por modais interativos e personalizados (`useDialog`) integrados à identidade visual do CRM.
 
 ---
 
