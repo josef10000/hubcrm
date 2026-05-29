@@ -318,11 +318,6 @@ export function ScreenRecorderWidget() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
       <div className="relative w-full max-w-lg overflow-hidden bg-zinc-900/90 border border-white/10 rounded-[2.5rem] shadow-2xl shadow-rose-500/10 backdrop-blur-2xl">
-        {/* Glow neon vermelho de gravação */}
-        {recordingState === 'recording' && (
-          <div className="absolute inset-0 border border-rose-500/30 animate-pulse pointer-events-none rounded-[2.5rem]" />
-        )}
-
         {/* Header */}
         <div className="p-6 border-b border-white/5 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -337,7 +332,7 @@ export function ScreenRecorderWidget() {
           <button
             onClick={() => setIsRecorderOpen(false)}
             className="p-2 text-zinc-500 hover:text-white hover:bg-white/5 rounded-full transition-all"
-            disabled={recordingState === 'recording' || recordingState === 'uploading'}
+            disabled={recordingState === 'uploading'}
           >
             <X size={20} />
           </button>
