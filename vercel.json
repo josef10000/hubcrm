@@ -5,6 +5,7 @@
     { "source": "/api/cron/finance-engine", "destination": "/api/cron_handler?action=finance" },
     { "source": "/api/cron/process-scheduler", "destination": "/api/cron_handler?action=scheduler" },
     { "source": "/api/cron/finance-reconciler", "destination": "/api/cron_handler?action=reconciler" },
+    { "source": "/api/cron/media-cleaner", "destination": "/api/cron_handler?action=cleaner" },
 
     { "source": "/api/asaas/webhook", "destination": "/api/asaas_webhook" },
     
@@ -45,6 +46,10 @@
     {
       "path": "/api/cron/finance-reconciler",
       "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/media-cleaner",
+      "schedule": "0 6 * * 1"
     }
   ]
 }
