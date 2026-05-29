@@ -70,9 +70,9 @@ export default function PeopleView() {
   const [elapsedToday, setElapsedToday] = useState(0);
 
   useEffect(() => {
-    if (!userProfile?.uid || !effectiveOrgId) return;
+    if (!userProfile?.uid || !crmOrgId) return;
     const q = query(
-      collection(db, 'organizations', effectiveOrgId, 'time_logs'),
+      collection(db, 'organizations', crmOrgId, 'time_logs'),
       where('userId', '==', userProfile.uid)
     );
     const unsub = onSnapshot(q, (snap) => {
@@ -81,7 +81,7 @@ export default function PeopleView() {
       setMyTimeLogs(logs);
     });
     return () => unsub();
-  }, [userProfile?.uid, effectiveOrgId]);
+  }, [userProfile?.uid, crmOrgId]);
 
   useEffect(() => {
     if (!todayLog || todayLog.status !== 'active') {
