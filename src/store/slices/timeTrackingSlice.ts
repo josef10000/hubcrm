@@ -22,6 +22,12 @@ export interface TimeLog {
   pauses: TimeLogPause[];
   totalDuration: number; // Em milissegundos (líquido de pausas)
   updatedAt: number;
+
+  // Controle de horas extras e regime
+  isOvertime?: boolean;
+  overtimeMinutesRequested?: number;
+  overtimeApprovedAt?: number;
+  overtimeExpiresAt?: number;
 }
 
 export interface TimeTrackingSlice {
@@ -33,6 +39,7 @@ export interface TimeTrackingSlice {
   endExpediente: () => Promise<void>;
   registerPause: (type: 'lunch' | 'away' | 'meeting') => Promise<void>;
   resumeExpediente: () => Promise<void>;
+  reopenExpediente: (overtimeMinutes?: number) => Promise<void>;
   loadTodayLog: (userId: string) => () => void;
   loadAllLogs: () => () => void;
 }
@@ -234,6 +241,56 @@ export const createTimeTrackingSlice: StateCreator<
 
     } catch (err) {
       console.error('[TimeTrackingSlice] Erro ao retomar expediente:', err);
+    }
+  },
+
+  reopenExpediente: async (overtimeMinutes) => {
+    const orgId = get().effectiveOrgId;
+    const log = get().todayLog;
+    if (!orgId || !log || log.status !== 'completed') return;
+
+    const docRef = doc(db, 'organizations', orgId, 'time_logs', log.id);
+
+    try {
+      const now = Date.now();
+      const isCLT = !!overtimeMinutes;
+      
+      const updateData: any = {
+        endTime: null, // Limpa o encerramento no Firestore
+        status: 'active',
+        updatedAt: now
+      };
+
+      if (isCLT && overtimeMinutes) {
+        updateData.isOvertime = true;
+        updateData.overtimeMinutesRequested = overtimeMinutes;
+        updateData.overtimeApprovedAt = now;
+        updateData.overtimeExpiresAt = now + (overtimeMinutes * 60 * 1000);
+      } else {
+        updateData.isOvertime = false;
+        updateData.overtimeMinutesRequested = null;
+        updateData.overtimeApprovedAt = null;
+        updateData.overtimeExpiresAt = null;
+      }
+
+      await setDoc(docRef, updateData, { merge: true });
+
+      // Retorna o status de presença do chat para online
+      const profileRef = doc(db, 'profiles', log.userId);
+      await setDoc(profileRef, {
+        presenceStatus: 'online',
+        isManualStatus: true,
+        lastSeen: now
+      }, { merge: true });
+
+      toast.success(
+        isCLT 
+          ? `Expediente reaberto! Hora extra autorizada de ${overtimeMinutes} minutos.` 
+          : 'Expediente reaberto com sucesso!'
+      );
+    } catch (err) {
+      console.error('[TimeTrackingSlice] Erro ao reabrir expediente:', err);
+      toast.error('Erro ao reabrir expediente.');
     }
   },
 

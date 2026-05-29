@@ -200,6 +200,20 @@ export function usePresence() {
       updateStatus('offline', false);
     };
 
+    // Monitoramento inteligente de expiração de horas extras para CLT
+    const overtimeCheckInterval = setInterval(async () => {
+      const currentStore = useCRMStore.getState();
+      const log = currentStore.todayLog;
+      if (
+        log?.status === 'active' && 
+        log.overtimeExpiresAt && 
+        Date.now() >= log.overtimeExpiresAt
+      ) {
+        toast.warning('O seu período de hora extra autorizada expirou! Seu expediente foi encerrado automaticamente.');
+        await currentStore.endExpediente();
+      }
+    }, 10000); // Roda a cada 10 segundos
+
     window.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('beforeunload', handleBeforeUnload);
     window.addEventListener('mousemove', handleUserInteraction);
@@ -214,6 +228,7 @@ export function usePresence() {
       window.removeEventListener('click', handleUserInteraction);
       if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
       if (activityTimer) clearTimeout(activityTimer);
+      clearInterval(overtimeCheckInterval);
       unsubLog();
     };
   }, [userProfile?.uid, effectiveOrgId]);

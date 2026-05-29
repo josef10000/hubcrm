@@ -33,7 +33,7 @@ export function Header({ currentPath, navigate }: HeaderProps) {
     handleExportCSV
   } = useCRM();
   const store = useCRMStore();
-  const { confirm: customConfirm, alert: customAlert } = useDialog();
+  const { confirm: customConfirm, alert: customAlert, prompt: customPrompt } = useDialog();
   const { hasPermission, hasAnyPermission } = usePermissions();
 
   const filteredClientsForExport = useFilteredClients(clients, searchTerm, filterStatus, sortBy, filterTagId);
@@ -150,6 +150,9 @@ export function Header({ currentPath, navigate }: HeaderProps) {
             onClick={async () => {
               if (store.loadingTimeLog) return;
               const log = store.todayLog;
+              const isAdmin = hasPermission('MANAGE_SETTINGS');
+              const contractType = isAdmin ? 'PJ' : (userProfile?.contractType || 'PJ');
+
               if (!log) {
                 await store.startExpediente(
                   userProfile.uid,
@@ -157,11 +160,37 @@ export function Header({ currentPath, navigate }: HeaderProps) {
                   userProfile.photoURL || ''
                 );
               } else if (log.status === 'completed') {
-                await customAlert({
-                  title: 'Expediente Concluído',
-                  message: 'Seu expediente de hoje já foi encerrado. Obrigado pelo excelente trabalho!',
-                  variant: 'success'
-                });
+                const isCLT = contractType === 'CLT';
+                if (isCLT) {
+                  const overtimeInput = await customPrompt({
+                    title: 'Horas Extras Planejadas',
+                    message: 'Seu expediente regular já foi concluído hoje. Como CLT, informe o tempo planejado de hora extra (em minutos) para liberar o ponto:',
+                    placeholder: 'Ex: 60 (para 1 hora)',
+                    confirmText: 'Liberar Ponto',
+                    cancelText: 'Cancelar',
+                    variant: 'warning'
+                  });
+
+                  if (overtimeInput !== null) {
+                    const minutes = parseInt(overtimeInput.trim(), 10);
+                    if (!isNaN(minutes) && minutes > 0) {
+                      await store.reopenExpediente(minutes);
+                    } else {
+                      toast.error('Por favor, insira um valor numérico válido maior que 0.');
+                    }
+                  }
+                } else {
+                  const confirmed = await customConfirm({
+                    title: 'Reabrir Expediente (PJ)',
+                    message: 'Deseja realmente reabrir seu expediente de trabalho de hoje? As horas continuarão a ser contadas normalmente.',
+                    confirmText: 'Sim, Reabrir',
+                    cancelText: 'Cancelar',
+                    variant: 'success'
+                  });
+                  if (confirmed) {
+                    await store.reopenExpediente();
+                  }
+                }
               } else {
                 const confirmed = await customConfirm({
                   title: 'Encerrar Expediente',
@@ -183,7 +212,7 @@ export function Header({ currentPath, navigate }: HeaderProps) {
                 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/20'
                 : store.todayLog.status === 'paused'
                 ? 'bg-amber-500/10 border-amber-500/30 text-amber-500 hover:bg-amber-500/20'
-                : 'bg-rose-500/10 border-rose-500/30 text-rose-500 opacity-60 cursor-not-allowed'
+                : 'bg-rose-500/10 border-rose-500/30 text-rose-500 hover:bg-rose-500/20'
             }`}
             title={
               !store.todayLog
@@ -192,7 +221,7 @@ export function Header({ currentPath, navigate }: HeaderProps) {
                 ? 'Expediente Ativo (Clique para encerrar)'
                 : store.todayLog.status === 'paused'
                 ? 'Expediente em Intervalo (Clique para encerrar)'
-                : 'Expediente Concluído Hoje'
+                : `Expediente Concluído Hoje (Clique para reabrir como ${hasPermission('MANAGE_SETTINGS') ? 'PJ' : (userProfile?.contractType || 'PJ')})`
             }
           >
             <Clock size={16} />

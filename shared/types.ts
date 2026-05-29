@@ -107,6 +107,14 @@ export interface UserProfile {
   isManualStatus?: boolean;
   lastSeen?: number;
 
+  // Contract & Work Schedule Systems
+  contractType?: 'CLT' | 'PJ';
+  workSchedule?: {
+    daysOfWeek: number[]; // 0 = Domingo, 1 = Segunda, etc.
+    entryTime: string;    // "HH:MM"
+    exitTime: string;     // "HH:MM"
+  };
+
   // Library Integration
   readingProgress?: Record<string, { currentPage: number; totalPages: number }>;
 

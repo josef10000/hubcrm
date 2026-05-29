@@ -184,7 +184,13 @@ export default function ProfileView() {
     linkedin: '',
     photoURL: '',
     birthDate: '',
-    startDate: ''
+    startDate: '',
+    contractType: 'PJ' as 'PJ' | 'CLT',
+    workSchedule: {
+      daysOfWeek: [1, 2, 3, 4, 5],
+      entryTime: '09:00',
+      exitTime: '18:00'
+    }
   });
   const [userAssets, setUserAssets] = useState<any[]>([]);
   const { hasPermission } = usePermissions();
@@ -224,7 +230,13 @@ export default function ProfileView() {
                 linkedin: data.linkedin || '',
                 photoURL: data.photoURL || '',
                 birthDate: data.birthDate || '',
-                startDate: data.startDate || ''
+                startDate: data.startDate || '',
+                contractType: data.contractType || 'PJ',
+                workSchedule: data.workSchedule || {
+                  daysOfWeek: [1, 2, 3, 4, 5],
+                  entryTime: '09:00',
+                  exitTime: '18:00'
+                }
               });
             }
             return editing;
@@ -789,6 +801,103 @@ export default function ProfileView() {
                         </div>
                       </div>
 
+                      {/* Sessão de Regime de Contratação e Jornada */}
+                      <div className="bg-white/5 border border-white/5 rounded-3xl p-6 space-y-6 text-left">
+                        <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                          <h4 className="text-sm font-bold text-white uppercase tracking-wider">Regime de Contratação e Jornada</h4>
+                          {!(isAdmin || isManagement) && (
+                            <span className="text-[10px] bg-amber-500/10 border border-amber-500/20 text-amber-500 px-2 py-0.5 rounded-lg font-bold">
+                              Apenas Leitura (RH/Admin)
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Regime de Contratação</label>
+                            <select
+                              disabled={!(isAdmin || isManagement)}
+                              value={formData.contractType}
+                              onChange={e => setFormData({ ...formData, contractType: e.target.value as any })}
+                              className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-500 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <option value="PJ">PJ (Prestador de Serviço Livre)</option>
+                              <option value="CLT">CLT (Jornada de Trabalho Planejada)</option>
+                            </select>
+                          </div>
+
+                          {formData.contractType === 'CLT' && (
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Entrada Regular</label>
+                                <input
+                                  type="time"
+                                  disabled={!(isAdmin || isManagement)}
+                                  value={formData.workSchedule.entryTime}
+                                  onChange={e => setFormData({
+                                    ...formData,
+                                    workSchedule: { ...formData.workSchedule, entryTime: e.target.value }
+                                  })}
+                                  className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-500 outline-none disabled:opacity-50"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Saída Regular</label>
+                                <input
+                                  type="time"
+                                  disabled={!(isAdmin || isManagement)}
+                                  value={formData.workSchedule.exitTime}
+                                  onChange={e => setFormData({
+                                    ...formData,
+                                    workSchedule: { ...formData.workSchedule, exitTime: e.target.value }
+                                  })}
+                                  className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-500 outline-none disabled:opacity-50"
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {formData.contractType === 'CLT' && (
+                          <div className="space-y-2">
+                            <label className="block text-xs font-bold text-gray-500 uppercase ml-1">Dias de Trabalho na Semana</label>
+                            <div className="flex gap-2 flex-wrap">
+                              {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((dayChar, idx) => {
+                                const isSelected = formData.workSchedule.daysOfWeek.includes(idx);
+                                return (
+                                  <button
+                                    key={idx}
+                                    type="button"
+                                    disabled={!(isAdmin || isManagement)}
+                                    onClick={() => {
+                                      const days = formData.workSchedule.daysOfWeek;
+                                      let newDays = [...days];
+                                      if (days.includes(idx)) {
+                                        newDays = days.filter(d => d !== idx);
+                                      } else {
+                                        newDays = [...days, idx].sort();
+                                      }
+                                      setFormData({
+                                        ...formData,
+                                        workSchedule: { ...formData.workSchedule, daysOfWeek: newDays }
+                                      });
+                                    }}
+                                    className={`w-10 h-10 rounded-xl font-bold text-xs border transition-all active:scale-95 disabled:scale-100 disabled:opacity-70 flex items-center justify-center ${
+                                      isSelected
+                                        ? 'bg-primary-500 border-primary-500 text-white shadow-lg shadow-primary-500/20'
+                                        : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:bg-white/10'
+                                    }`}
+                                    title={['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][idx]}
+                                  >
+                                    {dayChar}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
                       <div className="flex justify-end gap-3 pt-4">
                         <button 
                           onClick={() => setIsEditing(false)}
@@ -866,6 +975,63 @@ export default function ProfileView() {
                             )}
                           </div>
                         </div>
+                      </div>
+
+                      {/* Sessão de Regime & Jornada */}
+                      <div className="border-t border-gray-200 dark:border-white/5 pt-8">
+                        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 flex items-center">
+                          <Clock className="mr-2 animate-spin-slow" size={16} />
+                          Regime de Contratação & Jornada
+                        </h3>
+                        {(() => {
+                          const isProfileAdminOrRH = profile.role === 'admin' || profile.roleId === 'admin' || profile.permissions?.includes('MANAGE_SETTINGS') || profile.permissions?.includes('MANAGE_TEAM');
+                          const displayContract = isProfileAdminOrRH ? 'PJ' : (profile.contractType || 'PJ');
+
+                          return (
+                            <div className="bg-white/5 border border-white/5 rounded-3xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                              <div className="flex items-center space-x-4">
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border ${
+                                  displayContract === 'CLT'
+                                    ? 'bg-blue-500/10 border-blue-500/20 text-blue-500'
+                                    : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'
+                                }`}>
+                                  <span className="font-black text-sm">{displayContract}</span>
+                                </div>
+                                <div className="text-left">
+                                  <p className="font-semibold text-white">
+                                    {displayContract === 'CLT' ? 'Jornada Planejada (CLT)' : 'Prestador de Serviço Livre (PJ)'}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {displayContract === 'CLT' && profile.workSchedule
+                                      ? `Horário: ${profile.workSchedule.entryTime} às ${profile.workSchedule.exitTime}`
+                                      : 'Sem restrições de horários ou bloqueios de expediente.'}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {displayContract === 'CLT' && profile.workSchedule && (
+                                <div className="flex gap-1 flex-wrap">
+                                  {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((dayChar, idx) => {
+                                    const isWorkDay = profile.workSchedule?.daysOfWeek.includes(idx);
+                                    return (
+                                      <span
+                                        key={idx}
+                                        className={`w-8 h-8 rounded-lg font-bold text-[10px] flex items-center justify-center border ${
+                                          isWorkDay
+                                            ? 'bg-primary-500/10 border-primary-500/30 text-primary-400'
+                                            : 'bg-white/5 border-white/5 text-gray-600'
+                                        }`}
+                                        title={['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][idx]}
+                                      >
+                                        {dayChar}
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
 
                       {/* Ausências Recentes - Adicionado para Visibilidade Dupla */}
@@ -1216,7 +1382,7 @@ export default function ProfileView() {
                 </div>
               )}
 
-              {activeTab === 'expediente' && isOwnProfile && (
+              {activeTab === 'expediente' && (isOwnProfile || isManagement || isAdmin) && (
                 <div className="space-y-6 animate-in slide-in-from-bottom duration-500">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
                     {/* Card 1: Status Atual e Timer */}

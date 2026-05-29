@@ -24,7 +24,13 @@ export const teamUpdateProfileSchema = z.object({
     roleId: z.string().optional(),
     reportsTo: z.string().nullable().optional(),
     birthDate: z.string().nullable().optional(),
-    department: z.string().nullable().optional()
+    department: z.string().nullable().optional(),
+    contractType: z.enum(['PJ', 'CLT']).optional(),
+    workSchedule: z.object({
+      daysOfWeek: z.array(z.number()),
+      entryTime: z.string(),
+      exitTime: z.string()
+    }).optional()
   })
 });
 

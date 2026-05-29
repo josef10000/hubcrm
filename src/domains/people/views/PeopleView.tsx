@@ -92,6 +92,7 @@ export default function PeopleView() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+  const [selectedMemberForAttendance, setSelectedMemberForAttendance] = useState<UserProfile | null>(null);
 
   const allLogs = useCRMStore(s => s.allLogs);
   const loadAllLogs = useCRMStore(s => s.loadAllLogs);
@@ -768,150 +769,248 @@ export default function PeopleView() {
                                  <span>{v.start}</span><span>{v.end}</span>
                               </div>
                              {isAdminOrGerente && <button onClick={() => deleteVacation(v.id)} className="mt-2 text-[8px] text-red-500/40 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100 uppercase font-black">Remover do Histórico</button>}
-                           </div>
                          ))}
                       </div>
                    </div>
                  )}
-               </div>
-            </div>
-          )}
-          {activeTab === 'expediente' && (
+                  {activeTab === 'expediente' && (
             <div className="space-y-6 animate-in slide-in-from-bottom duration-500">
-              <div className="bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl overflow-hidden shadow-xl">
-                <div className="px-6 py-4 border-b border-gray-200 dark:border-white/10 flex items-center justify-between bg-gray-50/50 dark:bg-white/5">
-                  <div className="flex items-center">
-                    <Clock size={20} className="text-primary-500 mr-2 animate-spin-slow" />
-                    <h2 className="font-bold text-gray-900 dark:text-white">Expediente dos Colaboradores Ao Vivo</h2>
-                  </div>
-                  <button 
-                    onClick={() => {
-                      try {
-                        const headers = ['Data', 'Colaborador', 'Entrada', 'Saída', 'Pausas', 'Tempo Líquido (Segundos)', 'Tempo Líquido Formatado'];
-                        
-                        const rows = allLogs.map(log => {
-                          const netMs = log.totalDuration || calculateNetDuration(log.startTime, log.endTime, log.pauses);
-                          const netSecs = Math.floor(netMs / 1000);
-                          const hours = Math.floor(netSecs / 3600);
-                          const mins = Math.floor((netSecs % 3600) / 60);
-                          const formatted = `${hours}h ${mins}m`;
-                          
-                          const pausesStr = log.pauses.map(p => {
-                            const pStart = formatToBrasiliaTime(p.startTime, 'HH:mm');
-                            const pEnd = p.endTime ? formatToBrasiliaTime(p.endTime, 'HH:mm') : '...';
-                            return `${p.type === 'lunch' ? 'Almoço' : p.type === 'meeting' ? 'Reunião' : 'Ausente'} (${pStart} - ${pEnd})`;
-                          }).join(' | ');
+               <div className="bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl overflow-hidden shadow-xl">
+                 <div className="px-6 py-4 border-b border-gray-200 dark:border-white/10 flex items-center justify-between bg-gray-50/50 dark:bg-white/5">
+                   <div className="flex items-center">
+                     <Clock size={20} className="text-primary-500 mr-2 animate-spin-slow" />
+                     <h2 className="font-bold text-gray-900 dark:text-white">Expediente dos Colaboradores Ao Vivo</h2>
+                   </div>
+                   <button 
+                     onClick={() => {
+                       try {
+                         const timeToMinutes = (timeStr: string): number => {
+                           const [hours, minutes] = timeStr.split(':').map(Number);
+                           return hours * 60 + minutes;
+                         };
 
-                          return [
-                            log.date,
-                            log.userName,
-                            formatToBrasiliaTime(log.startTime, 'HH:mm:ss'),
-                            log.endTime ? formatToBrasiliaTime(log.endTime, 'HH:mm:ss') : 'Ativo',
-                            pausesStr || 'Nenhuma',
-                            netSecs,
-                            formatted
-                          ];
-                        });
+                         const headers = ['Data', 'Colaborador', 'Regime', 'Entrada', 'Saída', 'Pausas', 'Tempo Líquido (Segundos)', 'Tempo Líquido Formatado', 'Atraso (Minutos)', 'Almoço (Minutos)', 'Hora Extra'];
+                         
+                         const rows = allLogs.map(log => {
+                           const member = teamMembers.find(m => m.uid === log.userId);
+                           const isMemberAdminOrRH = member?.role === 'admin' || member?.roleId === 'admin' || member?.permissions?.includes('MANAGE_SETTINGS') || member?.permissions?.includes('MANAGE_TEAM');
+                           const memberContract = isMemberAdminOrRH ? 'PJ' : (member?.contractType || 'PJ');
 
-                        const csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
-                          + [headers.join(','), ...rows.map(r => r.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))].join('\n');
-                        
-                        const encodedUri = encodeURI(csvContent);
-                        const link = document.createElement("a");
-                        link.setAttribute("href", encodedUri);
-                        link.setAttribute("download", `Espelho_Ponto_HubCRM_${new Date().getFullYear()}_${new Date().getMonth() + 1}.csv`);
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        toast.success('Relatório de logs de ponto exportado com sucesso!');
-                      } catch (e) {
-                        console.error('Erro ao exportar logs de ponto:', e);
-                        toast.error('Erro ao exportar logs.');
-                      }
-                    }}
-                    className="flex items-center space-x-2 bg-primary-500/10 hover:bg-primary-500/20 border border-primary-500/30 text-primary-500 px-4 py-2.5 rounded-xl transition-all font-bold text-xs shadow-lg cursor-pointer"
-                  >
-                    <span>Exportar Logs Consolidados (CSV)</span>
-                  </button>
-                </div>
-                <div className="divide-y divide-gray-200 dark:divide-white/10">
-                  {teamMembers.map(member => {
-                    const todayStr = getLocalDateString();
-                    const log = allLogs.find(l => l.userId === member.uid && l.date === todayStr);
-                    const elapsed = elapsedTimes[member.uid] || 0;
-                    
-                    const formatMs = (ms: number) => {
-                      const totalSecs = Math.floor(ms / 1000);
-                      const hours = Math.floor(totalSecs / 3600);
-                      const minutes = Math.floor((totalSecs % 3600) / 60);
-                      const seconds = totalSecs % 60;
-                      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-                    };
+                           let csvLateMin = 0;
+                           let csvLunchMin = 0;
 
-                    return (
-                      <div key={member.uid} className="px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-gray-100 dark:hover:bg-white/5 transition-colors gap-4">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-10 h-10 rounded-full bg-primary-500/20 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold overflow-hidden shadow-inner">
-                            {member.photoURL ? <img src={member.photoURL} alt={member.displayName} /> : member.displayName?.[0] || 'U'}
-                          </div>
-                          <div>
-                            <p className="font-semibold text-gray-900 dark:text-white">{member.displayName}</p>
-                            <p className="text-xs text-gray-500">{member.jobTitle || 'Colaborador'}</p>
-                          </div>
-                        </div>
+                           if (memberContract === 'CLT') {
+                             if (member?.workSchedule?.entryTime) {
+                               const actualEntry = timeToMinutes(formatToBrasiliaTime(log.startTime, 'HH:mm'));
+                               const plannedEntry = timeToMinutes(member.workSchedule.entryTime);
+                               if (actualEntry > plannedEntry + 10) {
+                                 csvLateMin = actualEntry - plannedEntry;
+                               }
+                             }
+                             
+                             log.pauses.forEach(p => {
+                               if (p.type === 'lunch') {
+                                 const pEnd = p.endTime || Date.now();
+                                 csvLunchMin += Math.floor((pEnd - p.startTime) / 60000);
+                               }
+                             });
+                           }
 
-                        {/* Status do Ponto Ao Vivo */}
-                        <div className="flex items-center gap-3">
-                          <span className={`w-2.5 h-2.5 rounded-full ${
-                            !log
-                              ? 'bg-gray-400'
-                              : log.status === 'active'
-                              ? 'bg-emerald-500 animate-pulse'
-                              : log.status === 'paused'
-                              ? 'bg-amber-500'
-                              : 'bg-rose-500'
-                          }`} />
-                          <div className="flex flex-col">
-                            <span className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-tight">
-                              {!log
-                                ? 'Offline'
-                                : log.status === 'active'
-                                ? 'Trabalhando Ao Vivo'
-                                : log.status === 'paused'
-                                ? (() => {
-                                    const activePause = log.pauses.find(p => !p.endTime);
-                                    if (activePause?.type === 'lunch') return '🍱 Em Almoço';
-                                    if (activePause?.type === 'meeting') return '👥 Em Reunião';
-                                    return '🕒 Ausente';
-                                  })()
-                                : 'Expediente Encerrado'}
-                            </span>
-                            <span className="text-[10px] text-gray-500 font-mono">
-                              {log ? `Entrada: ${formatToBrasiliaTime(log.startTime, 'HH:mm:ss')}` : 'Sem registros hoje'}
-                            </span>
-                          </div>
-                        </div>
+                           const netMs = log.totalDuration || calculateNetDuration(log.startTime, log.endTime, log.pauses);
+                           const netSecs = Math.floor(netMs / 1000);
+                           const hours = Math.floor(netSecs / 3600);
+                           const mins = Math.floor((netSecs % 3600) / 60);
+                           const formatted = `${hours}h ${mins}m`;
+                           
+                           const pausesStr = log.pauses.map(p => {
+                             const pStart = formatToBrasiliaTime(p.startTime, 'HH:mm');
+                             const pEnd = p.endTime ? formatToBrasiliaTime(p.endTime, 'HH:mm') : '...';
+                             return `${p.type === 'lunch' ? 'Almoço' : p.type === 'meeting' ? 'Reunião' : 'Ausente'} (${pStart} - ${pEnd})`;
+                           }).join(' | ');
 
-                        {/* Contador de Tempo dinâmico */}
-                        <div className="flex flex-col items-end text-right">
-                          <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-0.5">Tempo Líquido Hoje</p>
-                          <p className={`text-sm font-bold font-mono ${
-                            log?.status === 'active' 
-                              ? 'text-emerald-500' 
-                              : log?.status === 'paused' 
-                              ? 'text-amber-500' 
-                              : 'text-gray-500'
-                          }`}>
-                            {log ? formatMs(elapsed) : '00:00:00'}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {teamMembers.length === 0 && (
-                    <div className="p-12 text-center opacity-30 italic">Nenhum membro ativo cadastrado.</div>
-                  )}
-                </div>
+                           return [
+                             log.date,
+                             log.userName,
+                             memberContract,
+                             formatToBrasiliaTime(log.startTime, 'HH:mm:ss'),
+                             log.endTime ? formatToBrasiliaTime(log.endTime, 'HH:mm:ss') : 'Ativo',
+                             pausesStr || 'Nenhuma',
+                             netSecs,
+                             formatted,
+                             csvLateMin > 0 ? `${csvLateMin} min` : '—',
+                             csvLunchMin > 0 ? `${csvLunchMin} min` : '—',
+                             log.isOvertime ? 'Sim' : 'Não'
+                           ];
+                         });
+
+                         const csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
+                           + [headers.join(','), ...rows.map(r => r.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))].join('\n');
+                         
+                         const encodedUri = encodeURI(csvContent);
+                         const link = document.createElement("a");
+                         link.setAttribute("href", encodedUri);
+                         link.setAttribute("download", `Espelho_Ponto_HubCRM_${new Date().getFullYear()}_${new Date().getMonth() + 1}.csv`);
+                         document.body.appendChild(link);
+                         link.click();
+                         document.body.removeChild(link);
+                         toast.success('Relatório de logs de ponto exportado com sucesso!');
+                       } catch (e) {
+                         console.error('Erro ao exportar logs de ponto:', e);
+                         toast.error('Erro ao exportar logs.');
+                       }
+                     }}
+                     className="flex items-center space-x-2 bg-primary-500/10 hover:bg-primary-500/20 border border-primary-500/30 text-primary-500 px-4 py-2.5 rounded-xl transition-all font-bold text-xs shadow-lg cursor-pointer"
+                   >
+                     <span>Exportar Logs Consolidados (CSV)</span>
+                   </button>
+                 </div>
+                 <div className="divide-y divide-gray-200 dark:divide-white/10">
+                   {teamMembers.map(member => {
+                     const todayStr = getLocalDateString();
+                     const log = allLogs.find(l => l.userId === member.uid && l.date === todayStr);
+                     const elapsed = elapsedTimes[member.uid] || 0;
+                     
+                     const isMemberAdminOrRH = member.role === 'admin' || member.roleId === 'admin' || member.permissions?.includes('MANAGE_SETTINGS') || member.permissions?.includes('MANAGE_TEAM');
+                     const memberContract = isMemberAdminOrRH ? 'PJ' : (member.contractType || 'PJ');
+
+                     const timeToMinutes = (timeStr: string): number => {
+                       const [hours, minutes] = timeStr.split(':').map(Number);
+                       return hours * 60 + minutes;
+                     };
+
+                     let isLate = false;
+                     let delayMinutes = 0;
+                     let lunchMinutes = 0;
+                     let isLunchExceeded = false;
+                     const isOvertime = log ? !!log.isOvertime : false;
+
+                     if (log && memberContract === 'CLT') {
+                       if (member.workSchedule?.entryTime) {
+                         const actualEntryMin = timeToMinutes(formatToBrasiliaTime(log.startTime, 'HH:mm'));
+                         const plannedEntryMin = timeToMinutes(member.workSchedule.entryTime);
+                         if (actualEntryMin > plannedEntryMin + 10) {
+                           isLate = true;
+                           delayMinutes = actualEntryMin - plannedEntryMin;
+                         }
+                       }
+                       
+                       log.pauses.forEach(p => {
+                         if (p.type === 'lunch') {
+                           const pEnd = p.endTime || Date.now();
+                           lunchMinutes += Math.floor((pEnd - p.startTime) / 60000);
+                         }
+                       });
+                       if (lunchMinutes > 60) {
+                         isLunchExceeded = true;
+                       }
+                     }
+
+                     const formatMs = (ms: number) => {
+                       const totalSecs = Math.floor(ms / 1000);
+                       const hours = Math.floor(totalSecs / 3600);
+                       const minutes = Math.floor((totalSecs % 3600) / 60);
+                       const seconds = totalSecs % 60;
+                       return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                     };
+
+                     return (
+                       <div 
+                         key={member.uid} 
+                         onClick={() => setSelectedMemberForAttendance(member)}
+                         className="px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-gray-100 dark:hover:bg-white/5 transition-colors gap-4 cursor-pointer"
+                       >
+                         <div className="flex items-center space-x-4">
+                           <div className="w-10 h-10 rounded-full bg-primary-500/20 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold overflow-hidden shadow-inner">
+                             {member.photoURL ? <img src={member.photoURL} alt={member.displayName} /> : member.displayName?.[0] || 'U'}
+                           </div>
+                           <div>
+                             <div className="flex items-center gap-2">
+                               <p className="font-semibold text-gray-900 dark:text-white">{member.displayName}</p>
+                               <span className={`text-[9px] px-2 py-0.5 rounded-lg font-black tracking-wider uppercase ${
+                                 memberContract === 'CLT'
+                                   ? 'bg-blue-500/10 border border-blue-500/20 text-blue-400'
+                                   : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
+                               }`}>
+                                 {memberContract}
+                               </span>
+                             </div>
+                             <p className="text-xs text-gray-500">{member.jobTitle || 'Colaborador'}</p>
+                           </div>
+                         </div>
+ 
+                         {/* Status do Ponto Ao Vivo */}
+                         <div className="flex items-center gap-3">
+                           <span className={`w-2.5 h-2.5 rounded-full ${
+                             !log
+                               ? 'bg-gray-400'
+                               : log.status === 'active'
+                               ? 'bg-emerald-500 animate-pulse'
+                               : log.status === 'paused'
+                               ? 'bg-amber-500'
+                               : 'bg-rose-500'
+                           }`} />
+                           <div className="flex flex-col">
+                             <span className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-tight">
+                               {!log
+                                 ? 'Offline'
+                                 : log.status === 'active'
+                                 ? 'Trabalhando Ao Vivo'
+                                 : log.status === 'paused'
+                                 ? (() => {
+                                     const activePause = log.pauses.find(p => !p.endTime);
+                                     if (activePause?.type === 'lunch') return '🍱 Em Almoço';
+                                     if (activePause?.type === 'meeting') return '👥 Em Reunião';
+                                     return '🕒 Ausente';
+                                   })()
+                                 : 'Expediente Encerrado'}
+                             </span>
+                             <span className="text-[10px] text-gray-500 font-mono">
+                               {log ? `Entrada: ${formatToBrasiliaTime(log.startTime, 'HH:mm:ss')}` : 'Sem registros hoje'}
+                             </span>
+                             
+                             <div className="flex flex-wrap gap-1 mt-1">
+                               {isLate && (
+                                 <span className="text-[9px] font-bold bg-amber-500/10 border border-amber-500/20 text-amber-500 px-1.5 py-0.5 rounded-lg flex items-center gap-0.5">
+                                   ⚠️ Atraso ({delayMinutes}m)
+                                 </span>
+                               )}
+                               {isLunchExceeded && (
+                                 <span className="text-[9px] font-bold bg-rose-500/10 border border-rose-500/20 text-rose-500 px-1.5 py-0.5 rounded-lg flex items-center gap-0.5">
+                                   🍱 Almoço Longo ({lunchMinutes}m)
+                                 </span>
+                               )}
+                               {isOvertime && (
+                                 <span className="text-[9px] font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 px-1.5 py-0.5 rounded-lg flex items-center gap-0.5">
+                                   ⚡ Hora Extra
+                                 </span>
+                               )}
+                             </div>
+                           </div>
+                         </div>
+ 
+                         {/* Contador de Tempo dinâmico */}
+                         <div className="flex flex-col items-end text-right">
+                           <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-0.5">Tempo Líquido Hoje</p>
+                           <p className={`text-sm font-bold font-mono ${
+                             log?.status === 'active' 
+                               ? 'text-emerald-500' 
+                               : log?.status === 'paused' 
+                               ? 'text-amber-500' 
+                               : 'text-gray-500'
+                           }`}>
+                             {log ? formatMs(elapsed) : '00:00:00'}
+                           </p>
+                         </div>
+                       </div>
+                     );
+                   })}
+                   {teamMembers.length === 0 && (
+                     <div className="p-12 text-center opacity-30 italic">Nenhum membro ativo cadastrado.</div>
+                   )}
+                 </div>
+               </div>
+             </div>
+           )}      </div>
               </div>
             </div>
           )}
@@ -945,6 +1044,286 @@ export default function PeopleView() {
             </div>
           )}
         </div>
+
+         {selectedMemberForAttendance && (() => {
+           const member = selectedMemberForAttendance;
+           const isMemberAdminOrRH = member.role === 'admin' || member.roleId === 'admin' || member.permissions?.includes('MANAGE_SETTINGS') || member.permissions?.includes('MANAGE_TEAM');
+           const memberContract = isMemberAdminOrRH ? 'PJ' : (member.contractType || 'PJ');
+
+           const memberLogs = allLogs.filter(l => l.userId === member.uid);
+           memberLogs.sort((a, b) => b.startTime - a.startTime);
+
+           const todayStr = getLocalDateString();
+           const todayLog = memberLogs.find(l => l.date === todayStr);
+
+           const formatMs = (ms: number) => {
+             const totalSecs = Math.floor(ms / 1000);
+             const hours = Math.floor(totalSecs / 3600);
+             const minutes = Math.floor((totalSecs % 3600) / 60);
+             const seconds = totalSecs % 60;
+             return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+           };
+
+           const formatMsToHours = (ms: number) => {
+             const totalSecs = Math.floor(ms / 1000);
+             const hours = Math.floor(totalSecs / 3600);
+             const minutes = Math.floor((totalSecs % 3600) / 60);
+             return `${hours}h ${minutes}m`;
+           };
+
+           const totalMsMonth = memberLogs.reduce((acc, curr) => acc + (curr.totalDuration || 0), 0);
+
+           // Calcula a média das pausas de almoço
+           let totalLunchMinutes = 0;
+           let lunchCount = 0;
+           memberLogs.forEach(l => {
+             let dayLunch = 0;
+             l.pauses.forEach(p => {
+               if (p.type === 'lunch') {
+                 const end = p.endTime || Date.now();
+                 dayLunch += (end - p.startTime);
+               }
+             });
+             if (dayLunch > 0) {
+               totalLunchMinutes += Math.floor(dayLunch / 60000);
+               lunchCount++;
+             }
+           });
+
+           return (
+             <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-4" onClick={() => setSelectedMemberForAttendance(null)}>
+               <div className="bg-[#0f1117] border border-white/10 rounded-[2.5rem] w-full max-w-4xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col animate-in scale-in duration-300" onClick={e => e.stopPropagation()}>
+                 {/* Header */}
+                 <div className="p-8 border-b border-white/5 flex justify-between items-center shrink-0">
+                   <div className="flex items-center space-x-4">
+                     <div className="w-12 h-12 rounded-full bg-primary-500/20 flex items-center justify-center text-primary-400 font-bold overflow-hidden border border-primary-500/30 shadow-inner">
+                       {member.photoURL ? <img src={member.photoURL} alt={member.displayName} /> : member.displayName?.[0] || 'U'}
+                     </div>
+                     <div className="text-left">
+                       <div className="flex items-center gap-2">
+                         <h3 className="text-xl font-bold text-white">{member.displayName}</h3>
+                         <span className={`text-[9px] px-2 py-0.5 rounded-lg font-black tracking-wider uppercase ${
+                           memberContract === 'CLT'
+                             ? 'bg-blue-500/10 border border-blue-500/20 text-blue-400'
+                             : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
+                         }`}>
+                           {memberContract}
+                         </span>
+                       </div>
+                       <p className="text-xs text-gray-400">{member.jobTitle || 'Colaborador'}</p>
+                     </div>
+                   </div>
+                   <button onClick={() => setSelectedMemberForAttendance(null)} className="p-2.5 bg-white/5 hover:bg-white/10 rounded-full border border-white/5 text-gray-400 hover:text-white transition-all"><X size={18} /></button>
+                 </div>
+
+                 {/* Modal Content */}
+                 <div className="p-8 space-y-8 overflow-y-auto custom-scrollbar flex-1">
+                   {/* Grid Informativa */}
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+                     {/* Card 1: Hoje */}
+                     <div className="bg-white/5 border border-white/5 rounded-3xl p-6 flex flex-col justify-between min-h-[140px]">
+                       <div>
+                         <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Tempo Hoje</span>
+                         <h3 className="text-3xl font-black font-mono tracking-tight text-white">
+                           {todayLog ? formatMs(elapsedTimes[member.uid] || todayLog.totalDuration) : '00:00:00'}
+                         </h3>
+                       </div>
+                       <div className="flex items-center gap-2 mt-4">
+                         <span className={`w-2.5 h-2.5 rounded-full ${
+                           !todayLog
+                             ? 'bg-gray-500'
+                             : todayLog.status === 'active'
+                             ? 'bg-emerald-500 animate-pulse'
+                             : todayLog.status === 'paused'
+                             ? 'bg-amber-500'
+                             : 'bg-rose-500'
+                         }`} />
+                         <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                           {!todayLog ? 'Offline' : todayLog.status === 'active' ? 'Ativo' : todayLog.status === 'paused' ? 'Intervalo' : 'Concluído'}
+                         </span>
+                       </div>
+                     </div>
+
+                     {/* Card 2: Mês */}
+                     <div className="bg-white/5 border border-white/5 rounded-3xl p-6 flex flex-col justify-between min-h-[140px]">
+                       <div>
+                         <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Total Acumulado (Mês)</span>
+                         <h3 className="text-3xl font-black font-mono tracking-tight text-primary-500">
+                           {formatMsToHours(totalMsMonth)}
+                         </h3>
+                       </div>
+                       <p className="text-[11px] text-gray-400">Tempo total consolidado produtivo.</p>
+                     </div>
+
+                     {/* Card 3: Almoço / Jornada */}
+                     <div className="bg-white/5 border border-white/5 rounded-3xl p-6 flex flex-col justify-between min-h-[140px]">
+                       <div>
+                         <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Regime & Expediente</span>
+                         <h3 className="text-xl font-bold text-white tracking-tight leading-tight mt-1">
+                           {memberContract === 'CLT' && member.workSchedule 
+                             ? `${member.workSchedule.entryTime} - ${member.workSchedule.exitTime}`
+                             : 'Horário Livre (PJ)'}
+                         </h3>
+                       </div>
+                       <p className="text-[11px] text-gray-400">
+                         {memberContract === 'CLT' && lunchCount > 0
+                           ? `Média de almoço: ${Math.round(totalLunchMinutes / lunchCount)} min`
+                           : 'Sem restrições de horários.'}
+                       </p>
+                     </div>
+                   </div>
+
+                   {/* Gráfico de Horas Semanais */}
+                   <div className="bg-white/5 border border-white/5 rounded-[2rem] p-6 text-left">
+                     <h3 className="font-bold flex items-center gap-2 mb-6 text-white text-sm uppercase tracking-wider"><TrendingUp size={16} className="text-primary-500" /> Histórico Semanal de Produção</h3>
+                     <div className="h-48 flex items-end gap-6 pt-6 px-4 border-b border-white/5">
+                       {(() => {
+                         const daysOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+                         const logsByDay = new Array(7).fill(0);
+                         
+                         const now = new Date();
+                         const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay())); // Domingo
+                         
+                         memberLogs.forEach(log => {
+                           const logDate = parseISO(log.date);
+                           const diff = Math.floor((logDate.getTime() - startOfWeek.getTime()) / (1000 * 60 * 60 * 24));
+                           if (diff >= 0 && diff < 7) {
+                             logsByDay[diff] = log.totalDuration;
+                           }
+                         });
+
+                         const maxDuration = Math.max(...logsByDay, 1000 * 60 * 60 * 8);
+
+                         return logsByDay.map((duration, idx) => {
+                           const percentage = Math.min((duration / maxDuration) * 100, 100);
+                           const hours = (duration / (1000 * 60 * 60)).toFixed(1);
+                           return (
+                             <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group relative text-center">
+                               <div className="absolute bottom-full mb-2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded shadow opacity-0 group-hover:opacity-100 transition-all font-mono pointer-events-none z-20 shrink-0">
+                                 {hours}h
+                               </div>
+                               <div 
+                                 style={{ height: `${percentage}%` }}
+                                 className={`w-full max-w-[32px] rounded-t-lg transition-all duration-500 ${
+                                   duration === 0 
+                                     ? 'bg-white/5' 
+                                     : idx === new Date().getDay()
+                                     ? 'bg-gradient-to-t from-primary-600 to-primary-400 shadow-lg'
+                                     : 'bg-white/10 hover:bg-white/20'
+                                 }`}
+                               />
+                               <span className="text-[10px] text-gray-500 font-medium mt-1">{daysOfWeek[idx]}</span>
+                             </div>
+                           );
+                         });
+                       })()}
+                     </div>
+                   </div>
+
+                   {/* Tabela Detalhada do Espelho de Ponto */}
+                   <div className="bg-white/5 border border-white/5 rounded-[2rem] p-6 text-left">
+                     <h3 className="font-bold flex items-center gap-2 mb-6 text-white text-sm uppercase tracking-wider"><Clock size={16} className="text-pink-500" /> Registro Completo de Presenças</h3>
+                     <div className="overflow-x-auto">
+                       <table className="w-full text-left border-collapse">
+                         <thead>
+                           <tr className="border-b border-white/5 text-[10px] text-gray-500 font-black uppercase tracking-widest">
+                             <th className="py-3 px-2">Data</th>
+                             <th className="py-3 px-2">Entrada</th>
+                             <th className="py-3 px-2">Saída</th>
+                             <th className="py-3 px-2">Intervalos/Pausas</th>
+                             <th className="py-3 px-2">Indicadores</th>
+                             <th className="py-3 px-2">Tempo Líquido</th>
+                           </tr>
+                         </thead>
+                         <tbody className="text-sm">
+                           {memberLogs.map(l => {
+                             const lIsOvertime = !!l.isOvertime;
+                             let lIsLate = false;
+                             let lLateMinutes = 0;
+                             let lLunchMinutes = 0;
+                             let lIsLunchExceeded = false;
+
+                             if (memberContract === 'CLT') {
+                               if (member.workSchedule?.entryTime) {
+                                 const actEntry = timeToMinutes(formatToBrasiliaTime(l.startTime, 'HH:mm'));
+                                 const planEntry = timeToMinutes(member.workSchedule.entryTime);
+                                 if (actEntry > planEntry + 10) {
+                                   lIsLate = true;
+                                   lLateMinutes = actEntry - planEntry;
+                                 }
+                               }
+                               
+                               l.pauses.forEach(p => {
+                                 if (p.type === 'lunch') {
+                                   const pEnd = p.endTime || Date.now();
+                                   lLunchMinutes += Math.floor((pEnd - p.startTime) / 60000);
+                                 }
+                               });
+                               if (lLunchMinutes > 60) {
+                                 lIsLunchExceeded = true;
+                               }
+                             }
+
+                             return (
+                               <tr key={l.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                                 <td className="py-4 px-2 font-bold text-gray-300">{formatLocalDateStr(l.date)}</td>
+                                 <td className="py-4 px-2 font-mono text-gray-400">{formatToBrasiliaTime(l.startTime, 'HH:mm:ss')}</td>
+                                 <td className="py-4 px-2 font-mono text-gray-400">
+                                   {l.endTime ? formatToBrasiliaTime(l.endTime, 'HH:mm:ss') : <span className="text-emerald-500 font-bold">Ativo</span>}
+                                 </td>
+                                 <td className="py-4 px-2">
+                                   {l.pauses.length > 0 ? (
+                                     <div className="flex flex-wrap gap-1 font-mono">
+                                       {l.pauses.map((p, pIdx) => (
+                                         <span key={pIdx} className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-gray-400">
+                                           {p.type === 'lunch' ? '🍱 Almoço' : p.type === 'meeting' ? '👥 Reunião' : '🕒 Ausente'}:{' '}
+                                           {formatToBrasiliaTime(p.startTime, 'HH:mm')} - {p.endTime ? formatToBrasiliaTime(p.endTime, 'HH:mm') : '...'}
+                                         </span>
+                                       ))}
+                                     </div>
+                                   ) : (
+                                     <span className="text-xs text-gray-500 italic">Sem pausas</span>
+                                   )}
+                                 </td>
+                                 <td className="py-4 px-2">
+                                   <div className="flex flex-wrap gap-1">
+                                     {lIsLate && (
+                                       <span className="text-[9px] font-bold bg-amber-500/10 border border-amber-500/20 text-amber-500 px-1.5 py-0.5 rounded">
+                                         Atraso ({lLateMinutes}m)
+                                       </span>
+                                     )}
+                                     {lIsLunchExceeded && (
+                                       <span className="text-[9px] font-bold bg-rose-500/10 border border-rose-500/20 text-rose-500 px-1.5 py-0.5 rounded">
+                                         Almoço Longo ({lLunchMinutes}m)
+                                       </span>
+                                     )}
+                                     {lIsOvertime && (
+                                       <span className="text-[9px] font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 px-1.5 py-0.5 rounded">
+                                         Hora Extra
+                                       </span>
+                                     )}
+                                   </div>
+                                 </td>
+                                 <td className="py-4 px-2 font-mono font-bold text-primary-500">
+                                   {formatDuration(l.totalDuration || calculateNetDuration(l.startTime, l.endTime, l.pauses))}
+                                 </td>
+                               </tr>
+                             );
+                           })}
+                           {memberLogs.length === 0 && (
+                             <tr>
+                               <td colSpan={6} className="py-12 text-center opacity-30 italic text-sm">Sem registros este mês.</td>
+                             </tr>
+                           )}
+                         </tbody>
+                       </table>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+             </div>
+           );
+         })()}
 
         {showVacationModal && (
            <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">

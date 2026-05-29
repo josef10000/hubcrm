@@ -17,13 +17,17 @@ Recentemente, adicionamos uma série de recursos de ponta no **Hub Chat** e no C
     *   Reações com física de partículas realista na tela ao clicar em emojis, usando `canvas-confetti` com formas de emojis customizadas.
 3.  **📢 Glow/Neon para Comunicados:**
     *   Destaques visuais vibrantes estilo neon dourado/âmbar com pulsação suave em bolhas de chat com prefixo `[AVISO]`.
-5.  **🕰️ Sistema de Ponto Eletrônico & Time Tracking Integrado:**
-    *   Botão minimalista e reativo no Header com indicador de estado (ativo/inativo).
-    *   Sincronização bidirecional automática com o status de presença do Chat (Online, Almoço, Reunião, Ausente, Offline).
-    *   Auto-Clock In inteligente com ativação silenciosa e retroativa após 1 minuto de atividade na plataforma.
-    *   Espelho de ponto pessoal com timer de horas trabalhadas no dia atual, gráfico semanal de desempenho de horas e histórico mensal completo de entradas, saídas e pausas no perfil do colaborador (`PeopleView.tsx`).
-    *   Painel "Expediente Ao Vivo" em tempo real para administradores, contendo monitoramento da jornada do time ao vivo e exportação de logs em formato CSV (`TeamManagementView.tsx`).
-    *   Substituição completa de diálogos de alerta e confirmação nativos por modais interativos e personalizados (`useDialog`) integrados à identidade visual do CRM.
+5.  **🕰️ Sistema de Ponto Eletrônico & Time Tracking Avançado (CLT vs PJ):**
+    *   **Badges de Regime e Jornada Cadastrada:** Atribuição simplificada e segura no painel do Perfil (editável apenas por Admin/RH) definindo colaboradores como CLT ou PJ. Administradores são tratados automaticamente como PJ por padrão.
+    *   **Fluxo Inteligente de Reabertura:**
+        *   *Profissional PJ:* Expediente livre de travas que nunca bloqueia. Permite reabrir com apenas um clique para contagem normal de horas.
+        *   *Colaborador CLT:* Expediente que bloqueia ao fim ou encerramento. A reabertura requer a informação do período de **horas extras planejadas** (em minutos) via prompt elegante integrado ao `useDialog`.
+    *   **Background Worker de Expiração (CLT):** Monitoramento contínuo a cada 10 segundos no hook `usePresence.ts` que encerra e bloqueia o expediente do CLT de forma autônoma assim que o período de hora extra autorizada expirar.
+    *   **Auditoria Centralizada de Expediente no People:** A aba de expedientes ao vivo do painel People lista todos os colaboradores da empresa (online/offline) com badges inteligentes de conformidade (Atraso de entrada > 10 min, Pausa de almoço excedida > 1h, regime de Hora Extra).
+    *   **Modal de Detalhes Integrado (`AttendanceDetailsModal`):** O clique na linha do expediente do time abre instantaneamente um modal super premium contendo totalizadores, gráfico semanal de produção e o espelho de ponto mensal completo do colaborador, evitando navegação de telas e carregando 100% no cache local do Zustand.
+    *   **Exportação CSV Avançada:** Logs consolidados exportáveis em CSV já incluindo indicadores de atraso de entrada, pausas de almoço excedidas e horas extras realizadas para facilitar a folha de pagamento do RH.
+    *   **Segurança no Backend:** Proteção robusta contra payload direto no backend (Vercel handler) impedindo que colaboradores comuns burlem o regime de contratação ou alterem seus horários de expediente.
+    *   **useDialog Integrado:** Substituição completa de diálogos de alerta e confirmação nativos por modais interativos e personalizados (`useDialog`) integrados à identidade visual do CRM.
 
 ---
 
