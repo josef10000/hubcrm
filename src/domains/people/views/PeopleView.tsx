@@ -51,6 +51,7 @@ export default function PeopleView() {
   const { user } = useAuth();
   const crm = useCRM();
   const { userProfile, teamProfiles: crmTeamProfiles, effectiveOrgId: crmOrgId } = crm;
+  const effectiveOrgId = crmOrgId || '';
 
   const subscribeToPeople = useCRMStore(s => s.subscribeToPeople);
 
@@ -121,7 +122,6 @@ export default function PeopleView() {
 
   const vacations = Array.isArray(rawVacations) ? rawVacations : [];
   const teamProfiles = Array.isArray(crmTeamProfiles) ? crmTeamProfiles : [];
-  const effectiveOrgId = crmOrgId || '';
 
   const [showVacationModal, setShowVacationModal] = useState(false);
   const [newVacation, setNewVacation] = useState<Partial<VacationPeriod>>({
