@@ -28,7 +28,7 @@ import InventorySection from '@people/components/InventorySection';
 import { EnergyScoreCard } from '@people/components/EnergyScoreCard';
 import { useCRMStore } from '@/store/useCRMStore';
 import { TimeLog, calculateNetDuration } from '@/store/slices/timeTrackingSlice';
-import { parseISO, format } from 'date-fns';
+import { parseISO } from 'date-fns';
 import { PDIKanban } from '@people/components/PDIKanban';
 import { 
   Plus, 
