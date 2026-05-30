@@ -1450,6 +1450,12 @@ export default function ProfileView() {
                             : 'Expediente Concluído'}
                         </span>
                       </div>
+                      {todayLog && (
+                        <span className="text-[10px] text-gray-500 dark:text-gray-400 font-mono mt-1 block">
+                          Entrada: {formatToBrasiliaTime(todayLog.startTime, 'HH:mm:ss')}
+                          {todayLog.endTime ? ` | Saída: ${formatToBrasiliaTime(todayLog.endTime, 'HH:mm:ss')}` : ''}
+                        </span>
+                      )}
                     </div>
 
                     {/* Card 2: Horas Líquidas no Mês */}

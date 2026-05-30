@@ -981,23 +981,25 @@ export default function PeopleView() {
                                ? 'bg-amber-500'
                                : 'bg-rose-500'
                            }`} />
-                           <div className="flex flex-col">
-                             <span className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-tight">
-                               {!log
-                                 ? 'Offline'
-                                 : log.status === 'active'
-                                 ? 'Trabalhando Ao Vivo'
-                                 : log.status === 'paused'
-                                 ? (() => {
-                                     const activePause = log.pauses.find(p => !p.endTime);
-                                     if (activePause?.type === 'lunch') return '🍱 Em Almoço';
-                                     if (activePause?.type === 'meeting') return '👥 Em Reunião';
-                                     return '🕒 Ausente';
-                                   })()
-                                 : 'Expediente Encerrado'}
-                             </span>
-                             <span className="text-[10px] text-gray-500 font-mono">
-                               {log ? `Entrada: ${formatToBrasiliaTime(log.startTime, 'HH:mm:ss')}` : 'Sem registros hoje'}
+                             <div className="flex flex-col">
+                              <span className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-tight">
+                                {!log
+                                  ? 'Offline'
+                                  : log.status === 'active'
+                                  ? 'Trabalhando Ao Vivo'
+                                  : log.status === 'paused'
+                                  ? (() => {
+                                      const activePause = log.pauses.find(p => !p.endTime);
+                                      if (activePause?.type === 'lunch') return '🍱 Em Almoço';
+                                      if (activePause?.type === 'meeting') return '👥 Em Reunião';
+                                      return '🕒 Ausente';
+                                    })()
+                                  : 'Expediente Encerrado'}
+                              </span>
+                              <span className="text-[10px] text-gray-500 font-mono">
+                                {log 
+                                  ? `Entrada: ${formatToBrasiliaTime(log.startTime, 'HH:mm:ss')}${log.endTime ? ` | Saída: ${formatToBrasiliaTime(log.endTime, 'HH:mm:ss')}` : ''}` 
+                                  : 'Sem registros hoje'}
                              </span>
                              
                              <div className="flex flex-wrap gap-1 mt-1">
@@ -1184,6 +1186,12 @@ export default function PeopleView() {
                            {!todayLog ? 'Offline' : todayLog.status === 'active' ? 'Ativo' : todayLog.status === 'paused' ? 'Intervalo' : 'Concluído'}
                          </span>
                        </div>
+                       {todayLog && (
+                          <span className="text-[10px] text-gray-400 font-mono mt-1 block">
+                            Entrada: {formatToBrasiliaTime(todayLog.startTime, 'HH:mm:ss')}
+                            {todayLog.endTime ? ` | Saída: ${formatToBrasiliaTime(todayLog.endTime, 'HH:mm:ss')}` : ''}
+                          </span>
+                        )}
                      </div>
 
                      {/* Card 2: Mês */}
