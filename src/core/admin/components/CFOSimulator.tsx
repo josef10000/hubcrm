@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, doc, setDoc } from 'firebase/firestore';
-import { Building, Save, Settings } from 'lucide-react';
+import { Building, Save, Settings, Pencil, Lock, Unlock } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface CFOSimulatorProps {
@@ -38,6 +38,7 @@ export default function CFOSimulator({ effectiveOrgId }: CFOSimulatorProps) {
   const [officialRegime, setOfficialRegime] = useState<'Simples Nacional III' | 'Simples Nacional V' | 'Lucro Presumido' | 'MEI'>('Simples Nacional III');
   const [officialPorte, setOfficialPorte] = useState<'MEI' | 'ME' | 'EPP' | 'LTDA'>('LTDA');
   const [isSavingOfficial, setIsSavingOfficial] = useState(false);
+  const [isOfficialLocked, setIsOfficialLocked] = useState<boolean>(true);
 
   // Estados de Simulação do Sócio / Pró-labore
   const [socioNet, setSocioNet] = useState<number>(6000);
@@ -92,8 +93,10 @@ export default function CFOSimulator({ effectiveOrgId }: CFOSimulatorProps) {
     const unsubPref = onSnapshot(prefRef, (snap) => {
       if (snap.exists()) {
         const data = snap.data();
+        let hasData = false;
         if (data.companyRegime) {
           setOfficialRegime(data.companyRegime);
+          hasData = true;
           // Inicializa a simulação para coincidir com o regime oficial
           setCompanyRegime(
             data.companyRegime === 'Simples Nacional V'
@@ -105,7 +108,13 @@ export default function CFOSimulator({ effectiveOrgId }: CFOSimulatorProps) {
         }
         if (data.companyPorte) {
           setOfficialPorte(data.companyPorte);
+          hasData = true;
         }
+        
+        // Se já existem preferências salvas, inicia bloqueado para evitar cliques acidentais
+        setIsOfficialLocked(hasData);
+      } else {
+        setIsOfficialLocked(false);
       }
     });
 
@@ -126,6 +135,7 @@ export default function CFOSimulator({ effectiveOrgId }: CFOSimulatorProps) {
         updatedAt: Date.now()
       }, { merge: true });
       toast.success('Configuração fiscal oficial da empresa salva com sucesso!');
+      setIsOfficialLocked(true); // Trava novamente após salvar
     } catch (e) {
       toast.error('Erro ao salvar configuração oficial');
       console.error(e);
@@ -398,9 +408,10 @@ export default function CFOSimulator({ effectiveOrgId }: CFOSimulatorProps) {
             <div className="space-y-1">
               <span className="text-[10px] font-black uppercase text-gray-500 block ml-1">Porte Jurídico</span>
               <select
+                disabled={isOfficialLocked}
                 value={officialPorte}
                 onChange={e => setOfficialPorte(e.target.value as any)}
-                className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-gray-200 focus:outline-none focus:border-primary-500 font-bold cursor-pointer mt-1"
+                className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-gray-200 focus:outline-none focus:border-primary-500 font-bold cursor-pointer mt-1 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
               >
                 <option value="MEI" className="bg-[#0f1117] text-white">MEI (Microempreendedor Individual)</option>
                 <option value="ME" className="bg-[#0f1117] text-white">ME (Microempresa)</option>
@@ -412,9 +423,10 @@ export default function CFOSimulator({ effectiveOrgId }: CFOSimulatorProps) {
             <div className="space-y-1">
               <span className="text-[10px] font-black uppercase text-gray-500 block ml-1">Regime Fiscal</span>
               <select
+                disabled={isOfficialLocked}
                 value={officialRegime}
                 onChange={e => setOfficialRegime(e.target.value as any)}
-                className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-gray-200 focus:outline-none focus:border-primary-500 font-bold cursor-pointer mt-1"
+                className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-gray-200 focus:outline-none focus:border-primary-500 font-bold cursor-pointer mt-1 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
               >
                 <option value="MEI" className="bg-[#0f1117] text-white">MEI (DAS Fixo Mensal)</option>
                 <option value="Simples Nacional III" className="bg-[#0f1117] text-white">Simples Nacional - Anexo III (6%)</option>
@@ -423,18 +435,30 @@ export default function CFOSimulator({ effectiveOrgId }: CFOSimulatorProps) {
               </select>
             </div>
 
-            <button
-              onClick={handleSaveOfficialConfig}
-              disabled={isSavingOfficial}
-              className="md:mt-5 flex items-center gap-1.5 px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-xs font-black uppercase shadow-lg shadow-primary-500/20 active:scale-95 transition-all disabled:opacity-50"
-            >
-              {isSavingOfficial ? (
-                <RefreshCw size={14} className="animate-spin" />
-              ) : (
-                <Save size={14} />
-              )}
-              <span>Salvar Oficial</span>
-            </button>
+            {isOfficialLocked ? (
+              <button
+                type="button"
+                onClick={() => setIsOfficialLocked(false)}
+                className="md:mt-5 flex items-center gap-1.5 px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl text-xs font-black uppercase shadow-lg hover:shadow-xl active:scale-95 transition-all cursor-pointer"
+                title="Editar Configuração Fiscal"
+              >
+                <Pencil size={14} className="text-primary-500" />
+                <span>Editar</span>
+              </button>
+            ) : (
+              <button
+                onClick={handleSaveOfficialConfig}
+                disabled={isSavingOfficial}
+                className="md:mt-5 flex items-center gap-1.5 px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-xs font-black uppercase shadow-lg shadow-primary-500/20 active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
+              >
+                {isSavingOfficial ? (
+                  <RefreshCw size={14} className="animate-spin" />
+                ) : (
+                  <Save size={14} />
+                )}
+                <span>Salvar Oficial</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
