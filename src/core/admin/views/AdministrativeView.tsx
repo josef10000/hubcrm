@@ -3,6 +3,7 @@ import {
   Shield, CheckCircle, Trash2, Plus, FileText, Image as ImageIcon, 
   Copy, Globe, Star, BookOpen, Settings, Users, Calculator
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { db } from '@/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
@@ -115,62 +116,107 @@ export default function AdministrativeView() {
           </div>
         </div>
 
-        {/* Navegação por Abas Premium em Glassmorphism */}
-        <div className="flex gap-2 p-1.5 bg-black/20 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-2xl mb-8 overflow-x-auto shrink-0 max-w-2xl">
+        {/* Navegação por Abas Premium em Glassmorphism sem scrollbar feia */}
+        <div className="flex gap-2 p-1.5 bg-black/20 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-2xl mb-8 overflow-x-auto no-scrollbar shrink-0 max-w-2xl shadow-xl">
           <button
             onClick={() => setActiveAdminTab('team')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
+            className={`relative flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors duration-300 ${
               activeAdminTab === 'team'
-                ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20'
-                : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/5'
+                ? 'text-white'
+                : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
-            <Users size={16} />
-            <span>Equipe & Acessos</span>
+            {activeAdminTab === 'team' && (
+              <motion.div
+                layoutId="activeAdminTab"
+                className="absolute inset-0 bg-primary-500 rounded-xl shadow-lg shadow-primary-500/20"
+                transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+              />
+            )}
+            <span className="relative z-10 flex items-center gap-2">
+              <Users size={16} />
+              <span>Equipe & Acessos</span>
+            </span>
           </button>
           <button
             onClick={() => setActiveAdminTab('workflows')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
+            className={`relative flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors duration-300 ${
               activeAdminTab === 'workflows'
-                ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20'
-                : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/5'
+                ? 'text-white'
+                : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
-            <Settings size={16} />
-            <span>Processos & Fluxos</span>
+            {activeAdminTab === 'workflows' && (
+              <motion.div
+                layoutId="activeAdminTab"
+                className="absolute inset-0 bg-primary-500 rounded-xl shadow-lg shadow-primary-500/20"
+                transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+              />
+            )}
+            <span className="relative z-10 flex items-center gap-2">
+              <Settings size={16} />
+              <span>Processos & Fluxos</span>
+            </span>
           </button>
           <button
             onClick={() => setActiveAdminTab('sales')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
+            className={`relative flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors duration-300 ${
               activeAdminTab === 'sales'
-                ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20'
-                : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/5'
+                ? 'text-white'
+                : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
-            <Globe size={16} />
-            <span>Vendas & Satisfação</span>
+            {activeAdminTab === 'sales' && (
+              <motion.div
+                layoutId="activeAdminTab"
+                className="absolute inset-0 bg-primary-500 rounded-xl shadow-lg shadow-primary-500/20"
+                transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+              />
+            )}
+            <span className="relative z-10 flex items-center gap-2">
+              <Globe size={16} />
+              <span>Vendas & Satisfação</span>
+            </span>
           </button>
           <button
             onClick={() => setActiveAdminTab('cfo')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
+            className={`relative flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors duration-300 ${
               activeAdminTab === 'cfo'
-                ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20'
-                : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/5'
+                ? 'text-white'
+                : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
-            <Calculator size={16} />
-            <span>Planejamento & CFO</span>
+            {activeAdminTab === 'cfo' && (
+              <motion.div
+                layoutId="activeAdminTab"
+                className="absolute inset-0 bg-primary-500 rounded-xl shadow-lg shadow-primary-500/20"
+                transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+              />
+            )}
+            <span className="relative z-10 flex items-center gap-2">
+              <Calculator size={16} />
+              <span>Planejamento & CFO</span>
+            </span>
           </button>
           <button
             onClick={() => setActiveAdminTab('contracts')}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
+            className={`relative flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors duration-300 ${
               activeAdminTab === 'contracts'
-                ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20'
-                : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/5'
+                ? 'text-white'
+                : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
-            <FileText size={16} />
-            <span>Contratos Digitais</span>
+            {activeAdminTab === 'contracts' && (
+              <motion.div
+                layoutId="activeAdminTab"
+                className="absolute inset-0 bg-primary-500 rounded-xl shadow-lg shadow-primary-500/20"
+                transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+              />
+            )}
+            <span className="relative z-10 flex items-center gap-2">
+              <FileText size={16} />
+              <span>Contratos Digitais</span>
+            </span>
           </button>
         </div>
 

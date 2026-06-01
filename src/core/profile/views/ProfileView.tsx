@@ -673,78 +673,160 @@ export default function ProfileView() {
           {/* Right Column: Tabbed Content */}
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-3xl border border-gray-200 dark:border-white/10 rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden">
-              {/* Tabs */}
-              <div className="flex gap-4 mb-8 overflow-x-auto custom-scrollbar pb-2">
-                <button 
+              {/* Tabs sem scrollbar feia e com pílula deslizante fluida */}
+              <div className="flex gap-2 mb-8 overflow-x-auto no-scrollbar pb-1.5 scroll-smooth max-w-full">
+                <motion.button 
+                  whileTap={{ scale: 0.96 }}
                   onClick={() => setActiveTab('info')}
-                  className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'info' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-500'}`}
+                  className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'info' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
                 >
-                  Informações
-                </button>
-                <button 
+                  {activeTab === 'info' && (
+                    <motion.div
+                      layoutId="activeProfileTab"
+                      className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
+                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative z-10">Informações</span>
+                </motion.button>
+                <motion.button 
+                  whileTap={{ scale: 0.96 }}
                   onClick={() => setActiveTab('availability')}
-                  className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'availability' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
+                  className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'availability' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
                 >
-                  Disponibilidade
-                </button>
+                  {activeTab === 'availability' && (
+                    <motion.div
+                      layoutId="activeProfileTab"
+                      className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
+                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative z-10">Disponibilidade</span>
+                </motion.button>
                 {isOwnProfile && (
                   <>
-                    <button 
+                    <motion.button 
+                      whileTap={{ scale: 0.96 }}
                       onClick={() => setActiveTab('pdi')}
-                      className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'pdi' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
+                      className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'pdi' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
                     >
-                      Meu PDI
-                    </button>
-                    <button 
-                      onClick={() => setActiveTab('inventory')}
-                      className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'inventory' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
-                    >
-                      Ativos
-                    </button>
-                    <button 
-                      onClick={() => setActiveTab('feedbacks')}
-                      className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'feedbacks' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
-                    >
-                      Mural
-                    </button>
-                    <button 
-                      onClick={() => setActiveTab('history')}
-                      className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'history' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
-                    >
-                      Carreira
-                    </button>
-                    <button 
-                      onClick={() => setActiveTab('vacations')}
-                      className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'vacations' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
-                    >
-                      Ausências
-                    </button>
-                    <button 
-                      onClick={() => setActiveTab('alerts')}
-                      className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all relative ${activeTab === 'alerts' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
-                    >
-                      Alertas
-                      {unreadAlertsCount > 0 && (
-                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[8px] rounded-full flex items-center justify-center border-2 border-zinc-900">
-                          {unreadAlertsCount}
-                        </span>
+                      {activeTab === 'pdi' && (
+                        <motion.div
+                          layoutId="activeProfileTab"
+                          className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
+                          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                        />
                       )}
-                    </button>
+                      <span className="relative z-10">Meu PDI</span>
+                    </motion.button>
+                    <motion.button 
+                      whileTap={{ scale: 0.96 }}
+                      onClick={() => setActiveTab('inventory')}
+                      className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'inventory' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                    >
+                      {activeTab === 'inventory' && (
+                        <motion.div
+                          layoutId="activeProfileTab"
+                          className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
+                          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                        />
+                      )}
+                      <span className="relative z-10">Ativos</span>
+                    </motion.button>
+                    <motion.button 
+                      whileTap={{ scale: 0.96 }}
+                      onClick={() => setActiveTab('feedbacks')}
+                      className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'feedbacks' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                    >
+                      {activeTab === 'feedbacks' && (
+                        <motion.div
+                          layoutId="activeProfileTab"
+                          className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
+                          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                        />
+                      )}
+                      <span className="relative z-10">Mural</span>
+                    </motion.button>
+                    <motion.button 
+                      whileTap={{ scale: 0.96 }}
+                      onClick={() => setActiveTab('history')}
+                      className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'history' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                    >
+                      {activeTab === 'history' && (
+                        <motion.div
+                          layoutId="activeProfileTab"
+                          className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
+                          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                        />
+                      )}
+                      <span className="relative z-10">Carreira</span>
+                    </motion.button>
+                    <motion.button 
+                      whileTap={{ scale: 0.96 }}
+                      onClick={() => setActiveTab('vacations')}
+                      className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'vacations' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                    >
+                      {activeTab === 'vacations' && (
+                        <motion.div
+                          layoutId="activeProfileTab"
+                          className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
+                          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                        />
+                      )}
+                      <span className="relative z-10">Ausências</span>
+                    </motion.button>
+                    <motion.button 
+                      whileTap={{ scale: 0.96 }}
+                      onClick={() => setActiveTab('alerts')}
+                      className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'alerts' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                    >
+                      {activeTab === 'alerts' && (
+                        <motion.div
+                          layoutId="activeProfileTab"
+                          className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
+                          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                        />
+                      )}
+                      <span className="relative z-10 flex items-center gap-1.5">
+                        <span>Alertas</span>
+                        {unreadAlertsCount > 0 && (
+                          <span className="w-4 h-4 bg-rose-500 text-white text-[8px] rounded-full flex items-center justify-center border border-zinc-950">
+                            {unreadAlertsCount}
+                          </span>
+                        )}
+                      </span>
+                    </motion.button>
                     {(isOwnProfile || isManagement || isAdmin) && (
-                      <button 
+                      <motion.button 
+                        whileTap={{ scale: 0.96 }}
                         onClick={() => setActiveTab('expediente')}
-                        className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'expediente' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
+                        className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'expediente' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
                       >
-                        Expediente
-                      </button>
+                        {activeTab === 'expediente' && (
+                          <motion.div
+                            layoutId="activeProfileTab"
+                            className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
+                            transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                          />
+                        )}
+                        <span className="relative z-10">Expediente</span>
+                      </motion.button>
                     )}
                     {(isOwnProfile || isManagement || isAdmin) && (
-                      <button 
+                      <motion.button 
+                        whileTap={{ scale: 0.96 }}
                         onClick={() => setActiveTab('contracts')}
-                        className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'contracts' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
+                        className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'contracts' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
                       >
-                        Documentos
-                      </button>
+                        {activeTab === 'contracts' && (
+                          <motion.div
+                            layoutId="activeProfileTab"
+                            className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
+                            transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                          />
+                        )}
+                        <span className="relative z-10">Documentos</span>
+                      </motion.button>
                     )}
                   </>
                 )}

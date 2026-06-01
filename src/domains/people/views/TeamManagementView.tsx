@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Mail, UserPlus, Shield, X, Check, Loader2, Trash2, GitGraph, List, ChevronRight, Edit2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useDialog } from '@auth/contexts/DialogContext';
@@ -307,17 +308,43 @@ export default function TeamManagementView() {
             <div className="flex bg-gray-200 dark:bg-white/5 p-1 rounded-2xl border border-gray-200 dark:border-white/10">
               <button 
                 onClick={() => setViewMode('list')}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium ${viewMode === 'list' ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                className={`relative flex items-center space-x-2 px-4 py-2 rounded-xl transition-colors duration-300 text-sm font-medium ${
+                  viewMode === 'list' 
+                    ? 'text-primary-500 dark:text-white font-semibold' 
+                    : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
               >
-                <List size={18} />
-                <span>Lista</span>
+                {viewMode === 'list' && (
+                  <motion.div
+                    layoutId="activeViewModeTab"
+                    className="absolute inset-0 bg-white dark:bg-white/10 rounded-xl shadow-sm border border-gray-100 dark:border-white/5"
+                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10 flex items-center space-x-2">
+                  <List size={18} />
+                  <span>Lista</span>
+                </span>
               </button>
               <button 
                 onClick={() => setViewMode('org')}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all text-sm font-medium ${viewMode === 'org' ? 'bg-white dark:bg-white/10 text-primary-500 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                className={`relative flex items-center space-x-2 px-4 py-2 rounded-xl transition-colors duration-300 text-sm font-medium ${
+                  viewMode === 'org' 
+                    ? 'text-primary-500 dark:text-white font-semibold' 
+                    : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
               >
-                <GitGraph size={18} />
-                <span>Organograma</span>
+                {viewMode === 'org' && (
+                  <motion.div
+                    layoutId="activeViewModeTab"
+                    className="absolute inset-0 bg-white dark:bg-white/10 rounded-xl shadow-sm border border-gray-100 dark:border-white/5"
+                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10 flex items-center space-x-2">
+                  <GitGraph size={18} />
+                  <span>Organograma</span>
+                </span>
               </button>
             </div>
             {hasPermission('MANAGE_TEAM') && (
