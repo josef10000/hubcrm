@@ -122,6 +122,9 @@ export interface UserProfile {
   transportVoucher?: number; // Vale-transporte
   homeOfficeAux?: number;    // Auxílio home-office
 
+  // Ecossistema de Contratos Digitais (Legal)
+  contracts?: UserContract[];
+
   // Library Integration
   readingProgress?: Record<string, { currentPage: number; totalPages: number }>;
 
@@ -132,6 +135,32 @@ export interface UserProfile {
   unlockedFrames?: string[];
   department?: string;
   claimedReadingClubs?: string[];
+}
+
+export interface UserContract {
+  id: string;                 // ID único do contrato gerado
+  templateId: string;         // ID do template de origem
+  title: string;              // Título do documento
+  bodyText: string;           // Texto final gerado (com as variáveis resolvidas)
+  status: 'pending' | 'signed';
+  createdAt: number;          // Data de envio
+  signedAt?: number;          // Data da assinatura
+  ip?: string;                // IP registrado no client
+  userAgent?: string;         // Dispositivo/Browser
+  signatureText?: string;     // Nome completo digitado
+  cpfCnpj?: string;           // Documento inserido pelo usuário
+  rg?: string;                // RG inserido pelo usuário
+  hash?: string;              // Hash de segurança SHA-256 do texto + metadados
+}
+
+export interface ContractTemplate {
+  id: string;
+  title: string;              // Ex: "Contrato de Prestação de Serviços PJ"
+  bodyText: string;           // Conteúdo em Markdown com tags dinâmicas
+  associatedRoleId?: string;  // Vinculado a um cargo específico (opcional)
+  createdAt: number;
+  updatedAt: number;
+  createdBy: string;
 }
 
 export type UserProfileBase = UserProfile;
