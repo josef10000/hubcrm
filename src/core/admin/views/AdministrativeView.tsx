@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   Shield, CheckCircle, Trash2, Plus, FileText, Image as ImageIcon, 
-  Copy, Globe, Star, BookOpen, Settings, Users
+  Copy, Globe, Star, BookOpen, Settings, Users, Calculator
 } from 'lucide-react';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { db } from '@/lib/firebase';
@@ -13,6 +13,7 @@ import { useAuth } from '@auth/contexts/AuthContext';
 import { useDialog } from '@auth/contexts/DialogContext';
 import TagManager from '@admin/components/TagManager';
 import RoleManagement from '@admin/components/RoleManagement';
+import CFOSimulator from '@admin/components/CFOSimulator';
 
 export default function AdministrativeView() {
   const {
@@ -47,7 +48,7 @@ export default function AdministrativeView() {
   const { confirm, alert } = useDialog();
   const [newSoftSkill, setNewSoftSkill] = React.useState('');
   
-  type AdminTab = 'team' | 'workflows' | 'sales';
+  type AdminTab = 'team' | 'workflows' | 'sales' | 'cfo';
   const [activeAdminTab, setActiveAdminTab] = React.useState<AdminTab>('team');
   
   if (!hasPermission('MANAGE_SETTINGS')) {
@@ -114,7 +115,7 @@ export default function AdministrativeView() {
         </div>
 
         {/* Navegação por Abas Premium em Glassmorphism */}
-        <div className="flex gap-2 p-1.5 bg-black/20 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-2xl mb-8 overflow-x-auto shrink-0 max-w-lg">
+        <div className="flex gap-2 p-1.5 bg-black/20 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-2xl mb-8 overflow-x-auto shrink-0 max-w-2xl">
           <button
             onClick={() => setActiveAdminTab('team')}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
@@ -147,6 +148,17 @@ export default function AdministrativeView() {
           >
             <Globe size={16} />
             <span>Vendas & Satisfação</span>
+          </button>
+          <button
+            onClick={() => setActiveAdminTab('cfo')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
+              activeAdminTab === 'cfo'
+                ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20'
+                : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Calculator size={16} />
+            <span>Planejamento & CFO</span>
           </button>
         </div>
 
@@ -373,6 +385,10 @@ export default function AdministrativeView() {
                 </div>
               </div>
             </div>
+          )}
+
+          {activeAdminTab === 'cfo' && (
+            <CFOSimulator effectiveOrgId={effectiveOrgId} />
           )}
         </div>
       </div>
