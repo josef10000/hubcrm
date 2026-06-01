@@ -14,6 +14,7 @@ import { useDialog } from '@auth/contexts/DialogContext';
 import TagManager from '@admin/components/TagManager';
 import RoleManagement from '@admin/components/RoleManagement';
 import CFOSimulator from '@admin/components/CFOSimulator';
+import ContractManager from '@admin/components/ContractManager';
 
 export default function AdministrativeView() {
   const {
@@ -48,7 +49,7 @@ export default function AdministrativeView() {
   const { confirm, alert } = useDialog();
   const [newSoftSkill, setNewSoftSkill] = React.useState('');
   
-  type AdminTab = 'team' | 'workflows' | 'sales' | 'cfo';
+  type AdminTab = 'team' | 'workflows' | 'sales' | 'cfo' | 'contracts';
   const [activeAdminTab, setActiveAdminTab] = React.useState<AdminTab>('team');
   
   if (!hasPermission('MANAGE_SETTINGS')) {
@@ -159,6 +160,17 @@ export default function AdministrativeView() {
           >
             <Calculator size={16} />
             <span>Planejamento & CFO</span>
+          </button>
+          <button
+            onClick={() => setActiveAdminTab('contracts')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
+              activeAdminTab === 'contracts'
+                ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20'
+                : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <FileText size={16} />
+            <span>Contratos Digitais</span>
           </button>
         </div>
 
@@ -389,6 +401,10 @@ export default function AdministrativeView() {
 
           {activeAdminTab === 'cfo' && (
             <CFOSimulator effectiveOrgId={effectiveOrgId} />
+          )}
+
+          {activeAdminTab === 'contracts' && (
+            <ContractManager effectiveOrgId={effectiveOrgId} />
           )}
         </div>
       </div>

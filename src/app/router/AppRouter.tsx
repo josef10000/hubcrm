@@ -8,7 +8,7 @@ import { useUI } from '@/contexts/UIContext';
 // Layouts & Shell
 import { AppLayout } from '../layouts/AppLayout';
 import { WorkspaceShell } from '../shell/WorkspaceShell';
-import { AuthGuard, PendingInviteGuard } from './RouteGuards';
+import { AuthGuard, PendingInviteGuard, ContractGuard } from './RouteGuards';
 
 // Eager Loaded Components (Core Views - Dashboard stays eager for instant load)
 import DashboardView from '@crm/views/DashboardView';
@@ -94,60 +94,62 @@ export function AppRouter() {
         <Route path="/*" element={
           <AuthGuard>
             <PendingInviteGuard>
-              <WorkspaceShell isBirthday={isBirthday}>
-                <AppLayout>
-                  <Routes>
-                    <Route path="/" element={<DashboardView />} />
-                    <Route path="/support" element={<SupportView />} />
-                    <Route path="/chat" element={<ChatView />} />
-                    <Route path="/notifications" element={<NotificationsView />} />
-                    <Route path="/calendar" element={
-                        <CalendarView 
-                            role={typeof userProfile?.role === 'string' ? userProfile.role : userProfile?.role?.id} 
-                            clients={clients} 
-                            onClientClick={(client) => { setEditingClient(client); setIsModalOpen(true); }} 
-                        />
-                    } />
-                    <Route path="/referrals" element={<ReferralsView clients={clients} user={user!} />} />
-                    <Route path="/products" element={<ProductsView />} />
-                    <Route path="/monitoring" element={<MonitoringView clients={clients} />} />
-                    <Route path="/map" element={
-                        <ClientMapView 
-                            clients={clients} 
-                            onClientClick={(client) => { setEditingClient(client); setIsModalOpen(true); }} 
-                        />
-                    } />
-                    <Route path="/billing" element={<BillingView />} />
-                    <Route path="/onboarding-hub" element={<OnboardingHubView />} />
-                    <Route path="/contracts" element={<ContractsView />} />
-                    <Route path="/projects" element={<ProjectsView />} />
+              <ContractGuard>
+                <WorkspaceShell isBirthday={isBirthday}>
+                  <AppLayout>
+                    <Routes>
+                      <Route path="/" element={<DashboardView />} />
+                      <Route path="/support" element={<SupportView />} />
+                      <Route path="/chat" element={<ChatView />} />
+                      <Route path="/notifications" element={<NotificationsView />} />
+                      <Route path="/calendar" element={
+                          <CalendarView 
+                              role={typeof userProfile?.role === 'string' ? userProfile.role : userProfile?.role?.id} 
+                              clients={clients} 
+                              onClientClick={(client) => { setEditingClient(client); setIsModalOpen(true); }} 
+                          />
+                      } />
+                      <Route path="/referrals" element={<ReferralsView clients={clients} user={user!} />} />
+                      <Route path="/products" element={<ProductsView />} />
+                      <Route path="/monitoring" element={<MonitoringView clients={clients} />} />
+                      <Route path="/map" element={
+                          <ClientMapView 
+                              clients={clients} 
+                              onClientClick={(client) => { setEditingClient(client); setIsModalOpen(true); }} 
+                          />
+                      } />
+                      <Route path="/billing" element={<BillingView />} />
+                      <Route path="/onboarding-hub" element={<OnboardingHubView />} />
+                      <Route path="/contracts" element={<ContractsView />} />
+                      <Route path="/projects" element={<ProjectsView />} />
 
-                    {/* Permission Based Routes */}
-                    <Route path="/analytics" element={hasPermission('VIEW_REPORTS') ? <AnalyticsView /> : <Navigate to="/" />} />
-                    <Route path="/finance" element={hasPermission('MANAGE_FINANCE') ? <FinanceView /> : <Navigate to="/" />} />
-                    <Route path="/marketing" element={hasPermission('MANAGE_SETTINGS') ? <MarketingView /> : <Navigate to="/" />} />
-                    <Route path="/team" element={hasPermission('MANAGE_TEAM') ? <TeamManagementView /> : <Navigate to="/" />} />
-                    <Route path="/people" element={hasPermission('MANAGE_TEAM') ? <PeopleView /> : <Navigate to="/" />} />
-                    <Route path="/admin" element={hasPermission('MANAGE_SETTINGS') ? <AdministrativeView /> : <Navigate to="/" />} />
-                    <Route path="/canvas" element={hasPermission('MANAGE_TEAM') || hasPermission('MANAGE_SETTINGS') ? <CanvasListView /> : <Navigate to="/" />} />
-                    <Route path="/canvas/:id" element={hasPermission('MANAGE_TEAM') || hasPermission('MANAGE_SETTINGS') ? <CanvasEditorView /> : <Navigate to="/" />} />
-                    
-                    {/* General Workspace Routes */}
-                    <Route path="/wiki" element={<WikiView />} />
-                    <Route path="/settings" element={<SettingsView />} />
-                    <Route path="/profile/:uid" element={<ProfileView />} />
-                    <Route path="/workspace" element={<MyWorkspaceView />} />
-                    <Route path="/arena" element={<ArenaView />} />
-                    <Route path="/shop" element={<HubShopView />} />
-                    
-                    {/* Security Based Route */}
-                    <Route path="/compliance" element={hasPermission('MANAGE_SETTINGS') ? <AuditDashboard /> : <Navigate to="/" />} />
-                    
-                    <Route path="*" element={<Navigate to="/" />} />
-                  </Routes>
-                </AppLayout>
-                <GlobalModals />
-              </WorkspaceShell>
+                      {/* Permission Based Routes */}
+                      <Route path="/analytics" element={hasPermission('VIEW_REPORTS') ? <AnalyticsView /> : <Navigate to="/" />} />
+                      <Route path="/finance" element={hasPermission('MANAGE_FINANCE') ? <FinanceView /> : <Navigate to="/" />} />
+                      <Route path="/marketing" element={hasPermission('MANAGE_SETTINGS') ? <MarketingView /> : <Navigate to="/" />} />
+                      <Route path="/team" element={hasPermission('MANAGE_TEAM') ? <TeamManagementView /> : <Navigate to="/" />} />
+                      <Route path="/people" element={hasPermission('MANAGE_TEAM') ? <PeopleView /> : <Navigate to="/" />} />
+                      <Route path="/admin" element={hasPermission('MANAGE_SETTINGS') ? <AdministrativeView /> : <Navigate to="/" />} />
+                      <Route path="/canvas" element={hasPermission('MANAGE_TEAM') || hasPermission('MANAGE_SETTINGS') ? <CanvasListView /> : <Navigate to="/" />} />
+                      <Route path="/canvas/:id" element={hasPermission('MANAGE_TEAM') || hasPermission('MANAGE_SETTINGS') ? <CanvasEditorView /> : <Navigate to="/" />} />
+                      
+                      {/* General Workspace Routes */}
+                      <Route path="/wiki" element={<WikiView />} />
+                      <Route path="/settings" element={<SettingsView />} />
+                      <Route path="/profile/:uid" element={<ProfileView />} />
+                      <Route path="/workspace" element={<MyWorkspaceView />} />
+                      <Route path="/arena" element={<ArenaView />} />
+                      <Route path="/shop" element={<HubShopView />} />
+                      
+                      {/* Security Based Route */}
+                      <Route path="/compliance" element={hasPermission('MANAGE_SETTINGS') ? <AuditDashboard /> : <Navigate to="/" />} />
+                      
+                      <Route path="*" element={<Navigate to="/" />} />
+                    </Routes>
+                  </AppLayout>
+                  <GlobalModals />
+                </WorkspaceShell>
+              </ContractGuard>
             </PendingInviteGuard>
           </AuthGuard>
         } />

@@ -26,6 +26,7 @@ import CareerTimeline from '@people/components/CareerTimeline';
 import FeedbackMural from '@people/components/FeedbackMural';
 import InventorySection from '@people/components/InventorySection';
 import { EnergyScoreCard } from '@people/components/EnergyScoreCard';
+import ProfileContractsTab from './ProfileContractsTab';
 import { useCRMStore } from '@/store/useCRMStore';
 import { TimeLog, calculateNetDuration } from '@/store/slices/timeTrackingSlice';
 import { parseISO } from 'date-fns';
@@ -108,7 +109,7 @@ export default function ProfileView() {
   const [isSaving, setIsSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [superior, setSuperior] = useState<UserProfile | null>(null);
-  const [activeTab, setActiveTab] = useState<'info' | 'pdi' | 'comissoes' | 'inventory' | 'feedbacks' | 'history' | 'alerts' | 'vacations' | 'availability' | 'expediente'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'pdi' | 'comissoes' | 'inventory' | 'feedbacks' | 'history' | 'alerts' | 'vacations' | 'availability' | 'expediente' | 'contracts'>('info');
 
   // Lógica de Ponto Eletrônico Individual (Meu Expediente)
   const todayLog = useCRMStore(s => s.todayLog);
@@ -735,6 +736,14 @@ export default function ProfileView() {
                         className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'expediente' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
                       >
                         Expediente
+                      </button>
+                    )}
+                    {(isOwnProfile || isManagement || isAdmin) && (
+                      <button 
+                        onClick={() => setActiveTab('contracts')}
+                        className={`shrink-0 whitespace-nowrap px-6 py-2 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'contracts' ? 'bg-primary-500 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}`}
+                      >
+                        Documentos
                       </button>
                     )}
                   </>
@@ -1884,6 +1893,16 @@ export default function ProfileView() {
                     <button type="submit" className="w-full bg-primary-500 hover:bg-primary-600 text-white p-5 rounded-2xl font-bold shadow-xl shadow-primary-500/20 transition-all">Enviar Solicitação</button>
                  </form>
               </div>
+           </div>
+        )}
+
+        {activeTab === 'contracts' && (isOwnProfile || isManagement || isAdmin) && (
+           <div className="space-y-6 animate-in slide-in-from-bottom duration-500">
+              <ProfileContractsTab 
+                profile={profile} 
+                isOwnProfile={isOwnProfile} 
+                isAdmin={isAdmin || isManagement} 
+              />
            </div>
         )}
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import Auth from '@auth/components/Auth';
 import WaitingInviteView from '@auth/views/WaitingInviteView';
+import ContractSignatureGate from '@auth/components/ContractSignatureGate';
 
 interface GuardProps {
   children: React.ReactNode;
@@ -51,6 +52,43 @@ export function PendingInviteGuard({ children }: GuardProps) {
 
   if (userProfile?.orgId === 'pending') {
     return <WaitingInviteView />;
+  }
+
+  return <>{children}</>;
+}
+
+/**
+ * Intercepta colaboradores que possuem contratos pendentes de assinatura.
+ * Os administradores estão isentos de bloqueio.
+ */
+export function ContractGuard({ children }: GuardProps) {
+  const { userProfile, refreshProfile } = useAuth();
+
+  if (!userProfile) return <>{children}</>;
+
+  // Verifica se o usuário atual é Administrador
+  // Administradores possuem a permissão MANAGE_SETTINGS ou a role contendo "Admin"
+  const rawRole = typeof userProfile.role === 'string' ? userProfile.role : (userProfile.role as any)?.name || '';
+  const isAdmin = userProfile.permissions?.includes('MANAGE_SETTINGS') || String(rawRole).toLowerCase().includes('admin');
+
+  // Filtra contratos no estado pendente
+  const pendingContracts = userProfile.contracts?.filter(c => c.status === 'pending') || [];
+
+  // Se houver contrato pendente E não for administrador, bloqueia com a tela de assinatura
+  if (pendingContracts.length > 0 && !isAdmin) {
+    return (
+      <ContractSignatureGate 
+        userProfile={userProfile} 
+        pendingContracts={pendingContracts} 
+        onSignSuccess={async () => {
+          if (refreshProfile) {
+            await refreshProfile();
+          } else {
+            window.location.reload();
+          }
+        }} 
+      />
+    );
   }
 
   return <>{children}</>;

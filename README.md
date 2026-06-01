@@ -34,6 +34,11 @@ Recentemente, adicionamos uma série de recursos de ponta no **Hub Chat** e no C
     *   **Suporte a Pró-labore Zero:** Flexibilidade total para sócios e administradores trabalharem sem remuneração direta, definindo a retirada do pró-labore simulado ou contratado como R$ 0,00.
     *   **Diagnóstico de Fator R:** Gráfico visual de meta de 28% do faturamento acumulado, indicando a elegibilidade para redução tributária do Anexo V (15.5%) para o Anexo III (6.0%) no Simples Nacional.
     *   **DRE Gerencial Reativa (Folha & Impostos Automáticos):** Integração total do financeiro da empresa que lê os perfis de equipe e as preferências da organização no Firestore para deduzir, de forma automática e sem lançamentos manuais, as despesas de pessoal reais (salário + provisões de 13º, férias + 1/3, FGTS, multa) e as deduções tributárias mensais na DRE, recalculando inclusive o Fator R dinâmico de cada mês para definir a alíquota do Simples.
+5.  **📜 Ecossistema de Contratos Digitais (Legal Completo):**
+    *   **Modelagem de Contratos Padrão (Templates):** Painel administrativo integrado ao CRM que permite criar, editar e excluir modelos de contratos (ex: NDA, Prestador PJ, CLT) usando formatação Markdown e variáveis dinâmicas (`{NOME_COLABORADOR}`, `{SALARIO}`, `{TIPO_CONTRATO}`, `{EMPRESA_NOME}`).
+    *   **Assinatura Digital no Primeiro Login (Signature Gate):** Um bloqueador de tela (Paywall Legal) em Glassmorphism que intercepta colaboradores comuns (não-admins) que possuam contratos no estado `pending`, forçando a leitura total do documento (detecção de scroll) e o preenchimento de dados de validade jurídica (CPF/CNPJ, RG e Assinatura por nome completo).
+    *   **Carimbo Legal de Autenticidade:** O documento assinado é congelado no banco de dados e exibe no perfil do colaborador um carimbo premium holográfico contendo: Hash Criptográfico SHA-256 único, Endereço de IP, data/hora local, navegador/SO do assinante e uma grafia elegante cursiva de sua assinatura, com validade jurídica sob a MP nº 2.200-2/2001.
+    *   **Gestão Geral e Histórico:** O Administrador pode disparar contratos adicionais a qualquer momento ou anular/deletar contratos com erros cadastrais para reenvio direto pelo painel. A aba "Documentos" no perfil permite visualizar e gerar PDFs de impressão limpa de todos os contratos a qualquer momento.
 
 ---
 
