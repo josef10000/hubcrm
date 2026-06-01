@@ -28,6 +28,12 @@ Recentemente, adicionamos uma série de recursos de ponta no **Hub Chat** e no C
     *   **Exportação CSV Avançada:** Logs consolidados exportáveis em CSV já incluindo indicadores de atraso de entrada, pausas de almoço excedidas e horas extras realizadas para facilitar a folha de pagamento do RH.
     *   **Segurança no Backend:** Proteção robusta contra payload direto no backend (Vercel handler) impedindo que colaboradores comuns burlem o regime de contratação ou alterem seus horários de expediente.
     *   **useDialog Integrado:** Substituição completa de diálogos de alerta e confirmação nativos por modais interativos e personalizados (`useDialog`) integrados à identidade visual do CRM.
+4.  **📊 CFO Simulator & DRE Table Automatizada (Financeiro Inteligente):**
+    *   **Configuração Fiscal Oficial:** Painel administrativo de Porte (MEI, ME, EPP, LTDA) e Regime Tributário (Simples Nacional III, V, Lucro Presumido) persistidos de forma segura no banco de dados.
+    *   **Simulador de Contratação & Pró-labore:** Slider interativo de alta precisão com algoritmo de Gross-up que calcula o Salário Bruto contratual com base no Salário Líquido desejado no bolso (aplicando alíquotas e faixas progressivas brasileiras vigentes de INSS e IRRF).
+    *   **Suporte a Pró-labore Zero:** Flexibilidade total para sócios e administradores trabalharem sem remuneração direta, definindo a retirada do pró-labore simulado ou contratado como R$ 0,00.
+    *   **Diagnóstico de Fator R:** Gráfico visual de meta de 28% do faturamento acumulado, indicando a elegibilidade para redução tributária do Anexo V (15.5%) para o Anexo III (6.0%) no Simples Nacional.
+    *   **DRE Gerencial Reativa (Folha & Impostos Automáticos):** Integração total do financeiro da empresa que lê os perfis de equipe e as preferências da organização no Firestore para deduzir, de forma automática e sem lançamentos manuais, as despesas de pessoal reais (salário + provisões de 13º, férias + 1/3, FGTS, multa) e as deduções tributárias mensais na DRE, recalculando inclusive o Fator R dinâmico de cada mês para definir a alíquota do Simples.
 
 ---
 

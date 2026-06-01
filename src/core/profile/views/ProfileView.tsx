@@ -4,7 +4,7 @@ import {
   User as UserIcon, Mail, Phone, Instagram, Linkedin, 
   ChevronLeft, Edit3, Save, X, Briefcase, Info, 
   Shield, Globe, MapPin, Loader2, Camera, Cake, Calendar,
-  Target, ChevronDown, CheckCircle2, Circle, Star, Wallet, TrendingUp, Clock, Plane, AlertTriangle, CalendarDays
+  Target, ChevronDown, CheckCircle2, Circle, Star, Wallet, TrendingUp, Clock, Plane, AlertTriangle, CalendarDays, DollarSign
 } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useDialog } from '@auth/contexts/DialogContext';
@@ -205,7 +205,12 @@ export default function ProfileView() {
       daysOfWeek: [1, 2, 3, 4, 5],
       entryTime: '09:00',
       exitTime: '18:00'
-    }
+    },
+    salary: 0,
+    healthInsurance: 0,
+    mealVoucher: 0,
+    transportVoucher: 0,
+    homeOfficeAux: 0
   });
   const [userAssets, setUserAssets] = useState<any[]>([]);
   const { hasPermission } = usePermissions();
@@ -214,6 +219,8 @@ export default function ProfileView() {
   const isAdmin = hasPermission('MANAGE_SETTINGS');
   const isManagement = hasPermission('MANAGE_TEAM');
   const canEdit = isOwnProfile || isManagement || isAdmin;
+  const canViewFinancials = isOwnProfile || isAdmin || isManagement;
+  const canEditFinancials = isAdmin || isManagement;
 
   // Redefine a aba ativa para 'info' se o colaborador acessar o perfil de outra pessoa estando em uma aba pessoal protegida
   useEffect(() => {
@@ -251,7 +258,12 @@ export default function ProfileView() {
                   daysOfWeek: [1, 2, 3, 4, 5],
                   entryTime: '09:00',
                   exitTime: '18:00'
-                }
+                },
+                salary: data.salary || 0,
+                healthInsurance: data.healthInsurance || 0,
+                mealVoucher: data.mealVoucher || 0,
+                transportVoucher: data.transportVoucher || 0,
+                homeOfficeAux: data.homeOfficeAux || 0
               });
             }
             return editing;
@@ -913,6 +925,123 @@ export default function ProfileView() {
                         )}
                       </div>
 
+                      {/* Remuneração & Benefícios (Apenas para donos do perfil e admins/RH) */}
+                      {canViewFinancials && (
+                        <div className="bg-white/5 border border-white/5 rounded-3xl p-6 space-y-6 text-left">
+                          <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                            <div className="flex items-center space-x-2">
+                              <DollarSign className="text-primary-500" size={20} />
+                              <h4 className="text-sm font-bold text-white uppercase tracking-wider">Remuneração & Benefícios</h4>
+                            </div>
+                            {!canEditFinancials && (
+                              <span className="text-[10px] bg-amber-500/10 border border-amber-500/20 text-amber-500 px-2 py-0.5 rounded-lg font-bold">
+                                Apenas Leitura
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">
+                                Salário / Pró-labore Base (Líquido)
+                              </label>
+                              <div className="relative">
+                                <span className="absolute left-4 top-3 text-sm text-gray-400 font-bold">R$</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  disabled={!canEditFinancials}
+                                  value={formData.salary || 0}
+                                  onChange={e => setFormData({ ...formData, salary: parseFloat(e.target.value) || 0 })}
+                                  className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-2xl pl-12 pr-4 py-3 text-sm focus:ring-2 focus:ring-primary-500 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                  placeholder="0.00"
+                                />
+                              </div>
+                              <p className="text-[10px] text-gray-400 mt-1 ml-1">
+                                Para administradores, pode ser definido como zero se não houver pró-labore ativo.
+                              </p>
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">
+                                Plano de Saúde (Custo Mensal)
+                              </label>
+                              <div className="relative">
+                                <span className="absolute left-4 top-3 text-sm text-gray-400 font-bold">R$</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  disabled={!canEditFinancials}
+                                  value={formData.healthInsurance || 0}
+                                  onChange={e => setFormData({ ...formData, healthInsurance: parseFloat(e.target.value) || 0 })}
+                                  className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-2xl pl-12 pr-4 py-3 text-sm focus:ring-2 focus:ring-primary-500 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                  placeholder="0.00"
+                                />
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">
+                                Vale Refeição / Alimentação (VR/VA)
+                              </label>
+                              <div className="relative">
+                                <span className="absolute left-4 top-3 text-sm text-gray-400 font-bold">R$</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  disabled={!canEditFinancials}
+                                  value={formData.mealVoucher || 0}
+                                  onChange={e => setFormData({ ...formData, mealVoucher: parseFloat(e.target.value) || 0 })}
+                                  className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-2xl pl-12 pr-4 py-3 text-sm focus:ring-2 focus:ring-primary-500 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                  placeholder="0.00"
+                                />
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">
+                                Vale Transporte (VT)
+                              </label>
+                              <div className="relative">
+                                <span className="absolute left-4 top-3 text-sm text-gray-400 font-bold">R$</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  disabled={!canEditFinancials}
+                                  value={formData.transportVoucher || 0}
+                                  onChange={e => setFormData({ ...formData, transportVoucher: parseFloat(e.target.value) || 0 })}
+                                  className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-2xl pl-12 pr-4 py-3 text-sm focus:ring-2 focus:ring-primary-500 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                  placeholder="0.00"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="md:col-span-2">
+                              <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">
+                                Auxílio Home Office / Custo Internet
+                              </label>
+                              <div className="relative">
+                                <span className="absolute left-4 top-3 text-sm text-gray-400 font-bold">R$</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  disabled={!canEditFinancials}
+                                  value={formData.homeOfficeAux || 0}
+                                  onChange={e => setFormData({ ...formData, homeOfficeAux: parseFloat(e.target.value) || 0 })}
+                                  className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-2xl pl-12 pr-4 py-3 text-sm focus:ring-2 focus:ring-primary-500 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                  placeholder="0.00"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="flex justify-end gap-3 pt-4">
                         <button 
                           onClick={() => setIsEditing(false)}
@@ -1048,6 +1177,104 @@ export default function ProfileView() {
                           );
                         })()}
                       </div>
+
+                      {/* Remuneração & Benefícios (Apenas para donos do perfil e admins/RH) */}
+                      {canViewFinancials && (
+                        <div className="border-t border-gray-200 dark:border-white/5 pt-8">
+                          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 flex items-center">
+                            <DollarSign className="mr-2 text-primary-500" size={16} />
+                            Remuneração & Benefícios (Confidencial)
+                          </h3>
+                          <div className="bg-white/5 border border-white/5 rounded-3xl p-6 space-y-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 text-left">
+                              <div>
+                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                                  Salário Base / Pró-labore
+                                </p>
+                                <p className="text-lg font-black text-white">
+                                  {profile.salary && profile.salary > 0 ? (
+                                    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(profile.salary)
+                                  ) : (
+                                    <span className="text-gray-500 text-sm font-semibold">R$ 0,00 (Sem Pró-labore)</span>
+                                  )}
+                                </p>
+                              </div>
+
+                              <div>
+                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                                  Plano de Saúde
+                                </p>
+                                <p className="text-lg font-bold text-white">
+                                  {profile.healthInsurance ? (
+                                    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(profile.healthInsurance)
+                                  ) : (
+                                    <span className="text-gray-500 text-sm font-semibold">Não possui</span>
+                                  )}
+                                </p>
+                              </div>
+
+                              <div>
+                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                                  Vale Refeição / Alimentação (VR/VA)
+                                </p>
+                                <p className="text-lg font-bold text-white">
+                                  {profile.mealVoucher ? (
+                                    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(profile.mealVoucher)
+                                  ) : (
+                                    <span className="text-gray-500 text-sm font-semibold">Não possui</span>
+                                  )}
+                                </p>
+                              </div>
+
+                              <div>
+                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                                  Vale Transporte (VT)
+                                </p>
+                                <p className="text-lg font-bold text-white">
+                                  {profile.transportVoucher ? (
+                                    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(profile.transportVoucher)
+                                  ) : (
+                                    <span className="text-gray-500 text-sm font-semibold">Não possui</span>
+                                  )}
+                                </p>
+                              </div>
+
+                              <div>
+                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                                  Auxílio Home Office
+                                </p>
+                                <p className="text-lg font-bold text-white">
+                                  {profile.homeOfficeAux ? (
+                                    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(profile.homeOfficeAux)
+                                  ) : (
+                                    <span className="text-gray-500 text-sm font-semibold">Não possui</span>
+                                  )}
+                                </p>
+                              </div>
+
+                              <div>
+                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                                  Custo Total Mensal Estimado
+                                </p>
+                                <p className="text-lg font-black text-primary-400">
+                                  {(() => {
+                                    const base = profile.salary || 0;
+                                    const benefits = (profile.healthInsurance || 0) + (profile.mealVoucher || 0) + (profile.transportVoucher || 0) + (profile.homeOfficeAux || 0);
+                                    
+                                    let total = base + benefits;
+                                    if (profile.contractType === 'CLT') {
+                                      // Provisões CLT: FGTS (8%), 13º (8.33%), Férias (11.11%), Multa FGTS (3.2%)
+                                      const provs = base * (0.08 + 0.0833 + 0.1111 + 0.032);
+                                      total += provs;
+                                    }
+                                    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total);
+                                  })()}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Ausências Recentes - Adicionado para Visibilidade Dupla */}
                       <div className="pt-8 border-t border-gray-100 dark:border-white/5">

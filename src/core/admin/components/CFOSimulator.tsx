@@ -5,7 +5,8 @@ import {
   TrendingDown, CheckCircle, Info, Sparkles
 } from 'lucide-react';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, setDoc } from 'firebase/firestore';
+import { Building, Save, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface CFOSimulatorProps {
@@ -33,11 +34,16 @@ export default function CFOSimulator({ effectiveOrgId }: CFOSimulatorProps) {
   const [hiringMode, setHiringMode] = useState<'CLT' | 'PJ' | 'compare'>('compare');
   const [companyRegime, setCompanyRegime] = useState<'SIMPLES_III' | 'SIMPLES_V' | 'LUCRO_PRESUMIDO'>('SIMPLES_III');
 
+  // Configurações Fiscais Oficiais (Salvas no Firestore para DRE e Financeiro real)
+  const [officialRegime, setOfficialRegime] = useState<'Simples Nacional III' | 'Simples Nacional V' | 'Lucro Presumido' | 'MEI'>('Simples Nacional III');
+  const [officialPorte, setOfficialPorte] = useState<'MEI' | 'ME' | 'EPP' | 'LTDA'>('LTDA');
+  const [isSavingOfficial, setIsSavingOfficial] = useState(false);
+
   // Estados de Simulação do Sócio / Pró-labore
   const [socioNet, setSocioNet] = useState<number>(6000);
   const [previousPayroll, setPreviousPayroll] = useState<number>(15000); // Folha de pagamento anterior estimada para cálculo de Fator R
 
-  // Carrega Caixa e MRR reais do Firebase
+  // Carrega Caixa e MRR reais do Firebase e preferências tributárias oficiais
   useEffect(() => {
     if (!effectiveOrgId) return;
 
@@ -81,11 +87,52 @@ export default function CFOSimulator({ effectiveOrgId }: CFOSimulatorProps) {
       setSimulatedMRR(mrrSum);
     });
 
+    // Assina preferências fiscais oficiais da empresa
+    const prefRef = doc(db, 'organizations', effectiveOrgId, 'settings', 'preferences');
+    const unsubPref = onSnapshot(prefRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data.companyRegime) {
+          setOfficialRegime(data.companyRegime);
+          // Inicializa a simulação para coincidir com o regime oficial
+          setCompanyRegime(
+            data.companyRegime === 'Simples Nacional V'
+              ? 'SIMPLES_V'
+              : data.companyRegime === 'Lucro Presumido'
+                ? 'LUCRO_PRESUMIDO'
+                : 'SIMPLES_III'
+          );
+        }
+        if (data.companyPorte) {
+          setOfficialPorte(data.companyPorte);
+        }
+      }
+    });
+
     return () => {
       unsubTrans();
       unsubClients();
+      unsubPref();
     };
   }, [effectiveOrgId]);
+
+  const handleSaveOfficialConfig = async () => {
+    setIsSavingOfficial(true);
+    try {
+      const prefRef = doc(db, 'organizations', effectiveOrgId, 'settings', 'preferences');
+      await setDoc(prefRef, {
+        companyRegime: officialRegime,
+        companyPorte: officialPorte,
+        updatedAt: Date.now()
+      }, { merge: true });
+      toast.success('Configuração fiscal oficial da empresa salva com sucesso!');
+    } catch (e) {
+      toast.error('Erro ao salvar configuração oficial');
+      console.error(e);
+    } finally {
+      setIsSavingOfficial(false);
+    }
+  };
 
   // --- MOTOR DE CÁLCULO BRASILEIRO VIGENTE (Gross-up e Encargos) ---
   
@@ -328,6 +375,70 @@ export default function CFOSimulator({ effectiveOrgId }: CFOSimulatorProps) {
 
   return (
     <div className="space-y-8 animate-in slide-in-from-bottom duration-500">
+      {/* Seção 0: Configuração Fiscal Oficial (Persistida para DRE e Financeiro real) */}
+      <div className="bg-gradient-to-r from-[#1e293b]/80 to-[#0f172a]/80 backdrop-blur-xl border border-primary-500/20 rounded-[2.5rem] p-6 shadow-2xl text-left relative overflow-hidden group">
+        <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:rotate-12 transition-transform text-white">
+          <Settings size={100} />
+        </div>
+        
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+          <div className="space-y-1">
+            <div className="flex items-center space-x-2">
+              <Building className="text-primary-500" size={20} />
+              <h3 className="text-base font-black text-white uppercase tracking-wider">
+                Configuração Fiscal Oficial da Empresa
+              </h3>
+            </div>
+            <p className="text-xs text-gray-400">
+              Esses dados definem oficialmente o cálculo automático de impostos e encargos trabalhistas na sua DRE.
+            </p>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="space-y-1">
+              <span className="text-[10px] font-black uppercase text-gray-500 block ml-1">Porte Jurídico</span>
+              <select
+                value={officialPorte}
+                onChange={e => setOfficialPorte(e.target.value as any)}
+                className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-gray-200 focus:outline-none focus:border-primary-500 font-bold cursor-pointer mt-1"
+              >
+                <option value="MEI" className="bg-[#0f1117] text-white">MEI (Microempreendedor Individual)</option>
+                <option value="ME" className="bg-[#0f1117] text-white">ME (Microempresa)</option>
+                <option value="EPP" className="bg-[#0f1117] text-white">EPP (Empresa de Pequeno Porte)</option>
+                <option value="LTDA" className="bg-[#0f1117] text-white">LTDA / S.A. (Sociedade Limitada)</option>
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-[10px] font-black uppercase text-gray-500 block ml-1">Regime Fiscal</span>
+              <select
+                value={officialRegime}
+                onChange={e => setOfficialRegime(e.target.value as any)}
+                className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-gray-200 focus:outline-none focus:border-primary-500 font-bold cursor-pointer mt-1"
+              >
+                <option value="MEI" className="bg-[#0f1117] text-white">MEI (DAS Fixo Mensal)</option>
+                <option value="Simples Nacional III" className="bg-[#0f1117] text-white">Simples Nacional - Anexo III (6%)</option>
+                <option value="Simples Nacional V" className="bg-[#0f1117] text-white">Simples Nacional - Anexo V (15.5%)</option>
+                <option value="Lucro Presumido" className="bg-[#0f1117] text-white">Lucro Presumido (~15% total)</option>
+              </select>
+            </div>
+
+            <button
+              onClick={handleSaveOfficialConfig}
+              disabled={isSavingOfficial}
+              className="md:mt-5 flex items-center gap-1.5 px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-xs font-black uppercase shadow-lg shadow-primary-500/20 active:scale-95 transition-all disabled:opacity-50"
+            >
+              {isSavingOfficial ? (
+                <RefreshCw size={14} className="animate-spin" />
+              ) : (
+                <Save size={14} />
+              )}
+              <span>Salvar Oficial</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* 1. Indicadores de Saúde Financeira do CRM */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Caixa da Empresa */}
@@ -436,7 +547,7 @@ export default function CFOSimulator({ effectiveOrgId }: CFOSimulatorProps) {
               </div>
               <input
                 type="range"
-                min="1412"
+                min="0"
                 max="25000"
                 step="100"
                 value={simulatedNet}
@@ -818,7 +929,7 @@ export default function CFOSimulator({ effectiveOrgId }: CFOSimulatorProps) {
               </div>
               <input
                 type="range"
-                min="1412"
+                min="0"
                 max="35000"
                 step="100"
                 value={socioNet}

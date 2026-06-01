@@ -20,6 +20,13 @@ export const teamRemoveSchema = z.object({
 export const teamUpdateProfileSchema = z.object({
   targetUid: z.string().min(1),
   profileData: z.object({
+    displayName: z.string().optional(),
+    bio: z.string().optional(),
+    phoneNumber: z.string().optional(),
+    instagram: z.string().optional(),
+    linkedin: z.string().optional(),
+    photoURL: z.string().optional(),
+    startDate: z.string().optional(),
     jobTitle: z.string().optional(),
     roleId: z.string().optional(),
     reportsTo: z.string().nullable().optional(),
@@ -30,7 +37,12 @@ export const teamUpdateProfileSchema = z.object({
       daysOfWeek: z.array(z.number()),
       entryTime: z.string(),
       exitTime: z.string()
-    }).optional()
+    }).optional(),
+    salary: z.number().optional(),
+    healthInsurance: z.number().optional(),
+    mealVoucher: z.number().optional(),
+    transportVoucher: z.number().optional(),
+    homeOfficeAux: z.number().optional()
   })
 });
 

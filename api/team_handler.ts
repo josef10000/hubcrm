@@ -301,14 +301,26 @@ async function handleUpdateProfile(req: VercelRequest, res: VercelResponse, uid:
     }
   }
 
-  // Barreira de segurança: Apenas Admin ou RH podem alterar regime e jornada de trabalho
-  const hasProtectedFields = 'contractType' in profileData || 'workSchedule' in profileData;
+  // Barreira de segurança: Apenas Admin ou RH podem alterar regime, jornada de trabalho, salários e benefícios
+  const hasProtectedFields = 
+    'contractType' in profileData || 
+    'workSchedule' in profileData ||
+    'salary' in profileData ||
+    'healthInsurance' in profileData ||
+    'mealVoucher' in profileData ||
+    'transportVoucher' in profileData ||
+    'homeOfficeAux' in profileData;
   const isAuthorizedToEditSchedule = isAdminUser || isManagement(editorData);
 
   if (hasProtectedFields && !isAuthorizedToEditSchedule) {
     // Remove os campos protegidos para colaboradores normais para evitar fraudes via payload direto
     delete (profileData as any).contractType;
     delete (profileData as any).workSchedule;
+    delete (profileData as any).salary;
+    delete (profileData as any).healthInsurance;
+    delete (profileData as any).mealVoucher;
+    delete (profileData as any).transportVoucher;
+    delete (profileData as any).homeOfficeAux;
   }
 
   if (profileData?.reportsTo === targetUid) return res.status(400).json({ error: 'Não pode reportar a si mesmo' });

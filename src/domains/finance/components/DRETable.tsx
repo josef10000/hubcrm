@@ -1,8 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useTransactions, useTransactionCategories } from '@/hooks/queries/useFinance';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, DollarSign, Building, Receipt } from 'lucide-react';
 import { Transaction, TransactionCategory } from '@/types';
+import { useAuth } from '@auth/contexts/AuthContext';
+import { db } from '@/lib/firebase';
+import { collection, doc, onSnapshot, query, where } from 'firebase/firestore';
 
 export default function DRETable() {
   const { data: transactionsData } = useTransactions();
@@ -12,6 +15,36 @@ export default function DRETable() {
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [drillDown, setDrillDown] = useState<{ categoryName: string; month: number } | null>(null);
 
+  const { userProfile } = useAuth();
+  const orgId = userProfile?.orgId;
+
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [preferences, setPreferences] = useState<any>(null);
+
+  useEffect(() => {
+    if (!orgId) return;
+
+    // Buscar perfis para folha de pagamento automatizada
+    const profilesQuery = query(collection(db, 'profiles'), where('orgId', '==', orgId));
+    const unsubscribeProfiles = onSnapshot(profilesQuery, (snap) => {
+      const list = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+      setProfiles(list);
+    });
+
+    // Buscar preferências fiscais da organização
+    const prefRef = doc(db, 'organizations', orgId, 'settings', 'preferences');
+    const unsubscribePref = onSnapshot(prefRef, (snap) => {
+      if (snap.exists()) {
+        setPreferences(snap.data());
+      }
+    });
+
+    return () => {
+      unsubscribeProfiles();
+      unsubscribePref();
+    };
+  }, [orgId]);
+
   const toggleRow = (categoryName: string) => {
     setExpandedRows(prev => ({ ...prev, [categoryName]: !prev[categoryName] }));
   };
@@ -19,6 +52,87 @@ export default function DRETable() {
   const currentYear = new Date().getFullYear();
   const months = Array.from({ length: 12 }, (_, i) => new Date(currentYear, i, 1));
   
+  // Cálculo mensal das despesas de folha reais com base nos contratos/benefícios cadastrados
+  const monthlyPersonnelExpenses = useMemo(() => {
+    const expenses = Array(12).fill(0);
+    if (!profiles.length) return expenses;
+
+    profiles.forEach(p => {
+      const base = p.salary || 0;
+      const benefits = (p.healthInsurance || 0) + (p.mealVoucher || 0) + (p.transportVoucher || 0) + (p.homeOfficeAux || 0);
+      
+      let monthlyCost = base + benefits;
+      if (p.contractType === 'CLT') {
+        const provs = base * (0.08 + 0.0833 + 0.1111 + 0.032); // FGTS 8%, 13º 8.33%, Férias 11.11%, Multa FGTS 3.2%
+        monthlyCost += provs;
+      }
+
+      // Se tiver startDate, só conta nos meses a partir da data de início
+      let startMonth = 0;
+      if (p.startDate) {
+        try {
+          const startDateObj = new Date(p.startDate);
+          if (startDateObj.getFullYear() === currentYear) {
+            startMonth = startDateObj.getMonth();
+          } else if (startDateObj.getFullYear() > currentYear) {
+            return;
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      for (let m = startMonth; m < 12; m++) {
+        expenses[m] += monthlyCost;
+      }
+    });
+
+    return expenses;
+  }, [profiles, currentYear]);
+
+  // Pré-cálculo da receita bruta mensal para impostos
+  const monthlyGrossRevenue = useMemo(() => {
+    const revenue = Array(12).fill(0);
+    (transactions || []).forEach(t => {
+      const date = new Date(t.date);
+      if (date.getFullYear() !== currentYear) return;
+      const monthIdx = date.getMonth();
+      if (t.type === 'INCOME') {
+        revenue[monthIdx] += t.amount;
+      }
+    });
+    return revenue;
+  }, [transactions, currentYear]);
+
+  // Cálculo de impostos de faturamento mensais com base no regime tributário ativo da empresa e Fator R
+  const monthlyTaxes = useMemo(() => {
+    const taxes = Array(12).fill(0);
+    const regime = preferences?.companyRegime || 'Simples Nacional III';
+
+    for (let m = 0; m < 12; m++) {
+      const revenue = monthlyGrossRevenue[m];
+      if (revenue <= 0) continue;
+
+      let taxAmount = 0;
+      if (regime === 'MEI') {
+        taxAmount = 75.00; // DAS MEI fixo
+      } else if (regime === 'Simples Nacional III') {
+        taxAmount = revenue * 0.06; // 6%
+      } else if (regime === 'Simples Nacional V') {
+        // Regra do Fator R: se folha / faturamento >= 28%, cai para Anexo III (6%), senão 15.5%
+        const personnelCost = monthlyPersonnelExpenses[m];
+        const ratio = personnelCost / revenue;
+        const taxRate = ratio >= 0.28 ? 0.06 : 0.155;
+        taxAmount = revenue * taxRate;
+      } else if (regime === 'Lucro Presumido') {
+        taxAmount = revenue * 0.15; // 15%
+      }
+      taxes[m] = taxAmount;
+    }
+
+    return taxes;
+  }, [monthlyGrossRevenue, preferences, monthlyPersonnelExpenses]);
+
   const aggregated = useMemo(() => {
     const data: any = { Receitas: {}, Despesas: {}, Deducoes: {} };
     
@@ -40,9 +154,22 @@ export default function DRETable() {
         data.Deducoes['Taxas Gateway'][monthIdx] += t.gatewayFee;
       }
     });
+
+    // Injetar Despesas de Pessoal & Folha (Automático)
+    const hasFolha = monthlyPersonnelExpenses.some(v => v > 0);
+    if (hasFolha) {
+      data.Despesas['Despesas de Pessoal & Folha (Automático)'] = monthlyPersonnelExpenses;
+    }
+
+    // Injetar Impostos (Automático)
+    const hasTaxes = monthlyTaxes.some(v => v > 0);
+    if (hasTaxes) {
+      const label = `Imposto sobre Faturamento (${preferences?.companyRegime || 'Simples Nacional III'})`;
+      data.Deducoes[label] = monthlyTaxes;
+    }
     
     return data;
-  }, [transactions, transactionCategories, currentYear]);
+  }, [transactions, transactionCategories, currentYear, monthlyPersonnelExpenses, monthlyTaxes, preferences]);
 
   const drillDownTransactions = useMemo(() => {
     if (!drillDown) return [];
