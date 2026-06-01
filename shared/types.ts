@@ -115,6 +115,13 @@ export interface UserProfile {
     exitTime: string;     // "HH:MM"
   };
 
+  // Financial / Compensation (visível apenas para Admin/RH)
+  salary?: number;           // Salário base ou pró-labore
+  healthInsurance?: number;  // Plano de saúde
+  mealVoucher?: number;      // Vale-refeição
+  transportVoucher?: number; // Vale-transporte
+  homeOfficeAux?: number;    // Auxílio home-office
+
   // Library Integration
   readingProgress?: Record<string, { currentPage: number; totalPages: number }>;
 
