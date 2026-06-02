@@ -39,6 +39,12 @@ Recentemente, adicionamos uma série de recursos de ponta no **Hub Chat** e no C
     *   **Assinatura Digital no Primeiro Login (Signature Gate):** Um bloqueador de tela (Paywall Legal) em Glassmorphism que intercepta colaboradores comuns (não-admins) que possuam contratos no estado `pending`, forçando a leitura total do documento (detecção de scroll) e o preenchimento de dados de validade jurídica (CPF/CNPJ, RG e Assinatura por nome completo).
     *   **Carimbo Legal de Autenticidade:** O documento assinado é congelado no banco de dados e exibe no perfil do colaborador um carimbo premium holográfico contendo: Hash Criptográfico SHA-256 único, Endereço de IP, data/hora local, navegador/SO do assinante e uma grafia elegante cursiva de sua assinatura, com validade jurídica sob a MP nº 2.200-2/2001.
     *   **Gestão Geral e Histórico:** O Administrador pode disparar contratos adicionais a qualquer momento ou anular/deletar contratos com erros cadastrais para reenvio direto pelo painel. A aba "Documentos" no perfil permite visualizar e gerar PDFs de impressão limpa de todos os contratos a qualquer momento.
+6.  **🎥 Transmissões ao Vivo Híbridas (Jitsi Meet + Firebase + Cloudflare R2):**
+    *   **Vídeo e Áudio Sem Custos (Jitsi Meet):** Transmissões ao vivo iniciadas por gestores utilizando a infraestrutura do Jitsi Meet embutida. Para os colaboradores/espectadores, o iframe do player é limpo, ocultando botões de câmera, microfone e controles para uma experiência view-only perfeita.
+    *   **Chat em Tempo Real Personalizado:** Painel lateral de comentários reativo conectado diretamente ao Firebase Firestore, permitindo apenas texto e emojis, mantendo a equipe focada na live.
+    *   **Notificações & Banners Reativos:** Banner vermelho pulsante no topo do CRM com alerta visual "Ao Vivo" para todos os colaboradores, além de disparo de notificações nativas do navegador.
+    *   **Gravação Local e R2 (Econômico):** Gravação local opcional no navegador do apresentador via `MediaRecorder` que realiza o upload da live ao R2 via Presigned URLs ao encerrar, economizando largura de banda e taxas de transferência (egress).
+    *   **Biblioteca de Mídias & Wiki:** As gravações salvas no R2 são organizadas em um painel seletor (Biblioteca de Mídias), permitindo anexar o player de vídeo nativo em artigos e tutoriais da Wiki de forma manual e flexível.
 
 ---
 
