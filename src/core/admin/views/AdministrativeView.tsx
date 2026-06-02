@@ -117,7 +117,7 @@ export default function AdministrativeView() {
         </div>
 
         {/* Navegação por Abas Premium em Glassmorphism sem scrollbar feia */}
-        <div className="flex gap-2 p-1.5 bg-black/20 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-2xl mb-8 overflow-x-auto no-scrollbar shrink-0 max-w-4xl shadow-xl">
+        <div className="flex gap-2 pt-1.5 px-1.5 pb-2.5 bg-black/20 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-2xl mb-8 overflow-x-auto custom-scrollbar shrink-0 max-w-4xl shadow-xl">
           <button
             onClick={() => setActiveAdminTab('team')}
             className={`relative flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors duration-300 ${

@@ -417,7 +417,7 @@ export default function ClientPortal() {
 
         {/* Service Selector / Subscriptions Switcher */}
         {allLinkedClients.length > 1 && (
-          <div className="mb-8 p-1.5 bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] flex overflow-x-auto no-scrollbar gap-1">
+          <div className="mb-8 pt-1.5 px-1.5 pb-2.5 bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] flex overflow-x-auto custom-scrollbar gap-1">
             {allLinkedClients.map(linked => (
               <button
                 key={linked.id}

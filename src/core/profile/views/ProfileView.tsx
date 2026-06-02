@@ -4,7 +4,7 @@ import {
   User as UserIcon, Mail, Phone, Instagram, Linkedin, 
   ChevronLeft, Edit3, Save, X, Briefcase, Info, 
   Shield, Globe, MapPin, Loader2, Camera, Cake, Calendar,
-  Target, ChevronDown, CheckCircle2, Circle, Star, Wallet, TrendingUp, Clock, Plane, AlertTriangle, CalendarDays, DollarSign
+  Target, ChevronDown, CheckCircle2, Circle, Star, Wallet, TrendingUp, Clock, Plane, AlertTriangle, CalendarDays, DollarSign, Pencil
 } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useDialog } from '@auth/contexts/DialogContext';
@@ -177,6 +177,12 @@ export default function ProfileView() {
   const [showAddAssetModal, setShowAddAssetModal] = useState(false);
   const [showAddMilestoneModal, setShowAddMilestoneModal] = useState(false);
   const [showEditSkillsModal, setShowEditSkillsModal] = useState(false);
+
+  // Estados para edição de Logs de Ponto (Expediente) pelo Admin
+  const [editingTimeLog, setEditingTimeLog] = useState<TimeLog | null>(null);
+  const [editDate, setEditDate] = useState<string>('');
+  const [editStartTime, setEditStartTime] = useState<string>('');
+  const [editEndTime, setEditEndTime] = useState<string>('');
   
   const [newVacation, setNewVacation] = useState<Partial<VacationPeriod>>({
     type: 'Férias',
@@ -467,6 +473,55 @@ export default function ProfileView() {
     }
   };
 
+  const handleOpenEditLog = (log: TimeLog) => {
+    setEditingTimeLog(log);
+    setEditDate(log.date);
+    setEditStartTime(formatToBrasiliaTime(log.startTime, 'HH:mm'));
+    setEditEndTime(log.endTime ? formatToBrasiliaTime(log.endTime, 'HH:mm') : '');
+  };
+
+  const handleSaveEditedLog = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTimeLog || !currentUserProfile?.orgId || !user?.uid) return;
+
+    try {
+      const [startH, startM] = editStartTime.split(':').map(Number);
+      const [yr, mo, dy] = editDate.split('-').map(Number);
+      
+      const startDt = new Date(yr, mo - 1, dy, startH, startM, 0, 0);
+      const newStartTime = startDt.getTime();
+      
+      let newEndTime: number | undefined = undefined;
+      
+      if (editEndTime) {
+        const [endH, endM] = editEndTime.split(':').map(Number);
+        const endDt = new Date(yr, mo - 1, dy, endH, endM, 0, 0);
+        newEndTime = endDt.getTime();
+      }
+
+      const newDuration = calculateNetDuration(newStartTime, newEndTime, editingTimeLog.pauses);
+      const logRef = doc(db, 'organizations', currentUserProfile.orgId, 'time_logs', editingTimeLog.id);
+      
+      await setDoc(logRef, {
+        date: editDate,
+        startTime: newStartTime,
+        endTime: newEndTime || null,
+        status: newEndTime ? 'completed' : 'active',
+        totalDuration: newDuration,
+        updatedAt: Date.now(),
+        editedByAdmin: true,
+        adminId: user.uid,
+        editedAt: Date.now()
+      }, { merge: true });
+
+      toast.success('Ponto eletrônico atualizado e auditado com sucesso!');
+      setEditingTimeLog(null);
+    } catch (err) {
+      console.error('[ProfileView] Erro ao editar registro de ponto:', err);
+      toast.error('Erro ao salvar registro de ponto.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center bg-transparent">
@@ -674,7 +729,7 @@ export default function ProfileView() {
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-gray-100 dark:bg-white/5 backdrop-blur-3xl border border-gray-200 dark:border-white/10 rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden">
               {/* Tabs sem scrollbar feia e com pílula deslizante fluida */}
-              <div className="flex gap-2 mb-8 overflow-x-auto no-scrollbar pb-1.5 scroll-smooth max-w-full">
+              <div className="flex gap-2 mb-8 overflow-x-auto custom-scrollbar pb-2.5 scroll-smooth max-w-full">
                 <motion.button 
                   whileTap={{ scale: 0.96 }}
                   onClick={() => setActiveTab('info')}
@@ -1866,12 +1921,22 @@ export default function ProfileView() {
                             <th className="py-4 px-2">Saída</th>
                             <th className="py-4 px-2">Intervalos/Pausas</th>
                             <th className="py-4 px-2">Total Líquido</th>
+                            {(isAdmin || isManagement) && <th className="py-4 px-2 text-right">Ações</th>}
                           </tr>
                         </thead>
                         <tbody className="text-sm">
                           {myMonthlyLogs.map(log => (
                             <tr key={log.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                              <td className="py-4 px-2 font-bold">{formatLocalDateStr(log.date)}</td>
+                              <td className="py-4 px-2 font-bold">
+                                <div className="flex items-center gap-1.5">
+                                  <span>{formatLocalDateStr(log.date)}</span>
+                                  {log.editedByAdmin && (
+                                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-black uppercase tracking-tighter shrink-0" title="Registro ajustado manualmente por um Administrador">
+                                      Ajustado
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
                               <td className="py-4 px-2 font-mono">{formatToBrasiliaTime(log.startTime, 'HH:mm:ss')}</td>
                               <td className="py-4 px-2 font-mono">
                                 {log.endTime ? formatToBrasiliaTime(log.endTime, 'HH:mm:ss') : <span className="text-emerald-500 font-bold">Ativo</span>}
@@ -1893,11 +1958,22 @@ export default function ProfileView() {
                               <td className="py-4 px-2 font-mono font-bold text-primary-500">
                                 {formatDuration(log.totalDuration || calculateNetDuration(log.startTime, log.endTime, log.pauses))}
                               </td>
+                              {(isAdmin || isManagement) && (
+                                <td className="py-4 px-2 text-right">
+                                  <button
+                                    onClick={() => handleOpenEditLog(log)}
+                                    className="p-2 hover:bg-white/10 rounded-xl transition-all text-primary-500 cursor-pointer inline-flex items-center justify-center"
+                                    title="Editar Ponto do Colaborador"
+                                  >
+                                    <Pencil size={14} />
+                                  </button>
+                                </td>
+                              )}
                             </tr>
                           ))}
                           {myMonthlyLogs.length === 0 && (
                             <tr>
-                              <td colSpan={5} className="py-12 text-center opacity-30 italic text-sm">
+                              <td colSpan={(isAdmin || isManagement) ? 6 : 5} className="py-12 text-center opacity-30 italic text-sm">
                                 Nenhum registro de expediente encontrado para este período.
                               </td>
                             </tr>
@@ -2017,6 +2093,79 @@ export default function ProfileView() {
           targetUserId={uid!}
           onSuccess={handleRefresh}
         />
+
+        {/* Modal de Edição de Ponto pelo Admin */}
+        {editingTimeLog && (
+           <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4" onClick={() => setEditingTimeLog(null)}>
+              <div className="bg-white dark:bg-[#0a0a0a] rounded-[2.5rem] border border-gray-200 dark:border-white/10 w-full max-w-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                 <div className="p-8 border-b border-gray-100 dark:border-white/5 flex justify-between items-center shrink-0 text-left">
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Ajustar Ponto Eletrônico</h3>
+                    <button onClick={() => setEditingTimeLog(null)} className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full text-gray-500 hover:text-gray-900 dark:hover:text-white"><X /></button>
+                 </div>
+                 <form onSubmit={handleSaveEditedLog} className="p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
+                    <div className="space-y-2 text-left">
+                       <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Colaborador</label>
+                       <div className="p-4 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                         <span className="w-2.5 h-2.5 rounded-full bg-primary-500 animate-pulse" />
+                         {editingTimeLog.userName}
+                       </div>
+                    </div>
+
+                    <div className="space-y-2 text-left">
+                       <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Data do Log</label>
+                       <input 
+                         type="date" 
+                         required 
+                         className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-2xl focus:outline-none focus:border-primary-500 transition-all font-medium text-gray-800 dark:text-white" 
+                         value={editDate} 
+                         onChange={e => setEditDate(e.target.value)} 
+                       />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                       <div className="space-y-2 text-left">
+                          <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Hora Entrada</label>
+                          <input 
+                            type="time" 
+                            required 
+                            className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-2xl focus:outline-none focus:border-primary-500 transition-all font-medium text-gray-800 dark:text-white" 
+                            value={editStartTime} 
+                            onChange={e => setEditStartTime(e.target.value)} 
+                          />
+                       </div>
+
+                       <div className="space-y-2 text-left">
+                          <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Hora Saída</label>
+                          <input 
+                            type="time" 
+                            className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-2xl focus:outline-none focus:border-primary-500 transition-all font-medium text-gray-800 dark:text-white" 
+                            value={editEndTime} 
+                            onChange={e => setEditEndTime(e.target.value)} 
+                            placeholder="Ainda trabalhando..."
+                          />
+                          <p className="text-[10px] text-gray-500 mt-1 pl-1">Deixe em branco se o expediente continuar ativo.</p>
+                       </div>
+                    </div>
+
+                    <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-left">
+                       <p className="text-xs text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                         <Info size={14} /> Observação de Ajuste & Auditoria
+                       </p>
+                       <p className="text-[11px] text-amber-600/90 dark:text-amber-400/80 leading-relaxed">
+                         Ao salvar as alterações, este ponto será marcado com o status <strong>"Concluído"</strong> (caso preenchida a saída) e a alteração será registrada internamente contendo sua identificação de Administrador no log de auditoria.
+                       </p>
+                    </div>
+
+                    <button 
+                      type="submit" 
+                      className="w-full py-4 bg-primary-500 hover:bg-primary-600 text-white font-black uppercase rounded-2xl transition-all shadow-xl shadow-primary-500/20 active:scale-95 text-sm shrink-0 cursor-pointer mt-4"
+                    >
+                      Salvar Alterações
+                    </button>
+                 </form>
+              </div>
+           </div>
+        )}
 
       </div>
     </div>
