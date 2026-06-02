@@ -28,6 +28,11 @@ export interface TimeLog {
   overtimeMinutesRequested?: number;
   overtimeApprovedAt?: number;
   overtimeExpiresAt?: number;
+
+  // Metadados de Auditoria Administrativa
+  editedByAdmin?: boolean;
+  adminId?: string;
+  editedAt?: number;
 }
 
 export interface TimeTrackingSlice {
