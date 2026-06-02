@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Lock, Eye, Globe, Shield, User, Book } from 'lucide-react';
+import { X, Save, Lock, Eye, Globe, Shield, User, Book, Video } from 'lucide-react';
 import { WikiArticle, WikiCategory, UserRole } from '@/types';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useNexusStore } from '@store/useNexusStore';
 import RichTextEditor from '@shared/components/RichTextEditor';
+import MediaLibrary from '@/views/MediaLibrary';
+import { toast } from 'sonner';
 
 interface WikiEditorModalProps {
   isOpen: boolean;
@@ -29,6 +31,24 @@ export default function WikiEditorModal({ isOpen, onClose, initialData }: WikiEd
     allowedUserIds: [],
     isPopular: false
   });
+
+  const [isMediaSelectorOpen, setIsMediaSelectorOpen] = useState(false);
+
+  const handleSelectMedia = (media: any) => {
+    const videoHtml = `<p></p><video src="${media.mediaUrl}" controls class="w-full max-h-[450px] rounded-2xl border border-white/10 shadow-2xl my-6 bg-black" style="width: 100%; max-height: 450px; border-radius: 1rem;"></video><p></p>`;
+    
+    const el = document.querySelector('[contenteditable]');
+    if (el) {
+      (el as HTMLElement).focus();
+      document.execCommand('insertHTML', false, videoHtml);
+      setFormData(prev => ({ ...prev, content: el.innerHTML }));
+    } else {
+      setFormData(prev => ({ ...prev, content: (prev.content || '') + videoHtml }));
+    }
+    
+    setIsMediaSelectorOpen(false);
+    toast.success(`Vídeo "${media.title}" anexado ao artigo com sucesso!`);
+  };
 
   useEffect(() => {
     if (initialData) {
@@ -105,7 +125,16 @@ export default function WikiEditorModal({ isOpen, onClose, initialData }: WikiEd
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">Conteúdo do Artigo</label>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-sm font-medium text-gray-400">Conteúdo do Artigo</label>
+                  <button
+                    type="button"
+                    onClick={() => setIsMediaSelectorOpen(true)}
+                    className="flex items-center gap-1.5 text-xs font-bold text-rose-500 hover:text-rose-600 transition-colors border border-rose-500/20 hover:border-rose-500/40 bg-rose-500/5 hover:bg-rose-500/10 px-3.5 py-1.5 rounded-xl cursor-pointer"
+                  >
+                    <Video size={14} /> Anexar Live Gravada (R2)
+                  </button>
+                </div>
                 <RichTextEditor
                   ref={editorRef}
                   value={formData.content || ''}
@@ -266,6 +295,18 @@ export default function WikiEditorModal({ isOpen, onClose, initialData }: WikiEd
           </button>
         </div>
       </div>
+
+      {isMediaSelectorOpen && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-black/85 backdrop-blur-md" onClick={() => setIsMediaSelectorOpen(false)}>
+          <div className="bg-zinc-900 border border-white/10 rounded-[2.5rem] w-full max-w-4xl max-h-[85vh] overflow-y-auto custom-scrollbar p-6 text-left" onClick={e => e.stopPropagation()}>
+            <MediaLibrary
+              isSelectionMode={true}
+              onSelect={handleSelectMedia}
+              onBack={() => setIsMediaSelectorOpen(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
