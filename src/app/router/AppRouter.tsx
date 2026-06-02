@@ -20,6 +20,8 @@ const NotificationsView = lazy(() => import('@core/notifications/views/Notificat
 const WikiView = lazy(() => import('@wiki/views/WikiView'));
 const SettingsView = lazy(() => import('@core/settings/views/SettingsView'));
 const ProfileView = lazy(() => import('@core/profile/views/ProfileView'));
+const ComplianceOuvidoriaView = lazy(() => import('@/views/ComplianceOuvidoriaView'));
+const ComplianceAdminView = lazy(() => import('@/views/ComplianceAdminView'));
 
 // Shared / Infrastructure (Lazy Loaded)
 const CalendarView = lazy(() => import('@shared/components/CalendarView'));
@@ -140,6 +142,8 @@ export function AppRouter() {
                       <Route path="/workspace" element={<MyWorkspaceView />} />
                       <Route path="/arena" element={<ArenaView />} />
                       <Route path="/shop" element={<HubShopView />} />
+                      <Route path="/ouvidoria" element={<ComplianceOuvidoriaView />} />
+                      <Route path="/compliance-admin" element={<ComplianceAdminView />} />
                       
                       {/* Security Based Route */}
                       <Route path="/compliance" element={hasPermission('MANAGE_SETTINGS') ? <AuditDashboard /> : <Navigate to="/" />} />

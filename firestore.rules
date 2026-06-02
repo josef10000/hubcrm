@@ -171,8 +171,22 @@ service cloud.firestore {
       match /team_invites/{id} {
         allow read, write: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_TEAM');
       }
-
-
+      
+      // 🛡️ HUB COMPLIANCE — Ouvidoria e Linha Ética
+      match /compliance_tickets/{ticketId} {
+        allow create: if isOwnerEmail() || (
+          belongsToOrg(orgId) && 
+          (request.resource.data.isAnonymous == false || request.resource.data.userId == null)
+        );
+        allow get: if isOwnerEmail() || belongsToOrg(orgId);
+        allow list, delete: if isOwnerEmail() || isOrgAdmin(orgId) || hasPermission(orgId, 'MANAGE_TEAM');
+        allow update: if isOwnerEmail() || isOrgAdmin(orgId) || hasPermission(orgId, 'MANAGE_TEAM');
+        
+        match /messages/{messageId} {
+          allow read, create: if isOwnerEmail() || belongsToOrg(orgId);
+          allow delete: if isOwnerEmail() || isOrgAdmin(orgId) || hasPermission(orgId, 'MANAGE_TEAM');
+        }
+      }
 
       match /{collection}/{docId} {
         allow read: if isOwnerEmail() || belongsToOrg(orgId);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Search, Menu, X, Plus, Download, Focus, Video, Clock } from 'lucide-react';
+import { Search, Menu, X, Plus, Download, Focus, Video, Clock, Shield } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
@@ -234,6 +234,22 @@ export function Header({ currentPath, navigate }: HeaderProps) {
                 store.todayLog.status === 'active' ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
               }`} />
             )}
+          </button>
+        )}
+        <button
+          onClick={() => navigate('/ouvidoria')}
+          className="p-2.5 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0"
+          title="Canal de Ouvidoria & Linha Ética"
+        >
+          <Shield size={16} />
+        </button>
+        {(userProfile?.isAdmin || (typeof userProfile?.role === 'string' && (userProfile.role.toLowerCase() === 'admin' || userProfile.role.toLowerCase() === 'rh'))) && (
+          <button
+            onClick={() => navigate('/compliance-admin')}
+            className="p-2.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-500 rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0 flex items-center justify-center"
+            title="Painel de Ouvidoria (RH / Gestão)"
+          >
+            <Shield size={16} className="text-rose-500 animate-pulse" />
           </button>
         )}
         <button

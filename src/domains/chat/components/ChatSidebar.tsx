@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Plus, MessageCircle, User, Users, Star, Bookmark, Calendar, BellOff, Bell, Trash2, ShieldOff, Hash, Compass, LogOut, AlertTriangle } from 'lucide-react';
+import { Search, Plus, MessageCircle, User, Users, Star, Bookmark, Calendar, BellOff, Bell, Trash2, ShieldOff, Hash, Compass, LogOut, AlertTriangle, Shield } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc, deleteDoc, collection, getDocs, writeBatch, setDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
@@ -202,6 +202,13 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-tighter">Mensagens</h2>
           <div className="flex gap-2">
+            <button 
+              onClick={() => navigate('/ouvidoria')}
+              title="Ouvidoria & Canal Ético"
+              className="p-2 bg-white dark:bg-white/10 text-rose-500 dark:text-rose-400 border border-gray-200 dark:border-white/10 rounded-xl shadow-sm hover:scale-105 transition-transform flex items-center justify-center"
+            >
+              <Shield size={18} />
+            </button>
             <button 
               onClick={() => setIsNewChatModalOpen(true)}
               title="Nova Conversa 1:1"

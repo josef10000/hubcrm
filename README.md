@@ -39,6 +39,11 @@ Recentemente, adicionamos uma série de recursos de ponta no **Hub Chat** e no C
     *   **Assinatura Digital no Primeiro Login (Signature Gate):** Um bloqueador de tela (Paywall Legal) em Glassmorphism que intercepta colaboradores comuns (não-admins) que possuam contratos no estado `pending`, forçando a leitura total do documento (detecção de scroll) e o preenchimento de dados de validade jurídica (CPF/CNPJ, RG e Assinatura por nome completo).
     *   **Carimbo Legal de Autenticidade:** O documento assinado é congelado no banco de dados e exibe no perfil do colaborador um carimbo premium holográfico contendo: Hash Criptográfico SHA-256 único, Endereço de IP, data/hora local, navegador/SO do assinante e uma grafia elegante cursiva de sua assinatura, com validade jurídica sob a MP nº 2.200-2/2001.
     *   **Gestão Geral e Histórico:** O Administrador pode disparar contratos adicionais a qualquer momento ou anular/deletar contratos com erros cadastrais para reenvio direto pelo painel. A aba "Documentos" no perfil permite visualizar e gerar PDFs de impressão limpa de todos os contratos a qualquer momento.
+6.  **🛡️ Ouvidoria & Linha Ética Premium (Compliance Legal):**
+    *   **Canal em Conformidade Legal (Lei nº 14.457/2022):** Canal seguro e integrado para envio de denúncias, reclamações, sugestões e elogios internos.
+    *   **Anonimato Real Garantido:** Fluxo inteligente no Firestore que blinda o envio de dados identificáveis (userId, IP, etc.) para manifestações marcadas como anônimas.
+    *   **Diálogo Bidirecional por Protocolo:** Geração automática de chave de protocolo alfanumérica única (`ETH-XXXXXX`), que permite ao colaborador acompanhar de forma segura e dialogar anonimamente com a gestão através de chat em tempo real.
+    *   **Painel Administrativo do RH:** Listagem consolidada com controle de status da investigação (`Recebido`, `Em Análise`, `Resolvido`) e chat direto para resposta do RH ao manifestante.
 
 ---
 
