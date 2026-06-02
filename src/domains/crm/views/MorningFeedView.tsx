@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useCRM } from '@crm/contexts/CRMContext';
-import { useAuth } from '@auth/contexts/AuthContext';
 import { Coffee, Briefcase, Sun, Loader2 } from 'lucide-react';
-import BentoWelcome from '../components/BentoWelcome';
 import BentoTicker from '../components/BentoTicker';
 import FeedNews from '../components/FeedNews';
 import FeedAnimeList from '../components/FeedAnimeList';
@@ -11,13 +8,9 @@ import TeamCelebrations from '../components/TeamCelebrations';
 import DashboardView from './DashboardView';
 
 export default function MorningFeedView() {
-  const { user } = useAuth();
-  const { userProfile } = useCRM();
   const [viewMode, setViewMode] = useState<'morning' | 'work'>('morning');
   const [feedData, setFeedData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-
-  const userName = userProfile?.displayName || user?.displayName || 'Colaborador';
 
   useEffect(() => {
     setLoading(true);
@@ -94,29 +87,24 @@ export default function MorningFeedView() {
               <BentoTicker financial={feedData.financial} />
             )}
 
-            {/* Bento Grid Principal */}
+            {/* Bento Grid Superior: Notícias (8 colunas) e Animes (4 colunas) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-              <div className="lg:col-span-4 h-full">
-                <BentoWelcome userName={userName} />
-              </div>
               <div className="lg:col-span-8 h-full">
                 <FeedNews news={feedData?.news || []} />
               </div>
-            </div>
-
-            {/* Grid Secundário: Comunicados e Celebrações */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-              <div className="lg:col-span-8 h-full">
-                <CompanyAnnouncements />
-              </div>
-              <div className="lg:col-span-4 h-full col-start-auto">
+              <div className="lg:col-span-4 h-full">
                 <FeedAnimeList animes={feedData?.animes || []} />
               </div>
             </div>
 
-            {/* Aniversariantes */}
-            <div className="grid grid-cols-1 gap-6">
-              <TeamCelebrations />
+            {/* Bento Grid Inferior: Comunicados (8 colunas) e Aniversariantes (4 colunas) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+              <div className="lg:col-span-8 h-full">
+                <CompanyAnnouncements />
+              </div>
+              <div className="lg:col-span-4 h-full">
+                <TeamCelebrations />
+              </div>
             </div>
           </div>
         ) : (
