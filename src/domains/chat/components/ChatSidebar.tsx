@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Search, Plus, MessageCircle, User, Users, Star, Bookmark, Calendar, BellOff, Bell, Trash2, ShieldOff, Hash, Compass, LogOut, AlertTriangle } from 'lucide-react';
+import { Search, Plus, MessageCircle, User, Users, Star, Bookmark, Calendar, BellOff, Bell, Trash2, ShieldOff, Hash, Compass, LogOut, AlertTriangle, Radio } from 'lucide-react';
 import { db } from '@/lib/firebase';
-import { doc, updateDoc, deleteDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
+import { doc, updateDoc, deleteDoc, collection, getDocs, writeBatch, setDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
 import { Chat } from '@/types/chat.types';
 import { formatChatTime } from '@/helpers/chatHelpers';
@@ -17,7 +17,6 @@ import { useDialog } from '@auth/contexts/DialogContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
 import { useNavigate } from 'react-router-dom';
 import { StartLiveModal } from './StartLiveModal';
-import { setDoc, doc } from 'firebase/firestore';
 
 interface ChatSidebarProps {
   chats: Chat[];

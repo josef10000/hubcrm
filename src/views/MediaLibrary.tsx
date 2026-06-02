@@ -3,7 +3,7 @@ import { useAuth } from '@auth/contexts/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { toast } from 'sonner';
-import { Video, Clock, Calendar, Copy, Play, ArrowLeft, Trash2, Search, Link2, Check } from 'lucide-react';
+import { Video, Clock, Calendar, Copy, Play, ArrowLeft, Trash2, Search, Link2, Check, Loader2, X } from 'lucide-react';
 
 interface MediaItem {
   id: string;
