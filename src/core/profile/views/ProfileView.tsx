@@ -478,6 +478,49 @@ export default function ProfileView() {
     setIsSaving(true);
     try {
       const token = await user?.getIdToken();
+      
+      // Sanitizar dados para o backend (remover campos vazios/inválidos para passar no esquema Zod)
+      const sanitizedProfileData = { ...formData };
+      
+      // 1. Tratar pixKeyType e pixKey vazios
+      if (!sanitizedProfileData.pixKeyType || sanitizedProfileData.pixKeyType === '') {
+        delete (sanitizedProfileData as any).pixKeyType;
+      }
+      if (!sanitizedProfileData.pixKey || sanitizedProfileData.pixKey.trim() === '') {
+        delete (sanitizedProfileData as any).pixKey;
+      }
+      
+      // 2. Tratar bankAccount vazio
+      const bank = sanitizedProfileData.bankAccount;
+      if (bank) {
+        const hasAnyBankData = 
+          (bank.bankCode && bank.bankCode.trim() !== '') ||
+          (bank.agency && bank.agency.trim() !== '') ||
+          (bank.account && bank.account.trim() !== '') ||
+          (bank.holderName && bank.holderName.trim() !== '');
+          
+        if (!hasAnyBankData) {
+          sanitizedProfileData.bankAccount = null;
+        } else {
+          sanitizedProfileData.bankAccount = {
+            bankCode: bank.bankCode || '',
+            bankName: bank.bankName || '',
+            agency: bank.agency || '',
+            account: bank.account || '',
+            accountDigit: bank.accountDigit || '',
+            accountType: bank.accountType || 'CHECKING',
+            holderName: bank.holderName || '',
+            holderCpfCnpj: bank.holderCpfCnpj || ''
+          };
+        }
+      }
+      
+      // 3. Tratar resignationDetails vazio
+      const resignation = sanitizedProfileData.resignationDetails;
+      if (resignation && (!resignation.resignationDate || resignation.resignationDate.trim() === '')) {
+        sanitizedProfileData.resignationDetails = null;
+      }
+
       const res = await fetch('/api/team/update-profile', {
         method: 'POST',
         headers: {
@@ -486,7 +529,7 @@ export default function ProfileView() {
         },
         body: JSON.stringify({
           targetUid: uid,
-          profileData: formData
+          profileData: sanitizedProfileData
         })
       });
 
@@ -508,7 +551,6 @@ export default function ProfileView() {
     } catch (error) {
       toast.error('Erro ao salvar alterações');
     } finally {
-      setIsSaving(true); // Manter coerência com o original que setava true no finally também (bug original?)
       setIsSaving(false);
     }
   };
