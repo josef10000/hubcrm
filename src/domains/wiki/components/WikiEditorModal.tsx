@@ -116,6 +116,7 @@ export default function WikiEditorModal({ isOpen, onClose, initialData }: WikiEd
                   placeholder="Escreva o conteúdo detalhado aqui..."
                 />
               </div>
+            </div>
 
             {/* Sidebar Config */}
             <div className="space-y-6">
