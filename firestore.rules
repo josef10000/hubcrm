@@ -172,17 +172,7 @@ service cloud.firestore {
         allow read, write: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_TEAM');
       }
 
-      // 🎥 HUB LIVES — Transmissões ao Vivo e Comunicados
-      match /live_broadcasts/{broadcastId} {
-        allow read: if isOwnerEmail() || belongsToOrg(orgId) || (resource.data.allowExternal == true);
-        allow write: if isOwnerEmail() || isOrgAdmin(orgId);
-        
-        match /comments/{commentId} {
-          allow read: if isOwnerEmail() || belongsToOrg(orgId) || (get(/databases/$(database)/documents/organizations/$(orgId)/live_broadcasts/$(broadcastId)).data.allowExternal == true);
-          allow create: if isOwnerEmail() || belongsToOrg(orgId) || (get(/databases/$(database)/documents/organizations/$(orgId)/live_broadcasts/$(broadcastId)).data.allowExternal == true);
-          allow delete: if isOwnerEmail() || isOrgAdmin(orgId) || (request.auth != null && request.auth.uid == resource.data.userId);
-        }
-      }
+
 
       match /{collection}/{docId} {
         allow read: if isOwnerEmail() || belongsToOrg(orgId);

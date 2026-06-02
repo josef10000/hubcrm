@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Plus, MessageCircle, User, Users, Star, Bookmark, Calendar, BellOff, Bell, Trash2, ShieldOff, Hash, Compass, LogOut, AlertTriangle, Radio } from 'lucide-react';
+import { Search, Plus, MessageCircle, User, Users, Star, Bookmark, Calendar, BellOff, Bell, Trash2, ShieldOff, Hash, Compass, LogOut, AlertTriangle } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc, deleteDoc, collection, getDocs, writeBatch, setDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
@@ -16,7 +16,6 @@ import ExploreChannelsModal from './ExploreChannelsModal';
 import { useDialog } from '@auth/contexts/DialogContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
 import { useNavigate } from 'react-router-dom';
-import { StartLiveModal } from './StartLiveModal';
 
 interface ChatSidebarProps {
   chats: Chat[];
@@ -35,46 +34,6 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
   const [searchTerm, setSearchTerm] = useState('');
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
   const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false);
-  const [isLiveModalOpen, setIsLiveModalOpen] = useState(false);
-
-  const handleCreateLive = async (data: {
-    title: string;
-    description: string;
-    recordEnabled: boolean;
-    allowExternal: boolean;
-  }) => {
-    if (!effectiveOrgId || !userProfile?.uid) return;
-
-    const liveId = `live_${Date.now()}`;
-    const token = data.allowExternal 
-      ? Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) 
-      : undefined;
-
-    try {
-      const docRef = doc(db, 'organizations', effectiveOrgId, 'live_broadcasts', liveId);
-      await setDoc(docRef, {
-        id: liveId,
-        title: data.title,
-        description: data.description,
-        hostId: userProfile.uid,
-        hostName: userProfile.displayName || 'Gestor',
-        status: 'active',
-        jitsiRoomName: `HubLive_${effectiveOrgId}_${liveId}`,
-        allowExternal: data.allowExternal,
-        token,
-        recordEnabled: data.recordEnabled,
-        mediaUrl: null,
-        createdAt: Date.now(),
-        endedAt: null
-      });
-
-      toast.success('Sala de transmissão gerada com sucesso!');
-      navigate(`/live/${liveId}`);
-    } catch (err) {
-      console.error('Erro ao criar live:', err);
-      toast.error('Erro ao iniciar transmissão.');
-    }
-  };
   const [activeTab, setActiveTab ] = useState<'chats' | 'channels' | 'saved'>('chats');
   const [selectedCategory, setSelectedCategory] = useState<string>('todos');
   const { bookmarks, loading: bookmarksLoading, updateBookmark } = useBookmarks();
@@ -243,15 +202,6 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-tighter">Mensagens</h2>
           <div className="flex gap-2">
-            {hasAnyPermission(['MANAGE_TEAM', 'MANAGE_SETTINGS']) && (
-              <button 
-                onClick={() => setIsLiveModalOpen(true)}
-                title="Iniciar Transmissão ao Vivo (Comunicado)"
-                className="p-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/20 rounded-xl shadow-sm hover:scale-105 transition-all flex items-center justify-center"
-              >
-                <Radio size={18} />
-              </button>
-            )}
             <button 
               onClick={() => setIsNewChatModalOpen(true)}
               title="Nova Conversa 1:1"
@@ -757,11 +707,6 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
         </>
       )}
 
-      <StartLiveModal
-        isOpen={isLiveModalOpen}
-        onClose={() => setIsLiveModalOpen(false)}
-        onSubmit={handleCreateLive}
-      />
     </div>
   );
 }

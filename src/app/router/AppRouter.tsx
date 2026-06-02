@@ -20,8 +20,6 @@ const NotificationsView = lazy(() => import('@core/notifications/views/Notificat
 const WikiView = lazy(() => import('@wiki/views/WikiView'));
 const SettingsView = lazy(() => import('@core/settings/views/SettingsView'));
 const ProfileView = lazy(() => import('@core/profile/views/ProfileView'));
-const LiveBroadcastView = lazy(() => import('@/views/LiveBroadcastView'));
-const MediaLibrary = lazy(() => import('@/views/MediaLibrary'));
 
 // Shared / Infrastructure (Lazy Loaded)
 const CalendarView = lazy(() => import('@shared/components/CalendarView'));
@@ -91,7 +89,6 @@ export function AppRouter() {
         <Route path="/onboarding" element={<OnboardingForm />} />
         <Route path="/checkout/:id" element={<PublicCheckoutPage />} />
         <Route path="/invite/:id" element={<AcceptInviteView />} />
-        <Route path="/live/public/:id" element={<LiveBroadcastView />} />
 
         {/* Private Workspace Routes */}
         <Route path="/*" element={
@@ -143,8 +140,6 @@ export function AppRouter() {
                       <Route path="/workspace" element={<MyWorkspaceView />} />
                       <Route path="/arena" element={<ArenaView />} />
                       <Route path="/shop" element={<HubShopView />} />
-                      <Route path="/live/:id" element={<LiveBroadcastView />} />
-                      <Route path="/media-library" element={<MediaLibrary />} />
                       
                       {/* Security Based Route */}
                       <Route path="/compliance" element={hasPermission('MANAGE_SETTINGS') ? <AuditDashboard /> : <Navigate to="/" />} />

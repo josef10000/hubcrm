@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Search, Menu, X, Plus, Download, Focus, Video, Clock, Radio } from 'lucide-react';
+import { Search, Menu, X, Plus, Download, Focus, Video, Clock } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
@@ -11,7 +11,6 @@ import { useCRMStore } from '@/store/useCRMStore';
 import { useDialog } from '@auth/contexts/DialogContext';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, doc, setDoc } from 'firebase/firestore';
-import { StartLiveModal } from '@chat/components/StartLiveModal';
 
 interface HeaderProps {
   currentPath: string;
@@ -39,70 +38,6 @@ export function Header({ currentPath, navigate }: HeaderProps) {
   const store = useCRMStore();
   const { confirm: customConfirm, alert: customAlert, prompt: customPrompt } = useDialog();
   const { hasPermission, hasAnyPermission } = usePermissions();
-
-  const [isLiveModalOpen, setIsLiveModalOpen] = useState(false);
-  const [activeLive, setActiveLive] = useState<any>(null);
-
-  // Escutar se existe live ativa na organização
-  useEffect(() => {
-    if (!userProfile?.orgId) return;
-
-    const ref = collection(db, 'organizations', userProfile.orgId, 'live_broadcasts');
-    const q = query(ref, where('status', '==', 'active'));
-
-    const unsub = onSnapshot(q, (snap) => {
-      if (!snap.empty) {
-        // Pega a primeira live ativa encontrada
-        const doc = snap.docs[0];
-        setActiveLive({ id: doc.id, ...doc.data() });
-      } else {
-        setActiveLive(null);
-      }
-    }, (err) => {
-      console.error('Erro ao buscar live ativa:', err);
-    });
-
-    return () => unsub();
-  }, [userProfile?.orgId]);
-
-  const handleCreateLive = async (data: {
-    title: string;
-    description: string;
-    recordEnabled: boolean;
-    allowExternal: boolean;
-  }) => {
-    if (!userProfile?.orgId || !userProfile?.uid) return;
-
-    const liveId = `live_${Date.now()}`;
-    const token = data.allowExternal 
-      ? Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) 
-      : undefined;
-
-    try {
-      const docRef = doc(db, 'organizations', userProfile.orgId, 'live_broadcasts', liveId);
-      await setDoc(docRef, {
-        id: liveId,
-        title: data.title,
-        description: data.description,
-        hostId: userProfile.uid,
-        hostName: userProfile.displayName || 'Gestor',
-        status: 'active',
-        jitsiRoomName: `HubLive_${userProfile.orgId}_${liveId}`,
-        allowExternal: data.allowExternal,
-        token,
-        recordEnabled: data.recordEnabled,
-        mediaUrl: null,
-        createdAt: Date.now(),
-        endedAt: null
-      });
-
-      toast.success('Sala de transmissão gerada com sucesso!');
-      navigate(`/live/${liveId}`);
-    } catch (err) {
-      console.error('Erro ao criar live:', err);
-      toast.error('Erro ao iniciar transmissão.');
-    }
-  };
 
   const filteredClientsForExport = useFilteredClients(clients, searchTerm, filterStatus, sortBy, filterTagId);
 
@@ -137,24 +72,6 @@ export function Header({ currentPath, navigate }: HeaderProps) {
 
   return (
     <>
-      {activeLive && currentPath !== `/live/${activeLive.id}` && currentPath !== `/live/public/${activeLive.id}` && (
-        <div className="bg-gradient-to-r from-rose-600 to-pink-600 text-white px-6 py-2.5 flex items-center justify-between text-xs font-bold shadow-lg animate-in slide-in-from-top duration-300 relative z-50">
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-            </span>
-            <span className="uppercase tracking-widest text-[9px] bg-white/20 px-2 py-0.5 rounded">Ao Vivo</span>
-            <span>{activeLive.hostName} está transmitindo agora: "{activeLive.title}"</span>
-          </div>
-          <button
-            onClick={() => navigate(`/live/${activeLive.id}`)}
-            className="px-4 py-1.5 bg-white text-rose-600 hover:bg-zinc-100 rounded-lg shadow-md transition-all active:scale-95 text-[10px] uppercase font-black tracking-widest cursor-pointer"
-          >
-            Assistir Transmissão
-          </button>
-        </div>
-      )}
       <header className="bg-black/20 backdrop-blur-2xl border-b border-gray-200 dark:border-white/10 px-6 py-4 flex items-center justify-between shrink-0 z-30 gap-4" role="banner">
       <div className="flex items-center flex-1">
         {isWiki ? (
@@ -319,15 +236,6 @@ export function Header({ currentPath, navigate }: HeaderProps) {
             )}
           </button>
         )}
-        {hasAnyPermission(['MANAGE_TEAM', 'MANAGE_SETTINGS']) && (
-          <button
-            onClick={() => setIsLiveModalOpen(true)}
-            className="p-2.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-500 rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0 flex items-center justify-center"
-            title="Iniciar Transmissão ao Vivo (Comunicado)"
-          >
-            <Radio size={16} />
-          </button>
-        )}
         <button
           onClick={() => setIsRecorderOpen(true)}
           className="p-2.5 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0"
@@ -384,12 +292,6 @@ export function Header({ currentPath, navigate }: HeaderProps) {
         )}
       </div>
     </header>
-
-    <StartLiveModal
-      isOpen={isLiveModalOpen}
-      onClose={() => setIsLiveModalOpen(false)}
-      onSubmit={handleCreateLive}
-    />
   </>
   );
 }
