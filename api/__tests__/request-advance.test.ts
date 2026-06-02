@@ -8,14 +8,16 @@ vi.mock('../_utils/authMiddleware.js', () => ({
   verifyAuth: vi.fn().mockImplementation(() => Promise.resolve(mockUid)),
 }));
 
-// Mock do asaasRequest
-const mockAsaasRequest = vi.fn();
+// Mock do asaasRequest via escopo global para contornar hoisting do Vitest
 vi.mock('../_utils/asaas.js', () => ({
-  asaasRequest: mockAsaasRequest,
+  asaasRequest: vi.fn((...args) => (globalThis as any).mockAsaasRequest(...args)),
   safeErrorResponse: vi.fn().mockImplementation((res, err) => {
     return res.status(err.status || 500).json({ error: err.message });
   }),
 }));
+
+const mockAsaasRequest = vi.fn();
+(globalThis as any).mockAsaasRequest = mockAsaasRequest;
 
 // Mock do audit
 const mockLogActivity = vi.fn();

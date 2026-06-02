@@ -297,28 +297,28 @@ export default function ProfileView() {
                 mealVoucher: data.mealVoucher || 0,
                 transportVoucher: data.transportVoucher || 0,
                 homeOfficeAux: data.homeOfficeAux || 0,
-                benefitDeductions: data.benefitDeductions || {
-                  healthInsuranceCopay: 0,
-                  mealVoucherDiscount: 0,
-                  transportVoucherDiscount: 0
+                benefitDeductions: {
+                  healthInsuranceCopay: data.benefitDeductions?.healthInsuranceCopay ?? 0,
+                  mealVoucherDiscount: data.benefitDeductions?.mealVoucherDiscount ?? 0,
+                  transportVoucherDiscount: data.benefitDeductions?.transportVoucherDiscount ?? 0
                 },
                 pixKeyType: data.pixKeyType || '',
                 pixKey: data.pixKey || '',
-                bankAccount: data.bankAccount || {
-                  bankCode: '',
-                  bankName: '',
-                  agency: '',
-                  account: '',
-                  accountDigit: '',
-                  accountType: 'CHECKING',
-                  holderName: '',
-                  holderCpfCnpj: ''
+                bankAccount: {
+                  bankCode: data.bankAccount?.bankCode ?? '',
+                  bankName: data.bankAccount?.bankName ?? '',
+                  agency: data.bankAccount?.agency ?? '',
+                  account: data.bankAccount?.account ?? '',
+                  accountDigit: data.bankAccount?.accountDigit ?? '',
+                  accountType: data.bankAccount?.accountType ?? 'CHECKING',
+                  holderName: data.bankAccount?.holderName ?? '',
+                  holderCpfCnpj: data.bankAccount?.holderCpfCnpj ?? ''
                 },
-                resignationDetails: data.resignationDetails || {
-                  resignationDate: '',
-                  reason: 'dismissal_without_cause',
-                  noticeType: 'none',
-                  penaltyPercentage: 0
+                resignationDetails: {
+                  resignationDate: data.resignationDetails?.resignationDate ?? '',
+                  reason: data.resignationDetails?.reason ?? 'dismissal_without_cause',
+                  noticeType: data.resignationDetails?.noticeType ?? 'none',
+                  penaltyPercentage: data.resignationDetails?.penaltyPercentage ?? 0
                 }
               });
             }
@@ -497,7 +497,14 @@ export default function ProfileView() {
       if (isOwnProfile) refreshProfile();
       
       // Atualizar estado local
-      setProfile(prev => prev ? { ...prev, ...formData } : null);
+      setProfile(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          ...formData,
+          pixKeyType: formData.pixKeyType === '' ? undefined : formData.pixKeyType
+        };
+      });
     } catch (error) {
       toast.error('Erro ao salvar alterações');
     } finally {
