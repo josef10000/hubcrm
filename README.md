@@ -1,7 +1,5 @@
 # 🔐 HUB CENTRAL — CRM ENTERPRISE
 
-![Hub CRM Dashboard Mockup](./public/hubcrm_dashboard_mockup.png)
-
 Plataforma corporativa de CRM de alta performance construída sob a arquitetura de **Modular Domain-Driven Design (DDD)** no Frontend e **Serverless Micro-services** no Backend. O sistema foi desenvolvido para centralizar a operação de vendas, gestão de equipes, conformidade ética (Compliance) e automação financeira integrada a bancos reais.
 
 ---
