@@ -483,7 +483,7 @@ export default function ProfileView() {
       const sanitizedProfileData = { ...formData };
       
       // 1. Tratar pixKeyType e pixKey vazios
-      if (!sanitizedProfileData.pixKeyType || sanitizedProfileData.pixKeyType === '') {
+      if (!sanitizedProfileData.pixKeyType || (sanitizedProfileData.pixKeyType as string) === '') {
         delete (sanitizedProfileData as any).pixKeyType;
       }
       if (!sanitizedProfileData.pixKey || sanitizedProfileData.pixKey.trim() === '') {
