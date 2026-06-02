@@ -28,7 +28,7 @@ import InventorySection from '@people/components/InventorySection';
 import { EnergyScoreCard } from '@people/components/EnergyScoreCard';
 import ProfileContractsTab from './ProfileContractsTab';
 import { useCRMStore } from '@/store/useCRMStore';
-import { TimeLog, calculateNetDuration } from '@/store/slices/timeTrackingSlice';
+import { TimeLog, calculateNetDuration, getLocalDateString } from '@/store/slices/timeTrackingSlice';
 import { parseISO } from 'date-fns';
 import { PDIKanban } from '@people/components/PDIKanban';
 import { 
@@ -112,7 +112,8 @@ export default function ProfileView() {
   const [activeTab, setActiveTab] = useState<'info' | 'pdi' | 'comissoes' | 'inventory' | 'feedbacks' | 'history' | 'alerts' | 'vacations' | 'availability' | 'expediente' | 'contracts'>('info');
 
   // Lógica de Ponto Eletrônico Individual (Meu Expediente)
-  const todayLog = useCRMStore(s => s.todayLog);
+  const todayLocalDateStr = getLocalDateString();
+  const todayLog = myTimeLogs.find(l => l.date === todayLocalDateStr);
   const [myTimeLogs, setMyTimeLogs] = useState<TimeLog[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<string>(() => format(new Date(), 'yyyy-MM'));
 
