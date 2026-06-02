@@ -19,13 +19,23 @@ vi.mock('../_utils/asaas.js', () => ({
 const mockAsaasRequest = vi.fn();
 (globalThis as any).mockAsaasRequest = mockAsaasRequest;
 
-// Mock do audit
-const mockLogActivity = vi.fn();
+// Mock do audit via escopo global para contornar hoisting do Vitest
 vi.mock('../_utils/audit.js', () => ({
-  logActivity: mockLogActivity,
+  logActivity: vi.fn((...args) => (globalThis as any).mockLogActivity(...args)),
 }));
 
-// Mock do Firebase Admin SDK / Firestore
+const mockLogActivity = vi.fn();
+(globalThis as any).mockLogActivity = mockLogActivity;
+
+// Mock do Firebase Admin SDK / Firestore via Proxy e escopo global para contornar hoisting
+vi.mock('../_utils/firebase.js', () => ({
+  db: new Proxy({}, {
+    get: (target, prop) => {
+      return (globalThis as any).mockFirestore[prop];
+    }
+  })
+}));
+
 let mockProfileData: any = {
   displayName: 'Colaborador Teste',
   orgId: 'org-test',
@@ -74,9 +84,7 @@ const mockFirestore = {
   }
 };
 
-vi.mock('../_utils/firebase.js', () => ({
-  db: mockFirestore
-}));
+(globalThis as any).mockFirestore = mockFirestore;
 
 // ── Import do handler (depois dos mocks) ─────────────────────
 import requestAdvanceHandler from '../_logic/asaas/request-advance';
