@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { webcrypto } from 'node:crypto';
 
 // Polyfill global para o crypto no ambiente do Node/Vitest
@@ -51,6 +51,15 @@ const generatePublicToken = (): string => {
 describe('CRM Slice — Lógicas Puras', () => {
 
   describe('isChurnRisk', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      // Define o tempo para um valor fixo determinístico
+      vi.setSystemTime(new Date(1717351680000));
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
     it('deve retornar true quando cliente não tem lastContactAt', () => {
       expect(isChurnRisk({}, 30)).toBe(true);
     });
