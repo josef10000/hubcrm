@@ -112,9 +112,9 @@ export default function ProfileView() {
   const [activeTab, setActiveTab] = useState<'info' | 'pdi' | 'comissoes' | 'inventory' | 'feedbacks' | 'history' | 'alerts' | 'vacations' | 'availability' | 'expediente' | 'contracts'>('info');
 
   // Lógica de Ponto Eletrônico Individual (Meu Expediente)
+  const [myTimeLogs, setMyTimeLogs] = useState<TimeLog[]>([]);
   const todayLocalDateStr = getLocalDateString();
   const todayLog = myTimeLogs.find(l => l.date === todayLocalDateStr);
-  const [myTimeLogs, setMyTimeLogs] = useState<TimeLog[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<string>(() => format(new Date(), 'yyyy-MM'));
 
   const getMonthOptions = () => {
