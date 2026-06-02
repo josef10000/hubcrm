@@ -1,5 +1,5 @@
 import React from 'react';
-import { RefreshCw, ArrowDownAZ, Clock, Tag as TagIcon, ChevronDown, Filter } from 'lucide-react';
+import { RefreshCw, ArrowDownAZ, Clock, Tag as TagIcon, ChevronDown, Filter, Plus, Download } from 'lucide-react';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useCRMStore } from '@store/useCRMStore';
 import { useUI } from '@/contexts/UIContext';
@@ -45,7 +45,7 @@ const DashboardView = React.memo(function DashboardView() {
   const orgRoles = orgRolesData;
   
   // Alguns estados ainda vêm do Context (UI Bridge)
-  const { setEditingClient, editingClient } = useCRM();
+  const { setEditingClient, editingClient, handleExportCSV } = useCRM();
 
   const {
     currentPage, setCurrentPage, clientsPerPage,
@@ -152,6 +152,32 @@ const DashboardView = React.memo(function DashboardView() {
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10">
       <div className="max-w-7xl mx-auto">
+
+        {/* ⚙️ Cabeçalho do Painel Operacional com Ações */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/5 pb-5 mb-6">
+          <div>
+            <h2 className="text-xl font-black text-white">Operações CRM</h2>
+            <p className="text-xs text-gray-400">Gerenciamento de clientes, cobranças e métricas de vendas.</p>
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <button
+              onClick={() => handleExportCSV(filteredClients)}
+              className="flex-1 sm:flex-none flex items-center justify-center space-x-2 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white px-4 py-2.5 rounded-2xl transition-all font-medium text-sm cursor-pointer"
+            >
+              <Download size={16} />
+              <span>Exportar</span>
+            </button>
+            {hasPermission('MANAGE_CLIENTS') && (
+              <button
+                onClick={() => { setEditingClient(null); setIsModalOpen(true); }}
+                className="flex-1 sm:flex-none flex items-center justify-center space-x-2 bg-gradient-to-r from-primary-500 to-primary-400 hover:from-primary-600 hover:to-primary-600 text-gray-900 px-5 py-2.5 rounded-2xl transition-all font-medium text-sm shadow-xl shadow-primary-500/10 hover:scale-102 active:scale-98 shrink-0 cursor-pointer font-bold"
+              >
+                <Plus size={16} />
+                <span>Novo Cliente</span>
+              </button>
+            )}
+          </div>
+        </div>
         
         <AlertPanels 
           overdueClients={overdueClients} 

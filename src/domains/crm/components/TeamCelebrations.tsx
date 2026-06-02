@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { useCRM } from '@crm/contexts/CRMContext';
+import { useCRMStore } from '@store/useCRMStore';
 import { Gift, Loader2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -17,7 +17,7 @@ interface BirthdayPerson {
 }
 
 export default function TeamCelebrations() {
-  const { effectiveOrgId } = useCRM();
+  const effectiveOrgId = useCRMStore(state => state.effectiveOrgId);
   const [birthdays, setBirthdays] = useState<BirthdayPerson[]>([]);
   const [loading, setLoading] = useState(true);
 

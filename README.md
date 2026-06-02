@@ -226,7 +226,7 @@ interface VacationPayment {
 ## 🛠️ Stack Tecnológica
 
 *   **Interface (Frontend):** React 19, TypeScript, Vite, Tailwind CSS (Vanilla CSS para componentes complexos).
-*   **Gerenciamento de Estado:** Zustand 5.x & React Context (Cache local de dados).
+*   **Gerenciamento de Estado & Cache de Dados:** React Query (TanStack Query v5) para sincronização e cache lazy em tempo real do Firestore, e Zustand 5.x para estados reativos leves de UI e preferências (otimizado para evitar conexões duplicadas e reduzir leituras no banco).
 *   **Persistência & Real-time:** Firebase Firestore & Firebase Auth SDK.
 *   **Bancos & APIs Financeiras:** Asaas REST API (Integração de Contas, Cobranças e Pix Lote).
 *   **Mídia & Object Storage:** Cloudflare R2 Object Storage (Gravação de vídeos via Presigned URLs) + Cloudinary.

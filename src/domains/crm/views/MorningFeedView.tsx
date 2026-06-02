@@ -5,7 +5,7 @@ import FeedNews from '../components/FeedNews';
 import FeedAnimeList from '../components/FeedAnimeList';
 import CompanyAnnouncements from '../components/CompanyAnnouncements';
 import TeamCelebrations from '../components/TeamCelebrations';
-import DashboardView from './DashboardView';
+const DashboardView = React.lazy(() => import('./DashboardView'));
 
 export default function MorningFeedView() {
   const [viewMode, setViewMode] = useState<'morning' | 'work'>('morning');
@@ -109,7 +109,14 @@ export default function MorningFeedView() {
           </div>
         ) : (
           <div className="animate-in fade-in duration-500">
-            <DashboardView />
+            <React.Suspense fallback={
+              <div className="bg-black/30 border border-white/5 p-8 rounded-3xl backdrop-blur-xl flex flex-col items-center justify-center min-h-[300px] w-full">
+                <Loader2 className="animate-spin text-primary-500 mb-2" size={24} />
+                <span className="text-xs text-gray-400 font-medium">Sincronizando dados operacionais...</span>
+              </div>
+            }>
+              <DashboardView />
+            </React.Suspense>
           </div>
         )}
 

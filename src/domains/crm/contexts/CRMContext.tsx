@@ -5,6 +5,8 @@ import { usePermissions } from '@auth/hooks/usePermissions';
 import { Client, Offer } from '@/types';
 import { ClientMapper } from '../entities/client.entity';
 import { LeadMapper } from '../entities/lead.entity';
+import { useClients, useLeads } from '@/hooks/queries/useClients';
+import { useTags, useTeamProfiles, useOrgRoles } from '@/hooks/queries/useCRMQueries';
 
 const CRMContext = createContext<any>(null);
 
@@ -25,7 +27,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
 
   const permissionsKey = JSON.stringify(permissions);
   
-  // Sincroniza a Store com o Firestore
+  // Sincroniza a Store com o Firestore (Apenas preferências e dados leves da Store)
   useEffect(() => {
     if (orgId && user?.uid && orgId !== 'pending') {
       const unsubscribe = store.init(user.uid, orgId, permissions, userProfile);
@@ -33,21 +35,9 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     }
   }, [orgId, user?.uid, permissionsKey]);
 
-  // Mapeamento de dados para Entidades robustas
-  const clients = React.useMemo(() => 
-    (store.clients || []).map(ClientMapper.toEntity), 
-    [store.clients]
-  );
-
-  const leads = React.useMemo(() => 
-    (store.leads || []).map(LeadMapper.toEntity), 
-    [store.leads]
-  );
-
   // Adaptador para manter compatibilidade com o código legado que usa useCRM()
   const value = {
     ...store,
-    clients,
     effectiveOrgId: orgId,
     userProfile,
     
@@ -78,5 +68,32 @@ export function useCRM() {
   if (!context) {
     throw new Error('useCRM deve ser usado dentro de um CRMProvider');
   }
-  return context;
+
+  // Consome os hooks do React Query de forma Lazy (somente onde o useCRM for chamado)
+  const { data: clientsData = [] } = useClients();
+  const { data: leadsData = [] } = useLeads();
+  const { data: tagsData = [] } = useTags();
+  const { data: teamProfilesData = [] } = useTeamProfiles();
+  const { data: orgRolesData = [] } = useOrgRoles();
+
+  // Mapeamento de dados para Entidades robustas
+  const clients = React.useMemo(() => 
+    (clientsData || []).map(ClientMapper.toEntity), 
+    [clientsData]
+  );
+
+  const leads = React.useMemo(() => 
+    (leadsData || []).map(LeadMapper.toEntity), 
+    [leadsData]
+  );
+
+  return {
+    ...context,
+    clients,
+    leads,
+    tags: tagsData,
+    teamProfiles: teamProfilesData,
+    orgRoles: orgRolesData,
+  };
 }
+

@@ -38,7 +38,6 @@ export default defineConfig(({mode}) => {
             firebase: ['firebase/app', 'firebase/firestore', 'firebase/auth', 'firebase/storage'],
             ui: ['lucide-react', 'motion', 'sonner'],
             tldraw: ['tldraw'],
-            three: ['three', '@react-three/fiber', '@react-three/drei'],
             charts: ['recharts'],
           },
         },

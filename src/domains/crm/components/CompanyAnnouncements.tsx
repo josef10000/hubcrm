@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query, doc, setDoc } from 'firebase/firestore';
-import { useCRM } from '@crm/contexts/CRMContext';
+import { useCRMStore } from '@store/useCRMStore';
 import { Megaphone, Loader2 } from 'lucide-react';
 
 interface Announcement {
@@ -15,7 +15,7 @@ interface Announcement {
 }
 
 export default function CompanyAnnouncements() {
-  const { effectiveOrgId } = useCRM();
+  const effectiveOrgId = useCRMStore(state => state.effectiveOrgId);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
 

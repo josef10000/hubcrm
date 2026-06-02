@@ -83,7 +83,8 @@ export const useCRMStore = create<CRMStoreState>()(
 
         const unsubscribers: (() => void)[] = [];
 
-        // Core Listeners (CRM, Roles, Configs)
+        // Core Listeners (CRM, Roles, Configs) - Desativados (carregados via React Query)
+        /*
         unsubscribers.push(createListener(orgId, 'clients', (data) => set({ clients: data }), undefined, (data) => {
           if (!permissions.includes('MANAGE_TEAM') && !permissions.includes('MANAGE_SETTINGS')) {
             return data.filter(c => c.assignedTo === userId);
@@ -94,6 +95,7 @@ export const useCRMStore = create<CRMStoreState>()(
         unsubscribers.push(createListener(orgId, 'offers', (data) => set({ offers: data }), (a, b) => (a.order || 0) - (b.order || 0)));
         unsubscribers.push(createListener(orgId, 'tags', (data) => set({ tags: data }), (a, b) => a.name.localeCompare(b.name)));
         unsubscribers.push(createListener(orgId, 'roles', (data) => set({ orgRoles: data })));
+        */
 
         try {
           const prefRef = doc(db, 'organizations', orgId, 'settings', 'preferences');
@@ -109,6 +111,8 @@ export const useCRMStore = create<CRMStoreState>()(
           Logger.error("[CRMStore] Failed to setup Preferences listener:", err);
         }
 
+        // Team profiles - Desativado (carregado via React Query)
+        /*
         try {
           const qProfiles = query(collection(db, 'profiles'), where('orgId', '==', orgId));
           const unsubProfiles = onSnapshot(qProfiles, (snap) => {
@@ -118,6 +122,7 @@ export const useCRMStore = create<CRMStoreState>()(
         } catch (err) {
           Logger.error("[CRMStore] Team profiles listener failed:", err);
         }
+        */
 
         const timeout = setTimeout(() => {
           if (get().loading) set({ loading: false });

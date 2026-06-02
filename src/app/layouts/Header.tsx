@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Search, Menu, X, Plus, Download, Focus, Video, Clock, Shield } from 'lucide-react';
+import { Search, Menu, X, Focus, Video, Clock, Shield } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
-import { useCRM } from '@crm/contexts/CRMContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
 import { useUI } from '@/contexts/UIContext';
-import { useFilteredClients } from '@/hooks/useFilteredClients';
 import { useWeather } from '@/hooks/useWeather';
 import { useCRMStore } from '@/store/useCRMStore';
 import { useDialog } from '@auth/contexts/DialogContext';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, doc, setDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
 interface HeaderProps {
   currentPath: string;
@@ -30,11 +28,6 @@ export function Header({ currentPath, navigate }: HeaderProps) {
     filterStatus, sortBy, filterTagId
   } = useUI();
   
-  const { 
-    clients,
-    setEditingClient,
-    handleExportCSV
-  } = useCRM();
   const store = useCRMStore();
   const { confirm: customConfirm, alert: customAlert, prompt: customPrompt } = useDialog();
   const { hasPermission, hasAnyPermission } = usePermissions();
@@ -56,8 +49,6 @@ export function Header({ currentPath, navigate }: HeaderProps) {
 
     return () => unsub();
   }, [userProfile?.orgId, hasAnyPermission]);
-
-  const filteredClientsForExport = useFilteredClients(clients, searchTerm, filterStatus, sortBy, filterTagId);
 
   const isWiki = currentPath === '/wiki';
   const isDashboard = currentPath === '/';
@@ -307,27 +298,6 @@ export function Header({ currentPath, navigate }: HeaderProps) {
             <Focus size={14} />
             <span>{focusMode ? 'Foco ON' : 'Foco'}</span>
           </button>
-        )}
-
-        {isDashboard && (
-          <>
-            <button
-              onClick={() => handleExportCSV(filteredClientsForExport)}
-              className="hidden sm:flex items-center space-x-2 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white px-4 py-3 rounded-2xl transition-all font-medium shrink-0"
-            >
-              <Download size={18} />
-              <span>Exportar</span>
-            </button>
-            {hasAnyPermission(['MANAGE_LEADS', 'MANAGE_CLIENTS']) && (
-              <button
-                onClick={() => { setEditingClient(null); setIsModalOpen(true); }}
-                className="flex items-center space-x-2 bg-gradient-to-r from-primary-500 to-primary-400 hover:from-primary-600 hover:to-primary-600 text-gray-900 dark:text-white px-5 py-3 rounded-2xl transition-all font-medium shadow-xl shadow-primary-500/30 hover:scale-105 active:scale-95 shrink-0"
-              >
-                <Plus size={18} />
-                <span className="hidden sm:inline">Novo Cliente</span>
-              </button>
-            )}
-          </>
         )}
       </div>
     </header>
