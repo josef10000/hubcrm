@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   Shield, CheckCircle, Trash2, Plus, FileText, Image as ImageIcon, 
-  Copy, Globe, Star, BookOpen, Settings, Users, Calculator
+  Copy, Globe, Star, BookOpen, Settings, Users, Calculator, Megaphone
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useCRM } from '@crm/contexts/CRMContext';
@@ -16,6 +16,7 @@ import TagManager from '@admin/components/TagManager';
 import RoleManagement from '@admin/components/RoleManagement';
 import CFOSimulator from '@admin/components/CFOSimulator';
 import ContractManager from '@admin/components/ContractManager';
+import AnnouncementManager from '@admin/components/AnnouncementManager';
 
 export default function AdministrativeView() {
   const {
@@ -50,7 +51,7 @@ export default function AdministrativeView() {
   const { confirm, alert } = useDialog();
   const [newSoftSkill, setNewSoftSkill] = React.useState('');
   
-  type AdminTab = 'team' | 'workflows' | 'sales' | 'cfo' | 'contracts';
+  type AdminTab = 'team' | 'workflows' | 'sales' | 'cfo' | 'contracts' | 'announcements';
   const [activeAdminTab, setActiveAdminTab] = React.useState<AdminTab>('team');
   
   if (!hasPermission('MANAGE_SETTINGS')) {
@@ -216,6 +217,26 @@ export default function AdministrativeView() {
             <span className="relative z-10 flex items-center gap-2">
               <FileText size={16} />
               <span>Contratos Digitais</span>
+            </span>
+          </button>
+          <button
+            onClick={() => setActiveAdminTab('announcements')}
+            className={`relative flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors duration-300 ${
+              activeAdminTab === 'announcements'
+                ? 'text-white'
+                : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'
+            }`}
+          >
+            {activeAdminTab === 'announcements' && (
+              <motion.div
+                layoutId="activeAdminTab"
+                className="absolute inset-0 bg-primary-500 rounded-xl shadow-lg shadow-primary-500/20"
+                transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+              />
+            )}
+            <span className="relative z-10 flex items-center gap-2">
+              <Megaphone size={16} />
+              <span>Mural de Avisos</span>
             </span>
           </button>
         </div>
@@ -451,6 +472,9 @@ export default function AdministrativeView() {
 
           {activeAdminTab === 'contracts' && (
             <ContractManager effectiveOrgId={effectiveOrgId} />
+          )}
+          {activeAdminTab === 'announcements' && (
+            <AnnouncementManager effectiveOrgId={effectiveOrgId} />
           )}
         </div>
       </div>

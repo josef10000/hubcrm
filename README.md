@@ -68,6 +68,13 @@ Fluxo financeiro sem erro humano e categorização contábil autônoma:
 *   **Painel de Conciliação em Lote:** Central de controle financeiro reativa que apresenta de forma ágil lançamentos inéditos classificados como *"A Categorizar"*. O gestor pode classificar os itens pendentes com base em sugestões da IA e o robô aprende dinamicamente com as novas associações contábeis.
 *   **Rastreabilidade Resiliente de Webhooks (`TRANSFER_CONFIRMED` & `TRANSFER_FAILED`):** Interceptação de eventos de transferências Pix na API Asaas que atualiza e estorna automaticamente adiantamentos de salários, férias e folhas de pagamento no banco de dados do CRM caso o Pix falhe ou seja rejeitado pelo banco receptor.
 
+### 7. 📢 Mural de Comunicados Gerenciável & Central Comunitária (Bento Grid)
+Integração e cultura corporativa de alto impacto:
+*   **Central Hub Matinal (Home):** Layout bento-grid de abertura do CRM com visual Glassmorphism contendo notícias, cotações em tempo real e calendário de animes.
+*   **Mural de Avisos Dinâmico (Admin CRUD):** Painel administrativo que permite criar, editar e excluir comunicados, com opção de destaque urgente em Glow Neon âmbar.
+*   **Tempo de Expiração Automatizado:** Cada aviso possui configuração de validade em dias e sai do ar de forma autônoma após expirar.
+*   **Celebrações do Mês Reais:** Listagem em tempo real dos aniversariantes da empresa integrados com perfis do Firestore, incluindo disparo de confete ao festejar com os aniversariantes de hoje.
+
 ---
 
 ## ⚖️ Comparativo de Regimes (CLT vs PJ)
