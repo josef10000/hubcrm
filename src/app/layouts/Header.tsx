@@ -39,6 +39,24 @@ export function Header({ currentPath, navigate }: HeaderProps) {
   const { confirm: customConfirm, alert: customAlert, prompt: customPrompt } = useDialog();
   const { hasPermission, hasAnyPermission } = usePermissions();
 
+  const [newTicketsCount, setNewTicketsCount] = useState(0);
+
+  // Escutar se existem novos tickets de compliance para exibir notificação (badge) ao RH/Admin
+  useEffect(() => {
+    if (!userProfile?.orgId || !hasAnyPermission(['MANAGE_SETTINGS', 'MANAGE_TEAM'])) return;
+
+    const ref = collection(db, 'organizations', userProfile.orgId, 'compliance_tickets');
+    const q = query(ref, where('status', '==', 'new'));
+
+    const unsub = onSnapshot(q, (snap) => {
+      setNewTicketsCount(snap.size);
+    }, (err) => {
+      console.error('Erro ao buscar novos tickets:', err);
+    });
+
+    return () => unsub();
+  }, [userProfile?.orgId, hasAnyPermission]);
+
   const filteredClientsForExport = useFilteredClients(clients, searchTerm, filterStatus, sortBy, filterTagId);
 
   const isWiki = currentPath === '/wiki';
@@ -243,13 +261,18 @@ export function Header({ currentPath, navigate }: HeaderProps) {
         >
           <Shield size={16} />
         </button>
-        {(userProfile?.isAdmin || (typeof userProfile?.role === 'string' && (userProfile.role.toLowerCase() === 'admin' || userProfile.role.toLowerCase() === 'rh'))) && (
+        {hasAnyPermission(['MANAGE_SETTINGS', 'MANAGE_TEAM']) && (
           <button
             onClick={() => navigate('/compliance-admin')}
-            className="p-2.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-500 rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0 flex items-center justify-center"
+            className="p-2.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-500 rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0 flex items-center justify-center relative"
             title="Painel de Ouvidoria (RH / Gestão)"
           >
-            <Shield size={16} className="text-rose-500 animate-pulse" />
+            <Shield size={16} className="text-rose-500" />
+            {newTicketsCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-rose-600 text-white text-[9px] font-black rounded-full h-4 w-4 flex items-center justify-center border border-zinc-950 animate-bounce">
+                {newTicketsCount}
+              </span>
+            )}
           </button>
         )}
         <button

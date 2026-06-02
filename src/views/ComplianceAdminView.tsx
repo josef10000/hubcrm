@@ -6,6 +6,7 @@ import { collection, onSnapshot, query, orderBy, doc, updateDoc, addDoc } from '
 import { toast } from 'sonner';
 import { Shield, MessageSquare, Clock, Lock, User, Check, Play, Eye, Archive, Loader2, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { usePermissions } from '@auth/hooks/usePermissions';
 
 interface ComplianceTicket {
   id: string;
@@ -33,6 +34,7 @@ export default function ComplianceAdminView() {
   const { userProfile } = useAuth();
   const { effectiveOrgId } = useCRM();
   const navigate = useNavigate();
+  const { hasAnyPermission } = usePermissions();
 
   const [tickets, setTickets] = useState<ComplianceTicket[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,18 +52,14 @@ export default function ComplianceAdminView() {
 
   // 1. Verificar permissão de acesso
   useEffect(() => {
-    if (userProfile && !userProfile.isAdmin && userProfile.role !== 'admin' && userProfile.role !== 'rh') {
-      // Verificação simples baseada em role ou se é dono. Se não tiver acesso, manda para home.
-      // A rota do AppRouter também valida por permissão, mas blindamos aqui também.
-      const hasAccess = userProfile.isAdmin || 
-                        (typeof userProfile.role === 'string' && (userProfile.role.toLowerCase() === 'admin' || userProfile.role.toLowerCase() === 'rh'));
-      
+    if (userProfile) {
+      const hasAccess = hasAnyPermission(['MANAGE_SETTINGS', 'MANAGE_TEAM']);
       if (!hasAccess) {
         toast.error('Acesso restrito ao RH e Administradores.');
         navigate('/');
       }
     }
-  }, [userProfile, navigate]);
+  }, [userProfile, navigate, hasAnyPermission]);
 
   // 2. Carregar todos os tickets da organização
   useEffect(() => {
