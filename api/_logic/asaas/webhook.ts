@@ -39,6 +39,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (wasProcessed) return res.status(200).json({ received: true, duplicate: true });
     }
 
+    // --- FILTRAR E DESPACHAR EVENTOS DE TRANSFERÊNCIA (Pix/TED do RH) ---
+    if (event && event.startsWith('TRANSFER_')) {
+      const transferData = body.transfer;
+      if (!transferData) return res.status(200).json({ received: true, info: 'No transfer data' });
+      
+      const { handleTransferEvent } = await import('./handlers/transfer_handler.js');
+      await handleTransferEvent(transferData, event);
+      return res.status(200).json({ received: true });
+    }
+
     const paymentData = payment || body.payment;
     const asaasCustomerId = paymentData?.customer || subscription?.customer || body.customer?.id || body.customer;
 

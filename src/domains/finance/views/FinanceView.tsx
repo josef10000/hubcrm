@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, DollarSign, Trash2, PieChart, Activity, Target, Tag } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Trash2, PieChart, Activity, Target, Tag, Receipt } from 'lucide-react';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useCRMStore } from '@/store/useCRMStore';
 import { useAuth } from '@auth/contexts/AuthContext';
@@ -15,6 +15,7 @@ import CashFlowForecastChart from '@finance/components/CashFlowForecastChart';
 import BudgetPanel from '@finance/components/BudgetPanel';
 import ROIAnalysis from '@finance/components/ROIAnalysis';
 import PayrollPanel from '../components/PayrollPanel';
+import ConciliationPanel from '../components/ConciliationPanel';
 import { usePermissions } from '@auth/hooks/usePermissions';
 
 export default function FinanceView() {
@@ -39,7 +40,7 @@ export default function FinanceView() {
   
   const { data: budgetsData } = useBudgets();
   const budgets = budgetsData || [];
-  const [activeTab, setActiveTab] = useState<'resumo' | 'dre' | 'fluxo' | 'orcamento' | 'roi' | 'saas' | 'payroll'>('resumo');
+  const [activeTab, setActiveTab] = useState<'resumo' | 'dre' | 'fluxo' | 'orcamento' | 'roi' | 'saas' | 'payroll' | 'conciliation'>('resumo');
 
   // subscribeToFinance and CRMStore listener initialization are now handled by React Query
   // Removing manual store subscriptions for finance data
@@ -64,6 +65,11 @@ export default function FinanceView() {
   
   const totalExpenses = (transactions || []).filter(t => t.type === 'EXPENSE').reduce((acc, t) => acc + t.amount, 0);
   const netProfit = totalMRR - totalExpenses;
+  
+  // Computar quantidade de despesas pendentes de conciliação (categoria "A Categorizar")
+  const pendingConciliationCount = (transactions || []).filter(
+    t => t.type === 'EXPENSE' && t.categoryName === 'A Categorizar'
+  ).length;
 
   // --- CÁLCULO DE RATEIO DE CUSTOS FIXOS (CSP) ---
   const activeClientsCount = (clients || []).filter(c => c.status === 'Ativo').length;
@@ -210,6 +216,18 @@ export default function FinanceView() {
           >
             <DollarSign size={18} />
             Folha de Pagamento
+          </button>
+          <button
+            onClick={() => setActiveTab('conciliation')}
+            className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'conciliation' ? 'bg-primary-500 text-gray-900 shadow-lg shadow-primary-500/20' : 'bg-black/40 text-gray-500 dark:text-gray-400 hover:bg-black/20'}`}
+          >
+            <Receipt size={18} />
+            Conciliação
+            {pendingConciliationCount > 0 && (
+              <span className="ml-1 px-2 py-0.5 text-[10px] font-bold bg-red-500 text-white rounded-full animate-pulse">
+                {pendingConciliationCount}
+              </span>
+            )}
           </button>
         </div>
 
@@ -451,6 +469,10 @@ export default function FinanceView() {
         ) : activeTab === 'payroll' ? (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <PayrollPanel />
+          </div>
+        ) : activeTab === 'conciliation' ? (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <ConciliationPanel />
           </div>
         ) : null}
 

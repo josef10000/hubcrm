@@ -147,6 +147,92 @@ export async function runFinanceReconciler(req: VercelRequest, res: VercelRespon
 
         await Promise.allSettled(clientSyncPromises);
 
+        // E. Sincronizar despesas do extrato do Asaas (Automático)
+        try {
+          console.log(`[Finance Reconciler] Sincronizando extrato de despesas da Org ${orgId}...`);
+          
+          // 1. Carregar transações existentes no CRM para cache e similaridade
+          const transactionsSnap = await db.collection('organizations').doc(orgId).collection('transactions').get();
+          const orgTransactions = transactionsSnap.docs.map(d => d.data());
+          const existingIds = new Set(orgTransactions.map(tx => tx.id));
+          const categorizedExpenses = orgTransactions.filter(tx => tx.type === 'EXPENSE' && tx.categoryName && tx.categoryName !== 'A Categorizar');
+
+          // 2. Buscar extrato de transações financeiras recentes no Asaas
+          const transactionsRes = await asaasRequest('/financialTransactions?limit=50', 'GET', null, asaasKey);
+          const asaasTransactions = transactionsRes.data || [];
+          const debits = asaasTransactions.filter((t: any) => t.type === 'DEBIT');
+
+          let newExpensesCount = 0;
+          let pendingConciliationCount = 0;
+
+          for (const t of debits) {
+            const transactionId = `asaas_tx_${t.id}`;
+            
+            // Ignorar se já cadastrado no CRM
+            if (existingIds.has(transactionId)) continue;
+
+            // Evitar duplicidade de transferências de lote ( Pix de salários )
+            const isDuplicateTransfer = orgTransactions.some(tx => 
+              tx.externalReference === t.id || 
+              (tx.type === 'EXPENSE' && tx.amount === Math.abs(t.value) && Math.abs(tx.date - new Date(t.date).getTime()) < 5 * 60 * 1000)
+            );
+            if (isDuplicateTransfer) continue;
+
+            // Algoritmo de Mapeamento Inteligente de Categorias
+            let matchedCategoryName = 'A Categorizar';
+            const cleanDesc = String(t.description || '').toLowerCase();
+            
+            for (const exp of categorizedExpenses) {
+              const expDesc = String(exp.description || '').toLowerCase();
+              const keywords = ['aws', 'amazon', 'google', 'facebook', 'github', 'host', 'telecom', 'energia', 'agua', 'luz', 'asaas', 'tar', 'ted', 'pix', 'boleto', 'caju', 'flash', 'seguro', 'internet'];
+              const matchedKey = keywords.find(key => cleanDesc.includes(key) && expDesc.includes(key));
+              if (matchedKey) {
+                matchedCategoryName = exp.categoryName;
+                break;
+              }
+            }
+
+            if (matchedCategoryName === 'A Categorizar') {
+              pendingConciliationCount++;
+            }
+
+            // Criar a despesa
+            const txRef = db.collection('organizations').doc(orgId).collection('transactions').doc(transactionId);
+            await txRef.set({
+              id: transactionId,
+              description: t.description || 'Despesa Asaas',
+              amount: Math.abs(t.value),
+              netAmount: Math.abs(t.value),
+              gatewayFee: 0,
+              date: new Date(t.date || Date.now()).getTime(),
+              paymentDate: new Date(t.date || Date.now()).getTime(),
+              type: 'EXPENSE',
+              status: 'PAID',
+              categoryName: matchedCategoryName,
+              externalReference: t.id
+            });
+            
+            newExpensesCount++;
+          }
+
+          console.log(`[Finance Reconciler] Sincronização concluída na Org ${orgId}. Novas despesas: ${newExpensesCount} | A Categorizar: ${pendingConciliationCount}`);
+
+          // Se houver novos lançamentos a categorizar, gera um alerta único
+          if (pendingConciliationCount > 0) {
+            await db.collection('system_alerts').add({
+              title: `📊 Conciliação Bancária Pendente`,
+              message: `Foram importadas ${pendingConciliationCount} novas despesas do Asaas sem categoria correspondente. Faça a classificação no painel financeiro.`,
+              type: 'info',
+              targetRoles: ['Administrador', 'Gerente', 'FinOps'],
+              createdAt: Date.now(),
+              link: '/finance',
+              orgId: orgId
+            });
+          }
+        } catch (expErr: any) {
+          results.errors.push(`Erro ao sincronizar extrato de despesas (Org: ${orgId}): ${expErr.message}`);
+        }
+
       } catch (orgErr: any) {
         results.errors.push(`Erro ao processar organização ${orgId} (${orgData.name || 'Sem Nome'}): ${orgErr.message}`);
       }
