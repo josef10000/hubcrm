@@ -11,7 +11,7 @@ import { WorkspaceShell } from '../shell/WorkspaceShell';
 import { AuthGuard, PendingInviteGuard, ContractGuard } from './RouteGuards';
 
 // Eager Loaded Components (Core Views - Dashboard stays eager for instant load)
-import DashboardView from '@crm/views/DashboardView';
+import MorningFeedView from '@crm/views/MorningFeedView';
 
 // Lazy Loaded Core Views
 const SupportView = lazy(() => import('@support/views/SupportView'));
@@ -100,7 +100,7 @@ export function AppRouter() {
                 <WorkspaceShell isBirthday={isBirthday}>
                   <AppLayout>
                     <Routes>
-                      <Route path="/" element={<DashboardView />} />
+                      <Route path="/" element={<MorningFeedView />} />
                       <Route path="/support" element={<SupportView />} />
                       <Route path="/chat" element={<ChatView />} />
                       <Route path="/notifications" element={<NotificationsView />} />
