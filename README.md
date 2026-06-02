@@ -44,6 +44,12 @@ Recentemente, adicionamos uma série de recursos de ponta no **Hub Chat** e no C
     *   **Anonimato Real Garantido:** Fluxo inteligente no Firestore que blinda o envio de dados identificáveis (userId, IP, etc.) para manifestações marcadas como anônimas.
     *   **Diálogo Bidirecional por Protocolo:** Geração automática de chave de protocolo alfanumérica única (`ETH-XXXXXX`), que permite ao colaborador acompanhar de forma segura e dialogar anonimamente com a gestão através de chat em tempo real.
     *   **Painel Administrativo do RH:** Listagem consolidada com controle de status da investigação (`Recebido`, `Em Análise`, `Resolvido`) e chat direto para resposta do RH ao manifestante.
+7.  **💵 Folha de Pagamento & Adiantamento Salarial Automatizados via Asaas:**
+    *   **Fechamento de Folha Simplificado:** Painel corporativo (`PayrollPanel`) com cálculo automático de proventos e descontos para CLT e PJ baseados em jornada cadastrada, horas extras (integradas ao ponto eletrônico) e comissões pendentes.
+    *   **Portal de Adiantamento Salarial:** Colaboradores cadastrados podem solicitar e receber adiantamentos Pix instantâneos de até 30% do salário diretamente de seu perfil de forma integrada à conta Asaas, com compensação automática no fechamento de folha.
+    *   **Agendamento de Férias CLT (Art. 130 e 145 CLT):** Cálculo da redução de direito a férias com base em faltas não justificadas do período aquisitivo, agendamento de Pix antecipado 2 dias antes e desconto de retorno autônomo na folha seguinte.
+    *   **Rescisões Automatizadas:** Módulo interno para simulação e quitação de saldo de salário, 13º proporcional, férias vencidas/proporcionais + 1/3, avisos prévios indenizados e guias governamentais informativas.
+    *   **Sincronização de Saldo em Tempo Real:** Conexão direta com a API do Asaas para exibição automática do saldo de caixas/bancos nas ferramentas de projeção de Fluxo de Caixa.
 
 ---
 
@@ -164,6 +170,7 @@ A integridade do CRM é assegurada por testes unitários e de integração:
 *   `crmSlice.test.ts`: Regras de negócio, risco de churn e cálculo de renovação.
 *   `nexusStore.test.ts`: Controle de estante virtual, progresso de leitura e moedas.
 *   `webhook.test.ts`: Validação de requisições de webhook financeiro (Asaas).
+*   `request-advance.test.ts`: Validação de limites, Pix Asaas e persistência de adiantamento salarial.
 
 ---
 

@@ -9,6 +9,9 @@ import paymentLinksHandler from './_logic/asaas/payment-links.js';
 import subscriptionsHandler from './_logic/asaas/subscriptions.js';
 import updateSubscriptionHandler from './_logic/asaas/update-subscription.js';
 import deleteSubscriptionHandler from './_logic/asaas/delete-subscription.js';
+import balanceHandler from './_logic/asaas/balance.js';
+import transferHandler from './_logic/asaas/transfer.js';
+import requestAdvanceHandler from './_logic/asaas/request-advance.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
@@ -16,6 +19,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log(`[AsaasHandler] Action: ${action}, Method: ${req.method}`);
 
     switch (action) {
+      // Saldos e Transferências
+      case 'balance':
+        return await balanceHandler(req, res);
+      case 'transfer':
+        return await transferHandler(req, res);
+      case 'request-advance':
+        return await requestAdvanceHandler(req, res);
+
       // Clientes
       case 'customers':
       case 'create-customer':

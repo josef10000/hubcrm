@@ -42,7 +42,30 @@ export const teamUpdateProfileSchema = z.object({
     healthInsurance: z.number().optional(),
     mealVoucher: z.number().optional(),
     transportVoucher: z.number().optional(),
-    homeOfficeAux: z.number().optional()
+    homeOfficeAux: z.number().optional(),
+    pixKeyType: z.enum(['CPF', 'CNPJ', 'EMAIL', 'PHONE', 'RANDOM']).nullable().optional(),
+    pixKey: z.string().nullable().optional(),
+    bankAccount: z.object({
+      bankCode: z.string(),
+      bankName: z.string().optional(),
+      agency: z.string(),
+      account: z.string(),
+      accountDigit: z.string(),
+      accountType: z.enum(['CHECKING', 'SAVINGS']),
+      holderName: z.string(),
+      holderCpfCnpj: z.string()
+    }).nullable().optional(),
+    benefitDeductions: z.object({
+      healthInsuranceCopay: z.number().optional(),
+      mealVoucherDiscount: z.number().optional(),
+      transportVoucherDiscount: z.number().optional()
+    }).nullable().optional(),
+    resignationDetails: z.object({
+      resignationDate: z.string(),
+      reason: z.enum(['dismissal_without_cause', 'dismissal_with_cause', 'employee_resignation', 'pj_termination']),
+      noticeType: z.enum(['worked', 'indemnified', 'none']),
+      penaltyPercentage: z.number().optional()
+    }).nullable().optional()
   })
 });
 

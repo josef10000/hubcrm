@@ -148,6 +148,21 @@ service cloud.firestore {
         allow write: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_FINANCE');
       }
 
+      match /payrolls/{id} {
+        allow read: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_FINANCE');
+        allow write: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_FINANCE');
+      }
+
+      match /salary_advances/{id} {
+        allow read: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_FINANCE') || (belongsToOrg(orgId) && resource.data.userId == request.auth.uid);
+        allow write: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_FINANCE');
+      }
+
+      match /vacation_payments/{id} {
+        allow read: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_FINANCE') || (belongsToOrg(orgId) && resource.data.userId == request.auth.uid);
+        allow write: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_FINANCE');
+      }
+
       match /clients/{id} {
         allow read: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_CLIENTS') || (belongsToOrg(orgId) && resource.data.assignedTo == request.auth.uid);
         allow write: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_CLIENTS');

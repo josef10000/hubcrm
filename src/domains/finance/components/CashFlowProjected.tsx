@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useClients } from '@/hooks/queries/useClients';
 import { useTransactions } from '@/hooks/queries/useFinance';
 import { getPlanPrice } from '@/helpers';
-import { TrendingUp, TrendingDown, Clock, AlertTriangle } from 'lucide-react';
+import { TrendingUp, TrendingDown, Clock, AlertTriangle, Loader2 } from 'lucide-react';
 
 export default function CashFlowProjected() {
   const { offers = [] } = useCRM();
@@ -12,7 +12,31 @@ export default function CashFlowProjected() {
   const { data: transactionsData } = useTransactions();
   const transactions = transactionsData || [];
   const [currentBalance, setCurrentBalance] = useState<number>(0);
+  const [loadingBalance, setLoadingBalance] = useState<boolean>(false);
   const [projectionMonths, setProjectionMonths] = useState<number>(3); // 3, 6, 12 meses
+
+  useEffect(() => {
+    let active = true;
+    const fetchBalance = async () => {
+      setLoadingBalance(true);
+      try {
+        const res = await fetch('/api/asaas_handler?action=balance');
+        const data = await res.json();
+        if (res.ok && active && typeof data.balance === 'number') {
+          setCurrentBalance(data.balance);
+        }
+      } catch (err) {
+        console.error('[CashFlowProjected] Erro ao obter saldo do Asaas:', err);
+      } finally {
+        if (active) setLoadingBalance(false);
+      }
+    };
+
+    fetchBalance();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Projected Cash Flow Logic
   const projectedData = useMemo(() => {
@@ -98,7 +122,10 @@ export default function CashFlowProjected() {
 
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 bg-gray-100 dark:bg-black/40 px-4 py-2 rounded-xl border border-gray-200 dark:border-white/10">
-              <span className="text-gray-500 font-medium text-sm">Saldo Inicial (Bancos):</span>
+              <span className="text-gray-500 font-medium text-sm flex items-center gap-1.5">
+                {loadingBalance && <Loader2 size={12} className="animate-spin text-emerald-500" />}
+                Saldo Real Asaas:
+              </span>
               <input 
                 type="number" 
                 value={currentBalance}

@@ -301,7 +301,7 @@ async function handleUpdateProfile(req: VercelRequest, res: VercelResponse, uid:
     }
   }
 
-  // Barreira de segurança: Apenas Admin ou RH podem alterar regime, jornada de trabalho, salários e benefícios
+  // Barreira de segurança: Apenas Admin ou RH podem alterar regime, jornada de trabalho, salários, benefícios e dados de desligamento
   const hasProtectedFields = 
     'contractType' in profileData || 
     'workSchedule' in profileData ||
@@ -309,7 +309,9 @@ async function handleUpdateProfile(req: VercelRequest, res: VercelResponse, uid:
     'healthInsurance' in profileData ||
     'mealVoucher' in profileData ||
     'transportVoucher' in profileData ||
-    'homeOfficeAux' in profileData;
+    'homeOfficeAux' in profileData ||
+    'benefitDeductions' in profileData ||
+    'resignationDetails' in profileData;
   const isAuthorizedToEditSchedule = isAdminUser || isManagement(editorData);
 
   if (hasProtectedFields && !isAuthorizedToEditSchedule) {
@@ -321,6 +323,8 @@ async function handleUpdateProfile(req: VercelRequest, res: VercelResponse, uid:
     delete (profileData as any).mealVoucher;
     delete (profileData as any).transportVoucher;
     delete (profileData as any).homeOfficeAux;
+    delete (profileData as any).benefitDeductions;
+    delete (profileData as any).resignationDetails;
   }
 
   if (profileData?.reportsTo === targetUid) return res.status(400).json({ error: 'Não pode reportar a si mesmo' });

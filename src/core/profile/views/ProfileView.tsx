@@ -218,9 +218,34 @@ export default function ProfileView() {
     healthInsurance: 0,
     mealVoucher: 0,
     transportVoucher: 0,
-    homeOfficeAux: 0
+    homeOfficeAux: 0,
+    benefitDeductions: {
+      healthInsuranceCopay: 0,
+      mealVoucherDiscount: 0,
+      transportVoucherDiscount: 0
+    },
+    pixKeyType: '' as 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'RANDOM' | '',
+    pixKey: '',
+    bankAccount: {
+      bankCode: '',
+      bankName: '',
+      agency: '',
+      account: '',
+      accountDigit: '',
+      accountType: 'CHECKING' as 'CHECKING' | 'SAVINGS',
+      holderName: '',
+      holderCpfCnpj: ''
+    },
+    resignationDetails: {
+      resignationDate: '',
+      reason: 'dismissal_without_cause' as 'dismissal_without_cause' | 'dismissal_with_cause' | 'employee_resignation' | 'pj_termination',
+      noticeType: 'none' as 'worked' | 'indemnified' | 'none',
+      penaltyPercentage: 0
+    }
   });
   const [userAssets, setUserAssets] = useState<any[]>([]);
+  const [activeAdvance, setActiveAdvance] = useState<any | null>(null);
+  const [isRequestingAdvance, setIsRequestingAdvance] = useState(false);
   const { hasPermission } = usePermissions();
 
   const isOwnProfile = user?.uid === uid;
@@ -271,7 +296,30 @@ export default function ProfileView() {
                 healthInsurance: data.healthInsurance || 0,
                 mealVoucher: data.mealVoucher || 0,
                 transportVoucher: data.transportVoucher || 0,
-                homeOfficeAux: data.homeOfficeAux || 0
+                homeOfficeAux: data.homeOfficeAux || 0,
+                benefitDeductions: data.benefitDeductions || {
+                  healthInsuranceCopay: 0,
+                  mealVoucherDiscount: 0,
+                  transportVoucherDiscount: 0
+                },
+                pixKeyType: data.pixKeyType || '',
+                pixKey: data.pixKey || '',
+                bankAccount: data.bankAccount || {
+                  bankCode: '',
+                  bankName: '',
+                  agency: '',
+                  account: '',
+                  accountDigit: '',
+                  accountType: 'CHECKING',
+                  holderName: '',
+                  holderCpfCnpj: ''
+                },
+                resignationDetails: data.resignationDetails || {
+                  resignationDate: '',
+                  reason: 'dismissal_without_cause',
+                  noticeType: 'none',
+                  penaltyPercentage: 0
+                }
               });
             }
             return editing;
@@ -321,6 +369,35 @@ export default function ProfileView() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const loaded = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       setUserAssets(loaded);
+    });
+
+    return () => unsubscribe();
+  }, [uid, currentUserProfile?.orgId]);
+
+  // Listener para adiantamento salarial ativo no mês atual
+  useEffect(() => {
+    if (!uid || !currentUserProfile?.orgId) return;
+    const now = new Date();
+    // Ajuste de Brasília (UTC-3)
+    const brTime = new Date(now.getTime() - 3 * 3600 * 1000);
+    const year = brTime.getUTCFullYear();
+    const month = String(brTime.getUTCMonth() + 1).padStart(2, '0');
+    const currentMonthStr = `${year}-${month}`;
+
+    const q = query(
+      collection(db, 'organizations', currentUserProfile.orgId, 'salary_advances'),
+      where('userId', '==', uid),
+      where('month', '==', currentMonthStr)
+    );
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (!snapshot.empty) {
+        setActiveAdvance({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() });
+      } else {
+        setActiveAdvance(null);
+      }
+    }, (error) => {
+      console.error('[ProfileView] Erro ao escutar adiantamentos salariais:', error);
     });
 
     return () => unsubscribe();
@@ -1185,6 +1262,363 @@ export default function ProfileView() {
                                 />
                               </div>
                             </div>
+
+                            {/* Descontos de Participação de Benefícios (Apenas RH/Admin) */}
+                            {canEditFinancials && (
+                              <div className="md:col-span-2 border-t border-white/5 pt-6 mt-4">
+                                <h5 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
+                                  Descontos / Participação em Benefícios (RH)
+                                </h5>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                  <div>
+                                    <label className="block text-[10px] font-bold text-gray-500 uppercase mb-2 ml-1">
+                                      Coparticipação Plano Saúde
+                                    </label>
+                                    <div className="relative">
+                                      <span className="absolute left-4 top-2.5 text-xs text-gray-400 font-bold">R$</span>
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={formData.benefitDeductions?.healthInsuranceCopay || 0}
+                                        onChange={e => setFormData({
+                                          ...formData,
+                                          benefitDeductions: {
+                                            ...formData.benefitDeductions,
+                                            healthInsuranceCopay: parseFloat(e.target.value) || 0
+                                          }
+                                        })}
+                                        className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl pl-10 pr-3 py-2 text-xs focus:ring-2 focus:ring-primary-500 outline-none"
+                                        placeholder="0.00"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-[10px] font-bold text-gray-500 uppercase mb-2 ml-1">
+                                      Desconto Vale Refeição
+                                    </label>
+                                    <div className="relative">
+                                      <span className="absolute left-4 top-2.5 text-xs text-gray-400 font-bold">R$</span>
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={formData.benefitDeductions?.mealVoucherDiscount || 0}
+                                        onChange={e => setFormData({
+                                          ...formData,
+                                          benefitDeductions: {
+                                            ...formData.benefitDeductions,
+                                            mealVoucherDiscount: parseFloat(e.target.value) || 0
+                                          }
+                                        })}
+                                        className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl pl-10 pr-3 py-2 text-xs focus:ring-2 focus:ring-primary-500 outline-none"
+                                        placeholder="0.00"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-[10px] font-bold text-gray-500 uppercase mb-2 ml-1">
+                                      Desconto Vale Transporte
+                                    </label>
+                                    <div className="relative">
+                                      <span className="absolute left-4 top-2.5 text-xs text-gray-400 font-bold">R$</span>
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        value={formData.benefitDeductions?.transportVoucherDiscount || 0}
+                                        onChange={e => setFormData({
+                                          ...formData,
+                                          benefitDeductions: {
+                                            ...formData.benefitDeductions,
+                                            transportVoucherDiscount: parseFloat(e.target.value) || 0
+                                          }
+                                        })}
+                                        className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl pl-10 pr-3 py-2 text-xs focus:ring-2 focus:ring-primary-500 outline-none"
+                                        placeholder="0.00"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Dados Bancários e Pix (Editável pelo próprio colaborador ou RH) */}
+                            <div className="md:col-span-2 border-t border-white/5 pt-6 mt-4">
+                              <h5 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
+                                Dados de Recebimento (Pix / Conta Bancária)
+                              </h5>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-[10px] font-bold text-gray-500 uppercase mb-2 ml-1">
+                                    Tipo de Chave Pix
+                                  </label>
+                                  <select
+                                    value={formData.pixKeyType || ''}
+                                    onChange={e => setFormData({ ...formData, pixKeyType: e.target.value as any })}
+                                    className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs focus:ring-2 focus:ring-primary-500 outline-none"
+                                  >
+                                    <option value="" className="bg-[#030712] text-gray-400">Não informado</option>
+                                    <option value="CPF" className="bg-[#030712] text-white">CPF</option>
+                                    <option value="CNPJ" className="bg-[#030712] text-white">CNPJ</option>
+                                    <option value="EMAIL" className="bg-[#030712] text-white">E-mail</option>
+                                    <option value="PHONE" className="bg-[#030712] text-white">Telefone/Celular</option>
+                                    <option value="RANDOM" className="bg-[#030712] text-white">Chave Aleatória (EVP)</option>
+                                  </select>
+                                </div>
+
+                                <div>
+                                  <label className="block text-[10px] font-bold text-gray-500 uppercase mb-2 ml-1">
+                                    Chave Pix
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={formData.pixKey || ''}
+                                    onChange={e => setFormData({ ...formData, pixKey: e.target.value })}
+                                    className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs focus:ring-2 focus:ring-primary-500 outline-none"
+                                    placeholder="Informe a chave Pix"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="mt-4 bg-white/5 border border-white/5 rounded-2xl p-4 space-y-4">
+                                <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-2">Dados Bancários (Opcional / TED)</p>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                  <div>
+                                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1.5 ml-1">Código do Banco</label>
+                                    <input
+                                      type="text"
+                                      value={formData.bankAccount?.bankCode || ''}
+                                      onChange={e => setFormData({
+                                        ...formData,
+                                        bankAccount: {
+                                          ...formData.bankAccount,
+                                          bankCode: e.target.value
+                                        }
+                                      })}
+                                      placeholder="Ex: 001, 260, 033"
+                                      className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary-500 outline-none"
+                                    />
+                                  </div>
+                                  
+                                  <div className="sm:col-span-2">
+                                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1.5 ml-1">Nome do Banco</label>
+                                    <input
+                                      type="text"
+                                      value={formData.bankAccount?.bankName || ''}
+                                      onChange={e => setFormData({
+                                        ...formData,
+                                        bankAccount: {
+                                          ...formData.bankAccount,
+                                          bankName: e.target.value
+                                        }
+                                      })}
+                                      placeholder="Ex: Banco do Brasil"
+                                      className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary-500 outline-none"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1.5 ml-1">Agência</label>
+                                    <input
+                                      type="text"
+                                      value={formData.bankAccount?.agency || ''}
+                                      onChange={e => setFormData({
+                                        ...formData,
+                                        bankAccount: {
+                                          ...formData.bankAccount,
+                                          agency: e.target.value
+                                        }
+                                      })}
+                                      placeholder="Agência (sem dígito)"
+                                      className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary-500 outline-none"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1.5 ml-1">Conta</label>
+                                    <input
+                                      type="text"
+                                      value={formData.bankAccount?.account || ''}
+                                      onChange={e => setFormData({
+                                        ...formData,
+                                        bankAccount: {
+                                          ...formData.bankAccount,
+                                          account: e.target.value
+                                        }
+                                      })}
+                                      placeholder="Número"
+                                      className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary-500 outline-none"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1.5 ml-1">Dígito</label>
+                                    <input
+                                      type="text"
+                                      value={formData.bankAccount?.accountDigit || ''}
+                                      onChange={e => setFormData({
+                                        ...formData,
+                                        bankAccount: {
+                                          ...formData.bankAccount,
+                                          accountDigit: e.target.value
+                                        }
+                                      })}
+                                      placeholder="Dígito"
+                                      className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary-500 outline-none"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1.5 ml-1">Tipo de Conta</label>
+                                    <select
+                                      value={formData.bankAccount?.accountType || 'CHECKING'}
+                                      onChange={e => setFormData({
+                                        ...formData,
+                                        bankAccount: {
+                                          ...formData.bankAccount,
+                                          accountType: e.target.value as any
+                                        }
+                                      })}
+                                      className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary-500 outline-none"
+                                    >
+                                      <option value="CHECKING" className="bg-[#030712] text-white">Conta Corrente</option>
+                                      <option value="SAVINGS" className="bg-[#030712] text-white">Poupança</option>
+                                    </select>
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1.5 ml-1">Nome do Titular</label>
+                                    <input
+                                      type="text"
+                                      value={formData.bankAccount?.holderName || ''}
+                                      onChange={e => setFormData({
+                                        ...formData,
+                                        bankAccount: {
+                                          ...formData.bankAccount,
+                                          holderName: e.target.value
+                                        }
+                                      })}
+                                      placeholder="Nome Completo"
+                                      className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary-500 outline-none"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-[9px] font-bold text-gray-500 uppercase mb-1.5 ml-1">CPF/CNPJ do Titular</label>
+                                    <input
+                                      type="text"
+                                      value={formData.bankAccount?.holderCpfCnpj || ''}
+                                      onChange={e => setFormData({
+                                        ...formData,
+                                        bankAccount: {
+                                          ...formData.bankAccount,
+                                          holderCpfCnpj: e.target.value
+                                        }
+                                      })}
+                                      placeholder="Documento"
+                                      className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary-500 outline-none"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Detalhes de Desligamento / Rescisão (Apenas RH/Admin) */}
+                            {canEditFinancials && (
+                              <div className="md:col-span-2 border-t border-white/5 pt-6 mt-4">
+                                <h5 className="text-xs font-bold text-red-400 uppercase tracking-wider mb-4 flex items-center">
+                                  <span>Desligamento / Rescisão do Contrato</span>
+                                </h5>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-red-500/5 border border-red-500/10 rounded-2xl p-4">
+                                  <div>
+                                    <label className="block text-[10px] font-bold text-gray-500 uppercase mb-2 ml-1">
+                                      Data do Desligamento
+                                    </label>
+                                    <input
+                                      type="date"
+                                      value={formData.resignationDetails?.resignationDate || ''}
+                                      onChange={e => setFormData({
+                                        ...formData,
+                                        resignationDetails: {
+                                          ...formData.resignationDetails,
+                                          resignationDate: e.target.value
+                                        }
+                                      })}
+                                      className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-red-500 outline-none text-white"
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-[10px] font-bold text-gray-500 uppercase mb-2 ml-1">
+                                      Motivo do Desligamento
+                                    </label>
+                                    <select
+                                      value={formData.resignationDetails?.reason || 'dismissal_without_cause'}
+                                      onChange={e => setFormData({
+                                        ...formData,
+                                        resignationDetails: {
+                                          ...formData.resignationDetails,
+                                          reason: e.target.value as any
+                                        }
+                                      })}
+                                      className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-red-500 outline-none"
+                                    >
+                                      <option value="dismissal_without_cause" className="bg-[#030712] text-white">Demissão sem Justa Causa (CLT)</option>
+                                      <option value="dismissal_with_cause" className="bg-[#030712] text-white">Demissão por Justa Causa (CLT)</option>
+                                      <option value="employee_resignation" className="bg-[#030712] text-white">Pedido de Demissão (CLT)</option>
+                                      <option value="pj_termination" className="bg-[#030712] text-white">Rescisão de Contrato PJ</option>
+                                    </select>
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-[10px] font-bold text-gray-500 uppercase mb-2 ml-1">
+                                      Aviso Prévio
+                                    </label>
+                                    <select
+                                      value={formData.resignationDetails?.noticeType || 'none'}
+                                      onChange={e => setFormData({
+                                        ...formData,
+                                        resignationDetails: {
+                                          ...formData.resignationDetails,
+                                          noticeType: e.target.value as any
+                                        }
+                                      })}
+                                      className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-red-500 outline-none"
+                                    >
+                                      <option value="none" className="bg-[#030712] text-white">Não se aplica</option>
+                                      <option value="worked" className="bg-[#030712] text-white">Trabalhado</option>
+                                      <option value="indemnified" className="bg-[#030712] text-white">Indenizado</option>
+                                    </select>
+                                  </div>
+
+                                  {formData.contractType === 'PJ' && (
+                                    <div>
+                                      <label className="block text-[10px] font-bold text-gray-500 uppercase mb-2 ml-1">
+                                        Multa Contratual PJ (%)
+                                      </label>
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        max="100"
+                                        value={formData.resignationDetails?.penaltyPercentage || 0}
+                                        onChange={e => setFormData({
+                                          ...formData,
+                                          resignationDetails: {
+                                            ...formData.resignationDetails,
+                                            penaltyPercentage: parseFloat(e.target.value) || 0
+                                          }
+                                        })}
+                                        className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-red-500 outline-none"
+                                        placeholder="Ex: 10"
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       )}
@@ -1418,6 +1852,224 @@ export default function ProfileView() {
                                   })()}
                                 </p>
                               </div>
+                            </div>
+
+                            {/* Divisor */}
+                            <div className="border-t border-gray-200 dark:border-white/5 pt-6" />
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+                              {/* Coluna 1: Dados Bancários / Pix */}
+                              <div>
+                                <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-3">
+                                  Dados de Recebimento
+                                </h4>
+                                <div className="space-y-3 bg-white/5 border border-white/5 rounded-2xl p-4">
+                                  {profile.pixKey ? (
+                                    <div>
+                                      <p className="text-[9px] font-bold text-gray-500 uppercase tracking-wider">Pix (Chave {profile.pixKeyType})</p>
+                                      <p className="text-sm font-semibold text-white select-all">{profile.pixKey}</p>
+                                    </div>
+                                  ) : (
+                                    <p className="text-xs text-amber-500 font-semibold flex items-center gap-1.5">
+                                      <AlertTriangle size={14} /> Sem chave Pix cadastrada
+                                    </p>
+                                  )}
+                                  
+                                  {profile.bankAccount && profile.bankAccount.bankCode && (
+                                    <div className="border-t border-white/5 pt-3">
+                                      <p className="text-[9px] font-bold text-gray-500 uppercase tracking-wider">Conta Bancária (TED)</p>
+                                      <p className="text-xs font-semibold text-white">
+                                        Banco {profile.bankAccount.bankCode} {profile.bankAccount.bankName && `- ${profile.bankAccount.bankName}`}
+                                      </p>
+                                      <p className="text-xs text-gray-400">
+                                        Ag: {profile.bankAccount.agency} | Cta: {profile.bankAccount.account}-{profile.bankAccount.accountDigit} ({profile.bankAccount.accountType === 'SAVINGS' ? 'Poupança' : 'Corrente'})
+                                      </p>
+                                      <p className="text-[10px] text-gray-400 mt-1">
+                                        Titular: {profile.bankAccount.holderName} ({profile.bankAccount.holderCpfCnpj})
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Coluna 2: Descontos de Benefícios & Rescisão */}
+                              <div>
+                                <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-3">
+                                  Coparticipações & Descontos
+                                </h4>
+                                <div className="space-y-3 bg-white/5 border border-white/5 rounded-2xl p-4">
+                                  <div className="grid grid-cols-2 gap-2 text-xs">
+                                    <span className="text-gray-400">Copart. Saúde:</span>
+                                    <span className="font-semibold text-white text-right">
+                                      {profile.benefitDeductions?.healthInsuranceCopay 
+                                        ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(profile.benefitDeductions.healthInsuranceCopay)
+                                        : 'R$ 0,00'}
+                                    </span>
+                                    
+                                    <span className="text-gray-400">Desconto VR:</span>
+                                    <span className="font-semibold text-white text-right">
+                                      {profile.benefitDeductions?.mealVoucherDiscount 
+                                        ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(profile.benefitDeductions.mealVoucherDiscount)
+                                        : 'R$ 0,00'}
+                                    </span>
+
+                                    <span className="text-gray-400">Desconto VT:</span>
+                                    <span className="font-semibold text-white text-right">
+                                      {profile.benefitDeductions?.transportVoucherDiscount 
+                                        ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(profile.benefitDeductions.transportVoucherDiscount)
+                                        : 'R$ 0,00'}
+                                    </span>
+                                  </div>
+
+                                  {profile.resignationDetails && profile.resignationDetails.resignationDate && (
+                                    <div className="border-t border-rose-500/20 pt-3 text-xs bg-rose-500/5 rounded-xl p-2.5 border border-rose-500/10 mt-2">
+                                      <p className="font-bold text-rose-500 flex items-center gap-1.5">
+                                        <AlertTriangle size={14} /> Desligamento Agendado
+                                      </p>
+                                      <p className="text-gray-300 mt-1">
+                                        Data: {formatLocalDateStr(profile.resignationDetails.resignationDate)}
+                                      </p>
+                                      <p className="text-gray-400 text-[10px]">
+                                        Motivo: {
+                                          profile.resignationDetails.reason === 'dismissal_without_cause' ? 'Sem justa causa' :
+                                          profile.resignationDetails.reason === 'dismissal_with_cause' ? 'Com justa causa' :
+                                          profile.resignationDetails.reason === 'employee_resignation' ? 'Pedido de demissão' :
+                                          'Rescisão contratual PJ'
+                                        }
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Card de Adiantamento Salarial */}
+                      {isOwnProfile && profile.salary && profile.salary > 0 && (
+                        <div className="border-t border-gray-200 dark:border-white/5 pt-8 mt-6">
+                          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 flex items-center">
+                            <Wallet className="mr-2 text-amber-500" size={16} />
+                            Portal de Adiantamento Salarial
+                          </h3>
+                          <div className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 border border-amber-500/20 rounded-3xl p-6 relative overflow-hidden">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+                              <div className="space-y-2 max-w-xl text-left">
+                                <h4 className="text-lg font-black text-white flex items-center gap-2">
+                                  Adiantamento Salarial Sem Custos
+                                </h4>
+                                <p className="text-xs text-gray-400 leading-relaxed">
+                                  Você pode solicitar um adiantamento Pix de até 30% do seu salário base de forma imediata. O valor será descontado integralmente no próximo fechamento da sua folha de pagamento.
+                                </p>
+                              </div>
+                              <div className="bg-black/30 border border-white/5 rounded-2xl p-4 min-w-[200px] text-center">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Seu Limite (30%)</p>
+                                <p className="text-2xl font-black text-amber-400">
+                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(profile.salary * 0.3)}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="mt-6 border-t border-amber-500/10 pt-6">
+                              {activeAdvance ? (
+                                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex items-center justify-between gap-4 text-left">
+                                  <div>
+                                    <p className="text-sm font-bold text-emerald-400 flex items-center gap-1.5">
+                                      <CheckCircle2 size={16} /> Adiantamento Solicitado e Pago!
+                                    </p>
+                                    <p className="text-xs text-gray-300 mt-1">
+                                      Valor de <span className="font-semibold text-white">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(activeAdvance.amount)}</span> recebido em {format(new Date(activeAdvance.requestedAt), 'dd/MM/yyyy')} via Pix.
+                                    </p>
+                                    <p className="text-[10px] text-gray-500 mt-0.5">
+                                      ID Asaas: {activeAdvance.asaasTransferId} | Competência: {activeAdvance.month}
+                                    </p>
+                                  </div>
+                                  <span className="shrink-0 px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-[10px] font-black uppercase tracking-wider">
+                                    Compensação Pendente
+                                  </span>
+                                </div>
+                              ) : !profile.pixKey ? (
+                                <div className="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-4 text-left">
+                                  <p className="text-sm font-bold text-rose-400 flex items-center gap-1.5">
+                                    <AlertTriangle size={16} /> Chave Pix Necessária
+                                  </p>
+                                  <p className="text-xs text-gray-300 mt-1">
+                                    Você precisa cadastrar sua chave Pix nas configurações do perfil para solicitar o adiantamento salarial.
+                                  </p>
+                                </div>
+                              ) : (
+                                <div className="flex flex-col sm:flex-row items-center gap-4 text-left">
+                                  <div className="w-full sm:flex-1">
+                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Valor da Solicitação</label>
+                                    <div className="relative">
+                                      <span className="absolute left-4 top-3 text-sm text-gray-400 font-bold">R$</span>
+                                      <input
+                                        type="number"
+                                        min="1"
+                                        max={profile.salary * 0.3}
+                                        step="0.01"
+                                        defaultValue={(profile.salary * 0.3).toFixed(2)}
+                                        id="advanceAmountInput"
+                                        placeholder="0,00"
+                                        className="w-full bg-black/40 border border-amber-500/20 focus:border-amber-500/50 rounded-2xl pl-10 pr-4 py-3 text-sm font-semibold text-white outline-none focus:ring-1 focus:ring-amber-500"
+                                      />
+                                    </div>
+                                    <span className="text-[10px] text-gray-500 mt-1 block">Escolha qualquer valor até o limite de R$ {(profile.salary * 0.3).toFixed(2)}</span>
+                                  </div>
+                                  <button
+                                    onClick={async () => {
+                                      const inputEl = document.getElementById('advanceAmountInput') as HTMLInputElement;
+                                      const val = parseFloat(inputEl?.value) || 0;
+                                      if (val <= 0 || val > profile.salary * 0.3) {
+                                        toast.error('Valor solicitado inválido ou excede o limite permitido');
+                                        return;
+                                      }
+
+                                      const ok = await confirm({
+                                        title: 'Confirmar Adiantamento Salarial',
+                                        message: `Deseja solicitar o adiantamento salarial de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)} via Pix? Este valor será descontado na sua próxima folha de pagamento.`,
+                                        confirmText: 'Sim, solicitar Pix',
+                                        variant: 'warning'
+                                      });
+                                      if (!ok) return;
+
+                                      setIsRequestingAdvance(true);
+                                      try {
+                                        const token = await user?.getIdToken();
+                                        const res = await fetch('/api/asaas_handler?action=request-advance', {
+                                          method: 'POST',
+                                          headers: {
+                                            'Authorization': `Bearer ${token}`,
+                                            'Content-Type': 'application/json'
+                                          },
+                                          body: JSON.stringify({ amount: val })
+                                        });
+
+                                        const data = await res.json();
+                                        if (!res.ok) throw new Error(data.error || 'Erro ao solicitar adiantamento');
+
+                                        toast.success('Adiantamento solicitado com sucesso! O Pix está sendo enviado.');
+                                      } catch (err: any) {
+                                        console.error(err);
+                                        toast.error(err.message || 'Erro ao solicitar adiantamento.');
+                                      } finally {
+                                        setIsRequestingAdvance(false);
+                                      }
+                                    }}
+                                    disabled={isRequestingAdvance}
+                                    className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-600 disabled:bg-amber-500/20 text-black font-black uppercase tracking-wider transition-all shadow-xl shadow-amber-500/20 active:scale-95 flex items-center justify-center gap-2 self-end shrink-0"
+                                  >
+                                    {isRequestingAdvance ? (
+                                      <>
+                                        <Loader2 size={16} className="animate-spin" /> Processando...
+                                      </>
+                                    ) : (
+                                      'Confirmar Pix'
+                                    )}
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>

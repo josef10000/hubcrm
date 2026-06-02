@@ -121,6 +121,29 @@ export interface UserProfile {
   mealVoucher?: number;      // Vale-refeição
   transportVoucher?: number; // Vale-transporte
   homeOfficeAux?: number;    // Auxílio home-office
+  benefitDeductions?: {
+    healthInsuranceCopay?: number;
+    mealVoucherDiscount?: number;
+    transportVoucherDiscount?: number;
+  };
+  pixKeyType?: 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'RANDOM';
+  pixKey?: string;
+  bankAccount?: {
+    bankCode: string;
+    bankName?: string;
+    agency: string;
+    account: string;
+    accountDigit: string;
+    accountType: 'CHECKING' | 'SAVINGS';
+    holderName: string;
+    holderCpfCnpj: string;
+  };
+  resignationDetails?: {
+    resignationDate: string;
+    reason: 'dismissal_without_cause' | 'dismissal_with_cause' | 'employee_resignation' | 'pj_termination';
+    noticeType: 'worked' | 'indemnified' | 'none';
+    penaltyPercentage?: number;
+  };
 
   // Ecossistema de Contratos Digitais (Legal)
   contracts?: UserContract[];

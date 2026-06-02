@@ -14,6 +14,7 @@ import DREWidget from '@finance/components/DREWidget';
 import CashFlowForecastChart from '@finance/components/CashFlowForecastChart';
 import BudgetPanel from '@finance/components/BudgetPanel';
 import ROIAnalysis from '@finance/components/ROIAnalysis';
+import PayrollPanel from '../components/PayrollPanel';
 import { usePermissions } from '@auth/hooks/usePermissions';
 
 export default function FinanceView() {
@@ -38,7 +39,7 @@ export default function FinanceView() {
   
   const { data: budgetsData } = useBudgets();
   const budgets = budgetsData || [];
-  const [activeTab, setActiveTab] = useState<'resumo' | 'dre' | 'fluxo' | 'orcamento' | 'roi' | 'saas'>('resumo');
+  const [activeTab, setActiveTab] = useState<'resumo' | 'dre' | 'fluxo' | 'orcamento' | 'roi' | 'saas' | 'payroll'>('resumo');
 
   // subscribeToFinance and CRMStore listener initialization are now handled by React Query
   // Removing manual store subscriptions for finance data
@@ -202,6 +203,13 @@ export default function FinanceView() {
           >
             <Activity size={18} />
             Métricas SaaS
+          </button>
+          <button
+            onClick={() => setActiveTab('payroll')}
+            className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'payroll' ? 'bg-primary-500 text-gray-900 shadow-lg shadow-primary-500/20' : 'bg-black/40 text-gray-500 dark:text-gray-400 hover:bg-black/20'}`}
+          >
+            <DollarSign size={18} />
+            Folha de Pagamento
           </button>
         </div>
 
@@ -439,6 +447,10 @@ export default function FinanceView() {
                 </div>
               </div>
             </div>
+          </div>
+        ) : activeTab === 'payroll' ? (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <PayrollPanel />
           </div>
         ) : null}
 
