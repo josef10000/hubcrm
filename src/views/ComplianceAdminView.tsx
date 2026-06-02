@@ -34,7 +34,7 @@ export default function ComplianceAdminView() {
   const { userProfile } = useAuth();
   const { effectiveOrgId } = useCRM();
   const navigate = useNavigate();
-  const { hasAnyPermission } = usePermissions();
+  const { hasAnyPermission, isLoadingPermissions } = usePermissions();
 
   const [tickets, setTickets] = useState<ComplianceTicket[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,14 +52,14 @@ export default function ComplianceAdminView() {
 
   // 1. Verificar permissão de acesso
   useEffect(() => {
-    if (userProfile) {
+    if (userProfile && !isLoadingPermissions) {
       const hasAccess = hasAnyPermission(['MANAGE_SETTINGS', 'MANAGE_TEAM']);
       if (!hasAccess) {
         toast.error('Acesso restrito ao RH e Administradores.');
         navigate('/');
       }
     }
-  }, [userProfile, navigate, hasAnyPermission]);
+  }, [userProfile, navigate, hasAnyPermission, isLoadingPermissions]);
 
   // 2. Carregar todos os tickets da organização
   useEffect(() => {
@@ -176,6 +176,17 @@ export default function ComplianceAdminView() {
   const countNew = tickets.filter(t => t.status === 'new').length;
   const countInvestigating = tickets.filter(t => t.status === 'investigating').length;
   const countResolved = tickets.filter(t => t.status === 'resolved').length;
+
+  if (isLoadingPermissions) {
+    return (
+      <div className="min-h-screen bg-[#07090e] flex items-center justify-center">
+        <div className="animate-pulse flex flex-col items-center gap-4">
+          <Loader2 className="h-10 w-10 text-rose-500 animate-spin" />
+          <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest text-center">Validando credenciais de compliance...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#07090e] text-white p-6 md:p-10 flex flex-col items-center">
