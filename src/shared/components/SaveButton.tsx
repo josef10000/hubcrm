@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, HTMLMotionProps } from 'framer-motion';
 import { Loader2, Check, AlertCircle } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -8,7 +8,7 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-interface SaveButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface SaveButtonProps extends Omit<HTMLMotionProps<'button'>, 'onClick'> {
   onClick: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => Promise<any> | any;
   loadingText?: string;
   successText?: string;
