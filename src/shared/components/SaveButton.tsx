@@ -65,8 +65,8 @@ export function SaveButton({
   // Efeito de vibração (shake) para o estado de erro
   const shakeAnimation = {
     x: [0, -6, 6, -6, 6, -3, 3, 0],
-    transition: { duration: 0.4, ease: 'easeInOut' }
-  } as const;
+    transition: { duration: 0.4, ease: 'easeInOut' as const }
+  };
 
   return (
     <motion.button
