@@ -33,6 +33,7 @@ export default function ContractManager({ effectiveOrgId }: ContractManagerProps
   const [bodyText, setBodyText] = useState('');
   const [associatedRoleId, setAssociatedRoleId] = useState('');
   const [savingTemplate, setSavingTemplate] = useState(false);
+  const [type, setType] = useState<'work_clt' | 'work_pj' | 'asset_term'>('work_clt');
 
   // Estados de Disparo
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
@@ -114,7 +115,8 @@ export default function ContractManager({ effectiveOrgId }: ContractManagerProps
         associatedRoleId: associatedRoleId || undefined,
         createdAt: currentTemplate?.createdAt || Date.now(),
         updatedAt: Date.now(),
-        createdBy: currentTemplate?.createdBy || user?.uid || 'admin'
+        createdBy: currentTemplate?.createdBy || user?.uid || 'admin',
+        type
       };
 
       await setDoc(doc(db, 'organizations', effectiveOrgId, 'contract_templates', templateId), templateData);
@@ -124,6 +126,7 @@ export default function ContractManager({ effectiveOrgId }: ContractManagerProps
       setTitle('');
       setBodyText('');
       setAssociatedRoleId('');
+      setType('work_clt');
       fetchTemplatesAndMembers();
     } catch (error) {
       toast.error('Erro ao salvar modelo de contrato');
@@ -182,7 +185,8 @@ export default function ContractManager({ effectiveOrgId }: ContractManagerProps
         title: template.title,
         bodyText: template.bodyText, // Texto base original. As variáveis serão resolvidas no momento de renderizar no gate
         status: 'pending',
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        type: template.type || 'work_clt'
       };
 
       // Adicionar na lista de contratos do colaborador
@@ -298,6 +302,7 @@ export default function ContractManager({ effectiveOrgId }: ContractManagerProps
                       setTitle('');
                       setBodyText('');
                       setAssociatedRoleId('');
+                      setType('work_clt');
                       setIsEditing(true);
                     }}
                     className="flex items-center space-x-2 bg-primary-500 hover:bg-primary-600 text-white px-4 py-2.5 rounded-xl transition-all font-bold text-xs shadow-lg shadow-primary-500/20"
@@ -320,7 +325,18 @@ export default function ContractManager({ effectiveOrgId }: ContractManagerProps
                       return (
                         <div key={tmpl.id} className="bg-black/30 border border-gray-200 dark:border-white/10 p-5 rounded-2xl flex flex-col justify-between hover:border-primary-500/20 transition-all group">
                           <div>
-                            <h4 className="font-bold text-gray-900 dark:text-white group-hover:text-primary-500 transition-colors text-sm line-clamp-1">{tmpl.title}</h4>
+                            <div className="flex items-start justify-between gap-2">
+                              <h4 className="font-bold text-gray-900 dark:text-white group-hover:text-primary-500 transition-colors text-sm line-clamp-1 flex-1">{tmpl.title}</h4>
+                              <span className={`inline-block px-2 py-0.5 text-[9px] font-extrabold uppercase rounded-md shrink-0 border ${
+                                tmpl.type === 'work_pj'
+                                  ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                                  : tmpl.type === 'asset_term'
+                                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                    : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                              }`}>
+                                {tmpl.type === 'work_pj' ? 'PJ' : tmpl.type === 'asset_term' ? 'Termo' : 'CLT'}
+                              </span>
+                            </div>
                             <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mt-2">Gatilho de Cargo</p>
                             <span className="inline-block px-2 py-0.5 mt-1 text-[9px] font-extrabold uppercase bg-primary-500/10 text-primary-500 rounded-md">
                               {associatedRoleName}
@@ -333,6 +349,7 @@ export default function ContractManager({ effectiveOrgId }: ContractManagerProps
                                 setTitle(tmpl.title);
                                 setBodyText(tmpl.bodyText);
                                 setAssociatedRoleId(tmpl.associatedRoleId || '');
+                                setType(tmpl.type || 'work_clt');
                                 setIsEditing(true);
                               }}
                               className="p-2 text-gray-400 hover:text-primary-500 hover:bg-primary-500/10 rounded-lg transition-all"
@@ -449,7 +466,20 @@ export default function ContractManager({ effectiveOrgId }: ContractManagerProps
                                 <p className="text-[10px] text-gray-400">{item.memberEmail} • {item.memberRole}</p>
                               </div>
                             </td>
-                            <td className="px-6 py-4 font-semibold text-white">{item.title}</td>
+                            <td className="px-6 py-4 font-semibold text-white">
+                              <div>
+                                <p className="font-semibold text-white">{item.title}</p>
+                                <span className={`inline-block px-1.5 py-0.5 mt-1 text-[8px] font-extrabold uppercase rounded border ${
+                                  item.type === 'work_pj'
+                                    ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                                    : item.type === 'asset_term'
+                                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                      : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                                }`}>
+                                  {item.type === 'work_pj' ? 'PJ' : item.type === 'asset_term' ? 'Termo' : 'CLT'}
+                                </span>
+                              </div>
+                            </td>
                             <td className="px-6 py-4 text-gray-400">{new Date(item.createdAt).toLocaleDateString()}</td>
                             <td className="px-6 py-4">
                               {item.status === 'signed' ? (
@@ -511,7 +541,7 @@ export default function ContractManager({ effectiveOrgId }: ContractManagerProps
           </div>
 
           <form onSubmit={handleSaveTemplate} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Título do Modelo</label>
                 <input
@@ -525,7 +555,23 @@ export default function ContractManager({ effectiveOrgId }: ContractManagerProps
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Associar ao Cargo (Gatilho Automático - Opcional)</label>
+                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Tipo de Documento</label>
+                <select
+                  value={type}
+                  onChange={e => setType(e.target.value as any)}
+                  className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 transition-all text-sm text-white"
+                >
+                  <option value="work_clt">Contrato de Trabalho (CLT)</option>
+                  <option value="work_pj">Contrato de Prestação de Serviços (PJ)</option>
+                  <option value="asset_term">Termo de Responsabilidade de Ativo</option>
+                </select>
+                <p className="text-[10px] text-gray-500 mt-1">
+                  Define a categoria do documento para triagem no perfil do colaborador.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Associar ao Cargo (Gatilho Automático)</label>
                 <select
                   value={associatedRoleId}
                   onChange={e => setAssociatedRoleId(e.target.value)}
@@ -537,7 +583,7 @@ export default function ContractManager({ effectiveOrgId }: ContractManagerProps
                   ))}
                 </select>
                 <p className="text-[10px] text-gray-500 mt-1">
-                  Se associado, qualquer colaborador convidado para este cargo receberá o contrato automaticamente no primeiro login.
+                  Se associado, o envio é automático ao convidar para o cargo.
                 </p>
               </div>
             </div>

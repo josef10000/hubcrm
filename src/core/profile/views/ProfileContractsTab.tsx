@@ -16,15 +16,21 @@ export default function ProfileContractsTab({
   isAdmin 
 }: ProfileContractsTabProps) {
   const [selectedContract, setSelectedContract] = useState<UserContract | null>(null);
-  const [subTab, setSubTab] = useState<'work' | 'assets'>('work');
+  const [subTab, setSubTab] = useState<'clt' | 'pj' | 'assets'>('clt');
 
   const contracts = profile.contracts || [];
   
   // Separar contratos por tipo
-  const workContracts = contracts.filter(c => c.type === 'work_contract' || !c.type);
+  const cltContracts = contracts.filter(c => c.type === 'work_clt' || c.type === 'work_contract' || !c.type);
+  const pjContracts = contracts.filter(c => c.type === 'work_pj');
   const assetTerms = contracts.filter(c => c.type === 'asset_term');
 
-  const activeList = subTab === 'work' ? workContracts : assetTerms;
+  const activeList = 
+    subTab === 'clt' 
+      ? cltContracts 
+      : subTab === 'pj' 
+        ? pjContracts 
+        : assetTerms;
 
   const handlePrint = () => {
     window.print();
@@ -43,14 +49,24 @@ export default function ProfileContractsTab({
       {/* Sub Navegação de Abas */}
       <div className="flex bg-black/40 border border-white/10 rounded-2xl p-1 shadow-inner self-start w-fit">
         <button
-          onClick={() => setSubTab('work')}
+          onClick={() => setSubTab('clt')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            subTab === 'work' 
+            subTab === 'clt' 
               ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' 
               : 'text-gray-400 hover:text-white'
           }`}
         >
-          Contratos de Trabalho ({workContracts.length})
+          Contratos CLT ({cltContracts.length})
+        </button>
+        <button
+          onClick={() => setSubTab('pj')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            subTab === 'pj' 
+              ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' 
+              : 'text-gray-400 hover:text-white'
+          }`}
+        >
+          Contratos PJ ({pjContracts.length})
         </button>
         <button
           onClick={() => setSubTab('assets')}
@@ -68,12 +84,18 @@ export default function ProfileContractsTab({
         <div className="bg-white/50 dark:bg-black/40 border border-gray-200 dark:border-white/10 rounded-3xl p-12 text-center space-y-3">
           <FileText size={40} className="mx-auto text-gray-400" />
           <p className="text-sm font-bold text-gray-600 dark:text-gray-400">
-            {subTab === 'work' ? 'Nenhum contrato de trabalho registrado' : 'Nenhum termo de equipamento registrado'}
+            {subTab === 'clt' 
+              ? 'Nenhum contrato CLT registrado' 
+              : subTab === 'pj' 
+                ? 'Nenhum contrato PJ registrado' 
+                : 'Nenhum termo de equipamento registrado'}
           </p>
           <p className="text-xs text-gray-400">
-            {subTab === 'work' 
-              ? 'Não há contratos de trabalho ou aditivos vinculados a este perfil atualmente.' 
-              : 'Não há termos de responsabilidade de equipamentos pendentes ou assinados vinculados a este perfil atualmente.'}
+            {subTab === 'clt' 
+              ? 'Não há contratos de trabalho CLT ou aditivos vinculados a este perfil atualmente.' 
+              : subTab === 'pj' 
+                ? 'Não há contratos de prestação de serviço PJ vinculados a este perfil atualmente.' 
+                : 'Não há termos de responsabilidade de equipamentos pendentes ou assinados vinculados a este perfil atualmente.'}
           </p>
         </div>
       ) : (
