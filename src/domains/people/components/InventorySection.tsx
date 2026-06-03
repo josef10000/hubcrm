@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Laptop, 
   Monitor, 
@@ -8,9 +8,12 @@ import {
   Plus, 
   Trash2, 
   Calendar,
-  Zap
+  Zap,
+  QrCode
 } from 'lucide-react';
 import { ToolAsset } from '@/types';
+import AssetQrCodeModal from './AssetQrCodeModal';
+import { useCRM } from '@crm/contexts/CRMContext';
 
 interface InventorySectionProps {
   inventory: ToolAsset[];
@@ -29,6 +32,9 @@ const CATEGORY_ICONS = {
 };
 
 export default function InventorySection({ inventory, isAdmin, onAdd, onRemove }: InventorySectionProps) {
+  const crm = useCRM();
+  const [selectedQrAsset, setSelectedQrAsset] = useState<ToolAsset | null>(null);
+
   if (inventory.length === 0) {
     return (
       <div className="text-center py-20 bg-white/5 rounded-[2.5rem] border-2 border-dashed border-white/5">
@@ -88,10 +94,20 @@ export default function InventorySection({ inventory, isAdmin, onAdd, onRemove }
               </div>
             </div>
 
+            {isAdmin && (
+              <button 
+                onClick={() => setSelectedQrAsset(asset)}
+                className="absolute bottom-4 right-4 p-2 text-gray-400 hover:text-primary-500 hover:bg-primary-500/10 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                title="Ver QR Code / Imprimir"
+              >
+                <QrCode size={16} />
+              </button>
+            )}
+
             {isAdmin && onRemove && (
               <button 
                 onClick={() => onRemove(asset.id)}
-                className="absolute top-4 right-4 p-2 text-gray-600 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100"
+                className="absolute top-4 right-4 p-2 text-gray-600 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all opacity-0 group-hover:opacity-100"
                 title="Remover Ativo"
               >
                 <Trash2 size={16} />
@@ -100,6 +116,15 @@ export default function InventorySection({ inventory, isAdmin, onAdd, onRemove }
           </div>
         ))}
       </div>
+
+      {selectedQrAsset && (
+        <AssetQrCodeModal 
+          isOpen={!!selectedQrAsset} 
+          onClose={() => setSelectedQrAsset(null)} 
+          asset={selectedQrAsset} 
+          orgId={crm?.effectiveOrgId || ''} 
+        />
+      )}
     </div>
   );
 }

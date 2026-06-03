@@ -423,22 +423,48 @@ async function handleAddAsset(req: VercelRequest, res: VercelResponse, uid: stri
   const senderData = senderSnap.data() as UserProfileBase;
   const orgId = senderData?.orgId || 'default';
 
+  // 1. Gera código patrimonial se não enviado
+  const assetCode = asset.assetCode || `CRM-AST-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
+
+  // 2. Busca informações do portador (colaborador) se houver
+  let assignedToName = '';
+  let assignedToJobTitle = '';
+  let assignedAt = null;
+  let status = asset.status || 'Devolvido';
+
+  if (targetUid) {
+    const targetSnap = await db.collection('profiles').doc(targetUid).get();
+    if (targetSnap.exists) {
+      const targetData = targetSnap.data();
+      assignedToName = targetData?.displayName || 'Colaborador';
+      assignedToJobTitle = targetData?.jobTitle || targetData?.role || 'Colaborador';
+      assignedAt = Date.now();
+      status = 'Em uso';
+    }
+  }
+
   await db.collection('organizations').doc(orgId).collection('assets').add({
     ...asset,
-    assignedTo: targetUid,
-    assignedAt: Date.now(),
+    assetCode,
+    status,
+    assignedTo: targetUid || '',
+    assignedToName,
+    assignedToJobTitle,
+    assignedAt,
     orgId
   });
 
-  await logActivity({
-    orgId,
-    userId: uid,
-    userName: senderData.displayName || 'Admin',
-    action: 'ASSET_ASSIGNED',
-    targetId: targetUid,
-    targetType: 'team',
-    details: `Ativo ${asset.name} atribuído ao usuário ${targetUid}`
-  });
+  if (targetUid) {
+    await logActivity({
+      orgId,
+      userId: uid,
+      userName: senderData.displayName || 'Admin',
+      action: 'ASSET_ASSIGNED',
+      targetId: targetUid,
+      targetType: 'team',
+      details: `Ativo ${asset.name} (${assetCode}) atribuído ao usuário ${targetUid} (${assignedToName} - ${assignedToJobTitle})`
+    });
+  }
 
   return res.status(200).json({ success: true });
 }

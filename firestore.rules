@@ -186,6 +186,13 @@ service cloud.firestore {
       match /team_invites/{id} {
         allow read, write: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_TEAM');
       }
+
+      // Acesso Público a Ativos (Consulta individual via QR Code)
+      match /assets/{assetId} {
+        allow get: if true;
+        allow list: if isOwnerEmail() || belongsToOrg(orgId);
+        allow write: if isOwnerEmail() || isOrgAdmin(orgId) || hasPermission(orgId, 'MANAGE_TEAM');
+      }
       
       // 🛡️ HUB COMPLIANCE — Ouvidoria e Linha Ética
       match /compliance_tickets/{ticketId} {

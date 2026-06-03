@@ -67,11 +67,17 @@ export interface Asset {
   id: string;
   name: string;
   serialNumber?: string;
-  category: 'Hardware' | 'Software' | 'Acesso' | 'Outro';
+  category: 'Hardware' | 'Software' | 'Acesso' | 'Notebook' | 'Monitor' | 'Celular' | 'Cadeira' | 'Periférico' | 'Outro';
   assignedTo: string; // userId
   assignedAt: number;
   status: 'Em uso' | 'Devolvido' | 'Manutenção';
   orgId: string;
+  purchaseDate?: string;
+  specifications?: string;
+  assetCode?: string;
+  assignedToName?: string;
+  assignedToJobTitle?: string;
+  condition?: 'Novo' | 'Bom' | 'Desgastado' | 'Danificado';
 }
 
 export interface CareerEvent {

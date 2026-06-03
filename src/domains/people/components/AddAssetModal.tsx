@@ -21,7 +21,9 @@ export default function AddAssetModal({ isOpen, onClose, targetUserId, onSuccess
     name: '',
     category: 'Notebook' as ToolAsset['category'],
     serialNumber: '',
-    condition: 'Novo' as ToolAsset['condition']
+    condition: 'Novo' as ToolAsset['condition'],
+    purchaseDate: '',
+    specifications: ''
   });
 
   if (!isOpen) return null;
@@ -44,7 +46,9 @@ export default function AddAssetModal({ isOpen, onClose, targetUserId, onSuccess
             name: formData.name,
             category: formData.category,
             serialNumber: formData.serialNumber,
-            condition: formData.condition
+            condition: formData.condition,
+            purchaseDate: formData.purchaseDate,
+            specifications: formData.specifications
           }
         })
       });
@@ -113,7 +117,7 @@ export default function AddAssetModal({ isOpen, onClose, targetUserId, onSuccess
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Número de Série / Patrimônio</label>
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Número de Série / Patrimônio (Opcional)</label>
             <div className="relative">
               <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
               <input
@@ -124,6 +128,27 @@ export default function AddAssetModal({ isOpen, onClose, targetUserId, onSuccess
                 className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 pl-12 pr-4 py-4 rounded-2xl focus:outline-none focus:border-primary-500 transition-all font-medium"
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Data de Compra / Aquisição</label>
+            <input
+              type="date"
+              value={formData.purchaseDate}
+              onChange={e => setFormData({...formData, purchaseDate: e.target.value})}
+              className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-2xl focus:outline-none focus:border-primary-500 transition-all font-medium"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Especificações Técnicas</label>
+            <textarea
+              rows={3}
+              placeholder="Ex: 16GB RAM, 512GB SSD, Processador M2"
+              value={formData.specifications}
+              onChange={e => setFormData({...formData, specifications: e.target.value})}
+              className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-2xl focus:outline-none focus:border-primary-500 transition-all font-medium resize-none"
+            />
           </div>
 
           <button 

@@ -14,13 +14,15 @@ export function AssetFormModal({ isOpen, onClose, onSubmit, teamProfiles, defaul
   const [newAsset, setNewAsset] = useState<Partial<Asset>>({
     category: 'Hardware',
     status: 'Em uso',
-    assignedTo: defaultUserId || ''
+    assignedTo: defaultUserId || '',
+    purchaseDate: '',
+    specifications: ''
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(newAsset);
-    setNewAsset({ category: 'Hardware', status: 'Em uso', assignedTo: defaultUserId || '' });
+    setNewAsset({ category: 'Hardware', status: 'Em uso', assignedTo: defaultUserId || '', purchaseDate: '', specifications: '' });
     onClose();
   };
 
@@ -81,6 +83,25 @@ export function AssetFormModal({ isOpen, onClose, onSubmit, teamProfiles, defaul
                 <option value="Manutenção">Manutenção</option>
               </select>
             </div>
+          </div>
+           <div>
+            <label className="text-xs font-black text-gray-400 uppercase tracking-widest pl-2 mb-1 block">Data de Compra / Aquisição</label>
+            <input 
+              type="date" 
+              className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-2xl text-sm focus:outline-none focus:border-primary-500 transition-all font-medium dark:text-white"
+              value={newAsset.purchaseDate || ''}
+              onChange={e => setNewAsset({...newAsset, purchaseDate: e.target.value})}
+            />
+          </div>
+          <div>
+            <label className="text-xs font-black text-gray-400 uppercase tracking-widest pl-2 mb-1 block">Especificações Técnicas</label>
+            <textarea 
+              rows={3}
+              placeholder="Ex: 16GB RAM, 512GB SSD, Processador M2"
+              className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-2xl text-sm focus:outline-none focus:border-primary-500 transition-all font-medium resize-none dark:text-white"
+              value={newAsset.specifications || ''}
+              onChange={e => setNewAsset({...newAsset, specifications: e.target.value})}
+            />
           </div>
           <div>
             <label className="text-xs font-black text-gray-400 uppercase tracking-widest pl-2 mb-1 block">Atribuir a</label>

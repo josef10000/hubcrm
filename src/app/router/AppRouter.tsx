@@ -54,6 +54,7 @@ const OnboardingForm = lazy(() => import('@auth/components/OnboardingForm'));
 const PublicCheckoutPage = lazy(() => import('@finance/views/PublicCheckoutPage'));
 const ProposalPublicView = lazy(() => import('@commercial/views/ProposalPublicView'));
 const AcceptInviteView = lazy(() => import('@auth/views/AcceptInviteView'));
+const AssetPublicView = lazy(() => import('@people/views/AssetPublicView'));
 import { GlobalModals } from '../shell/GlobalModals';
 import { useAppTitle } from './useAppTitle';
 
@@ -91,6 +92,7 @@ export function AppRouter() {
         <Route path="/onboarding" element={<OnboardingForm />} />
         <Route path="/checkout/:id" element={<PublicCheckoutPage />} />
         <Route path="/invite/:id" element={<AcceptInviteView />} />
+        <Route path="/p/asset/:orgId/:assetId" element={<AssetPublicView />} />
 
         {/* Private Workspace Routes */}
         <Route path="/*" element={

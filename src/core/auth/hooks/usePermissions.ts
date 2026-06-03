@@ -44,7 +44,10 @@ export function usePermissions() {
       const IS_ADMIN = 
         roleId === 'ROLE_ADMIN' || 
         roleObjId === 'ROLE_ADMIN' || 
-        roleName === 'Administrador';
+        roleName === 'Administrador' ||
+        (roleName && roleName.toLowerCase().includes('admin')) ||
+        (roleId && roleId.toLowerCase().includes('admin')) ||
+        (roleObjId && roleObjId.toLowerCase().includes('admin'));
 
       if (IS_ADMIN) { 
         if (isMounted) {

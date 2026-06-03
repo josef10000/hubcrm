@@ -517,10 +517,17 @@ export interface WikiArticle {
 export interface ToolAsset {
   id: string;
   name: string;
-  category: 'Notebook' | 'Monitor' | 'Celular' | 'Cadeira' | 'Periférico' | 'Outro';
+  category: 'Notebook' | 'Monitor' | 'Celular' | 'Cadeira' | 'Periférico' | 'Outro' | 'Hardware' | 'Software' | 'Acesso';
   serialNumber?: string;
   condition: 'Novo' | 'Bom' | 'Desgastado' | 'Danificado';
   assignedAt: number;
+  purchaseDate?: string;
+  specifications?: string;
+  assetCode?: string;
+  assignedTo?: string;
+  assignedToName?: string;
+  assignedToJobTitle?: string;
+  status?: 'Em uso' | 'Devolvido' | 'Manutenção';
 }
 
 export interface Skill {
