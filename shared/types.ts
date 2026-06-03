@@ -175,6 +175,8 @@ export interface UserContract {
   cpfCnpj?: string;           // Documento inserido pelo usuário
   rg?: string;                // RG inserido pelo usuário
   hash?: string;              // Hash de segurança SHA-256 do texto + metadados
+  type?: 'work_contract' | 'asset_term'; // Tipo do documento (Trabalho vs Termo Patrimonial)
+  assetId?: string;           // ID do ativo patrimonial vinculado (se for termo)
 }
 
 export interface ContractTemplate {
@@ -185,6 +187,7 @@ export interface ContractTemplate {
   createdAt: number;
   updatedAt: number;
   createdBy: string;
+  type?: 'work_contract' | 'asset_term'; // Tipo do modelo (Trabalho vs Termo Patrimonial)
 }
 
 export type UserProfileBase = UserProfile;

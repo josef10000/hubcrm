@@ -1,5 +1,5 @@
 import { db } from '@/lib/firebase';
-import { collection, query, onSnapshot, addDoc, deleteDoc, doc, QuerySnapshot, DocumentData } from 'firebase/firestore';
+import { collection, query, onSnapshot, addDoc, setDoc, deleteDoc, doc, QuerySnapshot, DocumentData } from 'firebase/firestore';
 import { Asset } from '@/types/people';
 
 /**
@@ -24,10 +24,20 @@ export const assetService = {
   },
 
   /**
-   * Adds a new asset to the organization.
+   * Adds a new asset to the organization. Supports custom ID.
    */
-  addAsset: async (orgId: string, assetData: Partial<Asset>) => {
+  addAsset: async (orgId: string, assetData: Partial<Asset>, customId?: string) => {
     if (!orgId) throw new Error('OrgId is required');
+    
+    if (customId) {
+      const docRef = doc(db, 'organizations', orgId, 'assets', customId);
+      await setDoc(docRef, {
+        ...assetData,
+        assignedAt: Date.now(),
+        orgId: orgId
+      });
+      return docRef;
+    }
     
     return await addDoc(collection(db, 'organizations', orgId, 'assets'), {
       ...assetData,

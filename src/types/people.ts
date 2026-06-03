@@ -78,6 +78,7 @@ export interface Asset {
   assignedToName?: string;
   assignedToJobTitle?: string;
   condition?: 'Novo' | 'Bom' | 'Desgastado' | 'Danificado';
+  contractId?: string; // ID do Termo de Responsabilidade assinado ou pendente
 }
 
 export interface CareerEvent {

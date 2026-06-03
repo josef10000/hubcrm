@@ -17,7 +17,8 @@ export default function AssetManager({ userId }: AssetManagerProps) {
     isAdminOrManager, 
     teamProfiles, 
     createAsset, 
-    removeAsset 
+    removeAsset,
+    templates
   } = useAssets(userId);
 
   const [showAddModal, setShowAddModal] = useState(false);
@@ -56,6 +57,8 @@ export default function AssetManager({ userId }: AssetManagerProps) {
             user={teamProfiles.find(p => p.uid === asset.assignedTo)}
             isAdminOrManager={isAdminOrManager}
             onDelete={removeAsset}
+            templates={templates}
+            onGenerateTerm={generateTermForAsset}
           />
         ))}
         {assets.length === 0 && !loading && (
@@ -72,6 +75,7 @@ export default function AssetManager({ userId }: AssetManagerProps) {
         onSubmit={createAsset}
         teamProfiles={teamProfiles}
         defaultUserId={userId}
+        templates={templates}
       />
     </div>
   );

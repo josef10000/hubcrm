@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { PlusCircle } from 'lucide-react';
 import { Asset } from '@/types/people';
+import { ContractTemplate } from '@/types';
 
 interface AssetFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (asset: Partial<Asset>) => void;
+  onSubmit: (asset: Partial<Asset> & { termTemplateId?: string }) => void;
   teamProfiles: any[];
   defaultUserId?: string;
+  templates: ContractTemplate[];
 }
 
-export function AssetFormModal({ isOpen, onClose, onSubmit, teamProfiles, defaultUserId }: AssetFormModalProps) {
+export function AssetFormModal({ isOpen, onClose, onSubmit, teamProfiles, defaultUserId, templates }: AssetFormModalProps) {
   const [newAsset, setNewAsset] = useState<Partial<Asset>>({
     category: 'Hardware',
     status: 'Em uso',
@@ -18,15 +20,24 @@ export function AssetFormModal({ isOpen, onClose, onSubmit, teamProfiles, defaul
     purchaseDate: '',
     specifications: ''
   });
+  const [termTemplateId, setTermTemplateId] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(newAsset);
+    onSubmit({
+      ...newAsset,
+      termTemplateId: newAsset.assignedTo ? termTemplateId : undefined
+    } as any);
     setNewAsset({ category: 'Hardware', status: 'Em uso', assignedTo: defaultUserId || '', purchaseDate: '', specifications: '' });
+    setTermTemplateId('');
     onClose();
   };
 
   if (!isOpen) return null;
+
+  // Filtrar templates específicos de termos se houver, senão dar fallback para todos
+  const assetTemplates = templates.filter(t => t.type === 'asset_term');
+  const displayedTemplates = assetTemplates.length > 0 ? assetTemplates : templates;
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}>
@@ -107,10 +118,12 @@ export function AssetFormModal({ isOpen, onClose, onSubmit, teamProfiles, defaul
           <div>
             <label className="text-xs font-black text-gray-400 uppercase tracking-widest pl-2 mb-1 block">Atribuir a</label>
             <select 
-              required
               className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-2xl text-sm focus:outline-none focus:border-primary-500 transition-all font-medium dark:text-white"
               value={newAsset.assignedTo || ''}
-              onChange={e => setNewAsset({...newAsset, assignedTo: e.target.value})}
+              onChange={e => {
+                const val = e.target.value;
+                setNewAsset({...newAsset, assignedTo: val, status: val ? 'Em uso' : 'Estoque'});
+              }}
             >
               <option value="">Selecione um colaborador</option>
               {teamProfiles.map(p => (
@@ -118,6 +131,28 @@ export function AssetFormModal({ isOpen, onClose, onSubmit, teamProfiles, defaul
               ))}
             </select>
           </div>
+
+          {newAsset.assignedTo && (
+            <div className="animate-in fade-in duration-300">
+              <label className="text-xs font-black text-gray-400 uppercase tracking-widest pl-2 mb-1 block">Termo de Responsabilidade (Obrigatório)</label>
+              <select 
+                required
+                className="w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-2xl text-sm focus:outline-none focus:border-primary-500 transition-all font-medium dark:text-white"
+                value={termTemplateId}
+                onChange={e => setTermTemplateId(e.target.value)}
+              >
+                <option value="">Selecione o modelo do Termo...</option>
+                {displayedTemplates.map(t => (
+                  <option key={t.id} value={t.id}>{t.title} {t.type !== 'asset_term' ? '(Contrato)' : ''}</option>
+                ))}
+              </select>
+              {assetTemplates.length === 0 && (
+                <p className="text-[10px] text-amber-500 mt-1 pl-2 font-semibold">
+                  ⚠️ Nenhum modelo específico de "Termo" cadastrado. Exibindo todos os modelos como fallback.
+                </p>
+              )}
+            </div>
+          )}
           
           <div className="flex gap-4 pt-4">
             <button 

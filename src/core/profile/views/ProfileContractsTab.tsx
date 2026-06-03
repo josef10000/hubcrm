@@ -16,8 +16,15 @@ export default function ProfileContractsTab({
   isAdmin 
 }: ProfileContractsTabProps) {
   const [selectedContract, setSelectedContract] = useState<UserContract | null>(null);
+  const [subTab, setSubTab] = useState<'work' | 'assets'>('work');
 
   const contracts = profile.contracts || [];
+  
+  // Separar contratos por tipo
+  const workContracts = contracts.filter(c => c.type === 'work_contract' || !c.type);
+  const assetTerms = contracts.filter(c => c.type === 'asset_term');
+
+  const activeList = subTab === 'work' ? workContracts : assetTerms;
 
   const handlePrint = () => {
     window.print();
@@ -33,20 +40,50 @@ export default function ProfileContractsTab({
         </div>
       </div>
 
-      {contracts.length === 0 ? (
+      {/* Sub Navegação de Abas */}
+      <div className="flex bg-black/40 border border-white/10 rounded-2xl p-1 shadow-inner self-start w-fit">
+        <button
+          onClick={() => setSubTab('work')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            subTab === 'work' 
+              ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' 
+              : 'text-gray-400 hover:text-white'
+          }`}
+        >
+          Contratos de Trabalho ({workContracts.length})
+        </button>
+        <button
+          onClick={() => setSubTab('assets')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            subTab === 'assets' 
+              ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' 
+              : 'text-gray-400 hover:text-white'
+          }`}
+        >
+          Termos de Equipamentos ({assetTerms.length})
+        </button>
+      </div>
+
+      {activeList.length === 0 ? (
         <div className="bg-white/50 dark:bg-black/40 border border-gray-200 dark:border-white/10 rounded-3xl p-12 text-center space-y-3">
           <FileText size={40} className="mx-auto text-gray-400" />
-          <p className="text-sm font-bold text-gray-600 dark:text-gray-400">Nenhum documento registrado</p>
-          <p className="text-xs text-gray-400">Não há contratos pendentes ou assinados vinculados a este perfil atualmente.</p>
+          <p className="text-sm font-bold text-gray-600 dark:text-gray-400">
+            {subTab === 'work' ? 'Nenhum contrato de trabalho registrado' : 'Nenhum termo de equipamento registrado'}
+          </p>
+          <p className="text-xs text-gray-400">
+            {subTab === 'work' 
+              ? 'Não há contratos de trabalho ou aditivos vinculados a este perfil atualmente.' 
+              : 'Não há termos de responsabilidade de equipamentos pendentes ou assinados vinculados a este perfil atualmente.'}
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {contracts.map(contract => (
+          {activeList.map(contract => (
             <div 
               key={contract.id} 
-              className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-5 rounded-3xl flex flex-col justify-between hover:border-primary-500/20 transition-all group"
+              className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-5 rounded-3xl flex flex-col justify-between hover:border-primary-500/20 transition-all group text-left"
             >
-              <div className="text-left space-y-3">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase ${
                     contract.status === 'signed' 
@@ -160,7 +197,7 @@ export default function ProfileContractsTab({
               )}
             </div>
 
-            <div className="px-6 py-4 border-t border-gray-200 dark:border-white/10 flex justify-end gap-3 bg-gray-50 dark:bg-white/5 shrink-0 print:hidden">
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-white/10 flex justify-end gap-3 bg-gray-50 dark:bg-white/5 print:hidden">
               <button
                 onClick={() => setSelectedContract(null)}
                 className="px-5 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 text-xs font-bold text-gray-500 dark:text-gray-400"
