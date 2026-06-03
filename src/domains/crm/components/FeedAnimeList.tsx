@@ -9,10 +9,57 @@ interface AnimeItem {
   episodes: string | number;
   time: string;
   synopsis: string | null;
+  status?: string;
+  broadcastInfo?: string;
 }
 
 interface FeedAnimeListProps {
   animes: AnimeItem[];
+}
+
+function translateStatus(status: string | null): string {
+  if (!status) return 'Status Desconhecido';
+  switch (status.trim()) {
+    case 'Currently Airing':
+      return 'Em Lançamento 🟢';
+    case 'Finished Airing':
+      return 'Finalizado 🔴';
+    case 'Not yet aired':
+      return 'A Estrear 🟡';
+    default:
+      return status;
+  }
+}
+
+function translateBroadcast(broadcastStr: string | null, broadcastDay: string | null, broadcastTime: string | null): string {
+  if (!broadcastStr || broadcastStr === 'N/A' || broadcastStr.toLowerCase() === 'not scheduled') {
+    return 'Transmissão não agendada';
+  }
+  
+  const daysMap: Record<string, string> = {
+    'sundays': 'Domingo',
+    'mondays': 'Segunda-feira',
+    'tuesdays': 'Terça-feira',
+    'wednesdays': 'Quarta-feira',
+    'thursdays': 'Quinta-feira',
+    'fridays': 'Sexta-feira',
+    'saturdays': 'Sábado',
+    'sunday': 'Domingo',
+    'monday': 'Segunda-feira',
+    'tuesday': 'Terça-feira',
+    'wednesday': 'Quarta-feira',
+    'thursday': 'Quinta-feira',
+    'friday': 'Sexta-feira',
+    'saturday': 'Sábado'
+  };
+
+  const dayClean = (broadcastDay || '').trim().replace(/s$/, '').toLowerCase(); // remove o 's' do final se houver
+  const translatedDay = daysMap[dayClean] || broadcastDay;
+
+  if (translatedDay && broadcastTime) {
+    return `Toda ${translatedDay} às ${broadcastTime} (JST)`;
+  }
+  return broadcastStr;
 }
 
 export default function FeedAnimeList({ animes }: FeedAnimeListProps) {
@@ -42,7 +89,9 @@ export default function FeedAnimeList({ animes }: FeedAnimeListProps) {
             score: anime.score || 'N/A',
             episodes: anime.episodes || '?',
             time: anime.broadcast?.time || anime.broadcast?.string || 'N/A',
-            synopsis: anime.synopsis || null
+            synopsis: anime.synopsis || null,
+            status: translateStatus(anime.status),
+            broadcastInfo: translateBroadcast(anime.broadcast?.string, anime.broadcast?.day, anime.broadcast?.time)
           }));
           setSearchResults(list);
           setSearching(false);
@@ -115,7 +164,11 @@ export default function FeedAnimeList({ animes }: FeedAnimeListProps) {
               )}
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold text-white truncate group-hover:text-primary-400 transition-colors">{anime.title}</p>
-                <p className="text-[10px] text-amber-400 font-bold">★ {anime.score}</p>
+                <div className="flex items-center gap-2 mt-0.5 text-[9px] font-bold">
+                  <span className="text-amber-400">★ {anime.score}</span>
+                  <span className="text-gray-600">•</span>
+                  <span className="text-gray-400 text-[8px] font-black">{anime.status}</span>
+                </div>
               </div>
             </button>
           ))}
@@ -142,7 +195,7 @@ export default function FeedAnimeList({ animes }: FeedAnimeListProps) {
                   className="w-16 h-24 object-cover rounded-xl border border-white/10 flex-shrink-0" 
                 />
               )}
-              <div className="space-y-2 flex-1 min-w-0">
+              <div className="space-y-1.5 flex-1 min-w-0">
                 <h4 className="text-xs font-black text-white leading-tight break-words">{selectedAnime.title}</h4>
                 <div className="flex flex-wrap gap-1.5">
                   <span className="text-[9px] font-bold text-amber-400 bg-amber-400/5 px-2 py-0.5 rounded border border-amber-400/10 flex items-center gap-1">
@@ -152,11 +205,16 @@ export default function FeedAnimeList({ animes }: FeedAnimeListProps) {
                     {selectedAnime.episodes} eps
                   </span>
                 </div>
-                {selectedAnime.time && selectedAnime.time !== 'N/A' && (
-                  <span className="inline-block text-[9px] text-primary-400 font-bold bg-primary-500/5 border border-primary-500/10 px-2 py-0.5 rounded">
-                    Exibição: {selectedAnime.time}
-                  </span>
-                )}
+                <div className="space-y-0.5 pt-0.5">
+                  <div className="text-[9px] font-medium text-gray-400">
+                    Status: <span className="font-bold text-white">{selectedAnime.status}</span>
+                  </div>
+                  {selectedAnime.broadcastInfo && (
+                    <div className="text-[9px] font-medium text-gray-400">
+                      Transmissão: <span className="font-bold text-primary-400">{selectedAnime.broadcastInfo}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             <div className="space-y-1">
