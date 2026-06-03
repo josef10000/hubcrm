@@ -5,6 +5,8 @@ import FeedNews from '../components/FeedNews';
 import FeedAnimeList from '../components/FeedAnimeList';
 import CompanyAnnouncements from '../components/CompanyAnnouncements';
 import TeamCelebrations from '../components/TeamCelebrations';
+import FeedSchedule from '../components/FeedSchedule';
+import FeedTrivia from '../components/FeedTrivia';
 const DashboardView = React.lazy(() => import('./DashboardView'));
 
 export default function MorningFeedView() {
@@ -104,6 +106,16 @@ export default function MorningFeedView() {
               </div>
               <div className="lg:col-span-4 h-full">
                 <TeamCelebrations />
+              </div>
+            </div>
+
+            {/* Bento Grid Inferior Extra: Agenda (8 colunas) e Trivia Geral (4 colunas) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+              <div className="lg:col-span-8 h-full">
+                <FeedSchedule />
+              </div>
+              <div className="lg:col-span-4 h-full">
+                <FeedTrivia />
               </div>
             </div>
           </div>
