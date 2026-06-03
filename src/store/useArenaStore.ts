@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { db } from '@/lib/firebase';
-import { doc, onSnapshot, updateDoc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc, arrayUnion, or } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc, arrayUnion, or, and } from 'firebase/firestore';
 import { Tournament } from '@/types';
 import { toast } from 'sonner';
 
@@ -464,12 +464,14 @@ export const useArenaStore = create<ArenaState>((set, get) => {
       // Escuta convites enviados a este usuário (como player2, player3 ou player4)
       const q = query(
         collection(db, 'matches'),
-        where('status', '==', 'waiting'),
-        or(
-          where('player2Id', '==', uid),
-          where('player3Id', '==', uid),
-          where('player4Id', '==', uid)
-        ) as any
+        and(
+          where('status', '==', 'waiting'),
+          or(
+            where('player2Id', '==', uid),
+            where('player3Id', '==', uid),
+            where('player4Id', '==', uid)
+          )
+        )
       );
 
       invitesUnsubscribe = onSnapshot(q, 
