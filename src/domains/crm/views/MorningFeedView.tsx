@@ -58,7 +58,7 @@ export default function MorningFeedView() {
               onClick={() => setViewMode('morning')}
               className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
                 viewMode === 'morning' 
-                  ? 'bg-primary-500 text-gray-900 shadow-lg shadow-primary-500/20' 
+                  ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' 
                   : 'text-gray-400 hover:text-white'
               }`}
             >
@@ -69,7 +69,7 @@ export default function MorningFeedView() {
               onClick={() => setViewMode('work')}
               className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
                 viewMode === 'work' 
-                  ? 'bg-primary-500 text-gray-900 shadow-lg shadow-primary-500/20' 
+                  ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' 
                   : 'text-gray-400 hover:text-white'
               }`}
             >

@@ -307,7 +307,7 @@ const DashboardView = React.memo(function DashboardView() {
                   onClick={() => setCurrentPage(page)}
                   className={`w-10 h-10 rounded-xl text-sm font-medium transition-all flex items-center justify-center ${
                     currentPage === page 
-                      ? 'bg-primary-500 text-gray-900 dark:text-white shadow-lg shadow-primary-500/50' 
+                      ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/50' 
                       : 'bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:bg-white/10 hover:text-gray-900 dark:text-white'
                   }`}
                 >

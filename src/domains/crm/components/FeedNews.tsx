@@ -38,7 +38,7 @@ export default function FeedNews({ news }: FeedNewsProps) {
               key={tab}
               onClick={() => setFilter(tab)}
               className={`px-3 py-1.5 rounded-lg uppercase tracking-wider transition-all cursor-pointer ${
-                filter === tab ? 'bg-primary-500 text-gray-900' : 'text-gray-400 hover:text-white'
+                filter === tab ? 'bg-primary-500 text-white' : 'text-gray-400 hover:text-white'
               }`}
             >
               {tab === 'all' ? 'Tudo' : tab === 'tech' ? 'Tech' : 'Economia'}

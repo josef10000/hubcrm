@@ -458,5 +458,17 @@
     position: relative;
     z-index: 10;
   }
+
+  /* Garantia de Contraste Global - Elementos Selecionados e Botões Primários */
+  .bg-primary-500,
+  [class*="bg-primary-500"] {
+    color: #ffffff !important;
+  }
+
+  .bg-primary-500 *,
+  [class*="bg-primary-500"] * {
+    color: #ffffff !important;
+  }
 }
+
 

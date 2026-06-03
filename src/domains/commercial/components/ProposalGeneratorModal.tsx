@@ -117,7 +117,7 @@ const ProposalGeneratorModal: React.FC<ProposalGeneratorModalProps> = ({
                     <div 
                       onClick={() => item.isOptional && toggleItemSelection(item.id)}
                       className={`w-6 h-6 rounded-md border flex items-center justify-center cursor-pointer transition-colors ${
-                        item.isSelected ? 'bg-primary-500 border-primary-500 text-gray-900' : 'border-white/20'
+                        item.isSelected ? 'bg-primary-500 border-primary-500 text-white' : 'border-white/20'
                       }`}
                     >
                       {item.isSelected && <CheckCircle2 className="w-4 h-4" />}
@@ -165,7 +165,7 @@ const ProposalGeneratorModal: React.FC<ProposalGeneratorModalProps> = ({
                 />
                 <button 
                   onClick={copyToClipboard}
-                  className="p-2 bg-primary-500 text-gray-900 rounded-lg hover:bg-primary-400 transition-all"
+                  className="p-2 bg-primary-500 text-white rounded-lg hover:bg-primary-400 transition-all"
                   title="Copiar Link"
                 >
                   <Copy size={16} />
@@ -196,9 +196,9 @@ const ProposalGeneratorModal: React.FC<ProposalGeneratorModalProps> = ({
               <button 
                 disabled={generating}
                 onClick={handleGenerate}
-                className="flex-1 py-3 px-4 rounded-xl bg-primary-500 text-gray-900 font-black text-xs uppercase tracking-widest hover:bg-primary-400 transition-all shadow-lg flex items-center justify-center gap-2"
+                className="flex-1 py-3 px-4 rounded-xl bg-primary-500 text-white font-black text-xs uppercase tracking-widest hover:bg-primary-400 transition-all shadow-lg flex items-center justify-center gap-2"
               >
-                {generating ? <div className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" /> : <><Send size={16} /> Gerar Link</>}
+                {generating ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <><Send size={16} /> Gerar Link</>}
               </button>
             </>
           ) : (

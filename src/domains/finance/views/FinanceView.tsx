@@ -170,35 +170,35 @@ export default function FinanceView() {
         <div className="flex items-center gap-4 mb-8 overflow-x-auto pb-2 custom-scrollbar">
           <button
             onClick={() => setActiveTab('resumo')}
-            className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'resumo' ? 'bg-primary-500 text-gray-900 shadow-lg shadow-primary-500/20' : 'bg-black/40 text-gray-500 dark:text-gray-400 hover:bg-black/20'}`}
+            className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'resumo' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' : 'bg-black/40 text-gray-500 dark:text-gray-400 hover:bg-black/20'}`}
           >
             <Activity size={18} />
             Resumo Corporativo
           </button>
           <button
             onClick={() => setActiveTab('dre')}
-            className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'dre' ? 'bg-primary-500 text-gray-900 shadow-lg shadow-primary-500/20' : 'bg-black/40 text-gray-500 dark:text-gray-400 hover:bg-black/20'}`}
+            className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'dre' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' : 'bg-black/40 text-gray-500 dark:text-gray-400 hover:bg-black/20'}`}
           >
             <PieChart size={18} />
             DRE Gerencial
           </button>
           <button
             onClick={() => setActiveTab('fluxo')}
-            className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'fluxo' ? 'bg-primary-500 text-gray-900 shadow-lg shadow-primary-500/20' : 'bg-black/40 text-gray-500 dark:text-gray-400 hover:bg-black/20'}`}
+            className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'fluxo' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' : 'bg-black/40 text-gray-500 dark:text-gray-400 hover:bg-black/20'}`}
           >
             <TrendingUp size={18} />
             Fluxo de Caixa
           </button>
           <button
             onClick={() => setActiveTab('orcamento')}
-            className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'orcamento' ? 'bg-primary-500 text-gray-900 shadow-lg shadow-primary-500/20' : 'bg-black/40 text-gray-500 dark:text-gray-400 hover:bg-black/20'}`}
+            className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'orcamento' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' : 'bg-black/40 text-gray-500 dark:text-gray-400 hover:bg-black/20'}`}
           >
             <Target size={18} />
             Orçamento (Budget)
           </button>
           <button
             onClick={() => setActiveTab('roi')}
-            className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'roi' ? 'bg-primary-500 text-gray-900 shadow-lg shadow-primary-500/20' : 'bg-black/40 text-gray-500 dark:text-gray-400 hover:bg-black/20'}`}
+            className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'roi' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' : 'bg-black/40 text-gray-500 dark:text-gray-400 hover:bg-black/20'}`}
           >
             <PieChart size={18} />
             ROI por Oferta

@@ -218,7 +218,7 @@ export default function AnnouncementManager({ effectiveOrgId }: AnnouncementMana
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 py-3 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-500/40 text-gray-900 font-bold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+              className="flex-1 py-3 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-500/40 text-white font-bold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2"
             >
               {saving ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />}
               {editingId ? 'Salvar Alterações' : 'Publicar Comunicado'}

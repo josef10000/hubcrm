@@ -126,7 +126,7 @@ export default function TeamCelebrations() {
                 <p className="text-xs font-bold text-white flex items-center gap-1.5">
                   {person.name}
                   {person.isToday && (
-                    <span className="px-1.5 py-0.5 bg-primary-500 text-gray-900 text-[8px] font-black rounded-md uppercase animate-pulse">
+                    <span className="px-1.5 py-0.5 bg-primary-500 text-white text-[8px] font-black rounded-md uppercase animate-pulse">
                       Hoje! 🎉
                     </span>
                   )}
