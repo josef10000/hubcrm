@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { db } from '@/lib/firebase';
-import { doc, onSnapshot, updateDoc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc, arrayUnion } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, setDoc, getDoc, collection, query, where, getDocs, deleteDoc, arrayUnion, or } from 'firebase/firestore';
 import { Tournament } from '@/types';
 import { toast } from 'sonner';
 
@@ -16,8 +16,15 @@ export interface GameMatch {
   player2Id: string;
   player2Name: string;
   player2Photo?: string;
+  player3Id?: string;
+  player3Name?: string;
+  player3Photo?: string;
+  player4Id?: string;
+  player4Name?: string;
+  player4Photo?: string;
+  playersAccepted?: string[];
   status: MatchStatus;
-  turn: string; // ID do jogador ativo
+  turn: string; // ID do jogador ativo ou cor ('red'|'green'|'yellow'|'blue') no Ludo
   boardState: any; // Matriz ou objeto de estado do tabuleiro
   moves: string[];
   winnerId?: string;
@@ -38,10 +45,14 @@ interface ArenaState {
   // Actions
   setOnlinePlayers: (players: any[]) => void;
   createMatchInvite: (opponentId: string, opponentName: string, opponentPhoto: string | undefined, gameType: GameType, currentUser: { uid: string; displayName: string; photoURL?: string }) => Promise<void>;
+  createLudoLobby: (invitedPlayers: { uid: string; displayName: string; photoURL?: string }[], currentUser: { uid: string; displayName: string; photoURL?: string }) => Promise<void>;
   acceptInvite: (match: GameMatch) => Promise<void>;
+  acceptLudoInvite: (matchId: string, uid: string) => Promise<void>;
   declineInvite: (matchId: string) => Promise<void>;
+  rejectLudoInvite: (matchId: string, uid: string) => Promise<void>;
   cancelSentInvite: () => Promise<void>;
-  makeMove: (boardState: any, moveStr?: string, winnerId?: string) => Promise<void>;
+  startLudoMatch: (matchId: string) => Promise<void>;
+  makeMove: (boardState: any, moveStr?: string, winnerId?: string, nextTurnOverride?: string) => Promise<void>;
   listenToMatch: (matchId: string) => () => void;
   listenToInvites: (uid: string) => () => void;
   exitActiveMatch: () => void;
@@ -100,6 +111,61 @@ export const useArenaStore = create<ArenaState>((set, get) => {
         get().listenToMatch(matchId);
       } catch (err) {
         console.error('Erro ao enviar convite:', err);
+        set({ loading: false });
+      }
+    },
+
+    createLudoLobby: async (invitedPlayers, currentUser) => {
+      set({ loading: true });
+      try {
+        const matchId = `ludo_${currentUser.uid}_${Date.now()}`;
+        
+        // Mapeia os slots. player1 é o host. player2, player3, player4 são preenchidos por convidados ou 'computer'
+        const players = [
+          { uid: currentUser.uid, displayName: currentUser.displayName || 'Jogador A', photoURL: currentUser.photoURL },
+          ...invitedPlayers
+        ];
+        
+        // Garante que o array tenha tamanho 4 preenchendo com 'computer'
+        while (players.length < 4) {
+          players.push({
+            uid: 'computer',
+            displayName: 'CPU 🤖',
+            photoURL: undefined
+          });
+        }
+        
+        const initialMatch: GameMatch = {
+          id: matchId,
+          gameType: 'ludo',
+          player1Id: players[0].uid,
+          player1Name: players[0].displayName,
+          player1Photo: players[0].photoURL,
+          player2Id: players[1].uid,
+          player2Name: players[1].displayName,
+          player2Photo: players[1].photoURL,
+          player3Id: players[2].uid,
+          player3Name: players[2].displayName,
+          player3Photo: players[2].photoURL,
+          player4Id: players[3].uid,
+          player4Name: players[3].displayName,
+          player4Photo: players[3].photoURL,
+          status: 'waiting',
+          turn: 'red', // O turno no Ludo online será a COR ('red' | 'green' | 'yellow' | 'blue')
+          playersAccepted: [currentUser.uid], // O Host já aceitou
+          boardState: null,
+          moves: [],
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        };
+        
+        await setDoc(doc(db, 'matches', matchId), initialMatch);
+        set({ sentInvite: initialMatch, loading: false });
+        
+        // Começa a escutar a partida
+        get().listenToMatch(matchId);
+      } catch (err) {
+        console.error('Erro ao criar lobby de Ludo:', err);
         set({ loading: false });
       }
     },
@@ -192,6 +258,59 @@ export const useArenaStore = create<ArenaState>((set, get) => {
       }
     },
 
+    acceptLudoInvite: async (matchId, uid) => {
+      try {
+        const docRef = doc(db, 'matches', matchId);
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists()) return;
+        
+        const matchData = docSnap.data();
+        const playersAccepted = matchData.playersAccepted || [];
+        if (!playersAccepted.includes(uid)) {
+          playersAccepted.push(uid);
+        }
+        
+        await updateDoc(docRef, {
+          playersAccepted,
+          updatedAt: Date.now()
+        });
+      } catch (err) {
+        console.error('Erro ao aceitar convite de Ludo:', err);
+      }
+    },
+
+    rejectLudoInvite: async (matchId, uid) => {
+      try {
+        const docRef = doc(db, 'matches', matchId);
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists()) return;
+        
+        const matchData = docSnap.data();
+        const updates: any = {
+          updatedAt: Date.now()
+        };
+        
+        if (matchData.player2Id === uid) {
+          updates.player2Id = 'computer';
+          updates.player2Name = 'CPU 🤖';
+          updates.player2Photo = null;
+        } else if (matchData.player3Id === uid) {
+          updates.player3Id = 'computer';
+          updates.player3Name = 'CPU 🤖';
+          updates.player3Photo = null;
+        } else if (matchData.player4Id === uid) {
+          updates.player4Id = 'computer';
+          updates.player4Name = 'CPU 🤖';
+          updates.player4Photo = null;
+        }
+        
+        await updateDoc(docRef, updates);
+        set({ receivedInvite: null });
+      } catch (err) {
+        console.error('Erro ao recusar convite de Ludo:', err);
+      }
+    },
+
     cancelSentInvite: async () => {
       const { sentInvite } = get();
       if (!sentInvite) return;
@@ -207,19 +326,58 @@ export const useArenaStore = create<ArenaState>((set, get) => {
       }
     },
 
-    makeMove: async (boardState, moveStr, winnerId) => {
+    startLudoMatch: async (matchId) => {
+      try {
+        const docRef = doc(db, 'matches', matchId);
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists()) return;
+        
+        const matchData = docSnap.data();
+        
+        // Inicializa o estado do tabuleiro de Ludo
+        const tokens = [];
+        const colors = ['red', 'green', 'yellow', 'blue'];
+        for (const color of colors) {
+          for (let i = 0; i < 4; i++) {
+            tokens.push({ id: i, color, position: -1 });
+          }
+        }
+        
+        const boardState = {
+          tokens,
+          diceValue: null,
+          hasRolled: false,
+          consecutiveSixes: 0,
+          winnerColor: null
+        };
+        
+        await updateDoc(docRef, {
+          status: 'playing',
+          boardState,
+          turn: 'red', // O vermelho (player1 / Host) sempre começa
+          updatedAt: Date.now()
+        });
+      } catch (err) {
+        console.error('Erro ao iniciar partida de Ludo:', err);
+      }
+    },
+
+    makeMove: async (boardState, moveStr, winnerId, nextTurnOverride) => {
       const { activeMatch } = get();
       if (!activeMatch) return;
       try {
         const docRef = doc(db, 'matches', activeMatch.id);
-        let nextTurn = activeMatch.turn;
-        if (boardState && boardState.players && boardState.players.length > 0) {
-          const playersList = boardState.players;
-          const currentIdx = playersList.findIndex((p: any) => p.id === activeMatch.turn);
-          const nextIdx = (currentIdx + 1) % playersList.length;
-          nextTurn = playersList[nextIdx].id;
-        } else {
-          nextTurn = activeMatch.turn === activeMatch.player1Id ? activeMatch.player2Id : activeMatch.player1Id;
+        let nextTurn = nextTurnOverride || activeMatch.turn;
+        
+        if (!nextTurnOverride) {
+          if (boardState && boardState.players && boardState.players.length > 0) {
+            const playersList = boardState.players;
+            const currentIdx = playersList.findIndex((p: any) => p.id === activeMatch.turn);
+            const nextIdx = (currentIdx + 1) % playersList.length;
+            nextTurn = playersList[nextIdx].id;
+          } else {
+            nextTurn = activeMatch.turn === activeMatch.player1Id ? activeMatch.player2Id : activeMatch.player1Id;
+          }
         }
 
         const updates: any = {
@@ -303,11 +461,15 @@ export const useArenaStore = create<ArenaState>((set, get) => {
     listenToInvites: (uid) => {
       if (invitesUnsubscribe) invitesUnsubscribe();
 
-      // Escuta convites enviados a este usuário
+      // Escuta convites enviados a este usuário (como player2, player3 ou player4)
       const q = query(
         collection(db, 'matches'),
-        where('player2Id', '==', uid),
-        where('status', '==', 'waiting')
+        where('status', '==', 'waiting'),
+        or(
+          where('player2Id', '==', uid),
+          where('player3Id', '==', uid),
+          where('player4Id', '==', uid)
+        )
       );
 
       invitesUnsubscribe = onSnapshot(q, 
@@ -315,9 +477,15 @@ export const useArenaStore = create<ArenaState>((set, get) => {
           if (!snapshot.empty) {
             // Pega o convite mais recente
             const docData = snapshot.docs[0].data() as GameMatch;
+            const playersAccepted = docData.playersAccepted || [];
             
-            // Só define se não for o próprio jogador enviando para si e se o convite é recente (limite de 1 min)
-            if (docData.player1Id !== uid && (Date.now() - docData.createdAt) < 60000) {
+            // Só define se não for o próprio jogador enviando para si, se o convite é recente (limite de 5 min)
+            // e se o jogador atual ainda não aceitou a partida
+            if (
+              docData.player1Id !== uid && 
+              (Date.now() - docData.createdAt) < 300000 &&
+              !playersAccepted.includes(uid)
+            ) {
               set({ receivedInvite: docData });
             }
           } else {

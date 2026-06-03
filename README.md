@@ -86,6 +86,12 @@ Módulo especializado integrado a Pessoas & Cultura para controle patrimonial f�
 *   **Impressão Térmica de Etiquetas (50x30mm):** Layout otimizado em CSS `@media print` para impressoras térmicas físicas de patrimônio. A etiqueta divide-se em duas metades: à esquerda, o QR Code de alta precisão; à direita, a marca da empresa, nome do ativo, código patrimonial, nome do colaborador portador e seu cargo.
 *   **Portal Público de Patrimônio:** Rota livre de autenticação e exposta de forma segura no Firestore (`allow get: if true`) que permite que qualquer pessoa ou câmera de celular escaneie o equipamento e visualize imediatamente quem é a empresa proprietária do item, a data de aquisição do patrimônio e a identificação do colaborador responsável atualmente pela sua custódia (com nome, cargo e data/hora do recebimento).
 
+### 9. 🎲 Arena de Jogos Multiplayer & Lobbies Online
+Módulo de descompressão integrado voltado para gamificação e cultura da equipe:
+*   **Lobbies Multi-jogador (Ludo):** Criação de salas de espera reativas no Firestore para até 4 jogadores humanos simultâneos. O Host tem total autonomia para preencher slots vagos com robôs inteligentes (CPU) e convidar colegas da empresa.
+*   **Inteligência Artificial Baseada no Host:** Execução de IA de robôs no cliente do Host, sincronizando decisões e dados no Firestore para todos os participantes em tempo real.
+*   **Casas Seguras & Regras Clássicas:** Motor de regras de Ludo completo com validações rígidas de barreiras (bloqueio de passagem/parada para 2+ peças da mesma cor) e casas seguras (impedindo a captura em saídas e intermediárias com estrelas neon piscantes), além de turnos extras estritos para jogadas de dado de valor 6.
+
 ---
 
 ## ⚖️ Comparativo de Regimes (CLT vs PJ)

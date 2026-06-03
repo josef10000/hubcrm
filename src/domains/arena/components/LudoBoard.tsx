@@ -223,9 +223,49 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
   const [particles, setParticles] = useState<{ id: string; color: string; x: number; y: number; dx: number; dy: number }[]>([]);
 
   const currentBoard = isLocal ? localBoard : (match.boardState || localBoard) as LudoBoardState;
-  const myColor: LudoColor = isLocal ? 'red' : (match.player1Id === user?.uid ? 'red' : 'green');
+  const myColor: LudoColor = isLocal 
+    ? 'red' 
+    : (match.player1Id === user?.uid ? 'red' 
+       : match.player2Id === user?.uid ? 'green' 
+       : match.player3Id === user?.uid ? 'yellow' 
+       : match.player4Id === user?.uid ? 'blue' 
+       : 'red');
   const activeColor: LudoColor = isLocal ? localTurn : (match.turn as LudoColor || 'red');
-  const isMyTurn = isLocal ? localTurn === 'red' : (match.turn === user?.uid && activeColor === myColor);
+  const isMyTurn = isLocal ? localTurn === 'red' : (match.turn === myColor);
+
+  const getPlayerNameByColor = (color: LudoColor): string => {
+    if (isLocal) {
+      if (color === 'red') return 'Você';
+      if (color === 'green') return 'Verde (CPU)';
+      if (color === 'yellow') return 'Amarelo (CPU)';
+      return 'Azul (CPU)';
+    }
+    if (color === 'red') return match.player1Name || 'Vermelho';
+    if (color === 'green') return match.player2Name || 'Verde';
+    if (color === 'yellow') return match.player3Name || 'Amarelo';
+    return match.player4Name || 'Azul';
+  };
+
+  const getPlayerLabel = (color: LudoColor): string => {
+    const name = getPlayerNameByColor(color);
+    if (!isLocal) {
+      const isMe = 
+        (color === 'red' && match.player1Id === user?.uid) ||
+        (color === 'green' && match.player2Id === user?.uid) ||
+        (color === 'yellow' && match.player3Id === user?.uid) ||
+        (color === 'blue' && match.player4Id === user?.uid);
+      if (isMe) return `${name} (Você)`;
+    }
+    return name;
+  };
+
+  const isCpuActiveColor = (color: LudoColor): boolean => {
+    if (isLocal) return color !== 'red';
+    if (color === 'red') return match.player1Id === 'computer';
+    if (color === 'green') return match.player2Id === 'computer';
+    if (color === 'yellow') return match.player3Id === 'computer';
+    return match.player4Id === 'computer';
+  };
 
   const theme = THEME_SKINS[currentSkin];
 
@@ -325,9 +365,10 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
       };
 
       const potentialMoves = getLudoValidMoves(nextBoard, activeColor);
+      const colorLabel = activeColor === 'red' ? 'Vermelho' : activeColor === 'green' ? 'Verde' : activeColor === 'yellow' ? 'Amarelo' : 'Azul';
 
       if (potentialMoves.length === 0) {
-        toast.info(`Rolou ${rolledValue}! Sem movimentos para Vermelho.`);
+        toast.info(`Rolou ${rolledValue}! Sem movimentos para ${colorLabel}.`);
         nextBoard.diceValue = null;
         nextBoard.hasRolled = false;
 
@@ -337,13 +378,13 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
           setLocalBoard(nextBoard);
           setLocalTurn(nextColorTurn);
         } else {
-          await makeMove(nextBoard, `roll-${rolledValue}-no-moves`);
+          await makeMove(nextBoard, `roll-${rolledValue}-no-moves`, undefined, nextColorTurn);
         }
       } else {
         if (isLocal) {
           setLocalBoard(nextBoard);
         } else {
-          await makeMove(nextBoard, `roll-${rolledValue}`);
+          await makeMove(nextBoard, `roll-${rolledValue}`, undefined, activeColor);
         }
       }
     }, 550);
@@ -398,7 +439,21 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
         toast.success('Rode o dado novamente! Bônus de jogada extra.');
       }
     } else {
-      await makeMove(nextBoard, `move-${token.color}-${token.id}`);
+      const nextColorTurn = rollAgain ? activeColor : getNextLudoColorTurn(activeColor);
+      
+      let winnerId: string | undefined = undefined;
+      if (nextBoard.winnerColor) {
+        if (nextBoard.winnerColor === 'red') winnerId = match.player1Id;
+        else if (nextBoard.winnerColor === 'green') winnerId = match.player2Id;
+        else if (nextBoard.winnerColor === 'yellow') winnerId = match.player3Id;
+        else if (nextBoard.winnerColor === 'blue') winnerId = match.player4Id;
+      }
+
+      await makeMove(nextBoard, `move-${token.color}-${token.id}`, winnerId, nextColorTurn);
+      
+      if (rollAgain) {
+        toast.success('Rode o dado novamente! Bônus de jogada extra.');
+      }
     }
   };
 
@@ -467,6 +522,82 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
       return () => clearTimeout(aiTimer);
     }
   }, [isLocal, localTurn, localBoard, currentBoard.winnerColor]);
+
+  // Efeito de IA para as CPUs no modo ONLINE (executado apenas na máquina do Host / player1)
+  useEffect(() => {
+    const isHost = !isLocal && match.player1Id === user?.uid;
+    if (isHost && !currentBoard.winnerColor && !isAiThinking) {
+      // Verifica se a cor ativa atual é controlada por CPU
+      const isCpuActive = 
+        (activeColor === 'green' && match.player2Id === 'computer') ||
+        (activeColor === 'yellow' && match.player3Id === 'computer') ||
+        (activeColor === 'blue' && match.player4Id === 'computer');
+
+      if (isCpuActive && !diceRolling && !currentBoard.hasRolled) {
+        setIsAiThinking(true);
+        
+        const aiTimer = setTimeout(() => {
+          playDiceSound();
+          const aiDice = Math.floor(Math.random() * 6) + 1;
+          
+          const boardWithDice = {
+            ...currentBoard,
+            diceValue: aiDice,
+            hasRolled: true
+          };
+
+          const validAiMoves = getLudoValidMoves(boardWithDice, activeColor);
+
+          if (validAiMoves.length === 0) {
+            boardWithDice.diceValue = null;
+            boardWithDice.hasRolled = false;
+            
+            const nextColorTurn = getNextLudoColorTurn(activeColor);
+            makeMove(boardWithDice, `cpu-roll-${aiDice}-no-moves`, undefined, nextColorTurn);
+            setIsAiThinking(false);
+            return;
+          }
+
+          setTimeout(() => {
+            const bestToken = getBestLudoMove(boardWithDice, aiDice, activeColor);
+            if (bestToken) {
+              const nextBoard = applyLudoMove(boardWithDice, bestToken, aiDice);
+              
+              const isCapture = nextBoard.tokens.filter(t => t.position === -1).length > boardWithDice.tokens.filter(t => t.position === -1).length;
+              const hasReachedGoal = bestToken.position !== 105 && nextBoard.tokens.find(t => t.id === bestToken.id)?.position === 105;
+
+              if (isCapture || hasReachedGoal) {
+                const coords = getLudoCoords(bestToken.color, bestToken);
+                triggerExplosion(coords.x, coords.y, bestToken.color === 'green' ? '#10b981' : bestToken.color === 'yellow' ? '#f59e0b' : '#6366f1');
+              }
+
+              playMoveSound(isCapture);
+
+              nextBoard.diceValue = null;
+              nextBoard.hasRolled = false;
+
+              const rollAgain = aiDice === 6;
+              const nextColorTurn = rollAgain ? activeColor : getNextLudoColorTurn(activeColor);
+              
+              let winnerId: string | undefined = undefined;
+              if (nextBoard.winnerColor) {
+                if (nextBoard.winnerColor === 'red') winnerId = match.player1Id;
+                else if (nextBoard.winnerColor === 'green') winnerId = match.player2Id;
+                else if (nextBoard.winnerColor === 'yellow') winnerId = match.player3Id;
+                else if (nextBoard.winnerColor === 'blue') winnerId = match.player4Id;
+              }
+
+              makeMove(nextBoard, `cpu-move-${bestToken.color}-${bestToken.id}`, winnerId, nextColorTurn);
+            }
+            setIsAiThinking(false);
+          }, 700);
+
+        }, 900);
+
+        return () => clearTimeout(aiTimer);
+      }
+    }
+  }, [isLocal, activeColor, currentBoard, match, user?.uid, diceRolling, isAiThinking]);
 
   const handleRestartLocalGame = () => {
     setLocalBoard(createInitialLudoState());
@@ -639,18 +770,25 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
             const themeInfo = LUDO_COLORS_THEME[color];
             const isTurn = activeColor === color;
             const wins = currentBoard.tokens.filter(t => t.color === color && t.position === 105).length;
+            const label = getPlayerLabel(color);
             
             return (
               <div key={color} className={`p-3 rounded-2xl border flex flex-col gap-1 relative overflow-hidden transition-all ${
                 isTurn ? `${themeInfo.border} bg-white/5` : 'bg-transparent border-white/5 opacity-40'
               }`}>
                 <div className="flex justify-between items-center">
-                  <span className={`text-[8px] font-black uppercase ${themeInfo.text}`}>{themeInfo.label}</span>
+                  <span className={`text-[8px] font-black uppercase ${themeInfo.text}`}>{label}</span>
                   <span className="text-[9px] font-black text-white">{wins}/4 Finalizadas</span>
                 </div>
                 {isTurn && (
                   <span className={`text-[7px] font-black uppercase mt-1 animate-pulse ${themeInfo.text}`}>
-                    {color === 'red' ? 'Sua Vez!' : 'Pensando (CPU)...'}
+                    {isLocal 
+                      ? (color === 'red' ? 'Sua Vez!' : 'Pensando (CPU)...')
+                      : (activeColor === myColor 
+                          ? 'Sua Vez!' 
+                          : (isCpuActiveColor(color) ? 'Pensando (CPU)...' : 'Aguardando Jogador...')
+                        )
+                    }
                   </span>
                 )}
               </div>

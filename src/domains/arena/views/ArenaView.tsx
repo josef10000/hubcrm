@@ -11,6 +11,7 @@ import { Connect4Board } from '../components/Connect4Board';
 import { CheckersBoard } from '../components/CheckersBoard';
 import { ChessBoard } from '../components/ChessBoard';
 import { LudoBoard } from '../components/LudoBoard';
+import { LudoLobbyModal } from '../components/LudoLobbyModal';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, doc } from 'firebase/firestore';
 import { toast } from 'sonner';
@@ -38,6 +39,7 @@ export default function ArenaView() {
   const onlinePlayers = useArenaStore(state => state.onlinePlayers);
   const setOnlinePlayers = useArenaStore(state => state.setOnlinePlayers);
   const createMatchInvite = useArenaStore(state => state.createMatchInvite);
+  const createLudoLobby = useArenaStore(state => state.createLudoLobby);
   const cancelSentInvite = useArenaStore(state => state.cancelSentInvite);
   const listenToInvites = useArenaStore(state => state.listenToInvites);
   const exitActiveMatch = useArenaStore(state => state.exitActiveMatch);
@@ -161,18 +163,30 @@ export default function ArenaView() {
 
   const handleDesafioOnline = async (opponent: any) => {
     if (!user) return;
-    const tId = toast.loading(`Enviando convite para ${opponent.displayName}...`);
-    try {
-      await createMatchInvite(
-        opponent.uid,
-        opponent.displayName,
-        opponent.photoURL,
-        selectedGame,
-        { uid: user.uid, displayName: user.displayName || 'Jogador A', photoURL: user.photoURL || undefined }
-      );
-      toast.success('Desafio enviado!', { id: tId });
-    } catch (e) {
-      toast.error('Erro ao desafiar oponente.', { id: tId });
+    if (selectedGame === 'ludo') {
+      const tId = toast.loading(`Criando sala de Ludo com ${opponent.displayName}...`);
+      try {
+        await createLudoLobby([
+          { uid: opponent.uid, displayName: opponent.displayName, photoURL: opponent.photoURL }
+        ], { uid: user.uid, displayName: user.displayName || 'Jogador A', photoURL: user.photoURL || undefined });
+        toast.success('Sala de Ludo criada!', { id: tId });
+      } catch (e) {
+        toast.error('Erro ao criar sala de Ludo.', { id: tId });
+      }
+    } else {
+      const tId = toast.loading(`Enviando convite para ${opponent.displayName}...`);
+      try {
+        await createMatchInvite(
+          opponent.uid,
+          opponent.displayName,
+          opponent.photoURL,
+          selectedGame,
+          { uid: user.uid, displayName: user.displayName || 'Jogador A', photoURL: user.photoURL || undefined }
+        );
+        toast.success('Desafio enviado!', { id: tId });
+      } catch (e) {
+        toast.error('Erro ao desafiar oponente.', { id: tId });
+      }
     }
   };
 
@@ -245,36 +259,40 @@ export default function ArenaView() {
       {/* 🚀 MODAL FLUTUANTE DE ESPERA DE CONVITE */}
       <AnimatePresence>
         {sentInvite && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-6"
-          >
+          sentInvite.gameType === 'ludo' ? (
+            <LudoLobbyModal matchId={sentInvite.id} onClose={exitActiveMatch} />
+          ) : (
             <motion.div 
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="w-full max-w-md bg-slate-950/70 border border-white/10 p-8 rounded-[2.5rem] text-center flex flex-col items-center gap-6 shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-6"
             >
-              <div className="w-20 h-20 rounded-full border-4 border-primary-500/20 border-t-primary-500 animate-spin flex items-center justify-center text-4xl">
-                ⚔️
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-xl font-black text-white uppercase tracking-widest">Aguardando Aceite</h3>
-                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">
-                  Você desafiou <span className="text-primary-400">{sentInvite.player2Name}</span> para {sentInvite.gameType.toUpperCase()}...
-                </p>
-              </div>
-              
-              <button 
-                onClick={cancelSentInvite}
-                className="w-full py-4 rounded-2xl bg-white/5 hover:bg-rose-500/10 border border-white/10 hover:border-rose-500/20 text-[10px] font-black text-gray-400 hover:text-rose-400 uppercase tracking-widest transition-all"
+              <motion.div 
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.9, y: 20 }}
+                className="w-full max-w-md bg-slate-950/70 border border-white/10 p-8 rounded-[2.5rem] text-center flex flex-col items-center gap-6 shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
               >
-                Cancelar Desafio
-              </button>
+                <div className="w-20 h-20 rounded-full border-4 border-primary-500/20 border-t-primary-500 animate-spin flex items-center justify-center text-4xl">
+                  ⚔️
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-xl font-black text-white uppercase tracking-widest">Aguardando Aceite</h3>
+                  <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">
+                    Você desafiou <span className="text-primary-400">{sentInvite.player2Name}</span> para {sentInvite.gameType.toUpperCase()}...
+                  </p>
+                </div>
+                
+                <button 
+                  onClick={cancelSentInvite}
+                  className="w-full py-4 rounded-2xl bg-white/5 hover:bg-rose-500/10 border border-white/10 hover:border-rose-500/20 text-[10px] font-black text-gray-400 hover:text-rose-400 uppercase tracking-widest transition-all"
+                >
+                  Cancelar Desafio
+                </button>
+              </motion.div>
             </motion.div>
-          </motion.div>
+          )
         )}
       </AnimatePresence>
 
@@ -478,9 +496,40 @@ export default function ArenaView() {
                     </button>
                   </div>
                 ) : (
-                  <div className="py-6 text-center border border-dashed border-white/5 rounded-2xl animate-in fade-in duration-300">
-                    <i className="ph ph-hand-pointing text-2xl text-primary-500/40 mb-2" />
-                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Escolha um colega online na barra lateral direita para desafiá-lo.</p>
+                  <div className="flex flex-col items-center gap-4 py-6 text-center border border-dashed border-white/5 rounded-2xl animate-in fade-in duration-300">
+                    {selectedGame === 'ludo' ? (
+                      <>
+                        <i className="ph ph-users text-3xl text-indigo-500/50 mb-1" />
+                        <div className="space-y-1">
+                          <p className="text-xs font-black text-white uppercase tracking-wider">Multiplayer Online Ludo</p>
+                          <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest leading-relaxed">
+                            Crie uma sala de espera para convidar seus colegas e preencher slots livres com robôs.
+                          </p>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            if (!user) return;
+                            const tId = toast.loading('Criando sala de Ludo...');
+                            try {
+                              await createLudoLobby([], { uid: user.uid, displayName: user.displayName || 'Jogador A', photoURL: user.photoURL || undefined });
+                              toast.success('Sala de Ludo criada!', { id: tId });
+                            } catch (e) {
+                              toast.error('Erro ao criar sala de Ludo.', { id: tId });
+                            }
+                          }}
+                          className="px-6 py-3.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-black text-[9px] uppercase tracking-widest rounded-2xl transition-all cursor-pointer shadow-lg shadow-indigo-500/25"
+                        >
+                          👥 Criar Sala de Ludo
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <i className="ph ph-hand-pointing text-2xl text-primary-500/40 mb-2" />
+                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                          Escolha um colega online na barra lateral direita para desafiá-lo.
+                        </p>
+                      </>
+                    )}
                   </div>
                 )}
               </div>

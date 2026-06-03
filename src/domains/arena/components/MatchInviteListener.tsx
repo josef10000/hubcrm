@@ -12,7 +12,9 @@ export function MatchInviteListener() {
   const receivedInvite = useArenaStore(state => state.receivedInvite);
   const activeMatch = useArenaStore(state => state.activeMatch);
   const acceptInvite = useArenaStore(state => state.acceptInvite);
+  const acceptLudoInvite = useArenaStore(state => state.acceptLudoInvite);
   const declineInvite = useArenaStore(state => state.declineInvite);
+  const rejectLudoInvite = useArenaStore(state => state.rejectLudoInvite);
   const listenToInvites = useArenaStore(state => state.listenToInvites);
 
   // Inicia a escuta de convites para o usuário logado
@@ -32,13 +34,21 @@ export function MatchInviteListener() {
 
   const handleAccept = async () => {
     if (!receivedInvite) return;
-    await acceptInvite(receivedInvite);
+    if (receivedInvite.gameType === 'ludo') {
+      await acceptLudoInvite(receivedInvite.id, user?.uid || '');
+    } else {
+      await acceptInvite(receivedInvite);
+    }
     navigate('/arena');
   };
 
   const handleDecline = async () => {
     if (!receivedInvite) return;
-    await declineInvite(receivedInvite.id);
+    if (receivedInvite.gameType === 'ludo') {
+      await rejectLudoInvite(receivedInvite.id, user?.uid || '');
+    } else {
+      await declineInvite(receivedInvite.id);
+    }
   };
 
   return (
