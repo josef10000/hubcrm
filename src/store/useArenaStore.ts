@@ -469,7 +469,7 @@ export const useArenaStore = create<ArenaState>((set, get) => {
           where('player2Id', '==', uid),
           where('player3Id', '==', uid),
           where('player4Id', '==', uid)
-        )
+        ) as any
       );
 
       invitesUnsubscribe = onSnapshot(q, 
