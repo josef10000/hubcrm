@@ -8,6 +8,7 @@ import { collection, query, getDocs, doc, setDoc, deleteDoc } from 'firebase/fir
 import { CustomRole, AppPermission, defaultRoles } from '@/constants/permissions';
 import { auditService } from '@/services/auditService';
 import { SaveButton } from '@/shared/components/SaveButton';
+import { toast } from 'sonner';
 
 const PERMISSION_GROUPS: { name: string; keys: AppPermission[] }[] = [
   { name: 'Geral & Dashboard', keys: ['VIEW_DASHBOARD', 'VIEW_REPORTS', 'MANAGE_SETTINGS'] },

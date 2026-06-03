@@ -66,7 +66,7 @@ export function SaveButton({
   const shakeAnimation = {
     x: [0, -6, 6, -6, 6, -3, 3, 0],
     transition: { duration: 0.4, ease: 'easeInOut' }
-  };
+  } as const;
 
   return (
     <motion.button
