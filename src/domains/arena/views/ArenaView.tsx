@@ -4,9 +4,8 @@ import { useCRM } from '@crm/contexts/CRMContext';
 import { useArenaStore, GameType } from '@store/useArenaStore';
 import { ArenaStoreModal } from '../components/ArenaStoreModal';
 import { TournamentBrackets } from '../components/TournamentBrackets';
-import { DailyPuzzle } from '../components/DailyPuzzle';
 import { usePermissions } from '@auth/hooks/usePermissions';
-import { Coins, ShoppingBag, Trophy, Plus, ArrowLeft, Crown, Swords, Users, ShieldAlert, Clock } from 'lucide-react';
+import { Coins, ShoppingBag, Trophy, Plus, ArrowLeft, Crown, Swords, Users, ShieldAlert } from 'lucide-react';
 import { Connect4Board } from '../components/Connect4Board';
 import { CheckersBoard } from '../components/CheckersBoard';
 import { ChessBoard } from '../components/ChessBoard';
@@ -58,9 +57,8 @@ export default function ArenaView() {
   const [achievements, setAchievements] = useState<any[]>([]);
   const [isStoreOpen, setIsStoreOpen] = useState(false);
 
-  // Estados locais dos Torneios
-  const [activeTab, setActiveTab] = useState<'games' | 'tournaments' | 'puzzles'>('games');
-  const [puzzlesLeaderboard, setPuzzlesLeaderboard] = useState<any[]>([]);
+  // Estados locais
+  const [activeTab, setActiveTab] = useState<'games' | 'tournaments'>('games');
   const [selectedTournamentId, setSelectedTournamentId] = useState<string | null>(null);
   const [isCreateTournamentOpen, setIsCreateTournamentOpen] = useState(false);
   const [newTourName, setNewTourName] = useState('');
@@ -124,27 +122,7 @@ export default function ArenaView() {
     }
   }, [userProfile?.orgId, listenToTournaments]);
 
-  // Escuta solvers do puzzle de hoje em tempo real
-  useEffect(() => {
-    const todayKey = new Date().toISOString().split('T')[0];
-    const q = query(
-      collection(db, 'dailyPuzzleSolvers'),
-      where('date', '==', todayKey)
-    );
-    const unsubscribe = onSnapshot(q, 
-      (snapshot) => {
-        const solvers = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-        // Ordena por menor tempo de resolução
-        solvers.sort((a: any, b: any) => (a.timeSeconds || 0) - (b.timeSeconds || 0));
-        setPuzzlesLeaderboard(solvers);
-      },
-      (error) => {
-        console.warn('Firestore: leaderboard de puzzles indisponível:', error.message);
-        setPuzzlesLeaderboard([]);
-      }
-    );
-    return () => unsubscribe();
-  }, []);
+
 
   // Sincroniza colaboradores online
   useEffect(() => {
@@ -326,19 +304,7 @@ export default function ArenaView() {
             >
               🏆 Torneios Eliminatórios
             </button>
-            <button
-              onClick={() => {
-                setActiveTab('puzzles');
-                setSelectedTournamentId(null);
-              }}
-              className={`pb-2 px-4 text-[10px] font-black uppercase tracking-widest border-b-2 transition-all cursor-pointer ${
-                activeTab === 'puzzles'
-                  ? 'border-cyan-500 text-cyan-400 shadow-[0_4px_12px_rgba(6,182,212,0.15)]'
-                  : 'border-transparent text-gray-500 hover:text-white'
-              }`}
-            >
-              🧩 Desafios Diários
-            </button>
+
           </div>
 
           {activeTab === 'games' ? (
@@ -534,7 +500,7 @@ export default function ArenaView() {
                 )}
               </div>
             </>
-          ) : activeTab === 'tournaments' ? (
+          ) : (
             // Visualização de Torneios Eliminatórios
             <div className="flex flex-col gap-6 animate-in fade-in duration-300">
               {selectedTournamentId && tournaments.find(t => t.id === selectedTournamentId) ? (
@@ -668,8 +634,6 @@ export default function ArenaView() {
                 </div>
               )}
             </div>
-          ) : (
-            <DailyPuzzle onBack={() => setActiveTab('games')} />
           )}
         </div>
 
@@ -723,78 +687,29 @@ export default function ArenaView() {
 
           {/* Placar de Líderes (Leaderboard) */}
           <div className="bg-slate-950/30 border border-white/5 rounded-[2.5rem] p-6 flex flex-col gap-4 select-none">
-            {activeTab === 'puzzles' ? (
-              <>
-                <div>
-                  <span className="text-[8px] font-black text-gray-500 uppercase tracking-widest">Puzzle do Dia</span>
-                  <h3 className="text-xs font-black text-white uppercase tracking-widest mt-1">Cérebros Rápidos</h3>
-                </div>
+            <div>
+              <span className="text-[8px] font-black text-gray-500 uppercase tracking-widest">Hall of Fame</span>
+              <h3 className="text-xs font-black text-white uppercase tracking-widest mt-1">Mestres do Hub</h3>
+            </div>
 
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between text-[9px] font-bold text-gray-400 uppercase border-b border-white/5 pb-2">
-                    <span>Rank / Colega</span>
-                    <span>Tempo</span>
-                  </div>
-
-                  {puzzlesLeaderboard.length > 0 ? (
-                    <div className="flex flex-col gap-2 overflow-y-auto max-h-[150px] custom-scrollbar pr-1">
-                      {puzzlesLeaderboard.map((solver, idx) => {
-                        const mins = Math.floor((solver.timeSeconds || 0) / 60);
-                        const secs = (solver.timeSeconds || 0) % 60;
-                        const timeStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}s`;
-                        
-                        return (
-                          <div 
-                            key={solver.uid}
-                            className={`flex items-center justify-between p-2 rounded-xl border ${
-                              idx === 0 
-                                ? 'bg-amber-500/5 border-amber-500/10 text-amber-500 animate-pulse'
-                                : 'bg-white/[0.01] border-white/5 text-gray-300'
-                            }`}
-                          >
-                            <span className="text-[9px] font-bold uppercase tracking-wider truncate max-w-[140px]">
-                              {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}º`} {solver.displayName}
-                            </span>
-                            <span className="text-[10px] font-mono font-black">{timeStr}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="py-6 text-center opacity-35 space-y-1">
-                      <Clock size={14} className="text-cyan-500 mx-auto animate-pulse" />
-                      <p className="text-[8px] font-bold uppercase tracking-widest">Ninguém resolveu hoje!</p>
-                    </div>
-                  )}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-[9px] font-bold text-gray-400 uppercase border-b border-white/5 pb-2">
+                <span>Rank / Colega</span>
+                <span>Vitórias</span>
+              </div>
+              
+              {realWins > 0 ? (
+                <div className="flex items-center justify-between p-2 rounded-xl bg-amber-500/5 border border-amber-500/10 text-amber-500 animate-pulse">
+                  <span className="text-[10px] font-black uppercase tracking-wider flex items-center gap-2">🥇 1º {user?.displayName || 'Você'}</span>
+                  <span className="text-xs font-black">{realWins}</span>
                 </div>
-              </>
-            ) : (
-              <>
-                <div>
-                  <span className="text-[8px] font-black text-gray-500 uppercase tracking-widest">Hall of Fame</span>
-                  <h3 className="text-xs font-black text-white uppercase tracking-widest mt-1">Mestres do Hub</h3>
+              ) : (
+                <div className="py-6 text-center opacity-35 space-y-1">
+                  <i className="ph ph-shield-star text-xl text-primary-500" />
+                  <p className="text-[8px] font-bold uppercase tracking-widest">Nenhuma vitória online.</p>
                 </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between text-[9px] font-bold text-gray-400 uppercase border-b border-white/5 pb-2">
-                    <span>Rank / Colega</span>
-                    <span>Vitórias</span>
-                  </div>
-                  
-                  {realWins > 0 ? (
-                    <div className="flex items-center justify-between p-2 rounded-xl bg-amber-500/5 border border-amber-500/10 text-amber-500 animate-pulse">
-                      <span className="text-[10px] font-black uppercase tracking-wider flex items-center gap-2">🥇 1º {user?.displayName || 'Você'}</span>
-                      <span className="text-xs font-black">{realWins}</span>
-                    </div>
-                  ) : (
-                    <div className="py-6 text-center opacity-35 space-y-1">
-                      <i className="ph ph-shield-star text-xl text-primary-500" />
-                      <p className="text-[8px] font-bold uppercase tracking-widest">Nenhuma vitória online.</p>
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
+              )}
+            </div>
           </div>
 
           {/* 🏆 MURAL DE CONQUISTAS (ACHIEVEMENTS) DOURADO */}
