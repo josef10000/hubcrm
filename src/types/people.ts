@@ -70,7 +70,7 @@ export interface Asset {
   category: 'Hardware' | 'Software' | 'Acesso' | 'Notebook' | 'Monitor' | 'Celular' | 'Cadeira' | 'Periférico' | 'Outro';
   assignedTo: string; // userId
   assignedAt: number;
-  status: 'Em uso' | 'Devolvido' | 'Manutenção';
+  status: 'Em uso' | 'Devolvido' | 'Manutenção' | 'Estoque';
   orgId: string;
   purchaseDate?: string;
   specifications?: string;

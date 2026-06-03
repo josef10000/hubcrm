@@ -527,7 +527,7 @@ export interface ToolAsset {
   assignedTo?: string;
   assignedToName?: string;
   assignedToJobTitle?: string;
-  status?: 'Em uso' | 'Devolvido' | 'Manutenção';
+  status?: 'Em uso' | 'Devolvido' | 'Manutenção' | 'Estoque';
 }
 
 export interface Skill {

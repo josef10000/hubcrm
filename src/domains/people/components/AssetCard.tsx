@@ -73,6 +73,7 @@ export function AssetCard({ asset, user, isAdminOrManager, onDelete }: AssetCard
         </div>
         <span className={`ml-auto text-[9px] font-black px-2 py-1 rounded-lg ${
           asset.status === 'Em uso' ? 'bg-emerald-500/10 text-emerald-500' : 
+          asset.status === 'Estoque' ? 'bg-blue-500/10 text-blue-500' :
           asset.status === 'Manutenção' ? 'bg-rose-500/10 text-rose-500' : 'bg-amber-500/10 text-amber-500'
         }`}>
           {(asset.status || 'Devolvido').toUpperCase()}

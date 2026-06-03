@@ -79,6 +79,7 @@ export function AssetFormModal({ isOpen, onClose, onSubmit, teamProfiles, defaul
                 onChange={e => setNewAsset({...newAsset, status: e.target.value as any})}
               >
                 <option value="Em uso">Em uso</option>
+                <option value="Estoque">Estoque</option>
                 <option value="Devolvido">Devolvido</option>
                 <option value="Manutenção">Manutenção</option>
               </select>
