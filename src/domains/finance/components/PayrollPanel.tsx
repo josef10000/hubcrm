@@ -228,7 +228,7 @@ export default function PayrollPanel() {
   }, [effectiveOrgId, competence, payrollSettings]);
 
   // 4. Executar os Cálculos da Folha
-  const calculatePayroll = () => {
+  const calculatePayroll = (silent: boolean = false) => {
     setCalculating(true);
     try {
       const items: PayrollItemCalculated[] = [];
@@ -453,7 +453,9 @@ export default function PayrollPanel() {
 
       setPayrollItems(items);
       setSelectedItems(items.filter(i => i.pixKey).map(i => i.userId));
-      toast.success('Folha calculada com sucesso!');
+      if (!silent) {
+        toast.success('Folha calculada com sucesso!');
+      }
     } catch (err) {
       console.error(err);
       toast.error('Erro ao calcular a folha de pagamento');
@@ -464,7 +466,7 @@ export default function PayrollPanel() {
 
   useEffect(() => {
     if (profiles.length > 0 && !loading) {
-      calculatePayroll();
+      calculatePayroll(true);
     }
   }, [profiles, timeLogs, vacations, advances, commissions, loading]);
 
@@ -608,7 +610,7 @@ export default function PayrollPanel() {
       await setDoc(doc(db, 'organizations', effectiveOrgId, 'payrolls', payrollId), payrollDoc);
 
       toast.success(`Fechamento da folha concluído! Sucessos: ${paidCount} | Falhas: ${failCount}`);
-      calculatePayroll();
+      calculatePayroll(true);
     } catch (error) {
       console.error(error);
       toast.error('Erro geral ao processar folha de pagamento.');
@@ -716,7 +718,7 @@ export default function PayrollPanel() {
 
       toast.success('Adiantamento de Férias CLT processado e agendado com sucesso!');
       setShowVacationModal(false);
-      calculatePayroll();
+      calculatePayroll(true);
     } catch (error: any) {
       toast.error(error.message || 'Erro ao processar adiantamento de férias');
     }
@@ -752,7 +754,7 @@ export default function PayrollPanel() {
           </button>
           
           <button
-            onClick={calculatePayroll}
+            onClick={() => calculatePayroll(false)}
             disabled={calculating}
             className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-2xl font-bold transition-all text-xs flex items-center gap-2"
           >
