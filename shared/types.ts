@@ -158,6 +158,7 @@ export interface UserProfile {
   unlockedFrames?: string[];
   department?: string;
   claimedReadingClubs?: string[];
+  lastTriviaCompletedDate?: string;
 }
 
 export interface UserContract {
