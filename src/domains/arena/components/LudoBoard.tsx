@@ -5,7 +5,7 @@ import { LudoBoardState, LudoToken, LudoColor, createInitialLudoState, getLudoVa
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, Star } from 'lucide-react';
 import { GameHelpModal } from './GameHelpModal';
 
 interface LudoBoardProps {
@@ -795,6 +795,11 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
                       {/* Efeito visual na reta final e centro */}
                       {x === 7 && y === 7 && (
                         <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 animate-pulse z-0" />
+                      )}
+
+                      {/* Desenha estrelas de proteção nas casas seguras intermediárias */}
+                      {((x === 6 && y === 2) || (x === 12 && y === 6) || (x === 8 && y === 12) || (x === 2 && y === 8)) && (
+                        <Star className="w-3.5 h-3.5 text-yellow-500/40 fill-yellow-500/10 absolute z-0 animate-pulse" />
                       )}
 
                       {/* Desenha as fichas da casa atual de forma empilhada ou orbitando */}
