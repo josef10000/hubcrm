@@ -128,11 +128,31 @@ export function createInitialLudoState(): LudoBoardState {
   };
 }
 
-// Retorna se um token específico pode se mover com o valor do dado rolado
-export function canLudoTokenMove(token: LudoToken, diceValue: number): boolean {
+// Casas seguras oficiais: Saídas (0, 13, 26, 39) e Estrelas (8, 21, 34, 47)
+export const LUDO_SAFE_POSITIONS = [0, 8, 13, 21, 26, 34, 39, 47];
+
+// Verifica se há uma barreira (2 ou mais peças da mesma cor) na posição especificada
+export function isBarrierAt(board: LudoBoardState, position: number, color: LudoColor): boolean {
+  if (position === -1 || position === 105) return false;
+  const count = board.tokens.filter(t => t.color === color && t.position === position).length;
+  return count >= 2;
+}
+
+// Verifica se há qualquer barreira (de qualquer cor) na posição especificada
+export function hasAnyBarrierAt(board: LudoBoardState, position: number): boolean {
+  const colors: LudoColor[] = ['red', 'green', 'yellow', 'blue'];
+  return colors.some(color => isBarrierAt(board, position, color));
+}
+
+// Retorna se um token específico pode se mover com o valor do dado rolado, simulando barreiras no caminho
+export function canLudoTokenMove(board: LudoBoardState, token: LudoToken, diceValue: number): boolean {
   // 1. Se está na base, precisa de 6 para sair
   if (token.position === -1) {
-    return diceValue === 6;
+    if (diceValue !== 6) return false;
+    // Ao sair da base, vai para a posição de início da sua cor
+    const startPos = LUDO_START_POSITION[token.color];
+    // Se a casa de saída tiver qualquer barreira, o peão fica bloqueado
+    return !hasAnyBarrierAt(board, startPos);
   }
 
   // 2. Se já chegou ao fim, não se move
@@ -140,20 +160,48 @@ export function canLudoTokenMove(token: LudoToken, diceValue: number): boolean {
     return false;
   }
 
-  // 3. Se está no caminho final, precisa do valor exato para chegar ao 105
+  // 3. Se está no caminho final, precisa do valor exato para chegar ao 105 e não pode ter barreira no caminho
   if (token.position >= 100) {
     const spacesLeft = 105 - token.position;
-    return diceValue <= spacesLeft;
+    if (diceValue > spacesLeft) return false;
+    
+    // Verificar se há barreiras na reta final
+    for (let p = token.position + 1; p <= token.position + diceValue; p++) {
+      if (hasAnyBarrierAt(board, p)) return false;
+    }
+    return true;
   }
 
-  // 4. No caminho comum, pode se mover sempre
+  // 4. No caminho comum, avança passo a passo verificando barreiras
+  const entryLimit = LUDO_ENTRY_LIMIT[token.color];
+  let currPos = token.position;
+  let stepCount = 0;
+
+  while (stepCount < diceValue) {
+    if (currPos === entryLimit) {
+      // Entra na reta final. O resto do caminho é simulado na reta final
+      const remainingSteps = diceValue - stepCount;
+      const destInHome = 100 + remainingSteps - 1;
+      if (destInHome > 105) return false;
+      for (let p = 100; p <= destInHome; p++) {
+        if (hasAnyBarrierAt(board, p)) return false;
+      }
+      return true;
+    }
+    currPos = (currPos + 1) % 52;
+    if (hasAnyBarrierAt(board, currPos)) {
+      return false; // Bloqueado por barreira no percurso
+    }
+    stepCount++;
+  }
+
   return true;
 }
 
 // Retorna as jogadas válidas de um jogador baseado no dado atual
 export function getLudoValidMoves(board: LudoBoardState, color: LudoColor): LudoToken[] {
   if (board.diceValue === null) return [];
-  return board.tokens.filter(t => t.color === color && canLudoTokenMove(t, board.diceValue!));
+  return board.tokens.filter(t => t.color === color && canLudoTokenMove(board, t, board.diceValue!));
 }
 
 // Aplica o movimento a uma peça no Ludo
@@ -198,18 +246,21 @@ export function applyLudoMove(board: LudoBoardState, tokenToMove: LudoToken, dic
   });
 
   // Lógica de Captura ("Comer")
-  // Se caímos em uma casa comum ocupada por fichas inimigas, mandamos elas de volta para a base (-1)
+  // Se caímos em uma casa comum ocupada por fichas inimigas (e não for casa segura), mandamos elas de volta para a base (-1)
   const movedToken = newTokens.find(t => t.color === tokenToMove.color && t.id === tokenToMove.id)!;
   
   if (movedToken.position !== -1 && movedToken.position < 100) {
-    for (let i = 0; i < newTokens.length; i++) {
-      const other = newTokens[i];
-      if (
-        other.color !== movedToken.color && 
-        other.position === movedToken.position
-      ) {
-        // Encontrou inimigo: manda de volta
-        newTokens[i] = { ...other, position: -1 };
+    const isSafePosition = LUDO_SAFE_POSITIONS.includes(movedToken.position);
+    if (!isSafePosition) {
+      for (let i = 0; i < newTokens.length; i++) {
+        const other = newTokens[i];
+        if (
+          other.color !== movedToken.color && 
+          other.position === movedToken.position
+        ) {
+          // Encontrou inimigo: manda de volta
+          newTokens[i] = { ...other, position: -1 };
+        }
       }
     }
   }
@@ -236,7 +287,7 @@ export function applyLudoMove(board: LudoBoardState, tokenToMove: LudoToken, dic
 
 // Algoritmo de IA heurístico para os oponentes virtuais
 export function getBestLudoMove(board: LudoBoardState, diceValue: number, aiColor: LudoColor): LudoToken | null {
-  const validTokens = board.tokens.filter(t => t.color === aiColor && canLudoTokenMove(t, diceValue));
+  const validTokens = board.tokens.filter(t => t.color === aiColor && canLudoTokenMove(board, t, diceValue));
   if (validTokens.length === 0) return null;
 
   let bestToken: LudoToken | null = null;

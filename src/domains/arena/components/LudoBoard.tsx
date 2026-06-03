@@ -385,7 +385,7 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
       return;
     }
 
-    const rollAgain = currentBoard.diceValue === 6 || isCapture;
+    const rollAgain = currentBoard.diceValue === 6;
     
     nextBoard.diceValue = null;
     nextBoard.hasRolled = false;
@@ -451,7 +451,7 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
               playLudoRetroSound('win');
               toast.error(`A CPU ${nextBoard.winnerColor.toUpperCase()} venceu a partida de Ludo!`);
             } else {
-              const rollAgain = aiDice === 6 || isCapture;
+              const rollAgain = aiDice === 6;
               if (rollAgain) {
                 setLocalTurn(localTurn);
               } else {
@@ -802,7 +802,7 @@ export function LudoBoard({ match, isLocal, aiDifficulty = 3, onExit }: LudoBoar
                         <div className="relative w-full h-full flex items-center justify-center">
                           {tokensHere.map((token, tIdx) => {
                             const isMyToken = token.color === myColor;
-                            const isClickable = isMyTurn && currentBoard.hasRolled && canLudoTokenMove(token, currentBoard.diceValue!) && isMyToken;
+                            const isClickable = isMyTurn && currentBoard.hasRolled && canLudoTokenMove(currentBoard, token, currentBoard.diceValue!) && isMyToken;
 
                             // Posicionamento de Órbita Circular elegante se houver múltiplas fichas na mesma casa!
                             const count = tokensHere.length;

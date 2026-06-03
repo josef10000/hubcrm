@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Coffee, Briefcase, Sun, Loader2 } from 'lucide-react';
+import { Coffee, Briefcase, Sun, Loader2, Headphones } from 'lucide-react';
 import BentoTicker from '../components/BentoTicker';
 import FeedAnimeList from '../components/FeedAnimeList';
 import CompanyAnnouncements from '../components/CompanyAnnouncements';
 import TeamCelebrations from '../components/TeamCelebrations';
 import FeedSchedule from '../components/FeedSchedule';
 import FeedTrivia from '../components/FeedTrivia';
+import SunriseBriefing from '../components/SunriseBriefing';
 const DashboardView = React.lazy(() => import('./DashboardView'));
 
 export default function MorningFeedView() {
   const [viewMode, setViewMode] = useState<'morning' | 'work'>('morning');
   const [feedData, setFeedData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showBriefing, setShowBriefing] = useState(true);
+  const [forceBriefingPlay, setForceBriefingPlay] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -41,6 +44,15 @@ export default function MorningFeedView() {
 
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10 w-full">
+      {showBriefing && (
+        <SunriseBriefing 
+          forcePlay={forceBriefingPlay}
+          onClose={() => {
+            setShowBriefing(false);
+            setForceBriefingPlay(false);
+          }}
+        />
+      )}
       <div className="max-w-7xl mx-auto space-y-6">
         
         {/* Cabeçalho Customizado e Seletor de Modo */}
@@ -50,7 +62,20 @@ export default function MorningFeedView() {
               <Sun size={14} className="animate-pulse" />
               <span>Praça da Comunidade</span>
             </div>
-            <h1 className="text-2xl font-black text-white">Central Hub</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-black text-white">Central Hub</h1>
+              <button
+                onClick={() => {
+                  setForceBriefingPlay(true);
+                  setShowBriefing(true);
+                }}
+                className="p-2 bg-white/5 hover:bg-primary-500/20 border border-white/10 hover:border-primary-500/30 text-gray-400 hover:text-primary-400 rounded-xl transition-all flex items-center gap-1.5 active:scale-95 group shadow-lg"
+                title="Ouvir Briefing Matinal"
+              >
+                <Headphones size={14} className="group-hover:animate-bounce" />
+                <span className="text-[10px] font-black uppercase tracking-wider pr-1 hidden sm:inline">Briefing</span>
+              </button>
+            </div>
           </div>
 
           {/* Toggle Switch Premium */}
