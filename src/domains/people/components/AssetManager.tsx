@@ -18,7 +18,8 @@ export default function AssetManager({ userId }: AssetManagerProps) {
     teamProfiles, 
     createAsset, 
     removeAsset,
-    templates
+    templates,
+    generateTermForAsset
   } = useAssets(userId);
 
   const [showAddModal, setShowAddModal] = useState(false);
