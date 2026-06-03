@@ -14,15 +14,248 @@ interface TriviaQuestion {
   answers: string[];
 }
 
-function decodeHtml(html: string): string {
-  try {
-    const txt = document.createElement('textarea');
-    txt.innerHTML = html;
-    return txt.value;
-  } catch (e) {
-    return html;
+const LOCAL_TRIVIA_QUESTIONS: TriviaQuestion[] = [
+  {
+    category: "Geografia",
+    question: "Qual é o maior país do mundo em extensão territorial?",
+    correctAnswer: "Rússia",
+    answers: ["Canadá", "Rússia", "China", "Estados Unidos"]
+  },
+  {
+    category: "História",
+    question: "Em que ano ocorreu a proclamação da República no Brasil?",
+    correctAnswer: "1889",
+    answers: ["1822", "1889", "1930", "1964"]
+  },
+  {
+    category: "Ciências",
+    question: "Qual é o elemento químico mais abundante no universo?",
+    correctAnswer: "Hidrogênio",
+    answers: ["Oxigênio", "Hidrogênio", "Hélio", "Carbono"]
+  },
+  {
+    category: "Arte",
+    question: "Quem pintou a obra 'Mona Lisa'?",
+    correctAnswer: "Leonardo da Vinci",
+    answers: ["Michelangelo", "Vincent van Gogh", "Leonardo da Vinci", "Pablo Picasso"]
+  },
+  {
+    category: "Ciências",
+    question: "Quantos planetas existem no Sistema Solar?",
+    correctAnswer: "8",
+    answers: ["7", "8", "9", "10"]
+  },
+  {
+    category: "Filosofia",
+    question: "De quem é a famosa frase filosófica 'Penso, logo existo'?",
+    correctAnswer: "René Descartes",
+    answers: ["Sócrates", "Platão", "René Descartes", "Friedrich Nietzsche"]
+  },
+  {
+    category: "Esportes",
+    question: "Qual país sediou os Jogos Olímpicos de Verão de 2016?",
+    correctAnswer: "Brasil",
+    answers: ["Estados Unidos", "Brasil", "Reino Unido", "Japão"]
+  },
+  {
+    category: "Biologia",
+    question: "Quantos ossos tem o corpo humano de um adulto em média?",
+    correctAnswer: "206",
+    answers: ["106", "206", "306", "406"]
+  },
+  {
+    category: "Geografia",
+    question: "Qual oceano banha a costa leste do Brasil?",
+    correctAnswer: "Atlântico",
+    answers: ["Pacífico", "Atlântico", "Índico", "Glacial Antártico"]
+  },
+  {
+    category: "Geografia",
+    question: "Qual é a capital do Canadá?",
+    correctAnswer: "Ottawa",
+    answers: ["Toronto", "Vancouver", "Montreal", "Ottawa"]
+  },
+  {
+    category: "Literatura",
+    question: "Quem escreveu o clássico romance brasileiro 'Dom Casmurro'?",
+    correctAnswer: "Machado de Assis",
+    answers: ["José de Alencar", "Machado de Assis", "Clarice Lispector", "Jorge Amado"]
+  },
+  {
+    category: "Física",
+    question: "Qual é a velocidade da luz aproximadamente no vácuo?",
+    correctAnswer: "300.000 km/s",
+    answers: ["150.000 km/s", "300.000 km/s", "1.000.000 km/s", "30.000 km/s"]
+  },
+  {
+    category: "Química",
+    question: "Qual metal é líquido em temperatura ambiente?",
+    correctAnswer: "Mercúrio",
+    answers: ["Ouro", "Ferro", "Mercúrio", "Prata"]
+  },
+  {
+    category: "História",
+    question: "Quantos anos durou a histórica 'Guerra dos Cem Anos'?",
+    correctAnswer: "116 anos",
+    answers: ["100 anos", "116 anos", "99 anos", "150 anos"]
+  },
+  {
+    category: "Geografia",
+    question: "Qual rio disputa com o Nilo o título de mais longo do mundo, sendo o maior em volume de água?",
+    correctAnswer: "Rio Amazonas",
+    answers: ["Rio Mississippi", "Rio Nilo", "Rio Amazonas", "Rio Yangtze"]
+  },
+  {
+    category: "História",
+    question: "Quem foi o primeiro homem a pisar na Lua, em 1969?",
+    correctAnswer: "Neil Armstrong",
+    answers: ["Buzz Aldrin", "Yuri Gagarin", "Neil Armstrong", "Michael Collins"]
+  },
+  {
+    category: "Geografia",
+    question: "Qual é a capital da Austrália?",
+    correctAnswer: "Canberra",
+    answers: ["Sydney", "Melbourne", "Brisbane", "Canberra"]
+  },
+  {
+    category: "Esportes",
+    question: "Em que ano foi realizada a primeira Copa do Mundo de Futebol?",
+    correctAnswer: "1930",
+    answers: ["1920", "1930", "1950", "1914"]
+  },
+  {
+    category: "Física",
+    question: "Qual cientista formulou a Teoria da Relatividade Geral?",
+    correctAnswer: "Albert Einstein",
+    answers: ["Isaac Newton", "Galileu Galilei", "Albert Einstein", "Nikola Tesla"]
+  },
+  {
+    category: "Turismo",
+    question: "Em qual cidade fica a famosa Torre Eiffel?",
+    correctAnswer: "Paris",
+    answers: ["Londres", "Paris", "Roma", "Berlim"]
+  },
+  {
+    category: "História",
+    question: "A qual civilização antiga é atribuída a invenção do papel?",
+    correctAnswer: "Chinesa",
+    answers: ["Egípcia", "Romana", "Chinesa", "Grega"]
+  },
+  {
+    category: "Matemática",
+    question: "Quantos lados tem um polígono heptágono?",
+    correctAnswer: "7",
+    answers: ["6", "7", "8", "9"]
+  },
+  {
+    category: "Geografia",
+    question: "Qual é o menor país do mundo em extensão territorial?",
+    correctAnswer: "Vaticano",
+    answers: ["Mônaco", "San Marino", "Vaticano", "Liechtenstein"]
+  },
+  {
+    category: "Literatura",
+    question: "Quem escreveu a célebre obra poética portuguesa 'Os Lusíadas'?",
+    correctAnswer: "Luís de Camões",
+    answers: ["Fernando Pessoa", "Luís de Camões", "Eça de Queirós", "José Saramago"]
+  },
+  {
+    category: "Biologia",
+    question: "Qual gás é o mais essencial para a respiração dos seres humanos?",
+    correctAnswer: "Oxigênio",
+    answers: ["Nitrogênio", "Gás Carbônico", "Oxigênio", "Hélio"]
+  },
+  {
+    category: "Geografia",
+    question: "Qual é a capital do estado de Goiás?",
+    correctAnswer: "Goiânia",
+    answers: ["Brasília", "Goiânia", "Anápolis", "Palmas"]
+  },
+  {
+    category: "Esportes",
+    question: "Quem é amplamente conhecido como o 'Rei do Futebol'?",
+    correctAnswer: "Pelé",
+    answers: ["Diego Maradona", "Pelé", "Lionel Messi", "Garrincha"]
+  },
+  {
+    category: "Botânica",
+    question: "Qual fruta é conhecida por apresentar as sementes do lado de fora da polpa?",
+    correctAnswer: "Morango",
+    answers: ["Morango", "Caju", "Figo", "Abacaxi"]
+  },
+  {
+    category: "Demografia",
+    question: "Qual país ultrapassou a China e se tornou o mais populoso do mundo recentemente?",
+    correctAnswer: "Índia",
+    answers: ["Estados Unidos", "Índia", "Indonésia", "Paquistão"]
+  },
+  {
+    category: "Astronomia",
+    question: "Qual é a estrela mais próxima da Terra depois do Sol?",
+    correctAnswer: "Próxima Centauri",
+    answers: ["Sirius", "Próxima Centauri", "Betelgeuse", "Alpha Centauri A"]
+  },
+  {
+    category: "Ciências",
+    question: "Quem foi a primeira mulher a ganhar um Prêmio Nobel na história?",
+    correctAnswer: "Marie Curie",
+    answers: ["Marie Curie", "Ada Lovelace", "Rosalind Franklin", "Irène Joliot-Curie"]
+  },
+  {
+    category: "Anatomia",
+    question: "Quantos dentes possui um ser humano adulto saudável e completo (incluindo os sisos)?",
+    correctAnswer: "32",
+    answers: ["28", "30", "32", "36"]
+  },
+  {
+    category: "Literatura",
+    question: "Qual é a obra literária de ficção mais vendida e traduzida da história?",
+    correctAnswer: "Dom Quixote",
+    answers: ["Dom Quixote", "O Pequeno Príncipe", "Um Conto de Duas Cidades", "O Senhor dos Anéis"]
+  },
+  {
+    category: "Geografia",
+    question: "Qual é a capital da Espanha?",
+    correctAnswer: "Madri",
+    answers: ["Barcelona", "Madri", "Sevilha", "Lisboa"]
+  },
+  {
+    category: "Gastronomia",
+    question: "Qual país é historicamente a pátria do risoto, da pizza e do macarrão?",
+    correctAnswer: "Itália",
+    answers: ["França", "Itália", "Grécia", "Espanha"]
+  },
+  {
+    category: "Anatomia",
+    question: "Qual órgão do corpo humano é responsável por bombear o sangue pelo sistema circulatório?",
+    correctAnswer: "Coração",
+    answers: ["Pulmão", "Cérebro", "Fígado", "Coração"]
+  },
+  {
+    category: "Geografia",
+    question: "Em qual continente está localizado o imenso Deserto do Saara?",
+    correctAnswer: "África",
+    answers: ["Ásia", "África", "Oceania", "América do Sul"]
+  },
+  {
+    category: "Literatura",
+    question: "Quem escreveu a famosa tragédia teatral 'Romeu e Julieta'?",
+    correctAnswer: "William Shakespeare",
+    answers: ["Miguel de Cervantes", "William Shakespeare", "Luis de Camões", "Dante Alighieri"]
+  },
+  {
+    category: "Matemática",
+    question: "Quantos segundos existem em uma hora completa?",
+    correctAnswer: "3.600",
+    answers: ["600", "3.600", "3.6000", "86.400"]
+  },
+  {
+    category: "Ciências",
+    question: "Qual cientista escocês descobriu a penicilina, o primeiro antibiótico, em 1928?",
+    correctAnswer: "Alexander Fleming",
+    answers: ["Louis Pasteur", "Alexander Fleming", "Robert Koch", "Edward Jenner"]
   }
-}
+];
 
 export default function FeedTrivia() {
   const { userProfile } = useAuth();
@@ -43,33 +276,30 @@ export default function FeedTrivia() {
     if (hasCompletedToday || !userProfile) return;
 
     setLoading(true);
-    fetch('https://opentdb.com/api.php?amount=1&type=multiple')
-      .then(res => {
-        if (!res.ok) throw new Error('Falha na resposta da API');
-        return res.json();
-      })
-      .then(data => {
-        const raw = data.results?.[0];
-        if (!raw) throw new Error('Nenhuma pergunta encontrada');
+    try {
+      // Sorteio determinístico diário
+      const dayOfYear = Math.floor((new Date().getTime() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+      const questionIndex = dayOfYear % LOCAL_TRIVIA_QUESTIONS.length;
+      const raw = LOCAL_TRIVIA_QUESTIONS[questionIndex];
 
-        const correct = decodeHtml(raw.correct_answer);
-        const incorrects = (raw.incorrect_answers || []).map((ans: string) => decodeHtml(ans));
-        
-        // Misturar respostas de forma aleatória
-        const answers = [correct, ...incorrects].sort(() => Math.random() - 0.5);
-
-        setQuestion({
-          category: decodeHtml(raw.category),
-          question: decodeHtml(raw.question),
-          correctAnswer: correct,
-          answers
-        });
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('[FeedTrivia] Erro ao carregar Trivia:', err);
-        setLoading(false);
+      // Embaralhar as alternativas de forma determinística diária
+      const answers = [...raw.answers].sort((a, b) => {
+        const hashA = a.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) + dayOfYear;
+        const hashB = b.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) + dayOfYear;
+        return (hashA % 10) - (hashB % 10);
       });
+
+      setQuestion({
+        category: raw.category,
+        question: raw.question,
+        correctAnswer: raw.correctAnswer,
+        answers
+      });
+    } catch (err) {
+      console.error('[FeedTrivia] Erro ao carregar Trivia local:', err);
+    } finally {
+      setLoading(false);
+    }
   }, [hasCompletedToday, userProfile]);
 
   const handleAnswerSubmit = async () => {

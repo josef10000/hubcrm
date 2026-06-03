@@ -20,12 +20,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const currentDay = days[new Date().getDay()];
 
     // 2. Requisições concorrentes e resilientes (allSettled)
-    const [newsResult, financeResult, animeResult] = await Promise.allSettled([
-      // RSS G1 Tecnologia e InfoMoney
-      Promise.all([
-        fetchRSS('https://g1.globo.com/rss/g1/tecnologia/'),
-        fetchRSS('https://www.infomoney.com.br/feed/')
-      ]),
+    const [financeResult, animeResult] = await Promise.allSettled([
       // AwesomeAPI (Cotações)
       fetch('https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL,BTC-BRL').then(async r => {
         if (!r.ok) throw new Error('AwesomeAPI status error');
@@ -38,33 +33,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
     ]);
 
-    // 3. Processar Notícias
+    // 3. Processar Notícias (Radar removido conforme solicitação)
     const newsList: any[] = [];
-    if (newsResult.status === 'fulfilled') {
-      const [g1Items, infoMoneyItems] = newsResult.value;
-
-      const g1 = g1Items.slice(0, 5).map((item: any) => ({
-        source: 'G1 Tecnologia',
-        title: item.title,
-        link: item.link,
-        pubDate: item.pubDate,
-        summary: item.summary,
-        imageUrl: item.imageUrl
-      }));
-
-      const infoMoney = infoMoneyItems.slice(0, 5).map((item: any) => ({
-        source: 'InfoMoney',
-        title: item.title,
-        link: item.link,
-        pubDate: item.pubDate,
-        summary: item.summary,
-        imageUrl: null
-      }));
-
-      newsList.push(...g1, ...infoMoney);
-      // Ordenar por data
-      newsList.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
-    }
 
     // 4. Processar Cotações Financeiras
     let financial = null;
@@ -128,59 +98,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.error('[FEED_HANDLER] Error generating feed:', error);
     return res.status(500).json({ error: 'Erro interno ao gerar o feed matinal', details: error.message });
   }
-}
-
-async function fetchRSS(url: string): Promise<any[]> {
-  try {
-    const response = await fetch(url);
-    if (!response.ok) return [];
-    const xmlText = await response.text();
-
-    const items: any[] = [];
-    const itemMatches = xmlText.match(/<item>[\s\S]*?<\/item>/g) || [];
-
-    for (const itemXml of itemMatches) {
-      const title = extractTag(itemXml, 'title');
-      const link = extractTag(itemXml, 'link');
-      const pubDate = extractTag(itemXml, 'pubDate');
-      const description = extractTag(itemXml, 'description');
-
-      // Extração de imagem se houver no description ou content
-      let imageUrl = null;
-      const imgMatch = description.match(/<img[^>]+src="([^">]+)"/i);
-      if (imgMatch) {
-        imageUrl = imgMatch[1];
-      }
-
-      const cleanTitle = cleanCData(title);
-      // Remover tags HTML da descrição para o resumo limpo
-      const cleanSummary = cleanCData(description)
-        .replace(/<[^>]*>/g, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-
-      items.push({
-        title: cleanTitle,
-        link: cleanCData(link),
-        pubDate: cleanCData(pubDate),
-        summary: cleanSummary,
-        imageUrl: imageUrl
-      });
-    }
-
-    return items;
-  } catch (error) {
-    console.error(`[FEED_HANDLER] Error parsing RSS from ${url}:`, error);
-    return [];
-  }
-}
-
-function extractTag(xml: string, tagName: string): string {
-  const regex = new RegExp(`<${tagName}>([\\s\\S]*?)<\/${tagName}>`, 'i');
-  const match = xml.match(regex);
-  return match ? match[1] : '';
-}
-
-function cleanCData(str: string): string {
-  return str.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/gi, '$1').trim();
 }

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Coffee, Briefcase, Sun, Loader2 } from 'lucide-react';
 import BentoTicker from '../components/BentoTicker';
-import FeedNews from '../components/FeedNews';
 import FeedAnimeList from '../components/FeedAnimeList';
 import CompanyAnnouncements from '../components/CompanyAnnouncements';
 import TeamCelebrations from '../components/TeamCelebrations';
@@ -89,33 +88,30 @@ export default function MorningFeedView() {
               <BentoTicker financial={feedData.financial} />
             )}
 
-            {/* Bento Grid Superior: Notícias (8 colunas) e Animes (4 colunas) */}
+            {/* Linha 1: Mural de Comunicados (8 colunas) e Lançamentos Geek (4 colunas) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
               <div className="lg:col-span-8 h-full">
-                <FeedNews news={feedData?.news || []} />
+                <CompanyAnnouncements />
               </div>
               <div className="lg:col-span-4 h-full">
                 <FeedAnimeList animes={feedData?.animes || []} />
               </div>
             </div>
 
-            {/* Bento Grid Inferior: Comunicados (8 colunas) e Aniversariantes (4 colunas) */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-              <div className="lg:col-span-8 h-full">
-                <CompanyAnnouncements />
-              </div>
-              <div className="lg:col-span-4 h-full">
-                <TeamCelebrations />
-              </div>
-            </div>
-
-            {/* Bento Grid Inferior Extra: Agenda (8 colunas) e Trivia Geral (4 colunas) */}
+            {/* Linha 2: Agenda Semanal (8 colunas) e Desafio da Trivia (4 colunas) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
               <div className="lg:col-span-8 h-full">
                 <FeedSchedule />
               </div>
               <div className="lg:col-span-4 h-full">
                 <FeedTrivia />
+              </div>
+            </div>
+
+            {/* Linha 3: Aniversariantes do Mês (12 colunas) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+              <div className="lg:col-span-12 h-full">
+                <TeamCelebrations />
               </div>
             </div>
           </div>
