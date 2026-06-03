@@ -107,7 +107,7 @@ async function handleInvite(req: VercelRequest, res: VercelResponse, uid: string
   
   const validation = validateSchema(teamInviteSchema, req.body);
   if (!validation.success) return res.status(400).json({ error: validation.error });
-  const { email, role, collaboratorName } = validation.data;
+  const { email, role, collaboratorName, templateId } = validation.data;
 
   const profileSnap = await db.collection('profiles').doc(uid).get();
   const senderData = profileSnap.data() as UserProfileBase;
@@ -119,7 +119,16 @@ async function handleInvite(req: VercelRequest, res: VercelResponse, uid: string
   const expiresAt = Date.now() + (7 * 24 * 60 * 60 * 1000);
 
   await db.collection('convites').doc(token).set({
-    id: token, email, role, orgId: senderData.orgId, token, status: 'pending', createdAt: Date.now(), expiresAt, invitedBy: uid
+    id: token,
+    email,
+    role,
+    orgId: senderData.orgId,
+    token,
+    status: 'pending',
+    createdAt: Date.now(),
+    expiresAt,
+    invitedBy: uid,
+    templateId: templateId || null
   });
 
   const protocol = req.headers['x-forwarded-proto'] || 'http';
@@ -230,6 +239,26 @@ async function handleAccept(req: VercelRequest, res: VercelResponse, uid: string
         }
       }
 
+      // Injeção de Contrato Pré-definido se aplicável
+      let initialContracts: any[] = [];
+      if (inviteData?.templateId) {
+        const templateRef = db.collection('organizations').doc(inviteData.orgId).collection('contract_templates').doc(inviteData.templateId);
+        const templateSnap = await transaction.get(templateRef);
+        if (templateSnap.exists) {
+          const template = templateSnap.data();
+          const contractId = db.collection('tmp').doc().id;
+          initialContracts.push({
+            id: contractId,
+            templateId: templateSnap.id,
+            title: template?.title || 'Contrato de Trabalho',
+            bodyText: template?.bodyText || '',
+            status: 'pending',
+            createdAt: Date.now(),
+            type: template?.type || 'work_clt'
+          });
+        }
+      }
+
       // 4. Preparar Atualização de Perfil (Profile)
       const profileUpdate: any = {
         uid,
@@ -241,9 +270,19 @@ async function handleAccept(req: VercelRequest, res: VercelResponse, uid: string
         acceptedInviteAt: Date.now()
       };
 
-      // Só define createdAt se for um perfil novo
+      // Só define createdAt e contratos se for um perfil novo
       if (!profileSnap.exists) {
         profileUpdate.createdAt = Date.now();
+        profileUpdate.contracts = initialContracts;
+      } else {
+        const currentProfile = profileSnap.data();
+        const existingContracts = currentProfile?.contracts || [];
+        if (initialContracts.length > 0) {
+          const hasContract = existingContracts.some((c: any) => c.templateId === inviteData.templateId && c.status === 'pending');
+          if (!hasContract) {
+            profileUpdate.contracts = [...existingContracts, ...initialContracts];
+          }
+        }
       }
 
       // Vínculo de hierarquia

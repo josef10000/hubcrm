@@ -7,7 +7,9 @@ import { useDialog } from '@auth/contexts/DialogContext';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
 import { toast } from 'sonner';
-import { UserRole } from '@/types';
+import { UserRole, ContractTemplate } from '@/types';
+import { db } from '@/lib/firebase';
+import { collection, getDocs } from 'firebase/firestore';
 import { authFetch } from '@/lib/authFetch';
 import { useCRMStore } from '@/store/useCRMStore';
 import { TimeLog, calculateNetDuration, getLocalDateString } from '@/store/slices/timeTrackingSlice';
@@ -114,6 +116,8 @@ export default function TeamManagementView() {
   const [inviteName, setInviteName] = useState('');
   const [inviteRole, setInviteRole] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [contractTemplates, setContractTemplates] = useState<ContractTemplate[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
 
   // Remove member state
   const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
@@ -142,8 +146,20 @@ export default function TeamManagementView() {
       } else {
         toast.error(data.error || 'Erro ao carregar equipe');
       }
+
+      const orgId = userProfile?.orgId;
+      if (orgId && orgId !== 'pending') {
+        const templatesRef = collection(db, 'organizations', orgId, 'contract_templates');
+        const templatesSnap = await getDocs(templatesRef);
+        const templatesList: ContractTemplate[] = [];
+        templatesSnap.forEach(d => {
+          templatesList.push({ id: d.id, ...d.data() } as ContractTemplate);
+        });
+        setContractTemplates(templatesList);
+      }
     } catch (error) {
-      toast.error('Erro de conexão');
+      console.error(error);
+      toast.error('Erro de conexão ao carregar equipe/contratos');
     } finally {
       setLoading(false);
     }
@@ -162,7 +178,8 @@ export default function TeamManagementView() {
         body: JSON.stringify({
           email: inviteEmail,
           role: inviteRole,
-          collaboratorName: inviteName
+          collaboratorName: inviteName,
+          templateId: selectedTemplateId || undefined
         })
       });
       const data = await res.json();
@@ -349,7 +366,7 @@ export default function TeamManagementView() {
             </div>
             {hasPermission('MANAGE_TEAM') && (
               <button 
-                onClick={() => setIsInviteModalOpen(true)}
+                onClick={() => { setIsInviteModalOpen(true); setSelectedTemplateId(''); }}
                 className="flex items-center space-x-2 bg-primary-500 hover:bg-primary-600 text-gray-900 dark:text-white px-5 py-3 rounded-2xl transition-all font-medium shadow-xl shadow-primary-500/20 whitespace-nowrap"
               >
                 <UserPlus size={18} />
@@ -529,6 +546,21 @@ export default function TeamManagementView() {
                     <option value="">Selecionar cargo...</option>
                     {orgRoles.map(role => (
                       <option key={role.id} value={role.id || role.name}>{role.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Vincular Contrato no Primeiro Acesso (Opcional)</label>
+                  <select 
+                    value={selectedTemplateId} 
+                    onChange={e => setSelectedTemplateId(e.target.value)} 
+                    className="w-full bg-gray-200/50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white font-medium"
+                  >
+                    <option value="">Nenhum contrato (Disparar manualmente depois)</option>
+                    {contractTemplates.map(tmpl => (
+                      <option key={tmpl.id} value={tmpl.id}>
+                        {tmpl.title} ({tmpl.type === 'work_pj' ? 'PJ' : tmpl.type === 'asset_term' ? 'Termo' : 'CLT'})
+                      </option>
                     ))}
                   </select>
                 </div>

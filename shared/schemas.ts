@@ -9,7 +9,8 @@ import { z } from 'zod';
 export const teamInviteSchema = z.object({
   email: z.string().email('E-mail inválido'),
   role: z.string().min(1, 'Role é obrigatória'),
-  collaboratorName: z.string().min(2, 'Nome muito curto')
+  collaboratorName: z.string().min(2, 'Nome muito curto'),
+  templateId: z.string().optional()
 });
 
 export const teamRemoveSchema = z.object({

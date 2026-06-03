@@ -641,6 +641,7 @@ export interface Invitation {
   invitedBy: string;
   acceptedBy?: string;
   acceptedAt?: number;
+  templateId?: string; // ID do template de contrato atrelado a este convite
 }
 
 export type InvitationBase = Invitation;

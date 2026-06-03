@@ -21,7 +21,7 @@ export default function ProfileContractsTab({
   const contracts = profile.contracts || [];
   
   // Separar contratos por tipo
-  const cltContracts = contracts.filter(c => c.type === 'work_clt' || c.type === 'work_contract' || !c.type);
+  const cltContracts = contracts.filter(c => c.type === 'work_clt' || (c.type as any) === 'work_contract' || !c.type);
   const pjContracts = contracts.filter(c => c.type === 'work_pj');
   const assetTerms = contracts.filter(c => c.type === 'asset_term');
 
