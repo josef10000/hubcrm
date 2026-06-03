@@ -19,6 +19,7 @@ import { UserProfile } from '@/types';
 import { PDICategory } from '@/types/people';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { SaveButton } from '@/shared/components/SaveButton';
 import { format } from 'date-fns';
 import MoodTracker from '@people/components/MoodTracker';
 import SkillRadarChart from '@people/components/SkillRadarChart';
@@ -106,7 +107,6 @@ export default function ProfileView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [superior, setSuperior] = useState<UserProfile | null>(null);
   const [activeTab, setActiveTab] = useState<'info' | 'pdi' | 'comissoes' | 'inventory' | 'feedbacks' | 'history' | 'alerts' | 'vacations' | 'availability' | 'expediente' | 'contracts'>('info');
@@ -475,7 +475,6 @@ export default function ProfileView() {
   };
 
   const handleSave = async () => {
-    setIsSaving(true);
     try {
       const token = await user?.getIdToken();
       
@@ -535,8 +534,11 @@ export default function ProfileView() {
 
       if (!res.ok) throw new Error('Erro ao salvar perfil');
       
-      toast.success('Perfil atualizado com sucesso!');
-      setIsEditing(false);
+      // Pequeno atraso para a animação do botão ser percebida
+      setTimeout(() => {
+        setIsEditing(false);
+      }, 1000);
+      
       if (isOwnProfile) refreshProfile();
       
       // Atualizar estado local
@@ -549,9 +551,7 @@ export default function ProfileView() {
         };
       });
     } catch (error) {
-      toast.error('Erro ao salvar alterações');
-    } finally {
-      setIsSaving(false);
+      throw error;
     }
   };
 
@@ -607,46 +607,42 @@ export default function ProfileView() {
     setEditEndTime(log.endTime ? formatToBrasiliaTime(log.endTime, 'HH:mm') : '');
   };
 
-  const handleSaveEditedLog = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveEditedLog = async () => {
     if (!editingTimeLog || !currentUserProfile?.orgId || !user?.uid) return;
 
-    try {
-      const [startH, startM] = editStartTime.split(':').map(Number);
-      const [yr, mo, dy] = editDate.split('-').map(Number);
-      
-      const startDt = new Date(yr, mo - 1, dy, startH, startM, 0, 0);
-      const newStartTime = startDt.getTime();
-      
-      let newEndTime: number | undefined = undefined;
-      
-      if (editEndTime) {
-        const [endH, endM] = editEndTime.split(':').map(Number);
-        const endDt = new Date(yr, mo - 1, dy, endH, endM, 0, 0);
-        newEndTime = endDt.getTime();
-      }
-
-      const newDuration = calculateNetDuration(newStartTime, newEndTime, editingTimeLog.pauses);
-      const logRef = doc(db, 'organizations', currentUserProfile.orgId, 'time_logs', editingTimeLog.id);
-      
-      await setDoc(logRef, {
-        date: editDate,
-        startTime: newStartTime,
-        endTime: newEndTime || null,
-        status: newEndTime ? 'completed' : 'active',
-        totalDuration: newDuration,
-        updatedAt: Date.now(),
-        editedByAdmin: true,
-        adminId: user.uid,
-        editedAt: Date.now()
-      }, { merge: true });
-
-      toast.success('Ponto eletrônico atualizado e auditado com sucesso!');
-      setEditingTimeLog(null);
-    } catch (err) {
-      console.error('[ProfileView] Erro ao editar registro de ponto:', err);
-      toast.error('Erro ao salvar registro de ponto.');
+    const [startH, startM] = editStartTime.split(':').map(Number);
+    const [yr, mo, dy] = editDate.split('-').map(Number);
+    
+    const startDt = new Date(yr, mo - 1, dy, startH, startM, 0, 0);
+    const newStartTime = startDt.getTime();
+    
+    let newEndTime: number | undefined = undefined;
+    
+    if (editEndTime) {
+      const [endH, endM] = editEndTime.split(':').map(Number);
+      const endDt = new Date(yr, mo - 1, dy, endH, endM, 0, 0);
+      newEndTime = endDt.getTime();
     }
+
+    const newDuration = calculateNetDuration(newStartTime, newEndTime, editingTimeLog.pauses);
+    const logRef = doc(db, 'organizations', currentUserProfile.orgId, 'time_logs', editingTimeLog.id);
+    
+    await setDoc(logRef, {
+      date: editDate,
+      startTime: newStartTime,
+      endTime: newEndTime || null,
+      status: newEndTime ? 'completed' : 'active',
+      totalDuration: newDuration,
+      updatedAt: Date.now(),
+      editedByAdmin: true,
+      adminId: user.uid,
+      editedAt: Date.now()
+    }, { merge: true });
+
+    // Pequeno atraso para a animação do botão ser percebida
+    setTimeout(() => {
+      setEditingTimeLog(null);
+    }, 1000);
   };
 
   if (loading) {
@@ -1679,14 +1675,12 @@ export default function ProfileView() {
                         >
                           Cancelar
                         </button>
-                        <button 
+                        <SaveButton 
                           onClick={handleSave}
-                          disabled={isSaving}
-                          className="px-8 py-3 rounded-2xl bg-primary-500 hover:bg-primary-600 text-white font-bold shadow-xl shadow-primary-500/20 active:scale-95 disabled:opacity-50 flex items-center gap-2"
+                          className="px-8 py-3 rounded-2xl bg-primary-500 hover:bg-primary-600 text-white font-bold shadow-xl shadow-primary-500/20"
                         >
-                          {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                          <span>Salvar Alterações</span>
-                        </button>
+                          Salvar Alterações
+                        </SaveButton>
                       </div>
                     </div>
                   ) : (
@@ -2804,7 +2798,7 @@ export default function ProfileView() {
                     <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Ajustar Ponto Eletrônico</h3>
                     <button onClick={() => setEditingTimeLog(null)} className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full text-gray-500 hover:text-gray-900 dark:hover:text-white"><X /></button>
                  </div>
-                 <form onSubmit={handleSaveEditedLog} className="p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
+                 <form onSubmit={e => e.preventDefault()} className="p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
                     <div className="space-y-2 text-left">
                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Colaborador</label>
                        <div className="p-4 bg-gray-100 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 font-bold text-gray-800 dark:text-white flex items-center gap-2">
@@ -2858,12 +2852,12 @@ export default function ProfileView() {
                        </p>
                     </div>
 
-                    <button 
-                      type="submit" 
-                      className="w-full py-4 bg-primary-500 hover:bg-primary-600 text-white font-black uppercase rounded-2xl transition-all shadow-xl shadow-primary-500/20 active:scale-95 text-sm shrink-0 cursor-pointer mt-4"
+                    <SaveButton 
+                      onClick={handleSaveEditedLog}
+                      className="w-full py-4 bg-primary-500 hover:bg-primary-600 text-white font-black uppercase rounded-2xl transition-all shadow-xl shadow-primary-500/20 text-sm shrink-0 mt-4"
                     >
                       Salvar Alterações
-                    </button>
+                    </SaveButton>
                  </form>
               </div>
            </div>

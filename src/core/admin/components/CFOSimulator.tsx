@@ -7,7 +7,7 @@ import {
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, doc, setDoc } from 'firebase/firestore';
 import { Building, Save, Settings, Pencil, Lock, Unlock } from 'lucide-react';
-import { toast } from 'sonner';
+import { SaveButton } from '@/shared/components/SaveButton';
 
 interface CFOSimulatorProps {
   effectiveOrgId: string;
@@ -37,7 +37,6 @@ export default function CFOSimulator({ effectiveOrgId }: CFOSimulatorProps) {
   // Configurações Fiscais Oficiais (Salvas no Firestore para DRE e Financeiro real)
   const [officialRegime, setOfficialRegime] = useState<'Simples Nacional III' | 'Simples Nacional V' | 'Lucro Presumido' | 'MEI'>('Simples Nacional III');
   const [officialPorte, setOfficialPorte] = useState<'MEI' | 'ME' | 'EPP' | 'LTDA'>('LTDA');
-  const [isSavingOfficial, setIsSavingOfficial] = useState(false);
   const [isOfficialLocked, setIsOfficialLocked] = useState<boolean>(true);
 
   // Estados de Simulação do Sócio / Pró-labore
@@ -126,22 +125,17 @@ export default function CFOSimulator({ effectiveOrgId }: CFOSimulatorProps) {
   }, [effectiveOrgId]);
 
   const handleSaveOfficialConfig = async () => {
-    setIsSavingOfficial(true);
-    try {
-      const prefRef = doc(db, 'organizations', effectiveOrgId, 'settings', 'preferences');
-      await setDoc(prefRef, {
-        companyRegime: officialRegime,
-        companyPorte: officialPorte,
-        updatedAt: Date.now()
-      }, { merge: true });
-      toast.success('Configuração fiscal oficial da empresa salva com sucesso!');
-      setIsOfficialLocked(true); // Trava novamente após salvar
-    } catch (e) {
-      toast.error('Erro ao salvar configuração oficial');
-      console.error(e);
-    } finally {
-      setIsSavingOfficial(false);
-    }
+    const prefRef = doc(db, 'organizations', effectiveOrgId, 'settings', 'preferences');
+    await setDoc(prefRef, {
+      companyRegime: officialRegime,
+      companyPorte: officialPorte,
+      updatedAt: Date.now()
+    }, { merge: true });
+    
+    // Pequeno atraso para a animação do botão ser percebida antes de fechar/travar
+    setTimeout(() => {
+      setIsOfficialLocked(true);
+    }, 1000);
   };
 
   // --- MOTOR DE CÁLCULO BRASILEIRO VIGENTE (Gross-up e Encargos) ---
@@ -446,18 +440,12 @@ export default function CFOSimulator({ effectiveOrgId }: CFOSimulatorProps) {
                 <span>Editar</span>
               </button>
             ) : (
-              <button
+              <SaveButton
                 onClick={handleSaveOfficialConfig}
-                disabled={isSavingOfficial}
-                className="md:mt-5 flex items-center gap-1.5 px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-xs font-black uppercase shadow-lg shadow-primary-500/20 active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
+                className="md:mt-5 flex items-center gap-1.5 px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-xs font-black uppercase shadow-lg shadow-primary-500/20 active:scale-95 cursor-pointer"
               >
-                {isSavingOfficial ? (
-                  <RefreshCw size={14} className="animate-spin" />
-                ) : (
-                  <Save size={14} />
-                )}
-                <span>Salvar Oficial</span>
-              </button>
+                Salvar Oficial
+              </SaveButton>
             )}
           </div>
         </div>

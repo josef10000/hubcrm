@@ -3,6 +3,7 @@ import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { Trash2, Edit2, Plus, AlertTriangle, Calendar, Clock, Megaphone, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { SaveButton } from '@/shared/components/SaveButton';
 
 interface Announcement {
   id?: string;
@@ -29,7 +30,6 @@ export default function AnnouncementManager({ effectiveOrgId }: AnnouncementMana
   const [author, setAuthor] = useState('');
   const [urgent, setUrgent] = useState(false);
   const [daysActive, setDaysActive] = useState<number>(7); // Padrão de 7 dias ativos
-  const [saving, setSaving] = useState(false);
 
   // 1. Ouvir comunicados do Firestore
   useEffect(() => {
@@ -52,40 +52,32 @@ export default function AnnouncementManager({ effectiveOrgId }: AnnouncementMana
   }, [effectiveOrgId]);
 
   // 2. Salvar ou Editar comunicado
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = async () => {
     if (!title.trim() || !content.trim() || !author.trim()) {
-      toast.error('Preencha todos os campos obrigatórios.');
-      return;
+      throw new Error('Preencha todos os campos obrigatórios.');
     }
 
-    setSaving(true);
-    try {
-      const id = editingId || Date.now().toString(36) + Math.random().toString(36).substring(2);
-      const createdAt = editingId 
-        ? (announcements.find(a => a.id === editingId)?.createdAt || Date.now()) 
-        : Date.now();
-      
-      const expiresAt = Date.now() + (daysActive * 24 * 60 * 60 * 1000);
+    const id = editingId || Date.now().toString(36) + Math.random().toString(36).substring(2);
+    const createdAt = editingId 
+      ? (announcements.find(a => a.id === editingId)?.createdAt || Date.now()) 
+      : Date.now();
+    
+    const expiresAt = Date.now() + (daysActive * 24 * 60 * 60 * 1000);
 
-      const ref = doc(db, 'organizations', effectiveOrgId, 'announcements', id);
-      await setDoc(ref, {
-        title: title.trim(),
-        content: content.trim(),
-        author: author.trim(),
-        createdAt,
-        expiresAt,
-        urgent
-      });
+    const ref = doc(db, 'organizations', effectiveOrgId, 'announcements', id);
+    await setDoc(ref, {
+      title: title.trim(),
+      content: content.trim(),
+      author: author.trim(),
+      createdAt,
+      expiresAt,
+      urgent
+    });
 
-      toast.success(editingId ? 'Comunicado atualizado!' : 'Comunicado publicado no mural!');
+    // Pequeno atraso para a animação do botão ser percebida antes de limpar o formulário
+    setTimeout(() => {
       resetForm();
-    } catch (err) {
-      console.error('[AnnouncementManager] Erro ao salvar:', err);
-      toast.error('Erro ao salvar comunicado no banco de dados.');
-    } finally {
-      setSaving(false);
-    }
+    }, 1000);
   };
 
   // 3. Excluir comunicado
@@ -144,7 +136,7 @@ export default function AnnouncementManager({ effectiveOrgId }: AnnouncementMana
           {editingId ? 'Editar Comunicado' : 'Publicar Novo Comunicado'}
         </h3>
 
-        <form onSubmit={handleSave} className="space-y-4">
+        <form onSubmit={e => e.preventDefault()} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-gray-400 uppercase mb-2 ml-1">Título do Aviso</label>
@@ -215,14 +207,13 @@ export default function AnnouncementManager({ effectiveOrgId }: AnnouncementMana
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button
-              type="submit"
-              disabled={saving}
-              className="flex-1 py-3 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-500/40 text-white font-bold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            <SaveButton
+              onClick={handleSave}
+              className="flex-1 py-3 bg-primary-500 hover:bg-primary-600 text-white font-bold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2"
             >
-              {saving ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />}
+              <Plus size={16} />
               {editingId ? 'Salvar Alterações' : 'Publicar Comunicado'}
-            </button>
+            </SaveButton>
             {editingId && (
               <button
                 type="button"

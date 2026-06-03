@@ -6,7 +6,7 @@ import { useAuth } from '@auth/contexts/AuthContext';
 import { auth, db } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import { toast } from 'sonner';
+import { SaveButton } from '@/shared/components/SaveButton';
 
 export default function SettingsView() {
   const { themeColor, setThemeColor } = useUI();
@@ -21,23 +21,14 @@ export default function SettingsView() {
   const [wallpaperUrl, setWallpaperUrl] = useState(userProfile?.wallpaperUrl || '');
   const [soundTheme, setSoundTheme] = useState(userProfile?.soundTheme || 'none');
   const [avatarFrame, setAvatarFrame] = useState(userProfile?.avatarFrame || 'none');
-  const [isSavingPersonal, setIsSavingPersonal] = useState(false);
-
+  
   const savePersonalSettings = async () => {
     if (!user) return;
-    setIsSavingPersonal(true);
-    try {
-      await setDoc(doc(db, 'profiles', user.uid), {
-        wallpaperUrl,
-        soundTheme,
-        avatarFrame
-      }, { merge: true });
-      toast.success('Configurações pessoais salvas!');
-    } catch (error) {
-      toast.error('Erro ao salvar configurações.');
-    } finally {
-      setIsSavingPersonal(false);
-    }
+    await setDoc(doc(db, 'profiles', user.uid), {
+      wallpaperUrl,
+      soundTheme,
+      avatarFrame
+    }, { merge: true });
   };
 
   const colorThemes = [
@@ -110,13 +101,12 @@ export default function SettingsView() {
             </div>
 
             <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-white/10">
-              <button
+              <SaveButton
                 onClick={savePersonalSettings}
-                disabled={isSavingPersonal}
-                className="px-6 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-xl font-bold transition-colors flex items-center gap-2"
+                className="px-6 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-xl font-bold transition-all"
               >
-                {isSavingPersonal ? 'Salvando...' : 'Salvar Meu Perfil'}
-              </button>
+                Salvar Meu Perfil
+              </SaveButton>
             </div>
           </div>
         </div>
@@ -183,20 +173,15 @@ export default function SettingsView() {
             </div>
             
             <div className="flex justify-end">
-              <button
+              <SaveButton
                 onClick={async () => {
                   if (!effectiveOrgId) return;
-                  try {
-                    await setDoc(doc(db, 'organizations', effectiveOrgId, 'settings', 'preferences'), { churnRiskDays }, { merge: true });
-                    toast.success('Preferências salvas com sucesso!');
-                  } catch (error) {
-                    toast.error('Erro ao salvar preferências.');
-                  }
+                  await setDoc(doc(db, 'organizations', effectiveOrgId, 'settings', 'preferences'), { churnRiskDays }, { merge: true });
                 }}
-                className="px-6 py-2 bg-primary-500 text-white rounded-xl font-bold hover:bg-primary-600 transition-colors"
+                className="px-6 py-2 bg-primary-500 text-white rounded-xl font-bold hover:bg-primary-600 transition-all"
               >
                 Salvar Aparência
-              </button>
+              </SaveButton>
             </div>
           </div>
         </div>

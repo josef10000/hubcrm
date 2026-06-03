@@ -63,6 +63,8 @@ Canal corporativo seguro voltado para compliance corporativo em conformidade com
 *   **Física de Emojis:** Sistema de micro-interações que reproduz física de gravidade e vetores com emojis reais na tela do chat através do `canvas-confetti`.
 *   **Glow para Comunicados:** Efeitos visuais vibrantes em neon âmbar para destacar bolhas de mensagens corporativas marcadas como `[AVISO]`.
 *   **Acessibilidade e Contraste Premium:** Todas as abas, botões, filtros e campos selecionados do CRM utilizam uma regra de contraste global robusta no CSS. Ao serem marcados com a classe de destaque primário (`bg-primary-500`), o texto e os ícones internos são forçados a exibir-se em branco claro (`#ffffff`), eliminando o contraste baixo de textos escuros indesejados.
+*   **Botão de Salvamento Animado (SaveButton):** Botão animado de feedback com Framer Motion integrado em locais estratégicos (configurações do perfil, aparência da empresa, simulador de CFO, mural de avisos e edição de cargos). Substitui toasts de sucesso convencionais por uma transição interna de cor para verde neon com checkmark desenhado dinamicamente em SVG, e oferece feedback visual de falha por efeito de vibração (shake) em tom rosa/vermelho com mensagem dinâmica.
+
 
 ### 6. 🤖 Conciliação Bancária Inteligente & Robô Contábil (Asaas)
 Fluxo financeiro sem erro humano e categorização contábil autônoma:

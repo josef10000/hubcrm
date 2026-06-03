@@ -6,8 +6,8 @@ import { usePermissions } from '@auth/hooks/usePermissions';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { CustomRole, AppPermission, defaultRoles } from '@/constants/permissions';
-import { toast } from 'sonner';
 import { auditService } from '@/services/auditService';
+import { SaveButton } from '@/shared/components/SaveButton';
 
 const PERMISSION_GROUPS: { name: string; keys: AppPermission[] }[] = [
   { name: 'Geral & Dashboard', keys: ['VIEW_DASHBOARD', 'VIEW_REPORTS', 'MANAGE_SETTINGS'] },
@@ -26,7 +26,6 @@ export default function RoleManagement() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<CustomRole | null>(null);
   const [formData, setFormData] = useState<Partial<CustomRole>>({});
-  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     fetchRoles();
@@ -65,41 +64,36 @@ export default function RoleManagement() {
     });
   };
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = async () => {
     if (!userProfile?.orgId || !formData.name) return;
     
-    setIsSaving(true);
-    try {
-      const roleId = editingRole?.id || `ROLE_${Date.now()}_${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-      const roleData: CustomRole = {
-        id: roleId,
-        name: formData.name,
-        level: formData.level || 10,
-        permissions: formData.permissions || [],
-        isDefault: editingRole ? editingRole.isDefault : false,
-        createdAt: editingRole?.createdAt || Date.now()
-      };
+    const roleId = editingRole?.id || `ROLE_${Date.now()}_${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    const roleData: CustomRole = {
+      id: roleId,
+      name: formData.name,
+      level: formData.level || 10,
+      permissions: formData.permissions || [],
+      isDefault: editingRole ? editingRole.isDefault : false,
+      createdAt: editingRole?.createdAt || Date.now()
+    };
 
-      await setDoc(doc(db, `organizations/${userProfile.orgId}/roles`, roleId), roleData);
-      
-      auditService.logActivity(userProfile.orgId, {
-        userId: userProfile.uid,
-        userName: userProfile.displayName || 'Admin',
-        action: editingRole ? 'ROLE_UPDATED' : 'ROLE_CREATED',
-        targetId: roleId,
-        targetType: 'role',
-        details: `${editingRole ? 'Atualizado' : 'Criado'} cargo: ${roleData.name} com ${roleData.permissions.length} permissões.`
-      });
+    await setDoc(doc(db, `organizations/${userProfile.orgId}/roles`, roleId), roleData);
+    
+    auditService.logActivity(userProfile.orgId, {
+      userId: userProfile.uid,
+      userName: userProfile.displayName || 'Admin',
+      action: editingRole ? 'ROLE_UPDATED' : 'ROLE_CREATED',
+      targetId: roleId,
+      targetType: 'role',
+      details: `${editingRole ? 'Atualizado' : 'Criado'} cargo: ${roleData.name} com ${roleData.permissions.length} permissões.`
+    });
 
-      toast.success('Cargo salvo com sucesso!');
+    // Pequeno atraso para a animação do botão ser percebida
+    setTimeout(() => {
       setIsModalOpen(false);
-      fetchRoles();
-    } catch (error) {
-      toast.error('Erro ao salvar cargo');
-    } finally {
-      setIsSaving(false);
-    }
+    }, 1000);
+    
+    fetchRoles();
   };
 
   const handleDelete = async (role: CustomRole) => {
@@ -204,10 +198,10 @@ export default function RoleManagement() {
                 <Shield size={20} className="text-primary-500 mr-2" /> 
                 {editingRole ? `Editar Cargo: ${editingRole.name}` : 'Novo Cargo'}
               </h3>
-              <button type="button" disabled={isSaving} onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-white"><X size={20} /></button>
+              <button type="button" onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-white"><X size={20} /></button>
             </div>
             
-            <form onSubmit={handleSave} className="p-6 space-y-6">
+            <form onSubmit={e => e.preventDefault()} className="p-6 space-y-6">
                <div className="space-y-4">
                  <div>
                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Nome do Cargo</label>
@@ -245,9 +239,9 @@ export default function RoleManagement() {
 
                <div className="pt-4 flex gap-3 sticky bottom-0 bg-zinc-900 border-t border-white/10 p-4 -mx-6 -mb-6">
                   <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-3 rounded-xl border border-white/10 text-gray-400 font-bold hover:bg-white/5 transition-all">Cancelar</button>
-                  <button type="submit" disabled={isSaving} className="flex-1 px-6 py-3 rounded-xl bg-primary-500 text-white font-bold shadow-lg shadow-primary-500/20 hover:bg-primary-600 transition-all flex justify-center">
-                    {isSaving ? <Loader2 className="animate-spin" /> : 'Salvar Permissões'}
-                  </button>
+                  <SaveButton onClick={handleSave} className="flex-1 px-6 py-3 rounded-xl bg-primary-500 text-white font-bold shadow-lg shadow-primary-500/20 flex justify-center">
+                    Salvar Permissões
+                  </SaveButton>
                </div>
             </form>
           </div>
