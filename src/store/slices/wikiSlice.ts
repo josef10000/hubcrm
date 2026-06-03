@@ -12,7 +12,7 @@ export interface WikiSlice {
   wikiArticles: WikiArticle[];
   beginnerGuideArticleId: string;
   
-  handleSaveWikiArticle: (articleData: Partial<WikiArticle>) => Promise<void>;
+  handleSaveWikiArticle: (articleData: Partial<WikiArticle>, silent?: boolean) => Promise<void>;
   handleDeleteWikiArticle: (articleId: string) => Promise<void>;
   handleToggleWikiStar: (articleId: string) => Promise<void>;
   handleAddWikiComment: (articleId: string, comment: Partial<WikiComment>) => Promise<void>;
@@ -28,7 +28,7 @@ export const createWikiSlice: StateCreator<
   wikiArticles: [],
   beginnerGuideArticleId: '',
 
-  handleSaveWikiArticle: async (articleData) => {
+  handleSaveWikiArticle: async (articleData, silent) => {
     const orgId = get().effectiveOrgId;
     if (!orgId) return;
     try {
@@ -39,7 +39,9 @@ export const createWikiSlice: StateCreator<
         updatedAt: Date.now(),
         createdAt: articleData.createdAt || Date.now()
       }, { merge: true });
-      toast.success('Artigo salvo!');
+      if (!silent) {
+        toast.success('Artigo salvo!');
+      }
     } catch (err) {
       console.error("[WikiSlice] Error saving wiki:", err);
     }

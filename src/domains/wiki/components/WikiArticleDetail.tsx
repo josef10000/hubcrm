@@ -32,9 +32,9 @@ export default function WikiArticleDetail({ article, onBack, onEdit }: WikiArtic
   const canManage = hasPermission('MANAGE_WIKI') || article.authorId === user?.uid;
 
   useEffect(() => {
-    // Incrementar view count (simples client-side)
+    // Incrementar view count (simples client-side silencioso)
     const timer = setTimeout(() => {
-        handleSaveWikiArticle({ ...article, viewCount: (article.viewCount || 0) + 1 });
+        handleSaveWikiArticle({ ...article, viewCount: (article.viewCount || 0) + 1 }, true);
     }, 5000); // 5 segundos de leitura para contar view
     return () => clearTimeout(timer);
   }, [article.id]);
