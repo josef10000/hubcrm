@@ -216,6 +216,11 @@ service cloud.firestore {
         allow write: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_TEAM') || hasPermission(orgId, 'MANAGE_SETTINGS');
       }
 
+      match /prompt_library/{promptId} {
+        allow read: if belongsToOrg(orgId);
+        allow write: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_TEAM') || hasPermission(orgId, 'MANAGE_SETTINGS');
+      }
+
       match /{collection}/{docId} {
         allow read: if isOwnerEmail() || belongsToOrg(orgId);
         allow write: if isOwnerEmail() || isOrgAdmin(orgId);

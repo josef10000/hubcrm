@@ -95,11 +95,12 @@ Módulo de descompressão integrado voltado para gamificação e cultura da equi
 *   **Casas Seguras & Regras Clássicas:** Motor de regras de Ludo completo com validações rígidas de barreiras (bloqueio de passagem/parada para 2+ peças da mesma cor) e casas seguras (impedindo a captura em saídas e intermediárias com estrelas neon piscantes), além de turnos extras estritos para jogadas de dado de valor 6.
 
 ### 10. 🎨 Templates de Produção & Gerador de Prompts de IA
-Módulo de engenharia de prompts e controle de qualidade visual para entrega rápida de projetos web:
-*   **Biblioteca de Templates Gerenciável (Firestore):** CRUD completo para cadastro, edição, busca e exclusão de modelos de sites criados pela empresa, sem mocks iniciais. Permite catalogar por nicho de mercado, tipo de site e paleta de cores.
-*   **Preview Visual & Demos Integradas:** Visualizador ampliado de mockups de design com botão para acesso direto à demonstração pública do site rodando.
-*   **Gerador de Prompts Interpolado por Variáveis:** Substituição de dados em tempo real vinculada ao CRM (importa nome do cliente, logo, contatos e serviços) com suporte a variáveis customizadas adicionais criadas dinamicamente.
-*   **Modos de Prompt Otimizados:** Alternador de perfil de prompt focado em Layout (código HTML/CSS), Copywriting (textos e SEO) ou Projeto Completo (Full Project), prontos para cópia rápida com micro-animações de feedback.
+Módulo de engenharia de prompts, biblioteca de templates e controle de qualidade para entrega ágil de sites de produção:
+*   **Catálogo de Templates White Label (Firestore):** Cadastro e gerenciamento focado na estrutura (ex: Landing Page, E-commerce) e nicho de mercado, livre de informações mockadas.
+*   **Upload de Print via Cloudinary:** Envio do print do site diretamente para os servidores do Cloudinary por meio da API integrada no frontend, salvando apenas o link da imagem no Firestore para otimizar armazenamento.
+*   **Armazenamento de Código e Demos Locais:** Upload do arquivo `.html` (index.html) de cada site diretamente para o Firestore. O sistema abre uma nova aba e renderiza o site localmente em tempo real via injeção dinâmica de HTML (`document.write`) sem necessidade de servidores ou hospedagem prévia.
+*   **Visualização Estática & Demos Personalizadas (CRM):** Duas vias de preview interativo de demonstração: abre o HTML puro do catálogo ou abre o HTML com as variáveis de cliente do CRM (nome, WhatsApp, e-mail, redes sociais) já interpoladas e substituídas de forma dinâmica no código.
+*   **Biblioteca Global de Prompts de IA:** Módulo complementar para cadastro e gestão de prompts globais reutilizáveis, com dropdown nos templates para rápida associação e cópia com alternador de perfis (Layout, Copywriting e Full).
 
 ---
 

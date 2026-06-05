@@ -1,27 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { 
   LayoutTemplate, Search, Plus, Trash2, Edit3, ExternalLink, Copy, Check, X, 
-  Palette, Maximize2, Info, Globe, FileText, Sparkles, User, Link as LinkIcon, AlertTriangle
+  Palette, Maximize2, Info, Globe, FileText, Sparkles, User, Link as LinkIcon, 
+  Upload, Code, Database, ChevronRight, Eye
 } from 'lucide-react';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
 import { db } from '@/lib/firebase';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 import { 
   collection, onSnapshot, doc, addDoc, updateDoc, deleteDoc, 
   query, orderBy 
 } from 'firebase/firestore';
 import { toast } from 'sonner';
 
+interface AIPrompt {
+  id: string;
+  name: string;
+  content: string;
+  createdAt: number;
+}
+
 interface ProductionTemplate {
   id: string;
-  title: string;
   niche: string;
-  colors: string[];
   type: string;
+  colors: string[];
   previewImageUrl: string;
-  demoUrl?: string;
-  promptTemplate: string;
+  htmlContent: string;
+  promptId: string;
   customVariables?: string[];
   createdAt: number;
   updatedAt?: number;
@@ -32,33 +40,49 @@ export default function ProductionTemplatesView() {
   const { hasPermission } = usePermissions();
   const { effectiveOrgId, clients } = useCRM();
 
+  // Abas principais: 'templates' | 'prompts'
+  const [activeTab, setActiveTab] = useState<'templates' | 'prompts'>('templates');
+
   // Estados de dados
   const [templates, setTemplates] = useState<ProductionTemplate[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [prompts, setPrompts] = useState<AIPrompt[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(true);
+  const [loadingPrompts, setLoadingPrompts] = useState(true);
 
   // Estados de busca e filtros
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
 
   // Estados dos modais
-  const [isCrudModalOpen, setIsCrudModalOpen] = useState(false);
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isPromptPanelOpen, setIsPromptPanelOpen] = useState(false);
 
-  // Estados do template selecionado
-  const [selectedTemplate, setSelectedTemplate] = useState<ProductionTemplate | null>(null);
-  const [editingTemplate, setEditingTemplate] = useState<Partial<ProductionTemplate> | null>(null);
+  // Estados de upload/loading nos formulários
+  const [uploadingImage, setUploadingImage] = useState(false);
 
-  // Estados para geração de prompt
+  // Entidades em edição/uso
+  const [editingTemplate, setEditingTemplate] = useState<Partial<ProductionTemplate> | null>(null);
+  const [editingPrompt, setEditingPrompt] = useState<Partial<AIPrompt> | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<ProductionTemplate | null>(null);
+
+  // Estados para geração de prompt/demo personalizada
   const [selectedClientId, setSelectedClientId] = useState('');
   const [customAnswers, setCustomAnswers] = useState<Record<string, string>>({});
   const [promptMode, setPromptMode] = useState<'full' | 'structural' | 'copy'>('full');
   const [copied, setCopied] = useState(false);
 
-  // Novas variáveis customizadas temporárias (durante criação/edição no form)
+  // Novas variáveis customizadas temporárias no form
   const [newVarName, setNewVarName] = useState('');
 
-  // 1. Escuta templates do Firestore em tempo real
+  // Permissões
+  const canManage = hasPermission('MANAGE_SETTINGS') || hasPermission('MANAGE_TEAM') || user?.email === 'jfs102019@hotmail.com';
+
+  // Categorias disponíveis para filtro
+  const categories = ['Todos', 'Landing Page', 'SaaS', 'Institucional', 'E-commerce'];
+
+  // 1. Escuta templates do Firestore
   useEffect(() => {
     if (!effectiveOrgId) return;
 
@@ -71,27 +95,43 @@ export default function ProductionTemplatesView() {
         list.push({ id: doc.id, ...doc.data() } as ProductionTemplate);
       });
       setTemplates(list);
-      setLoading(false);
+      setLoadingTemplates(false);
     }, (error) => {
       console.error("Erro ao carregar templates:", error);
       toast.error("Erro ao carregar os templates.");
-      setLoading(false);
+      setLoadingTemplates(false);
     });
 
     return () => unsubscribe();
   }, [effectiveOrgId]);
 
-  // Permissões
-  const canManage = hasPermission('MANAGE_SETTINGS') || hasPermission('MANAGE_TEAM') || user?.email === 'jfs102019@hotmail.com';
+  // 2. Escuta biblioteca de prompts do Firestore
+  useEffect(() => {
+    if (!effectiveOrgId) return;
 
-  // Categorias disponíveis para filtro
-  const categories = ['Todos', 'Landing Page', 'SaaS', 'Institucional', 'E-commerce'];
+    const promptsRef = collection(db, 'organizations', effectiveOrgId, 'prompt_library');
+    const q = query(promptsRef, orderBy('createdAt', 'desc'));
 
-  // 2. Filtro e Busca
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const list: AIPrompt[] = [];
+      snapshot.forEach((doc) => {
+        list.push({ id: doc.id, ...doc.data() } as AIPrompt);
+      });
+      setPrompts(list);
+      setLoadingPrompts(false);
+    }, (error) => {
+      console.error("Erro ao carregar biblioteca de prompts:", error);
+      toast.error("Erro ao carregar biblioteca de prompts.");
+      setLoadingPrompts(false);
+    });
+
+    return () => unsubscribe();
+  }, [effectiveOrgId]);
+
+  // 3. Filtros e Busca de templates
   const filteredTemplates = templates.filter(t => {
     const matchesCategory = selectedCategory === 'Todos' || t.type === selectedCategory;
     const matchesSearch = 
-      t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.niche.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.colors.some(c => c.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -99,57 +139,79 @@ export default function ProductionTemplatesView() {
     return matchesCategory && matchesSearch;
   });
 
-  // 3. CRUD: Abrir modal de criação
-  const handleOpenCreate = () => {
+  // 4. ABERTURA DE DEMO LOCAL EM OUTRA ABA (ESTÁTICA E DINÂMICA)
+  const handleOpenDemo = (htmlContent: string, answers?: Record<string, string>) => {
+    if (!htmlContent) {
+      toast.error("Este template não possui código HTML cadastrado!");
+      return;
+    }
+
+    let finalHtml = htmlContent;
+
+    // Se houver respostas/variáveis fornecidas, substitui no HTML antes de injetar
+    if (answers) {
+      Object.entries(answers).forEach(([key, val]) => {
+        // Substituição global da chave pela resposta digitada
+        finalHtml = finalHtml.split(key).join(val);
+      });
+    }
+
+    const newWindow = window.open();
+    if (newWindow) {
+      newWindow.document.open();
+      newWindow.document.write(finalHtml);
+      newWindow.document.close();
+    } else {
+      toast.error("O bloqueador de pop-ups impediu a abertura da demonstração.");
+    }
+  };
+
+  // 5. PROCESSOS CRUD: TEMPLATES
+
+  const handleOpenCreateTemplate = () => {
     setEditingTemplate({
-      title: '',
       niche: '',
       type: 'Landing Page',
       colors: ['#3b82f6'],
       previewImageUrl: '',
-      demoUrl: '',
-      promptTemplate: '',
+      htmlContent: '',
+      promptId: '',
       customVariables: []
     });
-    setIsCrudModalOpen(true);
+    setIsTemplateModalOpen(true);
   };
 
-  // 4. CRUD: Abrir modal de edição
-  const handleOpenEdit = (template: ProductionTemplate, e: React.MouseEvent) => {
+  const handleOpenEditTemplate = (template: ProductionTemplate, e: React.MouseEvent) => {
     e.stopPropagation();
     setEditingTemplate({ ...template });
-    setIsCrudModalOpen(true);
+    setIsTemplateModalOpen(true);
   };
 
-  // 5. CRUD: Salvar (Criar ou Atualizar)
   const handleSaveTemplate = async () => {
     if (!effectiveOrgId || !editingTemplate) return;
 
-    if (!editingTemplate.title || !editingTemplate.niche || !editingTemplate.promptTemplate || !editingTemplate.previewImageUrl) {
+    if (!editingTemplate.niche || !editingTemplate.previewImageUrl || !editingTemplate.htmlContent || !editingTemplate.promptId) {
       toast.error("Por favor, preencha todos os campos obrigatórios (*)");
       return;
     }
 
     try {
       const dataToSave = {
-        title: editingTemplate.title,
         niche: editingTemplate.niche,
         type: editingTemplate.type || 'Landing Page',
         colors: editingTemplate.colors || ['#3b82f6'],
         previewImageUrl: editingTemplate.previewImageUrl,
-        demoUrl: editingTemplate.demoUrl || '',
-        promptTemplate: editingTemplate.promptTemplate,
+        htmlContent: editingTemplate.htmlContent,
+        promptId: editingTemplate.promptId,
         customVariables: editingTemplate.customVariables || [],
         updatedAt: Date.now()
       };
 
       if (editingTemplate.id) {
-        // Atualizar
         const docRef = doc(db, 'organizations', effectiveOrgId, 'production_templates', editingTemplate.id);
         await updateDoc(docRef, dataToSave);
         toast.success("Template atualizado com sucesso!");
       } else {
-        // Criar novo
         const colRef = collection(db, 'organizations', effectiveOrgId, 'production_templates');
         await addDoc(colRef, {
           ...dataToSave,
@@ -158,7 +220,7 @@ export default function ProductionTemplatesView() {
         toast.success("Template criado com sucesso!");
       }
 
-      setIsCrudModalOpen(false);
+      setIsTemplateModalOpen(false);
       setEditingTemplate(null);
     } catch (err) {
       console.error("Erro ao salvar template:", err);
@@ -166,7 +228,6 @@ export default function ProductionTemplatesView() {
     }
   };
 
-  // 6. CRUD: Excluir template
   const handleDeleteTemplate = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!effectiveOrgId) return;
@@ -183,7 +244,42 @@ export default function ProductionTemplatesView() {
     }
   };
 
-  // Adicionar cor ao form
+  // Upload do print do site para o Cloudinary
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    try {
+      const secureUrl = await uploadToCloudinary(file);
+      setEditingTemplate(prev => prev ? { ...prev, previewImageUrl: secureUrl } : null);
+      toast.success("Print enviado ao Cloudinary com sucesso!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao enviar print para o Cloudinary.");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  // Upload e leitura do arquivo HTML
+  const handleHtmlUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      setEditingTemplate(prev => prev ? { ...prev, htmlContent: text } : null);
+      toast.success("Arquivo HTML carregado localmente com sucesso!");
+    };
+    reader.onerror = () => {
+      toast.error("Erro ao ler o arquivo HTML.");
+    };
+    reader.readAsText(file);
+  };
+
+  // Manipulação de cores no form de template
   const handleAddColor = () => {
     if (editingTemplate) {
       const colors = [...(editingTemplate.colors || []), '#3b82f6'];
@@ -191,7 +287,6 @@ export default function ProductionTemplatesView() {
     }
   };
 
-  // Mudar cor específica do array
   const handleColorChange = (index: number, val: string) => {
     if (editingTemplate) {
       const colors = [...(editingTemplate.colors || [])];
@@ -200,7 +295,6 @@ export default function ProductionTemplatesView() {
     }
   };
 
-  // Remover cor do form
   const handleRemoveColor = (index: number) => {
     if (editingTemplate && (editingTemplate.colors || []).length > 1) {
       const colors = (editingTemplate.colors || []).filter((_, i) => i !== index);
@@ -208,10 +302,9 @@ export default function ProductionTemplatesView() {
     }
   };
 
-  // Adicionar variável customizada no form
+  // Variáveis customizadas no form de template
   const handleAddCustomVariable = () => {
     if (!newVarName.trim()) return;
-    // Força o formato {VARIAVEL} se não tiver chaves
     let formattedVar = newVarName.trim().toUpperCase();
     if (!formattedVar.startsWith('{')) formattedVar = `{${formattedVar}`;
     if (!formattedVar.endsWith('}')) formattedVar = `${formattedVar}}`;
@@ -228,7 +321,6 @@ export default function ProductionTemplatesView() {
     }
   };
 
-  // Remover variável customizada no form
   const handleRemoveCustomVariable = (variable: string) => {
     if (editingTemplate) {
       const customVariables = (editingTemplate.customVariables || []).filter(v => v !== variable);
@@ -236,7 +328,69 @@ export default function ProductionTemplatesView() {
     }
   };
 
-  // 7. GERAÇÃO DE PROMPT
+  // 6. PROCESSOS CRUD: BIBLIOTECA DE PROMPTS
+
+  const handleOpenCreatePrompt = () => {
+    setEditingPrompt({ name: '', content: '' });
+    setIsPromptModalOpen(true);
+  };
+
+  const handleOpenEditPrompt = (prompt: AIPrompt) => {
+    setEditingPrompt({ ...prompt });
+    setIsPromptModalOpen(true);
+  };
+
+  const handleSavePrompt = async () => {
+    if (!effectiveOrgId || !editingPrompt) return;
+
+    if (!editingPrompt.name || !editingPrompt.content) {
+      toast.error("Preencha todos os campos obrigatórios (*)");
+      return;
+    }
+
+    try {
+      const dataToSave = {
+        name: editingPrompt.name,
+        content: editingPrompt.content,
+      };
+
+      if (editingPrompt.id) {
+        const docRef = doc(db, 'organizations', effectiveOrgId, 'prompt_library', editingPrompt.id);
+        await updateDoc(docRef, dataToSave);
+        toast.success("Prompt atualizado com sucesso!");
+      } else {
+        const colRef = collection(db, 'organizations', effectiveOrgId, 'prompt_library');
+        await addDoc(colRef, {
+          ...dataToSave,
+          createdAt: Date.now()
+        });
+        toast.success("Prompt cadastrado com sucesso!");
+      }
+
+      setIsPromptModalOpen(false);
+      setEditingPrompt(null);
+    } catch (err) {
+      console.error("Erro ao salvar prompt:", err);
+      toast.error("Erro ao salvar o prompt.");
+    }
+  };
+
+  const handleDeletePrompt = async (id: string) => {
+    if (!effectiveOrgId) return;
+
+    if (confirm("Deseja realmente excluir este prompt global? Templates que o utilizam precisarão de uma nova associação.")) {
+      try {
+        const docRef = doc(db, 'organizations', effectiveOrgId, 'prompt_library', id);
+        await deleteDoc(docRef);
+        toast.success("Prompt excluído com sucesso!");
+      } catch (err) {
+        console.error("Erro ao excluir prompt:", err);
+        toast.error("Erro ao excluir o prompt.");
+      }
+    }
+  };
+
+  // 7. GERAÇÃO E CÓPIA DE PROMPTS
   const handleSelectTemplateForPrompt = (template: ProductionTemplate) => {
     setSelectedTemplate(template);
     setSelectedClientId('');
@@ -244,7 +398,6 @@ export default function ProductionTemplatesView() {
     setIsPromptPanelOpen(true);
   };
 
-  // Auto preencher com base no cliente selecionado
   const handleClientChange = (clientId: string) => {
     setSelectedClientId(clientId);
     const client = clients.find(c => c.id === clientId);
@@ -259,13 +412,14 @@ export default function ProductionTemplatesView() {
     }
   };
 
-  // Gerar prompt com as variáveis interpoladas
   const getGeneratedPrompt = () => {
     if (!selectedTemplate) return '';
 
-    let prompt = selectedTemplate.promptTemplate;
+    const promptObj = prompts.find(p => p.id === selectedTemplate.promptId);
+    if (!promptObj) return 'Nenhum prompt associado a este template.';
 
-    // 1. Substituir variáveis padrão
+    let prompt = promptObj.content;
+
     const client = clients.find(c => c.id === selectedClientId);
     const clientName = client?.name || customAnswers['{NOME_CLIENTE}'] || 'Cliente Exemplo';
     const whatsapp = client?.whatsapp || customAnswers['{WHATSAPP_CLIENTE}'] || 'Contato do cliente';
@@ -282,15 +436,13 @@ export default function ProductionTemplatesView() {
       .replace(/{CLIENT_NICHO}/g, niche)
       .replace(/{NICHO_CLIENTE}/g, niche);
 
-    // 2. Substituir variáveis personalizadas do template
     if (selectedTemplate.customVariables) {
       selectedTemplate.customVariables.forEach(v => {
         const replacement = customAnswers[v] || `[Preencha ${v}]`;
-        prompt = prompt.split(v).join(replacement); // substituição global
+        prompt = prompt.split(v).join(replacement);
       });
     }
 
-    // 3. Aplicar perfil de prompt
     if (promptMode === 'structural') {
       prompt = `Apenas foque no design visual moderno, layout de componentes responsivos e código HTML/CSS limpo usando o seguinte template como referência de dados:\n\n${prompt}`;
     } else if (promptMode === 'copy') {
@@ -300,216 +452,328 @@ export default function ProductionTemplatesView() {
     return prompt;
   };
 
-  // Copiar prompt para o clipboard
   const handleCopyPrompt = () => {
     const text = getGeneratedPrompt();
     navigator.clipboard.writeText(text);
     setCopied(true);
-    toast.success("Prompt copiado com sucesso para a Área de Transferência!");
+    toast.success("Prompt copiado com sucesso!");
     setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <div className="space-y-6">
-      {/* CABEÇALHO */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-black/40 dark:bg-[#111111] p-6 rounded-3xl border border-gray-200 dark:border-white/10 shadow-sm backdrop-blur-md">
+    <div className="space-y-6 animate-fadeIn">
+      
+      {/* CABEÇALHO COM ABAS */}
+      <div className="bg-black/40 dark:bg-[#111111] p-6 rounded-3xl border border-gray-200 dark:border-white/10 shadow-sm backdrop-blur-md flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <LayoutTemplate className="w-6 h-6 text-primary-500" />
             Templates de Produção
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Cadastre, pesquise e gerencie templates de sites. Preencha os dados de clientes para gerar prompts otimizados para IA.
+            Biblioteca de site-templates White Label com renderização local de demos e injeção automática de dados do CRM.
           </p>
-        </div>
-        {canManage && (
-          <button 
-            onClick={handleOpenCreate}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-semibold transition-all hover:scale-[1.02] shadow-lg shadow-primary-500/10"
-          >
-            <Plus className="w-5 h-5" />
-            Novo Template
-          </button>
-        )}
-      </div>
 
-      {/* FILTROS E BUSCA */}
-      <div className="flex flex-col md:flex-row items-center gap-4">
-        {/* Barra de Busca */}
-        <div className="relative w-full md:flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input 
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-2xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-all backdrop-blur-md"
-            placeholder="Buscar por nome, nicho, cor ou tipo de site..."
-          />
-        </div>
-
-        {/* Categorias / Pills */}
-        <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 scrollbar-none">
-          {categories.map((cat) => (
+          {/* Abas */}
+          <div className="flex gap-4 mt-6 border-b border-white/5 pb-1">
             <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2.5 rounded-xl font-semibold text-xs transition-all whitespace-nowrap border ${
-                selectedCategory === cat
-                  ? 'bg-primary-500 text-white border-primary-500 shadow-sm'
-                  : 'bg-black/40 dark:bg-black/20 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-white/10 hover:bg-white/5'
+              onClick={() => setActiveTab('templates')}
+              className={`pb-2 text-sm font-bold uppercase tracking-wider transition-all border-b-2 ${
+                activeTab === 'templates'
+                  ? 'border-primary-500 text-white'
+                  : 'border-transparent text-gray-500 hover:text-gray-300'
               }`}
             >
-              {cat}
+              Catálogo de Templates
             </button>
-          ))}
+            <button
+              onClick={() => setActiveTab('prompts')}
+              className={`pb-2 text-sm font-bold uppercase tracking-wider transition-all border-b-2 ${
+                activeTab === 'prompts'
+                  ? 'border-primary-500 text-white'
+                  : 'border-transparent text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              Biblioteca de Prompts
+            </button>
+          </div>
+        </div>
+
+        <div>
+          {canManage && (
+            activeTab === 'templates' ? (
+              <button 
+                onClick={handleOpenCreateTemplate}
+                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold transition-all hover:scale-[1.02] shadow-lg shadow-primary-500/10"
+              >
+                <Plus className="w-5 h-5" />
+                Adicionar Template
+              </button>
+            ) : (
+              <button 
+                onClick={handleOpenCreatePrompt}
+                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold transition-all hover:scale-[1.02] shadow-lg shadow-primary-500/10"
+              >
+                <Plus className="w-5 h-5" />
+                Novo Prompt IA
+              </button>
+            )
+          )}
         </div>
       </div>
 
-      {/* BENTO GRID DE TEMPLATES */}
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-4">
-          <div className="h-10 w-10 rounded-full border-2 border-primary-500/30 border-t-primary-500 animate-spin"></div>
-          <p className="text-gray-500 text-sm font-medium tracking-wide">Carregando biblioteca de templates...</p>
-        </div>
-      ) : filteredTemplates.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-12 bg-black/40 dark:bg-[#111111] border border-dashed border-gray-200 dark:border-white/10 rounded-3xl text-center backdrop-blur-md">
-          <div className="p-4 bg-primary-500/10 rounded-2xl mb-4 text-primary-500">
-            <LayoutTemplate className="w-10 h-10" />
-          </div>
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white">Nenhum template cadastrado</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mt-2">
-            A biblioteca está vazia. Cadastre os modelos de site que a sua empresa produz para automatizar o fluxo do time.
-          </p>
-          {canManage && (
-            <button 
-              onClick={handleOpenCreate}
-              className="mt-6 px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-semibold transition-all hover:scale-[1.02]"
-            >
-              Criar Primeiro Template
-            </button>
-          )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTemplates.map((template) => (
-            <div 
-              key={template.id}
-              className="group flex flex-col bg-black/40 dark:bg-[#111111] border border-gray-200 dark:border-white/10 rounded-3xl overflow-hidden hover:border-primary-500/40 shadow-sm hover:shadow-lg transition-all duration-300 backdrop-blur-md"
-            >
-              {/* Imagem de Preview */}
-              <div className="relative aspect-video w-full overflow-hidden bg-black/20 border-b border-gray-200 dark:border-white/10">
-                <img 
-                  src={template.previewImageUrl} 
-                  alt={template.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  onError={(e) => {
-                    // Fallback visual se a imagem falhar
-                    e.currentTarget.src = "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=600&auto=format&fit=crop";
-                  }}
-                />
-                
-                {/* Overlay de Ação Rápida de Zoom */}
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-3 transition-opacity duration-300">
-                  <button 
-                    onClick={() => { setSelectedTemplate(template); setIsPreviewModalOpen(true); }}
-                    className="p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl border border-white/20 backdrop-blur-sm transition-all hover:scale-105"
-                    title="Ampliar Imagem"
-                  >
-                    <Maximize2 className="w-5 h-5" />
-                  </button>
-                  {template.demoUrl && (
-                    <a 
-                      href={template.demoUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl border border-white/20 backdrop-blur-sm transition-all hover:scale-105"
-                      title="Ver Site Demo"
-                    >
-                      <ExternalLink className="w-5 h-5" />
-                    </a>
-                  )}
-                </div>
-
-                {/* Badge de Categoria */}
-                <span className="absolute top-4 left-4 px-3 py-1 bg-[#090d16]/80 backdrop-blur-md border border-white/10 text-white rounded-lg text-[10px] font-bold uppercase tracking-wider">
-                  {template.type}
-                </span>
-              </div>
-
-              {/* Informações */}
-              <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
-                <div>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-bold text-gray-900 dark:text-white text-base group-hover:text-primary-400 transition-colors">
-                        {template.title}
-                      </h3>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                        Nicho: <span className="font-medium text-gray-700 dark:text-gray-300">{template.niche}</span>
-                      </p>
-                    </div>
-                    {canManage && (
-                      <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button 
-                          onClick={(e) => handleOpenEdit(template, e)}
-                          className="p-1.5 hover:bg-white/5 text-gray-400 hover:text-white rounded-lg transition-colors"
-                          title="Editar"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={(e) => handleDeleteTemplate(template.id, e)}
-                          className="p-1.5 hover:bg-red-500/10 text-gray-400 hover:text-red-400 rounded-lg transition-colors"
-                          title="Excluir"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Cores */}
-                  <div className="flex items-center gap-1.5 mt-3">
-                    <Palette className="w-3.5 h-3.5 text-gray-400" />
-                    <div className="flex gap-1">
-                      {template.colors.map((color, i) => (
-                        <div 
-                          key={i} 
-                          className="w-4 h-4 rounded-full border border-white/20 shadow-sm" 
-                          style={{ backgroundColor: color }}
-                          title={color}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Ações */}
-                <button
-                  onClick={() => handleSelectTemplateForPrompt(template)}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 bg-white/5 hover:bg-primary-500 border border-gray-200 dark:border-white/10 hover:border-primary-500 text-gray-900 dark:text-white hover:text-white rounded-xl font-bold text-xs transition-all"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Gerar Prompt
-                </button>
-              </div>
+      {/* CONTEÚDO DA ABA 1: CATALOGO DE TEMPLATES */}
+      {activeTab === 'templates' && (
+        <div className="space-y-6">
+          {/* BUSCA E FILTROS */}
+          <div className="flex flex-col md:flex-row items-center gap-4">
+            <div className="relative w-full md:flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input 
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-2xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-all backdrop-blur-md"
+                placeholder="Filtrar por nicho, cor, tipo de site..."
+              />
             </div>
-          ))}
+
+            <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-4 py-2.5 rounded-xl font-semibold text-xs transition-all whitespace-nowrap border ${
+                    selectedCategory === cat
+                      ? 'bg-primary-500 text-white border-primary-500 shadow-sm'
+                      : 'bg-black/40 dark:bg-black/20 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-white/10 hover:bg-white/5'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* LISTAGEM GRID */}
+          {loadingTemplates ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <div className="h-10 w-10 rounded-full border-2 border-primary-500/30 border-t-primary-500 animate-spin"></div>
+              <p className="text-gray-500 text-sm font-medium tracking-wide">Carregando catálogo...</p>
+            </div>
+          ) : filteredTemplates.length === 0 ? (
+            <div className="flex flex-col items-center justify-center p-12 bg-black/40 dark:bg-[#111111] border border-dashed border-gray-200 dark:border-white/10 rounded-3xl text-center backdrop-blur-md">
+              <div className="p-4 bg-primary-500/10 rounded-2xl mb-4 text-primary-500">
+                <LayoutTemplate className="w-10 h-10" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Nenhum template cadastrado</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mt-2">
+                Comece cadastrando os códigos HTML e imagens de previews dos seus sites de produção.
+              </p>
+              {canManage && (
+                <button 
+                  onClick={handleOpenCreateTemplate}
+                  className="mt-6 px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-semibold transition-all hover:scale-[1.02]"
+                >
+                  Criar Primeiro Template
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredTemplates.map((template) => (
+                <div 
+                  key={template.id}
+                  className="group flex flex-col bg-black/40 dark:bg-[#111111] border border-gray-200 dark:border-white/10 rounded-3xl overflow-hidden hover:border-primary-500/40 shadow-sm hover:shadow-lg transition-all duration-300 backdrop-blur-md"
+                >
+                  {/* Print Visual */}
+                  <div className="relative aspect-video w-full overflow-hidden bg-black/20 border-b border-gray-200 dark:border-white/10">
+                    <img 
+                      src={template.previewImageUrl} 
+                      alt={template.niche}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e) => {
+                        e.currentTarget.src = "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=600&auto=format&fit=crop";
+                      }}
+                    />
+                    
+                    {/* Ações Rápida Hover */}
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-3 transition-opacity duration-300">
+                      <button 
+                        onClick={() => { setSelectedTemplate(template); setIsPreviewModalOpen(true); }}
+                        className="p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl border border-white/20 backdrop-blur-sm transition-all hover:scale-105"
+                        title="Ver Print Ampliado"
+                      >
+                        <Maximize2 className="w-5 h-5" />
+                      </button>
+                      <button 
+                        onClick={() => handleOpenDemo(template.htmlContent)}
+                        className="p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl border border-white/20 backdrop-blur-sm transition-all hover:scale-105 flex items-center gap-1.5 font-bold text-xs"
+                        title="Abrir Demo Estática"
+                      >
+                        <Eye className="w-4 h-4" />
+                        Demo
+                      </button>
+                    </div>
+
+                    {/* Badge Tipo */}
+                    <span className="absolute top-4 left-4 px-3 py-1 bg-[#090d16]/80 backdrop-blur-md border border-white/10 text-white rounded-lg text-[10px] font-bold uppercase tracking-wider">
+                      {template.type}
+                    </span>
+                  </div>
+
+                  {/* Informações */}
+                  <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+                    <div>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-bold text-gray-900 dark:text-white text-base group-hover:text-primary-400 transition-colors">
+                            {template.type} — {template.niche}
+                          </h3>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                            Modo: <span className="font-medium text-gray-300">White Label</span>
+                          </p>
+                        </div>
+                        {canManage && (
+                          <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button 
+                              onClick={(e) => handleOpenEditTemplate(template, e)}
+                              className="p-1.5 hover:bg-white/5 text-gray-400 hover:text-white rounded-lg transition-colors"
+                              title="Editar"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={(e) => handleDeleteTemplate(template.id, e)}
+                              className="p-1.5 hover:bg-red-500/10 text-gray-400 hover:text-red-400 rounded-lg transition-colors"
+                              title="Excluir"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Paleta Cromática */}
+                      <div className="flex items-center gap-1.5 mt-3">
+                        <Palette className="w-3.5 h-3.5 text-gray-400" />
+                        <div className="flex gap-1">
+                          {template.colors.map((color, i) => (
+                            <div 
+                              key={i} 
+                              className="w-4 h-4 rounded-full border border-white/20 shadow-sm" 
+                              style={{ backgroundColor: color }}
+                              title={color}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Botão de Uso */}
+                    <button
+                      onClick={() => handleSelectTemplateForPrompt(template)}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 bg-white/5 hover:bg-primary-500 border border-gray-200 dark:border-white/10 hover:border-primary-500 text-gray-900 dark:text-white hover:text-white rounded-xl font-bold text-xs transition-all"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      Usar para Cliente
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {/* MODAL 1: PREVIEW ESTENDIDO (IMAGEM E DETALHES) */}
+      {/* CONTEÚDO DA ABA 2: BIBLIOTECA DE PROMPTS */}
+      {activeTab === 'prompts' && (
+        <div className="space-y-6">
+          {loadingPrompts ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <div className="h-10 w-10 rounded-full border-2 border-primary-500/30 border-t-primary-500 animate-spin"></div>
+              <p className="text-gray-500 text-sm font-medium tracking-wide">Carregando prompts...</p>
+            </div>
+          ) : prompts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center p-12 bg-black/40 dark:bg-[#111111] border border-dashed border-gray-200 dark:border-white/10 rounded-3xl text-center backdrop-blur-md">
+              <div className="p-4 bg-primary-500/10 rounded-2xl mb-4 text-primary-500">
+                <FileText className="w-10 h-10" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Nenhum prompt cadastrado</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mt-2">
+                Cadastre prompts de engenharia reversa de IA para associar aos seus templates de site.
+              </p>
+              {canManage && (
+                <button 
+                  onClick={handleOpenCreatePrompt}
+                  className="mt-6 px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-semibold transition-all hover:scale-[1.02]"
+                >
+                  Criar Primeiro Prompt
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {prompts.map((prompt) => (
+                <div 
+                  key={prompt.id}
+                  className="bg-black/40 dark:bg-[#111111] border border-gray-200 dark:border-white/10 rounded-3xl p-6 backdrop-blur-md flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-bold text-gray-900 dark:text-white text-base flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-primary-500" />
+                        {prompt.name}
+                      </h3>
+                      {canManage && (
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => handleOpenEditPrompt(prompt)}
+                            className="p-1 hover:bg-white/5 text-gray-400 hover:text-white rounded transition-colors"
+                            title="Editar"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleDeletePrompt(prompt.id)}
+                            className="p-1 hover:bg-red-500/10 text-gray-400 hover:text-red-400 rounded transition-colors"
+                            title="Excluir"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Visualização curta do prompt */}
+                    <div className="mt-4 bg-black/20 border border-white/5 rounded-2xl p-4 max-h-[150px] overflow-y-auto font-mono text-[10px] text-gray-400 whitespace-pre-wrap leading-relaxed select-all">
+                      {prompt.content}
+                    </div>
+                  </div>
+
+                  <div className="text-[10px] text-gray-500 mt-4 text-right">
+                    Criado em: {new Date(prompt.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* MODAL: PREVIEW DE PRINT AMPLIADO */}
       {isPreviewModalOpen && selectedTemplate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-all animate-fadeIn">
           <div className="relative w-full max-w-4xl bg-black/40 dark:bg-[#0c0d0f] border border-gray-200 dark:border-white/10 rounded-3xl overflow-hidden shadow-2xl backdrop-blur-md">
-            {/* Header Simulado de Navegador */}
+            
+            {/* Header Mockup */}
             <div className="flex items-center justify-between px-6 py-4 bg-black/40 border-b border-gray-200 dark:border-white/10">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-red-500"></div>
                 <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
                 <span className="text-xs text-gray-500 dark:text-gray-400 font-medium ml-4 select-none">
-                  {selectedTemplate.title} — Preview
+                  Print de Visualização — {selectedTemplate.type}
                 </span>
               </div>
               <button 
@@ -520,11 +784,11 @@ export default function ProductionTemplatesView() {
               </button>
             </div>
 
-            {/* Imagem Print do Site */}
-            <div className="max-h-[60vh] overflow-y-auto bg-black/10">
+            {/* Imagem do print */}
+            <div className="max-h-[60vh] overflow-y-auto bg-black/10 flex justify-center">
               <img 
                 src={selectedTemplate.previewImageUrl} 
-                alt={selectedTemplate.title} 
+                alt={selectedTemplate.niche} 
                 className="w-full h-auto object-contain"
                 onError={(e) => {
                   e.currentTarget.src = "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=600&auto=format&fit=crop";
@@ -532,31 +796,23 @@ export default function ProductionTemplatesView() {
               />
             </div>
 
-            {/* Rodapé de Informações */}
+            {/* Footer */}
             <div className="p-6 bg-black/40 border-t border-gray-200 dark:border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h4 className="font-bold text-gray-900 dark:text-white text-lg">{selectedTemplate.title}</h4>
-                <div className="flex items-center gap-4 mt-1">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    Nicho: <span className="text-gray-700 dark:text-gray-300 font-medium">{selectedTemplate.niche}</span>
-                  </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    Tipo: <span className="text-gray-700 dark:text-gray-300 font-medium">{selectedTemplate.type}</span>
-                  </span>
-                </div>
+                <h4 className="font-bold text-gray-900 dark:text-white text-lg">Site {selectedTemplate.type} — {selectedTemplate.niche}</h4>
+                <p className="text-xs text-gray-400">Design responsivo adaptado para criação rápida via prompt.</p>
               </div>
               <div className="flex gap-3">
-                {selectedTemplate.demoUrl && (
-                  <a 
-                    href={selectedTemplate.demoUrl}
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-white/10 text-gray-900 dark:text-white border border-gray-200 dark:border-white/10 rounded-xl font-bold text-sm transition-colors"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    Abrir Demo Real
-                  </a>
-                )}
+                <button 
+                  onClick={() => {
+                    setIsPreviewModalOpen(false);
+                    handleOpenDemo(selectedTemplate.htmlContent);
+                  }}
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-white/10 text-gray-900 dark:text-white border border-gray-200 dark:border-white/10 rounded-xl font-bold text-sm transition-colors"
+                >
+                  <Eye className="w-4 h-4" />
+                  Abrir Demo Local
+                </button>
                 <button
                   onClick={() => {
                     setIsPreviewModalOpen(false);
@@ -565,50 +821,35 @@ export default function ProductionTemplatesView() {
                   className="flex items-center justify-center gap-2 px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold text-sm transition-colors shadow-lg shadow-primary-500/10"
                 >
                   <Sparkles className="w-4 h-4" />
-                  Usar Template
+                  Usar para Cliente
                 </button>
               </div>
             </div>
+
           </div>
         </div>
       )}
 
-      {/* MODAL 2: CRUD CADASTRO E EDICÃO */}
-      {isCrudModalOpen && editingTemplate && (
+      {/* MODAL: CRUD DE TEMPLATES (COM UPLOADS CLOUDINARY E HTML) */}
+      {isTemplateModalOpen && editingTemplate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
           <div className="relative w-full max-w-3xl bg-[#0c0d0f] border border-gray-200 dark:border-white/10 rounded-3xl shadow-2xl p-6 md:p-8 animate-fadeIn my-8">
-            {/* Header */}
+            
             <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-white/10">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                 <LayoutTemplate className="w-5 h-5 text-primary-500" />
                 {editingTemplate.id ? 'Editar Template de Site' : 'Cadastrar Novo Template'}
               </h3>
               <button 
-                onClick={() => setIsCrudModalOpen(false)}
+                onClick={() => setIsTemplateModalOpen(false)}
                 className="p-1.5 hover:bg-white/5 text-gray-400 hover:text-white rounded-lg transition-all"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Formulário */}
             <div className="space-y-6 mt-6 max-h-[65vh] overflow-y-auto pr-2">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Nome/Título */}
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide">
-                    Nome/Título do Site *
-                  </label>
-                  <input 
-                    type="text" 
-                    value={editingTemplate.title || ''}
-                    onChange={(e) => setEditingTemplate({ ...editingTemplate, title: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 outline-none focus:ring-2 focus:ring-primary-500/50"
-                    placeholder="Ex: Landing Page Advocacia Premium"
-                    required
-                  />
-                </div>
-
                 {/* Nicho */}
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide">
@@ -623,9 +864,7 @@ export default function ProductionTemplatesView() {
                     required
                   />
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Tipo de Site */}
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide">
@@ -642,6 +881,29 @@ export default function ProductionTemplatesView() {
                     <option value="E-commerce" className="bg-[#0c0d0f]">E-commerce</option>
                   </select>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Associação do Prompt */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide">
+                    Prompt da IA Associado *
+                  </label>
+                  <select
+                    value={editingTemplate.promptId || ''}
+                    onChange={(e) => setEditingTemplate({ ...editingTemplate, promptId: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-black/40 dark:bg-[#0c0d0f] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500/50"
+                    required
+                  >
+                    <option value="" className="bg-[#0c0d0f]">-- Selecionar Prompt Global --</option>
+                    {prompts.map(p => (
+                      <option key={p.id} value={p.id} className="bg-[#0c0d0f]">{p.name}</option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-gray-500 mt-1">
+                    Crie prompts na aba "Biblioteca de Prompts" para selecioná-los aqui.
+                  </p>
+                </div>
 
                 {/* Cores */}
                 <div>
@@ -652,23 +914,23 @@ export default function ProductionTemplatesView() {
                       onClick={handleAddColor}
                       className="text-primary-500 text-xs font-bold hover:underline"
                     >
-                      + Cor
+                      + Adicionar Cor
                     </button>
                   </label>
                   <div className="flex flex-wrap gap-2 items-center">
                     {(editingTemplate.colors || []).map((color, idx) => (
-                      <div key={idx} className="flex items-center gap-1 bg-black/40 px-2.5 py-1.5 rounded-xl border border-gray-200 dark:border-white/10">
+                      <div key={idx} className="flex items-center gap-1 bg-black/40 px-2 py-1 rounded-xl border border-gray-200 dark:border-white/10">
                         <input 
                           type="color" 
                           value={color}
                           onChange={(e) => handleColorChange(idx, e.target.value)}
-                          className="w-5 h-5 border-0 bg-transparent cursor-pointer"
+                          className="w-4 h-4 border-0 bg-transparent cursor-pointer"
                         />
                         <input 
                           type="text" 
                           value={color}
                           onChange={(e) => handleColorChange(idx, e.target.value)}
-                          className="w-16 bg-transparent text-xs text-gray-300 border-0 outline-none p-0"
+                          className="w-16 bg-transparent text-[10px] text-gray-300 border-0 outline-none p-0"
                         />
                         {(editingTemplate.colors || []).length > 1 && (
                           <button 
@@ -685,42 +947,84 @@ export default function ProductionTemplatesView() {
                 </div>
               </div>
 
-              {/* Links de Demo e Imagem */}
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide flex items-center gap-1">
-                    <LinkIcon className="w-3.5 h-3.5" />
-                    Link do Print (Preview de Imagem) *
-                  </label>
-                  <input 
-                    type="url" 
-                    value={editingTemplate.previewImageUrl || ''}
-                    onChange={(e) => setEditingTemplate({ ...editingTemplate, previewImageUrl: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 outline-none focus:ring-2 focus:ring-primary-500/50"
-                    placeholder="Cole a URL pública da imagem (ex: do Imgur ou Cloudinary)"
-                    required
-                  />
+              {/* UPLOADS */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-white/5 pt-4">
+                {/* Upload Imagem Print (Cloudinary) */}
+                <div className="bg-white/5 p-4 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[140px]">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-300 mb-1 flex items-center gap-1">
+                      <Upload className="w-4 h-4 text-primary-500" />
+                      Upload do Print (Capa/Preview) *
+                    </label>
+                    <p className="text-[10px] text-gray-500 mb-3">
+                      Selecione a imagem do site para armazenar de forma segura no Cloudinary.
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center justify-center gap-2 px-4 py-2 bg-primary-500/20 hover:bg-primary-500/35 border border-primary-500/40 text-primary-400 rounded-xl cursor-pointer font-bold text-xs transition-all">
+                      <Upload className="w-4 h-4" />
+                      {uploadingImage ? 'Enviando...' : 'Escolher Imagem'}
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                        disabled={uploadingImage}
+                      />
+                    </label>
+                    
+                    {editingTemplate.previewImageUrl && (
+                      <div className="w-10 h-10 rounded-lg overflow-hidden border border-white/10 relative">
+                        <img 
+                          src={editingTemplate.previewImageUrl} 
+                          className="w-full h-full object-cover" 
+                          alt="preview"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide flex items-center gap-1">
-                    <Globe className="w-3.5 h-3.5" />
-                    Link da Demo (Site Rodando)
-                  </label>
-                  <input 
-                    type="url" 
-                    value={editingTemplate.demoUrl || ''}
-                    onChange={(e) => setEditingTemplate({ ...editingTemplate, demoUrl: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 outline-none focus:ring-2 focus:ring-primary-500/50"
-                    placeholder="Cole a URL do template em produção (ex: Vercel, Netlify)"
-                  />
+                {/* Upload index.html */}
+                <div className="bg-white/5 p-4 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[140px]">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-300 mb-1 flex items-center gap-1">
+                      <Code className="w-4 h-4 text-primary-500" />
+                      Código HTML do Site (index.html) *
+                    </label>
+                    <p className="text-[10px] text-gray-500 mb-3">
+                      Carregue o arquivo index.html contendo todo o HTML/CSS/JS do template.
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center justify-center gap-2 px-4 py-2 bg-primary-500/20 hover:bg-primary-500/35 border border-primary-500/40 text-primary-400 rounded-xl cursor-pointer font-bold text-xs transition-all">
+                      <Code className="w-4 h-4" />
+                      Carregar HTML (.html)
+                      <input 
+                        type="file" 
+                        accept=".html"
+                        onChange={handleHtmlUpload}
+                        className="hidden"
+                      />
+                    </label>
+                    
+                    {editingTemplate.htmlContent ? (
+                      <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20">
+                        HTML Pronto
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-gray-500">Nenhum carregado</span>
+                    )}
+                  </div>
                 </div>
               </div>
 
               {/* Variáveis Customizadas */}
-              <div>
+              <div className="border-t border-white/5 pt-4">
                 <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide">
-                  Variáveis Dinâmicas Personalizadas (Opcional)
+                  Variáveis Customizadas de Injeção
                 </label>
                 <div className="flex gap-2 mb-3">
                   <input 
@@ -728,7 +1032,7 @@ export default function ProductionTemplatesView() {
                     value={newVarName}
                     onChange={(e) => setNewVarName(e.target.value)}
                     className="flex-1 px-4 py-2.5 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 outline-none focus:ring-2 focus:ring-primary-500/50"
-                    placeholder="Ex: {SLOGAN}, {DIFERENCIAL}, {SECAO_SOBRE}"
+                    placeholder="Ex: {SLOGAN_HERO}, {SECAO_SOBRE}"
                   />
                   <button
                     type="button"
@@ -739,12 +1043,11 @@ export default function ProductionTemplatesView() {
                   </button>
                 </div>
 
-                {/* Variáveis Padrão e Criadas */}
                 <div className="space-y-2.5">
-                  <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Variáveis Padrão Inclusas:</p>
+                  <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Variáveis Padrão da Ficha do CRM:</p>
                   <div className="flex flex-wrap gap-2 select-none">
                     {['{NOME_CLIENTE}', '{WHATSAPP_CLIENTE}', '{EMAIL_CLIENTE}', '{NICHO_CLIENTE}'].map(v => (
-                      <span key={v} className="px-2 py-1 bg-white/5 border border-white/10 text-gray-400 rounded-lg text-xs" title="Auto preenchido pelo CRM">
+                      <span key={v} className="px-2 py-1 bg-white/5 border border-white/10 text-gray-400 rounded-lg text-xs">
                         {v}
                       </span>
                     ))}
@@ -752,7 +1055,7 @@ export default function ProductionTemplatesView() {
 
                   {(editingTemplate.customVariables || []).length > 0 && (
                     <>
-                      <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mt-3">Variáveis Customizadas do Template:</p>
+                      <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mt-3">Variáveis Customizadas Ativas:</p>
                       <div className="flex flex-wrap gap-2">
                         {(editingTemplate.customVariables || []).map(v => (
                           <span key={v} className="flex items-center gap-1 px-2.5 py-1 bg-primary-500/10 border border-primary-500/20 text-primary-400 rounded-lg text-xs">
@@ -772,25 +1075,11 @@ export default function ProductionTemplatesView() {
                 </div>
               </div>
 
-              {/* Prompt de IA */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide">
-                  Template do Prompt Base da IA *
-                </label>
-                <textarea 
-                  value={editingTemplate.promptTemplate || ''}
-                  onChange={(e) => setEditingTemplate({ ...editingTemplate, promptTemplate: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 outline-none focus:ring-2 focus:ring-primary-500/50 min-h-[150px] font-mono text-sm resize-y"
-                  placeholder={`Escreva as instruções da IA. Use as tags {NOME_CLIENTE}, {WHATSAPP_CLIENTE} ou as variáveis dinâmicas que você cadastrou.\n\nEx:\nCrie um site profissional para o cliente {NOME_CLIENTE} no nicho de {NICHO_CLIENTE}.\n\nDiferencial: {DIFERENCIAL}`}
-                  required
-                />
-              </div>
             </div>
 
-            {/* Footer Ações */}
             <div className="flex items-center justify-end gap-3 mt-8 pt-4 border-t border-gray-200 dark:border-white/10">
               <button
-                onClick={() => setIsCrudModalOpen(false)}
+                onClick={() => setIsTemplateModalOpen(false)}
                 className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-gray-900 dark:text-white rounded-xl font-semibold text-sm transition-colors border border-gray-200 dark:border-white/10"
               >
                 Cancelar
@@ -799,24 +1088,90 @@ export default function ProductionTemplatesView() {
                 onClick={handleSaveTemplate}
                 className="px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-primary-500/10"
               >
-                {editingTemplate.id ? 'Salvar Alterações' : 'Criar Template'}
+                {editingTemplate.id ? 'Salvar Template' : 'Cadastrar Template'}
               </button>
             </div>
+
           </div>
         </div>
       )}
 
-      {/* MODAL 3: PAINEL DE GERAÇÃO DE PROMPT (SPLIT SCREEN) */}
+      {/* MODAL: CRUD DE PROMPTS DA BIBLIOTECA */}
+      {isPromptModalOpen && editingPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-2xl bg-[#0c0d0f] border border-gray-200 dark:border-white/10 rounded-3xl shadow-2xl p-6 md:p-8 animate-fadeIn">
+            
+            <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-white/10">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <FileText className="w-5 h-5 text-primary-500" />
+                {editingPrompt.id ? 'Editar Prompt de IA' : 'Adicionar Novo Prompt IA'}
+              </h3>
+              <button 
+                onClick={() => setIsPromptModalOpen(false)}
+                className="p-1.5 hover:bg-white/5 text-gray-400 hover:text-white rounded-lg transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-6 mt-6">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide">
+                  Nome do Prompt *
+                </label>
+                <input 
+                  type="text" 
+                  value={editingPrompt.name || ''}
+                  onChange={(e) => setEditingPrompt({ ...editingPrompt, name: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 outline-none focus:ring-2 focus:ring-primary-500/50"
+                  placeholder="Ex: Prompt Gemini Canvas Principal"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide">
+                  Instruções e Corpo do Prompt (Chaves de Injeção) *
+                </label>
+                <textarea 
+                  value={editingPrompt.content || ''}
+                  onChange={(e) => setEditingPrompt({ ...editingPrompt, content: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 outline-none focus:ring-2 focus:ring-primary-500/50 min-h-[200px] font-mono text-sm resize-y"
+                  placeholder={`Escreva seu prompt instruindo a IA. Use as variáveis para interpolação:\n\nEx:\nCrie uma landing page profissional para {NOME_CLIENTE}.\nWhatsApp de contato: {WHATSAPP_CLIENTE}.\nNicho: {NICHO_CLIENTE}.`}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 mt-8 pt-4 border-t border-gray-200 dark:border-white/10">
+              <button
+                onClick={() => setIsPromptModalOpen(false)}
+                className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-gray-900 dark:text-white rounded-xl font-semibold text-sm transition-colors border border-gray-200 dark:border-white/10"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSavePrompt}
+                className="px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-primary-500/10"
+              >
+                {editingPrompt.id ? 'Salvar Alterações' : 'Salvar Prompt'}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: PAINEL DE GERAÇÃO DE PROMPT E DEMO PERSONALIZADA (SPLIT SCREEN) */}
       {isPromptPanelOpen && selectedTemplate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
           <div className="relative w-full max-w-6xl bg-[#0c0d0f] border border-gray-200 dark:border-white/10 rounded-3xl shadow-2xl p-6 md:p-8 animate-fadeIn my-8 flex flex-col max-h-[90vh]">
             
-            {/* Header */}
             <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-white/10">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-primary-500" />
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                  Gerador de Prompt: {selectedTemplate.title}
+                  Customização do Template: Site {selectedTemplate.type} — {selectedTemplate.niche}
                 </h3>
               </div>
               <button 
@@ -827,13 +1182,12 @@ export default function ProductionTemplatesView() {
               </button>
             </div>
 
-            {/* Split Screen Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mt-6 overflow-y-auto flex-1 pr-2">
               
-              {/* Lado Esquerdo: Formulário (2/5) */}
+              {/* Lado Esquerdo: Formulário */}
               <div className="lg:col-span-2 space-y-6">
                 
-                {/* Selecionar Cliente do CRM */}
+                {/* CRM Client Dropdown */}
                 <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
                   <label className="block text-xs font-bold text-primary-400 mb-1.5 uppercase tracking-wide flex items-center gap-1.5">
                     <User className="w-3.5 h-3.5" />
@@ -844,34 +1198,30 @@ export default function ProductionTemplatesView() {
                     onChange={(e) => handleClientChange(e.target.value)}
                     className="w-full px-4 py-2.5 bg-[#0c0d0f] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500/50"
                   >
-                    <option value="" className="bg-[#0c0d0f]">-- Selecionar Cliente Existente (Autopreencher) --</option>
+                    <option value="" className="bg-[#0c0d0f]">-- Selecionar Cliente do CRM --</option>
                     {clients.map(c => (
                       <option key={c.id} value={c.id} className="bg-[#0c0d0f]">{c.name}</option>
                     ))}
                   </select>
-                  <p className="text-[10px] text-gray-500 mt-1.5">
-                    Selecione para importar automaticamente os dados do cliente e acelerar a criação.
-                  </p>
                 </div>
 
-                {/* Variáveis Normais e Customizadas */}
+                {/* Variáveis Ficha */}
                 <div className="space-y-4">
-                  <h4 className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Variáveis Dinâmicas:</h4>
+                  <h4 className="text-xs font-bold text-gray-300 uppercase tracking-wider">Preenchimento de Variáveis</h4>
                   
-                  {/* Inputs Padrão */}
                   <div>
-                    <label className="block text-[10px] font-semibold text-gray-500 mb-1 uppercase">Nome do Cliente / Empresa</label>
+                    <label className="block text-[10px] font-semibold text-gray-500 mb-1 uppercase">Nome da Empresa / Cliente</label>
                     <input 
                       type="text"
                       value={customAnswers['{NOME_CLIENTE}'] || ''}
                       onChange={(e) => setCustomAnswers(prev => ({ ...prev, '{NOME_CLIENTE}': e.target.value }))}
                       className="w-full px-4 py-2.5 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500/50 text-xs"
-                      placeholder="Ex: Dr. Silva Dental Clinic"
+                      placeholder="Ex: Consultório Dr. João"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-semibold text-gray-500 mb-1 uppercase">WhatsApp / Telefone</label>
+                    <label className="block text-[10px] font-semibold text-gray-500 mb-1 uppercase">Contato WhatsApp</label>
                     <input 
                       type="text"
                       value={customAnswers['{WHATSAPP_CLIENTE}'] || ''}
@@ -881,18 +1231,7 @@ export default function ProductionTemplatesView() {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-[10px] font-semibold text-gray-500 mb-1 uppercase">Nicho de Negócio</label>
-                    <input 
-                      type="text"
-                      value={customAnswers['{NICHO_CLIENTE}'] || ''}
-                      onChange={(e) => setCustomAnswers(prev => ({ ...prev, '{NICHO_CLIENTE}': e.target.value }))}
-                      className="w-full px-4 py-2.5 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500/50 text-xs"
-                      placeholder="Ex: Odontologia Estética"
-                    />
-                  </div>
-
-                  {/* Inputs Customizados do Template */}
+                  {/* Inputs Customizados */}
                   {(selectedTemplate.customVariables || []).map(v => (
                     <div key={v}>
                       <label className="block text-[10px] font-semibold text-gray-500 mb-1 uppercase">
@@ -909,16 +1248,35 @@ export default function ProductionTemplatesView() {
                   ))}
                 </div>
 
-                {/* Alternador de Perfil de Prompt */}
+                {/* Ações Demo Personalizada */}
+                <div className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-3">
+                  <h4 className="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-1">
+                    <Globe className="w-4 h-4 text-primary-500" />
+                    Preview Dinâmico
+                  </h4>
+                  <p className="text-[10px] text-gray-500">
+                    Abre o site substituindo as variáveis inseridas acima no próprio código HTML.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenDemo(selectedTemplate.htmlContent, customAnswers)}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#3b82f6]/10 hover:bg-[#3b82f6]/20 border border-[#3b82f6]/35 text-[#3b82f6] rounded-xl font-bold text-xs transition-all"
+                  >
+                    <Eye className="w-4 h-4" />
+                    Ver Demo Personalizada
+                  </button>
+                </div>
+
+                {/* Alternador de Perfil */}
                 <div className="space-y-2 border-t border-white/5 pt-4">
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide">
                     Modo do Prompt Otimizado
                   </label>
                   <div className="grid grid-cols-3 gap-2">
                     {[
-                      { id: 'full', label: 'Completo (Full)', icon: Sparkles },
-                      { id: 'structural', label: 'Layout (CSS)', icon: Palette },
-                      { id: 'copy', label: 'Copy / Texto', icon: FileText }
+                      { id: 'full', label: 'Completo', icon: Sparkles },
+                      { id: 'structural', label: 'Design (CSS)', icon: Palette },
+                      { id: 'copy', label: 'Copy / SEO', icon: FileText }
                     ].map(mode => {
                       const IconComp = mode.icon;
                       return (
@@ -926,14 +1284,14 @@ export default function ProductionTemplatesView() {
                           key={mode.id}
                           type="button"
                           onClick={() => setPromptMode(mode.id as any)}
-                          className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all ${
+                          className={`flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all ${
                             promptMode === mode.id
                               ? 'bg-primary-500/15 border-primary-500 text-primary-400'
                               : 'bg-black/40 dark:bg-black/20 text-gray-400 border-gray-200 dark:border-white/10 hover:bg-white/5'
                           }`}
                         >
-                          <IconComp className="w-4 h-4 mb-1" />
-                          <span className="text-[9px] font-bold uppercase tracking-wide">{mode.label}</span>
+                          <IconComp className="w-3.5 h-3.5 mb-1" />
+                          <span className="text-[8px] font-bold uppercase tracking-wide">{mode.label}</span>
                         </button>
                       );
                     })}
@@ -942,22 +1300,19 @@ export default function ProductionTemplatesView() {
 
               </div>
 
-              {/* Lado Direito: Prompt Gerado (3/5) */}
+              {/* Lado Direito: Prompt */}
               <div className="lg:col-span-3 flex flex-col h-full space-y-4">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <h4 className="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
                     <FileText className="w-4 h-4 text-primary-500" />
-                    Prompt da IA Gerado:
+                    Prompt Otimizado para IA:
                   </h4>
-                  <span className="text-[10px] text-gray-500">Pronto para copiar e colar na IA</span>
                 </div>
 
-                {/* Visualizador de Texto (Prompt) */}
                 <div className="flex-1 min-h-[300px] max-h-[500px] overflow-y-auto bg-black/60 border border-gray-200 dark:border-white/10 rounded-2xl p-5 font-mono text-xs text-gray-300 whitespace-pre-wrap leading-relaxed select-all">
-                  {getGeneratedPrompt() || '[Aguardando preenchimento...]'}
+                  {getGeneratedPrompt()}
                 </div>
 
-                {/* Ação de Copiar */}
                 <button
                   onClick={handleCopyPrompt}
                   className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm transition-all duration-300 ${
@@ -969,12 +1324,12 @@ export default function ProductionTemplatesView() {
                   {copied ? (
                     <>
                       <Check className="w-5 h-5 animate-scaleUp" />
-                      Copiado com Sucesso!
+                      Copiado!
                     </>
                   ) : (
                     <>
                       <Copy className="w-5 h-5" />
-                      Copiar Prompt da IA
+                      Copiar Prompt do Template
                     </>
                   )}
                 </button>
@@ -982,7 +1337,6 @@ export default function ProductionTemplatesView() {
 
             </div>
 
-            {/* Rodapé Ações */}
             <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-white/10">
               <button
                 onClick={() => setIsPromptPanelOpen(false)}
