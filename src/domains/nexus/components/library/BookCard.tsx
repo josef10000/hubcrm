@@ -164,60 +164,99 @@ export const BookCard = React.memo(({
           )}
 
           <Book
-            title={book.title}
-            author={book.author}
             pages={book.totalPages || 120}
             color={bookColor}
-            bookmark={book.isFavorite}
-            bookmarkColor="#fbbf24"
-            spineText={book.category}
-            variant="default"
+            variant="simple"
             animation="hover"
             className="shadow-2xl"
-            illustration={
-              book.coverUrl ? (
+          >
+            {/* Capa Convencional Completa e Sem Alterações */}
+            <div 
+              className={`absolute inset-0 rounded-r-[4px] overflow-hidden border bg-[#1a1c23] ${
+                aura ? `${aura.border} border-[2.5px]` : 'border-white/10'
+              }`}
+            >
+              {/* Dobra da Capa (Lombada Esquerda) */}
+              <div className="absolute inset-y-0 left-[5px] w-[2px] bg-black/20 z-40" />
+
+              {/* Category Badge */}
+              {book.category && (
+                <div className="absolute top-3 right-3 px-2 py-1 bg-primary-500/80 backdrop-blur-md rounded-lg text-[7px] font-black text-white uppercase tracking-tighter z-40 shadow-lg">
+                  {book.category}
+                </div>
+              )}
+
+              {/* Favorite Button */}
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggleFavorite(book.id); }}
+                className={`absolute top-3 left-4 p-1.5 rounded-lg z-40 transition-all ${
+                  book.isFavorite ? 'bg-amber-500 text-white shadow-lg' : 'bg-black/40 text-white/40 hover:bg-black/60 hover:text-white'
+                }`}
+              >
+                <i className={`ph-bold ${book.isFavorite ? 'ph-star-fill' : 'ph-star'}`} />
+              </button>
+
+              {/* Format Badge */}
+              <div className="absolute top-3 left-14 flex gap-1 z-40">
+                {book.format === 'kindle' && (
+                  <div className="px-2 py-1 bg-amber-500/80 backdrop-blur-md rounded-lg text-[7px] font-black text-white uppercase tracking-widest shadow-lg flex items-center gap-1 border border-white/5">
+                    <i className="ph-fill ph-device-mobile" /> Kindle
+                  </div>
+                )}
+                {book.format === 'physical' && (
+                  <div className="px-2 py-1 bg-emerald-500/80 backdrop-blur-md rounded-lg text-[7px] font-black text-white uppercase tracking-widest shadow-lg flex items-center gap-1 border border-white/5">
+                    <i className="ph-fill ph-book-open" /> Físico
+                  </div>
+                )}
+                {(book.format === 'pdf' || !book.format) && (
+                  <div className="px-2 py-1 bg-blue-500/80 backdrop-blur-md rounded-lg text-[7px] font-black text-white uppercase tracking-widest shadow-lg flex items-center gap-1 border border-white/5">
+                    <i className="ph-fill ph-file-pdf" /> PDF
+                  </div>
+                )}
+              </div>
+
+              {/* Status Badge */}
+              {book.status && (
+                <div className={`absolute bottom-3 left-4 px-2 py-1 ${statusColors[book.status]} rounded-lg text-[7px] font-black text-white uppercase tracking-widest z-40 shadow-lg`}>
+                  {statusLabels[book.status]}
+                </div>
+              )}
+
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 z-10" />
+              
+              {book.coverUrl ? (
                 <img 
                   src={book.coverUrl} 
                   alt={book.title} 
-                  className="w-full h-full object-cover rounded-[3px]" 
-                  loading="lazy"
+                  className="w-full h-full object-cover transition-transform group-hover:scale-105" 
+                  loading="lazy" 
                 />
-              ) : undefined
-            }
-          />
-          
-          <div className="absolute top-4 left-6 flex gap-1.5 z-30 opacity-0 group-hover:opacity-100 transition-opacity">
-            {book.format === 'kindle' && (
-              <div className="px-1.5 py-0.5 bg-amber-500/80 backdrop-blur-md rounded text-[6.5px] font-black text-white uppercase tracking-wider">
-                Kindle
-              </div>
-            )}
-            {book.format === 'physical' && (
-              <div className="px-1.5 py-0.5 bg-emerald-500/80 backdrop-blur-md rounded text-[6.5px] font-black text-white uppercase tracking-wider">
-                Físico
-              </div>
-            )}
-            {book.format === 'pdf' && (
-              <div className="px-1.5 py-0.5 bg-blue-500/80 backdrop-blur-md rounded text-[6.5px] font-black text-white uppercase tracking-wider">
-                PDF
-              </div>
-            )}
-          </div>
+              ) : (
+                <div className={`w-full h-full flex flex-col items-center justify-center p-6 text-center gap-4 ${
+                  aura ? `bg-gradient-to-br ${aura.gradient} text-slate-950` : 'bg-gradient-to-br from-white/5 to-white/[0.02]'
+                }`}>
+                  <i className={`ph-duotone ph-book text-5xl ${aura ? 'text-slate-950/60' : 'text-primary-500/40'}`} />
+                  <span className={`text-[10px] font-black uppercase tracking-widest leading-tight ${aura ? 'text-slate-950/85' : 'opacity-40'}`}>{book.title}</span>
+                </div>
+              )}
+              
+              {/* Progress Bar (Visual) */}
+              {progress > 0 && (
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10 z-40">
+                  <div 
+                    className={`h-full ${progress === 100 ? 'bg-emerald-500' : 'bg-primary-500'}`} 
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              )}
 
-          {progress > 0 && (
-            <div className="absolute bottom-5 left-6 right-6 h-1 bg-white/10 rounded-full overflow-hidden z-30 opacity-80">
-              <div 
-                className={`h-full ${progress === 100 ? 'bg-emerald-500' : 'bg-primary-500'}`}
-                style={{ width: `${progress}%` }}
-              />
+              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 z-30">
+                 <div className="w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center text-white text-xl shadow-xl shadow-primary-500/40">
+                   <i className="ph-bold ph-play" />
+                 </div>
+              </div>
             </div>
-          )}
-
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-30 pointer-events-none">
-            <div className="w-10 h-10 bg-primary-500 text-white rounded-full flex items-center justify-center text-lg shadow-xl shadow-primary-500/30">
-              <i className="ph-bold ph-play" />
-            </div>
-          </div>
+          </Book>
         </div>
 
         <div className="mt-3 px-1 flex justify-between items-start">

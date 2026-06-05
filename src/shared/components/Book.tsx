@@ -159,7 +159,7 @@ export function Book({
               </div>
             </div>
           ) : (
-            <div className="flex h-full items-center justify-center p-4">
+            <div className="w-full h-full relative">
               {children}
             </div>
           )}
