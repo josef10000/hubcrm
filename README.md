@@ -109,6 +109,16 @@ Plataforma integrada de incentivo à leitura e gestão de conhecimento corporati
 *   **Sincronização com Clubes de Leitura & Trilhas:** Monitoramento em tempo real do progresso de leitura dos colaboradores. O progresso é sincronizado de forma bidirecional com os Clubes de Leitura da organização e com as Trilhas de Conhecimento Ativas.
 *   **Recompensas em HubCoins por Página Nova:** Sistema cognitivo de incentivo à leitura com trava temporal de segurança de 24 horas por obra, que concede HubCoins de forma proporcional a cada página lida inédita do colaborador, integrada ao seu saldo e ranking na Arena.
 
+### 12. 🎨 Experiência do Usuário (UX) & Componentes Modernos (HeroUI & Gravity Icons)
+Plataforma inteiramente modernizada usando a biblioteca `@heroui/react` e `@gravity-ui/icons` para interações de alta performance e visual premium:
+*   **Comemorações com Balões Flutuantes (`balloons-js`):** Efeito estético festivo com balões flutuantes que sobe na tela do colaborador no dia do seu aniversário.
+*   **Medidores de Armazenamento Reativos:** Painel administrativo de controle de consumo ("Consumo") com componentes `<Meter>` que exibem a volumetria em tempo real das nuvens Firebase, Cloudflare R2 e Cloudinary com sinalização visual de limite e criticidade.
+*   **Tabelas de Negócios com Ordenação e Status:** Listagem reativa de Leads, Contratos e Projetos que aceitam ordenação por colunas, e exibem status em badges (`Chip`) e fotos de responsáveis com `<Avatar>`.
+*   **Central de Chats Favoritos Fixados:** Ordenação reativa na `ChatSidebar` que fixa no topo os chats marcados como favoritos com o novo `ToggleButton` (ícone de coração reativo) e suporte ao local storage do navegador.
+*   **Toggles de Notificação Premium:** Alternador lógico em formato de Switch no menu de contexto das conversas, utilizando os ícones `BellFill` e `BellSlash` para mutar e desmutar contatos.
+*   **Toolbar e Anotações com Formatação:** Barra de estilo para Wiki e anotações de leads/clientes (`Toolbar`, `ToggleButtonGroup`) para estilo em Negrito, Itálico e Sublinhado usando ícones do `@gravity-ui/icons`.
+*   **Campos de Data e Hora Avançados:** Uso dos componentes interativos `<Calendar>` e `<TimeField>` nos modais de lembrete e agendador de mensagens.
+
 ---
 
 ## ⚖️ Comparativo de Regimes (CLT vs PJ)

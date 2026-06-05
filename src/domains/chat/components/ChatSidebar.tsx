@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Search, Plus, MessageCircle, User, Users, Star, Bookmark, Calendar, BellOff, Bell, Trash2, ShieldOff, Hash, Compass, LogOut, AlertTriangle, Shield } from 'lucide-react';
+import { Switch, ToggleButton } from '@heroui/react';
+import { BellFill as GBellFill, BellSlash as GBellSlash, Bookmark as GBookmark, Heart as GHeart } from '@gravity-ui/icons';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc, deleteDoc, collection, getDocs, writeBatch, setDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
@@ -40,6 +42,35 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, chatId: string } | null>(null);
   const [isChannelModalOpen, setIsChannelModalOpen] = useState(false);
   const [isExploreOpen, setIsExploreOpen] = useState(false);
+  
+  // Controle de Chats Favoritados na Barra Lateral
+  const [favoriteChats, setFavoriteChats] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (userProfile?.uid) {
+      try {
+        const saved = localStorage.getItem(`fav_chats_${userProfile.uid}`);
+        if (saved) {
+          setFavoriteChats(JSON.parse(saved));
+        }
+      } catch (e) {
+        console.error('Erro ao carregar chats favoritos:', e);
+      }
+    }
+  }, [userProfile?.uid]);
+
+  const toggleFavoriteChat = (chatId: string) => {
+    if (!userProfile?.uid) return;
+    setFavoriteChats(prev => {
+      const next = prev.includes(chatId) ? prev.filter(id => id !== chatId) : [...prev, chatId];
+      try {
+        localStorage.setItem(`fav_chats_${userProfile.uid}`, JSON.stringify(next));
+      } catch (e) {
+        console.error('Erro ao salvar chats favoritos:', e);
+      }
+      return next;
+    });
+  };
 
   const categories = ['todos', ...new Set(bookmarks.filter(b => b.category).map(b => b.category!))];
 
@@ -50,6 +81,30 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
   const filteredChannels = chats.filter(c => 
     c.type === 'channel' && c.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const sortedChats = useMemo(() => {
+    return [...filteredChats].sort((a, b) => {
+      const aFav = favoriteChats.includes(a.id);
+      const bFav = favoriteChats.includes(b.id);
+      if (aFav && !bFav) return -1;
+      if (!aFav && bFav) return 1;
+      const aTime = a.lastMessage?.createdAt?.toMillis ? a.lastMessage.createdAt.toMillis() : 0;
+      const bTime = b.lastMessage?.createdAt?.toMillis ? b.lastMessage.createdAt.toMillis() : 0;
+      return bTime - aTime;
+    });
+  }, [filteredChats, favoriteChats]);
+
+  const sortedChannels = useMemo(() => {
+    return [...filteredChannels].sort((a, b) => {
+      const aFav = favoriteChats.includes(a.id);
+      const bFav = favoriteChats.includes(b.id);
+      if (aFav && !bFav) return -1;
+      if (!aFav && bFav) return 1;
+      const aTime = a.lastMessage?.createdAt?.toMillis ? a.lastMessage.createdAt.toMillis() : 0;
+      const bTime = b.lastMessage?.createdAt?.toMillis ? b.lastMessage.createdAt.toMillis() : 0;
+      return bTime - aTime;
+    });
+  }, [filteredChannels, favoriteChats]);
 
   const isAdmin = userProfile?.role && typeof userProfile.role !== 'string' && (userProfile.role.id === 'ROLE_ADMIN' || userProfile.role.level === 0);
 
@@ -279,13 +334,13 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
       {/* Lista de Chats */}
       <div className="flex-1 overflow-y-auto custom-scrollbar px-3 space-y-1">
         {activeTab === 'chats' ? (
-          filteredChats.length === 0 ? (
+          sortedChats.length === 0 ? (
             <div className="p-8 text-center opacity-40">
               <MessageCircle size={32} className="mx-auto mb-2" />
               <p className="text-xs font-medium">Nenhuma conversa encontrada</p>
             </div>
           ) : (
-            filteredChats.map(chat => {
+            sortedChats.map(chat => {
               const isSelected = selectedId === chat.id;
               const unread = chat.unreadCount?.[userProfile?.uid || ''] || 0;
               const mention = chat.unreadMentions?.[userProfile?.uid || ''] || 0;
@@ -360,7 +415,7 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
                           
                           return isOnline ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 
                                  status === 'away' ? 'bg-amber-500' : 
-                                 status === 'lunch' ? 'bg-rose-500' :
+                                  status === 'lunch' ? 'bg-rose-500' :
                                  status === 'meeting' ? 'bg-blue-500' :
                                  'bg-gray-500';
                         })()
@@ -399,6 +454,26 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
                             <Calendar size={14} />
                           </button>
                         )}
+                        
+                        {/* ToggleButton de Favorito */}
+                        <ToggleButton
+                          isIconOnly
+                          aria-label="Favoritar"
+                          variant="ghost"
+                          className={`p-1 h-auto min-w-0 rounded-lg transition-all ${
+                            favoriteChats.includes(chat.id)
+                              ? 'text-amber-500 opacity-100 scale-110'
+                              : isSelected
+                                ? 'text-white/40 hover:text-white/80 hover:bg-white/10 group-hover:opacity-100 opacity-0'
+                                : 'text-gray-400 hover:text-amber-500 hover:bg-amber-500/10 group-hover:opacity-100 opacity-0'
+                          }`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFavoriteChat(chat.id);
+                          }}
+                        >
+                          <GHeart style={{ width: '14px', height: '14px', fill: favoriteChats.includes(chat.id) ? '#F59E0B' : 'none' }} />
+                        </ToggleButton>
                       </div>
                       <span className={`text-xs font-medium shrink-0 ${isSelected ? 'text-white/60' : 'text-gray-400'}`}>
                         {chat.lastMessage?.createdAt?.toMillis ? formatChatTime(chat.lastMessage.createdAt?.toMillis ? chat.lastMessage.createdAt.toMillis() : 0) : ''}
@@ -455,14 +530,14 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
               </button>
             </div>
 
-            {filteredChannels.length === 0 ? (
+            {sortedChannels.length === 0 ? (
               <div className="p-8 text-center opacity-40">
                 <Hash size={32} className="mx-auto mb-2" />
                 <p className="text-xs font-medium">Nenhum canal encontrado</p>
                 <p className="text-[10px] mt-1">Explore para encontrar canais disponíveis</p>
               </div>
             ) : (
-              filteredChannels.map(channel => {
+              sortedChannels.map(channel => {
                 const isSelected = selectedId === channel.id;
                 const unread = channel.unreadCount?.[userProfile?.uid || ''] || 0;
                 const mention = channel.unreadMentions?.[userProfile?.uid || ''] || 0;
@@ -516,6 +591,26 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
                             {channel.category}
                           </span>
                         )}
+
+                        {/* ToggleButton de Favorito */}
+                        <ToggleButton
+                          isIconOnly
+                          aria-label="Favoritar"
+                          variant="ghost"
+                          className={`p-1 h-auto min-w-0 rounded-lg transition-all ${
+                            favoriteChats.includes(channel.id)
+                              ? 'text-amber-500 opacity-100 scale-110'
+                              : isSelected
+                                ? 'text-white/40 hover:text-white/80 hover:bg-white/10 group-hover:opacity-100 opacity-0'
+                                : 'text-gray-400 hover:text-amber-500 hover:bg-amber-500/10 group-hover:opacity-100 opacity-0'
+                          }`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFavoriteChat(channel.id);
+                          }}
+                        >
+                          <GHeart style={{ width: '14px', height: '14px', fill: favoriteChats.includes(channel.id) ? '#F59E0B' : 'none' }} />
+                        </ToggleButton>
                       </div>
                       <p className={`text-[11px] truncate ${isSelected ? 'text-white/70' : 'text-gray-500'}`}>
                         {channel.lastMessage ? channel.lastMessage.text : (channel.description || `${channel.members.length} membros`)}
@@ -667,12 +762,33 @@ export default function ChatSidebar({ chats, loading, selectedId, onSelect }: Ch
                   <div className="px-4 py-2 mb-1 border-b border-gray-100 dark:border-white/5">
                     <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Opções de Conversa</p>
                   </div>
+                  <div className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
+                    <span className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-3">
+                      {!isMuted ? <GBellFill className="w-4 h-4 text-primary-500" /> : <GBellSlash className="w-4 h-4 text-gray-400" />}
+                      Notificações
+                    </span>
+                    <Switch
+                      size="sm"
+                      isSelected={!isMuted}
+                      onValueChange={() => handleToggleMute(chat)}
+                    >
+                      {({ isSelected }) => (
+                        <Switch.Icon>
+                          {isSelected ? <GBellFill className="w-3.5 h-3.5" /> : <GBellSlash className="w-3.5 h-3.5" />}
+                        </Switch.Icon>
+                      )}
+                    </Switch>
+                  </div>
+
                   <button 
-                    onClick={() => handleToggleMute(chat)}
+                    onClick={() => {
+                      toggleFavoriteChat(chat.id);
+                      setContextMenu(null);
+                    }}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-primary-500 hover:text-white transition-colors"
                   >
-                    {isMuted ? <Bell size={16} /> : <BellOff size={16} />}
-                    {isMuted ? 'Ativar Notificações' : 'Silenciar Notificações'}
+                    <GHeart className="w-4 h-4" style={{ fill: favoriteChats.includes(chat.id) ? 'currentColor' : 'none' }} />
+                    {favoriteChats.includes(chat.id) ? 'Remover dos Favoritos' : 'Favoritar Conversa'}
                   </button>
 
                   {/* Sair do canal/grupo */}

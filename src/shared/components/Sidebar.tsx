@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Star, X } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useUI } from '@/contexts/UIContext';
 import { useCRM } from '@crm/contexts/CRMContext';
@@ -9,8 +9,9 @@ import { usePermissions } from '@auth/hooks/usePermissions';
 import { useGlobalChatAlerts } from '@/hooks/useGlobalChatAlerts';
 import NavItem from './NavItem';
 import AvatarFrame from './AvatarFrame';
-import { useCRMStore } from '@/store/useCRMStore';
 import { navGroups } from '@/constants/navigation';
+import { Switch } from '@heroui/react';
+import { Sun, Moon } from '@gravity-ui/icons';
 
 // Mapeador de Ícones Premium (Phosphor Duotone)
 export const PremiumIcon = ({ iconName, size = 22, className = "" }: { iconName: string, size?: number, className?: string }) => {
@@ -59,6 +60,24 @@ export default function Sidebar() {
   const { supportRequests = [], wikiArticles = [], pendingVacationsCount = 0 } = useCRM();
   const { hasPermission } = usePermissions();
   const { totalUnread: chatUnreadCount } = useGlobalChatAlerts();
+
+  // Estado local para o tema Dark/Light
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return document.documentElement.classList.contains('dark');
+    }
+    return true;
+  });
+
+  const toggleTheme = () => {
+    const nextDark = !isDark;
+    setIsDark(nextDark);
+    if (nextDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
 
   // Estado para o menu Flyout
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
@@ -180,8 +199,21 @@ export default function Sidebar() {
             ))}
           </div>
 
-          {/* Perfil Mini no Rodapé */}
-          <div className="relative z-10 mt-auto">
+          {/* Alternador de Tema Dark/Light & Perfil Mini */}
+          <div className="relative z-10 mt-auto flex flex-col items-center gap-4">
+            <Switch 
+              defaultSelected={isDark} 
+              onChange={toggleTheme} 
+              size="sm"
+              className="cursor-pointer"
+            >
+              <Switch.Control className="w-12 h-6 bg-white/5 border border-white/10 rounded-full p-1 flex items-center relative transition-all duration-300">
+                <Switch.Thumb className="w-4 h-4 bg-white rounded-full transition-transform duration-300 shadow-md flex items-center justify-center">
+                  {isDark ? <Moon className="w-2.5 h-2.5 text-gray-900" /> : <Sun className="w-2.5 h-2.5 text-amber-500" />}
+                </Switch.Thumb>
+              </Switch.Control>
+            </Switch>
+
             <div 
               onClick={() => navigate(`/profile/${user?.uid}`)}
               className="relative cursor-pointer group"

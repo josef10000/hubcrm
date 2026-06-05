@@ -4,7 +4,7 @@ import { useAuth } from '@auth/contexts/AuthContext';
 import { useDialog } from '@auth/contexts/DialogContext';
 import { leadService } from '../services/leadService';
 import { Lead, LeadStatus } from '@/types';
-import { toast } from 'sonner';
+import { toast } from '@heroui/react';
 import { usePermissions } from '@auth/hooks/usePermissions';
 
 export type LeadFilterMode = 'all' | 'mine';
@@ -80,15 +80,26 @@ export function useLeads() {
       };
 
       if (editingLead) {
-        await leadService.updateLead(effectiveOrgId, editingLead.id, payload);
-        toast.success('Lead atualizado!');
+        await toast.promise(
+          leadService.updateLead(effectiveOrgId, editingLead.id, payload),
+          {
+            loading: 'Atualizando lead...',
+            success: 'Lead atualizado com sucesso!',
+            error: (e: Error) => `Erro ao atualizar lead: ${e.message}`
+          }
+        );
       } else {
-        await leadService.createLead(effectiveOrgId, payload, userProfile?.displayName || user?.email || 'Sistema');
-        toast.success('Lead adicionado!');
+        await toast.promise(
+          leadService.createLead(effectiveOrgId, payload, userProfile?.displayName || user?.email || 'Sistema'),
+          {
+            loading: 'Adicionando novo lead...',
+            success: 'Lead adicionado com sucesso!',
+            error: (e: Error) => `Erro ao adicionar lead: ${e.message}`
+          }
+        );
       }
       return true;
     } catch (e: any) {
-      toast.error(`Erro: ${e.message}`);
       return false;
     }
   };
@@ -96,10 +107,16 @@ export function useLeads() {
   const handleMoveLead = async (lead: Lead, targetStatus: LeadStatus) => {
     if (!effectiveOrgId) return;
     try {
-      await leadService.moveLead(effectiveOrgId, lead, targetStatus, userProfile?.displayName || user?.email || 'Sistema');
-      toast.success(`Lead movido para ${targetStatus}`);
+      await toast.promise(
+        leadService.moveLead(effectiveOrgId, lead, targetStatus, userProfile?.displayName || user?.email || 'Sistema'),
+        {
+          loading: `Movendo lead para ${targetStatus}...`,
+          success: `Lead movido para ${targetStatus}!`,
+          error: (e: Error) => `Erro ao mover lead: ${e.message}`
+        }
+      );
     } catch (e: any) {
-      toast.error('Erro ao mover lead.');
+      // Já tratado pelo toast.promise
     }
   };
 
@@ -117,10 +134,16 @@ export function useLeads() {
     });
     if (!ok) return;
     try {
-      await leadService.deleteLead(effectiveOrgId, leadId);
-      toast.success('Lead excluído');
+      await toast.promise(
+        leadService.deleteLead(effectiveOrgId, leadId),
+        {
+          loading: 'Excluindo lead...',
+          success: 'Lead excluído com sucesso!',
+          error: (e: Error) => `Erro ao excluir lead: ${e.message}`
+        }
+      );
     } catch (e: any) {
-      toast.error('Erro ao excluir lead.');
+      // Já tratado pelo toast.promise
     }
   };
 
@@ -130,7 +153,7 @@ export function useLeads() {
     const ghostLeads = leads.filter(l => !l.status || !validStatuses.includes(l.status.toLowerCase()));
     
     if (ghostLeads.length === 0) {
-      toast.info('Nenhum lead fantasma encontrado.');
+      toast.success('Nenhum lead fantasma encontrado.');
       return;
     }
 
@@ -143,10 +166,16 @@ export function useLeads() {
     if (!ok) return;
 
     try {
-      await leadService.cleanupGhostLeads(effectiveOrgId, ghostLeads);
-      toast.success('Limpeza concluída!');
+      await toast.promise(
+        leadService.cleanupGhostLeads(effectiveOrgId, ghostLeads),
+        {
+          loading: 'Limpando leads fantasmas...',
+          success: 'Limpeza concluída com sucesso!',
+          error: (e: Error) => `Erro ao limpar leads: ${e.message}`
+        }
+      );
     } catch (e: any) {
-      toast.error('Erro na limpeza.');
+      // Já tratado pelo toast.promise
     }
   };
 

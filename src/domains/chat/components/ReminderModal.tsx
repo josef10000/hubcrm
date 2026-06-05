@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { X, Bell, Calendar, Clock, ChevronRight } from 'lucide-react';
+import { X, Bell, Calendar as CalendarIcon, Clock, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, addHours, addDays, startOfDay, setHours, setMinutes } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Calendar as HeroUICalendar, TimeField } from '@heroui/react';
+import { today, getLocalTimeZone } from '@internationalized/date';
 
 interface ReminderModalProps {
   isOpen: boolean;
@@ -13,7 +15,7 @@ interface ReminderModalProps {
 
 export function ReminderModal({ isOpen, onClose, onConfirm, messageText }: ReminderModalProps) {
   const [mode, setMode] = useState<'quick' | 'custom'>('quick');
-  const [customDate, setCustomDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [calendarDate, setCalendarDate] = useState(() => today(getLocalTimeZone()));
   const [customTime, setCustomTime] = useState(format(new Date(), "HH:mm"));
 
   const quickOptions = [
@@ -24,7 +26,8 @@ export function ReminderModal({ isOpen, onClose, onConfirm, messageText }: Remin
   ];
 
   const handleCustomConfirm = () => {
-    const date = new Date(`${customDate}T${customTime}`);
+    const dateStr = calendarDate.toString();
+    const date = new Date(`${dateStr}T${customTime}`);
     onConfirm(date);
     onClose();
   };
@@ -106,27 +109,28 @@ export function ReminderModal({ isOpen, onClose, onConfirm, messageText }: Remin
                 <div className="space-y-4">
                   <div>
                     <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Data</label>
-                    <div className="relative">
-                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                      <input 
-                        type="date"
-                        value={customDate}
-                        onChange={(e) => setCustomDate(e.target.value)}
-                        className="w-full bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 pl-10 pr-4 py-2.5 rounded-xl text-sm dark:text-white"
+                    <div className="flex justify-center border border-gray-100 dark:border-white/10 rounded-2xl p-2 bg-gray-50 dark:bg-white/5">
+                      <HeroUICalendar 
+                        aria-label="Escolher data"
+                        value={calendarDate}
+                        onChange={setCalendarDate}
                       />
                     </div>
                   </div>
                   <div>
                     <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Horário</label>
-                    <div className="relative">
-                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                      <input 
-                        type="time"
-                        value={customTime}
-                        onChange={(e) => setCustomTime(e.target.value)}
-                        className="w-full bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 pl-10 pr-4 py-2.5 rounded-xl text-sm dark:text-white"
-                      />
-                    </div>
+                    <TimeField 
+                      className="w-full"
+                      onChange={(val) => {
+                        if (val) setCustomTime(val.toString());
+                      }}
+                    >
+                      <TimeField.Group className="flex bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 px-3 py-2.5 rounded-xl text-sm dark:text-white">
+                        <TimeField.Input>
+                          {(segment) => <TimeField.Segment segment={segment} />}
+                        </TimeField.Input>
+                      </TimeField.Group>
+                    </TimeField>
                   </div>
                   
                   <div className="flex gap-2 pt-2">

@@ -1,11 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, UserCircle, ChevronDown, History, PhoneCall, Users, ArrowRight, MessageSquare, Send } from 'lucide-react';
+import { X, Calendar, UserCircle, History, PhoneCall, Users, ArrowRight, MessageSquare, Send } from 'lucide-react';
 import { format } from 'date-fns';
 import { Lead } from '@/types';
 import { leadService } from '@/services/leadService';
-import { toast } from 'sonner';
+import { 
+  TextField, 
+  Input, 
+  TextArea, 
+  Select, 
+  ListBox, 
+  Toolbar, 
+  ToggleButtonGroup, 
+  ToggleButton, 
+  toast 
+} from '@heroui/react';
+import { Bold, Italic, Underline } from '@gravity-ui/icons';
 import { usePermissions } from '@auth/hooks/usePermissions';
-import { defaultRoles } from '@/constants/permissions';
 
 interface LeadFormModalProps {
   isOpen: boolean;
@@ -89,83 +99,158 @@ export function LeadFormModal({
           {activeTab === 'form' ? (
             <div className="space-y-4 pb-4">
               <div>
-                <label className="block text-xs text-gray-400 font-medium mb-1.5">Nome *</label>
-                <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500/50 outline-none text-sm" placeholder="Nome do lead" />
+                <TextField isRequired className="w-full" name="name">
+                  <label className="block text-xs text-gray-400 font-medium mb-1.5">Nome *</label>
+                  <Input 
+                    type="text" 
+                    value={formData.name} 
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500/50 outline-none text-sm" 
+                    placeholder="Nome do lead" 
+                  />
+                </TextField>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs text-gray-400 font-medium mb-1.5">WhatsApp</label>
-                  <input type="text" value={formData.whatsapp} onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500/50 outline-none text-sm" placeholder="(00) 00000-0000" />
+                  <TextField className="w-full" name="whatsapp">
+                    <label className="block text-xs text-gray-400 font-medium mb-1.5">WhatsApp</label>
+                    <Input 
+                      type="text" 
+                      value={formData.whatsapp} 
+                      onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500/50 outline-none text-sm" 
+                      placeholder="(00) 00000-0000" 
+                    />
+                  </TextField>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-400 font-medium mb-1.5">E-mail</label>
-                  <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500/50 outline-none text-sm" placeholder="email@exemplo.com" />
+                  <TextField className="w-full" name="email">
+                    <label className="block text-xs text-gray-400 font-medium mb-1.5">E-mail</label>
+                    <Input 
+                      type="email" 
+                      value={formData.email} 
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500/50 outline-none text-sm" 
+                      placeholder="email@exemplo.com" 
+                    />
+                  </TextField>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="relative">
+                <div>
                   <label className="block text-xs text-gray-400 font-medium mb-1.5">Origem</label>
-                  <select value={formData.leadSource} onChange={(e) => setFormData({ ...formData, leadSource: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500/50 outline-none text-sm appearance-none cursor-pointer">
-                    <option value="">Selecionar...</option>
-                    {LEAD_SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
+                  <Select 
+                    placeholder="Selecionar..." 
+                    value={formData.leadSource} 
+                    onChange={(val) => setFormData({ ...formData, leadSource: val })}
+                    className="w-full"
+                  >
+                    <Select.Trigger className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm flex justify-between items-center cursor-pointer">
+                      <Select.Value>{formData.leadSource || 'Selecionar...'}</Select.Value>
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover className="bg-neutral-900 border border-white/10 rounded-xl p-1 shadow-xl z-50">
+                      <ListBox>
+                        <ListBox.Item id="" textValue="Selecionar...">Selecionar...</ListBox.Item>
+                        {LEAD_SOURCES.map(s => (
+                          <ListBox.Item key={s} id={s} textValue={s}>{s}</ListBox.Item>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-400 font-medium mb-1.5">Valor Estimado</label>
-                  <input type="number" value={formData.estimatedValue} onChange={(e) => setFormData({ ...formData, estimatedValue: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500/50 outline-none text-sm" placeholder="R$ 0,00" />
+                  <TextField className="w-full" name="estimatedValue">
+                    <label className="block text-xs text-gray-400 font-medium mb-1.5">Valor Estimado</label>
+                    <Input 
+                      type="number" 
+                      value={formData.estimatedValue} 
+                      onChange={(e) => setFormData({ ...formData, estimatedValue: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500/50 outline-none text-sm" 
+                      placeholder="R$ 0,00" 
+                    />
+                  </TextField>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs text-gray-400 font-medium mb-1.5">Plano</label>
-                  <input type="text" value={formData.plan} onChange={(e) => setFormData({ ...formData, plan: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500/50 outline-none text-sm" placeholder="Ex: Essencial" />
+                  <TextField className="w-full" name="plan">
+                    <label className="block text-xs text-gray-400 font-medium mb-1.5">Plano</label>
+                    <Input 
+                      type="text" 
+                      value={formData.plan} 
+                      onChange={(e) => setFormData({ ...formData, plan: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500/50 outline-none text-sm" 
+                      placeholder="Ex: Essencial" 
+                    />
+                  </TextField>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-400 font-medium mb-1.5">Nicho</label>
-                  <input type="text" value={formData.niche} onChange={(e) => setFormData({ ...formData, niche: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500/50 outline-none text-sm" placeholder="Ex: Restaurante" />
+                  <TextField className="w-full" name="niche">
+                    <label className="block text-xs text-gray-400 font-medium mb-1.5">Nicho</label>
+                    <Input 
+                      type="text" 
+                      value={formData.niche} 
+                      onChange={(e) => setFormData({ ...formData, niche: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500/50 outline-none text-sm" 
+                      placeholder="Ex: Restaurante" 
+                    />
+                  </TextField>
                 </div>
               </div>
               <div>
-                <label className="block text-xs text-gray-400 font-medium mb-1.5">Próximo Contato (Follow-up)</label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                  <input type="date" value={formData.nextFollowUp} onChange={(e) => setFormData({ ...formData, nextFollowUp: e.target.value })}
-                    className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500/50 outline-none text-sm" />
-                </div>
+                <TextField className="w-full" name="nextFollowUp">
+                  <label className="block text-xs text-gray-400 font-medium mb-1.5">Próximo Contato (Follow-up)</label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 z-10" />
+                    <Input 
+                      type="date" 
+                      value={formData.nextFollowUp} 
+                      onChange={(e) => setFormData({ ...formData, nextFollowUp: e.target.value })}
+                      className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500/50 outline-none text-sm" 
+                    />
+                  </div>
+                </TextField>
               </div>
 
               <div>
                 <label className="block text-xs text-gray-400 font-medium mb-1.5">Dono do Lead (Atribuição)</label>
                 {hasPermission('MANAGE_TEAM') ? (
-                  <div className="relative">
-                    <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                    <select 
-                      value={formData.assignedTo || user?.uid} 
-                      onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
-                      className="w-full pl-10 pr-8 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500/50 outline-none text-sm appearance-none cursor-pointer"
-                    >
-                      <option value={user?.uid}>Atribuído a mim</option>
-                      {teamProfiles
-                        .filter(p => {
-                          const role = orgRoles.find(r => r.id === p.roleId || r.name === p.role);
-                          return role ? role.permissions.includes('MANAGE_LEADS') : false;
-                        })
-                        .map(member => (
-                          <option key={member.uid} value={member.uid}>
-                            {member.displayName} ({orgRoles.find(r => r.id === member.roleId || r.name === member.role)?.name || member.role})
-                          </option>
-                        ))
-                      }
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
-                  </div>
+                  <Select 
+                    placeholder="Atribuído a mim" 
+                    value={formData.assignedTo || user?.uid} 
+                    onChange={(val) => setFormData({ ...formData, assignedTo: val })}
+                    className="w-full"
+                  >
+                    <Select.Trigger className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm flex justify-between items-center cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        <UserCircle className="w-4 h-4 text-gray-500" />
+                        <Select.Value>
+                          {teamProfiles.find(p => p.uid === (formData.assignedTo || user?.uid))?.displayName || 'Atribuído a mim'}
+                        </Select.Value>
+                      </div>
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover className="bg-neutral-900 border border-white/10 rounded-xl p-1 shadow-xl z-50">
+                      <ListBox>
+                        <ListBox.Item id={user?.uid} textValue="Atribuído a mim">Atribuído a mim</ListBox.Item>
+                        {teamProfiles
+                          .filter(p => {
+                            const role = orgRoles.find(r => r.id === p.roleId || r.name === p.role);
+                            return role ? role.permissions.includes('MANAGE_LEADS') : false;
+                          })
+                          .map(member => {
+                            const roleName = orgRoles.find(r => r.id === member.roleId || r.name === member.role)?.name || member.role;
+                            return (
+                              <ListBox.Item key={member.uid} id={member.uid} textValue={member.displayName}>
+                                {member.displayName} ({roleName})
+                              </ListBox.Item>
+                            );
+                          })
+                        }
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
                 ) : (
                   <div className="flex items-center gap-3 px-4 py-2.5 bg-white/5 border border-dashed border-white/10 rounded-xl opacity-80">
                     <UserCircle className="w-4 h-4 text-gray-500" />
@@ -200,10 +285,27 @@ export function LeadFormModal({
                   })}
                 </div>
               </div>
-              <div>
-                <label className="block text-xs text-gray-400 font-medium mb-1.5">Observações</label>
-                <textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500/50 outline-none text-sm min-h-[80px] resize-none" placeholder="Anotações sobre o lead..." />
+              <div className="flex flex-col gap-1.5">
+                <label className="block text-xs text-gray-400 font-medium">Observações</label>
+                <Toolbar isAttached aria-label="Editor de observações" className="bg-white/5 border border-white/10 rounded-t-xl px-2 py-1 flex gap-1 items-center">
+                  <ToggleButtonGroup aria-label="Estilo do texto" selectionMode="multiple">
+                    <ToggleButton isIconOnly aria-label="Negrito" id="bold" variant="light" className="text-gray-400 hover:text-white p-1 rounded">
+                      <Bold className="w-4 h-4" />
+                    </ToggleButton>
+                    <ToggleButton isIconOnly aria-label="Itálico" id="italic" variant="light" className="text-gray-400 hover:text-white p-1 rounded">
+                      <Italic className="w-4 h-4" />
+                    </ToggleButton>
+                    <ToggleButton isIconOnly aria-label="Sublinhado" id="underline" variant="light" className="text-gray-400 hover:text-white p-1 rounded">
+                      <Underline className="w-4 h-4" />
+                    </ToggleButton>
+                  </ToggleButtonGroup>
+                </Toolbar>
+                <TextArea 
+                  value={formData.notes} 
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-white/5 border border-t-0 border-white/10 rounded-b-xl text-white outline-none text-sm min-h-[80px]" 
+                  placeholder="Anotações sobre o lead..." 
+                />
               </div>
               
               <button
@@ -243,7 +345,7 @@ export function LeadFormModal({
               </div>
 
               <div className="bg-white/5 border border-white/10 rounded-2xl p-4 shrink-0">
-                <textarea
+                <TextArea
                   value={newActivityText}
                   onChange={(e) => setNewActivityText(e.target.value)}
                   placeholder="Registrar nova interação..."

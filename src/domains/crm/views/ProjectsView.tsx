@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Layout, CheckSquare, Clock, Search, Filter, ArrowRight, AlertTriangle, CheckCircle2, User, Kanban, List, LayoutTemplate, FileText } from 'lucide-react';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import ProductionTemplatesView from './ProductionTemplatesView';
+import { Table, Avatar, Chip, Meter } from '@heroui/react';
 
 type ProjectTab = 'running' | 'delivered' | 'overdue';
 type ActiveSection = 'projects' | 'templates' | 'prompts';
@@ -17,6 +18,11 @@ export default function ProjectsView() {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const navigate = useNavigate();
+  
+  const [sortDescriptor, setSortDescriptor] = useState<{column: string, direction: 'ascending' | 'descending'}>({
+    column: 'name',
+    direction: 'ascending'
+  });
 
   // Lógica de SLA: Consideramos atrasado se estiver "Em Desenvolvimento" há mais de 20 dias
   // ou se não houver movimentação nos logs/estágios recentemente (simplificado para v4.0)
@@ -34,6 +40,32 @@ export default function ProjectsView() {
     if (activeTab === 'delivered') return client.status === 'Ativo';
     return false;
   });
+
+  const sortedProjects = useMemo(() => {
+    const list = [...filteredProjects];
+    list.sort((a, b) => {
+      const col = sortDescriptor.column;
+      let first = a[col as keyof typeof a];
+      let second = b[col as keyof typeof b];
+
+      if (col === 'progress') {
+        first = calculateProgress(a.stages || []) as any;
+        second = calculateProgress(b.stages || []) as any;
+      }
+
+      if (first === undefined || first === null) return 1;
+      if (second === undefined || second === null) return -1;
+
+      let cmp = 0;
+      if (typeof first === 'string' && typeof second === 'string') {
+        cmp = first.localeCompare(second);
+      } else {
+        cmp = (first as any) < (second as any) ? -1 : (first as any) > (second as any) ? 1 : 0;
+      }
+      return sortDescriptor.direction === 'descending' ? -cmp : cmp;
+    });
+    return list;
+  }, [filteredProjects, sortDescriptor]);
 
   const calculateProgress = (stages: any[]) => {
     if (!stages || stages.length === 0) return 0;
@@ -160,79 +192,148 @@ export default function ProjectsView() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}
+                className="w-full"
               >
                 {filteredProjects.length > 0 ? (
-                  filteredProjects.map((project) => {
-                    const progress = calculateProgress(project.stages || []);
-                    const assigned = teamProfiles.find(p => p.uid === project.assignedTo);
-                    
-                    return (
-                      <motion.div
-                        key={project.id}
-                        layout
-                        className={`group p-6 bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 rounded-3xl backdrop-blur-xl transition-all duration-500 ${activeTab === 'overdue' ? 'ring-1 ring-red-500/20' : ''}`}
-                      >
-                        <div className="flex justify-between items-start mb-6">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 ${activeTab === 'overdue' ? 'bg-red-500/20 text-red-400' : 'bg-indigo-500/20 text-indigo-400'} rounded-xl flex items-center justify-center`}>
-                              {activeTab === 'delivered' ? <CheckCircle2 size={20} /> : <Clock size={20} />}
-                            </div>
-                            <div>
-                              <span className="text-[10px] uppercase font-bold text-gray-500 tracking-widest block mb-0.5">Responsável</span>
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-xs font-semibold text-gray-300">{assigned?.displayName || 'Sem atribuição'}</span>
+                  viewMode === 'grid' ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {filteredProjects.map((project) => {
+                        const progress = calculateProgress(project.stages || []);
+                        const assigned = teamProfiles.find(p => p.uid === project.assignedTo);
+                        
+                        return (
+                          <motion.div
+                            key={project.id}
+                            layout
+                            className={`group p-6 bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 rounded-3xl backdrop-blur-xl transition-all duration-500 ${activeTab === 'overdue' ? 'ring-1 ring-red-500/20' : ''}`}
+                          >
+                            <div className="flex justify-between items-start mb-6">
+                              <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 ${activeTab === 'overdue' ? 'bg-red-500/20 text-red-400' : 'bg-indigo-500/20 text-indigo-400'} rounded-xl flex items-center justify-center`}>
+                                  {activeTab === 'delivered' ? <CheckCircle2 size={20} /> : <Clock size={20} />}
+                                </div>
+                                <div>
+                                  <span className="text-[10px] uppercase font-bold text-gray-500 tracking-widest block mb-0.5">Responsável</span>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-xs font-semibold text-gray-300">{assigned?.displayName || 'Sem atribuição'}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div className={`px-3 py-1 bg-black/20 rounded-full border border-white/5 text-[10px] font-bold ${activeTab === 'overdue' ? 'text-red-400 italic animate-pulse' : 'text-gray-500'}`}>
+                                {formatDistanceToNow(project.createdAt, { locale: ptBR, addSuffix: true })}
                               </div>
                             </div>
-                          </div>
-                          
-                          <div className={`px-3 py-1 bg-black/20 rounded-full border border-white/5 text-[10px] font-bold ${activeTab === 'overdue' ? 'text-red-400 italic animate-pulse' : 'text-gray-500'}`}>
-                            {formatDistanceToNow(project.createdAt, { locale: ptBR, addSuffix: true })}
-                          </div>
-                        </div>
 
-                        <h3 className="text-xl font-bold text-white mb-2 group-hover:text-primary-400 transition-colors truncate">
-                          {project.name}
-                        </h3>
-                        <p className="text-sm text-gray-500 mb-6 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-primary-500" />
-                          {project.plan}
-                        </p>
+                            <h3 className="text-xl font-bold text-white mb-2 group-hover:text-primary-400 transition-colors truncate">
+                              {project.name}
+                            </h3>
+                            <p className="text-sm text-gray-500 mb-6 flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-primary-500" />
+                              {project.plan}
+                            </p>
 
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-end">
-                            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Status da Entrega</span>
-                            <span className={`text-lg font-bold ${activeTab === 'overdue' ? 'text-red-400' : 'text-primary-400'}`}>{progress}%</span>
-                          </div>
-                          <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                            <motion.div 
-                              initial={{ width: 0 }}
-                              animate={{ width: `${progress}%` }}
-                              className={`h-full ${activeTab === 'overdue' ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-primary-500 shadow-[0_0_10px_rgba(var(--primary-500-rgb),0.5)]'}`}
-                            />
-                          </div>
-                          <div className="flex items-center justify-between text-[11px] text-gray-500 bg-black/10 p-2.5 rounded-xl border border-white/5 font-medium">
-                            <span className="flex items-center gap-2">
-                              <CheckSquare size={14} className="text-primary-500" />
-                              {project.stages?.find(s => !s.completed)?.name || 'Projeto Concluído'}
-                            </span>
-                            <ArrowRight size={12} className="opacity-50" />
-                          </div>
-                        </div>
+                            <div className="space-y-4">
+                              <div className="flex justify-between items-end">
+                                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Status da Entrega</span>
+                                <span className={`text-lg font-bold ${activeTab === 'overdue' ? 'text-red-400' : 'text-primary-400'}`}>{progress}%</span>
+                              </div>
+                              <Meter value={progress} color={activeTab === 'overdue' ? 'danger' : 'success'} className="w-full">
+                                <Meter.Track className="h-2 bg-white/5 rounded-full overflow-hidden w-full mt-2">
+                                  <Meter.Fill className={`h-full rounded-full ${activeTab === 'overdue' ? 'bg-red-500' : 'bg-primary-500'}`} />
+                                </Meter.Track>
+                              </Meter>
+                              <div className="flex items-center justify-between text-[11px] text-gray-500 bg-black/10 p-2.5 rounded-xl border border-white/5 font-medium">
+                                <span className="flex items-center gap-2">
+                                  <CheckSquare size={14} className="text-primary-500" />
+                                  {project.stages?.find(s => !s.completed)?.name || 'Projeto Concluído'}
+                                </span>
+                                <ArrowRight size={12} className="opacity-50" />
+                              </div>
+                            </div>
 
-                        <button
-                          onClick={() => {
-                            setEditingClient(project);
-                            navigate('/clients');
-                          }}
-                          className="mt-8 w-full py-3 bg-white/5 hover:bg-white/10 text-white rounded-2xl border border-white/5 transition-all text-sm font-bold flex items-center justify-center gap-2 group/btn"
-                        >
-                          Gerenciar Projeto
-                          <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-all" />
-                        </button>
-                      </motion.div>
-                    );
-                  })
+                            <button
+                              onClick={() => {
+                                setEditingClient(project);
+                                navigate('/clients');
+                              }}
+                              className="mt-8 w-full py-3 bg-white/5 hover:bg-white/10 text-white rounded-2xl border border-white/5 transition-all text-sm font-bold flex items-center justify-center gap-2 group/btn"
+                            >
+                              Gerenciar Projeto
+                              <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-all" />
+                            </button>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <Table>
+                      <Table.Content 
+                        aria-label="Tabela de Projetos"
+                        sortDescriptor={sortDescriptor}
+                        onSortChange={(desc) => setSortDescriptor(desc as any)}
+                        className="bg-black/40 border border-white/10 rounded-2xl p-4 backdrop-blur-xl w-full"
+                      >
+                        <Table.Header>
+                          <Table.Column id="name" allowsSorting>PROJETO</Table.Column>
+                          <Table.Column id="plan" allowsSorting>PLANO</Table.Column>
+                          <Table.Column id="assignedTo" allowsSorting>RESPONSÁVEL</Table.Column>
+                          <Table.Column id="progress" allowsSorting>PROGRESSO</Table.Column>
+                          <Table.Column id="createdAt" allowsSorting>CRIADO EM</Table.Column>
+                          <Table.Column id="actions">AÇÕES</Table.Column>
+                        </Table.Header>
+                        <Table.Body>
+                          {sortedProjects.map((project) => {
+                            const progress = calculateProgress(project.stages || []);
+                            const assigned = teamProfiles.find(p => p.uid === project.assignedTo);
+                            
+                            return (
+                              <Table.Row key={project.id}>
+                                <Table.Cell className="font-bold text-white py-3">{project.name}</Table.Cell>
+                                <Table.Cell>
+                                  <Chip size="sm" variant="flat" color="primary">{project.plan}</Chip>
+                                </Table.Cell>
+                                <Table.Cell>
+                                  <div className="flex items-center gap-2">
+                                    <Avatar size="sm" className="w-6 h-6 text-[10px]">
+                                      <Avatar.Fallback className="bg-primary-500 text-white font-bold uppercase text-[9px] flex items-center justify-center w-full h-full">
+                                        {assigned?.displayName ? assigned.displayName.substring(0, 2) : 'S'}
+                                      </Avatar.Fallback>
+                                    </Avatar>
+                                    <span className="text-xs text-gray-300 font-semibold">{assigned?.displayName || 'Sem atribuição'}</span>
+                                  </div>
+                                </Table.Cell>
+                                <Table.Cell>
+                                  <div className="flex items-center gap-2 w-32">
+                                    <Meter value={progress} color={activeTab === 'overdue' ? 'danger' : 'success'} className="w-full">
+                                      <Meter.Track className="h-1.5 bg-gray-700 rounded-full overflow-hidden w-full">
+                                        <Meter.Fill className={`h-full rounded-full ${activeTab === 'overdue' ? 'bg-red-500' : 'bg-emerald-500'}`} />
+                                      </Meter.Track>
+                                    </Meter>
+                                    <span className="text-xs font-bold text-gray-400">{progress}%</span>
+                                  </div>
+                                </Table.Cell>
+                                <Table.Cell className="text-xs text-gray-400">
+                                  {new Date(project.createdAt).toLocaleDateString('pt-BR')}
+                                </Table.Cell>
+                                <Table.Cell>
+                                  <button
+                                    onClick={() => {
+                                      setEditingClient(project);
+                                      navigate('/clients');
+                                    }}
+                                    className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white rounded-lg border border-white/5 text-xs font-bold transition-all"
+                                  >
+                                    Gerenciar
+                                  </button>
+                                </Table.Cell>
+                              </Table.Row>
+                            );
+                          })}
+                        </Table.Body>
+                      </Table.Content>
+                    </Table>
+                  )
                 ) : (
                   <EmptyProjects tab={activeTab} />
                 )}

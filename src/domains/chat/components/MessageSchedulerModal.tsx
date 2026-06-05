@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, X, Check, Timer } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, X, Check, Timer } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Timestamp } from 'firebase/firestore';
+import { Calendar as HeroUICalendar, TimeField } from '@heroui/react';
+import { today, getLocalTimeZone } from '@internationalized/date';
 
 interface MessageSchedulerModalProps {
   isOpen: boolean;
@@ -11,8 +13,8 @@ interface MessageSchedulerModalProps {
 }
 
 export function MessageSchedulerModal({ isOpen, onClose, onSelect, currentScheduledAt }: MessageSchedulerModalProps) {
-  const [selectedDate, setSelectedDate] = useState('');
-  const [selectedTime, setSelectedTime] = useState('');
+  const [selectedDate, setSelectedDate] = useState(() => today(getLocalTimeZone()));
+  const [selectedTime, setSelectedTime] = useState('09:00');
 
   const handleQuickSelect = (minutes: number) => {
     const date = new Date();
@@ -25,7 +27,8 @@ export function MessageSchedulerModal({ isOpen, onClose, onSelect, currentSchedu
     e.preventDefault();
     if (!selectedDate || !selectedTime) return;
 
-    const date = new Date(`${selectedDate}T${selectedTime}`);
+    const dateStr = selectedDate.toString();
+    const date = new Date(`${dateStr}T${selectedTime}`);
     onSelect(Timestamp.fromDate(date));
     onClose();
   };
@@ -105,29 +108,31 @@ export function MessageSchedulerModal({ isOpen, onClose, onSelect, currentSchedu
 
               {/* Custom Selector */}
               <form onSubmit={handleCustomSelect} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest px-2">Data</label>
-                    <div className="relative">
-                      <input 
-                        type="date" 
+                    <div className="flex justify-center border border-gray-100 dark:border-white/10 rounded-2xl p-2 bg-gray-50 dark:bg-white/5">
+                      <HeroUICalendar 
+                        aria-label="Escolher data"
                         value={selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value)}
-                        min={new Date().toISOString().split('T')[0]}
-                        className="w-full bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 p-4 rounded-3xl text-sm focus:outline-none focus:border-primary-500 transition-all dark:text-white"
+                        onChange={setSelectedDate}
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest px-2">Hora</label>
-                    <div className="relative">
-                      <input 
-                        type="time" 
-                        value={selectedTime}
-                        onChange={(e) => setSelectedTime(e.target.value)}
-                        className="w-full bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 p-4 rounded-3xl text-sm focus:outline-none focus:border-primary-500 transition-all dark:text-white"
-                      />
-                    </div>
+                    <TimeField 
+                      className="w-full"
+                      onChange={(val) => {
+                        if (val) setSelectedTime(val.toString());
+                      }}
+                    >
+                      <TimeField.Group className="flex bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 p-4 rounded-3xl text-sm dark:text-white">
+                        <TimeField.Input>
+                          {(segment) => <TimeField.Segment segment={segment} />}
+                        </TimeField.Input>
+                      </TimeField.Group>
+                    </TimeField>
                   </div>
                 </div>
 
@@ -143,7 +148,7 @@ export function MessageSchedulerModal({ isOpen, onClose, onSelect, currentSchedu
                   )}
                   <button 
                     type="submit"
-                    disabled={!selectedDate || !selectedTime}
+                    disabled={!selectedTime}
                     className="flex-[2] p-4 rounded-3xl bg-primary-500 text-white font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-primary-500/20 uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Agendar Mensagem

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { balloons, textBalloons } from 'balloons-js';
 
 interface BirthdayCelebrationProps {
   uid?: string;
@@ -21,6 +22,20 @@ export default function BirthdayCelebration({ uid }: BirthdayCelebrationProps) {
     // Se não foi exibido, mostrar agora
     setIsVisible(true);
     localStorage.setItem(storageKey, 'true');
+
+    // Disparar balões comemorativos
+    try {
+      balloons();
+      textBalloons([
+        {
+          text: "💩🔥😈",
+          fontSize: 120,
+          color: "#000000",
+        },
+      ]);
+    } catch (e) {
+      console.warn('Erro ao disparar balões:', e);
+    }
 
     // Injetar script do canvas-confetti via CDN
     const script = document.createElement('script');

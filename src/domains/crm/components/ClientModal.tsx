@@ -15,6 +15,7 @@ import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
 import { Tag as LucideTag } from 'lucide-react';
+import { Checkbox, Select, ListBox, Switch, TextField, Input, Toolbar, ToggleButton } from '@heroui/react';
 
 // ── Tab Components ──
 import HistoryTab from './client-modal/HistoryTab';
@@ -292,42 +293,43 @@ function ClientModal({
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 border-b border-gray-200 dark:border-white/10 pb-2">Dados do Cliente</h3>
                   
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Nome do Cliente/Empresa *</label>
-                    <input required type="text" name="name" value={formData.name || ''} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" placeholder="Ex: João Silva" />
-                  </div>
+                  <TextField isRequired name="name" className="w-full">
+                    <Label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Nome do Cliente/Empresa *</Label>
+                    <Input required type="text" name="name" value={formData.name || ''} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" placeholder="Ex: João Silva" />
+                  </TextField>
                   
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">WhatsApp {!formData.isCourtesy ? '*' : ''}</label>
-                    <input required={!formData.isCourtesy} type="text" name="whatsapp" value={formData.whatsapp || ''} onChange={handleChange} placeholder="(11) 99999-9999" className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
-                  </div>
+                  <TextField isRequired={!formData.isCourtesy} name="whatsapp" className="w-full">
+                    <Label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">WhatsApp {!formData.isCourtesy ? '*' : ''}</Label>
+                    <Input required={!formData.isCourtesy} type="text" name="whatsapp" value={formData.whatsapp || ''} onChange={handleChange} placeholder="(11) 99999-9999" className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
+                  </TextField>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">CPF/CNPJ {!formData.isCourtesy ? '*' : ''}</label>
+                  <TextField isRequired={!formData.isCourtesy} name="cpfCnpj" className="w-full">
+                    <Label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">CPF/CNPJ {!formData.isCourtesy ? '*' : ''}</Label>
                     <div className="relative">
-                      <input required={!formData.isCourtesy} type="text" name="cpfCnpj" value={formData.cpfCnpj || ''} onChange={handleChange} onBlur={handleCpfCnpjBlur} placeholder="999.999.999-99" className={`w-full px-4 py-3 pr-10 bg-black/20 border text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500 ${cpfCnpjStatus === 'valid' ? 'border-emerald-500' : cpfCnpjStatus === 'invalid' ? 'border-red-500' : 'border-gray-200 dark:border-white/10'}`} />
+                      <Input required={!formData.isCourtesy} type="text" name="cpfCnpj" value={formData.cpfCnpj || ''} onChange={handleChange} onBlur={handleCpfCnpjBlur} placeholder="999.999.999-99" className={`w-full px-4 py-3 pr-10 bg-black/20 border text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500 ${cpfCnpjStatus === 'valid' ? 'border-emerald-500' : cpfCnpjStatus === 'invalid' ? 'border-red-500' : 'border-gray-200 dark:border-white/10'}`} />
                       {cpfCnpjStatus === 'loading' && <Loader2 size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 animate-spin" />}
                       {cpfCnpjStatus === 'valid' && <CheckCircle size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500" />}
                       {cpfCnpjStatus === 'invalid' && <X size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500" />}
                     </div>
-                  </div>
+                  </TextField>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">E-mail {!formData.isCourtesy ? '*' : ''}</label>
-                    <input required={!formData.isCourtesy} type="email" name="email" value={formData.email || ''} onChange={handleChange} placeholder="cliente@email.com" className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
-                  </div>
+                  <TextField isRequired={!formData.isCourtesy} name="email" className="w-full">
+                    <Label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">E-mail {!formData.isCourtesy ? '*' : ''}</Label>
+                    <Input required={!formData.isCourtesy} type="email" name="email" value={formData.email || ''} onChange={handleChange} placeholder="cliente@email.com" className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
+                  </TextField>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">CEP</label>
+                  <TextField name="cep" className="w-full">
+                    <Label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">CEP</Label>
                     <div className="relative">
-                      <input type="text" name="cep" value={formData.cep || ''} onChange={handleChange} placeholder="00000-000" className="w-full px-4 py-3 pr-10 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
+                      <Input type="text" name="cep" value={formData.cep || ''} onChange={handleChange} placeholder="00000-000" className="w-full px-4 py-3 pr-10 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
                       {cepLoading && <Loader2 size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-primary-400 animate-spin" />}
                     </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Endereço</label>
-                    <input type="text" name="endereco" value={formData.endereco || ''} onChange={handleChange} placeholder="Rua, Avenida..." className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
-                  </div>
+                  </TextField>
+
+                  <TextField name="endereco" className="w-full">
+                    <Label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Endereço</Label>
+                    <Input type="text" name="endereco" value={formData.endereco || ''} onChange={handleChange} placeholder="Rua, Avenida..." className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
+                  </TextField>
                   <div className="grid grid-cols-3 gap-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Bairro</label>
@@ -345,41 +347,59 @@ function ClientModal({
 
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Origem do Lead {!formData.isCourtesy ? '*' : ''}</label>
-                    <select required={!formData.isCourtesy} name="leadSource" value={formData.leadSource || ''} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all">
-                      <option value="">Selecione a origem</option>
-                      <option value="Indicação">Indicação</option>
-                      <option value="Google Ads">Google Ads</option>
-                      <option value="Tráfego Orgânico">Tráfego Orgânico</option>
-                      <option value="Prospecção Manual">Prospecção Manual</option>
-                      <option value="Instagram">Instagram</option>
-                      <option value="WhatsApp Direto">WhatsApp Direto</option>
-                      <option value="Parceiro">Parceiro</option>
-                    </select>
+                    <Select 
+                      value={formData.leadSource || ''}
+                      onChange={(val) => setFormData(prev => ({ ...prev, leadSource: val }))}
+                      placeholder="Selecione a origem"
+                      className="w-full text-xs"
+                    >
+                      <Select.Trigger className="w-full flex items-center justify-between px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500 transition-all">
+                        <Select.Value />
+                        <Select.Indicator />
+                      </Select.Trigger>
+                      <Select.Popover className="bg-gray-200 dark:bg-zinc-950 border border-gray-200 dark:border-white/10 rounded-xl shadow-xl p-2 z-50">
+                        <ListBox onAction={(key) => setFormData(prev => ({ ...prev, leadSource: String(key) }))}>
+                          <ListBox.Item id="Indicação" textValue="Indicação">Indicação</ListBox.Item>
+                          <ListBox.Item id="Google Ads" textValue="Google Ads">Google Ads</ListBox.Item>
+                          <ListBox.Item id="Tráfego Orgânico" textValue="Tráfego Orgânico">Tráfego Orgânico</ListBox.Item>
+                          <ListBox.Item id="Prospecção Manual" textValue="Prospecção Manual">Prospecção Manual</ListBox.Item>
+                          <ListBox.Item id="Instagram" textValue="Instagram">Instagram</ListBox.Item>
+                          <ListBox.Item id="WhatsApp Direto" textValue="WhatsApp Direto">WhatsApp Direto</ListBox.Item>
+                          <ListBox.Item id="Parceiro" textValue="Parceiro">Parceiro</ListBox.Item>
+                        </ListBox>
+                      </Select.Popover>
+                    </Select>
                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Responsável / Vendedor {!formData.isCourtesy ? '*' : ''}</label>
-                    <select 
-                      required={!formData.isCourtesy} 
-                      name="assignedTo" 
-                      value={formData.assignedTo || ''} 
-                      onChange={handleChange} 
-                      className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                    <Select 
+                      value={formData.assignedTo || ''}
+                      onChange={(val) => setFormData(prev => ({ ...prev, assignedTo: val }))}
+                      placeholder="Selecione o responsável"
+                      className="w-full text-xs"
                     >
-                      <option value="">Selecione o responsável</option>
-                      {availableSellers.map(member => (
-                        <option key={member.uid} value={member.uid} className="bg-gray-900">
-                          {member.uid === userProfile?.uid ? `Eu mesmo (${member.displayName})` : member.displayName}
-                        </option>
-                      ))}
-                    </select>
+                      <Select.Trigger className="w-full flex items-center justify-between px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500 transition-all">
+                        <Select.Value />
+                        <Select.Indicator />
+                      </Select.Trigger>
+                      <Select.Popover className="bg-gray-200 dark:bg-zinc-950 border border-gray-200 dark:border-white/10 rounded-xl shadow-xl p-2 z-50">
+                        <ListBox onAction={(key) => setFormData(prev => ({ ...prev, assignedTo: String(key) }))}>
+                          {availableSellers.map(member => (
+                            <ListBox.Item key={member.uid} id={member.uid} textValue={member.displayName}>
+                              {member.uid === userProfile?.uid ? `Eu mesmo (${member.displayName})` : member.displayName}
+                            </ListBox.Item>
+                          ))}
+                        </ListBox>
+                      </Select.Popover>
+                    </Select>
                   </div>
 
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mt-8 mb-4 border-b border-gray-200 dark:border-white/10 pb-2">Configurações de Pagamento</h3>
 
                   {/* Cliente Cortesia Switch */}
                   <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-2xl mb-6">
-                    <label className="flex items-center justify-between cursor-pointer">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-start gap-2.5">
                         <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400 mt-0.5">
                           <Star size={16} className="fill-purple-400" />
@@ -389,42 +409,42 @@ function ClientModal({
                           <p className="text-[10px] text-gray-500 dark:text-gray-400">Acesso livre isento de cobranças e faturas no Asaas</p>
                         </div>
                       </div>
-                      <div className="relative inline-flex items-center cursor-pointer">
-                        <input 
-                          type="checkbox" 
-                          className="sr-only peer" 
-                          checked={formData.isCourtesy || false} 
-                          onChange={(e) => {
-                            const val = e.target.checked;
-                            setFormData(prev => ({ 
-                              ...prev, 
-                              isCourtesy: val, 
-                              status: val ? 'Ativo' : prev.status,
-                              paymentStatus: val ? 'N/A' : 'PENDING',
-                              // Se for VIP / Cortesia, purga os dados financeiros
-                              ...(val ? {
-                                plan: 'Isento / VIP',
-                                offerId: 'vip',
-                                planPrice: 0,
-                                setupPrice: 0,
-                                customMonthlyPrice: 0,
-                                customSetupPrice: 0,
-                                billingCycle: undefined,
-                                billingType: 'UNDEFINED'
-                              } : {
-                                plan: prev.plan === 'Isento / VIP' ? '' : prev.plan,
-                                offerId: prev.offerId === 'vip' ? '' : prev.offerId,
-                                planPrice: prev.planPrice === 0 ? undefined : prev.planPrice,
-                                setupPrice: prev.setupPrice === 0 ? undefined : prev.setupPrice,
-                                customMonthlyPrice: undefined,
-                                customSetupPrice: undefined
-                              })
-                            }));
-                          }} 
-                        />
-                        <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-500"></div>
-                      </div>
-                    </label>
+                      <Switch 
+                        defaultSelected={formData.isCourtesy || false}
+                        onChange={(e: any) => {
+                          const val = e.target.checked;
+                          setFormData(prev => ({ 
+                            ...prev, 
+                            isCourtesy: val, 
+                            status: val ? 'Ativo' : prev.status,
+                            paymentStatus: val ? 'N/A' : 'PENDING',
+                            ...(val ? {
+                              plan: 'Isento / VIP',
+                              offerId: 'vip',
+                              planPrice: 0,
+                              setupPrice: 0,
+                              customMonthlyPrice: 0,
+                              customSetupPrice: 0,
+                              billingCycle: undefined,
+                              billingType: 'UNDEFINED'
+                            } : {
+                              plan: prev.plan === 'Isento / VIP' ? '' : prev.plan,
+                              offerId: prev.offerId === 'vip' ? '' : prev.offerId,
+                              planPrice: prev.planPrice === 0 ? undefined : prev.planPrice,
+                              setupPrice: prev.setupPrice === 0 ? undefined : prev.setupPrice,
+                              customMonthlyPrice: undefined,
+                              customSetupPrice: undefined
+                            })
+                          }));
+                        }}
+                      >
+                        {(props) => (
+                          <Switch.Control className="bg-gray-700 rounded-full w-11 h-6 relative inline-flex items-center cursor-pointer">
+                            <Switch.Thumb className={`bg-white rounded-full w-5 h-5 transition-transform ${props.isSelected ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                          </Switch.Control>
+                        )}
+                      </Switch>
+                    </div>
                   </div>
 
                   {!formData.isCourtesy ? (
@@ -518,16 +538,22 @@ function ClientModal({
 
                             {formData.billingCycle === 'YEARLY' && (
                               <div className="mt-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-                                <label className="flex items-center justify-between cursor-pointer">
+                                <div className="flex items-center justify-between">
                                   <div>
                                     <span className="text-sm font-bold text-emerald-400">Pagamento Combo (Setup + Anual)</span>
                                     <p className="text-[10px] text-gray-400">Permite parcelar o valor total no cartão</p>
                                   </div>
-                                  <div className="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" className="sr-only peer" checked={formData.isCombo || false} onChange={(e) => setFormData(prev => ({ ...prev, isCombo: e.target.checked, billingType: e.target.checked ? 'CREDIT_CARD' : prev.billingType }))} />
-                                    <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-                                  </div>
-                                </label>
+                                  <Switch 
+                                    defaultSelected={formData.isCombo || false}
+                                    onChange={(e: any) => setFormData(prev => ({ ...prev, isCombo: e.target.checked, billingType: e.target.checked ? 'CREDIT_CARD' : prev.billingType }))}
+                                  >
+                                    {(props) => (
+                                      <Switch.Control className="bg-gray-700 rounded-full w-11 h-6 relative inline-flex items-center cursor-pointer">
+                                        <Switch.Thumb className={`bg-white rounded-full w-5 h-5 transition-transform ${props.isSelected ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                                      </Switch.Control>
+                                    )}
+                                  </Switch>
+                                </div>
                                 {formData.isCombo && (
                                   <div className="mt-3 pt-3 border-t border-emerald-500/10">
                                     <div className="flex justify-between items-center mb-2">
@@ -561,12 +587,26 @@ function ClientModal({
                       {(formData.isCombo || selectedOffer?.type === 'SINGLE') && (formData.billingType === 'CREDIT_CARD' || !formData.billingType) && (
                         <div className="mt-6">
                           <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Máximo de Parcelas (Cartão de Crédito)</label>
-                          <select value={formData.maxInstallments || 12} onChange={(e) => setFormData(prev => ({ ...prev, maxInstallments: Number(e.target.value) }))}
-                            className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all">
-                            {Array.from({ length: selectedOffer?.maxInstallments || 12 }, (_, i) => i + 1).map(num => (
-                              <option key={num} value={num} className="bg-white dark:bg-gray-900">{num === 1 ? 'À vista (1x)' : `Até ${num}x`}</option>
-                            ))}
-                          </select>
+                          <Select 
+                            value={String(formData.maxInstallments || 12)}
+                            onChange={(val) => setFormData(prev => ({ ...prev, maxInstallments: Number(val) }))}
+                            placeholder="Selecione o limite de parcelas"
+                            className="w-full"
+                          >
+                            <Select.Trigger className="w-full flex items-center justify-between px-4 py-3 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white transition-all text-sm">
+                              <Select.Value />
+                              <Select.Indicator />
+                            </Select.Trigger>
+                            <Select.Popover className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-white/10 rounded-xl shadow-xl p-2 z-50 max-h-60 overflow-y-auto">
+                              <ListBox onAction={(key) => setFormData(prev => ({ ...prev, maxInstallments: Number(key) }))}>
+                                {Array.from({ length: selectedOffer?.maxInstallments || 12 }, (_, i) => i + 1).map(num => (
+                                  <ListBox.Item key={num} id={String(num)} textValue={num === 1 ? 'À vista (1x)' : `Até ${num}x`}>
+                                    {num === 1 ? 'À vista (1x)' : `Até ${num}x`}
+                                  </ListBox.Item>
+                                ))}
+                              </ListBox>
+                            </Select.Popover>
+                          </Select>
                           <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">O cliente poderá escolher no checkout parcelar em até {formData.maxInstallments || 12} vezes.</p>
                         </div>
                       )}

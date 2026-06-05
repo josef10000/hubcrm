@@ -3,12 +3,19 @@ import { createPortal } from 'react-dom';
 import { 
   X, Search, User, MessageSquare, AlertTriangle, 
   CheckCircle, BookOpen, Copy, ExternalLink, 
-  History, Send, Info, Clock, ShieldAlert,
-  Hash, Globe, Phone, Mail
+  History, Send, Info, Clock,
+  Phone, Mail
 } from 'lucide-react';
 import { useCRM } from '@crm/contexts/CRMContext';
-import { toast } from 'sonner';
-import { Client, WikiArticle } from '@/types';
+import { 
+  TextField, 
+  Input, 
+  TextArea, 
+  Select, 
+  ListBox, 
+  toast 
+} from '@heroui/react';
+import { Client } from '@/types';
 
 interface SupportRequestModalProps {
   isOpen: boolean;
@@ -107,30 +114,36 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId, 
         clientSite !== (selectedClient.siteLink || '') ||
         clientWhatsapp !== (selectedClient.whatsapp || '');
 
-      if (dataChanged) {
-        await handleSaveClient({
-          id: selectedClient.id,
-          email: clientEmail,
-          siteLink: clientSite,
-          whatsapp: clientWhatsapp
-        });
-      }
+      const submitPromise = (async () => {
+        if (dataChanged) {
+          await handleSaveClient({
+            id: selectedClient.id,
+            email: clientEmail,
+            siteLink: clientSite,
+            whatsapp: clientWhatsapp
+          });
+        }
 
-      if (isNoteOnly) {
-        // Apenas registrar na timeline
-        await handleAddClientLog(selectedClient.id, `[Interação WhatsApp] ${message}`);
-      } else {
-        // Criar chamado
-        await handleCreateSupportRequest({
-          clientId: selectedClient.id,
-          clientName: selectedClient.name,
-          category,
-          priority,
-          message,
-          whatsappContext,
-          origin: 'whatsapp'
-        });
-      }
+        if (isNoteOnly) {
+          await handleAddClientLog(selectedClient.id, `[Interação WhatsApp] ${message}`);
+        } else {
+          await handleCreateSupportRequest({
+            clientId: selectedClient.id,
+            clientName: selectedClient.name,
+            category,
+            priority,
+            message,
+            whatsappContext,
+            origin: 'whatsapp'
+          });
+        }
+      })();
+
+      await toast.promise(submitPromise, {
+        loading: isNoteOnly ? 'Registrando interação...' : 'Abrindo chamado...',
+        success: isNoteOnly ? 'Interação registrada com sucesso!' : 'Chamado aberto com sucesso!',
+        error: (err: Error) => `Erro ao processar: ${err.message}`
+      });
 
       onClose();
       // Reset form
@@ -139,7 +152,7 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId, 
       setMessage('');
       setWhatsappContext('');
     } catch (e) {
-      // toast is handled in context
+      // Tratas pelo toast.promise
     } finally {
       setIsSubmitting(false);
     }
@@ -192,14 +205,16 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId, 
                 <label className="text-xs font-black uppercase tracking-widest text-gray-500 mb-2 block">Cliente</label>
                 {!selectedClient ? (
                   <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                    <input 
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Buscar por nome, WhatsApp ou e-mail..."
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white outline-none focus:border-primary-500/50 transition-all font-medium"
-                    />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 z-10" size={18} />
+                    <TextField className="w-full" name="clientSearch">
+                      <Input 
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Buscar por nome, WhatsApp ou e-mail..."
+                        className="w-full pl-12"
+                      />
+                    </TextField>
                     {filteredClients.length > 0 && (
                       <div className="absolute top-full left-0 w-full bg-[#1a1a1a] border border-white/10 rounded-2xl mt-2 overflow-hidden shadow-2xl z-20">
                         {filteredClients.map(c => (
@@ -257,28 +272,32 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId, 
             {selectedClient && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-500">
                 <div>
-                  <label className="text-xs font-black uppercase tracking-widest text-gray-500 mb-2 block">WhatsApp</label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" size={16} />
-                    <input 
-                      type="text" 
-                      value={clientWhatsapp}
-                      onChange={e => setClientWhatsapp(e.target.value)}
-                      className="w-full bg-white/5 border border-white/5 rounded-xl py-2 pl-10 pr-4 text-sm text-gray-300 outline-none focus:border-white/20"
-                    />
-                  </div>
+                  <TextField className="w-full" name="clientWhatsapp">
+                    <label className="text-xs font-black uppercase tracking-widest text-gray-500 mb-2 block">WhatsApp</label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 z-10" size={16} />
+                      <Input 
+                        type="text" 
+                        value={clientWhatsapp}
+                        onChange={e => setClientWhatsapp(e.target.value)}
+                        className="w-full pl-10"
+                      />
+                    </div>
+                  </TextField>
                 </div>
                 <div>
-                  <label className="text-xs font-black uppercase tracking-widest text-gray-500 mb-2 block">E-mail</label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" size={16} />
-                    <input 
-                      type="email" 
-                      value={clientEmail}
-                      onChange={e => setClientEmail(e.target.value)}
-                      className="w-full bg-white/5 border border-white/5 rounded-xl py-2 pl-10 pr-4 text-sm text-gray-300 outline-none focus:border-white/20"
-                    />
-                  </div>
+                  <TextField className="w-full" name="clientEmail">
+                    <label className="text-xs font-black uppercase tracking-widest text-gray-500 mb-2 block">E-mail</label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 z-10" size={16} />
+                      <Input 
+                        type="email" 
+                        value={clientEmail}
+                        onChange={e => setClientEmail(e.target.value)}
+                        className="w-full pl-10"
+                      />
+                    </div>
+                  </TextField>
                 </div>
               </div>
             )}
@@ -296,18 +315,27 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId, 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-xs font-black uppercase tracking-widest text-gray-500 mb-2 block">Categoria</label>
-                <select 
-                  value={category}
-                  onChange={e => setCategory(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 px-4 text-white outline-none focus:border-primary-500/50 appearance-none font-medium"
+                <Select 
+                  placeholder="Selecionar..." 
+                  value={category} 
+                  onChange={(val) => setCategory(val || 'Suporte Técnico')}
+                  className="w-full"
                 >
-                  <option value="Suporte Técnico">Suporte Técnico</option>
-                  <option value="Financeiro">Financeiro</option>
-                  <option value="Dúvida / Wiki">Dúvida / Wiki</option>
-                  <option value="Bug / Erro">Bug / Erro</option>
-                  <option value="Sugestão">Sugestão / Melhoria</option>
-                  <option value="Outros">Outros</option>
-                </select>
+                  <Select.Trigger className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-sm flex justify-between items-center cursor-pointer">
+                    <Select.Value>{category}</Select.Value>
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover className="bg-neutral-900 border border-white/10 rounded-xl p-1 shadow-xl z-50">
+                    <ListBox>
+                      <ListBox.Item id="Suporte Técnico" textValue="Suporte Técnico">Suporte Técnico</ListBox.Item>
+                      <ListBox.Item id="Financeiro" textValue="Financeiro">Financeiro</ListBox.Item>
+                      <ListBox.Item id="Dúvida / Wiki" textValue="Dúvida / Wiki">Dúvida / Wiki</ListBox.Item>
+                      <ListBox.Item id="Bug / Erro" textValue="Bug / Erro">Bug / Erro</ListBox.Item>
+                      <ListBox.Item id="Sugestão" textValue="Sugestão / Melhoria">Sugestão / Melhoria</ListBox.Item>
+                      <ListBox.Item id="Outros" textValue="Outros">Outros</ListBox.Item>
+                    </ListBox>
+                  </Select.Popover>
+                </Select>
               </div>
               <div>
                 <label className="text-xs font-black uppercase tracking-widest text-gray-500 mb-2 block">Prioridade</label>
@@ -344,24 +372,24 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId, 
                   <span className="text-[10px] font-black uppercase tracking-wider">Apenas Registrar Nota</span>
                 </button>
               </div>
-              <textarea 
+              <TextArea 
                 value={message}
                 onChange={e => setMessage(e.target.value)}
                 placeholder={isNoteOnly ? "O que foi conversado no WhatsApp?" : "O que o cliente relatou ou o que precisa ser feito?"}
                 className="w-full min-h-[120px] bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-white outline-none focus:border-primary-500/50 transition-all placeholder-gray-600 custom-scrollbar resize-none"
-              ></textarea>
+              />
             </div>
 
             <div className="bg-black/20 p-4 rounded-2xl border border-white/5">
               <label className="text-xs font-black uppercase tracking-widest text-gray-600 mb-2 block flex items-center gap-2">
                 <History size={14} /> Draft: Resumo / Contexto WhatsApp (Interno)
               </label>
-              <textarea 
+              <TextArea 
                 value={whatsappContext}
                 onChange={e => setWhatsappContext(e.target.value)}
                 placeholder="Cole aqui o trecho da conversa ou observações internas que não devem ir no chamado público..."
                 className="w-full min-h-[80px] bg-transparent text-gray-400 text-xs outline-none placeholder-gray-700 custom-scrollbar resize-none"
-              ></textarea>
+              />
             </div>
 
             <button 
@@ -394,18 +422,20 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId, 
             <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
               <BookOpen size={18} className="text-primary-400" /> Wiki Hub
             </h3>
-            <p className="text-gray-500 text-xs">Busca rápida de manuais e manuais.</p>
+            <p className="text-gray-500 text-xs">Busca rápida de manuais.</p>
           </div>
 
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={14} />
-            <input 
-              type="text" 
-              value={wikiSearch}
-              onChange={e => setWikiSearch(e.target.value)}
-              placeholder="Pesquisar guia..."
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-9 pr-3 text-xs text-white outline-none focus:border-primary-500/30"
-            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 z-10" size={14} />
+            <TextField className="w-full" name="wikiSearch">
+              <Input 
+                type="text" 
+                value={wikiSearch}
+                onChange={e => setWikiSearch(e.target.value)}
+                placeholder="Pesquisar guia..."
+                className="w-full pl-9 pr-3 text-xs"
+              />
+            </TextField>
           </div>
 
           <div className="space-y-3">
@@ -448,9 +478,9 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId, 
                 </div>
              ))}
              {filteredWiki.length === 0 && (
-               <div className="text-center py-10">
-                 <p className="text-gray-600 text-xs italic">Nenhum guia encontrado.</p>
-               </div>
+                <div className="text-center py-10">
+                  <p className="text-gray-600 text-xs italic">Nenhum guia encontrado.</p>
+                </div>
              )}
           </div>
 

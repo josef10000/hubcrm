@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { Shield, FileText, CheckCircle, Clock, Search, ExternalLink, Download, Mail, Filter, AlertCircle } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Shield, FileText, CheckCircle, Clock, Search, ExternalLink, Download, Mail } from 'lucide-react';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Table, Chip } from '@heroui/react';
 
 type ContractTab = 'pending' | 'signed' | 'archive';
 
@@ -11,6 +12,10 @@ export default function ContractsView() {
   const { clients } = useCRM();
   const [activeTab, setActiveTab] = useState<ContractTab>('pending');
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortDescriptor, setSortDescriptor] = useState<{column: string, direction: 'ascending' | 'descending'}>({
+    column: 'name',
+    direction: 'ascending'
+  });
 
   // Lógica de Filtragem de Contratos
   const allContractClients = clients.filter(c => c.contracts && c.contracts.length > 0);
@@ -24,12 +29,51 @@ export default function ContractsView() {
     return true; // Archive tab
   });
 
+  const sortedClients = useMemo(() => {
+    const list = [...filteredClients];
+    list.sort((a, b) => {
+      const col = sortDescriptor.column;
+      
+      let first = a[col as keyof typeof a];
+      let second = b[col as keyof typeof b];
+
+      if (col === 'createdAt') {
+        first = a.contracts?.[0]?.createdAt || 0;
+        second = b.contracts?.[0]?.createdAt || 0;
+      }
+      if (col === 'status') {
+        first = a.contracts?.[0]?.status || '';
+        second = b.contracts?.[0]?.status || '';
+      }
+
+      if (first === undefined || first === null) return 1;
+      if (second === undefined || second === null) return -1;
+
+      let cmp = 0;
+      if (typeof first === 'string' && typeof second === 'string') {
+        cmp = first.localeCompare(second);
+      } else {
+        cmp = (first as any) < (second as any) ? -1 : (first as any) > (second as any) ? 1 : 0;
+      }
+      return sortDescriptor.direction === 'descending' ? -cmp : cmp;
+    });
+    return list;
+  }, [filteredClients, sortDescriptor]);
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'signed':
-        return <span className="px-3 py-1 bg-green-500/10 text-green-400 border border-green-500/20 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5"><CheckCircle size={10} /> Assinado</span>;
+        return (
+          <Chip size="sm" variant="flat" color="success" className="border border-green-500/20">
+            <CheckCircle className="inline w-3 h-3 mr-1" /> Assinado
+          </Chip>
+        );
       default:
-        return <span className="px-3 py-1 bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5"><Clock size={10} /> Pendente</span>;
+        return (
+          <Chip size="sm" variant="flat" color="warning" className="border border-yellow-500/20">
+            <Clock className="inline w-3 h-3 mr-1" /> Pendente
+          </Chip>
+        );
     }
   };
 
@@ -50,7 +94,7 @@ export default function ContractsView() {
 
           <div className="flex items-center gap-4">
              <div className="relative group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-primary-400 transition-colors" size={18} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-primary-400 transition-colors z-10" size={18} />
               <input 
                 type="text"
                 placeholder="Buscar cliente..."
@@ -87,90 +131,82 @@ export default function ContractsView() {
           />
         </div>
 
-        {/* Lista de Documentos */}
+        {/* Lista de Documentos em Tabela */}
         <div className="space-y-4">
-          <AnimatePresence mode="popLayout">
-            {filteredClients.length > 0 ? (
-              filteredClients.map((client) => (
-                <motion.div
-                  key={client.id}
-                  layout
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="group relative overflow-hidden p-6 bg-white/[0.02] hover:bg-white/[0.04] border border-white/5 hover:border-white/10 rounded-3xl backdrop-blur-3xl transition-all duration-500"
+          <AnimatePresence mode="wait">
+            {sortedClients.length > 0 ? (
+              <Table>
+                <Table.Content 
+                  aria-label="Tabela de Contratos"
+                  sortDescriptor={sortDescriptor}
+                  onSortChange={(desc) => setSortDescriptor(desc as any)}
+                  className="bg-black/40 border border-white/10 rounded-2xl p-4 backdrop-blur-xl w-full"
                 >
-                  <div className="flex flex-col lg:flex-row lg:items-center gap-6">
-                    {/* Document Info */}
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className="w-14 h-14 bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl flex items-center justify-center text-gray-400 group-hover:text-primary-400 group-hover:scale-110 transition-all duration-500 border border-white/5">
-                        <FileText size={28} />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-white mb-1 group-hover:text-primary-400 transition-colors uppercase tracking-tight">
-                          Contrato Digital: {client.name}
-                        </h3>
-                        <div className="flex flex-wrap items-center gap-3">
-                          <span className="text-xs text-gray-500 flex items-center gap-1.5 font-medium">
-                            <Clock size={12} />
-                            Enviado em {format(client.contracts?.[0].createdAt || Date.now(), 'dd MMM yyyy', { locale: ptBR })}
-                          </span>
-                          <span className="w-1 h-1 bg-gray-700 rounded-full" />
-                          <span className="text-xs text-gray-400 bg-white/5 px-2 py-0.5 rounded border border-white/5">
-                            {client.plan}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Status & Timing */}
-                    <div className="flex items-center gap-8 px-6 border-x border-white/5 hidden lg:flex">
-                      <div className="text-center">
-                        <p className="text-[10px] uppercase font-bold text-gray-500 mb-1 leading-none tracking-widest">Status Atual</p>
-                        {getStatusBadge(client.contracts?.[0].status || 'pending')}
-                      </div>
-                      
-                      {client.contracts?.[0].status === 'signed' && (
-                        <div className="text-center">
-                          <p className="text-[10px] uppercase font-bold text-gray-500 mb-1 leading-none tracking-widest">Assinado em</p>
-                          <p className="text-xs font-semibold text-green-500">
-                             {format(client.contracts?.[0].signedAt || Date.now(), 'dd/MM/yyyy HH:mm')}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-2">
-                       <button className="p-3 bg-white/5 hover:bg-primary-500/20 text-gray-400 hover:text-primary-400 rounded-xl transition-all border border-white/5 group/btn relative" title="Visualizar">
-                        <ExternalLink size={18} />
-                      </button>
-                       <button className="p-3 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white rounded-xl transition-all border border-white/5" title="Baixar Cópia">
-                        <Download size={18} />
-                      </button>
-                      
-                      {client.contracts?.[0].status === 'pending' && (
-                        <button className="flex items-center gap-2 px-5 py-3 bg-primary-500 hover:bg-primary-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-primary-500/20 active:scale-95">
-                          <Mail size={18} />
-                          Reenviar Link
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              ))
+                  <Table.Header>
+                    <Table.Column id="name" allowsSorting>CLIENTE / CONTRATO</Table.Column>
+                    <Table.Column id="plan">PLANO</Table.Column>
+                    <Table.Column id="createdAt" allowsSorting>DATA DE ENVIO</Table.Column>
+                    <Table.Column id="status" allowsSorting>STATUS</Table.Column>
+                    <Table.Column id="signedAt">DATA DE ASSINATURA</Table.Column>
+                    <Table.Column id="actions">AÇÕES</Table.Column>
+                  </Table.Header>
+                  <Table.Body>
+                    {sortedClients.map((client) => {
+                      const contract = client.contracts?.[0];
+                      return (
+                        <Table.Row key={client.id}>
+                          <Table.Cell className="font-bold text-white py-3">
+                            <div className="flex items-center gap-3">
+                              <FileText className="w-4 h-4 text-gray-400" />
+                              <span>Contrato: {client.name}</span>
+                            </div>
+                          </Table.Cell>
+                          <Table.Cell>
+                            <Chip size="sm" variant="bordered" className="text-gray-400 border-white/10">
+                              {client.plan}
+                            </Chip>
+                          </Table.Cell>
+                          <Table.Cell className="text-xs text-gray-400">
+                            {contract?.createdAt ? format(contract.createdAt, 'dd MMM yyyy', { locale: ptBR }) : '-'}
+                          </Table.Cell>
+                          <Table.Cell>
+                            {getStatusBadge(contract?.status || 'pending')}
+                          </Table.Cell>
+                          <Table.Cell className="text-xs text-gray-400">
+                            {contract?.status === 'signed' && contract.signedAt 
+                              ? format(contract.signedAt, 'dd/MM/yyyy HH:mm') 
+                              : '-'}
+                          </Table.Cell>
+                          <Table.Cell>
+                            <div className="flex items-center gap-2">
+                              <button className="p-2 bg-white/5 hover:bg-primary-500/20 text-gray-400 hover:text-primary-400 rounded-lg transition-all border border-white/5" title="Visualizar">
+                                <ExternalLink size={14} />
+                              </button>
+                              <button className="p-2 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white rounded-lg transition-all border border-white/5" title="Baixar Cópia">
+                                <Download size={14} />
+                              </button>
+                              {contract?.status === 'pending' && (
+                                <button className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-500 hover:bg-primary-600 text-white font-bold rounded-lg text-xs transition-all shadow-lg shadow-primary-500/20 active:scale-95">
+                                  <Mail size={12} />
+                                  Reenviar
+                                </button>
+                              )}
+                            </div>
+                          </Table.Cell>
+                        </Table.Row>
+                      );
+                    })}
+                  </Table.Body>
+                </Table.Content>
+              </Table>
             ) : (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="py-32 flex flex-col items-center justify-center bg-white/[0.01] border border-dashed border-white/10 rounded-[3rem] text-center"
-              >
+              <div className="py-32 flex flex-col items-center justify-center bg-white/[0.01] border border-dashed border-white/10 rounded-[3rem] text-center">
                 <div className="p-6 bg-gray-900/50 rounded-full mb-6 border border-white/5">
                   <Shield size={48} className="text-gray-700" />
                 </div>
                 <h3 className="text-2xl font-bold text-white mb-2">Sem contratos {activeTab === 'pending' ? 'pendentes' : 'nesta aba'}</h3>
                 <p className="text-gray-500 max-w-sm">Tudo em ordem no jurídico! Quando houver movimentação nos documentos digitais, eles aparecerão aqui.</p>
-              </motion.div>
+              </div>
             )}
           </AnimatePresence>
         </div>
