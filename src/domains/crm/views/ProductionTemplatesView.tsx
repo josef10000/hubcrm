@@ -34,6 +34,9 @@ interface ProductionTemplate {
   updatedAt?: number;
 }
 
+// Categorias disponíveis para filtro de templates
+const categories = ['Todos', 'Landing Page', 'SaaS', 'Institucional', 'E-commerce'];
+
 // Lista estendida de sugestões de variáveis prontas e clicáveis
 const SUGGESTED_VARIABLES = [
   // Cores e Estilo
@@ -516,6 +519,33 @@ export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'temp
     setIsPromptPanelOpen(true);
   };
 
+  const handleClientChange = (clientId: string) => {
+    setSelectedClientId(clientId);
+    if (!clientId) {
+      setCustomAnswers(prev => {
+        const copy = { ...prev };
+        delete copy['{NOME_CLIENTE}'];
+        delete copy['{WHATSAPP_CLIENTE}'];
+        delete copy['{EMAIL_CLIENTE}'];
+        delete copy['{NICHO_CLIENTE}'];
+        return copy;
+      });
+      return;
+    }
+
+    const client = clients.find(c => c.id === clientId);
+    if (client) {
+      setCustomAnswers(prev => ({
+        ...prev,
+        '{NOME_CLIENTE}': client.name || '',
+        '{WHATSAPP_CLIENTE}': client.whatsapp || '',
+        '{EMAIL_CLIENTE}': client.email || '',
+        '{NICHO_CLIENTE}': client.niche || ''
+      }));
+      toast.success(`Dados de ${client.name} carregados do CRM!`);
+    }
+  };
+
   const getGeneratedPrompt = () => {
     if (!selectedTemplate) return '';
 
@@ -581,7 +611,7 @@ export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'temp
 
             <div className="flex gap-4 mt-6 border-b border-white/5 pb-1 font-bold">
               <button
-                onClick={() => setActiveTab('templates')}
+                onClick={() => setLocalActiveTab('templates')}
                 className={`pb-2 text-sm uppercase tracking-wider transition-all border-b-2 ${
                   activeTab === 'templates'
                     ? 'border-primary-500 text-white'
@@ -591,7 +621,7 @@ export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'temp
                 Catálogo de Templates
               </button>
               <button
-                onClick={() => setActiveTab('prompts')}
+                onClick={() => setLocalActiveTab('prompts')}
                 className={`pb-2 text-sm uppercase tracking-wider transition-all border-b-2 ${
                   activeTab === 'prompts'
                     ? 'border-primary-500 text-white'
