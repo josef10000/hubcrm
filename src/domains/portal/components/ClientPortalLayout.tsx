@@ -19,7 +19,7 @@ import { usePortalData } from '@/hooks/usePortalData';
 import { toast, Toaster } from 'sonner';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 
 // Importando as views
 import PortalHome from '../views/PortalHome';
@@ -49,35 +49,92 @@ export default function ClientPortalLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isClientAdmin, setIsClientAdmin] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
 
   // Escuta autenticação para verificar se o usuário está logado como client_admin
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
+      setAuthLoading(true);
       if (user) {
         setCurrentUser(user);
         try {
           const profileSnap = await getDoc(doc(db, 'profiles', user.uid));
           if (profileSnap.exists()) {
             const pData = profileSnap.data();
-            const isAuthorized = 
-              (pData.role === 'client_admin' && pData.orgId === orgId) ||
-              (pData.role === 'admin' || pData.role === 'manager');
             
-            setIsClientAdmin(isAuthorized);
+            // Administradores corporativos têm acesso irrestrito
+            if (pData.role === 'admin' || pData.role === 'manager') {
+              setIsClientAdmin(true);
+              setAuthLoading(false);
+              return;
+            }
+
+            if (pData.role === 'client_admin') {
+              // Se o cliente tentar acessar o portal de outro ID de cliente, redireciona para o correto dele
+              if (pData.orgId !== orgId || pData.clientId !== clientId) {
+                console.warn(`[PortalGuard] Divergência de rota. Redirecionando para o portal correto do cliente: /portal/${pData.orgId}/${pData.clientId}`);
+                navigate(`/portal/${pData.orgId}/${pData.clientId}`);
+                setAuthLoading(false);
+                return;
+              }
+              setIsClientAdmin(true);
+            } else {
+              setIsClientAdmin(false);
+            }
           } else {
             setIsClientAdmin(false);
           }
         } catch (e) {
-          console.error(e);
+          console.error('[PortalGuard] Erro ao carregar perfil:', e);
           setIsClientAdmin(false);
         }
       } else {
         setCurrentUser(null);
         setIsClientAdmin(false);
       }
+      setAuthLoading(false);
     });
     return () => unsub();
-  }, [orgId]);
+  }, [orgId, clientId, navigate]);
+
+  // Validação em tempo real do e-mail do card do cliente contra o e-mail logado
+  useEffect(() => {
+    if (loading || authLoading || !client || !currentUser || !isClientAdmin) return;
+
+    const validateEmailAndAccess = async () => {
+      try {
+        // Ignora a validação de e-mail do card se for um administrador corporativo (suporte/admin)
+        const profileSnap = await getDoc(doc(db, 'profiles', currentUser.uid));
+        if (profileSnap.exists()) {
+          const pData = profileSnap.data();
+          if (pData.role === 'admin' || pData.role === 'manager') return;
+        }
+
+        const cardEmail = client.email?.trim().toLowerCase();
+        const authEmail = currentUser.email?.trim().toLowerCase();
+
+        if (cardEmail && authEmail && cardEmail !== authEmail) {
+          console.warn(`[PortalGuard] E-mail do card alterado no CRM! Card=${cardEmail}, Login=${authEmail}. Revogando sessões.`);
+          toast.error('O e-mail de acesso deste portal foi alterado pelo administrador. Sessão encerrada.');
+
+          // Remove o profile obsoleto
+          try {
+            await deleteDoc(doc(db, 'profiles', currentUser.uid));
+          } catch (delErr) {
+            console.error('[PortalGuard] Falha ao remover profile obsoleto do Firestore:', delErr);
+          }
+
+          // Desconecta e limpa estados
+          await auth.signOut();
+          navigate('/portal/login');
+        }
+      } catch (err) {
+        console.error('[PortalGuard] Erro na validação de e-mail em tempo real:', err);
+      }
+    };
+
+    validateEmailAndAccess();
+  }, [client, loading, currentUser, authLoading, isClientAdmin, navigate]);
 
   const navItems = [
     { id: 'home', label: 'Dashboard', icon: LayoutDashboard },
@@ -91,27 +148,7 @@ export default function ClientPortalLayout() {
     { id: 'support', label: 'Atendimento', icon: MessageCircle },
   ];
 
-  const RenderLockScreen = ({ tabName }: { tabName: string }) => {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 px-6 text-center max-w-md mx-auto animate-in fade-in zoom-in duration-300">
-        <div className="w-16 h-16 bg-primary-500/10 rounded-full flex items-center justify-center mb-6 border border-primary-500/20 shadow-lg shadow-primary-500/5">
-          <Lock className="w-8 h-8 text-primary-400" />
-        </div>
-        <h3 className="text-xl font-bold text-white mb-2">Área Restrita: {tabName}</h3>
-        <p className="text-gray-400 text-sm mb-8 leading-relaxed">
-          Esta área contém informações administrativas e de agendamento reservadas para o dono da empresa. Faça login com suas credenciais do portal para acessar.
-        </p>
-        <button
-          onClick={() => navigate('/portal/login')}
-          className="w-full py-4 bg-primary-500 hover:bg-primary-600 text-white font-bold rounded-2xl transition-all shadow-lg shadow-primary-500/20 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
-        >
-          <span>Acessar com Login</span>
-        </button>
-      </div>
-    );
-  };
-
-  if (loading && !client) {
+  if ((loading && !client) || authLoading) {
     return (
       <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center">
         <motion.div 
@@ -136,6 +173,47 @@ export default function ClientPortalLayout() {
           <button onClick={() => window.location.reload()} className="w-full py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl transition-colors">
             Tentar Novamente
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Se o usuário não estiver autenticado/autorizado para este portal, exibe a tela de bloqueio total
+  if (!isClientAdmin) {
+    return (
+      <div className="min-h-screen bg-[#030712] flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans select-none animate-in fade-in duration-300">
+        {/* Orbes Decorativas */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+          <div className="absolute top-[-20%] left-[-20%] w-[50vw] h-[50vw] bg-primary-600/10 rounded-full blur-[140px]"></div>
+          <div className="absolute bottom-[-20%] right-[-20%] w-[50vw] h-[50vw] bg-blue-600/10 rounded-full blur-[140px]"></div>
+        </div>
+
+        <div className="max-w-md w-full text-center space-y-6 relative z-10">
+          {/* Cabeçalho */}
+          <div className="flex flex-col items-center">
+            <div className="relative mb-4">
+              <div className="absolute inset-0 bg-primary-500/20 blur-2xl rounded-full"></div>
+              <div className="relative w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center shadow-xl shadow-primary-500/20 border border-white/15">
+                <Lock className="w-8 h-8 text-white" />
+              </div>
+            </div>
+            <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">PORTAL DO CLIENTE</h1>
+            <p className="text-gray-400 text-xs mt-1 uppercase tracking-[0.2em] font-bold">Hub Symples &bull; Área Restrita</p>
+          </div>
+
+          {/* Card Glassmorphic */}
+          <div className="bg-white/[0.03] backdrop-blur-[35px] border border-white/10 p-8 rounded-[2.5rem] shadow-2xl space-y-6">
+            <h2 className="text-lg font-bold text-white mb-2">Autenticação Obrigatória</h2>
+            <p className="text-gray-400 text-sm leading-relaxed">
+              Para acessar os serviços de Agenda, CRM Financeiro e documentos do portal da sua empresa, por favor efetue o login.
+            </p>
+            <button
+              onClick={() => navigate('/portal/login')}
+              className="w-full py-4 bg-primary-500 hover:bg-primary-600 text-white font-bold rounded-2xl transition-all shadow-lg shadow-primary-500/20 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 text-sm"
+            >
+              <span>Acessar com Login</span>
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -342,18 +420,10 @@ export default function ClientPortalLayout() {
             >
               {activeTab === 'home' && <PortalHome client={client} announcement={announcement} setActiveTab={setActiveTab} />}
               {activeTab === 'agenda' && (
-                isClientAdmin ? (
-                  <PortalAgenda orgId={orgId || ''} clientId={activeClientId || ''} />
-                ) : (
-                  <RenderLockScreen tabName="Agenda" />
-                )
+                <PortalAgenda orgId={orgId || ''} clientId={activeClientId || ''} />
               )}
               {activeTab === 'crm_finance' && (
-                isClientAdmin ? (
-                  <PortalCRMFinance orgId={orgId || ''} clientId={activeClientId || ''} />
-                ) : (
-                  <RenderLockScreen tabName="CRM Financeiro" />
-                )
+                <PortalCRMFinance orgId={orgId || ''} clientId={activeClientId || ''} />
               )}
               {activeTab === 'finance' && (
                 <PortalFinance 
