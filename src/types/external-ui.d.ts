@@ -1,6 +1,9 @@
 declare module '@heroui/react' {
   import React from 'react';
   
+  // Tipo utilitário: base para sub-componentes que aceitam children + className
+  type SubFC<P = {}> = React.FC<{ children?: React.ReactNode; className?: string } & P>;
+
   export function cn(...inputs: any[]): string;
 
   export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -13,18 +16,19 @@ declare module '@heroui/react' {
 
   export interface ButtonGroupProps {
     children?: React.ReactNode;
+    className?: string;
     fullWidth?: boolean;
     size?: 'sm' | 'md' | 'lg';
     variant?: string;
   }
   export const ButtonGroup: React.FC<ButtonGroupProps> & {
-    Separator: React.FC;
+    Separator: React.FC<{ className?: string }>;
   };
 
   export const Description: React.FC<{ children?: React.ReactNode; className?: string }>;
   export const Header: React.FC<{ children?: React.ReactNode; className?: string }>;
   export const Label: React.FC<{ children?: React.ReactNode; className?: string; htmlFor?: string }>;
-  export const Separator: React.FC<{ className?: string }>;
+  export const Separator: React.FC<{ className?: string; orientation?: string }>;
   
   export interface KbdProps {
     children?: React.ReactNode;
@@ -34,21 +38,22 @@ declare module '@heroui/react' {
   }
   export const Kbd: React.FC<KbdProps> & {
     Abbr: React.FC<{ keyValue: string }>;
-    Content: React.FC<{ children?: React.ReactNode }>;
+    Content: SubFC;
   };
 
   export interface DropdownProps {
     children?: React.ReactNode;
   }
   export const Dropdown: React.FC<DropdownProps> & {
-    Popover: React.FC<{ children?: React.ReactNode }>;
-    Menu: React.FC<{ children?: React.ReactNode; onAction?: (key: any) => void }>;
-    Section: React.FC<{ children?: React.ReactNode }>;
-    Item: React.FC<{ children?: React.ReactNode; id: string; textValue?: string; variant?: string; className?: string }>;
+    Popover: SubFC;
+    Menu: SubFC<{ onAction?: (key: any) => void }>;
+    Section: SubFC;
+    Item: SubFC<{ id: string; textValue?: string; variant?: string }>;
   };
 
   export interface CalendarProps {
     children?: React.ReactNode;
+    className?: string;
     'aria-label'?: string;
     focusedValue?: any;
     value?: any;
@@ -56,29 +61,34 @@ declare module '@heroui/react' {
     onFocusChange?: (value: any) => void;
   }
   export const Calendar: React.FC<CalendarProps> & {
-    Header: React.FC<{ children?: React.ReactNode }>;
-    Heading: React.FC;
-    NavButton: React.FC<{ slot: 'previous' | 'next' }>;
-    Grid: React.FC<{ children?: React.ReactNode }>;
-    GridHeader: React.FC<{ children?: (day: string) => React.ReactNode }>;
-    HeaderCell: React.FC<{ children?: React.ReactNode }>;
-    GridBody: React.FC<{ children?: (date: any) => React.ReactNode }>;
-    Cell: React.FC<{ date: any }>;
+    Header: SubFC;
+    Heading: React.FC<{ className?: string }>;
+    NavButton: React.FC<{ slot: 'previous' | 'next'; className?: string }>;
+    Grid: SubFC;
+    GridHeader: SubFC<{ children?: (day: string) => React.ReactNode }>;
+    HeaderCell: SubFC;
+    GridBody: SubFC<{ children?: (date: any) => React.ReactNode }>;
+    Cell: React.FC<{ date: any; className?: string }>;
   };
 
   export interface CheckboxProps {
     children?: React.ReactNode;
+    className?: string;
     id?: string;
+    key?: any;
     checked?: boolean;
+    isSelected?: boolean;
+    defaultSelected?: boolean;
     onChange?: (e: any) => void;
+    onValueChange?: (isSelected: boolean) => void;
     variant?: string;
     slot?: string;
     'aria-label'?: string;
   }
   export const Checkbox: React.FC<CheckboxProps> & {
-    Control: React.FC<{ children?: React.ReactNode }>;
-    Indicator: React.FC;
-    Content: React.FC<{ children?: React.ReactNode }>;
+    Control: SubFC;
+    Indicator: React.FC<{ className?: string }>;
+    Content: SubFC;
   };
 
   export interface MeterProps {
@@ -88,9 +98,10 @@ declare module '@heroui/react' {
     className?: string;
   }
   export const Meter: React.FC<MeterProps> & {
-    Output: React.FC;
-    Track: React.FC<{ children?: React.ReactNode }>;
-    Fill: React.FC;
+    Output: React.FC<{ className?: string }>;
+    Track: SubFC;
+    Fill: React.FC<{ className?: string }>;
+    ValueLabel: React.FC<{ className?: string }>;
   };
 
   export interface PaginationProps {
@@ -98,14 +109,14 @@ declare module '@heroui/react' {
     className?: string;
   }
   export const Pagination: React.FC<PaginationProps> & {
-    Content: React.FC<{ children?: React.ReactNode }>;
-    Item: React.FC<{ children?: React.ReactNode; key?: any }>;
-    Previous: React.FC<{ children?: React.ReactNode; isDisabled?: boolean; onPress?: () => void }>;
-    PreviousIcon: React.FC;
-    Ellipsis: React.FC;
-    Link: React.FC<{ children?: React.ReactNode; isActive?: boolean; onPress?: () => void }>;
-    Next: React.FC<{ children?: React.ReactNode; isDisabled?: boolean; onPress?: () => void }>;
-    NextIcon: React.FC;
+    Content: SubFC;
+    Item: SubFC<{ key?: any }>;
+    Previous: SubFC<{ isDisabled?: boolean; onPress?: () => void }>;
+    PreviousIcon: React.FC<{ className?: string }>;
+    Ellipsis: React.FC<{ className?: string }>;
+    Link: SubFC<{ isActive?: boolean; onPress?: () => void }>;
+    Next: SubFC<{ isDisabled?: boolean; onPress?: () => void }>;
+    NextIcon: React.FC<{ className?: string }>;
   };
 
   export interface SelectProps {
@@ -114,21 +125,23 @@ declare module '@heroui/react' {
     placeholder?: string;
     value?: string;
     onChange?: (value: any) => void;
+    onSelectionChange?: (key: any) => void;
   }
   export const Select: React.FC<SelectProps> & {
-    Trigger: React.FC<{ children?: React.ReactNode }>;
-    Value: React.FC;
-    Indicator: React.FC;
-    Popover: React.FC<{ children?: React.ReactNode }>;
+    Trigger: SubFC;
+    Value: React.FC<{ className?: string; placeholder?: string }>;
+    Indicator: React.FC<{ className?: string }>;
+    Popover: SubFC;
   };
 
   export interface ListBoxProps {
     children?: React.ReactNode;
+    className?: string;
     onAction?: (key: any) => void;
   }
   export const ListBox: React.FC<ListBoxProps> & {
-    Item: React.FC<{ children?: React.ReactNode; id: string; textValue?: string }>;
-    ItemIndicator: React.FC;
+    Item: SubFC<{ id: string; textValue?: string }>;
+    ItemIndicator: React.FC<{ className?: string }>;
   };
 
   export interface SwitchRenderProps {
@@ -144,9 +157,9 @@ declare module '@heroui/react' {
     className?: string;
   }
   export const Switch: React.FC<SwitchProps> & {
-    Control: React.FC<{ children?: React.ReactNode; className?: string }>;
-    Thumb: React.FC<{ children?: React.ReactNode }>;
-    Icon: React.FC<{ children?: React.ReactNode }>;
+    Control: SubFC;
+    Thumb: SubFC;
+    Icon: SubFC;
   };
 
   export interface AvatarProps {
@@ -156,7 +169,7 @@ declare module '@heroui/react' {
   }
   export const Avatar: React.FC<AvatarProps> & {
     Image: React.FC<{ src?: string; className?: string }>;
-    Fallback: React.FC<{ children?: React.ReactNode; className?: string }>;
+    Fallback: SubFC;
   };
 
   export interface ChipProps {
@@ -176,24 +189,23 @@ declare module '@heroui/react' {
 
   export interface TableProps {
     children?: React.ReactNode;
+    className?: string;
   }
   export const Table: React.FC<TableProps> & {
-    ScrollContainer: React.FC<{ children?: React.ReactNode }>;
-    Content: React.FC<{
-      children?: React.ReactNode;
+    ScrollContainer: SubFC;
+    Content: SubFC<{
       'aria-label'?: string;
-      className?: string;
       selectedKeys?: Selection;
       selectionMode?: 'none' | 'single' | 'multiple';
       sortDescriptor?: SortDescriptor;
       onSelectionChange?: (keys: any) => void;
       onSortChange?: (descriptor: SortDescriptor) => void;
     }>;
-    Header: React.FC<{ children?: React.ReactNode }>;
-    Column: React.FC<{ children?: React.ReactNode | ((props: { sortDirection?: 'ascending' | 'descending' }) => React.ReactNode); className?: string; isRowHeader?: boolean; pr?: number; allowsSorting?: boolean; id?: string }>;
-    Body: React.FC<{ children?: React.ReactNode }>;
-    Row: React.FC<{ children?: React.ReactNode; id?: any }>;
-    Cell: React.FC<{ children?: React.ReactNode; className?: string }>;
+    Header: SubFC;
+    Column: SubFC<{ isRowHeader?: boolean; pr?: number; allowsSorting?: boolean; id?: string; children?: React.ReactNode | ((props: { sortDirection?: 'ascending' | 'descending' }) => React.ReactNode) }>;
+    Body: SubFC;
+    Row: SubFC<{ id?: any }>;
+    Cell: SubFC;
   };
 
   export interface TextFieldProps {
@@ -225,11 +237,13 @@ declare module '@heroui/react' {
     children?: React.ReactNode;
     className?: string;
     name?: string;
+    value?: any;
+    onChange?: (value: any) => void;
   }
   export const TimeField: React.FC<TimeFieldProps> & {
-    Group: React.FC<{ children?: React.ReactNode }>;
-    Input: React.FC<{ children?: (segment: any) => React.ReactNode }>;
-    Segment: React.FC<{ segment: any }>;
+    Group: SubFC;
+    Input: React.FC<{ children?: (segment: any) => React.ReactNode; className?: string }>;
+    Segment: React.FC<{ segment: any; className?: string }>;
   };
 
   export interface ToastOptions {
@@ -254,6 +268,7 @@ declare module '@heroui/react' {
 
   export interface ToolbarProps {
     children?: React.ReactNode;
+    className?: string;
     isAttached?: boolean;
     'aria-label'?: string;
   }
@@ -261,11 +276,12 @@ declare module '@heroui/react' {
 
   export interface ToggleButtonGroupProps {
     children?: React.ReactNode;
+    className?: string;
     'aria-label'?: string;
     selectionMode?: 'single' | 'multiple';
   }
   export const ToggleButtonGroup: React.FC<ToggleButtonGroupProps> & {
-    Separator: React.FC;
+    Separator: React.FC<{ className?: string }>;
   };
 
   export interface ToggleButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {

@@ -7,14 +7,7 @@ import {
   Phone, Mail
 } from 'lucide-react';
 import { useCRM } from '@crm/contexts/CRMContext';
-import { 
-  TextField, 
-  Input, 
-  TextArea, 
-  Select, 
-  ListBox, 
-  toast 
-} from '@heroui/react';
+import { toast } from 'sonner';
 import { Client } from '@/types';
 
 interface SupportRequestModalProps {
@@ -206,15 +199,15 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId, 
                 {!selectedClient ? (
                   <div className="relative">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 z-10" size={18} />
-                    <TextField className="w-full" name="clientSearch">
-                      <Input 
+                    <div className="w-full">
+                      <input 
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Buscar por nome, WhatsApp ou e-mail..."
-                        className="w-full pl-12"
+                        className="w-full pl-12 pr-4 py-2.5 bg-[#1a1a1a] border border-white/10 rounded-2xl text-white outline-none text-sm focus:ring-2 focus:ring-primary-500/50"
                       />
-                    </TextField>
+                    </div>
                     {filteredClients.length > 0 && (
                       <div className="absolute top-full left-0 w-full bg-[#1a1a1a] border border-white/10 rounded-2xl mt-2 overflow-hidden shadow-2xl z-20">
                         {filteredClients.map(c => (
@@ -272,32 +265,32 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId, 
             {selectedClient && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-500">
                 <div>
-                  <TextField className="w-full" name="clientWhatsapp">
+                  <div className="w-full">
                     <label className="text-xs font-black uppercase tracking-widest text-gray-500 mb-2 block">WhatsApp</label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 z-10" size={16} />
-                      <Input 
+                      <input 
                         type="text" 
                         value={clientWhatsapp}
                         onChange={e => setClientWhatsapp(e.target.value)}
-                        className="w-full pl-10"
+                        className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary-500/50 text-sm"
                       />
                     </div>
-                  </TextField>
+                  </div>
                 </div>
                 <div>
-                  <TextField className="w-full" name="clientEmail">
+                  <div className="w-full">
                     <label className="text-xs font-black uppercase tracking-widest text-gray-500 mb-2 block">E-mail</label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 z-10" size={16} />
-                      <Input 
+                      <input 
                         type="email" 
                         value={clientEmail}
                         onChange={e => setClientEmail(e.target.value)}
-                        className="w-full pl-10"
+                        className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary-500/50 text-sm"
                       />
                     </div>
-                  </TextField>
+                  </div>
                 </div>
               </div>
             )}
@@ -315,27 +308,18 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId, 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-xs font-black uppercase tracking-widest text-gray-500 mb-2 block">Categoria</label>
-                <Select 
-                  placeholder="Selecionar..." 
+                <select 
                   value={category} 
-                  onChange={(val) => setCategory(val || 'Suporte Técnico')}
-                  className="w-full"
+                  onChange={(e) => setCategory(e.target.value || 'Suporte Técnico')}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-sm outline-none focus:ring-2 focus:ring-primary-500/50 appearance-none cursor-pointer"
                 >
-                  <Select.Trigger className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white text-sm flex justify-between items-center cursor-pointer">
-                    <Select.Value>{category}</Select.Value>
-                    <Select.Indicator />
-                  </Select.Trigger>
-                  <Select.Popover className="bg-neutral-900 border border-white/10 rounded-xl p-1 shadow-xl z-50">
-                    <ListBox>
-                      <ListBox.Item id="Suporte Técnico" textValue="Suporte Técnico">Suporte Técnico</ListBox.Item>
-                      <ListBox.Item id="Financeiro" textValue="Financeiro">Financeiro</ListBox.Item>
-                      <ListBox.Item id="Dúvida / Wiki" textValue="Dúvida / Wiki">Dúvida / Wiki</ListBox.Item>
-                      <ListBox.Item id="Bug / Erro" textValue="Bug / Erro">Bug / Erro</ListBox.Item>
-                      <ListBox.Item id="Sugestão" textValue="Sugestão / Melhoria">Sugestão / Melhoria</ListBox.Item>
-                      <ListBox.Item id="Outros" textValue="Outros">Outros</ListBox.Item>
-                    </ListBox>
-                  </Select.Popover>
-                </Select>
+                  <option value="Suporte Técnico" className="bg-neutral-950 text-white">Suporte Técnico</option>
+                  <option value="Financeiro" className="bg-neutral-950 text-white">Financeiro</option>
+                  <option value="Dúvida / Wiki" className="bg-neutral-950 text-white">Dúvida / Wiki</option>
+                  <option value="Bug / Erro" className="bg-neutral-950 text-white">Bug / Erro</option>
+                  <option value="Sugestão" className="bg-neutral-950 text-white">Sugestão / Melhoria</option>
+                  <option value="Outros" className="bg-neutral-950 text-white">Outros</option>
+                </select>
               </div>
               <div>
                 <label className="text-xs font-black uppercase tracking-widest text-gray-500 mb-2 block">Prioridade</label>
@@ -372,11 +356,11 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId, 
                   <span className="text-[10px] font-black uppercase tracking-wider">Apenas Registrar Nota</span>
                 </button>
               </div>
-              <TextArea 
+              <textarea 
                 value={message}
                 onChange={e => setMessage(e.target.value)}
                 placeholder={isNoteOnly ? "O que foi conversado no WhatsApp?" : "O que o cliente relatou ou o que precisa ser feito?"}
-                className="w-full min-h-[120px] bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-white outline-none focus:border-primary-500/50 transition-all placeholder-gray-600 custom-scrollbar resize-none"
+                className="w-full min-h-[120px] bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-white outline-none focus:ring-2 focus:ring-primary-500/50 transition-all placeholder-gray-600 custom-scrollbar resize-none text-sm"
               />
             </div>
 
@@ -384,11 +368,11 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId, 
               <label className="text-xs font-black uppercase tracking-widest text-gray-600 mb-2 block flex items-center gap-2">
                 <History size={14} /> Draft: Resumo / Contexto WhatsApp (Interno)
               </label>
-              <TextArea 
+              <textarea 
                 value={whatsappContext}
                 onChange={e => setWhatsappContext(e.target.value)}
                 placeholder="Cole aqui o trecho da conversa ou observações internas que não devem ir no chamado público..."
-                className="w-full min-h-[80px] bg-transparent text-gray-400 text-xs outline-none placeholder-gray-700 custom-scrollbar resize-none"
+                className="w-full min-h-[80px] bg-transparent text-gray-400 text-xs outline-none placeholder-gray-700 custom-scrollbar resize-none border-0"
               />
             </div>
 
@@ -427,15 +411,15 @@ export default function SupportRequestModal({ isOpen, onClose, initialClientId, 
 
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 z-10" size={14} />
-            <TextField className="w-full" name="wikiSearch">
-              <Input 
+            <div className="w-full">
+              <input 
                 type="text" 
                 value={wikiSearch}
                 onChange={e => setWikiSearch(e.target.value)}
                 placeholder="Pesquisar guia..."
-                className="w-full pl-9 pr-3 text-xs"
+                className="w-full pl-9 pr-3 py-2 bg-[#1a1a1a] border border-white/10 rounded-xl text-white outline-none text-xs focus:ring-2 focus:ring-primary-500/50"
               />
-            </TextField>
+            </div>
           </div>
 
           <div className="space-y-3">

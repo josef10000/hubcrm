@@ -10,8 +10,7 @@ import { useGlobalChatAlerts } from '@/hooks/useGlobalChatAlerts';
 import NavItem from './NavItem';
 import AvatarFrame from './AvatarFrame';
 import { navGroups } from '@/constants/navigation';
-import { Switch } from '@heroui/react';
-import { Sun, Moon } from '@gravity-ui/icons';
+
 
 // Mapeador de Ícones Premium (Phosphor Duotone)
 export const PremiumIcon = ({ iconName, size = 22, className = "" }: { iconName: string, size?: number, className?: string }) => {
@@ -199,21 +198,7 @@ export default function Sidebar() {
             ))}
           </div>
 
-          {/* Alternador de Tema Dark/Light & Perfil Mini */}
           <div className="relative z-10 mt-auto flex flex-col items-center gap-4">
-            <Switch 
-              defaultSelected={isDark} 
-              onChange={toggleTheme} 
-              size="sm"
-              className="cursor-pointer"
-            >
-              <Switch.Control className="w-12 h-6 bg-white/5 border border-white/10 rounded-full p-1 flex items-center relative transition-all duration-300">
-                <Switch.Thumb className="w-4 h-4 bg-white rounded-full transition-transform duration-300 shadow-md flex items-center justify-center">
-                  {isDark ? <Moon className="w-2.5 h-2.5 text-gray-900" /> : <Sun className="w-2.5 h-2.5 text-amber-500" />}
-                </Switch.Thumb>
-              </Switch.Control>
-            </Switch>
-
             <div 
               onClick={() => navigate(`/profile/${user?.uid}`)}
               className="relative cursor-pointer group"

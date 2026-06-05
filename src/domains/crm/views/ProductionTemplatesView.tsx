@@ -4,7 +4,8 @@ import {
   Palette, Maximize2, Info, Globe, FileText, Sparkles, User, Link as LinkIcon, 
   Upload, Code, Database, ChevronRight, Eye, MousePointerClick
 } from 'lucide-react';
-import { Button, Dropdown, Pagination, Select, ListBox, TextField, Input, TextArea, ToggleButton, toast as herouiToast } from '@heroui/react';
+// Imports do HeroUI removidos para evitar erros de tipo
+
 import { EllipsisVertical, Pencil, SquarePlus, TrashBin, Heart, Bookmark } from '@gravity-ui/icons';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
@@ -150,9 +151,8 @@ export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'temp
     });
   };
 
-  // Estados de paginação
-  const [templatePage, setTemplatePage] = useState(1);
   const [promptPage, setPromptPage] = useState(1);
+  const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
   const itemsPerPage = 6;
 
   useEffect(() => {
@@ -820,45 +820,59 @@ export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'temp
                         </div>
                         {canManage && (
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <ToggleButton 
-                              isIconOnly 
+                            <button 
+                              type="button"
                               aria-label="Favoritar"
-                              variant="ghost"
-                              onPress={() => toggleFavoriteTemplate(template.id)}
+                              onClick={() => toggleFavoriteTemplate(template.id)}
+                              className="p-1 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white transition-all"
                             >
-                              <Heart className={cn("size-4 transition-colors", favoriteTemplates.includes(template.id) ? "text-red-500 fill-red-500" : "text-gray-400")} />
-                            </ToggleButton>
-                            <Dropdown>
-                              <Button isIconOnly aria-label="Ações" variant="secondary" size="sm">
+                              <Heart className={`size-4 transition-colors ${favoriteTemplates.includes(template.id) ? "text-red-500 fill-red-500" : "text-gray-400"}`} />
+                            </button>
+                            <div className="relative">
+                              <button 
+                                type="button"
+                                aria-label="Ações" 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveDropdownId(activeDropdownId === template.id ? null : template.id);
+                                }}
+                                className="p-1 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white transition-all"
+                              >
                                 <EllipsisVertical className="outline-none size-4" />
-                              </Button>
-                              <Dropdown.Popover>
-                                <Dropdown.Menu onAction={(key) => {
-                                  if (key === 'edit') handleOpenEditTemplate(template, null);
-                                  else if (key === 'delete') handleDeleteTemplate(template.id, null);
-                                }}>
-                                  <Dropdown.Section>
-                                    <Header className="px-2 py-1 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Ações</Header>
-                                    <Dropdown.Item id="edit" textValue="Editar Template" className="flex items-center gap-2 px-3 py-2 text-xs text-gray-300 hover:bg-white/5 rounded-lg cursor-pointer">
-                                      <div className="flex items-center gap-2">
-                                        <Pencil className="size-4 text-gray-400" />
-                                        <span>Editar Template</span>
-                                      </div>
-                                    </Dropdown.Item>
-                                  </Dropdown.Section>
-                                  <Separator className="border-t border-white/5 my-1" />
-                                  <Dropdown.Section>
-                                    <Header className="px-2 py-1 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Zona de Perigo</Header>
-                                    <Dropdown.Item id="delete" textValue="Excluir Template" variant="danger" className="flex items-center gap-2 px-3 py-2 text-xs text-red-400 hover:bg-red-500/10 rounded-lg cursor-pointer">
-                                      <div className="flex items-center gap-2">
-                                        <TrashBin className="size-4 text-red-500" />
-                                        <span>Excluir Template</span>
-                                      </div>
-                                    </Dropdown.Item>
-                                  </Dropdown.Section>
-                                </Dropdown.Menu>
-                              </Dropdown.Popover>
-                            </Dropdown>
+                              </button>
+                              {activeDropdownId === template.id && (
+                                <>
+                                  <div className="fixed inset-0 z-10" onClick={() => setActiveDropdownId(null)} />
+                                  <div className="absolute right-0 mt-2 w-48 bg-neutral-900 border border-white/10 rounded-xl shadow-xl p-2 z-20">
+                                    <div className="px-2 py-1 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Ações</div>
+                                    <button 
+                                      type="button"
+                                      onClick={() => {
+                                        setActiveDropdownId(null);
+                                        handleOpenEditTemplate(template, null as any);
+                                      }}
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-300 hover:bg-white/5 rounded-lg text-left"
+                                    >
+                                      <Pencil className="size-4 text-gray-400" />
+                                      <span>Editar Template</span>
+                                    </button>
+                                    <div className="border-t border-white/5 my-1" />
+                                    <div className="px-2 py-1 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Zona de Perigo</div>
+                                    <button 
+                                      type="button"
+                                      onClick={() => {
+                                        setActiveDropdownId(null);
+                                        handleDeleteTemplate(template.id, null as any);
+                                      }}
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-400 hover:bg-red-500/10 rounded-lg text-left"
+                                    >
+                                      <TrashBin className="size-4 text-red-500" />
+                                      <span>Excluir Template</span>
+                                    </button>
+                                  </div>
+                                </>
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>
@@ -891,28 +905,37 @@ export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'temp
             </div>
             {/* Paginação de Templates */}
             {filteredTemplates.length > itemsPerPage && (
-              <div className="flex justify-center mt-8">
-                <Pagination className="flex items-center gap-1">
-                  <Pagination.Content>
-                    <Pagination.Previous 
-                      isDisabled={templatePage === 1}
-                      onPress={() => setTemplatePage(prev => Math.max(prev - 1, 1))}
-                    />
-                    {Array.from({ length: Math.ceil(filteredTemplates.length / itemsPerPage) }).map((_, idx) => (
-                      <Pagination.Link 
-                        key={idx}
-                        isActive={templatePage === idx + 1}
-                        onPress={() => setTemplatePage(idx + 1)}
-                      >
-                        {idx + 1}
-                      </Pagination.Link>
-                    ))}
-                    <Pagination.Next 
-                      isDisabled={templatePage === Math.ceil(filteredTemplates.length / itemsPerPage)}
-                      onPress={() => setTemplatePage(prev => Math.min(prev + 1, Math.ceil(filteredTemplates.length / itemsPerPage)))}
-                    />
-                  </Pagination.Content>
-                </Pagination>
+              <div className="flex justify-center items-center gap-2 mt-8">
+                <button
+                  type="button"
+                  disabled={templatePage === 1}
+                  onClick={() => setTemplatePage(prev => Math.max(prev - 1, 1))}
+                  className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-xs font-bold text-gray-300 hover:text-white disabled:opacity-50 transition-all"
+                >
+                  Anterior
+                </button>
+                {Array.from({ length: Math.ceil(filteredTemplates.length / itemsPerPage) }).map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setTemplatePage(idx + 1)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                      templatePage === idx + 1
+                        ? 'bg-primary-500 border-primary-500 text-white shadow-lg'
+                        : 'bg-white/5 border-white/10 text-gray-300 hover:text-white'
+                    }`}
+                  >
+                    {idx + 1}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  disabled={templatePage === Math.ceil(filteredTemplates.length / itemsPerPage)}
+                  onClick={() => setTemplatePage(prev => Math.min(prev + 1, Math.ceil(filteredTemplates.length / itemsPerPage)))}
+                  className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-xs font-bold text-gray-300 hover:text-white disabled:opacity-50 transition-all"
+                >
+                  Próximo
+                </button>
               </div>
             )}
           </>)}
@@ -1009,28 +1032,37 @@ export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'temp
             </div>
             {/* Paginação de Prompts */}
             {prompts.length > itemsPerPage && (
-              <div className="flex justify-center mt-8">
-                <Pagination className="flex items-center gap-1">
-                  <Pagination.Content>
-                    <Pagination.Previous 
-                      isDisabled={promptPage === 1}
-                      onPress={() => setPromptPage(prev => Math.max(prev - 1, 1))}
-                    />
-                    {Array.from({ length: Math.ceil(prompts.length / itemsPerPage) }).map((_, idx) => (
-                      <Pagination.Link 
-                        key={idx}
-                        isActive={promptPage === idx + 1}
-                        onPress={() => setPromptPage(idx + 1)}
-                      >
-                        {idx + 1}
-                      </Pagination.Link>
-                    ))}
-                    <Pagination.Next 
-                      isDisabled={promptPage === Math.ceil(prompts.length / itemsPerPage)}
-                      onPress={() => setPromptPage(prev => Math.min(prev + 1, Math.ceil(prompts.length / itemsPerPage)))}
-                    />
-                  </Pagination.Content>
-                </Pagination>
+              <div className="flex justify-center items-center gap-2 mt-8">
+                <button
+                  type="button"
+                  disabled={promptPage === 1}
+                  onClick={() => setPromptPage(prev => Math.max(prev - 1, 1))}
+                  className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-xs font-bold text-gray-300 hover:text-white disabled:opacity-50 transition-all"
+                >
+                  Anterior
+                </button>
+                {Array.from({ length: Math.ceil(prompts.length / itemsPerPage) }).map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setPromptPage(idx + 1)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                      promptPage === idx + 1
+                        ? 'bg-primary-500 border-primary-500 text-white shadow-lg'
+                        : 'bg-white/5 border-white/10 text-gray-300 hover:text-white'
+                    }`}
+                  >
+                    {idx + 1}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  disabled={promptPage === Math.ceil(prompts.length / itemsPerPage)}
+                  onClick={() => setPromptPage(prev => Math.min(prev + 1, Math.ceil(prompts.length / itemsPerPage)))}
+                  className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-xs font-bold text-gray-300 hover:text-white disabled:opacity-50 transition-all"
+                >
+                  Próximo
+                </button>
               </div>
             )}
           </>)}
@@ -1142,24 +1174,16 @@ export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'temp
                   <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide">
                     Tipo de Estrutura
                   </label>
-                  <Select 
+                  <select 
                     value={editingTemplate.type || 'Landing Page'}
-                    onChange={(val) => setEditingTemplate({ ...editingTemplate, type: val })}
-                    className="w-full"
+                    onChange={(e) => setEditingTemplate({ ...editingTemplate, type: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-black/40 dark:bg-[#0c0d0f] border border-gray-200 dark:border-white/10 rounded-xl text-gray-950 dark:text-white text-sm outline-none focus:ring-2 focus:ring-primary-500/50 appearance-none cursor-pointer"
                   >
-                    <Select.Trigger className="w-full flex items-center justify-between px-4 py-2.5 bg-black/40 dark:bg-[#0c0d0f] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm">
-                      <Select.Value />
-                      <Select.Indicator />
-                    </Select.Trigger>
-                    <Select.Popover className="bg-[#0c0d0f] border border-white/10 rounded-xl shadow-xl p-2 z-50">
-                      <ListBox onAction={(key) => setEditingTemplate({ ...editingTemplate, type: String(key) })}>
-                        <ListBox.Item id="Landing Page" textValue="Landing Page">Landing Page</ListBox.Item>
-                        <ListBox.Item id="SaaS" textValue="SaaS / Plataforma">SaaS / Plataforma</ListBox.Item>
-                        <ListBox.Item id="Institucional" textValue="Institucional">Institucional</ListBox.Item>
-                        <ListBox.Item id="E-commerce" textValue="E-commerce">E-commerce</ListBox.Item>
-                      </ListBox>
-                    </Select.Popover>
-                  </Select>
+                    <option value="Landing Page" className="bg-[#0c0d0f] text-white">Landing Page</option>
+                    <option value="SaaS" className="bg-[#0c0d0f] text-white">SaaS / Plataforma</option>
+                    <option value="Institucional" className="bg-[#0c0d0f] text-white">Institucional</option>
+                    <option value="E-commerce" className="bg-[#0c0d0f] text-white">E-commerce</option>
+                  </select>
                 </div>
               </div>
 
@@ -1555,24 +1579,16 @@ export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'temp
                     <FileText className="w-3.5 h-3.5" />
                     Selecionar Prompt de IA *
                   </label>
-                  <Select 
+                  <select 
                     value={selectedPromptId}
-                    onChange={(val) => setSelectedPromptId(val)}
-                    placeholder="-- Selecionar Prompt da Biblioteca --"
-                    className="w-full text-xs"
+                    onChange={(e) => setSelectedPromptId(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-[#0c0d0f] border border-gray-200 dark:border-white/10 rounded-xl text-white text-xs outline-none focus:ring-2 focus:ring-primary-500/50 appearance-none cursor-pointer"
                   >
-                    <Select.Trigger className="w-full flex items-center justify-between px-4 py-2.5 bg-[#0c0d0f] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-xs">
-                      <Select.Value />
-                      <Select.Indicator />
-                    </Select.Trigger>
-                    <Select.Popover className="bg-[#0c0d0f] border border-white/10 rounded-xl shadow-xl p-2 z-50 max-h-60 overflow-y-auto">
-                      <ListBox onAction={(key) => setSelectedPromptId(String(key))}>
-                        {prompts.map(p => (
-                          <ListBox.Item key={p.id} id={p.id} textValue={p.name}>{p.name}</ListBox.Item>
-                        ))}
-                      </ListBox>
-                    </Select.Popover>
-                  </Select>
+                    <option value="" className="bg-[#0c0d0f] text-gray-500">-- Selecionar Prompt da Biblioteca --</option>
+                    {prompts.map(p => (
+                      <option key={p.id} value={p.id} className="bg-[#0c0d0f] text-white">{p.name}</option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* CRM Client Dropdown */}
@@ -1581,24 +1597,16 @@ export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'temp
                     <User className="w-3.5 h-3.5" />
                     Puxar Cliente do CRM
                   </label>
-                  <Select 
+                  <select 
                     value={selectedClientId}
-                    onChange={(val) => handleClientChange(val)}
-                    placeholder="-- Selecionar Cliente do CRM --"
-                    className="w-full text-xs"
+                    onChange={(e) => handleClientChange(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-[#0c0d0f] border border-gray-200 dark:border-white/10 rounded-xl text-white text-xs outline-none focus:ring-2 focus:ring-primary-500/50 appearance-none cursor-pointer"
                   >
-                    <Select.Trigger className="w-full flex items-center justify-between px-4 py-2.5 bg-[#0c0d0f] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-xs">
-                      <Select.Value />
-                      <Select.Indicator />
-                    </Select.Trigger>
-                    <Select.Popover className="bg-[#0c0d0f] border border-white/10 rounded-xl shadow-xl p-2 z-50 max-h-60 overflow-y-auto">
-                      <ListBox onAction={(key) => handleClientChange(String(key))}>
-                        {clients.map(c => (
-                          <ListBox.Item key={c.id} id={c.id} textValue={c.name}>{c.name}</ListBox.Item>
-                        ))}
-                      </ListBox>
-                    </Select.Popover>
-                  </Select>
+                    <option value="" className="bg-[#0c0d0f] text-gray-500">-- Selecionar Cliente do CRM --</option>
+                    {clients.map(c => (
+                      <option key={c.id} value={c.id} className="bg-[#0c0d0f] text-white">{c.name}</option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Variáveis Ficha */}

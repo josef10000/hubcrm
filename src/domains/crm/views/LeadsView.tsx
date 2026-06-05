@@ -5,7 +5,7 @@ import { Plus, DollarSign, Target, UserPlus, Search, TrendingUp, Users, Kanban, 
 import { useLeads } from '@/hooks/useLeads';
 import { LeadCard } from '@crm/components/leads/LeadCard';
 import { LeadFormModal } from '@crm/components/leads/LeadFormModal';
-import { Table, Avatar, Chip, TextField, Input, Select, ListBox } from '@heroui/react';
+import { Table, Avatar, Chip } from '@heroui/react';
 import { Pencil, TrashBin } from '@gravity-ui/icons';
 
 const LEAD_COLUMNS: { status: LeadStatus; label: string; color: string; bgColor: string }[] = [
@@ -200,59 +200,41 @@ export default function LeadsView() {
       {/* Search and Filters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6 items-center">
         <div className="flex-1 w-full">
-          <TextField className="w-full" name="search">
+          <div className="w-full">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 z-10" />
-              <Input
+              <input
                 type="text"
                 placeholder="Buscar por nome ou WhatsApp..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white outline-none text-sm"
+                className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white outline-none text-sm focus:ring-2 focus:ring-blue-500/50"
               />
             </div>
-          </TextField>
+          </div>
         </div>
 
-        <Select 
-          placeholder="Todas as Origens" 
+        <select 
           value={filterSource} 
-          onChange={(val) => setFilterSource(val || 'all')} 
-          className="min-w-[180px]"
+          onChange={(e) => setFilterSource(e.target.value || 'all')} 
+          className="min-w-[180px] px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none cursor-pointer"
         >
-          <Select.Trigger className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-sm flex justify-between items-center cursor-pointer">
-            <Select.Value>{filterSource === 'all' ? 'Todas as Origens' : filterSource}</Select.Value>
-            <Select.Indicator />
-          </Select.Trigger>
-          <Select.Popover className="bg-neutral-900 border border-white/10 rounded-xl p-1 shadow-xl z-50">
-            <ListBox>
-              <ListBox.Item id="all" textValue="Todas as Origens">Todas as Origens</ListBox.Item>
-              {LEAD_SOURCES.map(s => (
-                <ListBox.Item key={s} id={s} textValue={s}>{s}</ListBox.Item>
-              ))}
-            </ListBox>
-          </Select.Popover>
-        </Select>
+          <option value="all" className="bg-neutral-950 text-white">Todas as Origens</option>
+          {LEAD_SOURCES.map(s => (
+            <option key={s} value={s} className="bg-neutral-950 text-white">{s}</option>
+          ))}
+        </select>
 
-        <Select 
-          placeholder="Todas as Tags" 
+        <select 
           value={filterTag} 
-          onChange={(val) => setFilterTag(val || 'all')} 
-          className="min-w-[180px]"
+          onChange={(e) => setFilterTag(e.target.value || 'all')} 
+          className="min-w-[180px] px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none cursor-pointer"
         >
-          <Select.Trigger className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white text-sm flex justify-between items-center cursor-pointer">
-            <Select.Value>{filterTag === 'all' ? 'Todas as Tags' : tags.find(t => t.id === filterTag)?.name || filterTag}</Select.Value>
-            <Select.Indicator />
-          </Select.Trigger>
-          <Select.Popover className="bg-neutral-900 border border-white/10 rounded-xl p-1 shadow-xl z-50">
-            <ListBox>
-              <ListBox.Item id="all" textValue="Todas as Tags">Todas as Tags</ListBox.Item>
-              {tags.map(tag => (
-                <ListBox.Item key={tag.id} id={tag.id} textValue={tag.name}>{tag.name}</ListBox.Item>
-              ))}
-            </ListBox>
-          </Select.Popover>
-        </Select>
+          <option value="all" className="bg-neutral-950 text-white">Todas as Tags</option>
+          {tags.map(tag => (
+            <option key={tag.id} value={tag.id} className="bg-neutral-950 text-white">{tag.name}</option>
+          ))}
+        </select>
       </div>
 
       {/* Kanban Board or List Table */}

@@ -5,7 +5,6 @@ import {
   HardDrive
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Meter, Label, Description, cn } from '@heroui/react';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { db } from '@/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
@@ -511,73 +510,54 @@ export default function AdministrativeView() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Firebase (Firestore) */}
                 <div className="bg-black/20 border border-white/5 rounded-2xl p-6 flex flex-col gap-4">
-                  <Meter color="success" value={35} className="w-full">
-                    <Label className="text-sm font-bold text-gray-200">Firebase Firestore</Label>
-                    <Meter.Output className="text-xs text-gray-400 font-bold" />
-                    <Meter.Track className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mt-2">
-                      <Meter.Fill className="h-full bg-emerald-500 rounded-full" />
-                    </Meter.Track>
-                  </Meter>
-                  <Description className="text-xs text-gray-400 leading-relaxed">
+                  <div className="w-full">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-sm font-bold text-gray-200">Firebase Firestore</span>
+                      <span className="text-xs text-gray-400 font-bold">35%</span>
+                    </div>
+                    <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: '35%' }} />
+                    </div>
+                  </div>
+                  <div className="text-xs text-gray-400 leading-relaxed">
                     Uso de coleções do banco de dados (perfis, clientes, logs, chats e leads).
                     <span className="block mt-2 font-mono text-[10px] text-emerald-400 font-bold">Consumido: 350 MB / 1 GB (Spark Free)</span>
-                  </Description>
+                  </div>
                 </div>
 
                 {/* Cloudflare R2 */}
                 <div className="bg-black/20 border border-white/5 rounded-2xl p-6 flex flex-col gap-4">
-                  <Meter color="warning" value={78} className="w-full">
-                    <Label className="text-sm font-bold text-gray-200">Cloudflare R2</Label>
-                    <Meter.Output className="text-xs text-gray-400 font-bold" />
-                    <Meter.Track className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mt-2">
-                      <Meter.Fill className="h-full bg-amber-500 rounded-full" />
-                    </Meter.Track>
-                  </Meter>
-                  <Description className="text-xs text-gray-400 leading-relaxed">
+                  <div className="w-full">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-sm font-bold text-gray-200">Cloudflare R2</span>
+                      <span className="text-xs text-gray-400 font-bold">1.94%</span>
+                    </div>
+                    <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div className="h-full bg-amber-500 rounded-full" style={{ width: '1.94%' }} />
+                    </div>
+                  </div>
+                  <div className="text-xs text-gray-400 leading-relaxed">
                     Arquivos estáticos de templates, anexos do chat de suporte e mídias de projetos.
-                    <span className="block mt-2 font-mono text-[10px] text-amber-400 font-bold">Consumido: 7.8 GB / 10 GB (Gratuito)</span>
-                  </Description>
+                    <span className="block mt-2 font-mono text-[10px] text-amber-400 font-bold">Consumido: 193.93 MB / 10 GB (1.94% de uso)</span>
+                    <span className="block font-mono text-[10px] text-amber-400/80 font-bold">Classe A: 7 | Classe B: 1.79k</span>
+                  </div>
                 </div>
 
                 {/* Cloudinary Media */}
                 <div className="bg-black/20 border border-white/5 rounded-2xl p-6 flex flex-col gap-4">
-                  <Meter color="danger" value={92} className="w-full">
-                    <Label className="text-sm font-bold text-gray-200">Cloudinary API</Label>
-                    <Meter.Output className="text-xs text-gray-400 font-bold" />
-                    <Meter.Track className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mt-2">
-                      <Meter.Fill className="h-full bg-red-500 rounded-full" />
-                    </Meter.Track>
-                  </Meter>
-                  <Description className="text-xs text-gray-400 leading-relaxed">
+                  <div className="w-full">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-sm font-bold text-gray-200">Cloudinary API</span>
+                      <span className="text-xs text-gray-400 font-bold">4.8%</span>
+                    </div>
+                    <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-500 rounded-full" style={{ width: '4.8%' }} />
+                    </div>
+                  </div>
+                  <div className="text-xs text-gray-400 leading-relaxed">
                     Imagens de preview de templates, logotipos e avatares dinâmicos com transformações.
-                    <span className="block mt-2 font-mono text-[10px] text-red-400 font-bold">Consumido: 23 GB / 25 GB (Alerta Crítico)</span>
-                  </Description>
-                </div>
-              </div>
-
-              {/* Botões de Ações e Recomendações */}
-              <div className="p-4 bg-primary-500/5 border border-primary-500/20 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div>
-                  <h4 className="text-sm font-bold text-white mb-1">Aproximação de limites de mídia</h4>
-                  <p className="text-xs text-gray-400 leading-normal">O Cloudinary atingiu 92% da capacidade de armazenamento. Recomendamos limpar previews antigos de templates ou fazer o upgrade de plano.</p>
-                </div>
-                <div className="flex gap-2">
-                  <button 
-                    onClick={() => {
-                      toast.success("Otimização de imagens do Cloudinary iniciada!");
-                    }}
-                    className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-xl text-xs font-bold transition-all border border-white/10"
-                  >
-                    Otimizar Imagens
-                  </button>
-                  <button 
-                    onClick={() => {
-                      toast.success("Upgrade solicitado! Nosso suporte entrará em contato.");
-                    }}
-                    className="px-4 py-2 bg-primary-500 hover:bg-primary-600 active:scale-95 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-primary-500/10"
-                  >
-                    Fazer Upgrade
-                  </button>
+                    <span className="block mt-2 font-mono text-[10px] text-blue-400 font-bold">Consumido: 1.2 GB / 25 GB</span>
+                  </div>
                 </div>
               </div>
             </div>

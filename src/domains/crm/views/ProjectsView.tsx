@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import ProductionTemplatesView from './ProductionTemplatesView';
-import { Table, Avatar, Chip, Meter } from '@heroui/react';
+import { Table, Avatar, Chip } from '@heroui/react';
 
 type ProjectTab = 'running' | 'delivered' | 'overdue';
 type ActiveSection = 'projects' | 'templates' | 'prompts';
@@ -238,11 +238,12 @@ export default function ProjectsView() {
                                 <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Status da Entrega</span>
                                 <span className={`text-lg font-bold ${activeTab === 'overdue' ? 'text-red-400' : 'text-primary-400'}`}>{progress}%</span>
                               </div>
-                              <Meter value={progress} color={activeTab === 'overdue' ? 'danger' : 'success'} className="w-full">
-                                <Meter.Track className="h-2 bg-white/5 rounded-full overflow-hidden w-full mt-2">
-                                  <Meter.Fill className={`h-full rounded-full ${activeTab === 'overdue' ? 'bg-red-500' : 'bg-primary-500'}`} />
-                                </Meter.Track>
-                              </Meter>
+                              <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden mt-2">
+                                <div 
+                                  className={`h-full rounded-full ${activeTab === 'overdue' ? 'bg-red-500' : 'bg-primary-500'}`}
+                                  style={{ width: `${progress}%` }}
+                                />
+                              </div>
                               <div className="flex items-center justify-between text-[11px] text-gray-500 bg-black/10 p-2.5 rounded-xl border border-white/5 font-medium">
                                 <span className="flex items-center gap-2">
                                   <CheckSquare size={14} className="text-primary-500" />
@@ -305,11 +306,12 @@ export default function ProjectsView() {
                                 </Table.Cell>
                                 <Table.Cell>
                                   <div className="flex items-center gap-2 w-32">
-                                    <Meter value={progress} color={activeTab === 'overdue' ? 'danger' : 'success'} className="w-full">
-                                      <Meter.Track className="h-1.5 bg-gray-700 rounded-full overflow-hidden w-full">
-                                        <Meter.Fill className={`h-full rounded-full ${activeTab === 'overdue' ? 'bg-red-500' : 'bg-emerald-500'}`} />
-                                      </Meter.Track>
-                                    </Meter>
+                                    <div className="w-full h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                                      <div 
+                                        className={`h-full rounded-full ${activeTab === 'overdue' ? 'bg-red-500' : 'bg-emerald-500'}`}
+                                        style={{ width: `${progress}%` }}
+                                      />
+                                    </div>
                                     <span className="text-xs font-bold text-gray-400">{progress}%</span>
                                   </div>
                                 </Table.Cell>
