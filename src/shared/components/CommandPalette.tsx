@@ -29,6 +29,7 @@ import {
   Sparkles, 
   Gamepad2, 
   ShoppingBag,
+  LayoutTemplate,
   Info
 } from 'lucide-react';
 
@@ -80,6 +81,7 @@ export function CommandPalette() {
     { name: 'Meu Workspace', description: 'Anotador e metas de consistência do Nexus', path: '/workspace', shortcut: 'wo', icon: Target },
     { name: 'Hub Arena', description: 'Central de jogos (Xadrez, Damas, Ludo e Connect 4)', path: '/arena', shortcut: 'ar', icon: Gamepad2 },
     { name: 'Hub Shop', description: 'Loja de resgate de prêmios por Hub Coins', path: '/shop', shortcut: 'sh', icon: ShoppingBag },
+    { name: 'Templates de Produção', description: 'Central de templates de sites e gerador de prompts de IA', path: '/production-templates', shortcut: 'tp', icon: LayoutTemplate, permission: 'MANAGE_TEAM' },
     { name: 'Segurança / Compliance', description: 'Logs de auditoria e conformidade de dados', path: '/compliance', shortcut: 'sg', icon: ShieldAlert, permission: 'MANAGE_SETTINGS' }
   ], [userProfile?.uid]);
 

@@ -38,6 +38,7 @@ const ArenaView = lazy(() => import('@/domains/arena/views/ArenaView'));
 const HubShopView = lazy(() => import('@/domains/shop/views/HubShopView'));
 const ProjectsView = lazy(() => import('@crm/views/ProjectsView'));
 const OnboardingHubView = lazy(() => import('@crm/views/OnboardingHubView'));
+const ProductionTemplatesView = lazy(() => import('@crm/views/ProductionTemplatesView'));
 const ContractsView = lazy(() => import('@crm/views/ContractsView'));
 const MarketingView = lazy(() => import('@crm/views/MarketingView'));
 const ProductsView = lazy(() => import('@crm/views/ProductsView'));
@@ -136,6 +137,7 @@ export function AppRouter() {
                       <Route path="/admin" element={hasPermission('MANAGE_SETTINGS') ? <AdministrativeView /> : <Navigate to="/" />} />
                       <Route path="/canvas" element={hasPermission('MANAGE_TEAM') || hasPermission('MANAGE_SETTINGS') ? <CanvasListView /> : <Navigate to="/" />} />
                       <Route path="/canvas/:id" element={hasPermission('MANAGE_TEAM') || hasPermission('MANAGE_SETTINGS') ? <CanvasEditorView /> : <Navigate to="/" />} />
+                      <Route path="/production-templates" element={hasPermission('MANAGE_TEAM') || hasPermission('MANAGE_SETTINGS') ? <ProductionTemplatesView /> : <Navigate to="/" />} />
                       
                       {/* General Workspace Routes */}
                       <Route path="/wiki" element={<WikiView />} />

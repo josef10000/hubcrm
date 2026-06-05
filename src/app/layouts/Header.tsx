@@ -73,6 +73,7 @@ export function Header({ currentPath, navigate }: HeaderProps) {
       case '/team': return 'Gestão de Equipe';
       case '/people': return 'Pessoas & Cultura';
       case '/wiki': return 'Wiki Hub';
+      case '/production-templates': return 'Templates de Produção';
       default: return null;
     }
   };

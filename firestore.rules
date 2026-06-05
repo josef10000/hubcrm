@@ -210,6 +210,12 @@ service cloud.firestore {
         }
       }
 
+      // 🟢 TEMPLATES DE PRODUÇÃO — Módulo de Templates de Sites e Prompts
+      match /production_templates/{templateId} {
+        allow read: if belongsToOrg(orgId);
+        allow write: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_TEAM') || hasPermission(orgId, 'MANAGE_SETTINGS');
+      }
+
       match /{collection}/{docId} {
         allow read: if isOwnerEmail() || belongsToOrg(orgId);
         allow write: if isOwnerEmail() || isOrgAdmin(orgId);

@@ -94,6 +94,13 @@ Módulo de descompressão integrado voltado para gamificação e cultura da equi
 *   **Inteligência Artificial Baseada no Host:** Execução de IA de robôs no cliente do Host, sincronizando decisões e dados no Firestore para todos os participantes em tempo real.
 *   **Casas Seguras & Regras Clássicas:** Motor de regras de Ludo completo com validações rígidas de barreiras (bloqueio de passagem/parada para 2+ peças da mesma cor) e casas seguras (impedindo a captura em saídas e intermediárias com estrelas neon piscantes), além de turnos extras estritos para jogadas de dado de valor 6.
 
+### 10. 🎨 Templates de Produção & Gerador de Prompts de IA
+Módulo de engenharia de prompts e controle de qualidade visual para entrega rápida de projetos web:
+*   **Biblioteca de Templates Gerenciável (Firestore):** CRUD completo para cadastro, edição, busca e exclusão de modelos de sites criados pela empresa, sem mocks iniciais. Permite catalogar por nicho de mercado, tipo de site e paleta de cores.
+*   **Preview Visual & Demos Integradas:** Visualizador ampliado de mockups de design com botão para acesso direto à demonstração pública do site rodando.
+*   **Gerador de Prompts Interpolado por Variáveis:** Substituição de dados em tempo real vinculada ao CRM (importa nome do cliente, logo, contatos e serviços) com suporte a variáveis customizadas adicionais criadas dinamicamente.
+*   **Modos de Prompt Otimizados:** Alternador de perfil de prompt focado em Layout (código HTML/CSS), Copywriting (textos e SEO) ou Projeto Completo (Full Project), prontos para cópia rápida com micro-animações de feedback.
+
 ---
 
 ## ⚖️ Comparativo de Regimes (CLT vs PJ)
