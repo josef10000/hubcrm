@@ -947,16 +947,16 @@ export default function ProductionTemplatesView() {
                 </div>
               </div>
 
-              {/* UPLOADS */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-white/5 pt-4">
+              {/* UPLOADS E MÍDIAS */}
+              <div className="space-y-4 border-t border-white/5 pt-4">
                 {/* Upload Imagem Print (Cloudinary) */}
-                <div className="bg-white/5 p-4 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[140px]">
+                <div className="bg-white/5 p-4 rounded-2xl border border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
                     <label className="block text-xs font-bold text-gray-300 mb-1 flex items-center gap-1">
                       <Upload className="w-4 h-4 text-primary-500" />
-                      Upload do Print (Capa/Preview) *
+                      Upload do Print do Site (Capa/Preview) *
                     </label>
-                    <p className="text-[10px] text-gray-500 mb-3">
+                    <p className="text-[10px] text-gray-500">
                       Selecione a imagem do site para armazenar de forma segura no Cloudinary.
                     </p>
                   </div>
@@ -986,22 +986,16 @@ export default function ProductionTemplatesView() {
                   </div>
                 </div>
 
-                {/* Upload index.html */}
-                <div className="bg-white/5 p-4 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[140px]">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-300 mb-1 flex items-center gap-1">
+                {/* Editor e Colagem de HTML */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-xs font-bold text-gray-300 flex items-center gap-1.5 uppercase tracking-wide">
                       <Code className="w-4 h-4 text-primary-500" />
                       Código HTML do Site (index.html) *
                     </label>
-                    <p className="text-[10px] text-gray-500 mb-3">
-                      Carregue o arquivo index.html contendo todo o HTML/CSS/JS do template.
-                    </p>
-                  </div>
-                  
-                  <div className="flex items-center gap-3">
-                    <label className="flex items-center justify-center gap-2 px-4 py-2 bg-primary-500/20 hover:bg-primary-500/35 border border-primary-500/40 text-primary-400 rounded-xl cursor-pointer font-bold text-xs transition-all">
-                      <Code className="w-4 h-4" />
-                      Carregar HTML (.html)
+                    <label className="text-primary-500 hover:text-primary-400 text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors">
+                      <Upload className="w-3.5 h-3.5" />
+                      Importar de Arquivo .html
                       <input 
                         type="file" 
                         accept=".html"
@@ -1009,15 +1003,17 @@ export default function ProductionTemplatesView() {
                         className="hidden"
                       />
                     </label>
-                    
-                    {editingTemplate.htmlContent ? (
-                      <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20">
-                        HTML Pronto
-                      </span>
-                    ) : (
-                      <span className="text-[10px] text-gray-500">Nenhum carregado</span>
-                    )}
                   </div>
+                  <textarea
+                    value={editingTemplate.htmlContent || ''}
+                    onChange={(e) => setEditingTemplate({ ...editingTemplate, htmlContent: e.target.value })}
+                    className="w-full px-4 py-3 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-300 font-mono text-xs outline-none focus:ring-2 focus:ring-primary-500/50 min-h-[200px] resize-y"
+                    placeholder="Cole o código HTML/CSS/JS do site completo aqui (copiado do Gemini Canvas, por exemplo)..."
+                    required
+                  />
+                  <p className="text-[10px] text-gray-500 mt-1">
+                    Cole o código-fonte HTML. Você também pode importar um arquivo local clicando em "Importar de Arquivo .html".
+                  </p>
                 </div>
               </div>
 

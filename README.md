@@ -98,7 +98,7 @@ Módulo de descompressão integrado voltado para gamificação e cultura da equi
 Módulo de engenharia de prompts, biblioteca de templates e controle de qualidade para entrega ágil de sites de produção:
 *   **Catálogo de Templates White Label (Firestore):** Cadastro e gerenciamento focado na estrutura (ex: Landing Page, E-commerce) e nicho de mercado, livre de informações mockadas.
 *   **Upload de Print via Cloudinary:** Envio do print do site diretamente para os servidores do Cloudinary por meio da API integrada no frontend, salvando apenas o link da imagem no Firestore para otimizar armazenamento.
-*   **Armazenamento de Código e Demos Locais:** Upload do arquivo `.html` (index.html) de cada site diretamente para o Firestore. O sistema abre uma nova aba e renderiza o site localmente em tempo real via injeção dinâmica de HTML (`document.write`) sem necessidade de servidores ou hospedagem prévia.
+*   **Armazenamento de Código e Demos Locais:** Inserção e colagem direta de código HTML/CSS/JS em editor integrado ou importação automática de arquivos locais `.html`. O sistema abre uma nova aba e renderiza o site localmente em tempo real via injeção dinâmica de HTML (`document.write`) sem necessidade de servidores ou hospedagem prévia.
 *   **Visualização Estática & Demos Personalizadas (CRM):** Duas vias de preview interativo de demonstração: abre o HTML puro do catálogo ou abre o HTML com as variáveis de cliente do CRM (nome, WhatsApp, e-mail, redes sociais) já interpoladas e substituídas de forma dinâmica no código.
 *   **Biblioteca Global de Prompts de IA:** Módulo complementar para cadastro e gestão de prompts globais reutilizáveis, com dropdown nos templates para rápida associação e cópia com alternador de perfis (Layout, Copywriting e Full).
 
