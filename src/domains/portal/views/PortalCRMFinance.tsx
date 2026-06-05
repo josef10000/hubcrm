@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, doc, onSnapshot, updateDoc, query, orderBy, addDoc, deleteDoc } from 'firebase/firestore';
 import { 
-  DollarSign, Calendar, TrendingUp, AlertCircle, CheckCircle, RefreshCw, Phone, Filter, Plus, Trash2, TrendingDown, X
+  DollarSign, Calendar, TrendingUp, AlertCircle, CheckCircle, RefreshCw, Phone, Filter, Plus, Trash2, Edit3, TrendingDown, X
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -18,6 +18,7 @@ interface Expense {
   value: number;
   category: string;
   date: string;
+  type: 'pontual' | 'fixo'; // Pontual ou Fixo Mensal
   status: 'paid' | 'unpaid';
   createdAt: any;
 }
@@ -33,10 +34,14 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
   
   // Modal de despesas
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
+  
+  // Estados do formulário
   const [expenseDesc, setExpenseDesc] = useState('');
   const [expenseValue, setExpenseValue] = useState('');
   const [expenseCategory, setExpenseCategory] = useState('Aluguel');
   const [expenseDate, setExpenseDate] = useState(new Date().toISOString().substring(0, 10));
+  const [expenseType, setExpenseType] = useState<'pontual' | 'fixo'>('pontual');
   const [expenseStatus, setExpenseStatus] = useState<'paid' | 'unpaid'>('paid');
   const [savingExpense, setSavingExpense] = useState(false);
 
@@ -48,7 +53,7 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
     const unsub = onSnapshot(q, (snapshot) => {
       const list = snapshot.docs
         .map(d => ({ id: d.id, ...d.data() }))
-        .filter((app: any) => app.clientId === clientId); // Garante que lê apenas os agendamentos deste cliente
+        .filter((app: any) => app.clientId === clientId);
       setAppointments(list);
     });
     return () => unsub();
@@ -61,72 +66,125 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
     const q = query(expensesRef, orderBy('date', 'desc'));
     const unsub = onSnapshot(q, (snapshot) => {
       const list = snapshot.docs
-        .map(d => ({ id: d.id, ...d.data() } as Expense))
+        .map(d => {
+          const data = d.data();
+          return { 
+            id: d.id, 
+            ...data, 
+            type: data.type || 'pontual' // Fallback para registros antigos
+          } as Expense;
+        })
         .filter(exp => exp.clientId === clientId);
       setExpenses(list);
     });
     return () => unsub();
   }, [orgId, clientId]);
 
-  // Helpers de comparação temporal
-  const isToday = (dateStr: string) => {
+  // Obtém as datas limites (Início e Fim) do período selecionado
+  const getPeriodBounds = (): { start: Date; end: Date } => {
     const today = new Date();
     const tzOffset = today.getTimezoneOffset() * 60000;
-    const localTodayStr = new Date(today.getTime() - tzOffset).toISOString().substring(0, 10);
-    return dateStr === localTodayStr;
-  };
+    const localToday = new Date(today.getTime() - tzOffset);
 
-  const isThisWeek = (dateStr: string) => {
-    const today = new Date();
-    const appDate = new Date(dateStr + 'T12:00:00');
-    
-    // Domingo da semana atual
-    const dayOfWeek = today.getDay();
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - dayOfWeek);
-    startOfWeek.setHours(0, 0, 0, 0);
+    let start = new Date(localToday);
+    let end = new Date(localToday);
 
-    // Sábado da semana atual
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
-    endOfWeek.setHours(23, 59, 59, 999);
-
-    return appDate >= startOfWeek && appDate <= endOfWeek;
-  };
-
-  const isThisMonth = (dateStr: string) => {
-    const currentMonthStr = new Date().toISOString().substring(0, 7);
-    return dateStr.substring(0, 7) === currentMonthStr;
-  };
-
-  const isLastMonth = (dateStr: string) => {
-    const today = new Date();
-    today.setMonth(today.getMonth() - 1);
-    const lastMonthStr = today.toISOString().substring(0, 7);
-    return dateStr.substring(0, 7) === lastMonthStr;
-  };
-
-  const filterByPeriod = (item: any) => {
-    if (!item.date || item.status === 'cancelled') return false;
-    
     switch (filterPeriod) {
       case 'today':
-        return isToday(item.date);
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        break;
       case 'week':
-        return isThisWeek(item.date);
+        // Domingo da semana atual
+        const dayOfWeek = localToday.getDay();
+        start.setDate(localToday.getDate() - dayOfWeek);
+        start.setHours(0, 0, 0, 0);
+
+        // Sábado da semana atual
+        end.setDate(start.getDate() + 6);
+        end.setHours(23, 59, 59, 999);
+        break;
       case 'month':
-        return isThisMonth(item.date);
+        start.setDate(1);
+        start.setHours(0, 0, 0, 0);
+        
+        end.setMonth(start.getMonth() + 1);
+        end.setDate(0);
+        end.setHours(23, 59, 59, 999);
+        break;
       case 'last_month':
-        return isLastMonth(item.date);
+        start.setMonth(start.getMonth() - 1);
+        start.setDate(1);
+        start.setHours(0, 0, 0, 0);
+
+        end.setMonth(start.getMonth() + 1);
+        end.setDate(0);
+        end.setHours(23, 59, 59, 999);
+        break;
       case 'all':
       default:
-        return true;
+        start = new Date('2000-01-01T00:00:00');
+        end = new Date('2099-12-31T23:59:59');
+        break;
     }
+
+    return { start, end };
   };
 
-  // Filtragem dos dados consolidados pelo período
-  const appointmentsFiltered = appointments.filter(filterByPeriod);
-  const expensesFiltered = expenses.filter(filterByPeriod);
+  const { start: periodStart, end: periodEnd } = getPeriodBounds();
+
+  // Verifica se uma data específica cai no período ativo
+  const isDateInPeriod = (dateStr: string) => {
+    if (!dateStr) return false;
+    const itemDate = new Date(dateStr + 'T12:00:00');
+    return itemDate >= periodStart && itemDate <= periodEnd;
+  };
+
+  // Algoritmo matemático para contar ocorrências de um gasto fixo mensal recorrente
+  const countFixedExpenseOccurrences = (exp: Expense, start: Date, end: Date): number => {
+    const expStartDate = new Date(exp.date + 'T00:00:00');
+    if (expStartDate > end) return 0;
+
+    let occurrences = 0;
+    
+    // Inicia o loop no mês mais tardio entre o início do período e o início do gasto
+    const loopStart = new Date(Math.max(start.getTime(), expStartDate.getTime()));
+    let currentYear = loopStart.getFullYear();
+    let currentMonth = loopStart.getMonth();
+
+    const endYear = end.getFullYear();
+    const endMonth = end.getMonth();
+
+    const originalDate = new Date(exp.date + 'T12:00:00');
+    const dueDay = originalDate.getDate();
+
+    while (currentYear < endYear || (currentYear === endYear && currentMonth <= endMonth)) {
+      const occurrenceDate = new Date(currentYear, currentMonth, dueDay, 12, 0, 0);
+      
+      // Validação para dias inexistentes no mês analisado (ex: dia 31 em fevereiro)
+      if (occurrenceDate.getMonth() !== currentMonth) {
+        const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0, 12, 0, 0);
+        if (lastDayOfMonth >= start && lastDayOfMonth <= end && lastDayOfMonth >= expStartDate) {
+          occurrences++;
+        }
+      } else {
+        if (occurrenceDate >= start && occurrenceDate <= end && occurrenceDate >= expStartDate) {
+          occurrences++;
+        }
+      }
+
+      currentMonth++;
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      }
+    }
+
+    return occurrences;
+  };
+
+  // Filtragem dos dados consolidados de receitas
+  const appointmentsFiltered = appointments.filter(app => isDateInPeriod(app.date) && app.status !== 'cancelled');
 
   // Cálculos contábeis (Receitas)
   const totalProjetado = appointmentsFiltered.reduce((acc, app) => acc + (app.price || 0), 0);
@@ -143,10 +201,20 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
     ? totalProjetado / appointmentsFiltered.length 
     : 0;
 
-  // Cálculos contábeis (Despesas)
-  const totalExpenses = expensesFiltered.reduce((acc, exp) => acc + (exp.value || 0), 0);
+  // Cálculos contábeis (Despesas - Somando Pontuais e Recorrências de Fixas)
+  const totalExpenses = expenses.reduce((acc, exp) => {
+    if (exp.type === 'fixo') {
+      const occurrences = countFixedExpenseOccurrences(exp, periodStart, periodEnd);
+      return acc + (exp.value * occurrences);
+    } else {
+      if (isDateInPeriod(exp.date)) {
+        return acc + (exp.value || 0);
+      }
+      return acc;
+    }
+  }, 0);
 
-  // Lucro Líquido = Receitas Recebidas (Efetivadas) - Despesas Totais
+  // Lucro Líquido = Receitas Recebidas (Efetivadas) - Despesas Totais projetadas no período
   const lucroLiquido = totalPago - totalExpenses;
 
   // Alteração de status de pagamento do agendamento
@@ -186,8 +254,32 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
     }
   };
 
-  // Criação de nova despesa
-  const handleCreateExpense = async (e: React.FormEvent) => {
+  // Abertura do modal para novo gasto
+  const openNewExpenseModal = () => {
+    setEditingExpenseId(null);
+    setExpenseDesc('');
+    setExpenseValue('');
+    setExpenseCategory('Aluguel');
+    setExpenseDate(new Date().toISOString().substring(0, 10));
+    setExpenseType('pontual');
+    setExpenseStatus('paid');
+    setIsExpenseModalOpen(true);
+  };
+
+  // Abertura do modal para edição de gasto existente
+  const openEditExpenseModal = (exp: Expense) => {
+    setEditingExpenseId(exp.id);
+    setExpenseDesc(exp.description);
+    setExpenseValue(exp.value.toString().replace('.', ','));
+    setExpenseCategory(exp.category);
+    setExpenseDate(exp.date);
+    setExpenseType(exp.type || 'pontual');
+    setExpenseStatus(exp.status);
+    setIsExpenseModalOpen(true);
+  };
+
+  // Salvamento (Criação ou Edição) de despesa
+  const handleSaveExpense = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!expenseDesc.trim() || !expenseValue || !expenseDate) {
       toast.error('Por favor, preencha todos os campos.');
@@ -196,25 +288,29 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
 
     setSavingExpense(true);
     try {
-      await addDoc(collection(db, 'organizations', orgId, 'expenses'), {
-        clientId,
+      const payload = {
         description: expenseDesc.trim(),
         value: parseFloat(expenseValue.replace(',', '.')),
         category: expenseCategory,
         date: expenseDate,
+        type: expenseType,
         status: expenseStatus,
-        createdAt: new Date()
-      });
+        updatedAt: new Date()
+      };
 
-      toast.success('Gasto cadastrado com sucesso!');
+      if (editingExpenseId) {
+        await updateDoc(doc(db, 'organizations', orgId, 'expenses', editingExpenseId), payload);
+        toast.success('Gasto atualizado com sucesso!');
+      } else {
+        await addDoc(collection(db, 'organizations', orgId, 'expenses'), {
+          ...payload,
+          clientId,
+          createdAt: new Date()
+        });
+        toast.success('Gasto cadastrado com sucesso!');
+      }
+
       setIsExpenseModalOpen(false);
-      
-      // Limpa formulário
-      setExpenseDesc('');
-      setExpenseValue('');
-      setExpenseCategory('Aluguel');
-      setExpenseDate(new Date().toISOString().substring(0, 10));
-      setExpenseStatus('paid');
     } catch (err) {
       toast.error('Erro ao salvar despesa.');
       console.error(err);
@@ -225,15 +321,22 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
 
   // Filtragem da listagem de Receitas para a tabela
   const filteredAppointments = appointments.filter(app => {
-    if (!filterByPeriod(app)) return false;
+    if (!isDateInPeriod(app.date) || app.status === 'cancelled') return false;
     if (filterPayment === 'paid') return app.paymentStatus === 'paid';
     if (filterPayment === 'unpaid') return app.paymentStatus !== 'paid';
     return true;
   });
 
   // Filtragem da listagem de Despesas para a tabela
+  // Para gastos fixos (recorrentes), eles aparecem se a data de início for anterior ou igual ao final do período.
   const filteredExpenses = expenses.filter(exp => {
-    if (!filterByPeriod(exp)) return false;
+    if (exp.type === 'fixo') {
+      const expStartDate = new Date(exp.date + 'T00:00:00');
+      if (expStartDate > periodEnd) return false;
+    } else {
+      if (!isDateInPeriod(exp.date)) return false;
+    }
+    
     if (filterPayment === 'paid') return exp.status === 'paid';
     if (filterPayment === 'unpaid') return exp.status !== 'paid';
     return true;
@@ -302,7 +405,7 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
             <span className="p-1 bg-red-500/10 text-red-400 rounded-lg"><TrendingDown size={14} /></span>
           </div>
           <p className="text-2xl font-black text-red-400">R$ {totalExpenses.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-          <p className="text-[10px] text-red-400/80 mt-1 font-bold">Total de saídas registradas</p>
+          <p className="text-[10px] text-red-400/80 mt-1 font-bold">Total de saídas + fixas projetadas</p>
         </div>
 
         {/* Card 4: Lucro Líquido */}
@@ -319,7 +422,7 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
           <p className={`text-2xl font-black ${lucroLiquido >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
             R$ {lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </p>
-          <p className="text-[10px] text-gray-500 mt-1 italic">Entradas (pagas) menos saídas</p>
+          <p className="text-[10px] text-gray-500 mt-1 italic">Entradas (pagas) menos despesas</p>
         </div>
       </div>
 
@@ -358,7 +461,7 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
             {/* Botão de Novo Gasto (Apenas na aba Despesas) */}
             {subTab === 'expenses' && (
               <button
-                onClick={() => setIsExpenseModalOpen(true)}
+                onClick={openNewExpenseModal}
                 className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition-all shadow-md shadow-emerald-500/10 cursor-pointer"
               >
                 <Plus size={14} />
@@ -480,10 +583,11 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
               <table className="w-full text-left border-collapse min-w-[600px]">
                 <thead>
                   <tr className="border-b border-white/10 text-gray-400 text-xs uppercase tracking-wider font-mono">
-                    <th className="pb-3 font-semibold">Data</th>
+                    <th className="pb-3 font-semibold">Data / Freq</th>
                     <th className="pb-3 font-semibold">Categoria</th>
                     <th className="pb-3 font-semibold">Descrição</th>
                     <th className="pb-3 font-semibold">Valor</th>
+                    <th className="pb-3 font-semibold">Recorrência</th>
                     <th className="pb-3 font-semibold">Situação</th>
                     <th className="pb-3 font-semibold text-right">Ações</th>
                   </tr>
@@ -492,7 +596,11 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
                   {filteredExpenses.map((exp) => (
                     <tr key={exp.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                       <td className="py-4 text-xs font-medium font-mono text-gray-300">
-                        {exp.date ? new Date(exp.date + 'T12:00:00').toLocaleDateString('pt-BR') : 'Sem data'}
+                        {exp.type === 'fixo' ? (
+                          <span>Dia {new Date(exp.date + 'T12:00:00').getDate()}</span>
+                        ) : (
+                          <span>{exp.date ? new Date(exp.date + 'T12:00:00').toLocaleDateString('pt-BR') : 'Sem data'}</span>
+                        )}
                       </td>
                       <td className="py-4">
                         <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wider ${
@@ -512,6 +620,13 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
                         - R$ {exp.value?.toFixed(2).replace('.', ',')}
                       </td>
                       <td className="py-4">
+                        <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase ${
+                          exp.type === 'fixo' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                        }`}>
+                          {exp.type === 'fixo' ? 'FIXO MENSAL' : 'PONTUAL'}
+                        </span>
+                      </td>
+                      <td className="py-4">
                         <button
                           onClick={() => handleToggleExpenseStatus(exp.id, exp.status)}
                           className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border cursor-pointer active:scale-95 transition-all ${
@@ -523,11 +638,18 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
                           {exp.status === 'paid' ? 'PAGO' : 'PENDENTE'}
                         </button>
                       </td>
-                      <td className="py-4 text-right">
+                      <td className="py-4 text-right space-x-1.5">
+                        <button
+                          onClick={() => openEditExpenseModal(exp)}
+                          className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-gray-300 hover:text-white rounded-xl transition-all cursor-pointer active:scale-90 inline-flex items-center justify-center"
+                          title="Editar gasto"
+                        >
+                          <Edit3 size={13} />
+                        </button>
                         <button
                           onClick={() => handleDeleteExpense(exp.id)}
                           className="p-2 bg-red-500/10 hover:bg-red-500/25 border border-red-500/20 hover:border-red-500/30 text-red-400 hover:text-red-300 rounded-xl transition-all cursor-pointer active:scale-90 inline-flex items-center justify-center"
-                          title="Excluir despesa"
+                          title="Excluir gasto"
                         >
                           <Trash2 size={13} />
                         </button>
@@ -541,7 +663,7 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
         )}
       </div>
 
-      {/* Modal Glassmorphism de Novo Gasto */}
+      {/* Modal Glassmorphism de Cadastro e Edição de Gasto */}
       {isExpenseModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 md:p-8 rounded-[2.5rem] max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in duration-300">
@@ -553,11 +675,15 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
             </button>
 
             <div className="mb-6 text-left">
-              <h3 className="text-xl font-bold text-white mb-1">Registrar Gasto</h3>
-              <p className="text-xs text-gray-400 font-medium">Informe a saída financeira para ajustar o lucro líquido da empresa.</p>
+              <h3 className="text-xl font-bold text-white mb-1">
+                {editingExpenseId ? 'Editar Gasto' : 'Registrar Gasto'}
+              </h3>
+              <p className="text-xs text-gray-400 font-medium">
+                {editingExpenseId ? 'Ajuste os dados do gasto selecionado.' : 'Informe a saída financeira para ajustar o lucro líquido da empresa.'}
+              </p>
             </div>
 
-            <form onSubmit={handleCreateExpense} className="space-y-4 text-left">
+            <form onSubmit={handleSaveExpense} className="space-y-4 text-left">
               {/* Descrição */}
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Descrição do Gasto</label>
@@ -604,16 +730,18 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                {/* Data */}
+                {/* Tipo de Gasto */}
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Data de Vencimento/Pagamento</label>
-                  <input
-                    type="date"
-                    value={expenseDate}
-                    onChange={(e) => setExpenseDate(e.target.value)}
-                    className="w-full px-4 py-3 bg-black/40 border border-white/10 text-white rounded-xl text-sm outline-none transition-all focus:border-primary-500"
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Frequência</label>
+                  <select
+                    value={expenseType}
+                    onChange={(e) => setExpenseType(e.target.value as any)}
+                    className="w-full px-4 py-3 bg-black/40 border border-white/10 text-white rounded-xl text-sm outline-none transition-all focus:border-primary-500 font-bold"
                     required
-                  />
+                  >
+                    <option value="pontual" className="bg-[#050505]">Gasto Pontual (Único)</option>
+                    <option value="fixo" className="bg-[#050505]">Fixo Mensal (Recorrente)</option>
+                  </select>
                 </div>
 
                 {/* Situação */}
@@ -629,6 +757,25 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
                     <option value="unpaid" className="bg-[#050505]">Pendente</option>
                   </select>
                 </div>
+              </div>
+
+              {/* Data (Original de Lançamento ou de início do Gasto Fixo) */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                  {expenseType === 'fixo' ? 'Data de Início do Gasto Fixo' : 'Data do Gasto'}
+                </label>
+                <input
+                  type="date"
+                  value={expenseDate}
+                  onChange={(e) => setExpenseDate(e.target.value)}
+                  className="w-full px-4 py-3 bg-black/40 border border-white/10 text-white rounded-xl text-sm outline-none transition-all focus:border-primary-500"
+                  required
+                />
+                {expenseType === 'fixo' && (
+                  <p className="text-[9px] text-gray-400 italic mt-0.5">
+                    O gasto incidirá automaticamente todo dia {new Date(expenseDate + 'T12:00:00').getDate()} a partir desta data.
+                  </p>
+                )}
               </div>
 
               {/* Botões de Ação */}
@@ -653,7 +800,7 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
                   ) : (
                     <>
                       <CheckCircle size={14} />
-                      <span>Salvar Gasto</span>
+                      <span>{editingExpenseId ? 'Atualizar Gasto' : 'Salvar Gasto'}</span>
                     </>
                   )}
                 </button>
