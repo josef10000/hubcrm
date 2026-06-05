@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  onAuthStateChanged
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
@@ -19,6 +20,39 @@ export default function PortalLogin() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  // Verifica se o usuário já está autenticado e redireciona automaticamente
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const profileSnap = await getDoc(doc(db, 'profiles', user.uid));
+          if (profileSnap.exists()) {
+            const pData = profileSnap.data();
+            if (pData.role === 'client_admin' && pData.orgId && pData.clientId) {
+              const redirect = sessionStorage.getItem('portalRedirect');
+              sessionStorage.removeItem('portalRedirect');
+              navigate(redirect || `/portal/${pData.orgId}/${pData.clientId}`);
+              return;
+            }
+            if (pData.role === 'admin' || pData.role === 'manager') {
+              const redirect = sessionStorage.getItem('portalRedirect');
+              if (redirect) {
+                sessionStorage.removeItem('portalRedirect');
+                navigate(redirect);
+                return;
+              }
+            }
+          }
+        } catch (e) {
+          console.error('[PortalLogin] Erro ao verificar perfil:', e);
+        }
+      }
+      setCheckingAuth(false);
+    });
+    return () => unsub();
+  }, [navigate]);
 
   const checkAndLinkProfile = async (user: any) => {
     const profileRef = doc(db, 'profiles', user.uid);
@@ -28,13 +62,17 @@ export default function PortalLogin() {
       const profileData = profileSnap.data();
       if (profileData.role === 'client_admin' && profileData.orgId && profileData.clientId) {
         toast.success('Login efetuado com sucesso!');
+        const redirect = sessionStorage.getItem('portalRedirect');
+        sessionStorage.removeItem('portalRedirect');
         setTimeout(() => {
-          navigate(`/portal/${profileData.orgId}/${profileData.clientId}`);
+          navigate(redirect || `/portal/${profileData.orgId}/${profileData.clientId}`);
         }, 1000);
       } else if (profileData.role === 'admin' || profileData.role === 'manager' || profileData.role === 'employee') {
         toast.success('Login administrativo detectado!');
+        const redirect = sessionStorage.getItem('portalRedirect');
+        sessionStorage.removeItem('portalRedirect');
         setTimeout(() => {
-          navigate('/');
+          navigate(redirect || '/');
         }, 1000);
       } else {
         toast.error('Acesso restrito apenas a clientes cadastrados.');
@@ -141,6 +179,15 @@ export default function PortalLogin() {
       setLoading(false);
     }
   };
+
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen bg-[#030712] flex flex-col items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent mb-4"></div>
+        <p className="text-gray-400 font-medium animate-pulse">Verificando autenticação...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#030712] flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans select-none">

@@ -12,8 +12,7 @@ import {
   X,
   Bell,
   Calendar,
-  DollarSign,
-  Lock
+  DollarSign
 } from 'lucide-react';
 import { usePortalData } from '@/hooks/usePortalData';
 import { toast, Toaster } from 'sonner';
@@ -62,14 +61,12 @@ export default function ClientPortalLayout() {
           if (profileSnap.exists()) {
             const pData = profileSnap.data();
             
-            /* 
-            // Administradores corporativos têm acesso irrestrito
+            // Administradores corporativos têm acesso irrestrito ao portal
             if (pData.role === 'admin' || pData.role === 'manager') {
               setIsClientAdmin(true);
               setAuthLoading(false);
               return;
             }
-            */
 
             if (pData.role === 'client_admin') {
               // Se o cliente tentar acessar o portal de outro ID de cliente, redireciona para o correto dele
@@ -180,43 +177,28 @@ export default function ClientPortalLayout() {
     );
   }
 
-  // Se o usuário não estiver autenticado/autorizado para este portal, exibe a tela de bloqueio total
+  // Se o usuário não estiver autenticado/autorizado para este portal, redireciona automaticamente para o login
+  useEffect(() => {
+    if (authLoading || loading) return;
+    if (!isClientAdmin) {
+      // Salva a rota de destino no sessionStorage para redirecionar de volta após login
+      if (orgId && clientId) {
+        sessionStorage.setItem('portalRedirect', `/portal/${orgId}/${clientId}`);
+      }
+      navigate('/portal/login');
+    }
+  }, [isClientAdmin, authLoading, loading, orgId, clientId, navigate]);
+
+  // Enquanto redireciona, mostra loading
   if (!isClientAdmin) {
     return (
-      <div className="min-h-screen bg-[#030712] flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans select-none animate-in fade-in duration-300">
-        {/* Orbes Decorativas */}
-        <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-          <div className="absolute top-[-20%] left-[-20%] w-[50vw] h-[50vw] bg-primary-600/10 rounded-full blur-[140px]"></div>
-          <div className="absolute bottom-[-20%] right-[-20%] w-[50vw] h-[50vw] bg-blue-600/10 rounded-full blur-[140px]"></div>
-        </div>
-
-        <div className="max-w-md w-full text-center space-y-6 relative z-10">
-          {/* Cabeçalho */}
-          <div className="flex flex-col items-center">
-            <div className="relative mb-4">
-              <div className="absolute inset-0 bg-primary-500/20 blur-2xl rounded-full"></div>
-              <div className="relative w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center shadow-xl shadow-primary-500/20 border border-white/15">
-                <Lock className="w-8 h-8 text-white" />
-              </div>
-            </div>
-            <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">PORTAL DO CLIENTE</h1>
-            <p className="text-gray-400 text-xs mt-1 uppercase tracking-[0.2em] font-bold">Hub Symples &bull; Área Restrita</p>
-          </div>
-
-          {/* Card Glassmorphic */}
-          <div className="bg-white/[0.03] backdrop-blur-[35px] border border-white/10 p-8 rounded-[2.5rem] shadow-2xl space-y-6">
-            <h2 className="text-lg font-bold text-white mb-2">Autenticação Obrigatória</h2>
-            <p className="text-gray-400 text-sm leading-relaxed">
-              Para acessar os serviços de Agenda, CRM Financeiro e documentos do portal da sua empresa, por favor efetue o login.
-            </p>
-            <button
-              onClick={() => navigate('/portal/login')}
-              className="w-full py-4 bg-primary-500 hover:bg-primary-600 text-white font-bold rounded-2xl transition-all shadow-lg shadow-primary-500/20 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 text-sm"
-            >
-              <span>Acessar com Login</span>
-            </button>
-          </div>
-        </div>
+      <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center">
+        <motion.div 
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full mb-4"
+        />
+        <p className="text-gray-400 font-medium animate-pulse">Redirecionando para o login...</p>
       </div>
     );
   }
