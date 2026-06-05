@@ -81,7 +81,7 @@ export default function PortalLogin() {
     } else {
       // Perfil ainda não existe no Firestore, tenta a vinculação automática por e-mail via API serverless
       try {
-        const response = await fetch('/api/portal_auth', {
+        const response = await fetch('/api/portal_handler', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: user.email, uid: user.uid })

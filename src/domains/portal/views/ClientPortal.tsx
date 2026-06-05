@@ -189,7 +189,7 @@ export default function ClientPortal() {
           if (c.asaasCustomerId) {
             try {
               // We use a regular fetch here because the portal_finance endpoint is public but verified by orgId/clientId
-              const res = await fetch(`/api/portal_finance?orgId=${orgId}&clientId=${c.id}&token=${c.publicToken}`);
+              const res = await fetch(`/api/portal_handler?orgId=${orgId}&clientId=${c.id}&token=${c.publicToken}`);
               if (res.ok) {
                 const data = await res.json();
                 const payments = data.payments || []; // 🚀 API agora retorna .payments direto

@@ -39,7 +39,7 @@ export function usePortalData(orgId: string | undefined, initialClientId: string
       }
 
       try {
-        const response = await fetch(`/api/portal_finance?orgId=${orgId}&clientId=${activeClientId}&token=${token}`);
+        const response = await fetch(`/api/portal_handler?orgId=${orgId}&clientId=${activeClientId}&token=${token}`);
         
         if (!response.ok) {
           const errData = await response.json();

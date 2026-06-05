@@ -149,7 +149,7 @@ export const createCRMSlice: StateCreator<
                   await new Promise(r => setTimeout(r, 2500));
                   
                   const pData = await apiClient.get<any>(
-                    `/api/portal_finance?orgId=${effectiveOrgId}&clientId=${client.id}&token=${client.publicToken}`,
+                    `/api/portal_handler?orgId=${effectiveOrgId}&clientId=${client.id}&token=${client.publicToken}`,
                     { showErrorToast: false }
                   );
                   

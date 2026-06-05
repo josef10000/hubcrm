@@ -58,7 +58,7 @@ interface UseApiQueryResult<T> {
  * // Busca com dependências (re-executa quando orgId muda)
  * const { data: payments, refetch } = useApiQuery<Payment[]>(
  *   `payments-${orgId}`,
- *   `/api/portal_finance?orgId=${orgId}`,
+ *   `/api/portal_handler?orgId=${orgId}`,
  *   { ttl: 60000, deps: [orgId] }
  * );
  */

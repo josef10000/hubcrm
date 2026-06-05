@@ -149,7 +149,7 @@ async function request<T = any>(
  * 
  * @example
  * // GET simples
- * const data = await apiClient.get<PaymentData[]>('/api/portal_finance?orgId=abc');
+ * const data = await apiClient.get<PaymentData[]>('/api/portal_handler?orgId=abc');
  * 
  * // POST com body
  * const result = await apiClient.post('/api/team_handler?action=broadcast', {
