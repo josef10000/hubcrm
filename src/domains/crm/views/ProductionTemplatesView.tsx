@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   LayoutTemplate, Search, Plus, Trash2, Edit3, ExternalLink, Copy, Check, X, 
   Palette, Maximize2, Info, Globe, FileText, Sparkles, User, Link as LinkIcon, 
-  Upload, Code, Database, ChevronRight, Eye
+  Upload, Code, Database, ChevronRight, Eye, MousePointerClick
 } from 'lucide-react';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
@@ -27,21 +27,71 @@ interface ProductionTemplate {
   niche: string;
   type: string;
   colors: string[];
-  previewImageUrl: string;
+  previewImageUrl?: string; // Opcional no início
   htmlContent: string;
-  promptId: string;
   customVariables?: string[];
   createdAt: number;
   updatedAt?: number;
 }
 
-export default function ProductionTemplatesView() {
+// Lista estendida de sugestões de variáveis prontas e clicáveis
+const SUGGESTED_VARIABLES = [
+  // Cores e Estilo
+  '{COR_PRIMARIA}',
+  '{COR_SECUNDARIA}',
+  '{COR_ACENTO}',
+  
+  // Textos Hero e Copy
+  '{TITULO_HERO}',
+  '{SUBTITULO_HERO}',
+  '{SLOGAN_HERO}',
+  '{CTA_TEXTO}',
+  
+  // Conteúdos Estruturais
+  '{SECAO_SOBRE}',
+  '{BENEFICIOS}',
+  '{DIFERENCIAIS}',
+  '{SERVICOS_LISTA}',
+  '{TABELA_PRECOS}',
+  '{EQUIPE_MEMBROS}',
+  '{DEPOIMENTOS_CLIENTES}',
+  '{FAQ_PERGUNTAS}',
+  
+  // Contatos e Links
+  '{EMAIL_CONTATO}',
+  '{TELEFONE_CONTATO}',
+  '{ENDERECO_FISICO}',
+  '{HORARIO_FUNCIONAMENTO}',
+  '{LINK_WHATSAPP}',
+  '{LINK_INSTAGRAM}',
+  '{LINK_FACEBOOK}',
+  
+  // Mídias e Assets
+  '{URL_LOGOTIPO}',
+  '{URL_FAVICON}',
+  '{LINK_VIDEO}',
+  
+  // SEO e Integrações
+  '{TEXTO_RODAPE}',
+  '{METATAGS_SEO}',
+  '{PIXEL_FACEBOOK}'
+];
+
+export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'templates' | 'prompts' }) {
   const { user } = useAuth();
   const { hasPermission } = usePermissions();
   const { effectiveOrgId, clients } = useCRM();
 
+  const canManage = hasPermission('MANAGE_LEADS') || hasPermission('MANAGE_SETTINGS');
+
+  // Refs para manipular cursor do textarea
+  const promptTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const promptCrudTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const htmlTextareaRef = useRef<HTMLTextAreaElement>(null);
+
   // Abas principais: 'templates' | 'prompts'
-  const [activeTab, setActiveTab] = useState<'templates' | 'prompts'>('templates');
+  const [localActiveTab, setLocalActiveTab] = useState<'templates' | 'prompts'>('templates');
+  const activeTab = viewMode || localActiveTab;
 
   // Estados de dados
   const [templates, setTemplates] = useState<ProductionTemplate[]>([]);
@@ -59,7 +109,7 @@ export default function ProductionTemplatesView() {
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isPromptPanelOpen, setIsPromptPanelOpen] = useState(false);
 
-  // Estados de upload/loading nos formulários
+  // Estados de upload/loading
   const [uploadingImage, setUploadingImage] = useState(false);
 
   // Entidades em edição/uso
@@ -67,7 +117,8 @@ export default function ProductionTemplatesView() {
   const [editingPrompt, setEditingPrompt] = useState<Partial<AIPrompt> | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<ProductionTemplate | null>(null);
 
-  // Estados para geração de prompt/demo personalizada
+  // Estados para geração de prompt/demo personalizada (onde o prompt global é selecionado)
+  const [selectedPromptId, setSelectedPromptId] = useState('');
   const [selectedClientId, setSelectedClientId] = useState('');
   const [customAnswers, setCustomAnswers] = useState<Record<string, string>>({});
   const [promptMode, setPromptMode] = useState<'full' | 'structural' | 'copy'>('full');
@@ -75,12 +126,6 @@ export default function ProductionTemplatesView() {
 
   // Novas variáveis customizadas temporárias no form
   const [newVarName, setNewVarName] = useState('');
-
-  // Permissões
-  const canManage = hasPermission('MANAGE_SETTINGS') || hasPermission('MANAGE_TEAM') || user?.email === 'jfs102019@hotmail.com';
-
-  // Categorias disponíveis para filtro
-  const categories = ['Todos', 'Landing Page', 'SaaS', 'Institucional', 'E-commerce'];
 
   // 1. Escuta templates do Firestore
   useEffect(() => {
@@ -139,7 +184,7 @@ export default function ProductionTemplatesView() {
     return matchesCategory && matchesSearch;
   });
 
-  // 4. ABERTURA DE DEMO LOCAL EM OUTRA ABA (ESTÁTICA E DINÂMICA)
+  // 4. ABERTURA DE DEMO LOCAL
   const handleOpenDemo = (htmlContent: string, answers?: Record<string, string>) => {
     if (!htmlContent) {
       toast.error("Este template não possui código HTML cadastrado!");
@@ -148,10 +193,8 @@ export default function ProductionTemplatesView() {
 
     let finalHtml = htmlContent;
 
-    // Se houver respostas/variáveis fornecidas, substitui no HTML antes de injetar
     if (answers) {
       Object.entries(answers).forEach(([key, val]) => {
-        // Substituição global da chave pela resposta digitada
         finalHtml = finalHtml.split(key).join(val);
       });
     }
@@ -166,8 +209,7 @@ export default function ProductionTemplatesView() {
     }
   };
 
-  // 5. PROCESSOS CRUD: TEMPLATES
-
+  // 5. CRUD TEMPLATES
   const handleOpenCreateTemplate = () => {
     setEditingTemplate({
       niche: '',
@@ -175,7 +217,6 @@ export default function ProductionTemplatesView() {
       colors: ['#3b82f6'],
       previewImageUrl: '',
       htmlContent: '',
-      promptId: '',
       customVariables: []
     });
     setIsTemplateModalOpen(true);
@@ -190,7 +231,8 @@ export default function ProductionTemplatesView() {
   const handleSaveTemplate = async () => {
     if (!effectiveOrgId || !editingTemplate) return;
 
-    if (!editingTemplate.niche || !editingTemplate.previewImageUrl || !editingTemplate.htmlContent || !editingTemplate.promptId) {
+    // A imagem de preview agora é opcional
+    if (!editingTemplate.niche || !editingTemplate.htmlContent) {
       toast.error("Por favor, preencha todos os campos obrigatórios (*)");
       return;
     }
@@ -200,9 +242,8 @@ export default function ProductionTemplatesView() {
         niche: editingTemplate.niche,
         type: editingTemplate.type || 'Landing Page',
         colors: editingTemplate.colors || ['#3b82f6'],
-        previewImageUrl: editingTemplate.previewImageUrl,
+        previewImageUrl: editingTemplate.previewImageUrl || '',
         htmlContent: editingTemplate.htmlContent,
-        promptId: editingTemplate.promptId,
         customVariables: editingTemplate.customVariables || [],
         updatedAt: Date.now()
       };
@@ -244,7 +285,7 @@ export default function ProductionTemplatesView() {
     }
   };
 
-  // Upload do print do site para o Cloudinary
+  // Upload Cloudinary
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -253,16 +294,16 @@ export default function ProductionTemplatesView() {
     try {
       const secureUrl = await uploadToCloudinary(file);
       setEditingTemplate(prev => prev ? { ...prev, previewImageUrl: secureUrl } : null);
-      toast.success("Print enviado ao Cloudinary com sucesso!");
+      toast.success("Print enviado com sucesso!");
     } catch (err) {
       console.error(err);
-      toast.error("Erro ao enviar print para o Cloudinary.");
+      toast.error("Erro ao enviar imagem.");
     } finally {
       setUploadingImage(false);
     }
   };
 
-  // Upload e leitura do arquivo HTML
+  // Upload HTML
   const handleHtmlUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -271,15 +312,15 @@ export default function ProductionTemplatesView() {
     reader.onload = (event) => {
       const text = event.target?.result as string;
       setEditingTemplate(prev => prev ? { ...prev, htmlContent: text } : null);
-      toast.success("Arquivo HTML carregado localmente com sucesso!");
+      toast.success("HTML carregado!");
     };
     reader.onerror = () => {
-      toast.error("Erro ao ler o arquivo HTML.");
+      toast.error("Erro ao ler HTML.");
     };
     reader.readAsText(file);
   };
 
-  // Manipulação de cores no form de template
+  // Cores
   const handleAddColor = () => {
     if (editingTemplate) {
       const colors = [...(editingTemplate.colors || []), '#3b82f6'];
@@ -302,7 +343,21 @@ export default function ProductionTemplatesView() {
     }
   };
 
-  // Variáveis customizadas no form de template
+  // Adicionar variável customizada de forma direta (clicável no seletor do form de template)
+  const handleSelectSuggestedVariable = (variable: string) => {
+    if (editingTemplate) {
+      const customVariables = [...(editingTemplate.customVariables || [])];
+      if (customVariables.includes(variable)) {
+        toast.error("Esta variável já foi adicionada!");
+        return;
+      }
+      customVariables.push(variable);
+      setEditingTemplate({ ...editingTemplate, customVariables });
+      toast.success(`Variável ${variable} adicionada!`);
+    }
+  };
+
+  // Adicionar variável escrita manualmente
   const handleAddCustomVariable = () => {
     if (!newVarName.trim()) return;
     let formattedVar = newVarName.trim().toUpperCase();
@@ -328,8 +383,7 @@ export default function ProductionTemplatesView() {
     }
   };
 
-  // 6. PROCESSOS CRUD: BIBLIOTECA DE PROMPTS
-
+  // 6. CRUD PROMPTS
   const handleOpenCreatePrompt = () => {
     setEditingPrompt({ name: '', content: '' });
     setIsPromptModalOpen(true);
@@ -357,14 +411,14 @@ export default function ProductionTemplatesView() {
       if (editingPrompt.id) {
         const docRef = doc(db, 'organizations', effectiveOrgId, 'prompt_library', editingPrompt.id);
         await updateDoc(docRef, dataToSave);
-        toast.success("Prompt atualizado com sucesso!");
+        toast.success("Prompt atualizado!");
       } else {
         const colRef = collection(db, 'organizations', effectiveOrgId, 'prompt_library');
         await addDoc(colRef, {
           ...dataToSave,
           createdAt: Date.now()
         });
-        toast.success("Prompt cadastrado com sucesso!");
+        toast.success("Prompt cadastrado!");
       }
 
       setIsPromptModalOpen(false);
@@ -378,45 +432,95 @@ export default function ProductionTemplatesView() {
   const handleDeletePrompt = async (id: string) => {
     if (!effectiveOrgId) return;
 
-    if (confirm("Deseja realmente excluir este prompt global? Templates que o utilizam precisarão de uma nova associação.")) {
+    if (confirm("Deseja realmente excluir este prompt global?")) {
       try {
         const docRef = doc(db, 'organizations', effectiveOrgId, 'prompt_library', id);
         await deleteDoc(docRef);
-        toast.success("Prompt excluído com sucesso!");
+        toast.success("Prompt excluído!");
       } catch (err) {
         console.error("Erro ao excluir prompt:", err);
-        toast.error("Erro ao excluir o prompt.");
+        toast.error("Erro ao excluir.");
       }
     }
   };
 
-  // 7. GERAÇÃO E CÓPIA DE PROMPTS
+  // Inserção automática de variáveis no cursor do textarea (no CRUD de prompts)
+  const handleInsertVariableInCrudPrompt = (variable: string) => {
+    const textarea = promptCrudTextareaRef.current;
+    if (!textarea || !editingPrompt) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const before = text.substring(0, start);
+    const after = text.substring(end, text.length);
+    const newValue = before + variable + after;
+
+    setEditingPrompt({ ...editingPrompt, content: newValue });
+
+    // Foca de volta e ajusta cursor
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + variable.length, start + variable.length);
+    }, 50);
+  };
+
+  // Inserção automática de variáveis no cursor do editor de HTML do template
+  const handleInsertVariableInHtml = (variable: string) => {
+    const textarea = htmlTextareaRef.current;
+    if (!textarea || !editingTemplate) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const before = text.substring(0, start);
+    const after = text.substring(end, text.length);
+    const newValue = before + variable + after;
+
+    // Se for variável customizada, ativa automaticamente na lista de customVariables do template
+    const fixedCRMVariables = ['{NOME_CLIENTE}', '{WHATSAPP_CLIENTE}', '{EMAIL_CLIENTE}', '{NICHO_CLIENTE}'];
+    let customVariables = [...(editingTemplate.customVariables || [])];
+
+    if (!fixedCRMVariables.includes(variable) && !customVariables.includes(variable)) {
+      customVariables.push(variable);
+    }
+
+    setEditingTemplate({
+      ...editingTemplate,
+      htmlContent: newValue,
+      customVariables
+    });
+
+    // Foca de volta e ajusta cursor
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + variable.length, start + variable.length);
+    }, 50);
+
+    toast.success(`Variável ${variable} inserida no HTML!`);
+  };
+
+  // Inserção de variáveis no gerador de prompts (Split Screen) para customização rápida
+  const handleInsertVariableInCustomPrompt = (variable: string) => {
+    // Adiciona a variável ao campo de customAnswers correspondente
+    if (customAnswers[variable] !== undefined) return;
+    setCustomAnswers(prev => ({ ...prev, [variable]: '' }));
+  };
+
+  // 7. GERAÇÃO DE PROMPT PARA O CLIENTE (Onde seleciona o prompt global)
   const handleSelectTemplateForPrompt = (template: ProductionTemplate) => {
     setSelectedTemplate(template);
     setSelectedClientId('');
+    setSelectedPromptId('');
     setCustomAnswers({});
     setIsPromptPanelOpen(true);
-  };
-
-  const handleClientChange = (clientId: string) => {
-    setSelectedClientId(clientId);
-    const client = clients.find(c => c.id === clientId);
-    if (client) {
-      const initialAnswers: Record<string, string> = {
-        '{NOME_CLIENTE}': client.name || '',
-        '{WHATSAPP_CLIENTE}': client.whatsapp || '',
-        '{EMAIL_CLIENTE}': client.email || '',
-        '{NICHO_CLIENTE}': client.niche || '',
-      };
-      setCustomAnswers(prev => ({ ...prev, ...initialAnswers }));
-    }
   };
 
   const getGeneratedPrompt = () => {
     if (!selectedTemplate) return '';
 
-    const promptObj = prompts.find(p => p.id === selectedTemplate.promptId);
-    if (!promptObj) return 'Nenhum prompt associado a este template.';
+    const promptObj = prompts.find(p => p.id === selectedPromptId);
+    if (!promptObj) return 'Por favor, selecione um prompt de IA no painel ao lado para gerar o conteúdo.';
 
     let prompt = promptObj.content;
 
@@ -456,7 +560,7 @@ export default function ProductionTemplatesView() {
     const text = getGeneratedPrompt();
     navigator.clipboard.writeText(text);
     setCopied(true);
-    toast.success("Prompt copiado com sucesso!");
+    toast.success("Prompt copiado!");
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -464,68 +568,68 @@ export default function ProductionTemplatesView() {
     <div className="space-y-6 animate-fadeIn">
       
       {/* CABEÇALHO COM ABAS */}
-      <div className="bg-black/40 dark:bg-[#111111] p-6 rounded-3xl border border-gray-200 dark:border-white/10 shadow-sm backdrop-blur-md flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <LayoutTemplate className="w-6 h-6 text-primary-500" />
-            Templates de Produção
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Biblioteca de site-templates White Label com renderização local de demos e injeção automática de dados do CRM.
-          </p>
+      {!viewMode && (
+        <div className="bg-black/40 dark:bg-[#111111] p-6 rounded-3xl border border-gray-200 dark:border-white/10 shadow-sm backdrop-blur-md flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <LayoutTemplate className="w-6 h-6 text-primary-500" />
+              Templates de Produção
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Mapeie templates White Label, teste visualizações dinâmicas locais e associe prompts da biblioteca direto no cliente.
+            </p>
 
-          {/* Abas */}
-          <div className="flex gap-4 mt-6 border-b border-white/5 pb-1">
-            <button
-              onClick={() => setActiveTab('templates')}
-              className={`pb-2 text-sm font-bold uppercase tracking-wider transition-all border-b-2 ${
-                activeTab === 'templates'
-                  ? 'border-primary-500 text-white'
-                  : 'border-transparent text-gray-500 hover:text-gray-300'
-              }`}
-            >
-              Catálogo de Templates
-            </button>
-            <button
-              onClick={() => setActiveTab('prompts')}
-              className={`pb-2 text-sm font-bold uppercase tracking-wider transition-all border-b-2 ${
-                activeTab === 'prompts'
-                  ? 'border-primary-500 text-white'
-                  : 'border-transparent text-gray-500 hover:text-gray-300'
-              }`}
-            >
-              Biblioteca de Prompts
-            </button>
+            <div className="flex gap-4 mt-6 border-b border-white/5 pb-1 font-bold">
+              <button
+                onClick={() => setActiveTab('templates')}
+                className={`pb-2 text-sm uppercase tracking-wider transition-all border-b-2 ${
+                  activeTab === 'templates'
+                    ? 'border-primary-500 text-white'
+                    : 'border-transparent text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                Catálogo de Templates
+              </button>
+              <button
+                onClick={() => setActiveTab('prompts')}
+                className={`pb-2 text-sm uppercase tracking-wider transition-all border-b-2 ${
+                  activeTab === 'prompts'
+                    ? 'border-primary-500 text-white'
+                    : 'border-transparent text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                Biblioteca de Prompts
+              </button>
+            </div>
+          </div>
+
+          <div>
+            {canManage && (
+              activeTab === 'templates' ? (
+                <button 
+                  onClick={handleOpenCreateTemplate}
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold transition-all hover:scale-[1.02] shadow-lg shadow-primary-500/10"
+                >
+                  <Plus className="w-5 h-5" />
+                  Adicionar Template
+                </button>
+              ) : (
+                <button 
+                  onClick={handleOpenCreatePrompt}
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold transition-all hover:scale-[1.02] shadow-lg shadow-primary-500/10"
+                >
+                  <Plus className="w-5 h-5" />
+                  Novo Prompt IA
+                </button>
+              )
+            )}
           </div>
         </div>
+      )}
 
-        <div>
-          {canManage && (
-            activeTab === 'templates' ? (
-              <button 
-                onClick={handleOpenCreateTemplate}
-                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold transition-all hover:scale-[1.02] shadow-lg shadow-primary-500/10"
-              >
-                <Plus className="w-5 h-5" />
-                Adicionar Template
-              </button>
-            ) : (
-              <button 
-                onClick={handleOpenCreatePrompt}
-                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold transition-all hover:scale-[1.02] shadow-lg shadow-primary-500/10"
-              >
-                <Plus className="w-5 h-5" />
-                Novo Prompt IA
-              </button>
-            )
-          )}
-        </div>
-      </div>
-
-      {/* CONTEÚDO DA ABA 1: CATALOGO DE TEMPLATES */}
+      {/* ABA 1: CATÁLOGO */}
       {activeTab === 'templates' && (
         <div className="space-y-6">
-          {/* BUSCA E FILTROS */}
           <div className="flex flex-col md:flex-row items-center gap-4">
             <div className="relative w-full md:flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -533,12 +637,12 @@ export default function ProductionTemplatesView() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-2xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-all backdrop-blur-md"
+                className="w-full pl-12 pr-4 py-3 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-2xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none focus:ring-2 focus:ring-primary-500/50 transition-all backdrop-blur-md"
                 placeholder="Filtrar por nicho, cor, tipo de site..."
               />
             </div>
 
-            <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+            <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 scrollbar-none items-center">
               {categories.map((cat) => (
                 <button
                   key={cat}
@@ -552,10 +656,19 @@ export default function ProductionTemplatesView() {
                   {cat}
                 </button>
               ))}
+
+              {viewMode && canManage && (
+                <button 
+                  onClick={handleOpenCreateTemplate}
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold transition-all hover:scale-[1.02] shadow-lg shadow-primary-500/10 text-xs whitespace-nowrap ml-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Novo Template
+                </button>
+              )}
             </div>
           </div>
 
-          {/* LISTAGEM GRID */}
           {loadingTemplates ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
               <div className="h-10 w-10 rounded-full border-2 border-primary-500/30 border-t-primary-500 animate-spin"></div>
@@ -573,7 +686,7 @@ export default function ProductionTemplatesView() {
               {canManage && (
                 <button 
                   onClick={handleOpenCreateTemplate}
-                  className="mt-6 px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-semibold transition-all hover:scale-[1.02]"
+                  className="mt-6 px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-semibold transition-all"
                 >
                   Criar Primeiro Template
                 </button>
@@ -586,26 +699,35 @@ export default function ProductionTemplatesView() {
                   key={template.id}
                   className="group flex flex-col bg-black/40 dark:bg-[#111111] border border-gray-200 dark:border-white/10 rounded-3xl overflow-hidden hover:border-primary-500/40 shadow-sm hover:shadow-lg transition-all duration-300 backdrop-blur-md"
                 >
-                  {/* Print Visual */}
+                  {/* Print Visual com Fallback de Gradiente se não houver print */}
                   <div className="relative aspect-video w-full overflow-hidden bg-black/20 border-b border-gray-200 dark:border-white/10">
-                    <img 
-                      src={template.previewImageUrl} 
-                      alt={template.niche}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      onError={(e) => {
-                        e.currentTarget.src = "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=600&auto=format&fit=crop";
-                      }}
-                    />
+                    {template.previewImageUrl ? (
+                      <img 
+                        src={template.previewImageUrl} 
+                        alt={template.niche}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        onError={(e) => {
+                          e.currentTarget.src = "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=600&auto=format&fit=crop";
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-primary-900/30 to-purple-900/20 flex flex-col items-center justify-center gap-2 select-none group-hover:scale-105 transition-transform duration-500">
+                        <LayoutTemplate className="w-8 h-8 text-white/20" />
+                        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Sem Preview Cadastrado</span>
+                      </div>
+                    )}
                     
-                    {/* Ações Rápida Hover */}
+                    {/* Hover actions */}
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-3 transition-opacity duration-300">
-                      <button 
-                        onClick={() => { setSelectedTemplate(template); setIsPreviewModalOpen(true); }}
-                        className="p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl border border-white/20 backdrop-blur-sm transition-all hover:scale-105"
-                        title="Ver Print Ampliado"
-                      >
-                        <Maximize2 className="w-5 h-5" />
-                      </button>
+                      {template.previewImageUrl && (
+                        <button 
+                          onClick={() => { setSelectedTemplate(template); setIsPreviewModalOpen(true); }}
+                          className="p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl border border-white/20 backdrop-blur-sm transition-all hover:scale-105"
+                          title="Ver Print Ampliado"
+                        >
+                          <Maximize2 className="w-5 h-5" />
+                        </button>
+                      )}
                       <button 
                         onClick={() => handleOpenDemo(template.htmlContent)}
                         className="p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl border border-white/20 backdrop-blur-sm transition-all hover:scale-105 flex items-center gap-1.5 font-bold text-xs"
@@ -616,7 +738,6 @@ export default function ProductionTemplatesView() {
                       </button>
                     </div>
 
-                    {/* Badge Tipo */}
                     <span className="absolute top-4 left-4 px-3 py-1 bg-[#090d16]/80 backdrop-blur-md border border-white/10 text-white rounded-lg text-[10px] font-bold uppercase tracking-wider">
                       {template.type}
                     </span>
@@ -654,7 +775,6 @@ export default function ProductionTemplatesView() {
                         )}
                       </div>
 
-                      {/* Paleta Cromática */}
                       <div className="flex items-center gap-1.5 mt-3">
                         <Palette className="w-3.5 h-3.5 text-gray-400" />
                         <div className="flex gap-1">
@@ -670,7 +790,6 @@ export default function ProductionTemplatesView() {
                       </div>
                     </div>
 
-                    {/* Botão de Uso */}
                     <button
                       onClick={() => handleSelectTemplateForPrompt(template)}
                       className="w-full flex items-center justify-center gap-2 py-2.5 bg-white/5 hover:bg-primary-500 border border-gray-200 dark:border-white/10 hover:border-primary-500 text-gray-900 dark:text-white hover:text-white rounded-xl font-bold text-xs transition-all"
@@ -686,9 +805,27 @@ export default function ProductionTemplatesView() {
         </div>
       )}
 
-      {/* CONTEÚDO DA ABA 2: BIBLIOTECA DE PROMPTS */}
+      {/* ABA 2: PROMPTS */}
       {activeTab === 'prompts' && (
         <div className="space-y-6">
+          {viewMode && (
+            <div className="flex justify-between items-center bg-black/20 p-4 rounded-2xl border border-white/5 backdrop-blur-md">
+              <span className="text-xs text-gray-400 font-semibold tracking-wide flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-primary-500" />
+                Biblioteca de Prompts Globais para Gemini/IA
+              </span>
+              {canManage && (
+                <button 
+                  onClick={handleOpenCreatePrompt}
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold transition-all hover:scale-[1.02] shadow-lg shadow-primary-500/10 text-xs"
+                >
+                  <Plus className="w-4 h-4" />
+                  Novo Prompt IA
+                </button>
+              )}
+            </div>
+          )}
+
           {loadingPrompts ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
               <div className="h-10 w-10 rounded-full border-2 border-primary-500/30 border-t-primary-500 animate-spin"></div>
@@ -701,12 +838,12 @@ export default function ProductionTemplatesView() {
               </div>
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">Nenhum prompt cadastrado</h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mt-2">
-                Cadastre prompts de engenharia reversa de IA para associar aos seus templates de site.
+                Cadastre prompts de IA de engenharia reversa para usar nos seus clientes.
               </p>
               {canManage && (
                 <button 
                   onClick={handleOpenCreatePrompt}
-                  className="mt-6 px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-semibold transition-all hover:scale-[1.02]"
+                  className="mt-6 px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-semibold transition-all"
                 >
                   Criar Primeiro Prompt
                 </button>
@@ -717,7 +854,7 @@ export default function ProductionTemplatesView() {
               {prompts.map((prompt) => (
                 <div 
                   key={prompt.id}
-                  className="bg-black/40 dark:bg-[#111111] border border-gray-200 dark:border-white/10 rounded-3xl p-6 backdrop-blur-md flex flex-col justify-between"
+                  className="bg-black/40 dark:bg-[#111111] border border-gray-200 dark:border-white/10 rounded-3xl p-6 backdrop-blur-md flex flex-col justify-between hover:border-primary-500/30 transition-all"
                 >
                   <div>
                     <div className="flex items-center justify-between">
@@ -745,7 +882,6 @@ export default function ProductionTemplatesView() {
                       )}
                     </div>
                     
-                    {/* Visualização curta do prompt */}
                     <div className="mt-4 bg-black/20 border border-white/5 rounded-2xl p-4 max-h-[150px] overflow-y-auto font-mono text-[10px] text-gray-400 whitespace-pre-wrap leading-relaxed select-all">
                       {prompt.content}
                     </div>
@@ -761,12 +897,11 @@ export default function ProductionTemplatesView() {
         </div>
       )}
 
-      {/* MODAL: PREVIEW DE PRINT AMPLIADO */}
+      {/* MODAL: PREVIEW DE PRINT */}
       {isPreviewModalOpen && selectedTemplate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-all animate-fadeIn">
           <div className="relative w-full max-w-4xl bg-black/40 dark:bg-[#0c0d0f] border border-gray-200 dark:border-white/10 rounded-3xl overflow-hidden shadow-2xl backdrop-blur-md">
             
-            {/* Header Mockup */}
             <div className="flex items-center justify-between px-6 py-4 bg-black/40 border-b border-gray-200 dark:border-white/10">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-red-500"></div>
@@ -784,19 +919,16 @@ export default function ProductionTemplatesView() {
               </button>
             </div>
 
-            {/* Imagem do print */}
             <div className="max-h-[60vh] overflow-y-auto bg-black/10 flex justify-center">
-              <img 
-                src={selectedTemplate.previewImageUrl} 
-                alt={selectedTemplate.niche} 
-                className="w-full h-auto object-contain"
-                onError={(e) => {
-                  e.currentTarget.src = "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=600&auto=format&fit=crop";
-                }}
-              />
+              {selectedTemplate.previewImageUrl && (
+                <img 
+                  src={selectedTemplate.previewImageUrl} 
+                  alt={selectedTemplate.niche} 
+                  className="w-full h-auto object-contain"
+                />
+              )}
             </div>
 
-            {/* Footer */}
             <div className="p-6 bg-black/40 border-t border-gray-200 dark:border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <h4 className="font-bold text-gray-900 dark:text-white text-lg">Site {selectedTemplate.type} — {selectedTemplate.niche}</h4>
@@ -808,7 +940,7 @@ export default function ProductionTemplatesView() {
                     setIsPreviewModalOpen(false);
                     handleOpenDemo(selectedTemplate.htmlContent);
                   }}
-                  className="flex items-center justify-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-white/10 text-gray-900 dark:text-white border border-gray-200 dark:border-white/10 rounded-xl font-bold text-sm transition-colors"
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-white/10 text-gray-900 dark:text-white border border-gray-200 dark:border-white/10 rounded-xl font-bold text-sm"
                 >
                   <Eye className="w-4 h-4" />
                   Abrir Demo Local
@@ -818,7 +950,7 @@ export default function ProductionTemplatesView() {
                     setIsPreviewModalOpen(false);
                     handleSelectTemplateForPrompt(selectedTemplate);
                   }}
-                  className="flex items-center justify-center gap-2 px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold text-sm transition-colors shadow-lg shadow-primary-500/10"
+                  className="flex items-center justify-center gap-2 px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-primary-500/10"
                 >
                   <Sparkles className="w-4 h-4" />
                   Usar para Cliente
@@ -830,7 +962,7 @@ export default function ProductionTemplatesView() {
         </div>
       )}
 
-      {/* MODAL: CRUD DE TEMPLATES (COM UPLOADS CLOUDINARY E HTML) */}
+      {/* MODAL: CRUD DE TEMPLATES (SEM O PROMPT IA OBRIGATÓRIO E PRINT OPCIONAL) */}
       {isTemplateModalOpen && editingTemplate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
           <div className="relative w-full max-w-3xl bg-[#0c0d0f] border border-gray-200 dark:border-white/10 rounded-3xl shadow-2xl p-6 md:p-8 animate-fadeIn my-8">
@@ -883,28 +1015,7 @@ export default function ProductionTemplatesView() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Associação do Prompt */}
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide">
-                    Prompt da IA Associado *
-                  </label>
-                  <select
-                    value={editingTemplate.promptId || ''}
-                    onChange={(e) => setEditingTemplate({ ...editingTemplate, promptId: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-black/40 dark:bg-[#0c0d0f] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500/50"
-                    required
-                  >
-                    <option value="" className="bg-[#0c0d0f]">-- Selecionar Prompt Global --</option>
-                    {prompts.map(p => (
-                      <option key={p.id} value={p.id} className="bg-[#0c0d0f]">{p.name}</option>
-                    ))}
-                  </select>
-                  <p className="text-[10px] text-gray-500 mt-1">
-                    Crie prompts na aba "Biblioteca de Prompts" para selecioná-los aqui.
-                  </p>
-                </div>
-
+              <div className="grid grid-cols-1 gap-4">
                 {/* Cores */}
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide flex items-center justify-between">
@@ -954,10 +1065,10 @@ export default function ProductionTemplatesView() {
                   <div>
                     <label className="block text-xs font-bold text-gray-300 mb-1 flex items-center gap-1">
                       <Upload className="w-4 h-4 text-primary-500" />
-                      Upload do Print do Site (Capa/Preview) *
+                      Upload do Print do Site (Opcional)
                     </label>
                     <p className="text-[10px] text-gray-500">
-                      Selecione a imagem do site para armazenar de forma segura no Cloudinary.
+                      Envie uma captura de tela do site para o Cloudinary (pode fazer isso mais tarde).
                     </p>
                   </div>
                   
@@ -981,6 +1092,13 @@ export default function ProductionTemplatesView() {
                           className="w-full h-full object-cover" 
                           alt="preview"
                         />
+                        <button 
+                          type="button"
+                          onClick={() => setEditingTemplate(prev => prev ? { ...prev, previewImageUrl: '' } : null)}
+                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 text-[8px]"
+                        >
+                          ×
+                        </button>
                       </div>
                     )}
                   </div>
@@ -1005,42 +1123,108 @@ export default function ProductionTemplatesView() {
                     </label>
                   </div>
                   <textarea
+                    ref={htmlTextareaRef}
                     value={editingTemplate.htmlContent || ''}
                     onChange={(e) => setEditingTemplate({ ...editingTemplate, htmlContent: e.target.value })}
                     className="w-full px-4 py-3 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-300 font-mono text-xs outline-none focus:ring-2 focus:ring-primary-500/50 min-h-[200px] resize-y"
                     placeholder="Cole o código HTML/CSS/JS do site completo aqui (copiado do Gemini Canvas, por exemplo)..."
                     required
                   />
-                  <p className="text-[10px] text-gray-500 mt-1">
-                    Cole o código-fonte HTML. Você também pode importar um arquivo local clicando em "Importar de Arquivo .html".
-                  </p>
+
+                  {/* Painel de Variáveis Clicáveis para Inserir no Cursor do HTML */}
+                  <div className="mt-2 bg-white/5 p-3 rounded-2xl border border-white/5 space-y-2">
+                    <label className="block text-[10px] font-bold text-gray-400 flex items-center gap-1.5 uppercase tracking-wide">
+                      <MousePointerClick className="w-3.5 h-3.5 text-primary-500 animate-pulse" />
+                      Clique para Inserir no Cursor do HTML (Ativa formulário automático):
+                    </label>
+                    <div className="flex flex-wrap gap-1 max-h-[140px] overflow-y-auto">
+                      {/* CRM Fixas */}
+                      {['{NOME_CLIENTE}', '{WHATSAPP_CLIENTE}', '{EMAIL_CLIENTE}', '{NICHO_CLIENTE}'].map(v => (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => handleInsertVariableInHtml(v)}
+                          className="px-2 py-1 bg-white/5 border border-white/10 text-gray-300 rounded-lg text-[10px] hover:border-primary-500 hover:text-primary-400 hover:scale-105 active:scale-95 transition-all font-semibold"
+                          title="Inserir variável do cliente"
+                        >
+                          {v}
+                        </button>
+                      ))}
+                      {/* Customizadas sugeridas */}
+                      {SUGGESTED_VARIABLES.map(v => (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => handleInsertVariableInHtml(v)}
+                          className="px-2 py-1 bg-primary-500/5 border border-primary-500/20 text-primary-400 rounded-lg text-[10px] hover:bg-primary-500/10 hover:border-primary-500 hover:scale-105 active:scale-95 transition-all font-semibold"
+                          title="Inserir e ativar variável no formulário"
+                        >
+                          {v}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Variáveis Customizadas */}
-              <div className="border-t border-white/5 pt-4">
-                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide">
-                  Variáveis Customizadas de Injeção
-                </label>
-                <div className="flex gap-2 mb-3">
-                  <input 
-                    type="text"
-                    value={newVarName}
-                    onChange={(e) => setNewVarName(e.target.value)}
-                    className="flex-1 px-4 py-2.5 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 outline-none focus:ring-2 focus:ring-primary-500/50"
-                    placeholder="Ex: {SLOGAN_HERO}, {SECAO_SOBRE}"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddCustomVariable}
-                    className="px-4 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold text-sm transition-all"
-                  >
-                    Adicionar
-                  </button>
+              {/* VARIÁVEIS CUSTOMIZADAS (Clicáveis de sugestões) */}
+              <div className="border-t border-white/5 pt-4 space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide flex items-center gap-1">
+                    <MousePointerClick className="w-3.5 h-3.5 text-primary-500" />
+                    Variáveis Disponíveis e Sugeridas (Clique para Ativar)
+                  </label>
+                  <p className="text-[10px] text-gray-500 mb-3">
+                    Clique nas variáveis abaixo para ativá-las no formulário dinâmico deste template.
+                  </p>
+                  
+                  {/* Seletor Clicável */}
+                  <div className="flex flex-wrap gap-1.5 max-h-[140px] overflow-y-auto bg-black/20 p-3 rounded-2xl border border-white/5">
+                    {SUGGESTED_VARIABLES.map(v => {
+                      const isAlreadyActive = (editingTemplate.customVariables || []).includes(v);
+                      return (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => handleSelectSuggestedVariable(v)}
+                          disabled={isAlreadyActive}
+                          className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                            isAlreadyActive
+                              ? 'bg-primary-500/5 border-primary-500/20 text-primary-500/50 cursor-not-allowed opacity-50'
+                              : 'bg-black/40 border-white/5 text-gray-300 hover:border-primary-500 hover:text-primary-400 hover:scale-105 active:scale-95'
+                          }`}
+                        >
+                          {v}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                <div className="space-y-2.5">
-                  <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Variáveis Padrão da Ficha do CRM:</p>
+                {/* Criação manual se necessário */}
+                <div>
+                  <label className="block text-[10px] font-semibold text-gray-500 mb-1.5 uppercase">Ou criar variável manual extra</label>
+                  <div className="flex gap-2">
+                    <input 
+                      type="text"
+                      value={newVarName}
+                      onChange={(e) => setNewVarName(e.target.value)}
+                      className="flex-1 px-4 py-2 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 outline-none text-xs"
+                      placeholder="Ex: {SLOGAN_HERO}"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddCustomVariable}
+                      className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold text-xs"
+                    >
+                      Adicionar
+                    </button>
+                  </div>
+                </div>
+
+                {/* Variáveis Ativas Atuais */}
+                <div className="space-y-2">
+                  <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Variáveis de Ficha (Auto preenchidas do CRM):</p>
                   <div className="flex flex-wrap gap-2 select-none">
                     {['{NOME_CLIENTE}', '{WHATSAPP_CLIENTE}', '{EMAIL_CLIENTE}', '{NICHO_CLIENTE}'].map(v => (
                       <span key={v} className="px-2 py-1 bg-white/5 border border-white/10 text-gray-400 rounded-lg text-xs">
@@ -1051,10 +1235,10 @@ export default function ProductionTemplatesView() {
 
                   {(editingTemplate.customVariables || []).length > 0 && (
                     <>
-                      <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mt-3">Variáveis Customizadas Ativas:</p>
+                      <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mt-3">Variáveis Customizadas Ativadas no Form:</p>
                       <div className="flex flex-wrap gap-2">
                         {(editingTemplate.customVariables || []).map(v => (
-                          <span key={v} className="flex items-center gap-1 px-2.5 py-1 bg-primary-500/10 border border-primary-500/20 text-primary-400 rounded-lg text-xs">
+                          <span key={v} className="flex items-center gap-1.5 px-3 py-1 bg-primary-500/10 border border-primary-500/20 text-primary-400 rounded-lg text-xs">
                             {v}
                             <button 
                               type="button" 
@@ -1076,13 +1260,13 @@ export default function ProductionTemplatesView() {
             <div className="flex items-center justify-end gap-3 mt-8 pt-4 border-t border-gray-200 dark:border-white/10">
               <button
                 onClick={() => setIsTemplateModalOpen(false)}
-                className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-gray-900 dark:text-white rounded-xl font-semibold text-sm transition-colors border border-gray-200 dark:border-white/10"
+                className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-gray-900 dark:text-white rounded-xl font-semibold text-sm border border-gray-200 dark:border-white/10"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleSaveTemplate}
-                className="px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-primary-500/10"
+                className="px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-primary-500/10"
               >
                 {editingTemplate.id ? 'Salvar Template' : 'Cadastrar Template'}
               </button>
@@ -1092,10 +1276,10 @@ export default function ProductionTemplatesView() {
         </div>
       )}
 
-      {/* MODAL: CRUD DE PROMPTS DA BIBLIOTECA */}
+      {/* MODAL: CRUD DE PROMPTS (Inserção de variáveis clicáveis no cursor) */}
       {isPromptModalOpen && editingPrompt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="relative w-full max-w-2xl bg-[#0c0d0f] border border-gray-200 dark:border-white/10 rounded-3xl shadow-2xl p-6 md:p-8 animate-fadeIn">
+          <div className="relative w-full max-w-3xl bg-[#0c0d0f] border border-gray-200 dark:border-white/10 rounded-3xl shadow-2xl p-6 md:p-8 animate-fadeIn">
             
             <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-white/10">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -1130,25 +1314,59 @@ export default function ProductionTemplatesView() {
                   Instruções e Corpo do Prompt (Chaves de Injeção) *
                 </label>
                 <textarea 
+                  ref={promptCrudTextareaRef}
+                  id="prompt-textarea"
                   value={editingPrompt.content || ''}
                   onChange={(e) => setEditingPrompt({ ...editingPrompt, content: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 outline-none focus:ring-2 focus:ring-primary-500/50 min-h-[200px] font-mono text-sm resize-y"
-                  placeholder={`Escreva seu prompt instruindo a IA. Use as variáveis para interpolação:\n\nEx:\nCrie uma landing page profissional para {NOME_CLIENTE}.\nWhatsApp de contato: {WHATSAPP_CLIENTE}.\nNicho: {NICHO_CLIENTE}.`}
+                  className="w-full px-4 py-2.5 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-300 font-mono text-xs outline-none focus:ring-2 focus:ring-primary-500/50 min-h-[220px] resize-y"
+                  placeholder="Escreva seu prompt de IA aqui..."
                   required
                 />
+              </div>
+
+              {/* Painel de Variáveis Clicáveis para o Prompt */}
+              <div className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-3">
+                <label className="block text-xs font-bold text-gray-300 flex items-center gap-1.5 uppercase tracking-wide">
+                  <MousePointerClick className="w-4 h-4 text-primary-500 animate-pulse" />
+                  Clique nas Variáveis abaixo para inserir no Cursor:
+                </label>
+                <div className="flex flex-wrap gap-1.5 max-h-[140px] overflow-y-auto">
+                  {/* Ficha */}
+                  {['{NOME_CLIENTE}', '{WHATSAPP_CLIENTE}', '{EMAIL_CLIENTE}', '{NICHO_CLIENTE}'].map(v => (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => handleInsertVariableInCrudPrompt(v)}
+                      className="px-2 py-1 bg-white/5 border border-white/10 text-gray-300 rounded-lg text-xs hover:border-primary-500 hover:text-primary-400 hover:scale-105 active:scale-95 transition-all"
+                    >
+                      {v}
+                    </button>
+                  ))}
+                  {/* Customizadas sugeridas */}
+                  {SUGGESTED_VARIABLES.map(v => (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => handleInsertVariableInCrudPrompt(v)}
+                      className="px-2 py-1 bg-primary-500/5 border border-primary-500/20 text-primary-400 rounded-lg text-xs hover:bg-primary-500/10 hover:border-primary-500 hover:scale-105 active:scale-95 transition-all"
+                    >
+                      {v}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
             <div className="flex items-center justify-end gap-3 mt-8 pt-4 border-t border-gray-200 dark:border-white/10">
               <button
                 onClick={() => setIsPromptModalOpen(false)}
-                className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-gray-900 dark:text-white rounded-xl font-semibold text-sm transition-colors border border-gray-200 dark:border-white/10"
+                className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-gray-900 dark:text-white rounded-xl font-semibold text-sm border border-gray-200 dark:border-white/10"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleSavePrompt}
-                className="px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-primary-500/10"
+                className="px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-primary-500/10"
               >
                 {editingPrompt.id ? 'Salvar Alterações' : 'Salvar Prompt'}
               </button>
@@ -1158,7 +1376,7 @@ export default function ProductionTemplatesView() {
         </div>
       )}
 
-      {/* MODAL: PAINEL DE GERAÇÃO DE PROMPT E DEMO PERSONALIZADA (SPLIT SCREEN) */}
+      {/* MODAL: PAINEL DE GERAÇÃO (SPLIT SCREEN - COM DROP DOWN DO PROMPT E DADOS DO CLIENTE) */}
       {isPromptPanelOpen && selectedTemplate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
           <div className="relative w-full max-w-6xl bg-[#0c0d0f] border border-gray-200 dark:border-white/10 rounded-3xl shadow-2xl p-6 md:p-8 animate-fadeIn my-8 flex flex-col max-h-[90vh]">
@@ -1167,7 +1385,7 @@ export default function ProductionTemplatesView() {
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-primary-500" />
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                  Customização do Template: Site {selectedTemplate.type} — {selectedTemplate.niche}
+                  Gerador de Prompts: Site {selectedTemplate.type} — {selectedTemplate.niche}
                 </h3>
               </div>
               <button 
@@ -1183,6 +1401,25 @@ export default function ProductionTemplatesView() {
               {/* Lado Esquerdo: Formulário */}
               <div className="lg:col-span-2 space-y-6">
                 
+                {/* Selecionar Prompt da IA */}
+                <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                  <label className="block text-xs font-bold text-primary-400 mb-1.5 uppercase tracking-wide flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5" />
+                    Selecionar Prompt de IA *
+                  </label>
+                  <select
+                    value={selectedPromptId}
+                    onChange={(e) => setSelectedPromptId(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-[#0c0d0f] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500/50 text-xs"
+                    required
+                  >
+                    <option value="" className="bg-[#0c0d0f]">-- Selecionar Prompt da Biblioteca --</option>
+                    {prompts.map(p => (
+                      <option key={p.id} value={p.id} className="bg-[#0c0d0f]">{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+
                 {/* CRM Client Dropdown */}
                 <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
                   <label className="block text-xs font-bold text-primary-400 mb-1.5 uppercase tracking-wide flex items-center gap-1.5">
@@ -1192,7 +1429,7 @@ export default function ProductionTemplatesView() {
                   <select
                     value={selectedClientId}
                     onChange={(e) => handleClientChange(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-[#0c0d0f] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500/50"
+                    className="w-full px-4 py-2.5 bg-[#0c0d0f] border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500/50 text-xs"
                   >
                     <option value="" className="bg-[#0c0d0f]">-- Selecionar Cliente do CRM --</option>
                     {clients.map(c => (
@@ -1203,7 +1440,7 @@ export default function ProductionTemplatesView() {
 
                 {/* Variáveis Ficha */}
                 <div className="space-y-4">
-                  <h4 className="text-xs font-bold text-gray-300 uppercase tracking-wider">Preenchimento de Variáveis</h4>
+                  <h4 className="text-xs font-bold text-gray-300 uppercase tracking-wider">Dados e Variáveis:</h4>
                   
                   <div>
                     <label className="block text-[10px] font-semibold text-gray-500 mb-1 uppercase">Nome da Empresa / Cliente</label>
@@ -1211,7 +1448,7 @@ export default function ProductionTemplatesView() {
                       type="text"
                       value={customAnswers['{NOME_CLIENTE}'] || ''}
                       onChange={(e) => setCustomAnswers(prev => ({ ...prev, '{NOME_CLIENTE}': e.target.value }))}
-                      className="w-full px-4 py-2.5 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500/50 text-xs"
+                      className="w-full px-4 py-2 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white outline-none text-xs"
                       placeholder="Ex: Consultório Dr. João"
                     />
                   </div>
@@ -1222,7 +1459,7 @@ export default function ProductionTemplatesView() {
                       type="text"
                       value={customAnswers['{WHATSAPP_CLIENTE}'] || ''}
                       onChange={(e) => setCustomAnswers(prev => ({ ...prev, '{WHATSAPP_CLIENTE}': e.target.value }))}
-                      className="w-full px-4 py-2.5 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500/50 text-xs"
+                      className="w-full px-4 py-2 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white outline-none text-xs"
                       placeholder="Ex: (11) 99999-9999"
                     />
                   </div>
@@ -1230,16 +1467,27 @@ export default function ProductionTemplatesView() {
                   {/* Inputs Customizados */}
                   {(selectedTemplate.customVariables || []).map(v => (
                     <div key={v}>
-                      <label className="block text-[10px] font-semibold text-gray-500 mb-1 uppercase">
+                      <label className="block text-[10px] font-semibold text-gray-500 mb-1 uppercase flex items-center justify-between">
                         {v.replace(/{|}/g, '').replace(/_/g, ' ')}
+                        {customAnswers[v] === undefined && (
+                          <button 
+                            type="button" 
+                            onClick={() => handleInsertVariableInCustomPrompt(v)}
+                            className="text-primary-500 text-[9px] font-bold hover:underline"
+                          >
+                            Ativar campo
+                          </button>
+                        )}
                       </label>
-                      <input 
-                        type="text"
-                        value={customAnswers[v] || ''}
-                        onChange={(e) => setCustomAnswers(prev => ({ ...prev, [v]: e.target.value }))}
-                        className="w-full px-4 py-2.5 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500/50 text-xs"
-                        placeholder={`Preencher valor para ${v}`}
-                      />
+                      {customAnswers[v] !== undefined && (
+                        <input 
+                          type="text"
+                          value={customAnswers[v] || ''}
+                          onChange={(e) => setCustomAnswers(prev => ({ ...prev, [v]: e.target.value }))}
+                          className="w-full px-4 py-2 bg-black/40 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white outline-none text-xs animate-scaleUp"
+                          placeholder={`Preencher valor para ${v}`}
+                        />
+                      )}
                     </div>
                   ))}
                 </div>
@@ -1247,12 +1495,9 @@ export default function ProductionTemplatesView() {
                 {/* Ações Demo Personalizada */}
                 <div className="bg-white/5 p-4 rounded-2xl border border-white/5 space-y-3">
                   <h4 className="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-1">
-                    <Globe className="w-4 h-4 text-primary-500" />
-                    Preview Dinâmico
+                    <Globe className="w-4 h-4 text-primary-500 animate-pulse" />
+                    Preview Dinâmico do Cliente
                   </h4>
-                  <p className="text-[10px] text-gray-500">
-                    Abre o site substituindo as variáveis inseridas acima no próprio código HTML.
-                  </p>
                   <button
                     type="button"
                     onClick={() => handleOpenDemo(selectedTemplate.htmlContent, customAnswers)}
@@ -1311,8 +1556,11 @@ export default function ProductionTemplatesView() {
 
                 <button
                   onClick={handleCopyPrompt}
+                  disabled={!selectedPromptId}
                   className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm transition-all duration-300 ${
-                    copied 
+                    !selectedPromptId 
+                      ? 'bg-gray-800 text-gray-500 cursor-not-allowed border border-white/5' 
+                      : copied 
                       ? 'bg-green-500 text-white shadow-lg shadow-green-500/20 scale-[0.99]' 
                       : 'bg-primary-500 hover:bg-primary-600 text-white shadow-lg shadow-primary-500/10 hover:scale-[1.01]'
                   }`}
@@ -1336,7 +1584,7 @@ export default function ProductionTemplatesView() {
             <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-white/10">
               <button
                 onClick={() => setIsPromptPanelOpen(false)}
-                className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-gray-900 dark:text-white rounded-xl font-semibold text-sm transition-colors border border-gray-200 dark:border-white/10"
+                className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-gray-900 dark:text-white rounded-xl font-semibold text-sm border border-gray-200 dark:border-white/10"
               >
                 Fechar Painel
               </button>

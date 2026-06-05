@@ -37,9 +37,8 @@ export const navGroups = [
       { icon: Rocket, label: 'Onboarding Hub', path: '/onboarding-hub', permission: 'MANAGE_CLIENTS' },
       { icon: Globe, label: 'Monitoramento', path: '/monitoring', permission: 'MANAGE_SUPPORT' },
       { icon: LayoutTemplate, label: 'Hub Canvas', path: '/canvas', permission: 'MANAGE_TEAM' },
-      { icon: LayoutTemplate, label: 'Templates de Produção', path: '/production-templates', permission: 'MANAGE_TEAM' },
       { icon: MapIcon, label: 'Mapa', path: '/map' },
-      { icon: Layout, label: 'Projetos / Produção', path: '/projects', permission: 'MANAGE_CLIENTS' },
+      { icon: LayoutTemplate, label: 'Fábrica de Sites & Projetos', path: '/projects', permission: 'MANAGE_CLIENTS' },
     ]
   },
   {

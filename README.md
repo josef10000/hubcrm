@@ -94,13 +94,13 @@ Módulo de descompressão integrado voltado para gamificação e cultura da equi
 *   **Inteligência Artificial Baseada no Host:** Execução de IA de robôs no cliente do Host, sincronizando decisões e dados no Firestore para todos os participantes em tempo real.
 *   **Casas Seguras & Regras Clássicas:** Motor de regras de Ludo completo com validações rígidas de barreiras (bloqueio de passagem/parada para 2+ peças da mesma cor) e casas seguras (impedindo a captura em saídas e intermediárias com estrelas neon piscantes), além de turnos extras estritos para jogadas de dado de valor 6.
 
-### 10. 🎨 Templates de Produção & Gerador de Prompts de IA
-Módulo de engenharia de prompts, biblioteca de templates e controle de qualidade para entrega ágil de sites de produção:
-*   **Catálogo de Templates White Label (Firestore):** Cadastro e gerenciamento focado na estrutura (ex: Landing Page, E-commerce) e nicho de mercado, livre de informações mockadas.
-*   **Upload de Print via Cloudinary:** Envio do print do site diretamente para os servidores do Cloudinary por meio da API integrada no frontend, salvando apenas o link da imagem no Firestore para otimizar armazenamento.
-*   **Armazenamento de Código e Demos Locais:** Inserção e colagem direta de código HTML/CSS/JS em editor integrado ou importação automática de arquivos locais `.html`. O sistema abre uma nova aba e renderiza o site localmente em tempo real via injeção dinâmica de HTML (`document.write`) sem necessidade de servidores ou hospedagem prévia.
-*   **Visualização Estática & Demos Personalizadas (CRM):** Duas vias de preview interativo de demonstração: abre o HTML puro do catálogo ou abre o HTML com as variáveis de cliente do CRM (nome, WhatsApp, e-mail, redes sociais) já interpoladas e substituídas de forma dinâmica no código.
-*   **Biblioteca Global de Prompts de IA:** Módulo complementar para cadastro e gestão de prompts globais reutilizáveis, com dropdown nos templates para rápida associação e cópia com alternador de perfis (Layout, Copywriting e Full).
+### 10. 🎨 Fábrica de Sites & Projetos (Módulo Operacional Unificado)
+Integração operacional que centraliza o acompanhamento de entregas de sites com uma central de templates e prompts de IA:
+*   **Acompanhamento de Projetos:** Monitoramento em tempo real do progresso de desenvolvimento dos clientes vindos do CRM, com medição de SLA e acompanhamento de estágios de entrega.
+*   **Catálogo de Templates White Label (R2/Cloudinary):** Armazenamento estrutural de layouts focado em nicho e tipo (Landing Page, SaaS, Institucional), com envio opcional de print de preview e colagem/edição direta de códigos HTML/CSS/JS.
+*   **Variáveis Clicáveis com Injeção no Cursor:** Painel de chips de variáveis clicáveis (ex: `{COR_PRIMARIA}`, `{TITULO_HERO}`, `{LINK_WHATSAPP}`) abaixo do editor de HTML. Ao clicar em um chip, a variável é injetada na posição do cursor do editor e ativada no formulário de preenchimento dinâmico do cliente automaticamente.
+*   **Biblioteca de Prompts Globais de IA:** Biblioteca modular de prompts de engenharia reversa para o Gemini Canvas. Permite inserir variáveis dinâmicas no cursor e associar o prompt de forma dinâmica apenas na tela de geração ao cliente (Split Screen), gerando um prompt final completo e polido com 1 clique.
+*   **Execução de Demos Locais:** Abertura e renderização dos templates em uma nova aba usando injeção direta via JavaScript (`document.write`), permitindo visualizar a demo estática do catálogo ou a demo personalizada com as variáveis informadas do cliente já substituídas.
 
 ---
 

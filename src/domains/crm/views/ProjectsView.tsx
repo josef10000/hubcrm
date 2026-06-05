@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
-import { Layout, CheckSquare, Clock, Search, Filter, ArrowRight, AlertTriangle, CheckCircle2, User, Kanban, List } from 'lucide-react';
+import { Layout, CheckSquare, Clock, Search, Filter, ArrowRight, AlertTriangle, CheckCircle2, User, Kanban, List, LayoutTemplate, FileText } from 'lucide-react';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import ProductionTemplatesView from './ProductionTemplatesView';
 
 type ProjectTab = 'running' | 'delivered' | 'overdue';
+type ActiveSection = 'projects' | 'templates' | 'prompts';
 
 export default function ProjectsView() {
   const { clients, teamProfiles, setEditingClient } = useCRM();
+  const [activeSection, setActiveSection] = useState<ActiveSection>('projects');
   const [activeTab, setActiveTab] = useState<ProjectTab>('running');
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -45,155 +48,200 @@ export default function ProjectsView() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-indigo-500/20 rounded-lg text-indigo-400">
-                <Layout size={24} />
+              <div className="p-2 bg-primary-500/20 rounded-lg text-primary-400">
+                <LayoutTemplate size={24} />
               </div>
-              <h2 className="text-3xl font-bold text-white tracking-tight">Projetos & Produção</h2>
+              <h2 className="text-3xl font-bold text-white tracking-tight">Fábrica de Sites & Projetos</h2>
             </div>
-            <p className="text-gray-400">Controle Operacional e Entrega Técnica v4.0</p>
+            <p className="text-gray-400">Central de Produção, Templates White Label e Prompts Otimizados</p>
           </div>
 
-          <div className="flex items-center gap-3">
-             <div className="relative group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-primary-400 transition-colors" size={18} />
-              <input 
-                type="text"
-                placeholder="Buscar projeto..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 bg-black/40 border border-white/10 rounded-xl text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500/50 w-full md:w-64 backdrop-blur-xl transition-all"
+          {activeSection === 'projects' && (
+            <div className="flex items-center gap-3">
+              <div className="relative group">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-primary-400 transition-colors" size={18} />
+                <input 
+                  type="text"
+                  placeholder="Buscar projeto..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2 bg-black/40 border border-white/10 rounded-xl text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500/50 w-full md:w-64 backdrop-blur-xl transition-all"
+                />
+              </div>
+              <div className="flex bg-black/20 p-1 rounded-xl border border-white/5">
+                <button 
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-gray-300'}`}
+                >
+                  <Kanban size={18} />
+                </button>
+                <button 
+                  onClick={() => setViewMode('list')}
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-gray-300'}`}
+                >
+                  <List size={18} />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Alternador de Módulos Unificado */}
+        <div className="flex gap-6 border-b border-white/5 pb-2 font-bold text-xs uppercase tracking-wider">
+          <button
+            onClick={() => setActiveSection('projects')}
+            className={`pb-2 transition-all border-b-2 flex items-center gap-1.5 ${
+              activeSection === 'projects'
+                ? 'border-primary-500 text-white font-extrabold'
+                : 'border-transparent text-gray-500 hover:text-gray-300'
+            }`}
+          >
+            <Layout size={14} />
+            Acompanhamento de Projetos
+          </button>
+          <button
+            onClick={() => setActiveSection('templates')}
+            className={`pb-2 transition-all border-b-2 flex items-center gap-1.5 ${
+              activeSection === 'templates'
+                ? 'border-primary-500 text-white font-extrabold'
+                : 'border-transparent text-gray-500 hover:text-gray-300'
+            }`}
+          >
+            <LayoutTemplate size={14} />
+            Templates de Sites
+          </button>
+          <button
+            onClick={() => setActiveSection('prompts')}
+            className={`pb-2 transition-all border-b-2 flex items-center gap-1.5 ${
+              activeSection === 'prompts'
+                ? 'border-primary-500 text-white font-extrabold'
+                : 'border-transparent text-gray-500 hover:text-gray-300'
+            }`}
+          >
+            <FileText size={14} />
+            Biblioteca de Prompts IA
+          </button>
+        </div>
+
+        {activeSection === 'projects' ? (
+          <>
+            {/* Status Hub (Tabs) */}
+            <div className="flex items-center gap-2 p-1 bg-white/[0.02] backdrop-blur-xl border border-white/5 rounded-2xl w-fit">
+              <StatusTab 
+                active={activeTab === 'running'} 
+                onClick={() => setActiveTab('running')}
+                icon={<Clock size={16} />}
+                label="Em Execução"
+                count={clients.filter(c => c.status === 'Em Desenvolvimento' && !isOverdue(c.createdAt)).length}
+                color="primary"
+              />
+              <StatusTab 
+                active={activeTab === 'overdue'} 
+                onClick={() => setActiveTab('overdue')}
+                icon={<AlertTriangle size={16} />}
+                label="Críticos / SLA"
+                count={clients.filter(c => c.status === 'Em Desenvolvimento' && isOverdue(c.createdAt)).length}
+                color="red"
+              />
+              <StatusTab 
+                active={activeTab === 'delivered'} 
+                onClick={() => setActiveTab('delivered')}
+                icon={<CheckCircle2 size={16} />}
+                label="Entregues"
+                count={clients.filter(c => c.status === 'Ativo').length}
+                color="green"
               />
             </div>
-            <div className="flex bg-black/20 p-1 rounded-xl border border-white/5">
-              <button 
-                onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-gray-300'}`}
-              >
-                <Kanban size={18} />
-              </button>
-              <button 
-                onClick={() => setViewMode('list')}
-                className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-gray-300'}`}
-              >
-                <List size={18} />
-              </button>
-            </div>
-          </div>
-        </div>
 
-        {/* Status Hub (Tabs) */}
-        <div className="flex items-center gap-2 p-1 bg-white/[0.02] backdrop-blur-xl border border-white/5 rounded-2xl w-fit">
-          <StatusTab 
-            active={activeTab === 'running'} 
-            onClick={() => setActiveTab('running')}
-            icon={<Clock size={16} />}
-            label="Em Execução"
-            count={clients.filter(c => c.status === 'Em Desenvolvimento' && !isOverdue(c.createdAt)).length}
-            color="primary"
-          />
-          <StatusTab 
-            active={activeTab === 'overdue'} 
-            onClick={() => setActiveTab('overdue')}
-            icon={<AlertTriangle size={16} />}
-            label="Críticos / SLA"
-            count={clients.filter(c => c.status === 'Em Desenvolvimento' && isOverdue(c.createdAt)).length}
-            color="red"
-          />
-          <StatusTab 
-            active={activeTab === 'delivered'} 
-            onClick={() => setActiveTab('delivered')}
-            icon={<CheckCircle2 size={16} />}
-            label="Entregues"
-            count={clients.filter(c => c.status === 'Ativo').length}
-            color="green"
-          />
-        </div>
-
-        {/* Dashboard de Projetos */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab + viewMode}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}
-          >
-            {filteredProjects.length > 0 ? (
-              filteredProjects.map((project) => {
-                const progress = calculateProgress(project.stages || []);
-                const assigned = teamProfiles.find(p => p.uid === project.assignedTo);
-                
-                return (
-                  <motion.div
-                    key={project.id}
-                    layout
-                    className={`group p-6 bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 rounded-3xl backdrop-blur-xl transition-all duration-500 ${activeTab === 'overdue' ? 'ring-1 ring-red-500/20' : ''}`}
-                  >
-                    <div className="flex justify-between items-start mb-6">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 ${activeTab === 'overdue' ? 'bg-red-500/20 text-red-400' : 'bg-indigo-500/20 text-indigo-400'} rounded-xl flex items-center justify-center`}>
-                          {activeTab === 'delivered' ? <CheckCircle2 size={20} /> : <Clock size={20} />}
-                        </div>
-                        <div>
-                          <span className="text-[10px] uppercase font-bold text-gray-500 tracking-widest block mb-0.5">Responsável</span>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-semibold text-gray-300">{assigned?.displayName || 'Sem atribuição'}</span>
+            {/* Dashboard de Projetos */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab + viewMode}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}
+              >
+                {filteredProjects.length > 0 ? (
+                  filteredProjects.map((project) => {
+                    const progress = calculateProgress(project.stages || []);
+                    const assigned = teamProfiles.find(p => p.uid === project.assignedTo);
+                    
+                    return (
+                      <motion.div
+                        key={project.id}
+                        layout
+                        className={`group p-6 bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 rounded-3xl backdrop-blur-xl transition-all duration-500 ${activeTab === 'overdue' ? 'ring-1 ring-red-500/20' : ''}`}
+                      >
+                        <div className="flex justify-between items-start mb-6">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 ${activeTab === 'overdue' ? 'bg-red-500/20 text-red-400' : 'bg-indigo-500/20 text-indigo-400'} rounded-xl flex items-center justify-center`}>
+                              {activeTab === 'delivered' ? <CheckCircle2 size={20} /> : <Clock size={20} />}
+                            </div>
+                            <div>
+                              <span className="text-[10px] uppercase font-bold text-gray-500 tracking-widest block mb-0.5">Responsável</span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-semibold text-gray-300">{assigned?.displayName || 'Sem atribuição'}</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className={`px-3 py-1 bg-black/20 rounded-full border border-white/5 text-[10px] font-bold ${activeTab === 'overdue' ? 'text-red-400 italic animate-pulse' : 'text-gray-500'}`}>
+                            {formatDistanceToNow(project.createdAt, { locale: ptBR, addSuffix: true })}
                           </div>
                         </div>
-                      </div>
-                      
-                      <div className={`px-3 py-1 bg-black/20 rounded-full border border-white/5 text-[10px] font-bold ${activeTab === 'overdue' ? 'text-red-400 italic animate-pulse' : 'text-gray-500'}`}>
-                        {formatDistanceToNow(project.createdAt, { locale: ptBR, addSuffix: true })}
-                      </div>
-                    </div>
 
-                    <h3 className="text-xl font-bold text-white mb-2 group-hover:text-primary-400 transition-colors truncate">
-                      {project.name}
-                    </h3>
-                    <p className="text-sm text-gray-500 mb-6 flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-primary-500" />
-                      {project.plan}
-                    </p>
+                        <h3 className="text-xl font-bold text-white mb-2 group-hover:text-primary-400 transition-colors truncate">
+                          {project.name}
+                        </h3>
+                        <p className="text-sm text-gray-500 mb-6 flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-primary-500" />
+                          {project.plan}
+                        </p>
 
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-end">
-                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Status da Entrega</span>
-                        <span className={`text-lg font-bold ${activeTab === 'overdue' ? 'text-red-400' : 'text-primary-400'}`}>{progress}%</span>
-                      </div>
-                      <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                        <motion.div 
-                          initial={{ width: 0 }}
-                          animate={{ width: `${progress}%` }}
-                          className={`h-full ${activeTab === 'overdue' ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-primary-500 shadow-[0_0_10px_rgba(var(--primary-500-rgb),0.5)]'}`}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between text-[11px] text-gray-500 bg-black/10 p-2.5 rounded-xl border border-white/5 font-medium">
-                        <span className="flex items-center gap-2">
-                          <CheckSquare size={14} className="text-primary-500" />
-                          {project.stages?.find(s => !s.completed)?.name || 'Projeto Concluído'}
-                        </span>
-                        <ArrowRight size={12} className="opacity-50" />
-                      </div>
-                    </div>
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-end">
+                            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Status da Entrega</span>
+                            <span className={`text-lg font-bold ${activeTab === 'overdue' ? 'text-red-400' : 'text-primary-400'}`}>{progress}%</span>
+                          </div>
+                          <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                            <motion.div 
+                              initial={{ width: 0 }}
+                              animate={{ width: `${progress}%` }}
+                              className={`h-full ${activeTab === 'overdue' ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-primary-500 shadow-[0_0_10px_rgba(var(--primary-500-rgb),0.5)]'}`}
+                            />
+                          </div>
+                          <div className="flex items-center justify-between text-[11px] text-gray-500 bg-black/10 p-2.5 rounded-xl border border-white/5 font-medium">
+                            <span className="flex items-center gap-2">
+                              <CheckSquare size={14} className="text-primary-500" />
+                              {project.stages?.find(s => !s.completed)?.name || 'Projeto Concluído'}
+                            </span>
+                            <ArrowRight size={12} className="opacity-50" />
+                          </div>
+                        </div>
 
-                    <button
-                      onClick={() => {
-                        setEditingClient(project);
-                        navigate('/clients');
-                      }}
-                      className="mt-8 w-full py-3 bg-white/5 hover:bg-white/10 text-white rounded-2xl border border-white/5 transition-all text-sm font-bold flex items-center justify-center gap-2 group/btn"
-                    >
-                      Gerenciar Projeto
-                      <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-all" />
-                    </button>
-                  </motion.div>
-                );
-              })
-            ) : (
-              <EmptyProjects tab={activeTab} />
-            )}
-          </motion.div>
-        </AnimatePresence>
+                        <button
+                          onClick={() => {
+                            setEditingClient(project);
+                            navigate('/clients');
+                          }}
+                          className="mt-8 w-full py-3 bg-white/5 hover:bg-white/10 text-white rounded-2xl border border-white/5 transition-all text-sm font-bold flex items-center justify-center gap-2 group/btn"
+                        >
+                          Gerenciar Projeto
+                          <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-all" />
+                        </button>
+                      </motion.div>
+                    );
+                  })
+                ) : (
+                  <EmptyProjects tab={activeTab} />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </>
+        ) : (
+          <ProductionTemplatesView viewMode={activeSection === 'templates' ? 'templates' : 'prompts'} />
+        )}
       </div>
     </div>
   );

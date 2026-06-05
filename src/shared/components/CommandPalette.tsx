@@ -67,7 +67,7 @@ export function CommandPalette() {
     { name: 'Faturamento', description: 'Integrações financeiras, faturas Asaas e extrato', path: '/billing', shortcut: 'fa', icon: CreditCard },
     { name: 'Onboarding Hub', description: 'Gerenciador de formulários e recepção de clientes', path: '/onboarding-hub', shortcut: 'on', icon: ClipboardList },
     { name: 'Contratos', description: 'Modelos de contratos ativos e assinaturas digitais', path: '/contracts', shortcut: 'co', icon: UserCheck },
-    { name: 'Projetos', description: 'Acompanhamento de tarefas e cronograma do time', path: '/projects', shortcut: 'pj', icon: FolderGit2 },
+    { name: 'Fábrica de Sites & Projetos', description: 'Acompanhamento de projetos, templates white label e gerador de prompts', path: '/projects', shortcut: 'pj', icon: LayoutTemplate },
     { name: 'Relatórios / Analytics', description: 'Métricas de conversão e relatórios avançados', path: '/analytics', shortcut: 'an', icon: LineChart, permission: 'VIEW_REPORTS' },
     { name: 'Gestão Financeira', description: 'Snapshot diário de DRE, fluxo de caixa e BI', path: '/finance', shortcut: 'gf', icon: DollarSign, permission: 'MANAGE_FINANCE' },
     { name: 'Marketing', description: 'Campanhas ativas e réguas de relacionamento', path: '/marketing', shortcut: 'mk', icon: Sparkles, permission: 'MANAGE_SETTINGS' },
@@ -81,7 +81,6 @@ export function CommandPalette() {
     { name: 'Meu Workspace', description: 'Anotador e metas de consistência do Nexus', path: '/workspace', shortcut: 'wo', icon: Target },
     { name: 'Hub Arena', description: 'Central de jogos (Xadrez, Damas, Ludo e Connect 4)', path: '/arena', shortcut: 'ar', icon: Gamepad2 },
     { name: 'Hub Shop', description: 'Loja de resgate de prêmios por Hub Coins', path: '/shop', shortcut: 'sh', icon: ShoppingBag },
-    { name: 'Templates de Produção', description: 'Central de templates de sites e gerador de prompts de IA', path: '/production-templates', shortcut: 'tp', icon: LayoutTemplate, permission: 'MANAGE_TEAM' },
     { name: 'Segurança / Compliance', description: 'Logs de auditoria e conformidade de dados', path: '/compliance', shortcut: 'sg', icon: ShieldAlert, permission: 'MANAGE_SETTINGS' }
   ], [userProfile?.uid]);
 

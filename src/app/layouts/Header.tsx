@@ -62,7 +62,7 @@ export function Header({ currentPath, navigate }: HeaderProps) {
       case '/billing': return 'Cobrança & Comissões';
       case '/contracts': return 'Central de Contratos';
       case '/onboarding-hub': return 'Onboarding Hub';
-      case '/projects': return 'Projetos & Produção';
+      case '/projects': return 'Fábrica de Sites & Projetos';
       case '/settings': return 'Configurações';
       case '/referrals': return 'Hub Rewards';
       case '/marketing': return 'Comunicados Globais';
@@ -73,7 +73,6 @@ export function Header({ currentPath, navigate }: HeaderProps) {
       case '/team': return 'Gestão de Equipe';
       case '/people': return 'Pessoas & Cultura';
       case '/wiki': return 'Wiki Hub';
-      case '/production-templates': return 'Templates de Produção';
       default: return null;
     }
   };
