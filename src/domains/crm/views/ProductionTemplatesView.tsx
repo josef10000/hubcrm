@@ -755,7 +755,7 @@ export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'temp
                 </button>
               )}
             </div>
-          ) : (
+          ) : (<>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredTemplates.slice((templatePage - 1) * itemsPerPage, templatePage * itemsPerPage).map((template) => (
                 <div 
@@ -915,7 +915,7 @@ export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'temp
                 </Pagination>
               </div>
             )}
-          )}
+          </>)}
         </div>
       )}
 
@@ -963,7 +963,7 @@ export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'temp
                 </button>
               )}
             </div>
-          ) : (
+          ) : (<>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {prompts.slice((promptPage - 1) * itemsPerPage, promptPage * itemsPerPage).map((prompt) => (
                 <div 
@@ -1033,7 +1033,7 @@ export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'temp
                 </Pagination>
               </div>
             )}
-          )}
+          </>)}
         </div>
       )}
 
