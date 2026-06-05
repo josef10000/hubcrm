@@ -151,6 +151,7 @@ export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'temp
     });
   };
 
+  const [templatePage, setTemplatePage] = useState(1);
   const [promptPage, setPromptPage] = useState(1);
   const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
   const itemsPerPage = 6;

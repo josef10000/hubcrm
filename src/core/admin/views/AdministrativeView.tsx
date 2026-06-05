@@ -7,7 +7,7 @@ import {
 import { motion } from 'framer-motion';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { db } from '@/lib/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { toast } from 'sonner';
 import { OnboardingQuestion } from '@/types';
 import { usePermissions } from '@auth/hooks/usePermissions';
@@ -54,6 +54,62 @@ export default function AdministrativeView() {
   
   type AdminTab = 'team' | 'workflows' | 'sales' | 'cfo' | 'contracts' | 'announcements' | 'resources';
   const [activeAdminTab, setActiveAdminTab] = React.useState<AdminTab>('team');
+
+  // Estado para armazenar os dados dinâmicos de consumo de recursos
+  const [usageData, setUsageData] = React.useState({
+    firestoreUsedBytes: 350 * 1024 * 1024, // 350 MB default
+    firestoreLimitBytes: 1024 * 1024 * 1024, // 1 GB default
+    r2UsedBytes: 193.93 * 1024 * 1024, // 193.93 MB default
+    r2LimitBytes: 10 * 1024 * 1024 * 1024, // 10 GB default
+    r2OpsA: 7,
+    r2OpsB: 1790,
+    cloudinaryUsedBytes: 1.2 * 1024 * 1024 * 1024, // 1.2 GB default
+    cloudinaryLimitBytes: 25 * 1024 * 1024 * 1024, // 25 GB default
+  });
+
+  React.useEffect(() => {
+    if (!effectiveOrgId) return;
+    const docRef = doc(db, 'organizations', effectiveOrgId, 'settings', 'usage');
+    const unsub = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setUsageData({
+          firestoreUsedBytes: data.firestoreUsedBytes ?? 350 * 1024 * 1024,
+          firestoreLimitBytes: data.firestoreLimitBytes ?? 1024 * 1024 * 1024,
+          r2UsedBytes: data.r2UsedBytes ?? 193.93 * 1024 * 1024,
+          r2LimitBytes: data.r2LimitBytes ?? 10 * 1024 * 1024 * 1024,
+          r2OpsA: data.r2OpsA ?? 7,
+          r2OpsB: data.r2OpsB ?? 1790,
+          cloudinaryUsedBytes: data.cloudinaryUsedBytes ?? 1.2 * 1024 * 1024 * 1024,
+          cloudinaryLimitBytes: data.cloudinaryLimitBytes ?? 25 * 1024 * 1024 * 1024,
+        });
+      }
+    }, (error) => {
+      console.error("Erro ao escutar dados de consumo:", error);
+    });
+    return () => unsub();
+  }, [effectiveOrgId]);
+
+  // Função auxiliar para formatar bytes de maneira legível (MB, GB)
+  const formatBytes = (bytes: number, decimals = 2) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  };
+
+  const firestorePct = usageData.firestoreLimitBytes > 0 
+    ? (usageData.firestoreUsedBytes / usageData.firestoreLimitBytes) * 100
+    : 0;
+
+  const r2Pct = usageData.r2LimitBytes > 0 
+    ? (usageData.r2UsedBytes / usageData.r2LimitBytes) * 100
+    : 0;
+
+  const cloudinaryPct = usageData.cloudinaryLimitBytes > 0 
+    ? (usageData.cloudinaryUsedBytes / usageData.cloudinaryLimitBytes) * 100
+    : 0;
   
   if (!hasPermission('MANAGE_SETTINGS')) {
     return (
@@ -513,15 +569,15 @@ export default function AdministrativeView() {
                   <div className="w-full">
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-sm font-bold text-gray-200">Firebase Firestore</span>
-                      <span className="text-xs text-gray-400 font-bold">35%</span>
+                      <span className="text-xs text-gray-400 font-bold">{Math.round(firestorePct)}%</span>
                     </div>
                     <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: '35%' }} />
+                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${firestorePct}%` }} />
                     </div>
                   </div>
                   <div className="text-xs text-gray-400 leading-relaxed">
                     Uso de coleções do banco de dados (perfis, clientes, logs, chats e leads).
-                    <span className="block mt-2 font-mono text-[10px] text-emerald-400 font-bold">Consumido: 350 MB / 1 GB (Spark Free)</span>
+                    <span className="block mt-2 font-mono text-[10px] text-emerald-400 font-bold">Consumido: {formatBytes(usageData.firestoreUsedBytes)} / {formatBytes(usageData.firestoreLimitBytes)} (Spark Free)</span>
                   </div>
                 </div>
 
@@ -530,16 +586,16 @@ export default function AdministrativeView() {
                   <div className="w-full">
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-sm font-bold text-gray-200">Cloudflare R2</span>
-                      <span className="text-xs text-gray-400 font-bold">1.94%</span>
+                      <span className="text-xs text-gray-400 font-bold">{r2Pct.toFixed(2)}%</span>
                     </div>
                     <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                      <div className="h-full bg-amber-500 rounded-full" style={{ width: '1.94%' }} />
+                      <div className="h-full bg-amber-500 rounded-full" style={{ width: `${r2Pct}%` }} />
                     </div>
                   </div>
                   <div className="text-xs text-gray-400 leading-relaxed">
                     Arquivos estáticos de templates, anexos do chat de suporte e mídias de projetos.
-                    <span className="block mt-2 font-mono text-[10px] text-amber-400 font-bold">Consumido: 193.93 MB / 10 GB (1.94% de uso)</span>
-                    <span className="block font-mono text-[10px] text-amber-400/80 font-bold">Classe A: 7 | Classe B: 1.79k</span>
+                    <span className="block mt-2 font-mono text-[10px] text-amber-400 font-bold">Consumido: {formatBytes(usageData.r2UsedBytes)} / {formatBytes(usageData.r2LimitBytes)} ({r2Pct.toFixed(2)}% de uso)</span>
+                    <span className="block font-mono text-[10px] text-amber-400/80 font-bold">Classe A: {usageData.r2OpsA} | Classe B: {usageData.r2OpsB >= 1000 ? (usageData.r2OpsB / 1000).toFixed(2) + 'k' : usageData.r2OpsB}</span>
                   </div>
                 </div>
 
@@ -548,15 +604,15 @@ export default function AdministrativeView() {
                   <div className="w-full">
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-sm font-bold text-gray-200">Cloudinary API</span>
-                      <span className="text-xs text-gray-400 font-bold">4.8%</span>
+                      <span className="text-xs text-gray-400 font-bold">{cloudinaryPct.toFixed(1)}%</span>
                     </div>
                     <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                      <div className="h-full bg-blue-500 rounded-full" style={{ width: '4.8%' }} />
+                      <div className="h-full bg-blue-500 rounded-full" style={{ width: `${cloudinaryPct}%` }} />
                     </div>
                   </div>
                   <div className="text-xs text-gray-400 leading-relaxed">
                     Imagens de preview de templates, logotipos e avatares dinâmicos com transformações.
-                    <span className="block mt-2 font-mono text-[10px] text-blue-400 font-bold">Consumido: 1.2 GB / 25 GB</span>
+                    <span className="block mt-2 font-mono text-[10px] text-blue-400 font-bold">Consumido: {formatBytes(usageData.cloudinaryUsedBytes)} / {formatBytes(usageData.cloudinaryLimitBytes)}</span>
                   </div>
                 </div>
               </div>
