@@ -102,6 +102,13 @@ Integração operacional que centraliza o acompanhamento de entregas de sites co
 *   **Biblioteca de Prompts Globais de IA:** Biblioteca modular de prompts de engenharia reversa para o Gemini Canvas. Permite inserir variáveis dinâmicas no cursor e associar o prompt de forma dinâmica apenas na tela de geração ao cliente (Split Screen), gerando um prompt final completo e polido com 1 clique.
 *   **Execução de Demos Locais:** Abertura e renderização dos templates em uma nova aba usando injeção direta via JavaScript (`document.write`), permitindo visualizar a demo estática do catálogo ou a demo personalizada com as variáveis informadas do cliente já substituídas.
 
+### 11. 📚 Nexus Hub — Biblioteca de Sabedoria Corporativa & Gamificação
+Plataforma integrada de incentivo à leitura e gestão de conhecimento corporativo com mecânicas avançadas de gamificação:
+*   **Gerenciamento de Estante (LibraryTab):** Organiza o catálogo de livros corporativos, leituras recomendadas e obras da comunidade corporativa em layouts dinâmicos e fluidos de grade ou lista.
+*   **Estilo Visual 3D Realista (Lombada):** Nova tecnologia de renderização tridimensional nativa no CSS (`Book.tsx`) baseada no design clássico de Ali Imam. Exibe cada obra com lombadas em degradê tridimensional, miolo de folhas detalhado nas laterais, contracapa com profundidade física real calculada pela contagem de páginas do livro, e um marcador de páginas (Bookmark) flutuante reativo para obras favoritadas.
+*   **Sincronização com Clubes de Leitura & Trilhas:** Monitoramento em tempo real do progresso de leitura dos colaboradores. O progresso é sincronizado de forma bidirecional com os Clubes de Leitura da organização e com as Trilhas de Conhecimento Ativas.
+*   **Recompensas em HubCoins por Página Nova:** Sistema cognitivo de incentivo à leitura com trava temporal de segurança de 24 horas por obra, que concede HubCoins de forma proporcional a cada página lida inédita do colaborador, integrada ao seu saldo e ranking na Arena.
+
 ---
 
 ## ⚖️ Comparativo de Regimes (CLT vs PJ)

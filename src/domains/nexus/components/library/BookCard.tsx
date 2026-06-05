@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import { useNexusStore } from '@store/useNexusStore';
 import type { NexusBook } from '@store/useNexusStore';
+import { Book } from '@/shared/components/Book';
 
 export interface BookCardProps {
   book: NexusBook;
@@ -137,6 +138,113 @@ export const BookCard = React.memo(({
   };
   const is3DEnabled = animationMode === 'new' || animationMode === 'fixed_3d';
   const isParallaxEnabled = animationMode === 'parallax_2.5d';
+
+  if (animationMode === 'realist_3d') {
+    const bookColor = aura ? 
+      (activeNeonColor === 'cyberpunk-pink' ? '#ec4899' :
+       activeNeonColor === 'cobalt-wave' ? '#3b82f6' :
+       activeNeonColor === 'acid-lime' ? '#84cc16' :
+       activeNeonColor === 'amber-gold' ? '#f59e0b' :
+       activeNeonColor === 'purple-haze' ? '#a855f7' :
+       activeNeonColor === 'crimson-pulse' ? '#ef4444' : '#6b7280')
+      : (book.category === 'Tecnologia' ? '#0ea5e9' :
+         book.category === 'Filosofia' ? '#8b5cf6' :
+         book.category === 'Negócios & Finanças' ? '#10b981' :
+         book.category === 'Não-Ficção' ? '#64748b' :
+         book.category === 'Fantasia' ? '#f59e0b' :
+         book.category === 'Ficção' ? '#ec4899' : '#3b82f6');
+
+    return (
+      <div className="group relative">
+        <div className="flex justify-center items-center py-4 aspect-[3/4] relative cursor-pointer" onClick={() => onView(book.id)}>
+          {aura && (
+            <div 
+              className={`absolute inset-4 rounded-r-md ${aura.glow} opacity-60 group-hover:opacity-90 transition-all duration-500 animate-pulse -z-10`}
+            />
+          )}
+
+          <Book
+            title={book.title}
+            author={book.author}
+            pages={book.totalPages || 120}
+            color={bookColor}
+            bookmark={book.isFavorite}
+            bookmarkColor="#fbbf24"
+            spineText={book.category}
+            variant="default"
+            animation="hover"
+            className="shadow-2xl"
+            illustration={
+              book.coverUrl ? (
+                <img 
+                  src={book.coverUrl} 
+                  alt={book.title} 
+                  className="w-full h-full object-cover rounded-[3px]" 
+                  loading="lazy"
+                />
+              ) : undefined
+            }
+          />
+          
+          <div className="absolute top-4 left-6 flex gap-1.5 z-30 opacity-0 group-hover:opacity-100 transition-opacity">
+            {book.format === 'kindle' && (
+              <div className="px-1.5 py-0.5 bg-amber-500/80 backdrop-blur-md rounded text-[6.5px] font-black text-white uppercase tracking-wider">
+                Kindle
+              </div>
+            )}
+            {book.format === 'physical' && (
+              <div className="px-1.5 py-0.5 bg-emerald-500/80 backdrop-blur-md rounded text-[6.5px] font-black text-white uppercase tracking-wider">
+                Físico
+              </div>
+            )}
+            {book.format === 'pdf' && (
+              <div className="px-1.5 py-0.5 bg-blue-500/80 backdrop-blur-md rounded text-[6.5px] font-black text-white uppercase tracking-wider">
+                PDF
+              </div>
+            )}
+          </div>
+
+          {progress > 0 && (
+            <div className="absolute bottom-5 left-6 right-6 h-1 bg-white/10 rounded-full overflow-hidden z-30 opacity-80">
+              <div 
+                className={`h-full ${progress === 100 ? 'bg-emerald-500' : 'bg-primary-500'}`}
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          )}
+
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-30 pointer-events-none">
+            <div className="w-10 h-10 bg-primary-500 text-white rounded-full flex items-center justify-center text-lg shadow-xl shadow-primary-500/30">
+              <i className="ph-bold ph-play" />
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-3 px-1 flex justify-between items-start">
+          <div className="min-w-0">
+            <h4 className="text-xs font-black text-white truncate uppercase tracking-widest leading-none">{book.title}</h4>
+            <p className="text-[9px] font-medium text-gray-500 uppercase mt-1">
+              {book.sharedBy ? `Enviado por ${book.sharedBy.name}` : book.isCommunity ? 'Comunidade' : book.format === 'kindle' ? 'Livro Kindle' : book.format === 'physical' ? 'Livro Físico' : 'Documento PDF'}
+            </p>
+          </div>
+          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity items-center">
+            {isOwner && (
+              <>
+                <button onClick={(e) => { e.stopPropagation(); onEdit(book); }} className="p-1.5 hover:text-primary-400 transition-all" title="Editar Metadados"><i className="ph-bold ph-pencil-simple" /></button>
+                <button onClick={(e) => { e.stopPropagation(); onShare(book); }} className="p-1.5 hover:text-primary-400 transition-all" title="Compartilhar"><i className="ph-bold ph-paper-plane-tilt" /></button>
+                <button onClick={(e) => { e.stopPropagation(); onPublish(book); }} className={`p-1.5 transition-all ${book.isCommunity ? 'text-primary-400' : 'hover:text-primary-400'}`} title="Publicar na Comunidade"><i className="ph-bold ph-users-three" /></button>
+                <button onClick={(e) => { e.stopPropagation(); onUpdateCover(book.id); }} className="p-1.5 hover:text-primary-400 transition-all" title="Alterar Capa"><i className="ph-bold ph-image" /></button>
+              </>
+            )}
+            {!isOwner && !isInLibrary && (
+              <button onClick={(e) => { e.stopPropagation(); onAddToLibrary(book); }} className="p-1.5 hover:text-primary-400 transition-all" title="Adicionar à minha estante"><i className="ph-bold ph-plus-circle" /></button>
+            )}
+            <button onClick={(e) => { e.stopPropagation(); onDelete(book.id); }} className="p-1.5 hover:text-rose-400 transition-all" title={isOwner && book.isCommunity ? "Remover da Comunidade" : "Excluir"}><i className="ph-bold ph-trash" /></button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="group relative" style={{ perspective: is3DEnabled || isParallaxEnabled ? '1200px' : undefined }}>
