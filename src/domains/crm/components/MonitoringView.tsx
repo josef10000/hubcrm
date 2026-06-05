@@ -4,7 +4,7 @@ import { Client } from '@/types';
 import { toast } from 'sonner';
 
 interface UptimeMonitor {
-  id: number;
+  id: string | number;
   friendly_name: string;
   url: string;
   type: number;
@@ -176,8 +176,7 @@ export default function MonitoringView({ clients }: { clients: Client[] }) {
               </thead>
               <tbody>
                 {clientsWithSites.map(client => {
-                  const clientUrl = client.siteLink?.replace(/^https?:\/\//, '').replace(/\/$/, '');
-                  const monitor = monitors.find(m => m.url.includes(clientUrl || ''));
+                  const monitor = monitors.find(m => String(m.id) === String(client.id));
 
                   return (
                     <tr key={client.id} className="border-b border-gray-100 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">

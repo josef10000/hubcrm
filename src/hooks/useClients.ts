@@ -550,8 +550,7 @@ export function useClients(opts: UseClientsOptions) {
         const monitorsRes = await authFetch('/api/uptimerobot/monitors');
         if (monitorsRes.ok) {
           const monitors = await monitorsRes.json();
-          const clientUrl = clientToDelete.siteLink.replace(/^https?:\/\//, '').replace(/\/$/, '');
-          const monitorToDelete = monitors.find((m: any) => m.url.includes(clientUrl));
+          const monitorToDelete = monitors.find((m: any) => String(m.id) === String(clientToDelete.id));
           if (monitorToDelete) {
             await authFetch('/api/uptimerobot/monitors', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: monitorToDelete.id }) });
             console.log('Monitor deleted from UptimeRobot');

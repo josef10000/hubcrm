@@ -62,12 +62,14 @@ export default function ClientPortalLayout() {
           if (profileSnap.exists()) {
             const pData = profileSnap.data();
             
+            /* 
             // Administradores corporativos têm acesso irrestrito
             if (pData.role === 'admin' || pData.role === 'manager') {
               setIsClientAdmin(true);
               setAuthLoading(false);
               return;
             }
+            */
 
             if (pData.role === 'client_admin') {
               // Se o cliente tentar acessar o portal de outro ID de cliente, redireciona para o correto dele
