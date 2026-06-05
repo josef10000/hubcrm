@@ -50,6 +50,7 @@ const AuditDashboard = lazy(() => import('@domains/core/views/AuditDashboard'));
 
 // Public / External Views (Lazy Loaded)
 const ClientPortal = lazy(() => import('@portal/components/ClientPortalLayout'));
+const PortalLogin = lazy(() => import('@portal/views/PortalLogin'));
 const OnboardingForm = lazy(() => import('@auth/components/OnboardingForm'));
 const PublicCheckoutPage = lazy(() => import('@finance/views/PublicCheckoutPage'));
 const ProposalPublicView = lazy(() => import('@commercial/views/ProposalPublicView'));
@@ -87,6 +88,7 @@ export function AppRouter() {
     }>
       <Routes>
         {/* Public & External Routes */}
+        <Route path="/portal/login" element={<PortalLogin />} />
         <Route path="/portal/:orgId/:clientId/*" element={<ClientPortal />} />
         <Route path="/p/:proposalId" element={<ProposalPublicView />} />
         <Route path="/onboarding" element={<OnboardingForm />} />

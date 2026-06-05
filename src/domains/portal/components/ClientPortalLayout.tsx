@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   LayoutDashboard, 
@@ -10,10 +10,16 @@ import {
   LogOut, 
   Menu, 
   X,
-  Bell
+  Bell,
+  Calendar,
+  DollarSign,
+  Lock
 } from 'lucide-react';
 import { usePortalData } from '@/hooks/usePortalData';
-import { Toaster } from 'sonner';
+import { toast, Toaster } from 'sonner';
+import { auth, db } from '@/lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 
 // Importando as views
 import PortalHome from '../views/PortalHome';
@@ -21,9 +27,12 @@ import PortalFinance from '../views/PortalFinance';
 import PortalServices from '../views/PortalServices';
 import PortalDocuments from '../views/PortalDocuments';
 import PortalSupport from '../views/PortalSupport';
+import PortalAgenda from '../views/PortalAgenda';
+import PortalCRMFinance from '../views/PortalCRMFinance';
 
 export default function ClientPortalLayout() {
   const { orgId, clientId } = useParams<{ orgId: string; clientId: string }>();
+  const navigate = useNavigate();
   const { 
     client, 
     allClients,
@@ -38,16 +47,69 @@ export default function ClientPortalLayout() {
   } = usePortalData(orgId, clientId);
   const [activeTab, setActiveTab] = useState('home');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isClientAdmin, setIsClientAdmin] = useState(false);
+
+  // Escuta autenticação para verificar se o usuário está logado como client_admin
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setCurrentUser(user);
+        try {
+          const profileSnap = await getDoc(doc(db, 'profiles', user.uid));
+          if (profileSnap.exists()) {
+            const pData = profileSnap.data();
+            const isAuthorized = 
+              (pData.role === 'client_admin' && pData.orgId === orgId) ||
+              (pData.role === 'admin' || pData.role === 'manager');
+            
+            setIsClientAdmin(isAuthorized);
+          } else {
+            setIsClientAdmin(false);
+          }
+        } catch (e) {
+          console.error(e);
+          setIsClientAdmin(false);
+        }
+      } else {
+        setCurrentUser(null);
+        setIsClientAdmin(false);
+      }
+    });
+    return () => unsub();
+  }, [orgId]);
 
   const navItems = [
     { id: 'home', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'agenda', label: 'Agenda', icon: Calendar },
+    { id: 'crm_finance', label: 'CRM Financeiro', icon: DollarSign },
     ...(client && !client.isCourtesy ? [
-      { id: 'finance', label: 'Financeiro', icon: CreditCard },
+      { id: 'finance', label: 'Faturas Hub', icon: CreditCard },
       { id: 'services', label: 'Marketplace', icon: ShoppingBag }
     ] : []),
     { id: 'docs', label: 'Documentos', icon: Files },
     { id: 'support', label: 'Atendimento', icon: MessageCircle },
   ];
+
+  const RenderLockScreen = ({ tabName }: { tabName: string }) => {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 px-6 text-center max-w-md mx-auto animate-in fade-in zoom-in duration-300">
+        <div className="w-16 h-16 bg-primary-500/10 rounded-full flex items-center justify-center mb-6 border border-primary-500/20 shadow-lg shadow-primary-500/5">
+          <Lock className="w-8 h-8 text-primary-400" />
+        </div>
+        <h3 className="text-xl font-bold text-white mb-2">Área Restrita: {tabName}</h3>
+        <p className="text-gray-400 text-sm mb-8 leading-relaxed">
+          Esta área contém informações administrativas e de agendamento reservadas para o dono da empresa. Faça login com suas credenciais do portal para acessar.
+        </p>
+        <button
+          onClick={() => navigate('/portal/login')}
+          className="w-full py-4 bg-primary-500 hover:bg-primary-600 text-white font-bold rounded-2xl transition-all shadow-lg shadow-primary-500/20 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+        >
+          <span>Acessar com Login</span>
+        </button>
+      </div>
+    );
+  };
 
   if (loading && !client) {
     return (
@@ -188,9 +250,9 @@ export default function ClientPortalLayout() {
             ))}
           </nav>
 
-          <div className="mt-auto pt-6 border-t border-white/10">
-            <div className="flex items-center gap-3 p-4 bg-white/5 rounded-2xl border border-white/5 mb-4">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center font-bold text-sm">
+          <div className="mt-auto pt-6 border-t border-white/10 space-y-3">
+            <div className="flex items-center gap-3 p-4 bg-white/5 rounded-2xl border border-white/5">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center font-bold text-sm shrink-0">
                 {client.name.charAt(0)}
               </div>
               <div className="flex flex-col overflow-hidden">
@@ -198,7 +260,23 @@ export default function ClientPortalLayout() {
                 <span className="text-[10px] text-gray-500 truncate lowercase">{client.email}</span>
               </div>
             </div>
-            {/* Botão de sair inativo removido */}
+            {currentUser && (
+              <button
+                onClick={async () => {
+                  try {
+                    await auth.signOut();
+                    toast.success('Você saiu da área restrita.');
+                    setActiveTab('home');
+                  } catch (e) {
+                    toast.error('Erro ao sair.');
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 rounded-xl transition-all text-xs font-bold uppercase tracking-wider"
+              >
+                <LogOut size={14} />
+                Sair da Área Restrita
+              </button>
+            )}
           </div>
         </div>
       </aside>
@@ -263,6 +341,20 @@ export default function ClientPortalLayout() {
               className="h-full"
             >
               {activeTab === 'home' && <PortalHome client={client} announcement={announcement} setActiveTab={setActiveTab} />}
+              {activeTab === 'agenda' && (
+                isClientAdmin ? (
+                  <PortalAgenda orgId={orgId || ''} clientId={activeClientId || ''} />
+                ) : (
+                  <RenderLockScreen tabName="Agenda" />
+                )
+              )}
+              {activeTab === 'crm_finance' && (
+                isClientAdmin ? (
+                  <PortalCRMFinance orgId={orgId || ''} clientId={activeClientId || ''} />
+                ) : (
+                  <RenderLockScreen tabName="CRM Financeiro" />
+                )
+              )}
               {activeTab === 'finance' && (
                 <PortalFinance 
                   client={client} 
@@ -282,7 +374,7 @@ export default function ClientPortalLayout() {
 
       {/* Mobile Bottom Navigation */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-20 bg-black/80 backdrop-blur-2xl border-t border-white/10 z-50 flex items-center justify-around px-2">
-        {navItems.map((item) => (
+        {navItems.filter(item => ['home', 'agenda', 'crm_finance', 'support'].includes(item.id)).map((item) => (
           <button
             key={item.id}
             onClick={() => setActiveTab(item.id)}

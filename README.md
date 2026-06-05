@@ -119,6 +119,13 @@ Plataforma modernizada com foco em usabilidade e performance, integrando compone
 *   **Toolbar e Anotações com Formatação:** Barra de estilo para Wiki e anotações de leads/clientes para estilo em Negrito, Itálico e Sublinhado usando ícones premium.
 *   **Campos de Data e Hora Avançados:** Modais de lembrete e agendador de mensagens adaptados para inputs nativos HTML5 altamente responsivos e com ampla compatibilidade de sistema.
 
+### 13. 🔐 Portal do Cliente com Login Seguro, Agenda & Mini-CRM Financeiro
+Canal de autoatendimento corporativo integrado com Firebase Auth e modelagem robusta no Firestore para controle de atendimentos presenciais ou digitais:
+*   **Autenticação Segura com Controle de Acesso (RBAC):** Tela de login estilizada com visual Glassmorphism e tema escuro que verifica o perfil do usuário em `/profiles/{uid}`. Permite o acesso seguro apenas para usuários com permissão `client_admin` atrelada à organização correta, ou administradores gerais (`admin`/`manager`). As abas públicas (Dashboard, Marketplace, FAQs) continuam livres de autenticação para mitigar atrito, enquanto as abas confidenciais (Agenda e CRM Financeiro) são protegidas por um portal de bloqueio (`RenderLockScreen`) que convida o usuário a realizar a autenticação.
+*   **Agenda de Atendimentos em Linha de Tempo Diária:** Aba administrativa com visualização linear e cronológica diária dos horários agendados por clientes no site ou WhatsApp. Permite aos atendentes gerenciar compromissos, contatar clientes via WhatsApp com 1 clique, e registrar a finalização ou cancelamento de sessões de atendimento.
+*   **Cadastro de Serviços & Expediente Comercial:** CRUD integrado onde o cliente configura de forma autônoma os serviços disponíveis na empresa (duração, preços, status ativo) e o expediente comercial semanal da empresa (horário de abertura e fechamento por dia da semana e o intervalo de slot entre agendamentos). Essas informações alimentam a IA do WhatsApp e as opções de auto-agendamento do site.
+*   **Mini-CRM Financeiro Integrado:** Painel financeiro reativo que calcula em tempo real o faturamento projetado, pago, pendente e o ticket médio de atendimentos no mês vigente. Permite gerenciar as faturas individuais de cada agendamento com alteração rápida de status de pagamento (Pago / Pendente) para controle contábil.
+
 ---
 
 ## ⚖️ Comparativo de Regimes (CLT vs PJ)
