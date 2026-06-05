@@ -14,6 +14,7 @@ interface PortalCRMFinanceProps {
 export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinanceProps) {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [filterPayment, setFilterPayment] = useState<'all' | 'paid' | 'unpaid'>('all');
+  const [filterPeriod, setFilterPeriod] = useState<'today' | 'week' | 'month' | 'last_month' | 'all'>('month');
 
   // Escuta agendamentos em tempo real
   useEffect(() => {
@@ -27,25 +28,77 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
     return () => unsub();
   }, [orgId]);
 
-  // Cálculos financeiros do mês atual (baseado em YYYY-MM)
-  const currentMonthStr = new Date().toISOString().substring(0, 7); // Ex: "2026-06"
+  // Helpers de comparação temporal
+  const isToday = (dateStr: string) => {
+    const today = new Date();
+    const tzOffset = today.getTimezoneOffset() * 60000;
+    const localTodayStr = new Date(today.getTime() - tzOffset).toISOString().substring(0, 10);
+    return dateStr === localTodayStr;
+  };
 
-  const appointmentsThisMonth = appointments.filter(app => {
-    return app.date && app.date.substring(0, 7) === currentMonthStr && app.status !== 'cancelled';
-  });
+  const isThisWeek = (dateStr: string) => {
+    const today = new Date();
+    const appDate = new Date(dateStr + 'T12:00:00');
+    
+    // Domingo da semana atual
+    const dayOfWeek = today.getDay();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - dayOfWeek);
+    startOfWeek.setHours(0, 0, 0, 0);
 
-  const totalProjetado = appointmentsThisMonth.reduce((acc, app) => acc + (app.price || 0), 0);
+    // Sábado da semana atual
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+
+    return appDate >= startOfWeek && appDate <= endOfWeek;
+  };
+
+  const isThisMonth = (dateStr: string) => {
+    const currentMonthStr = new Date().toISOString().substring(0, 7);
+    return dateStr.substring(0, 7) === currentMonthStr;
+  };
+
+  const isLastMonth = (dateStr: string) => {
+    const today = new Date();
+    today.setMonth(today.getMonth() - 1);
+    const lastMonthStr = today.toISOString().substring(0, 7);
+    return dateStr.substring(0, 7) === lastMonthStr;
+  };
+
+  const filterByPeriod = (app: any) => {
+    if (!app.date || app.status === 'cancelled') return false;
+    
+    switch (filterPeriod) {
+      case 'today':
+        return isToday(app.date);
+      case 'week':
+        return isThisWeek(app.date);
+      case 'month':
+        return isThisMonth(app.date);
+      case 'last_month':
+        return isLastMonth(app.date);
+      case 'all':
+      default:
+        return true;
+    }
+  };
+
+  const appointmentsFilteredByPeriod = appointments.filter(filterByPeriod);
+
+  // Cálculos contábeis no período filtrado
+  const totalProjetado = appointmentsFilteredByPeriod.reduce((acc, app) => acc + (app.price || 0), 0);
   
-  const totalPago = appointmentsThisMonth
+  const totalPago = appointmentsFilteredByPeriod
     .filter(app => app.paymentStatus === 'paid')
     .reduce((acc, app) => acc + (app.price || 0), 0);
 
-  const totalPendente = appointmentsThisMonth
+  const totalPendente = appointmentsFilteredByPeriod
     .filter(app => app.paymentStatus !== 'paid')
     .reduce((acc, app) => acc + (app.price || 0), 0);
 
-  const ticketMedio = appointmentsThisMonth.length > 0 
-    ? totalProjetado / appointmentsThisMonth.length 
+  const ticketMedio = appointmentsFilteredByPeriod.length > 0 
+    ? totalProjetado / appointmentsFilteredByPeriod.length 
     : 0;
 
   // Toggle de status de pagamento
@@ -63,6 +116,10 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
 
   // Filtragem para a tabela
   const filteredAppointments = appointments.filter(app => {
+    // Primeiro aplica o filtro de período
+    if (!filterByPeriod(app)) return false;
+    
+    // Depois aplica o filtro de status de pagamento
     if (filterPayment === 'paid') return app.paymentStatus === 'paid';
     if (filterPayment === 'unpaid') return app.paymentStatus !== 'paid';
     return true;
@@ -70,6 +127,50 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
 
   return (
     <div className="space-y-6">
+      {/* Abas de Filtro de Período Temporal com efeito Glass */}
+      <div className="flex flex-wrap gap-2 p-1 bg-white/5 border border-white/10 rounded-2xl w-fit">
+        <button
+          onClick={() => setFilterPeriod('today')}
+          className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors ${
+            filterPeriod === 'today' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          Hoje
+        </button>
+        <button
+          onClick={() => setFilterPeriod('week')}
+          className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors ${
+            filterPeriod === 'week' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          Esta Semana
+        </button>
+        <button
+          onClick={() => setFilterPeriod('month')}
+          className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors ${
+            filterPeriod === 'month' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          Este Mês
+        </button>
+        <button
+          onClick={() => setFilterPeriod('last_month')}
+          className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors ${
+            filterPeriod === 'last_month' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          Mês Passado
+        </button>
+        <button
+          onClick={() => setFilterPeriod('all')}
+          className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors ${
+            filterPeriod === 'all' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          Geral (Tudo)
+        </button>
+      </div>
+
       {/* Cards de Métricas Reativas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Faturamento Projetado */}

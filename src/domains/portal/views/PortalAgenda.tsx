@@ -37,12 +37,87 @@ export default function PortalAgenda({ orgId, clientId }: PortalAgendaProps) {
     slotIntervalMinutes: 30
   });
 
-  // Estados dos formulários de CRUD
+  // Estados dos formulários de CRUD de Serviços
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
   const [serviceName, setServiceName] = useState('');
   const [serviceDuration, setServiceDuration] = useState(30);
   const [servicePrice, setServicePrice] = useState('');
   const [isSubmittingService, setIsSubmittingService] = useState(false);
+
+  // Estados do Agendamento Manual
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newClientName, setNewClientName] = useState('');
+  const [newClientPhone, setNewClientPhone] = useState('');
+  const [newClientEmail, setNewClientEmail] = useState('');
+  const [newServiceId, setNewServiceId] = useState('');
+  const [newDate, setNewDate] = useState(selectedDate);
+  const [newTime, setNewTime] = useState('');
+  const [newPrice, setNewPrice] = useState('');
+  const [newPaymentStatus, setNewPaymentStatus] = useState<'unpaid' | 'paid'>('unpaid');
+  const [isSubmittingAppointment, setIsSubmittingAppointment] = useState(false);
+
+  // Mantém a data do formulário sincronizada ao abrir
+  useEffect(() => {
+    setNewDate(selectedDate);
+  }, [selectedDate, isModalOpen]);
+
+  const handleServiceChange = (srvId: string) => {
+    setNewServiceId(srvId);
+    const selectedSrv = services.find(s => s.id === srvId);
+    if (selectedSrv) {
+      setNewPrice(selectedSrv.price.toString());
+    } else {
+      setNewPrice('');
+    }
+  };
+
+  const handleCreateAppointment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newClientName.trim() || !newClientPhone.trim() || !newTime || !newServiceId || !orgId) {
+      toast.error('Preencha os campos obrigatórios.');
+      return;
+    }
+
+    const selectedSrv = services.find(s => s.id === newServiceId);
+    if (!selectedSrv) {
+      toast.error('Selecione um serviço válido.');
+      return;
+    }
+
+    setIsSubmittingAppointment(true);
+    try {
+      await addDoc(collection(db, 'organizations', orgId, 'appointments'), {
+        clientName: newClientName.trim(),
+        clientPhone: newClientPhone.trim(),
+        clientEmail: newClientEmail.trim(),
+        serviceId: newServiceId,
+        serviceName: selectedSrv.name,
+        date: newDate,
+        time: newTime,
+        price: Number(newPrice.replace(',', '.')),
+        status: 'confirmed', // Confirmado por padrão
+        paymentStatus: newPaymentStatus,
+        createdAt: serverTimestamp()
+      });
+
+      toast.success('Agendamento realizado com sucesso!');
+      setIsModalOpen(false);
+      
+      // Limpa os campos
+      setNewClientName('');
+      setNewClientPhone('');
+      setNewClientEmail('');
+      setNewServiceId('');
+      setNewTime('');
+      setNewPrice('');
+      setNewPaymentStatus('unpaid');
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao realizar o agendamento.');
+    } finally {
+      setIsSubmittingAppointment(false);
+    }
+  };
 
   // Escuta Agendamentos
   useEffect(() => {
@@ -209,13 +284,22 @@ export default function PortalAgenda({ orgId, clientId }: PortalAgendaProps) {
               <p className="text-xs text-gray-400">Gerencie os horários marcados pelos clientes do seu site e WhatsApp.</p>
             </div>
             
-            {/* Seletor de Data */}
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="px-4 py-2.5 bg-black/40 border border-white/15 hover:border-white/30 focus:border-primary-500 text-white rounded-xl text-sm outline-none transition-all outline-none font-bold"
-            />
+            <div className="flex items-center gap-3">
+              {/* Seletor de Data */}
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="px-4 py-2.5 bg-black/40 border border-white/15 hover:border-white/30 focus:border-primary-500 text-white rounded-xl text-sm outline-none transition-all outline-none font-bold"
+              />
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="px-4 py-2.5 bg-primary-500 hover:bg-primary-600 text-white font-bold rounded-xl text-sm transition-all flex items-center gap-1.5 shadow-lg shadow-primary-500/20 active:scale-95"
+              >
+                <Plus size={16} />
+                <span className="hidden sm:inline">Novo Agendamento</span>
+              </button>
+            </div>
           </div>
 
           <div className="w-full h-[1px] bg-white/15" />
@@ -534,6 +618,159 @@ export default function PortalAgenda({ orgId, clientId }: PortalAgendaProps) {
             <Check size={14} />
             Salvar Expediente
           </button>
+        </div>
+      )}
+
+      {/* Modal Glassmorphism de Novo Agendamento */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 md:p-8 rounded-[2.5rem] max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in duration-300">
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="mb-6">
+              <h3 className="text-xl font-bold text-white mb-1">Novo Agendamento</h3>
+              <p className="text-xs text-gray-400">Preencha os dados do cliente e selecione o serviço para registrar na agenda.</p>
+            </div>
+
+            <form onSubmit={handleCreateAppointment} className="space-y-4">
+              {/* Cliente */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Nome do Cliente</label>
+                <input
+                  type="text"
+                  value={newClientName}
+                  onChange={(e) => setNewClientName(e.target.value)}
+                  placeholder="Ex: João Silva"
+                  className="w-full px-4 py-3 bg-black/40 border border-white/10 hover:border-white/20 focus:border-primary-500 text-white rounded-xl text-sm outline-none transition-all placeholder-gray-600 focus:ring-1 focus:ring-primary-500"
+                  required
+                />
+              </div>
+
+              {/* Contatos */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">WhatsApp / Tel</label>
+                  <input
+                    type="text"
+                    value={newClientPhone}
+                    onChange={(e) => setNewClientPhone(e.target.value)}
+                    placeholder="5511999999999"
+                    className="w-full px-4 py-3 bg-black/40 border border-white/10 hover:border-white/20 focus:border-primary-500 text-white rounded-xl text-sm outline-none transition-all placeholder-gray-600 focus:ring-1 focus:ring-primary-500"
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">E-mail (Opcional)</label>
+                  <input
+                    type="email"
+                    value={newClientEmail}
+                    onChange={(e) => setNewClientEmail(e.target.value)}
+                    placeholder="exemplo@email.com"
+                    className="w-full px-4 py-3 bg-black/40 border border-white/10 hover:border-white/20 focus:border-primary-500 text-white rounded-xl text-sm outline-none transition-all placeholder-gray-600 focus:ring-1 focus:ring-primary-500"
+                  />
+                </div>
+              </div>
+
+              {/* Serviço */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Serviço Ofertado</label>
+                <select
+                  value={newServiceId}
+                  onChange={(e) => handleServiceChange(e.target.value)}
+                  className="w-full px-4 py-3 bg-black/40 border border-white/10 text-white rounded-xl text-sm outline-none transition-all focus:border-primary-500"
+                  required
+                >
+                  <option value="" className="bg-[#050505] text-gray-500">Selecione um serviço...</option>
+                  {services.map(s => (
+                    <option key={s.id} value={s.id} className="bg-[#050505]">{s.name} (R$ {s.price})</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Data / Hora */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Data</label>
+                  <input
+                    type="date"
+                    value={newDate}
+                    onChange={(e) => setNewDate(e.target.value)}
+                    className="w-full px-4 py-3 bg-black/40 border border-white/10 text-white rounded-xl text-sm outline-none transition-all focus:border-primary-500 font-bold"
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Horário</label>
+                  <input
+                    type="time"
+                    value={newTime}
+                    onChange={(e) => setNewTime(e.target.value)}
+                    className="w-full px-4 py-3 bg-black/40 border border-white/10 text-white rounded-xl text-sm outline-none transition-all focus:border-primary-500 font-mono"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Valor / Pagamento */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Valor Cobrado (R$)</label>
+                  <input
+                    type="text"
+                    value={newPrice}
+                    onChange={(e) => setNewPrice(e.target.value)}
+                    placeholder="Ex: 150,00"
+                    className="w-full px-4 py-3 bg-black/40 border border-white/10 hover:border-white/20 focus:border-primary-500 text-white rounded-xl text-sm outline-none transition-all placeholder-gray-600 focus:ring-1 focus:ring-primary-500 font-bold"
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Status do Pagamento</label>
+                  <select
+                    value={newPaymentStatus}
+                    onChange={(e) => setNewPaymentStatus(e.target.value as 'unpaid' | 'paid')}
+                    className="w-full px-4 py-3 bg-black/40 border border-white/10 text-white rounded-xl text-sm outline-none transition-all focus:border-primary-500 font-bold"
+                  >
+                    <option value="unpaid" className="bg-[#050505] text-amber-400">PENDENTE</option>
+                    <option value="paid" className="bg-[#050505] text-emerald-400">PAGO</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Botões de Ação */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="submit"
+                  disabled={isSubmittingAppointment}
+                  className="flex-1 py-3.5 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-600/50 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all active:scale-[0.98] shadow-lg shadow-primary-500/10 flex items-center justify-center gap-2"
+                >
+                  {isSubmittingAppointment ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Salvando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check size={14} />
+                      <span>Agendar Cliente</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-6 py-3.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
