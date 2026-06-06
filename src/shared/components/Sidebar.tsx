@@ -263,7 +263,7 @@ export default function Sidebar() {
                   animate={{ opacity: 1, scale: 1, x: 0 }}
                   exit={{ opacity: 0, scale: 0.95, x: 10 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute left-24 bottom-0 w-64 bg-[#05070a]/90 backdrop-blur-[30px] border border-white/10 rounded-3xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.6)] z-[100] flex flex-col gap-3"
+                  className="fixed left-24 bottom-6 w-64 bg-[#05070a]/90 backdrop-blur-[30px] border border-white/10 rounded-3xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.6)] z-[100] flex flex-col gap-3"
                 >
                   {/* Cabeçalho do Popover */}
                   <div className="flex items-center gap-3">
