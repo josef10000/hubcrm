@@ -48,8 +48,8 @@ service cloud.firestore {
     // Escrita genérica: apenas o próprio dono do perfil
     // Escrita administrativa: admin pode alterar apenas roleId e permissions de membros da sua org
     match /profiles/{userId} {
-      allow read: if isOwnerEmail() || request.auth.uid == userId || 
-                    (isAuthenticated() && resource != null && resource.data.orgId != null && resource.data.orgId == getUserData().orgId);
+      allow read: if isOwnerEmail() || (request.auth != null && request.auth.uid == userId) || 
+                    (isAuthenticated() && resource.data.orgId != null && resource.data.orgId == getUserData().orgId);
       
       // O próprio dono pode editar tudo no seu perfil
       allow write: if isOwnerEmail() || request.auth.uid == userId;
