@@ -147,6 +147,18 @@ export default function ClientPortalLayout() {
     { id: 'support', label: 'Atendimento', icon: MessageCircle },
   ];
 
+  // Redireciona automaticamente para o login se não estiver autenticado (useEffect ANTES de qualquer return condicional)
+  useEffect(() => {
+    if (authLoading || (loading && !client)) return;
+    if (!isClientAdmin) {
+      // Salva a rota de destino no sessionStorage para redirecionar de volta após login
+      if (orgId && clientId) {
+        sessionStorage.setItem('portalRedirect', `/portal/${orgId}/${clientId}`);
+      }
+      navigate('/portal/login');
+    }
+  }, [isClientAdmin, authLoading, loading, client, orgId, clientId, navigate]);
+
   if ((loading && !client) || authLoading) {
     return (
       <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center">
@@ -176,18 +188,6 @@ export default function ClientPortalLayout() {
       </div>
     );
   }
-
-  // Se o usuário não estiver autenticado/autorizado para este portal, redireciona automaticamente para o login
-  useEffect(() => {
-    if (authLoading || loading) return;
-    if (!isClientAdmin) {
-      // Salva a rota de destino no sessionStorage para redirecionar de volta após login
-      if (orgId && clientId) {
-        sessionStorage.setItem('portalRedirect', `/portal/${orgId}/${clientId}`);
-      }
-      navigate('/portal/login');
-    }
-  }, [isClientAdmin, authLoading, loading, orgId, clientId, navigate]);
 
   // Enquanto redireciona, mostra loading
   if (!isClientAdmin) {
