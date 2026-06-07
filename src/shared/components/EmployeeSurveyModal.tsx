@@ -8,7 +8,7 @@ import { useCRM } from '@crm/contexts/CRMContext';
 import { differenceInDays } from 'date-fns';
 
 export default function EmployeeSurveyModal() {
-  const { userProfile } = useAuth();
+  const { user, userProfile } = useAuth();
   const { enpsQuestion, enpsFrequency, effectiveOrgId } = useCRM();
   const [score, setScore] = useState<number | null>(null);
   const [comment, setComment] = useState('');
@@ -47,7 +47,8 @@ export default function EmployeeSurveyModal() {
   if (!isOpen || !shouldShow()) return null;
 
   const handleSubmit = async () => {
-    if (score === null || !effectiveOrgId || !userProfile) return;
+    const uid = user?.uid || userProfile?.uid;
+    if (score === null || !effectiveOrgId || !userProfile || !uid) return;
 
     setIsSubmitting(true);
     try {
@@ -59,7 +60,7 @@ export default function EmployeeSurveyModal() {
       });
 
       // 2. Update user profile to track response (without linking to the score)
-      await updateDoc(doc(db, 'profiles', userProfile.uid), {
+      await updateDoc(doc(db, 'profiles', uid), {
         lastEnpsResponse: serverTimestamp()
       });
 

@@ -62,7 +62,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 if (typeof data.role === 'string') {
                   roleObj = defaultRoles.find(r => r.id === data.role || r.name === data.role) || defaultRoles[0];
                 }
-                const dataProfile = { ...data, role: roleObj } as UserProfile;
+                const dataProfile = { 
+                  ...data, 
+                  uid: snap.id,
+                  photoURL: data.photoURL || u.photoURL || '',
+                  displayName: data.displayName || u.displayName || 'Colaborador',
+                  role: roleObj 
+                } as UserProfile;
               
               // Se mudou o roleId, precisamos de um novo listener pro cargo
               unsubscribeRole(); 
@@ -336,17 +342,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const profileSnap = await getDoc(profileRef);
       if (profileSnap.exists()) {
         const data = profileSnap.data() as UserProfile;
+        const dataProfile: UserProfile = {
+          ...data,
+          uid: profileSnap.id,
+          photoURL: data.photoURL || user.photoURL || '',
+          displayName: data.displayName || user.displayName || 'Colaborador'
+        };
         // Garantir regra de super-admin
         if (user.email === 'jfs102019@hotmail.com') {
           const adminRole = defaultRoles.find(r => r.id === 'ROLE_ADMIN') || defaultRoles[0];
           const orgIdToUse = (data.orgId && data.orgId !== 'pending') ? data.orgId : user.uid;
-          setUserProfile({ ...data, email: user.email || data.email, role: adminRole, orgId: orgIdToUse });
+          setUserProfile({ ...dataProfile, email: user.email || data.email, role: adminRole, orgId: orgIdToUse });
           
           if (data.orgId === 'pending') {
             updateDoc(profileRef, { orgId: user.uid }).catch(() => {});
           }
         } else {
-          setUserProfile(data);
+          setUserProfile(dataProfile);
         }
       }
     } catch (err) {

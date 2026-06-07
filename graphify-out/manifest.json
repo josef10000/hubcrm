@@ -425,8 +425,8 @@
     "semantic_hash": ""
   },
   "src/core/auth/contexts/AuthContext.tsx": {
-    "mtime": 1778362515.948403,
-    "ast_hash": "d437c8c8ccb4e333f39e25dd2e0ca990",
+    "mtime": 1780852678.6468163,
+    "ast_hash": "3f73f312c4400b4a947eb5196c8a53cd",
     "semantic_hash": ""
   },
   "src/core/auth/contexts/DialogContext.tsx": {
@@ -1650,8 +1650,8 @@
     "semantic_hash": ""
   },
   "src/shared/components/EmployeeSurveyModal.tsx": {
-    "mtime": 1778362526.8414814,
-    "ast_hash": "56003665abfcdee53cb002471f25b70d",
+    "mtime": 1780852692.0377417,
+    "ast_hash": "01dd2822c675bae03497694cb9c4a6ce",
     "semantic_hash": ""
   },
   "src/shared/components/ErrorBoundary.tsx": {
