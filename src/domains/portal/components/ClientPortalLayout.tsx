@@ -32,6 +32,14 @@ import PortalCRMFinance from '../views/PortalCRMFinance';
 export default function ClientPortalLayout() {
   const { orgId, clientId } = useParams<{ orgId: string; clientId: string }>();
   const navigate = useNavigate();
+
+  // Salva o token da URL no sessionStorage para persistencia entre redirects
+  useEffect(() => {
+    const token = new URLSearchParams(window.location.search).get('token');
+    if (token) {
+      sessionStorage.setItem('portalToken', token);
+    }
+  }, []);
   const { 
     client, 
     allClients,
@@ -96,44 +104,7 @@ export default function ClientPortalLayout() {
     return () => unsub();
   }, [orgId, clientId, navigate]);
 
-  // Validação em tempo real do e-mail do card do cliente contra o e-mail logado
-  useEffect(() => {
-    if (loading || authLoading || !client || !currentUser || !isClientAdmin) return;
 
-    const validateEmailAndAccess = async () => {
-      try {
-        // Ignora a validação de e-mail do card se for um administrador corporativo (suporte/admin)
-        const profileSnap = await getDoc(doc(db, 'profiles', currentUser.uid));
-        if (profileSnap.exists()) {
-          const pData = profileSnap.data();
-          if (pData.role === 'admin' || pData.role === 'manager') return;
-        }
-
-        const cardEmail = client.email?.trim().toLowerCase();
-        const authEmail = currentUser.email?.trim().toLowerCase();
-
-        if (cardEmail && authEmail && cardEmail !== authEmail) {
-          console.warn(`[PortalGuard] E-mail do card alterado no CRM! Card=${cardEmail}, Login=${authEmail}. Revogando sessões.`);
-          toast.error('O e-mail de acesso deste portal foi alterado pelo administrador. Sessão encerrada.');
-
-          // Remove o profile obsoleto
-          try {
-            await deleteDoc(doc(db, 'profiles', currentUser.uid));
-          } catch (delErr) {
-            console.error('[PortalGuard] Falha ao remover profile obsoleto do Firestore:', delErr);
-          }
-
-          // Desconecta e limpa estados
-          await auth.signOut();
-          navigate('/portal/login');
-        }
-      } catch (err) {
-        console.error('[PortalGuard] Erro na validação de e-mail em tempo real:', err);
-      }
-    };
-
-    validateEmailAndAccess();
-  }, [client, loading, currentUser, authLoading, isClientAdmin, navigate]);
 
   const navItems = [
     { id: 'home', label: 'Dashboard', icon: LayoutDashboard },
@@ -154,6 +125,8 @@ export default function ClientPortalLayout() {
       // Salva a rota de destino no sessionStorage para redirecionar de volta após login
       if (orgId && clientId) {
         sessionStorage.setItem('portalRedirect', `/portal/${orgId}/${clientId}`);
+        sessionStorage.setItem('portalOrgId', orgId);
+        sessionStorage.setItem('portalClientId', clientId);
       }
       navigate('/portal/login');
     }

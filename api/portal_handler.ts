@@ -24,35 +24,56 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 // ============================================================
 async function handleAuth(req: VercelRequest, res: VercelResponse) {
   try {
-    const { email, uid } = req.body;
+    const { email, uid, orgId, clientId, token } = req.body;
 
     if (!email || !uid) {
       return res.status(400).json({ error: 'Parâmetros email e uid são obrigatórios.' });
     }
 
     const cleanEmail = email.trim().toLowerCase();
+    let targetOrgId = orgId;
+    let targetClientId = clientId;
 
-    // 1. Busca em lote em todas as organizações por um cliente com o e-mail fornecido
-    const clientsQuery = await db
-      .collectionGroup('clients')
-      .where('email', '==', cleanEmail)
-      .limit(1)
-      .get();
+    if (orgId && clientId && token) {
+      // Vinculação direta via link seguro (orgId + clientId + token)
+      const clientRef = db
+        .collection('organizations')
+        .doc(orgId)
+        .collection('clients')
+        .doc(clientId);
+      
+      const clientDoc = await clientRef.get();
+      if (!clientDoc.exists) {
+        return res.status(404).json({ error: 'Cliente não encontrado para esta vinculação.' });
+      }
 
-    if (clientsQuery.empty) {
-      console.warn(`[PortalAuth] E-mail não encontrado em nenhum card de cliente: ${cleanEmail}`);
-      return res.status(404).json({ 
-        error: 'Este e-mail não está associado a nenhuma empresa no sistema. Solicite ao suporte que insira seu e-mail no seu cadastro.' 
-      });
-    }
+      const clientData = clientDoc.data();
+      if (!clientData?.publicToken || clientData.publicToken !== token) {
+        return res.status(403).json({ error: 'Token de segurança inválido ou expirado.' });
+      }
+    } else {
+      // Fallback: busca por e-mail em lote (legado)
+      const clientsQuery = await db
+        .collectionGroup('clients')
+        .where('email', '==', cleanEmail)
+        .limit(1)
+        .get();
 
-    const clientDoc = clientsQuery.docs[0];
-    const clientId = clientDoc.id;
-    const orgId = clientDoc.ref.parent.parent?.id;
+      if (clientsQuery.empty) {
+        console.warn(`[PortalAuth] E-mail não encontrado em nenhum card de cliente: ${cleanEmail}`);
+        return res.status(404).json({ 
+          error: 'Este e-mail não está associado a nenhuma empresa no sistema. Solicite ao suporte que insira seu e-mail no seu cadastro ou utilize o link de convite correto.' 
+        });
+      }
 
-    if (!orgId) {
-      console.error(`[PortalAuth] Erro ao extrair orgId para o cliente ${clientId}`);
-      return res.status(500).json({ error: 'Erro de integrabilidade estrutural do banco.' });
+      const clientDoc = clientsQuery.docs[0];
+      targetClientId = clientDoc.id;
+      targetOrgId = clientDoc.ref.parent.parent?.id;
+
+      if (!targetOrgId) {
+        console.error(`[PortalAuth] Erro ao extrair orgId para o cliente ${targetClientId}`);
+        return res.status(500).json({ error: 'Erro de integrabilidade estrutural do banco.' });
+      }
     }
 
     // 2. Cria ou atualiza o perfil do usuário na coleção /profiles
@@ -60,17 +81,17 @@ async function handleAuth(req: VercelRequest, res: VercelResponse) {
     await profileRef.set({
       email: cleanEmail,
       role: 'client_admin',
-      orgId: orgId,
-      clientId: clientId,
+      orgId: targetOrgId,
+      clientId: targetClientId,
       updatedAt: new Date()
     }, { merge: true });
 
-    console.log(`[PortalAuth] Vinculado com sucesso: ${cleanEmail} -> org: ${orgId}, client: ${clientId}`);
+    console.log(`[PortalAuth] Vinculado com sucesso: ${cleanEmail} -> org: ${targetOrgId}, client: ${targetClientId}`);
 
     return res.status(200).json({
       success: true,
-      orgId,
-      clientId
+      orgId: targetOrgId,
+      clientId: targetClientId
     });
 
   } catch (error: any) {

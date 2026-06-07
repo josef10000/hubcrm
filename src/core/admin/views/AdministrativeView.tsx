@@ -617,6 +617,32 @@ export default function AdministrativeView() {
                   </div>
                 </div>
               </div>
+
+              {/* Painel do Grafo de Conhecimento (Graphify) */}
+              <div className="mt-8 p-8 bg-gradient-to-br from-primary-500/10 via-blue-500/5 to-transparent border border-primary-500/20 rounded-3xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 rounded-full blur-[80px] pointer-events-none group-hover:bg-primary-500/20 transition-all duration-500" />
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                  <div className="space-y-2 max-w-2xl text-left">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 bg-primary-500/20 text-primary-500 text-[10px] font-black uppercase tracking-wider rounded-md">
+                        Graphify AI
+                      </span>
+                      <span className="text-xs text-gray-400 font-bold">v0.3.10</span>
+                    </div>
+                    <h4 className="text-lg font-bold text-white">Grafo de Conhecimento da Base de Código</h4>
+                    <p className="text-sm text-gray-400 leading-relaxed">
+                      Explore o mapeamento visual completo de dependências, rotas, coleções do Firestore e estrutura de módulos do HubCRM. Útil para auditoria e navegação rápida da arquitetura técnica.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => window.open('/graph.html', '_blank')}
+                    className="shrink-0 px-6 py-4 bg-primary-500 hover:bg-primary-600 active:scale-95 text-white font-bold rounded-2xl transition-all shadow-lg shadow-primary-500/20 flex items-center justify-center gap-2"
+                  >
+                    <span>Abrir Grafo Interativo</span>
+                    <Globe size={18} />
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>

@@ -210,8 +210,8 @@
     "semantic_hash": ""
   },
   "api/portal_handler.ts": {
-    "mtime": 1780692722.5714302,
-    "ast_hash": "427ba75ce359470cf42b137a61c5ed06",
+    "mtime": 1780840856.2075648,
+    "ast_hash": "3c3b2e8190fa428ef3e2e6eb87a991b5",
     "semantic_hash": ""
   },
   "api/proposal_approve.ts": {
@@ -405,8 +405,8 @@
     "semantic_hash": ""
   },
   "src/core/admin/views/AdministrativeView.tsx": {
-    "mtime": 1780681277.7459078,
-    "ast_hash": "19b169493dbd2878c87ed2b043c5bcea",
+    "mtime": 1780840813.6594028,
+    "ast_hash": "f2161626853c11fe39854f734bc868eb",
     "semantic_hash": ""
   },
   "src/core/auth/components/Auth.tsx": {
@@ -1265,8 +1265,8 @@
     "semantic_hash": ""
   },
   "src/domains/portal/components/ClientPortalLayout.tsx": {
-    "mtime": 1780693592.924122,
-    "ast_hash": "0c30d1f6d863d9d8262173d1f6798358",
+    "mtime": 1780840826.9324024,
+    "ast_hash": "04baea55a7b49ede7bf86129c2434eba",
     "semantic_hash": ""
   },
   "src/domains/portal/views/ClientPortal.tsx": {
@@ -1300,8 +1300,8 @@
     "semantic_hash": ""
   },
   "src/domains/portal/views/PortalLogin.tsx": {
-    "mtime": 1780761366.116397,
-    "ast_hash": "3e00e0ad381bfbfec6d7cbe1be6fa897",
+    "mtime": 1780840849.6538937,
+    "ast_hash": "f15a813bea41ea14f77b5161d1e2c002",
     "semantic_hash": ""
   },
   "src/domains/portal/views/PortalServices.tsx": {
@@ -1905,8 +1905,8 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1780691270.3728461,
-    "ast_hash": "418972fca66443e32baec8ea3adb4164",
+    "mtime": 1780796757.1202767,
+    "ast_hash": "9f1c4b0346ac7456f74691bf1a8a605a",
     "semantic_hash": ""
   },
   "docs/API.md": {
@@ -1987,6 +1987,11 @@
   "public/pdf-viewer.html": {
     "mtime": 1779143693.5420184,
     "ast_hash": "5dea24aa87e8c58171366cc563b8511b",
+    "semantic_hash": ""
+  },
+  "public/graph.html": {
+    "mtime": 1780796706.2536767,
+    "ast_hash": "8f4de3e1b8db6d08575c26343fc9a991",
     "semantic_hash": ""
   }
 }

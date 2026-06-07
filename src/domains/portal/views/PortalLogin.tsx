@@ -34,7 +34,14 @@ export default function PortalLogin() {
             if (pData.role === 'client_admin' && pData.orgId && pData.clientId) {
               const redirect = sessionStorage.getItem('portalRedirect');
               sessionStorage.removeItem('portalRedirect');
-              navigate(redirect || `/portal/${pData.orgId}/${pData.clientId}`);
+              const token = sessionStorage.getItem('portalToken');
+              const tokenQuery = token ? `?token=${token}` : '';
+              if (redirect) {
+                const hasToken = redirect.includes('token=');
+                navigate(hasToken ? redirect : `${redirect}${tokenQuery}`);
+              } else {
+                navigate(`/portal/${pData.orgId}/${pData.clientId}${tokenQuery}`);
+              }
               return;
             }
             if (pData.role === 'admin' || pData.role === 'manager') {
@@ -65,8 +72,15 @@ export default function PortalLogin() {
         toast.success('Login efetuado com sucesso!');
         const redirect = sessionStorage.getItem('portalRedirect');
         sessionStorage.removeItem('portalRedirect');
+        const token = sessionStorage.getItem('portalToken');
+        const tokenQuery = token ? `?token=${token}` : '';
         setTimeout(() => {
-          navigate(redirect || `/portal/${profileData.orgId}/${profileData.clientId}`);
+          if (redirect) {
+            const hasToken = redirect.includes('token=');
+            navigate(hasToken ? redirect : `${redirect}${tokenQuery}`);
+          } else {
+            navigate(`/portal/${profileData.orgId}/${profileData.clientId}${tokenQuery}`);
+          }
         }, 1000);
       } else if (profileData.role === 'admin' || profileData.role === 'manager' || profileData.role === 'employee') {
         toast.success('Login administrativo detectado!');
@@ -80,20 +94,32 @@ export default function PortalLogin() {
         await auth.signOut();
       }
     } else {
-      // Perfil ainda não existe no Firestore, tenta a vinculação automática por e-mail via API serverless
+      // Perfil ainda não existe no Firestore, tenta a vinculação automática por e-mail ou via link com token
       try {
+        const sessionOrgId = sessionStorage.getItem('portalOrgId');
+        const sessionClientId = sessionStorage.getItem('portalClientId');
+        const sessionToken = sessionStorage.getItem('portalToken');
+
         const response = await fetch('/api/portal_handler', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: user.email, uid: user.uid })
+          body: JSON.stringify({ 
+            email: user.email, 
+            uid: user.uid,
+            orgId: sessionOrgId,
+            clientId: sessionClientId,
+            token: sessionToken
+          })
         });
 
         const data = await response.json();
 
         if (response.ok && data.success) {
           toast.success('Sua conta foi vinculada e o acesso liberado!');
+          const token = sessionToken || sessionStorage.getItem('portalToken');
+          const tokenQuery = token ? `?token=${token}` : '';
           setTimeout(() => {
-            navigate(`/portal/${data.orgId}/${data.clientId}`);
+            navigate(`/portal/${data.orgId}/${data.clientId}${tokenQuery}`);
           }, 1000);
         } else {
           toast.error(data.error || 'Este e-mail não está associado a nenhuma empresa no sistema.');
@@ -166,7 +192,7 @@ export default function PortalLogin() {
       console.error('Erro de autenticação:', error);
       let errorMsg = 'E-mail ou senha inválidos.';
       if (error.code === 'auth/email-already-in-use') {
-        errorMsg = 'Este e-mail já está em uso.';
+        errorMsg = 'Este e-mail já está cadastrado. Se você já criou sua conta, use a aba "Fazer Login" ao lado ou redefina sua senha.';
       } else if (error.code === 'auth/weak-password') {
         errorMsg = 'A senha deve ter pelo menos 6 caracteres.';
       } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
