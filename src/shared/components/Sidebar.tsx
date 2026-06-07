@@ -272,96 +272,114 @@ export default function Sidebar() {
             </div>
 
             {/* Menu Popover Flutuante de Presença (Status Rápido) */}
-            <AnimatePresence>
-              {statusMenuOpen && createPortal(
-                <motion.div
-                  ref={popoverRef}
-                  initial={{ opacity: 0, scale: 0.95, x: 20 }}
-                  animate={{ opacity: 1, scale: 1, x: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, x: 10 }}
-                  transition={{ duration: 0.15 }}
-                  className="fixed left-24 bottom-6 w-64 bg-[#05070a]/90 backdrop-blur-[30px] border border-white/10 rounded-3xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.6)] z-[100] flex flex-col gap-3"
-                >
-                  {/* Cabeçalho do Popover */}
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center text-gray-900 font-bold shrink-0 overflow-hidden border border-white/10">
-                      {isValidPhotoURL(userProfile?.photoURL) ? (
-                        <img src={userProfile!.photoURL} alt={userProfile?.displayName || 'Avatar'} className="w-full h-full object-cover" />
-                      ) : (
-                        (userProfile?.displayName || user?.displayName || 'U')[0].toUpperCase()
-                      )}
+            {createPortal(
+              <AnimatePresence>
+                {statusMenuOpen && (
+                  <motion.div
+                    ref={popoverRef}
+                    initial={{ opacity: 0, scale: 0.95, x: 20 }}
+                    animate={{ opacity: 1, scale: 1, x: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, x: 10 }}
+                    transition={{ duration: 0.15 }}
+                    className="fixed left-24 bottom-6 w-64 bg-[#05070a]/90 backdrop-blur-[30px] border border-white/10 rounded-3xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.6)] z-[100] flex flex-col gap-3"
+                  >
+                    {/* Cabeçalho do Popover */}
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center text-gray-900 font-bold shrink-0 overflow-hidden border border-white/10">
+                        {isValidPhotoURL(userProfile?.photoURL) ? (
+                          <img src={userProfile!.photoURL} alt={userProfile?.displayName || 'Avatar'} className="w-full h-full object-cover" />
+                        ) : (
+                          (userProfile?.displayName || user?.displayName || 'U')[0].toUpperCase()
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0 text-left">
+                        <p className="text-xs font-bold text-white truncate">{userProfile?.displayName}</p>
+                        <p className="text-[10px] text-gray-400 font-mono truncate">
+                          {statuses.find(s => s.id === (userProfile?.presenceStatus || 'offline'))?.label || 'Offline'}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0 text-left">
-                      <p className="text-xs font-bold text-white truncate">{userProfile?.displayName}</p>
-                      <p className="text-[10px] text-gray-400 font-mono truncate">
-                        {statuses.find(s => s.id === (userProfile?.presenceStatus || 'offline'))?.label || 'Offline'}
-                      </p>
+
+                    <div className="w-full h-[1px] bg-white/10" />
+
+                    {/* Lista de Status Rápidos */}
+                    <div className="flex flex-col gap-1">
+                      {statuses.map((status) => {
+                        const isActive = userProfile?.presenceStatus === status.id || (!userProfile?.presenceStatus && status.id === 'offline');
+                        return (
+                          <button
+                            key={status.id}
+                            onClick={() => {
+                              manualSetStatus(status.id as any);
+                              setStatusMenuOpen(false);
+                              toast.success(`Status alterado para ${status.label}`);
+                            }}
+                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold tracking-wide transition-all ${
+                              isActive 
+                                ? 'bg-white/10 text-white border border-white/10 shadow-[0_0_15px_rgba(255,255,255,0.05)]' 
+                                : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
+                            }`}
+                          >
+                            <div className={`w-2.5 h-2.5 rounded-full ${status.color}`} />
+                            <span className="flex-1 text-left">{status.label}</span>
+                            <span className="opacity-60">{status.icon}</span>
+                          </button>
+                        );
+                      })}
                     </div>
-                  </div>
 
-                  <div className="w-full h-[1px] bg-white/10" />
+                    <div className="w-full h-[1px] bg-white/10" />
 
-                  {/* Lista de Status Rápidos */}
-                  <div className="flex flex-col gap-1">
-                    {statuses.map((status) => {
-                      const isActive = userProfile?.presenceStatus === status.id || (!userProfile?.presenceStatus && status.id === 'offline');
-                      return (
-                        <button
-                          key={status.id}
-                          onClick={() => {
-                            manualSetStatus(status.id as any);
-                            setStatusMenuOpen(false);
-                            toast.success(`Status alterado para ${status.label}`);
-                          }}
-                          className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold tracking-wide transition-all ${
-                            isActive 
-                              ? 'bg-white/10 text-white border border-white/10 shadow-[0_0_15px_rgba(255,255,255,0.05)]' 
-                              : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
-                          }`}
-                        >
-                          <div className={`w-2.5 h-2.5 rounded-full ${status.color}`} />
-                          <span className="flex-1 text-left">{status.label}</span>
-                          <span className="opacity-60">{status.icon}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <div className="w-full h-[1px] bg-white/10" />
-
-                  {/* Ações do Rodapé */}
-                  <div className="flex flex-col gap-1">
-                    <button
-                      onClick={() => {
-                        setStatusMenuOpen(false);
-                        navigate(`/profile/${user?.uid || userProfile?.uid}`);
-                      }}
-                      className="w-full flex items-center gap-3 px-3 py-2 text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all border border-transparent text-left"
-                    >
-                      <User size={14} />
-                      <span>Ver Perfil</span>
-                    </button>
-
-                    <button
-                      onClick={async () => {
-                        try {
+                    {/* Ações do Rodapé */}
+                    <div className="flex flex-col gap-1">
+                      <button
+                        onClick={() => {
                           setStatusMenuOpen(false);
-                          await signOut(auth);
-                          navigate('/');
-                        } catch (e) {
-                          toast.error('Erro ao sair da conta.');
-                        }
-                      }}
-                      className="w-full flex items-center gap-3 px-3 py-2 text-xs font-semibold text-rose-500/80 hover:text-rose-400 hover:bg-rose-500/5 rounded-xl transition-all border border-transparent text-left"
-                    >
-                      <LogOut size={14} />
-                      <span>Sair da Conta</span>
-                    </button>
-                  </div>
-                </motion.div>,
-                document.body
-              )}
-            </AnimatePresence>
+                          navigate(`/profile/${user?.uid || userProfile?.uid}`);
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2 text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all border border-transparent text-left"
+                      >
+                        <User size={14} />
+                        <span>Ver Perfil</span>
+                      </button>
+
+                      <button
+                        onClick={async () => {
+                          try {
+                            setStatusMenuOpen(false);
+                            await signOut(auth);
+                            navigate('/');
+                          } catch (e) {
+                            toast.error('Erro ao sair da conta.');
+                          }
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2 text-xs font-semibold text-rose-500/80 hover:text-rose-400 hover:bg-rose-500/5 rounded-xl transition-all border border-transparent text-left"
+                      >
+                        <LogOut size={14} />
+                        <span>Sair da Conta</span>
+                      </button>
+
+                      {/* Metadados de Depuração para Diagnóstico */}
+                      <div className="mt-2 p-2 bg-white/5 rounded-xl border border-white/5 text-[9px] font-mono text-gray-500 select-all space-y-1 text-left">
+                        <div className="truncate" title={user?.email || 'N/A'}>
+                          <span className="font-bold text-gray-400">Email:</span> {user?.email || 'N/A'}
+                        </div>
+                        <div className="truncate" title={user?.uid || 'N/A'}>
+                          <span className="font-bold text-gray-400">UID:</span> {user?.uid || 'N/A'}
+                        </div>
+                        <div className="truncate" title={userProfile?.orgId || 'N/A'}>
+                          <span className="font-bold text-gray-400">OrgID:</span> {userProfile?.orgId || 'N/A'}
+                        </div>
+                        <div className="truncate">
+                          <span className="font-bold text-gray-400">Role:</span> {typeof userProfile?.role === 'string' ? userProfile.role : userProfile?.role?.id || 'N/A'}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>,
+              document.body
+            )}
           </div>
         </div>
 
