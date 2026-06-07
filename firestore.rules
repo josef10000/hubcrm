@@ -164,8 +164,11 @@ service cloud.firestore {
       }
 
       match /clients/{id} {
-        allow read: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_CLIENTS') || (belongsToOrg(orgId) && resource.data.assignedTo == request.auth.uid);
+        allow read: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_CLIENTS') || (belongsToOrg(orgId) && resource.data.assignedTo == request.auth.uid) || (isAuthenticated() && getUserData().clientId == id);
+        allow get: if true;
         allow write: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_CLIENTS');
+        allow update: if request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['npsScore', 'npsComment', 'npsSubmittedAt', 'referralRewardType', 'currentDiscount', 'accessKey', 'portalLinked', 'portalEmail', 'portalUserUid', 'portalLinkedAt']);
       }
 
       match /leads/{id} {
@@ -232,6 +235,24 @@ service cloud.firestore {
           allow delete: if isOwnerEmail() || isOrgAdmin(orgId) || request.auth.uid == resource.data.userId;
         }
       }
+
+      // 🟢 AGENDA E SERVIÇOS DO CLIENTE
+      match /appointments/{appointmentId} {
+        allow read, write: if isOwnerEmail() || belongsToOrg(orgId);
+      }
+
+      match /client_services/{serviceId} {
+        allow read, write: if isOwnerEmail() || belongsToOrg(orgId);
+      }
+
+      // 🟢 CONTROLE FINANCEIRO (DESPESAS E RECEITAS MANUAIS)
+      match /expenses/{expenseId} {
+        allow read, write: if isOwnerEmail() || belongsToOrg(orgId);
+      }
+
+      match /revenues/{revenueId} {
+        allow read, write: if isOwnerEmail() || belongsToOrg(orgId);
+      }
     }
 
     // ===============================================================
@@ -246,17 +267,6 @@ service cloud.firestore {
     // Ofertas e Planos Disponíveis (Público para o Checkout)
     match /organizations/{orgId}/offers/{offerId} {
       allow read: if true;
-    }
-
-    // Portal do Cliente
-    match /organizations/{orgId}/clients/{clientId} {
-      // Permite buscar um cliente específico pelo ID (chave de acesso do portal)
-      // Não permite listar (list) todos os clientes da empresa
-      allow get: if true;
-      
-      // Permite que o cliente atualize apenas campos específicos de interação no portal
-      allow update: if request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['npsScore', 'npsComment', 'npsSubmittedAt', 'referralRewardType', 'currentDiscount', 'accessKey']);
     }
     
     // Suporte (Portal do Cliente)

@@ -23,9 +23,22 @@ interface Expense {
   createdAt: any;
 }
 
+interface Revenue {
+  id: string;
+  clientId: string;
+  description: string;
+  value: number;
+  category: string;
+  date: string;
+  type: 'pontual' | 'fixo'; // Pontual ou Fixo Mensal
+  status: 'paid' | 'unpaid';
+  createdAt: any;
+}
+
 export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinanceProps) {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [revenues, setRevenues] = useState<Revenue[]>([]);
   
   // Controle de abas e filtros
   const [filterPeriod, setFilterPeriod] = useState<'today' | 'week' | 'month' | 'last_month' | 'all'>('month');
@@ -36,7 +49,7 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
   
-  // Estados do formulário
+  // Estados do formulário de despesa
   const [expenseDesc, setExpenseDesc] = useState('');
   const [expenseValue, setExpenseValue] = useState('');
   const [expenseCategory, setExpenseCategory] = useState('Aluguel');
@@ -44,6 +57,19 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
   const [expenseType, setExpenseType] = useState<'pontual' | 'fixo'>('pontual');
   const [expenseStatus, setExpenseStatus] = useState<'paid' | 'unpaid'>('paid');
   const [savingExpense, setSavingExpense] = useState(false);
+
+  // Modal de receitas manuais
+  const [isRevenueModalOpen, setIsRevenueModalOpen] = useState(false);
+  const [editingRevenueId, setEditingRevenueId] = useState<string | null>(null);
+  
+  // Estados do formulário de receita manual
+  const [revenueDesc, setRevenueDesc] = useState('');
+  const [revenueValue, setRevenueValue] = useState('');
+  const [revenueCategory, setRevenueCategory] = useState('Mensalidade');
+  const [revenueDate, setRevenueDate] = useState(new Date().toISOString().substring(0, 10));
+  const [revenueType, setRevenueType] = useState<'pontual' | 'fixo'>('pontual');
+  const [revenueStatus, setRevenueStatus] = useState<'paid' | 'unpaid'>('paid');
+  const [savingRevenue, setSavingRevenue] = useState(false);
 
   // Escuta agendamentos em tempo real
   useEffect(() => {
@@ -76,6 +102,27 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
         })
         .filter(exp => exp.clientId === clientId);
       setExpenses(list);
+    });
+    return () => unsub();
+  }, [orgId, clientId]);
+
+  // Escuta receitas manuais em tempo real
+  useEffect(() => {
+    if (!orgId || !clientId) return;
+    const revenuesRef = collection(db, 'organizations', orgId, 'revenues');
+    const q = query(revenuesRef, orderBy('date', 'desc'));
+    const unsub = onSnapshot(q, (snapshot) => {
+      const list = snapshot.docs
+        .map(d => {
+          const data = d.data();
+          return { 
+            id: d.id, 
+            ...data, 
+            type: data.type || 'pontual'
+          } as Revenue;
+        })
+        .filter(rev => rev.clientId === clientId);
+      setRevenues(list);
     });
     return () => unsub();
   }, [orgId, clientId]);
@@ -140,22 +187,22 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
     return itemDate >= periodStart && itemDate <= periodEnd;
   };
 
-  // Algoritmo matemático para contar ocorrências de um gasto fixo mensal recorrente
-  const countFixedExpenseOccurrences = (exp: Expense, start: Date, end: Date): number => {
-    const expStartDate = new Date(exp.date + 'T00:00:00');
-    if (expStartDate > end) return 0;
+  // Algoritmo matemático para contar ocorrências de um item fixo mensal recorrente (gasto ou receita)
+  const countFixedOccurrences = (dateStr: string, start: Date, end: Date): number => {
+    const itemStartDate = new Date(dateStr + 'T00:00:00');
+    if (itemStartDate > end) return 0;
 
     let occurrences = 0;
     
-    // Inicia o loop no mês mais tardio entre o início do período e o início do gasto
-    const loopStart = new Date(Math.max(start.getTime(), expStartDate.getTime()));
+    // Inicia o loop no mês mais tardio entre o início do período e o início do item
+    const loopStart = new Date(Math.max(start.getTime(), itemStartDate.getTime()));
     let currentYear = loopStart.getFullYear();
     let currentMonth = loopStart.getMonth();
 
     const endYear = end.getFullYear();
     const endMonth = end.getMonth();
 
-    const originalDate = new Date(exp.date + 'T12:00:00');
+    const originalDate = new Date(dateStr + 'T12:00:00');
     const dueDay = originalDate.getDate();
 
     while (currentYear < endYear || (currentYear === endYear && currentMonth <= endMonth)) {
@@ -164,11 +211,11 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
       // Validação para dias inexistentes no mês analisado (ex: dia 31 em fevereiro)
       if (occurrenceDate.getMonth() !== currentMonth) {
         const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0, 12, 0, 0);
-        if (lastDayOfMonth >= start && lastDayOfMonth <= end && lastDayOfMonth >= expStartDate) {
+        if (lastDayOfMonth >= start && lastDayOfMonth <= end && lastDayOfMonth >= itemStartDate) {
           occurrences++;
         }
       } else {
-        if (occurrenceDate >= start && occurrenceDate <= end && occurrenceDate >= expStartDate) {
+        if (occurrenceDate >= start && occurrenceDate <= end && occurrenceDate >= itemStartDate) {
           occurrences++;
         }
       }
@@ -183,28 +230,75 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
     return occurrences;
   };
 
-  // Filtragem dos dados consolidados de receitas
+  // Filtragem dos dados consolidados de receitas (Agendamentos)
   const appointmentsFiltered = appointments.filter(app => isDateInPeriod(app.date) && app.status !== 'cancelled');
 
-  // Cálculos contábeis (Receitas)
-  const totalProjetado = appointmentsFiltered.reduce((acc, app) => acc + (app.price || 0), 0);
-  
-  const totalPago = appointmentsFiltered
+  // Cálculos de Receitas Manuais no período
+  const totalManualProjetado = revenues.reduce((acc, rev) => {
+    if (rev.type === 'fixo') {
+      const occurrences = countFixedOccurrences(rev.date, periodStart, periodEnd);
+      return acc + (rev.value * occurrences);
+    } else {
+      if (isDateInPeriod(rev.date)) {
+        return acc + (rev.value || 0);
+      }
+      return acc;
+    }
+  }, 0);
+
+  const totalManualPago = revenues.reduce((acc, rev) => {
+    if (rev.status === 'paid') {
+      if (rev.type === 'fixo') {
+        const occurrences = countFixedOccurrences(rev.date, periodStart, periodEnd);
+        return acc + (rev.value * occurrences);
+      } else {
+        if (isDateInPeriod(rev.date)) {
+          return acc + (rev.value || 0);
+        }
+      }
+    }
+    return acc;
+  }, 0);
+
+  const totalManualPendente = revenues.reduce((acc, rev) => {
+    if (rev.status !== 'paid') {
+      if (rev.type === 'fixo') {
+        const occurrences = countFixedOccurrences(rev.date, periodStart, periodEnd);
+        return acc + (rev.value * occurrences);
+      } else {
+        if (isDateInPeriod(rev.date)) {
+          return acc + (rev.value || 0);
+        }
+      }
+    }
+    return acc;
+  }, 0);
+
+  // Cálculos contábeis totais (Receitas = Agendamentos + Receitas Manuais)
+  const totalAppointmentsProjetado = appointmentsFiltered.reduce((acc, app) => acc + (app.price || 0), 0);
+  const totalAppointmentsPago = appointmentsFiltered
     .filter(app => app.paymentStatus === 'paid')
     .reduce((acc, app) => acc + (app.price || 0), 0);
-
-  const totalPendente = appointmentsFiltered
+  const totalAppointmentsPendente = appointmentsFiltered
     .filter(app => app.paymentStatus !== 'paid')
     .reduce((acc, app) => acc + (app.price || 0), 0);
 
-  const ticketMedio = appointmentsFiltered.length > 0 
-    ? totalProjetado / appointmentsFiltered.length 
-    : 0;
+  const totalProjetado = totalAppointmentsProjetado + totalManualProjetado;
+  const totalPago = totalAppointmentsPago + totalManualPago;
+  const totalPendente = totalAppointmentsPendente + totalManualPendente;
+
+  const totalCount = appointmentsFiltered.length + revenues.filter(rev => {
+    if (rev.type === 'fixo') {
+      return countFixedOccurrences(rev.date, periodStart, periodEnd) > 0;
+    }
+    return isDateInPeriod(rev.date);
+  }).length;
+  const ticketMedio = totalCount > 0 ? totalProjetado / totalCount : 0;
 
   // Cálculos contábeis (Despesas - Somando Pontuais e Recorrências de Fixas)
   const totalExpenses = expenses.reduce((acc, exp) => {
     if (exp.type === 'fixo') {
-      const occurrences = countFixedExpenseOccurrences(exp, periodStart, periodEnd);
+      const occurrences = countFixedOccurrences(exp.date, periodStart, periodEnd);
       return acc + (exp.value * occurrences);
     } else {
       if (isDateInPeriod(exp.date)) {
@@ -319,12 +413,147 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
     }
   };
 
+  // Abertura do modal para nova receita manual
+  const openNewRevenueModal = () => {
+    setEditingRevenueId(null);
+    setRevenueDesc('');
+    setRevenueValue('');
+    setRevenueCategory('Mensalidade');
+    setRevenueDate(new Date().toISOString().substring(0, 10));
+    setRevenueType('pontual');
+    setRevenueStatus('paid');
+    setIsRevenueModalOpen(true);
+  };
+
+  // Abertura do modal para edição de receita manual existente
+  const openEditRevenueModal = (rev: any) => {
+    setEditingRevenueId(rev.id);
+    setRevenueDesc(rev.description);
+    setRevenueValue(rev.value.toString().replace('.', ','));
+    setRevenueCategory(rev.category);
+    setRevenueDate(rev.date);
+    setRevenueType(rev.type || 'pontual');
+    setRevenueStatus(rev.status);
+    setIsRevenueModalOpen(true);
+  };
+
+  // Alteração de status da receita manual
+  const handleToggleRevenueStatus = async (revId: string, currentStatus: string) => {
+    const nextStatus = currentStatus === 'paid' ? 'unpaid' : 'paid';
+    try {
+      await updateDoc(doc(db, 'organizations', orgId, 'revenues', revId), {
+        status: nextStatus
+      });
+      toast.success(`Receita marcada como ${nextStatus === 'paid' ? 'Paga' : 'Pendente'}`);
+    } catch (e) {
+      toast.error('Erro ao atualizar status da receita.');
+    }
+  };
+
+  // Deleção de receita manual
+  const handleDeleteRevenue = async (revId: string) => {
+    if (!window.confirm('Deseja realmente excluir este registro de receita?')) return;
+    try {
+      await deleteDoc(doc(db, 'organizations', orgId, 'revenues', revId));
+      toast.success('Receita removida com sucesso.');
+    } catch (e) {
+      toast.error('Erro ao remover receita.');
+    }
+  };
+
+  // Salvamento (Criação ou Edição) de receita manual
+  const handleSaveRevenue = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!revenueDesc.trim() || !revenueValue || !revenueDate) {
+      toast.error('Por favor, preencha todos os campos.');
+      return;
+    }
+
+    setSavingRevenue(true);
+    try {
+      const payload = {
+        description: revenueDesc.trim(),
+        value: parseFloat(revenueValue.replace(',', '.')),
+        category: revenueCategory,
+        date: revenueDate,
+        type: revenueType,
+        status: revenueStatus,
+        updatedAt: new Date()
+      };
+
+      if (editingRevenueId) {
+        await updateDoc(doc(db, 'organizations', orgId, 'revenues', editingRevenueId), payload);
+        toast.success('Receita atualizada com sucesso!');
+      } else {
+        await addDoc(collection(db, 'organizations', orgId, 'revenues'), {
+          ...payload,
+          clientId,
+          createdAt: new Date()
+        });
+        toast.success('Receita cadastrada com sucesso!');
+      }
+
+      setIsRevenueModalOpen(false);
+    } catch (err) {
+      toast.error('Erro ao salvar receita.');
+      console.error(err);
+    } finally {
+      setSavingRevenue(false);
+    }
+  };
+
   // Filtragem da listagem de Receitas para a tabela
   const filteredAppointments = appointments.filter(app => {
     if (!isDateInPeriod(app.date) || app.status === 'cancelled') return false;
     if (filterPayment === 'paid') return app.paymentStatus === 'paid';
     if (filterPayment === 'unpaid') return app.paymentStatus !== 'paid';
     return true;
+  });
+
+  // Filtragem da listagem de Receitas Manuais para a tabela
+  const filteredRevenues = revenues.filter(rev => {
+    if (rev.type === 'fixo') {
+      const revStartDate = new Date(rev.date + 'T00:00:00');
+      if (revStartDate > periodEnd) return false;
+    } else {
+      if (!isDateInPeriod(rev.date)) return false;
+    }
+    
+    if (filterPayment === 'paid') return rev.status === 'paid';
+    if (filterPayment === 'unpaid') return rev.status !== 'paid';
+    return true;
+  });
+
+  // Combinação das receitas de agendamento e receitas manuais, ordenadas por data desc
+  const combinedRevenues = [
+    ...filteredAppointments.map(app => ({
+      id: app.id,
+      date: app.date,
+      time: app.time,
+      clientName: app.clientName,
+      description: app.serviceName || 'Agendamento',
+      value: app.price || 0,
+      status: app.paymentStatus || 'unpaid',
+      type: 'pontual',
+      isAppointment: true,
+      category: 'Agendamento',
+      clientPhone: app.clientPhone
+    })),
+    ...filteredRevenues.map(rev => ({
+      id: rev.id,
+      date: rev.date,
+      time: '-',
+      clientName: '-',
+      description: rev.description,
+      value: rev.value || 0,
+      status: rev.status || 'unpaid',
+      type: rev.type || 'pontual',
+      isAppointment: false,
+      category: rev.category,
+      clientPhone: null
+    }))
+  ].sort((a, b) => {
+    return new Date(b.date + 'T12:00:00').getTime() - new Date(a.date + 'T12:00:00').getTime();
   });
 
   // Filtragem da listagem de Despesas para a tabela
@@ -458,6 +687,17 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
               </button>
             </div>
 
+            {/* Botão de Nova Receita (Apenas na aba Receitas) */}
+            {subTab === 'revenues' && (
+              <button
+                onClick={openNewRevenueModal}
+                className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] text-white text-[10px] font-black uppercase tracking-wider rounded-xl transition-all shadow-md shadow-emerald-500/10 cursor-pointer"
+              >
+                <Plus size={14} />
+                Registrar Receita
+              </button>
+            )}
+
             {/* Botão de Novo Gasto (Apenas na aba Despesas) */}
             {subTab === 'expenses' && (
               <button
@@ -503,63 +743,102 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
 
         {/* Renderização da Tabela de Receitas */}
         {subTab === 'revenues' && (
-          filteredAppointments.length === 0 ? (
+          combinedRevenues.length === 0 ? (
             <div className="py-16 text-center bg-black/20 border border-white/5 rounded-2xl">
               <DollarSign size={40} className="mx-auto mb-3 text-gray-600" />
               <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Nenhum Registro de Receita</p>
-              <p className="text-[11px] text-gray-600 mt-1">Nenhum agendamento de cliente atende a este filtro.</p>
+              <p className="text-[11px] text-gray-600 mt-1">Nenhuma receita ou agendamento de cliente atende a este filtro.</p>
             </div>
           ) : (
             <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left border-collapse min-w-[600px]">
                 <thead>
                   <tr className="border-b border-white/10 text-gray-400 text-xs uppercase tracking-wider font-mono">
-                    <th className="pb-3 font-semibold">Data / Hora</th>
-                    <th className="pb-3 font-semibold">Cliente</th>
-                    <th className="pb-3 font-semibold">Serviço</th>
-                    <th className="pb-3 font-semibold">Preço</th>
-                    <th className="pb-3 font-semibold">Status de Pagamento</th>
-                    <th className="pb-3 font-semibold text-right">Ação</th>
+                    <th className="pb-3 font-semibold">Data / Freq</th>
+                    <th className="pb-3 font-semibold">Categoria</th>
+                    <th className="pb-3 font-semibold">Descrição</th>
+                    <th className="pb-3 font-semibold">Valor</th>
+                    <th className="pb-3 font-semibold">Recorrência</th>
+                    <th className="pb-3 font-semibold">Situação</th>
+                    <th className="pb-3 font-semibold text-right">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredAppointments.map((app) => (
-                    <tr key={app.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                  {combinedRevenues.map((item) => (
+                    <tr key={item.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                       <td className="py-4 text-xs font-medium font-mono text-gray-300">
-                        {app.date ? new Date(app.date + 'T12:00:00').toLocaleDateString('pt-BR') : 'Sem data'} &bull; <span className="text-primary-400">{app.time}</span>
+                        {item.type === 'fixo' ? (
+                          <span>Dia {new Date(item.date + 'T12:00:00').getDate()}</span>
+                        ) : (
+                          <span>{item.date ? new Date(item.date + 'T12:00:00').toLocaleDateString('pt-BR') : 'Sem data'}</span>
+                        )}
+                      </td>
+                      <td className="py-4">
+                        <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wider ${
+                          item.category === 'Agendamento' ? 'bg-primary-500/10 text-primary-400 border border-primary-500/20' :
+                          item.category === 'Mensalidade' ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20' :
+                          item.category === 'Venda de Produto' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                          item.category === 'Serviço Adicional' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+                          'bg-gray-500/10 text-gray-400 border border-gray-500/20'
+                        }`}>
+                          {item.category}
+                        </span>
                       </td>
                       <td className="py-4 text-xs font-bold text-white">
-                        {app.clientName}
+                        {item.description}
                       </td>
-                      <td className="py-4 text-xs text-gray-300">
-                        {app.serviceName}
+                      <td className="py-4 text-xs font-bold text-emerald-400 font-mono">
+                        + R$ {item.value?.toFixed(2).replace('.', ',')}
                       </td>
-                      <td className="py-4 text-xs font-bold text-white font-mono">
-                        R$ {app.price?.toFixed(2).replace('.', ',')}
+                      <td className="py-4">
+                        <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase ${
+                          item.type === 'fixo' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                        }`}>
+                          {item.type === 'fixo' ? 'FIXO MENSAL' : 'PONTUAL'}
+                        </span>
                       </td>
                       <td className="py-4">
                         <button
-                          onClick={() => handleTogglePaymentStatus(app.id, app.paymentStatus)}
+                          onClick={() => item.isAppointment ? handleTogglePaymentStatus(item.id, item.status) : handleToggleRevenueStatus(item.id, item.status)}
                           className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border cursor-pointer active:scale-95 transition-all ${
-                            app.paymentStatus === 'paid' 
+                            item.status === 'paid' 
                               ? 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/20' 
                               : 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border-amber-500/20'
                           }`}
                         >
-                          {app.paymentStatus === 'paid' ? 'PAGO' : 'PENDENTE'}
+                          {item.status === 'paid' ? 'PAGO' : 'PENDENTE'}
                         </button>
                       </td>
-                      <td className="py-4 text-right">
-                        {app.clientPhone && (
-                          <a
-                            href={`https://wa.me/${app.clientPhone.replace(/\D/g, '')}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-xs text-primary-400 hover:text-primary-300 transition-colors"
-                          >
-                            <Phone size={12} />
-                            WhatsApp
-                          </a>
+                      <td className="py-4 text-right space-x-1.5">
+                        {item.isAppointment ? (
+                          item.clientPhone && (
+                            <a
+                              href={`https://wa.me/${item.clientPhone.replace(/\D/g, '')}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 text-xs text-primary-400 hover:text-primary-300 transition-colors"
+                            >
+                              <Phone size={12} />
+                              WhatsApp
+                            </a>
+                          )
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => openEditRevenueModal(item)}
+                              className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-gray-300 hover:text-white rounded-xl transition-all cursor-pointer active:scale-90 inline-flex items-center justify-center"
+                              title="Editar receita"
+                            >
+                              <Edit3 size={13} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteRevenue(item.id)}
+                              className="p-2 bg-red-500/10 hover:bg-red-500/25 border border-red-500/20 hover:border-red-500/30 text-red-400 hover:text-red-300 rounded-xl transition-all cursor-pointer active:scale-90 inline-flex items-center justify-center"
+                              title="Excluir receita"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </>
                         )}
                       </td>
                     </tr>
@@ -801,6 +1080,151 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
                     <>
                       <CheckCircle size={14} />
                       <span>{editingExpenseId ? 'Atualizar Gasto' : 'Salvar Gasto'}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+      )}
+
+      {/* Modal Glassmorphism de Cadastro e Edição de Receita */}
+      {isRevenueModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 md:p-8 rounded-[2.5rem] max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in duration-300">
+            <button
+              onClick={() => setIsRevenueModalOpen(false)}
+              className="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors cursor-pointer"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="mb-6 text-left">
+              <h3 className="text-xl font-bold text-white mb-1">
+                {editingRevenueId ? 'Editar Receita' : 'Registrar Receita'}
+              </h3>
+              <p className="text-xs text-gray-400 font-medium">
+                {editingRevenueId ? 'Ajuste os dados da receita selecionada.' : 'Informe a receita financeira para ajustar o faturamento e lucro líquido da empresa.'}
+              </p>
+            </div>
+
+            <form onSubmit={handleSaveRevenue} className="space-y-4 text-left">
+              {/* Descrição */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Descrição da Receita</label>
+                <input
+                  type="text"
+                  value={revenueDesc}
+                  onChange={(e) => setRevenueDesc(e.target.value)}
+                  placeholder="Ex: Consultoria Extra"
+                  className="w-full px-4 py-3 bg-black/40 border border-white/10 hover:border-white/20 focus:border-primary-500 text-white rounded-xl text-sm outline-none transition-all placeholder-gray-600 focus:ring-1 focus:ring-primary-500"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {/* Valor */}
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Valor (R$)</label>
+                  <input
+                    type="text"
+                    value={revenueValue}
+                    onChange={(e) => setRevenueValue(e.target.value)}
+                    placeholder="150,00"
+                    className="w-full px-4 py-3 bg-black/40 border border-white/10 hover:border-white/20 focus:border-primary-500 text-white rounded-xl text-sm outline-none transition-all placeholder-gray-600 focus:ring-1 focus:ring-primary-500 font-mono"
+                    required
+                  />
+                </div>
+
+                {/* Categoria */}
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Categoria</label>
+                  <select
+                    value={revenueCategory}
+                    onChange={(e) => setRevenueCategory(e.target.value)}
+                    className="w-full px-4 py-3 bg-black/40 border border-white/10 text-white rounded-xl text-sm outline-none transition-all focus:border-primary-500"
+                    required
+                  >
+                    <option value="Mensalidade" className="bg-[#050505]">Mensalidade</option>
+                    <option value="Venda de Produto" className="bg-[#050505]">Venda de Produto</option>
+                    <option value="Serviço Adicional" className="bg-[#050505]">Serviço Adicional</option>
+                    <option value="Outros" className="bg-[#050505]">Outros</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {/* Tipo de Receita */}
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Frequência</label>
+                  <select
+                    value={revenueType}
+                    onChange={(e) => setRevenueType(e.target.value as any)}
+                    className="w-full px-4 py-3 bg-black/40 border border-white/10 text-white rounded-xl text-sm outline-none transition-all focus:border-primary-500 font-bold"
+                    required
+                  >
+                    <option value="pontual" className="bg-[#050505]">Receita Pontual (Único)</option>
+                    <option value="fixo" className="bg-[#050505]">Fixo Mensal (Recorrente)</option>
+                  </select>
+                </div>
+
+                {/* Situação */}
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Situação</label>
+                  <select
+                    value={revenueStatus}
+                    onChange={(e) => setRevenueStatus(e.target.value as any)}
+                    className="w-full px-4 py-3 bg-black/40 border border-white/10 text-white rounded-xl text-sm outline-none transition-all focus:border-primary-500"
+                    required
+                  >
+                    <option value="paid" className="bg-[#050505]">Pago</option>
+                    <option value="unpaid" className="bg-[#050505]">Pendente</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Data */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                  {revenueType === 'fixo' ? 'Data de Início da Receita Fixa' : 'Data da Receita'}
+                </label>
+                <input
+                  type="date"
+                  value={revenueDate}
+                  onChange={(e) => setRevenueDate(e.target.value)}
+                  className="w-full px-4 py-3 bg-black/40 border border-white/10 text-white rounded-xl text-sm outline-none transition-all focus:border-primary-500"
+                  required
+                />
+                {revenueType === 'fixo' && (
+                  <p className="text-[9px] text-gray-400 italic mt-0.5">
+                    A receita incidirá automaticamente todo dia {new Date(revenueDate + 'T12:00:00').getDate()} a partir desta data.
+                  </p>
+                )}
+              </div>
+
+              {/* Botões de Ação */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsRevenueModalOpen(false)}
+                  className="flex-1 py-3 bg-white/5 hover:bg-white/10 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all border border-white/10 cursor-pointer text-center"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingRevenue}
+                  className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-500/50 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md shadow-emerald-500/10 cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  {savingRevenue ? (
+                    <>
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                      <span>Salvando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle size={14} />
+                      <span>{editingRevenueId ? 'Atualizar Receita' : 'Salvar Receita'}</span>
                     </>
                   )}
                 </button>

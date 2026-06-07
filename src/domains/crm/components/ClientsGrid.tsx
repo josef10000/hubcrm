@@ -110,6 +110,16 @@ export default function ClientsGrid({
                 </div>
 
                 <div className="flex gap-2">
+                  {client.portalLinked && (
+                    <span 
+                      title={`Vinculado ao e-mail: ${client.portalEmail || 'Não informado'}`}
+                      className="px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-sky-500/20 text-sky-300 border border-sky-500/30 flex items-center gap-1 cursor-help"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Globe size={10} />
+                      Portal Ativo
+                    </span>
+                  )}
 
                   {client.isCombo && (
                     <span className="px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-1">

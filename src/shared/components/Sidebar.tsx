@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Star, Globe, Clock, Coffee, Circle, User, LogOut, Users } from 'lucide-react';
@@ -67,11 +68,17 @@ export default function Sidebar() {
   const { manualSetStatus } = usePresence();
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const avatarMenuRef = useRef<HTMLDivElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
 
   // Fecha o menu de status se o usuário clicar fora dele
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (avatarMenuRef.current && !avatarMenuRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (
+        avatarMenuRef.current && 
+        !avatarMenuRef.current.contains(target) && 
+        (!popoverRef.current || !popoverRef.current.contains(target))
+      ) {
         setStatusMenuOpen(false);
       }
     }
@@ -257,8 +264,9 @@ export default function Sidebar() {
 
             {/* Menu Popover Flutuante de Presença (Status Rápido) */}
             <AnimatePresence>
-              {statusMenuOpen && (
+              {statusMenuOpen && createPortal(
                 <motion.div
+                  ref={popoverRef}
                   initial={{ opacity: 0, scale: 0.95, x: 20 }}
                   animate={{ opacity: 1, scale: 1, x: 0 }}
                   exit={{ opacity: 0, scale: 0.95, x: 10 }}
@@ -341,7 +349,8 @@ export default function Sidebar() {
                       <span>Sair da Conta</span>
                     </button>
                   </div>
-                </motion.div>
+                </motion.div>,
+                document.body
               )}
             </AnimatePresence>
           </div>

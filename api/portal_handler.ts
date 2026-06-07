@@ -86,6 +86,19 @@ async function handleAuth(req: VercelRequest, res: VercelResponse) {
       updatedAt: new Date()
     }, { merge: true });
 
+    // 2.5. Atualiza o card do cliente com as informações de vinculação
+    const clientRef = db
+      .collection('organizations')
+      .doc(targetOrgId)
+      .collection('clients')
+      .doc(targetClientId);
+    await clientRef.update({
+      portalLinked: true,
+      portalEmail: cleanEmail,
+      portalUserUid: uid,
+      portalLinkedAt: new Date()
+    });
+
     console.log(`[PortalAuth] Vinculado com sucesso: ${cleanEmail} -> org: ${targetOrgId}, client: ${targetClientId}`);
 
     return res.status(200).json({

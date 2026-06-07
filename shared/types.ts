@@ -329,6 +329,10 @@ export interface Client {
   publicToken?: string;
   isCourtesy?: boolean;
   orgId?: string;
+  portalLinked?: boolean;
+  portalEmail?: string;
+  portalUserUid?: string;
+  portalLinkedAt?: any;
 }
 
 export type ClientBase = Client;

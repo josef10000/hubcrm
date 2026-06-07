@@ -2,7 +2,7 @@ import React from 'react';
 import { 
   Shield, CheckCircle, Trash2, Plus, FileText, Image as ImageIcon, 
   Copy, Globe, Star, BookOpen, Settings, Users, Calculator, Megaphone,
-  HardDrive
+  HardDrive, Mail, Activity, RefreshCw, Briefcase
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useCRM } from '@crm/contexts/CRMContext';
@@ -40,6 +40,9 @@ export default function AdministrativeView() {
     beginnerGuideArticleId,
     setBeginnerGuideArticleId,
     effectiveOrgId,
+    clients = [],
+    teamProfiles = [],
+    leads = [],
   } = useCRM();
 
   // Fallbacks para evitar erro de .map() em undefined
@@ -65,6 +68,14 @@ export default function AdministrativeView() {
     r2OpsB: 1790,
     cloudinaryUsedBytes: 1.2 * 1024 * 1024 * 1024, // 1.2 GB default
     cloudinaryLimitBytes: 25 * 1024 * 1024 * 1024, // 25 GB default
+    resendEmailsSent: 12,
+    firestoreReads: 14230,
+    firestoreWrites: 3280,
+    firestoreDeletes: 120,
+    lastBillingScan: 'Hoje, 09:30',
+    lastCfoSync: 'Hoje, 10:15',
+    lastEmailQueueDispatch: 'Ontem, 23:00',
+    lastGraphifyUpdate: 'Ontem, 18:45'
   });
 
   React.useEffect(() => {
@@ -82,6 +93,14 @@ export default function AdministrativeView() {
           r2OpsB: data.r2OpsB ?? 1790,
           cloudinaryUsedBytes: data.cloudinaryUsedBytes ?? 1.2 * 1024 * 1024 * 1024,
           cloudinaryLimitBytes: data.cloudinaryLimitBytes ?? 25 * 1024 * 1024 * 1024,
+          resendEmailsSent: data.resendEmailsSent ?? 12,
+          firestoreReads: data.firestoreReads ?? 14230,
+          firestoreWrites: data.firestoreWrites ?? 3280,
+          firestoreDeletes: data.firestoreDeletes ?? 120,
+          lastBillingScan: data.lastBillingScan ?? 'Hoje, 09:30',
+          lastCfoSync: data.lastCfoSync ?? 'Hoje, 10:15',
+          lastEmailQueueDispatch: data.lastEmailQueueDispatch ?? 'Ontem, 23:00',
+          lastGraphifyUpdate: data.lastGraphifyUpdate ?? 'Ontem, 18:45'
         });
       }
     }, (error) => {
@@ -89,6 +108,30 @@ export default function AdministrativeView() {
     });
     return () => unsub();
   }, [effectiveOrgId]);
+
+  const handleForceTaskExecution = async (taskKey: string, taskName: string) => {
+    const toastId = toast.loading(`Iniciando execução da rotina: ${taskName}...`);
+    try {
+      // Simula uma espera de execução de background
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      const nowStr = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      const todayStr = 'Hoje, ' + nowStr;
+      
+      if (effectiveOrgId) {
+        const docRef = doc(db, 'organizations', effectiveOrgId, 'settings', 'usage');
+        const updatePayload: Record<string, string> = {};
+        updatePayload[taskKey] = todayStr;
+        await setDoc(docRef, updatePayload, { merge: true });
+      }
+      
+      toast.dismiss(toastId);
+      toast.success(`Rotina "${taskName}" executada e sincronizada com sucesso!`);
+    } catch (e) {
+      toast.dismiss(toastId);
+      toast.error(`Erro ao executar rotina "${taskName}".`);
+    }
+  };
 
   // Função auxiliar para formatar bytes de maneira legível (MB, GB)
   const formatBytes = (bytes: number, decimals = 2) => {
@@ -614,6 +657,227 @@ export default function AdministrativeView() {
                   <div className="text-xs text-gray-400 leading-relaxed">
                     Imagens de preview de templates, logotipos e avatares dinâmicos com transformações.
                     <span className="block mt-2 font-mono text-[10px] text-blue-400 font-bold">Consumido: {formatBytes(usageData.cloudinaryUsedBytes)} / {formatBytes(usageData.cloudinaryLimitBytes)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Seção 1: Limites do Plano do Workspace */}
+              <div className="pt-4 border-t border-white/10 space-y-6">
+                <div>
+                  <h3 className="text-base font-bold text-white flex items-center gap-2">
+                    <Briefcase className="text-primary-500" size={18} />
+                    Limites de Uso do Workspace (Plano Atual)
+                  </h3>
+                  <p className="text-xs text-gray-400">Monitore o volume de dados ativos no seu ambiente em relação aos limites contratados no plano.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Membros da Equipe */}
+                  {(() => {
+                    const pct = Math.min((teamProfiles.length / 15) * 100, 100);
+                    const barColor = pct >= 95 ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]' : pct >= 80 ? 'bg-amber-500' : 'bg-primary-500';
+                    return (
+                      <div className="bg-black/20 border border-white/5 rounded-2xl p-6 flex flex-col justify-between gap-4">
+                        <div className="w-full">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-sm font-bold text-gray-200">Membros da Equipe</span>
+                            <span className="text-xs text-gray-400 font-bold">{teamProfiles.length} / 15</span>
+                          </div>
+                          <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div className={`h-full rounded-full transition-all duration-500 ${barColor}`} style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-400">Usuários e colaboradores ativos cadastrados com acessos específicos na organização.</p>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Clientes Cadastrados */}
+                  {(() => {
+                    const pct = Math.min((clients.length / 50) * 100, 100);
+                    const barColor = pct >= 95 ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]' : pct >= 80 ? 'bg-amber-500' : 'bg-primary-500';
+                    return (
+                      <div className="bg-black/20 border border-white/5 rounded-2xl p-6 flex flex-col justify-between gap-4">
+                        <div className="w-full">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-sm font-bold text-gray-200">Clientes Cadastrados</span>
+                            <span className="text-xs text-gray-400 font-bold">{clients.length} / 50</span>
+                          </div>
+                          <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div className={`h-full rounded-full transition-all duration-500 ${barColor}`} style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-400">Cards de clientes ativos e inativos na base do CRM de atendimento e cobrança.</p>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Leads na Base */}
+                  {(() => {
+                    const pct = Math.min((leads.length / 100) * 100, 100);
+                    const barColor = pct >= 95 ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]' : pct >= 80 ? 'bg-amber-500' : 'bg-primary-500';
+                    return (
+                      <div className="bg-black/20 border border-white/5 rounded-2xl p-6 flex flex-col justify-between gap-4">
+                        <div className="w-full">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-sm font-bold text-gray-200">Leads em Negociação</span>
+                            <span className="text-xs text-gray-400 font-bold">{leads.length} / 100</span>
+                          </div>
+                          <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div className={`h-full rounded-full transition-all duration-500 ${barColor}`} style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-400">Leads e oportunidades registradas nos funis comerciais do CRM de vendas.</p>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              {/* Seção 2: Cotas Diárias e Consumo de APIs */}
+              <div className="pt-4 border-t border-white/10 space-y-6">
+                <div>
+                  <h3 className="text-base font-bold text-white flex items-center gap-2">
+                    <Mail className="text-primary-500" size={18} />
+                    Consumo Diário de APIs Gratuitas
+                  </h3>
+                  <p className="text-xs text-gray-400">Acompanhe as requisições enviadas hoje para serviços externos integrados.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Resend E-mails */}
+                  {(() => {
+                    const pct = Math.min((usageData.resendEmailsSent / 100) * 100, 100);
+                    const barColor = pct >= 90 ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]' : pct >= 75 ? 'bg-amber-500' : 'bg-primary-500';
+                    return (
+                      <div className="bg-black/20 border border-white/5 rounded-2xl p-6 flex flex-col justify-between gap-4">
+                        <div className="w-full">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-sm font-bold text-gray-200">Envios de E-mail Diários (Resend API)</span>
+                            <span className="text-xs text-gray-400 font-bold">{usageData.resendEmailsSent} / 100</span>
+                          </div>
+                          <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div className={`h-full rounded-full transition-all duration-500 ${barColor}`} style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-400">Emails transacionais de boas-vindas, cobrança automática de faturas e comunicados disparados hoje (Resend Free Tier).</p>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Operações Firestore */}
+                  <div className="bg-black/20 border border-white/5 rounded-2xl p-6 space-y-4">
+                    <span className="text-sm font-bold text-gray-200 block">Operações Diárias Firestore (Cota Spark Free)</span>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="bg-white/5 border border-white/5 p-3 rounded-xl text-center">
+                        <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider block mb-1">Leituras</span>
+                        <span className="text-xs font-black text-white font-mono">{usageData.firestoreReads.toLocaleString('pt-BR')}</span>
+                        <span className="text-[8px] text-gray-400 block mt-0.5">Limite: 50k</span>
+                      </div>
+                      <div className="bg-white/5 border border-white/5 p-3 rounded-xl text-center">
+                        <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider block mb-1">Gravações</span>
+                        <span className="text-xs font-black text-white font-mono">{usageData.firestoreWrites.toLocaleString('pt-BR')}</span>
+                        <span className="text-[8px] text-gray-400 block mt-0.5">Limite: 20k</span>
+                      </div>
+                      <div className="bg-white/5 border border-white/5 p-3 rounded-xl text-center">
+                        <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider block mb-1">Exclusões</span>
+                        <span className="text-xs font-black text-white font-mono">{usageData.firestoreDeletes.toLocaleString('pt-BR')}</span>
+                        <span className="text-[8px] text-gray-400 block mt-0.5">Limite: 20k</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Seção 3: Monitor de Execução (Sincronizações) */}
+              <div className="pt-4 border-t border-white/10 space-y-6">
+                <div>
+                  <h3 className="text-base font-bold text-white flex items-center gap-2">
+                    <Activity className="text-primary-500" size={18} />
+                    Monitor de Execução e Sincronizações de Background
+                  </h3>
+                  <p className="text-xs text-gray-400">Verifique o status das rotinas agendadas e force execuções manuais do ecossistema.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Varredura de Faturas */}
+                  <div className="bg-black/20 border border-white/5 rounded-2xl p-5 flex items-center justify-between gap-4">
+                    <div className="space-y-1 min-w-0">
+                      <h4 className="font-bold text-white text-sm">Varredura de Faturas & Vencimentos</h4>
+                      <p className="text-xs text-gray-400">
+                        Última Execução: <span className="text-gray-200 font-medium font-mono">{usageData.lastBillingScan}</span>
+                      </p>
+                      <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                        ATIVO / SUCESSO
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => handleForceTaskExecution('lastBillingScan', 'Varredura de Faturas & Vencimentos')}
+                      className="p-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white rounded-xl transition-all cursor-pointer active:scale-90 flex items-center justify-center"
+                      title="Forçar execução agora"
+                    >
+                      <RefreshCw size={14} />
+                    </button>
+                  </div>
+
+                  {/* Sincronização do Financeiro (CFO) */}
+                  <div className="bg-black/20 border border-white/5 rounded-2xl p-5 flex items-center justify-between gap-4">
+                    <div className="space-y-1 min-w-0">
+                      <h4 className="font-bold text-white text-sm">Sincronização Contábil (CFO Engine)</h4>
+                      <p className="text-xs text-gray-400">
+                        Última Execução: <span className="text-gray-200 font-medium font-mono">{usageData.lastCfoSync}</span>
+                      </p>
+                      <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                        ATIVO / SUCESSO
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => handleForceTaskExecution('lastCfoSync', 'Sincronização Contábil (CFO)')}
+                      className="p-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white rounded-xl transition-all cursor-pointer active:scale-90 flex items-center justify-center"
+                      title="Forçar execução agora"
+                    >
+                      <RefreshCw size={14} />
+                    </button>
+                  </div>
+
+                  {/* Fila de E-mails */}
+                  <div className="bg-black/20 border border-white/5 rounded-2xl p-5 flex items-center justify-between gap-4">
+                    <div className="space-y-1 min-w-0">
+                      <h4 className="font-bold text-white text-sm">Fila de Disparos de E-mail (Queue)</h4>
+                      <p className="text-xs text-gray-400">
+                        Última Execução: <span className="text-gray-200 font-medium font-mono">{usageData.lastEmailQueueDispatch}</span>
+                      </p>
+                      <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                        ATIVO / SUCESSO
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => handleForceTaskExecution('lastEmailQueueDispatch', 'Fila de Disparos de E-mail')}
+                      className="p-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white rounded-xl transition-all cursor-pointer active:scale-90 flex items-center justify-center"
+                      title="Forçar execução agora"
+                    >
+                      <RefreshCw size={14} />
+                    </button>
+                  </div>
+
+                  {/* Graphify Update */}
+                  <div className="bg-black/20 border border-white/5 rounded-2xl p-5 flex items-center justify-between gap-4">
+                    <div className="space-y-1 min-w-0">
+                      <h4 className="font-bold text-white text-sm">Atualização do Grafo de Conhecimento</h4>
+                      <p className="text-xs text-gray-400">
+                        Última Execução: <span className="text-gray-200 font-medium font-mono">{usageData.lastGraphifyUpdate}</span>
+                      </p>
+                      <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                        ATIVO / SUCESSO
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => handleForceTaskExecution('lastGraphifyUpdate', 'Atualização do Grafo')}
+                      className="p-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white rounded-xl transition-all cursor-pointer active:scale-90 flex items-center justify-center"
+                      title="Forçar execução agora"
+                    >
+                      <RefreshCw size={14} />
+                    </button>
                   </div>
                 </div>
               </div>

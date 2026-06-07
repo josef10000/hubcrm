@@ -46,6 +46,7 @@ export default function PortalAgenda({ orgId, clientId }: PortalAgendaProps) {
 
   // Estados do Agendamento Manual
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingAppointmentId, setEditingAppointmentId] = useState<string | null>(null);
   const [newClientName, setNewClientName] = useState('');
   const [newClientPhone, setNewClientPhone] = useState('');
   const [newClientEmail, setNewClientEmail] = useState('');
@@ -58,8 +59,10 @@ export default function PortalAgenda({ orgId, clientId }: PortalAgendaProps) {
 
   // Mantém a data do formulário sincronizada ao abrir
   useEffect(() => {
-    setNewDate(selectedDate);
-  }, [selectedDate, isModalOpen]);
+    if (!editingAppointmentId) {
+      setNewDate(selectedDate);
+    }
+  }, [selectedDate, isModalOpen, editingAppointmentId]);
 
   const handleServiceChange = (srvId: string) => {
     setNewServiceId(srvId);
@@ -71,7 +74,43 @@ export default function PortalAgenda({ orgId, clientId }: PortalAgendaProps) {
     }
   };
 
-  const handleCreateAppointment = async (e: React.FormEvent) => {
+  const closeAppointmentModal = () => {
+    setIsModalOpen(false);
+    setEditingAppointmentId(null);
+    setNewClientName('');
+    setNewClientPhone('');
+    setNewClientEmail('');
+    setNewServiceId('');
+    setNewTime('');
+    setNewPrice('');
+    setNewPaymentStatus('unpaid');
+  };
+
+  const handleEditAppointment = (app: any) => {
+    setEditingAppointmentId(app.id);
+    setNewClientName(app.clientName);
+    setNewClientPhone(app.clientPhone);
+    setNewClientEmail(app.clientEmail || '');
+    setNewServiceId(app.serviceId);
+    setNewDate(app.date);
+    setNewTime(app.time);
+    setNewPrice((app.price || 0).toString().replace('.', ','));
+    setNewPaymentStatus(app.paymentStatus || 'unpaid');
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteAppointment = async (appId: string) => {
+    if (!window.confirm('Tem certeza que deseja excluir permanentemente este agendamento?')) return;
+    try {
+      await deleteDoc(doc(db, 'organizations', orgId, 'appointments', appId));
+      toast.success('Agendamento excluído com sucesso!');
+    } catch (e) {
+      console.error(e);
+      toast.error('Erro ao excluir agendamento.');
+    }
+  };
+
+  const handleSaveAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newClientName.trim() || !newClientPhone.trim() || !newTime || !newServiceId || !orgId) {
       toast.error('Preencha os campos obrigatórios.');
@@ -86,7 +125,7 @@ export default function PortalAgenda({ orgId, clientId }: PortalAgendaProps) {
 
     setIsSubmittingAppointment(true);
     try {
-      await addDoc(collection(db, 'organizations', orgId, 'appointments'), {
+      const payload = {
         clientName: newClientName.trim(),
         clientPhone: newClientPhone.trim(),
         clientEmail: newClientEmail.trim(),
@@ -95,25 +134,26 @@ export default function PortalAgenda({ orgId, clientId }: PortalAgendaProps) {
         date: newDate,
         time: newTime,
         price: Number(newPrice.replace(',', '.')),
-        status: 'confirmed', // Confirmado por padrão
         paymentStatus: newPaymentStatus,
-        createdAt: serverTimestamp()
-      });
+        updatedAt: serverTimestamp()
+      };
 
-      toast.success('Agendamento realizado com sucesso!');
-      setIsModalOpen(false);
-      
-      // Limpa os campos
-      setNewClientName('');
-      setNewClientPhone('');
-      setNewClientEmail('');
-      setNewServiceId('');
-      setNewTime('');
-      setNewPrice('');
-      setNewPaymentStatus('unpaid');
+      if (editingAppointmentId) {
+        await updateDoc(doc(db, 'organizations', orgId, 'appointments', editingAppointmentId), payload);
+        toast.success('Agendamento atualizado com sucesso!');
+      } else {
+        await addDoc(collection(db, 'organizations', orgId, 'appointments'), {
+          ...payload,
+          status: 'confirmed',
+          createdAt: serverTimestamp()
+        });
+        toast.success('Agendamento realizado com sucesso!');
+      }
+
+      closeAppointmentModal();
     } catch (err) {
       console.error(err);
-      toast.error('Erro ao realizar o agendamento.');
+      toast.error(editingAppointmentId ? 'Erro ao atualizar o agendamento.' : 'Erro ao realizar o agendamento.');
     } finally {
       setIsSubmittingAppointment(false);
     }
@@ -385,6 +425,22 @@ export default function PortalAgenda({ orgId, clientId }: PortalAgendaProps) {
                           <X size={14} /> Cancelado
                         </span>
                       )}
+
+                      {/* Botões de Editar/Excluir Agendamento */}
+                      <button
+                        onClick={() => handleEditAppointment(app)}
+                        className="p-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white rounded-xl transition-all cursor-pointer active:scale-90"
+                        title="Editar agendamento"
+                      >
+                        <Edit2 size={13} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteAppointment(app.id)}
+                        className="p-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 hover:text-red-300 rounded-xl transition-all cursor-pointer active:scale-90"
+                        title="Excluir agendamento"
+                      >
+                        <Trash2 size={13} />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -626,18 +682,22 @@ export default function PortalAgenda({ orgId, clientId }: PortalAgendaProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 md:p-8 rounded-[2.5rem] max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in duration-300">
             <button
-              onClick={() => setIsModalOpen(false)}
-              className="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors"
+              onClick={closeAppointmentModal}
+              className="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors cursor-pointer"
             >
               <X size={20} />
             </button>
 
             <div className="mb-6">
-              <h3 className="text-xl font-bold text-white mb-1">Novo Agendamento</h3>
-              <p className="text-xs text-gray-400">Preencha os dados do cliente e selecione o serviço para registrar na agenda.</p>
+              <h3 className="text-xl font-bold text-white mb-1">
+                {editingAppointmentId ? 'Editar Agendamento' : 'Novo Agendamento'}
+              </h3>
+              <p className="text-xs text-gray-400">
+                {editingAppointmentId ? 'Ajuste os dados do agendamento do cliente.' : 'Preencha os dados do cliente e selecione o serviço para registrar na agenda.'}
+              </p>
             </div>
 
-            <form onSubmit={handleCreateAppointment} className="space-y-4">
+            <form onSubmit={handleSaveAppointment} className="space-y-4">
               {/* Cliente */}
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Nome do Cliente</label>
@@ -747,7 +807,7 @@ export default function PortalAgenda({ orgId, clientId }: PortalAgendaProps) {
                 <button
                   type="submit"
                   disabled={isSubmittingAppointment}
-                  className="flex-1 py-3.5 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-600/50 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all active:scale-[0.98] shadow-lg shadow-primary-500/10 flex items-center justify-center gap-2"
+                  className="flex-1 py-3.5 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-600/50 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all active:scale-[0.98] shadow-lg shadow-primary-500/10 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {isSubmittingAppointment ? (
                     <>
@@ -757,14 +817,14 @@ export default function PortalAgenda({ orgId, clientId }: PortalAgendaProps) {
                   ) : (
                     <>
                       <Check size={14} />
-                      <span>Agendar Cliente</span>
+                      <span>{editingAppointmentId ? 'Salvar Alterações' : 'Agendar Cliente'}</span>
                     </>
                   )}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-6 py-3.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all"
+                  onClick={closeAppointmentModal}
+                  className="px-6 py-3.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer"
                 >
                   Cancelar
                 </button>
