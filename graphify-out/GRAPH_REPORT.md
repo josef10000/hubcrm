@@ -1,16 +1,16 @@
 # Graph Report - hubcrm  (2026-06-07)
 
 ## Corpus Check
-- 391 files · ~500,216 words
+- 391 files · ~500,354 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1854 nodes · 4175 edges · 124 communities (106 shown, 18 thin omitted)
+- 1854 nodes · 4175 edges · 122 communities (106 shown, 16 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 2 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `6ef13e91`
+- Built from commit: `c5517027`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -118,13 +118,11 @@
 - [[_COMMUNITY_Community 101|Community 101]]
 - [[_COMMUNITY_Community 106|Community 106]]
 - [[_COMMUNITY_Community 107|Community 107]]
-- [[_COMMUNITY_Community 108|Community 108]]
 - [[_COMMUNITY_Community 109|Community 109]]
 - [[_COMMUNITY_Community 110|Community 110]]
 - [[_COMMUNITY_Community 112|Community 112]]
 - [[_COMMUNITY_Community 113|Community 113]]
 - [[_COMMUNITY_Community 114|Community 114]]
-- [[_COMMUNITY_Community 115|Community 115]]
 - [[_COMMUNITY_Community 116|Community 116]]
 - [[_COMMUNITY_Community 117|Community 117]]
 - [[_COMMUNITY_Community 118|Community 118]]
@@ -149,8 +147,6 @@
 10. `UserProfile` - 30 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `handler()` --calls--> `generatePublicToken()`  [INFERRED]
-  api/public_checkout.ts → src/tests/crmSlice.test.ts
 - `EnergyScoreCardProps` --references--> `UserProfile`  [EXTRACTED]
   src/domains/people/components/EnergyScoreCard.tsx → shared/types.ts
 - `ContractsTabProps` --references--> `Client`  [EXTRACTED]
@@ -159,11 +155,13 @@
   src/domains/crm/components/ClientsGrid.tsx → shared/types.ts
 - `PortalDocumentsProps` --references--> `Client`  [EXTRACTED]
   src/domains/portal/views/PortalDocuments.tsx → shared/types.ts
+- `ProposalGeneratorModalProps` --references--> `Lead`  [EXTRACTED]
+  src/domains/commercial/components/ProposalGeneratorModal.tsx → shared/types.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (124 total, 18 thin omitted)
+## Communities (122 total, 16 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.09
@@ -183,7 +181,7 @@ Nodes (3): MOODS, MoodTracker(), MoodLog
 
 ### Community 4 - "Community 4"
 Cohesion: 0.12
-Nodes (35): getRoleName(), handleAccept(), handleAddAsset(), handleAddFeedback(), handleAddMilestone(), handleBroadcast(), handleCancelInvite(), handleInvite() (+27 more)
+Nodes (34): getRoleName(), handleAccept(), handleAddAsset(), handleAddFeedback(), handleAddMilestone(), handleBroadcast(), handleCancelInvite(), handleInvite() (+26 more)
 
 ### Community 5 - "Community 5"
 Cohesion: 0.17
@@ -238,8 +236,8 @@ Cohesion: 0.13
 Nodes (11): EnergyScoreCard(), EnergyScoreCardProps, getLevel(), LEVELS, COLUMNS, PDIItem, PDIKanban(), PDIKanbanProps (+3 more)
 
 ### Community 18 - "Community 18"
-Cohesion: 0.13
-Nodes (20): handler(), handler(), handlePaymentCreated(), handlePaymentReceived(), resend, sendBoasVindasLinkEmail(), sendBoasVindasSubscriptionEmail(), sendFaturaEmitidaEmail() (+12 more)
+Cohesion: 0.11
+Nodes (21): handler(), handler(), handlePaymentCreated(), handlePaymentReceived(), resend, sendBoasVindasLinkEmail(), sendBoasVindasSubscriptionEmail(), sendFaturaEmitidaEmail() (+13 more)
 
 ### Community 19 - "Community 19"
 Cohesion: 0.10
@@ -346,12 +344,12 @@ Cohesion: 0.12
 Nodes (15): EventBus, Handler, HUB_EVENTS, initGlobalEventHandlers(), AuditLog, auditService, clientService, leadService (+7 more)
 
 ### Community 46 - "Community 46"
-Cohesion: 0.14
-Nodes (14): type, type, type, properties, type, active, maxInstallments, name (+6 more)
+Cohesion: 0.12
+Nodes (17): type, Offer, type, description, properties, required, title, type (+9 more)
 
 ### Community 47 - "Community 47"
-Cohesion: 0.14
-Nodes (14): type, type, type, type, Expense, description, properties, required (+6 more)
+Cohesion: 0.12
+Nodes (16): type, type, type, type, Expense, description, properties, required (+8 more)
 
 ### Community 48 - "Community 48"
 Cohesion: 0.14
@@ -367,7 +365,7 @@ Nodes (56): AddFeedbackModal(), AddMilestoneModal(), AddMilestoneModalProps, MIL
 
 ### Community 51 - "Community 51"
 Cohesion: 0.15
-Nodes (13): properties, type, type, enum, type, cpfCnpj, id, plan (+5 more)
+Nodes (13): properties, type, type, enum, type, cpfCnpj, name, plan (+5 more)
 
 ### Community 52 - "Community 52"
 Cohesion: 0.15
@@ -506,8 +504,8 @@ Cohesion: 0.38
 Nodes (4): createClientQueryResult(), createMockDocRef(), setupPaymentTest(), webhookEventsStore
 
 ### Community 87 - "Community 87"
-Cohesion: 0.18
-Nodes (11): handleGenerate(), handler(), handler(), handler(), hasFinancePermission(), handler(), handlePaymentOverdue(), handleTransferEvent() (+3 more)
+Cohesion: 0.25
+Nodes (8): handler(), handler(), hasFinancePermission(), handler(), handlePaymentOverdue(), handleTransferEvent(), logActivity(), db
 
 ### Community 88 - "Community 88"
 Cohesion: 0.29
@@ -549,10 +547,6 @@ Nodes (4): handle_call_tool(), handle_list_tools(), TextContent, Tool
 Cohesion: 0.40
 Nodes (4): firestore, indexes, rules, firebase
 
-### Community 108 - "Community 108"
-Cohesion: 0.40
-Nodes (5): Offer, description, required, title, type
-
 ### Community 109 - "Community 109"
 Cohesion: 0.40
 Nodes (4): name, private, type, version
@@ -569,6 +563,10 @@ Nodes (3): description, name, requestFramePermissions
 Cohesion: 0.50
 Nodes (3): crons, ignoreCommand, rewrites
 
+### Community 119 - "Community 119"
+Cohesion: 0.33
+Nodes (6): handleGenerate(), handler(), handler(), handleWeather(), handler(), getFirebaseAdmin()
+
 ### Community 121 - "Community 121"
 Cohesion: 0.13
 Nodes (19): CashFlowProjection(), Announcement, CompanyAnnouncements(), FinancialChartsProps, KudosWall(), BirthdayPerson, TeamCelebrations(), useClients() (+11 more)
@@ -576,17 +574,17 @@ Nodes (19): CashFlowProjection(), Announcement, CompanyAnnouncements(), Financia
 ## Knowledge Gaps
 - **630 isolated node(s):** `github-actions.workflows.pinned.workflows`, `mockFetch`, `mockAsaasRequest`, `mockDocGet`, `mockDocSet` (+625 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **18 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **16 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `useAuth()` connect `Community 50` to `Community 2`, `Community 3`, `Community 6`, `Community 7`, `Community 8`, `Community 9`, `Community 10`, `Community 16`, `Community 17`, `Community 19`, `Community 21`, `Community 22`, `Community 25`, `Community 27`, `Community 31`, `Community 32`, `Community 33`, `Community 37`, `Community 40`, `Community 53`, `Community 55`, `Community 65`, `Community 67`, `Community 84`, `Community 121`?**
-  _High betweenness centrality (0.062) - this node is a cross-community bridge._
+  _High betweenness centrality (0.065) - this node is a cross-community bridge._
 - **Why does `useCRM()` connect `Community 2` to `Community 0`, `Community 6`, `Community 7`, `Community 8`, `Community 9`, `Community 16`, `Community 17`, `Community 19`, `Community 21`, `Community 22`, `Community 23`, `Community 27`, `Community 30`, `Community 50`, `Community 53`, `Community 55`, `Community 77`, `Community 84`, `Community 121`?**
-  _High betweenness centrality (0.039) - this node is a cross-community bridge._
+  _High betweenness centrality (0.041) - this node is a cross-community bridge._
 - **Why does `Client` connect `Community 0` to `Community 121`, `Community 2`, `Community 5`, `Community 39`, `Community 8`, `Community 45`, `Community 13`, `Community 15`, `Community 16`, `Community 50`, `Community 53`, `Community 54`, `Community 57`?**
-  _High betweenness centrality (0.027) - this node is a cross-community bridge._
+  _High betweenness centrality (0.028) - this node is a cross-community bridge._
 - **What connects `github-actions.workflows.pinned.workflows`, `mockFetch`, `mockAsaasRequest` to the rest of the system?**
   _630 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
@@ -594,4 +592,4 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `Community 2` be split into smaller, more focused modules?**
   _Cohesion score 0.06734006734006734 - nodes in this community are weakly interconnected._
 - **Should `Community 4` be split into smaller, more focused modules?**
-  _Cohesion score 0.12091038406827881 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.12162162162162163 - nodes in this community are weakly interconnected._

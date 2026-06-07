@@ -1086,6 +1086,7 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
               </div>
             </form>
           </div>
+        </div>
       )}
 
       {/* Modal Glassmorphism de Cadastro e Edição de Receita */}
