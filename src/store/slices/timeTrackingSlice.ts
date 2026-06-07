@@ -83,7 +83,7 @@ export const createTimeTrackingSlice: StateCreator<
 > = (set, get) => ({
   todayLog: null,
   allLogs: [],
-  loadingTimeLog: true,
+  loadingTimeLog: false,
 
   startExpediente: async (userId, userName, userPhoto) => {
     const orgId = get().effectiveOrgId;
@@ -301,7 +301,10 @@ export const createTimeTrackingSlice: StateCreator<
 
   loadTodayLog: (userId) => {
     const orgId = get().effectiveOrgId;
-    if (!orgId) return () => {};
+    if (!orgId) {
+      set({ loadingTimeLog: false });
+      return () => {};
+    }
 
     const dateStr = getLocalDateString();
     const docId = `${dateStr}_${userId}`;

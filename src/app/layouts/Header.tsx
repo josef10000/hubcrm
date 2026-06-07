@@ -161,7 +161,10 @@ export function Header({ currentPath, navigate }: HeaderProps) {
         {userProfile && (
           <button
             onClick={async () => {
-              if (store.loadingTimeLog) return;
+              if (store.loadingTimeLog) {
+                toast.info('Carregando informações do seu expediente. Por favor, aguarde...');
+                return;
+              }
               const log = store.todayLog;
               const isAdmin = hasPermission('MANAGE_SETTINGS');
               const contractType = isAdmin ? 'PJ' : (userProfile?.contractType || 'PJ');
@@ -217,7 +220,6 @@ export function Header({ currentPath, navigate }: HeaderProps) {
                 }
               }
             }}
-            disabled={store.loadingTimeLog}
             className={`p-2.5 border rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0 flex items-center justify-center gap-1.5 ${
               !store.todayLog
                 ? 'bg-gray-100 dark:bg-white/5 border-gray-200 dark:border-white/10 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'

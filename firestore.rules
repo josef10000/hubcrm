@@ -224,6 +224,14 @@ service cloud.firestore {
         allow write: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_TEAM') || hasPermission(orgId, 'MANAGE_SETTINGS');
       }
 
+      // Ponto Eletrônico (Time Logs)
+      match /time_logs/{logId} {
+        allow read: if isOwnerEmail() || belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId) && request.resource.data.userId == request.auth.uid;
+        allow update: if belongsToOrg(orgId) && (resource.data.userId == request.auth.uid || isOrgAdmin(orgId));
+        allow delete: if isOwnerEmail() || isOrgAdmin(orgId);
+      }
+
       match /{collection}/{docId} {
         allow read: if isOwnerEmail() || belongsToOrg(orgId);
         allow write: if isOwnerEmail() || isOrgAdmin(orgId);

@@ -57,6 +57,15 @@ export const PremiumIcon = ({ iconName, size = 22, className = "" }: { iconName:
   );
 };
 
+const isValidPhotoURL = (url: any) => {
+  return url && 
+         typeof url === 'string' && 
+         url.trim() !== '' && 
+         url !== 'undefined' && 
+         url !== 'null' && 
+         (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:'));
+};
+
 export default function Sidebar() {
   const navigate = useNavigate();
   const { user, userProfile, unreadAlertsCount, isBirthday } = useAuth();
@@ -250,8 +259,8 @@ export default function Sidebar() {
             >
               <AvatarFrame size="md">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center text-gray-900 font-bold shrink-0 shadow-lg overflow-hidden border border-white/10 group-hover:scale-105 transition-transform">
-                  {userProfile?.photoURL ? (
-                    <img src={userProfile.photoURL} alt={userProfile.displayName} className="w-full h-full object-cover" />
+                  {isValidPhotoURL(userProfile?.photoURL) ? (
+                    <img src={userProfile!.photoURL} alt={userProfile?.displayName || 'Avatar'} className="w-full h-full object-cover" />
                   ) : (
                     (userProfile?.displayName || user?.displayName || 'U')[0].toUpperCase()
                   )}
@@ -276,8 +285,8 @@ export default function Sidebar() {
                   {/* Cabeçalho do Popover */}
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center text-gray-900 font-bold shrink-0 overflow-hidden border border-white/10">
-                      {userProfile?.photoURL ? (
-                        <img src={userProfile.photoURL} alt={userProfile.displayName} className="w-full h-full object-cover" />
+                      {isValidPhotoURL(userProfile?.photoURL) ? (
+                        <img src={userProfile!.photoURL} alt={userProfile?.displayName || 'Avatar'} className="w-full h-full object-cover" />
                       ) : (
                         (userProfile?.displayName || user?.displayName || 'U')[0].toUpperCase()
                       )}
@@ -325,7 +334,7 @@ export default function Sidebar() {
                     <button
                       onClick={() => {
                         setStatusMenuOpen(false);
-                        navigate(`/profile/${user?.uid}`);
+                        navigate(`/profile/${user?.uid || userProfile?.uid || userProfile?.id}`);
                       }}
                       className="w-full flex items-center gap-3 px-3 py-2 text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all border border-transparent text-left"
                     >
