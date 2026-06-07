@@ -316,6 +316,23 @@ RESEND_API_KEY=re_123456...
 
 ---
 
+## 🔍 Grafo de Conhecimento (Graphify)
+
+O projeto possui um grafo de conhecimento gerado semanticamente e estruturalmente através do `graphify`, localizado em `graphify-out/`. Este grafo mapeia todos os componentes, rotas, coleções do Firestore, relações de dependências e comunidades do projeto para auxiliar na navegação rápida do repositório tanto para desenvolvedores quanto para agentes de IA.
+
+*   **Relatório da Base de Código:** Visualize os principais abstractions (God Nodes), ciclos de importações e divisões de módulos em [GRAPH_REPORT.md](file:///c:/Users/JoséFrazãodaSilvaNet/OneDrive - 39985 - DIGITAL TECH LTDA/Área de Trabalho/Clonecrm/hubcrm/graphify-out/GRAPH_REPORT.md).
+*   **Visualização Interativa:** Abra o arquivo [graph.html](file:///c:/Users/JoséFrazãodaSilvaNet/OneDrive - 39985 - DIGITAL TECH LTDA/Área de Trabalho/Clonecrm/hubcrm/graphify-out/graph.html) no navegador para explorar as relações de forma visual.
+*   **Consultas Rápidas (CLI):** Execute consultas diretas baseadas na estrutura do grafo:
+    ```bash
+    python -m graphify query "Quais componentes usam useAuth?"
+    ```
+*   **Manutenção:** Sempre que fizer alterações estruturais relevantes no código, atualize o grafo localmente (AST local e gratuito) executando:
+    ```bash
+    python -m graphify update .
+    ```
+
+---
+
 ## 🧪 Como Rodar e Validar o Projeto
 
 Como o ambiente local não possui runtime local do Node.js por padrão (toda compilação e teste ocorre de forma automatizada no pipeline de CI/CD do GitHub Actions), utilize os seguintes comandos no terminal em ambientes que dispõem de Node:
