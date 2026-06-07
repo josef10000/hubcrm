@@ -358,22 +358,6 @@ export default function Sidebar() {
                         <LogOut size={14} />
                         <span>Sair da Conta</span>
                       </button>
-
-                      {/* Metadados de Depuração para Diagnóstico */}
-                      <div className="mt-2 p-2 bg-white/5 rounded-xl border border-white/5 text-[9px] font-mono text-gray-500 select-all space-y-1 text-left">
-                        <div className="truncate" title={user?.email || 'N/A'}>
-                          <span className="font-bold text-gray-400">Email:</span> {user?.email || 'N/A'}
-                        </div>
-                        <div className="truncate" title={user?.uid || 'N/A'}>
-                          <span className="font-bold text-gray-400">UID:</span> {user?.uid || 'N/A'}
-                        </div>
-                        <div className="truncate" title={userProfile?.orgId || 'N/A'}>
-                          <span className="font-bold text-gray-400">OrgID:</span> {userProfile?.orgId || 'N/A'}
-                        </div>
-                        <div className="truncate">
-                          <span className="font-bold text-gray-400">Role:</span> {typeof userProfile?.role === 'string' ? userProfile.role : userProfile?.role?.id || 'N/A'}
-                        </div>
-                      </div>
                     </div>
                   </motion.div>
                 )}
