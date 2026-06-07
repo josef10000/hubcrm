@@ -334,7 +334,7 @@ export default function Sidebar() {
                     <button
                       onClick={() => {
                         setStatusMenuOpen(false);
-                        navigate(`/profile/${user?.uid || userProfile?.uid || userProfile?.id}`);
+                        navigate(`/profile/${user?.uid || userProfile?.uid}`);
                       }}
                       className="w-full flex items-center gap-3 px-3 py-2 text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all border border-transparent text-left"
                     >

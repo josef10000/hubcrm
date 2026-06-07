@@ -325,8 +325,8 @@
     "semantic_hash": ""
   },
   "src/app/layouts/Header.tsx": {
-    "mtime": 1780664985.0337114,
-    "ast_hash": "acc14a99c190136057b7330a51ee8a7f",
+    "mtime": 1780853729.0428727,
+    "ast_hash": "577ada87e66039ee8f91474eafe22f1d",
     "semantic_hash": ""
   },
   "src/app/providers/AppProviders.tsx": {
@@ -1705,8 +1705,8 @@
     "semantic_hash": ""
   },
   "src/shared/components/Sidebar.tsx": {
-    "mtime": 1780841846.0383484,
-    "ast_hash": "2765d2a91e0cb0f193be69926b2a0f50",
+    "mtime": 1780853709.0560567,
+    "ast_hash": "486803f9971f9c79a91c700b83553730",
     "semantic_hash": ""
   },
   "src/shared/components/ThemeEffects.tsx": {
@@ -1750,8 +1750,8 @@
     "semantic_hash": ""
   },
   "src/store/slices/timeTrackingSlice.ts": {
-    "mtime": 1780404260.4903128,
-    "ast_hash": "731eaa684630b8f778aa577acb935a86",
+    "mtime": 1780853680.3190877,
+    "ast_hash": "51a4b867b5643538a4ddb3d5c6e41800",
     "semantic_hash": ""
   },
   "src/store/slices/wikiSlice.ts": {
