@@ -253,6 +253,13 @@ service cloud.firestore {
       match /revenues/{revenueId} {
         allow read, write: if isOwnerEmail() || belongsToOrg(orgId);
       }
+
+      // eNPS Results - Qualquer membro da organização pode cadastrar respostas
+      match /enps_results/{resultId} {
+        allow read: if isOwnerEmail() || belongsToOrg(orgId);
+        allow create: if belongsToOrg(orgId);
+        allow update, delete: if isOwnerEmail() || isOrgAdmin(orgId);
+      }
     }
 
     // ===============================================================
@@ -287,6 +294,20 @@ service cloud.firestore {
       // Atualização permitida para membros da organização OU pelo cliente (apenas campos de aceite)
       allow update: if (isAuthenticated() && (isOwnerEmail() || resource.data.orgId == getUserData().orgId)) ||
                      (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'viewedAt', 'approvedAt', 'acceptanceMetadata', 'items', 'totalAmount']));
+    }
+
+    // Regras para Arena e Comunicação (Jogos e Chamadas)
+    match /matches/{matchId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /tournaments/{tournamentId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /convites/{inviteId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /calls/{callId} {
+      allow read, write: if isAuthenticated();
     }
   }
 }
