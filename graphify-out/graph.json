@@ -3519,7 +3519,7 @@
       "source_file": "shared/types.ts",
       "source_location": "L197",
       "id": "shared_types_sitestatus",
-      "community": 98,
+      "community": 8,
       "norm_label": "sitestatus"
     },
     {
@@ -3816,7 +3816,7 @@
       "source_file": "shared/types.ts",
       "source_location": "L582",
       "id": "shared_types_moodlog",
-      "community": 95,
+      "community": 15,
       "norm_label": "moodlog"
     },
     {
@@ -4428,7 +4428,7 @@
       "source_file": "src/app/router/AppRouter.tsx",
       "source_location": "L62",
       "id": "router_approuter_approuter",
-      "community": 50,
+      "community": 3,
       "norm_label": "approuter()"
     },
     {
@@ -4444,7 +4444,7 @@
       "label": "GuardProps",
       "file_type": "code",
       "source_file": "src/app/router/RouteGuards.tsx",
-      "source_location": "L7",
+      "source_location": "L8",
       "id": "router_routeguards_guardprops",
       "community": 7,
       "norm_label": "guardprops"
@@ -4453,7 +4453,7 @@
       "label": "AuthGuard()",
       "file_type": "code",
       "source_file": "src/app/router/RouteGuards.tsx",
-      "source_location": "L14",
+      "source_location": "L15",
       "id": "router_routeguards_authguard",
       "community": 7,
       "norm_label": "authguard()"
@@ -4462,7 +4462,7 @@
       "label": "PendingInviteGuard()",
       "file_type": "code",
       "source_file": "src/app/router/RouteGuards.tsx",
-      "source_location": "L50",
+      "source_location": "L91",
       "id": "router_routeguards_pendinginviteguard",
       "community": 7,
       "norm_label": "pendinginviteguard()"
@@ -4471,7 +4471,7 @@
       "label": "ContractGuard()",
       "file_type": "code",
       "source_file": "src/app/router/RouteGuards.tsx",
-      "source_location": "L64",
+      "source_location": "L105",
       "id": "router_routeguards_contractguard",
       "community": 7,
       "norm_label": "contractguard()"
@@ -4482,7 +4482,7 @@
       "source_file": "src/app/router/useAppTitle.ts",
       "source_location": "L1",
       "id": "router_useapptitle",
-      "community": 50,
+      "community": 37,
       "norm_label": "useapptitle.ts"
     },
     {
@@ -4491,7 +4491,7 @@
       "source_file": "src/app/router/useAppTitle.ts",
       "source_location": "L12",
       "id": "router_useapptitle_useapptitle",
-      "community": 50,
+      "community": 37,
       "norm_label": "useapptitle()"
     },
     {
@@ -4500,7 +4500,7 @@
       "source_file": "src/app/shell/GlobalModals.tsx",
       "source_location": "L1",
       "id": "shell_globalmodals",
-      "community": 37,
+      "community": 3,
       "norm_label": "globalmodals.tsx"
     },
     {
@@ -4518,7 +4518,7 @@
       "source_file": "src/app/shell/ScreenRecorderWidget.tsx",
       "source_location": "L1",
       "id": "shell_screenrecorderwidget",
-      "community": 37,
+      "community": 3,
       "norm_label": "screenrecorderwidget.tsx"
     },
     {
@@ -4527,7 +4527,7 @@
       "source_file": "src/app/shell/ScreenRecorderWidget.tsx",
       "source_location": "L10",
       "id": "shell_screenrecorderwidget_screenrecorderwidget",
-      "community": 37,
+      "community": 3,
       "norm_label": "screenrecorderwidget()"
     },
     {
@@ -4536,7 +4536,7 @@
       "source_file": "src/app/shell/WorkspaceShell.tsx",
       "source_location": "L1",
       "id": "shell_workspaceshell",
-      "community": 50,
+      "community": 15,
       "norm_label": "workspaceshell.tsx"
     },
     {
@@ -4545,7 +4545,7 @@
       "source_file": "src/app/shell/WorkspaceShell.tsx",
       "source_location": "L11",
       "id": "shell_workspaceshell_workspaceshellprops",
-      "community": 50,
+      "community": 15,
       "norm_label": "workspaceshellprops"
     },
     {
@@ -4554,7 +4554,7 @@
       "source_file": "src/app/shell/WorkspaceShell.tsx",
       "source_location": "L20",
       "id": "shell_workspaceshell_workspaceshell",
-      "community": 50,
+      "community": 15,
       "norm_label": "workspaceshell()"
     },
     {
@@ -4581,7 +4581,7 @@
       "source_file": "src/constants/permissions.ts",
       "source_location": "L1",
       "id": "constants_permissions",
-      "community": 15,
+      "community": 50,
       "norm_label": "permissions.ts"
     },
     {
@@ -4590,7 +4590,7 @@
       "source_file": "src/constants/permissions.ts",
       "source_location": "L1",
       "id": "constants_permissions_apppermission",
-      "community": 15,
+      "community": 50,
       "norm_label": "apppermission"
     },
     {
@@ -4608,7 +4608,7 @@
       "source_file": "src/constants/permissions.ts",
       "source_location": "L21",
       "id": "constants_permissions_defaultroles",
-      "community": 15,
+      "community": 50,
       "norm_label": "defaultroles"
     },
     {
@@ -4761,7 +4761,7 @@
       "source_file": "src/core/admin/components/RoleManagement.tsx",
       "source_location": "L1",
       "id": "components_rolemanagement",
-      "community": 15,
+      "community": 50,
       "norm_label": "rolemanagement.tsx"
     },
     {
@@ -4770,7 +4770,7 @@
       "source_file": "src/core/admin/components/RoleManagement.tsx",
       "source_location": "L13",
       "id": "components_rolemanagement_permission_groups",
-      "community": 15,
+      "community": 50,
       "norm_label": "permission_groups"
     },
     {
@@ -4905,7 +4905,7 @@
       "source_file": "src/core/auth/contexts/AuthContext.tsx",
       "source_location": "L1",
       "id": "contexts_authcontext",
-      "community": 15,
+      "community": 50,
       "norm_label": "authcontext.tsx"
     },
     {
@@ -4923,7 +4923,7 @@
       "source_file": "src/core/auth/contexts/AuthContext.tsx",
       "source_location": "L20",
       "id": "contexts_authcontext_authcontext",
-      "community": 15,
+      "community": 50,
       "norm_label": "authcontext"
     },
     {
@@ -4932,7 +4932,7 @@
       "source_file": "src/core/auth/contexts/AuthContext.tsx",
       "source_location": "L25",
       "id": "contexts_authcontext_useauth",
-      "community": 50,
+      "community": 15,
       "norm_label": "useauth()"
     },
     {
@@ -5031,7 +5031,7 @@
       "source_file": "src/core/auth/hooks/usePermissions.ts",
       "source_location": "L1",
       "id": "hooks_usepermissions",
-      "community": 15,
+      "community": 50,
       "norm_label": "usepermissions.ts"
     },
     {
@@ -5040,7 +5040,7 @@
       "source_file": "src/core/auth/hooks/usePermissions.ts",
       "source_location": "L7",
       "id": "hooks_usepermissions_all_permissions",
-      "community": 15,
+      "community": 50,
       "norm_label": "all_permissions"
     },
     {
@@ -5058,7 +5058,7 @@
       "source_file": "src/core/auth/views/AcceptInviteView.tsx",
       "source_location": "L1",
       "id": "views_acceptinviteview",
-      "community": 50,
+      "community": 15,
       "norm_label": "acceptinviteview.tsx"
     },
     {
@@ -5067,7 +5067,7 @@
       "source_file": "src/core/auth/views/AcceptInviteView.tsx",
       "source_location": "L7",
       "id": "views_acceptinviteview_acceptinviteview",
-      "community": 50,
+      "community": 15,
       "norm_label": "acceptinviteview()"
     },
     {
@@ -5175,7 +5175,7 @@
       "source_file": "src/core/notifications/views/NotificationsView.tsx",
       "source_location": "L1",
       "id": "views_notificationsview",
-      "community": 3,
+      "community": 37,
       "norm_label": "notificationsview.tsx"
     },
     {
@@ -5184,7 +5184,7 @@
       "source_file": "src/core/notifications/views/NotificationsView.tsx",
       "source_location": "L8",
       "id": "views_notificationsview_notificationsview",
-      "community": 3,
+      "community": 37,
       "norm_label": "notificationsview()"
     },
     {
@@ -7155,7 +7155,7 @@
       "source_file": "src/domains/chat/components/UserStatusSelector.tsx",
       "source_location": "L1",
       "id": "components_userstatusselector",
-      "community": 50,
+      "community": 15,
       "norm_label": "userstatusselector.tsx"
     },
     {
@@ -7164,7 +7164,7 @@
       "source_file": "src/domains/chat/components/UserStatusSelector.tsx",
       "source_location": "L6",
       "id": "components_userstatusselector_userstatusselector",
-      "community": 50,
+      "community": 15,
       "norm_label": "userstatusselector()"
     },
     {
@@ -7488,7 +7488,7 @@
       "source_file": "src/domains/crm/components/CashFlowProjection.tsx",
       "source_location": "L1",
       "id": "components_cashflowprojection",
-      "community": 43,
+      "community": 26,
       "norm_label": "cashflowprojection.tsx"
     },
     {
@@ -7497,7 +7497,7 @@
       "source_file": "src/domains/crm/components/CashFlowProjection.tsx",
       "source_location": "L9",
       "id": "components_cashflowprojection_cashflowprojectionprops",
-      "community": 43,
+      "community": 26,
       "norm_label": "cashflowprojectionprops"
     },
     {
@@ -7506,7 +7506,7 @@
       "source_file": "src/domains/crm/components/CashFlowProjection.tsx",
       "source_location": "L13",
       "id": "components_cashflowprojection_cashflowprojection",
-      "community": 43,
+      "community": 26,
       "norm_label": "cashflowprojection()"
     },
     {
@@ -7812,7 +7812,7 @@
       "source_file": "src/domains/crm/components/MonitoringView.tsx",
       "source_location": "L1",
       "id": "components_monitoringview",
-      "community": 57,
+      "community": 5,
       "norm_label": "monitoringview.tsx"
     },
     {
@@ -7821,7 +7821,7 @@
       "source_file": "src/domains/crm/components/MonitoringView.tsx",
       "source_location": "L6",
       "id": "components_monitoringview_uptimemonitor",
-      "community": 57,
+      "community": 5,
       "norm_label": "uptimemonitor"
     },
     {
@@ -7830,7 +7830,7 @@
       "source_file": "src/domains/crm/components/MonitoringView.tsx",
       "source_location": "L22",
       "id": "components_monitoringview_monitoringview",
-      "community": 57,
+      "community": 5,
       "norm_label": "monitoringview()"
     },
     {
@@ -8127,7 +8127,7 @@
       "source_file": "src/domains/crm/components/client-modal/ReferralsTab.tsx",
       "source_location": "L1",
       "id": "client_modal_referralstab",
-      "community": 26,
+      "community": 68,
       "norm_label": "referralstab.tsx"
     },
     {
@@ -8136,7 +8136,7 @@
       "source_file": "src/domains/crm/components/client-modal/ReferralsTab.tsx",
       "source_location": "L10",
       "id": "client_modal_referralstab_referralstabprops",
-      "community": 26,
+      "community": 68,
       "norm_label": "referralstabprops"
     },
     {
@@ -8145,7 +8145,7 @@
       "source_file": "src/domains/crm/components/client-modal/ReferralsTab.tsx",
       "source_location": "L15",
       "id": "client_modal_referralstab_referralstab",
-      "community": 26,
+      "community": 68,
       "norm_label": "referralstab()"
     },
     {
@@ -9009,7 +9009,7 @@
       "source_file": "src/domains/finance/components/PayrollPanel.tsx",
       "source_location": "L1",
       "id": "components_payrollpanel",
-      "community": 95,
+      "community": 15,
       "norm_label": "payrollpanel.tsx"
     },
     {
@@ -9018,7 +9018,7 @@
       "source_file": "src/domains/finance/components/PayrollPanel.tsx",
       "source_location": "L17",
       "id": "components_payrollpanel_payrollsettings",
-      "community": 95,
+      "community": 15,
       "norm_label": "payrollsettings"
     },
     {
@@ -9027,7 +9027,7 @@
       "source_file": "src/domains/finance/components/PayrollPanel.tsx",
       "source_location": "L22",
       "id": "components_payrollpanel_payrollitemcalculated",
-      "community": 95,
+      "community": 15,
       "norm_label": "payrollitemcalculated"
     },
     {
@@ -9036,7 +9036,7 @@
       "source_file": "src/domains/finance/components/PayrollPanel.tsx",
       "source_location": "L63",
       "id": "components_payrollpanel_payrollpanel",
-      "community": 95,
+      "community": 15,
       "norm_label": "payrollpanel()"
     },
     {
@@ -9945,7 +9945,7 @@
       "source_file": "src/domains/people/components/BroadcastTab.tsx",
       "source_location": "L1",
       "id": "components_broadcasttab",
-      "community": 8,
+      "community": 68,
       "norm_label": "broadcasttab.tsx"
     },
     {
@@ -9963,7 +9963,7 @@
       "source_file": "src/domains/people/components/BroadcastTab.tsx",
       "source_location": "L12",
       "id": "components_broadcasttab_broadcasttab",
-      "community": 8,
+      "community": 68,
       "norm_label": "broadcasttab()"
     },
     {
@@ -10116,7 +10116,7 @@
       "source_file": "src/domains/people/components/FeedbackBoard.tsx",
       "source_location": "L1",
       "id": "components_feedbackboard",
-      "community": 15,
+      "community": 50,
       "norm_label": "feedbackboard.tsx"
     },
     {
@@ -10125,7 +10125,7 @@
       "source_file": "src/domains/people/components/FeedbackBoard.tsx",
       "source_location": "L14",
       "id": "components_feedbackboard_feedbackboardprops",
-      "community": 15,
+      "community": 50,
       "norm_label": "feedbackboardprops"
     },
     {
@@ -10134,7 +10134,7 @@
       "source_file": "src/domains/people/components/FeedbackBoard.tsx",
       "source_location": "L18",
       "id": "components_feedbackboard_feedbackboard",
-      "community": 15,
+      "community": 50,
       "norm_label": "feedbackboard()"
     },
     {
@@ -10206,7 +10206,7 @@
       "source_file": "src/domains/people/components/MoodTracker.tsx",
       "source_location": "L1",
       "id": "components_moodtracker",
-      "community": 95,
+      "community": 15,
       "norm_label": "moodtracker.tsx"
     },
     {
@@ -10215,7 +10215,7 @@
       "source_file": "src/domains/people/components/MoodTracker.tsx",
       "source_location": "L9",
       "id": "components_moodtracker_moods",
-      "community": 95,
+      "community": 15,
       "norm_label": "moods"
     },
     {
@@ -10224,7 +10224,7 @@
       "source_file": "src/domains/people/components/MoodTracker.tsx",
       "source_location": "L17",
       "id": "components_moodtracker_moodtracker",
-      "community": 95,
+      "community": 15,
       "norm_label": "moodtracker()"
     },
     {
@@ -10926,7 +10926,7 @@
       "source_file": "src/domains/support/components/SupportRequestModal.tsx",
       "source_location": "L1",
       "id": "components_supportrequestmodal",
-      "community": 57,
+      "community": 5,
       "norm_label": "supportrequestmodal.tsx"
     },
     {
@@ -10935,7 +10935,7 @@
       "source_file": "src/domains/support/components/SupportRequestModal.tsx",
       "source_location": "L13",
       "id": "components_supportrequestmodal_supportrequestmodalprops",
-      "community": 57,
+      "community": 5,
       "norm_label": "supportrequestmodalprops"
     },
     {
@@ -10944,7 +10944,7 @@
       "source_file": "src/domains/support/components/SupportRequestModal.tsx",
       "source_location": "L20",
       "id": "components_supportrequestmodal_supportrequestmodal",
-      "community": 57,
+      "community": 5,
       "norm_label": "supportrequestmodal()"
     },
     {
@@ -11745,7 +11745,7 @@
       "source_file": "src/hooks/useFilteredClients.ts",
       "source_location": "L1",
       "id": "hooks_usefilteredclients",
-      "community": 98,
+      "community": 8,
       "norm_label": "usefilteredclients.ts"
     },
     {
@@ -11754,7 +11754,7 @@
       "source_file": "src/hooks/useFilteredClients.ts",
       "source_location": "L5",
       "id": "hooks_usefilteredclients_usefilteredclients",
-      "community": 98,
+      "community": 43,
       "norm_label": "usefilteredclients()"
     },
     {
@@ -11826,7 +11826,7 @@
       "source_file": "src/hooks/useGlobalChatAlerts.ts",
       "source_location": "L1",
       "id": "hooks_useglobalchatalerts",
-      "community": 50,
+      "community": 37,
       "norm_label": "useglobalchatalerts.ts"
     },
     {
@@ -11835,7 +11835,7 @@
       "source_file": "src/hooks/useGlobalChatAlerts.ts",
       "source_location": "L8",
       "id": "hooks_useglobalchatalerts_useglobalchatalerts",
-      "community": 50,
+      "community": 37,
       "norm_label": "useglobalchatalerts()"
     },
     {
@@ -11907,7 +11907,7 @@
       "source_file": "src/hooks/usePortalCheckout.ts",
       "source_location": "L1",
       "id": "hooks_useportalcheckout",
-      "community": 104,
+      "community": 68,
       "norm_label": "useportalcheckout.ts"
     },
     {
@@ -11916,7 +11916,7 @@
       "source_file": "src/hooks/usePortalCheckout.ts",
       "source_location": "L8",
       "id": "hooks_useportalcheckout_useportalcheckout",
-      "community": 104,
+      "community": 68,
       "norm_label": "useportalcheckout()"
     },
     {
@@ -11961,7 +11961,7 @@
       "source_file": "src/hooks/usePresence.ts",
       "source_location": "L1",
       "id": "hooks_usepresence",
-      "community": 50,
+      "community": 15,
       "norm_label": "usepresence.ts"
     },
     {
@@ -11970,7 +11970,7 @@
       "source_file": "src/hooks/usePresence.ts",
       "source_location": "L9",
       "id": "hooks_usepresence_usepresence",
-      "community": 50,
+      "community": 15,
       "norm_label": "usepresence()"
     },
     {
@@ -12213,7 +12213,7 @@
       "source_file": "src/lib/authFetch.ts",
       "source_location": "L1",
       "id": "lib_authfetch",
-      "community": 8,
+      "community": 68,
       "norm_label": "authfetch.ts"
     },
     {
@@ -12222,7 +12222,7 @@
       "source_file": "src/lib/authFetch.ts",
       "source_location": "L8",
       "id": "lib_authfetch_authfetch",
-      "community": 8,
+      "community": 68,
       "norm_label": "authfetch()"
     },
     {
@@ -12555,7 +12555,7 @@
       "source_file": "src/services/asaasService.ts",
       "source_location": "L1",
       "id": "services_asaasservice",
-      "community": 8,
+      "community": 68,
       "norm_label": "asaasservice.ts"
     },
     {
@@ -12564,7 +12564,7 @@
       "source_file": "src/services/asaasService.ts",
       "source_location": "L8",
       "id": "services_asaasservice_asaasservice",
-      "community": 8,
+      "community": 68,
       "norm_label": "asaasservice"
     },
     {
@@ -12780,7 +12780,7 @@
       "source_file": "src/shared/components/AvatarFrame.tsx",
       "source_location": "L1",
       "id": "components_avatarframe",
-      "community": 50,
+      "community": 15,
       "norm_label": "avatarframe.tsx"
     },
     {
@@ -12789,7 +12789,7 @@
       "source_file": "src/shared/components/AvatarFrame.tsx",
       "source_location": "L4",
       "id": "components_avatarframe_avatarframeprops",
-      "community": 50,
+      "community": 15,
       "norm_label": "avatarframeprops"
     },
     {
@@ -12798,7 +12798,7 @@
       "source_file": "src/shared/components/AvatarFrame.tsx",
       "source_location": "L10",
       "id": "components_avatarframe_avatarframe",
-      "community": 50,
+      "community": 15,
       "norm_label": "avatarframe()"
     },
     {
@@ -12915,7 +12915,7 @@
       "source_file": "src/shared/components/CommandPalette.tsx",
       "source_location": "L1",
       "id": "components_commandpalette",
-      "community": 15,
+      "community": 50,
       "norm_label": "commandpalette.tsx"
     },
     {
@@ -12924,7 +12924,7 @@
       "source_file": "src/shared/components/CommandPalette.tsx",
       "source_location": "L36",
       "id": "components_commandpalette_commanditem",
-      "community": 15,
+      "community": 50,
       "norm_label": "commanditem"
     },
     {
@@ -12933,7 +12933,7 @@
       "source_file": "src/shared/components/CommandPalette.tsx",
       "source_location": "L45",
       "id": "components_commandpalette_commandpalette",
-      "community": 50,
+      "community": 15,
       "norm_label": "commandpalette()"
     },
     {
@@ -12942,7 +12942,7 @@
       "source_file": "src/shared/components/ConfirmationModal.tsx",
       "source_location": "L1",
       "id": "components_confirmationmodal",
-      "community": 37,
+      "community": 3,
       "norm_label": "confirmationmodal.tsx"
     },
     {
@@ -12951,7 +12951,7 @@
       "source_file": "src/shared/components/ConfirmationModal.tsx",
       "source_location": "L4",
       "id": "components_confirmationmodal_confirmationmodal",
-      "community": 37,
+      "community": 3,
       "norm_label": "confirmationmodal()"
     },
     {
@@ -14283,7 +14283,7 @@
       "source_file": "src/types.ts",
       "source_location": "L1",
       "id": "src_types",
-      "community": 57,
+      "community": 5,
       "norm_label": "types.ts"
     },
     {
@@ -14292,7 +14292,7 @@
       "source_file": "src/types.ts",
       "source_location": "L8",
       "id": "src_types_clientschema",
-      "community": 57,
+      "community": 5,
       "norm_label": "clientschema"
     },
     {
@@ -14868,7 +14868,7 @@
       "source_file": "src/views/ComplianceOuvidoriaView.tsx",
       "source_location": "L1",
       "id": "views_complianceouvidoriaview",
-      "community": 37,
+      "community": 15,
       "norm_label": "complianceouvidoriaview.tsx"
     },
     {
@@ -14877,7 +14877,7 @@
       "source_file": "src/views/ComplianceOuvidoriaView.tsx",
       "source_location": "L9",
       "id": "views_complianceouvidoriaview_complianceticket",
-      "community": 37,
+      "community": 15,
       "norm_label": "complianceticket"
     },
     {
@@ -14886,7 +14886,7 @@
       "source_file": "src/views/ComplianceOuvidoriaView.tsx",
       "source_location": "L23",
       "id": "views_complianceouvidoriaview_ticketmessage",
-      "community": 37,
+      "community": 15,
       "norm_label": "ticketmessage"
     },
     {
@@ -14895,7 +14895,7 @@
       "source_file": "src/views/ComplianceOuvidoriaView.tsx",
       "source_location": "L31",
       "id": "views_complianceouvidoriaview_complianceouvidoriaview",
-      "community": 37,
+      "community": 15,
       "norm_label": "complianceouvidoriaview()"
     },
     {
@@ -31388,9 +31388,9 @@
       "source_file": "src/shared/components/ProfileHoverCard.tsx",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_profilehovercard",
-      "target": "contexts_authcontext",
-      "confidence_score": 1.0
+      "target": "contexts_authcontext"
     },
     {
       "relation": "imports_from",
@@ -32814,9 +32814,9 @@
       "source_file": "src/shared/components/ProfileHoverCard.tsx",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_profilehovercard",
-      "target": "contexts_authcontext_useauth",
-      "confidence_score": 1.0
+      "target": "contexts_authcontext_useauth"
     },
     {
       "relation": "calls",
@@ -61724,5 +61724,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "f26e97844d17cb17c5530050eea6de7699f6c79f"
+  "built_at_commit": "2ffd3134dd8f397e23d9e363ae75610222df75ff"
 }
