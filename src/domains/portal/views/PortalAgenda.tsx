@@ -4,7 +4,7 @@ import {
   collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc, setDoc, query, orderBy, serverTimestamp 
 } from 'firebase/firestore';
 import { 
-  Calendar as CalendarIcon, Clock, Coffee, Plus, Trash2, Edit2, Check, X, Phone, DollarSign, Settings, Scissors
+  Calendar as CalendarIcon, Clock, Coffee, Plus, Trash2, Edit2, Check, X, Phone, DollarSign, Settings, Scissors, AlertTriangle
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -36,6 +36,13 @@ export default function PortalAgenda({ orgId, clientId }: PortalAgendaProps) {
     },
     slotIntervalMinutes: 30
   });
+
+  // Estados para integração de estoque e insumos
+  const [inventory, setInventory] = useState<any[]>([]);
+  const [stockAlerts, setStockAlerts] = useState<any[]>([]);
+  const [selectedServiceMaterials, setSelectedServiceMaterials] = useState<any[]>([]);
+  const [currentSelectedMaterialId, setCurrentSelectedMaterialId] = useState('');
+  const [currentSelectedMaterialQty, setCurrentSelectedMaterialQty] = useState('');
 
   // Estados dos formulários de CRUD de Serviços
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
@@ -195,6 +202,65 @@ export default function PortalAgenda({ orgId, clientId }: PortalAgendaProps) {
     return () => unsub();
   }, [orgId]);
 
+  // Escuta Inventário
+  useEffect(() => {
+    if (!orgId) return;
+    const inventoryRef = collection(db, 'organizations', orgId, 'inventory');
+    const unsub = onSnapshot(inventoryRef, (snapshot) => {
+      const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      setInventory(list);
+    });
+    return () => unsub();
+  }, [orgId]);
+
+  // Calcula insuficiência de estoque para agendamentos futuros
+  useEffect(() => {
+    if (appointments.length === 0 || services.length === 0 || inventory.length === 0) {
+      setStockAlerts([]);
+      return;
+    }
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    
+    // 1. Filtrar agendamentos futuros confirmados
+    const futureAppointments = appointments.filter(app => 
+      app.date >= todayStr && app.status !== 'cancelled'
+    );
+
+    // 2. Acumular o consumo planejado por itemId
+    const plannedConsumptions: Record<string, number> = {};
+
+    futureAppointments.forEach(app => {
+      const srv = services.find(s => s.id === app.serviceId);
+      if (srv && srv.materials && Array.isArray(srv.materials)) {
+        srv.materials.forEach((m: any) => {
+          plannedConsumptions[m.itemId] = (plannedConsumptions[m.itemId] || 0) + m.quantity;
+        });
+      }
+    });
+
+    // 3. Comparar com o estoque disponível
+    const alerts: any[] = [];
+    Object.keys(plannedConsumptions).forEach(itemId => {
+      const invItem = inventory.find(i => i.id === itemId);
+      if (invItem) {
+        const needed = plannedConsumptions[itemId];
+        if (needed > invItem.quantity) {
+          alerts.push({
+            itemId,
+            name: invItem.name,
+            unit: invItem.unit,
+            stock: invItem.quantity,
+            needed: needed,
+            shortage: needed - invItem.quantity
+          });
+        }
+      }
+    });
+
+    setStockAlerts(alerts);
+  }, [appointments, services, inventory]);
+
   // Ações de CRUD de Serviços
   const handleSaveService = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -209,6 +275,7 @@ export default function PortalAgenda({ orgId, clientId }: PortalAgendaProps) {
         name: serviceName.trim(),
         durationMinutes: Number(serviceDuration),
         price: Number(servicePrice.replace(',', '.')),
+        materials: selectedServiceMaterials,
         isActive: true,
         updatedAt: serverTimestamp()
       };
@@ -230,6 +297,9 @@ export default function PortalAgenda({ orgId, clientId }: PortalAgendaProps) {
       setServicePrice('');
       setServiceDuration(30);
       setEditingServiceId(null);
+      setSelectedServiceMaterials([]);
+      setCurrentSelectedMaterialId('');
+      setCurrentSelectedMaterialQty('');
     } catch (e) {
       console.error(e);
       toast.error('Erro ao salvar serviço.');
@@ -243,6 +313,7 @@ export default function PortalAgenda({ orgId, clientId }: PortalAgendaProps) {
     setServiceName(srv.name);
     setServiceDuration(srv.durationMinutes);
     setServicePrice(srv.price.toString());
+    setSelectedServiceMaterials(srv.materials || []);
   };
 
   const handleDeleteService = async (srvId: string) => {
@@ -281,6 +352,32 @@ export default function PortalAgenda({ orgId, clientId }: PortalAgendaProps) {
 
   return (
     <div className="space-y-6">
+      {/* Alerta de Insumos Insuficientes */}
+      {stockAlerts.length > 0 && (
+        <div className="bg-amber-500/10 border border-amber-500/35 p-5 rounded-2xl text-amber-200 flex flex-col gap-2 animate-in fade-in duration-300">
+          <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider">
+            <AlertTriangle className="w-4 h-4 text-amber-400" />
+            Alerta de Insumos Insuficientes para Agendamentos Futuros
+          </div>
+          <p className="text-[11px] text-gray-400">
+            Com base nos agendamentos futuros confirmados, os seguintes materiais no seu estoque ficarão negativos:
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+            {stockAlerts.map(alert => (
+              <div key={alert.itemId} className="p-3 bg-black/20 rounded-xl border border-white/5 text-xs flex justify-between items-center">
+                <div>
+                  <span className="font-bold text-white block">{alert.name}</span>
+                  <span className="text-gray-500">Disponível: {alert.stock}{alert.unit} &bull; Necessário: {alert.needed}{alert.unit}</span>
+                </div>
+                <span className="px-2.5 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full font-bold text-[10px] text-amber-400 font-mono">
+                  Falta: {alert.shortage}{alert.unit}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Abas Superiores com Efeito Glass */}
       <div className="flex gap-2 p-1 bg-white/5 border border-white/10 rounded-2xl w-fit">
         <button
@@ -501,7 +598,86 @@ export default function PortalAgenda({ orgId, clientId }: PortalAgendaProps) {
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-2">
+              {/* Insumos Utilizados */}
+              <div className="space-y-2 pt-2 border-t border-white/5">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Insumos Utilizados (Opcional)</label>
+                
+                <div className="flex gap-2 items-end">
+                  <div className="flex-1">
+                    <select
+                      value={currentSelectedMaterialId}
+                      onChange={(e) => setCurrentSelectedMaterialId(e.target.value)}
+                      className="w-full px-3 py-2 bg-black/40 border border-white/10 hover:border-white/20 text-white rounded-lg text-xs outline-none transition-all focus:border-primary-500 font-bold"
+                    >
+                      <option value="" className="bg-[#050505] text-gray-500">Selecionar material...</option>
+                      {inventory.map(item => (
+                        <option key={item.id} value={item.id} className="bg-[#050505]">{item.name} ({item.unit})</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="w-20">
+                    <input
+                      type="number"
+                      placeholder="Qtd"
+                      value={currentSelectedMaterialQty}
+                      onChange={(e) => setCurrentSelectedMaterialQty(e.target.value)}
+                      className="w-full px-3 py-2 bg-black/40 border border-white/10 hover:border-white/20 text-white rounded-lg text-xs outline-none transition-all placeholder-gray-700 font-mono"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!currentSelectedMaterialId || !currentSelectedMaterialQty || Number(currentSelectedMaterialQty) <= 0) return;
+                      const item = inventory.find(i => i.id === currentSelectedMaterialId);
+                      if (item) {
+                        const exists = selectedServiceMaterials.find(m => m.itemId === currentSelectedMaterialId);
+                        if (exists) {
+                          setSelectedServiceMaterials(selectedServiceMaterials.map(m =>
+                            m.itemId === currentSelectedMaterialId
+                              ? { ...m, quantity: Number(currentSelectedMaterialQty) }
+                              : m
+                          ));
+                        } else {
+                          setSelectedServiceMaterials([...selectedServiceMaterials, {
+                            itemId: item.id,
+                            name: item.name,
+                            quantity: Number(currentSelectedMaterialQty),
+                            unit: item.unit
+                          }]);
+                        }
+                      }
+                      setCurrentSelectedMaterialId('');
+                      setCurrentSelectedMaterialQty('');
+                    }}
+                    className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-lg text-xs font-bold transition-all"
+                  >
+                    Add
+                  </button>
+                </div>
+
+                {/* Lista de insumos vinculados temporariamente no form */}
+                {selectedServiceMaterials.length > 0 && (
+                  <div className="space-y-1.5 mt-2 max-h-28 overflow-y-auto custom-scrollbar bg-black/20 p-2 rounded-xl border border-white/5">
+                    {selectedServiceMaterials.map(m => (
+                      <div key={m.itemId} className="flex items-center justify-between text-[11px] bg-white/5 px-2.5 py-1.5 rounded-lg animate-in fade-in duration-150">
+                        <span className="text-gray-300 truncate pr-2">{m.name}</span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="font-mono text-gray-400 font-bold">{m.quantity}{m.unit}</span>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedServiceMaterials(selectedServiceMaterials.filter(x => x.itemId !== m.itemId))}
+                            className="text-gray-500 hover:text-red-400 p-0.5"
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-2 pt-2 border-t border-white/5">
                 <button
                   type="submit"
                   disabled={isSubmittingService}
@@ -518,6 +694,9 @@ export default function PortalAgenda({ orgId, clientId }: PortalAgendaProps) {
                       setServiceName('');
                       setServicePrice('');
                       setServiceDuration(30);
+                      setSelectedServiceMaterials([]);
+                      setCurrentSelectedMaterialId('');
+                      setCurrentSelectedMaterialQty('');
                     }}
                     className="px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all"
                   >

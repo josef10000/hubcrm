@@ -12,7 +12,8 @@ import {
   X,
   Bell,
   Calendar,
-  DollarSign
+  DollarSign,
+  Briefcase
 } from 'lucide-react';
 import { usePortalData } from '@/hooks/usePortalData';
 import { toast, Toaster } from 'sonner';
@@ -28,6 +29,7 @@ import PortalDocuments from '../views/PortalDocuments';
 import PortalSupport from '../views/PortalSupport';
 import PortalAgenda from '../views/PortalAgenda';
 import PortalCRMFinance from '../views/PortalCRMFinance';
+import PortalManagement from '../views/PortalManagement';
 
 export default function ClientPortalLayout() {
   const { orgId, clientId } = useParams<{ orgId: string; clientId: string }>();
@@ -110,6 +112,7 @@ export default function ClientPortalLayout() {
     { id: 'home', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'agenda', label: 'Agenda', icon: Calendar },
     { id: 'crm_finance', label: 'CRM Financeiro', icon: DollarSign },
+    { id: 'management', label: 'Meu Negócio', icon: Briefcase },
     ...(client && !client.isCourtesy ? [
       { id: 'finance', label: 'Faturas Hub', icon: CreditCard },
       { id: 'services', label: 'Marketplace', icon: ShoppingBag }
@@ -382,6 +385,9 @@ export default function ClientPortalLayout() {
               {activeTab === 'crm_finance' && (
                 <PortalCRMFinance orgId={orgId || ''} clientId={activeClientId || ''} />
               )}
+              {activeTab === 'management' && (
+                <PortalManagement orgId={orgId || ''} clientId={activeClientId || ''} />
+              )}
               {activeTab === 'finance' && (
                 <PortalFinance 
                   client={client} 
@@ -401,7 +407,7 @@ export default function ClientPortalLayout() {
 
       {/* Mobile Bottom Navigation */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-20 bg-black/80 backdrop-blur-2xl border-t border-white/10 z-50 flex items-center justify-around px-2">
-        {navItems.filter(item => ['home', 'agenda', 'crm_finance', 'support'].includes(item.id)).map((item) => (
+        {navItems.filter(item => ['home', 'agenda', 'crm_finance', 'management', 'support'].includes(item.id)).map((item) => (
           <button
             key={item.id}
             onClick={() => setActiveTab(item.id)}

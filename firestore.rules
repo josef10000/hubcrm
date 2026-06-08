@@ -254,6 +254,15 @@ service cloud.firestore {
         allow read, write: if isOwnerEmail() || belongsToOrg(orgId);
       }
 
+      // 🟢 ESTOQUE E ORÇAMENTOS (MÓDULO OPERACIONAL)
+      match /inventory/{itemId} {
+        allow read, write: if isOwnerEmail() || belongsToOrg(orgId);
+      }
+
+      match /budgets/{budgetId} {
+        allow read, write: if isOwnerEmail() || belongsToOrg(orgId);
+      }
+
       // 🟢 CONTROLE FINANCEIRO (DESPESAS E RECEITAS MANUAIS)
       match /expenses/{expenseId} {
         allow read, write: if isOwnerEmail() || belongsToOrg(orgId);

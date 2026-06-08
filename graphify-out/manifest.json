@@ -1265,8 +1265,8 @@
     "semantic_hash": ""
   },
   "src/domains/portal/components/ClientPortalLayout.tsx": {
-    "mtime": 1780840826.9324024,
-    "ast_hash": "04baea55a7b49ede7bf86129c2434eba",
+    "mtime": 1780925236.0319731,
+    "ast_hash": "f8fc44f7b5ef8b22a7c23e1f109b6b68",
     "semantic_hash": ""
   },
   "src/domains/portal/views/ClientPortal.tsx": {
@@ -1275,8 +1275,8 @@
     "semantic_hash": ""
   },
   "src/domains/portal/views/PortalAgenda.tsx": {
-    "mtime": 1780841836.9998145,
-    "ast_hash": "8025a20b130dd48a03816460eba43855",
+    "mtime": 1780925387.0501359,
+    "ast_hash": "262013c5e69c7982cd63642b6c4de2de",
     "semantic_hash": ""
   },
   "src/domains/portal/views/PortalCRMFinance.tsx": {
@@ -1875,8 +1875,8 @@
     "semantic_hash": ""
   },
   ".agents/workflows/graphify.md": {
-    "mtime": 1780796614.216428,
-    "ast_hash": "637776aa6f7496d069afe7520c845c8a",
+    "mtime": 1780922780.7323844,
+    "ast_hash": "0bc020d491fca99550c1ea3de0a5f862",
     "semantic_hash": ""
   },
   ".github/workflows/build-check.yml": {
@@ -1992,6 +1992,21 @@
   "public/graph.html": {
     "mtime": 1780842544.1242704,
     "ast_hash": "6272123b8909f78c63ef20f1041a8691",
+    "semantic_hash": ""
+  },
+  "src/domains/portal/components/PortalCalculator.tsx": {
+    "mtime": 1780925270.843409,
+    "ast_hash": "7ed7cda64f6b458d3c16a94bf12f5e00",
+    "semantic_hash": ""
+  },
+  "src/domains/portal/components/PortalInventory.tsx": {
+    "mtime": 1780925256.6198077,
+    "ast_hash": "35ba646138558308ed30481f29cf1005",
+    "semantic_hash": ""
+  },
+  "src/domains/portal/views/PortalManagement.tsx": {
+    "mtime": 1780925244.730385,
+    "ast_hash": "9542595119532299aa0c32db139a0507",
     "semantic_hash": ""
   }
 }
