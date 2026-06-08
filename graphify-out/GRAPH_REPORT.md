@@ -1,16 +1,16 @@
 # Graph Report - hubcrm  (2026-06-08)
 
 ## Corpus Check
-- 394 files · ~505,120 words
+- 394 files · ~505,122 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1869 nodes · 4194 edges · 130 communities (110 shown, 20 thin omitted)
+- 1869 nodes · 4194 edges · 130 communities (111 shown, 19 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 2 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `4c980e82`
+- Built from commit: `0002026f`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -169,7 +169,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (130 total, 20 thin omitted)
+## Communities (130 total, 19 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.11
@@ -384,8 +384,8 @@ Cohesion: 0.24
 Nodes (8): isValidPhotoURL(), Sidebar(), UserStatusSelector(), navGroups, CRMContext, useGlobalChatAlerts(), usePresence(), WorkspaceShell()
 
 ### Community 54 - "Community 54"
-Cohesion: 0.13
-Nodes (22): WikiArticleDetailProps, WikiEditorModalProps, Budget, SupportRequest, Transaction, TransactionCategory, WikiArticle, WikiComment (+14 more)
+Cohesion: 0.14
+Nodes (21): WikiArticleDetailProps, WikiEditorModalProps, Budget, SupportRequest, Transaction, TransactionCategory, WikiArticle, WikiComment (+13 more)
 
 ### Community 55 - "Community 55"
 Cohesion: 0.18
@@ -438,6 +438,10 @@ Nodes (6): InventoryItem, PortalCalculatorProps, SelectedMaterial, InventoryItem
 ### Community 67 - "Community 67"
 Cohesion: 0.39
 Nodes (4): useFirestoreSync(), CanvasDocument, canvasService, CanvasEditorView()
+
+### Community 68 - "Community 68"
+Cohesion: 0.50
+Nodes (3): StagesTabProps, ClientStage, PreferencesSlice
 
 ### Community 69 - "Community 69"
 Cohesion: 0.13
@@ -598,17 +602,17 @@ Nodes (3): crons, ignoreCommand, rewrites
 ## Knowledge Gaps
 - **637 isolated node(s):** `github-actions.workflows.pinned.workflows`, `mockFetch`, `mockAsaasRequest`, `mockDocGet`, `mockDocSet` (+632 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **20 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **19 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `useAuth()` connect `Community 50` to `Community 0`, `Community 2`, `Community 3`, `Community 6`, `Community 7`, `Community 8`, `Community 9`, `Community 10`, `Community 13`, `Community 15`, `Community 17`, `Community 19`, `Community 21`, `Community 22`, `Community 25`, `Community 27`, `Community 29`, `Community 31`, `Community 32`, `Community 33`, `Community 35`, `Community 37`, `Community 40`, `Community 43`, `Community 49`, `Community 53`, `Community 55`, `Community 65`, `Community 67`, `Community 76`, `Community 84`, `Community 95`, `Community 96`?**
-  _High betweenness centrality (0.054) - this node is a cross-community bridge._
+  _High betweenness centrality (0.055) - this node is a cross-community bridge._
 - **Why does `useCRM()` connect `Community 37` to `Community 0`, `Community 2`, `Community 3`, `Community 5`, `Community 6`, `Community 7`, `Community 8`, `Community 9`, `Community 15`, `Community 17`, `Community 19`, `Community 21`, `Community 22`, `Community 23`, `Community 27`, `Community 29`, `Community 35`, `Community 43`, `Community 49`, `Community 50`, `Community 53`, `Community 55`, `Community 77`, `Community 84`, `Community 95`, `Community 96`?**
-  _High betweenness centrality (0.038) - this node is a cross-community bridge._
+  _High betweenness centrality (0.037) - this node is a cross-community bridge._
 - **Why does `Client` connect `Community 5` to `Community 0`, `Community 96`, `Community 3`, `Community 37`, `Community 103`, `Community 8`, `Community 43`, `Community 13`, `Community 45`, `Community 111`, `Community 16`, `Community 53`, `Community 54`, `Community 57`, `Community 29`?**
-  _High betweenness centrality (0.034) - this node is a cross-community bridge._
+  _High betweenness centrality (0.028) - this node is a cross-community bridge._
 - **What connects `github-actions.workflows.pinned.workflows`, `mockFetch`, `mockAsaasRequest` to the rest of the system?**
   _637 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**

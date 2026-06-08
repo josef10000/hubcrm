@@ -10651,6 +10651,15 @@
       "norm_label": "revenue"
     },
     {
+      "label": "PortalCRMFinance()",
+      "file_type": "code",
+      "source_file": "src/domains/portal/views/PortalCRMFinance.tsx",
+      "source_location": "L40",
+      "id": "views_portalcrmfinance_portalcrmfinance",
+      "community": 24,
+      "norm_label": "portalcrmfinance()"
+    },
+    {
       "label": "PortalDocuments.tsx",
       "file_type": "code",
       "source_file": "src/domains/portal/views/PortalDocuments.tsx",
@@ -13500,7 +13509,7 @@
       "source_file": "src/store/slices/preferencesSlice.ts",
       "source_location": "L5",
       "id": "slices_preferencesslice_preferencesslice",
-      "community": 54,
+      "community": 68,
       "norm_label": "preferencesslice"
     },
     {
@@ -16814,15 +16823,6 @@
       "id": "implementation_plan_testes_de_build_e_performance",
       "community": 34,
       "norm_label": "testes de build e performance:"
-    },
-    {
-      "label": "PortalCRMFinance()",
-      "file_type": "code",
-      "source_file": "src/domains/portal/views/PortalCRMFinance.tsx",
-      "source_location": "L38",
-      "community": 24,
-      "norm_label": "portalcrmfinance()",
-      "id": "views_portalcrmfinance_portalcrmfinance"
     }
   ],
   "links": [
@@ -60019,9 +60019,9 @@
       "source_file": "README.md",
       "source_location": "L131",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "readme_recursos_premium_atuais",
-      "target": "readme_14_m\u00f3dulo_meu_neg\u00f3cio_lucro_real_por_projeto_estoque_or\u00e7amentos_e_finan\u00e7as_operacionais_no_portal",
-      "confidence_score": 1.0
+      "target": "readme_14_m\u00f3dulo_meu_neg\u00f3cio_lucro_real_por_projeto_estoque_or\u00e7amentos_e_finan\u00e7as_operacionais_no_portal"
     },
     {
       "relation": "contains",
@@ -61485,5 +61485,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "4c980e8249a9bdbd29f2992ab0b19248ccc7434b"
+  "built_at_commit": "0002026fca9f966f10941fdad56f03a5be99108f"
 }

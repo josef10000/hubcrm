@@ -987,6 +987,9 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
                 </tbody>
               </table>
             </div>
+          )
+        )}
+
         {/* Renderização da Tabela/Cards de Lucro por Projeto */}
         {subTab === 'projects' && (
           appointmentsFiltered.length === 0 ? (
