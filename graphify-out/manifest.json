@@ -470,8 +470,8 @@
     "semantic_hash": ""
   },
   "src/core/profile/views/ProfileView.tsx": {
-    "mtime": 1780516603.3679473,
-    "ast_hash": "7da96875f4735b335134225577dca8aa",
+    "mtime": 1780932045.5537748,
+    "ast_hash": "8a2b60046158bf41be1edc4d57ae427a",
     "semantic_hash": ""
   },
   "src/core/settings/views/SettingsView.tsx": {
@@ -1265,8 +1265,8 @@
     "semantic_hash": ""
   },
   "src/domains/portal/components/ClientPortalLayout.tsx": {
-    "mtime": 1780925236.0319731,
-    "ast_hash": "f8fc44f7b5ef8b22a7c23e1f109b6b68",
+    "mtime": 1780933282.643357,
+    "ast_hash": "69e3520d77f6c3dbf41ef986d2046bb9",
     "semantic_hash": ""
   },
   "src/domains/portal/views/ClientPortal.tsx": {
@@ -1620,8 +1620,8 @@
     "semantic_hash": ""
   },
   "src/shared/components/AvatarFrame.tsx": {
-    "mtime": 1780930535.933341,
-    "ast_hash": "7cf798e23e6d596cd9b4a0cd44061de8",
+    "mtime": 1780932019.4000607,
+    "ast_hash": "e1d6742ed8dacc5fce36a1301f7b1425",
     "semantic_hash": ""
   },
   "src/shared/components/BirthdayCelebration.tsx": {
@@ -1705,8 +1705,8 @@
     "semantic_hash": ""
   },
   "src/shared/components/Sidebar.tsx": {
-    "mtime": 1780930575.2478113,
-    "ast_hash": "541acc767137834f12ad3964ca0f550a",
+    "mtime": 1780932037.0810368,
+    "ast_hash": "dd6ea41e062fe2c1c948496d5e9db191",
     "semantic_hash": ""
   },
   "src/shared/components/ThemeEffects.tsx": {
@@ -1905,8 +1905,8 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1780927616.1813622,
-    "ast_hash": "b45b979a2bbd106c17efa111514dcb47",
+    "mtime": 1780933402.8969321,
+    "ast_hash": "2c570d4b77ee1ff9b35821dda8692634",
     "semantic_hash": ""
   },
   "docs/API.md": {
@@ -2010,8 +2010,8 @@
     "semantic_hash": ""
   },
   "src/shared/components/ProfileHoverCard.tsx": {
-    "mtime": 1780930555.9399784,
-    "ast_hash": "f1d8fdc24e41a8b3d0a09060e92d19c7",
+    "mtime": 1780932724.084748,
+    "ast_hash": "b8e790f049160188f1cdba8b7425b8b7",
     "semantic_hash": ""
   }
 }

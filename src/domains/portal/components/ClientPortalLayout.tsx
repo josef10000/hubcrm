@@ -210,10 +210,13 @@ export default function ClientPortalLayout() {
 
       {/* Sidebar */}
       <aside className={`
-        fixed inset-y-0 left-0 z-[60] w-72 bg-black/40 backdrop-blur-2xl border-r border-white/10 transform transition-transform duration-300 lg:relative lg:translate-x-0
+        fixed inset-y-0 left-0 z-[60] w-72 bg-[#05070a]/60 backdrop-blur-[35px] border-r border-white/10 transform transition-transform duration-300 lg:relative lg:translate-x-0 overflow-hidden
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
-        <div className="flex flex-col h-full p-6">
+        {/* Grain Texture Overlay */}
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay bg-[url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')]" />
+
+        <div className="flex flex-col h-full p-6 relative z-10">
           <div className="flex items-center justify-between mb-10 lg:mb-12">
             <div className="flex items-center gap-3">
               <img 
@@ -233,35 +236,41 @@ export default function ClientPortalLayout() {
 
           {/* Subscription Selector (Multi-Plan) */}
           {allClients.length > 1 && (
-            <div className="mb-8">
-              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-3 px-2">Suas Assinaturas</p>
-              <div className="space-y-2 max-h-[200px] overflow-y-auto custom-scrollbar pr-2">
-                {allClients.map((sub) => (
-                  <button
-                    key={sub.id}
-                    onClick={() => setActiveClientId(sub.id)}
-                    className={`
-                      w-full flex flex-col items-start p-3 rounded-xl transition-all duration-300 border
-                      ${activeClientId === sub.id 
-                        ? 'bg-primary-500/10 border-primary-500/30 text-white' 
-                        : 'bg-white/5 border-transparent text-gray-400 hover:bg-white/10'}
-                    `}
-                  >
-                    <span className="text-xs font-bold truncate w-full text-left">{sub.plan}</span>
-                    <span className="text-[10px] opacity-60 truncate w-full text-left">{sub.id.toUpperCase()}</span>
-                    {activeClientId === sub.id && (
-                      <div className="mt-2 flex items-center gap-1.5">
-                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                        <span className="text-[9px] font-bold text-emerald-400 uppercase">Ativa Agora</span>
-                      </div>
-                    )}
-                  </button>
-                ))}
+            <div className="mb-8 relative z-10">
+              <p className="text-[9px] text-gray-500 font-black uppercase tracking-[0.2em] mb-3 px-2">Suas Assinaturas</p>
+              <div className="space-y-2 max-h-[160px] overflow-y-auto custom-scrollbar pr-1">
+                {allClients.map((sub) => {
+                  const isActive = activeClientId === sub.id;
+                  return (
+                    <button
+                      key={sub.id}
+                      onClick={() => setActiveClientId(sub.id)}
+                      className={`
+                        w-full flex flex-col items-start p-3.5 rounded-2xl transition-all duration-300 border text-left relative overflow-hidden group/sub
+                        ${isActive 
+                          ? 'bg-[#0a0c10]/60 border-primary-500/30 text-white shadow-[0_4px_20px_rgba(0,0,0,0.4)]' 
+                          : 'bg-white/5 border-transparent text-gray-400 hover:bg-white/10 hover:border-white/10'}
+                      `}
+                    >
+                      {isActive && (
+                        <div className="absolute top-0 right-0 w-12 h-12 bg-gradient-to-bl from-primary-500/10 to-transparent pointer-events-none" />
+                      )}
+                      <span className={`text-xs font-bold truncate w-full transition-colors ${isActive ? 'text-white' : 'group-hover/sub:text-white'}`}>{sub.plan}</span>
+                      <span className="text-[9px] opacity-50 font-mono mt-0.5 truncate w-full">{sub.id.toUpperCase()}</span>
+                      {isActive && (
+                        <div className="mt-2 flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md">
+                          <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                          <span className="text-[8px] font-black text-emerald-400 uppercase tracking-wider">Ativa</span>
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
 
-          <nav className="flex-1 space-y-2">
+          <nav className="flex-1 space-y-2 relative z-10">
             {navItems.map((item) => (
               <button
                 key={item.id}
@@ -270,32 +279,51 @@ export default function ClientPortalLayout() {
                   setIsSidebarOpen(false);
                 }}
                 className={`
-                  w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 group
+                  w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 group relative
                   ${activeTab === item.id 
-                    ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' 
-                    : 'text-gray-400 hover:bg-white/5 hover:text-white'}
+                    ? 'bg-white/5 text-white border border-white/10 shadow-[0_0_15px_rgba(255,255,255,0.02)] font-semibold' 
+                    : 'text-gray-400 hover:bg-white/5 hover:text-white border border-transparent'}
                 `}
               >
-                <item.icon size={20} className={activeTab === item.id ? 'text-white' : 'group-hover:text-primary-400 transition-colors'} />
-                <span className="font-medium">{item.label}</span>
                 {activeTab === item.id && (
                   <motion.div 
-                    layoutId="activeIndicator"
-                    className="ml-auto w-1.5 h-1.5 bg-white rounded-full"
+                    layoutId="activePortalTabBg"
+                    className="absolute inset-0 bg-primary-500/10 border border-primary-500/20 rounded-2xl -z-10"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
                   />
                 )}
+                {activeTab === item.id && (
+                  <motion.div 
+                    layoutId="activePortalTabIndicator"
+                    className="absolute left-0 top-[15%] bottom-[15%] w-[3px] bg-primary-400 rounded-r-full shadow-[0_0_8px_currentColor] text-primary-400 z-10"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+                <item.icon size={20} className={`transition-all duration-300 group-hover:scale-110 ${activeTab === item.id ? 'text-primary-400' : 'group-hover:text-primary-400'}`} />
+                <span className="font-medium">{item.label}</span>
               </button>
             ))}
           </nav>
 
-          <div className="mt-auto pt-6 border-t border-white/10 space-y-3">
-            <div className="flex items-center gap-3 p-4 bg-white/5 rounded-2xl border border-white/5">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center font-bold text-sm shrink-0">
-                {client.name.charAt(0)}
+          <div className="mt-auto pt-6 border-t border-white/10 space-y-3 relative z-10">
+            <div className="flex items-center gap-3 p-4 bg-[#0a0c10]/40 backdrop-blur-md rounded-2xl border border-white/5 shadow-inner">
+              <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center font-bold text-sm shrink-0 overflow-hidden ${
+                client.status === 'Ativo'
+                  ? 'border-2 border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
+                  : 'border-2 border-amber-500/40 shadow-[0_0_12px_rgba(245,158,11,0.3)]'
+              }`}>
+                {client.name.charAt(0).toUpperCase()}
               </div>
-              <div className="flex flex-col overflow-hidden">
-                <span className="font-semibold truncate text-sm">{client.name}</span>
-                <span className="text-[10px] text-gray-500 truncate lowercase">{client.email}</span>
+              <div className="flex flex-col overflow-hidden text-left">
+                <span className="font-semibold truncate text-sm text-white">{client.name}</span>
+                <span className="text-[10px] text-gray-500 truncate lowercase mb-0.5">{client.email}</span>
+                <span className={`text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md border w-fit ${
+                  client.status === 'Ativo'
+                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                    : 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+                }`}>
+                  Plano {client.status}
+                </span>
               </div>
             </div>
             {currentUser && (
