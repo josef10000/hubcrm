@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Star, Globe, Clock, Coffee, Circle, User, LogOut, Users } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
@@ -10,8 +10,10 @@ import { usePermissions } from '@auth/hooks/usePermissions';
 import { useGlobalChatAlerts } from '@/hooks/useGlobalChatAlerts';
 import NavItem from './NavItem';
 import AvatarFrame from './AvatarFrame';
+import ProfileHoverCard from './ProfileHoverCard';
 import { navGroups } from '@/constants/navigation';
 import { usePresence } from '@/hooks/usePresence';
+import { useCRMStore } from '@/store/useCRMStore';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { toast } from 'sonner';
@@ -68,13 +70,31 @@ const isValidPhotoURL = (url: any) => {
 
 export default function Sidebar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, userProfile, unreadAlertsCount, isBirthday } = useAuth();
   const { sidebarOpen, setSidebarOpen, pinnedItems } = useUI();
   const { supportRequests = [], wikiArticles = [], pendingVacationsCount = 0 } = useCRM();
   const { hasPermission } = usePermissions();
   const { totalUnread: chatUnreadCount } = useGlobalChatAlerts();
   
+  const todayLog = useCRMStore(state => state.todayLog);
+  const expedienteStatus = todayLog?.status === 'active' 
+    ? 'active' 
+    : todayLog?.status === 'paused' 
+      ? 'paused' 
+      : 'none';
+  
   const { manualSetStatus } = usePresence();
+
+  const isRouteActive = (itemPath: string) => {
+    const currentPath = location.pathname;
+    if (itemPath === '/') return currentPath === '/';
+    return currentPath === itemPath || currentPath.startsWith(itemPath + '/');
+  };
+
+  const isGroupActive = (groupItems: any[]) => {
+    return groupItems.some(item => isRouteActive(item.path));
+  };
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const avatarMenuRef = useRef<HTMLDivElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -229,47 +249,79 @@ export default function Sidebar() {
             <div className="w-8 h-[1px] bg-white/10 my-2" />
 
             {/* Gatilhos dos Pilares */}
-            {visibleGroups.map((group) => (
-              <button
-                key={group.id}
-                onMouseEnter={() => handleMouseEnter(group.id)}
-                className={`p-3 rounded-2xl transition-all duration-300 relative group ${
-                  activeGroupId === group.id 
-                  ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30 shadow-[0_0_25px_rgba(var(--primary-rgb),0.25)]' 
-                  : 'text-gray-500 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <PremiumIcon iconName={group.icon.name || group.icon.displayName || 'Target'} />
-                {group.totalBadges > 0 && (
-                  <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-primary-500 rounded-full border-2 border-[#05070a] animate-pulse" />
-                )}
-                
-                {/* Tooltip Mini Cyber */}
-                <div className="absolute left-full ml-5 px-3 py-1.5 bg-[#0a0c10] text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all -translate-x-2 group-hover:translate-x-0 z-50 border border-white/10 shadow-2xl backdrop-blur-xl">
-                  {group.label}
-                </div>
-              </button>
-            ))}
+            {visibleGroups.map((group) => {
+              const active = isGroupActive(group.items);
+              return (
+                <button
+                  key={group.id}
+                  onMouseEnter={() => handleMouseEnter(group.id)}
+                  className={`p-3 rounded-2xl transition-all duration-300 relative group ${
+                    activeGroupId === group.id || active
+                    ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30 shadow-[0_0_25px_rgba(var(--primary-rgb),0.25)]' 
+                    : 'text-gray-500 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  {active && (
+                    <motion.div 
+                      layoutId="activePillarIndicator"
+                      className="absolute left-0 top-[15%] bottom-[15%] w-[3px] bg-primary-400 rounded-r-full shadow-[0_0_12px_rgba(var(--primary-rgb),0.8)] z-20"
+                      transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                    />
+                  )}
+                  <PremiumIcon iconName={group.icon.name || group.icon.displayName || 'Target'} />
+                  {group.totalBadges > 0 && (
+                    <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-primary-500 rounded-full border-2 border-[#05070a] animate-pulse" />
+                  )}
+                  
+                  {/* Tooltip Mini Cyber */}
+                  <div className="absolute left-full ml-5 px-3 py-1.5 bg-[#0a0c10] text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all -translate-x-2 group-hover:translate-x-0 z-50 border border-white/10 shadow-2xl backdrop-blur-xl">
+                    {group.label}
+                  </div>
+                </button>
+              );
+            })}
           </div>
 
           <div ref={avatarMenuRef} className="relative z-10 mt-auto flex flex-col items-center gap-4">
-            <div 
-              onClick={() => setStatusMenuOpen(!statusMenuOpen)}
-              className="relative cursor-pointer group"
-            >
-              <AvatarFrame size="md">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center text-gray-900 font-bold shrink-0 shadow-lg overflow-hidden border border-white/10 group-hover:scale-105 transition-transform">
-                  {isValidPhotoURL(userProfile?.photoURL) ? (
-                    <img src={userProfile!.photoURL} alt={userProfile?.displayName || 'Avatar'} className="w-full h-full object-cover" />
-                  ) : (
-                    (userProfile?.displayName || user?.displayName || 'U')[0].toUpperCase()
-                  )}
+            {userProfile?.uid && userProfile?.orgId ? (
+              <ProfileHoverCard userId={userProfile.uid} orgId={userProfile.orgId}>
+                <div 
+                  onClick={() => setStatusMenuOpen(!statusMenuOpen)}
+                  className="relative cursor-pointer group"
+                >
+                  <AvatarFrame size="md" pulseStatus={expedienteStatus}>
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center text-gray-900 font-bold shrink-0 shadow-lg overflow-hidden border border-white/10 group-hover:scale-105 transition-transform">
+                      {isValidPhotoURL(userProfile?.photoURL) ? (
+                        <img src={userProfile!.photoURL} alt={userProfile?.displayName || 'Avatar'} className="w-full h-full object-cover" />
+                      ) : (
+                        (userProfile?.displayName || user?.displayName || 'U')[0].toUpperCase()
+                      )}
+                    </div>
+                  </AvatarFrame>
+                  <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#05070a] shadow-lg transition-colors duration-300 ${
+                    getStatusColor(userProfile?.presenceStatus || 'offline')
+                  }`} />
                 </div>
-              </AvatarFrame>
-              <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#05070a] shadow-lg transition-colors duration-300 ${
-                getStatusColor(userProfile?.presenceStatus || 'offline')
-              }`} />
-            </div>
+              </ProfileHoverCard>
+            ) : (
+              <div 
+                onClick={() => setStatusMenuOpen(!statusMenuOpen)}
+                className="relative cursor-pointer group"
+              >
+                <AvatarFrame size="md" pulseStatus={expedienteStatus}>
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center text-gray-900 font-bold shrink-0 shadow-lg overflow-hidden border border-white/10 group-hover:scale-105 transition-transform">
+                    {isValidPhotoURL(userProfile?.photoURL) ? (
+                      <img src={userProfile!.photoURL} alt={userProfile?.displayName || 'Avatar'} className="w-full h-full object-cover" />
+                    ) : (
+                      (userProfile?.displayName || user?.displayName || 'U')[0].toUpperCase()
+                    )}
+                  </div>
+                </AvatarFrame>
+                <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#05070a] shadow-lg transition-colors duration-300 ${
+                  getStatusColor(userProfile?.presenceStatus || 'offline')
+                }`} />
+              </div>
+            )}
 
             {/* Menu Popover Flutuante de Presença (Status Rápido) */}
             {createPortal(

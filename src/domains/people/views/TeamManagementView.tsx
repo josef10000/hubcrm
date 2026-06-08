@@ -14,6 +14,7 @@ import { authFetch } from '@/lib/authFetch';
 import { useCRMStore } from '@/store/useCRMStore';
 import { TimeLog, calculateNetDuration, getLocalDateString } from '@/store/slices/timeTrackingSlice';
 import { format, parseISO } from 'date-fns';
+import ProfileHoverCard from '@/shared/components/ProfileHoverCard';
 
 interface Member {
   uid: string;
@@ -50,30 +51,54 @@ const getRoleDisplayName = (role: any): string => {
   return 'Colaborador';
 };
 
-const OrgNode = ({ member, members, navigate }: { member: Member, members: Member[], navigate: any }) => {
+const OrgNode = ({ member, members, navigate, orgId }: { member: Member, members: Member[], navigate: any, orgId: string }) => {
   const children = members.filter(m => m.reportsTo === member.uid);
   
   return (
     <div className="flex flex-col items-center group/node">
-      <div 
-        onClick={() => navigate(`/profile/${member.uid}`)}
-        className="relative z-10 flex flex-col items-center p-4 bg-white dark:bg-white/5 backdrop-blur-3xl border border-gray-200 dark:border-white/10 rounded-3xl min-w-[160px] shadow-lg hover:shadow-primary-500/20 hover:border-primary-500/30 transition-all cursor-pointer group"
-      >
-        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 p-0.5 mb-2 shadow-lg shadow-primary-500/10 overflow-hidden">
-          {member.photoURL ? (
-            <img src={member.photoURL} alt="" className="w-full h-full rounded-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gray-900 dark:bg-black rounded-full text-white font-bold">
-              {member.displayName?.[0]}
+      {orgId ? (
+        <ProfileHoverCard userId={member.uid} orgId={orgId}>
+          <div 
+            onClick={() => navigate(`/profile/${member.uid}`)}
+            className="relative z-10 flex flex-col items-center p-4 bg-white dark:bg-white/5 backdrop-blur-3xl border border-gray-200 dark:border-white/10 rounded-3xl min-w-[160px] shadow-lg hover:shadow-primary-500/20 hover:border-primary-500/30 transition-all cursor-pointer group"
+          >
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 p-0.5 mb-2 shadow-lg shadow-primary-500/10 overflow-hidden">
+              {member.photoURL ? (
+                <img src={member.photoURL} alt="" className="w-full h-full rounded-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gray-900 dark:bg-black rounded-full text-white font-bold">
+                  {member.displayName?.[0]}
+                </div>
+              )}
             </div>
-          )}
+            <p className="font-bold text-gray-900 dark:text-white text-sm text-center line-clamp-1">{member.displayName}</p>
+            <p className="text-[10px] text-primary-500 font-medium tracking-tight uppercase">{member.jobTitle || getRoleDisplayName(member.role)}</p>
+            <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <ChevronRight size={12} className="text-primary-500" />
+            </div>
+          </div>
+        </ProfileHoverCard>
+      ) : (
+        <div 
+          onClick={() => navigate(`/profile/${member.uid}`)}
+          className="relative z-10 flex flex-col items-center p-4 bg-white dark:bg-white/5 backdrop-blur-3xl border border-gray-200 dark:border-white/10 rounded-3xl min-w-[160px] shadow-lg hover:shadow-primary-500/20 hover:border-primary-500/30 transition-all cursor-pointer group"
+        >
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 p-0.5 mb-2 shadow-lg shadow-primary-500/10 overflow-hidden">
+            {member.photoURL ? (
+              <img src={member.photoURL} alt="" className="w-full h-full rounded-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gray-900 dark:bg-black rounded-full text-white font-bold">
+                {member.displayName?.[0]}
+              </div>
+            )}
+          </div>
+          <p className="font-bold text-gray-900 dark:text-white text-sm text-center line-clamp-1">{member.displayName}</p>
+          <p className="text-[10px] text-primary-500 font-medium tracking-tight uppercase">{member.jobTitle || getRoleDisplayName(member.role)}</p>
+          <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <ChevronRight size={12} className="text-primary-500" />
+          </div>
         </div>
-        <p className="font-bold text-gray-900 dark:text-white text-sm text-center line-clamp-1">{member.displayName}</p>
-        <p className="text-[10px] text-primary-500 font-medium tracking-tight uppercase">{member.jobTitle || getRoleDisplayName(member.role)}</p>
-        <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <ChevronRight size={12} className="text-primary-500" />
-        </div>
-      </div>
+      )}
 
       {children.length > 0 && (
         <div className="flex flex-col items-center mt-8 relative">
@@ -90,7 +115,7 @@ const OrgNode = ({ member, members, navigate }: { member: Member, members: Membe
               <div key={child.uid} className="relative">
                 {/* Connector to horizontal line */}
                 <div className="absolute -top-4 left-1/2 w-0.5 h-4 bg-gray-200 dark:bg-white/10 -translate-x-1/2" />
-                <OrgNode member={child} members={members} navigate={navigate} />
+                <OrgNode member={child} members={members} navigate={navigate} orgId={orgId} />
               </div>
             ))}
           </div>
@@ -397,9 +422,17 @@ export default function TeamManagementView() {
                           onClick={() => navigate(`/profile/${member.uid}`)}
                           className="flex items-center space-x-4 cursor-pointer"
                         >
-                          <div className="w-10 h-10 rounded-full bg-primary-500/20 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold overflow-hidden shadow-inner">
-                            {member.photoURL ? <img src={member.photoURL} alt={member.displayName} /> : member.displayName?.[0] || 'U'}
-                          </div>
+                          {userProfile?.orgId ? (
+                            <ProfileHoverCard userId={member.uid} orgId={userProfile.orgId}>
+                              <div className="w-10 h-10 rounded-full bg-primary-500/20 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold overflow-hidden shadow-inner">
+                                {member.photoURL ? <img src={member.photoURL} alt={member.displayName} /> : member.displayName?.[0] || 'U'}
+                              </div>
+                            </ProfileHoverCard>
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-primary-500/20 flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold overflow-hidden shadow-inner">
+                              {member.photoURL ? <img src={member.photoURL} alt={member.displayName} /> : member.displayName?.[0] || 'U'}
+                            </div>
+                          )}
                           <div>
                             <p className="font-semibold text-gray-900 dark:text-white group-hover:text-primary-500 transition-colors flex items-center gap-2">
                               {member.displayName}
@@ -507,7 +540,7 @@ export default function TeamManagementView() {
                   <div className="flex flex-col items-center">
                     <div className="flex gap-8 justify-center">
                       {roots.map(root => (
-                        <OrgNode key={root.uid} member={root} members={members} navigate={navigate} />
+                        <OrgNode key={root.uid} member={root} members={members} navigate={navigate} orgId={userProfile?.orgId || ''} />
                       ))}
                     </div>
                   </div>

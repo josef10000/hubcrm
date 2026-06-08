@@ -118,6 +118,8 @@ Plataforma modernizada com foco em usabilidade e performance, integrando compone
 *   **Toggles de Notificação Premium:** Alternador lógico reativo no menu de contexto das conversas, utilizando os ícones `BellFill` e `BellSlash` para mutar e desmutar contatos de forma silenciosa.
 *   **Toolbar e Anotações com Formatação:** Barra de estilo para Wiki e anotações de leads/clientes para estilo em Negrito, Itálico e Sublinhado usando ícones premium.
 *   **Campos de Data e Hora Avançados:** Modais de lembrete e agendador de mensagens adaptados para inputs nativos HTML5 altamente responsivos e com ampla compatibilidade de sistema.
+*   **Indicador Neon Deslizante de Pilar Ativo (`Sidebar.tsx`):** Filete neon vertical luminoso na lateral esquerda dos botões da Sidebar que acompanha o grupo de navegação correspondente à rota ativa, realizando um deslizamento vertical físico suave (`layoutId` do Framer Motion) à medida que a URL do navegador é alterada.
+*   **Profile Hover Card com Monitoramento de Expediente (`ProfileHoverCard.tsx`):** Componente de cartão de perfil flutuante (Hover Card) em Glassmorphism injetado no `document.body` via React Portal (evitando cortes por `overflow: hidden`). Possui atraso inteligente de hover de 250ms (debounce) para otimização de banda e inicia um listener de Ponto Eletrônico temporário em tempo real para exibir o status do expediente atual, tempo decorrido correndo na tela, cargo e e-mail do colaborador ao passar o mouse.
 
 ### 13. 🔐 Portal do Cliente com Login Geral Obrigatório, Agenda & CRM Financeiro (DRE/Caixa)
 Canal de autoatendimento corporativo integrado com Firebase Auth, modelagem robusta no Firestore e validações de segurança em tempo real:

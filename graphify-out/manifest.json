@@ -1260,8 +1260,8 @@
     "semantic_hash": ""
   },
   "src/domains/people/views/TeamManagementView.tsx": {
-    "mtime": 1780508566.9585316,
-    "ast_hash": "1527adfd779922a5aa513f03f314fc6d",
+    "mtime": 1780930614.8768096,
+    "ast_hash": "340d38fd1ac632776a992542457b1866",
     "semantic_hash": ""
   },
   "src/domains/portal/components/ClientPortalLayout.tsx": {
@@ -1620,8 +1620,8 @@
     "semantic_hash": ""
   },
   "src/shared/components/AvatarFrame.tsx": {
-    "mtime": 1778362526.6798747,
-    "ast_hash": "56530f87a5c3fcff5da7ee35d07a4c0e",
+    "mtime": 1780930535.933341,
+    "ast_hash": "7cf798e23e6d596cd9b4a0cd44061de8",
     "semantic_hash": ""
   },
   "src/shared/components/BirthdayCelebration.tsx": {
@@ -1705,8 +1705,8 @@
     "semantic_hash": ""
   },
   "src/shared/components/Sidebar.tsx": {
-    "mtime": 1780856016.9867153,
-    "ast_hash": "3afc9f0d2257259bd534a92c4039ce0b",
+    "mtime": 1780930575.2478113,
+    "ast_hash": "541acc767137834f12ad3964ca0f550a",
     "semantic_hash": ""
   },
   "src/shared/components/ThemeEffects.tsx": {
@@ -2007,6 +2007,11 @@
   "src/domains/portal/views/PortalManagement.tsx": {
     "mtime": 1780925244.730385,
     "ast_hash": "9542595119532299aa0c32db139a0507",
+    "semantic_hash": ""
+  },
+  "src/shared/components/ProfileHoverCard.tsx": {
+    "mtime": 1780930555.9399784,
+    "ast_hash": "f1d8fdc24e41a8b3d0a09060e92d19c7",
     "semantic_hash": ""
   }
 }
