@@ -19,6 +19,35 @@ import CFOSimulator from '@admin/components/CFOSimulator';
 import ContractManager from '@admin/components/ContractManager';
 import AnnouncementManager from '@admin/components/AnnouncementManager';
 
+const formatExecutionDate = (value: any): string => {
+  if (!value) return 'Não executado';
+  
+  // Se for um número ou string numérica (timestamp)
+  if (typeof value === 'number' || (!isNaN(Number(value)) && !isNaN(parseFloat(value)))) {
+    const date = new Date(Number(value));
+    const now = new Date();
+    
+    const isToday = date.getDate() === now.getDate() &&
+                    date.getMonth() === now.getMonth() &&
+                    date.getFullYear() === now.getFullYear();
+                    
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    const isYesterday = date.getDate() === yesterday.getDate() &&
+                        date.getMonth() === yesterday.getMonth() &&
+                        date.getFullYear() === yesterday.getFullYear();
+                        
+    const timeStr = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    
+    if (isToday) return `Hoje, ${timeStr}`;
+    if (isYesterday) return `Ontem, ${timeStr}`;
+    
+    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' }) + `, ${timeStr}`;
+  }
+  
+  return String(value);
+};
+
 export default function AdministrativeView() {
   const {
     defaultStages,
@@ -59,7 +88,7 @@ export default function AdministrativeView() {
   const [activeAdminTab, setActiveAdminTab] = React.useState<AdminTab>('team');
 
   // Estado para armazenar os dados dinâmicos de consumo de recursos
-  const [usageData, setUsageData] = React.useState({
+  const [usageData, setUsageData] = React.useState<any>({
     firestoreUsedBytes: 350 * 1024 * 1024, // 350 MB default
     firestoreLimitBytes: 1024 * 1024 * 1024, // 1 GB default
     r2UsedBytes: 193.93 * 1024 * 1024, // 193.93 MB default
@@ -72,10 +101,10 @@ export default function AdministrativeView() {
     firestoreReads: 14230,
     firestoreWrites: 3280,
     firestoreDeletes: 120,
-    lastBillingScan: 'Hoje, 09:30',
-    lastCfoSync: 'Hoje, 10:15',
-    lastEmailQueueDispatch: 'Ontem, 23:00',
-    lastGraphifyUpdate: 'Ontem, 18:45'
+    lastBillingScan: null,
+    lastCfoSync: null,
+    lastEmailQueueDispatch: null,
+    lastGraphifyUpdate: null
   });
 
   React.useEffect(() => {
@@ -97,10 +126,10 @@ export default function AdministrativeView() {
           firestoreReads: data.firestoreReads ?? 14230,
           firestoreWrites: data.firestoreWrites ?? 3280,
           firestoreDeletes: data.firestoreDeletes ?? 120,
-          lastBillingScan: data.lastBillingScan ?? 'Hoje, 09:30',
-          lastCfoSync: data.lastCfoSync ?? 'Hoje, 10:15',
-          lastEmailQueueDispatch: data.lastEmailQueueDispatch ?? 'Ontem, 23:00',
-          lastGraphifyUpdate: data.lastGraphifyUpdate ?? 'Ontem, 18:45'
+          lastBillingScan: data.lastBillingScan ?? null,
+          lastCfoSync: data.lastCfoSync ?? null,
+          lastEmailQueueDispatch: data.lastEmailQueueDispatch ?? null,
+          lastGraphifyUpdate: data.lastGraphifyUpdate ?? null
         });
       }
     }, (error) => {
@@ -115,13 +144,12 @@ export default function AdministrativeView() {
       // Simula uma espera de execução de background
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      const nowStr = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-      const todayStr = 'Hoje, ' + nowStr;
+      const nowTimestamp = Date.now();
       
       if (effectiveOrgId) {
         const docRef = doc(db, 'organizations', effectiveOrgId, 'settings', 'usage');
-        const updatePayload: Record<string, string> = {};
-        updatePayload[taskKey] = todayStr;
+        const updatePayload: Record<string, any> = {};
+        updatePayload[taskKey] = nowTimestamp;
         await setDoc(docRef, updatePayload, { merge: true });
       }
       
@@ -805,7 +833,7 @@ export default function AdministrativeView() {
                     <div className="space-y-1 min-w-0">
                       <h4 className="font-bold text-white text-sm">Varredura de Faturas & Vencimentos</h4>
                       <p className="text-xs text-gray-400">
-                        Última Execução: <span className="text-gray-200 font-medium font-mono">{usageData.lastBillingScan}</span>
+                        Última Execução: <span className="text-gray-200 font-medium font-mono">{formatExecutionDate(usageData.lastBillingScan)}</span>
                       </p>
                       <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
                         ATIVO / SUCESSO
@@ -825,7 +853,7 @@ export default function AdministrativeView() {
                     <div className="space-y-1 min-w-0">
                       <h4 className="font-bold text-white text-sm">Sincronização Contábil (CFO Engine)</h4>
                       <p className="text-xs text-gray-400">
-                        Última Execução: <span className="text-gray-200 font-medium font-mono">{usageData.lastCfoSync}</span>
+                        Última Execução: <span className="text-gray-200 font-medium font-mono">{formatExecutionDate(usageData.lastCfoSync)}</span>
                       </p>
                       <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
                         ATIVO / SUCESSO
@@ -845,7 +873,7 @@ export default function AdministrativeView() {
                     <div className="space-y-1 min-w-0">
                       <h4 className="font-bold text-white text-sm">Fila de Disparos de E-mail (Queue)</h4>
                       <p className="text-xs text-gray-400">
-                        Última Execução: <span className="text-gray-200 font-medium font-mono">{usageData.lastEmailQueueDispatch}</span>
+                        Última Execução: <span className="text-gray-200 font-medium font-mono">{formatExecutionDate(usageData.lastEmailQueueDispatch)}</span>
                       </p>
                       <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
                         ATIVO / SUCESSO
@@ -865,7 +893,7 @@ export default function AdministrativeView() {
                     <div className="space-y-1 min-w-0">
                       <h4 className="font-bold text-white text-sm">Atualização do Grafo de Conhecimento</h4>
                       <p className="text-xs text-gray-400">
-                        Última Execução: <span className="text-gray-200 font-medium font-mono">{usageData.lastGraphifyUpdate}</span>
+                        Última Execução: <span className="text-gray-200 font-medium font-mono">{formatExecutionDate(usageData.lastGraphifyUpdate)}</span>
                       </p>
                       <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
                         ATIVO / SUCESSO

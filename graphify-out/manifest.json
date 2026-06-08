@@ -405,8 +405,8 @@
     "semantic_hash": ""
   },
   "src/core/admin/views/AdministrativeView.tsx": {
-    "mtime": 1780841899.412143,
-    "ast_hash": "4e38d0170c0379d9edaa9707fe263d0e",
+    "mtime": 1780922623.6633348,
+    "ast_hash": "f2969e27b91bbdf5510f9543ee1dfa73",
     "semantic_hash": ""
   },
   "src/core/auth/components/Auth.tsx": {
@@ -1705,8 +1705,8 @@
     "semantic_hash": ""
   },
   "src/shared/components/Sidebar.tsx": {
-    "mtime": 1780853979.5937653,
-    "ast_hash": "3230955bedcc235380197aac3dd894a0",
+    "mtime": 1780856016.9867153,
+    "ast_hash": "3afc9f0d2257259bd534a92c4039ce0b",
     "semantic_hash": ""
   },
   "src/shared/components/ThemeEffects.tsx": {
