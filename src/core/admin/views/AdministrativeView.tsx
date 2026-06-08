@@ -18,6 +18,8 @@ import RoleManagement from '@admin/components/RoleManagement';
 import CFOSimulator from '@admin/components/CFOSimulator';
 import ContractManager from '@admin/components/ContractManager';
 import AnnouncementManager from '@admin/components/AnnouncementManager';
+import PortalAnnouncementForm from '@admin/components/PortalAnnouncementForm';
+
 
 const formatExecutionDate = (value: any): string => {
   if (!value) return 'Não executado';
@@ -86,6 +88,7 @@ export default function AdministrativeView() {
   
   type AdminTab = 'team' | 'workflows' | 'sales' | 'cfo' | 'contracts' | 'announcements' | 'resources';
   const [activeAdminTab, setActiveAdminTab] = React.useState<AdminTab>('team');
+  const [announcementSubTab, setAnnouncementSubTab] = React.useState<'team' | 'portal'>('team');
 
   // Estado para armazenar os dados dinâmicos de consumo de recursos
   const [usageData, setUsageData] = React.useState<any>({
@@ -623,7 +626,39 @@ export default function AdministrativeView() {
             <ContractManager effectiveOrgId={effectiveOrgId} />
           )}
           {activeAdminTab === 'announcements' && (
-            <AnnouncementManager effectiveOrgId={effectiveOrgId} />
+            <div className="space-y-6">
+              {/* Mini Navegação de Sub-Abas em Glassmorphism */}
+              <div className="flex gap-2 p-1 bg-black/20 backdrop-blur-xl border border-white/5 rounded-2xl w-fit shadow-xl">
+                <button
+                  onClick={() => setAnnouncementSubTab('team')}
+                  className={`relative px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
+                    announcementSubTab === 'team'
+                      ? 'text-white bg-primary-500 shadow-lg shadow-primary-500/20'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  Mural do Time
+                </button>
+                <button
+                  onClick={() => setAnnouncementSubTab('portal')}
+                  className={`relative px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 ${
+                    announcementSubTab === 'portal'
+                      ? 'text-white bg-primary-500 shadow-lg shadow-primary-500/20'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  Aviso do Portal (Clientes)
+                </button>
+              </div>
+
+              <div className="mt-4">
+                {announcementSubTab === 'team' ? (
+                  <AnnouncementManager effectiveOrgId={effectiveOrgId} />
+                ) : (
+                  <PortalAnnouncementForm effectiveOrgId={effectiveOrgId} />
+                )}
+              </div>
+            </div>
           )}
           {activeAdminTab === 'resources' && (
             <div className="bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-lg text-left space-y-8">

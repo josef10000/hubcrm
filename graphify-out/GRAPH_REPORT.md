@@ -1,16 +1,16 @@
 # Graph Report - hubcrm  (2026-06-08)
 
 ## Corpus Check
-- 395 files · ~507,496 words
+- 395 files · ~507,659 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1874 nodes · 4212 edges · 128 communities (109 shown, 19 thin omitted)
+- 1875 nodes · 4211 edges · 138 communities (122 shown, 16 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 3 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `c695d85a`
+- Built from commit: `3356d440`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -83,10 +83,13 @@
 - [[_COMMUNITY_Community 65|Community 65]]
 - [[_COMMUNITY_Community 66|Community 66]]
 - [[_COMMUNITY_Community 67|Community 67]]
+- [[_COMMUNITY_Community 68|Community 68]]
 - [[_COMMUNITY_Community 69|Community 69]]
+- [[_COMMUNITY_Community 70|Community 70]]
 - [[_COMMUNITY_Community 71|Community 71]]
 - [[_COMMUNITY_Community 72|Community 72]]
 - [[_COMMUNITY_Community 73|Community 73]]
+- [[_COMMUNITY_Community 74|Community 74]]
 - [[_COMMUNITY_Community 75|Community 75]]
 - [[_COMMUNITY_Community 76|Community 76]]
 - [[_COMMUNITY_Community 77|Community 77]]
@@ -101,6 +104,7 @@
 - [[_COMMUNITY_Community 86|Community 86]]
 - [[_COMMUNITY_Community 87|Community 87]]
 - [[_COMMUNITY_Community 88|Community 88]]
+- [[_COMMUNITY_Community 89|Community 89]]
 - [[_COMMUNITY_Community 90|Community 90]]
 - [[_COMMUNITY_Community 91|Community 91]]
 - [[_COMMUNITY_Community 92|Community 92]]
@@ -113,20 +117,26 @@
 - [[_COMMUNITY_Community 99|Community 99]]
 - [[_COMMUNITY_Community 100|Community 100]]
 - [[_COMMUNITY_Community 101|Community 101]]
+- [[_COMMUNITY_Community 102|Community 102]]
+- [[_COMMUNITY_Community 103|Community 103]]
 - [[_COMMUNITY_Community 104|Community 104]]
 - [[_COMMUNITY_Community 105|Community 105]]
 - [[_COMMUNITY_Community 106|Community 106]]
 - [[_COMMUNITY_Community 107|Community 107]]
+- [[_COMMUNITY_Community 108|Community 108]]
 - [[_COMMUNITY_Community 109|Community 109]]
 - [[_COMMUNITY_Community 110|Community 110]]
 - [[_COMMUNITY_Community 111|Community 111]]
 - [[_COMMUNITY_Community 112|Community 112]]
 - [[_COMMUNITY_Community 113|Community 113]]
 - [[_COMMUNITY_Community 114|Community 114]]
+- [[_COMMUNITY_Community 115|Community 115]]
 - [[_COMMUNITY_Community 116|Community 116]]
 - [[_COMMUNITY_Community 117|Community 117]]
 - [[_COMMUNITY_Community 118|Community 118]]
+- [[_COMMUNITY_Community 119|Community 119]]
 - [[_COMMUNITY_Community 120|Community 120]]
+- [[_COMMUNITY_Community 121|Community 121]]
 - [[_COMMUNITY_Community 122|Community 122]]
 - [[_COMMUNITY_Community 123|Community 123]]
 - [[_COMMUNITY_Community 124|Community 124]]
@@ -134,15 +144,15 @@
 - [[_COMMUNITY_Community 128|Community 128]]
 - [[_COMMUNITY_Community 129|Community 129]]
 - [[_COMMUNITY_Community 130|Community 130]]
+- [[_COMMUNITY_Community 133|Community 133]]
 - [[_COMMUNITY_Community 134|Community 134]]
-- [[_COMMUNITY_Community 136|Community 136]]
 - [[_COMMUNITY_Community 137|Community 137]]
 - [[_COMMUNITY_Community 138|Community 138]]
 - [[_COMMUNITY_Community 139|Community 139]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `useAuth()` - 189 edges
-2. `useCRM()` - 164 edges
+1. `useAuth()` - 187 edges
+2. `useCRM()` - 162 edges
 3. `usePermissions()` - 64 edges
 4. `Client` - 51 edges
 5. `useDialog()` - 48 edges
@@ -157,8 +167,8 @@
   api/public_checkout.ts → src/tests/crmSlice.test.ts
 - `ProfileHoverCard()` --calls--> `getRoleName()`  [INFERRED]
   src/shared/components/ProfileHoverCard.tsx → api/team_handler.ts
-- `EnergyScoreCardProps` --references--> `UserProfile`  [EXTRACTED]
-  src/domains/people/components/EnergyScoreCard.tsx → shared/types.ts
+- `UserProfilePeople` --inherits--> `UserProfile`  [EXTRACTED]
+  src/types/people.ts → shared/types.ts
 - `UIContextType` --references--> `SiteStatus`  [EXTRACTED]
   src/contexts/UIContext.tsx → shared/types.ts
 - `ContractsTabProps` --references--> `Client`  [EXTRACTED]
@@ -167,23 +177,23 @@
 ## Import Cycles
 - None detected.
 
-## Communities (128 total, 19 thin omitted)
+## Communities (138 total, 16 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.14
-Nodes (11): ApprovalCreatorModal(), ApprovalCreatorModalProps, MentionSuggestionsProps, MessageInput(), MessageSchedulerModal(), MessageSchedulerModalProps, PollCreatorModal(), PollCreatorModalProps (+3 more)
+Cohesion: 0.11
+Nodes (15): ApprovalCreatorModal(), ApprovalCreatorModalProps, MentionSuggestionsProps, MessageInput(), MessageInputProps, MessageSchedulerModal(), MessageSchedulerModalProps, PollCreatorModal() (+7 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.21
 Nodes (20): handler(), hasFinancePermission(), handler(), handler(), handler(), handler(), handler(), handler() (+12 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.18
-Nodes (8): RichTextEditor, RichTextEditorHandle, RichTextEditorProps, CATEGORIES, WikiEditorModal(), WikiCategory, CATEGORY_MAP, WikiView()
+Cohesion: 0.11
+Nodes (16): Announcement, CompanyAnnouncements(), KudosWall(), OKRWidget(), PaginationProps, BirthdayPerson, TeamCelebrations(), CATEGORIES (+8 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.10
-Nodes (20): NavItem(), NavItemProps, isValidPhotoURL(), PremiumIcon(), Sidebar(), ThemeEffects(), navGroups, CRMView (+12 more)
+Cohesion: 0.14
+Nodes (12): AlertPanels(), NavItem(), NavItemProps, OverdueAlertWidget(), PremiumIcon(), ThemeEffects(), CRMView, UIContext (+4 more)
 
 ### Community 4 - "Community 4"
 Cohesion: 0.12
@@ -194,20 +204,20 @@ Cohesion: 0.20
 Nodes (3): UseClientsOptions, Offer, PortalServicesProps
 
 ### Community 6 - "Community 6"
-Cohesion: 0.07
-Nodes (36): BankReconciliation(), TickerProps, BudgetPanel(), CashFlowForecastChart(), CashFlowProjected(), Announcement, CompanyAnnouncements(), ConciliationPanel() (+28 more)
+Cohesion: 0.17
+Nodes (16): BankReconciliation(), BudgetPanel(), CashFlowProjected(), CategoryManager(), ConciliationPanel(), PendingTransaction, DREChart(), DRETable() (+8 more)
 
 ### Community 7 - "Community 7"
 Cohesion: 0.05
-Nodes (41): googleProvider, AcceptInviteView, AdministrativeView, AnalyticsView, ArenaView, AssetPublicView, AuditDashboard, BillingView (+33 more)
+Nodes (36): AcceptInviteView, AdministrativeView, AnalyticsView, ArenaView, AssetPublicView, AuditDashboard, BillingView, CalendarView (+28 more)
 
 ### Community 8 - "Community 8"
-Cohesion: 0.22
-Nodes (10): BroadcastTab(), OnboardingForm(), ReferralsView(), calculateDiscount(), getPlanPrice(), getSetupPrice(), updateReferrerSubscription(), authFetch() (+2 more)
+Cohesion: 0.35
+Nodes (6): OnboardingForm(), calculateDiscount(), getPlanPrice(), getSetupPrice(), updateReferrerSubscription(), SiteStatus
 
 ### Community 9 - "Community 9"
-Cohesion: 0.09
-Nodes (20): ChecklistItem, ChecklistMessage(), ChecklistMessageProps, LinkPreviewCard(), LinkPreviewCardProps, MetaData, previewCache, COMMON_EMOJIS (+12 more)
+Cohesion: 0.10
+Nodes (17): ChecklistItem, ChecklistMessage(), ChecklistMessageProps, LinkPreviewCard(), LinkPreviewCardProps, MetaData, previewCache, COMMON_EMOJIS (+9 more)
 
 ### Community 10 - "Community 10"
 Cohesion: 0.12
@@ -222,116 +232,116 @@ Cohesion: 0.06
 Nodes (32): dependencies, @aws-sdk/client-s3, @aws-sdk/s3-request-presigner, balloons-js, better-sqlite3, canvas-confetti, clsx, date-fns (+24 more)
 
 ### Community 13 - "Community 13"
-Cohesion: 0.06
-Nodes (29): StagesTabProps, ApiErrorResponse, ApiResponse, ApiSuccessResponse, AppPermission, AuditLogEntry, AuditTargetType, BroadcastPayload (+21 more)
+Cohesion: 0.07
+Nodes (28): AuthContextType, ApiErrorResponse, ApiResponse, ApiSuccessResponse, AppPermission, AuditLogEntry, AuditTargetType, BroadcastPayload (+20 more)
 
 ### Community 14 - "Community 14"
 Cohesion: 0.06
 Nodes (30): AvatarProps, ButtonGroupProps, ButtonProps, CalendarProps, CheckboxProps, ChipProps, DateValue, DropdownProps (+22 more)
 
 ### Community 15 - "Community 15"
-Cohesion: 0.12
-Nodes (18): AvatarFrame(), AvatarFrameProps, CommandPalette(), MOODS, MoodTracker(), PayrollItemCalculated, PayrollPanel(), PayrollSettings (+10 more)
+Cohesion: 0.11
+Nodes (18): AddAssetModal(), AddAssetModalProps, CATEGORIES, CONDITIONS, AvatarFrame(), AvatarFrameProps, BirthdayCelebrationProps, BroadcastTab() (+10 more)
 
 ### Community 16 - "Community 16"
-Cohesion: 0.15
-Nodes (6): SlashCommandSuggestionsProps, availableCommands, BotCommand, BotContext, findCommand(), processBotCommand()
+Cohesion: 0.18
+Nodes (4): availableCommands, BotContext, findCommand(), processBotCommand()
 
 ### Community 17 - "Community 17"
-Cohesion: 0.09
-Nodes (24): CareerTimelineProps, ICONS, EnergyScoreCard(), EnergyScoreCardProps, getLevel(), LEVELS, COLUMNS, PDIItem (+16 more)
+Cohesion: 0.11
+Nodes (20): CareerTimelineProps, ICONS, COLUMNS, PDIItem, PDIKanban(), PDIKanbanProps, CareerMilestone, OnboardingTask (+12 more)
 
 ### Community 18 - "Community 18"
 Cohesion: 0.13
 Nodes (20): handler(), handler(), handlePaymentCreated(), handlePaymentReceived(), resend, sendBoasVindasLinkEmail(), sendBoasVindasSubscriptionEmail(), sendFaturaEmitidaEmail() (+12 more)
 
 ### Community 19 - "Community 19"
-Cohesion: 0.15
-Nodes (23): ChatSidebarProps, ChatWindow(), ChatWindowProps, ExploreChannelsModalProps, ForwardMessageModal(), ForwardMessageModalProps, GlobalSearchModal(), GlobalSearchModalProps (+15 more)
+Cohesion: 0.16
+Nodes (17): ChatSidebarProps, ChatWindowProps, CATEGORY_COLORS, ExploreChannelsModal(), ExploreChannelsModalProps, ForwardMessageModal(), ForwardMessageModalProps, GroupSettingsModalProps (+9 more)
 
 ### Community 20 - "Community 20"
 Cohesion: 0.07
 Nodes (29): 10. 🎨 Fábrica de Sites & Projetos (Módulo Operacional Unificado), 11. 📚 Nexus Hub — Biblioteca de Sabedoria Corporativa & Gamificação, 12. 🎨 Experiência do Usuário (UX) & Componentes Premium Refinados, 13. 🔐 Portal do Cliente com Login Geral Obrigatório, Agenda & CRM Financeiro (DRE/Caixa), 14. 💼 Módulo "Meu Negócio" & Lucro Real por Projeto (Estoque, Orçamentos e Finanças Operacionais no Portal), 1. Coleção `/profiles/{uid}` (Cadastro e Contratos), 1. 💵 Folha de Pagamento & Adiantamento Salarial Automatizados via Asaas, 2. 📊 CFO Simulator & DRE Table Reativa (+21 more)
 
 ### Community 21 - "Community 21"
-Cohesion: 0.15
-Nodes (18): ArenaStoreModal(), ArenaStoreModalProps, COSMETICS_LIST, Connect4Board(), FeedTrivia(), LOCAL_TRIVIA_QUESTIONS, TriviaQuestion, LudoLobbyModal() (+10 more)
+Cohesion: 0.11
+Nodes (26): ArenaStoreModal(), ArenaStoreModalProps, COSMETICS_LIST, CheckersBoard(), ChessBoard(), Connect4Board(), FeedTrivia(), LOCAL_TRIVIA_QUESTIONS (+18 more)
 
 ### Community 22 - "Community 22"
-Cohesion: 0.09
-Nodes (25): AvailabilityCalendar(), AvailabilityCalendarProps, DURATIONS, CategoryManager(), ChatSidebar(), ContractManager(), ContractManagerProps, SupportCard() (+17 more)
+Cohesion: 0.07
+Nodes (30): ContractsTab(), AvailabilityCalendar(), AvailabilityCalendarProps, DURATIONS, ContractManager(), FeedbackBoard(), FeedbackBoardProps, GifPickerModal() (+22 more)
 
 ### Community 23 - "Community 23"
-Cohesion: 0.09
-Nodes (21): AssetCard(), AssetCardProps, AssetFormModal(), AssetFormModalProps, AssetManager(), AssetManagerProps, AssetQrCodeModalProps, CATEGORY_ICONS (+13 more)
+Cohesion: 0.11
+Nodes (20): AssetCard(), AssetCardProps, AssetFormModal(), AssetFormModalProps, AssetManager(), AssetManagerProps, SkillRadarProps, useAssets() (+12 more)
 
 ### Community 24 - "Community 24"
-Cohesion: 0.06
-Nodes (17): ClientPortalLayout(), InventoryItem, PortalCalculatorProps, SelectedMaterial, InventoryItem, PortalInventoryProps, usePortalData(), usePortalSupport() (+9 more)
+Cohesion: 0.12
+Nodes (8): ClientPortalLayout(), usePortalData(), PortalAgendaProps, Expense, PortalCRMFinanceProps, Revenue, PortalFinanceProps, PortalHomeProps
 
 ### Community 25 - "Community 25"
 Cohesion: 0.15
-Nodes (18): LudoBoard(), LudoSkin, playLudoProceduralMusic(), stopLudoProceduralMusic(), THEME_SKINS, applyLudoMove(), canLudoTokenMove(), createInitialLudoState() (+10 more)
+Nodes (17): LudoSkin, playLudoProceduralMusic(), stopLudoProceduralMusic(), THEME_SKINS, applyLudoMove(), canLudoTokenMove(), createInitialLudoState(), getBestLudoMove() (+9 more)
 
 ### Community 26 - "Community 26"
-Cohesion: 0.10
-Nodes (15): ReferralsTabProps, AlertPanels(), AlertPanelsProps, CalendarMode, CalendarViewProps, Holiday, ClientMapViewProps, GeoCache (+7 more)
+Cohesion: 0.09
+Nodes (17): PlansTabProps, PurchasesTabProps, AlertPanelsProps, CalendarMode, CalendarView(), CalendarViewProps, Holiday, CashFlowProjectionProps (+9 more)
 
 ### Community 27 - "Community 27"
-Cohesion: 0.14
-Nodes (12): MyCornerWidget(), GoalsSkeleton(), LibrarySkeleton(), VaultSkeleton(), Field, PremiumDialog(), PremiumDialogProps, PHILOSOPHICAL_QUOTES (+4 more)
+Cohesion: 0.15
+Nodes (11): MyCornerWidget(), GoalsSkeleton(), LibrarySkeleton(), VaultSkeleton(), Field, PremiumDialog(), PremiumDialogProps, PHILOSOPHICAL_QUOTES (+3 more)
 
 ### Community 28 - "Community 28"
 Cohesion: 0.11
 Nodes (19): firestore, /users/{userId}, /users/{userId}/clients/{clientId}, /users/{userId}/expenses/{expenseId}, /users/{userId}/offers/{offerId}, /users/{userId}/settings/preferences, /users/{userId}/supportRequests/{requestId}, description (+11 more)
 
 ### Community 29 - "Community 29"
-Cohesion: 0.15
-Nodes (13): AddFeedbackModalProps, BroadcastTabProps, ContractSignatureGateProps, FeedbackMural(), FeedbackMuralProps, AuthContextType, BusinessAlert, FeedbackItem (+5 more)
+Cohesion: 0.12
+Nodes (16): AddFeedbackModal(), AddFeedbackModalProps, BroadcastTabProps, ContractSignatureGateProps, EnergyScoreCard(), EnergyScoreCardProps, getLevel(), LEVELS (+8 more)
 
 ### Community 30 - "Community 30"
-Cohesion: 0.10
-Nodes (26): OnboardingTabProps, OKRWidget(), WikiArticleDetailProps, WikiEditorModalProps, CustomRole, FeedbackRequest, KeyResult, Objective (+18 more)
+Cohesion: 0.12
+Nodes (23): OnboardingTabProps, Budget, FeedbackRequest, Objective, SupportRequest, WikiArticle, WikiComment, createFinanceSlice() (+15 more)
 
 ### Community 31 - "Community 31"
-Cohesion: 0.20
-Nodes (15): CheckersBoard(), CheckersSkin, playCheckersProceduralMusic(), stopCheckersProceduralMusic(), THEME_SKINS, applyCheckersMove(), checkCheckersWinner(), CheckersGrid (+7 more)
+Cohesion: 0.21
+Nodes (14): CheckersSkin, playCheckersProceduralMusic(), stopCheckersProceduralMusic(), THEME_SKINS, applyCheckersMove(), checkCheckersWinner(), CheckersGrid, CheckersMove (+6 more)
 
 ### Community 32 - "Community 32"
-Cohesion: 0.16
-Nodes (15): CheckersBoardProps, ChessBoardProps, Connect4BoardProps, Connect4Skin, playC4ProceduralMusic(), stopC4ProceduralMusic(), THEME_SKINS, LudoBoardProps (+7 more)
+Cohesion: 0.23
+Nodes (10): Connect4Skin, playC4ProceduralMusic(), stopC4ProceduralMusic(), THEME_SKINS, BoardGrid, CellValue, checkConnect4Winner(), getBestConnect4Move() (+2 more)
 
 ### Community 33 - "Community 33"
-Cohesion: 0.18
-Nodes (15): CHESS_PIECES_UNICODE, ChessBoard(), ChessSkin, playChessProceduralMusic(), stopChessProceduralMusic(), THEME_SKINS, applyChessMove(), checkChessWinner() (+7 more)
+Cohesion: 0.19
+Nodes (14): CHESS_PIECES_UNICODE, ChessSkin, playChessProceduralMusic(), stopChessProceduralMusic(), THEME_SKINS, applyChessMove(), checkChessWinner(), ChessBoardState (+6 more)
 
 ### Community 34 - "Community 34"
 Cohesion: 0.11
 Nodes (17): 1. Otimização de Frontend e Bundle 🎒, 2. Otimização de Backend, Queries e Crons ⚙️, 3. Estado, Hooks e Lógica Reativa 🧠, Ações Propostas:, Ações Propostas:, Ações Propostas:, Cronograma de Execução Proposto 📅, Fase 1: Correções Críticas (P0 - Backend & Banco) (+9 more)
 
 ### Community 35 - "Community 35"
-Cohesion: 0.21
-Nodes (9): GoalsTab(), GoalsTabProps, LibraryTab(), NexusHub(), ReadingCompanion(), ReadingCompanionProps, TasksTab(), useNexusStore (+1 more)
+Cohesion: 0.19
+Nodes (10): GoalsTab(), GoalsTabProps, NexusHub(), TasksTab(), LinkCard, VaultTab(), VaultTabProps, LinkFolder (+2 more)
 
 ### Community 36 - "Community 36"
 Cohesion: 0.12
 Nodes (17): devDependencies, autoprefixer, tailwindcss, @tailwindcss/vite, @tanstack/react-query-devtools, tsx, @types/canvas-confetti, @types/express (+9 more)
 
 ### Community 37 - "Community 37"
-Cohesion: 0.09
-Nodes (26): AddFeedbackModal(), ClientsGrid(), EmployeeSurveyModal(), CATEGORY_COLORS, ExploreChannelsModal(), FeedSchedule(), NewChatModal(), NewChatModalProps (+18 more)
+Cohesion: 0.06
+Nodes (32): ClientsGrid(), CreateGroupModal(), DocumentManager(), DocumentManagerProps, EmployeeSurveyModal(), FeedSchedule(), NewChatModal(), NewChatModalProps (+24 more)
 
 ### Community 38 - "Community 38"
 Cohesion: 0.24
 Nodes (8): handler(), runDailyCron(), runFinanceEngine(), runFinanceReconciler(), getS3Client(), runMediaCleaner(), runProcessScheduler(), sendBirthdayGreetingEmail()
 
 ### Community 39 - "Community 39"
-Cohesion: 0.15
-Nodes (10): BookCategory, DEFAULT_BOOK_CATEGORIES, DEFAULT_FOLDERS, DEFAULT_LINKS, LearningPath, NexusData, NexusState, ReadingStatus (+2 more)
+Cohesion: 0.14
+Nodes (9): ActivityLog, DEFAULT_BOOK_CATEGORIES, DEFAULT_FOLDERS, DEFAULT_LINKS, LearningPath, NexusData, NexusState, UserPathProgress (+1 more)
 
 ### Community 40 - "Community 40"
-Cohesion: 0.25
-Nodes (9): LibraryTabProps, NexusStats(), BookCard, BookCardProps, NEON_AURA_MAP, ListViewItem, ListViewItemProps, ActivityLog (+1 more)
+Cohesion: 0.23
+Nodes (11): LearningPath, LearningPathsPanel(), UserPathProgress, ReadingCompanion(), ReadingCompanionProps, BookCard, BookCardProps, NEON_AURA_MAP (+3 more)
 
 ### Community 41 - "Community 41"
 Cohesion: 0.23
@@ -342,16 +352,16 @@ Cohesion: 0.13
 Nodes (14): 1. Mural de Reconhecimento (Kudos), 2. Grid de Métricas em Tempo Real, 3. Alertas Inteligentes, 4. Projeção de Fluxo de Caixa, 📊 Dashboard: O Centro de Comando do HubCRM, 💡 Dicas de Especialista, 🛠️ Ferramentas de Gestão na Tela, Filtros e Ordenação (+6 more)
 
 ### Community 43 - "Community 43"
-Cohesion: 0.12
-Nodes (15): CashFlowProjection(), CashFlowProjectionProps, FinancialChartsProps, MetricsGrid, MetricsGridProps, OverdueAlertWidget(), OverdueAlertWidgetProps, calculateHealthScore() (+7 more)
+Cohesion: 0.16
+Nodes (15): CashFlowProjection(), FinancialChartsProps, RecentKudosWidget(), CRMContext, useClients(), useFilteredClients(), useFirestoreQuery(), useLeads() (+7 more)
 
 ### Community 44 - "Community 44"
-Cohesion: 0.26
-Nodes (7): ProposalGeneratorModalProps, Proposal, ProposalItem, ProposalItemSchema, ProposalSchema, ProposalStatusSchema, proposalService
+Cohesion: 0.29
+Nodes (6): Proposal, ProposalItem, ProposalItemSchema, ProposalSchema, ProposalStatusSchema, proposalService
 
 ### Community 45 - "Community 45"
-Cohesion: 0.32
-Nodes (5): EventBus, Handler, HUB_EVENTS, clientService, leadService
+Cohesion: 0.26
+Nodes (6): EventBus, Handler, HUB_EVENTS, initGlobalEventHandlers(), clientService, leadService
 
 ### Community 46 - "Community 46"
 Cohesion: 0.12
@@ -366,12 +376,12 @@ Cohesion: 0.14
 Nodes (14): type, type, SupportRequest, type, clientId, createdAt, message, subject (+6 more)
 
 ### Community 49 - "Community 49"
-Cohesion: 0.24
-Nodes (6): Announcement, AnnouncementManagerProps, CFOSimulatorProps, cn(), SaveButton(), SaveButtonProps
+Cohesion: 0.21
+Nodes (7): Announcement, AnnouncementManagerProps, CFOSimulatorProps, cn(), SaveButton(), SaveButtonProps, SettingsView()
 
 ### Community 50 - "Community 50"
-Cohesion: 0.10
-Nodes (28): AddMilestoneModal(), AddMilestoneModalProps, MILESTONE_TYPES, CalendarView(), ClientModal(), CommandItem, FeedbackBoard(), FeedbackBoardProps (+20 more)
+Cohesion: 0.25
+Nodes (10): AddMilestoneModal(), AddMilestoneModalProps, MILESTONE_TYPES, CommandItem, PERMISSION_GROUPS, AppPermission, CustomRole, defaultRoles (+2 more)
 
 ### Community 51 - "Community 51"
 Cohesion: 0.15
@@ -382,28 +392,28 @@ Cohesion: 0.15
 Nodes (13): type, format, type, type, displayName, email, photoURL, role (+5 more)
 
 ### Community 53 - "Community 53"
-Cohesion: 0.19
-Nodes (8): apiClient, ApiClientError, ApiClientOptions, Tag, createCRMSlice(), CRMSlice, LogLevel, LogOptions
+Cohesion: 0.16
+Nodes (11): ProposalGeneratorModalProps, LeadCardProps, apiClient, ApiClientError, ApiClientOptions, Lead, Tag, createCRMSlice() (+3 more)
 
 ### Community 54 - "Community 54"
-Cohesion: 0.25
-Nodes (8): Budget, Expense, Transaction, TransactionCategory, createFinanceSlice(), FinanceSlice, BaseActions, ConfigState
+Cohesion: 0.20
+Nodes (8): UptimeMonitor, SupportRequestModalProps, calculateHealthScore(), getHealthColor(), getHealthLabel(), LeadCard(), Expense, clientSchema
 
 ### Community 55 - "Community 55"
-Cohesion: 0.22
-Nodes (8): AddAssetModal(), AddAssetModalProps, CATEGORIES, CONDITIONS, CATEGORY_ICONS, InventorySection(), InventorySectionProps, ToolAsset
+Cohesion: 0.31
+Nodes (6): AssetQrCodeModalProps, CATEGORY_ICONS, CATEGORY_ICONS, InventorySection(), InventorySectionProps, ToolAsset
 
 ### Community 56 - "Community 56"
-Cohesion: 0.40
-Nodes (4): DEPARTMENTS_CONFIG, ReadingClub, ReadingClubsPanel(), ReadingClubsPanelProps
+Cohesion: 0.13
+Nodes (16): MetricsGrid, MetricsGridProps, isValidPhotoURL(), Sidebar(), navGroups, useGlobalChatAlerts(), usePermissions(), AppRouter() (+8 more)
 
 ### Community 57 - "Community 57"
-Cohesion: 0.11
-Nodes (12): ContractsTab(), ContractsTabProps, CredentialsTabProps, HistoryTabProps, UptimeMonitor, SupportRequestModal(), SupportRequestModalProps, ClientContract (+4 more)
+Cohesion: 0.15
+Nodes (8): ContractsTabProps, CredentialsTabProps, HistoryTabProps, ClientModal(), ClientContract, ClientCredential, ClientLog, PortalDocumentsProps
 
 ### Community 58 - "Community 58"
-Cohesion: 0.09
-Nodes (14): ErrorBoundary, Props, State, AuthProvider(), DialogProvider(), UIProvider(), initGlobalEventHandlers(), Logger (+6 more)
+Cohesion: 0.20
+Nodes (6): ErrorBoundary, Props, State, Logger, LogLevel, LogPayload
 
 ### Community 59 - "Community 59"
 Cohesion: 0.17
@@ -429,29 +439,49 @@ Nodes (10): 🛠️ Automação de Processos, ⚙️ Configurações: Personaliz
 Cohesion: 0.18
 Nodes (10): 1. Resumo Corporativo e BI de Clientes, 2. DRE Gerencial (Demonstrativo do Resultado do Exercício), 3. Fluxo de Caixa Projetado, 4. Orçamento (Budget), 🗂️ As Abas de Poder Financeiro, 💸 Como Lançar Despesas Corretamente, 💡 Dicas de Especialista, 📊 Financeiro Inteligente (BI): Decisões Baseadas em Dados (+2 more)
 
+### Community 65 - "Community 65"
+Cohesion: 0.17
+Nodes (4): TickerProps, AnimeItem, FeedAnimeListProps, DashboardView
+
 ### Community 66 - "Community 66"
-Cohesion: 0.20
-Nodes (8): isValidPhotoURL(), ProfileHoverCard(), ProfileHoverCardProps, getRoleDisplayName(), Invitation, Member, OrgNode(), TeamManagementView()
+Cohesion: 0.29
+Nodes (6): UserRole, getRoleDisplayName(), Invitation, Member, OrgNode(), TeamManagementView()
 
 ### Community 67 - "Community 67"
 Cohesion: 0.33
 Nodes (5): useFirestoreSync(), CanvasDocument, canvasService, CanvasEditorView(), CanvasListView()
 
+### Community 68 - "Community 68"
+Cohesion: 0.17
+Nodes (6): InventoryItem, PortalCalculatorProps, SelectedMaterial, InventoryItem, PortalInventoryProps, PortalManagementProps
+
 ### Community 69 - "Community 69"
 Cohesion: 0.20
 Nodes (5): CacheEntry, globalCache, inflight, UseApiQueryOptions, UseApiQueryResult
 
+### Community 70 - "Community 70"
+Cohesion: 0.24
+Nodes (6): AuthProvider(), DialogProvider(), UIProvider(), queryClient, AppProviders(), AppProvidersProps
+
+### Community 71 - "Community 71"
+Cohesion: 0.16
+Nodes (5): PortalAnnouncementForm(), PortalAnnouncementFormProps, SupportSatisfactionModalProps, useSettings(), googleProvider
+
 ### Community 72 - "Community 72"
 Cohesion: 0.20
 Nodes (7): collectionMock, docMock, mockDb, mockHandlePaymentCreated, mockHandlePaymentOverdue, mockHandlePaymentReceived, mockSnapshotResult
+
+### Community 74 - "Community 74"
+Cohesion: 0.29
+Nodes (6): LibraryTab(), LibraryTabProps, NexusStats(), CloudinaryResponse, uploadToCloudinary(), ReadingStatus
 
 ### Community 75 - "Community 75"
 Cohesion: 0.22
 Nodes (8): 🔐 Autenticação, 🛍️ Checkout Público (`/api/public_checkout`), 💳 Financeiro & Asaas (`/api/asaas_handler`), 🔌 HubCRM API Reference (v8.4.0), ⚡ Infraestrutura & Resiliência, 💰 Portal do Cliente (`/api/portal_finance`), 👥 Team & People (`/api/team_handler`), 🪝 Webhooks (`/api/asaas_webhook`)
 
 ### Community 76 - "Community 76"
-Cohesion: 0.27
-Nodes (8): LEAD_SOURCES, LeadFormModal(), LeadFormModalProps, Lead, emptyForm, LEAD_COLUMNS, LEAD_SOURCES, LeadsView()
+Cohesion: 0.20
+Nodes (9): LeadFilterMode, useLeads(), LEAD_SOURCES, LeadFormModal(), LeadFormModalProps, emptyForm, LEAD_COLUMNS, LEAD_SOURCES (+1 more)
 
 ### Community 77 - "Community 77"
 Cohesion: 0.32
@@ -482,8 +512,8 @@ Cohesion: 0.25
 Nodes (8): scripts, build, clean, dev, lint, preview, start, test
 
 ### Community 84 - "Community 84"
-Cohesion: 0.17
-Nodes (8): AIPrompt, categories, ProductionTemplate, ProductionTemplatesView(), SUGGESTED_VARIABLES, ActiveSection, ProjectsView(), ProjectTab
+Cohesion: 0.33
+Nodes (5): AIPrompt, categories, ProductionTemplate, ProductionTemplatesView(), SUGGESTED_VARIABLES
 
 ### Community 85 - "Community 85"
 Cohesion: 0.25
@@ -501,6 +531,10 @@ Nodes (11): handleGenerate(), handler(), handler(), handler(), hasFinancePermiss
 Cohesion: 0.29
 Nodes (3): CRMCardShape, CRMCardShapeUtil, CRMCardTool
 
+### Community 89 - "Community 89"
+Cohesion: 0.36
+Nodes (5): useWeather(), WeatherData, AppLayout(), Header(), HeaderProps
+
 ### Community 90 - "Community 90"
 Cohesion: 0.29
 Nodes (4): LeadEntity, LeadMapper, LeadSchema, LeadStatusSchema
@@ -509,13 +543,17 @@ Nodes (4): LeadEntity, LeadMapper, LeadSchema, LeadStatusSchema
 Cohesion: 0.29
 Nodes (6): apiKey, appId, authDomain, messagingSenderId, projectId, storageBucket
 
+### Community 92 - "Community 92"
+Cohesion: 0.23
+Nodes (7): ChatSidebar(), ChatWindow(), ImageLightboxProps, formatChatDividerDate(), formatChatTime(), isSameDay(), useBookmarks()
+
 ### Community 94 - "Community 94"
 Cohesion: 0.29
 Nodes (6): 💡 A Filosofia HubCRM, 🔗 Como os Módulos se Conectam, 🚀 Guia Mestre: Dominando o HubCRM, 🛠️ Primeiros Passos para Administradores, 📂 Sumário de Módulos, 🧭 Visão Geral do Sistema
 
 ### Community 95 - "Community 95"
-Cohesion: 0.11
-Nodes (13): CHANNEL_CATEGORIES, CHANNEL_ICONS, CreateChannelModal(), CreateChannelModalProps, CreateGroupModal(), CreateGroupModalProps, GifPickerModal(), GifPickerModalProps (+5 more)
+Cohesion: 0.24
+Nodes (6): CreateGroupModalProps, usePortalSupport(), ImgBBResponse, uploadImageToImgBB(), PortalSupport(), PortalSupportProps
 
 ### Community 96 - "Community 96"
 Cohesion: 0.29
@@ -526,8 +564,8 @@ Cohesion: 0.40
 Nodes (4): GameHelpModal(), GameHelpModalProps, GAME_RULES, GameHelpRule
 
 ### Community 98 - "Community 98"
-Cohesion: 0.22
-Nodes (5): ClientEntity, ClientMapper, ClientSchema, useFilteredClients(), SiteStatus
+Cohesion: 0.33
+Nodes (3): ClientEntity, ClientMapper, ClientSchema
 
 ### Community 99 - "Community 99"
 Cohesion: 0.33
@@ -541,9 +579,17 @@ Nodes (4): handle_call_tool(), handle_list_tools(), TextContent, Tool
 Cohesion: 0.33
 Nodes (4): handle_call_tool(), handle_list_tools(), TextContent, Tool
 
+### Community 102 - "Community 102"
+Cohesion: 0.38
+Nodes (4): StagesTabProps, ClientStage, createPreferencesSlice(), PreferencesSlice
+
+### Community 103 - "Community 103"
+Cohesion: 0.29
+Nodes (4): AuthGuard(), ContractGuard(), GuardProps, PendingInviteGuard()
+
 ### Community 104 - "Community 104"
-Cohesion: 0.25
-Nodes (3): PlansTabProps, PurchasesTabProps, ClientPlan
+Cohesion: 0.24
+Nodes (4): ReferralsTabProps, ContractManagerProps, authFetch(), asaasService
 
 ### Community 105 - "Community 105"
 Cohesion: 0.40
@@ -552,6 +598,10 @@ Nodes (4): Book(), BookProps, sizePresets, cn()
 ### Community 107 - "Community 107"
 Cohesion: 0.40
 Nodes (4): firestore, indexes, rules, firebase
+
+### Community 108 - "Community 108"
+Cohesion: 0.47
+Nodes (3): OFXTransaction, parseOFX(), BillingView()
 
 ### Community 109 - "Community 109"
 Cohesion: 0.40
@@ -569,45 +619,57 @@ Nodes (4): AuditLog, auditService, AuditDashboard(), AuditLogWithId
 Cohesion: 0.50
 Nodes (3): description, name, requestFramePermissions
 
+### Community 115 - "Community 115"
+Cohesion: 0.60
+Nodes (4): CashFlowForecastChart(), DREWidget(), formatCurrency(), useCashflowProjections()
+
 ### Community 116 - "Community 116"
 Cohesion: 0.50
 Nodes (3): crons, ignoreCommand, rewrites
 
+### Community 119 - "Community 119"
+Cohesion: 0.33
+Nodes (3): ActiveSection, ProjectsView(), ProjectTab
+
 ### Community 120 - "Community 120"
-Cohesion: 0.48
-Nodes (4): useChatList(), SoundType, useSoundEffect(), ChatView()
+Cohesion: 0.14
+Nodes (14): COMMON_EMOJIS, EmojiPicker(), EmojiPickerProps, SKIN_TONE_SUPPORTING_EMOJIS, SKIN_TONES, GlobalSearchModal(), GlobalSearchModalProps, ManageTemplatesModal() (+6 more)
+
+### Community 121 - "Community 121"
+Cohesion: 0.40
+Nodes (5): CheckersBoardProps, ChessBoardProps, Connect4BoardProps, LudoBoardProps, GameMatch
 
 ### Community 123 - "Community 123"
-Cohesion: 0.33
-Nodes (5): COMMON_EMOJIS, EmojiPicker(), EmojiPickerProps, SKIN_TONE_SUPPORTING_EMOJIS, SKIN_TONES
+Cohesion: 0.40
+Nodes (4): CHANNEL_CATEGORIES, CHANNEL_ICONS, CreateChannelModal(), CreateChannelModalProps
+
+### Community 133 - "Community 133"
+Cohesion: 0.50
+Nodes (3): isValidPhotoURL(), ProfileHoverCard(), ProfileHoverCardProps
 
 ### Community 134 - "Community 134"
 Cohesion: 0.60
 Nodes (4): handleAuth(), handleFinance(), handler(), ClientBase
 
-### Community 136 - "Community 136"
-Cohesion: 0.40
-Nodes (4): LinkCard, VaultTab(), VaultTabProps, LinkFolder
-
 ## Knowledge Gaps
-- **638 isolated node(s):** `github-actions.workflows.pinned.workflows`, `mockFetch`, `mockAsaasRequest`, `mockDocGet`, `mockDocSet` (+633 more)
+- **639 isolated node(s):** `github-actions.workflows.pinned.workflows`, `mockFetch`, `mockAsaasRequest`, `mockDocGet`, `mockDocSet` (+634 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **19 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **16 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `useAuth()` connect `Community 15` to `Community 0`, `Community 2`, `Community 3`, `Community 6`, `Community 7`, `Community 8`, `Community 9`, `Community 10`, `Community 17`, `Community 19`, `Community 21`, `Community 22`, `Community 25`, `Community 27`, `Community 31`, `Community 32`, `Community 33`, `Community 35`, `Community 37`, `Community 43`, `Community 50`, `Community 55`, `Community 56`, `Community 57`, `Community 66`, `Community 67`, `Community 76`, `Community 84`, `Community 95`, `Community 120`?**
-  _High betweenness centrality (0.066) - this node is a cross-community bridge._
-- **Why does `useCRM()` connect `Community 37` to `Community 0`, `Community 2`, `Community 3`, `Community 6`, `Community 7`, `Community 8`, `Community 9`, `Community 15`, `Community 17`, `Community 19`, `Community 21`, `Community 22`, `Community 23`, `Community 26`, `Community 27`, `Community 35`, `Community 43`, `Community 50`, `Community 55`, `Community 56`, `Community 57`, `Community 66`, `Community 67`, `Community 77`, `Community 84`, `Community 95`, `Community 120`?**
-  _High betweenness centrality (0.043) - this node is a cross-community bridge._
-- **Why does `Client` connect `Community 26` to `Community 0`, `Community 98`, `Community 37`, `Community 5`, `Community 6`, `Community 104`, `Community 8`, `Community 43`, `Community 45`, `Community 13`, `Community 16`, `Community 53`, `Community 57`, `Community 30`?**
+- **Why does `useAuth()` connect `Community 15` to `Community 0`, `Community 2`, `Community 3`, `Community 133`, `Community 6`, `Community 7`, `Community 9`, `Community 10`, `Community 17`, `Community 19`, `Community 21`, `Community 22`, `Community 23`, `Community 25`, `Community 27`, `Community 29`, `Community 31`, `Community 32`, `Community 33`, `Community 35`, `Community 37`, `Community 40`, `Community 43`, `Community 49`, `Community 50`, `Community 54`, `Community 56`, `Community 57`, `Community 66`, `Community 67`, `Community 76`, `Community 84`, `Community 89`, `Community 92`, `Community 95`, `Community 103`, `Community 104`, `Community 108`, `Community 120`, `Community 123`?**
+  _High betweenness centrality (0.069) - this node is a cross-community bridge._
+- **Why does `useCRM()` connect `Community 37` to `Community 0`, `Community 2`, `Community 3`, `Community 133`, `Community 6`, `Community 7`, `Community 8`, `Community 9`, `Community 17`, `Community 19`, `Community 21`, `Community 22`, `Community 23`, `Community 26`, `Community 27`, `Community 29`, `Community 35`, `Community 43`, `Community 49`, `Community 54`, `Community 55`, `Community 56`, `Community 57`, `Community 66`, `Community 67`, `Community 76`, `Community 77`, `Community 84`, `Community 92`, `Community 95`, `Community 108`, `Community 119`, `Community 120`, `Community 123`?**
+  _High betweenness centrality (0.044) - this node is a cross-community bridge._
+- **Why does `Client` connect `Community 26` to `Community 0`, `Community 5`, `Community 37`, `Community 6`, `Community 104`, `Community 8`, `Community 43`, `Community 45`, `Community 13`, `Community 16`, `Community 53`, `Community 54`, `Community 57`, `Community 30`?**
   _High betweenness centrality (0.025) - this node is a cross-community bridge._
 - **What connects `github-actions.workflows.pinned.workflows`, `mockFetch`, `mockAsaasRequest` to the rest of the system?**
-  _638 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _639 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.1437908496732026 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.10869565217391304 - nodes in this community are weakly interconnected._
+- **Should `Community 2` be split into smaller, more focused modules?**
+  _Cohesion score 0.11076923076923077 - nodes in this community are weakly interconnected._
 - **Should `Community 3` be split into smaller, more focused modules?**
-  _Cohesion score 0.10252100840336134 - nodes in this community are weakly interconnected._
-- **Should `Community 4` be split into smaller, more focused modules?**
-  _Cohesion score 0.12091038406827881 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.14285714285714285 - nodes in this community are weakly interconnected._

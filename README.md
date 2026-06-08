@@ -76,7 +76,9 @@ Fluxo financeiro sem erro humano e categorização contábil autônoma:
 ### 7. 📢 Mural de Comunicados Gerenciável & Central Comunitária (Bento Grid)
 Integração e cultura corporativa de alto impacto:
 *   **Central Hub Matinal (Home):** Layout bento-grid de abertura do CRM com visual Glassmorphism contendo cotações em tempo real, calendário de animes (lançamento geek) com busca inteligente (autocomplete Jikan), agenda semanal de reuniões em tempo real (`FeedSchedule.tsx`) e o Desafio da Trivia Geral (`FeedTrivia.tsx`) reformulado com 40 perguntas locais em Português do Brasil, que premia o colaborador com 50 Hub Coins por acerto uma vez ao dia com trava de persistência no Firestore.
-*   **Mural de Avisos Dinâmico (Admin CRUD):** Painel administrativo que permite criar, editar e excluir comunicados, com opção de destaque urgente em Glow Neon âmbar.
+*   **Mural de Avisos Dinâmico (Painel Administrativo):** Painel que permite criar, editar e excluir comunicados do time, com opção de destaque urgente em Glow Neon âmbar. O gerenciamento foi unificado no painel do administrador sob duas sub-abas:
+    *   **Mural do Time:** Avisos internos para todos os colaboradores (CRUD do `AnnouncementManager`).
+    *   **Aviso do Portal (Clientes):** Formulário dedicado para emitir avisos globais (como recesso, fim de ano e atualizações) exibidos no topo do portal corporativo de todos os clientes, persistidos em tempo real na raiz da organização.
 *   **Tempo de Expiração Automatizado:** Cada aviso possui configuração de validade em dias e sai do ar de forma autônoma após expirar.
 *   **Celebrações do Mês Reais:** Listagem em tempo real dos aniversariantes da empresa integrados com perfis do Firestore, incluindo disparo de confete ao festejar com os aniversariantes de hoje.
 

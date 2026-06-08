@@ -23,7 +23,6 @@ export const navGroups = [
       { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
       { icon: Package, label: 'Produtos', path: '/products' },
       { icon: Users, label: 'Hub Rewards', path: '/referrals' },
-      { icon: Megaphone, label: 'Marketing', path: '/marketing', permission: 'MANAGE_SETTINGS' },
     ]
   },
   {

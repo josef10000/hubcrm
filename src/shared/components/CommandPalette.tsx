@@ -70,7 +70,6 @@ export function CommandPalette() {
     { name: 'Fábrica de Sites & Projetos', description: 'Acompanhamento de projetos, templates white label e gerador de prompts', path: '/projects', shortcut: 'pj', icon: LayoutTemplate },
     { name: 'Relatórios / Analytics', description: 'Métricas de conversão e relatórios avançados', path: '/analytics', shortcut: 'an', icon: LineChart, permission: 'VIEW_REPORTS' },
     { name: 'Gestão Financeira', description: 'Snapshot diário de DRE, fluxo de caixa e BI', path: '/finance', shortcut: 'gf', icon: DollarSign, permission: 'MANAGE_FINANCE' },
-    { name: 'Marketing', description: 'Campanhas ativas e réguas de relacionamento', path: '/marketing', shortcut: 'mk', icon: Sparkles, permission: 'MANAGE_SETTINGS' },
     { name: 'Minha Equipe', description: 'Controle de acessos, convites e organograma', path: '/team', shortcut: 'te', icon: Users, permission: 'MANAGE_TEAM' },
     { name: 'Pessoas', description: 'Quadro Kanban de PDI e desenvolvimento de carreiras', path: '/people', shortcut: 'pe', icon: UserCheck, permission: 'MANAGE_TEAM' },
     { name: 'Administração', description: 'Configurações de infraestrutura e tokens', path: '/admin', shortcut: 'ad', icon: Settings, permission: 'MANAGE_SETTINGS' },

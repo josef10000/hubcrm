@@ -325,8 +325,8 @@
     "semantic_hash": ""
   },
   "src/app/layouts/Header.tsx": {
-    "mtime": 1780853729.0428727,
-    "ast_hash": "577ada87e66039ee8f91474eafe22f1d",
+    "mtime": 1780948333.015652,
+    "ast_hash": "d53bca8d0dfba3502d755485c31a2c61",
     "semantic_hash": ""
   },
   "src/app/providers/AppProviders.tsx": {
@@ -335,8 +335,8 @@
     "semantic_hash": ""
   },
   "src/app/router/AppRouter.tsx": {
-    "mtime": 1780687543.3531375,
-    "ast_hash": "4fe2c3beabd9770a293f3c379d869ed7",
+    "mtime": 1780948329.356,
+    "ast_hash": "4d2c6116106abfe52134ce913606f7cf",
     "semantic_hash": ""
   },
   "src/app/router/RouteGuards.tsx": {
@@ -365,8 +365,8 @@
     "semantic_hash": ""
   },
   "src/constants/navigation.ts": {
-    "mtime": 1780664977.2944715,
-    "ast_hash": "668a2c62a4d1fe7824fd875ab2b96948",
+    "mtime": 1780948325.6873243,
+    "ast_hash": "63a6cd5013cd733d952d253ded045b62",
     "semantic_hash": ""
   },
   "src/constants/permissions.ts": {
@@ -405,8 +405,8 @@
     "semantic_hash": ""
   },
   "src/core/admin/views/AdministrativeView.tsx": {
-    "mtime": 1780922623.6633348,
-    "ast_hash": "f2969e27b91bbdf5510f9543ee1dfa73",
+    "mtime": 1780948321.7423751,
+    "ast_hash": "4d2d846a23d8546df1c7687385cc6451",
     "semantic_hash": ""
   },
   "src/core/auth/components/Auth.tsx": {
@@ -952,11 +952,6 @@
   "src/domains/crm/views/LeadsView.tsx": {
     "mtime": 1780680588.9353206,
     "ast_hash": "cf6f392f375929319ce8423dd2ee20dd",
-    "semantic_hash": ""
-  },
-  "src/domains/crm/views/MarketingView.tsx": {
-    "mtime": 1778362519.36598,
-    "ast_hash": "42bf3d23e8139edd847600ca2518d595",
     "semantic_hash": ""
   },
   "src/domains/crm/views/MorningFeedView.tsx": {
@@ -1640,8 +1635,8 @@
     "semantic_hash": ""
   },
   "src/shared/components/CommandPalette.tsx": {
-    "mtime": 1780665022.9230897,
-    "ast_hash": "e037f2f10eee9f0c69a31cc22268f0ff",
+    "mtime": 1780948336.5057545,
+    "ast_hash": "96c392d6ce71fd8ede0a6c2ae2b29866",
     "semantic_hash": ""
   },
   "src/shared/components/ConfirmationModal.tsx": {
@@ -1905,8 +1900,8 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1780933402.8969321,
-    "ast_hash": "2c570d4b77ee1ff9b35821dda8692634",
+    "mtime": 1780948349.4769878,
+    "ast_hash": "b1f0b5500fec751d50ad8017c7ae9d3f",
     "semantic_hash": ""
   },
   "docs/API.md": {
@@ -2012,6 +2007,11 @@
   "src/shared/components/ProfileHoverCard.tsx": {
     "mtime": 1780932724.084748,
     "ast_hash": "b8e790f049160188f1cdba8b7425b8b7",
+    "semantic_hash": ""
+  },
+  "src/core/admin/components/PortalAnnouncementForm.tsx": {
+    "mtime": 1780948316.7928782,
+    "ast_hash": "d0c239c5a003cdae69bb29ff0f1b8799",
     "semantic_hash": ""
   }
 }

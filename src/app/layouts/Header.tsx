@@ -65,7 +65,6 @@ export function Header({ currentPath, navigate }: HeaderProps) {
       case '/projects': return 'Fábrica de Sites & Projetos';
       case '/settings': return 'Configurações';
       case '/referrals': return 'Hub Rewards';
-      case '/marketing': return 'Comunicados Globais';
       case '/products': return 'Produtos';
       case '/monitoring': return 'Monitoramento';
       case '/map': return 'Mapa de Clientes';

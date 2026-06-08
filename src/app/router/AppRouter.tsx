@@ -39,7 +39,6 @@ const HubShopView = lazy(() => import('@/domains/shop/views/HubShopView'));
 const ProjectsView = lazy(() => import('@crm/views/ProjectsView'));
 const OnboardingHubView = lazy(() => import('@crm/views/OnboardingHubView'));
 const ContractsView = lazy(() => import('@crm/views/ContractsView'));
-const MarketingView = lazy(() => import('@crm/views/MarketingView'));
 const ProductsView = lazy(() => import('@crm/views/ProductsView'));
 const TeamManagementView = lazy(() => import('@people/views/TeamManagementView'));
 const PeopleView = lazy(() => import('@people/views/PeopleView'));
@@ -132,7 +131,6 @@ export function AppRouter() {
                       {/* Permission Based Routes */}
                       <Route path="/analytics" element={hasPermission('VIEW_REPORTS') ? <AnalyticsView /> : <Navigate to="/" />} />
                       <Route path="/finance" element={hasPermission('MANAGE_FINANCE') ? <FinanceView /> : <Navigate to="/" />} />
-                      <Route path="/marketing" element={hasPermission('MANAGE_SETTINGS') ? <MarketingView /> : <Navigate to="/" />} />
                       <Route path="/team" element={hasPermission('MANAGE_TEAM') ? <TeamManagementView /> : <Navigate to="/" />} />
                       <Route path="/people" element={hasPermission('MANAGE_TEAM') ? <PeopleView /> : <Navigate to="/" />} />
                       <Route path="/admin" element={hasPermission('MANAGE_SETTINGS') ? <AdministrativeView /> : <Navigate to="/" />} />
