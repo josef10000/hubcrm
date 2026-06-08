@@ -58,9 +58,29 @@ export default function ProfileHoverCard({ userId, orgId, children }: ProfileHov
       }
     : null;
 
-  const roleName = profile 
-    ? (orgRoles.find((r: any) => r.id === profile.roleId || r.name === profile.role)?.name || profile.role || 'Colaborador') 
-    : 'Colaborador';
+  const getRoleName = (prof: any) => {
+    if (!prof) return 'Colaborador';
+    const rId = prof.roleId;
+    const rVal = prof.role;
+    
+    // 1. Tenta encontrar nas roles da organização por id ou nome
+    if (orgRoles && orgRoles.length > 0) {
+      const found = orgRoles.find((r: any) => 
+        r.id === rId || 
+        (typeof rVal === 'string' && r.id === rVal) || 
+        (typeof rVal === 'object' && rVal && r.id === rVal.id)
+      );
+      if (found && found.name) return found.name;
+    }
+    
+    // 2. Fallback para a role do perfil
+    if (typeof rVal === 'string') return rVal;
+    if (typeof rVal === 'object' && rVal) return rVal.name || rVal.id || 'Colaborador';
+    
+    return 'Colaborador';
+  };
+
+  const roleName = getRoleName(profile);
 
   // Escuta expediente no Firestore apenas quando o card estiver visível (Lazy Loading)
   useEffect(() => {
