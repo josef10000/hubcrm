@@ -25,9 +25,9 @@ export default function AvatarFrame({ children, size = 'md', pulseStatus = 'none
     
     if (frame === 'none') {
       if (pulseStatus === 'active') {
-        styles = 'bg-gradient-to-r from-emerald-500 to-cyan-500 shadow-[0_0_12px_rgba(16,185,129,0.6)] animate-pulse';
+        styles = 'bg-gradient-to-r from-emerald-500 to-cyan-500 shadow-[0_0_12px_rgba(16,185,129,0.6)]';
       } else if (pulseStatus === 'paused') {
-        styles = 'bg-gradient-to-r from-amber-500 to-rose-500 shadow-[0_0_12px_rgba(245,158,11,0.6)] animate-pulse';
+        styles = 'bg-gradient-to-r from-amber-500 to-rose-500 shadow-[0_0_12px_rgba(245,158,11,0.6)]';
       }
     } else {
       switch (frame) {
@@ -61,9 +61,9 @@ export default function AvatarFrame({ children, size = 'md', pulseStatus = 'none
       }
 
       if (pulseStatus === 'active') {
-        styles += ' animate-pulse shadow-[0_0_22px_rgba(16,185,129,0.8)]';
+        styles += ' shadow-[0_0_22px_rgba(16,185,129,0.8)]';
       } else if (pulseStatus === 'paused') {
-        styles += ' animate-pulse shadow-[0_0_22px_rgba(245,158,11,0.8)]';
+        styles += ' shadow-[0_0_22px_rgba(245,158,11,0.8)]';
       } else if (frame === 'rainbow') {
         styles += ' animate-pulse';
       }

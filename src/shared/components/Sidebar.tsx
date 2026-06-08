@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Star, Globe, Clock, Coffee, Circle, User, LogOut, Users } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useUI } from '@/contexts/UIContext';

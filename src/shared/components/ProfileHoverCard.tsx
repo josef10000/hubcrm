@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { doc, onSnapshot } from 'firebase/firestore';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, Coffee, Shield, Globe, Users, Circle, Calendar } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { useCRM } from '@crm/contexts/CRMContext';
+import { useAuth } from '@auth/contexts/AuthContext';
 
 interface ProfileHoverCardProps {
   userId: string;
@@ -35,6 +36,7 @@ const isValidPhotoURL = (url: any) => {
 
 export default function ProfileHoverCard({ userId, orgId, children }: ProfileHoverCardProps) {
   const { teamProfiles = [], orgRoles = [] } = useCRM();
+  const { user, userProfile: currentUserProfile } = useAuth();
   const [isVisible, setIsVisible] = useState(false);
   const [todayLog, setTodayLog] = useState<any>(null);
   const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
@@ -43,7 +45,19 @@ export default function ProfileHoverCard({ userId, orgId, children }: ProfileHov
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Busca perfil e cargo do colaborador correspondente
-  const profile = teamProfiles.find((p: any) => p.uid === userId);
+  const rawProfile = userId === currentUserProfile?.uid 
+    ? currentUserProfile 
+    : (teamProfiles || []).find((p: any) => p.uid === userId);
+
+  // Fallback seguro com dados da conta Firebase autenticada se for o próprio usuário
+  const profile = rawProfile 
+    ? {
+        ...rawProfile,
+        displayName: rawProfile.displayName || (userId === user?.uid ? user.displayName : '') || 'Colaborador',
+        photoURL: rawProfile.photoURL || (userId === user?.uid ? user.photoURL : '') || '',
+      }
+    : null;
+
   const roleName = profile 
     ? (orgRoles.find((r: any) => r.id === profile.roleId || r.name === profile.role)?.name || profile.role || 'Colaborador') 
     : 'Colaborador';
@@ -77,12 +91,17 @@ export default function ProfileHoverCard({ userId, orgId, children }: ProfileHov
     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
 
     const rect = e.currentTarget.getBoundingClientRect();
-    let leftCoords = rect.right + window.scrollX + 12; // 12px à direita do avatar
-    const topCoords = rect.top + window.scrollY;
+    let leftCoords = rect.right + 12; // 12px à direita do avatar
+    let topCoords = rect.top;
 
     // Se bater na extremidade direita da tela, abre à esquerda
     if (leftCoords + 288 > window.innerWidth) {
-      leftCoords = rect.left + window.scrollX - 288 - 12;
+      leftCoords = rect.left - 288 - 12;
+    }
+
+    // Se bater na extremidade inferior da tela, joga para cima
+    if (topCoords + 320 > window.innerHeight) {
+      topCoords = window.innerHeight - 320 - 12;
     }
 
     hoverTimeoutRef.current = setTimeout(() => {
@@ -144,9 +163,12 @@ export default function ProfileHoverCard({ userId, orgId, children }: ProfileHov
         const now = Date.now();
         let totalTime = now - startTime;
         let totalPauseTime = 0;
-        pauses.forEach(p => {
-          const pEnd = p.endTime || now;
-          totalPauseTime += (pEnd - p.startTime);
+        const pausesList = pauses || [];
+        pausesList.forEach(p => {
+          if (p && p.startTime) {
+            const pEnd = p.endTime || now;
+            totalPauseTime += (pEnd - p.startTime);
+          }
         });
         const net = totalTime - totalPauseTime;
         setDuration(net > 0 ? net : 0);
@@ -193,7 +215,7 @@ export default function ProfileHoverCard({ userId, orgId, children }: ProfileHov
             exit={{ opacity: 0, scale: 0.95, y: 5 }}
             transition={{ duration: 0.15 }}
             style={{ 
-              position: 'absolute', 
+              position: 'fixed', 
               top: coords.top, 
               left: coords.left, 
               zIndex: 9999 
@@ -276,7 +298,7 @@ export default function ProfileHoverCard({ userId, orgId, children }: ProfileHov
                     <div className="flex justify-between pt-1 border-t border-white/5 mt-1">
                       <span>Tempo Ativo:</span>
                       {todayLog.status === 'active' ? (
-                        <LiveDuration startTime={todayLog.startTime} pauses={todayLog.pauses} />
+                        <LiveDuration startTime={todayLog.startTime} pauses={todayLog.pauses || []} />
                       ) : (
                         <span className="font-mono text-gray-400">
                           {Math.floor(todayLog.totalDuration / 3600000)}h {Math.floor((todayLog.totalDuration % 3600000) / 60000)}m

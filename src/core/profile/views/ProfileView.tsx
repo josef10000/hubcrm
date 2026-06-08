@@ -130,7 +130,7 @@ export default function ProfileView() {
     return options;
   };
   const [elapsedToday, setElapsedToday] = useState(0);
-  const myMonthlyLogs = myTimeLogs.filter(l => l.date.startsWith(selectedMonth));
+  const myMonthlyLogs = myTimeLogs.filter(l => l && l.date && typeof l.date === 'string' && l.date.startsWith(selectedMonth));
 
   useEffect(() => {
     if (!uid || !currentUserProfile?.orgId) return;
@@ -271,54 +271,62 @@ export default function ProfileView() {
       try {
         if (snap.exists()) {
           const data = snap.data() as UserProfile;
-          setProfile(data);
+          // Enriquecimento do perfil com dados do Firebase Auth se for o próprio usuário logado
+          const enrichedProfile = {
+            ...data,
+            uid: snap.id,
+            displayName: data.displayName || (snap.id === user?.uid ? user.displayName : '') || 'Colaborador',
+            photoURL: data.photoURL || (snap.id === user?.uid ? user.photoURL : '') || '',
+          } as UserProfile;
+          
+          setProfile(enrichedProfile);
           setError(null);
           
           setIsEditing(editing => {
             if (!editing) {
               setFormData({
-                displayName: data.displayName || '',
-                jobTitle: data.jobTitle || '',
-                bio: data.bio || '',
-                phoneNumber: data.phoneNumber || '',
-                instagram: data.instagram || '',
-                linkedin: data.linkedin || '',
-                photoURL: data.photoURL || '',
-                birthDate: data.birthDate || '',
-                startDate: data.startDate || '',
-                contractType: data.contractType || 'PJ',
-                workSchedule: data.workSchedule || {
+                displayName: enrichedProfile.displayName || '',
+                jobTitle: enrichedProfile.jobTitle || '',
+                bio: enrichedProfile.bio || '',
+                phoneNumber: enrichedProfile.phoneNumber || '',
+                instagram: enrichedProfile.instagram || '',
+                linkedin: enrichedProfile.linkedin || '',
+                photoURL: enrichedProfile.photoURL || '',
+                birthDate: enrichedProfile.birthDate || '',
+                startDate: enrichedProfile.startDate || '',
+                contractType: enrichedProfile.contractType || 'PJ',
+                workSchedule: enrichedProfile.workSchedule || {
                   daysOfWeek: [1, 2, 3, 4, 5],
                   entryTime: '09:00',
                   exitTime: '18:00'
                 },
-                salary: data.salary || 0,
-                healthInsurance: data.healthInsurance || 0,
-                mealVoucher: data.mealVoucher || 0,
-                transportVoucher: data.transportVoucher || 0,
-                homeOfficeAux: data.homeOfficeAux || 0,
+                salary: enrichedProfile.salary || 0,
+                healthInsurance: enrichedProfile.healthInsurance || 0,
+                mealVoucher: enrichedProfile.mealVoucher || 0,
+                transportVoucher: enrichedProfile.transportVoucher || 0,
+                homeOfficeAux: enrichedProfile.homeOfficeAux || 0,
                 benefitDeductions: {
-                  healthInsuranceCopay: data.benefitDeductions?.healthInsuranceCopay ?? 0,
-                  mealVoucherDiscount: data.benefitDeductions?.mealVoucherDiscount ?? 0,
-                  transportVoucherDiscount: data.benefitDeductions?.transportVoucherDiscount ?? 0
+                  healthInsuranceCopay: enrichedProfile.benefitDeductions?.healthInsuranceCopay ?? 0,
+                  mealVoucherDiscount: enrichedProfile.benefitDeductions?.mealVoucherDiscount ?? 0,
+                  transportVoucherDiscount: enrichedProfile.benefitDeductions?.transportVoucherDiscount ?? 0
                 },
-                pixKeyType: data.pixKeyType || '',
-                pixKey: data.pixKey || '',
+                pixKeyType: enrichedProfile.pixKeyType || '',
+                pixKey: enrichedProfile.pixKey || '',
                 bankAccount: {
-                  bankCode: data.bankAccount?.bankCode ?? '',
-                  bankName: data.bankAccount?.bankName ?? '',
-                  agency: data.bankAccount?.agency ?? '',
-                  account: data.bankAccount?.account ?? '',
-                  accountDigit: data.bankAccount?.accountDigit ?? '',
-                  accountType: data.bankAccount?.accountType ?? 'CHECKING',
-                  holderName: data.bankAccount?.holderName ?? '',
-                  holderCpfCnpj: data.bankAccount?.holderCpfCnpj ?? ''
+                  bankCode: enrichedProfile.bankAccount?.bankCode ?? '',
+                  bankName: enrichedProfile.bankAccount?.bankName ?? '',
+                  agency: enrichedProfile.bankAccount?.agency ?? '',
+                  account: enrichedProfile.bankAccount?.account ?? '',
+                  accountDigit: enrichedProfile.bankAccount?.accountDigit ?? '',
+                  accountType: enrichedProfile.bankAccount?.accountType ?? 'CHECKING',
+                  holderName: enrichedProfile.bankAccount?.holderName ?? '',
+                  holderCpfCnpj: enrichedProfile.bankAccount?.holderCpfCnpj ?? ''
                 },
                 resignationDetails: {
-                  resignationDate: data.resignationDetails?.resignationDate ?? '',
-                  reason: data.resignationDetails?.reason ?? 'dismissal_without_cause',
-                  noticeType: data.resignationDetails?.noticeType ?? 'none',
-                  penaltyPercentage: data.resignationDetails?.penaltyPercentage ?? 0
+                  resignationDate: enrichedProfile.resignationDetails?.resignationDate ?? '',
+                  reason: enrichedProfile.resignationDetails?.reason ?? 'dismissal_without_cause',
+                  noticeType: enrichedProfile.resignationDetails?.noticeType ?? 'none',
+                  penaltyPercentage: enrichedProfile.resignationDetails?.penaltyPercentage ?? 0
                 }
               });
             }
