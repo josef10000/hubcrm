@@ -21,6 +21,8 @@ interface Expense {
   type: 'pontual' | 'fixo'; // Pontual ou Fixo Mensal
   status: 'paid' | 'unpaid';
   createdAt: any;
+  appointmentId?: string;
+  appointmentClientName?: string;
 }
 
 interface Revenue {
@@ -39,10 +41,12 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
   const [appointments, setAppointments] = useState<any[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [revenues, setRevenues] = useState<Revenue[]>([]);
+  const [services, setServices] = useState<any[]>([]);
+  const [inventory, setInventory] = useState<any[]>([]);
   
   // Controle de abas e filtros
   const [filterPeriod, setFilterPeriod] = useState<'today' | 'week' | 'month' | 'last_month' | 'all'>('month');
-  const [subTab, setSubTab] = useState<'revenues' | 'expenses'>('revenues');
+  const [subTab, setSubTab] = useState<'revenues' | 'expenses' | 'projects'>('revenues');
   const [filterPayment, setFilterPayment] = useState<'all' | 'paid' | 'unpaid'>('all');
   
   // Modal de despesas
@@ -56,6 +60,7 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
   const [expenseDate, setExpenseDate] = useState(new Date().toISOString().substring(0, 10));
   const [expenseType, setExpenseType] = useState<'pontual' | 'fixo'>('pontual');
   const [expenseStatus, setExpenseStatus] = useState<'paid' | 'unpaid'>('paid');
+  const [expenseAppointmentId, setExpenseAppointmentId] = useState('');
   const [savingExpense, setSavingExpense] = useState(false);
 
   // Modal de receitas manuais
@@ -126,6 +131,28 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
     });
     return () => unsub();
   }, [orgId, clientId]);
+
+  // Escuta Serviços do Cliente (para obter custo de insumos)
+  useEffect(() => {
+    if (!orgId) return;
+    const servicesRef = collection(db, 'organizations', orgId, 'client_services');
+    const unsub = onSnapshot(servicesRef, (snapshot) => {
+      const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      setServices(list);
+    });
+    return () => unsub();
+  }, [orgId]);
+
+  // Escuta Inventário (para obter custos unitários)
+  useEffect(() => {
+    if (!orgId) return;
+    const inventoryRef = collection(db, 'organizations', orgId, 'inventory');
+    const unsub = onSnapshot(inventoryRef, (snapshot) => {
+      const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      setInventory(list);
+    });
+    return () => unsub();
+  }, [orgId]);
 
   // Obtém as datas limites (Início e Fim) do período selecionado
   const getPeriodBounds = (): { start: Date; end: Date } => {
@@ -357,6 +384,7 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
     setExpenseDate(new Date().toISOString().substring(0, 10));
     setExpenseType('pontual');
     setExpenseStatus('paid');
+    setExpenseAppointmentId('');
     setIsExpenseModalOpen(true);
   };
 
@@ -369,6 +397,7 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
     setExpenseDate(exp.date);
     setExpenseType(exp.type || 'pontual');
     setExpenseStatus(exp.status);
+    setExpenseAppointmentId(exp.appointmentId || '');
     setIsExpenseModalOpen(true);
   };
 
@@ -382,6 +411,14 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
 
     setSavingExpense(true);
     try {
+      let appointmentClientName = '';
+      if (expenseAppointmentId) {
+        const app = appointments.find(a => a.id === expenseAppointmentId);
+        if (app) {
+          appointmentClientName = app.clientName;
+        }
+      }
+
       const payload = {
         description: expenseDesc.trim(),
         value: parseFloat(expenseValue.replace(',', '.')),
@@ -389,6 +426,8 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
         date: expenseDate,
         type: expenseType,
         status: expenseStatus,
+        appointmentId: expenseAppointmentId || null,
+        appointmentClientName: appointmentClientName || null,
         updatedAt: new Date()
       };
 
@@ -667,7 +706,7 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Seletor de visualização (Receitas vs Despesas) */}
+            {/* Seletor de visualização (Receitas vs Despesas vs Projetos) */}
             <div className="flex p-1 bg-black/40 border border-white/10 rounded-xl">
               <button
                 onClick={() => { setSubTab('revenues'); setFilterPayment('all'); }}
@@ -684,6 +723,14 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
                 }`}
               >
                 Despesas
+              </button>
+              <button
+                onClick={() => { setSubTab('projects'); setFilterPayment('all'); }}
+                className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                  subTab === 'projects' ? 'bg-primary-500 text-white' : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                Lucro por Projeto
               </button>
             </div>
 
@@ -714,32 +761,34 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
         <div className="w-full h-[1px] bg-white/15" />
 
         {/* Filtros de Pagamento da Tabela */}
-        <div className="flex gap-2 p-1 bg-black/40 border border-white/10 rounded-xl w-fit">
-          <button
-            onClick={() => setFilterPayment('all')}
-            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors ${
-              filterPayment === 'all' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            Todos
-          </button>
-          <button
-            onClick={() => setFilterPayment('paid')}
-            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors ${
-              filterPayment === 'paid' ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            {subTab === 'revenues' ? 'Pagos' : 'Gastos Pagos'}
-          </button>
-          <button
-            onClick={() => setFilterPayment('unpaid')}
-            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors ${
-              filterPayment === 'unpaid' ? 'bg-amber-500/20 text-amber-400' : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            {subTab === 'revenues' ? 'Pendentes' : 'Gastos Pendentes'}
-          </button>
-        </div>
+        {subTab !== 'projects' && (
+          <div className="flex gap-2 p-1 bg-black/40 border border-white/10 rounded-xl w-fit">
+            <button
+              onClick={() => setFilterPayment('all')}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                filterPayment === 'all' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Todos
+            </button>
+            <button
+              onClick={() => setFilterPayment('paid')}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                filterPayment === 'paid' ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              {subTab === 'revenues' ? 'Pagos' : 'Gastos Pagos'}
+            </button>
+            <button
+              onClick={() => setFilterPayment('unpaid')}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                filterPayment === 'unpaid' ? 'bg-amber-500/20 text-amber-400' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              {subTab === 'revenues' ? 'Pendentes' : 'Gastos Pendentes'}
+            </button>
+          </div>
+        )}
 
         {/* Renderização da Tabela de Receitas */}
         {subTab === 'revenues' && (
@@ -938,6 +987,109 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
                 </tbody>
               </table>
             </div>
+        {/* Renderização da Tabela/Cards de Lucro por Projeto */}
+        {subTab === 'projects' && (
+          appointmentsFiltered.length === 0 ? (
+            <div className="py-16 text-center bg-black/20 border border-white/5 rounded-2xl">
+              <Calendar size={40} className="mx-auto mb-3 text-gray-600" />
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Nenhum Agendamento no Período</p>
+              <p className="text-[11px] text-gray-600 mt-1">Nenhum projeto ou agendamento concluído foi encontrado para o período selecionado.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {appointmentsFiltered.map((app) => {
+                // Filtra despesas vinculadas a este agendamento no Firestore
+                const appExpenses = expenses.filter(e => e.appointmentId === app.id);
+                const appExpensesTotal = appExpenses.reduce((sum, e) => sum + e.value, 0);
+
+                // Busca serviço para obter o custo de insumos
+                const srv = services.find(s => s.id === app.serviceId);
+                let appMaterialsCost = 0;
+                if (srv && srv.materials && Array.isArray(srv.materials)) {
+                  srv.materials.forEach((m: any) => {
+                    const invItem = inventory.find(i => i.id === m.itemId);
+                    const costUnit = invItem ? (invItem.costPerUnit || 0) : 0;
+                    appMaterialsCost += m.quantity * costUnit;
+                  });
+                }
+
+                const appRevenue = app.price || 0;
+                const appTotalCost = appExpensesTotal + appMaterialsCost;
+                const appNetProfit = appRevenue - appTotalCost;
+                const appMargin = appRevenue > 0 ? (appNetProfit / appRevenue) * 100 : 0;
+
+                // Estilo dos badges de lucratividade
+                let performanceColor = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+                let performanceLabel = 'Altamente Lucrativo';
+                
+                if (appMargin < 20) {
+                  performanceColor = 'text-rose-400 bg-rose-500/10 border-rose-500/20';
+                  performanceLabel = 'Alerta de Margem';
+                } else if (appMargin >= 20 && appMargin <= 50) {
+                  performanceColor = 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20';
+                  performanceLabel = 'Margem Saudável';
+                }
+
+                return (
+                  <div key={app.id} className="bg-black/30 border border-white/10 hover:border-white/20 p-6 rounded-[2rem] flex flex-col justify-between shadow-xl transition-all duration-300">
+                    <div>
+                      {/* Header Card */}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="min-w-0">
+                          <h4 className="font-bold text-white text-base truncate">{app.clientName}</h4>
+                          <span className="text-[10px] text-gray-500 font-bold font-mono">
+                            {app.date ? new Date(app.date + 'T12:00:00').toLocaleDateString('pt-BR') : ''} &bull; {app.time}
+                          </span>
+                        </div>
+                        <div className={`px-2.5 py-1 rounded-full border text-[9px] font-black uppercase tracking-tight ${performanceColor}`}>
+                          {performanceLabel}
+                        </div>
+                      </div>
+
+                      <div className="bg-white/5 border border-white/5 rounded-2xl p-4 mb-4">
+                        <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider block mb-1">Serviço Realizado</span>
+                        <span className="text-sm font-bold text-white">{app.serviceName}</span>
+                      </div>
+
+                      {/* Quebra Financeira */}
+                      <div className="space-y-2 text-xs border-t border-white/5 pt-4">
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Valor Cobrado (Faturamento):</span>
+                          <span className="text-gray-200 font-mono font-bold">R$ {appRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Custo de Insumos (Estoque):</span>
+                          <span className="text-gray-400 font-mono font-medium">- R$ {appMaterialsCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Despesas Extras (Lançadas):</span>
+                          <span className="text-gray-400 font-mono font-medium">- R$ {appExpensesTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                        <div className="flex justify-between border-t border-white/5 pt-2 font-bold text-sm">
+                          <span className="text-gray-300">Lucro Líquido Real:</span>
+                          <span className={`${appNetProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'} font-mono`}>
+                            R$ {appNetProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Exibe detalhes se houver despesas extras */}
+                    {appExpenses.length > 0 && (
+                      <div className="mt-4 pt-3 border-t border-white/5 space-y-1">
+                        <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider block mb-1">Detalhamento de Gastos:</span>
+                        {appExpenses.map(exp => (
+                          <div key={exp.id} className="flex justify-between text-[10px] text-gray-400 font-medium animate-in fade-in duration-150">
+                            <span className="truncate pr-4">{exp.description}</span>
+                            <span className="text-rose-400 shrink-0 font-mono">- R$ {exp.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           )
         )}
       </div>
@@ -1055,6 +1207,23 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
                     O gasto incidirá automaticamente todo dia {new Date(expenseDate + 'T12:00:00').getDate()} a partir desta data.
                   </p>
                 )}
+              </div>
+
+              {/* Vincular a Agendamento (Projeto) */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Vincular a Agendamento (Opcional)</label>
+                <select
+                  value={expenseAppointmentId}
+                  onChange={(e) => setExpenseAppointmentId(e.target.value)}
+                  className="w-full px-4 py-3 bg-black/40 border border-white/10 text-white rounded-xl text-sm outline-none transition-all focus:border-primary-500 font-bold"
+                >
+                  <option value="" className="bg-[#050505] text-gray-500">Nenhum (Gasto Geral)</option>
+                  {appointments.map(app => (
+                    <option key={app.id} value={app.id} className="bg-[#050505]">
+                      {app.clientName} - {app.serviceName} ({app.date ? new Date(app.date + 'T12:00:00').toLocaleDateString('pt-BR') : ''})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Botões de Ação */}

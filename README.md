@@ -128,6 +128,16 @@ Canal de autoatendimento corporativo integrado com Firebase Auth, modelagem robu
 *   **Badge de Portal Ativo no CRM:** O card de clientes no CRM exibe visualmente o selo premium "Portal Ativo" com o e-mail associado quando a conta do portal do cliente é criada e vinculada com sucesso.
 *   **Monitor de Limites de Uso e Sincronizações:** O Painel Administrativo conta com um monitor de limites reais/calculados de workspace e cotas diárias de APIs de e-mails (Resend) e banco de dados (Firestore Spark Plan), além de disparadores para forçar tarefas manuais (atualização do grafo de código, varredura de faturas, dispatch de queue, sincronização contábil).
 
+### 14. 💼 Módulo "Meu Negócio" & Lucro Real por Projeto (Estoque, Orçamentos e Finanças Operacionais no Portal)
+Ferramental operacional e financeiro completo integrado ao Portal do Cliente para otimizar o dia a dia e a lucratividade de autônomos e microempresas:
+*   **Controle de Estoque de Insumos (`PortalInventory.tsx`):** CRUD completo para gerenciamento de materiais físicos (ex: filamentos 3D, tintas, parafusos). Inclui controle de quantidade mínima de segurança com alertas de `⚠️ Estoque Baixo` e botões de incremento/decremento rápidos nos cards do inventário.
+*   **Calculadora de Orçamentos e Precificação (`PortalCalculator.tsx`):** Simulador inteligente de orçamentos que cruza o consumo estimado de materiais do estoque (calculado pelo custo unitário físico) e custos de mão de obra (horas trabalhadas vs valor da hora) com um controle deslizante de margem de lucro (slider). Retorna o preço sugerido de venda e o lucro líquido simulado, permitindo salvar o orçamento no Firestore (`budgets` collection).
+*   **Alertas de Estoque Cumulativo na Agenda (`PortalAgenda.tsx`):** Sistema preditivo que cruza os materiais associados a serviços agendados no futuro. Exibe um banner de alerta preventivo na timeline se os agendamentos futuros confirmados consumirem uma quantidade cumulativa maior do que o saldo atual físico do estoque, prevenindo gargalos operacionais.
+*   **Fluxo de Caixa do Projeto & Lucro Líquido Real (`PortalCRMFinance.tsx`):** Painel financeiro com suporte a rastreamento de lucratividade real por projeto. Permite vincular despesas extras de campo (ex: gasolina, alimentação, insumos emergenciais) a agendamentos específicos. Calcula o lucro líquido real de cada projeto descontando do preço cobrado o custo de insumos do estoque e as despesas extras, exibindo um semáforo de performance:
+    *   🟢 `Altamente Lucrativo` (Margem > 50%)
+    *   🟡 `Margem Saudável` (Margem de 20% a 50%)
+    *   🔴 `Alerta de Margem` (Margem < 20% ou prejuízo)
+
 ---
 
 ## ⚖️ Comparativo de Regimes (CLT vs PJ)
