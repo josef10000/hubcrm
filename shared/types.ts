@@ -63,6 +63,7 @@ export interface UserProfile {
   orgId: string;
   role: CustomRole | string; 
   roleId?: string;
+  clientId?: string;
   permissions?: string[];
   createdAt: number;
   updatedAt?: number;

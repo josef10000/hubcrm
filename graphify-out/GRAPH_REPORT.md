@@ -1,16 +1,16 @@
 # Graph Report - hubcrm  (2026-06-08)
 
 ## Corpus Check
-- 395 files · ~507,494 words
+- 395 files · ~507,496 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1874 nodes · 4212 edges · 129 communities (110 shown, 19 thin omitted)
+- 1874 nodes · 4212 edges · 128 communities (109 shown, 19 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 3 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `2ffd3134`
+- Built from commit: `c695d85a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -83,7 +83,6 @@
 - [[_COMMUNITY_Community 65|Community 65]]
 - [[_COMMUNITY_Community 66|Community 66]]
 - [[_COMMUNITY_Community 67|Community 67]]
-- [[_COMMUNITY_Community 68|Community 68]]
 - [[_COMMUNITY_Community 69|Community 69]]
 - [[_COMMUNITY_Community 71|Community 71]]
 - [[_COMMUNITY_Community 72|Community 72]]
@@ -168,7 +167,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (129 total, 19 thin omitted)
+## Communities (128 total, 19 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.14
@@ -191,8 +190,8 @@ Cohesion: 0.12
 Nodes (35): getRoleName(), handleAccept(), handleAddAsset(), handleAddFeedback(), handleAddMilestone(), handleBroadcast(), handleCancelInvite(), handleInvite() (+27 more)
 
 ### Community 5 - "Community 5"
-Cohesion: 0.13
-Nodes (7): UptimeMonitor, SupportRequestModal(), SupportRequestModalProps, UseClientsOptions, Offer, clientSchema, PortalServicesProps
+Cohesion: 0.20
+Nodes (3): UseClientsOptions, Offer, PortalServicesProps
 
 ### Community 6 - "Community 6"
 Cohesion: 0.07
@@ -203,8 +202,8 @@ Cohesion: 0.05
 Nodes (41): googleProvider, AcceptInviteView, AdministrativeView, AnalyticsView, ArenaView, AssetPublicView, AuditDashboard, BillingView (+33 more)
 
 ### Community 8 - "Community 8"
-Cohesion: 0.27
-Nodes (8): OnboardingForm(), ReferralsView(), calculateDiscount(), getPlanPrice(), getSetupPrice(), updateReferrerSubscription(), SiteStatus, AnalyticsView()
+Cohesion: 0.22
+Nodes (10): BroadcastTab(), OnboardingForm(), ReferralsView(), calculateDiscount(), getPlanPrice(), getSetupPrice(), updateReferrerSubscription(), authFetch() (+2 more)
 
 ### Community 9 - "Community 9"
 Cohesion: 0.09
@@ -276,7 +275,7 @@ Nodes (18): LudoBoard(), LudoSkin, playLudoProceduralMusic(), stopLudoProcedural
 
 ### Community 26 - "Community 26"
 Cohesion: 0.10
-Nodes (16): AlertPanels(), AlertPanelsProps, CalendarMode, CalendarViewProps, Holiday, CashFlowProjection(), CashFlowProjectionProps, ClientMapViewProps (+8 more)
+Nodes (15): ReferralsTabProps, AlertPanels(), AlertPanelsProps, CalendarMode, CalendarViewProps, Holiday, ClientMapViewProps, GeoCache (+7 more)
 
 ### Community 27 - "Community 27"
 Cohesion: 0.14
@@ -343,8 +342,8 @@ Cohesion: 0.13
 Nodes (14): 1. Mural de Reconhecimento (Kudos), 2. Grid de Métricas em Tempo Real, 3. Alertas Inteligentes, 4. Projeção de Fluxo de Caixa, 📊 Dashboard: O Centro de Comando do HubCRM, 💡 Dicas de Especialista, 🛠️ Ferramentas de Gestão na Tela, Filtros e Ordenação (+6 more)
 
 ### Community 43 - "Community 43"
-Cohesion: 0.13
-Nodes (14): FinancialChartsProps, MetricsGrid, MetricsGridProps, OverdueAlertWidget(), OverdueAlertWidgetProps, calculateHealthScore(), getHealthColor(), getHealthLabel() (+6 more)
+Cohesion: 0.12
+Nodes (15): CashFlowProjection(), CashFlowProjectionProps, FinancialChartsProps, MetricsGrid, MetricsGridProps, OverdueAlertWidget(), OverdueAlertWidgetProps, calculateHealthScore() (+7 more)
 
 ### Community 44 - "Community 44"
 Cohesion: 0.26
@@ -399,8 +398,8 @@ Cohesion: 0.40
 Nodes (4): DEPARTMENTS_CONFIG, ReadingClub, ReadingClubsPanel(), ReadingClubsPanelProps
 
 ### Community 57 - "Community 57"
-Cohesion: 0.15
-Nodes (8): ContractsTab(), ContractsTabProps, CredentialsTabProps, HistoryTabProps, ClientContract, ClientCredential, ClientLog, PortalDocumentsProps
+Cohesion: 0.11
+Nodes (12): ContractsTab(), ContractsTabProps, CredentialsTabProps, HistoryTabProps, UptimeMonitor, SupportRequestModal(), SupportRequestModalProps, ClientContract (+4 more)
 
 ### Community 58 - "Community 58"
 Cohesion: 0.09
@@ -437,10 +436,6 @@ Nodes (8): isValidPhotoURL(), ProfileHoverCard(), ProfileHoverCardProps, getRole
 ### Community 67 - "Community 67"
 Cohesion: 0.33
 Nodes (5): useFirestoreSync(), CanvasDocument, canvasService, CanvasEditorView(), CanvasListView()
-
-### Community 68 - "Community 68"
-Cohesion: 0.25
-Nodes (4): ReferralsTabProps, BroadcastTab(), authFetch(), asaasService
 
 ### Community 69 - "Community 69"
 Cohesion: 0.20
@@ -531,8 +526,8 @@ Cohesion: 0.40
 Nodes (4): GameHelpModal(), GameHelpModalProps, GAME_RULES, GameHelpRule
 
 ### Community 98 - "Community 98"
-Cohesion: 0.33
-Nodes (3): ClientEntity, ClientMapper, ClientSchema
+Cohesion: 0.22
+Nodes (5): ClientEntity, ClientMapper, ClientSchema, useFilteredClients(), SiteStatus
 
 ### Community 99 - "Community 99"
 Cohesion: 0.33
@@ -547,7 +542,7 @@ Cohesion: 0.33
 Nodes (4): handle_call_tool(), handle_list_tools(), TextContent, Tool
 
 ### Community 104 - "Community 104"
-Cohesion: 0.33
+Cohesion: 0.25
 Nodes (3): PlansTabProps, PurchasesTabProps, ClientPlan
 
 ### Community 105 - "Community 105"
@@ -602,11 +597,11 @@ Nodes (4): LinkCard, VaultTab(), VaultTabProps, LinkFolder
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `useAuth()` connect `Community 15` to `Community 0`, `Community 2`, `Community 3`, `Community 6`, `Community 7`, `Community 9`, `Community 10`, `Community 17`, `Community 19`, `Community 21`, `Community 22`, `Community 25`, `Community 27`, `Community 31`, `Community 32`, `Community 33`, `Community 35`, `Community 37`, `Community 43`, `Community 50`, `Community 55`, `Community 56`, `Community 57`, `Community 66`, `Community 67`, `Community 68`, `Community 76`, `Community 84`, `Community 95`, `Community 120`?**
+- **Why does `useAuth()` connect `Community 15` to `Community 0`, `Community 2`, `Community 3`, `Community 6`, `Community 7`, `Community 8`, `Community 9`, `Community 10`, `Community 17`, `Community 19`, `Community 21`, `Community 22`, `Community 25`, `Community 27`, `Community 31`, `Community 32`, `Community 33`, `Community 35`, `Community 37`, `Community 43`, `Community 50`, `Community 55`, `Community 56`, `Community 57`, `Community 66`, `Community 67`, `Community 76`, `Community 84`, `Community 95`, `Community 120`?**
   _High betweenness centrality (0.066) - this node is a cross-community bridge._
-- **Why does `useCRM()` connect `Community 37` to `Community 0`, `Community 2`, `Community 3`, `Community 5`, `Community 6`, `Community 7`, `Community 8`, `Community 9`, `Community 15`, `Community 17`, `Community 19`, `Community 21`, `Community 22`, `Community 23`, `Community 26`, `Community 27`, `Community 35`, `Community 43`, `Community 50`, `Community 55`, `Community 56`, `Community 57`, `Community 66`, `Community 67`, `Community 77`, `Community 84`, `Community 95`, `Community 120`?**
+- **Why does `useCRM()` connect `Community 37` to `Community 0`, `Community 2`, `Community 3`, `Community 6`, `Community 7`, `Community 8`, `Community 9`, `Community 15`, `Community 17`, `Community 19`, `Community 21`, `Community 22`, `Community 23`, `Community 26`, `Community 27`, `Community 35`, `Community 43`, `Community 50`, `Community 55`, `Community 56`, `Community 57`, `Community 66`, `Community 67`, `Community 77`, `Community 84`, `Community 95`, `Community 120`?**
   _High betweenness centrality (0.043) - this node is a cross-community bridge._
-- **Why does `Client` connect `Community 26` to `Community 0`, `Community 68`, `Community 5`, `Community 37`, `Community 6`, `Community 104`, `Community 8`, `Community 43`, `Community 45`, `Community 13`, `Community 16`, `Community 53`, `Community 57`, `Community 30`?**
+- **Why does `Client` connect `Community 26` to `Community 0`, `Community 98`, `Community 37`, `Community 5`, `Community 6`, `Community 104`, `Community 8`, `Community 43`, `Community 45`, `Community 13`, `Community 16`, `Community 53`, `Community 57`, `Community 30`?**
   _High betweenness centrality (0.025) - this node is a cross-community bridge._
 - **What connects `github-actions.workflows.pinned.workflows`, `mockFetch`, `mockAsaasRequest` to the rest of the system?**
   _638 weakly-connected nodes found - possible documentation gaps or missing edges._
