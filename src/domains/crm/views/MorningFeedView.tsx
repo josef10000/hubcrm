@@ -45,12 +45,12 @@ export default function MorningFeedView() {
         
         {/* Cabeçalho Customizado e Seletor de Modo */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-6">
-          <div className="text-left space-y-1">
-            <div className="flex items-center gap-2 text-primary-400 text-xs font-black uppercase tracking-wider">
-              <Sun size={14} className="animate-pulse" />
-              <span>Praça da Comunidade</span>
+          <div className="flex items-center gap-3 text-left">
+            <div className="p-2.5 bg-primary-500/10 rounded-2xl text-primary-500 shadow-inner shrink-0">
+              <Sun size={24} className="animate-pulse" />
             </div>
-            <div className="flex items-center gap-3">
+            <div className="space-y-0.5">
+              <span className="text-[10px] font-black uppercase tracking-widest text-primary-400 block">Praça da Comunidade</span>
               <h1 className="text-2xl font-black text-white">Central Hub</h1>
             </div>
           </div>

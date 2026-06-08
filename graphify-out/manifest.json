@@ -955,8 +955,8 @@
     "semantic_hash": ""
   },
   "src/domains/crm/views/MorningFeedView.tsx": {
-    "mtime": 1780515837.9721353,
-    "ast_hash": "99a3c8244ce42ff1bca4a6beb9700876",
+    "mtime": 1780949585.9324822,
+    "ast_hash": "094272537c011a43b3286f036c4f1fbe",
     "semantic_hash": ""
   },
   "src/domains/crm/views/OnboardingHubView.tsx": {
