@@ -961,35 +961,59 @@ export default function ProfileView() {
                   </motion.button>
                 )}
                 {isOwnProfile && (
-                        className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'expediente' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                      >
-                        {activeTab === 'expediente' && (
-                          <motion.div
-                            layoutId="activeProfileTab"
-                            className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
-                            transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                          />
-                        )}
-                        <span className="relative z-10">Expediente</span>
-                      </motion.button>
+                  <motion.button 
+                    whileTap={{ scale: 0.96 }}
+                    onClick={() => setActiveTab('alerts')}
+                    className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'alerts' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                  >
+                    {activeTab === 'alerts' && (
+                      <motion.div
+                        layoutId="activeProfileTab"
+                        className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                      />
                     )}
-                    {(isOwnProfile || isManagement || isAdmin) && (
-                      <motion.button 
-                        whileTap={{ scale: 0.96 }}
-                        onClick={() => setActiveTab('contracts')}
-                        className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'contracts' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                      >
-                        {activeTab === 'contracts' && (
-                          <motion.div
-                            layoutId="activeProfileTab"
-                            className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
-                            transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                          />
-                        )}
-                        <span className="relative z-10">Documentos</span>
-                      </motion.button>
+                    <span className="relative z-10 flex items-center gap-1.5">
+                      <span>Alertas</span>
+                      {unreadAlertsCount > 0 && (
+                        <span className="w-4 h-4 bg-rose-500 text-white text-[8px] rounded-full flex items-center justify-center border border-zinc-950">
+                          {unreadAlertsCount}
+                        </span>
+                      )}
+                    </span>
+                  </motion.button>
+                )}
+                {(isOwnProfile || isManagement || isAdmin) && (
+                  <motion.button 
+                    whileTap={{ scale: 0.96 }}
+                    onClick={() => setActiveTab('expediente')}
+                    className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'expediente' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                  >
+                    {activeTab === 'expediente' && (
+                      <motion.div
+                        layoutId="activeProfileTab"
+                        className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                      />
                     )}
-                  </>
+                    <span className="relative z-10">Expediente</span>
+                  </motion.button>
+                )}
+                {(isOwnProfile || isManagement || isAdmin) && (
+                  <motion.button 
+                    whileTap={{ scale: 0.96 }}
+                    onClick={() => setActiveTab('contracts')}
+                    className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'contracts' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                  >
+                    {activeTab === 'contracts' && (
+                      <motion.div
+                        layoutId="activeProfileTab"
+                        className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                    <span className="relative z-10">Documentos</span>
+                  </motion.button>
                 )}
               </div>
 
