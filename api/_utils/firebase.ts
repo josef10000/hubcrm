@@ -2,7 +2,7 @@ import * as adminNamespace from 'firebase-admin';
 
 const admin = (adminNamespace as any).default || adminNamespace;
 export { admin };
-export const firestore = adminNamespace.firestore;
+export const FieldValue = adminNamespace.firestore.FieldValue;
 
 /**
  * Ensures Firebase Admin is initialized exactly once.

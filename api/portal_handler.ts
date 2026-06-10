@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { admin, db, firestore } from './_utils/firebase.js';
+import { admin, db, FieldValue } from './_utils/firebase.js';
 import { asaasRequest, safeErrorResponse } from './_utils/asaas.js';
 import type { ClientBase } from '../shared/types.js';
 import { portalFinanceSchema, validateSchema } from '../shared/schemas.js';
@@ -156,7 +156,7 @@ async function handleAuth(req: VercelRequest, res: VercelResponse) {
     };
 
     if (action === 'activate') {
-      updateData.portalActivationCode = firestore.FieldValue.delete();
+      updateData.portalActivationCode = FieldValue.delete();
     }
 
     await clientRef.update(updateData);
@@ -176,7 +176,10 @@ async function handleAuth(req: VercelRequest, res: VercelResponse) {
 
   } catch (error: any) {
     console.error("[PortalAuth] Erro crítico na vinculação:", error);
-    return res.status(500).json({ error: 'Erro interno ao autenticar e vincular conta do portal.' });
+    return res.status(500).json({ 
+      error: 'Erro interno ao autenticar e vincular conta do portal.',
+      details: error.message
+    });
   }
 }
 
