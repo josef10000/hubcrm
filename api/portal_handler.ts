@@ -10,6 +10,29 @@ import { portalFinanceSchema, validateSchema } from '../shared/schemas.js';
  * - GET: Busca de dados financeiros do portal (antigo portal_finance)
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Configurações de CORS para o novo domínio separado do Portal Hub
+  const allowedOrigins = [
+    'https://portalhub.hubsymples.com.br',
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://localhost:4173'
+  ];
+  
+  const origin = req.headers.origin;
+  if (origin && (allowedOrigins.includes(origin) || origin.startsWith('http://localhost:'))) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', 'https://portalhub.hubsymples.com.br');
+  }
+  
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  // Tratar requisições preflight (OPTIONS)
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   if (req.method === 'POST') {
     return handleAuth(req, res);
   }
