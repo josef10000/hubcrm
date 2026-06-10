@@ -141,14 +141,25 @@ async function handleReadSupport(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const snap = await db.collectionGroup('supportRequests').get();
-    const list = snap.docs.map(doc => ({
+    const supportSnap = await db.collectionGroup('supportRequests').get();
+    const supportList = supportSnap.docs.map(doc => ({
       id: doc.id,
       path: doc.ref.path,
       ...doc.data()
     }));
-    return res.status(200).json(list);
+
+    const profilesSnap = await db.collection('profiles').get();
+    const profilesList = profilesSnap.docs.map(doc => ({
+      id: doc.id,
+      path: doc.ref.path,
+      ...doc.data()
+    }));
+
+    return res.status(200).json({
+      supportRequests: supportList,
+      profiles: profilesList
+    });
   } catch (error: any) {
-    return res.status(500).json({ error: 'Erro ao ler chamados', details: error.message });
+    return res.status(500).json({ error: 'Erro ao ler dados de suporte e perfis', details: error.message });
   }
 }
