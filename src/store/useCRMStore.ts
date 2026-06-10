@@ -111,6 +111,14 @@ export const useCRMStore = create<CRMStoreState>()(
           Logger.error("[CRMStore] Failed to setup Preferences listener:", err);
         }
 
+        // Subscrição global para chamados de suporte para manter a contagem atualizada em tempo real na sidebar
+        try {
+          const unsubSupport = get().subscribeToSupport(orgId);
+          unsubscribers.push(unsubSupport);
+        } catch (err) {
+          Logger.error("[CRMStore] Global support subscription failed:", err);
+        }
+
         // Team profiles - Desativado (carregado via React Query)
         /*
         try {

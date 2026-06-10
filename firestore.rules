@@ -299,6 +299,8 @@ service cloud.firestore {
       // Público pode criar chamados, mas apenas a equipe (ou via ID específico se implementado) pode ler
       allow create: if true;
       allow read: if belongsToOrg(orgId);
+      allow update: if belongsToOrg(orgId);
+      allow delete: if belongsToOrg(orgId) && getUserData().role != 'client_admin';
     }
 
     // Propostas Comerciais (Root Collection)

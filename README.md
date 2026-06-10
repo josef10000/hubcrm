@@ -282,6 +282,25 @@ interface VacationPayment {
 }
 ```
 
+### 5. Coleção `/organizations/{orgId}/supportRequests` (Central de Atendimento)
+Armazena as solicitações de suporte abertas pelos clientes no Portal ou geradas internamente (WhatsApp/Telefone). Possui suporte a comunicação bidirecional em tempo real e controle de SLA:
+```typescript
+interface SupportRequest {
+  id: string;
+  clientId: string;
+  clientName: string;
+  category: string;
+  priority: 'baixa' | 'media' | 'alta';
+  message: string;        // Relato original e histórico de mensagens concatenadas
+  reply?: string;         // Resposta enviada pelo consultor
+  repliedAt?: any;        // Timestamp da resposta
+  status: 'aberto' | 'em_analise' | 'concluido';
+  origin: 'portal' | 'whatsapp' | 'internal';
+  createdAt: any;
+  updatedAt?: any;
+}
+```
+
 ---
 
 ## 🛠️ Stack Tecnológica
