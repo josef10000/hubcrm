@@ -85,7 +85,7 @@ async function handleCleanup(req: VercelRequest, res: VercelResponse) {
   // 2. Obter perfis para separar funcionários de clientes
   const allProfilesSnap = await db.collection('profiles').get();
   const employeeUids = new Set<string>();
-  const clientProfileRefs: admin.firestore.DocumentReference[] = [];
+  const clientProfileRefs: any[] = [];
 
   allProfilesSnap.docs.forEach((doc) => {
     const data = doc.data();
