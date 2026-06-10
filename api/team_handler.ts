@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { db, getFirebaseAdmin, FieldValue } from './_utils/firebase.js';
+import { db, getFirebaseAdmin } from './_utils/firebase.js';
 import { verifyAuth } from './_utils/authMiddleware.js';
 import { sendTeamInviteEmail, sendTeamBroadcastEmail } from '../src/services/emailService.js';
 import crypto from 'crypto';
@@ -442,7 +442,7 @@ async function handleAddFeedback(req: VercelRequest, res: VercelResponse, uid: s
   if (!isManagementUser) return res.status(403).json({ error: 'Apenas gestores podem enviar feedbacks' });
 
   await db.collection('profiles').doc(targetUid).update({
-    feedbacks: FieldValue.arrayUnion({
+    feedbacks: getFirebaseAdmin().firestore.FieldValue.arrayUnion({
       ...feedback,
       id: crypto.randomUUID(),
       fromId: uid,
@@ -530,7 +530,7 @@ async function handleAddMilestone(req: VercelRequest, res: VercelResponse, uid: 
   if (!isManagementUser) return res.status(403).json({ error: 'Apenas Administradores, Gerentes ou RH podem adicionar marcos' });
 
   await db.collection('profiles').doc(targetUid).update({
-    careerTimeline: FieldValue.arrayUnion({
+    careerTimeline: getFirebaseAdmin().firestore.FieldValue.arrayUnion({
       ...milestone,
       id: crypto.randomUUID()
     })

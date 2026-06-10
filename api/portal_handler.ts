@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { admin, db, FieldValue } from './_utils/firebase.js';
+import { admin, db } from './_utils/firebase.js';
 import { asaasRequest, safeErrorResponse } from './_utils/asaas.js';
 import type { ClientBase } from '../shared/types.js';
 import { portalFinanceSchema, validateSchema } from '../shared/schemas.js';
@@ -156,7 +156,7 @@ async function handleAuth(req: VercelRequest, res: VercelResponse) {
     };
 
     if (action === 'activate') {
-      updateData.portalActivationCode = FieldValue.delete();
+       updateData.portalActivationCode = admin.firestore.FieldValue.delete();
     }
 
     await clientRef.update(updateData);
