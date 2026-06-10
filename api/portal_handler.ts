@@ -12,7 +12,7 @@ import { portalFinanceSchema, validateSchema } from '../shared/schemas.js';
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Configurações de CORS para o novo domínio separado do Portal Hub
   const allowedOrigins = [
-    'https://portalhub.hubsymples.com.br',
+    'https://portahub.hubsymples.com.br',
     'http://localhost:3000',
     'http://localhost:5173',
     'http://localhost:4173'
@@ -22,7 +22,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (origin && (allowedOrigins.includes(origin) || origin.startsWith('http://localhost:'))) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   } else {
-    res.setHeader('Access-Control-Allow-Origin', 'https://portalhub.hubsymples.com.br');
+    res.setHeader('Access-Control-Allow-Origin', 'https://portahub.hubsymples.com.br');
   }
   
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');

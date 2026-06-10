@@ -256,7 +256,7 @@ export default function ClientsGrid({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    const portalBaseUrl = import.meta.env.VITE_PORTAL_URL || 'https://portalhub.hubsymples.com.br';
+                    const portalBaseUrl = import.meta.env.VITE_PORTAL_URL || 'https://portahub.hubsymples.com.br';
                     const url = `${portalBaseUrl}/portal/${effectiveOrgId}/${client.id}${client.publicToken ? `?token=${client.publicToken}` : ''}`;
                     navigator.clipboard.writeText(url);
                     toast.success('Link do Portal copiado para a área de transferência!');

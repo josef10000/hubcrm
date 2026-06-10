@@ -124,11 +124,11 @@ Plataforma modernizada com foco em usabilidade e performance, integrando compone
 *   **Profile Hover Card com Monitoramento de Expediente (`ProfileHoverCard.tsx`):** Componente de cartão de perfil flutuante (Hover Card) em Glassmorphism injetado no `document.body` via React Portal (evitando cortes por `overflow: hidden`). Possui atraso inteligente de hover de 250ms (debounce) para otimização de banda e inicia um listener de Ponto Eletrônico temporário em tempo real para exibir o status do expediente atual, tempo decorrido correndo na tela, cargo e e-mail do colaborador ao passar o mouse.
 
 ### 13. 🔐 Portal Hub — Canal do Cliente Independente (Desacoplado)
-O Canal do Cliente foi extraído e desacoplado do repositório do CRM administrativo para um repositório independente (**Portal Hub**), hospedado em **`https://portalhub.hubsymples.com.br`** e pronto para deploy automático na Vercel:
+O Canal do Cliente foi extraído e desacoplado do repositório do CRM administrativo para um repositório independente (**Portal Hub**), hospedado em **`https://portahub.hubsymples.com.br`** e pronto para deploy automático na Vercel:
 *   **Autenticação Obrigatória Integrada:** Exige login inicial obrigatório com Firebase Auth (/login) para acesso às áreas restritas de faturamento, chamados e agenda. Administradores também validam acesso para fins de teste.
 *   **Validação em Tempo Real:** Escuta contínua de alterações de e-mail no Firestore; a mudança de e-mail no CRM desloga sessões ativas com o e-mail anterior de forma automática.
 *   **Integração Nativa de Dados:** Compartilha o mesmo banco de dados do Firebase Firestore com o CRM administrativo para a sincronização em tempo real de chamados, agendamentos e contratos.
-*   **CORS Habilitado na API Administrativa:** O endpoint `/api/portal_handler` no CRM administrativo está configurado para receber requisições de origem cruzada (CORS) da origem `https://portalhub.hubsymples.com.br` para consultas contábeis (Asaas) seguras.
+*   **CORS Habilitado na API Administrativa:** O endpoint `/api/portal_handler` no CRM administrativo está configurado para receber requisições de origem cruzada (CORS) da origem `https://portahub.hubsymples.com.br` para consultas contábeis (Asaas) seguras.
 
 ### 14. 💼 Módulo "Meu Negócio" & Lucro Real por Projeto no Portal Hub
 Ferramental de produtividade completo disponível na área restrita do cliente no **Portal Hub**:
