@@ -125,8 +125,8 @@ Plataforma modernizada com foco em usabilidade e performance, integrando compone
 
 ### 13. 🔐 Portal Hub — Canal do Cliente Independente (Desacoplado)
 O Canal do Cliente foi extraído e desacoplado do repositório do CRM administrativo para um repositório independente (**Portal Hub**), hospedado em **`https://portahub.hubsymples.com.br`** e pronto para deploy automático na Vercel:
-*   **Autenticação Obrigatória Integrada:** Exige login inicial obrigatório com Firebase Auth (/login) para acesso às áreas restritas de faturamento, chamados e agenda. Administradores também validam acesso para fins de teste.
-*   **Validação em Tempo Real:** Escuta contínua de alterações de e-mail no Firestore; a mudança de e-mail no CRM desloga sessões ativas com o e-mail anterior de forma automática.
+*   **Autenticação Obrigatória Integrada:** Exige login inicial obrigatório com Firebase Auth (/login) para acesso às áreas restritas de faturamento, chamados e agenda.
+*   **Ativação Desacoplada por Código Único:** Implementa fluxo com código de 6 dígitos (ex: `HUB-A7B8C9`) para ativação inicial. O cliente cria sua conta no portal usando qualquer e-mail/senha pessoal desejados, e insere o código único gerado pelo CRM para vincular definitivamente sua conta do portal ao seu card de cliente administrativo.
 *   **Integração Nativa de Dados:** Compartilha o mesmo banco de dados do Firebase Firestore com o CRM administrativo para a sincronização em tempo real de chamados, agendamentos e contratos.
 *   **CORS Habilitado na API Administrativa:** O endpoint `/api/portal_handler` no CRM administrativo está configurado para receber requisições de origem cruzada (CORS) da origem `https://portahub.hubsymples.com.br` para consultas contábeis (Asaas) seguras.
 
