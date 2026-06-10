@@ -38,7 +38,7 @@ interface ProductionTemplate {
 }
 
 // Categorias disponíveis para filtro de templates
-const categories = ['Todos', 'Landing Page', 'SaaS', 'Institucional', 'E-commerce'];
+const categories = ['Todos', 'Favoritos', 'Landing Page', 'SaaS', 'Institucional', 'E-commerce'];
 
 // Lista estendida de sugestões de variáveis prontas e clicáveis
 const SUGGESTED_VARIABLES = [
@@ -212,7 +212,15 @@ export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'temp
 
   // 3. Filtros e Busca de templates
   const filteredTemplates = templates.filter(t => {
-    const matchesCategory = selectedCategory === 'Todos' || t.type === selectedCategory;
+    let matchesCategory = false;
+    if (selectedCategory === 'Todos') {
+      matchesCategory = true;
+    } else if (selectedCategory === 'Favoritos') {
+      matchesCategory = favoriteTemplates.includes(t.id);
+    } else {
+      matchesCategory = t.type === selectedCategory;
+    }
+
     const matchesSearch = 
       t.niche.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -739,15 +747,23 @@ export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'temp
               <p className="text-gray-500 text-sm font-medium tracking-wide">Carregando catálogo...</p>
             </div>
           ) : filteredTemplates.length === 0 ? (
-            <div className="flex flex-col items-center justify-center p-12 bg-black/40 dark:bg-[#111111] border border-dashed border-gray-200 dark:border-white/10 rounded-3xl text-center backdrop-blur-md">
+            <div className="flex flex-col items-center justify-center p-12 bg-black/40 dark:bg-[#111111] border border-dashed border-gray-200 dark:border-white/10 rounded-3xl text-center backdrop-blur-md animate-fadeIn">
               <div className="p-4 bg-primary-500/10 rounded-2xl mb-4 text-primary-500">
-                <LayoutTemplate className="w-10 h-10" />
+                {selectedCategory === 'Favoritos' ? (
+                  <Heart className="w-10 h-10 text-red-500 fill-red-500/20" />
+                ) : (
+                  <LayoutTemplate className="w-10 h-10" />
+                )}
               </div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Nenhum template cadastrado</h3>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                {selectedCategory === 'Favoritos' ? 'Nenhum favorito ainda' : 'Nenhum template cadastrado'}
+              </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mt-2">
-                Comece cadastrando os códigos HTML e imagens de previews dos seus sites de produção.
+                {selectedCategory === 'Favoritos' 
+                  ? 'Clique no ícone de coração nos templates do catálogo para adicioná-los aos seus favoritos.'
+                  : 'Comece cadastrando os códigos HTML e imagens de previews dos seus sites de produção.'}
               </p>
-              {canManage && (
+              {canManage && selectedCategory !== 'Favoritos' && (
                 <button 
                   onClick={handleOpenCreateTemplate}
                   className="mt-6 px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-semibold transition-all"
@@ -761,10 +777,10 @@ export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'temp
               {filteredTemplates.slice((templatePage - 1) * itemsPerPage, templatePage * itemsPerPage).map((template) => (
                 <div 
                   key={template.id}
-                  className="group flex flex-col bg-black/40 dark:bg-[#111111] border border-gray-200 dark:border-white/10 rounded-3xl overflow-hidden hover:border-primary-500/40 shadow-sm hover:shadow-lg transition-all duration-300 backdrop-blur-md"
+                  className="group flex flex-col bg-black/40 dark:bg-[#111111] border border-gray-200 dark:border-white/10 rounded-3xl hover:border-primary-500/40 shadow-sm hover:shadow-lg transition-all duration-300 backdrop-blur-md"
                 >
                   {/* Print Visual com Fallback de Gradiente se não houver print */}
-                  <div className="relative aspect-video w-full overflow-hidden bg-black/20 border-b border-gray-200 dark:border-white/10">
+                  <div className="relative aspect-video w-full overflow-hidden bg-black/20 border-b border-gray-200 dark:border-white/10 rounded-t-[1.4rem]">
                     {template.previewImageUrl ? (
                       <img 
                         src={template.previewImageUrl} 
@@ -775,7 +791,7 @@ export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'temp
                         }}
                       />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-primary-900/30 to-purple-900/20 flex flex-col items-center justify-center gap-2 select-none group-hover:scale-105 transition-transform duration-500">
+                      <div className="w-full h-full bg-gradient-to-br from-primary-900/30 to-purple-900/20 flex flex-col items-center justify-center gap-2 select-none group-hover:scale-105 transition-transform duration-500 rounded-t-[1.4rem]">
                         <LayoutTemplate className="w-8 h-8 text-white/20" />
                         <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Sem Preview Cadastrado</span>
                       </div>
