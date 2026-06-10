@@ -259,8 +259,8 @@ export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'temp
     setIsTemplateModalOpen(true);
   };
 
-  const handleOpenEditTemplate = (template: ProductionTemplate, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleOpenEditTemplate = (template: ProductionTemplate, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setEditingTemplate({ ...template });
     setIsTemplateModalOpen(true);
   };
@@ -306,8 +306,8 @@ export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'temp
     }
   };
 
-  const handleDeleteTemplate = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDeleteTemplate = async (id: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     if (!effectiveOrgId) return;
 
     if (confirm("Tem certeza que deseja excluir permanentemente este template?")) {
@@ -848,9 +848,9 @@ export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'temp
                                     <div className="px-2 py-1 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Ações</div>
                                     <button 
                                       type="button"
-                                      onClick={() => {
+                                      onClick={(e) => {
                                         setActiveDropdownId(null);
-                                        handleOpenEditTemplate(template, null as any);
+                                        handleOpenEditTemplate(template, e);
                                       }}
                                       className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-300 hover:bg-white/5 rounded-lg text-left"
                                     >
@@ -861,9 +861,9 @@ export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'temp
                                     <div className="px-2 py-1 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Zona de Perigo</div>
                                     <button 
                                       type="button"
-                                      onClick={() => {
+                                      onClick={(e) => {
                                         setActiveDropdownId(null);
-                                        handleDeleteTemplate(template.id, null as any);
+                                        handleDeleteTemplate(template.id, e);
                                       }}
                                       className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-400 hover:bg-red-500/10 rounded-lg text-left"
                                     >
