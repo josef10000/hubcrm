@@ -66,6 +66,16 @@ export const createCRMSlice: StateCreator<
         client.publicToken = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
       }
 
+      // 🛡️ Garantir portalActivationCode para o Portal do Cliente (HUB-XXXXXX)
+      if (!client.portalActivationCode) {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let code = '';
+        for (let i = 0; i < 6; i++) {
+          code += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        client.portalActivationCode = `HUB-${code}`;
+      }
+
       // 🚀 Integração com Asaas (Exige CPF/CNPJ e E-mail)
       const cleanCpfCnpj = client.cpfCnpj?.replace(/\D/g, '') || '';
       const hasValidDoc = cleanCpfCnpj.length === 11 || cleanCpfCnpj.length === 14;

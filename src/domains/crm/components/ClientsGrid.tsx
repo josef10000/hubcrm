@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { AlertTriangle, Clock, Phone, Tag, Briefcase, Globe, DollarSign, MessageCircle, Copy, Users, Link as LinkIcon, Zap, Calendar, PlusCircle, UserPlus } from 'lucide-react';
+import { AlertTriangle, Clock, Phone, Tag, Briefcase, Globe, DollarSign, MessageCircle, Copy, Users, Link as LinkIcon, Zap, Calendar, PlusCircle, UserPlus, Key } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import SupportRequestModal from '@support/components/SupportRequestModal';
 import { Client } from '@/types';
@@ -261,11 +261,26 @@ export default function ClientsGrid({
                     navigator.clipboard.writeText(url);
                     toast.success('Link do Portal copiado para a área de transferência!');
                   }}
-                  className="flex items-center justify-center w-full py-2.5 rounded-xl bg-primary-500/20 text-primary-400 hover:bg-primary-500/30 border border-primary-500/30 transition-colors text-sm font-medium"
+                  className={`flex items-center justify-center py-2.5 rounded-xl bg-primary-500/20 text-primary-400 hover:bg-primary-500/30 border border-primary-500/30 transition-colors text-xs font-medium ${client.portalActivationCode ? 'flex-1' : 'w-full'}`}
+                  title="Copiar Link Completo"
                 >
-                  <Copy size={18} className="mr-2" />
-                  Link do Portal
+                  <LinkIcon size={16} className="mr-1.5" />
+                  Link Portal
                 </button>
+                {client.portalActivationCode && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigator.clipboard.writeText(client.portalActivationCode);
+                      toast.success(`Código de ativação copiado: ${client.portalActivationCode}`);
+                    }}
+                    className="flex-1 flex items-center justify-center py-2.5 rounded-xl bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/30 transition-colors text-xs font-medium"
+                    title={`Código de Ativação: ${client.portalActivationCode}`}
+                  >
+                    <Key size={16} className="mr-1.5" />
+                    Cód: {client.portalActivationCode.replace('HUB-', '')}
+                  </button>
+                )}
               </div>
               <div className="relative group/seller">
                 <button

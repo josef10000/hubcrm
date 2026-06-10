@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   X, Plus, DollarSign, CheckCircle, Clock, MapPin, Phone, Tag, Building2, FileText, Briefcase, AlignLeft,
   Paperclip, Copy, MessageCircle, Trash2, Snowflake, Globe, Image as ImageIcon, Sparkles, Wand2, Star, Zap,
-  RefreshCw, Link as LinkIcon, AlertTriangle, TrendingDown, Eye, EyeOff, Edit2, Loader2, Download, FileSignature, FileUp, Mail, Bell, BellOff
+  RefreshCw, Link as LinkIcon, AlertTriangle, TrendingDown, Eye, EyeOff, Edit2, Loader2, Download, FileSignature, FileUp, Mail, Bell, BellOff, Key
 } from 'lucide-react';
 import { auth, db, storage } from '@/lib/firebase';
 import { collection, doc, setDoc, onSnapshot, deleteDoc, addDoc, updateDoc } from 'firebase/firestore';
@@ -622,6 +622,49 @@ function ClientModal({
                       {isCheckingPayment && <span className="text-xs text-gray-500 dark:text-gray-400 animate-pulse">Verificando pagamento...</span>}
                     </div>
                   </div>
+
+                  {/* 🌐 Portal do Cliente Configs */}
+                  {formData.id && (
+                    <div className="p-4 bg-primary-500/10 border border-primary-500/20 rounded-2xl space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Globe size={18} className="text-primary-400" />
+                        <span className="text-sm font-bold text-gray-950 dark:text-white">Portal do Cliente</span>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-black/35 p-3 rounded-xl border border-white/5 flex flex-col justify-center">
+                          <span className="text-[9px] text-gray-500 uppercase font-black block mb-0.5">Código de Ativação</span>
+                          <span className="text-xs font-mono font-bold text-primary-400">{formData.portalActivationCode || 'HUB-Pendente'}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (formData.portalActivationCode) {
+                              navigator.clipboard.writeText(formData.portalActivationCode);
+                              toast.success('Código de ativação copiado!');
+                            }
+                          }}
+                          disabled={!formData.portalActivationCode}
+                          className="flex items-center justify-center gap-2 bg-primary-500/20 hover:bg-primary-500/35 border border-primary-500/30 text-primary-400 font-bold rounded-xl text-xs uppercase transition-all py-3.5"
+                        >
+                          <Copy size={14} />
+                          Copiar Código
+                        </button>
+                      </div>
+
+                      {formData.portalLinked ? (
+                        <div className="text-[10px] text-emerald-400 flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 p-2.5 rounded-xl">
+                          <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping"></span>
+                          <span>Portal Ativado por: <strong>{formData.portalEmail}</strong></span>
+                        </div>
+                      ) : (
+                        <div className="text-[10px] text-yellow-400 flex items-center gap-1.5 bg-yellow-500/10 border border-yellow-500/20 p-2.5 rounded-xl">
+                          <AlertTriangle size={14} className="shrink-0 text-yellow-400" />
+                          <span>Aguardando ativação pelo cliente.</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Data Prevista de Entrega</label>

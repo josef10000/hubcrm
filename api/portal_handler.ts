@@ -50,7 +50,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 // ============================================================
 async function handleAuth(req: VercelRequest, res: VercelResponse) {
   try {
-    const { email, uid, orgId, clientId, token } = req.body;
+    const { action, activationCode, email, uid, orgId, clientId, token } = req.body;
 
     if (!email || !uid) {
       return res.status(400).json({ error: 'Parâmetros email e uid são obrigatórios.' });
@@ -60,7 +60,34 @@ async function handleAuth(req: VercelRequest, res: VercelResponse) {
     let targetOrgId = orgId;
     let targetClientId = clientId;
 
-    if (orgId && clientId && token) {
+    if (action === 'activate') {
+      if (!activationCode) {
+        return res.status(400).json({ error: 'Parâmetro activationCode é obrigatório para ativação.' });
+      }
+
+      console.log(`[PortalAuth] Tentativa de ativação com o código: ${activationCode} para o usuário: ${cleanEmail}`);
+
+      // Busca o cliente pelo código de ativação
+      const clientsQuery = await db
+        .collectionGroup('clients')
+        .where('portalActivationCode', '==', activationCode.trim())
+        .limit(1)
+        .get();
+
+      if (clientsQuery.empty) {
+        console.warn(`[PortalAuth] Código de ativação inválido ou não encontrado: ${activationCode}`);
+        return res.status(400).json({ error: 'Código de ativação inválido ou já utilizado.' });
+      }
+
+      const clientDoc = clientsQuery.docs[0];
+      targetClientId = clientDoc.id;
+      targetOrgId = clientDoc.ref.parent.parent?.id;
+
+      if (!targetOrgId) {
+        console.error(`[PortalAuth] Erro ao extrair orgId para o cliente ${targetClientId} no fluxo de ativação`);
+        return res.status(500).json({ error: 'Erro de integrabilidade estrutural do banco de dados.' });
+      }
+    } else if (orgId && clientId && token) {
       // Vinculação direta via link seguro (orgId + clientId + token)
       const clientRef = db
         .collection('organizations')
@@ -88,7 +115,7 @@ async function handleAuth(req: VercelRequest, res: VercelResponse) {
       if (clientsQuery.empty) {
         console.warn(`[PortalAuth] E-mail não encontrado em nenhum card de cliente: ${cleanEmail}`);
         return res.status(404).json({ 
-          error: 'Este e-mail não está associado a nenhuma empresa no sistema. Solicite ao suporte que insira seu e-mail no seu cadastro ou utilize o link de convite correto.' 
+          error: 'Este e-mail não está associado a nenhuma empresa no sistema. Solicite ao suporte que lhe forneça o Código de Ativação do seu portal.' 
         });
       }
 
@@ -118,19 +145,32 @@ async function handleAuth(req: VercelRequest, res: VercelResponse) {
       .doc(targetOrgId)
       .collection('clients')
       .doc(targetClientId);
-    await clientRef.update({
+    
+    // Na ativação por código, opcionalmente removemos o código para que ele não seja reutilizado
+    const updateData: any = {
       portalLinked: true,
       portalEmail: cleanEmail,
       portalUserUid: uid,
       portalLinkedAt: new Date()
-    });
+    };
 
-    console.log(`[PortalAuth] Vinculado com sucesso: ${cleanEmail} -> org: ${targetOrgId}, client: ${targetClientId}`);
+    if (action === 'activate') {
+      updateData.portalActivationCode = admin.firestore.FieldValue.delete();
+    }
+
+    await clientRef.update(updateData);
+
+    const finalClientDoc = await clientRef.get();
+    const finalClientData = finalClientDoc.data();
+    const publicToken = finalClientData?.publicToken || '';
+
+    console.log(`[PortalAuth] Vinculado com sucesso: ${cleanEmail} -> org: ${targetOrgId}, client: ${targetClientId} (Action: ${action || 'normal'})`);
 
     return res.status(200).json({
       success: true,
       orgId: targetOrgId,
-      clientId: targetClientId
+      clientId: targetClientId,
+      token: publicToken
     });
 
   } catch (error: any) {

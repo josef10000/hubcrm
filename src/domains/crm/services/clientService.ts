@@ -8,7 +8,13 @@ export const clientService = {
     const clientRef = doc(collection(db, 'organizations', orgId, 'clients'));
     const clientId = clientRef.id;
 
-    const newClient: Partial<Client> & { publicToken: string } = {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    const newClient: Partial<Client> & { publicToken: string, portalActivationCode: string } = {
       id: clientId,
       name: lead.name,
       email: lead.email,
@@ -16,6 +22,7 @@ export const clientService = {
       status: 'Ativo',
       planPrice: totalAmount,
       publicToken: crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, ''), // 64 chars hex-like
+      portalActivationCode: `HUB-${code}`,
       assignedTo: lead.assignedTo || 'system',
       createdAt: Date.now(),
       updatedAt: Date.now(),
