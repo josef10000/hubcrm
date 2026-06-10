@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import fetch from 'node-fetch';
 import monitorsHandler from './_logic/uptimerobot/monitors.js';
 import manualTriggerHandler from './_logic/email/manual-trigger.js';
-import { admin, db } from './_utils/firebase.js';
+import { admin, db, firestore } from './_utils/firebase.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { action } = req.query;
@@ -68,10 +68,10 @@ async function handleCleanup(req: VercelRequest, res: VercelResponse) {
       // Só limpa se houver dados do portal vinculados para otimizar escritas
       if (data.portalLinked || data.portalEmail || data.portalUserUid || data.portalLinkedAt) {
         batch.update(doc.ref, {
-          portalLinked: admin.firestore.FieldValue.delete(),
-          portalEmail: admin.firestore.FieldValue.delete(),
-          portalUserUid: admin.firestore.FieldValue.delete(),
-          portalLinkedAt: admin.firestore.FieldValue.delete()
+          portalLinked: firestore.FieldValue.delete(),
+          portalEmail: firestore.FieldValue.delete(),
+          portalUserUid: firestore.FieldValue.delete(),
+          portalLinkedAt: firestore.FieldValue.delete()
         });
         cleanedClientsCount++;
       }

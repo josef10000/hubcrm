@@ -1,8 +1,8 @@
 import * as adminNamespace from 'firebase-admin';
 
-// Handle common interop issues with firebase-admin in ESM/Vercel
 const admin = (adminNamespace as any).default || adminNamespace;
 export { admin };
+export const firestore = adminNamespace.firestore;
 
 /**
  * Ensures Firebase Admin is initialized exactly once.
