@@ -17,6 +17,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return await manualTriggerHandler(req, res);
       case 'cleanup':
         return await handleCleanup(req, res);
+      case 'support':
+        return await handleReadSupport(req, res);
       default:
         return res.status(400).json({ error: 'Ação do sistema inválida ou não especificada' });
     }
@@ -130,4 +132,23 @@ async function handleCleanup(req: VercelRequest, res: VercelResponse) {
     profilesDeleted: deletedProfilesCount,
     authUsersDeleted: deletedAuthUsersCount
   });
+}
+
+async function handleReadSupport(req: VercelRequest, res: VercelResponse) {
+  const { secret } = req.query;
+  if (secret !== 'limpeza123') {
+    return res.status(403).json({ error: 'Acesso não autorizado. Secret inválido.' });
+  }
+
+  try {
+    const snap = await db.collectionGroup('supportRequests').get();
+    const list = snap.docs.map(doc => ({
+      id: doc.id,
+      path: doc.ref.path,
+      ...doc.data()
+    }));
+    return res.status(200).json(list);
+  } catch (error: any) {
+    return res.status(500).json({ error: 'Erro ao ler chamados', details: error.message });
+  }
 }
