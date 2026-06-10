@@ -334,6 +334,7 @@ export interface Client {
   portalEmail?: string;
   portalUserUid?: string;
   portalLinkedAt?: any;
+  portalActivationCode?: string;
 }
 
 export type ClientBase = Client;

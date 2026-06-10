@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { db } from './_utils/firebase.js';
+import { admin, db } from './_utils/firebase.js';
 import { asaasRequest, safeErrorResponse } from './_utils/asaas.js';
 import type { ClientBase } from '../shared/types.js';
 import { portalFinanceSchema, validateSchema } from '../shared/schemas.js';
