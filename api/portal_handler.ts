@@ -37,6 +37,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return handleAuth(req, res);
   }
   if (req.method === 'GET') {
+    if (req.query.action === 'debug') {
+      return handleDebug(req, res);
+    }
     return handleFinance(req, res);
   }
   return res.status(405).json({ error: 'Method Not Allowed' });
@@ -260,3 +263,84 @@ async function handleFinance(req: VercelRequest, res: VercelResponse) {
     return safeErrorResponse(res, error, 'Erro ao carregar faturamento do portal');
   }
 }
+
+// ============================================================
+// GET — Diagnóstico de Usuário e Vínculo (Temporário)
+// ============================================================
+async function handleDebug(req: VercelRequest, res: VercelResponse) {
+  try {
+    const { email } = req.query;
+
+    if (!email || typeof email !== 'string') {
+      return res.status(400).json({ error: 'Parâmetro email é obrigatório.' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    // 1. Buscar na coleção 'profiles' pelo e-mail
+    const profilesQuery = await db
+      .collection('profiles')
+      .where('email', '==', cleanEmail)
+      .get();
+
+    const profiles: any[] = [];
+    profilesQuery.forEach((doc) => {
+      profiles.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+
+    // 2. Buscar em lote de clientes (collectionGroup 'clients')
+    const clientsQuery = await db
+      .collectionGroup('clients')
+      .where('email', '==', cleanEmail)
+      .get();
+
+    const clients: any[] = [];
+    clientsQuery.forEach((doc) => {
+      const orgId = doc.ref.parent.parent?.id;
+      clients.push({
+        id: doc.id,
+        orgId: orgId || null,
+        path: doc.ref.path,
+        data: doc.data()
+      });
+    });
+
+    // 3. Buscar com o e-mail original (para testar case-sensitivity)
+    let clientsWithOriginalCase: any[] = [];
+    if (email !== cleanEmail) {
+      const originalCaseQuery = await db
+        .collectionGroup('clients')
+        .where('email', '==', email.trim())
+        .get();
+      
+      originalCaseQuery.forEach((doc) => {
+        const orgId = doc.ref.parent.parent?.id;
+        clientsWithOriginalCase.push({
+          id: doc.id,
+          orgId: orgId || null,
+          path: doc.ref.path,
+          data: doc.data()
+        });
+      });
+    }
+
+    return res.status(200).json({
+      queryEmail: email,
+      cleanEmail,
+      profilesFound: profiles.length,
+      profiles,
+      clientsFound: clients.length,
+      clients,
+      clientsWithOriginalCaseFound: clientsWithOriginalCase.length,
+      clientsWithOriginalCase
+    });
+
+  } catch (error: any) {
+    console.error("[PortalDebug] Critical Error:", error);
+    return res.status(500).json({ error: 'Erro no diagnóstico', message: error.message });
+  }
+}
+
