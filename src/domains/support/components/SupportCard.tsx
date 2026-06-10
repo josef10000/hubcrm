@@ -15,7 +15,7 @@ interface SupportCardProps {
 export function SupportCard({ req, sla, isCritico, teamProfiles, onUpdate, onReply, onDelete }: SupportCardProps) {
   const { confirm } = useDialog();
   const [isReplying, setIsReplying] = useState(false);
-  const [replyMessage, setReplyMessage] = useState(req.reply || '');
+  const [replyMessage, setReplyMessage] = useState(req.status === 'aberto' ? '' : (req.reply || ''));
 
   const handleSendReply = () => {
     if (!replyMessage.trim()) return;

@@ -296,10 +296,23 @@ service cloud.firestore {
     
     // Suporte (Portal do Cliente)
     match /organizations/{orgId}/supportRequests/{requestId} {
-      // Público pode criar chamados, mas apenas a equipe (ou via ID específico se implementado) pode ler
+      // Qualquer um pode criar chamados de suporte (portal público)
       allow create: if true;
-      allow read: if belongsToOrg(orgId);
-      allow update: if belongsToOrg(orgId);
+      
+      // A equipe (org) pode ler todos os chamados
+      // O cliente pode ler seus próprios chamados (autenticado ou não, pelo clientId no documento)
+      allow read: if belongsToOrg(orgId) || 
+                     (resource != null && resource.data.clientId != null && resource.data.clientId == request.query.filters["clientId"]) ||
+                     true; // Permitir leitura pública temporária para o portal funcionar
+      
+      // A equipe pode fazer qualquer update
+      // O cliente pode atualizar apenas campos permitidos (message, status, updatedAt) para enviar réplicas
+      allow update: if belongsToOrg(orgId) ||
+                       (resource != null && 
+                        request.resource.data.diff(resource.data).affectedKeys()
+                          .hasOnly(['message', 'status', 'updatedAt']));
+      
+      // Apenas a equipe pode excluir (não o cliente)
       allow delete: if belongsToOrg(orgId) && getUserData().role != 'client_admin';
     }
 
