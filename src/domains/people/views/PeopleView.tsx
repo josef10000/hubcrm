@@ -742,7 +742,6 @@ export default function PeopleView() {
             <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] p-8 shadow-xl">
                <div className="flex justify-between items-center mb-8">
                   <h2 className="text-xl font-bold">Ausências & Férias</h2>
-                  <button onClick={() => setShowVacationModal(true)} className="px-4 py-2 bg-primary-500 text-white rounded-xl text-sm font-bold">Solicitar</button>
                </div>
                
                <div className="space-y-12">

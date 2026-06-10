@@ -712,21 +712,12 @@ export default function ProfileView() {
           </button>
           
           <div className="flex items-center gap-3">
-            {isOwnProfile && (
-              <button 
-                onClick={() => setShowVacationModal(true)}
-                className="px-6 py-2 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 font-bold border border-amber-500/20 transition-all flex items-center gap-2"
-              >
-                <Calendar size={18} />
-                Solicitar Ausência
-              </button>
-            )}
             {canEdit && !isEditing && (
               <button 
                 onClick={() => setIsEditing(true)}
-                className="px-6 py-2 rounded-2xl bg-primary-500 hover:bg-primary-600 text-white font-bold shadow-lg shadow-primary-500/20 active:scale-95 transition-all flex items-center gap-2"
+                className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 font-bold text-xs transition-all active:scale-95 flex items-center gap-1.5"
               >
-                <Edit3 size={18} />
+                <Edit3 size={14} />
                 Editar Perfil
               </button>
             )}
@@ -889,103 +880,87 @@ export default function ProfileView() {
                   )}
                   <span className="relative z-10">Disponibilidade</span>
                 </motion.button>
+                {(isOwnProfile || isManagement || isAdmin) && (
+                  <motion.button 
+                    whileTap={{ scale: 0.96 }}
+                    onClick={() => setActiveTab('pdi')}
+                    className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'pdi' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                  >
+                    {activeTab === 'pdi' && (
+                      <motion.div
+                        layoutId="activeProfileTab"
+                        className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                    <span className="relative z-10">{isOwnProfile ? 'Meu PDI' : 'PDI'}</span>
+                  </motion.button>
+                )}
+                {(isOwnProfile || isManagement || isAdmin) && (
+                  <motion.button 
+                    whileTap={{ scale: 0.96 }}
+                    onClick={() => setActiveTab('inventory')}
+                    className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'inventory' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                  >
+                    {activeTab === 'inventory' && (
+                      <motion.div
+                        layoutId="activeProfileTab"
+                        className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                    <span className="relative z-10">Ativos</span>
+                  </motion.button>
+                )}
+                {(isOwnProfile || isManagement || isAdmin) && (
+                  <motion.button 
+                    whileTap={{ scale: 0.96 }}
+                    onClick={() => setActiveTab('feedbacks')}
+                    className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'feedbacks' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                  >
+                    {activeTab === 'feedbacks' && (
+                      <motion.div
+                        layoutId="activeProfileTab"
+                        className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                    <span className="relative z-10">Mural</span>
+                  </motion.button>
+                )}
+                {(isOwnProfile || isManagement || isAdmin) && (
+                  <motion.button 
+                    whileTap={{ scale: 0.96 }}
+                    onClick={() => setActiveTab('history')}
+                    className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'history' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                  >
+                    {activeTab === 'history' && (
+                      <motion.div
+                        layoutId="activeProfileTab"
+                        className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                    <span className="relative z-10">Carreira</span>
+                  </motion.button>
+                )}
+                {(isOwnProfile || isManagement || isAdmin) && (
+                  <motion.button 
+                    whileTap={{ scale: 0.96 }}
+                    onClick={() => setActiveTab('vacations')}
+                    className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'vacations' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                  >
+                    {activeTab === 'vacations' && (
+                      <motion.div
+                        layoutId="activeProfileTab"
+                        className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                    <span className="relative z-10">Ausências</span>
+                  </motion.button>
+                )}
                 {isOwnProfile && (
-                  <>
-                    <motion.button 
-                      whileTap={{ scale: 0.96 }}
-                      onClick={() => setActiveTab('pdi')}
-                      className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'pdi' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                    >
-                      {activeTab === 'pdi' && (
-                        <motion.div
-                          layoutId="activeProfileTab"
-                          className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
-                          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                        />
-                      )}
-                      <span className="relative z-10">Meu PDI</span>
-                    </motion.button>
-                    <motion.button 
-                      whileTap={{ scale: 0.96 }}
-                      onClick={() => setActiveTab('inventory')}
-                      className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'inventory' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                    >
-                      {activeTab === 'inventory' && (
-                        <motion.div
-                          layoutId="activeProfileTab"
-                          className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
-                          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                        />
-                      )}
-                      <span className="relative z-10">Ativos</span>
-                    </motion.button>
-                    <motion.button 
-                      whileTap={{ scale: 0.96 }}
-                      onClick={() => setActiveTab('feedbacks')}
-                      className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'feedbacks' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                    >
-                      {activeTab === 'feedbacks' && (
-                        <motion.div
-                          layoutId="activeProfileTab"
-                          className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
-                          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                        />
-                      )}
-                      <span className="relative z-10">Mural</span>
-                    </motion.button>
-                    <motion.button 
-                      whileTap={{ scale: 0.96 }}
-                      onClick={() => setActiveTab('history')}
-                      className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'history' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                    >
-                      {activeTab === 'history' && (
-                        <motion.div
-                          layoutId="activeProfileTab"
-                          className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
-                          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                        />
-                      )}
-                      <span className="relative z-10">Carreira</span>
-                    </motion.button>
-                    <motion.button 
-                      whileTap={{ scale: 0.96 }}
-                      onClick={() => setActiveTab('vacations')}
-                      className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'vacations' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                    >
-                      {activeTab === 'vacations' && (
-                        <motion.div
-                          layoutId="activeProfileTab"
-                          className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
-                          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                        />
-                      )}
-                      <span className="relative z-10">Ausências</span>
-                    </motion.button>
-                    <motion.button 
-                      whileTap={{ scale: 0.96 }}
-                      onClick={() => setActiveTab('alerts')}
-                      className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'alerts' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                    >
-                      {activeTab === 'alerts' && (
-                        <motion.div
-                          layoutId="activeProfileTab"
-                          className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
-                          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                        />
-                      )}
-                      <span className="relative z-10 flex items-center gap-1.5">
-                        <span>Alertas</span>
-                        {unreadAlertsCount > 0 && (
-                          <span className="w-4 h-4 bg-rose-500 text-white text-[8px] rounded-full flex items-center justify-center border border-zinc-950">
-                            {unreadAlertsCount}
-                          </span>
-                        )}
-                      </span>
-                    </motion.button>
-                    {(isOwnProfile || isManagement || isAdmin) && (
-                      <motion.button 
-                        whileTap={{ scale: 0.96 }}
-                        onClick={() => setActiveTab('expediente')}
                         className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'expediente' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
                       >
                         {activeTab === 'expediente' && (
@@ -2166,7 +2141,7 @@ export default function ProfileView() {
                 </div>
               )}
 
-              {activeTab === 'pdi' && isOwnProfile && (
+              {activeTab === 'pdi' && (isOwnProfile || isManagement || isAdmin) && (
                 <div className="animate-in slide-in-from-right duration-500">
                   <div className="flex items-center gap-3 mb-8">
                     <div className="p-3 bg-indigo-500/10 rounded-2xl text-indigo-500">
@@ -2273,7 +2248,7 @@ export default function ProfileView() {
                 </div>
               )}
 
-              {activeTab === 'inventory' && isOwnProfile && (
+              {activeTab === 'inventory' && (isOwnProfile || isManagement || isAdmin) && (
                 <div className="animate-in slide-in-from-right duration-500">
                   <InventorySection 
                     inventory={userAssets} 
@@ -2283,7 +2258,7 @@ export default function ProfileView() {
                 </div>
               )}
 
-              {activeTab === 'feedbacks' && isOwnProfile && (
+              {activeTab === 'feedbacks' && (isOwnProfile || isManagement || isAdmin) && (
                 <div className="animate-in slide-in-from-right duration-500">
                   <div className="flex items-center justify-between mb-8">
                     <h4 className="text-sm font-bold text-gray-500 uppercase tracking-widest">Mural de Feedbacks</h4>
@@ -2304,16 +2279,27 @@ export default function ProfileView() {
                 </div>
               )}
 
-              {activeTab === 'vacations' && isOwnProfile && (
+              {activeTab === 'vacations' && (isOwnProfile || isManagement || isAdmin) && (
                 <div className="animate-in slide-in-from-right duration-500 space-y-6 text-left">
-                   <div className="flex items-center gap-3 mb-4">
-                     <div className="p-3 bg-amber-500/10 rounded-2xl text-amber-500">
-                       <Calendar size={24} />
+                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                     <div className="flex items-center gap-3">
+                       <div className="p-3 bg-amber-500/10 rounded-2xl text-amber-500">
+                         <Calendar size={24} />
+                       </div>
+                       <div>
+                         <h4 className="font-bold">Histórico de Ausências</h4>
+                         <p className="text-xs text-gray-500">Acompanhamento de férias, folgas e licenças.</p>
+                       </div>
                      </div>
-                     <div>
-                       <h4 className="font-bold">Histórico de Ausências</h4>
-                       <p className="text-xs text-gray-500">Acompanhamento de férias, folgas e licenças.</p>
-                     </div>
+                     {isOwnProfile && (
+                       <button 
+                         onClick={() => setShowVacationModal(true)}
+                         className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-black font-bold text-xs transition-all shadow-lg shadow-amber-500/10 flex items-center gap-1.5 self-start sm:self-auto"
+                       >
+                         <Calendar size={14} />
+                         Solicitar Ausência
+                       </button>
+                     )}
                    </div>
 
                    <div className="grid grid-cols-1 gap-4">
@@ -2457,7 +2443,7 @@ export default function ProfileView() {
                 </div>
               )}
 
-              {activeTab === 'history' && isOwnProfile && (
+              {activeTab === 'history' && (isOwnProfile || isManagement || isAdmin) && (
                 <div className="animate-in slide-in-from-right duration-500">
                   <div className="flex items-center justify-between mb-8">
                     <h4 className="text-sm font-bold text-gray-500 uppercase tracking-widest">Linha do Tempo de Carreira</h4>
