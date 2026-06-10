@@ -82,18 +82,42 @@ async function handleCleanup(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  // 2. Buscar e deletar todos os perfis com role 'client_admin'
-  const profilesSnap = await db
-    .collection('profiles')
-    .where('role', '==', 'client_admin')
-    .get();
-  
-  let deletedProfilesCount = 0;
+  // 2. Obter perfis para separar funcionários de clientes
+  const allProfilesSnap = await db.collection('profiles').get();
+  const employeeUids = new Set<string>();
+  const clientProfileRefs: admin.firestore.DocumentReference[] = [];
 
-  if (!profilesSnap.empty) {
+  allProfilesSnap.docs.forEach((doc) => {
+    const data = doc.data();
+    if (data.role === 'client_admin') {
+      clientProfileRefs.push(doc.ref);
+    } else {
+      employeeUids.add(doc.id);
+    }
+  });
+
+  // 3. Listar todos os usuários do Firebase Auth e deletar os que não forem funcionários do CRM
+  let deletedAuthUsersCount = 0;
+  try {
+    const listUsersResult = await admin.auth().listUsers(1000);
+    for (const userRecord of listUsersResult.users) {
+      const uid = userRecord.uid;
+      // Se não for funcionário do CRM, removemos do Auth
+      if (!employeeUids.has(uid)) {
+        await admin.auth().deleteUser(uid);
+        deletedAuthUsersCount++;
+      }
+    }
+  } catch (authErr: any) {
+    console.error('[Cleanup] Erro ao listar/deletar usuários do Firebase Auth:', authErr);
+  }
+
+  // 4. Deletar os perfis do tipo client_admin do Firestore
+  let deletedProfilesCount = 0;
+  if (clientProfileRefs.length > 0) {
     const batch = db.batch();
-    profilesSnap.docs.forEach((doc) => {
-      batch.delete(doc.ref);
+    clientProfileRefs.forEach((ref) => {
+      batch.delete(ref);
       deletedProfilesCount++;
     });
     await batch.commit();
@@ -101,8 +125,9 @@ async function handleCleanup(req: VercelRequest, res: VercelResponse) {
 
   return res.status(200).json({
     success: true,
-    message: 'Limpeza do Firestore realizada com sucesso!',
+    message: 'Limpeza do Firestore e Firebase Auth realizada com sucesso!',
     clientsCleaned: cleanedClientsCount,
-    profilesDeleted: deletedProfilesCount
+    profilesDeleted: deletedProfilesCount,
+    authUsersDeleted: deletedAuthUsersCount
   });
 }
