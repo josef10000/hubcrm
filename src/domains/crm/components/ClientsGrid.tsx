@@ -136,14 +136,20 @@ export default function ClientsGrid({
                     {client.status}
                   </span>
                 </div>
-                {client.paymentStatus && client.paymentStatus !== 'N/A' && (
-                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                    client.paymentStatus === 'RECEIVED' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
-                    client.paymentStatus === 'OVERDUE' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
-                    'bg-primary-500/20 text-primary-400 border border-primary-500/30'
-                  }`}>
-                    {client.paymentStatus === 'RECEIVED' ? 'Pago' : client.paymentStatus === 'OVERDUE' ? 'Atrasado' : 'Pendente'}
+                {client.isCourtesy ? (
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                    VIP / Isento
                   </span>
+                ) : (
+                  client.paymentStatus && client.paymentStatus !== 'N/A' && (
+                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                      client.paymentStatus === 'RECEIVED' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
+                      client.paymentStatus === 'OVERDUE' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                      'bg-primary-500/20 text-primary-400 border border-primary-500/30'
+                    }`}>
+                      {client.paymentStatus === 'RECEIVED' ? 'Pago' : client.paymentStatus === 'OVERDUE' ? 'Atrasado' : 'Pendente'}
+                    </span>
+                  )
                 )}
               </div>
             </div>
@@ -159,7 +165,7 @@ export default function ClientsGrid({
                 Plano {client.plan} <span className="ml-2 text-xs opacity-60">(R$ {getPlanPrice(client.plan, client.billingCycle, client).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span>
               </div>
               
-              {client.nextDueDate && client.status !== 'Cancelado' && (
+              {client.nextDueDate && client.status !== 'Cancelado' && !client.isCourtesy && (
                 <div className="flex items-center text-gray-600 dark:text-gray-300 text-sm">
                   <Calendar size={16} className="mr-3 text-primary-400 opacity-80" />
                   Vencimento: {new Date(client.nextDueDate + 'T12:00:00Z').toLocaleDateString('pt-BR')}
@@ -202,7 +208,7 @@ export default function ClientsGrid({
             </div>
 
             <div className="mt-6 pt-4 border-t border-gray-200 dark:border-white/10 flex flex-col gap-2">
-              {client.invoiceUrl && (
+              {client.invoiceUrl && !client.isCourtesy && (
                 <div className="flex gap-2">
                   <a 
                     href={client.invoiceUrl}
@@ -238,7 +244,7 @@ export default function ClientsGrid({
                   <MessageCircle size={18} className="mr-2" />
                   WhatsApp
                 </a>
-                {client.invoiceUrl && (
+                {client.invoiceUrl && !client.isCourtesy && (
                   <a 
                     href={`https://wa.me/55${(client.whatsapp || '').replace(/\D/g, '')}?text=Olá ${client.name}, sua fatura de R$ ${getPlanPrice(client.plan, client.billingCycle, client).toFixed(2).replace('.', ',')} vence dia ${client.nextDueDate ? new Date(client.nextDueDate).toLocaleDateString('pt-BR') : ''}. Segue o link para pagamento via PIX: ${client.invoiceUrl}`}
                     target="_blank"
