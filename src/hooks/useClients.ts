@@ -199,6 +199,7 @@ export function useClients(opts: UseClientsOptions) {
       isCourtesy: clientData.isCourtesy || false,
       asaasNotificationsEnabled: clientData.asaasNotificationsEnabled || false,
       referralRewardType: clientData.billingCycle === 'YEARLY' || clientData.isCombo ? 'commission' : clientData.referralRewardType || editingClient?.referralRewardType || 'discount',
+      brandAssets: clientData.brandAssets,
     };
 
     try {
