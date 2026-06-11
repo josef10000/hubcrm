@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { doc, collection, query, where, onSnapshot, getDocs, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { GrowthAsset } from '@/types';
 
 export function usePortalData(orgId: string | undefined, initialClientId: string | undefined) {
   const [activeClientId, setActiveClientId] = useState<string | undefined>(initialClientId);
+  const [growthAssets, setGrowthAssets] = useState<GrowthAsset[]>([]);
   const [allClients, setAllClients] = useState<any[]>([]);
   const [client, setClient] = useState<any>(null);
   const [paymentsHistory, setPaymentsHistory] = useState<any[]>([]);
@@ -90,6 +92,24 @@ export function usePortalData(orgId: string | undefined, initialClientId: string
     }
   }, [orgId, initialClientId, client]);
 
+  // Buscar ativos de crescimento globais da organização em tempo real no Firestore
+  useEffect(() => {
+    if (!orgId) return;
+
+    const colRef = collection(db, 'organizations', orgId, 'growth_assets');
+    const unsub = onSnapshot(colRef, (snapshot) => {
+      const assets: GrowthAsset[] = [];
+      snapshot.forEach((doc) => {
+        assets.push({ id: doc.id, ...doc.data() } as GrowthAsset);
+      });
+      setGrowthAssets(assets);
+    }, (error) => {
+      console.error("Erro ao carregar growth_assets no portal:", error);
+    });
+
+    return () => unsub();
+  }, [orgId]);
+
   return { 
     client, 
     allClients,
@@ -101,7 +121,8 @@ export function usePortalData(orgId: string | undefined, initialClientId: string
     announcement, 
     loading, 
     switching,
-    error 
+    error,
+    growthAssets
   };
 }
 

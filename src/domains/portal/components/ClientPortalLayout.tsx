@@ -13,7 +13,8 @@ import {
   Bell,
   Calendar,
   DollarSign,
-  Briefcase
+  Briefcase,
+  Rocket
 } from 'lucide-react';
 import { usePortalData } from '@/hooks/usePortalData';
 import { toast, Toaster } from 'sonner';
@@ -30,6 +31,7 @@ import PortalSupport from '../views/PortalSupport';
 import PortalAgenda from '../views/PortalAgenda';
 import PortalCRMFinance from '../views/PortalCRMFinance';
 import PortalManagement from '../views/PortalManagement';
+import PortalGrowthHub from '../views/PortalGrowthHub';
 
 export default function ClientPortalLayout() {
   const { orgId, clientId } = useParams<{ orgId: string; clientId: string }>();
@@ -52,7 +54,8 @@ export default function ClientPortalLayout() {
     error, 
     announcement, 
     paymentsHistory, 
-    offers 
+    offers,
+    growthAssets
   } = usePortalData(orgId, clientId);
   const [activeTab, setActiveTab] = useState('home');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -113,6 +116,7 @@ export default function ClientPortalLayout() {
     { id: 'agenda', label: 'Agenda', icon: Calendar },
     { id: 'crm_finance', label: 'CRM Financeiro', icon: DollarSign },
     { id: 'management', label: 'Meu Negócio', icon: Briefcase },
+    { id: 'growth', label: 'Hub de Crescimento', icon: Rocket },
     ...(client && !client.isCourtesy ? [
       { id: 'finance', label: 'Faturas Hub', icon: CreditCard },
       { id: 'services', label: 'Marketplace', icon: ShoppingBag }
@@ -415,6 +419,9 @@ export default function ClientPortalLayout() {
               )}
               {activeTab === 'management' && (
                 <PortalManagement orgId={orgId || ''} clientId={activeClientId || ''} />
+              )}
+              {activeTab === 'growth' && (
+                <PortalGrowthHub client={client} growthAssets={growthAssets} />
               )}
               {activeTab === 'finance' && (
                 <PortalFinance 

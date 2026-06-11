@@ -137,9 +137,9 @@ Ferramental de produtividade completo disponível na área restrita do cliente n
 *   **Performance Financeira por Projeto (`PortalCRMFinance.tsx`):** Permite aos clientes acompanhar custos de insumos e registrar despesas operacionais atreladas a agendamentos, gerando relatórios de margem e lucro líquido por projeto (com sinalização visual verde/amarela/vermelha de performance).
 
 ### 15. 🚀 Hub de Crescimento (Área de Sucesso do Cliente)
-Backoffice e infraestrutura de dados para o Hub de Crescimento, que disponibiliza recursos de sucesso aos clientes no Portal de forma segregada:
-*   **Dados Individuais (Cofre da Marca):** Aba dedicada dentro do card do cliente ("Cofre da Marca") que permite fazer upload da logo (via Cloudinary), salvar paleta de cores HEX (com seletor visual nativo), especificar tipografia padrão e cadastrar links de templates customizados do Canva específicos do cliente.
-*   **Dados Globais (Ativos Globais):** Tela geral no menu do CRM com CRUD completo de ativos de sucesso (vídeos de treinamento, PDFs, links de templates gerais do Canva e textos de scripts de vendas).
+Backoffice, infraestrutura de dados e portal do cliente para o Hub de Crescimento, disponibilizando recursos de sucesso e materiais aos clientes:
+*   **Dados Individuais (Cofre da Marca):** Aba dedicada no CRM ("Cofre da Marca") e seção do Portal do Cliente ([PortalGrowthHub.tsx](file:///c:/Users/JoséFrazãodaSilvaNet/OneDrive - 39985 - DIGITAL TECH LTDA/Área de Trabalho/Clonecrm/hubcrm/src/domains/portal/views/PortalGrowthHub.tsx)) que exibe a logo oficial para download, a paleta de cores HEX (com cópia direta de código com 1 clique) e a tipografia configurada.
+*   **Dados Globais (Ativos Globais):** Tela geral no menu do CRM com CRUD completo de materiais de sucesso, e renderização reativa no Portal do Cliente segregada por abas: "Templates Rápidos", "Arsenal de Vendas" (scripts com botão de cópia rápida) e "Treinamentos" (player de vídeo incorporado e links externos).
 *   **Segurança no Firestore & API:** Regras de segurança granulares no Firestore e atualização no payload da API do portal (`api/portal_handler.ts`) para incluir o objeto `brandAssets` no carregamento seguro do cliente.
 
 ---
