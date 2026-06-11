@@ -338,6 +338,11 @@ export interface Client {
   brandAssets?: BrandAssets;
 }
 
+export interface BrandAssetLogo {
+  name: string;
+  url: string;
+}
+
 export interface BrandAssetLink {
   title: string;
   url: string;
@@ -345,6 +350,7 @@ export interface BrandAssetLink {
 
 export interface BrandAssets {
   logoUrl?: string;
+  logos?: BrandAssetLogo[];
   colors?: string[]; // Array de strings HEX
   typography?: string;
   customCanvaLinks?: BrandAssetLink[];

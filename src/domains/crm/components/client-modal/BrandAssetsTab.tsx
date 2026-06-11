@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Upload, Trash2, Plus, Link as LinkIcon, Loader2, Palette, Type } from 'lucide-react';
-import { Client, BrandAssets, BrandAssetLink } from '@/types';
+import { Client, BrandAssets, BrandAssetLink, BrandAssetLogo } from '@/types';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 import { toast } from 'sonner';
 
@@ -12,12 +12,14 @@ interface BrandAssetsTabProps {
 export default function BrandAssetsTab({ client, setFormData }: BrandAssetsTabProps) {
   const brandAssets: BrandAssets = client.brandAssets || {
     logoUrl: '',
+    logos: [],
     colors: [],
     typography: '',
     customCanvaLinks: []
   };
 
   const [uploading, setUploading] = useState(false);
+  const [logoNameInput, setLogoNameInput] = useState('');
   const [newColor, setNewColor] = useState('#6366f1');
   const [newColorText, setNewColorText] = useState('#6366f1');
   const [newLinkLabel, setNewLinkLabel] = useState('');
@@ -48,11 +50,21 @@ export default function BrandAssetsTab({ client, setFormData }: BrandAssetsTabPr
       return;
     }
 
+    const name = logoNameInput.trim() || file.name.split('.')[0] || 'Logo';
+
     setUploading(true);
     try {
       const secureUrl = await uploadToCloudinary(file);
-      updateBrandAssets({ logoUrl: secureUrl });
-      toast.success('Logo enviada com sucesso!');
+      const currentLogos = brandAssets.logos || [];
+      const newLogo: BrandAssetLogo = { name, url: secureUrl };
+      const updatedLogos = [...currentLogos, newLogo];
+
+      updateBrandAssets({
+        logos: updatedLogos,
+        logoUrl: currentLogos.length === 0 ? secureUrl : (brandAssets.logoUrl || secureUrl)
+      });
+      setLogoNameInput('');
+      toast.success('Logotipo enviado com sucesso!');
     } catch (error: any) {
       console.error('Logo upload error:', error);
       toast.error(`Falha ao enviar a logo: ${error.message || 'Erro desconhecido'}`);
@@ -61,10 +73,16 @@ export default function BrandAssetsTab({ client, setFormData }: BrandAssetsTabPr
     }
   };
 
-  const handleRemoveLogo = () => {
-    updateBrandAssets({ logoUrl: '' });
+  const handleRemoveLogo = (indexToRemove: number) => {
+    const currentLogos = brandAssets.logos || [];
+    const updatedLogos = currentLogos.filter((_, idx) => idx !== indexToRemove);
+    
+    updateBrandAssets({
+      logos: updatedLogos,
+      logoUrl: updatedLogos.length > 0 ? updatedLogos[0].url : ''
+    });
     if (fileInputRef.current) fileInputRef.current.value = '';
-    toast.success('Logo removida.');
+    toast.success('Logotipo removido.');
   };
 
   const handleAddColor = () => {
@@ -133,55 +151,82 @@ export default function BrandAssetsTab({ client, setFormData }: BrandAssetsTabPr
         <div className="space-y-6">
           
           {/* Sessão Logo */}
-          <div className="p-4 bg-black/20 border border-white/5 rounded-2xl space-y-3">
+          <div className="p-4 bg-black/20 border border-white/5 rounded-2xl space-y-4">
             <h4 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
               <Upload size={16} className="text-primary-400" />
-              Logo da Marca
+              Logotipos da Marca (Múltiplos)
             </h4>
             
-            <div className="flex items-center gap-4">
-              <div className="w-24 h-24 rounded-xl border border-gray-200 dark:border-white/10 bg-white/5 flex items-center justify-center overflow-hidden shrink-0 relative">
-                {brandAssets.logoUrl ? (
-                  <img src={brandAssets.logoUrl} alt="Logo do Cliente" className="w-full h-full object-contain p-2" />
-                ) : (
-                  <span className="text-[10px] text-gray-500 italic text-center p-2">Sem Logo</span>
-                )}
-                {uploading && (
-                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                    <Loader2 className="w-6 h-6 text-primary-500 animate-spin" />
-                  </div>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  onChange={handleLogoUpload} 
-                  accept="image/*" 
-                  className="hidden" 
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                  className="px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:opacity-50 text-gray-900 dark:text-white text-xs font-bold rounded-xl transition-all"
-                >
-                  Fazer Upload da Logo
-                </button>
-                {brandAssets.logoUrl && (
+            {/* Form de Adicionar Logo */}
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Nome/Versão da Logo</label>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    value={logoNameInput}
+                    onChange={(e) => setLogoNameInput(e.target.value)}
+                    placeholder="Ex: Logo Principal, PNG Transparente, SVG"
+                    className="flex-1 px-3 py-2.5 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none text-xs"
+                  />
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    onChange={handleLogoUpload} 
+                    accept="image/*" 
+                    className="hidden" 
+                  />
                   <button
                     type="button"
-                    onClick={handleRemoveLogo}
-                    className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 justify-center"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="px-4 py-2.5 bg-primary-500 hover:bg-primary-600 disabled:opacity-50 text-gray-900 dark:text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shrink-0"
                   >
-                    <Trash2 size={12} />
-                    Remover Logo
+                    {uploading ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
+                    Upload Logo
                   </button>
-                )}
+                </div>
               </div>
             </div>
-            <p className="text-[10px] text-gray-500 leading-normal">Tamanho recomendado: formato PNG ou SVG transparente com fundo contrastante.</p>
+
+            {/* Listagem de Logos */}
+            <div className="space-y-2 max-h-[220px] overflow-y-auto custom-scrollbar border-t border-white/5 pt-3">
+              {brandAssets.logos?.map((logo, idx) => (
+                <div 
+                  key={idx}
+                  className="flex items-center justify-between p-3 bg-white/5 border border-white/10 rounded-xl"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-12 h-12 bg-white/5 border border-white/5 rounded-lg flex items-center justify-center overflow-hidden p-1 shrink-0">
+                      <img src={logo.url} alt={logo.name} className="w-full h-full object-contain" />
+                    </div>
+                    <div className="min-w-0 pr-2">
+                      <p className="text-xs font-bold text-gray-900 dark:text-white truncate">{logo.name}</p>
+                      <a 
+                        href={logo.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-[10px] text-primary-400 hover:underline truncate block mt-0.5"
+                      >
+                        Visualizar Link
+                      </a>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveLogo(idx)}
+                    className="p-2 hover:bg-red-500/10 text-gray-400 hover:text-red-500 rounded-lg transition-colors shrink-0"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+              {(!brandAssets.logos || brandAssets.logos.length === 0) && (
+                <div className="text-center py-6 text-xs text-gray-500 italic">
+                  Nenhum logotipo enviado ainda.
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Sessão Paleta de Cores */}
@@ -269,35 +314,35 @@ export default function BrandAssetsTab({ client, setFormData }: BrandAssetsTabPr
 
         </div>
 
-        {/* Lado Direito: Links do Canva Customizados */}
+        {/* Lado Direito: Links do Canva/Outros Customizados */}
         <div className="space-y-4">
           <div className="p-4 bg-black/20 border border-white/5 rounded-2xl space-y-4 h-full flex flex-col justify-between">
             <div>
               <h4 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-3">
                 <LinkIcon size={16} className="text-primary-400" />
-                Templates Customizados (Canva / Outros)
+                Links & Templates da Marca (Canva, Trello, Drive...)
               </h4>
 
               {/* Form de Adicionar Link */}
               <div className="space-y-3 mb-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Título do Template</label>
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Título do Link / Template</label>
                   <input 
                     type="text" 
                     value={newLinkLabel}
                     onChange={(e) => setNewLinkLabel(e.target.value)}
-                    placeholder="Ex: Identidade Visual / Post de Vendas"
+                    placeholder="Ex: Painel do Trello, Canva LP, Pasta do Drive"
                     className="w-full px-3 py-2 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none text-xs"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Link do Documento / Template</label>
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">URL de Acesso</label>
                   <div className="flex gap-2">
                     <input 
                       type="url" 
                       value={newLinkUrl}
                       onChange={(e) => setNewLinkUrl(e.target.value)}
-                      placeholder="https://canva.com/design/..."
+                      placeholder="https://trello.com/... ou https://canva.com/..."
                       className="flex-1 px-3 py-2 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none text-xs"
                     />
                     <button
