@@ -61,6 +61,48 @@ async function handleAuth(req: VercelRequest, res: VercelResponse) {
     let targetOrgId = orgId;
     let targetClientId = clientId;
 
+    if (action === 'update_client') {
+      if (!orgId || !clientId || !token) {
+        return res.status(400).json({ error: 'Parâmetros orgId, clientId e token são obrigatórios para atualizar dados.' });
+      }
+
+      const clientRef = db
+        .collection('organizations')
+        .doc(orgId)
+        .collection('clients')
+        .doc(clientId);
+
+      const clientDoc = await clientRef.get();
+      if (!clientDoc.exists) {
+        return res.status(404).json({ error: 'Cliente não encontrado.' });
+      }
+
+      const clientData = clientDoc.data();
+      if (!clientData?.publicToken || clientData.publicToken !== token) {
+        return res.status(403).json({ error: 'Token de segurança inválido ou expirado.' });
+      }
+
+      const { clientName, clientPhone } = req.body;
+      const updatePayload: any = {};
+      if (clientName && clientName.trim()) {
+        updatePayload.name = clientName.trim();
+      }
+      if (clientPhone !== undefined) {
+        updatePayload.phone = clientPhone.trim();
+        updatePayload.whatsapp = clientPhone.trim();
+      }
+
+      if (Object.keys(updatePayload).length > 0) {
+        await clientRef.update(updatePayload);
+        console.log(`[PortalUpdate] Cliente ${clientId} atualizado no CRM: ${JSON.stringify(updatePayload)}`);
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Dados cadastrais do cliente atualizados no CRM com sucesso.'
+      });
+    }
+
     if (action === 'activate') {
       if (!activationCode) {
         return res.status(400).json({ error: 'Parâmetro activationCode é obrigatório para ativação.' });
