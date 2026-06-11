@@ -129,6 +129,9 @@ O Canal do Cliente foi extraído e desacoplado do repositório do CRM administra
 *   **Ativação Desacoplada por Código Único:** Implementa fluxo com código de 6 dígitos (ex: `HUB-A7B8C9`) para ativação inicial. O cliente cria sua conta no portal usando qualquer e-mail/senha pessoal desejados, e insere o código único gerado pelo CRM para vincular definitivamente sua conta do portal ao seu card de cliente administrativo.
 *   **Integração Nativa de Dados:** Compartilha o mesmo banco de dados do Firebase Firestore com o CRM administrativo para a sincronização em tempo real de chamados, agendamentos e contratos.
 *   **CORS Habilitado na API Administrativa:** O endpoint `/api/portal_handler` no CRM administrativo está configurado para receber requisições de origem cruzada (CORS) da origem `https://portahub.hubsymples.com.br` para consultas contábeis (Asaas) seguras.
+*   **Endpoints de API Públicos e Seguros [NOVO]:** O endpoint `/api/portal_handler` agora suporta ações de acesso livre e seguro para clientes finais não-autenticados:
+    *   `public_get_appointment`: Retorna informações básicas do agendamento (nome do cliente, serviço, data, hora, preço) e o logotipo do assinante (`logoUrl` dos ativos de marca).
+    *   `public_confirm_appointment`: Executa atualizações de status de presença do cliente final (`confirmed` ou `cancelled`) de forma segura utilizando o Firebase Admin SDK, contornando as restrições normais de escrita na coleção de agendamentos.
 
 ### 14. 💼 Módulo "Meu Negócio" & Lucro Real por Projeto no Portal Hub
 Ferramental de produtividade completo disponível na área restrita do cliente no **Portal Hub**:

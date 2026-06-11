@@ -35,11 +35,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (req.method === 'POST') {
+    if (req.body.action === 'public_confirm_appointment') {
+      return handlePublicConfirmAppointment(req, res);
+    }
     return handleAuth(req, res);
   }
   if (req.method === 'GET') {
     if (req.query.action === 'debug') {
       return handleDebug(req, res);
+    }
+    if (req.query.action === 'public_get_appointment') {
+      return handlePublicGetAppointment(req, res);
     }
     return handleFinance(req, res);
   }
@@ -428,6 +434,98 @@ async function handleDebug(req: VercelRequest, res: VercelResponse) {
   } catch (error: any) {
     console.error("[PortalDebug] Critical Error:", error);
     return res.status(500).json({ error: 'Erro no diagnóstico', message: error.message });
+  }
+}
+
+async function handlePublicGetAppointment(req: VercelRequest, res: VercelResponse) {
+  try {
+    const { orgId, appointmentId, clientId } = req.query;
+    if (!orgId || !appointmentId) {
+      return res.status(400).json({ error: 'Parâmetros orgId e appointmentId são obrigatórios.' });
+    }
+
+    // Busca o agendamento
+    const appointmentDoc = await db
+      .collection('organizations')
+      .doc(orgId as string)
+      .collection('appointments')
+      .doc(appointmentId as string)
+      .get();
+
+    if (!appointmentDoc.exists) {
+      return res.status(404).json({ error: 'Agendamento não encontrado.' });
+    }
+
+    const appointmentData = appointmentDoc.data();
+
+    // Busca a logo da organização (lendo do brandAssets do cliente correspondente ao assinante no CRM)
+    let logoUrl = '';
+    if (clientId) {
+      const clientDoc = await db
+        .collection('organizations')
+        .doc(orgId as string)
+        .collection('clients')
+        .doc(clientId as string)
+        .get();
+
+      if (clientDoc.exists) {
+        const clientData = clientDoc.data();
+        logoUrl = clientData?.brandAssets?.logoUrl || '';
+      }
+    }
+
+    // Retorna apenas dados públicos não sensíveis
+    return res.status(200).json({
+      clientName: appointmentData?.clientName || '',
+      serviceName: appointmentData?.serviceName || '',
+      date: appointmentData?.date || '',
+      time: appointmentData?.time || '',
+      price: appointmentData?.price || 0,
+      status: appointmentData?.status || '',
+      logoUrl
+    });
+  } catch (error: any) {
+    console.error('[PortalPublicAppointment] Erro ao buscar agendamento:', error);
+    return res.status(500).json({ error: 'Erro interno ao buscar dados do agendamento.', details: error.message });
+  }
+}
+
+async function handlePublicConfirmAppointment(req: VercelRequest, res: VercelResponse) {
+  try {
+    const { orgId, appointmentId, status } = req.body;
+    if (!orgId || !appointmentId || !status) {
+      return res.status(400).json({ error: 'Parâmetros orgId, appointmentId e status são obrigatórios.' });
+    }
+
+    if (status !== 'confirmed' && status !== 'cancelled') {
+      return res.status(400).json({ error: 'Status de confirmação inválido.' });
+    }
+
+    const appointmentRef = db
+      .collection('organizations')
+      .doc(orgId as string)
+      .collection('appointments')
+      .doc(appointmentId as string);
+
+    const appointmentDoc = await appointmentRef.get();
+    if (!appointmentDoc.exists) {
+      return res.status(404).json({ error: 'Agendamento não encontrado.' });
+    }
+
+    await appointmentRef.update({
+      status,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    console.log(`[PortalPublicAppointment] Agendamento ${appointmentId} atualizado com sucesso para status: ${status}`);
+
+    return res.status(200).json({
+      success: true,
+      message: `Presença atualizada com sucesso para ${status === 'confirmed' ? 'Confirmado' : 'Cancelado'}.`
+    });
+  } catch (error: any) {
+    console.error('[PortalPublicAppointment] Erro ao atualizar agendamento:', error);
+    return res.status(500).json({ error: 'Erro interno ao atualizar presença no agendamento.', details: error.message });
   }
 }
 
