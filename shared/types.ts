@@ -335,6 +335,32 @@ export interface Client {
   portalUserUid?: string;
   portalLinkedAt?: any;
   portalActivationCode?: string;
+  brandAssets?: BrandAssets;
+}
+
+export interface BrandAssetLink {
+  title: string;
+  url: string;
+}
+
+export interface BrandAssets {
+  logoUrl?: string;
+  colors?: string[]; // Array de strings HEX
+  typography?: string;
+  customCanvaLinks?: BrandAssetLink[];
+}
+
+export type GrowthAssetType = 'video' | 'pdf' | 'script' | 'template';
+
+export interface GrowthAsset {
+  id: string;
+  title: string;
+  type: GrowthAssetType;
+  url: string; // link do youtube, drive, canva, etc.
+  content?: string; // para textos de scripts de vendas
+  category: string;
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 export type ClientBase = Client;

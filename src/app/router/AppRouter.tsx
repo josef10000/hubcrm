@@ -46,6 +46,7 @@ const CanvasListView = lazy(() => import('@chat/views/CanvasListView'));
 const CanvasEditorView = lazy(() => import('@chat/views/CanvasEditorView'));
 const ReferralsView = lazy(() => import('@crm/components/ReferralsView'));
 const AuditDashboard = lazy(() => import('@domains/core/views/AuditDashboard'));
+const GrowthHubView = lazy(() => import('@/domains/crm/views/GrowthHubView'));
 
 // Public / External Views (Lazy Loaded)
 const ClientPortal = lazy(() => import('@portal/components/ClientPortalLayout'));
@@ -129,6 +130,7 @@ export function AppRouter() {
                       <Route path="/projects" element={<ProjectsView />} />
 
                       {/* Permission Based Routes */}
+                      <Route path="/growth-hub" element={hasPermission('MANAGE_CLIENTS') ? <GrowthHubView /> : <Navigate to="/" />} />
                       <Route path="/analytics" element={hasPermission('VIEW_REPORTS') ? <AnalyticsView /> : <Navigate to="/" />} />
                       <Route path="/finance" element={hasPermission('MANAGE_FINANCE') ? <FinanceView /> : <Navigate to="/" />} />
                       <Route path="/team" element={hasPermission('MANAGE_TEAM') ? <TeamManagementView /> : <Navigate to="/" />} />

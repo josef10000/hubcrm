@@ -338,6 +338,7 @@ async function handleFinance(req: VercelRequest, res: VercelResponse) {
         customMonthlyPrice: clientData.customMonthlyPrice,
         customSetupPrice: clientData.customSetupPrice,
         isCourtesy: clientData.isCourtesy,
+        brandAssets: clientData.brandAssets || null,
       },
       payments: filteredPayments,
       requests: requests.sort((a: any, b: any) => (b.createdAt?._seconds || 0) - (a.createdAt?._seconds || 0)),

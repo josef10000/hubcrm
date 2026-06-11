@@ -27,6 +27,7 @@ import ReferralsTab from './client-modal/ReferralsTab';
 import ContractsTab from './client-modal/ContractsTab';
 import PlansTab from './client-modal/PlansTab';
 import PurchasesTab from './client-modal/PurchasesTab';
+import BrandAssetsTab from './client-modal/BrandAssetsTab';
 
 export default
 function ClientModal({ 
@@ -73,7 +74,7 @@ function ClientModal({
   });
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [activeTab, setActiveTab] = useState<'details' | 'history' | 'stages' | 'credentials' | 'onboarding' | 'contracts' | 'referrals' | 'emails' | 'plans' | 'purchases'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'history' | 'stages' | 'credentials' | 'onboarding' | 'contracts' | 'referrals' | 'emails' | 'plans' | 'purchases' | 'brandAssets'>('details');
   const [cepLoading, setCepLoading] = useState(false);
   const [cpfCnpjStatus, setCpfCnpjStatus] = useState<'idle' | 'valid' | 'invalid' | 'loading'>('idle');
   const [newLogText, setNewLogText] = useState('');
@@ -260,6 +261,7 @@ function ClientModal({
     { key: 'contracts', label: 'Contratos' },
     { key: 'plans', label: 'Assinaturas' },
     { key: 'purchases', label: 'Compras' },
+    { key: 'brandAssets', label: 'Cofre da Marca' },
   ] as const;
 
   return (
@@ -772,6 +774,8 @@ function ClientModal({
               <ReferralsTab client={initialData} user={user} />
             ) : activeTab === 'contracts' && initialData ? (
               <ContractsTab client={initialData} user={user} formData={formData} setFormData={setFormData} defaultContractText={defaultContractText} orgId={effectiveOrgId} />
+            ) : activeTab === 'brandAssets' ? (
+              <BrandAssetsTab client={formData} setFormData={setFormData} />
             ) : null}
           </div>
 

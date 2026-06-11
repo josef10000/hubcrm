@@ -172,6 +172,12 @@ service cloud.firestore {
           .hasOnly(['npsScore', 'npsComment', 'npsSubmittedAt', 'referralRewardType', 'currentDiscount', 'accessKey', 'portalLinked', 'portalEmail', 'portalUserUid', 'portalLinkedAt']);
       }
 
+      // 📚 HUB DE CRESCIMENTO — Ativos Globais
+      match /growth_assets/{assetId} {
+        allow read: if belongsToOrg(orgId) || isAuthenticated(); // Leitura para membros ou clientes autenticados
+        allow write: if isOwnerEmail() || isOrgAdmin(orgId) || hasPermission(orgId, 'MANAGE_CLIENTS');
+      }
+
       match /leads/{id} {
         allow read: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_LEADS') || (belongsToOrg(orgId) && resource.data.assignedTo == request.auth.uid);
         allow write: if isOwnerEmail() || hasPermission(orgId, 'MANAGE_LEADS');
