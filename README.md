@@ -373,7 +373,7 @@ O projeto possui um grafo de conhecimento gerado semanticamente e estruturalment
 
 ## 🧪 Como Rodar e Validar o Projeto
 
-Como o ambiente local não possui runtime local do Node.js por padrão (toda compilação e teste ocorre de forma automatizada no pipeline de CI/CD do GitHub Actions), utilize os seguintes comandos no terminal em ambientes que dispõem de Node:
+O ambiente local de desenvolvimento foi configurado e agora dispõe do runtime do Node.js (v26.3.0) e npm (v11.16.0) instalados e prontos para uso. Utilize os seguintes comandos no terminal para desenvolvimento e validação:
 
 ```bash
 # 1. Instalar as dependências globais e locais
