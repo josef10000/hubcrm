@@ -54,6 +54,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Call Asaas finance balance endpoint
     const data = await asaasRequest('/finance/balance', 'GET');
+
+    // Persist balance snapshot to Firestore for frontend cache
+    try {
+      const profileSnap = await db.collection('profiles').doc(uid).get();
+      const orgId = profileSnap.data()?.orgId;
+      if (orgId && typeof data.balance === 'number') {
+        await db.collection('organizations').doc(orgId)
+          .collection('settings').doc('asaas_cache')
+          .set({ balance: data.balance, updatedAt: Date.now() }, { merge: true });
+      }
+    } catch (cacheErr) {
+      // Cache save failure should NOT block the response
+      console.warn('[Balance] Falha ao gravar cache no Firestore:', cacheErr);
+    }
+
     return res.status(200).json(data);
   } catch (error: any) {
     return safeErrorResponse(res, error, 'Erro ao obter saldo no Asaas');

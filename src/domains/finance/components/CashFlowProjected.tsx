@@ -1,42 +1,57 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useClients } from '@/hooks/queries/useClients';
 import { useTransactions } from '@/hooks/queries/useFinance';
 import { getPlanPrice } from '@/helpers';
 import { authFetch } from '@/lib/authFetch';
-import { TrendingUp, TrendingDown, Clock, AlertTriangle, Loader2 } from 'lucide-react';
+import { db } from '@/lib/firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { TrendingUp, TrendingDown, AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
 
 export default function CashFlowProjected() {
-  const { offers = [] } = useCRM();
+  const { effectiveOrgId, offers = [] } = useCRM();
   const { data: clientsData } = useClients();
   const clients = clientsData || [];
   const { data: transactionsData } = useTransactions();
   const transactions = transactionsData || [];
-  const [currentBalance, setCurrentBalance] = useState<number>(0);
-  const [loadingBalance, setLoadingBalance] = useState<boolean>(false);
-  const [projectionMonths, setProjectionMonths] = useState<number>(3); // 3, 6, 12 meses
+  const [currentBalance, setCurrentBalance] = useState<number | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null);
+  const [loadingBalance, setLoadingBalance] = useState<boolean>(true);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [projectionMonths, setProjectionMonths] = useState<number>(3);
 
+  // 1. Lê o cache do saldo do Firestore em tempo real (sem chamar a API do Asaas)
   useEffect(() => {
-    let active = true;
-    const fetchBalance = async () => {
-      setLoadingBalance(true);
-      try {
-        const res = await authFetch('/api/asaas_handler?action=balance');
-        const data = await res.json();
-        if (res.ok && active && typeof data.balance === 'number') {
-          setCurrentBalance(data.balance);
-        }
-      } catch (err) {
-        console.error('[CashFlowProjected] Erro ao obter saldo do Asaas:', err);
-      } finally {
-        if (active) setLoadingBalance(false);
+    if (!effectiveOrgId) return;
+    const cacheRef = doc(db, 'organizations', effectiveOrgId, 'settings', 'asaas_cache');
+    const unsub = onSnapshot(cacheRef, (snap) => {
+      setLoadingBalance(false);
+      if (snap.exists()) {
+        const data = snap.data();
+        if (typeof data.balance === 'number') setCurrentBalance(data.balance);
+        if (typeof data.updatedAt === 'number') setLastUpdated(data.updatedAt);
       }
-    };
+    }, () => setLoadingBalance(false));
+    return () => unsub();
+  }, [effectiveOrgId]);
 
-    fetchBalance();
-    return () => {
-      active = false;
-    };
+  // 2. Botão de atualização manual — chama a API e o backend já atualiza o Firestore
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const res = await authFetch('/api/asaas_handler?action=balance');
+      if (res.ok) {
+        const data = await res.json();
+        if (typeof data.balance === 'number') {
+          setCurrentBalance(data.balance);
+          setLastUpdated(Date.now());
+        }
+      }
+    } catch (err) {
+      console.error('[CashFlowProjected] Erro ao atualizar saldo:', err);
+    } finally {
+      setRefreshing(false);
+    }
   }, []);
 
   // Projected Cash Flow Logic
@@ -102,7 +117,7 @@ export default function CashFlowProjected() {
     });
 
     // 3. Accumulate projected balance waterfall
-    let runningBalance = currentBalance;
+    let runningBalance = currentBalance ?? 0;
     monthlyBuckets.forEach(bucket => {
       const net = bucket.inflow - bucket.outflow;
       runningBalance += net;
@@ -110,7 +125,7 @@ export default function CashFlowProjected() {
     });
 
     return monthlyBuckets;
-  }, [clients, transactions, currentBalance, projectionMonths]);
+  }, [clients, transactions, currentBalance, projectionMonths, offers]);
 
   return (
     <div className="space-y-6">
@@ -122,20 +137,36 @@ export default function CashFlowProjected() {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 bg-gray-100 dark:bg-black/40 px-4 py-2 rounded-xl border border-gray-200 dark:border-white/10">
-              <span className="text-gray-500 font-medium text-sm flex items-center gap-1.5">
-                {loadingBalance && <Loader2 size={12} className="animate-spin text-emerald-500" />}
-                Saldo Real Asaas:
-              </span>
-              <input 
-                type="number" 
-                value={currentBalance}
-                onChange={(e) => setCurrentBalance(Number(e.target.value))}
-                className="w-24 bg-transparent border-none outline-none text-emerald-500 font-bold p-0 focus:ring-0 text-right"
-              />
+            {/* Saldo Real Asaas — somente leitura */}
+            <div className="flex flex-col items-end gap-0.5">
+              <div className="flex items-center gap-2 bg-gray-100 dark:bg-black/40 px-4 py-2 rounded-xl border border-gray-200 dark:border-white/10">
+                <span className="text-gray-500 font-medium text-sm">Saldo Real Asaas:</span>
+                {loadingBalance ? (
+                  <Loader2 size={14} className="animate-spin text-emerald-500" />
+                ) : (
+                  <span className="text-emerald-500 font-bold text-sm">
+                    {currentBalance !== null
+                      ? `R$ ${currentBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                      : '—'}
+                  </span>
+                )}
+                <button
+                  onClick={handleRefresh}
+                  disabled={refreshing}
+                  title="Atualizar saldo agora"
+                  className="ml-1 text-gray-400 hover:text-emerald-500 transition-colors disabled:opacity-40"
+                >
+                  <RefreshCw size={13} className={refreshing ? 'animate-spin' : ''} />
+                </button>
+              </div>
+              {lastUpdated && (
+                <span className="text-[10px] text-gray-400 pr-1">
+                  atualizado às {new Date(lastUpdated).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
             </div>
-            <select 
-              value={projectionMonths} 
+            <select
+              value={projectionMonths}
               onChange={e => setProjectionMonths(Number(e.target.value))}
               className="bg-gray-100 dark:bg-black/40 px-4 py-2 rounded-xl border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white font-medium outline-none"
             >

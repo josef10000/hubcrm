@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { db } from '../_utils/firebase.js';
+import { asaasRequest } from '../_utils/asaas.js';
 
 /**
  * HubCRM Finance Engine - Cron Job
@@ -163,4 +164,22 @@ async function processOrganizationFinance(orgId: string) {
   });
 
   await batch.commit();
+
+  // 7. Atualizar cache do saldo real do Asaas no Firestore
+  try {
+    const prefsDoc = await db.collection('organizations').doc(orgId)
+      .collection('settings').doc('preferences').get();
+    const asaasKey = prefsDoc.exists ? prefsDoc.data()?.asaas_api_key : null;
+    if (asaasKey) {
+      const balanceData = await asaasRequest('/finance/balance', 'GET');
+      if (typeof balanceData.balance === 'number') {
+        await db.collection('organizations').doc(orgId)
+          .collection('settings').doc('asaas_cache')
+          .set({ balance: balanceData.balance, updatedAt: Date.now() }, { merge: true });
+        console.log(`[Finance Cron] Saldo Asaas da org ${orgId} atualizado: R$ ${balanceData.balance}`);
+      }
+    }
+  } catch (balanceErr: any) {
+    console.warn(`[Finance Cron] Falha ao atualizar cache de saldo da org ${orgId}:`, balanceErr.message);
+  }
 }
