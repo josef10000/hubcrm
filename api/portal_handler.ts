@@ -38,6 +38,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.body.action === 'public_confirm_appointment') {
       return handlePublicConfirmAppointment(req, res);
     }
+    if (req.body.action === 'get_client') {
+      return handleGetClient(req, res);
+    }
     return handleAuth(req, res);
   }
   if (req.method === 'GET') {
@@ -88,8 +91,10 @@ async function handleAuth(req: VercelRequest, res: VercelResponse) {
         return res.status(403).json({ error: 'Token de segurança inválido ou expirado.' });
       }
 
-      const { clientName, clientPhone } = req.body;
+      const { clientName, clientPhone, schedulingSettings, fidelitySettings, bioSettings, contracts, logs } = req.body;
       const updatePayload: any = {};
+
+      // Dados cadastrais básicos
       if (clientName && clientName.trim()) {
         updatePayload.name = clientName.trim();
       }
@@ -98,14 +103,42 @@ async function handleAuth(req: VercelRequest, res: VercelResponse) {
         updatePayload.whatsapp = clientPhone.trim();
       }
 
+      // Configurações de Agenda (expediente, pix, templates WhatsApp, nomenclaturas)
+      if (schedulingSettings !== undefined) {
+        const existingSched = clientData?.schedulingSettings || {};
+        updatePayload.schedulingSettings = { ...existingSched, ...schedulingSettings };
+      }
+
+      // Configurações do Clube de Fidelidade
+      if (fidelitySettings !== undefined) {
+        const existingFid = clientData?.fidelitySettings || {};
+        updatePayload.fidelitySettings = { ...existingFid, ...fidelitySettings };
+      }
+
+      // Configurações do Mini-Site (Bio)
+      if (bioSettings !== undefined) {
+        const existingBio = clientData?.bioSettings || {};
+        updatePayload.bioSettings = { ...existingBio, ...bioSettings };
+      }
+
+      // Contratos assinados digitalmente
+      if (contracts !== undefined) {
+        updatePayload.contracts = contracts;
+      }
+
+      // Logs de atividade
+      if (logs !== undefined) {
+        updatePayload.logs = logs;
+      }
+
       if (Object.keys(updatePayload).length > 0) {
         await clientRef.update(updatePayload);
-        console.log(`[PortalUpdate] Cliente ${clientId} atualizado no CRM: ${JSON.stringify(updatePayload)}`);
+        console.log(`[PortalUpdate] Cliente ${clientId} atualizado no CRM com campos: ${Object.keys(updatePayload).join(', ')}`);
       }
 
       return res.status(200).json({
         success: true,
-        message: 'Dados cadastrais do cliente atualizados no CRM com sucesso.'
+        message: 'Dados do cliente atualizados com sucesso.'
       });
     }
 
@@ -529,3 +562,52 @@ async function handlePublicConfirmAppointment(req: VercelRequest, res: VercelRes
   }
 }
 
+// ============================================================
+// POST get_client — Busca dados do cliente via token (sem exigir uid/email)
+// ============================================================
+async function handleGetClient(req: VercelRequest, res: VercelResponse) {
+  try {
+    const { orgId, clientId, token } = req.body;
+
+    if (!orgId || !clientId || !token) {
+      return res.status(400).json({ error: 'Parâmetros orgId, clientId e token são obrigatórios.' });
+    }
+
+    const clientRef = db
+      .collection('organizations')
+      .doc(orgId)
+      .collection('clients')
+      .doc(clientId);
+
+    const clientDoc = await clientRef.get();
+    if (!clientDoc.exists) {
+      return res.status(404).json({ error: 'Cliente não encontrado.' });
+    }
+
+    const clientData = clientDoc.data();
+    if (!clientData?.publicToken || clientData.publicToken !== token) {
+      return res.status(403).json({ error: 'Token de segurança inválido ou expirado.' });
+    }
+
+    // Retorna apenas os campos seguros (sem informações sensíveis)
+    return res.status(200).json({
+      success: true,
+      client: {
+        id: clientDoc.id,
+        name: clientData.name,
+        email: clientData.email,
+        phone: clientData.phone,
+        schedulingSettings: clientData.schedulingSettings || {},
+        fidelitySettings: clientData.fidelitySettings || {},
+        bioSettings: clientData.bioSettings || {},
+        contracts: clientData.contracts || [],
+        logs: clientData.logs || [],
+        packages: clientData.packages || [],
+        portalLinked: clientData.portalLinked || false,
+      }
+    });
+  } catch (error: any) {
+    console.error('[PortalGetClient] Erro ao buscar dados do cliente:', error);
+    return res.status(500).json({ error: 'Erro interno ao buscar dados do cliente.', details: error.message });
+  }
+}
