@@ -52,14 +52,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(403).json({ error: 'Acesso negado: Requer privilégios financeiros' });
     }
 
+    // Obter orgId do perfil do usuario
+    const profileSnap = await db.collection('profiles').doc(uid).get();
+    const orgId = profileSnap.data()?.orgId;
+    if (!orgId) {
+      return res.status(400).json({ error: 'Organizacao nao encontrada no perfil do usuario' });
+    }
+
+    // Obter asaasKey da organizacao
+    const prefsDoc = await db.collection('organizations').doc(orgId)
+      .collection('settings').doc('preferences').get();
+    const asaasKey = prefsDoc.exists ? prefsDoc.data()?.asaas_api_key : null;
+
     // Call Asaas finance balance endpoint
-    const data = await asaasRequest('/finance/balance', 'GET');
+    const data = await asaasRequest('/finance/balance', 'GET', null, asaasKey);
 
     // Persist balance snapshot to Firestore for frontend cache
     try {
-      const profileSnap = await db.collection('profiles').doc(uid).get();
-      const orgId = profileSnap.data()?.orgId;
-      if (orgId && typeof data.balance === 'number') {
+      if (typeof data.balance === 'number') {
         await db.collection('organizations').doc(orgId)
           .collection('settings').doc('asaas_cache')
           .set({ balance: data.balance, updatedAt: Date.now() }, { merge: true });

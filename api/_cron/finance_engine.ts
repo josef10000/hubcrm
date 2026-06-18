@@ -171,7 +171,7 @@ async function processOrganizationFinance(orgId: string) {
       .collection('settings').doc('preferences').get();
     const asaasKey = prefsDoc.exists ? prefsDoc.data()?.asaas_api_key : null;
     if (asaasKey) {
-      const balanceData = await asaasRequest('/finance/balance', 'GET');
+      const balanceData = await asaasRequest('/finance/balance', 'GET', null, asaasKey);
       if (typeof balanceData.balance === 'number') {
         await db.collection('organizations').doc(orgId)
           .collection('settings').doc('asaas_cache')

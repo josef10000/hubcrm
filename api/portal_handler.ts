@@ -62,11 +62,11 @@ async function handleAuth(req: VercelRequest, res: VercelResponse) {
   try {
     const { action, activationCode, email, uid, orgId, clientId, token } = req.body;
 
-    if (!email || !uid) {
+    if (action !== 'update_client' && (!email || !uid)) {
       return res.status(400).json({ error: 'Parâmetros email e uid são obrigatórios.' });
     }
 
-    const cleanEmail = email.trim().toLowerCase();
+    const cleanEmail = email ? email.trim().toLowerCase() : '';
     let targetOrgId = orgId;
     let targetClientId = clientId;
 
