@@ -3,6 +3,7 @@ import { useCRM } from '@crm/contexts/CRMContext';
 import { useClients } from '@/hooks/queries/useClients';
 import { useTransactions } from '@/hooks/queries/useFinance';
 import { getPlanPrice } from '@/helpers';
+import { authFetch } from '@/lib/authFetch';
 import { TrendingUp, TrendingDown, Clock, AlertTriangle, Loader2 } from 'lucide-react';
 
 export default function CashFlowProjected() {
@@ -20,7 +21,7 @@ export default function CashFlowProjected() {
     const fetchBalance = async () => {
       setLoadingBalance(true);
       try {
-        const res = await fetch('/api/asaas_handler?action=balance');
+        const res = await authFetch('/api/asaas_handler?action=balance');
         const data = await res.json();
         if (res.ok && active && typeof data.balance === 'number') {
           setCurrentBalance(data.balance);

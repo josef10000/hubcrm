@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { Transaction } from '@/types';
 import DREWidget from '@finance/components/DREWidget';
 import CashFlowForecastChart from '@finance/components/CashFlowForecastChart';
+import CashFlowProjected from '@finance/components/CashFlowProjected';
 import BudgetPanel from '@finance/components/BudgetPanel';
 import ROIAnalysis from '@finance/components/ROIAnalysis';
 import PayrollPanel from '../components/PayrollPanel';
@@ -370,7 +371,8 @@ export default function FinanceView() {
             <DREWidget />
           </div>
         ) : activeTab === 'fluxo' ? (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
+            <CashFlowProjected />
             <CashFlowForecastChart />
           </div>
         ) : activeTab === 'orcamento' ? (
