@@ -63,6 +63,10 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
   const updateBookDetails = useNexusStore(state => state.updateBookDetails);
   const deleteBookAction = useNexusStore(state => state.deleteBook);
   const addBookAction = useNexusStore(state => state.addBook);
+
+  const animationMode = useNexusStore(state => state.bookAnimationMode || 'new');
+  const learningPaths = useNexusStore(state => state.learningPaths || []);
+  const userPathsProgress = useNexusStore(state => state.userPathsProgress || {});
   
   const [categoryFilter, setCategoryFilter] = React.useState<string>('all');
   const [statusFilter, setStatusFilter] = React.useState<ReadingStatus | 'all'>('all');
@@ -244,20 +248,20 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
         <motion.div 
           animate={{ 
             x: [0, 30, -30, 0],
-            y: [0, -30, 30, 0],
-            backgroundColor: currentBlobColor
+            y: [0, -30, 30, 0]
           }}
+          style={{ backgroundColor: currentBlobColor }}
           transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-          className="absolute -top-40 -left-40 w-[600px] h-[600px] blur-[80px] rounded-full opacity-30 will-change-transform"
+          className="absolute -top-40 -left-40 w-[600px] h-[600px] blur-[80px] rounded-full opacity-30 transition-colors duration-700 ease-out will-change-transform"
         />
         <motion.div 
           animate={{ 
             x: [0, -50, 50, 0],
-            y: [0, 50, -50, 0],
-            backgroundColor: currentBlobColor
+            y: [0, 50, -50, 0]
           }}
+          style={{ backgroundColor: currentBlobColor }}
           transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-          className="absolute -bottom-40 -right-40 w-[700px] h-[700px] blur-[100px] rounded-full opacity-20 will-change-transform"
+          className="absolute -bottom-40 -right-40 w-[700px] h-[700px] blur-[100px] rounded-full opacity-20 transition-colors duration-700 ease-out will-change-transform"
         />
       </div>
 
@@ -677,6 +681,9 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
                             onUpdateProgress={updateReadingProgress}
                             isOwner={librarySubTab === 'my' || (librarySubTab === 'community' && (book as any).ownerId === userUid)}
                             isInLibrary={safeBooks.some(b => b && (b.id === book.id || (book.pdfUrl && b.pdfUrl === book.pdfUrl)))}
+                            animationMode={animationMode}
+                            learningPaths={learningPaths}
+                            userPathsProgress={userPathsProgress}
                           />
                         ))}
                       </motion.div>
@@ -715,6 +722,9 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
                                 onUpdateProgress={updateReadingProgress}
                                 isOwner={librarySubTab === 'my' || (librarySubTab === 'community' && (book as any).ownerId === userUid)}
                                 isInLibrary={safeBooks.some(b => b && (b.id === book.id || (book.pdfUrl && b.pdfUrl === book.pdfUrl)))}
+                                animationMode={animationMode}
+                                learningPaths={learningPaths}
+                                userPathsProgress={userPathsProgress}
                               />
                             </motion.div>
                           ))}

@@ -17,6 +17,9 @@ export interface BookCardProps {
   onUpdateProgress: (id: string, page: number) => void;
   isOwner: boolean;
   isInLibrary: boolean;
+  animationMode: 'new' | 'fixed_3d' | 'zoom' | 'none' | 'parallax_2.5d' | 'realist_3d';
+  learningPaths: any[];
+  userPathsProgress: Record<string, any>;
 }
 
 export const NEON_AURA_MAP: Record<string, { gradient: string; glow: string; border: string }> = {
@@ -65,11 +68,13 @@ export const BookCard = React.memo(({
   onToggleFavorite,
   onUpdateProgress,
   isOwner,
-  isInLibrary
+  isInLibrary,
+  animationMode,
+  learningPaths,
+  userPathsProgress
 }: BookCardProps) => {
   if (!book) return null;
 
-  const animationMode = useNexusStore(state => state.bookAnimationMode || 'new');
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
@@ -78,9 +83,6 @@ export const BookCard = React.memo(({
 
   const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["15deg", "-15deg"]);
   const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-15deg", "15deg"]);
-
-  const learningPaths = useNexusStore(state => state.learningPaths || []);
-  const userPathsProgress = useNexusStore(state => state.userPathsProgress || {});
 
   const activeNeonColor = (() => {
     // 1. Se o próprio livro já tem um neon ativo associado a uma trilha na estante pessoal
