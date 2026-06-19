@@ -40,3 +40,16 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
   - **Atribuição Reativa**: O sistema conta leads e faturamento reais consultando o banco de dados do CRM onde `leadSource` seja igual ao `trackingCode` correspondente ao criativo. Se não houver dados reais, cai de volta nos valores informados manualmente.
   - **Upload de Mídia**: Suporte para subir imagens e vídeos direto no Cloudinary utilizando `uploadToCloudinary` ou inserção manual de URLs externas.
   - **Navegação**: Adicionado novo grupo na Sidebar com ícone `LayoutGrid` mapeado para `ph-grid-four` do Phosphor. Rota protegida `/hub-ads` com lazy loading.
+
+---
+
+## 4. Correções de Usabilidade e Estabilidade no HubAds & Molduras
+- **Data**: 19/06/2026
+- **Funcionalidade**: Ajustes de navegação do HubAds e solução para o deploy de molduras de avatar.
+- **Decisões Técnicas**:
+  - **Sintaxe do Modal**: Restaurada e fechada adequadamente a tag do `textarea` de Notas e as divs/forms na aba de performance em `src/domains/hubads/components/CreativeModal.tsx`.
+  - **Remoção de Passos do HubAds**: Retirada a numeração sequencial das abas do modal do HubAds, mantendo-as como abas de preenchimento livre para fins de banco de criativos.
+  - **Deploy do Backend (Vercel)**: Assegurada a compilação do projeto (`npm run build`) para reativar o pipeline de deploy automático. Isso atualizou o schema Zod (`teamUpdateProfileSchema` em `shared/schemas.ts`) com a propriedade `avatarFrame` na API do Vercel Serverless, garantindo a gravação reativa de molduras nos perfis dos usuários.
+  - **Ajustes de Avatar na Sidebar**: Removida a classe `border border-white/10` interna no avatar da Sidebar para limpar a borda cinza residual quando nenhuma moldura está ativa. Passada a prop `frame` de forma explícita para o `<AvatarFrame>` para sincronizar as atualizações de moldura em tempo real.
+  - **Avatar com Fundo Transparente**: Alterado o contêiner interno do `AvatarFrame` para `bg-transparent`. Desenvolvido o helper `getCleanPhotoURL` para dinamicamente injetar `backgroundColor=transparent` em qualquer URL da API do DiceBear (retroativo para avatares antigos e nativo para novas gerações).
+  - **Layout do CreativeCard (HubAds)**: Removido o badge de `trackingCode` e o botão hover de cópia de cima da mídia do criativo. Reestruturado o card para alocar o código e botão de cópia de forma fixa na base do card, logo abaixo do título, limpando a imagem.
