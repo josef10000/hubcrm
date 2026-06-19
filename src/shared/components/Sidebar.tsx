@@ -290,8 +290,8 @@ export default function Sidebar() {
                   onClick={() => setStatusMenuOpen(!statusMenuOpen)}
                   className="relative cursor-pointer group"
                 >
-                  <AvatarFrame size="md" pulseStatus="none">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center text-gray-900 font-bold shrink-0 shadow-lg overflow-hidden border border-white/10 group-hover:scale-105 transition-transform">
+                  <AvatarFrame size="md" pulseStatus="none" frame={userProfile?.avatarFrame || 'none'}>
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center text-gray-900 font-bold shrink-0 shadow-lg overflow-hidden group-hover:scale-105 transition-transform">
                       {isValidPhotoURL(userProfile?.photoURL) ? (
                         <img src={userProfile!.photoURL} alt={userProfile?.displayName || 'Avatar'} className="w-full h-full object-cover" />
                       ) : (
@@ -309,8 +309,8 @@ export default function Sidebar() {
                 onClick={() => setStatusMenuOpen(!statusMenuOpen)}
                 className="relative cursor-pointer group"
               >
-                  <AvatarFrame size="md" pulseStatus="none">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center text-gray-900 font-bold shrink-0 shadow-lg overflow-hidden border border-white/10 group-hover:scale-105 transition-transform">
+                  <AvatarFrame size="md" pulseStatus="none" frame={userProfile?.avatarFrame || 'none'}>
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center text-gray-900 font-bold shrink-0 shadow-lg overflow-hidden group-hover:scale-105 transition-transform">
                       {isValidPhotoURL(userProfile?.photoURL) ? (
                         <img src={userProfile!.photoURL} alt={userProfile?.displayName || 'Avatar'} className="w-full h-full object-cover" />
                       ) : (
