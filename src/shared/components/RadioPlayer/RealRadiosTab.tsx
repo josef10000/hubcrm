@@ -74,10 +74,41 @@ export default function RealRadiosTab({ typeFilter }: RealRadiosTabProps) {
 
   const handleToggleFavorite = (e: React.MouseEvent, station: Station) => {
     e.stopPropagation(); // Evita dar play ao clicar em favoritar
-    if (favoriteStationIds.includes(station.id)) {
-      removeFavorite(station.id);
+    
+    // Encontra se já existe nas playlists personalizadas
+    const correspondingCustom = customStations.find(s => s.url.trim().toLowerCase() === station.url.trim().toLowerCase());
+    
+    if (correspondingCustom) {
+      if (favoriteStationIds.includes(correspondingCustom.id)) {
+        removeFavorite(correspondingCustom.id);
+      } else {
+        addFavorite(correspondingCustom.id);
+      }
+    } else if (station.isCustom || station.id === 'spotify-empresa') {
+      if (favoriteStationIds.includes(station.id)) {
+        removeFavorite(station.id);
+      } else {
+        addFavorite(station.id);
+      }
     } else {
-      addFavorite(station.id);
+      // Se for um resultado de busca do YouTube, salva nas customStations e favorita
+      const newId = `${station.type}-custom-${Date.now()}`;
+      const newStation: Station = {
+        id: newId,
+        name: station.name.trim(),
+        url: station.url.trim(),
+        favicon: station.favicon?.trim() || (station.type === 'youtube'
+          ? 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=80&h=80&fit=crop'
+          : 'https://images.unsplash.com/photo-1614680376593-902f74fa0d41?w=80&h=80&fit=crop'),
+        tags: [station.type, 'playlist', 'equipe'],
+        type: station.type,
+        isCustom: true
+      };
+      
+      useRadioStore.setState((state) => ({
+        customStations: [...state.customStations, newStation],
+        favoriteStationIds: [...state.favoriteStationIds, newId]
+      }));
     }
   };
 
@@ -199,14 +230,24 @@ export default function RealRadiosTab({ typeFilter }: RealRadiosTabProps) {
     : userCustomStations;
 
   const renderStationItem = (station: Station) => {
-    const isActive = currentStation?.id === station.id;
+    const correspondingCustom = customStations.find(s => s.url.trim().toLowerCase() === station.url.trim().toLowerCase());
+    const isAdded = !!correspondingCustom;
+    const isCustom = station.isCustom || isAdded;
+
+    const isActive = currentStation?.id === station.id || (correspondingCustom && currentStation?.id === correspondingCustom.id) || (currentStation?.url === station.url);
     const isCurrentPlaying = isActive && isPlaying;
-    const isFav = favoriteStationIds.includes(station.id);
+    
+    const isFav = isAdded 
+      ? favoriteStationIds.includes(correspondingCustom.id) 
+      : favoriteStationIds.includes(station.id);
 
     return (
       <div
         key={station.id}
-        onClick={() => playStation(station)}
+        onClick={() => {
+          // Toca a versão da estante se já estiver salva, ou a da busca direto
+          playStation(correspondingCustom || station);
+        }}
         className={`w-full flex items-center justify-between p-2.5 rounded-xl border text-left transition-all duration-300 backdrop-blur-md cursor-pointer group ${
           isActive
             ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
@@ -252,17 +293,32 @@ export default function RealRadiosTab({ typeFilter }: RealRadiosTabProps) {
           </div>
         </div>
 
-        {/* Ações da Playlist (Favoritar & Play) */}
+        {/* Ações da Playlist (Adicionar, Editar, Excluir, Favoritar & Play) */}
         <div className="flex items-center gap-1.5 shrink-0 pl-2">
-          {/* Botão de Editar (disponível para Spotify e YouTube) */}
-          {(station.type === 'spotify' || station.type === 'youtube') && (
+          {/* Botão de Adicionar (+) - Apenas para itens de busca que ainda não estão salvos */}
+          {!isCustom && (station.type === 'spotify' || station.type === 'youtube') && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                setEditingStation(station);
-                setEditName(station.name);
-                setEditUrl(station.url);
-                setEditFavicon(station.favicon || '');
+                addCustomStation(station.name, station.url, station.favicon);
+              }}
+              className="p-1.5 rounded-lg text-emerald-400 hover:text-emerald-300 hover:bg-white/10 transition-all duration-300"
+              title="Salvar na Estante"
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+          )}
+
+          {/* Botão de Editar (disponível apenas para playlists adicionadas na biblioteca) */}
+          {isCustom && station.id !== 'spotify-empresa' && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                const targetStation = correspondingCustom || station;
+                setEditingStation(targetStation);
+                setEditName(targetStation.name);
+                setEditUrl(targetStation.url);
+                setEditFavicon(targetStation.favicon || '');
                 setEditError('');
                 setShowAddForm(false); // Fecha o form de adição
               }}
@@ -273,12 +329,13 @@ export default function RealRadiosTab({ typeFilter }: RealRadiosTabProps) {
             </button>
           )}
 
-          {/* Botão de Excluir (disponível para Spotify e YouTube) */}
-          {(station.type === 'spotify' || station.type === 'youtube') && (
+          {/* Botão de Excluir (disponível apenas para playlists adicionadas na biblioteca) */}
+          {isCustom && station.id !== 'spotify-empresa' && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                setPlaylistToDelete(station);
+                const targetStation = correspondingCustom || station;
+                setPlaylistToDelete(targetStation);
               }}
               className="p-1.5 rounded-lg text-white/40 hover:text-red-400 hover:bg-white/10 transition-all duration-300"
               title="Excluir Playlist"
@@ -293,6 +350,7 @@ export default function RealRadiosTab({ typeFilter }: RealRadiosTabProps) {
             className={`p-1.5 rounded-lg transition-all duration-300 hover:bg-white/10 ${
               isFav ? 'text-red-500 scale-105' : 'text-white/40 hover:text-white'
             }`}
+            title={isFav ? "Remover dos Favoritos" : "Favoritar"}
           >
             <Heart className="w-4 h-4" fill={isFav ? 'currentColor' : 'none'} />
           </button>

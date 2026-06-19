@@ -19,6 +19,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return await handleCleanup(req, res);
       case 'support':
         return await handleReadSupport(req, res);
+      case 'youtube-search':
+        return await handleYoutubeSearch(req, res);
       default:
         return res.status(400).json({ error: 'Ação do sistema inválida ou não especificada' });
     }
@@ -161,5 +163,91 @@ async function handleReadSupport(req: VercelRequest, res: VercelResponse) {
     });
   } catch (error: any) {
     return res.status(500).json({ error: 'Erro ao ler dados de suporte e perfis', details: error.message });
+  }
+}
+
+async function handleYoutubeSearch(req: VercelRequest, res: VercelResponse) {
+  const { q } = req.query;
+
+  if (!q || typeof q !== 'string' || !q.trim()) {
+    return res.status(400).json({ error: 'Termo de busca (q) é obrigatório' });
+  }
+
+  const queryTerm = q.trim();
+  
+  // Normalizar a query para o ID do documento do Firestore
+  const normalizedQuery = queryTerm
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // remove acentos
+    .replace(/[^a-z0-9\s-]/g, '') // remove especiais
+    .trim()
+    .replace(/\s+/g, '_'); // espaços para underscores
+
+  if (!normalizedQuery) {
+    return res.status(400).json({ error: 'Termo de busca inválido' });
+  }
+
+  try {
+    const cacheRef = db.collection('youtubeSearchCache').doc(normalizedQuery);
+    const cacheSnap = await cacheRef.get();
+
+    if (cacheSnap.exists) {
+      const cacheData = cacheSnap.data();
+      const ageMs = Date.now() - (cacheData?.createdAt || 0);
+      const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+
+      if (ageMs < thirtyDaysMs && Array.isArray(cacheData?.results)) {
+        console.log(`[YouTube Search] Cache hit para query: "${queryTerm}"`);
+        return res.status(200).json({ results: cacheData.results, cached: true });
+      }
+    }
+
+    const apiKey = process.env.youtube;
+    if (!apiKey) {
+      console.error('[YouTube Search] Variável de ambiente "youtube" não configurada.');
+      return res.status(500).json({ error: 'YouTube API Key não configurada no servidor' });
+    }
+
+    console.log(`[YouTube Search] Cache miss. Buscando na API do YouTube para: "${queryTerm}"`);
+    const youtubeUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(queryTerm)}&type=video&maxResults=8&key=${apiKey}`;
+    
+    const ytRes = await fetch(youtubeUrl);
+    
+    if (!ytRes.ok) {
+      const errorText = await ytRes.text();
+      console.error('[YouTube Search] Erro na API do YouTube:', errorText);
+      return res.status(500).json({ error: 'Erro ao buscar dados na API do YouTube', details: errorText });
+    }
+
+    const ytData = await ytRes.json() as any;
+    
+    const results = (ytData.items || []).map((item: any) => {
+      const videoId = item.id?.videoId;
+      const snippet = item.snippet || {};
+      
+      return {
+        id: `youtube-search-${videoId}`,
+        name: snippet.title || 'Vídeo do YouTube',
+        url: `https://www.youtube.com/watch?v=${videoId}`,
+        favicon: snippet.thumbnails?.default?.url || snippet.thumbnails?.medium?.url || 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=80&h=80&fit=crop',
+        tags: ['youtube', 'video'],
+        type: 'youtube'
+      };
+    }).filter((s: any) => {
+      const videoId = s.id.replace('youtube-search-', '');
+      return videoId && videoId.length === 11;
+    });
+
+    await cacheRef.set({
+      query: queryTerm,
+      results,
+      createdAt: Date.now()
+    });
+
+    return res.status(200).json({ results, cached: false });
+  } catch (err: any) {
+    console.error('[YouTube Search] Falha ao processar busca:', err);
+    return res.status(500).json({ error: 'Falha interna ao processar busca do YouTube', details: err.message });
   }
 }

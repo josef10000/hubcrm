@@ -13,7 +13,9 @@ import {
   Radio, 
   Minus, 
   Maximize2,
-  Headphones
+  Headphones,
+  Video,
+  VideoOff
 } from 'lucide-react';
 
 export default function RadioPlayer() {
@@ -35,7 +37,9 @@ export default function RadioPlayer() {
     toggleMute,
     toggleMinimize,
     setActiveTab,
-    setPlayingState
+    setPlayingState,
+    showYoutubeVideo,
+    toggleYoutubeVideo
   } = useRadioStore();
 
   const callStatus = useCallStore((state) => state.callStatus);
@@ -310,13 +314,24 @@ export default function RadioPlayer() {
               <Music className="w-4 h-4 text-emerald-400 animate-pulse" />
               <span className="text-xs font-bold text-white tracking-wider font-mono">HUB FOCUS STATION</span>
             </div>
-            <button 
-              onClick={toggleMinimize}
-              className="text-white/40 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-all"
-              title="Minimizar"
-            >
-              <Minus className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-1.5">
+              {currentStation?.type === 'youtube' && (
+                <button
+                  onClick={toggleYoutubeVideo}
+                  className="text-white/40 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-all"
+                  title={showYoutubeVideo ? "Modo Apenas Áudio" : "Exibir Vídeo com Áudio"}
+                >
+                  {showYoutubeVideo ? <Video className="w-4 h-4 text-emerald-400" /> : <VideoOff className="w-4 h-4 text-white/40" />}
+                </button>
+              )}
+              <button 
+                onClick={toggleMinimize}
+                className="text-white/40 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-all"
+                title="Minimizar"
+              >
+                <Minus className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {/* Estação Ativa e Tipo */}
@@ -385,19 +400,27 @@ export default function RadioPlayer() {
           {/* B: YOUTUBE PLAYER */}
           {currentStation?.type === 'youtube' && (
             <div className="space-y-1.5 relative z-10 animate-fade-in">
-              <div className="relative w-full overflow-hidden rounded-xl border border-white/10 bg-black/40">
+              <div className={`relative w-full overflow-hidden rounded-xl border transition-all duration-300 ${
+                showYoutubeVideo 
+                  ? 'h-[200px] border-white/10 bg-black/40' 
+                  : 'h-0 border-none bg-transparent'
+              }`}>
                 {shouldRenderYoutube ? (
                   <iframe
                     ref={youtubeIframeRef}
                     src={getYoutubeEmbedUrl(currentStation.url)}
                     width="100%"
-                    height="200"
+                    height={showYoutubeVideo ? "200" : "0"}
                     frameBorder="0"
                     allowFullScreen={false}
                     allow="autoplay; encrypted-media; picture-in-picture"
                     loading="lazy"
                     title={currentStation.name}
-                    className="rounded-xl shadow-lg"
+                    className={`rounded-xl shadow-lg transition-all duration-300 ${
+                      showYoutubeVideo 
+                        ? 'w-full h-[200px]' 
+                        : 'absolute opacity-0 pointer-events-none w-0 h-0'
+                    }`}
                   />
                 ) : (
                   <div className="h-[200px] w-full flex flex-col items-center justify-center text-white/40 text-center p-4">
@@ -407,9 +430,11 @@ export default function RadioPlayer() {
                   </div>
                 )}
               </div>
-              <div className="text-[8px] text-white/30 text-center leading-normal px-1 font-mono">
-                💡 Controlado nativamente pelo CRM abaixo.
-              </div>
+              {showYoutubeVideo && (
+                <div className="text-[8px] text-white/30 text-center leading-normal px-1 font-mono">
+                  💡 Controlado nativamente pelo CRM abaixo.
+                </div>
+              )}
             </div>
           )}
 

@@ -35,6 +35,7 @@
     { "source": "/api/email/manual-trigger", "destination": "/api/system_handler?action=email" },
     { "source": "/api/uptimerobot/monitors", "destination": "/api/system_handler?action=uptime" },
     { "source": "/api/weather", "destination": "/api/system_handler?action=weather" },
+    { "source": "/api/youtube/search", "destination": "/api/system_handler?action=youtube-search" },
     
     { "source": "/((?!api/.*).*)", "destination": "/index.html" }
   ],

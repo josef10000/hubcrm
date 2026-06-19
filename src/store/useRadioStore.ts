@@ -25,6 +25,7 @@ interface RadioState {
   searchResults: Station[];
   isSearching: boolean;
   isMinimized: boolean;
+  showYoutubeVideo: boolean;
   
   // Actions
   playStation: (station: Station) => void;
@@ -36,10 +37,11 @@ interface RadioState {
   addCustomStation: (name: string, url: string, favicon?: string) => void;
   removeCustomStation: (id: string) => void;
   updateCustomStation: (id: string, updates: Partial<Station>) => void;
-  searchStations: (query: string) => void;
+  searchStations: (query: string) => Promise<void>;
   toggleMinimize: () => void;
   setActiveTab: (tab: 'vibes' | 'streaming') => void;
   setPlayingState: (isPlaying: boolean) => void;
+  toggleYoutubeVideo: () => void;
 }
 
 // Focus Vibes (Apenas Lofi conforme solicitado pelo usuário)
@@ -82,6 +84,11 @@ export const useRadioStore = create<RadioState>()(
       searchResults: [],
       isSearching: false,
       isMinimized: true,
+      showYoutubeVideo: true,
+
+      toggleYoutubeVideo: () => {
+        set((state) => ({ showYoutubeVideo: !state.showYoutubeVideo }));
+      },
 
       playStation: (station) => {
         set({ currentStation: station, isPlaying: true });
@@ -189,7 +196,7 @@ export const useRadioStore = create<RadioState>()(
         });
       },
 
-      searchStations: (query) => {
+      searchStations: async (query) => {
         if (!query.trim()) {
           set({ searchResults: [], searchQuery: '', isSearching: false });
           return;
@@ -200,13 +207,38 @@ export const useRadioStore = create<RadioState>()(
         const searchLower = query.toLowerCase().trim();
         const allKnownPlaylists = [...get().customStations];
         
-        const filtered = allKnownPlaylists.filter((item) => {
+        // 1. Filtrar playlists customizadas locais primeiro
+        const localFiltered = allKnownPlaylists.filter((item) => {
           const matchesName = item.name.toLowerCase().includes(searchLower);
           const matchesTags = item.tags?.some((t) => t.toLowerCase().includes(searchLower)) || false;
           return matchesName || matchesTags;
         });
 
-        set({ searchResults: filtered, isSearching: false });
+        set({ searchResults: localFiltered });
+
+        // 2. Chamar a rota de busca do YouTube
+        try {
+          const res = await fetch(`/api/youtube/search?q=${encodeURIComponent(query)}`);
+          if (res.ok) {
+            const data = await res.json() as { results: Station[] };
+            if (Array.isArray(data?.results)) {
+              const localUrls = new Set(localFiltered.map(s => s.url.trim().toLowerCase()));
+              const ytFiltered = data.results.filter(s => !localUrls.has(s.url.trim().toLowerCase()));
+              
+              set((state) => {
+                if (state.searchQuery === query) {
+                  return { searchResults: [...localFiltered, ...ytFiltered], isSearching: false };
+                }
+                return {};
+              });
+              return;
+            }
+          }
+        } catch (err) {
+          console.warn('[RadioStore] Erro ao buscar vídeos do YouTube:', err);
+        }
+
+        set({ isSearching: false });
       },
 
       toggleMinimize: () => {
@@ -230,7 +262,8 @@ export const useRadioStore = create<RadioState>()(
         customStations: state.customStations,
         deletedStationIds: state.deletedStationIds,
         currentStation: state.currentStation,
-        activeTab: state.activeTab
+        activeTab: state.activeTab,
+        showYoutubeVideo: state.showYoutubeVideo
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {
