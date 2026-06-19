@@ -3,6 +3,9 @@ import fetch from 'node-fetch';
 import monitorsHandler from './_logic/uptimerobot/monitors.js';
 import manualTriggerHandler from './_logic/email/manual-trigger.js';
 import { admin, db } from './_utils/firebase.js';
+import { verifyAuth } from './_utils/authMiddleware.js';
+import { processSingleOrgReconciliation } from './_cron/finance_reconciler.js';
+import { processOrganizationFinance } from './_cron/finance_engine.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { action } = req.query;
@@ -21,6 +24,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return await handleReadSupport(req, res);
       case 'youtube-search':
         return await handleYoutubeSearch(req, res);
+      case 'force-task':
+        return await handleForceTask(req, res);
       default:
         return res.status(400).json({ error: 'Ação do sistema inválida ou não especificada' });
     }
@@ -30,6 +35,59 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       error: 'Erro interno no processador do sistema', 
       details: error.message 
     });
+  }
+}
+
+async function handleForceTask(req: VercelRequest, res: VercelResponse) {
+  const uid = await verifyAuth(req, res);
+  if (!uid) return;
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Método não permitido' });
+  }
+
+  const { taskKey } = req.body;
+  if (!taskKey) {
+    return res.status(400).json({ error: 'taskKey é obrigatório' });
+  }
+
+  try {
+    const results = {
+      processedOrgs: 1,
+      syncedClients: 0,
+      updatedClients: 0,
+      errors: [] as string[]
+    };
+
+    const docRef = db.collection('organizations').doc(uid).collection('settings').doc('usage');
+
+    if (taskKey === 'lastBillingScan') {
+      const orgDoc = await db.collection('organizations').doc(uid).get();
+      if (!orgDoc.exists) {
+        return res.status(404).json({ error: 'Organização não encontrada' });
+      }
+      
+      await processSingleOrgReconciliation(uid, orgDoc.data(), results);
+      
+      if (results.errors.length > 0) {
+        return res.status(500).json({ error: 'Erro ao executar reconciliador', details: results.errors });
+      }
+
+      await docRef.set({ lastBillingScan: Date.now() }, { merge: true });
+      return res.status(200).json({ success: true, results });
+
+    } else if (taskKey === 'lastCfoSync') {
+      await processOrganizationFinance(uid);
+      await docRef.set({ lastCfoSync: Date.now() }, { merge: true });
+      return res.status(200).json({ success: true });
+      
+    } else {
+      return res.status(400).json({ error: 'taskKey inválida ou não suportada' });
+    }
+
+  } catch (error: any) {
+    console.error(`[Force Task Error] ${taskKey}:`, error);
+    return res.status(500).json({ error: error.message || 'Erro ao forçar execução da tarefa' });
   }
 }
 

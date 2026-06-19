@@ -53,3 +53,14 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
   - **Ajustes de Avatar na Sidebar**: Removida a classe `border border-white/10` interna no avatar da Sidebar para limpar a borda cinza residual quando nenhuma moldura está ativa. Passada a prop `frame` de forma explícita para o `<AvatarFrame>` para sincronizar as atualizações de moldura em tempo real.
   - **Avatar com Fundo Transparente**: Alterado o contêiner interno do `AvatarFrame` para `bg-transparent`. Desenvolvido o helper `getCleanPhotoURL` para dinamicamente injetar `backgroundColor=transparent` em qualquer URL da API do DiceBear (retroativo para avatares antigos e nativo para novas gerações).
   - **Layout do CreativeCard (HubAds)**: Removido o badge de `trackingCode` e o botão hover de cópia de cima da mídia do criativo. Reestruturado o card para alocar o código e botão de cópia de forma fixa na base do card, logo abaixo do título, limpando a imagem.
+
+---
+
+## 5. Limpeza de Painel de Consumo & Ativação de Rotinas de Background Reais
+- **Data da Integração**: 19/06/2026
+- **Funcionalidade**: Limpeza de rotinas fictícias e integração das ações de Varredura de Faturas e Sincronização CFO com o backend real.
+- **Decisões Técnicas**:
+  - **Ação de Backend**: Criado endpoint seguro `/api/system_handler?action=force-task` protegido por `verifyAuth(req, res)` que executa rotinas baseadas na organização correspondente ao UID do usuário logado.
+  - **Extração de Rotinas**: Extraída a lógica de reconciliação para `processSingleOrgReconciliation` em `api/_cron/finance_reconciler.ts` e exportada `processOrganizationFinance` de `api/_cron/finance_engine.ts`.
+  - **Atualização do Firestore**: O timestamp de execução (`lastBillingScan` e `lastCfoSync`) é gravado de verdade pelo backend após a conclusão com sucesso de cada rotina, e não simulado localmente no frontend.
+  - **Limpeza de UI**: Removidas as opções simuladas de Fila de E-mails, Atualização do Grafo de Conhecimento e o painel correspondente ao Graphify em `AdministrativeView.tsx`.

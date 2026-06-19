@@ -7,6 +7,7 @@ import {
 import { motion } from 'framer-motion';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { db } from '@/lib/firebase';
+import { authFetch } from '@/lib/authFetch';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { toast } from 'sonner';
 import { OnboardingQuestion } from '@/types';
@@ -105,9 +106,7 @@ export default function AdministrativeView() {
     firestoreWrites: 3280,
     firestoreDeletes: 120,
     lastBillingScan: null,
-    lastCfoSync: null,
-    lastEmailQueueDispatch: null,
-    lastGraphifyUpdate: null
+    lastCfoSync: null
   });
 
   React.useEffect(() => {
@@ -130,9 +129,7 @@ export default function AdministrativeView() {
           firestoreWrites: data.firestoreWrites ?? 3280,
           firestoreDeletes: data.firestoreDeletes ?? 120,
           lastBillingScan: data.lastBillingScan ?? null,
-          lastCfoSync: data.lastCfoSync ?? null,
-          lastEmailQueueDispatch: data.lastEmailQueueDispatch ?? null,
-          lastGraphifyUpdate: data.lastGraphifyUpdate ?? null
+          lastCfoSync: data.lastCfoSync ?? null
         });
       }
     }, (error) => {
@@ -144,23 +141,24 @@ export default function AdministrativeView() {
   const handleForceTaskExecution = async (taskKey: string, taskName: string) => {
     const toastId = toast.loading(`Iniciando execução da rotina: ${taskName}...`);
     try {
-      // Simula uma espera de execução de background
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const nowTimestamp = Date.now();
-      
-      if (effectiveOrgId) {
-        const docRef = doc(db, 'organizations', effectiveOrgId, 'settings', 'usage');
-        const updatePayload: Record<string, any> = {};
-        updatePayload[taskKey] = nowTimestamp;
-        await setDoc(docRef, updatePayload, { merge: true });
+      const response = await authFetch('/api/system_handler?action=force-task', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ taskKey })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Erro HTTP ${response.status}`);
       }
-      
+
       toast.dismiss(toastId);
       toast.success(`Rotina "${taskName}" executada e sincronizada com sucesso!`);
-    } catch (e) {
+    } catch (e: any) {
       toast.dismiss(toastId);
-      toast.error(`Erro ao executar rotina "${taskName}".`);
+      toast.error(`Erro ao executar rotina "${taskName}": ${e.message}`);
     }
   };
 
@@ -902,72 +900,6 @@ export default function AdministrativeView() {
                       <RefreshCw size={14} />
                     </button>
                   </div>
-
-                  {/* Fila de E-mails */}
-                  <div className="bg-black/20 border border-white/5 rounded-2xl p-5 flex items-center justify-between gap-4">
-                    <div className="space-y-1 min-w-0">
-                      <h4 className="font-bold text-white text-sm">Fila de Disparos de E-mail (Queue)</h4>
-                      <p className="text-xs text-gray-400">
-                        Última Execução: <span className="text-gray-200 font-medium font-mono">{formatExecutionDate(usageData.lastEmailQueueDispatch)}</span>
-                      </p>
-                      <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
-                        ATIVO / SUCESSO
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => handleForceTaskExecution('lastEmailQueueDispatch', 'Fila de Disparos de E-mail')}
-                      className="p-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white rounded-xl transition-all cursor-pointer active:scale-90 flex items-center justify-center"
-                      title="Forçar execução agora"
-                    >
-                      <RefreshCw size={14} />
-                    </button>
-                  </div>
-
-                  {/* Graphify Update */}
-                  <div className="bg-black/20 border border-white/5 rounded-2xl p-5 flex items-center justify-between gap-4">
-                    <div className="space-y-1 min-w-0">
-                      <h4 className="font-bold text-white text-sm">Atualização do Grafo de Conhecimento</h4>
-                      <p className="text-xs text-gray-400">
-                        Última Execução: <span className="text-gray-200 font-medium font-mono">{formatExecutionDate(usageData.lastGraphifyUpdate)}</span>
-                      </p>
-                      <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
-                        ATIVO / SUCESSO
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => handleForceTaskExecution('lastGraphifyUpdate', 'Atualização do Grafo')}
-                      className="p-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white rounded-xl transition-all cursor-pointer active:scale-90 flex items-center justify-center"
-                      title="Forçar execução agora"
-                    >
-                      <RefreshCw size={14} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Painel do Grafo de Conhecimento (Graphify) */}
-              <div className="mt-8 p-8 bg-gradient-to-br from-primary-500/10 via-blue-500/5 to-transparent border border-primary-500/20 rounded-3xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 rounded-full blur-[80px] pointer-events-none group-hover:bg-primary-500/20 transition-all duration-500" />
-                <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-                  <div className="space-y-2 max-w-2xl text-left">
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 bg-primary-500/20 text-primary-500 text-[10px] font-black uppercase tracking-wider rounded-md">
-                        Graphify AI
-                      </span>
-                      <span className="text-xs text-gray-400 font-bold">v0.3.10</span>
-                    </div>
-                    <h4 className="text-lg font-bold text-white">Grafo de Conhecimento da Base de Código</h4>
-                    <p className="text-sm text-gray-400 leading-relaxed">
-                      Explore o mapeamento visual completo de dependências, rotas, coleções do Firestore e estrutura de módulos do HubCRM. Útil para auditoria e navegação rápida da arquitetura técnica.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => window.open('/graph.html', '_blank')}
-                    className="shrink-0 px-6 py-4 bg-primary-500 hover:bg-primary-600 active:scale-95 text-white font-bold rounded-2xl transition-all shadow-lg shadow-primary-500/20 flex items-center justify-center gap-2"
-                  >
-                    <span>Abrir Grafo Interativo</span>
-                    <Globe size={18} />
-                  </button>
                 </div>
               </div>
             </div>

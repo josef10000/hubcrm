@@ -63,7 +63,7 @@ export async function runFinanceEngine(req: VercelRequest, res: VercelResponse) 
 /**
  * Processa os dados de BI de uma organização específica
  */
-async function processOrganizationFinance(orgId: string) {
+export async function processOrganizationFinance(orgId: string) {
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   
