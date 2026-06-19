@@ -67,6 +67,8 @@ export const BookCard = React.memo(({
   isOwner,
   isInLibrary
 }: BookCardProps) => {
+  if (!book) return null;
+
   const animationMode = useNexusStore(state => state.bookAnimationMode || 'new');
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -91,10 +93,10 @@ export const BookCard = React.memo(({
     }
     
     // 2. Se o livro está na comunidade (ou recomendação), busca se o originalBookId (ou id) faz parte de alguma trilha ativa do usuário logado
-    const bookOriginalId = book.originalBookId || book.id;
+    const bookOriginalId = book.originalBookId || book.id || '';
     const activePath = learningPaths.find(path => {
       const progress = userPathsProgress[path.id];
-      return progress && progress.status === 'ACTIVE' && path.bookIds.includes(bookOriginalId);
+      return progress && progress.status === 'ACTIVE' && Array.isArray(path.bookIds) && path.bookIds.includes(bookOriginalId);
     });
     
     return activePath ? activePath.neonColor : null;

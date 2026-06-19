@@ -71,8 +71,11 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
   const [viewLayout, setViewLayout] = React.useState<'grid' | 'list'>('grid');
   const [viewMode, setViewMode] = React.useState<'grid' | 'alphabetical'>('grid');
   
+  // Garantir lista segura de livros (filtrando null/undefined)
+  const safeBooks = React.useMemo(() => (Array.isArray(books) ? books.filter(Boolean) : []), [books]);
+
   const stats = React.useMemo(() => {
-    const myBooks = books.filter(b => !b.ownerId || b.ownerId === userUid);
+    const myBooks = safeBooks.filter(b => b && (!b.ownerId || b.ownerId === userUid));
     const totalPages = myBooks.reduce((acc, b) => acc + (b.currentPage || 0), 0);
     const finished = myBooks.filter(b => b.status === 'finished').length;
     const reading = myBooks.filter(b => 
@@ -80,15 +83,15 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
       ((b.currentPage || 0) > 0 && b.status !== 'finished')
     ).length;
     return { total: myBooks.length, totalPages, finished, reading };
-  }, [books, userUid]);
+  }, [safeBooks, userUid]);
 
   // Currently Reading — Todos os livros em leitura
   const readingBooks = React.useMemo(() => {
-    const myBooks = books.filter(b => !b.ownerId || b.ownerId === userUid);
+    const myBooks = safeBooks.filter(b => b && (!b.ownerId || b.ownerId === userUid));
     return myBooks
       .filter(b => b.status === 'reading' && (b.currentPage || 0) > 0 && (b.totalPages || 0) > 0)
       .sort((a, b) => (b.currentPage || 0) - (a.currentPage || 0));
-  }, [books, userUid]);
+  }, [safeBooks, userUid]);
 
   const handlePublishBook = React.useCallback(async (book: NexusBook) => {
     if (!orgId) return;
@@ -173,18 +176,21 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
     toast.success('Adicionado à sua estante!');
   }, [addBookAction, userUid]);
 
-  let sourceBooks = [];
+  let sourceBooks: NexusBook[] = [];
   if (librarySubTab === 'my') {
-    sourceBooks = books.filter(b => !b.sharedBy && !b.isCommunity);
+    sourceBooks = safeBooks.filter(b => b && !b.sharedBy && !b.isCommunity);
   } else if (librarySubTab === 'shared') {
-    sourceBooks = books.filter(b => b.sharedBy);
+    sourceBooks = safeBooks.filter(b => b && b.sharedBy);
   } else {
-    sourceBooks = communityBooks;
+    sourceBooks = Array.isArray(communityBooks) ? communityBooks.filter(Boolean) : [];
   }
 
   const filteredBooks = sourceBooks.filter(b => {
-    const matchesSearch = b.title.toLowerCase().includes(librarySearchQuery.toLowerCase()) || 
-                         b.author?.toLowerCase().includes(librarySearchQuery.toLowerCase());
+    if (!b) return false;
+    const title = b.title || '';
+    const author = b.author || '';
+    const matchesSearch = title.toLowerCase().includes(librarySearchQuery.toLowerCase()) || 
+                          author.toLowerCase().includes(librarySearchQuery.toLowerCase());
     const matchesCategory = categoryFilter === 'all' || b.category === categoryFilter;
     const matchesStatus = statusFilter === 'all' || b.status === statusFilter;
     const matchesFavorite = !favoriteFilter || b.isFavorite;
@@ -196,10 +202,12 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
     if (viewMode !== 'alphabetical') return null;
     
     const groups: Record<string, NexusBook[]> = {};
-    const sorted = [...filteredBooks].sort((a, b) => a.title.localeCompare(b.title));
+    const sorted = [...filteredBooks].sort((a, b) => (a.title || '').localeCompare(b.title || ''));
     
     sorted.forEach(book => {
-      const firstLetter = book.title.charAt(0).toUpperCase();
+      if (!book) return;
+      const title = book.title || '';
+      const firstLetter = title.trim().charAt(0).toUpperCase();
       const key = /^[A-Z]/.test(firstLetter) ? firstLetter : '#';
       if (!groups[key]) groups[key] = [];
       groups[key].push(book);
@@ -668,7 +676,7 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
                             onToggleFavorite={toggleFavorite}
                             onUpdateProgress={updateReadingProgress}
                             isOwner={librarySubTab === 'my' || (librarySubTab === 'community' && (book as any).ownerId === userUid)}
-                            isInLibrary={books.some(b => b.id === book.id || (book.pdfUrl && b.pdfUrl === book.pdfUrl))}
+                            isInLibrary={safeBooks.some(b => b && (b.id === book.id || (book.pdfUrl && b.pdfUrl === book.pdfUrl)))}
                           />
                         ))}
                       </motion.div>
@@ -706,7 +714,7 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({
                                 onToggleFavorite={toggleFavorite}
                                 onUpdateProgress={updateReadingProgress}
                                 isOwner={librarySubTab === 'my' || (librarySubTab === 'community' && (book as any).ownerId === userUid)}
-                                isInLibrary={books.some(b => b.id === book.id || (book.pdfUrl && b.pdfUrl === book.pdfUrl))}
+                                isInLibrary={safeBooks.some(b => b && (b.id === book.id || (book.pdfUrl && b.pdfUrl === book.pdfUrl)))}
                               />
                             </motion.div>
                           ))}
