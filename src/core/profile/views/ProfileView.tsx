@@ -20,7 +20,7 @@ import { PDICategory } from '@/types/people';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SaveButton } from '@/shared/components/SaveButton';
-import AvatarFrame from '@/shared/components/AvatarFrame';
+import AvatarFrame, { getCleanPhotoURL } from '@/shared/components/AvatarFrame';
 import { format } from 'date-fns';
 import MoodTracker from '@people/components/MoodTracker';
 import SkillRadarChart from '@people/components/SkillRadarChart';
@@ -747,7 +747,7 @@ export default function ProfileView() {
                 <AvatarFrame size="xl" pulseStatus="none" frame={isEditing ? formData.avatarFrame : (profile?.avatarFrame || 'none')}>
                   <div className="w-40 h-40 rounded-full overflow-hidden bg-gray-200 dark:bg-white/5 flex items-center justify-center text-5xl font-bold font-display text-gray-900 dark:text-white relative">
                     {formData.photoURL ? (
-                      <img src={formData.photoURL} alt={formData.displayName} className="w-full h-full object-cover" />
+                      <img src={getCleanPhotoURL(formData.photoURL)} alt={formData.displayName} className="w-full h-full object-cover" />
                     ) : (
                       formData.displayName?.[0] || <UserIcon />
                     )}
@@ -2955,7 +2955,7 @@ export default function ProfileView() {
                     <div className="flex justify-center">
                        <div className="w-32 h-32 rounded-full border-4 border-purple-500/20 p-1 bg-white/5 backdrop-blur-xl shadow-xl flex items-center justify-center overflow-hidden">
                           <img 
-                             src={`https://api.dicebear.com/9.x/${tempDiceBearStyle}/svg?seed=${encodeURIComponent(tempDiceBearSeed)}`} 
+                             src={`https://api.dicebear.com/9.x/${tempDiceBearStyle}/svg?seed=${encodeURIComponent(tempDiceBearSeed)}&backgroundColor=transparent`} 
                              alt="Preview DiceBear" 
                              className="w-full h-full object-cover rounded-full"
                           />
@@ -3009,7 +3009,7 @@ export default function ProfileView() {
                        <button
                           type="button"
                           onClick={() => {
-                             const finalUrl = `https://api.dicebear.com/9.x/${tempDiceBearStyle}/svg?seed=${encodeURIComponent(tempDiceBearSeed)}`;
+                             const finalUrl = `https://api.dicebear.com/9.x/${tempDiceBearStyle}/svg?seed=${encodeURIComponent(tempDiceBearSeed)}&backgroundColor=transparent`;
                              setFormData(prev => ({ ...prev, photoURL: finalUrl }));
                              setShowDiceBearModal(false);
                              toast.success('Avatar DiceBear aplicado! Clique em "Salvar Alterações" para gravar definitivamente.');

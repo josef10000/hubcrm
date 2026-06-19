@@ -75,9 +75,18 @@ export default function AvatarFrame({ children, size = 'md', pulseStatus = 'none
 
   return (
     <div className={`rounded-full flex items-center justify-center overflow-visible ${sizeClasses[size]} ${getFrameStyles()}`}>
-      <div className="bg-white dark:bg-gray-900 rounded-full w-full h-full overflow-hidden flex items-center justify-center">
+      <div className="rounded-full w-full h-full overflow-hidden flex items-center justify-center bg-transparent">
         {children}
       </div>
     </div>
   );
+}
+
+export function getCleanPhotoURL(url: any): string {
+  if (!url || typeof url !== 'string') return '';
+  if (url.includes('api.dicebear.com') && !url.includes('backgroundColor=')) {
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}backgroundColor=transparent`;
+  }
+  return url;
 }

@@ -6,6 +6,7 @@ import { Clock, Coffee, Shield, Globe, Users, Circle, Calendar } from 'lucide-re
 import { db } from '@/lib/firebase';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
+import { getCleanPhotoURL } from './AvatarFrame';
 
 interface ProfileHoverCardProps {
   userId: string;
@@ -262,7 +263,7 @@ export default function ProfileHoverCard({ userId, orgId, children, disabled = f
               <div className="relative">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center text-gray-900 font-bold shrink-0 overflow-hidden border border-white/15">
                   {profile && isValidPhotoURL(profile.photoURL) ? (
-                    <img src={profile.photoURL} alt={profile.displayName || 'Avatar'} className="w-full h-full object-cover" />
+                    <img src={getCleanPhotoURL(profile.photoURL)} alt={profile.displayName || 'Avatar'} className="w-full h-full object-cover" />
                   ) : (
                     (profile?.displayName || 'U')[0].toUpperCase()
                   )}

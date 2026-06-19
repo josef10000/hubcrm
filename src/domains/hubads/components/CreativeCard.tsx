@@ -135,28 +135,7 @@ export function CreativeCard({ creative, realLeadsCount, realRevenueCount, onCli
           <span className={`px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase rounded-full border ${getStatusColor(creative.status)}`}>
             {getStatusLabel(creative.status)}
           </span>
-          <span className="px-2 py-0.5 text-[10px] bg-slate-900/80 backdrop-blur border border-white/10 rounded-md text-slate-400 font-mono">
-            {creative.trackingCode}
-          </span>
         </div>
-
-        {/* Hover overlay para copiar trackingCode */}
-        <button 
-          onClick={copyTrackingCode}
-          className="absolute bottom-3 right-3 p-2 bg-slate-900/90 hover:bg-slate-900 border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all flex items-center gap-1.5 text-xs opacity-0 group-hover:opacity-100 duration-200"
-        >
-          {copied ? (
-            <>
-              <Check className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-emerald-400 font-medium">Copiado!</span>
-            </>
-          ) : (
-            <>
-              <Copy className="w-3.5 h-3.5" />
-              <span>Copiar Tracking</span>
-            </>
-          )}
-        </button>
       </div>
 
       {/* Conteúdo do Card */}
@@ -177,6 +156,24 @@ export function CreativeCard({ creative, realLeadsCount, realRevenueCount, onCli
               "{creative.headline}"
             </p>
           )}
+          
+          {/* Código de rastreamento com cópia rápida */}
+          <div className="flex items-center justify-between gap-2 mb-3 bg-slate-900/40 border border-white/5 rounded-xl px-3 py-1.5 text-xs text-slate-400">
+            <span className="font-mono text-[10px] font-semibold text-slate-300">
+              {creative.trackingCode}
+            </span>
+            <button
+              onClick={copyTrackingCode}
+              className="p-1 hover:bg-white/5 rounded text-slate-400 hover:text-white transition-colors"
+              title="Copiar Código de Rastreamento"
+            >
+              {copied ? (
+                <Check className="w-3.5 h-3.5 text-emerald-400" />
+              ) : (
+                <Copy className="w-3.5 h-3.5" />
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Plataformas e Rodapé */}
