@@ -4,7 +4,7 @@ import {
   User as UserIcon, Mail, Phone, Instagram, Linkedin, 
   ChevronLeft, Edit3, Save, X, Briefcase, Info, 
   Shield, Globe, MapPin, Loader2, Camera, Cake, Calendar,
-  Target, ChevronDown, CheckCircle2, Circle, Star, Wallet, TrendingUp, Clock, Plane, AlertTriangle, CalendarDays, DollarSign, Pencil
+  Target, ChevronDown, CheckCircle2, Circle, Star, Wallet, TrendingUp, Clock, Plane, AlertTriangle, CalendarDays, DollarSign, Pencil, Sparkles
 } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useDialog } from '@auth/contexts/DialogContext';
@@ -196,6 +196,11 @@ export default function ProfileView() {
 
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Estados para o Gerador de Avatar DiceBear
+  const [showDiceBearModal, setShowDiceBearModal] = useState(false);
+  const [tempDiceBearStyle, setTempDiceBearStyle] = useState('lorelei');
+  const [tempDiceBearSeed, setTempDiceBearSeed] = useState(() => Math.random().toString(36).substring(7));
 
   // Form State
   const [formData, setFormData] = useState({
@@ -745,13 +750,25 @@ export default function ProfileView() {
                     )}
                   </div>
                   {isEditing && (
-                    <button 
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploading}
-                      className="absolute bottom-0 right-0 p-3 rounded-full bg-primary-500 text-white shadow-xl hover:bg-primary-600 transition-all active:scale-90"
-                    >
-                      {uploading ? <Loader2 size={20} className="animate-spin" /> : <Camera size={20} />}
-                    </button>
+                    <>
+                      <button 
+                        type="button"
+                        onClick={() => setShowDiceBearModal(true)}
+                        className="absolute bottom-0 left-0 p-3 rounded-full bg-purple-600 text-white shadow-xl hover:bg-purple-700 transition-all active:scale-90"
+                        title="Gerar Avatar com DiceBear"
+                      >
+                        <Sparkles size={20} />
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploading}
+                        className="absolute bottom-0 right-0 p-3 rounded-full bg-primary-500 text-white shadow-xl hover:bg-primary-600 transition-all active:scale-90"
+                        title="Upload de Foto"
+                      >
+                        {uploading ? <Loader2 size={20} className="animate-spin" /> : <Camera size={20} />}
+                      </button>
+                    </>
                   )}
                 </div>
                 <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
@@ -2877,6 +2894,102 @@ export default function ProfileView() {
                       Salvar Alterações
                     </SaveButton>
                  </form>
+              </div>
+           </div>
+        )}
+
+        {/* Modal do Gerador de Avatar DiceBear */}
+        {showDiceBearModal && (
+           <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4" onClick={() => setShowDiceBearModal(false)}>
+              <div className="bg-white dark:bg-[#0a0a0a] rounded-[2.5rem] border border-gray-200 dark:border-white/10 w-full max-w-md shadow-2xl overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+                 <div className="p-8 border-b border-gray-100 dark:border-white/5 flex justify-between items-center shrink-0 text-left">
+                    <div>
+                       <h3 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                          <Sparkles className="text-purple-500 animate-pulse" />
+                          Gerador de Avatar DiceBear
+                       </h3>
+                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Crie avatares ilustrados exclusivos em tempo real</p>
+                    </div>
+                    <button onClick={() => setShowDiceBearModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full text-gray-500 hover:text-gray-900 dark:hover:text-white"><X /></button>
+                 </div>
+                 
+                 <div className="p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1 text-center">
+                    {/* Preview Circular do Avatar */}
+                    <div className="flex justify-center">
+                       <div className="w-32 h-32 rounded-full border-4 border-purple-500/20 p-1 bg-white/5 backdrop-blur-xl shadow-xl flex items-center justify-center overflow-hidden">
+                          <img 
+                             src={`https://api.dicebear.com/9.x/${tempDiceBearStyle}/svg?seed=${encodeURIComponent(tempDiceBearSeed)}`} 
+                             alt="Preview DiceBear" 
+                             className="w-full h-full object-cover rounded-full"
+                          />
+                       </div>
+                    </div>
+
+                    {/* Seletor de Estilo */}
+                    <div className="space-y-2 text-left">
+                       <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Estilo do Desenho</label>
+                       <select 
+                          value={tempDiceBearStyle} 
+                          onChange={e => setTempDiceBearStyle(e.target.value)}
+                          className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-2xl focus:outline-none focus:border-purple-500 transition-all font-medium text-gray-800 dark:text-white appearance-none cursor-pointer"
+                       >
+                          <option value="lorelei" className="bg-white dark:bg-[#0a0a0a]">Lorelei (Cartoon Moderno)</option>
+                          <option value="bottts" className="bg-white dark:bg-[#0a0a0a]">Bottts (Robôs e Tecnologia)</option>
+                          <option value="avataaars" className="bg-white dark:bg-[#0a0a0a]">Avataaars (Ilustração Humana)</option>
+                          <option value="adventurer" className="bg-white dark:bg-[#0a0a0a]">Adventurer (Aventureiro)</option>
+                          <option value="pixel-art" className="bg-white dark:bg-[#0a0a0a]">Pixel Art (Arte 8-bit)</option>
+                          <option value="shapes" className="bg-white dark:bg-[#0a0a0a]">Shapes (Formas Geométricas)</option>
+                          <option value="initials" className="bg-white dark:bg-[#0a0a0a]">Initials (Iniciais do Nome)</option>
+                          <option value="fun-emoji" className="bg-white dark:bg-[#0a0a0a]">Fun Emoji (Emojis Engraçados)</option>
+                       </select>
+                    </div>
+
+                    {/* Semente / Customização */}
+                    <div className="space-y-2 text-left">
+                       <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Semente de Geração (Seed)</label>
+                       <div className="flex gap-2">
+                          <input 
+                             type="text" 
+                             className="flex-1 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-2xl focus:outline-none focus:border-purple-500 transition-all font-medium text-gray-800 dark:text-white" 
+                             value={tempDiceBearSeed} 
+                             onChange={e => setTempDiceBearSeed(e.target.value)} 
+                             placeholder="Digite qualquer palavra..."
+                          />
+                          <button 
+                             type="button"
+                             onClick={() => setTempDiceBearSeed(Math.random().toString(36).substring(7))}
+                             className="px-4 bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 border border-purple-500/20 rounded-2xl font-bold transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                             title="Randomizar Semente"
+                          >
+                             🎲 Aleatório
+                          </button>
+                       </div>
+                       <p className="text-[10px] text-gray-500 mt-1 pl-1">Cada palavra ou letra diferente gerará um avatar totalmente único!</p>
+                    </div>
+
+                    {/* Botões de Ação */}
+                    <div className="flex gap-3 pt-4">
+                       <button
+                          type="button"
+                          onClick={() => {
+                             const finalUrl = `https://api.dicebear.com/9.x/${tempDiceBearStyle}/svg?seed=${encodeURIComponent(tempDiceBearSeed)}`;
+                             setFormData(prev => ({ ...prev, photoURL: finalUrl }));
+                             setShowDiceBearModal(false);
+                             toast.success('Avatar DiceBear aplicado! Clique em "Salvar Alterações" para gravar definitivamente.');
+                          }}
+                          className="flex-1 py-4 bg-purple-600 hover:bg-purple-700 text-white font-black uppercase rounded-2xl transition-all shadow-xl shadow-purple-600/20 text-sm shrink-0"
+                       >
+                          Usar este Avatar
+                       </button>
+                       <button
+                          type="button"
+                          onClick={() => setShowDiceBearModal(false)}
+                          className="bg-white/10 hover:bg-white/15 text-gray-700 dark:text-white py-4 px-6 rounded-2xl text-xs font-semibold transition-all border border-gray-200 dark:border-white/10 active:scale-95"
+                       >
+                          Cancelar
+                       </button>
+                    </div>
+                 </div>
               </div>
            </div>
         )}
