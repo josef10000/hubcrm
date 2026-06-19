@@ -50,6 +50,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.query.action === 'public_get_appointment') {
       return handlePublicGetAppointment(req, res);
     }
+    if (req.query.action === 'public_get_bio') {
+      return handlePublicGetBio(req, res);
+    }
     return handleFinance(req, res);
   }
   return res.status(405).json({ error: 'Method Not Allowed' });
@@ -609,5 +612,101 @@ async function handleGetClient(req: VercelRequest, res: VercelResponse) {
   } catch (error: any) {
     console.error('[PortalGetClient] Erro ao buscar dados do cliente:', error);
     return res.status(500).json({ error: 'Erro interno ao buscar dados do cliente.', details: error.message });
+  }
+}
+
+// ============================================================
+// GET public_get_bio — Busca dados consolidados e públicos da Bio/Agendamento
+// ============================================================
+async function handlePublicGetBio(req: VercelRequest, res: VercelResponse) {
+  try {
+    const { orgId, clientId } = req.query;
+    if (!orgId) {
+      return res.status(400).json({ error: 'Parâmetro orgId é obrigatório.' });
+    }
+
+    const orgRef = db.collection('organizations').doc(orgId as string);
+    const orgSnap = await orgRef.get();
+    if (!orgSnap.exists) {
+      return res.status(404).json({ error: 'Organização não encontrada.' });
+    }
+    const orgData = orgSnap.data();
+
+    // Tenta detectar o clientId se não for informado
+    let targetClientId = (clientId as string) || '';
+    if (!targetClientId) {
+      const clientsSnap = await db
+        .collection('organizations')
+        .doc(orgId as string)
+        .collection('clients')
+        .limit(1)
+        .get();
+      if (!clientsSnap.empty) {
+        targetClientId = clientsSnap.docs[0].id;
+      }
+    }
+
+    let bioSettings = {
+      title: orgData?.name || 'Nosso Negócio',
+      description: 'Seja bem-vindo à nossa página pública. Veja nossos links e faça um agendamento online.',
+      avatarUrl: orgData?.logoUrl || '',
+      links: [],
+      showBooking: true
+    };
+    let schedulingSettings = {};
+    let fidelitySettings = {};
+
+    if (targetClientId) {
+      const clientSnap = await db
+        .collection('organizations')
+        .doc(orgId as string)
+        .collection('clients')
+        .doc(targetClientId)
+        .get();
+
+      if (clientSnap.exists) {
+        const clientData = clientSnap.data();
+        if (clientData?.bioSettings) {
+          bioSettings = { ...bioSettings, ...clientData.bioSettings };
+        }
+        if (clientData?.schedulingSettings) {
+          schedulingSettings = clientData.schedulingSettings;
+        }
+        if (clientData?.fidelitySettings) {
+          fidelitySettings = clientData.fidelitySettings;
+        }
+      }
+    }
+
+    // Busca a lista de serviços ativos
+    const servicesSnap = await db
+      .collection('organizations')
+      .doc(orgId as string)
+      .collection('client_services')
+      .orderBy('createdAt', 'desc')
+      .get();
+    
+    const services = servicesSnap.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    return res.status(200).json({
+      success: true,
+      org: {
+        id: orgSnap.id,
+        name: orgData?.name || '',
+        logoUrl: orgData?.logoUrl || ''
+      },
+      clientId: targetClientId,
+      bioSettings,
+      schedulingSettings,
+      fidelitySettings,
+      services
+    });
+
+  } catch (error: any) {
+    console.error('[PortalPublicGetBio] Erro ao obter dados públicos do Mini-Site:', error);
+    return res.status(500).json({ error: 'Erro interno ao carregar os dados públicos do Mini-Site.', details: error.message });
   }
 }
