@@ -248,10 +248,6 @@ export async function runFinanceReconciler(req: VercelRequest, res: VercelRespon
       await processSingleOrgReconciliation(orgDoc.id, orgDoc.data(), results);
     });
 
-    await Promise.allSettled(orgPromises);}`);
-      }
-    });
-
     await Promise.allSettled(orgPromises);
 
     console.log(`[Finance Reconciler] Concluído com sucesso. Organizações processadas: ${results.processedOrgs}, Clientes varridos: ${results.syncedClients}, Atualizados: ${results.updatedClients}`);
