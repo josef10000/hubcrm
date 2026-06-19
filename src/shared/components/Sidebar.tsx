@@ -290,6 +290,7 @@ export default function Sidebar() {
                   onClick={() => setStatusMenuOpen(!statusMenuOpen)}
                   className="relative cursor-pointer group"
                 >
+                  <AvatarFrame size="md" pulseStatus="none">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center text-gray-900 font-bold shrink-0 shadow-lg overflow-hidden border border-white/10 group-hover:scale-105 transition-transform">
                       {isValidPhotoURL(userProfile?.photoURL) ? (
                         <img src={userProfile!.photoURL} alt={userProfile?.displayName || 'Avatar'} className="w-full h-full object-cover" />
@@ -297,6 +298,7 @@ export default function Sidebar() {
                         (userProfile?.displayName || user?.displayName || 'U')[0].toUpperCase()
                       )}
                     </div>
+                  </AvatarFrame>
                   <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#05070a] shadow-lg transition-colors duration-300 ${
                     getStatusColor(userProfile?.presenceStatus || 'offline')
                   }`} />
@@ -307,13 +309,15 @@ export default function Sidebar() {
                 onClick={() => setStatusMenuOpen(!statusMenuOpen)}
                 className="relative cursor-pointer group"
               >
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center text-gray-900 font-bold shrink-0 shadow-lg overflow-hidden border border-white/10 group-hover:scale-105 transition-transform">
-                    {isValidPhotoURL(userProfile?.photoURL) ? (
-                      <img src={userProfile!.photoURL} alt={userProfile?.displayName || 'Avatar'} className="w-full h-full object-cover" />
-                    ) : (
-                      (userProfile?.displayName || user?.displayName || 'U')[0].toUpperCase()
-                    )}
-                  </div>
+                  <AvatarFrame size="md" pulseStatus="none">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-400 flex items-center justify-center text-gray-900 font-bold shrink-0 shadow-lg overflow-hidden border border-white/10 group-hover:scale-105 transition-transform">
+                      {isValidPhotoURL(userProfile?.photoURL) ? (
+                        <img src={userProfile!.photoURL} alt={userProfile?.displayName || 'Avatar'} className="w-full h-full object-cover" />
+                      ) : (
+                        (userProfile?.displayName || user?.displayName || 'U')[0].toUpperCase()
+                      )}
+                    </div>
+                  </AvatarFrame>
                 <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#05070a] shadow-lg transition-colors duration-300 ${
                   getStatusColor(userProfile?.presenceStatus || 'offline')
                 }`} />
