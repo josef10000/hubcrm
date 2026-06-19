@@ -27,6 +27,7 @@ export const teamUpdateProfileSchema = z.object({
     instagram: z.string().optional(),
     linkedin: z.string().optional(),
     photoURL: z.string().optional(),
+    avatarFrame: z.string().optional(),
     startDate: z.string().optional(),
     jobTitle: z.string().optional(),
     roleId: z.string().optional(),

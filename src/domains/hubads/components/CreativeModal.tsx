@@ -249,7 +249,7 @@ export function CreativeModal({ isOpen, onClose, onSave, onDelete, creative }: C
             }`}
           >
             <ImageIcon className="w-4 h-4" />
-            1. Criativo & Mídia
+            Criativo & Mídia
           </button>
           <button
             onClick={() => setActiveTab('campaign')}
@@ -260,7 +260,7 @@ export function CreativeModal({ isOpen, onClose, onSave, onDelete, creative }: C
             }`}
           >
             <Globe className="w-4 h-4" />
-            2. Campanha & Status
+            Campanha & Status
           </button>
           <button
             onClick={() => setActiveTab('performance')}
@@ -271,13 +271,14 @@ export function CreativeModal({ isOpen, onClose, onSave, onDelete, creative }: C
             }`}
           >
             <Calculator className="w-4 h-4" />
-            3. Performance Financeira
+            Performance Financeira
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
-          {errorMsg && (
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            {errorMsg && (
             <div className="p-4 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl flex items-start gap-3">
               <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
               <div className="text-sm font-medium">{errorMsg}</div>
@@ -433,17 +434,6 @@ export function CreativeModal({ isOpen, onClose, onSave, onDelete, creative }: C
                   />
                 </div>
               </div>
-
-              <div className="flex justify-end pt-4">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('campaign')}
-                  className="px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-semibold flex items-center gap-2 transition-colors shadow-lg shadow-primary-500/20"
-                >
-                  Continuar
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
             </div>
           )}
 
@@ -539,24 +529,6 @@ export function CreativeModal({ isOpen, onClose, onSave, onDelete, creative }: C
                   <span className="font-semibold text-white block mb-1">Uso do Código de Rastreamento:</span>
                   O código sequencial gerado pelo sistema (ex: <span className="font-mono text-white">HUBADS-002</span>) deve ser utilizado como a origem de leads (URL UTM ou entrada no cadastro de Leads no CRM). Ao fazer isso, o faturamento e leads vinculados a este criativo serão contabilizados em tempo real no dashboard.
                 </div>
-              </div>
-
-              <div className="flex justify-between pt-4">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('creative')}
-                  className="px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-semibold transition-colors"
-                >
-                  Voltar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('performance')}
-                  className="px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-semibold flex items-center gap-2 transition-colors shadow-lg shadow-primary-500/20"
-                >
-                  Continuar
-                  <ArrowRight className="w-4 h-4" />
-                </button>
               </div>
             </div>
           )}
@@ -673,45 +645,46 @@ export function CreativeModal({ isOpen, onClose, onSave, onDelete, creative }: C
                     onChange={(e) => setNotes(e.target.value)}
                     rows={3}
                     placeholder="Pontos positivos, negativos, feedbacks dos clientes no anúncio..."
-                    className="w-full px-4 py-3 bg-[#0d1117] border border-white/10 rounded-xl text-white focus:outline-none focus:border-primary-500 transition-colors resize-y font-sans"
+                    className="w-full px-4 py-3 bg-[#0d1117] border border-white/10 rounded-xl text-white focus:outline-none focus:border-primary-500 transition-colors resize-y"
                   />
-                </div>
-              </div>
-
-              {/* Botões de Ação */}
-              <div className="flex justify-between pt-6 border-t border-white/10">
-                <div>
-                  {creative && onDelete && (
-                    <button
-                      type="button"
-                      onClick={handleDeleteClick}
-                      disabled={loading}
-                      className="px-4 py-2.5 bg-red-600/10 hover:bg-red-600 border border-red-600/20 hover:border-red-600/40 text-red-500 hover:text-white rounded-xl font-semibold transition-all flex items-center gap-1.5"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Excluir
-                    </button>
-                  )}
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('campaign')}
-                    className="px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-semibold transition-colors"
-                  >
-                    Voltar
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="px-6 py-2.5 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-500/50 text-white rounded-xl font-semibold flex items-center gap-1.5 transition-colors shadow-lg shadow-primary-500/20"
-                  >
-                    {loading ? 'Salvando...' : 'Salvar Criativo'}
-                  </button>
                 </div>
               </div>
             </div>
           )}
+          </div>
+ 
+          {/* Rodapé Fixo Unificado */}
+          <div className="p-5 border-t border-white/10 bg-[#070a0f] flex justify-between items-center z-10 shrink-0">
+            <div>
+              {creative && onDelete && (
+                <button
+                  type="button"
+                  onClick={handleDeleteClick}
+                  disabled={loading}
+                  className="px-4 py-2.5 bg-red-600/10 hover:bg-red-600 border border-red-600/20 hover:border-red-600/40 text-red-500 hover:text-white rounded-xl font-semibold transition-all flex items-center gap-1.5 text-xs"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Excluir Criativo
+                </button>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl font-semibold transition-colors text-xs"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-6 py-2.5 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-500/50 text-white rounded-xl font-semibold flex items-center gap-1.5 transition-colors shadow-lg shadow-primary-500/20 text-xs"
+              >
+                {loading ? 'Salvando...' : 'Salvar Criativo'}
+              </button>
+            </div>
+          </div>
         </form>
       </div>
     </div>
