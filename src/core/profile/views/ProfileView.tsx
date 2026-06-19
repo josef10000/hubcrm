@@ -20,6 +20,7 @@ import { PDICategory } from '@/types/people';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SaveButton } from '@/shared/components/SaveButton';
+import AvatarFrame from '@/shared/components/AvatarFrame';
 import { format } from 'date-fns';
 import MoodTracker from '@people/components/MoodTracker';
 import SkillRadarChart from '@people/components/SkillRadarChart';
@@ -204,6 +205,7 @@ export default function ProfileView() {
 
   // Form State
   const [formData, setFormData] = useState({
+    avatarFrame: 'none',
     displayName: '',
     jobTitle: '',
     bio: '',
@@ -290,6 +292,7 @@ export default function ProfileView() {
           setIsEditing(editing => {
             if (!editing) {
               setFormData({
+                avatarFrame: enrichedProfile.avatarFrame || 'none',
                 displayName: enrichedProfile.displayName || '',
                 jobTitle: enrichedProfile.jobTitle || '',
                 bio: enrichedProfile.bio || '',
@@ -741,38 +744,72 @@ export default function ProfileView() {
             >
               {/* Profile Image */}
               <div className="relative inline-block mb-6">
-                <div className="w-40 h-40 rounded-full border-4 border-primary-500/20 p-1 bg-white/5 backdrop-blur-xl relative">
-                  <div className="w-full h-full rounded-full overflow-hidden bg-gray-200 dark:bg-white/5 flex items-center justify-center text-5xl font-bold font-display text-gray-900 dark:text-white">
+                <AvatarFrame size="xl" pulseStatus="none" frame={isEditing ? formData.avatarFrame : (profile?.avatarFrame || 'none')}>
+                  <div className="w-40 h-40 rounded-full overflow-hidden bg-gray-200 dark:bg-white/5 flex items-center justify-center text-5xl font-bold font-display text-gray-900 dark:text-white relative">
                     {formData.photoURL ? (
                       <img src={formData.photoURL} alt={formData.displayName} className="w-full h-full object-cover" />
                     ) : (
                       formData.displayName?.[0] || <UserIcon />
                     )}
+                    {isEditing && (
+                      <>
+                        <button 
+                          type="button"
+                          onClick={() => setShowDiceBearModal(true)}
+                          className="absolute bottom-1 left-1 p-2.5 rounded-full bg-purple-600 text-white shadow-xl hover:bg-purple-700 transition-all active:scale-90 z-20"
+                          title="Gerar Avatar com DiceBear"
+                        >
+                          <Sparkles size={16} />
+                        </button>
+                        <button 
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploading}
+                          className="absolute bottom-1 right-1 p-2.5 rounded-full bg-primary-500 text-white shadow-xl hover:bg-primary-600 transition-all active:scale-90 z-20"
+                          title="Upload de Foto"
+                        >
+                          {uploading ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
+                        </button>
+                      </>
+                    )}
                   </div>
-                  {isEditing && (
-                    <>
-                      <button 
-                        type="button"
-                        onClick={() => setShowDiceBearModal(true)}
-                        className="absolute bottom-0 left-0 p-3 rounded-full bg-purple-600 text-white shadow-xl hover:bg-purple-700 transition-all active:scale-90"
-                        title="Gerar Avatar com DiceBear"
-                      >
-                        <Sparkles size={20} />
-                      </button>
-                      <button 
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={uploading}
-                        className="absolute bottom-0 right-0 p-3 rounded-full bg-primary-500 text-white shadow-xl hover:bg-primary-600 transition-all active:scale-90"
-                        title="Upload de Foto"
-                      >
-                        {uploading ? <Loader2 size={20} className="animate-spin" /> : <Camera size={20} />}
-                      </button>
-                    </>
-                  )}
-                </div>
+                </AvatarFrame>
                 <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
               </div>
+
+              {isEditing && (
+                <div className="mt-2 mb-6 text-left max-w-[200px] mx-auto">
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1 text-center">
+                    Moldura do Avatar
+                  </label>
+                  <select
+                    value={formData.avatarFrame || 'none'}
+                    onChange={e => setFormData({...formData, avatarFrame: e.target.value})}
+                    className="w-full bg-white dark:bg-[#0d1117] border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white rounded-xl px-3 py-1.5 focus:ring-2 focus:ring-primary-500 outline-none text-xs"
+                  >
+                    <option value="none">Nenhuma</option>
+                    {Array.from(new Set(['none', ...(profile?.unlockedFrames || []), profile?.avatarFrame].filter(Boolean))).map(frameKey => {
+                      const frameNames: Record<string, string> = {
+                        none: 'Nenhuma',
+                        neon: 'Neon Purple (Loja)',
+                        gold: 'Gold Premium (Loja)',
+                        cyberpunk: 'Cyberpunk Cyan (Loja)',
+                        floral: 'Eco Floral (Loja)',
+                        ruby: 'Ruby Red (Loja)',
+                        ocean: 'Ocean Blue (Loja)',
+                        dark: 'Dark Minimalist (Loja)',
+                        rainbow: 'Rainbow Glow (Loja)',
+                        silver: 'Silver Platinum (Loja)'
+                      };
+                      return (
+                        <option key={frameKey} value={frameKey}>
+                          {frameNames[frameKey] || frameKey}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              )}
 
               <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-1">{profile.displayName}</h2>
               {profile.activeTitle && (

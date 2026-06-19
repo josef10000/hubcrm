@@ -5,11 +5,12 @@ interface AvatarFrameProps {
   children: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   pulseStatus?: 'active' | 'paused' | 'none';
+  frame?: string;
 }
 
-export default function AvatarFrame({ children, size = 'md', pulseStatus = 'none' }: AvatarFrameProps) {
+export default function AvatarFrame({ children, size = 'md', pulseStatus = 'none', frame: propFrame }: AvatarFrameProps) {
   const { userProfile } = useAuth();
-  const frame = userProfile?.avatarFrame || 'none';
+  const frame = propFrame || userProfile?.avatarFrame || 'none';
 
   if (frame === 'none' && pulseStatus === 'none') return <>{children}</>;
 
