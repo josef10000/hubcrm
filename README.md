@@ -145,6 +145,13 @@ Backoffice, infraestrutura de dados e portal do cliente para o Hub de Cresciment
 *   **Dados Globais (Ativos Globais):** Tela geral no menu do CRM com CRUD completo de materiais de sucesso, e renderização reativa no Portal do Cliente segregada por abas: "Templates Rápidos" (com detecção inteligente de links para aplicar badges e botões dedicados de plataformas como Canva, Trello e Google Drive), "Arsenal de Vendas" (scripts com botão de cópia rápida) e "Treinamentos" (player de vídeo incorporado e links externos).
 *   **Segurança no Firestore & API:** Regras de segurança granulares no Firestore e atualização no payload da API do portal (`api/portal_handler.ts`) para incluir o objeto `brandAssets` no carregamento seguro do cliente.
 
+### 16. 📢 HubAds — Módulo de Gestão de Criativos & Tráfego Pago
+Módulo especializado para controle de criativos de tráfego pago, organização de referências e atribuição de leads:
+*   **Grid Visual de Criativos:** Visualização em grade responsiva com design Glassmorphism, exibindo miniatura de mídias, tags, badges de plataforma e status de veiculação.
+*   **Métricas Financeiras em Tempo Real:** Entrada de investimento, impressões, cliques, conversões e faturamento por criativo, com cálculo automático no frontend de CTR, CPC, CPL e ROAS.
+*   **Upload de Mídia (Cloudinary):** Upload direto de peças de anúncios (imagens e vídeos) integrado com o serviço de Cloudinary.
+*   **Classificação e Atribuição de Leads:** Rastreamento dinâmico que cruza o código único de rastreamento gerado (`HUBADS-XXX`) com o campo `leadSource` dos leads e clientes cadastrados no CRM para contabilizar conversões e faturamento real em tempo real.
+
 ---
 
 ## ⚖️ Comparativo de Regimes (CLT vs PJ)

@@ -46,7 +46,8 @@ export const PremiumIcon = ({ iconName, size = 22, className = "" }: { iconName:
     'Star': 'ph-star',
     'Search': 'ph-magnifying-glass',
     'X': 'ph-x-circle',
-    'Zap': 'ph-lightning'
+    'Zap': 'ph-lightning',
+    'LayoutGrid': 'ph-grid-four'
   };
 
   const phClass = mapping[iconName] || 'ph-question';

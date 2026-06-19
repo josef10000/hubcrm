@@ -1,7 +1,7 @@
 import { 
   LayoutDashboard, Users, DollarSign, Target, Rocket, HeartHandshake, Settings, 
   Package, Megaphone, Calendar, MessageCircle, Globe, LayoutTemplate, Map as MapIcon, 
-  Layout, CreditCard, Shield, BarChart3, BookOpen, Bell, ShieldCheck, Zap
+  Layout, CreditCard, Shield, BarChart3, BookOpen, Bell, ShieldCheck, Zap, LayoutGrid
 } from 'lucide-react';
 
 export const navGroups = [
@@ -50,6 +50,14 @@ export const navGroups = [
       { icon: DollarSign, label: 'Financeiro Estratégico', path: '/finance', permission: 'MANAGE_FINANCE' },
       { icon: Shield, label: 'Contratos', path: '/contracts', permission: 'MANAGE_FINANCE' },
       { icon: BarChart3, label: 'Analytics', path: '/analytics', permission: 'VIEW_REPORTS' },
+    ]
+  },
+  {
+    id: 'hubads',
+    label: 'HubAds',
+    icon: Megaphone,
+    items: [
+      { icon: LayoutGrid, label: 'Criativos', path: '/hub-ads' },
     ]
   },
   {

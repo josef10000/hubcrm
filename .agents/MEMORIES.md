@@ -27,3 +27,16 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
     - Campo de input para a semente (`seed`) e botão para randomizar com sementes aleatórias em tempo real.
     - O botão de confirmação injeta a URL final SVG `https://api.dicebear.com/9.x/{estilo}/svg?seed={semente}` no `formData.photoURL`, que é persistido no Firestore ao salvar as alterações do perfil.
   - **Sincronização**: O upload de fotos originais do dispositivo (Cloudinary) permanece ativo e independente.
+
+---
+
+## 3. HubAds — Módulo de Gestão de Criativos & Tráfego Pago
+- **Data da Integração**: 19/06/2026
+- **Funcionalidade**: Central de planejamento, referências e performance financeira de criativos de tráfego pago.
+- **Decisões Técnicas**:
+  - **Estrutura Firestore**: Coleção `organizations/{orgId}/hubads_creatives` para dados de criativos.
+  - **Sequenciador de Tracking**: Geração automática de `trackingCode` sequencial (ex: `HUBADS-001`, `HUBADS-002`...) baseado na ordenação reversa por `createdAt`.
+  - **Métricas de Performance**: Entrada manual de investimento, impressões, cliques, conversões e faturamento, com cálculos de front-end reativos em tempo real para CTR, CPC, CPL e ROAS.
+  - **Atribuição Reativa**: O sistema conta leads e faturamento reais consultando o banco de dados do CRM onde `leadSource` seja igual ao `trackingCode` correspondente ao criativo. Se não houver dados reais, cai de volta nos valores informados manualmente.
+  - **Upload de Mídia**: Suporte para subir imagens e vídeos direto no Cloudinary utilizando `uploadToCloudinary` ou inserção manual de URLs externas.
+  - **Navegação**: Adicionado novo grupo na Sidebar com ícone `LayoutGrid` mapeado para `ph-grid-four` do Phosphor. Rota protegida `/hub-ads` com lazy loading.

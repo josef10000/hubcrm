@@ -47,6 +47,7 @@ const CanvasEditorView = lazy(() => import('@chat/views/CanvasEditorView'));
 const ReferralsView = lazy(() => import('@crm/components/ReferralsView'));
 const AuditDashboard = lazy(() => import('@domains/core/views/AuditDashboard'));
 const GrowthHubView = lazy(() => import('@/domains/crm/views/GrowthHubView'));
+const HubAdsView = lazy(() => import('@/domains/hubads/views/HubAdsView'));
 
 // Public / External Views (Lazy Loaded)
 const ClientPortal = lazy(() => import('@portal/components/ClientPortalLayout'));
@@ -146,6 +147,7 @@ export function AppRouter() {
                       <Route path="/workspace" element={<MyWorkspaceView />} />
                       <Route path="/arena" element={<ArenaView />} />
                       <Route path="/shop" element={<HubShopView />} />
+                      <Route path="/hub-ads" element={<HubAdsView />} />
                       <Route path="/ouvidoria" element={<ComplianceOuvidoriaView />} />
                       <Route path="/compliance-admin" element={<ComplianceAdminView />} />
                       
