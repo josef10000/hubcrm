@@ -36,6 +36,8 @@
     { "source": "/api/uptimerobot/monitors", "destination": "/api/system_handler?action=uptime" },
     { "source": "/api/weather", "destination": "/api/system_handler?action=weather" },
     { "source": "/api/youtube/search", "destination": "/api/system_handler?action=youtube-search" },
+    { "source": "/api/site-shield", "destination": "/api/system_handler?action=site-shield" },
+    { "source": "/api/site-status", "destination": "/api/system_handler?action=site-status" },
     
     { "source": "/((?!api/.*).*)", "destination": "/index.html" }
   ],

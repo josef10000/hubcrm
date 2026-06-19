@@ -64,3 +64,19 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
   - **Extração de Rotinas**: Extraída a lógica de reconciliação para `processSingleOrgReconciliation` em `api/_cron/finance_reconciler.ts` e exportada `processOrganizationFinance` de `api/_cron/finance_engine.ts`.
   - **Atualização do Firestore**: O timestamp de execução (`lastBillingScan` e `lastCfoSync`) é gravado de verdade pelo backend após a conclusão com sucesso de cada rotina, e não simulado localmente no frontend.
   - **Limpeza de UI**: Removidas as opções simuladas de Fila de E-mails, Atualização do Grafo de Conhecimento e o painel correspondente ao Graphify em `AdministrativeView.tsx`.
+
+---
+
+## 6. Sistema Site Shield (Bloqueio Automático)
+- **Data da Integração**: 19/06/2026
+- **Funcionalidade**: Desativação dinâmica de sites por assinatura de clientes inadimplentes há mais de 10 dias ou com assinaturas canceladas.
+- **Decisões Técnicas**:
+  - **Endpoints e Rotas**:
+    - `/api/site-shield` mapeado no `vercel.json` retornando o script de verificação JS (`application/javascript`).
+    - `/api/site-status?domain=...` consultando e validando as regras contábeis do cliente no Firestore sem exigir autenticação (CORS liberado com `Access-Control-Allow-Origin: *`).
+  - **Lógica de Bloqueio**:
+    - Normalização inteligente de URLs (removendo `https?://`, `www.`, caminhos e parâmetros) no frontend e no backend para match perfeito.
+    - Atraso superior a 10 dias a partir da data de vencimento (`nextDueDate`) quando `paymentStatus === 'OVERDUE'` ou `status === 'Inadimplente'` suspende o site.
+    - Cancelamento explícito (`status === 'Cancelado'`) também suspende de imediato.
+  - **Performance e Cache**: O script guarda a resposta no `sessionStorage` do visitante por 12 horas, minimizando o impacto no limite de leituras do Firestore. O botão "Verificar Novamente" na tela de bloqueio limpa o cache e recarrega a página.
+  - **Interface CRM**: Adicionado botão de cópia com um clique "Copiar Script Site Shield" (ícone `Shield`) e toast explicativo sob o campo `siteLink` no modal de visualização de cliente (`ClientModal.tsx`).

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   X, Plus, DollarSign, CheckCircle, Clock, MapPin, Phone, Tag, Building2, FileText, Briefcase, AlignLeft,
   Paperclip, Copy, MessageCircle, Trash2, Snowflake, Globe, Image as ImageIcon, Sparkles, Wand2, Star, Zap,
-  RefreshCw, Link as LinkIcon, AlertTriangle, TrendingDown, Eye, EyeOff, Edit2, Loader2, Download, FileSignature, FileUp, Mail, Bell, BellOff, Key
+  RefreshCw, Link as LinkIcon, AlertTriangle, TrendingDown, Eye, EyeOff, Edit2, Loader2, Download, FileSignature, FileUp, Mail, Bell, BellOff, Key, Shield
 } from 'lucide-react';
 import { auth, db, storage } from '@/lib/firebase';
 import { collection, doc, setDoc, onSnapshot, deleteDoc, addDoc, updateDoc } from 'firebase/firestore';
@@ -716,6 +716,26 @@ function ClientModal({
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Link do Site (Opcional)</label>
                     <input type="url" name="siteLink" value={formData.siteLink || ''} onChange={handleChange} placeholder="https://..." className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
                   </div>
+
+                  {formData.siteLink && (
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const scriptTag = `<script src="${window.location.origin}/api/site-shield"></script>`;
+                          navigator.clipboard.writeText(scriptTag);
+                          toast.success('Script Site Shield copiado!');
+                        }}
+                        className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-sm font-medium transition-all"
+                      >
+                        <Shield size={16} />
+                        Copiar Script Site Shield
+                      </button>
+                      <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">
+                        Insira este código na tag <code>&lt;head&gt;</code> do site do cliente para ativação do bloqueio automático por atraso.
+                      </p>
+                    </div>
+                  )}
 
                   {initialData && (
                     <div>

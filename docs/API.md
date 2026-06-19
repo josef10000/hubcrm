@@ -46,5 +46,14 @@ O sistema processa automaticamente eventos do Asaas:
 - **Validation:** Todos os inputs são validados via **Zod schemas**.
 - **Logging:** Erros e atividades críticas são reportados ao **Axiom**.
 
+## 🛡️ Site Shield (`/api/site-shield` & `/api/site-status`)
+Mecanismo de bloqueio automático para sites de clientes suspensos ou inadimplentes por mais de 10 dias.
+- `GET /api/site-shield`: Retorna o script JS universal de verificação. Ele normaliza o hostname em execução e faz uma consulta rápida à API do CRM.
+- `GET /api/site-status?domain=<domain>`: Endpoint público (CORS-enabled) que valida as condições contábeis de um cliente.
+  - Verifica o status do cliente no Firestore.
+  - Se inadimplente ou vencido por mais de 10 dias, retorna `{ suspended: true, message: 'Assinatura com pendências financeiras pendentes.' }`.
+  - Se cancelado, retorna `{ suspended: true, message: 'Esta assinatura foi cancelada.' }`.
+  - Caso contrário, retorna `{ suspended: false }`.
+
 ---
 *Hub Central © 2026 — Engenharia de Software Enterprise.*
