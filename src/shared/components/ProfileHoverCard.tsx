@@ -11,6 +11,7 @@ interface ProfileHoverCardProps {
   userId: string;
   orgId: string;
   children: React.ReactNode;
+  disabled?: boolean;
 }
 
 // Auxiliar local para obter a data no Horário de Brasília
@@ -34,7 +35,7 @@ const isValidPhotoURL = (url: any) => {
          (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:'));
 };
 
-export default function ProfileHoverCard({ userId, orgId, children }: ProfileHoverCardProps) {
+export default function ProfileHoverCard({ userId, orgId, children, disabled = false }: ProfileHoverCardProps) {
   const { teamProfiles = [], orgRoles = [] } = useCRM();
   const { user, userProfile: currentUserProfile } = useAuth();
   const [isVisible, setIsVisible] = useState(false);
@@ -106,8 +107,17 @@ export default function ProfileHoverCard({ userId, orgId, children }: ProfileHov
     return () => unsubscribe();
   }, [isVisible, userId, orgId]);
 
+  // Fecha o hover card imediatamente quando disabled muda para true
+  useEffect(() => {
+    if (disabled && isVisible) {
+      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+      setIsVisible(false);
+    }
+  }, [disabled]);
+
   // Gerenciamento de eventos de Hover com Debounce de 250ms
   const handleMouseEnter = (e: React.MouseEvent) => {
+    if (disabled) return; // Não abre hover quando desabilitado
     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
 
     const rect = e.currentTarget.getBoundingClientRect();

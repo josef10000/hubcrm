@@ -284,7 +284,7 @@ export default function Sidebar() {
 
           <div ref={avatarMenuRef} className="relative z-10 mt-auto flex flex-col items-center gap-4">
             {userProfile?.uid && userProfile?.orgId ? (
-              <ProfileHoverCard userId={userProfile.uid} orgId={userProfile.orgId}>
+              <ProfileHoverCard userId={userProfile.uid} orgId={userProfile.orgId} disabled={statusMenuOpen}>
                 <div 
                   onClick={() => setStatusMenuOpen(!statusMenuOpen)}
                   className="relative cursor-pointer group"
