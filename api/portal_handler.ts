@@ -53,6 +53,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.query.action === 'public_get_bio') {
       return handlePublicGetBio(req, res);
     }
+    if (req.query.action === 'public_get_wallet_pass') {
+      return handlePublicGetWalletPass(req, res);
+    }
     return handleFinance(req, res);
   }
   return res.status(405).json({ error: 'Method Not Allowed' });
@@ -708,5 +711,235 @@ async function handlePublicGetBio(req: VercelRequest, res: VercelResponse) {
   } catch (error: any) {
     console.error('[PortalPublicGetBio] Erro ao obter dados públicos do Mini-Site:', error);
     return res.status(500).json({ error: 'Erro interno ao carregar os dados públicos do Mini-Site.', details: error.message });
+  }
+}
+
+// ============================================================
+// GET — Geração e Visualização do Passe Digital (Apple & Google Wallet Simulator)
+// ============================================================
+async function handlePublicGetWalletPass(req: VercelRequest, res: VercelResponse) {
+  try {
+    const { type, orgId, id, clientId } = req.query;
+    if (!orgId) {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      return res.status(400).send('<h1>Erro: orgId é obrigatório</h1>');
+    }
+
+    const orgSnap = await db.collection('organizations').doc(orgId as string).get();
+    if (!orgSnap.exists) {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      return res.status(404).send('<h1>Erro: Organização não encontrada</h1>');
+    }
+    const orgData = orgSnap.data();
+
+    let title = orgData?.name || 'Portal Hub';
+    let cardColor = '#6366f1';
+    let textColor = '#ffffff';
+    let detailsHtml = '';
+    let barcodeValue = (id as string) || (clientId as string) || '1234567890';
+
+    if (type === 'fidelity') {
+      const clientsSnap = await db.collection('organizations').doc(orgId as string).collection('clients').limit(1).get();
+      let fidelityConfig: any = {};
+      let rewardText = 'Prêmio Especial';
+
+      if (!clientsSnap.empty) {
+        const clientDoc = clientsSnap.docs[0];
+        const clientData = clientDoc.data();
+        fidelityConfig = clientData?.fidelitySettings || {};
+        cardColor = fidelityConfig.walletCardColor || '#b89430';
+        textColor = fidelityConfig.walletTextColor || '#ffffff';
+        rewardText = fidelityConfig.reward || 'Prêmio Especial';
+      }
+
+      title = `Cartão Fidelidade — ${title}`;
+      detailsHtml = `
+        <div style="font-size: 11px; opacity: 0.75; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">PRÊMIO FIDELIDADE</div>
+        <div style="font-size: 22px; font-weight: 900; margin-bottom: 20px; color: ${textColor}; line-height: 1.2;">${rewardText}</div>
+        <div style="font-size: 12px; opacity: 0.8; margin-bottom: 8px;">Meta: <strong>${fidelityConfig.goal || 10} visitas</strong> completas</div>
+        <div style="font-size: 11px; opacity: 0.6; font-style: italic;">Apresente este cartão no local para carimbar.</div>
+      `;
+    } else {
+      if (!id) {
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        return res.status(400).send('<h1>Erro: id do agendamento é obrigatório</h1>');
+      }
+      const appSnap = await db.collection('organizations').doc(orgId as string).collection('appointments').doc(id as string).get();
+      if (!appSnap.exists) {
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        return res.status(404).send('<h1>Erro: Agendamento não encontrado</h1>');
+      }
+      const appData = appSnap.data();
+      
+      const clientsSnap = await db.collection('organizations').doc(orgId as string).collection('clients').limit(1).get();
+      if (!clientsSnap.empty) {
+        const clientData = clientsSnap.docs[0].data();
+        cardColor = clientData?.fidelitySettings?.walletCardColor || '#6366f1';
+        textColor = clientData?.fidelitySettings?.walletTextColor || '#ffffff';
+      }
+
+      title = `Ticket de Agendamento`;
+      
+      const dateFormatted = appData?.date ? new Date(appData.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+      detailsHtml = `
+        <div style="font-size: 11px; opacity: 0.75; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">SERVIÇO CONFIRMADO</div>
+        <div style="font-size: 20px; font-weight: 900; margin-bottom: 20px; color: ${textColor}; line-height: 1.2;">${appData?.serviceName || 'Serviço'}</div>
+        
+        <div style="display: grid; grid-template-cols: 1fr 1fr; grid-auto-flow: column; gap: 15px; margin-bottom: 20px;">
+          <div>
+            <div style="font-size: 10px; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.5px;">DATA</div>
+            <div style="font-size: 14px; font-weight: bold; color: ${textColor}">${dateFormatted}</div>
+          </div>
+          <div>
+            <div style="font-size: 10px; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.5px;">HORÁRIO</div>
+            <div style="font-size: 14px; font-weight: bold; color: ${textColor}">${appData?.time || ''}</div>
+          </div>
+        </div>
+
+        <div style="border-t: 1px solid rgba(255,255,255,0.15); pt-15; margin-top: 15px;">
+          <div style="font-size: 10px; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">CLIENTE</div>
+          <div style="font-size: 13px; font-weight: bold; color: ${textColor}">${appData?.clientName || ''}</div>
+        </div>
+      `;
+    }
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="pt-BR">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${title}</title>
+        <style>
+          body {
+            background-color: #050505;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+          }
+          .pass-container {
+            width: 100%;
+            max-width: 340px;
+            background-color: ${cardColor};
+            color: ${textColor};
+            border-radius: 28px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.15);
+            overflow: hidden;
+            transition: transform 0.3s;
+          }
+          .pass-container:hover {
+            transform: translateY(-5px);
+          }
+          .pass-header {
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.2);
+            position: relative;
+          }
+          .pass-header::before, .pass-header::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: #050505;
+          }
+          .pass-header::before { left: -8px; }
+          .pass-header::after { right: -8px; }
+          .pass-logo {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.1);
+            object-fit: cover;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+          }
+          .pass-body {
+            padding: 24px;
+          }
+          .pass-footer {
+            background-color: #ffffff;
+            color: #000000;
+            padding: 24px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            border-top: 1px dashed rgba(0, 0, 0, 0.1);
+          }
+          .barcode {
+            font-family: 'Libre Barcode 128', "Courier New", monospace;
+            font-size: 52px;
+            margin: 0;
+            line-height: 1;
+            letter-spacing: 1px;
+          }
+          .barcode-text {
+            font-size: 9px;
+            color: #777;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+          }
+          .btn-back {
+            margin-top: 25px;
+            padding: 12px 24px;
+            background-color: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #999;
+            text-decoration: none;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+          }
+          .btn-back:hover {
+            background-color: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.2);
+          }
+        </style>
+        <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+128&display=swap" rel="stylesheet">
+      </head>
+      <body>
+        <div class="pass-container">
+          <div class="pass-header">
+            ${orgData?.logoUrl ? `<img src="${orgData.logoUrl}" class="pass-logo" alt="Logo">` : '<div class="pass-logo" style="display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:16px;">H</div>'}
+            <div style="font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: ${textColor}">${orgData?.name || 'Estabelecimento'}</div>
+          </div>
+          <div class="pass-body">
+            ${detailsHtml}
+          </div>
+          <div class="pass-footer">
+            <div class="barcode">*${barcodeValue.substring(0, 10)}*</div>
+            <div class="barcode-text">${barcodeValue}</div>
+          </div>
+        </div>
+        <a href="javascript:window.close();" class="btn-back">Fechar Visualizador</a>
+      </body>
+      </html>
+    `;
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.status(200).send(htmlContent);
+
+  } catch (e: any) {
+    console.error('[PortalGetWalletPass] Erro ao gerar passe digital:', e);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.status(500).send(`<h1>Erro Interno</h1><p>${e.message}</p>`);
   }
 }
