@@ -119,3 +119,14 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
   - **Interceptação de Cancelamento no Growth Hub**: Adicionadas as funções `handleClosePostModal` e `handleCloseAssetModal` em `GrowthHubView.tsx`. Elas verificam se o formulário está "sujo" (com alterações) e, em caso positivo, exibem um diálogo de confirmação customizado para descarte.
   - **Substituição Geral**: As caixas de diálogo nativas síncronas em `ProductionTemplatesView.tsx`, `CreativeModal.tsx`, `AnnouncementManager.tsx`, `PayrollPanel.tsx`, `PortalInventory.tsx`, `PortalAgenda.tsx` e `PortalCRMFinance.tsx` foram integralmente reescritas com chamadas assíncronas ao `useDialog` do projeto.
 
+---
+
+## 10. Marketplace para Clientes VIP e Escolha de Artigo em Destaque
+- **Data da Integração**: 24/06/2026
+- **Funcionalidade**: Abertura do Marketplace para clientes VIP/Cortesia e escolha de artigo em destaque exclusivo no CMS administrativo.
+- **Decisões Técnicas**:
+  - **Abertura do Marketplace**: Separadas as condicionais no `ClientPortalLayout.tsx` (sidebar, dropdown do cabeçalho e gaveta mobile) para manter "Faturas Hub" restrito a clientes pagantes (`!client.isCourtesy`), mas disponibilizar "Marketplace" (`services`) para todos os clientes ativos.
+  - **Destaque Exclusivo no CMS**: Introduzido o toggle `featured` em `postFormData` e no modal de edição em `GrowthHubView.tsx`. Caso o artigo seja salvo como destaque (`featured === true`), o sistema realiza uma consulta por outros artigos em destaque no Firestore e os desmarca automaticamente de forma paralela.
+  - **Identificação no Portal**: Atualizada a lógica de escolha do post no banner superior em `PortalInsights.tsx` para `posts.find(p => p.featured) || posts[0]`. O grid inferior remove o post destacado de forma automática para evitar repetição.
+
+
