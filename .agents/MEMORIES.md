@@ -129,4 +129,15 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
   - **Destaque Exclusivo no CMS**: Introduzido o toggle `featured` em `postFormData` e no modal de edição em `GrowthHubView.tsx`. Caso o artigo seja salvo como destaque (`featured === true`), o sistema realiza uma consulta por outros artigos em destaque no Firestore e os desmarca automaticamente de forma paralela.
   - **Identificação no Portal**: Atualizada a lógica de escolha do post no banner superior em `PortalInsights.tsx` para `posts.find(p => p.featured) || posts[0]`. O grid inferior remove o post destacado de forma automática para evitar repetição.
 
+---
+
+## 11. Integração de Áudio e Mini Podcasts (R2)
+- **Data da Integração**: 24/06/2026
+- **Funcionalidade**: Integração de mini podcasts e áudio-resumos armazenados no Cloudflare R2 e integrados ao "Dicas & Insights" e "Hub de Crescimento".
+- **Decisões Técnicas**:
+  - **Upload Direto no CRM**: Criado utilitário `uploadToR2` (`src/lib/r2.ts`) no CRM que obtém URLs assinadas de `/api/storage_handler?action=upload-url` e realiza PUT binário direto no R2 para evitar sobrecarga no servidor Node.js.
+  - **Compatibilidade do Chat**: Adicionado alias `uploadFileToR2` apontando para `uploadToR2` para compatibilidade com o chat interno.
+  - **Player de Insights**: Player de áudio customizado e reativo integrado no leitor de artigos do Portal (`PortalInsights.tsx`). Controles incluem play/pause, progresso interativo e velocidade de reprodução (1.0x, 1.5x, 2.0x) com cleanup dinâmico de áudio ao alternar ou fechar o artigo.
+  - **Player no Hub de Treinamentos**: Separação visual de videoaulas e áudios na aba "Treinamentos" do Hub de Crescimento (`PortalGrowthHub.tsx`), renderizando um `AudioCard` modular por podcast listado.
+
 
