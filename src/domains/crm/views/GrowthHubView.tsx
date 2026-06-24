@@ -395,14 +395,30 @@ export default function GrowthHubView() {
         }
       }
 
-      const payload = {
+      // Helper para limpar propriedades undefined recursivamente para o Firestore
+      const cleanUndefined = (obj: any): any => {
+        if (Array.isArray(obj)) {
+          return obj.map(item => cleanUndefined(item));
+        } else if (obj !== null && typeof obj === 'object') {
+          const cleaned: any = {};
+          for (const key of Object.keys(obj)) {
+            if (obj[key] !== undefined) {
+              cleaned[key] = cleanUndefined(obj[key]);
+            }
+          }
+          return cleaned;
+        }
+        return obj;
+      };
+
+      const payload = cleanUndefined({
         title: postFormData.title.trim(),
         excerpt: postFormData.excerpt.trim(),
         category: postFormData.category,
         imageUrl: postFormData.imageUrl.trim(),
         readTime: postFormData.readTime.trim(),
         publishedAt: editingPost 
-          ? editingPost.publishedAt 
+          ? (editingPost.publishedAt || new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }))
           : new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }),
         likes: editingPost ? (editingPost.likes || 0) : 0,
         views: editingPost ? (editingPost.views || 0) : 0,
@@ -413,8 +429,8 @@ export default function GrowthHubView() {
         },
         blocks: postFormData.blocks,
         status: postFormData.status,
-        createdAt: editingPost ? editingPost.createdAt : Date.now()
-      };
+        createdAt: editingPost ? (editingPost.createdAt || Date.now()) : Date.now()
+      });
 
       const finalDocRef = doc(db, 'blog_posts', slug);
       await setDoc(finalDocRef, payload);
