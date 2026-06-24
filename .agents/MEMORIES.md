@@ -93,7 +93,8 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
     - Construtor de blocos ricos reordenável no formulário do artigo, contendo botões de reordenação (🔼/🔽) e exclusão (🗑️).
     - Tipos de blocos suportados: Parágrafo, Subtítulo, Citação e CTA (este com redirecionamento dinâmico mapeado para as abas exatas do portal).
     - Controle de status de publicação (Rascunho/Publicado).
-    - **Limpeza de `undefined`**: Introduzida a função helper `cleanUndefined` que recursivamente remove quaisquer propriedades do payload ou do array de blocos que possuam valor `undefined` (como `ctaText` ou `ctaAction` em blocos que não sejam CTA), evitando erros de rejeição do Firestore (`Unsupported field value: undefined`) durante a chamada de `setDoc`.
+    - **Limpeza de `undefined`**: Introduzida a função helper `cleanUndefined` que recursivamente remove quaisquer propriedades do payload ou do array de blocos que possuam valor `undefined` (como `ctaText` or `ctaAction` em blocos que não sejam CTA), evitando erros de rejeição do Firestore (`Unsupported field value: undefined`) durante a chamada de `setDoc`.
+    - **Importação de Ícones**: Adicionado o componente `Clock` de `lucide-react` às importações do arquivo, solucionando o travamento por `ReferenceError: Clock is not defined` ao renderizar o card administrativo de post.
   - **Portal do Cliente (`PortalInsights.tsx`)**:
     - Substituição completa de dados mockados por listener em tempo real (`onSnapshot`) apontando para `/blog_posts` onde `status == 'published'`.
     - Contadores de curtidas (`likes`) e visualizações (`views`) gravados e sincronizados de forma reativa no Firestore com incrementos atômicos (`increment(1)` ou `increment(-1)`).
