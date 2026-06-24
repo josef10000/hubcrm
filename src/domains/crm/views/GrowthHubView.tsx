@@ -24,7 +24,9 @@ import {
   Sparkles,
   ChevronRight,
   Upload,
-  Clock
+  Clock,
+  Music,
+  Mic
 } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { 
@@ -47,6 +49,7 @@ import { usePermissions } from '@auth/hooks/usePermissions';
 import { useDialog } from '@auth/contexts/DialogContext';
 import { GrowthAsset, GrowthAssetType, BlogPost, ArticleBlock } from '@/types';
 import { uploadToCloudinary } from '@/lib/cloudinary';
+import { uploadToR2 } from '@/lib/r2';
 import { toast } from 'sonner';
 
 export default function GrowthHubView() {
@@ -83,6 +86,8 @@ export default function GrowthHubView() {
   const [isPostOpen, setIsPostOpen] = useState(false);
   const [isPostSubmitting, setIsPostSubmitting] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isUploadingAudio, setIsUploadingAudio] = useState(false);
+  const [isUploadingAssetAudio, setIsUploadingAssetAudio] = useState(false);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [postFormData, setPostFormData] = useState<{
     id: string;
@@ -97,6 +102,7 @@ export default function GrowthHubView() {
     blocks: ArticleBlock[];
     status: 'draft' | 'published';
     featured: boolean;
+    audioUrl?: string;
   }>({
     id: '',
     title: '',
@@ -109,7 +115,8 @@ export default function GrowthHubView() {
     authorAvatarUrl: '',
     blocks: [],
     status: 'draft',
-    featured: false
+    featured: false,
+    audioUrl: ''
   });
 
   // Permissão de escrita (Admin/Dono)
@@ -374,7 +381,8 @@ export default function GrowthHubView() {
         { type: 'paragraph', text: '' }
       ],
       status: 'published',
-      featured: false
+      featured: false,
+      audioUrl: ''
     });
     setIsPostOpen(true);
   };
@@ -393,7 +401,8 @@ export default function GrowthHubView() {
       authorAvatarUrl: post.author.avatarUrl || '',
       blocks: post.blocks && post.blocks.length > 0 ? [...post.blocks] : [{ type: 'paragraph', text: '' }],
       status: post.status || 'published',
-      featured: !!post.featured
+      featured: !!post.featured,
+      audioUrl: post.audioUrl || ''
     });
     setIsPostOpen(true);
   };
@@ -409,6 +418,7 @@ export default function GrowthHubView() {
       const originalBlocks = editingPost.blocks && editingPost.blocks.length > 0 ? editingPost.blocks : [{ type: 'paragraph', text: '' }];
       const originalStatus = editingPost.status || 'published';
       const originalFeatured = !!editingPost.featured;
+      const originalAudioUrl = editingPost.audioUrl || '';
 
       if (
         postFormData.title !== editingPost.title ||
@@ -421,6 +431,7 @@ export default function GrowthHubView() {
         postFormData.authorAvatarUrl !== originalAuthorAvatarUrl ||
         postFormData.status !== originalStatus ||
         postFormData.featured !== originalFeatured ||
+        postFormData.audioUrl !== originalAudioUrl ||
         JSON.stringify(postFormData.blocks) !== JSON.stringify(originalBlocks)
       ) {
         hasChanges = true;
@@ -441,6 +452,7 @@ export default function GrowthHubView() {
         postFormData.authorAvatarUrl !== defaultAuthorAvatar ||
         postFormData.status !== 'published' ||
         postFormData.featured !== false ||
+        postFormData.audioUrl !== '' ||
         postFormData.blocks.length > 1 ||
         (postFormData.blocks.length === 1 && (postFormData.blocks[0].text !== '' || postFormData.blocks[0].type !== 'paragraph'))
       ) {
@@ -486,6 +498,60 @@ export default function GrowthHubView() {
       toast.error(`Falha no upload: ${error.message || 'Erro ao enviar'}`, { id: toastId });
     } finally {
       setIsUploadingImage(false);
+    }
+  };
+
+  // Upload de áudio do artigo para R2
+  const handleAudioUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('audio/')) {
+      toast.error('Por favor, selecione apenas arquivos de áudio.');
+      return;
+    }
+
+    setIsUploadingAudio(true);
+    const toastId = toast.loading('Enviando áudio para o Cloudflare R2...');
+    try {
+      const secureUrl = await uploadToR2(file, 'blog_posts');
+      setPostFormData(prev => ({
+        ...prev,
+        audioUrl: secureUrl
+      }));
+      toast.success('Áudio do artigo enviado com sucesso!', { id: toastId });
+    } catch (error: any) {
+      console.error('Erro no upload do áudio:', error);
+      toast.error(`Falha no upload: ${error.message || 'Erro ao enviar'}`, { id: toastId });
+    } finally {
+      setIsUploadingAudio(false);
+    }
+  };
+
+  // Upload de áudio do ativo (podcast) para R2
+  const handleAssetAudioUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('audio/')) {
+      toast.error('Por favor, selecione apenas arquivos de áudio.');
+      return;
+    }
+
+    setIsUploadingAssetAudio(true);
+    const toastId = toast.loading('Enviando áudio do ativo para o Cloudflare R2...');
+    try {
+      const secureUrl = await uploadToR2(file, 'growth_assets');
+      setAssetFormData(prev => ({
+        ...prev,
+        url: secureUrl
+      }));
+      toast.success('Áudio do ativo enviado com sucesso!', { id: toastId });
+    } catch (error: any) {
+      console.error('Erro no upload do áudio do ativo:', error);
+      toast.error(`Falha no upload: ${error.message || 'Erro ao enviar'}`, { id: toastId });
+    } finally {
+      setIsUploadingAssetAudio(false);
     }
   };
 
@@ -581,6 +647,7 @@ export default function GrowthHubView() {
         blocks: postFormData.blocks,
         status: postFormData.status,
         featured: !!postFormData.featured,
+        audioUrl: postFormData.audioUrl || '',
         createdAt: editingPost ? (editingPost.createdAt || Date.now()) : Date.now()
       });
 
@@ -1079,20 +1146,48 @@ export default function GrowthHubView() {
                   <option value="pdf" className="bg-gray-200 dark:bg-zinc-950">PDF / Link do Drive</option>
                   <option value="script" className="bg-gray-200 dark:bg-zinc-950">Script de Vendas (Texto)</option>
                   <option value="template" className="bg-gray-200 dark:bg-zinc-950">Template / Link Geral Canva</option>
+                  <option value="audio" className="bg-gray-200 dark:bg-zinc-950">Áudio / Podcast (R2)</option>
                 </select>
               </div>
 
               {assetFormData.type !== 'script' && (
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 text-left">Link URL *</label>
-                  <input
-                    required
-                    type="url"
-                    value={assetFormData.url || ''}
-                    onChange={(e) => setAssetFormData({ ...assetFormData, url: e.target.value })}
-                    placeholder="https://..."
-                    className="w-full px-4 py-2.5 bg-black/20 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none text-sm"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      required
+                      type="url"
+                      value={assetFormData.url || ''}
+                      onChange={(e) => setAssetFormData({ ...assetFormData, url: e.target.value })}
+                      placeholder="https://..."
+                      className="flex-1 px-4 py-2.5 bg-black/20 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none text-sm"
+                    />
+                    {assetFormData.type === 'audio' && (
+                      <>
+                        <input
+                          type="file"
+                          id="asset-audio-upload"
+                          accept="audio/*"
+                          onChange={handleAssetAudioUpload}
+                          className="hidden"
+                          disabled={isUploadingAssetAudio}
+                        />
+                        <label
+                          htmlFor="asset-audio-upload"
+                          className={`px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shrink-0 ${
+                            isUploadingAssetAudio ? 'opacity-50 pointer-events-none' : ''
+                          }`}
+                        >
+                          {isUploadingAssetAudio ? (
+                            <Loader2 size={14} className="animate-spin" />
+                          ) : (
+                            <Upload size={14} />
+                          )}
+                          Subir Áudio
+                        </label>
+                      </>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -1468,6 +1563,57 @@ export default function GrowthHubView() {
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {/* Áudio do Artigo */}
+              <div className="p-4 bg-white/5 border border-white/5 rounded-2xl space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-xs font-black uppercase text-gray-400 tracking-wider">Áudio do Artigo (Opcional)</h4>
+                    <p className="text-[10px] text-gray-500 mt-0.5">Suba uma versão em áudio ou podcast para os clientes ouvirem.</p>
+                  </div>
+                  
+                  <div className="flex items-center">
+                    <input
+                      type="file"
+                      id="post-audio-upload"
+                      accept="audio/*"
+                      onChange={handleAudioUpload}
+                      className="hidden"
+                      disabled={isUploadingAudio}
+                    />
+                    <label
+                      htmlFor="post-audio-upload"
+                      className={`px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shrink-0 ${
+                        isUploadingAudio ? 'opacity-50 pointer-events-none' : ''
+                      }`}
+                    >
+                      {isUploadingAudio ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Mic size={14} />
+                      )}
+                      Upload Áudio (R2)
+                    </label>
+                  </div>
+                </div>
+
+                {postFormData.audioUrl && (
+                  <div className="bg-black/30 border border-white/5 p-4 rounded-xl flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2 truncate">
+                      <Music size={16} className="text-primary-400 shrink-0" />
+                      <span className="text-[10px] text-gray-400 font-mono truncate">{postFormData.audioUrl}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setPostFormData({ ...postFormData, audioUrl: '' })}
+                      className="p-1.5 text-red-500 hover:bg-red-500/10 rounded transition-colors cursor-pointer text-xs"
+                      title="Remover Áudio"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Artigo em Destaque */}

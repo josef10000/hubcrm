@@ -356,7 +356,7 @@ export interface BrandAssets {
   customCanvaLinks?: BrandAssetLink[];
 }
 
-export type GrowthAssetType = 'video' | 'pdf' | 'script' | 'template';
+export type GrowthAssetType = 'video' | 'pdf' | 'script' | 'template' | 'audio';
 
 export interface GrowthAsset {
   id: string;
@@ -396,6 +396,8 @@ export interface BlogPost {
   blocks: ArticleBlock[];
   createdAt: any;
   status?: 'draft' | 'published';
+  featured?: boolean;
+  audioUrl?: string;
 }
 
 
