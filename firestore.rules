@@ -354,4 +354,4 @@ service cloud.firestore {
     }
   }
 }
-// Trigger deploy test to verify new GCP permissions - 24/06/2026 v3
+// Trigger deploy test to verify new GCP permissions - 24/06/2026 v4
