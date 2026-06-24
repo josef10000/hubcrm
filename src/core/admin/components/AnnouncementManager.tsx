@@ -4,6 +4,7 @@ import { collection, onSnapshot, query, doc, setDoc, deleteDoc } from 'firebase/
 import { Trash2, Edit2, Plus, AlertTriangle, Calendar, Clock, Megaphone, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { SaveButton } from '@/shared/components/SaveButton';
+import { useDialog } from '@auth/contexts/DialogContext';
 
 interface Announcement {
   id?: string;
@@ -20,6 +21,7 @@ interface AnnouncementManagerProps {
 }
 
 export default function AnnouncementManager({ effectiveOrgId }: AnnouncementManagerProps) {
+  const { confirm } = useDialog();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -82,7 +84,13 @@ export default function AnnouncementManager({ effectiveOrgId }: AnnouncementMana
 
   // 3. Excluir comunicado
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir este comunicado permanentemente?')) return;
+    const ok = await confirm({
+      title: 'Excluir Comunicado',
+      message: 'Tem certeza que deseja excluir este comunicado permanentemente?',
+      confirmText: 'Sim, Excluir',
+      cancelText: 'Cancelar'
+    });
+    if (!ok) return;
 
     try {
       const ref = doc(db, 'organizations', effectiveOrgId, 'announcements', id);

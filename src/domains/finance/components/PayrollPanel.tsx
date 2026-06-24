@@ -11,6 +11,7 @@ import {
 } from 'firebase/firestore';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
+import { useDialog } from '@auth/contexts/DialogContext';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -63,6 +64,7 @@ interface PayrollItemCalculated {
 export default function PayrollPanel() {
   const { user, userProfile } = useAuth();
   const { effectiveOrgId } = useCRM();
+  const { confirm } = useDialog();
 
   const [competence, setCompetence] = useState<string>(() => {
     const d = new Date();
@@ -495,7 +497,12 @@ export default function PayrollPanel() {
       return;
     }
 
-    const confirmPay = confirm(`Deseja disparar o pagamento Pix via Asaas para ${itemsToPay.length} colaboradores, totalizando R$ ${itemsToPay.reduce((acc, i) => acc + i.netAmount, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}?`);
+    const confirmPay = await confirm({
+      title: 'Confirmar Pagamento',
+      message: `Deseja disparar o pagamento Pix via Asaas para ${itemsToPay.length} colaboradores, totalizando R$ ${itemsToPay.reduce((acc, i) => acc + i.netAmount, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}?`,
+      confirmText: 'Sim, Pagar',
+      cancelText: 'Cancelar'
+    });
     if (!confirmPay) return;
 
     setProcessingInBatch(true);
@@ -663,7 +670,12 @@ export default function PayrollPanel() {
     const prof = profiles.find(p => p.uid === vacationCalc.userId);
     if (!prof) return;
 
-    const confirmV = confirm(`Confirmar o adiantamento de Férias de ${prof.displayName} no valor líquido de R$ ${vacationCalc.net.toFixed(2)}? O Pix será agendado para 2 dias antes das férias no Asaas.`);
+    const confirmV = await confirm({
+      title: 'Confirmar Adiantamento de Férias',
+      message: `Confirmar o adiantamento de Férias de ${prof.displayName} no valor líquido de R$ ${vacationCalc.net.toFixed(2)}? O Pix será agendado para 2 dias antes das férias no Asaas.`,
+      confirmText: 'Sim, Confirmar',
+      cancelText: 'Cancelar'
+    });
     if (!confirmV) return;
 
     try {

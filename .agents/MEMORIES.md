@@ -110,3 +110,12 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
   - **Upload Criptografado de Secret**: Executado um script de integração (`update_secret_github.py`) que usa a API do GitHub com as credenciais locais do usuário (`git credential fill`) para criptografar (Curve25519 e libsodium box) e subir o JSON na secret `GCP_SA_KEY` do repositório `josef10000/hubcrm`.
   - **Refatoração do Workflow**: Substituído o contêiner Docker da action de terceiros (`w9jds/firebase-action`) no arquivo [firebase-rules.yml](file:///c:/Users/JoséFrazãodaSilvaNet/OneDrive - 39985 - DIGITAL TECH LTDA/Área de Trabalho/Clonecrm/hubcrm/.github/workflows/firebase-rules.yml) pela action oficial `google-github-actions/auth@v2` em conjunto com a instalação nativa do `firebase-tools` via `npm` no runner de Actions. Isso resolveu o erro `Failed to authenticate` e validou com sucesso a publicação de novas regras.
 
+---
+
+## 9. Remoção de Diálogos Nativos do Navegador (Modais Próprios)
+- **Data da Integração**: 24/06/2026
+- **Funcionalidade**: Substituição total de `window.confirm`, `confirm` e `window.alert` por diálogos customizados do hook `useDialog`.
+- **Decisões Técnicas**:
+  - **Interceptação de Cancelamento no Growth Hub**: Adicionadas as funções `handleClosePostModal` e `handleCloseAssetModal` em `GrowthHubView.tsx`. Elas verificam se o formulário está "sujo" (com alterações) e, em caso positivo, exibem um diálogo de confirmação customizado para descarte.
+  - **Substituição Geral**: As caixas de diálogo nativas síncronas em `ProductionTemplatesView.tsx`, `CreativeModal.tsx`, `AnnouncementManager.tsx`, `PayrollPanel.tsx`, `PortalInventory.tsx`, `PortalAgenda.tsx` e `PortalCRMFinance.tsx` foram integralmente reescritas com chamadas assíncronas ao `useDialog` do projeto.
+

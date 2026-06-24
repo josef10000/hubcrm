@@ -42,6 +42,7 @@ import {
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
+import { useDialog } from '@auth/contexts/DialogContext';
 import { GrowthAsset, GrowthAssetType, BlogPost, ArticleBlock } from '@/types';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 import { toast } from 'sonner';
@@ -50,6 +51,7 @@ export default function GrowthHubView() {
   const { userProfile } = useAuth();
   const { hasPermission } = usePermissions();
   const { effectiveOrgId } = useCRM();
+  const { confirm } = useDialog();
 
   // Abas principais
   const [activeSubTab, setActiveSubTab] = useState<'assets' | 'insights'>('assets');
@@ -209,6 +211,44 @@ export default function GrowthHubView() {
     setIsAssetModalOpen(true);
   };
 
+  const handleCloseAssetModal = async () => {
+    let hasChanges = false;
+    if (editingAsset) {
+      if (
+        assetFormData.title !== editingAsset.title ||
+        assetFormData.type !== editingAsset.type ||
+        assetFormData.url !== (editingAsset.url || '') ||
+        assetFormData.content !== (editingAsset.content || '') ||
+        assetFormData.category !== editingAsset.category
+      ) {
+        hasChanges = true;
+      }
+    } else {
+      if (
+        assetFormData.title !== '' ||
+        assetFormData.type !== 'video' ||
+        assetFormData.url !== '' ||
+        assetFormData.content !== '' ||
+        assetFormData.category !== ''
+      ) {
+        hasChanges = true;
+      }
+    }
+
+    if (hasChanges) {
+      const ok = await confirm({
+        title: 'Descartar Alterações?',
+        message: 'Você possui alterações não salvas no ativo. Deseja realmente fechar e descartar essas alterações?',
+        confirmText: 'Sim, Descartar',
+        cancelText: 'Continuar Editando'
+      });
+      if (!ok) return;
+    }
+
+    setIsAssetModalOpen(false);
+    setEditingAsset(null);
+  };
+
   const handleAssetSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!effectiveOrgId) return;
@@ -265,7 +305,12 @@ export default function GrowthHubView() {
   const handleDeleteAsset = async (assetId: string) => {
     if (!effectiveOrgId) return;
 
-    const ok = window.confirm('Deseja realmente remover este ativo do Hub de Crescimento? Esta ação não pode ser desfeita.');
+    const ok = await confirm({
+      title: 'Excluir Ativo',
+      message: 'Tem certeza que deseja remover este ativo do Hub de Crescimento? Esta ação não pode ser desfeita.',
+      confirmText: 'Sim, Excluir',
+      cancelText: 'Cancelar'
+    });
     if (!ok) return;
 
     try {
@@ -275,6 +320,25 @@ export default function GrowthHubView() {
     } catch (error: any) {
       console.error('Erro ao deletar ativo:', error);
       toast.error('Falha ao remover ativo.');
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    const ok = await confirm({
+      title: 'Excluir Artigo',
+      message: 'Tem certeza que deseja remover este artigo do portal de dicas e insights dos clientes? Esta ação é irreversível.',
+      confirmText: 'Sim, Excluir',
+      cancelText: 'Cancelar'
+    });
+    if (!ok) return;
+
+    try {
+      const docRef = doc(db, 'blog_posts', postId);
+      await deleteDoc(docRef);
+      toast.success('Artigo removido com sucesso.');
+    } catch (error: any) {
+      console.error('Erro ao deletar artigo:', error);
+      toast.error('Falha ao remover artigo.');
     }
   };
 
@@ -326,6 +390,67 @@ export default function GrowthHubView() {
       status: post.status || 'published'
     });
     setIsPostOpen(true);
+  };
+
+  const handleClosePostModal = async () => {
+    let hasChanges = false;
+    if (editingPost) {
+      const originalImageUrl = editingPost.imageUrl || '';
+      const originalReadTime = editingPost.readTime || '4 min';
+      const originalAuthorName = editingPost.author?.name || '';
+      const originalAuthorRole = editingPost.author?.role || '';
+      const originalAuthorAvatarUrl = editingPost.author?.avatarUrl || '';
+      const originalBlocks = editingPost.blocks && editingPost.blocks.length > 0 ? editingPost.blocks : [{ type: 'paragraph', text: '' }];
+      const originalStatus = editingPost.status || 'published';
+
+      if (
+        postFormData.title !== editingPost.title ||
+        postFormData.excerpt !== editingPost.excerpt ||
+        postFormData.category !== editingPost.category ||
+        postFormData.imageUrl !== originalImageUrl ||
+        postFormData.readTime !== originalReadTime ||
+        postFormData.authorName !== originalAuthorName ||
+        postFormData.authorRole !== originalAuthorRole ||
+        postFormData.authorAvatarUrl !== originalAuthorAvatarUrl ||
+        postFormData.status !== originalStatus ||
+        JSON.stringify(postFormData.blocks) !== JSON.stringify(originalBlocks)
+      ) {
+        hasChanges = true;
+      }
+    } else {
+      const defaultAuthorName = userProfile?.displayName || '';
+      const defaultAuthorRole = userProfile?.jobTitle || 'Consultoria de Crescimento';
+      const defaultAuthorAvatar = userProfile?.photoURL || 'https://i.imgur.com/zCvL7xy.png';
+
+      if (
+        postFormData.title !== '' ||
+        postFormData.excerpt !== '' ||
+        postFormData.category !== 'Geral' ||
+        postFormData.imageUrl !== '' ||
+        postFormData.readTime !== '4 min' ||
+        postFormData.authorName !== defaultAuthorName ||
+        postFormData.authorRole !== defaultAuthorRole ||
+        postFormData.authorAvatarUrl !== defaultAuthorAvatar ||
+        postFormData.status !== 'published' ||
+        postFormData.blocks.length > 1 ||
+        (postFormData.blocks.length === 1 && (postFormData.blocks[0].text !== '' || postFormData.blocks[0].type !== 'paragraph'))
+      ) {
+        hasChanges = true;
+      }
+    }
+
+    if (hasChanges) {
+      const ok = await confirm({
+        title: 'Descartar Alterações?',
+        message: 'Você possui alterações não salvas no artigo. Deseja realmente fechar e descartar essas alterações?',
+        confirmText: 'Sim, Descartar',
+        cancelText: 'Continuar Editando'
+      });
+      if (!ok) return;
+    }
+
+    setIsPostOpen(false);
+    setEditingPost(null);
   };
 
   // Upload da Imagem de Capa do Artigo via Cloudinary
@@ -445,19 +570,7 @@ export default function GrowthHubView() {
     }
   };
 
-  const handleDeletePost = async (postId: string) => {
-    const ok = window.confirm('Deseja realmente remover este artigo do portal dos clientes? Esta ação é irreversível.');
-    if (!ok) return;
 
-    try {
-      const docRef = doc(db, 'blog_posts', postId);
-      await deleteDoc(docRef);
-      toast.success('Artigo removido com sucesso.');
-    } catch (error: any) {
-      console.error('Erro ao deletar artigo:', error);
-      toast.error('Falha ao remover artigo.');
-    }
-  };
 
   // Blocos dinâmicos do post
   const addBlock = (type: 'paragraph' | 'heading' | 'quote' | 'cta') => {
@@ -897,7 +1010,7 @@ export default function GrowthHubView() {
                 {editingAsset ? 'Editar Ativo Global' : 'Adicionar Ativo Global'}
               </h3>
               <button 
-                onClick={() => setIsAssetModalOpen(false)} 
+                onClick={handleCloseAssetModal} 
                 className="text-gray-400 hover:text-white transition-colors cursor-pointer"
               >
                 <X size={20} />
@@ -974,7 +1087,7 @@ export default function GrowthHubView() {
               <div className="flex justify-end gap-3 pt-4 border-t border-gray-300 dark:border-white/10">
                 <button
                   type="button"
-                  onClick={() => setIsAssetModalOpen(false)}
+                  onClick={handleCloseAssetModal}
                   className="px-4 py-2.5 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-white/5 transition-colors cursor-pointer"
                 >
                   Cancelar
@@ -1012,7 +1125,7 @@ export default function GrowthHubView() {
                 </h3>
               </div>
               <button 
-                onClick={() => setIsPostOpen(false)} 
+                onClick={handleClosePostModal} 
                 className="text-gray-400 hover:text-white transition-colors cursor-pointer p-2 rounded-full hover:bg-white/5"
               >
                 <X size={20} />
@@ -1368,7 +1481,7 @@ export default function GrowthHubView() {
               <div className="flex justify-end gap-3 pt-6 border-t border-gray-300 dark:border-white/10 mt-8">
                 <button
                   type="button"
-                  onClick={() => setIsPostOpen(false)}
+                  onClick={handleClosePostModal}
                   className="px-5 py-2.5 rounded-xl text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-white/5 transition-colors cursor-pointer"
                 >
                   Cancelar

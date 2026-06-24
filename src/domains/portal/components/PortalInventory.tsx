@@ -7,6 +7,7 @@ import {
   Plus, Trash2, Edit2, Search, AlertTriangle, CheckCircle2, Package, Coins, Minus, X
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useDialog } from '@auth/contexts/DialogContext';
 
 interface PortalInventoryProps {
   orgId: string;
@@ -22,6 +23,7 @@ interface InventoryItem {
 }
 
 export default function PortalInventory({ orgId }: PortalInventoryProps) {
+  const { confirm } = useDialog();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -112,7 +114,14 @@ export default function PortalInventory({ orgId }: PortalInventoryProps) {
   };
 
   const handleDeleteItem = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir permanentemente este insumo?')) return;
+    const ok = await confirm({
+      title: 'Excluir Insumo',
+      message: 'Tem certeza que deseja excluir permanentemente este insumo?',
+      confirmText: 'Sim, Excluir',
+      cancelText: 'Cancelar'
+    });
+    if (!ok) return;
+
     try {
       await deleteDoc(doc(db, 'organizations', orgId, 'inventory', id));
       toast.success('Insumo removido com sucesso!');

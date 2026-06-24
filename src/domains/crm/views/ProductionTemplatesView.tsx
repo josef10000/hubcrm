@@ -10,6 +10,7 @@ import { EllipsisVertical, Pencil, SquarePlus, TrashBin, Heart, Bookmark } from 
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
+import { useDialog } from '@auth/contexts/DialogContext';
 import { db } from '@/lib/firebase';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 import { 
@@ -87,6 +88,7 @@ export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'temp
   const { user } = useAuth();
   const { hasPermission } = usePermissions();
   const { effectiveOrgId, clients } = useCRM();
+  const { confirm } = useDialog();
 
   const canManage = hasPermission('MANAGE_LEADS') || hasPermission('MANAGE_SETTINGS');
 
@@ -318,15 +320,21 @@ export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'temp
     e?.stopPropagation();
     if (!effectiveOrgId) return;
 
-    if (confirm("Tem certeza que deseja excluir permanentemente este template?")) {
-      try {
-        const docRef = doc(db, 'organizations', effectiveOrgId, 'production_templates', id);
-        await deleteDoc(docRef);
-        toast.success("Template excluído com sucesso!");
-      } catch (err) {
-        console.error("Erro ao excluir template:", err);
-        toast.error("Erro ao excluir o template.");
-      }
+    const ok = await confirm({
+      title: 'Excluir Template',
+      message: 'Tem certeza que deseja excluir permanentemente este template?',
+      confirmText: 'Sim, Excluir',
+      cancelText: 'Cancelar'
+    });
+    if (!ok) return;
+
+    try {
+      const docRef = doc(db, 'organizations', effectiveOrgId, 'production_templates', id);
+      await deleteDoc(docRef);
+      toast.success("Template excluído com sucesso!");
+    } catch (err) {
+      console.error("Erro ao excluir template:", err);
+      toast.error("Erro ao excluir o template.");
     }
   };
 
@@ -477,15 +485,21 @@ export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'temp
   const handleDeletePrompt = async (id: string) => {
     if (!effectiveOrgId) return;
 
-    if (confirm("Deseja realmente excluir este prompt global?")) {
-      try {
-        const docRef = doc(db, 'organizations', effectiveOrgId, 'prompt_library', id);
-        await deleteDoc(docRef);
-        toast.success("Prompt excluído!");
-      } catch (err) {
-        console.error("Erro ao excluir prompt:", err);
-        toast.error("Erro ao excluir.");
-      }
+    const ok = await confirm({
+      title: 'Excluir Prompt',
+      message: 'Deseja realmente excluir este prompt global?',
+      confirmText: 'Sim, Excluir',
+      cancelText: 'Cancelar'
+    });
+    if (!ok) return;
+
+    try {
+      const docRef = doc(db, 'organizations', effectiveOrgId, 'prompt_library', id);
+      await deleteDoc(docRef);
+      toast.success("Prompt excluído!");
+    } catch (err) {
+      console.error("Erro ao excluir prompt:", err);
+      toast.error("Erro ao excluir.");
     }
   };
 

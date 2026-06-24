@@ -5,6 +5,7 @@ import {
   DollarSign, Calendar, TrendingUp, AlertCircle, CheckCircle, RefreshCw, Phone, Filter, Plus, Trash2, Edit3, TrendingDown, X
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useDialog } from '@auth/contexts/DialogContext';
 
 interface PortalCRMFinanceProps {
   orgId: string;
@@ -38,6 +39,7 @@ interface Revenue {
 }
 
 export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinanceProps) {
+  const { confirm } = useDialog();
   const [appointments, setAppointments] = useState<any[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [revenues, setRevenues] = useState<Revenue[]>([]);
@@ -366,7 +368,14 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
 
   // Deleção de despesa
   const handleDeleteExpense = async (expId: string) => {
-    if (!window.confirm('Deseja realmente excluir este registro de gasto?')) return;
+    const ok = await confirm({
+      title: 'Excluir Gasto',
+      message: 'Deseja realmente excluir este registro de gasto?',
+      confirmText: 'Sim, Excluir',
+      cancelText: 'Cancelar'
+    });
+    if (!ok) return;
+
     try {
       await deleteDoc(doc(db, 'organizations', orgId, 'expenses', expId));
       toast.success('Gasto removido com sucesso.');
@@ -491,7 +500,14 @@ export default function PortalCRMFinance({ orgId, clientId }: PortalCRMFinancePr
 
   // Deleção de receita manual
   const handleDeleteRevenue = async (revId: string) => {
-    if (!window.confirm('Deseja realmente excluir este registro de receita?')) return;
+    const ok = await confirm({
+      title: 'Excluir Receita',
+      message: 'Deseja realmente excluir este registro de receita?',
+      confirmText: 'Sim, Excluir',
+      cancelText: 'Cancelar'
+    });
+    if (!ok) return;
+
     try {
       await deleteDoc(doc(db, 'organizations', orgId, 'revenues', revId));
       toast.success('Receita removida com sucesso.');

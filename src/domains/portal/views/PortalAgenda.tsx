@@ -7,6 +7,7 @@ import {
   Calendar as CalendarIcon, Clock, Coffee, Plus, Trash2, Edit2, Check, X, Phone, DollarSign, Settings, Scissors, AlertTriangle
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useDialog } from '@auth/contexts/DialogContext';
 
 interface PortalAgendaProps {
   orgId: string;
@@ -14,6 +15,7 @@ interface PortalAgendaProps {
 }
 
 export default function PortalAgenda({ orgId, clientId }: PortalAgendaProps) {
+  const { confirm } = useDialog();
   // Abas internas: 'timeline' | 'services' | 'settings'
   const [subTab, setSubTab] = useState<'timeline' | 'services' | 'settings'>('timeline');
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -107,7 +109,14 @@ export default function PortalAgenda({ orgId, clientId }: PortalAgendaProps) {
   };
 
   const handleDeleteAppointment = async (appId: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir permanentemente este agendamento?')) return;
+    const ok = await confirm({
+      title: 'Excluir Agendamento',
+      message: 'Tem certeza que deseja excluir permanentemente este agendamento?',
+      confirmText: 'Sim, Excluir',
+      cancelText: 'Cancelar'
+    });
+    if (!ok) return;
+
     try {
       await deleteDoc(doc(db, 'organizations', orgId, 'appointments', appId));
       toast.success('Agendamento excluído com sucesso!');
@@ -317,7 +326,14 @@ export default function PortalAgenda({ orgId, clientId }: PortalAgendaProps) {
   };
 
   const handleDeleteService = async (srvId: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir este serviço?')) return;
+    const ok = await confirm({
+      title: 'Excluir Serviço',
+      message: 'Tem certeza que deseja excluir este serviço?',
+      confirmText: 'Sim, Excluir',
+      cancelText: 'Cancelar'
+    });
+    if (!ok) return;
+
     try {
       await deleteDoc(doc(db, 'organizations', orgId, 'client_services', srvId));
       toast.success('Serviço excluído!');

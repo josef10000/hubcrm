@@ -4,6 +4,7 @@ import {
   Layers, Play, Link, Calculator, Check, ArrowRight, AlertCircle, AlertTriangle
 } from 'lucide-react';
 import { uploadToCloudinary } from '@/lib/cloudinary';
+import { useDialog } from '@auth/contexts/DialogContext';
 import { CreativeEntity } from '../entities/creative.entity';
 
 interface CreativeModalProps {
@@ -17,6 +18,7 @@ interface CreativeModalProps {
 type TabType = 'creative' | 'campaign' | 'performance';
 
 export function CreativeModal({ isOpen, onClose, onSave, onDelete, creative }: CreativeModalProps) {
+  const { confirm } = useDialog();
   const [activeTab, setActiveTab] = useState<TabType>('creative');
   const [loading, setLoading] = useState(false);
   const [uploadingMedia, setUploadingMedia] = useState(false);
@@ -189,17 +191,25 @@ export function CreativeModal({ isOpen, onClose, onSave, onDelete, creative }: C
   };
 
   const handleDeleteClick = async () => {
-    if (onDelete && window.confirm('Deseja realmente excluir este criativo? Esta ação não pode ser desfeita.')) {
-      setLoading(true);
-      try {
-        await onDelete();
-        onClose();
-      } catch (err: any) {
-        console.error(err);
-        setErrorMsg('Erro ao excluir criativo.');
-      } finally {
-        setLoading(false);
-      }
+    if (!onDelete) return;
+
+    const ok = await confirm({
+      title: 'Excluir Criativo',
+      message: 'Deseja realmente excluir este criativo? Esta ação não pode ser desfeita.',
+      confirmText: 'Sim, Excluir',
+      cancelText: 'Cancelar'
+    });
+    if (!ok) return;
+
+    setLoading(true);
+    try {
+      await onDelete();
+      onClose();
+    } catch (err: any) {
+      console.error(err);
+      setErrorMsg('Erro ao excluir criativo.');
+    } finally {
+      setLoading(false);
     }
   };
 
