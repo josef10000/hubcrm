@@ -37,7 +37,9 @@ import {
   query, 
   orderBy, 
   setDoc,
-  getDoc
+  getDoc,
+  getDocs,
+  where
 } from 'firebase/firestore';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
@@ -94,6 +96,7 @@ export default function GrowthHubView() {
     authorAvatarUrl: string;
     blocks: ArticleBlock[];
     status: 'draft' | 'published';
+    featured: boolean;
   }>({
     id: '',
     title: '',
@@ -105,7 +108,8 @@ export default function GrowthHubView() {
     authorRole: '',
     authorAvatarUrl: '',
     blocks: [],
-    status: 'draft'
+    status: 'draft',
+    featured: false
   });
 
   // Permissão de escrita (Admin/Dono)
@@ -369,7 +373,8 @@ export default function GrowthHubView() {
       blocks: [
         { type: 'paragraph', text: '' }
       ],
-      status: 'published'
+      status: 'published',
+      featured: false
     });
     setIsPostOpen(true);
   };
@@ -387,7 +392,8 @@ export default function GrowthHubView() {
       authorRole: post.author.role || '',
       authorAvatarUrl: post.author.avatarUrl || '',
       blocks: post.blocks && post.blocks.length > 0 ? [...post.blocks] : [{ type: 'paragraph', text: '' }],
-      status: post.status || 'published'
+      status: post.status || 'published',
+      featured: !!post.featured
     });
     setIsPostOpen(true);
   };
@@ -402,6 +408,7 @@ export default function GrowthHubView() {
       const originalAuthorAvatarUrl = editingPost.author?.avatarUrl || '';
       const originalBlocks = editingPost.blocks && editingPost.blocks.length > 0 ? editingPost.blocks : [{ type: 'paragraph', text: '' }];
       const originalStatus = editingPost.status || 'published';
+      const originalFeatured = !!editingPost.featured;
 
       if (
         postFormData.title !== editingPost.title ||
@@ -413,6 +420,7 @@ export default function GrowthHubView() {
         postFormData.authorRole !== originalAuthorRole ||
         postFormData.authorAvatarUrl !== originalAuthorAvatarUrl ||
         postFormData.status !== originalStatus ||
+        postFormData.featured !== originalFeatured ||
         JSON.stringify(postFormData.blocks) !== JSON.stringify(originalBlocks)
       ) {
         hasChanges = true;
@@ -432,6 +440,7 @@ export default function GrowthHubView() {
         postFormData.authorRole !== defaultAuthorRole ||
         postFormData.authorAvatarUrl !== defaultAuthorAvatar ||
         postFormData.status !== 'published' ||
+        postFormData.featured !== false ||
         postFormData.blocks.length > 1 ||
         (postFormData.blocks.length === 1 && (postFormData.blocks[0].text !== '' || postFormData.blocks[0].type !== 'paragraph'))
       ) {
@@ -521,6 +530,22 @@ export default function GrowthHubView() {
         }
       }
 
+      // Se este artigo for marcado como destaque (featured === true), desmarcar outros
+      if (postFormData.featured) {
+        const qFeatured = query(
+          collection(db, 'blog_posts'),
+          where('featured', '==', true)
+        );
+        const featuredSnap = await getDocs(qFeatured);
+        const promises = featuredSnap.docs.map(docSnap => {
+          if (docSnap.id !== slug) {
+            return updateDoc(docSnap.ref, { featured: false });
+          }
+          return Promise.resolve();
+        });
+        await Promise.all(promises);
+      }
+
       // Helper para limpar propriedades undefined recursivamente para o Firestore
       const cleanUndefined = (obj: any): any => {
         if (Array.isArray(obj)) {
@@ -555,6 +580,7 @@ export default function GrowthHubView() {
         },
         blocks: postFormData.blocks,
         status: postFormData.status,
+        featured: !!postFormData.featured,
         createdAt: editingPost ? (editingPost.createdAt || Date.now()) : Date.now()
       });
 
@@ -1441,6 +1467,29 @@ export default function GrowthHubView() {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+
+              {/* Artigo em Destaque */}
+              <div className="p-4 bg-white/5 border border-white/5 rounded-2xl flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-black uppercase text-gray-400 tracking-wider">Destaque do Portal</h4>
+                  <p className="text-[10px] text-gray-500 mt-0.5">Coloca este artigo no topo com um layout de destaque.</p>
+                </div>
+                
+                <div className="flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => setPostFormData({ ...postFormData, featured: !postFormData.featured })}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 cursor-pointer ${
+                      postFormData.featured
+                        ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                        : 'bg-black/30 border-white/5 text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    <Sparkles size={14} className={postFormData.featured ? 'animate-pulse' : ''} />
+                    {postFormData.featured ? 'Artigo em Destaque ✨' : 'Marcar como Destaque'}
+                  </button>
                 </div>
               </div>
 
