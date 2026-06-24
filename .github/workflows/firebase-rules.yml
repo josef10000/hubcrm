@@ -12,12 +12,9 @@ on:
     paths:
       - 'firestore.rules'
 
-env:
-  # Garante compatibilidade com versões recentes do Node
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   deploy_rules:
@@ -25,15 +22,21 @@ jobs:
     steps:
       - name: Checkout do Código
         uses: actions/checkout@v4
+
+      - name: Autenticar no Google Cloud
+        uses: google-github-actions/auth@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar Firebase CLI
+        run: npm install -g firebase-tools
 
       - name: Deploy Firestore Rules
-        uses: w9jds/firebase-action@master
-        with:
-          args: deploy --only firestore:rules --project gassistant-83242
-        env:
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-          PROJECT_ID: gassistant-83242
+        run: firebase deploy --only firestore:rules --project gassistant-83242
 
 
