@@ -23,7 +23,8 @@ import {
   Eye, 
   Sparkles,
   ChevronRight,
-  Upload
+  Upload,
+  Clock
 } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { 
