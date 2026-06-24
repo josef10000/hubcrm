@@ -346,6 +346,12 @@ service cloud.firestore {
     match /calls/{callId} {
       allow read, write: if isAuthenticated();
     }
+
+    // 📚 CENTRAL DE INSIGHTS — Blog/Artigos Globais
+    match /blog_posts/{postId} {
+      allow read: if true;
+      allow write: if isOwnerEmail() || isAuthenticated();
+    }
   }
 }
 // Trigger deploy test to verify new GCP permissions

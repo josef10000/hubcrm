@@ -80,3 +80,21 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
     - Cancelamento explícito (`status === 'Cancelado'`) também suspende de imediato.
   - **Performance e Cache**: O script guarda a resposta no `sessionStorage` do visitante por 12 horas, minimizando o impacto no limite de leituras do Firestore. O botão "Verificar Novamente" na tela de bloqueio limpa o cache e recarrega a página.
   - **Interface CRM**: Adicionado botão de cópia com um clique "Copiar Script Site Shield" (ícone `Shield`) e toast explicativo sob o campo `siteLink` no modal de visualização de cliente (`ClientModal.tsx`).
+
+---
+
+## 7. Central de Artigos Dinâmicos (Dicas & Insights)
+- **Data da Integração**: 24/06/2026
+- **Funcionalidade**: CMS administrativo para publicação de artigos dinâmicos em tempo real na aba de Dicas & Insights do portal dos clientes.
+- **Decisões Técnicas**:
+  - **Firestore Global**: Armazenamento na coleção global raiz `/blog_posts`. Os documentos utilizam como ID o slug amigável gerado automaticamente a partir do título.
+  - **CMS no CRM (`GrowthHubView.tsx`)**:
+    - Layout dividido em sub-abas superiores ("Ativos de Sucesso" e "Dicas & Insights").
+    - Construtor de blocos ricos reordenável no formulário do artigo, contendo botões de reordenação (🔼/🔽) e exclusão (🗑️).
+    - Tipos de blocos suportados: Parágrafo, Subtítulo, Citação e CTA (este com redirecionamento dinâmico mapeado para as abas exatas do portal).
+    - Controle de status de publicação (Rascunho/Publicado).
+  - **Portal do Cliente (`PortalInsights.tsx`)**:
+    - Substituição completa de dados mockados por listener em tempo real (`onSnapshot`) apontando para `/blog_posts` onde `status == 'published'`.
+    - Contadores de curtidas (`likes`) e visualizações (`views`) gravados e sincronizados de forma reativa no Firestore com incrementos atômicos (`increment(1)` ou `increment(-1)`).
+    - Uso de `localStorage` local para evitar múltiplas curtidas ou incrementos redundantes de visualizações na mesma máquina.
+

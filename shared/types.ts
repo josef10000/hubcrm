@@ -371,6 +371,34 @@ export interface GrowthAsset {
 
 export type ClientBase = Client;
 
+export interface ArticleBlock {
+  type: 'paragraph' | 'heading' | 'quote' | 'cta';
+  text?: string;
+  ctaText?: string;
+  ctaAction?: string;
+}
+
+export interface BlogPost {
+  id: string;
+  title: string;
+  excerpt: string;
+  category: 'Gestão' | 'Vendas' | 'Finanças' | 'Marketing' | 'Geral';
+  imageUrl: string;
+  publishedAt: string;
+  readTime: string;
+  likes: number;
+  views: number;
+  author: {
+    name: string;
+    role: string;
+    avatarUrl: string;
+  };
+  blocks: ArticleBlock[];
+  createdAt: any;
+  status?: 'draft' | 'published';
+}
+
+
 /** @deprecated Use Transaction with type 'EXPENSE' instead */
 export interface Expense {
   id: string;

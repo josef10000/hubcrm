@@ -141,8 +141,9 @@ Ferramental de produtividade completo disponível na área restrita do cliente n
 
 ### 15. 🚀 Hub de Crescimento (Área de Sucesso do Cliente)
 Backoffice, infraestrutura de dados e portal do cliente para o Hub de Crescimento, disponibilizando recursos de sucesso e materiais aos clientes:
-*   **Dados Individuais (Cofre da Marca):** Aba dedicada no CRM ("Cofre da Marca") e seção do Portal do Cliente ([PortalGrowthHub.tsx](file:///c:/Users/JoséFrazãodaSilvaNet/OneDrive - 39985 - DIGITAL TECH LTDA/Área de Trabalho/Clonecrm/hubcrm-portal/src/views/PortalGrowthHub.tsx)) que exibe múltiplos logotipos da marca (ex: SVG, PNG transparente) para visualização e download individual, a paleta de cores HEX (com cópia rápida com 1 clique), a tipografia configurada e múltiplos links e templates customizados.
+*   **Dados Individuais (Cofre da Marca):** Aba dedicada no CRM ("Cofre da Marca") e seção do Portal do Cliente ([PortalGrowthHub.tsx](../hubcrm-portal/src/views/PortalGrowthHub.tsx)) que exibe múltiplos logotipos da marca (ex: SVG, PNG transparente) para visualização e download individual, a paleta de cores HEX (com cópia rápida com 1 clique), a tipografia configurada e múltiplos links e templates customizados.
 *   **Dados Globais (Ativos Globais):** Tela geral no menu do CRM com CRUD completo de materiais de sucesso, e renderização reativa no Portal do Cliente segregada por abas: "Templates Rápidos" (com detecção inteligente de links para aplicar badges e botões dedicados de plataformas como Canva, Trello e Google Drive), "Arsenal de Vendas" (scripts com botão de cópia rápida) e "Treinamentos" (player de vídeo incorporado e links externos).
+*   **Dicas & Insights (Blog Dinâmico):** Nova sub-aba administrativa no CRM que permite gerenciar artigos ricos formados por metadados e blocos de conteúdo reordenáveis (parágrafo, subtítulo, citação e botão CTA para abas do portal). Os artigos são exibidos no feed do Portal em tempo real a partir da coleção global `/blog_posts` com incrementos atômicos de visualizações e curtidas.
 *   **Segurança no Firestore & API:** Regras de segurança granulares no Firestore e atualização no payload da API do portal (`api/portal_handler.ts`) para incluir o objeto `brandAssets` no carregamento seguro do cliente.
 
 ### 16. 📢 HubAds — Módulo de Gestão de Criativos & Tráfego Pago
@@ -365,8 +366,8 @@ RESEND_API_KEY=re_123456...
 
 O projeto possui um grafo de conhecimento gerado semanticamente e estruturalmente através do `graphify`, localizado em `graphify-out/`. Este grafo mapeia todos os componentes, rotas, coleções do Firestore, relações de dependências e comunidades do projeto para auxiliar na navegação rápida do repositório tanto para desenvolvedores quanto para agentes de IA.
 
-*   **Relatório da Base de Código:** Visualize os principais abstractions (God Nodes), ciclos de importações e divisões de módulos em [GRAPH_REPORT.md](file:///c:/Users/JoséFrazãodaSilvaNet/OneDrive - 39985 - DIGITAL TECH LTDA/Área de Trabalho/Clonecrm/hubcrm/graphify-out/GRAPH_REPORT.md).
-*   **Visualização Interativa:** Abra o arquivo [graph.html](file:///c:/Users/JoséFrazãodaSilvaNet/OneDrive - 39985 - DIGITAL TECH LTDA/Área de Trabalho/Clonecrm/hubcrm/graphify-out/graph.html) no navegador para explorar as relações de forma visual.
+*   **Relatório da Base de Código:** Visualize os principais abstractions (God Nodes), ciclos de importações e divisões de módulos em [GRAPH_REPORT.md](graphify-out/GRAPH_REPORT.md).
+*   **Visualização Interativa:** Abra o arquivo [graph.html](graphify-out/graph.html) no navegador para explorar as relações de forma visual.
 *   **Consultas Rápidas (CLI):** Execute consultas diretas baseadas na estrutura do grafo:
     ```bash
     python -m graphify query "Quais componentes usam useAuth?"
