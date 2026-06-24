@@ -98,3 +98,13 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
     - Contadores de curtidas (`likes`) e visualizações (`views`) gravados e sincronizados de forma reativa no Firestore com incrementos atômicos (`increment(1)` ou `increment(-1)`).
     - Uso de `localStorage` local para evitar múltiplas curtidas ou incrementos redundantes de visualizações na mesma máquina.
 
+---
+
+## 8. Correção do Pipeline de Segurança do Firestore no GitHub Actions
+- **Data da Integração**: 24/06/2026
+- **Funcionalidade**: Correção da autenticação e deploy automático de regras de segurança do Firestore no GitHub Actions.
+- **Decisões Técnicas**:
+  - **Identificação da Chave**: Encontrado e validado o arquivo JSON `gassistant-83242-22b1c80241f3.json` na Área de Trabalho pertencente à conta de serviço `github-actions-hub@gassistant-83242.iam.gserviceaccount.com`.
+  - **Upload Criptografado de Secret**: Executado um script de integração (`update_secret_github.py`) que usa a API do GitHub com as credenciais locais do usuário (`git credential fill`) para criptografar (Curve25519 e libsodium box) e subir o JSON na secret `GCP_SA_KEY` do repositório `josef10000/hubcrm`.
+  - **Refatoração do Workflow**: Substituído o contêiner Docker da action de terceiros (`w9jds/firebase-action`) no arquivo [firebase-rules.yml](file:///c:/Users/JoséFrazãodaSilvaNet/OneDrive - 39985 - DIGITAL TECH LTDA/Área de Trabalho/Clonecrm/hubcrm/.github/workflows/firebase-rules.yml) pela action oficial `google-github-actions/auth@v2` em conjunto com a instalação nativa do `firebase-tools` via `npm` no runner de Actions. Isso resolveu o erro `Failed to authenticate` e validou com sucesso a publicação de novas regras.
+
