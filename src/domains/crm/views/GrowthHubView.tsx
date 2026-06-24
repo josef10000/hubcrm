@@ -16,13 +16,14 @@ import {
   ArrowUp, 
   ArrowDown, 
   User, 
-  Image, 
+  Image as ImageIcon, 
   Globe, 
   Check, 
   ThumbsUp, 
   Eye, 
   Sparkles,
-  ChevronRight
+  ChevronRight,
+  Upload
 } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { 
@@ -41,6 +42,7 @@ import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
 import { GrowthAsset, GrowthAssetType, BlogPost, ArticleBlock } from '@/types';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 import { toast } from 'sonner';
 
 export default function GrowthHubView() {
@@ -73,8 +75,9 @@ export default function GrowthHubView() {
   const [postsLoading, setPostsLoading] = useState(true);
   const [searchTermPosts, setSearchTermPosts] = useState('');
   const [selectedCategoryFilterPosts, setSelectedCategoryFilterPosts] = useState<string>('all');
-  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+  const [isPostOpen, setIsPostOpen] = useState(false);
   const [isPostSubmitting, setIsPostSubmitting] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [postFormData, setPostFormData] = useState<{
     id: string;
@@ -171,7 +174,7 @@ export default function GrowthHubView() {
       setPostsLoading(false);
     }, (error) => {
       console.error('Erro ao carregar artigos globais:', error);
-      toast.error('Erro ao carregar os artigos de Dicas & Insights.');
+      toast.error('Erro ao carregar os artigos de Dicas & Insights. Verifique se o deploy das regras do Firestore foi concluído no GitHub.');
       setPostsLoading(false);
     });
 
@@ -306,9 +309,6 @@ export default function GrowthHubView() {
     setIsPostOpen(true);
   };
 
-  // Pequeno fix para o estado de abertura do modal de artigos
-  const [isPostOpen, setIsPostOpen] = useState(false);
-
   const handleOpenEditPostModal = (post: BlogPost) => {
     setEditingPost(post);
     setPostFormData({
@@ -325,6 +325,33 @@ export default function GrowthHubView() {
       status: post.status || 'published'
     });
     setIsPostOpen(true);
+  };
+
+  // Upload da Imagem de Capa do Artigo via Cloudinary
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Por favor, selecione apenas arquivos de imagem.');
+      return;
+    }
+
+    setIsUploadingImage(true);
+    const toastId = toast.loading('Enviando imagem de capa para o Cloudinary...');
+    try {
+      const secureUrl = await uploadToCloudinary(file);
+      setPostFormData(prev => ({
+        ...prev,
+        imageUrl: secureUrl
+      }));
+      toast.success('Imagem de capa carregada com sucesso!', { id: toastId });
+    } catch (error: any) {
+      console.error('Erro no upload da capa:', error);
+      toast.error(`Falha no upload: ${error.message || 'Erro ao enviar'}`, { id: toastId });
+    } finally {
+      setIsUploadingImage(false);
+    }
   };
 
   const handlePostSubmit = async (e: React.FormEvent) => {
@@ -355,7 +382,6 @@ export default function GrowthHubView() {
 
     setIsPostSubmitting(true);
     try {
-      // Gerar ID / Slug amigável
       const slug = editingPost ? editingPost.id : slugify(postFormData.title);
       
       if (!editingPost) {
@@ -485,25 +511,21 @@ export default function GrowthHubView() {
     }
   };
 
+  const getFriendlyCtaLabel = (action: string) => {
+    switch (action) {
+      case 'home': return 'Início / Dashboard';
+      case 'agenda_settings': return 'Agenda (Configuração Pix)';
+      case 'management': return 'Meu Negócio (Calculadora/Insumos)';
+      case 'finance': return 'Financeiro (Faturas)';
+      case 'services': return 'Serviços / Projetos';
+      case 'docs': return 'Contratos / Assinaturas';
+      case 'support': return 'Suporte / Chamados';
+      case 'profile': return 'Minha Conta / Perfil';
+      default: return action;
+    }
+  };
+
   // Elementos estéticos de auxílio
-  const getAssetTypeIcon = (type: GrowthAssetType) => {
-    switch (type) {
-      case 'video': return <Video size={16} className="text-red-400" />;
-      case 'pdf': return <FileText size={16} className="text-emerald-400" />;
-      case 'script': return <FileCode size={16} className="text-yellow-400" />;
-      case 'template': return <LinkIcon size={16} className="text-cyan-400" />;
-    }
-  };
-
-  const getAssetTypeLabel = (type: GrowthAssetType) => {
-    switch (type) {
-      case 'video': return 'Vídeo de Treinamento';
-      case 'pdf': return 'PDF / Documento';
-      case 'script': return 'Script de Vendas';
-      case 'template': return 'Template / Canva';
-    }
-  };
-
   const getCategoryClass = (cat: string) => {
     switch (cat) {
       case 'Vendas': return 'bg-amber-500/10 border-amber-500/20 text-amber-400';
@@ -1025,16 +1047,60 @@ export default function GrowthHubView() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Campo Imagem de Capa com Upload via Cloudinary */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">Imagem de Capa (Unsplash ou URL) *</label>
-                  <input
-                    required
-                    type="url"
-                    value={postFormData.imageUrl}
-                    onChange={(e) => setPostFormData({ ...postFormData, imageUrl: e.target.value })}
-                    placeholder="https://images.unsplash.com/photo-..."
-                    className="w-full px-4 py-2.5 bg-black/20 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-[#f97316] outline-none text-xs"
-                  />
+                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5">Imagem de Capa *</label>
+                  <div className="flex gap-2">
+                    <input
+                      required
+                      type="url"
+                      value={postFormData.imageUrl}
+                      onChange={(e) => setPostFormData({ ...postFormData, imageUrl: e.target.value })}
+                      placeholder="Cole a URL ou faça upload..."
+                      className="flex-1 px-4 py-2.5 bg-black/20 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-[#f97316] outline-none text-xs"
+                    />
+                    <input
+                      type="file"
+                      id="post-cover-upload"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      disabled={isUploadingImage}
+                    />
+                    <label
+                      htmlFor="post-cover-upload"
+                      className={`px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shrink-0 ${
+                        isUploadingImage ? 'opacity-50 pointer-events-none' : ''
+                      }`}
+                    >
+                      {isUploadingImage ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Upload size={14} />
+                      )}
+                      Upload
+                    </label>
+                  </div>
+                  
+                  {postFormData.imageUrl && (
+                    <div className="mt-3 relative w-full h-32 rounded-xl overflow-hidden bg-black/30 border border-white/5 group">
+                      <img 
+                        src={postFormData.imageUrl} 
+                        alt="Preview da Capa" 
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setPostFormData({ ...postFormData, imageUrl: '' })}
+                          className="p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors cursor-pointer"
+                          title="Remover Imagem"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -1095,7 +1161,7 @@ export default function GrowthHubView() {
                   <h4 className="text-xs font-black uppercase text-gray-400 tracking-wider flex items-center gap-1.5">
                     <FileText size={14} /> Blocos de Conteúdo do Artigo
                   </h4>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 flex-wrap">
                     <button
                       type="button"
                       onClick={() => addBlock('paragraph')}
