@@ -33,7 +33,6 @@ jobs:
         with:
           args: deploy --only firestore:rules --project gassistant-83242
         env:
-          GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          PROJECT_ID: gassistant-83242
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
 
 
