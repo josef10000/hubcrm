@@ -54,6 +54,7 @@ const ClientPortal = lazy(() => import('@portal/components/ClientPortalLayout'))
 const PortalLogin = lazy(() => import('@portal/views/PortalLogin'));
 const OnboardingForm = lazy(() => import('@auth/components/OnboardingForm'));
 const PublicCheckoutPage = lazy(() => import('@finance/views/PublicCheckoutPage'));
+const CheckoutPayView = lazy(() => import('@finance/views/CheckoutPayView'));
 const ProposalPublicView = lazy(() => import('@commercial/views/ProposalPublicView'));
 const AcceptInviteView = lazy(() => import('@auth/views/AcceptInviteView'));
 const AssetPublicView = lazy(() => import('@people/views/AssetPublicView'));
@@ -94,6 +95,7 @@ export function AppRouter() {
         <Route path="/p/:proposalId" element={<ProposalPublicView />} />
         <Route path="/onboarding" element={<OnboardingForm />} />
         <Route path="/checkout/:id" element={<PublicCheckoutPage />} />
+        <Route path="/checkout-pay/:orgId/:clientId/:paymentId" element={<CheckoutPayView />} />
         <Route path="/invite/:id" element={<AcceptInviteView />} />
         <Route path="/p/asset/:orgId/:assetId" element={<AssetPublicView />} />
 

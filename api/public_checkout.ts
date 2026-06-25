@@ -140,6 +140,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       convertedVia: 'Public Checkout',
       billingCycle: clientData.billingCycle || 'MONTHLY',
       invoiceUrl: checkoutUrl,
+      currentPaymentId: currentPaymentId || '',
       nextDueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0]
     });
 

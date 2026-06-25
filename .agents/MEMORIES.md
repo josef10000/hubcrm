@@ -140,4 +140,26 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
   - **Player de Insights**: Player de áudio customizado e reativo integrado no leitor de artigos do Portal (`PortalInsights.tsx`). Controles incluem play/pause, progresso interativo e velocidade de reprodução (1.0x, 1.5x, 2.0x) com cleanup dinâmico de áudio ao alternar ou fechar o artigo.
   - **Player no Hub de Treinamentos**: Separação visual de videoaulas e áudios na aba "Treinamentos" do Hub de Crescimento (`PortalGrowthHub.tsx`), renderizando um `AudioCard` modular por podcast listado.
 
+---
+
+## 12. Checkout Transparente (White-Label Asaas)
+- **Data da Integração**: 25/06/2026
+- **Funcionalidade**: Sistema de checkout transparente (white-label) no próprio repositório CRM para pagamentos via PIX, Cartão de Crédito e Boleto integrados à API Asaas v3.
+- **Decisões Técnicas**:
+  - **Endpoints e Rotas**:
+    - Criado `/api/checkout_handler.ts` com endpoints seguros para buscar dados da fatura (`info`), pagar com cartão (`pay`), gerar QR Code Pix (`pix`) e retornar linha digitável/boleto (`boleto`).
+    - Mapeadas as rotas do backend no `vercel.json`.
+  - **Identificação do Pagamento**:
+    - Suporte para `paymentId === 'latest'` para buscar automaticamente a última fatura pendente ou vencida do cliente no Asaas de forma nativa.
+    - Suporte para IDs de assinatura do tipo `sub_xxx` (pesquisa e extrai a fatura pendente de forma transparente).
+    - Persistência da propriedade `currentPaymentId` no Firestore do cliente ao gerar novas cobranças (webhooks e checkout inicial).
+  - **Segurança**:
+    - Tripla validação baseada em tokens públicos (`publicToken`) gerados de forma determinística para cada cliente no Firestore e IDs de compradores no Asaas.
+    - Dados sensíveis do cartão de crédito nunca são persistidos em banco de dados; são enviados diretamente para a API Asaas via requisição segura.
+  - **Frontend Integrado**:
+    - Criada a view `/checkout-pay/:orgId/:clientId/:paymentId` (`CheckoutPayView.tsx`) no próprio projeto, integrando os fluxos na mesma aba.
+    - Substituídos os botões de faturas e histórico de mensalidades no painel do portal do cliente (`ClientPortal.tsx`) e na aba de planos do CRM (`PlansTab.tsx`) para direcionar ao checkout transparente Hub.
+    - Atualizado o template de mensagem automática de cobrança via WhatsApp no `ClientsGrid.tsx` com a URL do checkout white-label.
+
+
 

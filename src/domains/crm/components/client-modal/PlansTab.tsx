@@ -9,11 +9,13 @@ import {
   Package,
   Zap,
   Users,
-  Star
+  Star,
+  Copy
 } from 'lucide-react';
 import { Client, ClientPlan } from '@/types';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { toast } from 'sonner';
 
 interface PlansTabProps {
   client: Partial<Client>;
@@ -136,17 +138,21 @@ export default function PlansTab({ client, orgId }: PlansTabProps) {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                 <div className="flex items-center gap-3">
                   {plan.invoiceUrl && (
-                    <a 
-                      href={plan.invoiceUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white text-xs font-bold rounded-xl border border-white/10 transition-all flex items-center gap-2"
+                    <button 
+                      onClick={() => {
+                        const portalBaseUrl = import.meta.env.VITE_PORTAL_URL || window.location.origin;
+                        const url = `${portalBaseUrl}/checkout-pay/${orgId}/${client.id}/${plan.id}?token=${client.publicToken || ''}`;
+                        navigator.clipboard.writeText(url);
+                        toast.success('Link do Checkout copiado para a área de transferência!');
+                      }}
+                      className="px-4 py-2 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 text-xs font-bold rounded-xl border border-indigo-500/30 transition-all flex items-center gap-2"
+                      title="Copiar link do checkout white-label"
                     >
-                      <ExternalLink size={14} />
-                      Link de Pagamento
-                    </a>
+                      <Copy size={14} />
+                      Checkout White-Label
+                    </button>
                   )}
                 </div>
               </div>

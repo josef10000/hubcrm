@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { AlertTriangle, Clock, Phone, Tag, Briefcase, Globe, DollarSign, MessageCircle, Copy, Users, Link as LinkIcon, Zap, Calendar, PlusCircle, UserPlus, Key } from 'lucide-react';
+import { AlertTriangle, Clock, Phone, Tag, Briefcase, Globe, DollarSign, MessageCircle, Copy, Users, Link as LinkIcon, Zap, Calendar, PlusCircle, UserPlus, Key, CreditCard } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import SupportRequestModal from '@support/components/SupportRequestModal';
 import { Client } from '@/types';
@@ -246,7 +246,10 @@ export default function ClientsGrid({
                 </a>
                 {client.invoiceUrl && !client.isCourtesy && (
                   <a 
-                    href={`https://wa.me/55${(client.whatsapp || '').replace(/\D/g, '')}?text=Olá ${client.name}, sua fatura de R$ ${getPlanPrice(client.plan, client.billingCycle, client).toFixed(2).replace('.', ',')} vence dia ${client.nextDueDate ? new Date(client.nextDueDate).toLocaleDateString('pt-BR') : ''}. Segue o link para pagamento via PIX: ${client.invoiceUrl}`}
+                    href={`https://wa.me/55${(client.whatsapp || '').replace(/\D/g, '')}?text=Olá ${client.name}, sua fatura de R$ ${getPlanPrice(client.plan, client.billingCycle, client).toFixed(2).replace('.', ',')} está disponível. Segue o link seguro para pagamento: ${(() => {
+                      const portalBaseUrl = import.meta.env.VITE_PORTAL_URL || window.location.origin;
+                      return `${portalBaseUrl}/checkout-pay/${effectiveOrgId}/${client.id}/latest?token=${client.publicToken || ''}`;
+                    })()}`}
                     target="_blank"
                     rel="noreferrer"
                     onClick={e => e.stopPropagation()}
@@ -267,11 +270,25 @@ export default function ClientsGrid({
                     navigator.clipboard.writeText(url);
                     toast.success('Link do Portal copiado para a área de transferência!');
                   }}
-                  className={`flex items-center justify-center py-2.5 rounded-xl bg-primary-500/20 text-primary-400 hover:bg-primary-500/30 border border-primary-500/30 transition-colors text-xs font-medium ${client.portalActivationCode ? 'flex-1' : 'w-full'}`}
+                  className={`flex items-center justify-center py-2.5 rounded-xl bg-primary-500/20 text-primary-400 hover:bg-primary-500/30 border border-primary-500/30 transition-colors text-xs font-medium flex-1`}
                   title="Copiar Link Completo"
                 >
                   <LinkIcon size={16} className="mr-1.5" />
                   Link Portal
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const portalBaseUrl = import.meta.env.VITE_PORTAL_URL || window.location.origin;
+                    const url = `${portalBaseUrl}/checkout-pay/${effectiveOrgId}/${client.id}/latest?token=${client.publicToken || ''}`;
+                    navigator.clipboard.writeText(url);
+                    toast.success('Link do Checkout White-Label copiado!');
+                  }}
+                  className="flex-1 flex items-center justify-center py-2.5 rounded-xl bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 border border-indigo-500/30 transition-colors text-xs font-semibold"
+                  title="Copiar Link de Checkout Transparente"
+                >
+                  <CreditCard size={16} className="mr-1.5" />
+                  Checkout
                 </button>
                 {client.portalActivationCode && (
                   <button

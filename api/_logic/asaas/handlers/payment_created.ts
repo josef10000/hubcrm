@@ -40,6 +40,7 @@ export async function handlePaymentCreated(doc: any, clientData: any, paymentDat
   try {
     const updates: any = {
       invoiceUrl: pLink,
+      currentPaymentId: paymentData.id,
       paymentStatus: 'PENDING',
       updatedAt: Date.now()
     };

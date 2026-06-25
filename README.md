@@ -153,6 +153,14 @@ Módulo especializado para controle de criativos de tráfego pago, organização
 *   **Upload de Mídia (Cloudinary):** Upload direto de peças de anúncios (imagens e vídeos) integrado com o serviço de Cloudinary.
 *   **Classificação e Atribuição de Leads:** Rastreamento dinâmico que cruza o código único de rastreamento gerado (`HUBADS-XXX`) com o campo `leadSource` dos leads e clientes cadastrados no CRM para contabilizar conversões e faturamento real em tempo real.
 
+### 17. 💳 Checkout Transparente White-Label (Asaas API v3)
+Integração e processamento seguro de cobranças sob a própria identidade visual do HubCRM, sem redirecionar para páginas externas do Asaas:
+*   **Centralização de Motor Financeiro:** Rota de API pública `/api/checkout_handler.ts` atuando como ponte server-to-server entre o cliente e a API Asaas.
+*   **Suporte Multi-Métodos:** Suporta PIX (com QR code dinâmico e código copia-e-cola), Boleto Bancário (com linha digitável, código de barras e link de PDF) e Cartão de Crédito (tokenização imediata anti-fraude com envio de IP remoto).
+*   **Validação por publicToken:** Segurança baseada em chaves criptográficas geradas para cada cliente, cruzadas com o ID do pagador Asaas.
+*   **Suporte a Assinaturas e latest:** Lógica inteligente que resolve o pagamento mais recente de forma automática (`latest`) e extrai as faturas abertas de assinaturas (`sub_xxx`) de forma transparente.
+*   **Integração de Webhooks:** Totalmente compatível com os webhooks existentes que atualizam o status financeiro para `RECEIVED`, atualizam o Firestore e geram lançamentos contábeis.
+
 ---
 
 ## ⚖️ Comparativo de Regimes (CLT vs PJ)

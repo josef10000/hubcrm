@@ -553,11 +553,9 @@ export default function ClientPortal() {
                             {c.paymentStatus === 'RECEIVED' || c.paymentStatus === 'CONFIRMED' ? 'PAGO' : 'PENDENTE'}
                           </span>
 
-                          {c.invoiceUrl && c.paymentStatus !== 'RECEIVED' && (
+                           {c.invoiceUrl && c.paymentStatus !== 'RECEIVED' && (
                             <a
-                              href={c.invoiceUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                              href={`/checkout-pay/${orgId}/${c.id}/${c.currentPaymentId || 'latest'}?token=${c.publicToken || ''}`}
                               className="px-4 py-2 bg-white/5 hover:bg-primary-500 hover:text-white text-white text-[10px] font-bold rounded-xl border border-white/10 transition-all flex items-center gap-2"
                             >
                               <ExternalLink size={14} />
@@ -574,9 +572,7 @@ export default function ClientPortal() {
                         </div>
                         {c.invoiceUrl && (
                           <a
-                            href={c.invoiceUrl}
-                            target="_blank"
-                            rel="noreferrer"
+                            href={`/checkout-pay/${orgId}/${c.id}/${c.currentPaymentId || 'latest'}?token=${c.publicToken || ''}`}
                             className="text-[10px] text-primary-400 hover:text-primary-300 font-black uppercase flex items-center gap-1 transition-colors"
                           >
                             <FileText size={12} /> Ver Fatura
@@ -643,9 +639,7 @@ export default function ClientPortal() {
                       <td className="py-4 text-right">
                         {payment.invoiceUrl && (
                           <a
-                            href={payment.invoiceUrl}
-                            target="_blank"
-                            rel="noreferrer"
+                            href={`/checkout-pay/${orgId}/${payment.externalReference || clientId}/${payment.id}?token=${client?.publicToken || ''}`}
                             className="inline-flex items-center gap-1 text-sm text-primary-400 hover:text-primary-300 transition-colors"
                           >
                             <ExternalLink className="w-4 h-4" />
