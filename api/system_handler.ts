@@ -460,7 +460,7 @@ async function handleSiteShield(req: VercelRequest, res: VercelResponse) {
     document.body.style.padding = '0';
     document.body.style.background = '#0f172a';
   }
-})();\`;
+})();`;
 
   return res.status(200).send(scriptContent);
 }

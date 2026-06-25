@@ -39,10 +39,10 @@
     { "source": "/api/site-shield", "destination": "/api/system_handler?action=site-shield" },
     { "source": "/api/site-status", "destination": "/api/system_handler?action=site-status" },
     
-    { "source": "/api/checkout/info", "destination": "/api/checkout_handler?action=info" },
-    { "source": "/api/checkout/pay", "destination": "/api/checkout_handler?action=pay" },
-    { "source": "/api/checkout/pix", "destination": "/api/checkout_handler?action=pix" },
-    { "source": "/api/checkout/boleto", "destination": "/api/checkout_handler?action=boleto" },
+    { "source": "/api/checkout/info", "destination": "/api/portal_handler?action=checkout_info" },
+    { "source": "/api/checkout/pay", "destination": "/api/portal_handler?action=checkout_pay" },
+    { "source": "/api/checkout/pix", "destination": "/api/portal_handler?action=checkout_pix" },
+    { "source": "/api/checkout/boleto", "destination": "/api/portal_handler?action=checkout_boleto" },
 
     { "source": "/((?!api/.*).*)", "destination": "/index.html" }
   ],

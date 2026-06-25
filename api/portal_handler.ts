@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { admin, db } from './_utils/firebase.js';
-import { asaasRequest, safeErrorResponse } from './_utils/asaas.js';
+import { asaasRequest, safeErrorResponse, AsaasApiError } from './_utils/asaas.js';
 import type { ClientBase } from '../shared/types.js';
 import { portalFinanceSchema, validateSchema } from '../shared/schemas.js';
 
@@ -41,6 +41,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.body.action === 'get_client') {
       return handleGetClient(req, res);
     }
+    if (req.body.action === 'checkout_pay') {
+      return handleCheckoutPay(req, res);
+    }
     return handleAuth(req, res);
   }
   if (req.method === 'GET') {
@@ -55,6 +58,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     if (req.query.action === 'public_get_wallet_pass') {
       return handlePublicGetWalletPass(req, res);
+    }
+    if (req.query.action === 'checkout_info') {
+      return handleCheckoutInfo(req, res);
+    }
+    if (req.query.action === 'checkout_pix') {
+      return handleCheckoutPix(req, res);
+    }
+    if (req.query.action === 'checkout_boleto') {
+      return handleCheckoutBoleto(req, res);
     }
     return handleFinance(req, res);
   }
@@ -941,5 +953,188 @@ async function handlePublicGetWalletPass(req: VercelRequest, res: VercelResponse
     console.error('[PortalGetWalletPass] Erro ao gerar passe digital:', e);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.status(500).send(`<h1>Erro Interno</h1><p>${e.message}</p>`);
+  }
+}
+
+// ============================================================
+// CHECKOUT TRANSPARENTE — AUXILIARES & ENDPOINTS
+// ============================================================
+
+async function validateCheckoutAccess(req: VercelRequest) {
+  const orgId = req.method === 'POST' ? req.body.orgId : req.query.orgId;
+  const clientId = req.method === 'POST' ? req.body.clientId : req.query.clientId;
+  const paymentId = req.method === 'POST' ? req.body.paymentId : req.query.paymentId;
+  const token = req.method === 'POST' ? req.body.token : req.query.token;
+
+  if (!orgId || !clientId || !paymentId || !token) {
+    throw new AsaasApiError(400, 'Missing security parameters', 'Parâmetros de segurança ausentes');
+  }
+
+  // 1. Fetch client from Firestore
+  const clientDoc = await db
+    .collection('organizations')
+    .doc(String(orgId))
+    .collection('clients')
+    .doc(String(clientId))
+    .get();
+
+  if (!clientDoc.exists) {
+    throw new AsaasApiError(404, 'Client not found in CRM', 'Cliente não cadastrado');
+  }
+
+  const clientData = clientDoc.data();
+  
+  // 2. Validate token
+  if (!clientData?.publicToken || clientData.publicToken !== token) {
+    throw new AsaasApiError(403, 'Invalid publicToken', 'Acesso não autorizado ou link expirado');
+  }
+
+  // 3. Fetch payment details from Asaas
+  let payment;
+  if (paymentId === 'latest') {
+    if (!clientData.asaasCustomerId) {
+      throw new AsaasApiError(404, 'No Asaas customer ID', 'Cliente sem configuração financeira no Asaas');
+    }
+    
+    // Buscar faturas pendentes
+    const pendingList = await asaasRequest(`/payments?customer=${clientData.asaasCustomerId}&status=PENDING&limit=1`, 'GET');
+    if (pendingList.data && pendingList.data.length > 0) {
+      payment = pendingList.data[0];
+    } else {
+      // Buscar faturas vencidas
+      const overdueList = await asaasRequest(`/payments?customer=${clientData.asaasCustomerId}&status=OVERDUE&limit=1`, 'GET');
+      if (overdueList.data && overdueList.data.length > 0) {
+        payment = overdueList.data[0];
+      }
+    }
+
+    if (!payment) {
+      // Se não houver pendente/vencida, tenta achar a última recebida/confirmada para mostrar como paga
+      const fallbackList = await asaasRequest(`/payments?customer=${clientData.asaasCustomerId}&limit=1`, 'GET');
+      if (fallbackList.data && fallbackList.data.length > 0) {
+        payment = fallbackList.data[0];
+      }
+    }
+  } else if (String(paymentId).startsWith('sub_')) {
+    const subPayments = await asaasRequest(`/subscriptions/${paymentId}/payments`, 'GET');
+    if (subPayments.data && subPayments.data.length > 0) {
+      payment = subPayments.data.find((p: any) => p.status === 'PENDING' || p.status === 'OVERDUE') || subPayments.data[0];
+    }
+  } else {
+    payment = await asaasRequest(`/payments/${paymentId}`, 'GET');
+  }
+
+  if (!payment) {
+    throw new AsaasApiError(404, 'Payment not found in Asaas', 'Fatura não encontrada');
+  }
+
+  // 4. Validate ownership
+  if (payment.customer !== clientData.asaasCustomerId) {
+    throw new AsaasApiError(403, 'Payment does not belong to this customer', 'Acesso não autorizado para esta fatura');
+  }
+
+  return { clientData, payment };
+}
+
+async function handleCheckoutInfo(req: VercelRequest, res: VercelResponse) {
+  try {
+    const { payment, clientData } = await validateCheckoutAccess(req);
+
+    const clientBillingType = clientData.billingType || 'UNDEFINED';
+    let allowedMethods = ['PIX', 'CREDIT_CARD', 'BOLETO'];
+    
+    if (clientBillingType === 'PIX') {
+      allowedMethods = ['PIX'];
+    } else if (clientBillingType === 'CREDIT_CARD') {
+      allowedMethods = ['CREDIT_CARD'];
+    } else if (clientBillingType === 'BOLETO') {
+      allowedMethods = ['BOLETO'];
+    }
+
+    return res.status(200).json({
+      paymentId: payment.id,
+      value: payment.value,
+      dueDate: payment.dueDate,
+      description: payment.description || 'Fatura Hub Central',
+      billingType: payment.billingType,
+      clientName: clientData.name,
+      status: payment.status,
+      allowedMethods
+    });
+  } catch (error: any) {
+    return safeErrorResponse(res, error, 'Erro ao carregar dados do checkout');
+  }
+}
+
+async function handleCheckoutPay(req: VercelRequest, res: VercelResponse) {
+  try {
+    const { payment } = await validateCheckoutAccess(req);
+
+    if (payment.status === 'RECEIVED' || payment.status === 'CONFIRMED') {
+      return res.status(400).json({ error: 'Esta fatura já está paga.' });
+    }
+
+    const { creditCard, creditCardHolderInfo } = req.body;
+    if (!creditCard || !creditCardHolderInfo) {
+      return res.status(400).json({ error: 'Dados do cartão de crédito obrigatórios.' });
+    }
+
+    const rawIp = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || req.socket.remoteAddress || '127.0.0.1';
+    const remoteIp = String(rawIp).split(',')[0].trim();
+
+    const response = await asaasRequest(`/payments/${payment.id}/payWithCreditCard`, 'POST', {
+      creditCard,
+      creditCardHolderInfo,
+      remoteIp
+    });
+
+    return res.status(200).json({
+      success: true,
+      status: response.status,
+      paymentId: response.id
+    });
+  } catch (error: any) {
+    return safeErrorResponse(res, error, 'Erro ao pagar com cartão de crédito');
+  }
+}
+
+async function handleCheckoutPix(req: VercelRequest, res: VercelResponse) {
+  try {
+    const { payment } = await validateCheckoutAccess(req);
+
+    if (payment.status === 'RECEIVED' || payment.status === 'CONFIRMED') {
+      return res.status(400).json({ error: 'Esta fatura já está paga.' });
+    }
+
+    const pixData = await asaasRequest(`/payments/${payment.id}/pixQrCode`, 'GET');
+
+    return res.status(200).json({
+      encodedImage: pixData.encodedImage,
+      payload: pixData.payload,
+      expirationDate: pixData.expirationDate
+    });
+  } catch (error: any) {
+    return safeErrorResponse(res, error, 'Erro ao obter Pix QR Code');
+  }
+}
+
+async function handleCheckoutBoleto(req: VercelRequest, res: VercelResponse) {
+  try {
+    const { payment } = await validateCheckoutAccess(req);
+
+    if (payment.status === 'RECEIVED' || payment.status === 'CONFIRMED') {
+      return res.status(400).json({ error: 'Esta fatura já está paga.' });
+    }
+
+    const identification = await asaasRequest(`/payments/${payment.id}/identificationField`, 'GET');
+
+    return res.status(200).json({
+      identificationField: identification.identificationField,
+      nossoNumero: identification.nossoNumero,
+      barCode: identification.barCode,
+      bankSlipUrl: payment.bankSlipUrl || payment.invoiceUrl || ''
+    });
+  } catch (error: any) {
+    return safeErrorResponse(res, error, 'Erro ao carregar boleto');
   }
 }
