@@ -160,7 +160,7 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
     - Criada a view `/checkout-pay/:orgId/:clientId/:paymentId` (`CheckoutPayView.tsx`) no próprio projeto, integrando os fluxos na mesma aba.
     - Substituídos os botões de faturas e histórico de mensalidades no painel do portal do cliente (`ClientPortal.tsx`) e na aba de planos do CRM (`PlansTab.tsx`) para direcionar ao checkout transparente Hub.
     - Atualizado o template de mensagem automática de cobrança via WhatsApp no `ClientsGrid.tsx` com a URL do checkout white-label.
-    - **Ajuste estético**: Rodapé do checkout atualizado para remover o texto de proteção SSL e centralizar a marca "Powered by Asaas", que foi ampliada em 3x.
+    - **Ajuste estético**: Rodapé do checkout atualizado para remover o texto de proteção SSL e centralizar a marca "Powered by Asaas" de maneira discreta (texto xs, logo h-5 e opacidade suave de 60%).
 
 
 
