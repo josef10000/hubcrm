@@ -300,12 +300,10 @@ export default function CheckoutPayView() {
         <div className="md:col-span-5 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary-500/20 to-transparent blur-md rounded-bl-full" />
           
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-9 h-9 rounded-xl bg-primary-500 flex items-center justify-center font-black text-black text-lg tracking-tighter">
-              H
-            </div>
+          <div className="flex items-center gap-3.5 mb-6">
+            <img src="/logo-hub.png" alt="Hub Symples" className="w-9 h-9 object-contain" />
             <div>
-              <h2 className="text-sm font-black uppercase tracking-wider text-white">Hub Central</h2>
+              <h2 className="text-sm font-black uppercase tracking-wider text-white">Hub Symples</h2>
               <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">White-Label Checkout</p>
             </div>
           </div>
@@ -364,7 +362,7 @@ export default function CheckoutPayView() {
               </div>
               <h1 className="text-2xl font-black mb-2 text-white">Pagamento Confirmado!</h1>
               <p className="text-gray-400 text-sm max-w-sm mb-8">
-                Obrigado! Seu pagamento foi processado e conciliado de forma automática no CRM da Hub Central.
+                Obrigado! Seu pagamento foi processado e conciliado de forma automática no CRM da Hub Symples.
               </p>
               <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center gap-3 text-emerald-400 text-xs font-semibold max-w-xs">
                 <ShieldCheck size={18} />
@@ -687,9 +685,15 @@ export default function CheckoutPayView() {
           )}
 
           {/* Footer security message */}
-          <div className="mt-8 pt-4 border-t border-white/5 flex items-center justify-center gap-1.5 text-[9px] text-gray-600 font-bold uppercase tracking-widest">
-            <ShieldCheck size={12} className="text-emerald-500" />
-            Transação segura protegida por SSL e Tokenização
+          <div className="mt-8 pt-4 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-1.5 text-[9px] text-gray-600 font-bold uppercase tracking-widest">
+              <ShieldCheck size={12} className="text-emerald-500" />
+              Transação segura protegida por SSL e Tokenização
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-[9px] text-gray-600 font-bold uppercase tracking-widest">Powered by</span>
+              <img src="/logo-asaas.png" alt="Asaas" className="h-3.5 object-contain opacity-75 hover:opacity-100 transition-opacity" />
+            </div>
           </div>
         </div>
 
@@ -697,7 +701,7 @@ export default function CheckoutPayView() {
 
       {/* Footer copyright */}
       <div className="max-w-4xl w-full mx-auto mt-10 text-center text-[10px] text-gray-600 font-semibold relative z-10">
-        © {new Date().getFullYear()} Hub Central. Todos os direitos reservados.
+        © {new Date().getFullYear()} Hub Symples. Todos os direitos reservados.
       </div>
     </div>
   );
