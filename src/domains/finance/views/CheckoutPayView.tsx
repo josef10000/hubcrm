@@ -685,14 +685,10 @@ export default function CheckoutPayView() {
           )}
 
           {/* Footer security message */}
-          <div className="mt-8 pt-4 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="flex items-center gap-1.5 text-[9px] text-gray-600 font-bold uppercase tracking-widest">
-              <ShieldCheck size={12} className="text-emerald-500" />
-              Transação segura protegida por SSL e Tokenização
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-[9px] text-gray-600 font-bold uppercase tracking-widest">Powered by</span>
-              <img src="/logo-asaas.png" alt="Asaas" className="h-3.5 object-contain opacity-75 hover:opacity-100 transition-opacity" />
+          <div className="mt-8 pt-4 border-t border-white/5 flex items-center justify-center">
+            <div className="flex items-center gap-3">
+              <span className="text-[27px] text-gray-600 font-bold uppercase tracking-widest">Powered by</span>
+              <img src="/logo-asaas.png" alt="Asaas" className="h-[42px] object-contain opacity-75 hover:opacity-100 transition-opacity" />
             </div>
           </div>
         </div>
