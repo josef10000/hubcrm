@@ -685,10 +685,10 @@ export default function CheckoutPayView() {
           )}
 
           {/* Footer security message */}
-          <div className="mt-8 pt-4 border-t border-white/5 flex items-center justify-center">
-            <div className="flex items-center gap-3">
-              <span className="text-[27px] text-gray-600 font-bold uppercase tracking-widest">Powered by</span>
-              <img src="/logo-asaas.png" alt="Asaas" className="h-[42px] object-contain opacity-75 hover:opacity-100 transition-opacity" />
+          <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-center">
+            <div className="flex items-center gap-2 text-gray-600 opacity-60">
+              <span className="text-xs font-bold uppercase tracking-widest">Powered by</span>
+              <img src="/logo-asaas.png" alt="Asaas" className="h-5 object-contain" />
             </div>
           </div>
         </div>
