@@ -162,5 +162,12 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
     - Atualizado o template de mensagem automática de cobrança via WhatsApp no `ClientsGrid.tsx` com a URL do checkout white-label.
     - **Ajuste estético**: Rodapé do checkout atualizado para remover o texto de proteção SSL e centralizar a marca "Powered by Asaas" de maneira discreta (texto xs, logo h-5 e opacidade suave de 60%).
 
+---
 
-
+## 13. Otimização de Imagens no Upload do Cloudinary
+- **Data da Integração**: 30/06/2026
+- **Funcionalidade**: Otimização automática e transparente de imagens no frontend antes do upload para o Cloudinary.
+- **Decisões Técnicas**:
+  - **Conversão e Redimensionamento**: Qualquer imagem elegível (excluindo arquivos vetoriais SVG) é convertida para o formato **WebP** com qualidade de **80%** e tem suas dimensões reduzidas para no máximo **1200px** de largura ou altura (mantendo a proporção original) usando a API de Canvas do navegador.
+  - **Transparência**: Implementado diretamente na função global `uploadToCloudinary` em `src/lib/cloudinary.ts`. Isso garante que todas as telas do sistema que utilizam upload (perfil do usuário, criativos de anúncios do HubAds, prints do sistema, lojinha VIP e ativos do cliente) passem a enviar arquivos otimizados e comprimidos automaticamente, sem precisar reescrever cada componente individualmente.
+  - **Segurança e Fallback**: Caso ocorra qualquer erro no processo do Canvas, o sistema faz o fallback seguro enviando o arquivo original bruto para não travar o fluxo de upload. PDFs, vídeos e áudios passam direto sem modificação.
