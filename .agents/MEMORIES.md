@@ -171,3 +171,13 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
   - **Conversão e Redimensionamento**: Qualquer imagem elegível (excluindo arquivos vetoriais SVG) é convertida para o formato **WebP** com qualidade de **80%** e tem suas dimensões reduzidas para no máximo **1200px** de largura ou altura (mantendo a proporção original) usando a API de Canvas do navegador.
   - **Transparência**: Implementado diretamente na função global `uploadToCloudinary` em `src/lib/cloudinary.ts`. Isso garante que todas as telas do sistema que utilizam upload (perfil do usuário, criativos de anúncios do HubAds, prints do sistema, lojinha VIP e ativos do cliente) passem a enviar arquivos otimizados e comprimidos automaticamente, sem precisar reescrever cada componente individualmente.
   - **Segurança e Fallback**: Caso ocorra qualquer erro no processo do Canvas, o sistema faz o fallback seguro enviando o arquivo original bruto para não travar o fluxo de upload. PDFs, vídeos e áudios passam direto sem modificação.
+
+---
+
+## 14. CRM Multiproduto — Interface Reativa (Passo 1)
+- **Data da Integração**: 03/07/2026
+- **Funcionalidade**: Adaptação reativa das telas do CRM com base no produto adquirido pelo cliente, permitindo gerenciar cadastros, cobranças e suporte de múltiplos softwares (como o novo SaaS de Cobrança) na mesma plataforma.
+- **Decisões Técnicas**:
+  - **Propriedade de Identificação**: Campo `productType: 'portal_hub' | 'saas_cobranca' | 'outros'` adicionado na interface `Client` e salvo no Firestore.
+  - **Filtro de Abas e Campos**: Abas exclusivas do Portal Hub ("Credenciais", "Briefing" e "Cofre da Marca") são omitidas dinamicamente do modal de cliente (`ClientModal.tsx`) para outros produtos. O mesmo ocorre para campos e atalhos na aba "Dados" e no grid de clientes (`ClientsGrid.tsx`), ocultando "Link do Site", "Link Portal", "Código de Ativação" e "Script Site Shield".
+  - **Manutenção de Cobranças**: O botão de "Checkout" (link do checkout transparente do Asaas) e a gestão financeira de mensalidades continuam disponíveis para todos os clientes, independentemente do produto selecionado.
