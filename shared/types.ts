@@ -271,6 +271,7 @@ export interface Client {
   name: string;
   email: string;
   productType?: 'portal_hub' | 'saas_cobranca' | 'outros';
+  integrationCode?: string;
   whatsapp: string;
   status: SiteStatus;
   plan: string;

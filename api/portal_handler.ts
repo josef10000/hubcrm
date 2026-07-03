@@ -50,6 +50,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.body.action === 'support_reply') {
       return handleSupportReply(req, res);
     }
+    if (req.body.action === 'support_cancel_subscription') {
+      return handleSupportCancelSubscription(req, res);
+    }
     return handleAuth(req, res);
   }
   if (req.method === 'GET') {
@@ -1273,5 +1276,66 @@ async function handleSupportList(req: VercelRequest, res: VercelResponse) {
   } catch (e: any) {
     console.error('[PortalSupportList] Erro ao listar chamados externos:', e);
     return res.status(e.statusCode || 500).json({ error: e.message || 'Erro interno ao listar os chamados' });
+  }
+}
+
+async function handleSupportCancelSubscription(req: VercelRequest, res: VercelResponse) {
+  try {
+    const { clientData } = await validateSupportAccess(req);
+    const orgId = req.method === 'POST' ? req.body.orgId : req.query.orgId;
+    const clientId = req.method === 'POST' ? req.body.clientId : req.query.clientId;
+
+    // 1. Definir a data limite de acesso (será a data do próximo vencimento da fatura)
+    const accessUntil = clientData.nextDueDate || new Date().toISOString().split('T')[0];
+
+    // 2. Se houver assinatura ativa no Asaas, cancela no gateway
+    if (clientData.asaasSubscriptionId) {
+      try {
+        await asaasRequest(`/subscriptions/${clientData.asaasSubscriptionId}`, 'DELETE');
+      } catch (err: any) {
+        console.error(`[PortalSupportCancel] Erro ao deletar assinatura ${clientData.asaasSubscriptionId} no Asaas:`, err.message);
+      }
+    }
+
+    // 3. Deletar cobranças pendentes ou vencidas no Asaas
+    if (clientData.asaasCustomerId) {
+      try {
+        const paymentsList = await asaasRequest(`/payments?customer=${clientData.asaasCustomerId}`, 'GET');
+        if (paymentsList.data && Array.isArray(paymentsList.data)) {
+          for (const payment of paymentsList.data) {
+            if (payment.status === 'PENDING' || payment.status === 'OVERDUE') {
+              try {
+                await asaasRequest(`/payments/${payment.id}`, 'DELETE');
+              } catch (delErr: any) {
+                console.error(`[PortalSupportCancel] Erro ao deletar fatura ${payment.id} no Asaas:`, delErr.message);
+              }
+            }
+          }
+        }
+      } catch (err: any) {
+        console.error('[PortalSupportCancel] Erro ao listar faturas no Asaas:', err.message);
+      }
+    }
+
+    // 4. Atualizar o status do cliente para "Cancelado" no Firestore do CRM
+    await db
+      .collection('organizations')
+      .doc(String(orgId))
+      .collection('clients')
+      .doc(String(clientId))
+      .update({
+        status: 'Cancelado',
+        paymentStatus: 'N/A',
+        invoiceUrl: admin.firestore.FieldValue.delete(),
+        asaasSubscriptionId: admin.firestore.FieldValue.delete()
+      });
+
+    return res.status(200).json({
+      success: true,
+      accessUntil
+    });
+  } catch (e: any) {
+    console.error('[PortalSupportCancel] Erro ao processar cancelamento de chamado externo:', e);
+    return res.status(e.statusCode || 500).json({ error: e.message || 'Erro interno ao processar o cancelamento' });
   }
 }

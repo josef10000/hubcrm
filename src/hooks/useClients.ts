@@ -158,10 +158,17 @@ export function useClients(opts: UseClientsOptions) {
 
     const isNew = !clientData.id;
     const clientRef = isNew ? doc(collection(db, 'organizations', userId, 'clients')) : doc(db, 'organizations', userId, 'clients', clientData.id!);
+    const generatedToken = clientData.publicToken || editingClient?.publicToken || (crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, ''));
+    const generatedActivationCode = clientData.portalActivationCode || editingClient?.portalActivationCode || ('HUB-' + Math.random().toString(36).substring(2, 8).toUpperCase());
+    
     const client: Client = {
       ...(editingClient || {}),
       assignedTo: isNew ? (auth.currentUser?.uid || undefined) : (editingClient?.assignedTo || undefined),
       id: clientRef.id,
+      productType: clientData.productType || 'portal_hub',
+      integrationCode: clientData.integrationCode || '',
+      publicToken: generatedToken,
+      portalActivationCode: generatedActivationCode,
       name: clientData.name || '',
       whatsapp: clientData.whatsapp || '',
       plan: (clientData.plan as PlanType) || '',
@@ -505,6 +512,31 @@ export function useClients(opts: UseClientsOptions) {
 
       const cleanClient = Object.fromEntries(Object.entries(client).filter(([_, v]) => v !== undefined));
       await setDoc(doc(db, 'organizations', userId, 'clients', client.id), cleanClient, { merge: true });
+
+      // Disparar Webhook para o SaaS de Rastreamento se houver código de integração configurado
+      if (client.productType !== 'portal_hub' && client.integrationCode) {
+        fetch(import.meta.env.VITE_SAAS_WEBHOOK_URL || 'https://tracker.hubsymples.com.br/api/crm-webhook', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            integrationCode: client.integrationCode,
+            crmOrgId: userId,
+            crmClientId: client.id,
+            crmPublicToken: client.publicToken
+          })
+        }).then(res => {
+          if (res.ok) {
+            toast.success('Integração com o SaaS sincronizada com sucesso!');
+          } else {
+            console.error('SaaS webhook integration response was not ok');
+            toast.warning('Aviso: O cliente foi salvo, mas a sincronização automática com o SaaS falhou.');
+          }
+        }).catch(err => {
+          console.error('Error firing SaaS webhook integration:', err);
+          toast.warning('Aviso: O cliente foi salvo, mas a sincronização automática com o SaaS falhou.');
+        });
+      }
+
       setIsModalOpen(false);
       setEditingClient(null);
     } catch (error: any) {

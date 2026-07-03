@@ -316,6 +316,23 @@ function ClientModal({
                     </select>
                   </div>
 
+                  {!isPortalProduct && (
+                    <div className="w-full">
+                      <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Código de Integração</label>
+                      <input 
+                        type="text" 
+                        name="integrationCode" 
+                        value={formData.integrationCode || ''} 
+                        onChange={handleChange} 
+                        className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500 text-sm" 
+                        placeholder="Ex: COB-123456" 
+                      />
+                      <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">
+                        Código único gerado pelo SaaS externo para ativar a sincronização automática.
+                      </p>
+                    </div>
+                  )}
+
                   <div className="w-full">
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Nome do Cliente/Empresa *</label>
                     <input required type="text" name="name" value={formData.name || ''} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" placeholder="Ex: João Silva" />
