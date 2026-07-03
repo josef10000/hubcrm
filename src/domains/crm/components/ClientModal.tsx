@@ -70,7 +70,8 @@ function ClientModal({
     status: 'Em Desenvolvimento',
     isCombo: false,
     maxInstallments: defaultOffer?.maxInstallments ?? 12,
-    billingType: undefined
+    billingType: undefined,
+    productType: 'portal_hub'
   });
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -97,7 +98,10 @@ function ClientModal({
 
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      setFormData({
+        productType: 'portal_hub',
+        ...initialData
+      });
       if (initialData.asaasSubscriptionId && initialData.status !== 'Cancelado' && isOpen) {
         checkPaymentStatus(initialData.asaasSubscriptionId);
       }
@@ -110,7 +114,8 @@ function ClientModal({
         status: 'Em Desenvolvimento',
         isCombo: false,
         maxInstallments: defaultOffer?.maxInstallments ?? 12,
-        billingType: 'CREDIT_CARD'
+        billingType: 'CREDIT_CARD',
+        productType: 'portal_hub'
       });
     }
     setShowCancelConfirm(false);
@@ -251,18 +256,19 @@ function ClientModal({
   };
 
   // ─── Tab Buttons ───
+  const isPortalProduct = !formData.productType || formData.productType === 'portal_hub';
   const tabButtons = [
     { key: 'details', label: 'Dados' },
     { key: 'history', label: 'Histórico' },
     { key: 'stages', label: 'Etapas' },
-    { key: 'credentials', label: 'Credenciais' },
-    { key: 'onboarding', label: 'Briefing' },
+    isPortalProduct && { key: 'credentials', label: 'Credenciais' },
+    isPortalProduct && { key: 'onboarding', label: 'Briefing' },
     { key: 'referrals', label: 'Indicações' },
     { key: 'contracts', label: 'Contratos' },
     { key: 'plans', label: 'Assinaturas' },
     { key: 'purchases', label: 'Compras' },
-    { key: 'brandAssets', label: 'Cofre da Marca' },
-  ] as const;
+    isPortalProduct && { key: 'brandAssets', label: 'Cofre da Marca' },
+  ].filter(Boolean) as Array<{ key: typeof activeTab; label: string }>;
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-md" onClick={onClose}>
@@ -295,7 +301,21 @@ function ClientModal({
                 {/* Left Column: Basic Info & Payment */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 border-b border-gray-200 dark:border-white/10 pb-2">Dados do Cliente</h3>
-                  
+
+                  <div className="w-full">
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Produto Adquirido *</label>
+                    <select 
+                      name="productType"
+                      value={formData.productType || 'portal_hub'}
+                      onChange={(e) => setFormData(prev => ({ ...prev, productType: e.target.value as Client['productType'] }))}
+                      className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all text-sm"
+                    >
+                      <option value="portal_hub" className="bg-gray-200 dark:bg-zinc-950 text-gray-900 dark:text-white">Portal Hub (Site + Sistema)</option>
+                      <option value="saas_cobranca" className="bg-gray-200 dark:bg-zinc-950 text-gray-900 dark:text-white">SaaS de Cobrança Interna</option>
+                      <option value="outros" className="bg-gray-200 dark:bg-zinc-950 text-gray-900 dark:text-white">Outros / Serviços Gerais</option>
+                    </select>
+                  </div>
+
                   <div className="w-full">
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Nome do Cliente/Empresa *</label>
                     <input required type="text" name="name" value={formData.name || ''} onChange={handleChange} className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" placeholder="Ex: João Silva" />
@@ -626,7 +646,7 @@ function ClientModal({
                   </div>
 
                   {/* 🌐 Portal do Cliente Configs */}
-                  {formData.id && (
+                  {formData.id && isPortalProduct && (
                     <div className="p-4 bg-primary-500/10 border border-primary-500/20 rounded-2xl space-y-3">
                       <div className="flex items-center gap-2">
                         <Globe size={18} className="text-primary-400" />
@@ -712,45 +732,49 @@ function ClientModal({
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Link do Site (Opcional)</label>
-                    <input type="url" name="siteLink" value={formData.siteLink || ''} onChange={handleChange} placeholder="https://..." className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
-                  </div>
-
-                  {formData.siteLink && (
-                    <div className="mt-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const scriptTag = `<script src="${window.location.origin}/api/site-shield"></script>`;
-                          navigator.clipboard.writeText(scriptTag);
-                          toast.success('Script Site Shield copiado!');
-                        }}
-                        className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-sm font-medium transition-all"
-                      >
-                        <Shield size={16} />
-                        Copiar Script Site Shield
-                      </button>
-                      <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">
-                        Insira este código na tag <code>&lt;head&gt;</code> do site do cliente para ativação do bloqueio automático por atraso.
-                      </p>
-                    </div>
-                  )}
-
-                  {initialData && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Link de Briefing do Cliente</label>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 rounded-xl text-sm truncate select-all">
-                          {window.location.origin}/onboarding/{effectiveOrgId}/{initialData.id}
-                        </div>
-                        <button type="button" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/onboarding/${effectiveOrgId}/${initialData.id}`); toast.success('Link copiado!'); }}
-                          className="p-3 bg-gray-200 dark:bg-white/10 hover:bg-gray-300 dark:hover:bg-white/20 text-gray-900 dark:text-white rounded-xl transition-colors shrink-0" title="Copiar Link">
-                          <Copy size={18} />
-                        </button>
+                  {isPortalProduct && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Link do Site (Opcional)</label>
+                        <input type="url" name="siteLink" value={formData.siteLink || ''} onChange={handleChange} placeholder="https://..." className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all placeholder-gray-500" />
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">Envie este link para o cliente preencher o briefing. As respostas atualizarão este cadastro.</p>
-                    </div>
+
+                      {formData.siteLink && (
+                        <div className="mt-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const scriptTag = `<script src="${window.location.origin}/api/site-shield"></script>`;
+                              navigator.clipboard.writeText(scriptTag);
+                              toast.success('Script Site Shield copiado!');
+                            }}
+                            className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-sm font-medium transition-all"
+                          >
+                            <Shield size={16} />
+                            Copiar Script Site Shield
+                          </button>
+                          <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">
+                            Insira este código na tag <code>&lt;head&gt;</code> do site do cliente para ativação do bloqueio automático por atraso.
+                          </p>
+                        </div>
+                      )}
+
+                      {initialData && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Link de Briefing do Cliente</label>
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 rounded-xl text-sm truncate select-all">
+                              {window.location.origin}/onboarding/{effectiveOrgId}/{initialData.id}
+                            </div>
+                            <button type="button" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/onboarding/${effectiveOrgId}/${initialData.id}`); toast.success('Link copiado!'); }}
+                              className="p-3 bg-gray-200 dark:bg-white/10 hover:bg-gray-300 dark:hover:bg-white/20 text-gray-900 dark:text-white rounded-xl transition-colors shrink-0" title="Copiar Link">
+                              <Copy size={18} />
+                            </button>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">Envie este link para o cliente preencher o briefing. As respostas atualizarão este cadastro.</p>
+                        </div>
+                      )}
+                    </>
                   )}
 
                   <div className="flex-1 flex flex-col">

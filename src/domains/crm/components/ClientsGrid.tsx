@@ -110,7 +110,7 @@ export default function ClientsGrid({
                 </div>
 
                 <div className="flex gap-2">
-                  {client.portalLinked && (
+                  {(!client.productType || client.productType === 'portal_hub') && client.portalLinked && (
                     <span 
                       title={`Vinculado ao e-mail: ${client.portalEmail || 'Não informado'}`}
                       className="px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-sky-500/20 text-sky-300 border border-sky-500/30 flex items-center gap-1 cursor-help"
@@ -186,7 +186,7 @@ export default function ClientsGrid({
                 </div>
               )}
               
-              {client.siteLink && (
+              {(!client.productType || client.productType === 'portal_hub') && client.siteLink && (
                 <div className="flex items-center text-gray-600 dark:text-gray-300 text-sm">
                   <Globe size={16} className="mr-3 text-primary-400 opacity-80" />
                   <a href={client.siteLink} target="_blank" rel="noreferrer" className="text-blue-400 hover:text-blue-300 hover:underline truncate" onClick={e => e.stopPropagation()}>
@@ -262,20 +262,22 @@ export default function ClientsGrid({
                 )}
               </div>
               <div className="flex gap-2 w-full">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const portalBaseUrl = import.meta.env.VITE_PORTAL_URL || 'https://portahub.hubsymples.com.br';
-                    const url = `${portalBaseUrl}/portal/${effectiveOrgId}/${client.id}${client.publicToken ? `?token=${client.publicToken}` : ''}`;
-                    navigator.clipboard.writeText(url);
-                    toast.success('Link do Portal copiado para a área de transferência!');
-                  }}
-                  className={`flex items-center justify-center py-2.5 rounded-xl bg-primary-500/20 text-primary-400 hover:bg-primary-500/30 border border-primary-500/30 transition-colors text-xs font-medium flex-1`}
-                  title="Copiar Link Completo"
-                >
-                  <LinkIcon size={16} className="mr-1.5" />
-                  Link Portal
-                </button>
+                {(!client.productType || client.productType === 'portal_hub') && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const portalBaseUrl = import.meta.env.VITE_PORTAL_URL || 'https://portahub.hubsymples.com.br';
+                      const url = `${portalBaseUrl}/portal/${effectiveOrgId}/${client.id}${client.publicToken ? `?token=${client.publicToken}` : ''}`;
+                      navigator.clipboard.writeText(url);
+                      toast.success('Link do Portal copiado para a área de transferência!');
+                    }}
+                    className={`flex items-center justify-center py-2.5 rounded-xl bg-primary-500/20 text-primary-400 hover:bg-primary-500/30 border border-primary-500/30 transition-colors text-xs font-medium flex-1`}
+                    title="Copiar Link Completo"
+                  >
+                    <LinkIcon size={16} className="mr-1.5" />
+                    Link Portal
+                  </button>
+                )}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -290,7 +292,7 @@ export default function ClientsGrid({
                   <CreditCard size={16} className="mr-1.5" />
                   Checkout
                 </button>
-                {client.portalActivationCode && (
+                {(!client.productType || client.productType === 'portal_hub') && client.portalActivationCode && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();

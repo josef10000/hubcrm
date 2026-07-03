@@ -270,6 +270,7 @@ export interface Client {
   id: string;
   name: string;
   email: string;
+  productType?: 'portal_hub' | 'saas_cobranca' | 'outros';
   whatsapp: string;
   status: SiteStatus;
   plan: string;
