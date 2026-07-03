@@ -44,6 +44,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.body.action === 'checkout_pay') {
       return handleCheckoutPay(req, res);
     }
+    if (req.body.action === 'support_create') {
+      return handleSupportCreate(req, res);
+    }
+    if (req.body.action === 'support_reply') {
+      return handleSupportReply(req, res);
+    }
     return handleAuth(req, res);
   }
   if (req.method === 'GET') {
@@ -67,6 +73,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     if (req.query.action === 'checkout_boleto') {
       return handleCheckoutBoleto(req, res);
+    }
+    if (req.query.action === 'support_list') {
+      return handleSupportList(req, res);
     }
     return handleFinance(req, res);
   }
@@ -1136,5 +1145,133 @@ async function handleCheckoutBoleto(req: VercelRequest, res: VercelResponse) {
     });
   } catch (error: any) {
     return safeErrorResponse(res, error, 'Erro ao carregar boleto');
+  }
+}
+
+// ============================================================
+// SUPORTE EXTERNO BILATERAL
+// ============================================================
+
+async function validateSupportAccess(req: VercelRequest) {
+  const orgId = req.method === 'POST' ? req.body.orgId : req.query.orgId;
+  const clientId = req.method === 'POST' ? req.body.clientId : req.query.clientId;
+  const token = req.method === 'POST' ? req.body.token : req.query.token;
+
+  if (!orgId || !clientId || !token) {
+    throw new AsaasApiError(400, 'Missing security parameters', 'Parâmetros de segurança ausentes');
+  }
+
+  const clientDoc = await db
+    .collection('organizations')
+    .doc(String(orgId))
+    .collection('clients')
+    .doc(String(clientId))
+    .get();
+
+  if (!clientDoc.exists) {
+    throw new AsaasApiError(404, 'Client not found in CRM', 'Cliente não cadastrado');
+  }
+
+  const clientData = clientDoc.data();
+  
+  if (!clientData?.publicToken || clientData.publicToken !== token) {
+    throw new AsaasApiError(403, 'Invalid publicToken', 'Acesso não autorizado ou link expirado');
+  }
+
+  return { clientData };
+}
+
+async function handleSupportCreate(req: VercelRequest, res: VercelResponse) {
+  try {
+    const { clientData } = await validateSupportAccess(req);
+    const { orgId, clientId, category, priority, subject, message } = req.body;
+
+    if (!category || !priority || !subject || !message) {
+      return res.status(400).json({ error: 'Parâmetros ausentes: category, priority, subject e message são obrigatórios.' });
+    }
+
+    const docRef = await db
+      .collection('organizations')
+      .doc(String(orgId))
+      .collection('supportRequests')
+      .add({
+        clientId,
+        clientName: clientData.name || '',
+        category,
+        priority,
+        message: `${subject}: ${message}`,
+        status: 'aberto',
+        origin: 'external_saas',
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+    return res.status(200).json({ success: true, requestId: docRef.id });
+  } catch (e: any) {
+    console.error('[PortalSupportCreate] Erro ao criar chamado externo:', e);
+    return res.status(e.statusCode || 500).json({ error: e.message || 'Erro interno ao processar o chamado' });
+  }
+}
+
+async function handleSupportReply(req: VercelRequest, res: VercelResponse) {
+  try {
+    await validateSupportAccess(req);
+    const { orgId, requestId, message } = req.body;
+
+    if (!requestId || !message) {
+      return res.status(400).json({ error: 'Parâmetros ausentes: requestId e message são obrigatórios.' });
+    }
+
+    await db
+      .collection('organizations')
+      .doc(String(orgId))
+      .collection('supportRequests')
+      .doc(String(requestId))
+      .update({
+        message,
+        status: 'aberto',
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+    return res.status(200).json({ success: true });
+  } catch (e: any) {
+    console.error('[PortalSupportReply] Erro ao enviar réplica:', e);
+    return res.status(e.statusCode || 500).json({ error: e.message || 'Erro interno ao atualizar o chamado' });
+  }
+}
+
+async function handleSupportList(req: VercelRequest, res: VercelResponse) {
+  try {
+    await validateSupportAccess(req);
+    const { orgId, clientId } = req.query;
+
+    const snapshot = await db
+      .collection('organizations')
+      .doc(String(orgId))
+      .collection('supportRequests')
+      .where('clientId', '==', String(clientId))
+      .orderBy('createdAt', 'desc')
+      .get();
+
+    const requests = snapshot.docs.map(doc => {
+      const data = doc.data();
+      
+      const createdAt = data.createdAt ? (data.createdAt.toDate ? data.createdAt.toDate().toISOString() : data.createdAt) : null;
+      const repliedAt = data.repliedAt ? (data.repliedAt.toDate ? data.repliedAt.toDate().toISOString() : data.repliedAt) : null;
+      const updatedAt = data.updatedAt ? (data.updatedAt.toDate ? data.updatedAt.toDate().toISOString() : data.updatedAt) : null;
+
+      return {
+        id: doc.id,
+        ...data,
+        createdAt,
+        repliedAt,
+        updatedAt
+      };
+    });
+
+    return res.status(200).json({ success: true, requests });
+  } catch (e: any) {
+    console.error('[PortalSupportList] Erro ao listar chamados externos:', e);
+    return res.status(e.statusCode || 500).json({ error: e.message || 'Erro interno ao listar os chamados' });
   }
 }
