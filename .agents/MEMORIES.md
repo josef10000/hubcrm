@@ -181,3 +181,16 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
   - **Propriedade de Identificação**: Campo `productType: 'portal_hub' | 'saas_cobranca' | 'outros'` adicionado na interface `Client` e salvo no Firestore.
   - **Filtro de Abas e Campos**: Abas exclusivas do Portal Hub ("Credenciais", "Briefing" e "Cofre da Marca") são omitidas dinamicamente do modal de cliente (`ClientModal.tsx`) para outros produtos. O mesmo ocorre para campos e atalhos na aba "Dados" e no grid de clientes (`ClientsGrid.tsx`), ocultando "Link do Site", "Link Portal", "Código de Ativação" e "Script Site Shield".
   - **Manutenção de Cobranças**: O botão de "Checkout" (link do checkout transparente do Asaas) e a gestão financeira de mensalidades continuam disponíveis para todos os clientes, independentemente do produto selecionado.
+
+---
+
+## 15. CRM Multiproduto — APIs de Suporte Externo (Passo 2)
+- **Data da Integração**: 03/07/2026
+- **Funcionalidade**: Endpoints de API seguros integrados no CRM para que outros SaaS externos criem chamados, listem chamados anteriores e enviem réplicas de forma bilateral.
+- **Decisões Técnicas**:
+  - **Autenticação Baseada em Token**: As requisições externas para suporte são assinadas com `orgId`, `clientId` e `token` (que é comparado com o `publicToken` do cliente no Firestore para garantir acesso autorizado e exclusivo).
+  - **Limitação de Serverless Functions da Vercel**: Para evitar estourar o limite de 12 serverless functions do plano Hobby da Vercel, as novas rotas de suporte foram adicionadas como subações no arquivo `api/portal_handler.ts`.
+  - **Ações Implementadas**:
+    - `POST support_create`: Cria um novo chamado com origem `external_saas` e mensagem no formato `[Assunto]: [Mensagem]`.
+    - `POST support_reply`: Permite enviar réplicas a chamados existentes e reabre-os (mudando o status para `aberto`).
+    - `GET support_list`: Retorna a listagem de chamados do cliente com Timestamps convertidos para strings ISO para evitar problemas na serialização do JSON.
