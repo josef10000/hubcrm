@@ -193,4 +193,8 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
   - **Ações Implementadas**:
     - `POST support_create`: Cria um novo chamado com origem `external_saas` e mensagem no formato `[Assunto]: [Mensagem]`.
     - `POST support_reply`: Permite enviar réplicas a chamados existentes e reabre-os (mudando o status para `aberto`).
+    - `POST support_cancel_subscription`: Exclui a assinatura e as cobranças pendentes no Asaas, atualiza o status no CRM para "Cancelado" e responde ao SaaS externo com a data limite de acesso (`accessUntil` baseado na propriedade `nextDueDate` do cliente no CRM).
     - `GET support_list`: Retorna a listagem de chamados do cliente com Timestamps convertidos para strings ISO para evitar problemas na serialização do JSON.
+  - **Sincronização de Integração (Código de Integração)**:
+    - Campo `integrationCode` exposto no modal do cliente do CRM se o produto não for Portal Hub.
+    - Ao salvar o card no CRM, o frontend dispara um Webhook `POST` em segundo plano para `https://tracker.hubsymples.com.br/api/crm-webhook` (ou a URL definida em `VITE_SAAS_WEBHOOK_URL`) sincronizando as chaves `orgId`, `clientId` e `publicToken` geradas para o SaaS de Rastreamento de forma autônoma.
