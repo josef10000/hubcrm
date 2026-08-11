@@ -284,7 +284,7 @@ export default function ClientsGrid({
                     const portalBaseUrl = import.meta.env.VITE_PORTAL_URL || window.location.origin;
                     const url = `${portalBaseUrl}/checkout-pay/${effectiveOrgId}/${client.id}/latest?token=${client.publicToken || ''}`;
                     navigator.clipboard.writeText(url);
-                    toast.success('Link do Checkout White-Label copiado!');
+                    toast.success('Link de Pagamento copiado!');
                   }}
                   className="flex-1 flex items-center justify-center py-2.5 rounded-xl bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 border border-indigo-500/30 transition-colors text-xs font-semibold"
                   title="Copiar Link de Checkout Transparente"

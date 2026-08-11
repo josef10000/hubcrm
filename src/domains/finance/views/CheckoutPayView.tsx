@@ -304,7 +304,9 @@ export default function CheckoutPayView() {
             <img src="/logo-hub.png" alt="Hub Symples" className="w-9 h-9 object-contain" />
             <div>
               <h2 className="text-sm font-black uppercase tracking-wider text-white">Hub Symples</h2>
-              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">White-Label Checkout</p>
+              <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest flex items-center gap-1 mt-0.5">
+                <ShieldCheck size={12} /> Pagamento Seguro
+              </p>
             </div>
           </div>
 

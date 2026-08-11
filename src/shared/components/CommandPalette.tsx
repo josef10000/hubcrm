@@ -67,7 +67,7 @@ export function CommandPalette() {
     { name: 'Faturamento', description: 'Integrações financeiras, faturas Asaas e extrato', path: '/billing', shortcut: 'fa', icon: CreditCard },
     { name: 'Onboarding Hub', description: 'Gerenciador de formulários e recepção de clientes', path: '/onboarding-hub', shortcut: 'on', icon: ClipboardList },
     { name: 'Contratos', description: 'Modelos de contratos ativos e assinaturas digitais', path: '/contracts', shortcut: 'co', icon: UserCheck },
-    { name: 'Fábrica de Sites & Projetos', description: 'Acompanhamento de projetos, templates white label e gerador de prompts', path: '/projects', shortcut: 'pj', icon: LayoutTemplate },
+    { name: 'Fábrica de Sites & Projetos', description: 'Acompanhamento de projetos, templates personalizados e gerador de prompts', path: '/projects', shortcut: 'pj', icon: LayoutTemplate },
     { name: 'Relatórios / Analytics', description: 'Métricas de conversão e relatórios avançados', path: '/analytics', shortcut: 'an', icon: LineChart, permission: 'VIEW_REPORTS' },
     { name: 'Gestão Financeira', description: 'Snapshot diário de DRE, fluxo de caixa e BI', path: '/finance', shortcut: 'gf', icon: DollarSign, permission: 'MANAGE_FINANCE' },
     { name: 'Minha Equipe', description: 'Controle de acessos, convites e organograma', path: '/team', shortcut: 'te', icon: Users, permission: 'MANAGE_TEAM' },

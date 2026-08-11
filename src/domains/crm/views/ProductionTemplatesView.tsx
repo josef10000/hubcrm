@@ -662,7 +662,7 @@ export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'temp
               Templates de Produção
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Mapeie templates White Label, teste visualizações dinâmicas locais e associe prompts da biblioteca direto no cliente.
+              Mapeie templates personalizados, teste visualizações dinâmicas locais e associe prompts da biblioteca direto no cliente.
             </p>
 
             <div className="flex gap-4 mt-6 border-b border-white/5 pb-1 font-bold">
@@ -846,7 +846,7 @@ export default function ProductionTemplatesView({ viewMode }: { viewMode?: 'temp
                             {template.type} — {template.niche}
                           </h3>
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                            Modo: <span className="font-medium text-gray-300">White Label</span>
+                            Modo: <span className="font-medium text-gray-300">Personalizados</span>
                           </p>
                         </div>
                         {canManage && (

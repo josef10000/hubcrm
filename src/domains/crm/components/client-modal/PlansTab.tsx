@@ -147,11 +147,11 @@ export default function PlansTab({ client, orgId }: PlansTabProps) {
                         navigator.clipboard.writeText(url);
                         toast.success('Link do Checkout copiado para a área de transferência!');
                       }}
-                      className="px-4 py-2 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 text-xs font-bold rounded-xl border border-indigo-500/30 transition-all flex items-center gap-2"
-                      title="Copiar link do checkout white-label"
+                      title="Copiar link do pagamento"
+                      className="px-3 py-2 bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 border border-indigo-500/30 rounded-xl text-xs font-medium transition-colors flex items-center gap-1.5"
                     >
-                      <Copy size={14} />
-                      Checkout White-Label
+                      <CreditCard size={14} />
+                      Link de Pagamento
                     </button>
                   )}
                 </div>

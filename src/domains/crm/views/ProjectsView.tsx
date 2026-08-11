@@ -85,7 +85,7 @@ export default function ProjectsView() {
               </div>
               <h2 className="text-3xl font-bold text-white tracking-tight">Fábrica de Sites & Projetos</h2>
             </div>
-            <p className="text-gray-400">Central de Produção, Templates White Label e Prompts Otimizados</p>
+            <p className="text-gray-400">Central de Produção, Templates Personalizados e Prompts Otimizados</p>
           </div>
 
           {activeSection === 'projects' && (
