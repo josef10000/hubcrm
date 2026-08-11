@@ -218,3 +218,20 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
       - **Isolamento de Acesso**: O backend (`api/public_checkout.ts`) **NÃO** gera credenciais de acesso ao portal e **NÃO** envia e-mails de boas-vindas do portal do cliente.
   - **Sincronização & Build**: Testes de build (`npm run build`) validados sem erros e código enviado para os repositórios remotos no GitHub.
 
+---
+
+## 17. Página de Pagamento Transparente Direta (1-Page Checkout)
+- **Data da Integração**: 11/08/2026
+- **Funcionalidade**: Reformulação completa da página pública do produto (`PublicCheckoutPage.tsx`) para um Checkout Transparente Direto em 1 única tela, sem questionários ou etapas longas de onboarding.
+- **Decisões Técnicas**:
+  - **Experiência de Compra Direta**:
+    - Substituído o fluxo antigo de 4 etapas por uma interface fluida de 2 colunas:
+      - **Coluna Esquerda (Branding & Prova Social)**: Logo em alta definição (vinda do Cloudflare R2), título da oferta, descrição, preço em destaque, benefícios inclusos com checkmarks na cor temática R2, selo de garantia incondicional, depoimento de cliente e badges de segurança SSL.
+      - **Coluna Direita (Checkout Transparente Direto)**: Dados do comprador (Nome, E-mail, WhatsApp e CPF/CNPJ) e seletor de método de pagamento por abas (PIX, Cartão de Crédito e Boleto).
+  - **Pagamento PIX Instantâneo no Próprio Checkout**:
+    - Ao selecionar PIX, a API `/api/public_checkout` comunica-se com o Asaas, obtém a imagem Base64 do QR Code e a chave Copia e Cola, e renderiza INSTANTANEAMENTE na mesma tela.
+    - O sistema ativa polling em segundo plano (`/api/checkout/info`) para identificar a confirmação do pagamento em tempo real sem exigir atualização manual do cliente.
+  - **Processamento de Cartão de Crédito e Boleto**:
+    - Abas dedicadas para pagamento transparente com cartão de crédito (com dados enviados diretamente à API do Asaas) e emissão de boleto bancário com linha digitável.
+  - **Sincronização & GitHub**: Validada compilação com `npm run build` e alterações enviadas para a branch `main` no GitHub.
+
