@@ -94,7 +94,7 @@ export function AppRouter() {
         <Route path="/portal/:orgId/:clientId/*" element={<ClientPortal />} />
         <Route path="/p/:proposalId" element={<ProposalPublicView />} />
         <Route path="/onboarding" element={<OnboardingForm />} />
-        <Route path="/checkout/:id" element={<PublicCheckoutPage />} />
+        <Route path="/checkout/:orgId" element={<PublicCheckoutPage />} />
         <Route path="/checkout-pay/:orgId/:clientId/:paymentId" element={<CheckoutPayView />} />
         <Route path="/invite/:id" element={<AcceptInviteView />} />
         <Route path="/p/asset/:orgId/:assetId" element={<AssetPublicView />} />

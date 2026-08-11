@@ -12,7 +12,8 @@ import { Offer } from '@/types';
 import { uploadImageToImgBB } from '@/lib/imgbb';
 
 export default function PublicCheckoutPage() {
-  const { orgId } = useParams<{ orgId: string }>();
+  const params = useParams<{ orgId?: string; id?: string }>();
+  const effectiveOrgId = params.orgId || params.id;
   const [searchParams] = useSearchParams();
   const requestedOfferId = searchParams.get('offerId') || searchParams.get('product') || searchParams.get('productId');
 
@@ -76,10 +77,13 @@ export default function PublicCheckoutPage() {
     document.documentElement.classList.add('dark');
     
     const fetchData = async () => {
-      if (!orgId) return;
+      if (!effectiveOrgId) {
+        setLoading(false);
+        return;
+      }
       try {
         // 1. Fetch Owner Settings
-        const settingsRef = doc(db, 'organizations', orgId, 'settings', 'preferences');
+        const settingsRef = doc(db, 'organizations', effectiveOrgId, 'settings', 'preferences');
         const docSnap = await getDoc(settingsRef);
         
         let settingsData: any = null;
@@ -101,31 +105,29 @@ export default function PublicCheckoutPage() {
           }));
         }
 
-        // 2. Fetch Active Offers for Checkout
-        const offersRef = collection(db, 'organizations', orgId, 'offers');
-        const q = query(
-          offersRef, 
-          where('active', '==', true),
-          where('displayContext', 'in', ['CHECKOUT', 'BOTH'])
-        );
-        
-        const offersSnap = await getDocs(q);
+        // 2. Fetch Active Offers (carrega a coleção e filtra na memória para evitar travamentos de índice no Firestore)
+        const offersRef = collection(db, 'organizations', effectiveOrgId, 'offers');
+        const offersSnap = await getDocs(offersRef);
         const loadedOffers: Offer[] = [];
+
         offersSnap.forEach(d => {
-          loadedOffers.push({ id: d.id, ...d.data() } as Offer);
+          const data = d.data() as Offer;
+          if (data.active !== false) {
+            loadedOffers.push({ id: d.id, ...data });
+          }
         });
         
-        // Sort by order
+        // Sort por ordem e preço
         const sorted = loadedOffers.sort((a, b) => (a.order || 0) - (b.order || 0) || a.price - b.price);
         setOffers(sorted);
         
-        // Seleção de oferta prioritária por URL ou padrão
+        // Seleção de oferta prioritária por URL ou primeira disponível
         let targetOffer: Offer | null = null;
         if (requestedOfferId) {
           targetOffer = sorted.find(o => o.id === requestedOfferId) || null;
           if (!targetOffer) {
-            // Tenta buscar no banco caso não esteja no filtro de busca
-            const singleOfferSnap = await getDoc(doc(db, 'organizations', orgId, 'offers', requestedOfferId));
+            // Tenta buscar no banco caso não esteja na listagem geral
+            const singleOfferSnap = await getDoc(doc(db, 'organizations', effectiveOrgId, 'offers', requestedOfferId));
             if (singleOfferSnap.exists()) {
               targetOffer = { id: singleOfferSnap.id, ...singleOfferSnap.data() } as Offer;
             }
@@ -152,7 +154,7 @@ export default function PublicCheckoutPage() {
       }
     };
     fetchData();
-  }, [orgId, requestedOfferId]);
+  }, [effectiveOrgId, requestedOfferId]);
 
   const validateStep = () => {
     if (step === 1) {
@@ -185,14 +187,14 @@ export default function PublicCheckoutPage() {
   };
 
   const handleSubmit = async () => {
-    if (!orgId) return;
+    if (!effectiveOrgId) return;
     setSubmitting(true);
     try {
       const response = await fetch('/api/public_checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          orgId,
+          orgId: effectiveOrgId,
           clientData,
           briefingAnswers: answers,
           contract: {
