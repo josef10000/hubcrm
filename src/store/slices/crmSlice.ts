@@ -252,14 +252,26 @@ export const createCRMSlice: StateCreator<
     if (!orgId) return;
     try {
       const id = offerData.id || doc(collection(db, 'organizations', orgId, 'offers')).id;
-      await setDoc(doc(db, 'organizations', orgId, 'offers', id), {
+      
+      const payload: any = {
         ...offerData,
         id,
-        createdAt: offerData.createdAt || Date.now()
-      }, { merge: true });
-      toast.success('Oferta salva!');
-    } catch (err) {
+        order: offerData.order !== undefined && offerData.order !== null ? Number(offerData.order) : 0,
+        price: offerData.price !== undefined && offerData.price !== null ? Number(offerData.price) : 0,
+        createdAt: offerData.createdAt || Date.now(),
+        updatedAt: Date.now()
+      };
+
+      // Remover undefined para evitar quebra no Firestore
+      const cleanData = Object.fromEntries(
+        Object.entries(payload).filter(([_, v]) => v !== undefined)
+      );
+
+      await setDoc(doc(db, 'organizations', orgId, 'offers', id), cleanData, { merge: true });
+      toast.success('Produto & Checkout salvo com sucesso!');
+    } catch (err: any) {
       logger.error("Error saving offer", { domain: 'CRM', data: err });
+      toast.error(`Erro ao salvar produto: ${err.message || 'Erro desconhecido'}`);
     }
   },
 

@@ -11,17 +11,23 @@ export function useOffers() {
   
   const firestoreQuery = useMemo(() => {
     if (!orgId) return null;
-    return query(
-      collection(db, 'organizations', orgId, 'offers'),
-      orderBy('order')
-    );
+    return collection(db, 'organizations', orgId, 'offers');
   }, [orgId]);
 
-  return useFirestoreQuery<Offer>(
+  const queryResult = useFirestoreQuery<Offer>(
     ['offers', orgId],
     firestoreQuery,
     { enabled: !!orgId }
   );
+
+  const sortedData = useMemo(() => {
+    return (queryResult.data || []).slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  }, [queryResult.data]);
+
+  return {
+    ...queryResult,
+    data: sortedData
+  };
 }
 
 export function useTags() {

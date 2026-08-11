@@ -201,18 +201,20 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 
 ---
 
-## 16. Checkout Transparente Dinâmico por Produto
+## 16. Construtor de Checkout com Live Preview, R2 & Vendas Avulsas
 - **Data da Integração**: 11/08/2026
-- **Funcionalidade**: Personalização completa de identidade visual, benefícios e contrato no Checkout Transparente para cada produto/oferta cadastrada no CRM.
+- **Funcionalidade**: Construtor completo de checkouts transparentes por produto com armazenamento no Cloudflare R2, simulador ao vivo (Live Preview), prova social (depoimentos) e suporte a Vendas Avulsas (Sem Acesso ao Portal).
 - **Decisões Técnicas**:
-  - **Interface `Offer` Expandida**: Adicionados os campos `logoUrl` (imagem de logo com fundo transparente PNG/SVG), `accentColor` (hexadecimal da cor temática do produto), `benefits` (array de strings para lista de recursos em destaque) e `customContractText` (texto de contrato/termos específicos).
-  - **Painel de Gestão de Ofertas (`OfferModal.tsx` & `ProductsView.tsx`)**:
-    - Upload direto da logo do produto com helper centralizado de ImgBB e recomendações de design.
-    - Seletor de cores temáticas com paleta rápida e caixa de texto de benefícios por quebra de linha.
-    - Botão de atalho de cópia *"Link Checkout"* para gerar URLs prontas por produto com 1 clique (`/checkout/:orgId?offerId=ID_DO_PRODUTO`).
-  - **Checkout Público (`PublicCheckoutPage.tsx`)**:
-    - Leitura de `offerId` da URL para pré-seleção automática e injeção do tema do produto.
-    - Background com brilho estético (*glow*) adaptado à cor do produto e cabeçalho com a logo específica.
-    - Renderização do card lateral de **Benefícios Inclusos no Produto** com checkmarks estilizados.
-    - **Manutenção de Credibilidade e Segurança**: Selos padronizados de **Criptografia SSL 256-bit**, ícones de **Pix**, **Cartões de Crédito** em até 12x, **Boleto** e aviso oficial de processamento seguro via **Asaas**.
+  - **Armazenamento de Mídia no Cloudflare R2**:
+    - Logos de produtos e fotos de depoimentos de clientes são salvas no seu bucket corporativo via `uploadToR2` (`/api/storage_handler`), retornando URLs públicas via CDN da Cloudflare sem expiração.
+  - **Live Preview em Tempo Real no `OfferModal.tsx`**:
+    - Layout expansível em Split-View (Formulário em 3 Abas à esquerda + Simulador do Checkout em tempo real à direita).
+    - Mudanças no nome do produto, preço, cor de tema, logo R2, benefícios, depoimentos e avisos são refletidos instantaneamente no preview sem recarregar a página.
+  - **Módulo de Prova Social & Depoimentos (`TestimonialItem`)**:
+    - Suporte ao cadastro de depoimentos de clientes (foto R2, nome, empresa/cargo, rating de 5 estrelas e comentário) exibidos no checkout.
+  - **Regra de Produto Avulso / Uso Único (`hasPortalAccess`)**:
+    - Campo `hasPortalAccess: boolean` adicionado em `Offer`. Quando definido como `false`:
+      - O checkout processa a cobrança no Asaas e cadastra a venda no CRM com a tag `isAvulso: true` e `productType: 'venda_avulsa'`.
+      - **Isolamento de Acesso**: O backend (`api/public_checkout.ts`) **NÃO** gera credenciais de acesso ao portal e **NÃO** envia e-mails de boas-vindas do portal do cliente.
+  - **Sincronização & Build**: Testes de build (`npm run build`) validados sem erros e código enviado para os repositórios remotos no GitHub.
 

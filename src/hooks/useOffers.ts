@@ -25,16 +25,24 @@ export function useOffers(userId: string, offers: Offer[], setOffers: React.Disp
       
       const offerId = offerRef.id;
       const offerToSave: any = {
+        ...offerData,
         id: offerId,
         name: offerData.name,
         type: offerData.type || 'SUBSCRIPTION',
-        price: offerData.price,
+        price: Number(offerData.price || 0),
         active: offerData.active !== undefined ? offerData.active : true,
         displayContext: offerData.displayContext || 'PORTAL',
-        order: offerData.order !== undefined ? offerData.order : 0,
+        order: offerData.order !== undefined && offerData.order !== null ? Number(offerData.order) : 0,
         description: offerData.description || '',
         isMostHired: offerData.isMostHired || false,
         details: offerData.details || '',
+        logoUrl: offerData.logoUrl || '',
+        accentColor: offerData.accentColor || '#f97316',
+        benefits: offerData.benefits || [],
+        customContractText: offerData.customContractText || '',
+        hasPortalAccess: offerData.hasPortalAccess !== undefined ? offerData.hasPortalAccess : true,
+        guaranteeText: offerData.guaranteeText || '',
+        testimonials: offerData.testimonials || [],
         createdAt: isNew ? Date.now() : offerData.createdAt || Date.now(),
       };
       if (offerData.setupPrice !== undefined) offerToSave.setupPrice = offerData.setupPrice;

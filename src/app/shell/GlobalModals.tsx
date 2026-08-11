@@ -15,7 +15,7 @@ export function GlobalModals() {
     isOfferModalOpen, setIsOfferModalOpen,
     isDeleteOfferConfirmOpen, setIsDeleteOfferConfirmOpen,
     editingClient, handleSaveClient, handleDeleteClient,
-    editingOffer, handleSaveOffer, handleDeleteOffer,
+    editingOffer, setEditingOffer, handleSaveOffer, handleDeleteOffer,
     offerToDelete, setOfferToDelete,
     onboardingQuestions, offers,
     teamProfiles, orgRoles
@@ -39,9 +39,17 @@ export function GlobalModals() {
       />
       <OfferModal
         isOpen={isOfferModalOpen}
-        onClose={() => setIsOfferModalOpen(false)}
-        onSave={handleSaveOffer}
-        onDelete={handleDeleteOffer}
+        onClose={() => { setIsOfferModalOpen(false); setEditingOffer(null); }}
+        onSave={async (data) => {
+          await handleSaveOffer(data);
+          setIsOfferModalOpen(false);
+          setEditingOffer(null);
+        }}
+        onDelete={async (id) => {
+          await handleDeleteOffer(id);
+          setIsOfferModalOpen(false);
+          setEditingOffer(null);
+        }}
         initialData={editingOffer}
       />
       <ConfirmationModal
