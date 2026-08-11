@@ -48,9 +48,14 @@ export default function ProductsView() {
                   <div>
                     <div className="flex justify-between items-start mb-2">
                       <h4 className="font-bold text-gray-900 dark:text-white text-lg">{offer.name}</h4>
-                      <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md ${offer.active ? 'bg-emerald-500/20 text-emerald-500' : 'bg-gray-500/20 text-gray-500'}`}>
-                        {offer.active ? 'Ativa' : 'Inativa'}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md ${offer.hasPortalAccess !== false ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}`}>
+                          {offer.hasPortalAccess !== false ? 'Com Portal' : 'Venda Avulsa'}
+                        </span>
+                        <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md ${offer.active ? 'bg-emerald-500/20 text-emerald-500' : 'bg-gray-500/20 text-gray-500'}`}>
+                          {offer.active ? 'Ativa' : 'Inativa'}
+                        </span>
+                      </div>
                     </div>
                     <div className="space-y-1 mb-4">
                       <p className="text-sm text-gray-600 dark:text-gray-400">

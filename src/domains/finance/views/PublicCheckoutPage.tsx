@@ -5,7 +5,7 @@ import { db } from '@/lib/firebase';
 import { 
   CheckCircle, Globe, Building2, Mail, Phone, User as UserIcon, 
   FileText, Check, ArrowRight, ArrowLeft, Loader2, Upload, 
-  ShieldCheck, Lock, CreditCard, QrCode, Sparkles 
+  ShieldCheck, Lock, CreditCard, QrCode, Sparkles, Star, Award, MessageSquare 
 } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
 import { Offer } from '@/types';
@@ -305,6 +305,42 @@ export default function PublicCheckoutPage() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Selo de Garantia e Prova Social (Depoimentos) */}
+        {(activeOffer?.guaranteeText || (activeOffer?.testimonials && activeOffer.testimonials.length > 0)) && (
+          <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {activeOffer?.guaranteeText && (
+              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center gap-3 backdrop-blur-xl">
+                <div className="p-2 bg-amber-500/20 text-amber-400 rounded-xl">
+                  <Award size={20} />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-amber-300 uppercase tracking-wider">Selo de Garantia</h4>
+                  <p className="text-xs text-gray-200">{activeOffer.guaranteeText}</p>
+                </div>
+              </div>
+            )}
+
+            {activeOffer?.testimonials && activeOffer.testimonials.length > 0 && (
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3 backdrop-blur-xl">
+                <div className="w-10 h-10 rounded-full bg-primary-500/20 text-primary-300 border border-white/10 flex items-center justify-center font-bold text-xs overflow-hidden flex-shrink-0">
+                  {activeOffer.testimonials[0].avatarUrl ? (
+                    <img src={activeOffer.testimonials[0].avatarUrl} alt={activeOffer.testimonials[0].name} className="w-full h-full object-cover" />
+                  ) : (
+                    activeOffer.testimonials[0].name.charAt(0)
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-white truncate">{activeOffer.testimonials[0].name}</span>
+                    <div className="flex text-amber-400"><Star size={10} fill="currentColor" /></div>
+                  </div>
+                  <p className="text-[11px] text-gray-300 italic line-clamp-1">"{activeOffer.testimonials[0].comment}"</p>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

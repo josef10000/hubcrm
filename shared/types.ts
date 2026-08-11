@@ -502,6 +502,15 @@ export interface Budget {
   month?: number;
 }
 
+export interface TestimonialItem {
+  id: string;
+  name: string;
+  roleCompany?: string;
+  avatarUrl?: string;
+  rating?: number;
+  comment: string;
+}
+
 export interface Offer {
   id: string;
   name: string;
@@ -520,6 +529,9 @@ export interface Offer {
   accentColor?: string;
   benefits?: string[];
   customContractText?: string;
+  hasPortalAccess?: boolean;
+  guaranteeText?: string;
+  testimonials?: TestimonialItem[];
   createdAt: number;
 }
 

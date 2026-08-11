@@ -111,6 +111,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const clientRef = db.collection('organizations').doc(orgId).collection('clients').doc();
     const annualNote = isYearly ? "\n[OBS: Plano Anual - Validade: 12 meses (Renovação Manual)]" : "";
     
+    const hasPortalAccess = offer.hasPortalAccess !== undefined ? offer.hasPortalAccess : true;
+
     await clientRef.set({
       id: clientRef.id,
       name: clientData.name,
@@ -118,10 +120,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       whatsapp: clientData.whatsapp,
       asaasCustomerId: asaasCustomer.id,
       publicToken: generatePublicToken(),
-      status: 'Em Desenvolvimento',
+      status: hasPortalAccess ? 'Em Desenvolvimento' : 'Ativo',
       paymentStatus: 'PENDING',
       plan: offer.name + (isYearly ? ' (Anual)' : ''),
       offerId: clientData.offerId,
+      hasPortalAccess: hasPortalAccess,
+      isAvulso: !hasPortalAccess,
+      productType: hasPortalAccess ? 'portal_hub' : 'venda_avulsa',
       onboardingAnswers: briefingAnswers,
       contracts: req.body.contract?.accepted ? [{
         id: `signed_${Date.now()}`,
@@ -133,7 +138,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         signatureName: req.body.contract.signatureName
       }] : [],
       notes: (briefingAnswers ? "Respostas do Briefing registradas." : "") + 
-             (req.body.contract?.accepted ? "\n[Contrato assinado digitalmente]" : "") + annualNote,
+             (req.body.contract?.accepted ? "\n[Contrato assinado digitalmente]" : "") + 
+             (!hasPortalAccess ? "\n[Venda Avulsa Pontual - Sem Portal]" : "") + annualNote,
       onboardingCompleted: true,
       createdAt: Date.now(),
       lastUpdate: Date.now(),
