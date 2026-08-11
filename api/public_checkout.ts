@@ -73,12 +73,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 4. Create Charge in Asaas
     let checkoutUrl = '';
     let currentPaymentId = '';
+    let pixData: any = null;
+    let boletoData: any = null;
+    let paymentStatusResult = 'PENDING';
     
+    const billingType = req.body.paymentMethod || 'UNDEFINED';
+
     // Yearly Subscription becomes a Single Payment as requested
     if (offer.type === 'SUBSCRIPTION' && !isYearly) {
       const subscription = await asaasRequest("/subscriptions", "POST", {
         customer: asaasCustomer.id,
-        billingType: "UNDEFINED",
+        billingType: billingType,
         value: value,
         nextDueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
         cycle: cycle,
@@ -90,6 +95,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (payments.data && payments.data.length > 0) {
         checkoutUrl = payments.data[0].invoiceUrl;
         currentPaymentId = payments.data[0].id;
+        paymentStatusResult = payments.data[0].status || 'PENDING';
       } else {
         checkoutUrl = subscription.paymentLink || '';
       }
@@ -97,7 +103,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Single Payment OR Yearly One-Time Payment
       const payment = await asaasRequest("/payments", "POST", {
         customer: asaasCustomer.id,
-        billingType: "UNDEFINED",
+        billingType: billingType,
         value: total,
         dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
         description: isYearly ? `Plano Anual: ${offer.name} (12 meses)` : `Compra: ${offer.name}`,
@@ -105,6 +111,62 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
       checkoutUrl = payment.invoiceUrl;
       currentPaymentId = payment.id;
+      paymentStatusResult = payment.status || 'PENDING';
+    }
+
+    // 4.1 Processar PIX se selecionado
+    if (billingType === 'PIX' && currentPaymentId) {
+      try {
+        const pixRes = await asaasRequest(`/payments/${currentPaymentId}/pixQrCode`, "GET");
+        if (pixRes && pixRes.encodedImage && pixRes.payload) {
+          pixData = {
+            encodedImage: pixRes.encodedImage,
+            payload: pixRes.payload,
+            expirationDate: pixRes.expirationDate
+          };
+        }
+      } catch (pixErr) {
+        console.error('[PublicCheckout] Erro ao obter PIX QR Code:', pixErr);
+      }
+    }
+
+    // 4.2 Processar CARTÃO DE CRÉDITO se dados informados
+    if (billingType === 'CREDIT_CARD' && currentPaymentId && req.body.creditCard) {
+      try {
+        const cardRes = await asaasRequest(`/payments/${currentPaymentId}/payWithCreditCard`, "POST", {
+          creditCard: req.body.creditCard,
+          creditCardHolderInfo: {
+            name: clientData.name,
+            email: clientData.email,
+            cpfCnpj: cleanCpfCnpj,
+            mobilePhone: clientData.whatsapp ? clientData.whatsapp.replace(/\D/g, '') : undefined,
+            postalCode: req.body.creditCard.postalCode || '00000000',
+            addressNumber: req.body.creditCard.addressNumber || '0'
+          }
+        });
+        if (cardRes && cardRes.status) {
+          paymentStatusResult = cardRes.status;
+        }
+      } catch (cardErr: any) {
+        console.error('[PublicCheckout] Erro ao pagar com Cartão:', cardErr);
+        return res.status(400).json({ error: `Erro no cartão: ${cardErr.message || 'Dados inválidos'}` });
+      }
+    }
+
+    // 4.3 Processar BOLETO se selecionado
+    if (billingType === 'BOLETO' && currentPaymentId) {
+      try {
+        const boletoRes = await asaasRequest(`/payments/${currentPaymentId}/identificationField`, "GET");
+        if (boletoRes && boletoRes.identificationField) {
+          boletoData = {
+            identificationField: boletoRes.identificationField,
+            barCode: boletoRes.barCode,
+            bankSlipUrl: checkoutUrl
+          };
+        }
+      } catch (bolErr) {
+        console.error('[PublicCheckout] Erro ao obter linha digitável do boleto:', bolErr);
+      }
     }
 
     // 5. Register Lead in CRM
@@ -121,13 +183,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       asaasCustomerId: asaasCustomer.id,
       publicToken: generatePublicToken(),
       status: hasPortalAccess ? 'Em Desenvolvimento' : 'Ativo',
-      paymentStatus: 'PENDING',
+      paymentStatus: paymentStatusResult,
       plan: offer.name + (isYearly ? ' (Anual)' : ''),
       offerId: clientData.offerId,
       hasPortalAccess: hasPortalAccess,
       isAvulso: !hasPortalAccess,
       productType: hasPortalAccess ? 'portal_hub' : 'venda_avulsa',
-      onboardingAnswers: briefingAnswers,
+      onboardingAnswers: briefingAnswers || {},
       contracts: req.body.contract?.accepted ? [{
         id: `signed_${Date.now()}`,
         type: 'text',
@@ -137,13 +199,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         signedAt: Date.now(),
         signatureName: req.body.contract.signatureName
       }] : [],
-      notes: (briefingAnswers ? "Respostas do Briefing registradas." : "") + 
-             (req.body.contract?.accepted ? "\n[Contrato assinado digitalmente]" : "") + 
-             (!hasPortalAccess ? "\n[Venda Avulsa Pontual - Sem Portal]" : "") + annualNote,
+      notes: (!hasPortalAccess ? "[Venda Avulsa Pontual - Sem Portal]" : "Venda via Pagamento Transparente") + annualNote,
       onboardingCompleted: true,
       createdAt: Date.now(),
       lastUpdate: Date.now(),
-      convertedVia: 'Public Checkout',
+      convertedVia: 'Pagamento Transparente',
       billingCycle: clientData.billingCycle || 'MONTHLY',
       invoiceUrl: checkoutUrl,
       currentPaymentId: currentPaymentId || '',
@@ -162,21 +222,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         `Plano ${offer.name}`,
         `Sua fatura está pronta - ${offer.name}`
       );
-      console.log(`[PublicCheckout] Automation: Welcome/Invoice email sent to ${clientData.email}`);
       
-      // Marcar evento como enviado para o webhook não duplicar
       if (currentPaymentId) {
         const eventKey = `PAYMENT_CREATED_${currentPaymentId}`;
         await clientRef.update({
           sentEvents: [eventKey],
-          welcomeEmailSent: true // Também marcamos boas-vindas como enviado
+          welcomeEmailSent: true
         });
       }
     } catch (emailErr) {
       console.error('[PublicCheckout] Email Automation Error:', emailErr);
     }
 
-    return res.status(200).json({ checkoutUrl });
+    return res.status(200).json({ 
+      success: true,
+      checkoutUrl, 
+      paymentId: currentPaymentId, 
+      clientId: clientRef.id,
+      publicToken: clientRef.id,
+      pixData, 
+      boletoData,
+      paymentStatus: paymentStatusResult
+    });
 
   } catch (error: any) {
     console.error('[PublicCheckout] Error:', error);

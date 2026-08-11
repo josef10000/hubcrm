@@ -1,15 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { 
-  CheckCircle, Globe, Building2, Mail, Phone, User as UserIcon, 
-  FileText, Check, ArrowRight, ArrowLeft, Loader2, Upload, 
-  ShieldCheck, Lock, CreditCard, QrCode, Sparkles, Star, Award, MessageSquare 
+  CheckCircle, Mail, Phone, User as UserIcon, 
+  FileText, Check, Loader2, ShieldCheck, Lock, CreditCard, QrCode, Sparkles, Star, Award, Copy
 } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
 import { Offer } from '@/types';
-import { uploadImageToImgBB } from '@/lib/imgbb';
 
 export default function PublicCheckoutPage() {
   const params = useParams<{ orgId?: string; id?: string }>();
@@ -22,58 +20,42 @@ export default function PublicCheckoutPage() {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [step, setStep] = useState(1);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
   
+  // Forma de Pagamento Transparente
+  const [paymentMethod, setPaymentMethod] = useState<'PIX' | 'CREDIT_CARD' | 'BOLETO'>('PIX');
+  
+  // Dados do Cliente Comprador
   const [clientData, setClientData] = useState({
     name: '',
     email: '',
     whatsapp: '',
     cpfCnpj: '',
-    offerId: '',
-    plan: '',
-    billingCycle: 'MONTHLY' as 'MONTHLY' | 'YEARLY'
+    billingCycle: 'MONTHLY',
+    offerId: ''
   });
-  
-  const [contractAccepted, setContractAccepted] = useState(false);
-  const [signatureName, setSignatureName] = useState('');
-  
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [uploadingFile, setUploadingFile] = useState<string | null>(null);
 
-  const handleFileUpload = async (questionId: string, file: File) => {
-    if (!orgId) return;
-    console.log(`[Checkout] Iniciando upload para pergunta: ${questionId}`, file.name);
-    setUploadingFile(questionId);
-    
-    try {
-      console.log(`[Checkout] Enviando imagem via helper padrão do ImgBB...`);
-      
-      // Utiliza o helper centralizado que já possui a chave do sistema
-      const downloadURL = await uploadImageToImgBB(file);
+  // Dados do Cartão de Crédito
+  const [cardData, setCardData] = useState({
+    holderName: '',
+    number: '',
+    expiryMonth: '',
+    expiryYear: '',
+    ccv: '',
+    installments: 1
+  });
 
-      console.log(`[Checkout] URL obtida com sucesso:`, downloadURL);
-      
-      // Acumula os URLs caso o cliente envie várias fotos na mesma pergunta
-      setAnswers(prev => {
-        const current = prev[questionId] || '';
-        if (current) {
-          return { ...prev, [questionId]: `${current}, ${downloadURL}` };
-        }
-        return { ...prev, [questionId]: downloadURL };
-      });
-      
-      toast.success('Arquivo enviado com sucesso!');
-    } catch (error: any) {
-      console.error("[Checkout] Erro crítico no upload:", error);
-      toast.error(`Erro ao enviar arquivo: ${error.message || 'Tente novamente.'}`);
-    } finally {
-      console.log(`[Checkout] Finalizando estado de upload.`);
-      setUploadingFile(null);
-    }
-  };
+  // Resultados de Pagamento Transparente
+  const [pixResult, setPixResult] = useState<{ encodedImage: string; payload: string } | null>(null);
+  const [boletoResult, setBoletoResult] = useState<{ identificationField: string; bankSlipUrl: string } | null>(null);
+  const [copiedPix, setCopiedPix] = useState(false);
+  const [copiedBoleto, setCopiedBoleto] = useState(false);
+  const [paymentId, setPaymentId] = useState<string | null>(null);
+
+  // Polling de pagamento
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // Force dark mode
     document.documentElement.classList.add('dark');
     
     const fetchData = async () => {
@@ -82,30 +64,15 @@ export default function PublicCheckoutPage() {
         return;
       }
       try {
-        // 1. Fetch Owner Settings
+        // 1. Fetch Configurações da Organização
         const settingsRef = doc(db, 'organizations', effectiveOrgId, 'settings', 'preferences');
         const docSnap = await getDoc(settingsRef);
         
-        let settingsData: any = null;
         if (docSnap.exists()) {
-          settingsData = docSnap.data();
-          setOwnerSettings(settingsData);
+          setOwnerSettings(docSnap.data());
         }
 
-        // Se não houver perguntas cadastradas, usa um padrão básico para não ficar vazio
-        if (!settingsData?.onboardingQuestions || settingsData.onboardingQuestions.length === 0) {
-          setOwnerSettings((prev: any) => ({
-            ...prev,
-            onboardingQuestions: [
-              { id: 'q1', text: 'Qual o nome da sua empresa?', type: 'text', required: true },
-              { id: 'q2', text: 'Descreva brevemente o seu negócio', type: 'textarea', required: true },
-              { id: 'q3', text: 'Quais são as suas cores preferidas?', type: 'text', required: false },
-              { id: 'q4', text: 'Logo e Imagens de Referência', type: 'file', required: false }
-            ]
-          }));
-        }
-
-        // 2. Fetch Active Offers (carrega a coleção e filtra na memória para evitar travamentos de índice no Firestore)
+        // 2. Fetch Ofertas Ativas
         const offersRef = collection(db, 'organizations', effectiveOrgId, 'offers');
         const offersSnap = await getDocs(offersRef);
         const loadedOffers: Offer[] = [];
@@ -117,16 +84,13 @@ export default function PublicCheckoutPage() {
           }
         });
         
-        // Sort por ordem e preço
         const sorted = loadedOffers.sort((a, b) => (a.order || 0) - (b.order || 0) || a.price - b.price);
         setOffers(sorted);
         
-        // Seleção de oferta prioritária por URL ou primeira disponível
         let targetOffer: Offer | null = null;
         if (requestedOfferId) {
           targetOffer = sorted.find(o => o.id === requestedOfferId) || null;
           if (!targetOffer) {
-            // Tenta buscar no banco caso não esteja na listagem geral
             const singleOfferSnap = await getDoc(doc(db, 'organizations', effectiveOrgId, 'offers', requestedOfferId));
             if (singleOfferSnap.exists()) {
               targetOffer = { id: singleOfferSnap.id, ...singleOfferSnap.data() } as Offer;
@@ -148,7 +112,7 @@ export default function PublicCheckoutPage() {
         }
 
       } catch (error) {
-        console.error("Error fetching checkout data:", error);
+        console.error("Erro ao carregar dados:", error);
       } finally {
         setLoading(false);
       }
@@ -156,38 +120,67 @@ export default function PublicCheckoutPage() {
     fetchData();
   }, [effectiveOrgId, requestedOfferId]);
 
-  const validateStep = () => {
-    if (step === 1) {
-      if (!clientData.name || !clientData.email || !clientData.whatsapp || !clientData.cpfCnpj) {
-        toast.error('Preencha os campos obrigatórios (Nome, E-mail, WhatsApp e CPF/CNPJ).');
-        return false;
-      }
-    }
-    if (step === 2 && ownerSettings?.onboardingQuestions) {
-      for (const q of ownerSettings.onboardingQuestions) {
-        if (q.required && !answers[q.id]) {
-          toast.error(`A pergunta "${q.text}" é obrigatória.`);
-          return false;
+  // Polling para checar se o PIX foi pago
+  useEffect(() => {
+    if (!paymentId || paymentSuccess) return;
+
+    pollingRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/checkout/info?orgId=${effectiveOrgId}&clientId=temp&paymentId=${paymentId}&token=temp`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.status === 'RECEIVED' || data.status === 'CONFIRMED') {
+            setPaymentSuccess(true);
+            toast.success('Pagamento confirmado com sucesso!');
+            if (pollingRef.current) clearInterval(pollingRef.current);
+          }
         }
+      } catch (e) {
+        // Silencioso
       }
-    }
-    if (step === 3) {
-      if (!contractAccepted || !signatureName) {
-        toast.error('Você precisa aceitar os termos do contrato e preencher seu nome para continuar.');
-        return false;
-      }
-    }
-    if (step === 4) {
-      if (!clientData.offerId) {
-        toast.error('Por favor, selecione um plano para continuar.');
-        return false;
-      }
-    }
-    return true;
+    }, 5000);
+
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, [paymentId, paymentSuccess, effectiveOrgId]);
+
+  const activeOffer = offers.find(o => o.id === clientData.offerId) || selectedOffer || offers[0];
+  const logoToDisplay = activeOffer?.logoUrl || ownerSettings?.logoUrl || "https://i.imgur.com/zCvL7xy.png";
+  const customAccentColor = activeOffer?.accentColor || '#f97316';
+
+  const handleCopyPix = () => {
+    if (!pixResult?.payload) return;
+    navigator.clipboard.writeText(pixResult.payload);
+    setCopiedPix(true);
+    toast.success('Chave PIX Copia e Cola copiada para a área de transferência!');
+    setTimeout(() => setCopiedPix(false), 3000);
   };
 
-  const handleSubmit = async () => {
-    if (!effectiveOrgId) return;
+  const handleCopyBoleto = () => {
+    if (!boletoResult?.identificationField) return;
+    navigator.clipboard.writeText(boletoResult.identificationField);
+    setCopiedBoleto(true);
+    toast.success('Linha digitável do boleto copiada!');
+    setTimeout(() => setCopiedBoleto(false), 3000);
+  };
+
+  const handleProcessPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!effectiveOrgId || !activeOffer) return;
+
+    if (!clientData.name?.trim() || !clientData.email?.trim() || !clientData.whatsapp?.trim() || !clientData.cpfCnpj?.trim()) {
+      toast.error('Por favor, preencha todos os dados pessoais obrigatórios.');
+      return;
+    }
+
+    if (paymentMethod === 'CREDIT_CARD') {
+      if (!cardData.number || !cardData.holderName || !cardData.expiryMonth || !cardData.expiryYear || !cardData.ccv) {
+        toast.error('Preencha todos os dados do cartão de crédito.');
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
       const response = await fetch('/api/public_checkout', {
@@ -195,557 +188,529 @@ export default function PublicCheckoutPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           orgId: effectiveOrgId,
-          clientData,
-          briefingAnswers: answers,
-          contract: {
-            accepted: contractAccepted,
-            signatureName,
-            signedAt: new Date().toISOString(),
-            content: ownerSettings?.defaultContractText
-          }
+          clientData: {
+            ...clientData,
+            offerId: activeOffer.id,
+            name: clientData.name,
+            email: clientData.email,
+            whatsapp: clientData.whatsapp,
+            cpfCnpj: clientData.cpfCnpj,
+            billingCycle: clientData.billingCycle
+          },
+          paymentMethod,
+          creditCard: paymentMethod === 'CREDIT_CARD' ? {
+            holderName: cardData.holderName,
+            number: cardData.number.replace(/\D/g, ''),
+            expiryMonth: cardData.expiryMonth,
+            expiryYear: cardData.expiryYear,
+            ccv: cardData.ccv
+          } : undefined
         })
       });
 
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Erro ao processar checkout');
+      if (!response.ok) throw new Error(result.error || 'Erro ao processar pagamento');
 
-      toast.success('Cadastro realizado! Redirecionando para o pagamento...');
-      setTimeout(() => {
+      if (result.paymentId) setPaymentId(result.paymentId);
+
+      if (paymentMethod === 'PIX' && result.pixData) {
+        setPixResult(result.pixData);
+        toast.success('QR Code e Chave PIX gerados com sucesso!');
+      } else if (paymentMethod === 'CREDIT_CARD') {
+        if (result.paymentStatus === 'CONFIRMED' || result.paymentStatus === 'RECEIVED') {
+          setPaymentSuccess(true);
+          toast.success('Pagamento no cartão aprovado com sucesso!');
+        } else {
+          toast.success('Transação enviada para processamento!');
+        }
+      } else if (paymentMethod === 'BOLETO' && result.boletoData) {
+        setBoletoResult(result.boletoData);
+        toast.success('Boleto bancário gerado!');
+      } else if (result.checkoutUrl) {
         window.location.href = result.checkoutUrl;
-      }, 2000);
+      }
+
     } catch (error: any) {
-      console.error("Checkout Error:", error);
-      toast.error(error.message);
+      console.error("Erro no pagamento:", error);
+      toast.error(error.message || 'Falha ao processar o pagamento.');
+    } finally {
       setSubmitting(false);
     }
   };
 
-  // Define a cor de destaque dinâmica do produto selecionado
-  const activeOffer = offers.find(o => o.id === clientData.offerId) || selectedOffer || offers[0];
-  const logoToDisplay = activeOffer?.logoUrl || ownerSettings?.logoUrl || "https://i.imgur.com/zCvL7xy.png";
-  const customAccentColor = activeOffer?.accentColor || '#f97316';
-  const contractTextToDisplay = activeOffer?.customContractText || ownerSettings?.defaultContractText;
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#030712] flex items-center justify-center">
-        <Loader2 className="animate-spin text-primary-500" size={48} />
+      <div className="min-h-screen bg-[#030712] flex flex-col items-center justify-center gap-3">
+        <Loader2 className="animate-spin text-primary-500" size={44} />
+        <span className="text-gray-400 text-xs font-medium uppercase tracking-widest">Carregando Página de Pagamento...</span>
+      </div>
+    );
+  }
+
+  // TELA DE SUCESSO DO PAGAMENTO
+  if (paymentSuccess) {
+    return (
+      <div className="min-h-screen bg-[#030712] flex items-center justify-center p-4">
+        <div className="bg-[#0b0f19] border border-white/10 rounded-3xl p-8 max-w-lg w-full text-center space-y-6 shadow-2xl backdrop-blur-xl">
+          <div className="w-20 h-20 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto border border-emerald-500/30">
+            <CheckCircle size={48} />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-extrabold text-white">Pagamento Confirmado!</h2>
+            <p className="text-gray-300 text-sm">
+              Obrigado! Seu pagamento para <strong style={{ color: customAccentColor }}>{activeOffer?.name}</strong> foi identificado com sucesso.
+            </p>
+          </div>
+          <div className="p-4 bg-white/5 border border-white/10 rounded-2xl text-left text-xs space-y-2 text-gray-300">
+            <p><strong className="text-white">Cliente:</strong> {clientData.name}</p>
+            <p><strong className="text-white">E-mail:</strong> {clientData.email}</p>
+            <p><strong className="text-white">Produto:</strong> {activeOffer?.name}</p>
+            <p><strong className="text-white">Valor:</strong> R$ {activeOffer?.price?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+          </div>
+          <p className="text-xs text-gray-500">Uma cópia do comprovante foi enviada para o seu e-mail.</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#030712] py-12 px-4 sm:px-6 lg:px-8 font-sans text-gray-100 relative overflow-hidden">
+    <div className="min-h-screen bg-[#030712] py-8 sm:py-12 px-4 sm:px-6 lg:px-8 font-sans text-gray-100 relative overflow-hidden">
       <Toaster theme="dark" position="top-right" />
-      
-      {/* Background Glows com Cor Dinâmica do Produto */}
+
+      {/* Glow Ambient Estético com a Cor do Produto */}
       <div 
-        className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full blur-[140px] pointer-events-none opacity-20 transition-all duration-700"
+        className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full blur-[160px] pointer-events-none opacity-20 transition-all duration-700"
         style={{ backgroundColor: customAccentColor }}
       />
       <div 
-        className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full blur-[140px] pointer-events-none opacity-15 transition-all duration-700"
+        className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full blur-[160px] pointer-events-none opacity-15 transition-all duration-700"
         style={{ backgroundColor: customAccentColor }}
       />
 
-      <div className="max-w-5xl mx-auto relative z-10">
-        {/* Cabeçalho de Branding do Produto / Org */}
-        <div className="text-center mb-12">
-          <div className="flex justify-center mb-6">
-            <div className="p-4 rounded-3xl bg-black/40 border border-white/10 backdrop-blur-xl shadow-2xl inline-flex items-center justify-center max-w-xs transition-all hover:scale-105">
-              <img 
-                src={logoToDisplay} 
-                alt={activeOffer?.name || ownerSettings?.companyName || "Logo"} 
-                className="h-20 w-auto object-contain max-h-24 filter drop-shadow-xl" 
-                referrerPolicy="no-referrer" 
-              />
-            </div>
+      <div className="max-w-6xl mx-auto relative z-10">
+        
+        {/* Cabeçalho da Empresa */}
+        <div className="flex justify-center mb-8">
+          <div className="p-3 rounded-2xl bg-black/40 border border-white/10 backdrop-blur-xl shadow-2xl inline-flex items-center justify-center max-w-xs transition-all hover:scale-105">
+            <img 
+              src={logoToDisplay} 
+              alt={activeOffer?.name || ownerSettings?.companyName || "Logo"} 
+              className="h-16 w-auto object-contain max-h-20 filter drop-shadow-xl" 
+              referrerPolicy="no-referrer" 
+            />
           </div>
-
-          {activeOffer?.name && (
-            <span 
-              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-3 border shadow-sm"
-              style={{ 
-                backgroundColor: `${customAccentColor}20`, 
-                borderColor: `${customAccentColor}50`, 
-                color: customAccentColor 
-              }}
-            >
-              <Sparkles size={14} />
-              {activeOffer.name}
-            </span>
-          )}
-
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-3 tracking-tight">
-            {activeOffer?.name ? activeOffer.name : (ownerSettings?.checkoutTitle || 'Abertura de Demanda')}
-          </h1>
-          <p className="text-gray-400 max-w-xl mx-auto text-sm sm:text-base">
-            {activeOffer?.description || ownerSettings?.checkoutDescription || 'Preencha os dados abaixo para formalizar o pedido e liberar a sua assinatura.'}
-          </p>
         </div>
 
-        {/* Banner de Benefícios do Produto Selecionado (se houver) */}
-        {activeOffer?.benefits && activeOffer.benefits.length > 0 && (
-          <div 
-            className="mb-8 p-5 rounded-2xl border backdrop-blur-xl transition-all shadow-xl"
-            style={{ 
-              backgroundColor: `${customAccentColor}10`, 
-              borderColor: `${customAccentColor}30` 
-            }}
-          >
-            <h3 className="text-xs font-bold uppercase tracking-wider mb-3 flex items-center gap-2" style={{ color: customAccentColor }}>
-              <ShieldCheck size={16} />
-              Recursos e Benefícios Inclusos no {activeOffer.name}:
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {activeOffer.benefits.map((benefit, idx) => (
-                <div key={idx} className="flex items-start gap-2 text-xs text-gray-200">
-                  <div className="mt-0.5 rounded-full p-0.5" style={{ backgroundColor: `${customAccentColor}30`, color: customAccentColor }}>
-                    <Check size={12} />
-                  </div>
-                  <span>{benefit}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Selo de Garantia e Prova Social (Depoimentos) */}
-        {(activeOffer?.guaranteeText || (activeOffer?.testimonials && activeOffer.testimonials.length > 0)) && (
-          <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-            {activeOffer?.guaranteeText && (
-              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center gap-3 backdrop-blur-xl">
-                <div className="p-2 bg-amber-500/20 text-amber-400 rounded-xl">
-                  <Award size={20} />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-amber-300 uppercase tracking-wider">Selo de Garantia</h4>
-                  <p className="text-xs text-gray-200">{activeOffer.guaranteeText}</p>
-                </div>
-              </div>
-            )}
-
-            {activeOffer?.testimonials && activeOffer.testimonials.length > 0 && (
-              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3 backdrop-blur-xl">
-                <div className="w-10 h-10 rounded-full bg-primary-500/20 text-primary-300 border border-white/10 flex items-center justify-center font-bold text-xs overflow-hidden flex-shrink-0">
-                  {activeOffer.testimonials[0].avatarUrl ? (
-                    <img src={activeOffer.testimonials[0].avatarUrl} alt={activeOffer.testimonials[0].name} className="w-full h-full object-cover" />
-                  ) : (
-                    activeOffer.testimonials[0].name.charAt(0)
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white truncate">{activeOffer.testimonials[0].name}</span>
-                    <div className="flex text-amber-400"><Star size={10} fill="currentColor" /></div>
-                  </div>
-                  <p className="text-[11px] text-gray-300 italic line-clamp-1">"{activeOffer.testimonials[0].comment}"</p>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Steps Indicator */}
-        <nav className="flex items-center justify-center gap-4 mb-12" aria-label="Progresso do Checkout">
-          {[1, 2, 3, 4].map((s) => {
-            const isActive = step >= s;
-            return (
-              <div key={s} className="flex items-center gap-2" aria-current={step === s ? 'step' : undefined}>
-                <div 
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-300 ${isActive ? 'text-white shadow-lg' : 'bg-white/5 text-gray-500 border border-white/10'}`}
-                  style={isActive ? { backgroundColor: customAccentColor, boxShadow: `0 0 20px ${customAccentColor}40` } : {}}
-                  aria-label={`Etapa ${s}`}
+        {/* LAYOUT DE 2 COLUNAS: RESUMO DA OFERTA (ESQUERDA) + CHECKOUT TRANSPARENTE (DIREITA) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* COLUNA ESQUERDA: Detalhes do Produto, Benefícios & Prova Social */}
+          <div className="lg:col-span-5 space-y-6">
+            <div className="bg-[#0b0f19]/80 border border-white/10 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl space-y-6">
+              
+              <div>
+                <span 
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-3 border shadow-sm"
+                  style={{ backgroundColor: `${customAccentColor}20`, borderColor: `${customAccentColor}50`, color: customAccentColor }}
                 >
-                  {step > s ? <Check size={18} aria-hidden="true" /> : s}
-                </div>
-                {s < 4 && (
-                  <div 
-                    className="w-8 h-px transition-colors duration-300"
-                    style={{ backgroundColor: step > s ? customAccentColor : 'rgba(255,255,255,0.1)' }} 
-                    aria-hidden="true" 
-                  />
-                )}
+                  <Sparkles size={12} />
+                  {activeOffer?.type === 'SUBSCRIPTION' ? 'Plano de Assinatura' : 'Pagamento Único'}
+                </span>
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                  {activeOffer?.name || ownerSettings?.checkoutTitle || 'Abertura de Demanda'}
+                </h1>
+                <p className="text-gray-400 text-xs sm:text-sm mt-2 leading-relaxed">
+                  {activeOffer?.description || ownerSettings?.checkoutDescription || 'Preencha os dados ao lado para concluir o pagamento de forma rápida e segura.'}
+                </p>
               </div>
-            );
-          })}
-        </nav>
 
-        <div className="bg-white/5 backdrop-blur-2xl border border-white/10 p-8 rounded-3xl shadow-2xl relative">
-          {step === 1 && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
-                <UserIcon className="w-5 h-5 text-primary-500" />
-                Seus Dados
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="md:col-span-2">
-                  <label htmlFor="checkout-name" className="block text-sm font-medium text-gray-300 mb-2">Nome Completo / Empresa *</label>
-                  <div className="relative">
-                    <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" aria-hidden="true" />
-                    <input
-                      id="checkout-name"
-                      type="text"
-                      required
-                      aria-required="true"
-                      value={clientData.name}
-                      onChange={(e) => setClientData({...clientData, name: e.target.value})}
-                      className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary-500 transition-all"
-                      placeholder="Nome ou Razão Social"
-                    />
-                  </div>
-                </div>
+              {/* Preço em Destaque */}
+              <div 
+                className="p-5 rounded-2xl border backdrop-blur-xl flex items-baseline justify-between"
+                style={{ backgroundColor: `${customAccentColor}10`, borderColor: `${customAccentColor}30` }}
+              >
                 <div>
-                  <label htmlFor="checkout-email" className="block text-sm font-medium text-gray-300 mb-2">E-mail *</label>
-                  <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" aria-hidden="true" />
-                    <input
-                      id="checkout-email"
-                      type="email"
-                      required
-                      aria-required="true"
-                      value={clientData.email}
-                      onChange={(e) => setClientData({...clientData, email: e.target.value})}
-                      className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary-500 transition-all"
-                      placeholder="contato@exemplo.com"
-                    />
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block mb-0.5">Valor do Investimento</span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-xs text-gray-400 font-medium">R$</span>
+                    <span className="text-3xl font-extrabold text-white tracking-tight">
+                      {(activeOffer?.price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </span>
+                    {activeOffer?.type === 'SUBSCRIPTION' && <span className="text-xs text-gray-400 font-medium">/mês</span>}
                   </div>
                 </div>
-                <div>
-                  <label htmlFor="checkout-whatsapp" className="block text-sm font-medium text-gray-300 mb-2">WhatsApp *</label>
-                  <div className="relative">
-                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" aria-hidden="true" />
-                    <input
-                      id="checkout-whatsapp"
-                      type="text"
-                      required
-                      aria-required="true"
-                      value={clientData.whatsapp}
-                      onChange={(e) => setClientData({...clientData, whatsapp: e.target.value})}
-                      className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary-500 transition-all"
-                      placeholder="(00) 00000-0000"
-                    />
+                {activeOffer?.setupPrice && activeOffer.setupPrice > 0 ? (
+                  <div className="text-right">
+                    <span className="text-[10px] text-gray-400 block font-medium">Taxa de Setup</span>
+                    <span className="text-sm font-bold text-gray-200">+ R$ {activeOffer.setupPrice.toLocaleString('pt-BR')}</span>
                   </div>
-                </div>
-                <div className="md:col-span-2">
-                  <label htmlFor="checkout-cpf-cnpj" className="block text-sm font-medium text-gray-300 mb-2">CPF ou CNPJ *</label>
-                  <div className="relative">
-                    <FileText className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" aria-hidden="true" />
-                    <input
-                      id="checkout-cpf-cnpj"
-                      type="text"
-                      required
-                      aria-required="true"
-                      value={clientData.cpfCnpj}
-                      onChange={(e) => setClientData({...clientData, cpfCnpj: e.target.value})}
-                      className="w-full pl-12 pr-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary-500 transition-all"
-                      placeholder="Somente números"
-                    />
-                  </div>
-                </div>
+                ) : null}
               </div>
-            </div>
-          )}
 
-          {step === 2 && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-              <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-primary-500" />
-                Briefing do Projeto
-              </h2>
-              <div className="space-y-6">
-                {(ownerSettings?.onboardingQuestions || []).map((q: any) => (
-                  <div key={q.id}>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      {q.text.toLowerCase().includes('logo') ? 'Logo e Imagens do Site' : q.text} {q.required && <span className="text-primary-500">*</span>}
-                    </label>
-                    {q.type === 'textarea' ? (
-                      <textarea
-                        value={answers[q.id] || ''}
-                        onChange={(e) => setAnswers({...answers, [q.id]: e.target.value})}
-                        className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary-500 transition-all h-32 resize-none"
-                      />
-                    ) : q.type === 'select' ? (
-                      <select
-                        value={answers[q.id] || ''}
-                        onChange={(e) => setAnswers({...answers, [q.id]: e.target.value})}
-                        className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary-500 transition-all appearance-none"
-                      >
-                        <option value="">Selecione...</option>
-                        {q.options?.split(',').map((opt: string) => <option key={opt} value={opt.trim()}>{opt.trim()}</option>)}
-                      </select>
-                    ) : q.type === 'file' ? (
-                      <div className="flex flex-col gap-2">
-                        {answers[q.id] ? (
-                          <div className="flex items-center gap-3 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl relative group">
-                            <CheckCircle className="text-emerald-500 w-5 h-5 flex-shrink-0" />
-                            <span className="text-emerald-400 text-sm truncate flex-1">
-                              {answers[q.id].split(',').length} arquivo(s) enviado(s)
-                            </span>
-                            <input
-                              type="file"
-                              multiple
-                              onChange={async (e) => {
-                                const files = Array.from(e.target.files || []);
-                                for (const file of files) {
-                                  await handleFileUpload(q.id, file);
-                                }
-                              }}
-                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                              disabled={uploadingFile === q.id}
-                              title="Adicionar mais arquivos"
-                            />
-                            <button 
-                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setAnswers({...answers, [q.id]: ''}); }}
-                              className="text-gray-400 hover:text-white transition-colors relative z-20"
-                            >
-                              Limpar
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="relative group">
-                            <input
-                              type="file"
-                              multiple
-                              onChange={async (e) => {
-                                const files = Array.from(e.target.files || []);
-                                for (const file of files) {
-                                  await handleFileUpload(q.id, file);
-                                }
-                              }}
-                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                              disabled={uploadingFile === q.id}
-                            />
-                            <div className={`w-full px-4 py-6 border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center gap-3 transition-all ${uploadingFile === q.id ? 'bg-primary-500/5 border-primary-500/50' : 'bg-black/40 group-hover:border-white/20'}`}>
-                              {uploadingFile === q.id ? (
-                                <>
-                                  <Loader2 className="animate-spin text-primary-500" size={24} />
-                                  <span className="text-sm text-gray-400">Subindo arquivo...</span>
-                                </>
-                              ) : (
-                                <>
-                                  <div className="p-3 bg-white/5 rounded-full group-hover:bg-white/10 transition-colors">
-                                    <Upload className="text-gray-400 group-hover:text-white" size={24} />
-                                  </div>
-                                  <div className="text-center">
-                                    <span className="text-sm text-white font-medium">Clique para escolher o arquivo</span>
-                                    <p className="text-xs text-gray-500 mt-1">Imagens (.jpg, .png) ou PDF</p>
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        )}
+              {/* Benefícios Inclusos */}
+              {activeOffer?.benefits && activeOffer.benefits.length > 0 && (
+                <div className="space-y-3 pt-2">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-gray-300 flex items-center gap-2">
+                    <ShieldCheck size={14} style={{ color: customAccentColor }} />
+                    O que está incluso:
+                  </h4>
+                  <div className="space-y-2">
+                    {activeOffer.benefits.map((benefit, idx) => (
+                      <div key={idx} className="flex items-start gap-2.5 text-xs text-gray-200">
+                        <div className="mt-0.5 rounded-full p-0.5 flex-shrink-0" style={{ backgroundColor: `${customAccentColor}30`, color: customAccentColor }}>
+                          <Check size={12} />
+                        </div>
+                        <span className="leading-snug">{benefit}</span>
                       </div>
-                    ) : (
-                      <input
-                        type="text"
-                        value={answers[q.id] || ''}
-                        onChange={(e) => setAnswers({...answers, [q.id]: e.target.value})}
-                        className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary-500 transition-all"
-                      />
-                    )}
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {step === 3 && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-              <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-primary-500" />
-                Contrato de Prestação de Serviços
-              </h2>
-              <div className="bg-black/40 border border-white/10 rounded-2xl p-6 h-[400px] overflow-y-auto custom-scrollbar text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-mono italic">
-                {contractTextToDisplay || `CONTRATO DE PRESTAÇÃO DE SERVIÇOS
-
-1. OBJETO DO CONTRATO
-O presente instrumento tem como objeto a prestação de serviços digitais acordados entre as partes no plano ou produto selecionado.
-
-2. PRAZOS E ENTREGAS
-As entregas serão realizadas conforme o cronograma acordado entre o contratante e o contratado.
-
-3. PAGAMENTOS E CANCELAMENTOS
-Em caso de suspensão ou atraso no pagamento, o serviço poderá ser suspenso após notificação.`}
-              </div>
-              
-              <div className="space-y-4 pt-4">
-                <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <label htmlFor="checkout-signature" className="block text-sm font-medium text-gray-300 mb-2">Nome Completo (Assinatura Digital)</label>
-                    <input
-                      id="checkout-signature"
-                      type="text"
-                      value={signatureName}
-                      onChange={(e) => setSignatureName(e.target.value)}
-                      className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary-500 transition-all placeholder:text-gray-600"
-                      placeholder="Digite seu nome completo como assinatura"
-                    />
-                  </div>
-                </div>
-
-                <label htmlFor="checkout-contract-check" className="flex items-center gap-3 p-4 bg-primary-500/5 border border-primary-500/20 rounded-xl cursor-pointer group transition-all hover:bg-primary-500/10 active:scale-[0.99]">
-                  <input
-                    id="checkout-contract-check"
-                    type="checkbox"
-                    checked={contractAccepted}
-                    onChange={(e) => setContractAccepted(e.target.checked)}
-                    className="w-5 h-5 rounded border-white/10 text-primary-500 focus:ring-primary-500 bg-black/40"
-                  />
-                  <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
-                    Li e concordo integralmente com os termos do contrato acima citado.
-                  </span>
-                </label>
-              </div>
-            </div>
-          )}
-
-          {step === 4 && (
-            <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-              <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-primary-500" />
-                Selecione o Escopo da Demanda
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {offers.length > 0 ? (
-                    offers.map((offer) => {
-                      const isYearly = clientData.billingCycle === 'YEARLY' && offer.type === 'SUBSCRIPTION';
-                      const displayPrice = isYearly ? (offer.price * 12 * 0.85) : offer.price;
-                      
-                      return (
-                        <button
-                          key={offer.id}
-                          onClick={() => setClientData({...clientData, offerId: offer.id, plan: offer.name })}
-                          className={`p-6 rounded-2xl border transition-all text-left flex flex-col relative ${clientData.offerId === offer.id ? 'bg-primary-500/10 border-primary-500 shadow-lg shadow-primary-500/20' : 'bg-black/40 border-white/10 hover:border-white/20'}`}
-                        >
-                          <p className="font-bold text-xl mb-1">{offer.name}</p>
-                          <p className="text-xs text-gray-400 mb-3">
-                            {offer.type === 'SUBSCRIPTION' 
-                              ? (isYearly ? 'Pagamento Único (Anual)' : 'Assinatura Mensal') 
-                              : 'Pagamento Único'}
-                          </p>
-                          
-                          {offer.description && (
-                            <p className="text-xs text-gray-500 mb-4 line-clamp-3 italic">
-                              "{offer.description}"
-                            </p>
-                          )}
-                          
-                          <div className="mt-auto">
-                            <div className="flex items-baseline gap-1">
-                              <span className="text-2xl font-bold text-white">
-                                R$ {displayPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                              </span>
-                              {offer.type === 'SUBSCRIPTION' && !isYearly && <span className="text-gray-500 text-xs">/mês</span>}
-                              {isYearly && <span className="text-primary-500 text-[10px] font-bold ml-1">-15% OFF</span>}
-                            </div>
-                            
-                            {offer.setupPrice ? (
-                              <p className="text-[10px] text-primary-400/80 mt-1">+ R$ {offer.setupPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} de setup</p>
-                            ) : null}
-                          </div>
-                          
-                          {clientData.offerId === offer.id && <div className="absolute top-4 right-4 text-primary-500"><Check size={20} /></div>}
-                        </button>
-                      );
-                    })
-                ) : (
-                  <div className="md:col-span-2 p-8 text-center bg-white/5 rounded-2xl border border-dashed border-white/10">
-                    <p className="text-gray-400">Nenhum plano disponível no momento.</p>
-                  </div>
-                )}
-              </div>
-
-              {offers.find(o => o.id === clientData.offerId)?.type === 'SUBSCRIPTION' && (
-                <div className="flex bg-black/40 p-1 rounded-xl border border-white/10 max-w-xs mx-auto">
-                  <button
-                    onClick={() => setClientData({...clientData, billingCycle: 'MONTHLY'})}
-                    className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${clientData.billingCycle === 'MONTHLY' ? 'bg-primary-500 text-white' : 'text-gray-400'}`}
-                  >
-                    Mensal
-                  </button>
-                  <button
-                    onClick={() => setClientData({...clientData, billingCycle: 'YEARLY'})}
-                    className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${clientData.billingCycle === 'YEARLY' ? 'bg-primary-500 text-white' : 'text-gray-400'}`}
-                  >
-                    Anual (-15%)
-                  </button>
                 </div>
               )}
+
+              {/* Selo de Garantia */}
+              {activeOffer?.guaranteeText && (
+                <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center gap-3">
+                  <div className="p-2.5 bg-amber-500/20 text-amber-400 rounded-xl flex-shrink-0">
+                    <Award size={20} />
+                  </div>
+                  <div>
+                    <h5 className="text-[10px] font-extrabold text-amber-300 uppercase tracking-wider">Garantia Assegurada</h5>
+                    <p className="text-xs text-gray-200 mt-0.5">{activeOffer.guaranteeText}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Depoimento de Prova Social */}
+              {activeOffer?.testimonials && activeOffer.testimonials.length > 0 && (
+                <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-primary-500/20 text-primary-300 border border-white/10 flex items-center justify-center font-bold text-xs overflow-hidden flex-shrink-0">
+                      {activeOffer.testimonials[0].avatarUrl ? (
+                        <img src={activeOffer.testimonials[0].avatarUrl} alt={activeOffer.testimonials[0].name} className="w-full h-full object-cover" />
+                      ) : (
+                        activeOffer.testimonials[0].name.charAt(0)
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-white truncate">{activeOffer.testimonials[0].name}</span>
+                        <div className="flex text-amber-400"><Star size={10} fill="currentColor" /></div>
+                      </div>
+                      <span className="text-[10px] text-gray-400 block truncate">{activeOffer.testimonials[0].roleCompany}</span>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-gray-300 italic">"{activeOffer.testimonials[0].comment}"</p>
+                </div>
+              )}
+
+              {/* Selos de Confiança no Rodapé Esquerdo */}
+              <div className="pt-4 border-t border-white/10 flex items-center justify-between text-[10px] text-gray-400">
+                <span className="flex items-center gap-1"><Lock size={12} className="text-emerald-400" /> SSL 256-bit</span>
+                <span className="flex items-center gap-1"><QrCode size={12} className="text-emerald-400" /> Pix / Cartão</span>
+                <span className="flex items-center gap-1"><ShieldCheck size={12} className="text-primary-400" /> Asaas</span>
+              </div>
+
             </div>
-          )}
-
-          <div className="flex justify-between mt-12 pt-8 border-t border-white/10">
-            {step > 1 ? (
-              <button
-                onClick={() => setStep(step - 1)}
-                className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
-                disabled={submitting}
-                aria-label="Voltar para a etapa anterior"
-              >
-                <ArrowLeft size={18} aria-hidden="true" />
-                Voltar
-              </button>
-            ) : <div />}
-            
-            {step < 4 ? (
-              <button
-                onClick={() => {
-                  if (validateStep()) setStep(step + 1);
-                }}
-                style={{ backgroundColor: customAccentColor }}
-                className="text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-black/40"
-                aria-label="Continuar para o próximo passo"
-              >
-                Continuar
-                <ArrowRight size={18} aria-hidden="true" />
-              </button>
-            ) : (
-              <button
-                onClick={handleSubmit}
-                disabled={submitting || offers.length === 0}
-                style={{ backgroundColor: customAccentColor }}
-                className="text-white px-10 py-3 rounded-xl font-bold flex items-center gap-2 transition-all hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 shadow-xl shadow-black/40"
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="animate-spin" size={18} />
-                    Processando...
-                  </>
-                ) : (
-                  <>
-                    Finalizar e Registrar
-                    <CheckCircle size={18} />
-                  </>
-                )}
-              </button>
-            )}
           </div>
+
+          {/* COLUNA DIREITA: Checkout Transparente Direto de 1 Tela */}
+          <div className="lg:col-span-7">
+            <div className="bg-[#0b0f19] border border-white/10 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl space-y-6">
+              
+              <div className="border-b border-white/10 pb-4">
+                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                  <CreditCard size={20} style={{ color: customAccentColor }} />
+                  Pagamento Transparente
+                </h3>
+                <p className="text-xs text-gray-400 mt-1">Preencha os seus dados e escolha a forma de pagamento abaixo</p>
+              </div>
+
+              <form onSubmit={handleProcessPayment} className="space-y-6">
+                
+                {/* 1. DADOS PESSOAIS DO COMPRADOR */}
+                <div className="space-y-4">
+                  <h4 className="text-xs font-bold text-gray-300 uppercase tracking-wider">1. Dados do Comprador</h4>
+                  
+                  <div>
+                    <label className="block text-xs font-medium text-gray-300 mb-1">Nome Completo ou Razão Social *</label>
+                    <div className="relative">
+                      <UserIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                      <input 
+                        type="text" 
+                        required
+                        value={clientData.name}
+                        onChange={e => setClientData(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="Ex: João da Silva"
+                        className="w-full pl-10 pr-4 py-2.5 bg-black/40 border border-white/10 rounded-xl text-white text-xs outline-none focus:ring-2 transition-all"
+                        style={{ '--tw-ring-color': customAccentColor } as any}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-300 mb-1">E-mail para Recebimento *</label>
+                      <div className="relative">
+                        <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                        <input 
+                          type="email" 
+                          required
+                          value={clientData.email}
+                          onChange={e => setClientData(prev => ({ ...prev, email: e.target.value }))}
+                          placeholder="seuemail@empresa.com"
+                          className="w-full pl-10 pr-4 py-2.5 bg-black/40 border border-white/10 rounded-xl text-white text-xs outline-none focus:ring-2 transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-gray-300 mb-1">WhatsApp / Celular *</label>
+                      <div className="relative">
+                        <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                        <input 
+                          type="text" 
+                          required
+                          value={clientData.whatsapp}
+                          onChange={e => {
+                            let v = e.target.value.replace(/\D/g, '');
+                            if (v.length > 11) v = v.substring(0, 11);
+                            if (v.length > 2) v = `(${v.substring(0, 2)}) ${v.substring(2)}`;
+                            if (v.length > 10) v = `${v.substring(0, 10)}-${v.substring(10)}`;
+                            setClientData(prev => ({ ...prev, whatsapp: v }));
+                          }}
+                          placeholder="(11) 99999-9999"
+                          className="w-full pl-10 pr-4 py-2.5 bg-black/40 border border-white/10 rounded-xl text-white text-xs outline-none focus:ring-2 transition-all"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-300 mb-1">CPF ou CNPJ (para emissão da nota/fatura) *</label>
+                    <div className="relative">
+                      <FileText size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                      <input 
+                        type="text" 
+                        required
+                        value={clientData.cpfCnpj}
+                        onChange={e => {
+                          let v = e.target.value.replace(/\D/g, '');
+                          if (v.length <= 11) {
+                            if (v.length > 9) v = v.substring(0, 3) + '.' + v.substring(3, 6) + '.' + v.substring(6, 9) + '-' + v.substring(9, 11);
+                            else if (v.length > 6) v = v.substring(0, 3) + '.' + v.substring(3, 6) + '.' + v.substring(6);
+                            else if (v.length > 3) v = v.substring(0, 3) + '.' + v.substring(3);
+                          } else {
+                            v = v.substring(0, 14);
+                            v = v.substring(0, 2) + '.' + v.substring(2, 5) + '.' + v.substring(5, 8) + '/' + v.substring(8, 12) + '-' + v.substring(12);
+                          }
+                          setClientData(prev => ({ ...prev, cpfCnpj: v }));
+                        }}
+                        placeholder="000.000.000-00 ou 00.000.000/0001-00"
+                        className="w-full pl-10 pr-4 py-2.5 bg-black/40 border border-white/10 rounded-xl text-white text-xs outline-none focus:ring-2 transition-all"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. FORMA DE PAGAMENTO EM ABAS */}
+                <div className="space-y-4 pt-2">
+                  <h4 className="text-xs font-bold text-gray-300 uppercase tracking-wider">2. Escolha o Método de Pagamento</h4>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('PIX')}
+                      className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all ${paymentMethod === 'PIX' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-lg shadow-emerald-500/20' : 'bg-black/40 border-white/10 text-gray-400 hover:text-white hover:bg-white/5'}`}
+                    >
+                      <QrCode size={20} />
+                      <span className="text-xs font-bold">PIX</span>
+                      <span className="text-[9px] opacity-75">Aprovação Instantânea</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('CREDIT_CARD')}
+                      className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all ${paymentMethod === 'CREDIT_CARD' ? 'bg-primary-500/20 border-primary-500 text-primary-400 shadow-lg shadow-primary-500/20' : 'bg-black/40 border-white/10 text-gray-400 hover:text-white hover:bg-white/5'}`}
+                    >
+                      <CreditCard size={20} />
+                      <span className="text-xs font-bold">Cartão</span>
+                      <span className="text-[9px] opacity-75">Até 12x no Cartão</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('BOLETO')}
+                      className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all ${paymentMethod === 'BOLETO' ? 'bg-blue-500/20 border-blue-500 text-blue-400 shadow-lg shadow-blue-500/20' : 'bg-black/40 border-white/10 text-gray-400 hover:text-white hover:bg-white/5'}`}
+                    >
+                      <FileText size={20} />
+                      <span className="text-xs font-bold">Boleto</span>
+                      <span className="text-[9px] opacity-75">Vencimento 1 dia</span>
+                    </button>
+                  </div>
+
+                  {/* SUB-TELA PIX GERADO NA MESMA PÁGINA */}
+                  {paymentMethod === 'PIX' && pixResult && (
+                    <div className="p-6 bg-black/60 border border-emerald-500/30 rounded-2xl text-center space-y-4 animate-in fade-in duration-300">
+                      <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/20 text-emerald-400 text-xs font-bold rounded-full border border-emerald-500/30">
+                        <QrCode size={14} />
+                        <span>PIX Gerado com Sucesso!</span>
+                      </div>
+                      
+                      {/* QR Code Imagem */}
+                      {pixResult.encodedImage && (
+                        <div className="flex justify-center p-3 bg-white rounded-2xl w-48 h-48 mx-auto shadow-xl">
+                          <img src={`data:image/png;base64,${pixResult.encodedImage}`} alt="QR Code PIX" className="w-full h-full object-contain" />
+                        </div>
+                      )}
+
+                      <div className="space-y-2">
+                        <label className="block text-[11px] font-bold text-gray-400 uppercase">Chave PIX Copia e Cola</label>
+                        <div className="flex items-center gap-2">
+                          <input 
+                            type="text" 
+                            readOnly 
+                            value={pixResult.payload} 
+                            className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-xs text-gray-300 font-mono truncate"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleCopyPix}
+                            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shrink-0 transition-colors"
+                          >
+                            {copiedPix ? <Check size={14} /> : <Copy size={14} />}
+                            <span>{copiedPix ? 'Copiado!' : 'Copiar PIX'}</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <p className="text-[11px] text-gray-400 flex items-center justify-center gap-1.5">
+                        <Loader2 size={12} className="animate-spin text-emerald-400" />
+                        Aguardando pagamento... Assim que for pago, o sistema confirmará automaticamente!
+                      </p>
+                    </div>
+                  )}
+
+                  {/* FORMULÁRIO DE CARTÃO DE CRÉDITO */}
+                  {paymentMethod === 'CREDIT_CARD' && (
+                    <div className="p-5 bg-black/40 border border-white/10 rounded-2xl space-y-3 animate-in fade-in duration-300">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-300 mb-1">Número do Cartão *</label>
+                        <input 
+                          type="text"
+                          value={cardData.number}
+                          onChange={e => {
+                            let v = e.target.value.replace(/\D/g, '').substring(0, 16);
+                            v = v.replace(/(\d{4})/g, '$1 ').trim();
+                            setCardData(prev => ({ ...prev, number: v }));
+                          }}
+                          placeholder="0000 0000 0000 0000"
+                          className="w-full px-4 py-2.5 bg-black/60 border border-white/10 rounded-xl text-white text-xs font-mono outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-300 mb-1">Nome Impresso no Cartão *</label>
+                        <input 
+                          type="text"
+                          value={cardData.holderName}
+                          onChange={e => setCardData(prev => ({ ...prev, holderName: e.target.value.toUpperCase() }))}
+                          placeholder="COMO ESTÁ NO CARTÃO"
+                          className="w-full px-4 py-2.5 bg-black/60 border border-white/10 rounded-xl text-white text-xs outline-none uppercase"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <label className="block text-[11px] font-medium text-gray-300 mb-1">Mês *</label>
+                          <input 
+                            type="text"
+                            maxLength={2}
+                            value={cardData.expiryMonth}
+                            onChange={e => setCardData(prev => ({ ...prev, expiryMonth: e.target.value.replace(/\D/g, '') }))}
+                            placeholder="MM"
+                            className="w-full px-3 py-2.5 bg-black/60 border border-white/10 rounded-xl text-white text-xs text-center font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-medium text-gray-300 mb-1">Ano *</label>
+                          <input 
+                            type="text"
+                            maxLength={4}
+                            value={cardData.expiryYear}
+                            onChange={e => setCardData(prev => ({ ...prev, expiryYear: e.target.value.replace(/\D/g, '') }))}
+                            placeholder="AAAA"
+                            className="w-full px-3 py-2.5 bg-black/60 border border-white/10 rounded-xl text-white text-xs text-center font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-medium text-gray-300 mb-1">CVV *</label>
+                          <input 
+                            type="text"
+                            maxLength={4}
+                            value={cardData.ccv}
+                            onChange={e => setCardData(prev => ({ ...prev, ccv: e.target.value.replace(/\D/g, '') }))}
+                            placeholder="123"
+                            className="w-full px-3 py-2.5 bg-black/60 border border-white/10 rounded-xl text-white text-xs text-center font-mono"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* SUB-TELA BOLETO GERADO */}
+                  {paymentMethod === 'BOLETO' && boletoResult && (
+                    <div className="p-5 bg-black/60 border border-blue-500/30 rounded-2xl space-y-3 animate-in fade-in duration-300">
+                      <span className="text-xs font-bold text-blue-400 block">Linha Digitável do Boleto:</span>
+                      <div className="flex items-center gap-2">
+                        <input 
+                          type="text" 
+                          readOnly 
+                          value={boletoResult.identificationField} 
+                          className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-xs text-gray-300 font-mono truncate"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleCopyBoleto}
+                          className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shrink-0"
+                        >
+                          {copiedBoleto ? <Check size={14} /> : <Copy size={14} />}
+                          <span>{copiedBoleto ? 'Copiado!' : 'Copiar'}</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+
+                {/* BOTÃO DE CONFIRMAÇÃO DO PAGAMENTO */}
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  style={{ backgroundColor: customAccentColor }}
+                  className="w-full py-4 rounded-2xl text-white font-extrabold text-sm shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      <span>Processando Pagamento Seguro...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Lock size={18} />
+                      <span>
+                        {paymentMethod === 'PIX' ? 'Gerar PIX Instantâneo' : paymentMethod === 'CREDIT_CARD' ? 'Pagar com Cartão de Crédito' : 'Gerar Boleto Bancário'}
+                      </span>
+                    </>
+                  )}
+                </button>
+
+              </form>
+
+            </div>
+          </div>
+
         </div>
 
-        {/* Rodapé Padronizado de Segurança e Credibilidade */}
-        <div className="mt-12 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-gray-400">
-          <div className="flex items-center gap-2">
-            <Lock className="text-emerald-500 w-4 h-4 flex-shrink-0" />
-            <span>Pagamento Seguro com Criptografia SSL 256-bit</span>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1.5 text-gray-300">
-              <QrCode className="w-4 h-4 text-emerald-400" /> Pix Instantâneo
-            </span>
-            <span className="flex items-center gap-1.5 text-gray-300">
-              <CreditCard className="w-4 h-4 text-blue-400" /> Cartão até 12x
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2 opacity-80 hover:opacity-100 transition-opacity">
-            <ShieldCheck className="w-4 h-4 text-primary-400" />
-            <span>Processado de forma segura via <strong>Asaas</strong></span>
-          </div>
-        </div>
       </div>
     </div>
   );
