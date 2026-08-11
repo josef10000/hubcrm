@@ -63,8 +63,8 @@ export default function ProductsView() {
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         <span className="font-medium">Exibição:</span> {
-                          offer.displayContext === 'CHECKOUT' ? 'Apenas Checkout' : 
-                          offer.displayContext === 'BOTH' ? 'CRM e Checkout' : 'Apenas CRM (Manual)'
+                          offer.displayContext === 'CHECKOUT' ? 'Apenas Página de Pagamento' : 
+                          offer.displayContext === 'BOTH' ? 'CRM e Pagamento' : 'Apenas CRM (Manual)'
                         }
                       </p>
                       {offer.order !== undefined && (
@@ -97,10 +97,10 @@ export default function ProductsView() {
                       <button
                         onClick={() => handleCopyCheckoutLink(offer.id, offer.name)}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary-500 hover:text-primary-400 bg-primary-500/10 hover:bg-primary-500/20 rounded-xl transition-all"
-                        title="Copiar Link Direto do Checkout deste Produto"
+                        title="Copiar Link de Pagamento deste Produto"
                       >
                         <LinkIcon size={14} />
-                        <span>Link Checkout</span>
+                        <span>Link de Pagamento</span>
                       </button>
                       <div className="flex gap-2">
                         <button 

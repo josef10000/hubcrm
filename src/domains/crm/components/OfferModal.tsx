@@ -175,7 +175,7 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
             </div>
             <div>
               <h2 className="text-xl font-bold text-white">
-                {initialData?.id ? 'Editar Produto & Construtor de Checkout' : 'Novo Produto & Construtor de Checkout'}
+                {initialData?.id ? 'Editar Produto & Página de Pagamento' : 'Novo Produto & Página de Pagamento'}
               </h2>
               <p className="text-xs text-gray-400">Configure o produto, identidade visual R2 e veja o preview em tempo real</p>
             </div>
@@ -262,9 +262,9 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
                         onChange={handleChange} 
                         className="w-full px-3 py-2.5 bg-black/40 border border-white/10 text-white rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary-500"
                       >
-                        <option value="PORTAL">Apenas CRM (Manual)</option>
-                        <option value="CHECKOUT">Apenas Página de Checkout</option>
-                        <option value="BOTH">Ambos (CRM e Checkout)</option>
+                        <option value="PORTAL">Apenas CRM / Interno (Manual)</option>
+                        <option value="CHECKOUT">Apenas Página de Pagamento</option>
+                        <option value="BOTH">Ambos (CRM e Página de Pagamento)</option>
                       </select>
                     </div>
                   </div>
@@ -403,9 +403,8 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
 
                   {/* Seletor de Cores Interativo em Tempo Real */}
                   <div className="p-4 bg-white/5 border border-white/10 rounded-2xl space-y-3">
-                    <label className="block text-xs font-bold text-white flex items-center gap-1.5">
-                      <Palette size={14} className="text-primary-400" />
-                      Cor de Destaque do Checkout (Color Picker ao Vivo)
+                    <label className="block text-xs font-medium text-gray-300 mb-1">
+                      Cor de Destaque da Página (Color Picker ao Vivo)
                     </label>
 
                     <div className="flex items-center gap-3">
@@ -467,9 +466,8 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
 
                   {/* Selo de Garantia */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-300 mb-1 flex items-center gap-1.5">
-                      <Award size={14} className="text-amber-400" />
-                      Selo de Garantia Exibido no Checkout
+                    <label className="block text-xs font-medium text-gray-300 mb-1">
+                      Selo de Garantia Exibido na Página de Pagamento
                     </label>
                     <input 
                       type="text" 
@@ -582,7 +580,7 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
             <div className="flex items-center justify-between mb-4 pb-2 border-b border-white/10">
               <span className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
                 <Eye size={14} className="text-primary-400" />
-                Live Preview do Checkout (Tempo Real)
+                <span>Live Preview em Tempo Real</span>
               </span>
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold">
                 Ao Vivo
@@ -622,7 +620,7 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
                   </span>
 
                   <h3 className="text-lg font-extrabold text-white">
-                    Checkout — {formData.name || 'Nome do Produto'}
+                    {formData.name || 'Nome do Produto'}
                   </h3>
 
                   <div className="flex items-baseline justify-center gap-1">
@@ -716,7 +714,7 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
               className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-orange-600 text-white text-xs font-bold shadow-lg shadow-primary-500/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
             >
               <Check size={16} />
-              Salvar Produto & Checkout
+              Salvar Produto & Página de Pagamento
             </button>
           </div>
         </div>

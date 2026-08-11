@@ -275,7 +275,7 @@ export default function PublicCheckoutPage() {
           )}
 
           <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-3 tracking-tight">
-            {activeOffer?.name ? `Checkout — ${activeOffer.name}` : (ownerSettings?.checkoutTitle || 'Abertura de Demanda')}
+            {activeOffer?.name ? activeOffer.name : (ownerSettings?.checkoutTitle || 'Abertura de Demanda')}
           </h1>
           <p className="text-gray-400 max-w-xl mx-auto text-sm sm:text-base">
             {activeOffer?.description || ownerSettings?.checkoutDescription || 'Preencha os dados abaixo para formalizar o pedido e liberar a sua assinatura.'}
