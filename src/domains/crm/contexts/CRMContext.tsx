@@ -6,7 +6,7 @@ import { Client, Offer } from '@/types';
 import { ClientMapper } from '../entities/client.entity';
 import { LeadMapper } from '../entities/lead.entity';
 import { useClients, useLeads } from '@/hooks/queries/useClients';
-import { useTags, useTeamProfiles, useOrgRoles } from '@/hooks/queries/useCRMQueries';
+import { useTags, useTeamProfiles, useOrgRoles, useOffers } from '@/hooks/queries/useCRMQueries';
 
 const CRMContext = createContext<any>(null);
 
@@ -55,7 +55,6 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     // Fallbacks e mapeamentos de ações
     handleExportCSV: (data: any[]) => {
       console.log("Exporting CSV...", data);
-      // Implementação do export se necessário
     },
     errorMsg: store.errorMsg
   };
@@ -72,6 +71,7 @@ export function useCRM() {
   // Consome os hooks do React Query de forma Lazy (somente onde o useCRM for chamado)
   const { data: clientsData = [] } = useClients();
   const { data: leadsData = [] } = useLeads();
+  const { data: offersData = [] } = useOffers();
   const { data: tagsData = [] } = useTags();
   const { data: teamProfilesData = [] } = useTeamProfiles();
   const { data: orgRolesData = [] } = useOrgRoles();
@@ -91,6 +91,7 @@ export function useCRM() {
     ...context,
     clients,
     leads,
+    offers: offersData,
     tags: tagsData,
     teamProfiles: teamProfilesData,
     orgRoles: orgRolesData,

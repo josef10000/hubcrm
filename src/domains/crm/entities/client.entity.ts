@@ -3,15 +3,15 @@ import { SiteStatus } from '../../../types';
 
 export const ClientSchema = z.object({
   id: z.string(),
-  name: z.string().min(3, "O nome deve ter pelo menos 3 caracteres"),
-  email: z.string().email("E-mail inválido").min(1, "E-mail é obrigatório"),
+  name: z.string().optional().or(z.literal('')).default('Cliente'),
+  email: z.string().optional().or(z.literal('')).default(''),
   whatsapp: z.string().optional().or(z.literal('')),
   cpfCnpj: z.string().optional().or(z.literal('')),
   status: z.enum(['Em Desenvolvimento', 'Ativo', 'Inadimplente', 'Cancelado', 'Pendente'] as const).default('Pendente'),
   plan: z.string().default('Personalizado'),
   planPrice: z.number().default(0),
   setupPrice: z.number().default(0),
-  createdAt: z.number(),
+  createdAt: z.number().default(() => Date.now()),
   updatedAt: z.number().optional(),
   assignedTo: z.string().optional(),
   tagIds: z.array(z.string()).default([]),
