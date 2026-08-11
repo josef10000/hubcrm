@@ -198,3 +198,21 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
   - **Sincronização de Integração (Código de Integração)**:
     - Campo `integrationCode` exposto no modal do cliente do CRM se o produto não for Portal Hub.
     - Ao salvar o card no CRM, o frontend dispara um Webhook `POST` em segundo plano para `https://tracker.hubsymples.com.br/api/crm-webhook` (ou a URL definida em `VITE_SAAS_WEBHOOK_URL`) sincronizando as chaves `orgId`, `clientId` e `publicToken` geradas para o SaaS de Rastreamento de forma autônoma.
+
+---
+
+## 16. Checkout Transparente Dinâmico por Produto
+- **Data da Integração**: 11/08/2026
+- **Funcionalidade**: Personalização completa de identidade visual, benefícios e contrato no Checkout Transparente para cada produto/oferta cadastrada no CRM.
+- **Decisões Técnicas**:
+  - **Interface `Offer` Expandida**: Adicionados os campos `logoUrl` (imagem de logo com fundo transparente PNG/SVG), `accentColor` (hexadecimal da cor temática do produto), `benefits` (array de strings para lista de recursos em destaque) e `customContractText` (texto de contrato/termos específicos).
+  - **Painel de Gestão de Ofertas (`OfferModal.tsx` & `ProductsView.tsx`)**:
+    - Upload direto da logo do produto com helper centralizado de ImgBB e recomendações de design.
+    - Seletor de cores temáticas com paleta rápida e caixa de texto de benefícios por quebra de linha.
+    - Botão de atalho de cópia *"Link Checkout"* para gerar URLs prontas por produto com 1 clique (`/checkout/:orgId?offerId=ID_DO_PRODUTO`).
+  - **Checkout Público (`PublicCheckoutPage.tsx`)**:
+    - Leitura de `offerId` da URL para pré-seleção automática e injeção do tema do produto.
+    - Background com brilho estético (*glow*) adaptado à cor do produto e cabeçalho com a logo específica.
+    - Renderização do card lateral de **Benefícios Inclusos no Produto** com checkmarks estilizados.
+    - **Manutenção de Credibilidade e Segurança**: Selos padronizados de **Criptografia SSL 256-bit**, ícones de **Pix**, **Cartões de Crédito** em até 12x, **Boleto** e aviso oficial de processamento seguro via **Asaas**.
+

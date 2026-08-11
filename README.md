@@ -52,7 +52,15 @@ Segurança jurídica avançada na admissão e manutenção de colaboradores:
 *   **Signature Gate & Abas de Triagem:** Bloqueador de tela em Glassmorphism que impede o acesso ao CRM se houver documentos pendentes, exigindo leitura ativa, CPF/RG e assinatura. A Central de Documentos do colaborador organiza e separa os itens assinados/pendentes em três sub-abas ("Contratos CLT", "Contratos PJ" e "Termos de Equipamentos").
 *   **Carimbo Jurídico Digital:** Ao assinar, é gerado um selo holográfico incorporado ao contrato com Hash Criptográfico SHA-256, endereço IP do assinante, timestamp Unix, sistema operacional do usuário e fonte cursiva elegante, em conformidade com a MP nº 2.200-2/2001.
 
-### 4. 🛡️ Ouvidoria & Linha Ética
+### 5. 🛍️ Checkout Transparente Dinâmico por Produto
+Sistema de checkout transparente público de alta conversão, permitindo que cada oferta ou produto possua identidade visual própria e alta credibilidade:
+*   **Branding & Capa Específica por Produto:** Cada produto ou oferta cadastrada pode ter sua própria **Logo** (com recomendação e suporte para fundo transparente em formato PNG/SVG) e **Cor Temática (Accent Color)** que molda reativamente a paleta visual, botões, gradientes e sombras da página de checkout.
+*   **Lista de Benefícios Inclusos:** Exibição lateral em cards com efeito de vidro (*Glassmorphism*) contendo os bullets de vantagens e recursos do produto em destaque.
+*   **Link Direto de Checkout:** O painel de gestão de produtos no CRM disponibiliza o botão *"Link Checkout"*, gerando links diretos (`/checkout/:orgId?offerId=ID_DO_PRODUTO`) para vendas com 1 clique.
+*   **Minuta Contratual Customizada por Produto:** Suporte a termos de aceite jurídicos específicos para cada produto ou serviço oferecido.
+*   **Selos de Confiança Padronizados (Trust Badges):** Exibição em todas as páginas de checkout dos selos de **Criptografia SSL de 256 bits**, métodos aceitos (**Pix**, **Cartões de Crédito** em até 12x e **Boleto**) e a chancela oficial de processamento seguro via **Asaas**.
+
+### 6. 🛡️ Ouvidoria & Linha Ética
 Canal corporativo seguro voltado para compliance corporativo em conformidade com a **Lei nº 14.457/2022**:
 *   **Garantia de Anonimato Real:** O backend do Firestore descarta o `userId` e o `IP` de manifestações anônimas, impossibilitando rastreamento de autoria.
 *   **Acompanhamento por Chave de Protocolo:** Manifestantes anônimos recebem uma chave única (`ETH-XXXXXX`) para consultar o andamento e conversar de forma bidirecional e segura com o RH/Compliance.

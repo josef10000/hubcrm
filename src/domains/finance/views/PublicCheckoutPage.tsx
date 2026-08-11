@@ -1,18 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore';
-import { db, storage } from '@/lib/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { CheckCircle, Globe, Building2, Mail, Phone, User as UserIcon, FileText, Check, ArrowRight, ArrowLeft, Loader2, Upload } from 'lucide-react';
+import { db } from '@/lib/firebase';
+import { 
+  CheckCircle, Globe, Building2, Mail, Phone, User as UserIcon, 
+  FileText, Check, ArrowRight, ArrowLeft, Loader2, Upload, 
+  ShieldCheck, Lock, CreditCard, QrCode, Sparkles 
+} from 'lucide-react';
 import { toast, Toaster } from 'sonner';
 import { Offer } from '@/types';
 import { uploadImageToImgBB } from '@/lib/imgbb';
 
 export default function PublicCheckoutPage() {
   const { orgId } = useParams<{ orgId: string }>();
+  const [searchParams] = useSearchParams();
+  const requestedOfferId = searchParams.get('offerId') || searchParams.get('product') || searchParams.get('productId');
+
   const [loading, setLoading] = useState(true);
   const [ownerSettings, setOwnerSettings] = useState<any>(null);
   const [offers, setOffers] = useState<Offer[]>([]);
+  const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [step, setStep] = useState(1);
   
@@ -109,15 +116,32 @@ export default function PublicCheckoutPage() {
         });
         
         // Sort by order
-        const sorted = loadedOffers.sort((a, b) => (a.order || 0) - (b.order || 0) || a.price - b.price).slice(0, 3);
+        const sorted = loadedOffers.sort((a, b) => (a.order || 0) - (b.order || 0) || a.price - b.price);
         setOffers(sorted);
         
-        // Default selection
-        if (sorted.length > 0) {
+        // Seleção de oferta prioritária por URL ou padrão
+        let targetOffer: Offer | null = null;
+        if (requestedOfferId) {
+          targetOffer = sorted.find(o => o.id === requestedOfferId) || null;
+          if (!targetOffer) {
+            // Tenta buscar no banco caso não esteja no filtro de busca
+            const singleOfferSnap = await getDoc(doc(db, 'organizations', orgId, 'offers', requestedOfferId));
+            if (singleOfferSnap.exists()) {
+              targetOffer = { id: singleOfferSnap.id, ...singleOfferSnap.data() } as Offer;
+            }
+          }
+        }
+
+        if (!targetOffer && sorted.length > 0) {
+          targetOffer = sorted[0];
+        }
+
+        if (targetOffer) {
+          setSelectedOffer(targetOffer);
           setClientData(prev => ({ 
             ...prev, 
-            offerId: sorted[0].id, 
-            plan: sorted[0].name 
+            offerId: targetOffer!.id, 
+            plan: targetOffer!.name 
           }));
         }
 
@@ -128,7 +152,7 @@ export default function PublicCheckoutPage() {
       }
     };
     fetchData();
-  }, [orgId]);
+  }, [orgId, requestedOfferId]);
 
   const validateStep = () => {
     if (step === 1) {
@@ -194,6 +218,12 @@ export default function PublicCheckoutPage() {
     }
   };
 
+  // Define a cor de destaque dinâmica do produto selecionado
+  const activeOffer = offers.find(o => o.id === clientData.offerId) || selectedOffer || offers[0];
+  const logoToDisplay = activeOffer?.logoUrl || ownerSettings?.logoUrl || "https://i.imgur.com/zCvL7xy.png";
+  const customAccentColor = activeOffer?.accentColor || '#f97316';
+  const contractTextToDisplay = activeOffer?.customContractText || ownerSettings?.defaultContractText;
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#030712] flex items-center justify-center">
@@ -206,36 +236,101 @@ export default function PublicCheckoutPage() {
     <div className="min-h-screen bg-[#030712] py-12 px-4 sm:px-6 lg:px-8 font-sans text-gray-100 relative overflow-hidden">
       <Toaster theme="dark" position="top-right" />
       
-      {/* Background Glows */}
-      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-primary-500/10 rounded-full blur-[120px] pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-primary-600/10 rounded-full blur-[120px] pointer-events-none"></div>
+      {/* Background Glows com Cor Dinâmica do Produto */}
+      <div 
+        className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full blur-[140px] pointer-events-none opacity-20 transition-all duration-700"
+        style={{ backgroundColor: customAccentColor }}
+      />
+      <div 
+        className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full blur-[140px] pointer-events-none opacity-15 transition-all duration-700"
+        style={{ backgroundColor: customAccentColor }}
+      />
 
       <div className="max-w-5xl mx-auto relative z-10">
+        {/* Cabeçalho de Branding do Produto / Org */}
         <div className="text-center mb-12">
-          <div className="flex justify-center mb-8">
-            <img src="https://i.imgur.com/zCvL7xy.png" alt="Hub Symples Logo" className="h-48 w-auto object-contain drop-shadow-2xl" referrerPolicy="no-referrer" />
+          <div className="flex justify-center mb-6">
+            <div className="p-4 rounded-3xl bg-black/40 border border-white/10 backdrop-blur-xl shadow-2xl inline-flex items-center justify-center max-w-xs transition-all hover:scale-105">
+              <img 
+                src={logoToDisplay} 
+                alt={activeOffer?.name || ownerSettings?.companyName || "Logo"} 
+                className="h-20 w-auto object-contain max-h-24 filter drop-shadow-xl" 
+                referrerPolicy="no-referrer" 
+              />
+            </div>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-4">
-            {ownerSettings?.checkoutTitle || 'Abertura de Projeto Interno'}
+
+          {activeOffer?.name && (
+            <span 
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-3 border shadow-sm"
+              style={{ 
+                backgroundColor: `${customAccentColor}20`, 
+                borderColor: `${customAccentColor}50`, 
+                color: customAccentColor 
+              }}
+            >
+              <Sparkles size={14} />
+              {activeOffer.name}
+            </span>
+          )}
+
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-3 tracking-tight">
+            {activeOffer?.name ? `Checkout — ${activeOffer.name}` : (ownerSettings?.checkoutTitle || 'Abertura de Demanda')}
           </h1>
-          <p className="text-gray-400 max-w-xl mx-auto">
-            {ownerSettings?.checkoutDescription || 'Preencha os dados abaixo para formalizar a nova demanda interna e realizar a assinatura.'}
+          <p className="text-gray-400 max-w-xl mx-auto text-sm sm:text-base">
+            {activeOffer?.description || ownerSettings?.checkoutDescription || 'Preencha os dados abaixo para formalizar o pedido e liberar a sua assinatura.'}
           </p>
         </div>
 
+        {/* Banner de Benefícios do Produto Selecionado (se houver) */}
+        {activeOffer?.benefits && activeOffer.benefits.length > 0 && (
+          <div 
+            className="mb-8 p-5 rounded-2xl border backdrop-blur-xl transition-all shadow-xl"
+            style={{ 
+              backgroundColor: `${customAccentColor}10`, 
+              borderColor: `${customAccentColor}30` 
+            }}
+          >
+            <h3 className="text-xs font-bold uppercase tracking-wider mb-3 flex items-center gap-2" style={{ color: customAccentColor }}>
+              <ShieldCheck size={16} />
+              Recursos e Benefícios Inclusos no {activeOffer.name}:
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {activeOffer.benefits.map((benefit, idx) => (
+                <div key={idx} className="flex items-start gap-2 text-xs text-gray-200">
+                  <div className="mt-0.5 rounded-full p-0.5" style={{ backgroundColor: `${customAccentColor}30`, color: customAccentColor }}>
+                    <Check size={12} />
+                  </div>
+                  <span>{benefit}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Steps Indicator */}
         <nav className="flex items-center justify-center gap-4 mb-12" aria-label="Progresso do Checkout">
-          {[1, 2, 3, 4].map((s) => (
-            <div key={s} className="flex items-center gap-2" aria-current={step === s ? 'step' : undefined}>
-              <div 
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${step >= s ? 'bg-primary-500 text-white' : 'bg-white/5 text-gray-500 border border-white/10'}`}
-                aria-label={`Etapa ${s}: ${s === 1 ? 'Dados' : s === 2 ? 'Briefing' : s === 3 ? 'Contrato' : 'Plano'}`}
-              >
-                {step > s ? <Check size={18} aria-hidden="true" /> : s}
+          {[1, 2, 3, 4].map((s) => {
+            const isActive = step >= s;
+            return (
+              <div key={s} className="flex items-center gap-2" aria-current={step === s ? 'step' : undefined}>
+                <div 
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-300 ${isActive ? 'text-white shadow-lg' : 'bg-white/5 text-gray-500 border border-white/10'}`}
+                  style={isActive ? { backgroundColor: customAccentColor, boxShadow: `0 0 20px ${customAccentColor}40` } : {}}
+                  aria-label={`Etapa ${s}`}
+                >
+                  {step > s ? <Check size={18} aria-hidden="true" /> : s}
+                </div>
+                {s < 4 && (
+                  <div 
+                    className="w-8 h-px transition-colors duration-300"
+                    style={{ backgroundColor: step > s ? customAccentColor : 'rgba(255,255,255,0.1)' }} 
+                    aria-hidden="true" 
+                  />
+                )}
               </div>
-              {s < 4 && <div className={`w-8 h-px ${step > s ? 'bg-primary-500' : 'bg-white/10'}`} aria-hidden="true" />}
-            </div>
-          ))}
+            );
+          })}
         </nav>
 
         <div className="bg-white/5 backdrop-blur-2xl border border-white/10 p-8 rounded-3xl shadow-2xl relative">
@@ -425,16 +520,16 @@ export default function PublicCheckoutPage() {
                 Contrato de Prestação de Serviços
               </h2>
               <div className="bg-black/40 border border-white/10 rounded-2xl p-6 h-[400px] overflow-y-auto custom-scrollbar text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-mono italic">
-                {ownerSettings?.defaultContractText || `CONTRATO DE PRESTAÇÃO DE SERVIÇOS
+                {contractTextToDisplay || `CONTRATO DE PRESTAÇÃO DE SERVIÇOS
 
 1. OBJETO DO CONTRATO
-O presente instrumento tem como objeto a prestação de serviços digitais acordados entre as partes no plano ou projeto selecionado.
+O presente instrumento tem como objeto a prestação de serviços digitais acordados entre as partes no plano ou produto selecionado.
 
 2. PRAZOS E ENTREGAS
-As entregas serão realizadas conforme cronograma acordado.
+As entregas serão realizadas conforme o cronograma acordado entre o contratante e o contratado.
 
 3. PAGAMENTOS E CANCELAMENTOS
-Em caso de suspensão de pagamento, o serviço será suspenso após X dias. Cancelamentos devem ser notificados antecipadamente.`}
+Em caso de suspensão ou atraso no pagamento, o serviço poderá ser suspenso após notificação.`}
               </div>
               
               <div className="space-y-4 pt-4">
@@ -562,7 +657,8 @@ Em caso de suspensão de pagamento, o serviço será suspenso após X dias. Canc
                 onClick={() => {
                   if (validateStep()) setStep(step + 1);
                 }}
-                className="bg-primary-500 hover:bg-primary-600 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                style={{ backgroundColor: customAccentColor }}
+                className="text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-black/40"
                 aria-label="Continuar para o próximo passo"
               >
                 Continuar
@@ -572,7 +668,8 @@ Em caso de suspensão de pagamento, o serviço será suspenso após X dias. Canc
               <button
                 onClick={handleSubmit}
                 disabled={submitting || offers.length === 0}
-                className="bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-orange-700 text-white px-10 py-3 rounded-xl font-bold flex items-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100"
+                style={{ backgroundColor: customAccentColor }}
+                className="text-white px-10 py-3 rounded-xl font-bold flex items-center gap-2 transition-all hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 shadow-xl shadow-black/40"
               >
                 {submitting ? (
                   <>
@@ -590,9 +687,27 @@ Em caso de suspensão de pagamento, o serviço será suspenso após X dias. Canc
           </div>
         </div>
 
-        <p className="mt-8 text-center text-gray-500 text-sm">
-          Pagamento processado de forma segura via Asaas Platinum.
-        </p>
+        {/* Rodapé Padronizado de Segurança e Credibilidade */}
+        <div className="mt-12 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-gray-400">
+          <div className="flex items-center gap-2">
+            <Lock className="text-emerald-500 w-4 h-4 flex-shrink-0" />
+            <span>Pagamento Seguro com Criptografia SSL 256-bit</span>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1.5 text-gray-300">
+              <QrCode className="w-4 h-4 text-emerald-400" /> Pix Instantâneo
+            </span>
+            <span className="flex items-center gap-1.5 text-gray-300">
+              <CreditCard className="w-4 h-4 text-blue-400" /> Cartão até 12x
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 opacity-80 hover:opacity-100 transition-opacity">
+            <ShieldCheck className="w-4 h-4 text-primary-400" />
+            <span>Processado de forma segura via <strong>Asaas</strong></span>
+          </div>
+        </div>
       </div>
     </div>
   );

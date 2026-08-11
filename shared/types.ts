@@ -516,6 +516,10 @@ export interface Offer {
   commissionValue?: number;
   isMostHired?: boolean;
   details?: string;
+  logoUrl?: string;
+  accentColor?: string;
+  benefits?: string[];
+  customContractText?: string;
   createdAt: number;
 }
 

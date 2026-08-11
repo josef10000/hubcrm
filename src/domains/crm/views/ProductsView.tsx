@@ -1,14 +1,16 @@
 import React from 'react';
-import { Package, Edit2, Trash2, Plus, RefreshCw } from 'lucide-react';
+import { Package, Edit2, Trash2, Plus, RefreshCw, Link as LinkIcon, Copy } from 'lucide-react';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
+import { toast } from 'sonner';
 
 export default function ProductsView() {
   const { userProfile } = useAuth();
   const { hasPermission } = usePermissions();
   const { 
     offers, 
+    effectiveOrgId,
     setEditingOffer, 
     setIsOfferModalOpen, 
     setOfferToDelete, 
@@ -17,6 +19,12 @@ export default function ProductsView() {
   } = useCRM();
 
   const canManageProducts = hasPermission('MANAGE_SETTINGS');
+
+  const handleCopyCheckoutLink = (offerId: string, offerName: string) => {
+    const url = `${window.location.origin}/checkout/${effectiveOrgId}?offerId=${offerId}`;
+    navigator.clipboard.writeText(url);
+    toast.success(`Link do checkout de "${offerName}" copiado!`);
+  };
 
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10">
@@ -80,21 +88,31 @@ export default function ProductsView() {
                     </div>
                   </div>
                   {canManageProducts && (
-                    <div className="flex justify-end gap-2 pt-4 border-t border-gray-100 dark:border-white/5">
-                      <button 
-                        onClick={() => { setEditingOffer(offer); setIsOfferModalOpen(true); }}
-                        className="p-2 text-gray-500 hover:text-primary-500 transition-colors rounded-lg hover:bg-primary-500/10"
-                        title="Editar Oferta"
+                    <div className="flex justify-between items-center pt-4 border-t border-gray-100 dark:border-white/5">
+                      <button
+                        onClick={() => handleCopyCheckoutLink(offer.id, offer.name)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary-500 hover:text-primary-400 bg-primary-500/10 hover:bg-primary-500/20 rounded-xl transition-all"
+                        title="Copiar Link Direto do Checkout deste Produto"
                       >
-                        <Edit2 size={18} />
+                        <LinkIcon size={14} />
+                        <span>Link Checkout</span>
                       </button>
-                      <button 
-                        onClick={() => { setOfferToDelete(offer.id); setIsDeleteOfferConfirmOpen(true); }}
-                        className="p-2 text-gray-500 hover:text-red-500 transition-colors rounded-lg hover:bg-red-500/10"
-                        title="Excluir Oferta"
-                      >
-                        <Trash2 size={18} />
-                      </button>
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => { setEditingOffer(offer); setIsOfferModalOpen(true); }}
+                          className="p-2 text-gray-500 hover:text-primary-500 transition-colors rounded-lg hover:bg-primary-500/10"
+                          title="Editar Oferta"
+                        >
+                          <Edit2 size={18} />
+                        </button>
+                        <button 
+                          onClick={() => { setOfferToDelete(offer.id); setIsDeleteOfferConfirmOpen(true); }}
+                          className="p-2 text-gray-500 hover:text-red-500 transition-colors rounded-lg hover:bg-red-500/10"
+                          title="Excluir Oferta"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>

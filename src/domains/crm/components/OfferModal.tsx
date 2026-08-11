@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, Star } from 'lucide-react';
+import { X, Star, Upload, Palette, Check, Sparkles, Loader2 } from 'lucide-react';
 import { Offer } from '@/types';
+import { uploadImageToImgBB } from '@/lib/imgbb';
+import { toast } from 'sonner';
 
 export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Offer>) => void, onDelete?: (id: string) => void, initialData: Partial<Offer> | null }) {
   const [formData, setFormData] = useState<Partial<Offer>>({
@@ -14,16 +16,27 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
     description: '',
     active: true,
     commissionValue: 0,
+    logoUrl: '',
+    accentColor: '#f97316',
+    benefits: [],
+    customContractText: ''
   });
   const [errorMsg, setErrorMsg] = useState('');
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [benefitsInput, setBenefitsInput] = useState('');
 
   useEffect(() => {
     setErrorMsg('');
     if (initialData) {
       setFormData({
         ...initialData,
-        commissionValue: initialData.commissionValue || 0
+        commissionValue: initialData.commissionValue || 0,
+        logoUrl: initialData.logoUrl || '',
+        accentColor: initialData.accentColor || '#f97316',
+        benefits: initialData.benefits || [],
+        customContractText: initialData.customContractText || ''
       });
+      setBenefitsInput(initialData.benefits ? initialData.benefits.join('\n') : '');
     } else {
       setFormData({
         name: '',
@@ -36,7 +49,12 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
         description: '',
         active: true,
         commissionValue: 0,
+        logoUrl: '',
+        accentColor: '#f97316',
+        benefits: [],
+        customContractText: ''
       });
+      setBenefitsInput('');
     }
   }, [initialData, isOpen]);
 
@@ -51,6 +69,22 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
     }));
   };
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingLogo(true);
+    try {
+      const url = await uploadImageToImgBB(file);
+      setFormData(prev => ({ ...prev, logoUrl: url }));
+      toast.success('Logo do produto enviada com sucesso!');
+    } catch (err: any) {
+      toast.error('Erro ao enviar imagem da logo.');
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -60,7 +94,15 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
     if (formData.price === undefined || formData.price === null) return setErrorMsg('Preço é obrigatório.');
     if (formData.order === undefined || formData.order === null) return setErrorMsg('Ordem de exibição é obrigatória.');
     
-    onSave(formData);
+    const parsedBenefits = benefitsInput
+      .split('\n')
+      .map(b => b.trim())
+      .filter(Boolean);
+
+    onSave({
+      ...formData,
+      benefits: parsedBenefits
+    });
   };
 
   return (
@@ -253,6 +295,110 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
                 placeholder="Ex: 500.00"
               />
               <p className="text-xs text-gray-500 mt-1">Valor fixo que o vendedor receberá por esta venda após a baixa do pagamento.</p>
+            </div>
+
+            {/* --- PERSONALIZAÇÃO DE CHECKOUT POR PRODUTO --- */}
+            <div className="pt-4 border-t border-gray-200 dark:border-white/10 space-y-4">
+              <div className="flex items-center gap-2 text-sm font-bold text-primary-500">
+                <Palette size={16} />
+                <span>Personalização do Checkout por Produto</span>
+              </div>
+
+              {/* Logo do Produto */}
+              <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+                  Logo do Produto (PNG/SVG com Fundo Transparente)
+                </label>
+                <div className="flex items-center gap-3">
+                  {formData.logoUrl ? (
+                    <div className="relative w-14 h-14 bg-black/40 border border-white/10 rounded-xl flex items-center justify-center p-2 group overflow-hidden">
+                      <img src={formData.logoUrl} alt="Logo" className="max-w-full max-h-full object-contain" />
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, logoUrl: '' }))}
+                        className="absolute inset-0 bg-black/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold"
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  ) : null}
+                  <label className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-black/20 border border-dashed border-gray-300 dark:border-white/20 hover:border-primary-500 rounded-xl cursor-pointer transition-colors text-xs font-medium text-gray-600 dark:text-gray-300">
+                    {uploadingLogo ? <Loader2 size={16} className="animate-spin text-primary-500" /> : <Upload size={16} />}
+                    {uploadingLogo ? 'Enviando...' : 'Fazer upload da logo (PNG/SVG)'}
+                    <input type="file" accept="image/png,image/svg+xml,image/webp" onChange={handleLogoUpload} className="hidden" />
+                  </label>
+                </div>
+                <p className="text-[11px] text-gray-500 mt-1">
+                  💡 Recomendado: Imagem PNG ou SVG com fundo transparente para melhor adaptação visual no tema escuro.
+                </p>
+              </div>
+
+              {/* Cor Temática do Produto */}
+              <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+                  Cor de Destaque / Tema do Produto
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    name="accentColor"
+                    value={formData.accentColor || '#f97316'}
+                    onChange={handleChange}
+                    className="w-10 h-10 rounded-xl border border-white/10 bg-transparent cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    name="accentColor"
+                    value={formData.accentColor || '#f97316'}
+                    onChange={handleChange}
+                    className="flex-1 px-4 py-2.5 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl text-xs font-mono"
+                    placeholder="#f97316"
+                  />
+                  <div className="flex gap-1">
+                    {['#f97316', '#8b5cf6', '#10b981', '#3b82f6', '#ec4899'].map(color => (
+                      <button
+                        key={color}
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, accentColor: color }))}
+                        className="w-6 h-6 rounded-full border border-white/20 transition-transform hover:scale-110"
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Benefícios em Bullets */}
+              <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+                  Benefícios em Destaque no Checkout (1 por linha)
+                </label>
+                <textarea
+                  value={benefitsInput}
+                  onChange={(e) => setBenefitsInput(e.target.value)}
+                  rows={4}
+                  className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary-500 resize-none font-sans"
+                  placeholder={"Emissão ilimitada de cobranças Pix\nNotificações automáticas no WhatsApp\nSuporte prioritário com especialista"}
+                />
+                <p className="text-[11px] text-gray-500 mt-1">
+                  Estes benefícios serão listados com checkmarks na lateral do checkout do produto.
+                </p>
+              </div>
+
+              {/* Contrato / Termos Específicos */}
+              <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+                  Contrato / Termos de Aceite Específicos do Produto (Opcional)
+                </label>
+                <textarea
+                  name="customContractText"
+                  value={formData.customContractText || ''}
+                  onChange={handleChange}
+                  rows={3}
+                  className="w-full px-4 py-3 bg-black/20 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary-500 resize-none font-sans"
+                  placeholder="Se preenchido, este texto substituirá as cláusulas padrão no aceite do contrato deste produto."
+                />
+              </div>
             </div>
           </div>
 
