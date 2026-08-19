@@ -4,6 +4,7 @@ import { useICPs } from '../hooks/useICPs';
 import { useOffers } from '@/hooks/useOffers';
 import ICPModal from '../components/ICPModal';
 import ConfirmDeleteICPModal from '../components/ConfirmDeleteICPModal';
+import ICPDetailsModal from '../components/ICPDetailsModal';
 import { ICP } from '@/types';
 
 export default function ICPView() {
@@ -12,6 +13,7 @@ export default function ICPView() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingICP, setEditingICP] = useState<ICP | null>(null);
+  const [viewingDetailsICP, setViewingDetailsICP] = useState<ICP | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [icpToDelete, setIcpToDelete] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<'ALL' | 'B2B' | 'B2C'>('ALL');
@@ -302,7 +304,7 @@ export default function ICPView() {
                   <div className="pt-4 mt-4 border-t border-white/5 flex items-center justify-between text-[10px] text-gray-500">
                     <span>Canais: {(icp.channels || []).join(', ') || 'N/I'}</span>
                     <button 
-                      onClick={() => handleOpenEdit(icp)}
+                      onClick={() => setViewingDetailsICP(icp)}
                       className="text-amber-400 hover:underline font-bold flex items-center gap-1"
                     >
                       Ver Detalhes <ArrowRight size={12} />
@@ -313,6 +315,18 @@ export default function ICPView() {
             })}
           </div>
         )}
+
+        {/* Modal de Detalhes (Somente Leitura - Executive Persona Dossier) */}
+        <ICPDetailsModal
+          isOpen={!!viewingDetailsICP}
+          onClose={() => setViewingDetailsICP(null)}
+          icp={viewingDetailsICP}
+          offers={offers}
+          onEdit={(targetIcp) => {
+            setViewingDetailsICP(null);
+            handleOpenEdit(targetIcp);
+          }}
+        />
 
         {/* Modal de Criação / Edição */}
         <ICPModal
