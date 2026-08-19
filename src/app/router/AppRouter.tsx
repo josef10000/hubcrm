@@ -48,6 +48,7 @@ const ReferralsView = lazy(() => import('@crm/components/ReferralsView'));
 const AuditDashboard = lazy(() => import('@domains/core/views/AuditDashboard'));
 const GrowthHubView = lazy(() => import('@/domains/crm/views/GrowthHubView'));
 const HubAdsView = lazy(() => import('@/domains/hubads/views/HubAdsView'));
+const ICPView = lazy(() => import('@/domains/crm/views/ICPView'));
 
 // Public / External Views (Lazy Loaded)
 const ClientPortal = lazy(() => import('@portal/components/ClientPortalLayout'));
@@ -120,6 +121,7 @@ export function AppRouter() {
                       } />
                       <Route path="/referrals" element={<ReferralsView clients={clients} user={user!} />} />
                       <Route path="/products" element={<ProductsView />} />
+                      <Route path="/icp" element={<ICPView />} />
                       <Route path="/monitoring" element={<MonitoringView clients={clients} />} />
                       <Route path="/map" element={
                           <ClientMapView 

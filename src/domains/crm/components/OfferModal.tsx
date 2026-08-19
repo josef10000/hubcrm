@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { 
   X, Star, Upload, Palette, Check, Sparkles, Loader2, 
   ShieldCheck, Lock, CreditCard, QrCode, UserCheck, Plus, Trash2, 
-  Eye, MessageSquare, Award, Zap
+  Eye, MessageSquare, Award, Zap, Target
 } from 'lucide-react';
 import { Offer, TestimonialItem, OrderBump } from '@/types';
 import { uploadToR2 } from '@/lib/r2';
 import { toast } from 'sonner';
+import { useICPs } from '../hooks/useICPs';
 
 export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialData }: { isOpen: boolean, onClose: () => void, onSave: (data: Partial<Offer>) => void, onDelete?: (id: string) => void, initialData: Partial<Offer> | null }) {
   const [formData, setFormData] = useState<Partial<Offer>>({
@@ -34,6 +35,7 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
   const [benefitsInput, setBenefitsInput] = useState('');
   const [activeTab, setActiveTab] = useState<'general' | 'branding' | 'testimonials' | 'bumps'>('general');
   const [uploadingAvatarId, setUploadingAvatarId] = useState<string | null>(null);
+  const { icps } = useICPs();
 
   useEffect(() => {
     setErrorMsg('');
@@ -307,6 +309,32 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
                         <option value="BOTH">Ambos (CRM e Página de Pagamento)</option>
                       </select>
                     </div>
+                  </div>
+
+                  {/* VÍNCULO OPCIONAL DE ICP (PERFIL DE CLIENTE IDEAL) */}
+                  <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Target size={16} className="text-amber-400" />
+                      <span className="text-xs font-bold text-white">Perfil de Cliente Ideal (ICP Conectado) — Opcional</span>
+                    </div>
+                    <select 
+                      name="icpId"
+                      value={formData.icpId || ''}
+                      onChange={e => setFormData(prev => ({ ...prev, icpId: e.target.value || undefined }))}
+                      className="w-full px-3 py-2 bg-black/60 border border-white/10 text-white rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500"
+                    >
+                      <option value="">Nenhum ICP conectado (Geral)</option>
+                      {icps.map(icp => (
+                        <option key={icp.id} value={icp.id}>
+                          🎯 {icp.name} ({icp.niche || 'Geral'}) — Decisor: {icp.decisionMakerRole || 'Geral'}
+                        </option>
+                      ))}
+                    </select>
+                    {formData.icpId && (
+                      <p className="text-[11px] text-amber-300 italic">
+                        💡 Este produto será associado ao ICP de {icps.find(i => i.id === formData.icpId)?.name || 'selecionado'}.
+                      </p>
+                    )}
                   </div>
 
                   {/* Chave de Acesso ao Portal (Venda Avulsa Sem Portal) */}

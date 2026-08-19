@@ -509,7 +509,25 @@ export interface OrderBump {
   price: number;
   highlightTag?: string;
   linkedOfferId?: string;
-  active: boolean;
+  active?: boolean;
+}
+
+export interface ICP {
+  id: string;
+  name: string;
+  niche?: string;
+  companySize?: string;
+  decisionMakerRole?: string;
+  avgTicket?: number;
+  painPoints?: string[];
+  desires?: string[];
+  objections?: string[];
+  channels?: string[];
+  pitchNotes?: string;
+  linkedOfferIds?: string[];
+  active?: boolean;
+  createdAt: number;
+  updatedAt?: number;
 }
 
 export interface TestimonialItem {
@@ -543,6 +561,7 @@ export interface Offer {
   guaranteeText?: string;
   testimonials?: TestimonialItem[];
   orderBumps?: OrderBump[];
+  icpId?: string;
   createdAt: number;
 }
 

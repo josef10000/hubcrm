@@ -66,6 +66,7 @@ export function Header({ currentPath, navigate }: HeaderProps) {
       case '/settings': return 'Configurações';
       case '/referrals': return 'Hub Rewards';
       case '/products': return 'Produtos';
+      case '/icp': return 'Perfis ICP (Cliente Ideal)';
       case '/monitoring': return 'Monitoramento';
       case '/map': return 'Mapa de Clientes';
       case '/notifications': return 'Notificações';
