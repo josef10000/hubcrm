@@ -874,6 +874,7 @@ export type OfferStatus = 'draft' | 'validating' | 'active' | 'archived';
 export interface OfferBlueprint {
   id?: string;
   title: string;
+  catchyName?: string;
   status: OfferStatus;
   productId: string;
   icpId: string;

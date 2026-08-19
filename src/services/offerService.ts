@@ -83,14 +83,17 @@ export const offerService = {
     if (!orgId) throw new Error("orgId is required");
     try {
       const docRef = doc(db, 'organizations', orgId, 'offer_blueprints', offerId);
-      const updateData = {
+      const updateData: any = {
         ...data,
         updatedAt: serverTimestamp(),
       };
 
+      delete updateData.id;
+      delete updateData.createdAt;
+
       Object.keys(updateData).forEach(key => {
-        if ((updateData as any)[key] === undefined) {
-          delete (updateData as any)[key];
+        if (updateData[key] === undefined) {
+          delete updateData[key];
         }
       });
 

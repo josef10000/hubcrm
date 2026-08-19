@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Save, FlaskConical, Target, Package, Sparkles, 
-  Lightbulb, ShieldCheck, DollarSign, Layers, PenTool
+  Lightbulb, ShieldCheck, DollarSign, Layers, PenTool, Tag
 } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -68,14 +68,25 @@ export default function OfferLabEditorView() {
   };
 
   const handleSave = async () => {
-    if (!orgId || !id || !offer) return;
+    if (!orgId || !id || !offer) {
+      toast.error('Não foi possível salvar: Dados incompletos.');
+      return;
+    }
+    
     setSaving(true);
+    const savePromise = offerService.updateOffer(orgId, id, offer);
+    
+    toast.promise(savePromise, {
+      loading: 'Salvando alterações...',
+      success: 'Oferta salva com sucesso!',
+      error: (err) => {
+        console.error('Erro ao salvar oferta:', err);
+        return 'Erro ao salvar as alterações. Tente novamente.';
+      }
+    });
+
     try {
-      await offerService.updateOffer(orgId, id, offer);
-      toast.success('Oferta salva com sucesso!');
-    } catch (error) {
-      console.error('Erro ao salvar oferta:', error);
-      toast.error('Erro ao salvar as alterações.');
+      await savePromise;
     } finally {
       setSaving(false);
     }
@@ -221,6 +232,19 @@ export default function OfferLabEditorView() {
         <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-6 lg:p-10">
           <div className="max-w-3xl mx-auto space-y-8">
             
+            <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className="flex items-center gap-2 mb-4 text-pink-500">
+                <Tag className="w-5 h-5" />
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Nome Chiclete</h2>
+              </div>
+              <input
+                type="text"
+                value={offer.catchyName || ''}
+                onChange={(e) => handleChange('catchyName', e.target.value)}
+                placeholder="Ex: Método Descomplica, Fórmula do Lucro, etc."
+                className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+              />
+            </section>
             <section className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
               <div className="flex items-center gap-2 mb-4 text-amber-500">
                 <Sparkles className="w-5 h-5" />
