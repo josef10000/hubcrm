@@ -257,3 +257,19 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
     - Notas do cliente no CRM enriquecidas com `[ORDER BUMPS ADQUIRIDOS: ...]`.
   - **Sincronização & Git**: Tag local `pre-order-bump-v1` criada, build verificado com sucesso e código enviado para o GitHub (`88421ae`).
 
+---
+
+## 19. Redesign Premium do Checkout & Cartão de Crédito 3D Interativo
+- **Data da Integração**: 19/08/2026
+- **Funcionalidade**: Redesign visual da página pública de pagamento (`PublicCheckoutPage.tsx`) com tema Dark Slate Mesh Gradient (`#080e1a`), Glassmorphism e um **Cartão de Crédito Virtual Interativo 3D** (`InteractiveCreditCard.tsx`).
+- **Decisões Técnicas**:
+  - **Componente `InteractiveCreditCard.tsx`**:
+    - Suporte a giro 3D de 180 graus (`rotate-y-180` com `perspective: 1000px` e `transform-style: preserve-3d`).
+    - Detecção automática de bandeiras por regex (Visa, Mastercard, Elo, Amex, Hipercard) exibindo logos dinâmicas no canto do cartão.
+    - Atualização simultânea em tempo real dos dígitos do cartão, nome do titular e validade (MM/AA).
+    - Eventos `onFocus` e `onBlur` no campo **CVV** acionam a rotação 3D suave mostrando a tarja magnética no verso do cartão e os 3 dígitos digitados.
+  - **Design & Acabamento**:
+    - Fundo Dark Slate `#080e1a` com Mesh Light Glows em gradiente difuso que se adaptam à cor de destaque (`accentColor`) do produto.
+    - Molduras de vidro fosco (`backdrop-blur-2xl bg-white/[0.03]`) e sombras de alta profundidade.
+  - **Sincronização & GitHub**: Build compilado sem erros e código enviado para o GitHub (`109a48f`).
+
