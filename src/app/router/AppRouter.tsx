@@ -40,6 +40,8 @@ const ProjectsView = lazy(() => import('@crm/views/ProjectsView'));
 const OnboardingHubView = lazy(() => import('@crm/views/OnboardingHubView'));
 const ContractsView = lazy(() => import('@crm/views/ContractsView'));
 const ProductsView = lazy(() => import('@crm/views/ProductsView'));
+const OfferLabListView = lazy(() => import('@crm/views/OfferLabListView'));
+const OfferLabEditorView = lazy(() => import('@crm/views/OfferLabEditorView'));
 const TeamManagementView = lazy(() => import('@people/views/TeamManagementView'));
 const PeopleView = lazy(() => import('@people/views/PeopleView'));
 const CanvasListView = lazy(() => import('@chat/views/CanvasListView'));
@@ -122,6 +124,8 @@ export function AppRouter() {
                       <Route path="/referrals" element={<ReferralsView clients={clients} user={user!} />} />
                       <Route path="/products" element={<ProductsView />} />
                       <Route path="/icp" element={<ICPView />} />
+                      <Route path="/offers" element={<OfferLabListView />} />
+                      <Route path="/offers/:id" element={<OfferLabEditorView />} />
                       <Route path="/monitoring" element={<MonitoringView clients={clients} />} />
                       <Route path="/map" element={
                           <ClientMapView 

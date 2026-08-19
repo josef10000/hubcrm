@@ -866,3 +866,28 @@ export interface Tournament {
   orgId: string;
   createdAt: number;
 }
+
+// ── Laboratório de Ofertas ──────────────────────────────────────────────────────
+
+export type OfferStatus = 'draft' | 'validating' | 'active' | 'archived';
+
+export interface OfferBlueprint {
+  id?: string;
+  title: string;
+  status: OfferStatus;
+  productId: string;
+  icpId: string;
+  
+  promise: string;
+  mechanism: string;
+  deliverables: string;
+  bonuses: string;
+  guarantee: string;
+  pricingAnchoring: string;
+  scratchpad: string;
+
+  createdAt?: any;
+  updatedAt?: any;
+  createdBy?: string;
+}
+

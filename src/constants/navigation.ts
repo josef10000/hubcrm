@@ -1,7 +1,7 @@
 import { 
   LayoutDashboard, Users, DollarSign, Target, Rocket, HeartHandshake, Settings, 
   Package, Megaphone, Calendar, MessageCircle, Globe, LayoutTemplate, Map as MapIcon, 
-  Layout, CreditCard, Shield, BarChart3, BookOpen, Bell, ShieldCheck, Zap, LayoutGrid
+  Layout, CreditCard, Shield, BarChart3, BookOpen, Bell, ShieldCheck, Zap, LayoutGrid, FlaskConical
 } from 'lucide-react';
 
 export const navGroups = [
@@ -23,6 +23,7 @@ export const navGroups = [
       { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
       { icon: Package, label: 'Produtos', path: '/products' },
       { icon: Target, label: 'Perfis ICP', path: '/icp' },
+      { icon: FlaskConical, label: 'Laboratório de Ofertas', path: '/offers' },
       { icon: Users, label: 'Hub Rewards', path: '/referrals' },
       { icon: Rocket, label: 'Hub de Crescimento', path: '/growth-hub', permission: 'MANAGE_CLIENTS' },
     ]
