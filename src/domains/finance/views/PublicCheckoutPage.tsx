@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
 import { Offer } from '@/types';
+import InteractiveCreditCard from '../components/InteractiveCreditCard';
 
 export default function PublicCheckoutPage() {
   const params = useParams<{ orgId?: string; id?: string }>();
@@ -44,6 +45,7 @@ export default function PublicCheckoutPage() {
     ccv: '',
     installments: 1
   });
+  const [isCardFlipped, setIsCardFlipped] = useState(false);
 
   // Resultados de Pagamento Transparente
   const [pixResult, setPixResult] = useState<{ encodedImage: string; payload: string } | null>(null);
@@ -299,16 +301,16 @@ export default function PublicCheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#030712] py-8 sm:py-12 px-4 sm:px-6 lg:px-8 font-sans text-gray-100 relative overflow-hidden">
+    <div className="min-h-screen bg-[#080e1a] py-8 sm:py-12 px-4 sm:px-6 lg:px-8 font-sans text-gray-100 relative overflow-hidden">
       <Toaster theme="dark" position="top-right" />
 
-      {/* Glow Ambient Estético com a Cor do Produto */}
+      {/* Mesh Light Glows de Alta Definição */}
       <div 
-        className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full blur-[160px] pointer-events-none opacity-20 transition-all duration-700"
+        className="absolute top-[-15%] left-[-15%] w-[600px] h-[600px] rounded-full blur-[180px] pointer-events-none opacity-25 transition-all duration-700"
         style={{ backgroundColor: customAccentColor }}
       />
       <div 
-        className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full blur-[160px] pointer-events-none opacity-15 transition-all duration-700"
+        className="absolute bottom-[-15%] right-[-15%] w-[600px] h-[600px] rounded-full blur-[180px] pointer-events-none opacity-20 transition-all duration-700"
         style={{ backgroundColor: customAccentColor }}
       />
 
@@ -668,21 +670,34 @@ export default function PublicCheckoutPage() {
                     </div>
                   )}
 
-                  {/* FORMULÁRIO DE CARTÃO DE CRÉDITO */}
+                  {/* FORMULÁRIO DE CARTÃO DE CRÉDITO COM CARTÃO 3D INTERATIVO */}
                   {paymentMethod === 'CREDIT_CARD' && (
-                    <div className="p-5 bg-black/40 border border-white/10 rounded-2xl space-y-3 animate-in fade-in duration-300">
+                    <div className="p-5 bg-black/40 border border-white/10 rounded-2xl space-y-4 animate-in fade-in duration-300">
+                      
+                      {/* CARTÃO VIRTUAL 3D INTERATIVO (Gira ao focar no CVV) */}
+                      <InteractiveCreditCard 
+                        number={cardData.number}
+                        holderName={cardData.holderName}
+                        expiryMonth={cardData.expiryMonth}
+                        expiryYear={cardData.expiryYear}
+                        ccv={cardData.ccv}
+                        isFlipped={isCardFlipped}
+                        accentColor={customAccentColor}
+                      />
+
                       <div>
                         <label className="block text-xs font-medium text-gray-300 mb-1">Número do Cartão *</label>
                         <input 
                           type="text"
                           value={cardData.number}
+                          onFocus={() => setIsCardFlipped(false)}
                           onChange={e => {
                             let v = e.target.value.replace(/\D/g, '').substring(0, 16);
                             v = v.replace(/(\d{4})/g, '$1 ').trim();
                             setCardData(prev => ({ ...prev, number: v }));
                           }}
                           placeholder="0000 0000 0000 0000"
-                          className="w-full px-4 py-2.5 bg-black/60 border border-white/10 rounded-xl text-white text-xs font-mono outline-none"
+                          className="w-full px-4 py-2.5 bg-black/60 border border-white/10 rounded-xl text-white text-xs font-mono outline-none focus:border-primary-500 transition-colors"
                         />
                       </div>
 
@@ -691,9 +706,10 @@ export default function PublicCheckoutPage() {
                         <input 
                           type="text"
                           value={cardData.holderName}
+                          onFocus={() => setIsCardFlipped(false)}
                           onChange={e => setCardData(prev => ({ ...prev, holderName: e.target.value.toUpperCase() }))}
                           placeholder="COMO ESTÁ NO CARTÃO"
-                          className="w-full px-4 py-2.5 bg-black/60 border border-white/10 rounded-xl text-white text-xs outline-none uppercase"
+                          className="w-full px-4 py-2.5 bg-black/60 border border-white/10 rounded-xl text-white text-xs outline-none uppercase focus:border-primary-500 transition-colors"
                         />
                       </div>
 
@@ -704,9 +720,10 @@ export default function PublicCheckoutPage() {
                             type="text"
                             maxLength={2}
                             value={cardData.expiryMonth}
+                            onFocus={() => setIsCardFlipped(false)}
                             onChange={e => setCardData(prev => ({ ...prev, expiryMonth: e.target.value.replace(/\D/g, '') }))}
                             placeholder="MM"
-                            className="w-full px-3 py-2.5 bg-black/60 border border-white/10 rounded-xl text-white text-xs text-center font-mono"
+                            className="w-full px-3 py-2.5 bg-black/60 border border-white/10 rounded-xl text-white text-xs text-center font-mono focus:border-primary-500 transition-colors"
                           />
                         </div>
                         <div>
@@ -715,20 +732,23 @@ export default function PublicCheckoutPage() {
                             type="text"
                             maxLength={4}
                             value={cardData.expiryYear}
+                            onFocus={() => setIsCardFlipped(false)}
                             onChange={e => setCardData(prev => ({ ...prev, expiryYear: e.target.value.replace(/\D/g, '') }))}
                             placeholder="AAAA"
-                            className="w-full px-3 py-2.5 bg-black/60 border border-white/10 rounded-xl text-white text-xs text-center font-mono"
+                            className="w-full px-3 py-2.5 bg-black/60 border border-white/10 rounded-xl text-white text-xs text-center font-mono focus:border-primary-500 transition-colors"
                           />
                         </div>
                         <div>
-                          <label className="block text-[11px] font-medium text-gray-300 mb-1">CVV *</label>
+                          <label className="block text-[11px] font-medium text-gray-300 mb-1 text-amber-400 font-bold">CVV *</label>
                           <input 
                             type="text"
                             maxLength={4}
                             value={cardData.ccv}
+                            onFocus={() => setIsCardFlipped(true)}
+                            onBlur={() => setIsCardFlipped(false)}
                             onChange={e => setCardData(prev => ({ ...prev, ccv: e.target.value.replace(/\D/g, '') }))}
                             placeholder="123"
-                            className="w-full px-3 py-2.5 bg-black/60 border border-white/10 rounded-xl text-white text-xs text-center font-mono"
+                            className="w-full px-3 py-2.5 bg-black/60 border border-amber-500/50 rounded-xl text-white text-xs text-center font-mono outline-none focus:ring-2 focus:ring-amber-500/50 transition-all"
                           />
                         </div>
                       </div>
