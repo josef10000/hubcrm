@@ -515,10 +515,15 @@ export interface OrderBump {
 export interface ICP {
   id: string;
   name: string;
+  targetType?: 'B2B' | 'B2C';
   niche?: string;
   companySize?: string;
   decisionMakerRole?: string;
   avgTicket?: number;
+  ageGroup?: string;
+  gender?: string;
+  incomeRange?: string;
+  lifestyleInterests?: string[];
   painPoints?: string[];
   desires?: string[];
   objections?: string[];

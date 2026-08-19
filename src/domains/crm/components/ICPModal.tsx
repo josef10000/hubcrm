@@ -16,10 +16,15 @@ export default function ICPModal({ isOpen, onClose, onSave, editingICP, offers }
 
   const [formData, setFormData] = useState<Partial<ICP>>({
     name: '',
+    targetType: 'B2B',
     niche: '',
     companySize: '',
     decisionMakerRole: '',
     avgTicket: 0,
+    ageGroup: '',
+    gender: 'Todos',
+    incomeRange: '',
+    lifestyleInterests: [],
     painPoints: [],
     desires: [],
     objections: [],
@@ -39,6 +44,8 @@ export default function ICPModal({ isOpen, onClose, onSave, editingICP, offers }
     if (editingICP) {
       setFormData({
         ...editingICP,
+        targetType: editingICP.targetType || 'B2B',
+        lifestyleInterests: editingICP.lifestyleInterests || [],
         painPoints: editingICP.painPoints || [],
         desires: editingICP.desires || [],
         objections: editingICP.objections || [],
@@ -48,10 +55,15 @@ export default function ICPModal({ isOpen, onClose, onSave, editingICP, offers }
     } else {
       setFormData({
         name: '',
+        targetType: 'B2B',
         niche: '',
         companySize: '',
         decisionMakerRole: '',
         avgTicket: 0,
+        ageGroup: '25 - 45 anos',
+        gender: 'Todos',
+        incomeRange: 'R$ 5.000 - R$ 15.000/mês',
+        lifestyleInterests: [],
         painPoints: ['Pouco tempo para gerenciar processos', 'Baixa previsibilidade de receita'],
         desires: ['Escalar vendas com previsibilidade', 'Centralizar gestão da empresa'],
         objections: ['Já tenho outro sistema', 'Preço / Orçamento apertado'],
@@ -173,6 +185,37 @@ export default function ICPModal({ isOpen, onClose, onSave, editingICP, offers }
           {/* ABA 1: DADOS GERAIS */}
           {activeTab === 'GENERAL' && (
             <div className="space-y-4 animate-in fade-in duration-200">
+              
+              {/* TIPO DE PERFIL: B2B VS B2C */}
+              <div className="p-3 bg-white/5 border border-white/10 rounded-2xl space-y-2">
+                <label className="block text-xs font-bold text-gray-300 uppercase tracking-wider">Tipo de Cliente Alvo *</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, targetType: 'B2B' }))}
+                    className={`py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 border transition-all ${
+                      formData.targetType === 'B2B'
+                        ? 'bg-blue-500/20 border-blue-500 text-blue-400 shadow-md'
+                        : 'bg-black/40 border-white/10 text-gray-400 hover:border-white/20'
+                    }`}
+                  >
+                    <span>🏢 B2B (Empresarial)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, targetType: 'B2C' }))}
+                    className={`py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 border transition-all ${
+                      formData.targetType === 'B2C'
+                        ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-md'
+                        : 'bg-black/40 border-white/10 text-gray-400 hover:border-white/20'
+                    }`}
+                  >
+                    <span>👤 B2C (Consumidor Final)</span>
+                  </button>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-medium text-gray-300 mb-1">Nome da Persona / ICP *</label>
                 <input 
@@ -180,58 +223,116 @@ export default function ICPModal({ isOpen, onClose, onSave, editingICP, offers }
                   required
                   value={formData.name}
                   onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Ex: Infoprodutor de Cursos Digitais (Scale)"
+                  placeholder={formData.targetType === 'B2B' ? "Ex: Infoprodutor de Cursos Digitais (Scale)" : "Ex: Jovem Profissional em Busca de Especialização"}
                   className="w-full px-4 py-2.5 bg-black/50 border border-white/10 rounded-xl text-white text-xs outline-none focus:border-amber-500 transition-colors"
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-gray-300 mb-1">Setor / Nicho de Atuação</label>
-                  <input 
-                    type="text"
-                    value={formData.niche}
-                    onChange={e => setFormData(prev => ({ ...prev, niche: e.target.value }))}
-                    placeholder="Ex: Educação / E-learning / SaaS"
-                    className="w-full px-4 py-2.5 bg-black/50 border border-white/10 rounded-xl text-white text-xs outline-none focus:border-amber-500 transition-colors"
-                  />
-                </div>
+              {/* CAMPOS ESPECÍFICOS B2B */}
+              {formData.targetType === 'B2B' ? (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-300 mb-1">Setor / Nicho de Atuação</label>
+                      <input 
+                        type="text"
+                        value={formData.niche}
+                        onChange={e => setFormData(prev => ({ ...prev, niche: e.target.value }))}
+                        placeholder="Ex: Educação / E-learning / SaaS"
+                        className="w-full px-4 py-2.5 bg-black/50 border border-white/10 rounded-xl text-white text-xs outline-none focus:border-amber-500 transition-colors"
+                      />
+                    </div>
 
-                <div>
-                  <label className="block text-xs font-medium text-gray-300 mb-1">Cargo do Decisor de Compra</label>
-                  <input 
-                    type="text"
-                    value={formData.decisionMakerRole}
-                    onChange={e => setFormData(prev => ({ ...prev, decisionMakerRole: e.target.value }))}
-                    placeholder="Ex: CEO, Director de Marketing, Founder"
-                    className="w-full px-4 py-2.5 bg-black/50 border border-white/10 rounded-xl text-white text-xs outline-none focus:border-amber-500 transition-colors"
-                  />
-                </div>
-              </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-300 mb-1">Cargo do Decisor de Compra</label>
+                      <input 
+                        type="text"
+                        value={formData.decisionMakerRole}
+                        onChange={e => setFormData(prev => ({ ...prev, decisionMakerRole: e.target.value }))}
+                        placeholder="Ex: CEO, Diretor de Marketing, Founder"
+                        className="w-full px-4 py-2.5 bg-black/50 border border-white/10 rounded-xl text-white text-xs outline-none focus:border-amber-500 transition-colors"
+                      />
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-gray-300 mb-1">Porte da Empresa / Faturamento</label>
-                  <input 
-                    type="text"
-                    value={formData.companySize}
-                    onChange={e => setFormData(prev => ({ ...prev, companySize: e.target.value }))}
-                    placeholder="Ex: 5 a 20 funcionários / R$ 50k - R$ 200k/mês"
-                    className="w-full px-4 py-2.5 bg-black/50 border border-white/10 rounded-xl text-white text-xs outline-none focus:border-amber-500 transition-colors"
-                  />
-                </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-300 mb-1">Porte da Empresa / Faturamento</label>
+                      <input 
+                        type="text"
+                        value={formData.companySize}
+                        onChange={e => setFormData(prev => ({ ...prev, companySize: e.target.value }))}
+                        placeholder="Ex: 5 a 20 funcionários / R$ 50k - R$ 200k/mês"
+                        className="w-full px-4 py-2.5 bg-black/50 border border-white/10 rounded-xl text-white text-xs outline-none focus:border-amber-500 transition-colors"
+                      />
+                    </div>
 
-                <div>
-                  <label className="block text-xs font-medium text-gray-300 mb-1">Ticket Médio Estimado de Venda (R$)</label>
-                  <input 
-                    type="number"
-                    value={formData.avgTicket || ''}
-                    onChange={e => setFormData(prev => ({ ...prev, avgTicket: Number(e.target.value) }))}
-                    placeholder="Ex: 2500"
-                    className="w-full px-4 py-2.5 bg-black/50 border border-white/10 rounded-xl text-white text-xs outline-none focus:border-amber-500 transition-colors"
-                  />
-                </div>
-              </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-300 mb-1">Ticket Médio Estimado (R$)</label>
+                      <input 
+                        type="number"
+                        value={formData.avgTicket || ''}
+                        onChange={e => setFormData(prev => ({ ...prev, avgTicket: Number(e.target.value) }))}
+                        placeholder="Ex: 2500"
+                        className="w-full px-4 py-2.5 bg-black/50 border border-white/10 rounded-xl text-white text-xs outline-none focus:border-amber-500 transition-colors"
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                /* CAMPOS ESPECÍFICOS B2C */
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-300 mb-1">Faixa Etária / Idade Alvo</label>
+                      <input 
+                        type="text"
+                        value={formData.ageGroup}
+                        onChange={e => setFormData(prev => ({ ...prev, ageGroup: e.target.value }))}
+                        placeholder="Ex: 25 - 40 anos"
+                        className="w-full px-4 py-2.5 bg-black/50 border border-white/10 rounded-xl text-white text-xs outline-none focus:border-amber-500 transition-colors"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-gray-300 mb-1">Gênero / Público</label>
+                      <select 
+                        value={formData.gender || 'Todos'}
+                        onChange={e => setFormData(prev => ({ ...prev, gender: e.target.value }))}
+                        className="w-full px-4 py-2.5 bg-black/50 border border-white/10 rounded-xl text-white text-xs outline-none focus:border-amber-500 transition-colors"
+                      >
+                        <option value="Todos">Todos os gêneros</option>
+                        <option value="Feminino">Predominantemente Feminino</option>
+                        <option value="Masculino">Predominantemente Masculino</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-300 mb-1">Faixa de Renda Estimada</label>
+                      <input 
+                        type="text"
+                        value={formData.incomeRange}
+                        onChange={e => setFormData(prev => ({ ...prev, incomeRange: e.target.value }))}
+                        placeholder="Ex: R$ 4.000 - R$ 12.000/mês (Classe B)"
+                        className="w-full px-4 py-2.5 bg-black/50 border border-white/10 rounded-xl text-white text-xs outline-none focus:border-amber-500 transition-colors"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-gray-300 mb-1">Ticket Médio Estimado (R$)</label>
+                      <input 
+                        type="number"
+                        value={formData.avgTicket || ''}
+                        onChange={e => setFormData(prev => ({ ...prev, avgTicket: Number(e.target.value) }))}
+                        placeholder="Ex: 297"
+                        className="w-full px-4 py-2.5 bg-black/50 border border-white/10 rounded-xl text-white text-xs outline-none focus:border-amber-500 transition-colors"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
 
               {/* CANAIS DE AQUISIÇÃO */}
               <div className="space-y-2 pt-2">

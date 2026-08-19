@@ -13,14 +13,19 @@ export default function ICPView() {
   const [editingICP, setEditingICP] = useState<ICP | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [icpToDelete, setIcpToDelete] = useState<string | null>(null);
+  const [filterType, setFilterType] = useState<'ALL' | 'B2B' | 'B2C'>('ALL');
 
   const filteredICPs = icps.filter(icp => {
     const search = searchTerm.toLowerCase();
-    return (
+    const matchesSearch = (
       icp.name.toLowerCase().includes(search) ||
       (icp.niche && icp.niche.toLowerCase().includes(search)) ||
-      (icp.decisionMakerRole && icp.decisionMakerRole.toLowerCase().includes(search))
+      (icp.decisionMakerRole && icp.decisionMakerRole.toLowerCase().includes(search)) ||
+      (icp.ageGroup && icp.ageGroup.toLowerCase().includes(search))
     );
+
+    const matchesType = filterType === 'ALL' || icp.targetType === filterType || (!icp.targetType && filterType === 'B2B');
+    return matchesSearch && matchesType;
   });
 
   const handleOpenCreate = () => {
@@ -66,16 +71,46 @@ export default function ICPView() {
           </button>
         </div>
 
-        {/* Barra de Pesquisa */}
-        <div className="relative max-w-md">
-          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input 
-            type="text" 
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            placeholder="Buscar ICP por nome, nicho ou decisor..."
-            className="w-full pl-10 pr-4 py-2.5 bg-black/40 border border-white/10 rounded-2xl text-white text-xs outline-none focus:border-amber-500 transition-colors"
-          />
+        {/* Barra de Pesquisa & Filtros de Tipo */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="relative max-w-md w-full">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input 
+              type="text" 
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              placeholder="Buscar ICP por nome, nicho, decisor ou idade..."
+              className="w-full pl-10 pr-4 py-2.5 bg-black/40 border border-white/10 rounded-2xl text-white text-xs outline-none focus:border-amber-500 transition-colors"
+            />
+          </div>
+
+          {/* Filtros B2B vs B2C */}
+          <div className="flex items-center gap-1.5 bg-black/40 p-1.5 border border-white/10 rounded-2xl">
+            <button
+              onClick={() => setFilterType('ALL')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                filterType === 'ALL' ? 'bg-amber-500 text-gray-900 shadow-md' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Todos os Perfis ({icps.length})
+            </button>
+            <button
+              onClick={() => setFilterType('B2B')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                filterType === 'B2B' ? 'bg-blue-500 text-white shadow-md' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              🏢 B2B Empresas ({icps.filter(i => i.targetType !== 'B2C').length})
+            </button>
+            <button
+              onClick={() => setFilterType('B2C')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                filterType === 'B2C' ? 'bg-emerald-500 text-gray-900 shadow-md' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              👤 B2C Consumidor ({icps.filter(i => i.targetType === 'B2C').length})
+            </button>
+          </div>
         </div>
 
         {/* Grid de Cards ICP - Persona Canvas */}
@@ -89,7 +124,7 @@ export default function ICPView() {
             <div className="space-y-1">
               <h3 className="text-base font-bold text-white">Nenhum Perfil ICP Encontrado</h3>
               <p className="text-xs text-gray-400 max-w-md mx-auto">
-                Crie o primeiro Perfil de Cliente Ideal da sua empresa para alinhar a equipe de produtos e vendas.
+                Crie o primeiro Perfil de Cliente Ideal (B2B ou B2C) da sua empresa para alinhar a equipe de produtos e vendas.
               </p>
             </div>
             <button
@@ -103,6 +138,7 @@ export default function ICPView() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredICPs.map(icp => {
               const linkedOffers = offers.filter(o => (icp.linkedOfferIds || []).includes(o.id));
+              const isB2C = icp.targetType === 'B2C';
 
               return (
                 <div 
@@ -110,15 +146,25 @@ export default function ICPView() {
                   className="bg-black/40 border border-white/10 hover:border-amber-500/40 rounded-3xl p-6 flex flex-col justify-between transition-all duration-300 backdrop-blur-xl group hover:shadow-2xl hover:shadow-amber-500/10 relative overflow-hidden"
                 >
                   {/* Accent Line Topo */}
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 via-amber-400 to-transparent" />
+                  <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${isB2C ? 'from-emerald-500 via-emerald-400' : 'from-blue-500 via-blue-400'} to-transparent`} />
 
                   <div className="space-y-4">
                     {/* Topo do Card */}
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <span className="text-[9px] uppercase tracking-widest font-extrabold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 inline-block mb-1.5">
-                          {icp.niche || 'Geral'}
-                        </span>
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <span className={`text-[9px] uppercase tracking-widest font-extrabold px-2.5 py-0.5 rounded-full border inline-block ${
+                            isB2C 
+                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                              : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                          }`}>
+                            {isB2C ? '👤 B2C Consumidor' : '🏢 B2B Empresa'}
+                          </span>
+                          <span className="text-[9px] uppercase tracking-widest font-bold text-gray-400">
+                            {icp.niche || 'Geral'}
+                          </span>
+                        </div>
+
                         <h3 className="text-base font-extrabold text-white group-hover:text-amber-400 transition-colors leading-tight">
                           {icp.name}
                         </h3>
@@ -143,19 +189,32 @@ export default function ICPView() {
                       </div>
                     </div>
 
-                    {/* Meta Info (Decisor & Ticket) */}
-                    <div className="grid grid-cols-2 gap-2 text-[11px] p-3 rounded-2xl bg-white/[0.03] border border-white/5">
-                      <div>
-                        <span className="text-gray-400 block text-[9px] uppercase font-semibold">Decisor</span>
-                        <span className="font-bold text-gray-200 truncate block">{icp.decisionMakerRole || 'N/I'}</span>
+                    {/* Meta Info Dinâmica (B2B vs B2C) */}
+                    {isB2C ? (
+                      <div className="grid grid-cols-2 gap-2 text-[11px] p-3 rounded-2xl bg-emerald-500/5 border border-emerald-500/10">
+                        <div>
+                          <span className="text-gray-400 block text-[9px] uppercase font-semibold">Faixa Etária</span>
+                          <span className="font-bold text-emerald-300 truncate block">{icp.ageGroup || 'Geral'}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-400 block text-[9px] uppercase font-semibold">Renda Estimada</span>
+                          <span className="font-bold text-amber-400 truncate block">{icp.incomeRange || 'N/I'}</span>
+                        </div>
                       </div>
-                      <div>
-                        <span className="text-gray-400 block text-[9px] uppercase font-semibold">Ticket Estimado</span>
-                        <span className="font-bold text-amber-400 block">
-                          R$ {(icp.avgTicket || 0).toLocaleString('pt-BR')}
-                        </span>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2 text-[11px] p-3 rounded-2xl bg-blue-500/5 border border-blue-500/10">
+                        <div>
+                          <span className="text-gray-400 block text-[9px] uppercase font-semibold">Decisor</span>
+                          <span className="font-bold text-blue-300 truncate block">{icp.decisionMakerRole || 'N/I'}</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-400 block text-[9px] uppercase font-semibold">Ticket Estimado</span>
+                          <span className="font-bold text-amber-400 block">
+                            R$ {(icp.avgTicket || 0).toLocaleString('pt-BR')}
+                          </span>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Dores (Pain Points) */}
                     {icp.painPoints && icp.painPoints.length > 0 && (
