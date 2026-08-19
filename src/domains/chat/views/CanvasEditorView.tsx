@@ -25,12 +25,10 @@ export default function CanvasEditorView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, userProfile } = useAuth();
-  const currentUserId = user?.uid || 'admin-1';
   const orgId = userProfile?.orgId;
   
   const [canvas, setCanvas] = useState<CanvasDocument | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [editor, setEditor] = useState<Editor | null>(null);
   
@@ -56,7 +54,7 @@ export default function CanvasEditorView() {
   }), []);
 
   // Hook para Multiplayer via Firestore
-  const isSynced = useFirestoreSync(editor, orgId, id);
+  const { isSynced, isSaving } = useFirestoreSync(editor, orgId, id);
 
   useEffect(() => {
     if (id && orgId) {
@@ -163,7 +161,7 @@ export default function CanvasEditorView() {
               {canvas.title}
             </h1>
             <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-              {saving ? (
+              {isSaving ? (
                 <span className="flex items-center gap-1 text-indigo-500">
                   <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
                   Salvando...

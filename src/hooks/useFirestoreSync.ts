@@ -1,15 +1,24 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Editor, TLRecord } from 'tldraw';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, doc, writeBatch } from 'firebase/firestore';
 
 export function useFirestoreSync(editor: Editor | null, orgId: string | undefined, canvasId: string | undefined) {
   const [isSynced, setIsSynced] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Ref para armazenar mudanças pendentes no debounce
+  const pendingChangesRef = useRef<{
+    added: Record<string, TLRecord>;
+    updated: Record<string, TLRecord>;
+    removed: Record<string, TLRecord>;
+  }>({ added: {}, updated: {}, removed: {} });
+
+  const timeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!editor || !orgId || !canvasId) return;
 
-    let isSyncingToFirestore = false;
     const recordsRef = collection(db, 'organizations', orgId, 'canvases', canvasId, 'records');
 
     // 1. Escutar alterações remotas (Firestore -> Tldraw)
@@ -23,7 +32,7 @@ export function useFirestoreSync(editor: Editor | null, orgId: string | undefine
         const data = change.doc.data() as TLRecord;
         if (['instance', 'camera', 'instance_page_state', 'instance_presence', 'pointer'].includes(data.typeName)) return;
 
-        // Sanitização de dados corrompidos (ex: geo shapes antigos com propriedade text que quebra o schema do v3)
+        // Sanitização de dados corrompidos
         if (data.typeName === 'shape' && data.type === 'geo') {
           if (data.props && 'text' in data.props) {
             delete (data.props as any).text;
@@ -51,47 +60,86 @@ export function useFirestoreSync(editor: Editor | null, orgId: string | undefine
       setIsSynced(true);
     });
 
-    // 2. Escutar alterações locais (Tldraw -> Firestore)
+    // 2. Escutar alterações locais (Tldraw -> Firestore) com DEBOUNCE
     const unsubscribeEditor = editor.store.listen(
       (update) => {
-        // Ignorar alterações que vieram do próprio Firestore (evita loop infinito)
         if (update.source === 'remote') return;
 
-        const batch = writeBatch(db);
-        let hasChanges = false;
+        let hasRelevantChanges = false;
+        const pending = pendingChangesRef.current;
+
         Object.values(update.changes.added).forEach(record => {
            if (['instance', 'camera', 'instance_page_state', 'instance_presence', 'pointer'].includes(record.typeName)) return;
-           const docRef = doc(recordsRef, record.id);
-           batch.set(docRef, record);
-           hasChanges = true;
+           pending.added[record.id] = record;
+           hasRelevantChanges = true;
         });
 
-        Object.values(update.changes.updated).forEach(([oldRecord, newRecord]) => {
+        Object.values(update.changes.updated).forEach(([_, newRecord]) => {
            if (['instance', 'camera', 'instance_page_state', 'instance_presence', 'pointer'].includes(newRecord.typeName)) return;
-           const docRef = doc(recordsRef, newRecord.id);
-           batch.set(docRef, newRecord);
-           hasChanges = true;
+           pending.updated[newRecord.id] = newRecord;
+           hasRelevantChanges = true;
         });
 
         Object.values(update.changes.removed).forEach(record => {
            if (['instance', 'camera', 'instance_page_state', 'instance_presence', 'pointer'].includes(record.typeName)) return;
-           const docRef = doc(recordsRef, record.id);
-           batch.delete(docRef);
-           hasChanges = true;
+           pending.removed[record.id] = record;
+           delete pending.added[record.id];
+           delete pending.updated[record.id];
+           hasRelevantChanges = true;
         });
-        
-        if (hasChanges) {
-          batch.commit().catch(e => console.error("Hub Canvas Sync Error:", e));
+
+        if (hasRelevantChanges) {
+          setIsSaving(true);
+          
+          if (timeoutRef.current !== null) {
+            window.clearTimeout(timeoutRef.current);
+          }
+
+          timeoutRef.current = window.setTimeout(() => {
+            const batch = writeBatch(db);
+            let hasBatchWrites = false;
+
+            Object.values(pending.added).forEach(record => {
+              batch.set(doc(recordsRef, record.id), record);
+              hasBatchWrites = true;
+            });
+
+            Object.values(pending.updated).forEach(record => {
+              batch.set(doc(recordsRef, record.id), record);
+              hasBatchWrites = true;
+            });
+
+            Object.values(pending.removed).forEach(record => {
+              batch.delete(doc(recordsRef, record.id));
+              hasBatchWrites = true;
+            });
+
+            if (hasBatchWrites) {
+              batch.commit()
+                .then(() => setIsSaving(false))
+                .catch(e => {
+                  console.error("Hub Canvas Sync Error:", e);
+                  setIsSaving(false);
+                });
+            } else {
+              setIsSaving(false);
+            }
+
+            pendingChangesRef.current = { added: {}, updated: {}, removed: {} };
+          }, 800);
         }
       },
-      { scope: 'document' } // Capturar todas as mudanças no documento (incluindo assets)
+      { scope: 'document' }
     );
 
     return () => {
       unsubscribeFirestore();
       unsubscribeEditor();
+      if (timeoutRef.current !== null) {
+        window.clearTimeout(timeoutRef.current);
+      }
     };
   }, [editor, orgId, canvasId]);
 
-  return isSynced;
+  return { isSynced, isSaving };
 }
