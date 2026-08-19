@@ -51,6 +51,9 @@ export default function PublicCheckoutPage() {
   const [copiedPix, setCopiedPix] = useState(false);
   const [copiedBoleto, setCopiedBoleto] = useState(false);
   const [paymentId, setPaymentId] = useState<string | null>(null);
+  
+  // Estado de Order Bumps selecionados
+  const [selectedBumpIds, setSelectedBumpIds] = useState<string[]>([]);
 
   // Polling de pagamento
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
@@ -149,6 +152,27 @@ export default function PublicCheckoutPage() {
   const logoToDisplay = activeOffer?.logoUrl || ownerSettings?.logoUrl || "https://i.imgur.com/zCvL7xy.png";
   const customAccentColor = activeOffer?.accentColor || '#f97316';
 
+  const toggleBump = (bumpId: string) => {
+    setSelectedBumpIds(prev => 
+      prev.includes(bumpId) ? prev.filter(id => id !== bumpId) : [...prev, bumpId]
+    );
+  };
+
+  const calculateTotal = () => {
+    if (!activeOffer) return 0;
+    let total = activeOffer.price || 0;
+    if (activeOffer.orderBumps && activeOffer.orderBumps.length > 0) {
+      activeOffer.orderBumps.forEach(bump => {
+        if (selectedBumpIds.includes(bump.id)) {
+          total += bump.price || 0;
+        }
+      });
+    }
+    return total;
+  };
+
+  const totalPrice = calculateTotal();
+
   const handleCopyPix = () => {
     if (!pixResult?.payload) return;
     navigator.clipboard.writeText(pixResult.payload);
@@ -197,6 +221,7 @@ export default function PublicCheckoutPage() {
             cpfCnpj: clientData.cpfCnpj,
             billingCycle: clientData.billingCycle
           },
+          selectedBumpIds,
           paymentMethod,
           creditCard: paymentMethod === 'CREDIT_CARD' ? {
             holderName: cardData.holderName,
@@ -324,17 +349,19 @@ export default function PublicCheckoutPage() {
                 </p>
               </div>
 
-              {/* Preço em Destaque */}
+              {/* Preço em Destaque (recalculado dinamicamente com os Order Bumps) */}
               <div 
-                className="p-5 rounded-2xl border backdrop-blur-xl flex items-baseline justify-between"
+                className="p-5 rounded-2xl border backdrop-blur-xl flex items-baseline justify-between transition-all"
                 style={{ backgroundColor: `${customAccentColor}10`, borderColor: `${customAccentColor}30` }}
               >
                 <div>
-                  <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block mb-0.5">Valor do Investimento</span>
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block mb-0.5">
+                    {selectedBumpIds.length > 0 ? 'Valor Total do Pedido (com Bumps)' : 'Valor do Investimento'}
+                  </span>
                   <div className="flex items-baseline gap-1">
                     <span className="text-xs text-gray-400 font-medium">R$</span>
                     <span className="text-3xl font-extrabold text-white tracking-tight">
-                      {(activeOffer?.price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      {totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
                     {activeOffer?.type === 'SUBSCRIPTION' && <span className="text-xs text-gray-400 font-medium">/mês</span>}
                   </div>
@@ -346,6 +373,57 @@ export default function PublicCheckoutPage() {
                   </div>
                 ) : null}
               </div>
+
+              {/* SEÇÃO DE ORDER BUMPS DESTACADOS DE 1 CLIQUE */}
+              {activeOffer?.orderBumps && activeOffer.orderBumps.filter(b => b.active !== false).length > 0 && (
+                <div className="space-y-3 pt-1">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                    <Sparkles size={14} />
+                    Oferta Especial Complementar:
+                  </h4>
+                  <div className="space-y-2.5">
+                    {activeOffer.orderBumps.filter(b => b.active !== false).map(bump => {
+                      const isSelected = selectedBumpIds.includes(bump.id);
+                      return (
+                        <div
+                          key={bump.id}
+                          onClick={() => toggleBump(bump.id)}
+                          className={`p-4 rounded-2xl border transition-all cursor-pointer relative overflow-hidden select-none ${
+                            isSelected 
+                              ? 'bg-amber-500/15 border-amber-500/80 shadow-lg shadow-amber-500/10' 
+                              : 'bg-black/40 border-white/10 hover:border-white/20'
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => {}}
+                              className="mt-1 w-4 h-4 rounded border-white/20 text-amber-500 focus:ring-0 cursor-pointer"
+                            />
+                            <div className="flex-1 space-y-1">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs font-extrabold text-white flex items-center gap-1.5">
+                                  SIM! Quero adicionar {bump.title}
+                                </span>
+                                <span className="text-xs font-bold text-amber-400 shrink-0">
+                                  + R$ {(bump.price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-gray-300 leading-relaxed">{bump.description}</p>
+                              {bump.highlightTag && (
+                                <span className="inline-block text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 mt-1">
+                                  {bump.highlightTag}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Benefícios Inclusos */}
               {activeOffer?.benefits && activeOffer.benefits.length > 0 && (

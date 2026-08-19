@@ -502,6 +502,16 @@ export interface Budget {
   month?: number;
 }
 
+export interface OrderBump {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  highlightTag?: string;
+  linkedOfferId?: string;
+  active: boolean;
+}
+
 export interface TestimonialItem {
   id: string;
   name: string;
@@ -532,6 +542,7 @@ export interface Offer {
   hasPortalAccess?: boolean;
   guaranteeText?: string;
   testimonials?: TestimonialItem[];
+  orderBumps?: OrderBump[];
   createdAt: number;
 }
 

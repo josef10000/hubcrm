@@ -18,7 +18,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { orgId, clientData, briefingAnswers } = req.body;
+    const { orgId, clientData, briefingAnswers, selectedBumpIds } = req.body;
 
     if (!orgId) return res.status(400).json({ error: 'ID da organização é obrigatório' });
     if (!clientData || !clientData.email || !clientData.offerId) {
@@ -58,17 +58,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // 3. Calculate Final Price
+    // 3. Calculate Final Price com Order Bumps
+    let bumpsTotal = 0;
+    const selectedBumpNames: string[] = [];
+
+    if (Array.isArray(selectedBumpIds) && selectedBumpIds.length > 0 && Array.isArray(offer.orderBumps)) {
+      offer.orderBumps.forEach((b: any) => {
+        if (selectedBumpIds.includes(b.id) && b.active !== false) {
+          bumpsTotal += (b.price || 0);
+          selectedBumpNames.push(b.title || 'Bump Extra');
+        }
+      });
+    }
+
     const isYearly = clientData.billingCycle === 'YEARLY' && offer.type === 'SUBSCRIPTION';
-    let value = offer.price;
+    let value = (offer.price || 0) + bumpsTotal;
     let cycle = 'MONTHLY';
     
     if (isYearly) {
-      value = offer.price * 12 * 0.85; 
+      value = (offer.price * 12 * 0.85) + bumpsTotal; 
     }
 
     const setupPrice = offer.setupPrice || 0;
     const total = (offer.type === 'SUBSCRIPTION' && !isYearly) ? value : (value + setupPrice);
+    const bumpsDescriptionText = selectedBumpNames.length > 0 ? ` (Bumps inclusos: ${selectedBumpNames.join(', ')})` : '';
 
     // 4. Create Charge in Asaas
     let checkoutUrl = '';
@@ -87,7 +100,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         value: value,
         nextDueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
         cycle: cycle,
-        description: `Assinatura: ${offer.name}`,
+        description: `Assinatura: ${offer.name}${bumpsDescriptionText}`,
         observations: `Referência: ${offer.id}`
       });
 
@@ -106,7 +119,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         billingType: billingType,
         value: total,
         dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-        description: isYearly ? `Plano Anual: ${offer.name} (12 meses)` : `Compra: ${offer.name}`,
+        description: isYearly ? `Plano Anual: ${offer.name}${bumpsDescriptionText}` : `Compra: ${offer.name}${bumpsDescriptionText}`,
         observations: isYearly ? `Pagamento Único Anual com 15% de desconto. CRM Org: ${orgId}` : `Checkout Público`
       });
       checkoutUrl = payment.invoiceUrl;
@@ -199,7 +212,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         signedAt: Date.now(),
         signatureName: req.body.contract.signatureName
       }] : [],
-      notes: (!hasPortalAccess ? "[Venda Avulsa Pontual - Sem Portal]" : "Venda via Pagamento Transparente") + annualNote,
+      notes: (!hasPortalAccess ? "[Venda Avulsa Pontual - Sem Portal]" : "Venda via Pagamento Transparente") + 
+             (selectedBumpNames.length > 0 ? `\n[ORDER BUMPS ADQUIRIDOS: ${selectedBumpNames.join(', ')}]` : "") + 
+             annualNote,
       onboardingCompleted: true,
       createdAt: Date.now(),
       lastUpdate: Date.now(),

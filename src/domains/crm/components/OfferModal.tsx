@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { 
   X, Star, Upload, Palette, Check, Sparkles, Loader2, 
   ShieldCheck, Lock, CreditCard, QrCode, UserCheck, Plus, Trash2, 
-  Eye, MessageSquare, Award
+  Eye, MessageSquare, Award, Zap
 } from 'lucide-react';
-import { Offer, TestimonialItem } from '@/types';
+import { Offer, TestimonialItem, OrderBump } from '@/types';
 import { uploadToR2 } from '@/lib/r2';
 import { toast } from 'sonner';
 
@@ -26,12 +26,13 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
     customContractText: '',
     hasPortalAccess: true,
     guaranteeText: 'Garantia Incondicional de 7 Dias',
-    testimonials: []
+    testimonials: [],
+    orderBumps: []
   });
   const [errorMsg, setErrorMsg] = useState('');
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [benefitsInput, setBenefitsInput] = useState('');
-  const [activeTab, setActiveTab] = useState<'general' | 'branding' | 'testimonials'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'branding' | 'testimonials' | 'bumps'>('general');
   const [uploadingAvatarId, setUploadingAvatarId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -46,7 +47,8 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
         customContractText: initialData.customContractText || '',
         hasPortalAccess: initialData.hasPortalAccess !== undefined ? initialData.hasPortalAccess : true,
         guaranteeText: initialData.guaranteeText || 'Garantia Incondicional de 7 Dias',
-        testimonials: initialData.testimonials || []
+        testimonials: initialData.testimonials || [],
+        orderBumps: initialData.orderBumps || []
       });
       setBenefitsInput(initialData.benefits ? initialData.benefits.join('\n') : '');
     } else {
@@ -67,13 +69,43 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
         customContractText: '',
         hasPortalAccess: true,
         guaranteeText: 'Garantia Incondicional de 7 Dias',
-        testimonials: []
+        testimonials: [],
+        orderBumps: []
       });
       setBenefitsInput('');
     }
   }, [initialData, isOpen]);
 
   if (!isOpen) return null;
+
+  const handleAddOrderBump = () => {
+    const newBump: OrderBump = {
+      id: `bump_${Date.now()}`,
+      title: '',
+      description: '',
+      price: 0,
+      highlightTag: 'OFERTA ESPECIAL',
+      active: true
+    };
+    setFormData(prev => ({
+      ...prev,
+      orderBumps: [...(prev.orderBumps || []), newBump]
+    }));
+  };
+
+  const handleRemoveOrderBump = (bumpId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      orderBumps: (prev.orderBumps || []).filter(b => b.id !== bumpId)
+    }));
+  };
+
+  const handleUpdateOrderBump = (bumpId: string, field: keyof OrderBump, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      orderBumps: (prev.orderBumps || []).map(b => b.id === bumpId ? { ...b, [field]: value } : b)
+    }));
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -192,26 +224,34 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
               <button
                 type="button"
                 onClick={() => setActiveTab('general')}
-                className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all ${activeTab === 'general' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                className={`flex-1 py-2.5 px-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${activeTab === 'general' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
               >
                 <Sparkles size={14} />
-                <span>Dados Principais</span>
+                <span>Geral</span>
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('branding')}
-                className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all ${activeTab === 'branding' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                className={`flex-1 py-2.5 px-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${activeTab === 'branding' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
               >
                 <Palette size={14} />
-                <span>Branding & R2</span>
+                <span>Branding</span>
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('testimonials')}
-                className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all ${activeTab === 'testimonials' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                className={`flex-1 py-2.5 px-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${activeTab === 'testimonials' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
               >
                 <MessageSquare size={14} />
                 <span>Depoimentos ({formData.testimonials?.length || 0})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('bumps')}
+                className={`flex-1 py-2.5 px-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${activeTab === 'bumps' ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+              >
+                <Zap size={14} />
+                <span>Order Bumps ({formData.orderBumps?.length || 0})</span>
               </button>
             </div>
 
@@ -572,6 +612,110 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
                   )}
                 </div>
               )}
+
+              {/* ABA 4: ORDER BUMPS (OFERTAS COMPLEMENTARES DE 1 CLIQUE) */}
+              {activeTab === 'bumps' && (
+                <div className="space-y-4 animate-in fade-in duration-300">
+                  <div className="flex justify-between items-center bg-white/5 p-3 rounded-2xl border border-white/10">
+                    <div>
+                      <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+                        <Zap size={14} className="text-amber-400" />
+                        Order Bumps (Ofertas Adicionais)
+                      </h4>
+                      <p className="text-[11px] text-gray-400">Ofertas extras com checkbox de 1 clique exibidas no checkout público</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleAddOrderBump}
+                      className="px-3 py-1.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-xs font-bold flex items-center gap-1 transition-transform hover:scale-105"
+                    >
+                      <Plus size={14} />
+                      Adicionar Bump
+                    </button>
+                  </div>
+
+                  {(!formData.orderBumps || formData.orderBumps.length === 0) ? (
+                    <div className="p-8 text-center bg-white/5 rounded-2xl border border-dashed border-white/10 text-xs text-gray-400 space-y-2">
+                      <Zap size={24} className="mx-auto text-amber-400 opacity-60" />
+                      <p>Nenhum Order Bump cadastrado para este produto.</p>
+                      <p className="text-[10px] text-gray-500">Adicione ofertas extras para aumentar seu ticket médio durante a compra!</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {formData.orderBumps.map((bump) => (
+                        <div key={bump.id} className="p-4 bg-white/5 border border-amber-500/20 rounded-2xl space-y-3 relative group">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveOrderBump(bump.id)}
+                            className="absolute top-3 right-3 text-gray-500 hover:text-red-400 transition-colors"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div>
+                              <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Título do Bump *</label>
+                              <input
+                                type="text"
+                                value={bump.title}
+                                onChange={(e) => handleUpdateOrderBump(bump.id, 'title', e.target.value)}
+                                className="w-full px-3 py-1.5 bg-black/40 border border-white/10 rounded-lg text-xs text-white"
+                                placeholder="Ex: Suporte VIP 24/7 via WhatsApp"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Valor Adicional R$ *</label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={bump.price}
+                                onChange={(e) => handleUpdateOrderBump(bump.id, 'price', parseFloat(e.target.value) || 0)}
+                                className="w-full px-3 py-1.5 bg-black/40 border border-white/10 rounded-lg text-xs text-white"
+                                placeholder="47.00"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div>
+                              <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Tag de Destaque</label>
+                              <input
+                                type="text"
+                                value={bump.highlightTag || ''}
+                                onChange={(e) => handleUpdateOrderBump(bump.id, 'highlightTag', e.target.value)}
+                                className="w-full px-3 py-1.5 bg-black/40 border border-white/10 rounded-lg text-xs text-white"
+                                placeholder="Ex: OFERTA ÚNICA - 50% OFF"
+                              />
+                            </div>
+                            <div className="flex items-center pt-5">
+                              <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={bump.active !== false}
+                                  onChange={(e) => handleUpdateOrderBump(bump.id, 'active', e.target.checked)}
+                                  className="w-4 h-4 rounded border-white/10 text-primary-500 focus:ring-0 bg-black/40"
+                                />
+                                <span>Bump Ativo na Página</span>
+                              </label>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Descrição Curta *</label>
+                            <textarea
+                              value={bump.description}
+                              onChange={(e) => handleUpdateOrderBump(bump.id, 'description', e.target.value)}
+                              rows={2}
+                              className="w-full px-3 py-1.5 bg-black/40 border border-white/10 rounded-lg text-xs text-white resize-none"
+                              placeholder="Explique os benefícios deste produto extra..."
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </form>
           </div>
 
@@ -651,6 +795,38 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
                         <span>{b}</span>
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {/* SIMULADOR DE ORDER BUMP NO LIVE PREVIEW */}
+                {formData.orderBumps && formData.orderBumps.length > 0 && (
+                  <div 
+                    className="p-3 rounded-xl border border-dashed space-y-1.5 relative overflow-hidden"
+                    style={{ 
+                      backgroundColor: `${formData.accentColor || '#f97316'}15`,
+                      borderColor: `${formData.accentColor || '#f97316'}60`
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                        {formData.orderBumps[0].highlightTag || 'OFERTA ESPECIAL'}
+                      </span>
+                      <span className="text-xs font-bold text-white">
+                        + R$ {(formData.orderBumps[0].price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+
+                    <label className="flex items-start gap-2 cursor-pointer mt-1">
+                      <input type="checkbox" defaultChecked className="mt-0.5 rounded text-amber-500 focus:ring-0" />
+                      <div>
+                        <span className="text-[11px] font-bold text-white block">
+                          SIM! Quero adicionar {formData.orderBumps[0].title || 'o produto extra'}
+                        </span>
+                        <p className="text-[10px] text-gray-300 leading-tight">
+                          {formData.orderBumps[0].description || 'Descrição do benefício complementar.'}
+                        </p>
+                      </div>
+                    </label>
                   </div>
                 )}
 

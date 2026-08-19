@@ -90,6 +90,11 @@ export default function ProductsView() {
                           <span className="font-medium text-gray-600 dark:text-gray-400">Comissão vendedor:</span> R$ {offer.commissionValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </p>
                       )}
+                      {offer.orderBumps && offer.orderBumps.length > 0 && (
+                        <p className="text-xs text-amber-500 font-bold flex items-center gap-1 mt-1">
+                          ⚡ {offer.orderBumps.length} Order Bump(s) Ativo(s)
+                        </p>
+                      )}
                     </div>
                   </div>
                   {canManageProducts && (
