@@ -187,6 +187,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const annualNote = isYearly ? "\n[OBS: Plano Anual - Validade: 12 meses (Renovação Manual)]" : "";
     
     const hasPortalAccess = offer.hasPortalAccess !== undefined ? offer.hasPortalAccess : true;
+    const isSingleSale = offer.type === 'SINGLE' || !hasPortalAccess;
 
     await clientRef.set({
       id: clientRef.id,
@@ -195,13 +196,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       whatsapp: clientData.whatsapp,
       asaasCustomerId: asaasCustomer.id,
       publicToken: generatePublicToken(),
-      status: hasPortalAccess ? 'Em Desenvolvimento' : 'Ativo',
+      status: isSingleSale ? 'Ativo' : 'Em Desenvolvimento',
       paymentStatus: paymentStatusResult,
       plan: offer.name + (isYearly ? ' (Anual)' : ''),
       offerId: clientData.offerId,
-      hasPortalAccess: hasPortalAccess,
-      isAvulso: !hasPortalAccess,
-      productType: hasPortalAccess ? 'portal_hub' : 'venda_avulsa',
+      hasPortalAccess: !isSingleSale,
+      isAvulso: isSingleSale,
+      productType: isSingleSale ? 'venda_avulsa' : 'portal_hub',
       onboardingAnswers: briefingAnswers || {},
       contracts: req.body.contract?.accepted ? [{
         id: `signed_${Date.now()}`,

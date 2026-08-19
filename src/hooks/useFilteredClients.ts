@@ -7,7 +7,8 @@ export function useFilteredClients(
   searchTerm: string,
   filterStatus: SiteStatus | 'Todos',
   sortBy: 'recent' | 'alphabetical' | 'value',
-  filterTagId: string = 'all'
+  filterTagId: string = 'all',
+  clientCategoryFilter: 'RECURRING' | 'SINGLE' | 'ALL' = 'RECURRING'
 ) {
   const deferredSearchTerm = useDeferredValue(searchTerm);
 
@@ -22,7 +23,15 @@ export function useFilteredClients(
         
       const matchesStatus = filterStatus === 'Todos' || c.status === filterStatus;
       const matchesTag = filterTagId === 'all' || (c.tagIds || []).includes(filterTagId);
-      return matchesSearch && matchesStatus && matchesTag;
+      
+      let matchesCategory = true;
+      if (clientCategoryFilter === 'RECURRING') {
+        matchesCategory = c.isAvulso !== true;
+      } else if (clientCategoryFilter === 'SINGLE') {
+        matchesCategory = c.isAvulso === true;
+      }
+
+      return matchesSearch && matchesStatus && matchesTag && matchesCategory;
     });
 
     result.sort((a, b) => {
@@ -32,5 +41,5 @@ export function useFilteredClients(
     });
 
     return result;
-  }, [clients, deferredSearchTerm, filterStatus, sortBy, filterTagId]);
+  }, [clients, deferredSearchTerm, filterStatus, sortBy, filterTagId, clientCategoryFilter]);
 }

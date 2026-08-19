@@ -56,6 +56,7 @@ const DashboardView = React.memo(function DashboardView() {
     filterTagId, setFilterTagId
   } = useUI();
   
+  const [clientCategoryFilter, setClientCategoryFilter] = React.useState<'RECURRING' | 'SINGLE' | 'ALL'>('RECURRING');
   const { hasPermission } = usePermissions();
 
   // Business Logic Actions
@@ -77,7 +78,7 @@ const DashboardView = React.memo(function DashboardView() {
   });
 
 
-  const filteredClients = useFilteredClients(clients, searchTerm, filterStatus, sortBy, filterTagId);
+  const filteredClients = useFilteredClients(clients, searchTerm, filterStatus, sortBy, filterTagId, clientCategoryFilter);
 
   const indexOfLastClient = currentPage * clientsPerPage;
   const indexOfFirstClient = indexOfLastClient - clientsPerPage;
@@ -214,12 +215,54 @@ const DashboardView = React.memo(function DashboardView() {
           />
         )}
 
+        {/* Seletor de Categoria de Clientes (Recorrentes vs Vendas Avulsas) */}
+        <div className="flex items-center gap-2 mb-4 bg-gray-900/60 p-1.5 rounded-2xl border border-white/10 w-fit">
+          <button
+            onClick={() => { setClientCategoryFilter('RECURRING'); setCurrentPage(1); }}
+            className={`px-4 py-2 rounded-xl text-xs font-extrabold flex items-center gap-2 transition-all ${
+              clientCategoryFilter === 'RECURRING'
+                ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20'
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            Clientes Recorrentes ({ (clients || []).filter(c => c.isAvulso !== true).length })
+          </button>
+          
+          <button
+            onClick={() => { setClientCategoryFilter('SINGLE'); setCurrentPage(1); }}
+            className={`px-4 py-2 rounded-xl text-xs font-extrabold flex items-center gap-2 transition-all ${
+              clientCategoryFilter === 'SINGLE'
+                ? 'bg-amber-500 text-gray-900 shadow-lg shadow-amber-500/20'
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-amber-400" />
+            Compradores Avulsos ({ (clients || []).filter(c => c.isAvulso === true).length })
+          </button>
+
+          <button
+            onClick={() => { setClientCategoryFilter('ALL'); setCurrentPage(1); }}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              clientCategoryFilter === 'ALL'
+                ? 'bg-white/20 text-white'
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            Todos os Registros ({ (clients || []).length })
+          </button>
+        </div>
+
         {/* Quick Filters & Sort */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div className="flex bg-gray-100 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-1 rounded-2xl overflow-x-auto max-w-full custom-scrollbar">
             {['Todos', 'Em Desenvolvimento', 'Ativo', 'Inadimplente', 'Cancelado'].map((status) => {
-              const clientsList = clients || [];
-              const count = status === 'Todos' ? clientsList.length : clientsList.filter(c => c.status === status).length;
+              const baseList = (clients || []).filter(c => {
+                if (clientCategoryFilter === 'RECURRING') return c.isAvulso !== true;
+                if (clientCategoryFilter === 'SINGLE') return c.isAvulso === true;
+                return true;
+              });
+              const count = status === 'Todos' ? baseList.length : baseList.filter(c => c.status === status).length;
               return (
                 <button
                   key={status}
