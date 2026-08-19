@@ -289,3 +289,21 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
       - 🟣 **Todos os Registros**: Exibe a base consolidada.
   - **Sincronização & GitHub**: Compilado sem erros (`npm run build`) e sincronizado no GitHub (`fde66df`).
 
+---
+
+## 21. Módulo de Perfil de Cliente Ideal (ICP B2B & B2C)
+- **Data da Integração**: 19/08/2026
+- **Funcionalidade**: Mapeamento completo e gerenciamento interativo de Perfis de Cliente Ideal (**ICP**) com suporte a **B2B (Empresas)** e **B2C (Consumidor Final)** e conexão opcional bidirecional aos produtos do CRM.
+- **Decisões Técnicas**:
+  - **Interface `ICP` (`shared/types.ts`)**:
+    - Suporte a `targetType: 'B2B' | 'B2C'`.
+    - Campos B2B: Nicho, Porte da Empresa, Cargo do Decisor, Ticket Médio.
+    - Campos B2C: Faixa Etária (`ageGroup`), Gênero (`gender`), Faixa de Renda (`incomeRange`), Interesses.
+    - Mapeamento comportamental comum: Dores (`painPoints`), Objetivos (`desires`), Objeções (`objections`), Canais de Aquisição (`channels`) e Pitch de Venda (`pitchNotes`).
+  - **Visualização & Modal (`ICPView.tsx`, `ICPModal.tsx`, `useICPs.ts`)**:
+    - Formulário em 3 abas dinâmicas com chave B2B/B2C.
+    - Cards estilo *Persona Canvas* com badges coloridos (`🏢 B2B` / `👤 B2C`) e filtros superiores.
+  - **Vínculo com Produtos (`OfferModal.tsx`)**:
+    - Campo de seleção opcional "Perfil de Cliente Ideal (ICP)" no construtor de ofertas, conectando ofertas ao perfil de comprador ideal.
+  - **Sincronização & GitHub**: Validado com `npm run build` e publicado na branch `main` (`1006428`).
+
