@@ -305,6 +305,8 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
     - Cards estilo *Persona Canvas* com badges coloridos (`🏢 B2B` / `👤 B2C`) e filtros superiores.
   - **Vínculo com Produtos (`OfferModal.tsx`)**:
     - Campo de seleção opcional "Perfil de Cliente Ideal (ICP)" no construtor de ofertas, conectando ofertas ao perfil de comprador ideal.
-  - **Tratativa Defensiva contra Nulos**: Adicionado fallback defensivo `const safeOffers = Array.isArray(offers) ? offers : [];` em `ICPModal.tsx` e `ICPView.tsx` evitando erros de runtime (`TypeError: undefined.length`).
-  - **Sincronização & GitHub**: Validado com `npm run build` e publicado na branch `main` (`1c30150`).
+  - **Avatares Ilustrativos & Modal Customizado (`ConfirmDeleteICPModal.tsx`)**:
+    - Avatares dinâmicos nos cards: `User` com iluminação verde esmeralda para B2C e `Building2` com iluminação azul neon para B2B.
+    - Remoção completa do `confirm()` nativo do navegador, substituído por modal customizado de confirmação de exclusão em Glassmorphism.
+  - **Sincronização & GitHub**: Validado com `npm run build` e publicado na branch `main` (`16b96e4`).
 
