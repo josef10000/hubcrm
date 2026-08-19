@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Target, Plus, Search, Briefcase, AlertCircle, Sparkles, Tag, Layers, Edit2, Trash2, BookOpen, Users, DollarSign, ArrowRight } from 'lucide-react';
+import { Target, Plus, Search, Briefcase, AlertCircle, Sparkles, Tag, Layers, Edit2, Trash2, BookOpen, Users, DollarSign, ArrowRight, Building2, UserCheck, User } from 'lucide-react';
 import { useICPs } from '../hooks/useICPs';
 import { useOffers } from '@/hooks/useOffers';
 import ICPModal from '../components/ICPModal';
+import ConfirmDeleteICPModal from '../components/ConfirmDeleteICPModal';
 import { ICP } from '@/types';
 
 export default function ICPView() {
@@ -28,6 +29,8 @@ export default function ICPView() {
     return matchesSearch && matchesType;
   });
 
+  const [isDeletingICP, setIsDeletingICP] = useState(false);
+
   const handleOpenCreate = () => {
     setEditingICP(null);
     setIsModalOpen(true);
@@ -38,9 +41,18 @@ export default function ICPView() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este Perfil de Cliente Ideal (ICP)?')) {
-      await deleteICP(id);
+  const handleRequestDelete = (id: string) => {
+    setIcpToDelete(id);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!icpToDelete) return;
+    try {
+      setIsDeletingICP(true);
+      await deleteICP(icpToDelete);
+      setIcpToDelete(null);
+    } finally {
+      setIsDeletingICP(false);
     }
   };
 
@@ -150,25 +162,38 @@ export default function ICPView() {
                   <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${isB2C ? 'from-emerald-500 via-emerald-400' : 'from-blue-500 via-blue-400'} to-transparent`} />
 
                   <div className="space-y-4">
-                    {/* Topo do Card */}
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <div className="flex items-center gap-1.5 mb-1.5">
-                          <span className={`text-[9px] uppercase tracking-widest font-extrabold px-2.5 py-0.5 rounded-full border inline-block ${
-                            isB2C 
-                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                              : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                          }`}>
-                            {isB2C ? '👤 B2C Consumidor' : '🏢 B2B Empresa'}
-                          </span>
-                          <span className="text-[9px] uppercase tracking-widest font-bold text-gray-400">
-                            {icp.niche || 'Geral'}
-                          </span>
-                        </div>
+                    {/* Topo do Card com Avatar e Ações */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3">
+                        {/* Avatar / Ilustração do Perfil */}
+                        {isB2C ? (
+                          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/30 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-500/10 shrink-0">
+                            <User size={24} />
+                          </div>
+                        ) : (
+                          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-500/30 border border-blue-500/40 flex items-center justify-center text-blue-400 shadow-lg shadow-blue-500/10 shrink-0">
+                            <Building2 size={24} />
+                          </div>
+                        )}
 
-                        <h3 className="text-base font-extrabold text-white group-hover:text-amber-400 transition-colors leading-tight">
-                          {icp.name}
-                        </h3>
+                        <div>
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span className={`text-[9px] uppercase tracking-widest font-extrabold px-2.5 py-0.5 rounded-full border inline-block ${
+                              isB2C 
+                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                                : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                            }`}>
+                              {isB2C ? '👤 B2C Consumidor' : '🏢 B2B Empresa'}
+                            </span>
+                            <span className="text-[9px] uppercase tracking-widest font-bold text-gray-400">
+                              {icp.niche || 'Geral'}
+                            </span>
+                          </div>
+
+                          <h3 className="text-base font-extrabold text-white group-hover:text-amber-400 transition-colors leading-tight">
+                            {icp.name}
+                          </h3>
+                        </div>
                       </div>
 
                       {/* Ações */}
@@ -181,7 +206,7 @@ export default function ICPView() {
                           <Edit2 size={16} />
                         </button>
                         <button
-                          onClick={() => handleDelete(icp.id)}
+                          onClick={() => handleRequestDelete(icp.id)}
                           className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                           title="Excluir ICP"
                         >
@@ -296,6 +321,15 @@ export default function ICPView() {
           onSave={saveICP}
           editingICP={editingICP}
           offers={offers}
+        />
+
+        {/* Modal Customizado de Confirmação de Exclusão */}
+        <ConfirmDeleteICPModal
+          isOpen={!!icpToDelete}
+          onClose={() => setIcpToDelete(null)}
+          onConfirm={handleConfirmDelete}
+          icpName={icps.find(i => i.id === icpToDelete)?.name}
+          isDeleting={isDeletingICP}
         />
 
       </div>
