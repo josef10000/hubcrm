@@ -235,3 +235,25 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
     - Abas dedicadas para pagamento transparente com cartão de crédito (com dados enviados diretamente à API do Asaas) e emissão de boleto bancário com linha digitável.
   - **Sincronização & GitHub**: Validada compilação com `npm run build` e alterações enviadas para a branch `main` no GitHub.
 
+---
+
+## 18. Sistema de Order Bump Multiproduto (Ofertas de 1 Clique)
+- **Data da Integração**: 19/08/2026
+- **Funcionalidade**: Sistema de Order Bump integrado ao cadastro de ofertas no CRM, simulador ao vivo, checkout público transparente e API de cobrança via Asaas.
+- **Decisões Técnicas**:
+  - **Interface `OrderBump` (`shared/types.ts`)**:
+    - Propriedades `id`, `title`, `description`, `price`, `highlightTag` e `active`.
+    - Campo `orderBumps?: OrderBump[]` integrado na interface `Offer`.
+  - **Construtor no CRM (`OfferModal.tsx`)**:
+    - Nova aba "Order Bumps" permitindo criar, editar valores, alterar títulos, descrições, tags de destaque e ativar/desativar bumps.
+    - **Simulador Live Preview**: Atualizado à direita para renderizar o card de Order Bump no preview em tempo real.
+  - **Checkout Público (`PublicCheckoutPage.tsx`)**:
+    - Card de Order Bump destacado com checkbox interativo de 1 clique.
+    - Re-cálculo automático do valor total do investimento na tela em tempo real à medida que o comprador marca/desmarca bumps.
+    - Envio de `selectedBumpIds` no payload para `/api/public_checkout`.
+  - **Consolidação na Cobrança (`api/public_checkout.ts`)**:
+    - Cálculo de valor consolidado (Preço Principal + Bumps Selecionados).
+    - Descrição da cobrança no Asaas inclui o resumo das ofertas adicionais adquiridas.
+    - Notas do cliente no CRM enriquecidas com `[ORDER BUMPS ADQUIRIDOS: ...]`.
+  - **Sincronização & Git**: Tag local `pre-order-bump-v1` criada, build verificado com sucesso e código enviado para o GitHub (`88421ae`).
+
