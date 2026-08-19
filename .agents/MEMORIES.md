@@ -273,3 +273,19 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
     - Molduras de vidro fosco (`backdrop-blur-2xl bg-white/[0.03]`) e sombras de alta profundidade.
   - **Sincronização & GitHub**: Build compilado sem erros e código enviado para o GitHub (`109a48f`).
 
+---
+
+## 20. Segregação de Clientes Recorrentes & Compradores Avulsos no CRM
+- **Data da Integração**: 19/08/2026
+- **Funcionalidade**: Organização e filtragem automática de compradores de vendas pontuais/avulsas separadamente dos clientes recorrentes de portal/assinatura.
+- **Decisões Técnicas**:
+  - **API `api/public_checkout.ts`**:
+    - Compras de assinatura (`SUBSCRIPTION`) criam o registro como cliente recorrente (`isAvulso: false`, `productType: 'portal_hub'`).
+    - Compras de produtos avulsos (`SINGLE` / `hasPortalAccess: false`) marcam o cadastro com `isAvulso: true` e `productType: 'venda_avulsa'`.
+  - **Abas de Filtragem (`DashboardView.tsx` & `useFilteredClients.ts`)**:
+    - Adicionado o seletor de abas no topo da área de Operações CRM:
+      - 🔵 **Clientes Recorrentes** *(Padrão)*: Exibe apenas clientes ativos/em desenvolvimento com mensalidade e portal, deixando a tela de gestão limpa.
+      - 🟢 **Compradores Avulsos**: Exibe a base de contatos dos compradores de ofertas pontuais com e-mails, WhatsApps e Order Bumps adquiridos, ideais para campanhas de **remarketing**.
+      - 🟣 **Todos os Registros**: Exibe a base consolidada.
+  - **Sincronização & GitHub**: Compilado sem erros (`npm run build`) e sincronizado no GitHub (`fde66df`).
+
