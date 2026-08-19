@@ -305,5 +305,6 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
     - Cards estilo *Persona Canvas* com badges coloridos (`🏢 B2B` / `👤 B2C`) e filtros superiores.
   - **Vínculo com Produtos (`OfferModal.tsx`)**:
     - Campo de seleção opcional "Perfil de Cliente Ideal (ICP)" no construtor de ofertas, conectando ofertas ao perfil de comprador ideal.
-  - **Sincronização & GitHub**: Validado com `npm run build` e publicado na branch `main` (`1006428`).
+  - **Tratativa Defensiva contra Nulos**: Adicionado fallback defensivo `const safeOffers = Array.isArray(offers) ? offers : [];` em `ICPModal.tsx` e `ICPView.tsx` evitando erros de runtime (`TypeError: undefined.length`).
+  - **Sincronização & GitHub**: Validado com `npm run build` e publicado na branch `main` (`1c30150`).
 
