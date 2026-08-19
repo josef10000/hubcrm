@@ -74,21 +74,24 @@ export default function OfferLabEditorView() {
     }
     
     setSaving(true);
-    const savePromise = offerService.updateOffer(orgId, id, offer);
-    
-    toast.promise(savePromise, {
-      loading: 'Salvando alterações...',
-      success: 'Oferta salva com sucesso!',
-      error: (err) => {
-        console.error('Erro ao salvar oferta:', err);
-        return 'Erro ao salvar as alterações. Tente novamente.';
-      }
-    });
-
     try {
-      await savePromise;
+      await offerService.updateOffer(orgId, id, offer);
+      toast.success('Oferta salva com sucesso!');
+      navigate('/offers');
+    } catch (err) {
+      console.error('Erro ao salvar oferta:', err);
+      toast.error('Erro ao salvar as alterações. Tente novamente.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const autoSave = async () => {
+    if (!orgId || !id || !offer) return;
+    try {
+      await offerService.updateOffer(orgId, id, offer);
+    } catch (err) {
+      console.error('Erro no auto-save:', err);
     }
   };
 
@@ -96,7 +99,7 @@ export default function OfferLabEditorView() {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (offer && !loading) {
-        handleSave();
+        autoSave();
       }
     }, 2000);
     return () => clearTimeout(timer);
