@@ -18,7 +18,7 @@ export const offerService = {
     if (!orgId) return [];
     try {
       const q = query(
-        collection(db, 'organizations', orgId, 'offers'),
+        collection(db, 'organizations', orgId, 'offer_blueprints'),
         orderBy('createdAt', 'desc')
       );
       
@@ -30,8 +30,8 @@ export const offerService = {
         offers.push({
           ...data,
           id: docSnap.id,
-          createdAt: data.createdAt?.toDate(),
-          updatedAt: data.updatedAt?.toDate(),
+          createdAt: data.createdAt?.toDate?.() || data.createdAt,
+          updatedAt: data.updatedAt?.toDate?.() || data.updatedAt,
         } as OfferBlueprint);
       });
       
@@ -45,7 +45,7 @@ export const offerService = {
   async getOffer(orgId: string, offerId: string): Promise<OfferBlueprint | null> {
     if (!orgId) return null;
     try {
-      const docRef = doc(db, 'organizations', orgId, 'offers', offerId);
+      const docRef = doc(db, 'organizations', orgId, 'offer_blueprints', offerId);
       const docSnap = await getDoc(docRef);
       
       if (docSnap.exists()) {
@@ -53,8 +53,8 @@ export const offerService = {
         return {
           ...data,
           id: docSnap.id,
-          createdAt: data.createdAt?.toDate(),
-          updatedAt: data.updatedAt?.toDate(),
+          createdAt: data.createdAt?.toDate?.() || data.createdAt,
+          updatedAt: data.updatedAt?.toDate?.() || data.updatedAt,
         } as OfferBlueprint;
       }
       return null;
@@ -67,7 +67,7 @@ export const offerService = {
   async createOffer(orgId: string, data: Omit<OfferBlueprint, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     if (!orgId) throw new Error("orgId is required");
     try {
-      const docRef = await addDoc(collection(db, 'organizations', orgId, 'offers'), {
+      const docRef = await addDoc(collection(db, 'organizations', orgId, 'offer_blueprints'), {
         ...data,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -82,13 +82,12 @@ export const offerService = {
   async updateOffer(orgId: string, offerId: string, data: Partial<OfferBlueprint>): Promise<void> {
     if (!orgId) throw new Error("orgId is required");
     try {
-      const docRef = doc(db, 'organizations', orgId, 'offers', offerId);
+      const docRef = doc(db, 'organizations', orgId, 'offer_blueprints', offerId);
       const updateData = {
         ...data,
         updatedAt: serverTimestamp(),
       };
 
-      // Remove undefined values
       Object.keys(updateData).forEach(key => {
         if ((updateData as any)[key] === undefined) {
           delete (updateData as any)[key];
@@ -105,7 +104,7 @@ export const offerService = {
   async deleteOffer(orgId: string, offerId: string): Promise<void> {
     if (!orgId) throw new Error("orgId is required");
     try {
-      const docRef = doc(db, 'organizations', orgId, 'offers', offerId);
+      const docRef = doc(db, 'organizations', orgId, 'offer_blueprints', offerId);
       await deleteDoc(docRef);
     } catch (error) {
       console.error('Error deleting offer:', error);

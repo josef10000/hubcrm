@@ -58,9 +58,9 @@ export default function OfferLabEditorView() {
       const icpsData = icpsSnap.docs.map(d => ({ id: d.id, ...d.data() } as ICP));
       setIcps(icpsData);
 
-      // Load Products
-      const productsSnap = await getDocs(collection(db, 'organizations', orgId, 'products'));
-      const productsData = productsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Product));
+      // Load Products (which are stored in 'offers' collection)
+      const productsSnap = await getDocs(collection(db, 'organizations', orgId, 'offers'));
+      const productsData = productsSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
       setProducts(productsData);
     } catch (error) {
       console.error("Erro ao carregar dados auxiliares:", error);
@@ -161,7 +161,7 @@ export default function OfferLabEditorView() {
           <div className="p-5 border-b border-gray-100 dark:border-gray-700">
             <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 mb-4 flex items-center gap-2">
               <Package className="w-4 h-4" />
-              Produto Base
+              Produto Base <span className="text-xs font-normal opacity-70">(Opcional)</span>
             </h3>
             <select
               value={offer.productId}
@@ -183,7 +183,7 @@ export default function OfferLabEditorView() {
           <div className="p-5">
             <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 mb-4 flex items-center gap-2">
               <Target className="w-4 h-4" />
-              Público Alvo (ICP)
+              Público Alvo (ICP) <span className="text-xs font-normal opacity-70">(Opcional)</span>
             </h3>
             <select
               value={offer.icpId}
@@ -324,12 +324,6 @@ export default function OfferLabEditorView() {
             />
           </div>
           
-          <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-             <button className="w-full py-2.5 px-4 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-sm font-medium rounded-xl shadow-sm transition-all flex items-center justify-center gap-2">
-                <Sparkles className="w-4 h-4" />
-                Gerar Ideias com IA (Em breve)
-             </button>
-          </div>
         </div>
 
       </div>
