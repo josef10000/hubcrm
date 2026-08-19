@@ -308,5 +308,7 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
   - **Avatares Ilustrativos & Modal Customizado (`ConfirmDeleteICPModal.tsx`)**:
     - Avatares dinâmicos nos cards: `User` com iluminação verde esmeralda para B2C e `Building2` com iluminação azul neon para B2B.
     - Remoção completa do `confirm()` nativo do navegador, substituído por modal customizado de confirmação de exclusão em Glassmorphism.
-  - **Sincronização & GitHub**: Validado com `npm run build` e publicado na branch `main` (`16b96e4`).
+  - **Dossier de Visualização (`ICPDetailsModal.tsx`)**:
+    - O botão "Ver Detalhes ->" nos cards abre a ficha de leitura executiva (*Executive Persona Dossier*) em modo somente leitura com resumo demográfico/firmográfico, dores, desejos, objeções, pitch e ofertas conectadas, mantendo o formulário de edição restrito ao atalho do ícone de lápis.
+  - **Sincronização & GitHub**: Validado com `npm run build` e publicado na branch `main` (`379ad06`).
 
