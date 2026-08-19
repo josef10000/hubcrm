@@ -11,7 +11,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { OfferBlueprint } from '../../shared/types';
+import { OfferBlueprint } from '@/types';
 
 export const offerService = {
   async getOffers(orgId: string): Promise<OfferBlueprint[]> {

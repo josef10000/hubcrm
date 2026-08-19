@@ -4,7 +4,7 @@ import { FlaskConical, Search, Plus, Trash2, Edit3 } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useDialog } from '@auth/contexts/DialogContext';
 import { offerService } from '@/services/offerService';
-import { OfferBlueprint } from '../../shared/types';
+import { OfferBlueprint } from '@/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 

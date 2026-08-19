@@ -7,7 +7,7 @@ import {
 import { useAuth } from '@auth/contexts/AuthContext';
 import { toast } from 'sonner';
 import { offerService } from '@/services/offerService';
-import { OfferBlueprint, ICP, Product } from '../../shared/types';
+import { OfferBlueprint, ICP, Product } from '@/types';
 import { db } from '@/lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 
