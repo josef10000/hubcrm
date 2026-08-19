@@ -137,7 +137,8 @@ export default function ICPView() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredICPs.map(icp => {
-              const linkedOffers = offers.filter(o => (icp.linkedOfferIds || []).includes(o.id));
+              const safeOffersList = Array.isArray(offers) ? offers : [];
+              const linkedOffers = safeOffersList.filter(o => (icp.linkedOfferIds || []).includes(o.id));
               const isB2C = icp.targetType === 'B2C';
 
               return (

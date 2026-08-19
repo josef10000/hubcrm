@@ -10,7 +10,8 @@ interface ICPModalProps {
   offers: Offer[];
 }
 
-export default function ICPModal({ isOpen, onClose, onSave, editingICP, offers }: ICPModalProps) {
+export default function ICPModal({ isOpen, onClose, onSave, editingICP, offers = [] }: ICPModalProps) {
+  const safeOffers = Array.isArray(offers) ? offers : [];
   const [activeTab, setActiveTab] = useState<'GENERAL' | 'CANVAS' | 'PITCH'>('GENERAL');
   const [saving, setSaving] = useState(false);
 
@@ -501,11 +502,11 @@ export default function ICPModal({ isOpen, onClose, onSave, editingICP, offers }
                   Vincular a Produtos/Ofertas Existentes do CRM:
                 </label>
 
-                {offers.length === 0 ? (
+                {safeOffers.length === 0 ? (
                   <p className="text-xs text-gray-500 italic">Nenhum produto cadastrado no CRM ainda.</p>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-56 overflow-y-auto custom-scrollbar p-1">
-                    {offers.map(offer => {
+                    {safeOffers.map(offer => {
                       const isLinked = (formData.linkedOfferIds || []).includes(offer.id);
                       return (
                         <div
