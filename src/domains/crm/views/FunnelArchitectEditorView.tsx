@@ -8,15 +8,14 @@ import {
   Pin, Video, Instagram, PlaySquare, Search, MessageCircle,
   Magnet, FileText, CreditCard, Gift, Package, Zap, Repeat,
   Crown, Mail, Send, Check, X, ExternalLink, Sliders, Tv,
-  ShoppingBag, Globe
+  ShoppingBag, Globe, Pencil
 } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { funnelService } from '@/services/funnelService';
 import { 
   FunnelBlueprint, FunnelNode, FunnelConnection, 
-  FunnelNodeType, FunnelNodeSubType, FunnelChecklistItem,
-  FunnelPort
+  FunnelNodeType, FunnelNodeSubType, FunnelChecklistItem 
 } from '@/types';
 import { FUNNEL_BLOCK_CATALOG, BlockMeta } from '../constants/funnelTemplates';
 import { toast } from 'sonner';
@@ -36,12 +35,13 @@ export default function FunnelArchitectEditorView() {
   // Seleção e UI
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
+  const [nodeEditDraft, setNodeEditDraft] = useState<FunnelNode | null>(null);
   const [isLibraryOpen, setIsLibraryOpen] = useState(true);
-  const [isInspectorOpen, setIsInspectorOpen] = useState(true);
+  const [isInspectorOpen, setIsInspectorOpen] = useState(false);
   const [inspectorTab, setInspectorTab] = useState<'config' | 'guide' | 'checklist'>('config');
 
-  // Modo de Conexão de Nós & Portas (Topo, Direita, Baixo, Esquerda)
-  const [connectingPortSource, setConnectingPortSource] = useState<{ nodeId: string; port: FunnelPort } | null>(null);
+  // Modo de Conexão de Nós
+  const [connectingFromNodeId, setConnectingFromNodeId] = useState<string | null>(null);
 
   // Zoom e Pan da Tela Infinita
   const [zoom, setZoom] = useState(1);
@@ -139,115 +139,86 @@ export default function FunnelArchitectEditorView() {
       setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
       setSelectedNodeId(null);
       setSelectedConnectionId(null);
-      setConnectingPortSource(null);
-    }
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDraggingCanvas) {
-      setPan({
-        x: e.clientX - dragStart.x,
-        y: e.clientY - dragStart.y
-      });
-    } else if (draggingNodeId && funnel) {
-      const newX = Math.round(((e.clientX - pan.x) / zoom - nodeDragOffset.x) / 10) * 10;
-      const newY = Math.round(((e.clientY - pan.y) / zoom - nodeDragOffset.y) / 10) * 10;
-
-      setFunnel(prev => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          nodes: prev.nodes.map(n => n.id === draggingNodeId ? { ...n, x: newX, y: newY } : n)
-        };
-      });
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDraggingCanvas(false);
-    setDraggingNodeId(null);
-  };
-
-  // ── ⚓ GEOMETRIA DE PORTAS & CONEXÕES ──────────────────────────────────
-  const getNodePortCoordinates = (
-    node: FunnelNode,
-    port?: FunnelPort,
-    isTarget = false
-  ): { x: number; y: number; port: FunnelPort } => {
-    const cardWidth = 224; // Largura do card (w-56)
-    const cardHeight = 84;  // Altura aproximada do card
-
-    const effectivePort: FunnelPort = port && port !== 'auto' 
-      ? port 
-      : isTarget ? 'left' : 'right';
-
-    switch (effectivePort) {
-      case 'top':
-        return { x: node.x + cardWidth / 2, y: node.y, port: 'top' };
-      case 'bottom':
-        return { x: node.x + cardWidth / 2, y: node.y + cardHeight, port: 'bottom' };
-      case 'left':
-        return { x: node.x, y: node.y + cardHeight / 2, port: 'left' };
-      case 'right':
-      default:
-        return { x: node.x + cardWidth, y: node.y + cardHeight / 2, port: 'right' };
-    }
-  };
-
-  const calculateBezierPath = (
-    start: { x: number; y: number; port: FunnelPort },
-    end: { x: number; y: number; port: FunnelPort }
-  ): string => {
-    if (start.port === 'right' && end.port === 'left') {
-      const deltaX = Math.abs(end.x - start.x) * 0.5;
-      return `M ${start.x} ${start.y} C ${start.x + deltaX} ${start.y}, ${end.x - deltaX} ${end.y}, ${end.x} ${end.y}`;
-    }
-
-    const dist = Math.hypot(end.x - start.x, end.y - start.y);
-    const controlDist = Math.max(35, Math.min(dist * 0.45, 160));
-
-    const getTangent = (p: FunnelPort) => {
-      switch (p) {
-        case 'right': return { dx: 1, dy: 0 };
-        case 'left': return { dx: -1, dy: 0 };
-        case 'top': return { dx: 0, dy: -1 };
-        case 'bottom': return { dx: 0, dy: 1 };
-        default: return { dx: 1, dy: 0 };
+      setConnectingFromNodeId(null);
+      if (isInspectorOpen && !nodeEditDraft) {
+        setIsInspectorOpen(false);
       }
+    }
+  };
+
+  // Listener global de mouse para movimentação e arraste a 60fps com linhas sincronizadas em tempo real
+  useEffect(() => {
+    if (!draggingNodeId && !isDraggingCanvas) return;
+
+    let animFrameId: number;
+
+    const handleWindowMouseMove = (e: MouseEvent) => {
+      cancelAnimationFrame(animFrameId);
+      animFrameId = requestAnimationFrame(() => {
+        if (isDraggingCanvas) {
+          setPan({
+            x: e.clientX - dragStart.x,
+            y: e.clientY - dragStart.y
+          });
+        } else if (draggingNodeId) {
+          const currentX = Math.round((e.clientX - pan.x) / zoom - nodeDragOffset.x);
+          const currentY = Math.round((e.clientY - pan.y) / zoom - nodeDragOffset.y);
+
+          setFunnel(prev => {
+            if (!prev) return null;
+            return {
+              ...prev,
+              nodes: prev.nodes.map(n => n.id === draggingNodeId ? { ...n, x: currentX, y: currentY } : n)
+            };
+          });
+        }
+      });
     };
 
-    const tanStart = getTangent(start.port);
-    const tanEnd = getTangent(end.port);
+    const handleWindowMouseUp = () => {
+      setIsDraggingCanvas(false);
+      setDraggingNodeId(null);
+    };
 
-    const p1 = { x: start.x + tanStart.dx * controlDist, y: start.y + tanStart.dy * controlDist };
-    const p2 = { x: end.x + tanEnd.dx * controlDist, y: end.y + tanEnd.dy * controlDist };
+    window.addEventListener('mousemove', handleWindowMouseMove);
+    window.addEventListener('mouseup', handleWindowMouseUp);
 
-    return `M ${start.x} ${start.y} C ${p1.x} ${p1.y}, ${p2.x} ${p2.y}, ${end.x} ${end.y}`;
+    return () => {
+      cancelAnimationFrame(animFrameId);
+      window.removeEventListener('mousemove', handleWindowMouseMove);
+      window.removeEventListener('mouseup', handleWindowMouseUp);
+    };
+  }, [draggingNodeId, isDraggingCanvas, dragStart, pan, zoom, nodeDragOffset]);
+
+  // ── 📝 EDIÇÃO DO BLOCO COM DRAFT (SALVAR / CANCELAR) ────────────────────
+  const handleOpenNodeEditor = (node: FunnelNode) => {
+    setSelectedNodeId(node.id);
+    setSelectedConnectionId(null);
+    setNodeEditDraft(JSON.parse(JSON.stringify(node)));
+    setIsInspectorOpen(true);
   };
 
-  const handleStartPortConnection = (e: React.MouseEvent, nodeId: string, port: FunnelPort = 'auto') => {
-    e.stopPropagation();
-    if (!connectingPortSource) {
-      setConnectingPortSource({ nodeId, port });
-      toast.info('Clique no ponto ou bloco de destino para conectar.');
-    } else if (connectingPortSource.nodeId === nodeId) {
-      // Se clicou no mesmo nó, cancela
-      setConnectingPortSource(null);
-    } else {
-      // Cria a conexão com as portas escolhidas
-      const targetPort = port;
-      const newConn: FunnelConnection = {
-        id: `conn-${Date.now()}`,
-        fromNodeId: connectingPortSource.nodeId,
-        toNodeId: nodeId,
-        fromPort: connectingPortSource.port !== 'auto' ? connectingPortSource.port : undefined,
-        toPort: targetPort !== 'auto' ? targetPort : undefined,
-        style: 'solid'
+  const handleSaveNodeDraft = () => {
+    if (!nodeEditDraft || !funnel) return;
+    setFunnel(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        nodes: prev.nodes.map(n => n.id === nodeEditDraft.id ? nodeEditDraft : n)
       };
-      setFunnel(prev => prev ? { ...prev, connections: [...prev.connections, newConn] } : null);
-      setConnectingPortSource(null);
-      toast.success('Blocos conectados!');
-    }
+    });
+    setNodeEditDraft(null);
+    setIsInspectorOpen(false);
+    toast.success('Alterações do bloco salvas!');
+  };
+
+  const handleCancelNodeDraft = () => {
+    setNodeEditDraft(null);
+    setIsInspectorOpen(false);
+  };
+
+  const updateDraftField = (field: keyof FunnelNode, value: any) => {
+    setNodeEditDraft(prev => prev ? { ...prev, [field]: value } : null);
   };
 
   // ── 🧱 OPERAÇÕES COM NÓS E CONEXÕES ──────────────────────────────────────
@@ -285,8 +256,7 @@ export default function FunnelArchitectEditorView() {
       };
     });
 
-    setSelectedNodeId(newNode.id);
-    setIsInspectorOpen(true);
+    handleOpenNodeEditor(newNode);
     toast.success(`Bloco "${blockMeta.name}" adicionado!`);
   };
 
@@ -301,6 +271,8 @@ export default function FunnelArchitectEditorView() {
       };
     });
     setSelectedNodeId(null);
+    setNodeEditDraft(null);
+    setIsInspectorOpen(false);
     toast.success('Bloco removido!');
   };
 
@@ -317,8 +289,38 @@ export default function FunnelArchitectEditorView() {
     toast.success('Conexão removida!');
   };
 
+  const handleStartConnection = (e: React.MouseEvent, nodeId: string) => {
+    e.stopPropagation();
+    if (!connectingFromNodeId) {
+      setConnectingFromNodeId(nodeId);
+      toast.info('Clique no bloco de destino para conectar.');
+    } else if (connectingFromNodeId === nodeId) {
+      setConnectingFromNodeId(null);
+    } else {
+      // Cria a conexão
+      const exists = funnel?.connections.some(
+        c => c.fromNodeId === connectingFromNodeId && c.toNodeId === nodeId
+      );
+      if (!exists && funnel) {
+        const newConn: FunnelConnection = {
+          id: `conn-${Date.now()}`,
+          fromNodeId: connectingFromNodeId,
+          toNodeId: nodeId,
+          style: 'solid'
+        };
+        setFunnel(prev => prev ? { ...prev, connections: [...prev.connections, newConn] } : null);
+        toast.success('Blocos conectados!');
+      }
+      setConnectingFromNodeId(null);
+    }
+  };
+
   const handleNodeMouseDown = (e: React.MouseEvent, node: FunnelNode) => {
     e.stopPropagation();
+    if (connectingFromNodeId && connectingFromNodeId !== node.id) {
+      handleStartConnection(e, node.id);
+      return;
+    }
     setSelectedNodeId(node.id);
     setSelectedConnectionId(null);
     setDraggingNodeId(node.id);
@@ -526,30 +528,14 @@ export default function FunnelArchitectEditorView() {
           )}
 
           {selectedConnectionId && (
-            <div className="flex items-center gap-1.5 bg-white/5 p-1 rounded-xl border border-white/10">
-              <button
-                onClick={() => {
-                  setFunnel(prev => prev ? {
-                    ...prev,
-                    connections: prev.connections.map(c => c.id === selectedConnectionId ? { ...c, style: c.style === 'solid' ? 'animated' : c.style === 'animated' ? 'dashed' : 'solid' } : c)
-                  } : null);
-                }}
-                className="px-2.5 py-1.5 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5"
-                title="Alterar estilo da seta (Sólido / Animado / Pontilhado)"
-              >
-                <Zap className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Alternar Estilo</span>
-              </button>
-
-              <button
-                onClick={handleDeleteSelectedConnection}
-                className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-lg text-xs font-bold transition-all flex items-center gap-1"
-                title="Remover Conexão Selecionada"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span className="hidden lg:inline">Excluir Linha</span>
-              </button>
-            </div>
+            <button
+              onClick={handleDeleteSelectedConnection}
+              className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+              title="Remover Conexão Selecionada"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span className="hidden lg:inline">Remover Linha</span>
+            </button>
           )}
 
           <button
@@ -701,10 +687,13 @@ export default function FunnelArchitectEditorView() {
                 const toNode = funnel.nodes.find(n => n.id === conn.toNodeId);
                 if (!fromNode || !toNode) return null;
 
-                const startPos = getNodePortCoordinates(fromNode, conn.fromPort, false);
-                const endPos = getNodePortCoordinates(toNode, conn.toPort, true);
+                const startX = fromNode.x + 220; // Largura do card
+                const startY = fromNode.y + 45;  // Meio vertical
+                const endX = toNode.x;
+                const endY = toNode.y + 45;
 
-                const pathData = calculateBezierPath(startPos, endPos);
+                const deltaX = Math.abs(endX - startX) * 0.5;
+                const pathData = `M ${startX} ${startY} C ${startX + deltaX} ${startY}, ${endX - deltaX} ${endY}, ${endX} ${endY}`;
                 const isSelected = selectedConnectionId === conn.id;
 
                 return (
@@ -714,7 +703,7 @@ export default function FunnelArchitectEditorView() {
                       d={pathData}
                       fill="none"
                       stroke="transparent"
-                      strokeWidth="24"
+                      strokeWidth="20"
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedConnectionId(conn.id);
@@ -740,7 +729,7 @@ export default function FunnelArchitectEditorView() {
             {funnel.nodes.map(node => {
               const meta = FUNNEL_BLOCK_CATALOG.find(b => b.subType === node.subType);
               const isSelected = selectedNodeId === node.id;
-              const isConnectingSource = connectingPortSource?.nodeId === node.id;
+              const isConnectingSource = connectingFromNodeId === node.id;
               const isBottleneck = simulationResults.bottleneckIds.includes(node.id);
               const calculatedTraffic = simulationResults.trafficMap?.[node.id] || 0;
 
@@ -752,7 +741,7 @@ export default function FunnelArchitectEditorView() {
                     left: `${node.x}px`,
                     top: `${node.y}px`
                   }}
-                  className={`group absolute w-56 rounded-2xl pointer-events-auto cursor-pointer transition-all select-none backdrop-blur-2xl border ${
+                  className={`absolute w-56 rounded-2xl pointer-events-auto cursor-pointer transition-shadow select-none backdrop-blur-2xl border ${
                     isSelected
                       ? 'border-indigo-400 shadow-2xl shadow-indigo-500/30 ring-2 ring-indigo-500/40 bg-[#0c1427]'
                       : isConnectingSource
@@ -760,67 +749,6 @@ export default function FunnelArchitectEditorView() {
                       : 'border-white/10 hover:border-white/25 bg-[#090e1c]/90 shadow-xl'
                   }`}
                 >
-                  {/* ⚓ 4 ÂNCORAS / PONTOS DE CONEXÃO (TOPO, DIREITA, BASE, ESQUERDA) */}
-                  {/* Topo */}
-                  <button
-                    onClick={(e) => handleStartPortConnection(e, node.id, 'top')}
-                    title="Conectar porta Superior (Topo)"
-                    className={`absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full border-2 transition-all flex items-center justify-center z-10 ${
-                      connectingPortSource?.nodeId === node.id && connectingPortSource?.port === 'top'
-                        ? 'bg-amber-400 border-white scale-125 shadow-lg shadow-amber-500/50'
-                        : connectingPortSource
-                        ? 'bg-indigo-500 hover:bg-emerald-400 border-slate-900 scale-110 shadow animate-pulse'
-                        : 'bg-indigo-600 hover:bg-indigo-400 border-[#090e1c] opacity-0 group-hover:opacity-100 hover:scale-125'
-                    }`}
-                  >
-                    <div className="w-1 h-1 bg-white rounded-full"></div>
-                  </button>
-
-                  {/* Direita */}
-                  <button
-                    onClick={(e) => handleStartPortConnection(e, node.id, 'right')}
-                    title="Conectar porta Direita"
-                    className={`absolute top-1/2 -right-2 -translate-y-1/2 w-4 h-4 rounded-full border-2 transition-all flex items-center justify-center z-10 ${
-                      connectingPortSource?.nodeId === node.id && connectingPortSource?.port === 'right'
-                        ? 'bg-amber-400 border-white scale-125 shadow-lg shadow-amber-500/50'
-                        : connectingPortSource
-                        ? 'bg-indigo-500 hover:bg-emerald-400 border-slate-900 scale-110 shadow animate-pulse'
-                        : 'bg-indigo-600 hover:bg-indigo-400 border-[#090e1c] opacity-0 group-hover:opacity-100 hover:scale-125'
-                    }`}
-                  >
-                    <div className="w-1 h-1 bg-white rounded-full"></div>
-                  </button>
-
-                  {/* Base / Inferior */}
-                  <button
-                    onClick={(e) => handleStartPortConnection(e, node.id, 'bottom')}
-                    title="Conectar porta Inferior (Base)"
-                    className={`absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full border-2 transition-all flex items-center justify-center z-10 ${
-                      connectingPortSource?.nodeId === node.id && connectingPortSource?.port === 'bottom'
-                        ? 'bg-amber-400 border-white scale-125 shadow-lg shadow-amber-500/50'
-                        : connectingPortSource
-                        ? 'bg-indigo-500 hover:bg-emerald-400 border-slate-900 scale-110 shadow animate-pulse'
-                        : 'bg-indigo-600 hover:bg-indigo-400 border-[#090e1c] opacity-0 group-hover:opacity-100 hover:scale-125'
-                    }`}
-                  >
-                    <div className="w-1 h-1 bg-white rounded-full"></div>
-                  </button>
-
-                  {/* Esquerda */}
-                  <button
-                    onClick={(e) => handleStartPortConnection(e, node.id, 'left')}
-                    title="Conectar porta Esquerda"
-                    className={`absolute top-1/2 -left-2 -translate-y-1/2 w-4 h-4 rounded-full border-2 transition-all flex items-center justify-center z-10 ${
-                      connectingPortSource?.nodeId === node.id && connectingPortSource?.port === 'left'
-                        ? 'bg-amber-400 border-white scale-125 shadow-lg shadow-amber-500/50'
-                        : connectingPortSource
-                        ? 'bg-indigo-500 hover:bg-emerald-400 border-slate-900 scale-110 shadow animate-pulse'
-                        : 'bg-indigo-600 hover:bg-indigo-400 border-[#090e1c] opacity-0 group-hover:opacity-100 hover:scale-125'
-                    }`}
-                  >
-                    <div className="w-1 h-1 bg-white rounded-full"></div>
-                  </button>
-
                   {/* Badge de Gargalo */}
                   {isBottleneck && (
                     <div className="absolute -top-3 -right-2 px-2 py-0.5 rounded-full bg-rose-600 text-white text-[9px] font-black uppercase tracking-wider flex items-center gap-1 shadow-lg shadow-rose-600/50 animate-bounce">
@@ -840,18 +768,33 @@ export default function FunnelArchitectEditorView() {
                       </span>
                     </div>
 
-                    {/* Conector Rápido (Auto-Port) */}
-                    <button
-                      onClick={(e) => handleStartPortConnection(e, node.id, 'auto')}
-                      className={`p-1 rounded-md text-[10px] font-bold transition-colors ${
-                        isConnectingSource 
-                          ? 'bg-amber-500 text-black' 
-                          : 'bg-white/5 hover:bg-indigo-600 text-gray-300 hover:text-white'
-                      }`}
-                      title="Conectar a outro bloco (automático)"
-                    >
-                      <ArrowRight className="w-3 h-3" />
-                    </button>
+                    {/* Ações do Card */}
+                    <div className="flex items-center gap-1">
+                      {/* Botão de Editar Bloco */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenNodeEditor(node);
+                        }}
+                        className="p-1 rounded-md text-[10px] font-bold bg-white/5 hover:bg-indigo-600 text-gray-300 hover:text-white transition-colors"
+                        title="Editar parâmetros do bloco"
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </button>
+
+                      {/* Conector de Saída (Botão de Puxar Seta) */}
+                      <button
+                        onClick={(e) => handleStartConnection(e, node.id)}
+                        className={`p-1 rounded-md text-[10px] font-bold transition-colors ${
+                          isConnectingSource 
+                            ? 'bg-amber-500 text-black' 
+                            : 'bg-white/5 hover:bg-indigo-600 text-gray-300 hover:text-white'
+                        }`}
+                        title="Conectar a outro bloco"
+                      >
+                        <ArrowRight className="w-3 h-3" />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Conteúdo do Card */}
@@ -935,345 +878,368 @@ export default function FunnelArchitectEditorView() {
         </div>
 
         {/* ── GAVETA DIREITA: INSPETOR DE PROPRIEDADES & GUIA TÁTICO ─────────── */}
-        {selectedNode && (
-          <div 
-            className={`absolute right-0 top-0 bottom-0 z-20 w-80 lg:w-96 bg-[#090e1c]/95 border-l border-white/10 backdrop-blur-2xl flex flex-col transition-transform duration-300 ${
-              isInspectorOpen ? 'translate-x-0' : 'translate-x-full'
-            }`}
-          >
-            {/* Cabeçalho do Inspetor */}
-            <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
-              <div className="flex items-center gap-2">
-                <div className={`p-1.5 rounded-lg border ${selectedNodeMeta?.badgeColor || 'bg-white/5 text-white'}`}>
-                  {renderNodeIcon(selectedNodeMeta?.iconName || 'Layers', 16)}
-                </div>
-                <div>
-                  <h3 className="text-xs font-black text-white uppercase tracking-wider">
-                    Configuração da Etapa
-                  </h3>
-                  <span className="text-[10px] text-gray-400">{selectedNode.type}</span>
-                </div>
-              </div>
-              <button
-                onClick={() => setIsInspectorOpen(false)}
-                className="p-1 text-gray-400 hover:text-white rounded-lg hover:bg-white/10"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+        {(nodeEditDraft || selectedNode) && (() => {
+          const activeNode = nodeEditDraft || selectedNode!;
+          const activeNodeMeta = FUNNEL_BLOCK_CATALOG.find(b => b.subType === activeNode.subType);
 
-            {/* Abas do Inspetor */}
-            <div className="flex border-b border-white/10 bg-black/40 text-xs">
-              <button
-                onClick={() => setInspectorTab('config')}
-                className={`flex-1 py-2.5 font-bold transition-colors ${
-                  inspectorTab === 'config' ? 'text-indigo-400 border-b-2 border-indigo-500 bg-white/[0.02]' : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                Parâmetros
-              </button>
-              <button
-                onClick={() => setInspectorTab('checklist')}
-                className={`flex-1 py-2.5 font-bold transition-colors ${
-                  inspectorTab === 'checklist' ? 'text-indigo-400 border-b-2 border-indigo-500 bg-white/[0.02]' : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                Tarefas ({selectedNode.checklist?.filter(c => c.done).length || 0}/{selectedNode.checklist?.length || 0})
-              </button>
-              <button
-                onClick={() => setInspectorTab('guide')}
-                className={`flex-1 py-2.5 font-bold transition-colors ${
-                  inspectorTab === 'guide' ? 'text-amber-400 border-b-2 border-amber-500 bg-white/[0.02]' : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                🧠 Guia Tático
-              </button>
-            </div>
-
-            {/* Conteúdo das Abas */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-5">
-              
-              {inspectorTab === 'config' && (
-                <>
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-gray-400 uppercase">Nome da Etapa</label>
-                    <input
-                      type="text"
-                      value={selectedNode.label}
-                      onChange={(e) => updateSelectedNode('label', e.target.value)}
-                      className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
-                    />
+          return (
+            <div 
+              className={`absolute right-0 top-0 bottom-0 z-20 w-80 lg:w-96 bg-[#090e1c]/95 border-l border-white/10 backdrop-blur-2xl flex flex-col transition-transform duration-300 ${
+                isInspectorOpen ? 'translate-x-0' : 'translate-x-full'
+              }`}
+            >
+              {/* Cabeçalho do Inspetor */}
+              <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
+                <div className="flex items-center gap-2">
+                  <div className={`p-1.5 rounded-lg border ${activeNodeMeta?.badgeColor || 'bg-white/5 text-white'}`}>
+                    {renderNodeIcon(activeNodeMeta?.iconName || 'Layers', 16)}
                   </div>
+                  <div>
+                    <h3 className="text-xs font-black text-white uppercase tracking-wider">
+                      Configuração da Etapa
+                    </h3>
+                    <span className="text-[10px] text-gray-400">{activeNode.type}</span>
+                  </div>
+                </div>
+                <button
+                  onClick={handleCancelNodeDraft}
+                  className="p-1 text-gray-400 hover:text-white rounded-lg hover:bg-white/10"
+                  title="Fechar sem salvar"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
 
-                  {/* Se for Produto de Afiliado */}
-                  {selectedNode.subType.startsWith('affiliate_') && (
-                    <div className="space-y-3 p-3.5 rounded-2xl bg-amber-500/5 border border-amber-500/20">
-                      <div className="flex items-center gap-2 text-amber-400">
-                        <ShoppingBag className="w-4 h-4" />
-                        <span className="text-xs font-bold uppercase">Configuração de Afiliado</span>
+              {/* Abas do Inspetor */}
+              <div className="flex border-b border-white/10 bg-black/40 text-xs">
+                <button
+                  onClick={() => setInspectorTab('config')}
+                  className={`flex-1 py-2.5 font-bold transition-colors ${
+                    inspectorTab === 'config' ? 'text-indigo-400 border-b-2 border-indigo-500 bg-white/[0.02]' : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  Parâmetros
+                </button>
+                <button
+                  onClick={() => setInspectorTab('checklist')}
+                  className={`flex-1 py-2.5 font-bold transition-colors ${
+                    inspectorTab === 'checklist' ? 'text-indigo-400 border-b-2 border-indigo-500 bg-white/[0.02]' : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  Tarefas ({activeNode.checklist?.filter(c => c.done).length || 0}/{activeNode.checklist?.length || 0})
+                </button>
+                <button
+                  onClick={() => setInspectorTab('guide')}
+                  className={`flex-1 py-2.5 font-bold transition-colors ${
+                    inspectorTab === 'guide' ? 'text-amber-400 border-b-2 border-amber-500 bg-white/[0.02]' : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  🧠 Guia Tático
+                </button>
+              </div>
+
+              {/* Conteúdo das Abas */}
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-5">
+                
+                {inspectorTab === 'config' && (
+                  <>
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-bold text-gray-400 uppercase">Nome da Etapa</label>
+                      <input
+                        type="text"
+                        value={activeNode.label}
+                        onChange={(e) => updateDraftField('label', e.target.value)}
+                        className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                      />
+                    </div>
+
+                    {/* Se for Produto de Afiliado */}
+                    {activeNode.subType.startsWith('affiliate_') && (
+                      <div className="space-y-3 p-3.5 rounded-2xl bg-amber-500/5 border border-amber-500/20">
+                        <div className="flex items-center gap-2 text-amber-400">
+                          <ShoppingBag className="w-4 h-4" />
+                          <span className="text-xs font-bold uppercase">Configuração de Afiliado</span>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase">Seu Link de Afiliado</label>
+                          <div className="flex gap-2">
+                            <input
+                              type="url"
+                              placeholder="https://shopee.com.br/... ou https://amzn.to/..."
+                              value={activeNode.affiliateLink || ''}
+                              onChange={(e) => updateDraftField('affiliateLink', e.target.value)}
+                              className="flex-1 px-3 py-1.5 bg-black/60 border border-white/10 rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-amber-500"
+                            />
+                            {activeNode.affiliateLink && (
+                              <a
+                                href={activeNode.affiliateLink}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="p-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-xl text-xs font-bold transition-colors flex items-center justify-center"
+                                title="Testar Link"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5" />
+                              </a>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase">Comissão Estimada (%)</label>
+                          <input
+                            type="number"
+                            placeholder="Ex: 10 ou 50"
+                            value={activeNode.commissionRate || ''}
+                            onChange={(e) => updateDraftField('commissionRate', parseFloat(e.target.value) || 0)}
+                            className="w-full px-3 py-1.5 bg-black/60 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500"
+                          />
+                        </div>
                       </div>
+                    )}
 
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase">Seu Link de Afiliado</label>
+                    {/* Vínculo com Oferta Real do CRM (Apenas para ofertas próprias) */}
+                    {activeNode.type === 'offer' && !activeNode.subType.startsWith('affiliate_') && (
+                      <div className="space-y-2 p-3 rounded-2xl bg-emerald-500/5 border border-emerald-500/20">
+                        <div className="flex justify-between items-center">
+                          <label className="text-[11px] font-bold text-emerald-400 uppercase flex items-center gap-1.5">
+                            <DollarSign className="w-3.5 h-3.5" />
+                            Vincular Oferta do CRM (Opcional)
+                          </label>
+                          <span className="text-[9px] text-gray-500 font-medium">Livre ou Vinculado</span>
+                        </div>
+
+                        <select
+                          value={activeNode.offerId || ''}
+                          onChange={(e) => {
+                            const chosenOffer = offers.find(o => o.id === e.target.value);
+                            if (chosenOffer) {
+                              updateDraftField('offerId', chosenOffer.id);
+                              updateDraftField('price', chosenOffer.price);
+                              updateDraftField('label', chosenOffer.name);
+                            } else {
+                              updateDraftField('offerId', undefined);
+                            }
+                          }}
+                          className="w-full px-3 py-2 bg-black/60 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+                        >
+                          <option value="">Produto livre (digitar dados manualmente abaixo)</option>
+                          {offers.map(o => (
+                            <option key={o.id} value={o.id}>
+                              📦 {o.name} (R$ {o.price?.toFixed(2)})
+                            </option>
+                          ))}
+                        </select>
+
+                        <p className="text-[10px] text-gray-400 leading-tight">
+                          💡 Você pode digitar o preço livremente abaixo sem precisar criar o produto antes no CRM.
+                        </p>
+
+                        {activeNode.offerId && (
+                          <a
+                            href={`${window.location.origin}/checkout/${orgId}?offerId=${activeNode.offerId}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[10px] font-bold text-emerald-400 hover:underline flex items-center gap-1 pt-1"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            Abrir Link do Checkout Transparente
+                          </a>
+                        )}
+                      </div>
+                    )}
+
+                    {/* URL Externa / Link da Página */}
+                    {(activeNode.type === 'page' || activeNode.type === 'traffic') && (
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-gray-400 uppercase">Link / URL da Página</label>
                         <div className="flex gap-2">
                           <input
                             type="url"
-                            placeholder="https://shopee.com.br/... ou https://amzn.to/..."
-                            value={selectedNode.affiliateLink || ''}
-                            onChange={(e) => updateSelectedNode('affiliateLink', e.target.value)}
-                            className="flex-1 px-3 py-1.5 bg-black/60 border border-white/10 rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-amber-500"
+                            placeholder="https://seusite.com.br/artigo-ou-pagina"
+                            value={activeNode.url || ''}
+                            onChange={(e) => updateDraftField('url', e.target.value)}
+                            className="flex-1 px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
                           />
-                          {selectedNode.affiliateLink && (
+                          {activeNode.url && (
                             <a
-                              href={selectedNode.affiliateLink}
+                              href={activeNode.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="p-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-xl text-xs font-bold transition-colors flex items-center justify-center"
-                              title="Testar Link"
+                              className="p-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-xl flex items-center justify-center"
+                              title="Abrir URL"
                             >
                               <ExternalLink className="w-3.5 h-3.5" />
                             </a>
                           )}
                         </div>
                       </div>
+                    )}
 
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase">Comissão Estimada (%)</label>
+                    {/* Preço ou CPC */}
+                    {activeNode.type === 'offer' && (
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-gray-400 uppercase">
+                          {activeNode.subType.startsWith('affiliate_') ? 'Preço do Produto no Parceiro (R$)' : 'Preço do Produto (R$)'}
+                        </label>
                         <input
                           type="number"
-                          placeholder="Ex: 10 ou 50"
-                          value={selectedNode.commissionRate || ''}
-                          onChange={(e) => updateSelectedNode('commissionRate', parseFloat(e.target.value) || 0)}
-                          className="w-full px-3 py-1.5 bg-black/60 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500"
+                          step="0.01"
+                          value={activeNode.price || 0}
+                          onChange={(e) => updateDraftField('price', parseFloat(e.target.value) || 0)}
+                          className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
                         />
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Vínculo com Oferta Real do CRM (Apenas para ofertas próprias) */}
-                  {selectedNode.type === 'offer' && !selectedNode.subType.startsWith('affiliate_') && (
-                    <div className="space-y-2 p-3 rounded-2xl bg-emerald-500/5 border border-emerald-500/20">
-                      <div className="flex justify-between items-center">
-                        <label className="text-[11px] font-bold text-emerald-400 uppercase flex items-center gap-1.5">
-                          <DollarSign className="w-3.5 h-3.5" />
-                          Vincular Oferta do CRM (Opcional)
-                        </label>
-                        <span className="text-[9px] text-gray-500 font-medium">Livre ou Vinculado</span>
+                    {activeNode.type === 'traffic' && (
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-gray-400 uppercase">Custo Médio por Clique - CPC (R$)</label>
+                        <input
+                          type="number"
+                          step="0.10"
+                          value={activeNode.costPerClick || 0}
+                          onChange={(e) => updateDraftField('costPerClick', parseFloat(e.target.value) || 0)}
+                          className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                        />
                       </div>
+                    )}
 
+                    {/* Taxa de Conversão Esperada */}
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center">
+                        <label className="text-[11px] font-bold text-gray-400 uppercase">Taxa de Conversão Esperada</label>
+                        <span className="text-xs font-bold text-indigo-400">{activeNode.conversionRate || 0}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0.5"
+                        max="100"
+                        step="0.5"
+                        value={activeNode.conversionRate || 0}
+                        onChange={(e) => updateDraftField('conversionRate', parseFloat(e.target.value))}
+                        className="w-full accent-indigo-500 cursor-pointer"
+                      />
+                    </div>
+
+                    {/* Status da Etapa */}
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-bold text-gray-400 uppercase">Status de Execução</label>
                       <select
-                        value={selectedNode.offerId || ''}
-                        onChange={(e) => {
-                          const chosenOffer = offers.find(o => o.id === e.target.value);
-                          if (chosenOffer) {
-                            updateSelectedNode('offerId', chosenOffer.id);
-                            updateSelectedNode('price', chosenOffer.price);
-                            updateSelectedNode('label', chosenOffer.name);
-                          } else {
-                            updateSelectedNode('offerId', undefined);
+                        value={activeNode.status || 'idea'}
+                        onChange={(e) => updateDraftField('status', e.target.value)}
+                        className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                      >
+                        <option value="idea">💡 Ideia / Planejamento</option>
+                        <option value="in_progress">🚧 Em Construção / Gravando</option>
+                        <option value="ready">✅ Pronto para Testar</option>
+                        <option value="live">🚀 No Ar / Rodando</option>
+                      </select>
+                    </div>
+
+                    {/* Notas & Links */}
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-bold text-gray-400 uppercase">Notas & Rascunho</label>
+                      <textarea
+                        rows={4}
+                        value={activeNode.notes || ''}
+                        onChange={(e) => updateDraftField('notes', e.target.value)}
+                        placeholder="Adicione referências, copies ou anotações desta etapa..."
+                        className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 resize-none"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {inspectorTab === 'checklist' && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-gray-400 uppercase">Lista de Tarefas</span>
+                      <button
+                        onClick={() => {
+                          const text = prompt('Digite a nova tarefa:');
+                          if (text && text.trim()) {
+                            const updated = [...(activeNode.checklist || []), { id: `chk-${Date.now()}`, text: text.trim(), done: false }];
+                            updateDraftField('checklist', updated);
                           }
                         }}
-                        className="w-full px-3 py-2 bg-black/60 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+                        className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
                       >
-                        <option value="">Produto livre (digitar dados manualmente abaixo)</option>
-                        {offers.map(o => (
-                          <option key={o.id} value={o.id}>
-                            📦 {o.name} (R$ {o.price?.toFixed(2)})
-                          </option>
-                        ))}
-                      </select>
+                        <Plus className="w-3 h-3" /> Adicionar
+                      </button>
+                    </div>
 
-                      <p className="text-[10px] text-gray-400 leading-tight">
-                        💡 Você pode digitar o preço livremente abaixo sem precisar criar o produto antes no CRM.
-                      </p>
-
-                      {selectedNode.offerId && (
-                        <a
-                          href={`${window.location.origin}/checkout/${orgId}?offerId=${selectedNode.offerId}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-[10px] font-bold text-emerald-400 hover:underline flex items-center gap-1 pt-1"
+                    <div className="space-y-2">
+                      {(activeNode.checklist || []).map((item) => (
+                        <div
+                          key={item.id}
+                          onClick={() => {
+                            const updated = (activeNode.checklist || []).map(c => c.id === item.id ? { ...c, done: !c.done } : c);
+                            updateDraftField('checklist', updated);
+                          }}
+                          className={`p-2.5 rounded-xl border cursor-pointer transition-all flex items-start gap-2.5 ${
+                            item.done 
+                              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300 line-through' 
+                              : 'bg-white/[0.02] border-white/10 text-gray-300 hover:bg-white/[0.05]'
+                          }`}
                         >
-                          <ExternalLink className="w-3 h-3" />
-                          Abrir Link do Checkout Transparente
-                        </a>
-                      )}
-                    </div>
-                  )}
-
-                  {/* URL Externa / Link da Página */}
-                  {(selectedNode.type === 'page' || selectedNode.type === 'traffic') && (
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-bold text-gray-400 uppercase">Link / URL da Página</label>
-                      <div className="flex gap-2">
-                        <input
-                          type="url"
-                          placeholder="https://seusite.com.br/artigo-ou-pagina"
-                          value={selectedNode.url || ''}
-                          onChange={(e) => updateSelectedNode('url', e.target.value)}
-                          className="flex-1 px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
-                        />
-                        {selectedNode.url && (
-                          <a
-                            href={selectedNode.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="p-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-xl flex items-center justify-center"
-                            title="Abrir URL"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Preço ou CPC */}
-                  {selectedNode.type === 'offer' && (
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-bold text-gray-400 uppercase">
-                        {selectedNode.subType.startsWith('affiliate_') ? 'Preço do Produto no Parceiro (R$)' : 'Preço do Produto (R$)'}
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={selectedNode.price || 0}
-                        onChange={(e) => updateSelectedNode('price', parseFloat(e.target.value) || 0)}
-                        className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
-                      />
-                    </div>
-                  )}
-
-                  {selectedNode.type === 'traffic' && (
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-bold text-gray-400 uppercase">Custo Médio por Clique - CPC (R$)</label>
-                      <input
-                        type="number"
-                        step="0.10"
-                        value={selectedNode.costPerClick || 0}
-                        onChange={(e) => updateSelectedNode('costPerClick', parseFloat(e.target.value) || 0)}
-                        className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
-                      />
-                    </div>
-                  )}
-
-                  {/* Taxa de Conversão Esperada */}
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between items-center">
-                      <label className="text-[11px] font-bold text-gray-400 uppercase">Taxa de Conversão Esperada</label>
-                      <span className="text-xs font-bold text-indigo-400">{selectedNode.conversionRate || 0}%</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0.5"
-                      max="100"
-                      step="0.5"
-                      value={selectedNode.conversionRate || 0}
-                      onChange={(e) => updateSelectedNode('conversionRate', parseFloat(e.target.value))}
-                      className="w-full accent-indigo-500 cursor-pointer"
-                    />
-                  </div>
-
-                  {/* Status da Etapa */}
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-gray-400 uppercase">Status de Execução</label>
-                    <select
-                      value={selectedNode.status || 'idea'}
-                      onChange={(e) => updateSelectedNode('status', e.target.value)}
-                      className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
-                    >
-                      <option value="idea">💡 Ideia / Planejamento</option>
-                      <option value="in_progress">🚧 Em Construção / Gravando</option>
-                      <option value="ready">✅ Pronto para Testar</option>
-                      <option value="live">🚀 No Ar / Rodando</option>
-                    </select>
-                  </div>
-
-                  {/* Notas & Links */}
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-gray-400 uppercase">Notas & Rascunho</label>
-                    <textarea
-                      rows={4}
-                      value={selectedNode.notes || ''}
-                      onChange={(e) => updateSelectedNode('notes', e.target.value)}
-                      placeholder="Adicione referências, copies ou anotações desta etapa..."
-                      className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 resize-none"
-                    />
-                  </div>
-                </>
-              )}
-
-              {inspectorTab === 'checklist' && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-gray-400 uppercase">Lista de Tarefas</span>
-                    <button
-                      onClick={() => {
-                        const text = prompt('Digite a nova tarefa:');
-                        if (text && text.trim()) {
-                          const updated = [...(selectedNode.checklist || []), { id: `chk-${Date.now()}`, text: text.trim(), done: false }];
-                          updateSelectedNode('checklist', updated);
-                        }
-                      }}
-                      className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
-                    >
-                      <Plus className="w-3 h-3" /> Adicionar
-                    </button>
-                  </div>
-
-                  <div className="space-y-2">
-                    {(selectedNode.checklist || []).map((item) => (
-                      <div
-                        key={item.id}
-                        onClick={() => {
-                          const updated = (selectedNode.checklist || []).map(c => c.id === item.id ? { ...c, done: !c.done } : c);
-                          updateSelectedNode('checklist', updated);
-                        }}
-                        className={`p-2.5 rounded-xl border cursor-pointer transition-all flex items-start gap-2.5 ${
-                          item.done 
-                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300 line-through' 
-                            : 'bg-white/[0.02] border-white/10 text-gray-300 hover:bg-white/[0.05]'
-                        }`}
-                      >
-                        <div className={`w-4 h-4 rounded mt-0.5 flex items-center justify-center border ${item.done ? 'bg-emerald-500 border-emerald-400 text-black' : 'border-white/20'}`}>
-                          {item.done && <Check className="w-3 h-3 stroke-[3]" />}
+                          <div className={`w-4 h-4 rounded mt-0.5 flex items-center justify-center border ${item.done ? 'bg-emerald-500 border-emerald-400 text-black' : 'border-white/20'}`}>
+                            {item.done && <Check className="w-3 h-3 stroke-[3]" />}
+                          </div>
+                          <span className="text-xs font-medium leading-tight flex-1">{item.text}</span>
                         </div>
-                        <span className="text-xs font-medium leading-tight flex-1">{item.text}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {inspectorTab === 'guide' && selectedNodeMeta && (
-                <div className="space-y-4">
-                  <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
-                    <h4 className="text-xs font-bold text-amber-300 mb-1 flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      {selectedNodeMeta.strategicGuide.title}
-                    </h4>
-                    <p className="text-xs text-gray-300 leading-relaxed">
-                      {selectedNodeMeta.strategicGuide.description}
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <span className="text-[11px] font-black text-gray-400 uppercase block">Regras de Ouro</span>
-                    <ul className="space-y-2 text-xs text-gray-300">
-                      {selectedNodeMeta.strategicGuide.goldenRules.map((rule, i) => (
-                        <li key={i} className="flex items-start gap-2 p-2 bg-white/[0.02] rounded-xl border border-white/5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 shrink-0"></span>
-                          <span>{rule}</span>
-                        </li>
                       ))}
-                    </ul>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
+                {inspectorTab === 'guide' && activeNodeMeta && (
+                  <div className="space-y-4">
+                    <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
+                      <h4 className="text-xs font-bold text-amber-300 mb-1 flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        {activeNodeMeta.strategicGuide.title}
+                      </h4>
+                      <p className="text-xs text-gray-300 leading-relaxed">
+                        {activeNodeMeta.strategicGuide.description}
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <span className="text-[11px] font-black text-gray-400 uppercase block">Regras de Ouro</span>
+                      <ul className="space-y-2 text-xs text-gray-300">
+                        {activeNodeMeta.strategicGuide.goldenRules.map((rule, i) => (
+                          <li key={i} className="flex items-start gap-2 p-2 bg-white/[0.02] rounded-xl border border-white/5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 shrink-0"></span>
+                            <span>{rule}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+
+              </div>
+
+              {/* Rodapé de Ações: Salvar / Cancelar */}
+              <div className="p-4 border-t border-white/10 bg-black/40 flex items-center justify-end gap-2">
+                <button
+                  onClick={handleCancelNodeDraft}
+                  className="px-3.5 py-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-xl text-xs font-bold transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSaveNodeDraft}
+                  className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-500/20 flex items-center gap-1.5"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  Salvar Alterações
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
       </div>
     </div>

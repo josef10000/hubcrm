@@ -944,14 +944,10 @@ export interface FunnelNode {
   checklist?: FunnelChecklistItem[];
 }
 
-export type FunnelPort = 'top' | 'right' | 'bottom' | 'left' | 'auto';
-
 export interface FunnelConnection {
   id: string;
   fromNodeId: string;
   toNodeId: string;
-  fromPort?: FunnelPort;
-  toPort?: FunnelPort;
   label?: string;
   style?: 'solid' | 'dashed' | 'animated';
 }
