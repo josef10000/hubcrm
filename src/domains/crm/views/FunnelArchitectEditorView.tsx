@@ -15,7 +15,8 @@ import { useCRM } from '@crm/contexts/CRMContext';
 import { funnelService } from '@/services/funnelService';
 import { 
   FunnelBlueprint, FunnelNode, FunnelConnection, 
-  FunnelNodeType, FunnelNodeSubType, FunnelChecklistItem 
+  FunnelNodeType, FunnelNodeSubType, FunnelChecklistItem,
+  FunnelPort
 } from '@/types';
 import { FUNNEL_BLOCK_CATALOG, BlockMeta } from '../constants/funnelTemplates';
 import { toast } from 'sonner';
@@ -39,8 +40,8 @@ export default function FunnelArchitectEditorView() {
   const [isInspectorOpen, setIsInspectorOpen] = useState(true);
   const [inspectorTab, setInspectorTab] = useState<'config' | 'guide' | 'checklist'>('config');
 
-  // Modo de Conexão de Nós
-  const [connectingFromNodeId, setConnectingFromNodeId] = useState<string | null>(null);
+  // Modo de Conexão de Nós & Portas (Topo, Direita, Baixo, Esquerda)
+  const [connectingPortSource, setConnectingPortSource] = useState<{ nodeId: string; port: FunnelPort } | null>(null);
 
   // Zoom e Pan da Tela Infinita
   const [zoom, setZoom] = useState(1);
@@ -138,7 +139,7 @@ export default function FunnelArchitectEditorView() {
       setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
       setSelectedNodeId(null);
       setSelectedConnectionId(null);
-      setConnectingFromNodeId(null);
+      setConnectingPortSource(null);
     }
   };
 
@@ -165,6 +166,94 @@ export default function FunnelArchitectEditorView() {
   const handleMouseUp = () => {
     setIsDraggingCanvas(false);
     setDraggingNodeId(null);
+  };
+
+  // ── ⚓ GEOMETRIA DE PORTAS & CONEXÕES MULTI-LATERAIS ──────────────────────
+  const getNodePortCoordinates = (
+    node: FunnelNode,
+    port?: FunnelPort,
+    oppositeNode?: FunnelNode
+  ): { x: number; y: number; port: FunnelPort } => {
+    const cardWidth = 224; // Largura do card (w-56)
+    const cardHeight = 84;  // Altura aproximada do card
+
+    let effectivePort: FunnelPort = port || 'auto';
+
+    if (effectivePort === 'auto' && oppositeNode) {
+      const dx = (oppositeNode.x + cardWidth / 2) - (node.x + cardWidth / 2);
+      const dy = (oppositeNode.y + cardHeight / 2) - (node.y + cardHeight / 2);
+
+      if (Math.abs(dx) >= Math.abs(dy)) {
+        effectivePort = dx >= 0 ? 'right' : 'left';
+      } else {
+        effectivePort = dy >= 0 ? 'bottom' : 'top';
+      }
+    } else if (effectivePort === 'auto') {
+      effectivePort = 'right';
+    }
+
+    switch (effectivePort) {
+      case 'top':
+        return { x: node.x + cardWidth / 2, y: node.y, port: 'top' };
+      case 'bottom':
+        return { x: node.x + cardWidth / 2, y: node.y + cardHeight, port: 'bottom' };
+      case 'left':
+        return { x: node.x, y: node.y + cardHeight / 2, port: 'left' };
+      case 'right':
+      default:
+        return { x: node.x + cardWidth, y: node.y + cardHeight / 2, port: 'right' };
+    }
+  };
+
+  const calculateBezierPath = (
+    start: { x: number; y: number; port: FunnelPort },
+    end: { x: number; y: number; port: FunnelPort }
+  ): string => {
+    const dist = Math.hypot(end.x - start.x, end.y - start.y);
+    const controlDist = Math.max(35, Math.min(dist * 0.45, 160));
+
+    const getTangent = (p: FunnelPort) => {
+      switch (p) {
+        case 'right': return { dx: 1, dy: 0 };
+        case 'left': return { dx: -1, dy: 0 };
+        case 'top': return { dx: 0, dy: -1 };
+        case 'bottom': return { dx: 0, dy: 1 };
+        default: return { dx: 1, dy: 0 };
+      }
+    };
+
+    const tanStart = getTangent(start.port);
+    const tanEnd = getTangent(end.port);
+
+    const p1 = { x: start.x + tanStart.dx * controlDist, y: start.y + tanStart.dy * controlDist };
+    const p2 = { x: end.x + tanEnd.dx * controlDist, y: end.y + tanEnd.dy * controlDist };
+
+    return `M ${start.x} ${start.y} C ${p1.x} ${p1.y}, ${p2.x} ${p2.y}, ${end.x} ${end.y}`;
+  };
+
+  const handleStartPortConnection = (e: React.MouseEvent, nodeId: string, port: FunnelPort = 'auto') => {
+    e.stopPropagation();
+    if (!connectingPortSource) {
+      setConnectingPortSource({ nodeId, port });
+      toast.info('Clique no ponto ou bloco de destino para conectar.');
+    } else if (connectingPortSource.nodeId === nodeId) {
+      // Se clicou no mesmo nó, cancela
+      setConnectingPortSource(null);
+    } else {
+      // Cria a conexão com as portas escolhidas
+      const targetPort = port;
+      const newConn: FunnelConnection = {
+        id: `conn-${Date.now()}`,
+        fromNodeId: connectingPortSource.nodeId,
+        toNodeId: nodeId,
+        fromPort: connectingPortSource.port,
+        toPort: targetPort,
+        style: 'solid'
+      };
+      setFunnel(prev => prev ? { ...prev, connections: [...prev.connections, newConn] } : null);
+      setConnectingPortSource(null);
+      toast.success('Blocos conectados!');
+    }
   };
 
   // ── 🧱 OPERAÇÕES COM NÓS E CONEXÕES ──────────────────────────────────────
@@ -234,36 +323,10 @@ export default function FunnelArchitectEditorView() {
     toast.success('Conexão removida!');
   };
 
-  const handleStartConnection = (e: React.MouseEvent, nodeId: string) => {
-    e.stopPropagation();
-    if (!connectingFromNodeId) {
-      setConnectingFromNodeId(nodeId);
-      toast.info('Clique no bloco de destino para conectar.');
-    } else if (connectingFromNodeId === nodeId) {
-      setConnectingFromNodeId(null);
-    } else {
-      // Cria a conexão
-      const exists = funnel?.connections.some(
-        c => c.fromNodeId === connectingFromNodeId && c.toNodeId === nodeId
-      );
-      if (!exists && funnel) {
-        const newConn: FunnelConnection = {
-          id: `conn-${Date.now()}`,
-          fromNodeId: connectingFromNodeId,
-          toNodeId: nodeId,
-          style: 'solid'
-        };
-        setFunnel(prev => prev ? { ...prev, connections: [...prev.connections, newConn] } : null);
-        toast.success('Blocos conectados!');
-      }
-      setConnectingFromNodeId(null);
-    }
-  };
-
   const handleNodeMouseDown = (e: React.MouseEvent, node: FunnelNode) => {
     e.stopPropagation();
-    if (connectingFromNodeId && connectingFromNodeId !== node.id) {
-      handleStartConnection(e, node.id);
+    if (connectingPortSource && connectingPortSource.nodeId !== node.id) {
+      handleStartPortConnection(e, node.id, 'auto');
       return;
     }
     setSelectedNodeId(node.id);
@@ -473,14 +536,30 @@ export default function FunnelArchitectEditorView() {
           )}
 
           {selectedConnectionId && (
-            <button
-              onClick={handleDeleteSelectedConnection}
-              className="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
-              title="Remover Conexão Selecionada"
-            >
-              <Trash2 className="w-4 h-4" />
-              <span className="hidden lg:inline">Remover Linha</span>
-            </button>
+            <div className="flex items-center gap-1.5 bg-white/5 p-1 rounded-xl border border-white/10">
+              <button
+                onClick={() => {
+                  setFunnel(prev => prev ? {
+                    ...prev,
+                    connections: prev.connections.map(c => c.id === selectedConnectionId ? { ...c, style: c.style === 'solid' ? 'animated' : c.style === 'animated' ? 'dashed' : 'solid' } : c)
+                  } : null);
+                }}
+                className="px-2.5 py-1.5 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5"
+                title="Alterar estilo da seta (Sólido / Animado / Pontilhado)"
+              >
+                <Zap className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Alternar Estilo</span>
+              </button>
+
+              <button
+                onClick={handleDeleteSelectedConnection}
+                className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-lg text-xs font-bold transition-all flex items-center gap-1"
+                title="Remover Conexão Selecionada"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span className="hidden lg:inline">Excluir Linha</span>
+              </button>
+            </div>
           )}
 
           <button
@@ -632,13 +711,10 @@ export default function FunnelArchitectEditorView() {
                 const toNode = funnel.nodes.find(n => n.id === conn.toNodeId);
                 if (!fromNode || !toNode) return null;
 
-                const startX = fromNode.x + 220; // Largura do card
-                const startY = fromNode.y + 45;  // Meio vertical
-                const endX = toNode.x;
-                const endY = toNode.y + 45;
+                const startPos = getNodePortCoordinates(fromNode, conn.fromPort, toNode);
+                const endPos = getNodePortCoordinates(toNode, conn.toPort, fromNode);
 
-                const deltaX = Math.abs(endX - startX) * 0.5;
-                const pathData = `M ${startX} ${startY} C ${startX + deltaX} ${startY}, ${endX - deltaX} ${endY}, ${endX} ${endY}`;
+                const pathData = calculateBezierPath(startPos, endPos);
                 const isSelected = selectedConnectionId === conn.id;
 
                 return (
@@ -648,7 +724,7 @@ export default function FunnelArchitectEditorView() {
                       d={pathData}
                       fill="none"
                       stroke="transparent"
-                      strokeWidth="20"
+                      strokeWidth="24"
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedConnectionId(conn.id);
@@ -674,7 +750,7 @@ export default function FunnelArchitectEditorView() {
             {funnel.nodes.map(node => {
               const meta = FUNNEL_BLOCK_CATALOG.find(b => b.subType === node.subType);
               const isSelected = selectedNodeId === node.id;
-              const isConnectingSource = connectingFromNodeId === node.id;
+              const isConnectingSource = connectingPortSource?.nodeId === node.id;
               const isBottleneck = simulationResults.bottleneckIds.includes(node.id);
               const calculatedTraffic = simulationResults.trafficMap?.[node.id] || 0;
 
@@ -686,7 +762,7 @@ export default function FunnelArchitectEditorView() {
                     left: `${node.x}px`,
                     top: `${node.y}px`
                   }}
-                  className={`absolute w-56 rounded-2xl pointer-events-auto cursor-pointer transition-shadow select-none backdrop-blur-2xl border ${
+                  className={`group absolute w-56 rounded-2xl pointer-events-auto cursor-pointer transition-all select-none backdrop-blur-2xl border ${
                     isSelected
                       ? 'border-indigo-400 shadow-2xl shadow-indigo-500/30 ring-2 ring-indigo-500/40 bg-[#0c1427]'
                       : isConnectingSource
@@ -694,6 +770,67 @@ export default function FunnelArchitectEditorView() {
                       : 'border-white/10 hover:border-white/25 bg-[#090e1c]/90 shadow-xl'
                   }`}
                 >
+                  {/* ⚓ 4 ÂNCORAS / PONTOS DE CONEXÃO (TOPO, DIREITA, BASE, ESQUERDA) */}
+                  {/* Topo */}
+                  <button
+                    onClick={(e) => handleStartPortConnection(e, node.id, 'top')}
+                    title="Conectar porta Superior (Topo)"
+                    className={`absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full border-2 transition-all flex items-center justify-center z-10 ${
+                      connectingPortSource?.nodeId === node.id && connectingPortSource?.port === 'top'
+                        ? 'bg-amber-400 border-white scale-125 shadow-lg shadow-amber-500/50'
+                        : connectingPortSource
+                        ? 'bg-indigo-500 hover:bg-emerald-400 border-slate-900 scale-110 shadow animate-pulse'
+                        : 'bg-indigo-600 hover:bg-indigo-400 border-[#090e1c] opacity-0 group-hover:opacity-100 hover:scale-125'
+                    }`}
+                  >
+                    <div className="w-1 h-1 bg-white rounded-full"></div>
+                  </button>
+
+                  {/* Direita */}
+                  <button
+                    onClick={(e) => handleStartPortConnection(e, node.id, 'right')}
+                    title="Conectar porta Direita"
+                    className={`absolute top-1/2 -right-2 -translate-y-1/2 w-4 h-4 rounded-full border-2 transition-all flex items-center justify-center z-10 ${
+                      connectingPortSource?.nodeId === node.id && connectingPortSource?.port === 'right'
+                        ? 'bg-amber-400 border-white scale-125 shadow-lg shadow-amber-500/50'
+                        : connectingPortSource
+                        ? 'bg-indigo-500 hover:bg-emerald-400 border-slate-900 scale-110 shadow animate-pulse'
+                        : 'bg-indigo-600 hover:bg-indigo-400 border-[#090e1c] opacity-0 group-hover:opacity-100 hover:scale-125'
+                    }`}
+                  >
+                    <div className="w-1 h-1 bg-white rounded-full"></div>
+                  </button>
+
+                  {/* Base / Inferior */}
+                  <button
+                    onClick={(e) => handleStartPortConnection(e, node.id, 'bottom')}
+                    title="Conectar porta Inferior (Base)"
+                    className={`absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full border-2 transition-all flex items-center justify-center z-10 ${
+                      connectingPortSource?.nodeId === node.id && connectingPortSource?.port === 'bottom'
+                        ? 'bg-amber-400 border-white scale-125 shadow-lg shadow-amber-500/50'
+                        : connectingPortSource
+                        ? 'bg-indigo-500 hover:bg-emerald-400 border-slate-900 scale-110 shadow animate-pulse'
+                        : 'bg-indigo-600 hover:bg-indigo-400 border-[#090e1c] opacity-0 group-hover:opacity-100 hover:scale-125'
+                    }`}
+                  >
+                    <div className="w-1 h-1 bg-white rounded-full"></div>
+                  </button>
+
+                  {/* Esquerda */}
+                  <button
+                    onClick={(e) => handleStartPortConnection(e, node.id, 'left')}
+                    title="Conectar porta Esquerda"
+                    className={`absolute top-1/2 -left-2 -translate-y-1/2 w-4 h-4 rounded-full border-2 transition-all flex items-center justify-center z-10 ${
+                      connectingPortSource?.nodeId === node.id && connectingPortSource?.port === 'left'
+                        ? 'bg-amber-400 border-white scale-125 shadow-lg shadow-amber-500/50'
+                        : connectingPortSource
+                        ? 'bg-indigo-500 hover:bg-emerald-400 border-slate-900 scale-110 shadow animate-pulse'
+                        : 'bg-indigo-600 hover:bg-indigo-400 border-[#090e1c] opacity-0 group-hover:opacity-100 hover:scale-125'
+                    }`}
+                  >
+                    <div className="w-1 h-1 bg-white rounded-full"></div>
+                  </button>
+
                   {/* Badge de Gargalo */}
                   {isBottleneck && (
                     <div className="absolute -top-3 -right-2 px-2 py-0.5 rounded-full bg-rose-600 text-white text-[9px] font-black uppercase tracking-wider flex items-center gap-1 shadow-lg shadow-rose-600/50 animate-bounce">
@@ -713,15 +850,15 @@ export default function FunnelArchitectEditorView() {
                       </span>
                     </div>
 
-                    {/* Conector de Saída (Botão de Puxar Seta) */}
+                    {/* Conector Rápido (Auto-Port) */}
                     <button
-                      onClick={(e) => handleStartConnection(e, node.id)}
+                      onClick={(e) => handleStartPortConnection(e, node.id, 'auto')}
                       className={`p-1 rounded-md text-[10px] font-bold transition-colors ${
                         isConnectingSource 
                           ? 'bg-amber-500 text-black' 
                           : 'bg-white/5 hover:bg-indigo-600 text-gray-300 hover:text-white'
                       }`}
-                      title="Conectar a outro bloco"
+                      title="Conectar a outro bloco (automático)"
                     >
                       <ArrowRight className="w-3 h-3" />
                     </button>

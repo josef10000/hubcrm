@@ -333,9 +333,10 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
     - `FunnelNodeType`: `traffic`, `page`, `offer`, `automation`.
     - `FunnelNodeSubType`: 29 subtipos especializados (Pinterest, TikTok, Instagram, YouTube, Google SEO, WhatsApp, Blog/Site de Conteúdo, Quiz Interativo, Quiz + VSL Híbrido, Páginas Estáticas/Pre-sell, Webnário/Masterclass, Páginas de Venda/VSL/Captura, Checkout Transparente, Order Bump, Upsell, Assinatura Recorrente, High-Ticket, Afiliados Amazon, Afiliados Shopee, Afiliados Mercado Livre, Infoprodutos Afiliados, E-mails e Remarketing).
     - `FunnelNode`: Posições no canvas (`x`, `y`), taxa de conversão esperada, preço (R$), CPC de tráfego, link de afiliado (`affiliateLink`), taxa de comissão (`commissionRate`), checklist de execução e notas.
-    - `FunnelConnection`: Ligações curvas Bezier (SVG) dinâmicas com setas direcionais e estilos sólido, pontilhado e animado.
-  - **Quadro Infinito (`FunnelArchitectEditorView.tsx`)**:
+    - `FunnelConnection`: Ligações curvas Bezier (SVG) dinâmicas com suporte a 4 portas direcionais (`fromPort`, `toPort`: `top` | `right` | `bottom` | `left` | `auto`), cálculo de tangentes por quadrante e estilos sólido, pontilhado e animado.
+  - **Quadro Infinito & Portas de Conexão (`FunnelArchitectEditorView.tsx`)**:
     - Pan livre com botão do meio/fundo do canvas e Zoom In/Out com mouse wheel (0.3x a 2.2x).
+    - **Conexões Multi-Laterais (4 Portas por Card)**: Cada bloco possui 4 âncoras interativas nos 4 lados (Topo, Direita, Base, Esquerda) permitindo ramificar múltiplos produtos de afiliados a partir de um Blog/Site ou Order Bumps a partir de um Checkout sem cruzamento de linhas.
     - Grid Dark Slate com Glassmorphism e mini-controles de visualização.
     - Gaveta lateral retrátil dividida em 5 categorias: Linhas de Tráfego, Páginas & Etapas, Ofertas Próprias, Afiliação & Lojas Parceiras e Automações.
     - Inspetor lateral com 3 abas: Parâmetros (links de afiliado com botão de teste, vínculo opcional com ofertas do CRM e links de checkout), Checklist de Tarefas e Guia Tático Estratégico de Copy.
