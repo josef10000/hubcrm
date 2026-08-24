@@ -7,7 +7,7 @@ import {
   DollarSign, Users, Eye, ArrowUpRight, ArrowDownRight,
   Pin, Video, Instagram, PlaySquare, Search, MessageCircle,
   Magnet, FileText, CreditCard, Gift, Package, Zap, Repeat,
-  Crown, Mail, Send, Check, X, ExternalLink, Sliders
+  Crown, Mail, Send, Check, X, ExternalLink, Sliders, Tv
 } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
@@ -371,7 +371,7 @@ export default function FunnelArchitectEditorView() {
     const icons: Record<string, any> = {
       Pin, Video, Instagram, PlaySquare, Search, MessageCircle,
       Magnet, FileText, CreditCard, Gift, Package, Zap, Repeat,
-      Crown, Mail, Send, RefreshCw, Play
+      Crown, Mail, Send, RefreshCw, Play, Tv, HelpCircle, Sparkles, CheckCircle2
     };
     const IconComp = icons[iconName] || Layers;
     return <IconComp size={size} />;
@@ -515,7 +515,7 @@ export default function FunnelArchitectEditorView() {
             {/* Categorias de Blocos */}
             {[
               { id: 'traffic', title: '🌐 Linhas de Tráfego', subTypes: ['pinterest', 'tiktok', 'instagram', 'youtube', 'google_seo', 'whatsapp'] },
-              { id: 'page', title: '📄 Páginas & Etapas', subTypes: ['capture_page', 'vsl_page', 'sales_page', 'checkout', 'thank_you_page'] },
+              { id: 'page', title: '📄 Páginas & Etapas', subTypes: ['quiz_page', 'quiz_vsl_page', 'capture_page', 'vsl_page', 'sales_page', 'static_page', 'webinar_page', 'checkout', 'thank_you_page'] },
               { id: 'offer', title: '💰 Monetização & Ofertas', subTypes: ['lead_magnet', 'front_end', 'order_bump', 'upsell', 'downsell', 'subscription', 'high_ticket'] },
               { id: 'automation', title: '🤖 Automações & Régua', subTypes: ['email_seq', 'whatsapp_auto', 'remarketing'] }
             ].map(category => (

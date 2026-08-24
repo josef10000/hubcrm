@@ -902,8 +902,8 @@ export type FunnelNodeType = 'traffic' | 'page' | 'offer' | 'automation';
 export type FunnelNodeSubType = 
   // Tráfego
   | 'pinterest' | 'tiktok' | 'instagram' | 'youtube' | 'google_seo' | 'whatsapp' | 'partners'
-  // Páginas
-  | 'sales_page' | 'capture_page' | 'vsl_page' | 'advertorial' | 'checkout' | 'thank_you_page'
+  // Páginas & Etapas Web
+  | 'quiz_page' | 'quiz_vsl_page' | 'vsl_page' | 'sales_page' | 'capture_page' | 'static_page' | 'webinar_page' | 'advertorial' | 'checkout' | 'thank_you_page'
   // Ofertas & Monetização
   | 'lead_magnet' | 'front_end' | 'order_bump' | 'upsell' | 'downsell' | 'subscription' | 'high_ticket'
   // Automações

@@ -151,6 +151,86 @@ export const FUNNEL_BLOCK_CATALOG: BlockMeta[] = [
   // ── 📄 PÁGINAS & ETAPAS WEB ────────────────────────────────
   {
     type: 'page',
+    subType: 'quiz_page',
+    name: 'Página de Quiz Interativo',
+    categoryLabel: 'Páginas & Etapas',
+    iconName: 'HelpCircle',
+    badgeColor: 'bg-violet-500/10 text-violet-400 border-violet-500/30',
+    bgGradient: 'from-violet-500/20 to-purple-700/10',
+    defaultConversion: 28.0,
+    strategicGuide: {
+      title: 'Quiz Interativo de Alta Conversão',
+      description: 'Engaja o visitante através de micro-perguntas personalizadas, qualificando o lead e entregando um diagnóstico sob medida.',
+      goldenRules: [
+        'Primeira pergunta deve ser ultra-fácil e rápida (ex: "Qual é o seu objetivo principal?").',
+        'Use barra de progresso visual para gerar sensação de avanço.',
+        'Colete o WhatsApp/E-mail apenas no final para liberar o resultado do diagnóstico.'
+      ],
+      actionItems: ['Estruturar 5 a 7 perguntas rápidas', 'Definir 3 perfis de diagnóstico', 'Configurar captura de lead no final']
+    }
+  },
+  {
+    type: 'page',
+    subType: 'quiz_vsl_page',
+    name: 'Quiz + VSL Híbrido',
+    categoryLabel: 'Páginas & Etapas',
+    iconName: 'Sparkles',
+    badgeColor: 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/30',
+    bgGradient: 'from-fuchsia-500/20 to-pink-700/10',
+    defaultConversion: 12.0,
+    strategicGuide: {
+      title: 'Funil Híbrido: Quiz ➡️ VSL Personalizada',
+      description: 'O lead responde ao quiz e é direcionado para um vídeo de vendas customizado que resolve exatamente a dor que ele selecionou.',
+      goldenRules: [
+        'O vídeo deve abrir citando o resultado do teste ("Com base no seu perfil X, este é o seu maior obstáculo...").',
+        'Gera conexão emocional imediata porque o lead sente que o produto foi feito sob medida para ele.',
+        'Pitch direto para a oferta certa de acordo com a resposta do quiz.'
+      ],
+      actionItems: ['Gravar introduções personalizadas por perfil', 'Conectar lógica de redirecionamento', 'Adicionar botão de checkout delay']
+    }
+  },
+  {
+    type: 'page',
+    subType: 'static_page',
+    name: 'Página Estática / Pre-sell / Artigo',
+    categoryLabel: 'Páginas & Etapas',
+    iconName: 'FileText',
+    badgeColor: 'bg-slate-500/10 text-slate-300 border-slate-500/30',
+    bgGradient: 'from-slate-500/20 to-gray-700/10',
+    defaultConversion: 15.0,
+    strategicGuide: {
+      title: 'Página Estática de Aquecimento (Pre-sell)',
+      description: 'Página de leitura rápida estilo editorial/notícia que conscientiza tráfego frio antes de enviar para a oferta.',
+      goldenRules: [
+        'Formato leve sem cara de anúncio agressivo ("Artigo de Descoberta").',
+        'História em primeira pessoa com quebra de preconceitos.',
+        'Links contextuais no meio do texto direcionando para a página de vendas.'
+      ],
+      actionItems: ['Escrever artigo no tom de notícia/editorial', 'Inserir links de texto sutis', 'Otimizar para carregamento instantâneo']
+    }
+  },
+  {
+    type: 'page',
+    subType: 'webinar_page',
+    name: 'Página de Webnário / Masterclass',
+    categoryLabel: 'Páginas & Etapas',
+    iconName: 'Tv',
+    badgeColor: 'bg-red-500/10 text-red-400 border-red-500/30',
+    bgGradient: 'from-red-500/20 to-amber-700/10',
+    defaultConversion: 8.0,
+    strategicGuide: {
+      title: 'Webnário / Aula Magna ao Vivo ou Replay',
+      description: 'Transmissão com conteúdo aprofundado de 30 a 60 minutos, chat ao vivo e pitch irresistível no final.',
+      goldenRules: [
+        'Entregue uma aula prática que prove sua autoridade nos primeiros 20 minutos.',
+        'Ative o botão de oferta no momento exato do pitch com bônus para quem comprar durante a live.',
+        'Dispare lembretes no WhatsApp 1 hora, 15 minutos e "Estamos ao Vivo!".'
+      ],
+      actionItems: ['Preparar slides da apresentação', 'Configurar player de transmissão', 'Programar disparos de contagem regressiva']
+    }
+  },
+  {
+    type: 'page',
     subType: 'capture_page',
     name: 'Página de Captura (Squeeze)',
     categoryLabel: 'Páginas & Etapas',
@@ -820,6 +900,105 @@ export const MARKET_FUNNEL_TEMPLATES: FunnelTemplate[] = [
       { id: 'c-3-4', fromNodeId: 'node-3', toNodeId: 'node-4', style: 'animated' },
       { id: 'c-4-5', fromNodeId: 'node-4', toNodeId: 'node-5', style: 'solid' },
       { id: 'c-4-6', fromNodeId: 'node-4', toNodeId: 'node-6', style: 'solid' }
+    ]
+  },
+  {
+    id: 'template-quiz-vsl-hybrid',
+    title: 'Funil de Quiz Interativo + VSL Customizada',
+    category: 'perpetual',
+    categoryName: 'Quiz & Segmentação',
+    badge: '🧩 Ultra Qualificação de Lead',
+    description: 'O lead responde um teste interativo de 5 perguntas, recebe um diagnóstico em vídeo (VSL) feito sob medida para a dor dele e é direcionado para o checkout de alta conversão.',
+    estimatedROI: '4.6x ROAS',
+    nodes: [
+      {
+        id: 'node-1',
+        type: 'traffic',
+        subType: 'tiktok',
+        label: 'TikTok & Meta Ads',
+        subtitle: 'Chamada: "Faça o Teste Gratuito"',
+        x: 100,
+        y: 200,
+        costPerClick: 0.70,
+        status: 'ready'
+      },
+      {
+        id: 'node-2',
+        type: 'page',
+        subType: 'quiz_page',
+        label: 'Quiz de Diagnóstico (5 Perguntas)',
+        subtitle: 'Micro-compromissos & Segmentação',
+        x: 420,
+        y: 200,
+        conversionRate: 65.0,
+        status: 'ready'
+      },
+      {
+        id: 'node-3',
+        type: 'page',
+        subType: 'quiz_vsl_page',
+        label: 'Resultado + VSL Personalizada',
+        subtitle: 'Vídeo Focado na Dor Selecionada',
+        x: 750,
+        y: 200,
+        conversionRate: 14.0,
+        status: 'ready'
+      },
+      {
+        id: 'node-4',
+        type: 'page',
+        subType: 'checkout',
+        label: 'Checkout Transparente',
+        subtitle: 'PIX 1-Clique + Oferta Exclusiva',
+        x: 1080,
+        y: 200,
+        conversionRate: 70.0,
+        status: 'ready'
+      },
+      {
+        id: 'node-5',
+        type: 'offer',
+        subType: 'front_end',
+        label: 'Solução Personalizada (R$ 67)',
+        subtitle: 'Produto Específico para o Perfil',
+        x: 1080,
+        y: 50,
+        price: 67.00,
+        conversionRate: 100,
+        status: 'ready'
+      },
+      {
+        id: 'node-6',
+        type: 'offer',
+        subType: 'order_bump',
+        label: 'Order Bump (+R$ 29,90)',
+        subtitle: 'Plano de Ação Acelerador',
+        x: 1080,
+        y: 360,
+        price: 29.90,
+        conversionRate: 42.0,
+        status: 'ready'
+      },
+      {
+        id: 'node-7',
+        type: 'automation',
+        subType: 'whatsapp_auto',
+        label: 'Envio do Diagnóstico no WhatsApp',
+        subtitle: 'Entrega do Resultado + Lembrete',
+        x: 750,
+        y: 420,
+        conversionRate: 25.0,
+        status: 'ready'
+      }
+    ],
+    connections: [
+      { id: 'c-1-2', fromNodeId: 'node-1', toNodeId: 'node-2', style: 'solid' },
+      { id: 'c-2-3', fromNodeId: 'node-2', toNodeId: 'node-3', style: 'solid' },
+      { id: 'c-3-4', fromNodeId: 'node-3', toNodeId: 'node-4', style: 'solid' },
+      { id: 'c-4-5', fromNodeId: 'node-4', toNodeId: 'node-5', style: 'solid' },
+      { id: 'c-4-6', fromNodeId: 'node-4', toNodeId: 'node-6', style: 'solid' },
+      { id: 'c-2-7', fromNodeId: 'node-2', toNodeId: 'node-7', style: 'dashed' },
+      { id: 'c-7-4', fromNodeId: 'node-7', toNodeId: 'node-4', style: 'dashed' }
     ]
   }
 ];

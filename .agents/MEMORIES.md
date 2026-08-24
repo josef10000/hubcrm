@@ -331,7 +331,7 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
   - **Estrutura Firestore**: Coleção `organizations/{orgId}/funnels`.
   - **Tipagem & Modelos (`shared/types.ts`)**:
     - `FunnelNodeType`: `traffic`, `page`, `offer`, `automation`.
-    - `FunnelNodeSubType`: 20 subtipos especializados (Pinterest, TikTok, Instagram, YouTube, Google SEO, WhatsApp, Páginas de Venda/VSL/Captura, Checkout Transparente, Order Bump, Upsell, Assinatura Recorrente, High-Ticket, E-mails e Remarketing).
+    - `FunnelNodeSubType`: 24 subtipos especializados (Pinterest, TikTok, Instagram, YouTube, Google SEO, WhatsApp, Quiz Interativo, Quiz + VSL Híbrido, Páginas Estáticas/Pre-sell, Webnário/Masterclass, Páginas de Venda/VSL/Captura, Checkout Transparente, Order Bump, Upsell, Assinatura Recorrente, High-Ticket, E-mails e Remarketing).
     - `FunnelNode`: Posições no canvas (`x`, `y`), taxa de conversão esperada, preço (R$), CPC de tráfego, checklist de execução e notas.
     - `FunnelConnection`: Ligações curvas Bezier (SVG) dinâmicas com setas direcionais e estilos sólido, pontilhado e animado.
   - **Quadro Infinito (`FunnelArchitectEditorView.tsx`)**:
@@ -343,5 +343,5 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
     - Algoritmo em tempo real que propaga o volume de visitantes iniciais pelos nós através das taxas de conversão, calculando Faturamento Projetado, Custo de Tráfego, Lucro Líquido e ROAS.
     - Alerta visual de gargalo (*Bottleneck Alert*) em etapas com baixa conversão.
   - **Galeria de Templates de 1-Clique (`funnelTemplates.ts`)**:
-    - 5 modelos validados prontos: *Baixo Ticket + Bump + Assinatura*, *Orgânico Pinterest & TikTok ➡️ WhatsApp*, *B2B High-Ticket*, *Lançamento 24h WhatsApp* e *Perpétuo SaaS*.
+    - 6 modelos validados prontos: *Baixo Ticket + Bump + Assinatura*, *Orgânico Pinterest & TikTok ➡️ WhatsApp*, *Quiz Interativo + VSL Customizada*, *B2B High-Ticket*, *Lançamento 24h WhatsApp* e *Perpétuo SaaS*.
   - **Navegação**: Rota `/funnels` e `/funnels/:id` adicionadas em `AppRouter.tsx` e item "Funis & Ecossistema" com ícone `GitFork` no menu Comercial do `Sidebar.tsx`.
