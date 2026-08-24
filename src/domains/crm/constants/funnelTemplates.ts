@@ -478,6 +478,112 @@ export const FUNNEL_BLOCK_CATALOG: BlockMeta[] = [
       actionItems: ['Criar formulário de qualificação', 'Roteiro de fechamento consultivo', 'Definir limite de mentorados']
     }
   },
+  {
+    type: 'page',
+    subType: 'blog_site',
+    name: 'Blog / Site de Conteúdo & SEO',
+    categoryLabel: 'Páginas & Etapas',
+    iconName: 'Globe',
+    badgeColor: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+    bgGradient: 'from-emerald-500/20 to-teal-700/10',
+    defaultConversion: 5.0,
+    strategicGuide: {
+      title: 'Portal de Conteúdo & Geração de Audiência',
+      description: 'Seu hub central de autoridade na internet. Onde você publica artigos de SEO, reviews, notícias e converte visitantes em compradores através de banners e links contextuais.',
+      goldenRules: [
+        'Insira CTAs (Chamadas para Ação) no topo, meio e final de cada artigo.',
+        'Use popups de saída (Exit-intent) oferecendo uma Isca Digital gratuita.',
+        'Conecte links para produtos próprios e produtos de afiliados nas recomendações.'
+      ],
+      actionItems: ['Publicar 3 artigos pilares com SEO', 'Configurar banners laterais para ofertas', 'Inserir formulário de newsletter']
+    }
+  },
+
+  // ── 🛒 AFILIAÇÃO & LOJAS PARCEIRAS ──────────────────────────
+  {
+    type: 'offer',
+    subType: 'affiliate_amazon',
+    name: 'Produto Afiliado Amazon',
+    categoryLabel: 'Afiliação & Parcerias',
+    iconName: 'ShoppingBag',
+    badgeColor: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+    bgGradient: 'from-amber-500/20 to-orange-700/10',
+    defaultPrice: 150.00,
+    defaultConversion: 8.0,
+    strategicGuide: {
+      title: 'Monetização com Programa de Associados Amazon',
+      description: 'Recomende livros, equipamentos, eletrônicos ou produtos físicos da Amazon e receba comissão automática por cada venda gerada pelo seu link.',
+      goldenRules: [
+        'A Amazon paga comissão sobre todo o carrinho que o cliente comprar nas próximas 24 horas.',
+        'Crie reviews honestos em vídeo ou artigo mostrando os benefícios práticos do produto.',
+        'Use links curtos e rastreáveis com a sua tag de associado Amazon.'
+      ],
+      actionItems: ['Cadastrar ID de Associado Amazon', 'Gerar link de afiliado do produto', 'Inserir botão de compra nos artigos e vídeos']
+    }
+  },
+  {
+    type: 'offer',
+    subType: 'affiliate_shopee',
+    name: 'Achadinho / Afiliado Shopee',
+    categoryLabel: 'Afiliação & Parcerias',
+    iconName: 'ShoppingBag',
+    badgeColor: 'bg-orange-500/10 text-orange-400 border-orange-500/30',
+    bgGradient: 'from-orange-500/20 to-red-600/10',
+    defaultPrice: 45.00,
+    defaultConversion: 12.0,
+    strategicGuide: {
+      title: 'Vendas em Massa com Afiliados Shopee',
+      description: 'Ideal para produtos virais de baixo custo ("Achadinhos") promovidos no TikTok, Pinterest, Reels e canais do Telegram/WhatsApp.',
+      goldenRules: [
+        'Foque em produtos curiosos, úteis para o dia a dia e com preço abaixo de R$ 50.',
+        'Divulgue cupons de frete grátis e promoções relâmpago para acelerar a decisão.',
+        'Crie uma coleção/loja vitrine na Shopee com todos os seus produtos indicados.'
+      ],
+      actionItems: ['Pegar link de afiliado Shopee', 'Criar vídeo de demonstração do produto', 'Disparar no grupo de Achadinhos do WhatsApp']
+    }
+  },
+  {
+    type: 'offer',
+    subType: 'affiliate_mercadolivre',
+    name: 'Produto Afiliado Mercado Livre',
+    categoryLabel: 'Afiliação & Parcerias',
+    iconName: 'ShoppingBag',
+    badgeColor: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30',
+    bgGradient: 'from-yellow-500/20 to-amber-600/10',
+    defaultPrice: 120.00,
+    defaultConversion: 9.0,
+    strategicGuide: {
+      title: 'Programa de Afiliados Mercado Livre',
+      description: 'Aproveite a força da entrega Full e da confiança do Mercado Livre para indicar produtos com alta taxa de conversão.',
+      goldenRules: [
+        'Destaque produtos com selo "Chegará Amanhã / Full" para matar a objeção de tempo de entrega.',
+        'Compare 2 modelos do mesmo produto para guiar o cliente na melhor escolha.',
+        'Insira seu link de afiliado ML no comparativo.'
+      ],
+      actionItems: ['Gerar link do Mercado Livre Afiliados', 'Destacar prazo de entrega Full', 'Criar card de recomendação']
+    }
+  },
+  {
+    type: 'offer',
+    subType: 'affiliate_product',
+    name: 'Infoproduto / Curso Afiliado (Hotmart/Kiwify)',
+    categoryLabel: 'Afiliação & Parcerias',
+    iconName: 'ExternalLink',
+    badgeColor: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
+    bgGradient: 'from-purple-500/20 to-indigo-700/10',
+    defaultPrice: 197.00,
+    defaultConversion: 4.0,
+    strategicGuide: {
+      title: 'Afiliação de Infoprodutos e Ferramentas',
+      description: 'Venda cursos, mentorias ou softwares de terceiros com comissões altas (de 30% a 70% por venda).',
+      goldenRules: [
+        'Ofereça um bônus exclusivo seu para quem comprar pelo seu link de afiliado.',
+        'Escolha produtos com página de vendas impecável e recuperação de vendas ativa.',
+        'Use sua própria experiência como aluno/usuário como depoimento.'
+      ],
+      actionItems: ['Pegar link de afiliado na plataforma', 'Criar bônus exclusivo de entrega', 'Adicionar no fluxo do funil']
+    }
+  },
 
   // ── 🤖 AUTOMAÇÕES & RECUPERAÇÃO ───────────────────────────
   {

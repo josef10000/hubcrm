@@ -331,16 +331,16 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
   - **Estrutura Firestore**: Coleção `organizations/{orgId}/funnels`.
   - **Tipagem & Modelos (`shared/types.ts`)**:
     - `FunnelNodeType`: `traffic`, `page`, `offer`, `automation`.
-    - `FunnelNodeSubType`: 24 subtipos especializados (Pinterest, TikTok, Instagram, YouTube, Google SEO, WhatsApp, Quiz Interativo, Quiz + VSL Híbrido, Páginas Estáticas/Pre-sell, Webnário/Masterclass, Páginas de Venda/VSL/Captura, Checkout Transparente, Order Bump, Upsell, Assinatura Recorrente, High-Ticket, E-mails e Remarketing).
-    - `FunnelNode`: Posições no canvas (`x`, `y`), taxa de conversão esperada, preço (R$), CPC de tráfego, checklist de execução e notas.
+    - `FunnelNodeSubType`: 29 subtipos especializados (Pinterest, TikTok, Instagram, YouTube, Google SEO, WhatsApp, Blog/Site de Conteúdo, Quiz Interativo, Quiz + VSL Híbrido, Páginas Estáticas/Pre-sell, Webnário/Masterclass, Páginas de Venda/VSL/Captura, Checkout Transparente, Order Bump, Upsell, Assinatura Recorrente, High-Ticket, Afiliados Amazon, Afiliados Shopee, Afiliados Mercado Livre, Infoprodutos Afiliados, E-mails e Remarketing).
+    - `FunnelNode`: Posições no canvas (`x`, `y`), taxa de conversão esperada, preço (R$), CPC de tráfego, link de afiliado (`affiliateLink`), taxa de comissão (`commissionRate`), checklist de execução e notas.
     - `FunnelConnection`: Ligações curvas Bezier (SVG) dinâmicas com setas direcionais e estilos sólido, pontilhado e animado.
   - **Quadro Infinito (`FunnelArchitectEditorView.tsx`)**:
     - Pan livre com botão do meio/fundo do canvas e Zoom In/Out com mouse wheel (0.3x a 2.2x).
     - Grid Dark Slate com Glassmorphism e mini-controles de visualização.
-    - Gaveta lateral retrátil com catálogo de blocos categorizados.
-    - Inspetor lateral com 3 abas: Parâmetros (vínculo com ofertas reais do CRM e links de checkout), Checklist de Tarefas e Guia Tático Estratégico de Copy.
+    - Gaveta lateral retrátil dividida em 5 categorias: Linhas de Tráfego, Páginas & Etapas, Ofertas Próprias, Afiliação & Lojas Parceiras e Automações.
+    - Inspetor lateral com 3 abas: Parâmetros (links de afiliado com botão de teste, vínculo opcional com ofertas do CRM e links de checkout), Checklist de Tarefas e Guia Tático Estratégico de Copy.
   - **Simulador de Tráfego & Gargalos de Venda**:
-    - Algoritmo em tempo real que propaga o volume de visitantes iniciais pelos nós através das taxas de conversão, calculando Faturamento Projetado, Custo de Tráfego, Lucro Líquido e ROAS.
+    - Algoritmo em tempo real que propaga o volume de visitantes iniciais pelos nós através das taxas de conversão, calculando Faturamento Projetado (incluindo comissões de afiliados), Custo de Tráfego, Lucro Líquido e ROAS.
     - Alerta visual de gargalo (*Bottleneck Alert*) em etapas com baixa conversão.
   - **Galeria de Templates de 1-Clique (`funnelTemplates.ts`)**:
     - 6 modelos validados prontos: *Baixo Ticket + Bump + Assinatura*, *Orgânico Pinterest & TikTok ➡️ WhatsApp*, *Quiz Interativo + VSL Customizada*, *B2B High-Ticket*, *Lançamento 24h WhatsApp* e *Perpétuo SaaS*.

@@ -903,9 +903,11 @@ export type FunnelNodeSubType =
   // Tráfego
   | 'pinterest' | 'tiktok' | 'instagram' | 'youtube' | 'google_seo' | 'whatsapp' | 'partners'
   // Páginas & Etapas Web
-  | 'quiz_page' | 'quiz_vsl_page' | 'vsl_page' | 'sales_page' | 'capture_page' | 'static_page' | 'webinar_page' | 'advertorial' | 'checkout' | 'thank_you_page'
-  // Ofertas & Monetização
+  | 'blog_site' | 'quiz_page' | 'quiz_vsl_page' | 'vsl_page' | 'sales_page' | 'capture_page' | 'static_page' | 'webinar_page' | 'advertorial' | 'checkout' | 'thank_you_page'
+  // Ofertas & Monetização Própria
   | 'lead_magnet' | 'front_end' | 'order_bump' | 'upsell' | 'downsell' | 'subscription' | 'high_ticket'
+  // Afiliação & Lojas Parceiras
+  | 'affiliate_amazon' | 'affiliate_shopee' | 'affiliate_mercadolivre' | 'affiliate_product'
   // Automações
   | 'email_seq' | 'whatsapp_auto' | 'remarketing';
 
@@ -925,12 +927,16 @@ export interface FunnelNode {
   y: number;
   
   // Estratégia e Negócio
-  offerId?: string;       // Conexão com Produto/Oferta real do CRM
-  creativeId?: string;    // Conexão com Criativo do HubAds
-  price?: number;         // Valor em R$ (para ofertas)
-  costPerClick?: number;  // Custo estimado do clique (para tráfego pago)
-  conversionRate?: number;// % esperada de conversão
+  offerId?: string;          // Conexão com Produto/Oferta real do CRM (Opcional)
+  creativeId?: string;       // Conexão com Criativo do HubAds
+  price?: number;            // Valor do produto em R$
+  costPerClick?: number;     // Custo estimado do clique (para tráfego pago)
+  conversionRate?: number;   // % esperada de conversão
   status?: 'idea' | 'in_progress' | 'ready' | 'live';
+  
+  // Afiliação & Links Externos
+  affiliateLink?: string;    // Link de Afiliado (Shopee, Amazon, Mercado Livre, Hotmart, etc.)
+  commissionRate?: number;   // Taxa de comissão do afiliado (%)
   
   // Execução
   url?: string;

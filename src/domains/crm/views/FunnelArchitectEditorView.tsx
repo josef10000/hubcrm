@@ -7,7 +7,8 @@ import {
   DollarSign, Users, Eye, ArrowUpRight, ArrowDownRight,
   Pin, Video, Instagram, PlaySquare, Search, MessageCircle,
   Magnet, FileText, CreditCard, Gift, Package, Zap, Repeat,
-  Crown, Mail, Send, Check, X, ExternalLink, Sliders, Tv
+  Crown, Mail, Send, Check, X, ExternalLink, Sliders, Tv,
+  ShoppingBag, Globe
 } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
@@ -327,11 +328,16 @@ export default function FunnelArchitectEditorView() {
         const convertedVisitors = fromTraffic * convRate;
         trafficMap[toNode.id] = (trafficMap[toNode.id] || 0) + convertedVisitors;
 
-        // Se for produto/oferta, calcula receita
+        // Se for produto/oferta, calcula receita (ou comissão de afiliado)
         if (toNode.type === 'offer' && toNode.price) {
           const offerVisitors = trafficMap[toNode.id];
           const offerConv = (toNode.conversionRate || 100) / 100;
-          totalRevenue += offerVisitors * offerConv * toNode.price;
+          if (toNode.subType.startsWith('affiliate_')) {
+            const commRate = (toNode.commissionRate || 10) / 100;
+            totalRevenue += offerVisitors * offerConv * (toNode.price * commRate);
+          } else {
+            totalRevenue += offerVisitors * offerConv * toNode.price;
+          }
         }
 
         // Gargalo: conversão muito baixa em página/checkout
@@ -371,7 +377,8 @@ export default function FunnelArchitectEditorView() {
     const icons: Record<string, any> = {
       Pin, Video, Instagram, PlaySquare, Search, MessageCircle,
       Magnet, FileText, CreditCard, Gift, Package, Zap, Repeat,
-      Crown, Mail, Send, RefreshCw, Play, Tv, HelpCircle, Sparkles, CheckCircle2
+      Crown, Mail, Send, RefreshCw, Play, Tv, HelpCircle, Sparkles, CheckCircle2,
+      ShoppingBag, Globe
     };
     const IconComp = icons[iconName] || Layers;
     return <IconComp size={size} />;
@@ -515,8 +522,9 @@ export default function FunnelArchitectEditorView() {
             {/* Categorias de Blocos */}
             {[
               { id: 'traffic', title: '🌐 Linhas de Tráfego', subTypes: ['pinterest', 'tiktok', 'instagram', 'youtube', 'google_seo', 'whatsapp'] },
-              { id: 'page', title: '📄 Páginas & Etapas', subTypes: ['quiz_page', 'quiz_vsl_page', 'capture_page', 'vsl_page', 'sales_page', 'static_page', 'webinar_page', 'checkout', 'thank_you_page'] },
-              { id: 'offer', title: '💰 Monetização & Ofertas', subTypes: ['lead_magnet', 'front_end', 'order_bump', 'upsell', 'downsell', 'subscription', 'high_ticket'] },
+              { id: 'page', title: '📄 Páginas & Etapas', subTypes: ['blog_site', 'quiz_page', 'quiz_vsl_page', 'capture_page', 'vsl_page', 'sales_page', 'static_page', 'webinar_page', 'checkout', 'thank_you_page'] },
+              { id: 'offer', title: '💰 Monetização & Ofertas Próprias', subTypes: ['lead_magnet', 'front_end', 'order_bump', 'upsell', 'downsell', 'subscription', 'high_ticket'] },
+              { id: 'affiliate', title: '🛒 Afiliação & Lojas Parceiras', subTypes: ['affiliate_amazon', 'affiliate_shopee', 'affiliate_mercadolivre', 'affiliate_product'] },
               { id: 'automation', title: '🤖 Automações & Régua', subTypes: ['email_seq', 'whatsapp_auto', 'remarketing'] }
             ].map(category => (
               <div key={category.id} className="space-y-2">
@@ -729,7 +737,9 @@ export default function FunnelArchitectEditorView() {
                     <div className="flex items-center justify-between text-[11px] pt-1 border-t border-white/5">
                       {node.type === 'offer' && node.price !== undefined ? (
                         <span className="font-black text-emerald-400">
-                          R$ {node.price.toFixed(2)}
+                          {node.subType.startsWith('affiliate_') && node.commissionRate
+                            ? `R$ ${node.price.toFixed(2)} (${node.commissionRate}%)`
+                            : `R$ ${node.price.toFixed(2)}`}
                         </span>
                       ) : node.type === 'traffic' && node.costPerClick ? (
                         <span className="font-bold text-cyan-400">
@@ -868,13 +878,62 @@ export default function FunnelArchitectEditorView() {
                     />
                   </div>
 
-                  {/* Vínculo com Oferta Real do CRM */}
-                  {selectedNode.type === 'offer' && (
-                    <div className="space-y-1.5 p-3 rounded-2xl bg-emerald-500/5 border border-emerald-500/20">
-                      <label className="text-[11px] font-bold text-emerald-400 uppercase flex items-center gap-1.5">
-                        <DollarSign className="w-3.5 h-3.5" />
-                        Vincular Oferta Real do CRM
-                      </label>
+                  {/* Se for Produto de Afiliado */}
+                  {selectedNode.subType.startsWith('affiliate_') && (
+                    <div className="space-y-3 p-3.5 rounded-2xl bg-amber-500/5 border border-amber-500/20">
+                      <div className="flex items-center gap-2 text-amber-400">
+                        <ShoppingBag className="w-4 h-4" />
+                        <span className="text-xs font-bold uppercase">Configuração de Afiliado</span>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase">Seu Link de Afiliado</label>
+                        <div className="flex gap-2">
+                          <input
+                            type="url"
+                            placeholder="https://shopee.com.br/... ou https://amzn.to/..."
+                            value={selectedNode.affiliateLink || ''}
+                            onChange={(e) => updateSelectedNode('affiliateLink', e.target.value)}
+                            className="flex-1 px-3 py-1.5 bg-black/60 border border-white/10 rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-amber-500"
+                          />
+                          {selectedNode.affiliateLink && (
+                            <a
+                              href={selectedNode.affiliateLink}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="p-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-xl text-xs font-bold transition-colors flex items-center justify-center"
+                              title="Testar Link"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase">Comissão Estimada (%)</label>
+                        <input
+                          type="number"
+                          placeholder="Ex: 10 ou 50"
+                          value={selectedNode.commissionRate || ''}
+                          onChange={(e) => updateSelectedNode('commissionRate', parseFloat(e.target.value) || 0)}
+                          className="w-full px-3 py-1.5 bg-black/60 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Vínculo com Oferta Real do CRM (Apenas para ofertas próprias) */}
+                  {selectedNode.type === 'offer' && !selectedNode.subType.startsWith('affiliate_') && (
+                    <div className="space-y-2 p-3 rounded-2xl bg-emerald-500/5 border border-emerald-500/20">
+                      <div className="flex justify-between items-center">
+                        <label className="text-[11px] font-bold text-emerald-400 uppercase flex items-center gap-1.5">
+                          <DollarSign className="w-3.5 h-3.5" />
+                          Vincular Oferta do CRM (Opcional)
+                        </label>
+                        <span className="text-[9px] text-gray-500 font-medium">Livre ou Vinculado</span>
+                      </div>
+
                       <select
                         value={selectedNode.offerId || ''}
                         onChange={(e) => {
@@ -889,13 +948,18 @@ export default function FunnelArchitectEditorView() {
                         }}
                         className="w-full px-3 py-2 bg-black/60 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
                       >
-                        <option value="">Selecione uma oferta cadastrada...</option>
+                        <option value="">Produto livre (digitar dados manualmente abaixo)</option>
                         {offers.map(o => (
                           <option key={o.id} value={o.id}>
-                            {o.name} (R$ {o.price?.toFixed(2)})
+                            📦 {o.name} (R$ {o.price?.toFixed(2)})
                           </option>
                         ))}
                       </select>
+
+                      <p className="text-[10px] text-gray-400 leading-tight">
+                        💡 Você pode digitar o preço livremente abaixo sem precisar criar o produto antes no CRM.
+                      </p>
+
                       {selectedNode.offerId && (
                         <a
                           href={`${window.location.origin}/checkout/${orgId}?offerId=${selectedNode.offerId}`}
@@ -910,10 +974,39 @@ export default function FunnelArchitectEditorView() {
                     </div>
                   )}
 
+                  {/* URL Externa / Link da Página */}
+                  {(selectedNode.type === 'page' || selectedNode.type === 'traffic') && (
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-bold text-gray-400 uppercase">Link / URL da Página</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="url"
+                          placeholder="https://seusite.com.br/artigo-ou-pagina"
+                          value={selectedNode.url || ''}
+                          onChange={(e) => updateSelectedNode('url', e.target.value)}
+                          className="flex-1 px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
+                        />
+                        {selectedNode.url && (
+                          <a
+                            href={selectedNode.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="p-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-xl flex items-center justify-center"
+                            title="Abrir URL"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Preço ou CPC */}
                   {selectedNode.type === 'offer' && (
                     <div className="space-y-1.5">
-                      <label className="text-[11px] font-bold text-gray-400 uppercase">Preço do Produto (R$)</label>
+                      <label className="text-[11px] font-bold text-gray-400 uppercase">
+                        {selectedNode.subType.startsWith('affiliate_') ? 'Preço do Produto no Parceiro (R$)' : 'Preço do Produto (R$)'}
+                      </label>
                       <input
                         type="number"
                         step="0.01"
