@@ -168,29 +168,18 @@ export default function FunnelArchitectEditorView() {
     setDraggingNodeId(null);
   };
 
-  // ── ⚓ GEOMETRIA DE PORTAS & CONEXÕES MULTI-LATERAIS ──────────────────────
+  // ── ⚓ GEOMETRIA DE PORTAS & CONEXÕES ──────────────────────────────────
   const getNodePortCoordinates = (
     node: FunnelNode,
     port?: FunnelPort,
-    oppositeNode?: FunnelNode
+    isTarget = false
   ): { x: number; y: number; port: FunnelPort } => {
     const cardWidth = 224; // Largura do card (w-56)
     const cardHeight = 84;  // Altura aproximada do card
 
-    let effectivePort: FunnelPort = port || 'auto';
-
-    if (effectivePort === 'auto' && oppositeNode) {
-      const dx = (oppositeNode.x + cardWidth / 2) - (node.x + cardWidth / 2);
-      const dy = (oppositeNode.y + cardHeight / 2) - (node.y + cardHeight / 2);
-
-      if (Math.abs(dx) >= Math.abs(dy)) {
-        effectivePort = dx >= 0 ? 'right' : 'left';
-      } else {
-        effectivePort = dy >= 0 ? 'bottom' : 'top';
-      }
-    } else if (effectivePort === 'auto') {
-      effectivePort = 'right';
-    }
+    const effectivePort: FunnelPort = port && port !== 'auto' 
+      ? port 
+      : isTarget ? 'left' : 'right';
 
     switch (effectivePort) {
       case 'top':
@@ -209,6 +198,11 @@ export default function FunnelArchitectEditorView() {
     start: { x: number; y: number; port: FunnelPort },
     end: { x: number; y: number; port: FunnelPort }
   ): string => {
+    if (start.port === 'right' && end.port === 'left') {
+      const deltaX = Math.abs(end.x - start.x) * 0.5;
+      return `M ${start.x} ${start.y} C ${start.x + deltaX} ${start.y}, ${end.x - deltaX} ${end.y}, ${end.x} ${end.y}`;
+    }
+
     const dist = Math.hypot(end.x - start.x, end.y - start.y);
     const controlDist = Math.max(35, Math.min(dist * 0.45, 160));
 
@@ -246,8 +240,8 @@ export default function FunnelArchitectEditorView() {
         id: `conn-${Date.now()}`,
         fromNodeId: connectingPortSource.nodeId,
         toNodeId: nodeId,
-        fromPort: connectingPortSource.port,
-        toPort: targetPort,
+        fromPort: connectingPortSource.port !== 'auto' ? connectingPortSource.port : undefined,
+        toPort: targetPort !== 'auto' ? targetPort : undefined,
         style: 'solid'
       };
       setFunnel(prev => prev ? { ...prev, connections: [...prev.connections, newConn] } : null);
@@ -325,10 +319,6 @@ export default function FunnelArchitectEditorView() {
 
   const handleNodeMouseDown = (e: React.MouseEvent, node: FunnelNode) => {
     e.stopPropagation();
-    if (connectingPortSource && connectingPortSource.nodeId !== node.id) {
-      handleStartPortConnection(e, node.id, 'auto');
-      return;
-    }
     setSelectedNodeId(node.id);
     setSelectedConnectionId(null);
     setDraggingNodeId(node.id);
@@ -711,8 +701,8 @@ export default function FunnelArchitectEditorView() {
                 const toNode = funnel.nodes.find(n => n.id === conn.toNodeId);
                 if (!fromNode || !toNode) return null;
 
-                const startPos = getNodePortCoordinates(fromNode, conn.fromPort, toNode);
-                const endPos = getNodePortCoordinates(toNode, conn.toPort, fromNode);
+                const startPos = getNodePortCoordinates(fromNode, conn.fromPort, false);
+                const endPos = getNodePortCoordinates(toNode, conn.toPort, true);
 
                 const pathData = calculateBezierPath(startPos, endPos);
                 const isSelected = selectedConnectionId === conn.id;
