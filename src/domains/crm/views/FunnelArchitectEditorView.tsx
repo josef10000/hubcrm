@@ -638,8 +638,6 @@ export default function FunnelArchitectEditorView() {
           ref={canvasRef}
           onWheel={handleWheel}
           onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
           className="flex-1 w-full h-full relative overflow-hidden canvas-background cursor-grab active:cursor-grabbing bg-[#050914]"
           style={{
             backgroundImage: `radial-gradient(circle, rgba(255, 255, 255, 0.07) 1px, transparent 1px)`,
