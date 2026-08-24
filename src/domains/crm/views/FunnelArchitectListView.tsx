@@ -154,7 +154,7 @@ export default function FunnelArchitectListView() {
       message: `Tem certeza que deseja excluir o funil "${funnel.title}"? Esta ação é irreversível.`,
       confirmText: 'Excluir',
       cancelText: 'Cancelar',
-      type: 'danger'
+      variant: 'danger'
     });
 
     if (confirmed) {

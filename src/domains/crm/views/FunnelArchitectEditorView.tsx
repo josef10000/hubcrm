@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
-  ArrowLeft, Save, Play, RefreshCw, Plus, Trash2, Link as LinkIcon, 
+  ArrowLeft, ArrowRight, Save, Play, RefreshCw, Plus, Trash2, Link as LinkIcon, 
   Sparkles, CheckCircle2, AlertTriangle, HelpCircle, Layers, 
   ZoomIn, ZoomOut, Maximize2, Move, ChevronRight, ChevronLeft,
   DollarSign, Users, Eye, ArrowUpRight, ArrowDownRight,
