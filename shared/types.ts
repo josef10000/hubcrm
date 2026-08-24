@@ -892,3 +892,81 @@ export interface OfferBlueprint {
   createdBy?: string;
 }
 
+// ── Arquiteto de Funis & Ecossistema ──────────────────────────────────────────
+
+export type FunnelCategory = 'perpetual' | 'launch' | 'organic' | 'high_ticket' | 'community' | 'custom';
+export type FunnelStatus = 'draft' | 'building' | 'active' | 'archived';
+
+export type FunnelNodeType = 'traffic' | 'page' | 'offer' | 'automation';
+
+export type FunnelNodeSubType = 
+  // Tráfego
+  | 'pinterest' | 'tiktok' | 'instagram' | 'youtube' | 'google_seo' | 'whatsapp' | 'partners'
+  // Páginas
+  | 'sales_page' | 'capture_page' | 'vsl_page' | 'advertorial' | 'checkout' | 'thank_you_page'
+  // Ofertas & Monetização
+  | 'lead_magnet' | 'front_end' | 'order_bump' | 'upsell' | 'downsell' | 'subscription' | 'high_ticket'
+  // Automações
+  | 'email_seq' | 'whatsapp_auto' | 'remarketing';
+
+export interface FunnelChecklistItem {
+  id: string;
+  text: string;
+  done: boolean;
+}
+
+export interface FunnelNode {
+  id: string;
+  type: FunnelNodeType;
+  subType: FunnelNodeSubType;
+  label: string;
+  subtitle?: string;
+  x: number;
+  y: number;
+  
+  // Estratégia e Negócio
+  offerId?: string;       // Conexão com Produto/Oferta real do CRM
+  creativeId?: string;    // Conexão com Criativo do HubAds
+  price?: number;         // Valor em R$ (para ofertas)
+  costPerClick?: number;  // Custo estimado do clique (para tráfego pago)
+  conversionRate?: number;// % esperada de conversão
+  status?: 'idea' | 'in_progress' | 'ready' | 'live';
+  
+  // Execução
+  url?: string;
+  notes?: string;
+  checklist?: FunnelChecklistItem[];
+}
+
+export interface FunnelConnection {
+  id: string;
+  fromNodeId: string;
+  toNodeId: string;
+  label?: string;
+  style?: 'solid' | 'dashed' | 'animated';
+}
+
+export interface FunnelBlueprint {
+  id?: string;
+  title: string;
+  description?: string;
+  category: FunnelCategory;
+  status: FunnelStatus;
+  
+  nodes: FunnelNode[];
+  connections: FunnelConnection[];
+  
+  // Simulador de Tráfego
+  metrics?: {
+    initialTraffic: number;
+    projectedRevenue: number;
+    projectedROI: number;
+    bottleneckNodeIds?: string[];
+  };
+  
+  orgId: string;
+  createdBy?: string;
+  createdAt?: any;
+  updatedAt?: any;
+}
+

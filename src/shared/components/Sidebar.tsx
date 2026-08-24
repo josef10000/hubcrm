@@ -48,7 +48,8 @@ export const PremiumIcon = ({ iconName, size = 22, className = "" }: { iconName:
     'X': 'ph-x-circle',
     'Zap': 'ph-lightning',
     'LayoutGrid': 'ph-grid-four',
-    'FlaskConical': 'ph-flask'
+    'FlaskConical': 'ph-flask',
+    'GitFork': 'ph-git-fork'
   };
 
   const phClass = mapping[iconName] || 'ph-question';
