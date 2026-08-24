@@ -146,26 +146,27 @@ export default function FunnelArchitectListView() {
   };
 
   const handleDeleteFunnel = async (e: React.MouseEvent, funnel: FunnelBlueprint) => {
+    e.preventDefault();
     e.stopPropagation();
     if (!orgId || !funnel.id) return;
 
-    const confirmed = await confirm({
-      title: 'Excluir Funil',
-      message: `Tem certeza que deseja excluir o funil "${funnel.title}"? Esta ação é irreversível.`,
-      confirmText: 'Excluir',
-      cancelText: 'Cancelar',
-      variant: 'danger'
-    });
+    try {
+      const confirmed = await confirm({
+        title: 'Excluir Funil',
+        message: `Tem certeza que deseja excluir o funil "${funnel.title}"? Esta ação é irreversível.`,
+        confirmText: 'Excluir',
+        cancelText: 'Cancelar',
+        variant: 'danger'
+      });
 
-    if (confirmed) {
-      try {
+      if (confirmed) {
         await funnelService.deleteFunnel(orgId, funnel.id);
         toast.success('Funil excluído com sucesso!');
         setFunnels(prev => prev.filter(f => f.id !== funnel.id));
-      } catch (error) {
-        console.error('Erro ao excluir:', error);
-        toast.error('Erro ao excluir o funil.');
       }
+    } catch (error) {
+      console.error('Erro ao excluir:', error);
+      toast.error('Erro ao excluir o funil.');
     }
   };
 
@@ -307,7 +308,12 @@ export default function FunnelArchitectListView() {
               return (
                 <div
                   key={funnel.id}
-                  onClick={() => navigate(`/funnels/${funnel.id}`)}
+                  onClick={(e) => {
+                    if ((e.target as HTMLElement).closest('button')) {
+                      return;
+                    }
+                    navigate(`/funnels/${funnel.id}`);
+                  }}
                   className="group cursor-pointer bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 hover:border-indigo-500/50 rounded-3xl p-6 transition-all duration-300 flex flex-col justify-between hover:shadow-2xl hover:shadow-indigo-500/10 relative overflow-hidden backdrop-blur-xl"
                 >
                   {/* Glow de Fundo */}
@@ -319,11 +325,12 @@ export default function FunnelArchitectListView() {
                         {statusLabels}
                       </span>
                       <button
+                        type="button"
                         onClick={(e) => handleDeleteFunnel(e, funnel)}
-                        className="p-1.5 text-gray-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+                        className="p-1.5 text-gray-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors relative z-10"
                         title="Excluir funil"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4 pointer-events-none" />
                       </button>
                     </div>
 
