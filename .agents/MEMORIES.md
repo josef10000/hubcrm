@@ -339,6 +339,7 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
     - **Arraste a 60fps & Linhas Sincronizadas**: Listener global de mouse com `requestAnimationFrame` garantindo que os blocos e as curvas SVG se movam colados em tempo real sem atraso ou desencaixe de linha.
     - **Edição com Lápis & Buffer de Rascunho (Draft)**: Cada bloco possui um botão de lápis (`Pencil`) que abre o inspetor lateral; alterações ficam em buffer rascunho com botões dedicados de **"Salvar Alterações"** e **"Cancelar"** (ou fechar/clicar fora para descartar sem alterar).
     - Grid Dark Slate com Glassmorphism e mini-controles de visualização.
+    - **Biblioteca de Blocos com Busca em Tempo Real**: Campo de pesquisa com filtro instantâneo por nome, categoria, palavras-chave e estratégias, com botão de limpar e estado vazio elegante.
     - Gaveta lateral retrátil dividida em 5 categorias: Linhas de Tráfego, Páginas & Etapas, Ofertas Próprias, Afiliação & Lojas Parceiras e Automações.
     - Inspetor lateral com 3 abas: Parâmetros (links de afiliado com botão de teste, vínculo opcional com ofertas do CRM e links de checkout), Checklist de Tarefas e Guia Tático Estratégico de Copy.
   - **Simulador de Tráfego & Gargalos de Venda**:
