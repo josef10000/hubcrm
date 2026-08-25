@@ -977,6 +977,48 @@ export const FUNNEL_BLOCK_CATALOG: BlockMeta[] = [
       ],
       actionItems: ['Organizar trilha de vídeos e manuais', 'Atribuir padrinho ao novo colaborador', 'Agendar avaliação de 30 dias']
     }
+  },
+
+  // ── 🎯 INTELIGÊNCIA DO CRM & NOTAS LIVRES ─────────────────
+  {
+    type: 'icp',
+    subType: 'icp_persona',
+    name: 'Perfil ICP / Persona Ideal',
+    categoryLabel: 'Inteligência do CRM',
+    iconName: 'Target',
+    badgeColor: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+    bgGradient: 'from-amber-500/20 to-orange-700/10',
+    defaultConversion: 100.0,
+    strategicGuide: {
+      title: 'Mapeamento de Perfil de Cliente Ideal (ICP)',
+      description: 'Conecta o perfil exato do cliente (dores, desejos, objeções e faixa de renda) aos canais e páginas do funil.',
+      goldenRules: [
+        'Selecione o ICP real cadastrado no CRM para carregar dores e objeções automaticamente.',
+        'Ligue o ICP diretamente ao canal de tráfego de onde essa persona mais consome conteúdo.',
+        'Alinhe a promessa da primeira página com a dor número 1 do ICP.'
+      ],
+      actionItems: ['Selecionar Perfil ICP cadastrado', 'Ligar ao canal de atração correspondente', 'Revisar dores e objeções mapeadas']
+    }
+  },
+  {
+    type: 'note',
+    subType: 'sticky_note',
+    name: 'Post-it / Nota Adesiva',
+    categoryLabel: 'Anotações & Notas',
+    iconName: 'StickyNote',
+    badgeColor: 'bg-yellow-500/10 text-yellow-300 border-yellow-500/30',
+    bgGradient: 'from-yellow-400/20 to-amber-600/10',
+    defaultConversion: 100.0,
+    strategicGuide: {
+      title: 'Nota Adesiva de Estratégia & Metas',
+      description: 'Cartão de anotações livres para registrar metas de CAC, ideias de copy, tarefas pendentes da equipe ou observações.',
+      goldenRules: [
+        'Use cores diferentes para tipos de notas (ex: Amarelo para metas, Rosa para ideias, Verde para tarefas aprovadas).',
+        'Posicione o post-it próximo à etapa relevante do fluxo.',
+        'Mantenha anotações curtas e acionáveis.'
+      ],
+      actionItems: ['Digitar o texto da anotação', 'Escolher a cor do post-it', 'Posicionar no quadro']
+    }
   }
 ];
 

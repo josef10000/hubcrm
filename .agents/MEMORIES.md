@@ -326,12 +326,14 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 
 ## 23. Funis & Orquestração de Processos (Quadro Infinito & Simulador Empresarial)
 - **Data da Integração**: 24/08/2026 - Atualizado em 25/08/2026
-- **Funcionalidade**: Módulo visual interativo no estilo Funnelytics / Miro para desenho, simulação e gerenciamento da jornada completa de vendas B2C/B2B, réguas de e-mail marketing, processos de vendas consultivas, pós-venda (CS) e RH em um Quadro Infinito (Infinite Canvas).
+- **Funcionalidade**: Módulo visual interativo no estilo Funnelytics / Miro para desenho, simulação e gerenciamento da jornada completa de vendas B2C/B2B, réguas de e-mail marketing, processos de vendas consultivas, pós-venda (CS), RH, Perfis ICP, Post-its e Molduras Visuais em um Quadro Infinito (Infinite Canvas).
 - **Decisões Técnicas**:
   - **Estrutura Firestore**: Coleção `organizations/{orgId}/funnels`.
   - **Tipagem & Modelos (`shared/types.ts`)**:
-    - `FunnelNodeType`: `traffic`, `page`, `offer`, `automation`, `b2b`, `cs`, `hr`.
-    - `FunnelNodeSubType`: 45 subtipos especializados cobrindo:
+    - `FunnelNodeType`: `traffic`, `page`, `offer`, `automation`, `b2b`, `cs`, `hr`, `icp`, `note`.
+    - `FunnelNodeSubType`: 47 subtipos especializados cobrindo:
+      - *Inteligência do CRM*: `icp_persona` (Perfil ICP com vínculo a `useICPs`, dores, desejos, objeções e ticket médio).
+      - *Anotações & Post-its*: `sticky_note` (Notas adesivas com 5 cores pastéis: Amarelo, Azul, Rosa, Verde e Roxo).
       - *Tráfego*: Pinterest, TikTok, Instagram, YouTube, Google SEO, WhatsApp, Parceiros.
       - *Páginas & Etapas Web*: Blog/Site, Quiz, Quiz+VSL, VSL, Página de Vendas, Captura, Estática/Pre-sell, Webnário, Advertorial, Checkout Transparente, Obrigado.
       - *Ofertas*: Lead Magnet, Front-End, Order Bump, Upsell, Downsell, Assinatura, High-Ticket.
@@ -340,15 +342,16 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
       - *Vendas B2B Corporativas*: Agendamento de Reunião/Demo, Qualificação SDR (BANT), Envio de Proposta Comercial, Assinatura Eletrônica de Contrato, Faturamento PJ & NF-e.
       - *Pós-Venda, Sucesso do Cliente (CS) & Retenção*: Onboarding Kick-off, Abertura de Chamado/Helpdesk, Pesquisa NPS (0 a 10), Renovação de Contrato / Up-Sell.
       - *RH & Processos Internos*: Triagem & Recrutamento de Talentos, Treinamento & Onboarding de Equipe.
-    - `FunnelNode`: Posições no canvas (`x`, `y`), taxa de conversão esperada, preço (R$), CPC de tráfego, link de afiliado (`affiliateLink`), taxa de comissão (`commissionRate`), checklist de execução e notas.
+    - `FunnelFrame`: Molduras de agrupamento visual livres (`id`, `title`, `color`, `x`, `y`, `width`, `height`) com 7 cores (Índigo, Esmeralda, Âmbar, Rosa, Ciano, Roxo, Slate), cabeçalho arrastável, edição inline de título, seletor de cor e alça de redimensionamento live no canto inferior direito.
+    - `FunnelNode`: Posições no canvas (`x`, `y`), `icpId` (vínculo ICP), `noteColor` (cor do post-it), taxa de conversão, preço (R$), CPC, link de afiliado (`affiliateLink`), taxa de comissão (`commissionRate`), checklist e notas.
     - `FunnelConnection`: Ligações curvas Bezier (SVG) dinâmicas com setas direcionais e estilos sólido, pontilhado e animado.
   - **Quadro Infinito (`FunnelArchitectEditorView.tsx`)**:
     - Pan livre com botão do meio/fundo do canvas e Zoom In/Out com mouse wheel (0.3x a 2.2x).
-    - **Arraste a 60fps & Linhas Sincronizadas**: Listener global de mouse com `requestAnimationFrame` garantindo que os blocos e as curvas SVG se movam colados em tempo real sem atraso ou desencaixe de linha.
+    - **Arraste a 60fps & Linhas Sincronizadas**: Listener global de mouse com `requestAnimationFrame` garantindo que os blocos, as molduras e as curvas SVG se movam colados em tempo real sem atraso ou desencaixe de linha.
     - **Edição com Lápis & Buffer de Rascunho (Draft)**: Cada bloco possui um botão de lápis (`Pencil`) que abre o inspetor lateral; alterações ficam em buffer rascunho com botões dedicados de **"Salvar Alterações"** e **"Cancelar"** (ou fechar/clicar fora para descartar sem alterar).
-    - Grid Dark Slate com Glassmorphism e mini-controles de visualização.
-    - **Biblioteca de Blocos com Busca em Tempo Real**: Campo de pesquisa com filtro instantâneo por nome, categoria, palavras-chave e estratégias, organizado em 8 categorias ricas.
-    - Inspetor lateral com 3 abas: Parâmetros (links de afiliado com botão de teste, vínculo opcional com ofertas do CRM e links de checkout), Checklist de Tarefas e Guia Tático Estratégico de Copy.
+    - **Molduras de Área Flexíveis**: Botão `+ Nova Moldura` na barra superior para criar caixas de agrupamento de fases/estratégias livres (ex: Tráfego Direto, Upsells, Fechamento B2B) com cores e dimensões 100% personalizáveis.
+    - **Biblioteca de Blocos com Busca em Tempo Real**: Campo de pesquisa com filtro instantâneo por nome, categoria, palavras-chave e estratégias, organizado em 10 categorias ricas.
+    - Inspetor lateral com 3 abas: Parâmetros (seleção de ICPs do CRM, cores de Post-it, links de afiliado com botão de teste, vínculo opcional com ofertas do CRM e links de checkout), Checklist de Tarefas e Guia Tático Estratégico de Copy.
   - **Simulador de Tráfego & Gargalos de Venda**:
     - Algoritmo em tempo real que propaga o volume de visitantes iniciais pelos nós através das taxas de conversão, calculando Faturamento Projetado (incluindo comissões de afiliados), Custo de Tráfego, Lucro Líquido e ROAS.
     - Alerta visual de gargalo (*Bottleneck Alert*) em etapas com baixa conversão.

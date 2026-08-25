@@ -897,9 +897,13 @@ export interface OfferBlueprint {
 export type FunnelCategory = 'perpetual' | 'launch' | 'organic' | 'high_ticket' | 'community' | 'b2b' | 'cs' | 'custom';
 export type FunnelStatus = 'draft' | 'building' | 'active' | 'archived';
 
-export type FunnelNodeType = 'traffic' | 'page' | 'offer' | 'automation' | 'b2b' | 'cs' | 'hr';
+export type FunnelNodeType = 'traffic' | 'page' | 'offer' | 'automation' | 'b2b' | 'cs' | 'hr' | 'icp' | 'note';
 
 export type FunnelNodeSubType = 
+  // Inteligência & ICPs do CRM
+  | 'icp_persona'
+  // Anotações & Post-its
+  | 'sticky_note'
   // Tráfego & Atração
   | 'pinterest' | 'tiktok' | 'instagram' | 'youtube' | 'google_seo' | 'whatsapp' | 'partners'
   // Páginas & Etapas Web
@@ -923,6 +927,16 @@ export interface FunnelChecklistItem {
   done: boolean;
 }
 
+export interface FunnelFrame {
+  id: string;
+  title: string;
+  color: 'indigo' | 'emerald' | 'amber' | 'rose' | 'cyan' | 'purple' | 'slate';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export interface FunnelNode {
   id: string;
   type: FunnelNodeType;
@@ -931,6 +945,10 @@ export interface FunnelNode {
   subtitle?: string;
   x: number;
   y: number;
+  
+  // Inteligência & ICP
+  icpId?: string;            // Vínculo com Perfil ICP real do CRM
+  noteColor?: string;        // Cor do Post-it ('yellow' | 'blue' | 'pink' | 'green' | 'purple')
   
   // Estratégia e Negócio
   offerId?: string;          // Conexão com Produto/Oferta real do CRM (Opcional)
@@ -967,6 +985,7 @@ export interface FunnelBlueprint {
   
   nodes: FunnelNode[];
   connections: FunnelConnection[];
+  frames?: FunnelFrame[];
   
   // Simulador de Tráfego
   metrics?: {

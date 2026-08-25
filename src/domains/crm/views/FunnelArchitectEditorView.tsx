@@ -10,23 +10,124 @@ import {
   Crown, Mail, Send, Check, X, ExternalLink, Sliders, Tv,
   ShoppingBag, Globe, Pencil,
   Calendar, PhoneCall, Briefcase, FileSignature, Receipt, Rocket, LifeBuoy,
-  Star, RefreshCcw, Clock, GitBranch, Smartphone, Mic, UserCheck, GraduationCap, Inbox
+  Star, RefreshCcw, Clock, GitBranch, Smartphone, Mic, UserCheck, GraduationCap, Inbox,
+  Target, StickyNote, BoxSelect
 } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
+import { useICPs } from '../hooks/useICPs';
 import { funnelService } from '@/services/funnelService';
 import { 
-  FunnelBlueprint, FunnelNode, FunnelConnection, 
+  FunnelBlueprint, FunnelNode, FunnelConnection, FunnelFrame,
   FunnelNodeType, FunnelNodeSubType, FunnelChecklistItem 
 } from '@/types';
 import { FUNNEL_BLOCK_CATALOG, BlockMeta } from '../constants/funnelTemplates';
 import { toast } from 'sonner';
+
+// ── 🎨 TEMAS VISUAIS DE MOLDURAS & POST-ITS ──────────────────────────────────
+const FRAME_COLORS: Record<string, { border: string; bg: string; text: string; header: string; activeDot: string; label: string }> = {
+  indigo: {
+    border: 'border-indigo-500/40',
+    bg: 'bg-indigo-950/20',
+    text: 'text-indigo-300',
+    header: 'bg-indigo-900/40 border-indigo-500/30',
+    activeDot: 'bg-indigo-500',
+    label: 'Índigo'
+  },
+  emerald: {
+    border: 'border-emerald-500/40',
+    bg: 'bg-emerald-950/20',
+    text: 'text-emerald-300',
+    header: 'bg-emerald-900/40 border-emerald-500/30',
+    activeDot: 'bg-emerald-500',
+    label: 'Esmeralda'
+  },
+  amber: {
+    border: 'border-amber-500/40',
+    bg: 'bg-amber-950/20',
+    text: 'text-amber-300',
+    header: 'bg-amber-900/40 border-amber-500/30',
+    activeDot: 'bg-amber-500',
+    label: 'Âmbar'
+  },
+  rose: {
+    border: 'border-rose-500/40',
+    bg: 'bg-rose-950/20',
+    text: 'text-rose-300',
+    header: 'bg-rose-900/40 border-rose-500/30',
+    activeDot: 'bg-rose-500',
+    label: 'Rosa'
+  },
+  cyan: {
+    border: 'border-cyan-500/40',
+    bg: 'bg-cyan-950/20',
+    text: 'text-cyan-300',
+    header: 'bg-cyan-900/40 border-cyan-500/30',
+    activeDot: 'bg-cyan-500',
+    label: 'Ciano'
+  },
+  purple: {
+    border: 'border-purple-500/40',
+    bg: 'bg-purple-950/20',
+    text: 'text-purple-300',
+    header: 'bg-purple-900/40 border-purple-500/30',
+    activeDot: 'bg-purple-500',
+    label: 'Roxo'
+  },
+  slate: {
+    border: 'border-slate-500/40',
+    bg: 'bg-slate-900/40',
+    text: 'text-slate-300',
+    header: 'bg-slate-800/50 border-slate-500/30',
+    activeDot: 'bg-slate-400',
+    label: 'Slate'
+  }
+};
+
+const STICKY_COLORS: Record<string, { bg: string; text: string; border: string; dot: string; title: string }> = {
+  yellow: {
+    bg: 'bg-amber-200/95 text-amber-950',
+    text: 'text-amber-950',
+    border: 'border-amber-400',
+    dot: 'bg-amber-400',
+    title: 'Amarelo'
+  },
+  blue: {
+    bg: 'bg-sky-200/95 text-sky-950',
+    text: 'text-sky-950',
+    border: 'border-sky-400',
+    dot: 'bg-sky-400',
+    title: 'Azul'
+  },
+  pink: {
+    bg: 'bg-pink-200/95 text-pink-950',
+    text: 'text-pink-950',
+    border: 'border-pink-400',
+    dot: 'bg-pink-400',
+    title: 'Rosa'
+  },
+  green: {
+    bg: 'bg-emerald-200/95 text-emerald-950',
+    text: 'text-emerald-950',
+    border: 'border-emerald-400',
+    dot: 'bg-emerald-400',
+    title: 'Verde'
+  },
+  purple: {
+    bg: 'bg-purple-200/95 text-purple-950',
+    text: 'text-purple-950',
+    border: 'border-purple-400',
+    dot: 'bg-purple-400',
+    title: 'Roxo'
+  }
+};
 
 export default function FunnelArchitectEditorView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { userProfile } = useAuth();
   const { offers, effectiveOrgId } = useCRM();
+  const { icps } = useICPs();
   const orgId = userProfile?.orgId || effectiveOrgId;
 
   // Estado do Funil
@@ -55,6 +156,12 @@ export default function FunnelArchitectEditorView() {
   // Arraste de Nó
   const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null);
   const [nodeDragOffset, setNodeDragOffset] = useState({ x: 0, y: 0 });
+
+  // Arraste e Redimensionamento de Molduras (Frames)
+  const [draggingFrameId, setDraggingFrameId] = useState<string | null>(null);
+  const [frameDragOffset, setFrameDragOffset] = useState({ x: 0, y: 0 });
+  const [resizingFrameId, setResizingFrameId] = useState<string | null>(null);
+  const [frameResizeStart, setFrameResizeStart] = useState<{ x: number; y: number; initialWidth: number; initialHeight: number }>({ x: 0, y: 0, initialWidth: 480, initialHeight: 320 });
 
   // Simulador de Tráfego
   const [initialTrafficInput, setInitialTrafficInput] = useState<number>(3000);
@@ -149,9 +256,9 @@ export default function FunnelArchitectEditorView() {
     }
   };
 
-  // Listener global de mouse para movimentação e arraste a 60fps com linhas sincronizadas em tempo real
+  // Listener global de mouse para movimentação e arraste a 60fps com nós, molduras e linhas sincronizados
   useEffect(() => {
-    if (!draggingNodeId && !isDraggingCanvas) return;
+    if (!draggingNodeId && !isDraggingCanvas && !draggingFrameId && !resizingFrameId) return;
 
     let animFrameId: number;
 
@@ -174,6 +281,30 @@ export default function FunnelArchitectEditorView() {
               nodes: prev.nodes.map(n => n.id === draggingNodeId ? { ...n, x: currentX, y: currentY } : n)
             };
           });
+        } else if (draggingFrameId) {
+          const currentX = Math.round((e.clientX - pan.x) / zoom - frameDragOffset.x);
+          const currentY = Math.round((e.clientY - pan.y) / zoom - frameDragOffset.y);
+
+          setFunnel(prev => {
+            if (!prev) return null;
+            return {
+              ...prev,
+              frames: (prev.frames || []).map(f => f.id === draggingFrameId ? { ...f, x: currentX, y: currentY } : f)
+            };
+          });
+        } else if (resizingFrameId) {
+          const currentCanvasX = (e.clientX - pan.x) / zoom;
+          const currentCanvasY = (e.clientY - pan.y) / zoom;
+          const newWidth = Math.max(220, Math.round(frameResizeStart.initialWidth + (currentCanvasX - frameResizeStart.x)));
+          const newHeight = Math.max(140, Math.round(frameResizeStart.initialHeight + (currentCanvasY - frameResizeStart.y)));
+
+          setFunnel(prev => {
+            if (!prev) return null;
+            return {
+              ...prev,
+              frames: (prev.frames || []).map(f => f.id === resizingFrameId ? { ...f, width: newWidth, height: newHeight } : f)
+            };
+          });
         }
       });
     };
@@ -181,6 +312,8 @@ export default function FunnelArchitectEditorView() {
     const handleWindowMouseUp = () => {
       setIsDraggingCanvas(false);
       setDraggingNodeId(null);
+      setDraggingFrameId(null);
+      setResizingFrameId(null);
     };
 
     window.addEventListener('mousemove', handleWindowMouseMove);
@@ -191,7 +324,74 @@ export default function FunnelArchitectEditorView() {
       window.removeEventListener('mousemove', handleWindowMouseMove);
       window.removeEventListener('mouseup', handleWindowMouseUp);
     };
-  }, [draggingNodeId, isDraggingCanvas, dragStart, pan, zoom, nodeDragOffset]);
+  }, [draggingNodeId, isDraggingCanvas, draggingFrameId, resizingFrameId, dragStart, pan, zoom, nodeDragOffset, frameDragOffset, frameResizeStart]);
+
+  // ── 🔲 GESTÃO DE MOLDURAS / ÁREAS VISUAIS FLEXÍVEIS ──────────────────────
+  const handleAddFrame = () => {
+    const newFrame: FunnelFrame = {
+      id: `frame_${Date.now()}`,
+      title: 'Nova Área / Fase',
+      color: 'indigo',
+      x: Math.round((-pan.x + 350) / zoom),
+      y: Math.round((-pan.y + 200) / zoom),
+      width: 520,
+      height: 340
+    };
+    setFunnel(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        frames: [...(prev.frames || []), newFrame]
+      };
+    });
+    toast.success('Moldura adicionada! Arraste, redimensione e altere o título livremente.');
+  };
+
+  const handleUpdateFrame = (frameId: string, updates: Partial<FunnelFrame>) => {
+    setFunnel(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        frames: (prev.frames || []).map(f => f.id === frameId ? { ...f, ...updates } : f)
+      };
+    });
+  };
+
+  const handleDeleteFrame = (frameId: string) => {
+    setFunnel(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        frames: (prev.frames || []).filter(f => f.id !== frameId)
+      };
+    });
+    toast.success('Moldura removida.');
+  };
+
+  const handleFrameMouseDown = (e: React.MouseEvent, frame: FunnelFrame) => {
+    e.stopPropagation();
+    if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).closest('button')) return;
+    const canvasX = (e.clientX - pan.x) / zoom;
+    const canvasY = (e.clientY - pan.y) / zoom;
+    setFrameDragOffset({
+      x: canvasX - frame.x,
+      y: canvasY - frame.y
+    });
+    setDraggingFrameId(frame.id);
+  };
+
+  const handleFrameResizeMouseDown = (e: React.MouseEvent, frame: FunnelFrame) => {
+    e.stopPropagation();
+    const canvasX = (e.clientX - pan.x) / zoom;
+    const canvasY = (e.clientY - pan.y) / zoom;
+    setFrameResizeStart({
+      x: canvasX,
+      y: canvasY,
+      initialWidth: frame.width,
+      initialHeight: frame.height
+    });
+    setResizingFrameId(frame.id);
+  };
 
   // ── 📝 EDIÇÃO DO BLOCO COM DRAFT (SALVAR / CANCELAR) ────────────────────
   const handleOpenNodeEditor = (node: FunnelNode) => {
@@ -438,7 +638,8 @@ export default function FunnelArchitectEditorView() {
       Crown, Mail, Send, RefreshCw, Play, Tv, HelpCircle, Sparkles, CheckCircle2,
       ShoppingBag, Globe, Pencil,
       Calendar, PhoneCall, Briefcase, FileSignature, Receipt, Rocket, LifeBuoy,
-      Star, RefreshCcw, Clock, GitBranch, Smartphone, Mic, UserCheck, GraduationCap, Inbox
+      Star, RefreshCcw, Clock, GitBranch, Smartphone, Mic, UserCheck, GraduationCap, Inbox,
+      Target, StickyNote, BoxSelect
     };
     const IconComp = icons[iconName] || Layers;
     return <IconComp size={size} />;
@@ -483,6 +684,9 @@ export default function FunnelArchitectEditorView() {
               </span>
               <span>• {funnel.nodes.length} blocos</span>
               <span>• {funnel.connections.length} conexões</span>
+              {funnel.frames && funnel.frames.length > 0 && (
+                <span>• {funnel.frames.length} molduras</span>
+              )}
             </div>
           </div>
         </div>
@@ -520,6 +724,16 @@ export default function FunnelArchitectEditorView() {
 
         {/* Lado Direito: Ações */}
         <div className="flex items-center gap-2">
+          {/* Botão de Adicionar Moldura / Área */}
+          <button
+            onClick={handleAddFrame}
+            className="px-3 py-2 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 hover:border-indigo-500/40 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+            title="Criar uma moldura / área de agrupamento visual redimensionável"
+          >
+            <BoxSelect className="w-4 h-4 text-indigo-400" />
+            <span className="hidden sm:inline">+ Nova Moldura</span>
+          </button>
+
           {/* Botão de Excluir Selecionado */}
           {selectedNodeId && (
             <button
@@ -606,6 +820,7 @@ export default function FunnelArchitectEditorView() {
             {(() => {
               const query = blockSearchQuery.trim().toLowerCase();
               const categories = [
+                { id: 'icp', title: '🎯 Inteligência & Perfis ICP', subTypes: ['icp_persona'] },
                 { id: 'traffic', title: '🌐 Linhas de Tráfego & Atração', subTypes: ['pinterest', 'tiktok', 'instagram', 'youtube', 'google_seo', 'whatsapp'] },
                 { id: 'page', title: '📄 Páginas & Etapas Web', subTypes: ['blog_site', 'quiz_page', 'quiz_vsl_page', 'capture_page', 'vsl_page', 'sales_page', 'static_page', 'webinar_page', 'checkout', 'thank_you_page'] },
                 { id: 'offer', title: '💰 Monetização & Ofertas Próprias', subTypes: ['lead_magnet', 'front_end', 'order_bump', 'upsell', 'downsell', 'subscription', 'high_ticket'] },
@@ -613,7 +828,8 @@ export default function FunnelArchitectEditorView() {
                 { id: 'automation', title: '🤖 E-mail & Automações Multicanal', subTypes: ['email_seq', 'email_broadcast', 'delay_timer', 'condition_branch', 'whatsapp_auto', 'sms_transactional', 'voice_bot', 'remarketing'] },
                 { id: 'b2b', title: '🏢 Vendas B2B & Negociação Corporativa', subTypes: ['b2b_meeting', 'b2b_qualification', 'b2b_proposal', 'contract_signing', 'corporate_invoice'] },
                 { id: 'cs', title: '⚙️ Pós-Venda, Sucesso do Cliente (CS) & Retenção', subTypes: ['client_onboarding', 'support_ticket', 'nps_survey', 'contract_renewal'] },
-                { id: 'hr', title: '👥 RH & Processos Internos', subTypes: ['hr_recruitment', 'team_training'] }
+                { id: 'hr', title: '👥 RH & Processos Internos', subTypes: ['hr_recruitment', 'team_training'] },
+                { id: 'note', title: '📝 Anotações & Post-its', subTypes: ['sticky_note'] }
               ];
 
               const filteredCategories = categories.map(cat => {
@@ -635,7 +851,7 @@ export default function FunnelArchitectEditorView() {
                   <div className="p-8 text-center">
                     <Search className="w-8 h-8 text-gray-600 mx-auto mb-2" />
                     <p className="text-xs font-semibold text-gray-400">Nenhum bloco encontrado</p>
-                    <p className="text-[10px] text-gray-600 mt-1">Tente buscar por "quiz", "afiliado", "vsl", "pix", "whatsapp"...</p>
+                    <p className="text-[10px] text-gray-600 mt-1">Tente buscar por "icp", "post-it", "quiz", "afiliado", "vsl", "pix", "whatsapp"...</p>
                   </div>
                 );
               }
@@ -713,8 +929,80 @@ export default function FunnelArchitectEditorView() {
             }}
             className="absolute inset-0 pointer-events-none w-[5000px] h-[5000px]"
           >
+            {/* ── 🔲 RENDERIZAÇÃO DAS MOLDURAS / CAIXAS DE AGRUPAMENTO (FRAMES) ── */}
+            {funnel.frames?.map(frame => {
+              const frameTheme = FRAME_COLORS[frame.color] || FRAME_COLORS.indigo;
+              return (
+                <div
+                  key={frame.id}
+                  style={{
+                    left: `${frame.x}px`,
+                    top: `${frame.y}px`,
+                    width: `${frame.width}px`,
+                    height: `${frame.height}px`
+                  }}
+                  className={`absolute rounded-3xl border-2 ${frameTheme.border} ${frameTheme.bg} backdrop-blur-[2px] pointer-events-auto transition-colors z-0 flex flex-col`}
+                >
+                  {/* Cabeçalho da Moldura (Arrastável) */}
+                  <div
+                    onMouseDown={(e) => handleFrameMouseDown(e, frame)}
+                    className={`h-10 px-3 border-b ${frameTheme.header} rounded-t-3xl flex items-center justify-between cursor-move select-none`}
+                  >
+                    <div className="flex items-center gap-2 flex-1 mr-2">
+                      <Move className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                      <input
+                        type="text"
+                        value={frame.title}
+                        onChange={(e) => handleUpdateFrame(frame.id, { title: e.target.value })}
+                        className="bg-transparent text-xs font-black text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 rounded px-1.5 py-0.5 w-full max-w-[200px]"
+                        placeholder="Nome da Área / Fase..."
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {/* Seletor de Cores da Moldura */}
+                      {Object.keys(FRAME_COLORS).map(colorName => (
+                        <button
+                          key={colorName}
+                          onClick={() => handleUpdateFrame(frame.id, { color: colorName as any })}
+                          className={`w-3 h-3 rounded-full ${FRAME_COLORS[colorName].activeDot} transition-transform ${
+                            frame.color === colorName ? 'scale-125 ring-2 ring-white shadow-md' : 'opacity-50 hover:opacity-100'
+                          }`}
+                          title={`Cor ${FRAME_COLORS[colorName].label}`}
+                        />
+                      ))}
+
+                      <div className="w-px h-3 bg-white/20 mx-0.5"></div>
+
+                      <button
+                        onClick={() => handleDeleteFrame(frame.id)}
+                        className="p-1 text-gray-400 hover:text-rose-400 hover:bg-rose-500/20 rounded-lg transition-colors"
+                        title="Excluir Moldura"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Fundo Livre da Moldura */}
+                  <div className="flex-1 relative">
+                    {/* Alça de Redimensionamento no Canto Inferior Direito */}
+                    <div
+                      onMouseDown={(e) => handleFrameResizeMouseDown(e, frame)}
+                      className="absolute right-1 bottom-1 w-6 h-6 flex items-center justify-center cursor-nwse-resize text-gray-400 hover:text-white transition-colors"
+                      title="Arraste para redimensionar a moldura"
+                    >
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 2L2 8M8 5L5 8M8 8H8.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
             {/* SVG DE CONEXÕES / SETAS DINÂMICAS */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-visible">
+            <svg className="absolute inset-0 w-full h-full pointer-events-none z-10 overflow-visible">
               <defs>
                 <marker
                   id="arrow-solid"
@@ -783,7 +1071,7 @@ export default function FunnelArchitectEditorView() {
               })}
             </svg>
 
-            {/* RENDERIZAÇÃO DOS NÓS (CARDS) */}
+            {/* ── 🧱 RENDERIZAÇÃO DOS NÓS (CARDS) ──────────────────────────────── */}
             {funnel.nodes.map(node => {
               const meta = FUNNEL_BLOCK_CATALOG.find(b => b.subType === node.subType);
               const isSelected = selectedNodeId === node.id;
@@ -791,6 +1079,148 @@ export default function FunnelArchitectEditorView() {
               const isBottleneck = simulationResults.bottleneckIds.includes(node.id);
               const calculatedTraffic = simulationResults.trafficMap?.[node.id] || 0;
 
+              // 📝 RENDERIZAÇÃO ESPECIAL DE POST-IT / NOTA ADESIVA
+              if (node.subType === 'sticky_note') {
+                const noteColor = (node.noteColor || 'yellow') as keyof typeof STICKY_COLORS;
+                const style = STICKY_COLORS[noteColor] || STICKY_COLORS.yellow;
+                return (
+                  <div
+                    key={node.id}
+                    onMouseDown={(e) => handleNodeMouseDown(e, node)}
+                    style={{ left: `${node.x}px`, top: `${node.y}px` }}
+                    className={`absolute w-60 p-4 rounded-2xl pointer-events-auto cursor-pointer shadow-xl transition-transform border z-20 ${style.bg} ${style.border} ${
+                      isSelected ? 'ring-2 ring-indigo-500 scale-105 shadow-2xl' : 'hover:scale-[1.02]'
+                    }`}
+                  >
+                    {/* Alfinete no Topo */}
+                    <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-black/10">
+                      <div className="flex items-center gap-1.5">
+                        <Pin className="w-3.5 h-3.5 text-black/60 rotate-45" />
+                        <span className="text-[10px] font-black uppercase tracking-wider text-black/70">
+                          {node.label || 'Post-it'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleOpenNodeEditor(node); }}
+                          className="p-1 rounded bg-black/10 hover:bg-black/20 text-black/70 transition-colors"
+                          title="Editar"
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setFunnel(prev => prev ? { ...prev, nodes: prev.nodes.filter(n => n.id !== node.id) } : null);
+                          }}
+                          className="p-1 rounded bg-black/10 hover:bg-rose-500 hover:text-white text-black/70 transition-colors"
+                          title="Excluir Nota"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Texto da Nota */}
+                    <div className="text-xs font-semibold leading-relaxed whitespace-pre-wrap select-text min-h-12 line-clamp-6">
+                      {node.notes || 'Clique no lápis para escrever sua anotação estratégica, metas ou tarefas da equipe aqui...'}
+                    </div>
+
+                    {/* Cores rápidas */}
+                    <div className="flex items-center gap-1.5 mt-3 pt-2 border-t border-black/10">
+                      {Object.keys(STICKY_COLORS).map(c => (
+                        <button
+                          key={c}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setFunnel(prev => prev ? {
+                              ...prev,
+                              nodes: prev.nodes.map(n => n.id === node.id ? { ...n, noteColor: c } : n)
+                            } : null);
+                          }}
+                          className={`w-3.5 h-3.5 rounded-full ${STICKY_COLORS[c].dot} border border-black/20 hover:scale-125 transition-transform`}
+                          title={STICKY_COLORS[c].title}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              }
+
+              // 🎯 RENDERIZAÇÃO ESPECIAL DE PERFIL ICP / PERSONA
+              if (node.subType === 'icp_persona') {
+                const linkedICP = icps.find(i => i.id === node.icpId);
+                return (
+                  <div
+                    key={node.id}
+                    onMouseDown={(e) => handleNodeMouseDown(e, node)}
+                    style={{ left: `${node.x}px`, top: `${node.y}px` }}
+                    className={`absolute w-60 rounded-2xl pointer-events-auto cursor-pointer transition-all select-none backdrop-blur-2xl border z-20 ${
+                      isSelected
+                        ? 'border-amber-400 shadow-2xl shadow-amber-500/30 ring-2 ring-amber-500/40 bg-[#161209]'
+                        : isConnectingSource
+                        ? 'border-amber-400 shadow-2xl shadow-amber-500/30 ring-2 ring-amber-500/40 bg-[#161209]'
+                        : 'border-amber-500/30 hover:border-amber-500/60 bg-[#110d05]/95 shadow-xl'
+                    }`}
+                  >
+                    {/* Cabeçalho do Card ICP */}
+                    <div className="p-3 border-b border-amber-500/20 flex items-center justify-between bg-amber-500/5">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                          <Target size={14} />
+                        </div>
+                        <span className="text-[10px] font-black text-amber-400 uppercase tracking-wider">
+                          {linkedICP?.targetType || 'ICP / Persona'}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleOpenNodeEditor(node); }}
+                          className="p-1 rounded-md bg-white/5 hover:bg-amber-500 hover:text-black text-gray-300 transition-colors"
+                          title="Selecionar / Configurar ICP"
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={(e) => handleStartConnection(e, node.id)}
+                          className={`p-1 rounded-md text-[10px] font-bold transition-colors ${
+                            isConnectingSource ? 'bg-amber-500 text-black' : 'bg-white/5 hover:bg-amber-500 hover:text-black text-gray-300'
+                          }`}
+                          title="Ligar ICP ao Canal de Tráfego ou Página"
+                        >
+                          <ArrowRight className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Corpo do Card ICP */}
+                    <div className="p-3 space-y-2">
+                      <h4 className="text-xs font-bold text-white line-clamp-1">
+                        {node.label}
+                      </h4>
+                      <p className="text-[11px] text-gray-400 line-clamp-1">
+                        {node.subtitle || 'Selecione um ICP nas configurações'}
+                      </p>
+
+                      {linkedICP?.avgTicket ? (
+                        <div className="text-[10px] text-amber-300 font-bold bg-amber-500/10 px-2 py-1 rounded-lg border border-amber-500/20 flex items-center justify-between">
+                          <span>Ticket Médio:</span>
+                          <span className="text-emerald-400">R$ {linkedICP.avgTicket.toLocaleString('pt-BR')}</span>
+                        </div>
+                      ) : null}
+
+                      {node.notes && (
+                        <p className="text-[10px] text-gray-400 line-clamp-2 bg-black/40 p-1.5 rounded-lg border border-white/5 italic">
+                          "{node.notes}"
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+
+              // 📦 RENDERIZAÇÃO PADRÃO DE BLOCOS (TRÁFEGO, PÁGINAS, OFERTAS, AUTOMAÇÕES, B2B, CS, RH)
               return (
                 <div
                   key={node.id}
@@ -799,7 +1229,7 @@ export default function FunnelArchitectEditorView() {
                     left: `${node.x}px`,
                     top: `${node.y}px`
                   }}
-                  className={`absolute w-56 rounded-2xl pointer-events-auto cursor-pointer transition-shadow select-none backdrop-blur-2xl border ${
+                  className={`absolute w-56 rounded-2xl pointer-events-auto cursor-pointer transition-shadow select-none backdrop-blur-2xl border z-20 ${
                     isSelected
                       ? 'border-indigo-400 shadow-2xl shadow-indigo-500/30 ring-2 ring-indigo-500/40 bg-[#0c1427]'
                       : isConnectingSource
@@ -1010,6 +1440,113 @@ export default function FunnelArchitectEditorView() {
                         className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
                       />
                     </div>
+
+                    {/* Configuração de Perfil ICP */}
+                    {activeNode.subType === 'icp_persona' && (
+                      <div className="space-y-3 p-3.5 rounded-2xl bg-amber-500/5 border border-amber-500/20">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[11px] font-bold text-amber-400 uppercase flex items-center gap-1.5">
+                            <Target className="w-3.5 h-3.5" />
+                            Perfil ICP do CRM
+                          </label>
+                          <a
+                            href="/icp"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[10px] text-amber-400 hover:underline flex items-center gap-1"
+                          >
+                            Gerenciar ICPs <ExternalLink className="w-2.5 h-2.5" />
+                          </a>
+                        </div>
+
+                        <select
+                          value={activeNode.icpId || ''}
+                          onChange={(e) => {
+                            const chosenICP = icps.find(i => i.id === e.target.value);
+                            if (chosenICP) {
+                              updateDraftField('icpId', chosenICP.id);
+                              updateDraftField('label', chosenICP.name);
+                              updateDraftField('subtitle', `${chosenICP.targetType || 'B2B'} • ${chosenICP.niche || chosenICP.decisionMakerRole || 'Perfil ICP'}`);
+                              if (chosenICP.avgTicket) updateDraftField('price', chosenICP.avgTicket);
+                              if (chosenICP.painPoints?.length) updateDraftField('notes', `Dores: ${chosenICP.painPoints.slice(0, 2).join('; ')}`);
+                            } else {
+                              updateDraftField('icpId', undefined);
+                            }
+                          }}
+                          className="w-full px-3 py-2 bg-black/60 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500"
+                        >
+                          <option value="">Selecione um ICP cadastrado...</option>
+                          {icps.map(icp => (
+                            <option key={icp.id} value={icp.id}>
+                              {icp.name} ({icp.targetType || 'B2B'} - {icp.niche || icp.decisionMakerRole || 'Geral'})
+                            </option>
+                          ))}
+                        </select>
+
+                        {/* Detalhes do ICP Selecionado */}
+                        {(() => {
+                          const currentICP = icps.find(i => i.id === activeNode.icpId);
+                          if (!currentICP) return null;
+                          return (
+                            <div className="space-y-2 pt-2 border-t border-white/5 text-xs text-gray-300">
+                              <div className="flex items-center gap-2">
+                                <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-black uppercase">
+                                  {currentICP.targetType || 'B2B'}
+                                </span>
+                                <span className="text-[11px] text-gray-400">
+                                  Ticket Médio: <strong className="text-emerald-400">R$ {currentICP.avgTicket?.toLocaleString('pt-BR') || 'N/A'}</strong>
+                                </span>
+                              </div>
+
+                              {currentICP.painPoints && currentICP.painPoints.length > 0 && (
+                                <div>
+                                  <span className="text-[10px] text-gray-500 font-bold block uppercase">Dores Principais:</span>
+                                  <ul className="list-disc list-inside text-[11px] text-gray-400 space-y-0.5">
+                                    {currentICP.painPoints.slice(0, 3).map((p, idx) => (
+                                      <li key={idx} className="line-clamp-1">{p}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+
+                              {currentICP.objections && currentICP.objections.length > 0 && (
+                                <div>
+                                  <span className="text-[10px] text-gray-500 font-bold block uppercase">Objeções Comuns:</span>
+                                  <ul className="list-disc list-inside text-[11px] text-gray-400 space-y-0.5">
+                                    {currentICP.objections.slice(0, 2).map((obj, idx) => (
+                                      <li key={idx} className="line-clamp-1">{obj}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+
+                    {/* Configuração de Post-it / Nota Adesiva */}
+                    {activeNode.subType === 'sticky_note' && (
+                      <div className="space-y-3 p-3.5 rounded-2xl bg-yellow-500/5 border border-yellow-500/20">
+                        <label className="text-[11px] font-bold text-yellow-300 uppercase flex items-center gap-1.5">
+                          <StickyNote className="w-3.5 h-3.5" />
+                          Cor do Post-it
+                        </label>
+                        <div className="flex items-center gap-2">
+                          {Object.entries(STICKY_COLORS).map(([colorKey, colorVal]) => (
+                            <button
+                              key={colorKey}
+                              type="button"
+                              onClick={() => updateDraftField('noteColor', colorKey)}
+                              className={`w-7 h-7 rounded-xl border-2 transition-transform ${colorVal.dot} ${
+                                (activeNode.noteColor || 'yellow') === colorKey ? 'scale-110 border-white shadow-lg' : 'border-transparent opacity-70 hover:opacity-100'
+                              }`}
+                              title={colorVal.title}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Se for Produto de Afiliado */}
                     {activeNode.subType.startsWith('affiliate_') && (
