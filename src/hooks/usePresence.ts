@@ -54,14 +54,7 @@ export function usePresence() {
           await currentStore.registerPause('meeting');
         }
       } else if (status === 'online') {
-        if (!log) {
-          // Se ficou online e não tem ponto batido hoje, abre o expediente!
-          await currentStore.startExpediente(
-            userProfileRef.current.uid,
-            userProfileRef.current.displayName || 'Colaborador',
-            userProfileRef.current.photoURL || ''
-          );
-        } else if (log.status === 'paused') {
+        if (log && log.status === 'paused') {
           // Se estava pausado e voltou, retoma contagem de horas
           await currentStore.resumeExpediente();
         }
@@ -106,10 +99,6 @@ export function usePresence() {
   useEffect(() => {
     if (!userProfile?.uid || !effectiveOrgId) return;
 
-    const sessionStartTime = Date.now();
-    let hasCheckedAutoClock = false;
-    let activityTimer: NodeJS.Timeout | null = null;
-
     // Assina em tempo real o log de hoje para mantê-lo sincronizado no Zustand
     const unsubLog = store.loadTodayLog(userProfile.uid);
 
@@ -130,51 +119,10 @@ export function usePresence() {
       }
     };
 
-    const trackActivityForAutoClockIn = () => {
-      const currentStore = useCRMStore.getState();
-      const currentLog = currentStore.todayLog;
-
-      if (currentLog?.status === 'completed') return;
-      if (hasCheckedAutoClock || currentLog || currentStore.loadingTimeLog) return;
-
-      if (!activityTimer) {
-        activityTimer = setTimeout(async () => {
-          const checkStore = useCRMStore.getState();
-          const checkLog = checkStore.todayLog;
-          if (!checkLog && !hasCheckedAutoClock) {
-            hasCheckedAutoClock = true;
-
-            // Inicia o expediente de forma automática no Zustand/Firestore
-            await checkStore.startExpediente(
-              userProfile.uid,
-              userProfile.displayName || 'Colaborador',
-              userProfile.photoURL || ''
-            );
-
-            // Ajusta o startTime retroativamente para a hora em que o colaborador abriu a aba do CRM
-            const todayStr = getLocalDateString();
-            const docId = `${todayStr}_${userProfile.uid}`;
-            const orgId = checkStore.effectiveOrgId;
-            if (orgId) {
-              try {
-                const docRef = doc(db, 'organizations', orgId, 'time_logs', docId);
-                await updateDoc(docRef, { startTime: sessionStartTime });
-              } catch (e) {
-                console.error('[AutoClockIn] Erro ao aplicar retroatividade:', e);
-              }
-            }
-
-            toast.info('Auto-Clock In: Identificamos atividade contínua no CRM e iniciamos seu expediente!');
-          }
-        }, 60 * 1000); // 1 minuto de atividade no site
-      }
-    };
-
     const handleUserInteraction = () => {
       const currentStore = useCRMStore.getState();
       if (currentStore.todayLog?.status === 'completed') return;
       resetInactivityTimer();
-      trackActivityForAutoClockIn();
     };
 
     initPresence();
@@ -227,7 +175,6 @@ export function usePresence() {
       window.removeEventListener('keydown', handleUserInteraction);
       window.removeEventListener('click', handleUserInteraction);
       if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
-      if (activityTimer) clearTimeout(activityTimer);
       clearInterval(overtimeCheckInterval);
       unsubLog();
     };

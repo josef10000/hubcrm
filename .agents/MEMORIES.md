@@ -391,3 +391,24 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
   - **Central de Lançamento Multi-Monitores (`MultiScreenLauncherModal.tsx` & `ScreenLauncherView.tsx` / `/screens`)**:
     - Botão "Lançar Todos os 3 Monitores" que abre 3 janelas pop-up limpas para distribuição instantânea nas 3 telas físicas do setup.
     - Acesso direto via botão "Monitores" no cabeçalho global (`Header.tsx`), menu Comercial (`navigation.ts`) e Command Palette (`CommandPalette.tsx`).
+
+---
+
+## 25. Ponto Eletrônico: Controle Manual de Expediente & Ajuste em Lote
+- **Data da Integração**: 25/08/2026
+- **Funcionalidades**:
+  1. Desativação do início automático de expediente (Auto-Clock In).
+  2. Botão de Expediente (Pill Inteligente) com controle de status e tempo ao vivo no Header.
+  3. Calendário completo do mês e sistema de Ajuste/Regularização de Ponto em Lote (Multi-dias).
+- **Decisões Técnicas**:
+  - **Desativação de Auto-Clock In (`usePresence.ts`)**:
+    - Removida a chamada automática a `startExpediente` na transição para `online` e eliminada a rotina `trackActivityForAutoClockIn`. A presença de chat continua atualizando `online`/`away`/`offline` sem gerar logs de ponto não intencionais no Firestore.
+  - **Botão de Expediente no Header (`Header.tsx`)**:
+    - Substituído o ícone pequeno por um botão tipo *Pill* expressivo com indicador de status (`Iniciar Expediente` em azul/violeta, `Expediente Ativo` em verde com ponto pulsante, `Em Intervalo` em âmbar e `Expediente Encerrado`).
+    - Clique interativo: Inicia expediente imediatamente no primeiro clique; permite pausar, retomar ou encerrar com diálogo de confirmação seguro.
+  - **Espelho de Ponto com Ajuste em Lote (`ProfileView.tsx`)**:
+    - Geração de todos os dias do mês selecionado (`allMonthDays`) com cálculo de dias úteis e fins de semana.
+    - Status visuais por dia: ✅ *Concluído*, ⚠️ *Sem Saída (Ponto Aberto)*, ⭕ *Sem Registro*, 🌴 *Folga / Fim de Semana*, ⏳ *Futuro*.
+    - Seleção múltipla com checkboxes individuais, master checkbox e botões de atalho rápido (*"Selecionar Faltantes"*, *"Selecionar Todos"*, *"Limpar"*).
+    - Barra de ação flutuante e modal de preenchimento em lote com horários padrão (Entrada, Saída e Intervalo de Almoço de 1h) aplicando a múltiplos dias com 1 clique no Firestore (`time_logs`), calculando a duração líquida e registrando auditoria (`editedByAdmin: true`).
+

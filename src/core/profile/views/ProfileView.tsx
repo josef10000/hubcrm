@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   User as UserIcon, Mail, Phone, Instagram, Linkedin, 
   ChevronLeft, Edit3, Save, X, Briefcase, Info, 
   Shield, Globe, MapPin, Loader2, Camera, Cake, Calendar,
-  Target, ChevronDown, CheckCircle2, Circle, Star, Wallet, TrendingUp, Clock, Plane, AlertTriangle, CalendarDays, DollarSign, Pencil, Sparkles
+  Target, ChevronDown, CheckCircle2, Circle, Star, Wallet, TrendingUp, Clock, Plane, AlertTriangle, CalendarDays, DollarSign, Pencil, Sparkles,
+  CheckSquare, Square, Layers, Zap, Check
 } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useDialog } from '@auth/contexts/DialogContext';
@@ -185,6 +186,17 @@ export default function ProfileView() {
   const [editDate, setEditDate] = useState<string>('');
   const [editStartTime, setEditStartTime] = useState<string>('');
   const [editEndTime, setEditEndTime] = useState<string>('');
+
+  // Estados para Ajuste e Regularização de Ponto em Lote (Multi-dias)
+  const [selectedDates, setSelectedDates] = useState<string[]>([]);
+  const [showBatchModal, setShowBatchModal] = useState(false);
+  const [batchStartTime, setBatchStartTime] = useState('09:00');
+  const [batchEndTime, setBatchEndTime] = useState('18:00');
+  const [batchIncludeLunch, setBatchIncludeLunch] = useState(true);
+  const [batchLunchStart, setBatchLunchStart] = useState('12:00');
+  const [batchLunchEnd, setBatchLunchEnd] = useState('13:00');
+  const [isSavingBatch, setIsSavingBatch] = useState(false);
+  const [viewOnlyRecordedDays, setViewOnlyRecordedDays] = useState(false);
   
   const [newVacation, setNewVacation] = useState<Partial<VacationPeriod>>({
     type: 'Férias',
@@ -659,6 +671,135 @@ export default function ProfileView() {
     setTimeout(() => {
       setEditingTimeLog(null);
     }, 1000);
+  };
+
+  // Geração completa de todos os dias do mês selecionado
+  const allMonthDays = useMemo(() => {
+    if (!selectedMonth) return [];
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const days = [];
+    const now = new Date();
+    const todayStr = format(now, 'yyyy-MM-dd');
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateObj = new Date(year, month - 1, d);
+      const dateStr = format(dateObj, 'yyyy-MM-dd');
+      const dayOfWeek = dateObj.getDay(); // 0 = Dom, 6 = Sab
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+      const isFuture = dateStr > todayStr;
+      const log = myTimeLogs.find(l => l && l.date === dateStr);
+
+      days.push({
+        date: dateStr,
+        dateObj,
+        dayNumber: d,
+        dayOfWeek,
+        isWeekend,
+        isFuture,
+        log
+      });
+    }
+    // Ordem decrescente (do dia mais recente para o dia 1)
+    return days.reverse();
+  }, [selectedMonth, myTimeLogs]);
+
+  const displayedDays = useMemo(() => {
+    if (viewOnlyRecordedDays) {
+      return allMonthDays.filter(d => !!d.log);
+    }
+    return allMonthDays;
+  }, [allMonthDays, viewOnlyRecordedDays]);
+
+  const handleToggleSelectDate = (dateStr: string) => {
+    setSelectedDates(prev => 
+      prev.includes(dateStr) ? prev.filter(d => d !== dateStr) : [...prev, dateStr]
+    );
+  };
+
+  const handleSelectAllNonFuture = () => {
+    const selectable = displayedDays.filter(d => !d.isFuture).map(d => d.date);
+    setSelectedDates(selectable);
+  };
+
+  const handleSelectMissingOrOpen = () => {
+    const missing = displayedDays
+      .filter(d => !d.isFuture && (!d.log || !d.log.endTime))
+      .map(d => d.date);
+    setSelectedDates(missing);
+  };
+
+  const handleClearSelection = () => {
+    setSelectedDates([]);
+  };
+
+  const handleSaveBatchLogs = async () => {
+    if (selectedDates.length === 0 || !currentUserProfile?.orgId || !uid || !user?.uid) return;
+
+    try {
+      setIsSavingBatch(true);
+      const targetOrgId = currentUserProfile.orgId;
+      const targetUserId = uid;
+      const targetUserName = profile?.name || currentUserProfile.displayName || 'Colaborador';
+      const targetUserPhoto = profile?.photoURL || currentUserProfile.photoURL || '';
+
+      const [startH, startM] = batchStartTime.split(':').map(Number);
+      const [endH, endM] = batchEndTime.split(':').map(Number);
+      const [lunchStartH, lunchStartM] = batchLunchStart.split(':').map(Number);
+      const [lunchEndH, lunchEndM] = batchLunchEnd.split(':').map(Number);
+
+      const promises = selectedDates.map(async (dateStr) => {
+        const [yr, mo, dy] = dateStr.split('-').map(Number);
+
+        const startDt = new Date(yr, mo - 1, dy, startH, startM, 0, 0);
+        const endDt = new Date(yr, mo - 1, dy, endH, endM, 0, 0);
+
+        const startTime = startDt.getTime();
+        const endTime = endDt.getTime();
+
+        const pauses: TimeLogPause[] = [];
+        if (batchIncludeLunch) {
+          const lunchStartDt = new Date(yr, mo - 1, dy, lunchStartH, lunchStartM, 0, 0);
+          const lunchEndDt = new Date(yr, mo - 1, dy, lunchEndH, lunchEndM, 0, 0);
+          pauses.push({
+            type: 'lunch',
+            startTime: lunchStartDt.getTime(),
+            endTime: lunchEndDt.getTime()
+          });
+        }
+
+        const netDuration = calculateNetDuration(startTime, endTime, pauses);
+        const docId = `${dateStr}_${targetUserId}`;
+        const logRef = doc(db, 'organizations', targetOrgId, 'time_logs', docId);
+
+        await setDoc(logRef, {
+          id: docId,
+          userId: targetUserId,
+          userName: targetUserName,
+          userPhoto: targetUserPhoto,
+          date: dateStr,
+          startTime,
+          endTime,
+          status: 'completed',
+          pauses,
+          totalDuration: netDuration,
+          updatedAt: Date.now(),
+          editedByAdmin: true,
+          adminId: user.uid,
+          editedAt: Date.now()
+        }, { merge: true });
+      });
+
+      await Promise.all(promises);
+      toast.success(`${selectedDates.length} dias regularizados com sucesso no Espelho de Ponto!`);
+      setSelectedDates([]);
+      setShowBatchModal(false);
+    } catch (err) {
+      console.error('Erro ao salvar lote de ponto:', err);
+      toast.error('Erro ao regularizar dias em lote.');
+    } finally {
+      setIsSavingBatch(false);
+    }
   };
 
   if (loading) {
@@ -2677,72 +2818,306 @@ export default function ProfileView() {
                     </div>
                   </div>
 
-                  {/* Tabela de Logs de Ponto */}
-                  <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] p-8 shadow-xl">
-                    <h3 className="font-bold flex items-center gap-2 mb-6 text-left"><Clock className="text-pink-500" /> Registro de Presenças do Mês</h3>
+                  {/* Tabela de Logs de Ponto com Seleção em Lote */}
+                  <div className="bg-white/50 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-[2rem] p-6 lg:p-8 shadow-xl space-y-4">
+                    
+                    {/* Cabeçalho da Tabela e Ações Rápidas */}
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-2 border-b border-white/5">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-xl bg-pink-500/10 border border-pink-500/20 text-pink-500">
+                          <Clock className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2 text-sm lg:text-base">
+                            Registro de Presenças do Mês
+                            <span className="text-xs font-mono font-normal text-gray-400 bg-white/5 px-2 py-0.5 rounded-lg border border-white/10">
+                              {displayedDays.length} dias
+                            </span>
+                          </h3>
+                          <p className="text-[11px] text-gray-500">Selecione múltiplos dias para aplicar horários de entrada e saída em lote.</p>
+                        </div>
+                      </div>
+
+                      {/* Controles de Filtro e Seleção Rápida */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          onClick={() => setViewOnlyRecordedDays(!viewOnlyRecordedDays)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                            viewOnlyRecordedDays
+                              ? 'bg-primary-500/20 text-primary-400 border-primary-500/30'
+                              : 'bg-white/5 text-gray-400 border-white/10 hover:text-white'
+                          }`}
+                        >
+                          {viewOnlyRecordedDays ? 'Mostrando: Com Registro' : 'Mostrando: Mês Completo'}
+                        </button>
+
+                        {(isAdmin || isManagement || isOwnProfile) && (
+                          <>
+                            <button
+                              onClick={handleSelectMissingOrOpen}
+                              className="px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-xl text-xs font-bold transition-all"
+                              title="Selecionar todos os dias que faltam bater ponto ou não tiveram saída registrada"
+                            >
+                              Selecionar Faltantes
+                            </button>
+                            <button
+                              onClick={handleSelectAllNonFuture}
+                              className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 rounded-xl text-xs font-bold transition-all"
+                            >
+                              Selecionar Todos
+                            </button>
+                            {selectedDates.length > 0 && (
+                              <button
+                                onClick={handleClearSelection}
+                                className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-bold transition-all"
+                              >
+                                Limpar ({selectedDates.length})
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* BARRA DE AÇÃO FLUTUANTE DE AJUSTE EM LOTE */}
+                    {selectedDates.length > 0 && (isAdmin || isManagement || isOwnProfile) && (
+                      <div className="p-4 rounded-2xl bg-gradient-to-r from-primary-950/80 via-[#0d1428] to-indigo-950/80 border border-primary-500/40 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-xl bg-primary-500/20 text-primary-400 border border-primary-500/30">
+                            <Sparkles className="w-4 h-4 text-amber-400" />
+                          </div>
+                          <div>
+                            <span className="text-xs font-bold text-white block">
+                              {selectedDates.length} {selectedDates.length === 1 ? 'dia selecionado' : 'dias selecionados'} para ajuste em massa
+                            </span>
+                            <span className="text-[11px] text-gray-400">
+                              Defina os horários padrão uma única vez e aplique a todos os dias marcados.
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+                          <button
+                            onClick={() => setShowBatchModal(true)}
+                            className="w-full sm:w-auto px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-primary-500/25 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+                          >
+                            <Zap className="w-3.5 h-3.5 fill-white" />
+                            <span>Ajustar em Lote</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Tabela de Dias do Mês */}
                     <div className="overflow-x-auto">
                       <table className="w-full text-left border-collapse">
                         <thead>
                           <tr className="border-b border-white/5 text-xs text-gray-400 font-black uppercase tracking-widest">
-                            <th className="py-4 px-2">Data</th>
+                            {(isAdmin || isManagement || isOwnProfile) && (
+                              <th className="py-4 px-3 w-10 text-center">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (selectedDates.length === displayedDays.filter(d => !d.isFuture).length) {
+                                      handleClearSelection();
+                                    } else {
+                                      handleSelectAllNonFuture();
+                                    }
+                                  }}
+                                  className="text-gray-400 hover:text-white"
+                                  title="Alternar seleção de todos"
+                                >
+                                  {selectedDates.length > 0 && selectedDates.length === displayedDays.filter(d => !d.isFuture).length ? (
+                                    <CheckSquare size={16} className="text-primary-500" />
+                                  ) : (
+                                    <Square size={16} />
+                                  )}
+                                </button>
+                              </th>
+                            )}
+                            <th className="py-4 px-2">Data / Dia</th>
+                            <th className="py-4 px-2">Status</th>
                             <th className="py-4 px-2">Entrada</th>
                             <th className="py-4 px-2">Saída</th>
-                            <th className="py-4 px-2">Intervalos/Pausas</th>
+                            <th className="py-4 px-2">Intervalos / Almoço</th>
                             <th className="py-4 px-2">Total Líquido</th>
-                            {(isAdmin || isManagement) && <th className="py-4 px-2 text-right">Ações</th>}
+                            {(isAdmin || isManagement || isOwnProfile) && <th className="py-4 px-2 text-right">Ações</th>}
                           </tr>
                         </thead>
                         <tbody className="text-sm">
-                          {myMonthlyLogs.map(log => (
-                            <tr key={log.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                              <td className="py-4 px-2 font-bold">
-                                <div className="flex items-center gap-1.5">
-                                  <span>{formatLocalDateStr(log.date)}</span>
-                                  {log.editedByAdmin && (
-                                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-black uppercase tracking-tighter shrink-0" title="Registro ajustado manualmente por um Administrador">
-                                      Ajustado
+                          {displayedDays.map(day => {
+                            const isSelected = selectedDates.includes(day.date);
+                            const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+                            const dayLabel = dayNames[day.dayOfWeek];
+                            const hasLog = !!day.log;
+                            const isCompleted = hasLog && !!day.log?.endTime;
+                            const isOpen = hasLog && !day.log?.endTime;
+
+                            return (
+                              <tr 
+                                key={day.date} 
+                                className={`border-b border-white/5 transition-colors ${
+                                  isSelected 
+                                    ? 'bg-primary-500/10 hover:bg-primary-500/15' 
+                                    : day.isWeekend 
+                                    ? 'bg-white/[0.01] opacity-70 hover:opacity-100 hover:bg-white/5' 
+                                    : 'hover:bg-white/5'
+                                }`}
+                              >
+                                {/* Checkbox da Linha */}
+                                {(isAdmin || isManagement || isOwnProfile) && (
+                                  <td className="py-3 px-3 text-center">
+                                    {day.isFuture ? (
+                                      <span className="text-gray-600 text-xs">---</span>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleToggleSelectDate(day.date)}
+                                        className="text-gray-400 hover:text-white transition-colors"
+                                      >
+                                        {isSelected ? (
+                                          <CheckSquare size={16} className="text-primary-500" />
+                                        ) : (
+                                          <Square size={16} />
+                                        )}
+                                      </button>
+                                    )}
+                                  </td>
+                                )}
+
+                                {/* Data e Dia da Semana */}
+                                <td className="py-3 px-2 font-bold">
+                                  <div className="flex items-center gap-2">
+                                    <span className={day.isWeekend ? 'text-gray-400' : 'text-white font-mono'}>
+                                      {formatLocalDateStr(day.date)}
+                                    </span>
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${
+                                      day.isWeekend ? 'bg-white/5 text-gray-500' : 'bg-primary-500/10 text-primary-400'
+                                    }`}>
+                                      {dayLabel}
+                                    </span>
+                                    {day.log?.editedByAdmin && (
+                                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-400 font-black uppercase tracking-tighter" title="Ponto regularizado">
+                                        Ajustado
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+
+                                {/* Status do Ponto */}
+                                <td className="py-3 px-2">
+                                  {day.isFuture ? (
+                                    <span className="text-[10px] text-gray-500 italic">Futuro</span>
+                                  ) : isCompleted ? (
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1">
+                                      <CheckCircle2 size={10} /> Concluído
+                                    </span>
+                                  ) : isOpen ? (
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 inline-flex items-center gap-1 animate-pulse">
+                                      <AlertTriangle size={10} /> Sem Saída
+                                    </span>
+                                  ) : day.isWeekend ? (
+                                    <span className="text-[10px] font-medium text-gray-500">Folga</span>
+                                  ) : (
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 inline-flex items-center gap-1">
+                                      <Circle size={8} /> Sem Registro
                                     </span>
                                   )}
-                                </div>
-                              </td>
-                              <td className="py-4 px-2 font-mono">{formatToBrasiliaTime(log.startTime, 'HH:mm:ss')}</td>
-                              <td className="py-4 px-2 font-mono">
-                                {log.endTime ? formatToBrasiliaTime(log.endTime, 'HH:mm:ss') : <span className="text-emerald-500 font-bold">Ativo</span>}
-                              </td>
-                              <td className="py-4 px-2">
-                                {log.pauses.length > 0 ? (
-                                  <div className="flex flex-wrap gap-1.5 font-mono">
-                                    {log.pauses.map((p, idx) => (
-                                      <span key={idx} className="text-[10px] px-2 py-0.5 rounded-lg bg-white/5 border border-white/10 text-gray-400 flex items-center gap-1 font-mono">
-                                        {p.type === 'lunch' ? '🍱 Almoço' : p.type === 'meeting' ? '👥 Reunião' : '🕒 Ausente'}:{' '}
-                                        {formatToBrasiliaTime(p.startTime, 'HH:mm')} - {p.endTime ? formatToBrasiliaTime(p.endTime, 'HH:mm') : '...'}
-                                      </span>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <span className="text-xs text-gray-500 italic">Sem intervalos</span>
-                                )}
-                              </td>
-                              <td className="py-4 px-2 font-mono font-bold text-primary-500">
-                                {formatDuration(log.totalDuration || calculateNetDuration(log.startTime, log.endTime, log.pauses))}
-                              </td>
-                              {(isAdmin || isManagement) && (
-                                <td className="py-4 px-2 text-right">
-                                  <button
-                                    onClick={() => handleOpenEditLog(log)}
-                                    className="p-2 hover:bg-white/10 rounded-xl transition-all text-primary-500 cursor-pointer inline-flex items-center justify-center"
-                                    title="Editar Ponto do Colaborador"
-                                  >
-                                    <Pencil size={14} />
-                                  </button>
                                 </td>
-                              )}
-                            </tr>
-                          ))}
-                          {myMonthlyLogs.length === 0 && (
+
+                                {/* Hora Entrada */}
+                                <td className="py-3 px-2 font-mono text-xs">
+                                  {day.log?.startTime ? (
+                                    formatToBrasiliaTime(day.log.startTime, 'HH:mm:ss')
+                                  ) : (
+                                    <span className="text-gray-600">--:--:--</span>
+                                  )}
+                                </td>
+
+                                {/* Hora Saída */}
+                                <td className="py-3 px-2 font-mono text-xs">
+                                  {day.log?.endTime ? (
+                                    formatToBrasiliaTime(day.log.endTime, 'HH:mm:ss')
+                                  ) : day.log?.startTime ? (
+                                    <span className="text-amber-400 font-bold">Em Aberto</span>
+                                  ) : (
+                                    <span className="text-gray-600">--:--:--</span>
+                                  )}
+                                </td>
+
+                                {/* Pausas e Intervalos */}
+                                <td className="py-3 px-2">
+                                  {day.log?.pauses && day.log.pauses.length > 0 ? (
+                                    <div className="flex flex-wrap gap-1 font-mono text-[10px]">
+                                      {day.log.pauses.map((p, idx) => (
+                                        <span key={idx} className="px-2 py-0.5 rounded-lg bg-white/5 border border-white/10 text-gray-400 flex items-center gap-1">
+                                          {p.type === 'lunch' ? '🍱 Almoço' : p.type === 'meeting' ? '👥 Reunião' : '🕒 Pausa'}:{' '}
+                                          {formatToBrasiliaTime(p.startTime, 'HH:mm')} - {p.endTime ? formatToBrasiliaTime(p.endTime, 'HH:mm') : '...'}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <span className="text-[11px] text-gray-600 italic">Sem intervalos</span>
+                                  )}
+                                </td>
+
+                                {/* Total Líquido */}
+                                <td className="py-3 px-2 font-mono font-bold text-primary-400 text-xs">
+                                  {day.log ? (
+                                    formatDuration(day.log.totalDuration || calculateNetDuration(day.log.startTime, day.log.endTime, day.log.pauses))
+                                  ) : (
+                                    <span className="text-gray-600 font-normal">00h 00m 00s</span>
+                                  )}
+                                </td>
+
+                                {/* Ações */}
+                                {(isAdmin || isManagement || isOwnProfile) && (
+                                  <td className="py-3 px-2 text-right">
+                                    {!day.isFuture && (
+                                      <button
+                                        onClick={() => {
+                                          if (day.log) {
+                                            handleOpenEditLog(day.log);
+                                          } else {
+                                            // Criar novo ponto para o dia faltante
+                                            const [yr, mo, dy] = day.date.split('-').map(Number);
+                                            const defaultStart = new Date(yr, mo - 1, dy, 9, 0, 0, 0).getTime();
+                                            const defaultEnd = new Date(yr, mo - 1, dy, 18, 0, 0, 0).getTime();
+                                            
+                                            setEditingTimeLog({
+                                              id: `${day.date}_${uid}`,
+                                              userId: uid!,
+                                              userName: profile?.name || currentUserProfile?.displayName || 'Colaborador',
+                                              userPhoto: profile?.photoURL || currentUserProfile?.photoURL || '',
+                                              date: day.date,
+                                              startTime: defaultStart,
+                                              endTime: defaultEnd,
+                                              status: 'completed',
+                                              pauses: [],
+                                              totalDuration: calculateNetDuration(defaultStart, defaultEnd, []),
+                                              updatedAt: Date.now()
+                                            });
+                                            setEditDate(day.date);
+                                            setEditStartTime('09:00');
+                                            setEditEndTime('18:00');
+                                          }
+                                        }}
+                                        className="p-1.5 hover:bg-white/10 rounded-xl transition-all text-primary-400 hover:text-white cursor-pointer inline-flex items-center justify-center"
+                                        title={day.log ? "Editar Horários deste Dia" : "Preencher Ponto deste Dia"}
+                                      >
+                                        <Pencil size={14} />
+                                      </button>
+                                    )}
+                                  </td>
+                                )}
+                              </tr>
+                            );
+                          })}
+
+                          {displayedDays.length === 0 && (
                             <tr>
-                              <td colSpan={(isAdmin || isManagement) ? 6 : 5} className="py-12 text-center opacity-30 italic text-sm">
-                                Nenhum registro de expediente encontrado para este período.
+                              <td colSpan={(isAdmin || isManagement || isOwnProfile) ? 8 : 7} className="py-12 text-center opacity-30 italic text-sm">
+                                Nenhum registro encontrado para este período.
                               </td>
                             </tr>
                           )}
@@ -2930,6 +3305,134 @@ export default function ProfileView() {
                     >
                       Salvar Alterações
                     </SaveButton>
+                 </form>
+              </div>
+           </div>
+        )}
+
+        {/* Modal de Ajuste de Ponto em Lote (Multi-dias) */}
+        {showBatchModal && (
+           <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[100] flex items-center justify-center p-4" onClick={() => setShowBatchModal(false)}>
+              <div className="bg-[#090e1c] border border-white/15 rounded-[2.5rem] w-full max-w-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                 <div className="p-7 border-b border-white/10 flex justify-between items-center shrink-0 text-left bg-gradient-to-r from-primary-950/40 to-transparent">
+                    <div>
+                       <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                          <Zap className="text-amber-400 w-5 h-5 fill-amber-400" />
+                          Ajuste de Ponto em Lote
+                       </h3>
+                       <p className="text-xs text-gray-400 mt-0.5">
+                          Preencha os horários que serão aplicados aos <strong>{selectedDates.length} dias</strong> selecionados
+                       </p>
+                    </div>
+                    <button onClick={() => setShowBatchModal(false)} className="p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors">
+                       <X />
+                    </button>
+                 </div>
+
+                 <form onSubmit={e => { e.preventDefault(); handleSaveBatchLogs(); }} className="p-7 space-y-5 overflow-y-auto custom-scrollbar flex-1 text-left">
+                    
+                    {/* Lista de Dias Selecionados em formato de Badges */}
+                    <div className="space-y-2">
+                       <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">
+                          Dias Selecionados ({selectedDates.length})
+                       </label>
+                       <div className="p-3 bg-white/[0.02] border border-white/10 rounded-2xl max-h-24 overflow-y-auto custom-scrollbar flex flex-wrap gap-1.5">
+                          {selectedDates.map(dateStr => (
+                             <span key={dateStr} className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-lg bg-primary-500/10 text-primary-400 border border-primary-500/20">
+                                {formatLocalDateStr(dateStr)}
+                             </span>
+                          ))}
+                       </div>
+                    </div>
+
+                    {/* Horários de Entrada e Saída */}
+                    <div className="grid grid-cols-2 gap-4">
+                       <div className="space-y-2">
+                          <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Hora Entrada Padrão</label>
+                          <input 
+                            type="time" 
+                            required 
+                            className="w-full bg-white/5 border border-white/10 p-3.5 rounded-2xl focus:outline-none focus:border-primary-500 transition-all font-mono font-bold text-white text-sm" 
+                            value={batchStartTime} 
+                            onChange={e => setBatchStartTime(e.target.value)} 
+                          />
+                       </div>
+
+                       <div className="space-y-2">
+                          <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Hora Saída Padrão</label>
+                          <input 
+                            type="time" 
+                            required 
+                            className="w-full bg-white/5 border border-white/10 p-3.5 rounded-2xl focus:outline-none focus:border-primary-500 transition-all font-mono font-bold text-white text-sm" 
+                            value={batchEndTime} 
+                            onChange={e => setBatchEndTime(e.target.value)} 
+                          />
+                       </div>
+                    </div>
+
+                    {/* Intervalo de Almoço */}
+                    <div className="p-4 bg-white/[0.02] border border-white/10 rounded-2xl space-y-3">
+                       <div className="flex items-center justify-between">
+                          <label className="text-xs font-bold text-white flex items-center gap-2 cursor-pointer">
+                             <input 
+                               type="checkbox"
+                               checked={batchIncludeLunch}
+                               onChange={e => setBatchIncludeLunch(e.target.checked)}
+                               className="w-4 h-4 rounded text-primary-500 accent-primary-500 cursor-pointer"
+                             />
+                             <span>Incluir Intervalo de Almoço (1h)</span>
+                          </label>
+                          <span className="text-[10px] text-gray-400 font-mono">Dedução líquida</span>
+                       </div>
+
+                       {batchIncludeLunch && (
+                          <div className="grid grid-cols-2 gap-3 pt-2 border-t border-white/5 animate-in fade-in">
+                             <div>
+                                <span className="text-[10px] text-gray-400 uppercase font-bold pl-1 block mb-1">Início Almoço</span>
+                                <input 
+                                  type="time" 
+                                  value={batchLunchStart} 
+                                  onChange={e => setBatchLunchStart(e.target.value)} 
+                                  className="w-full bg-black/40 border border-white/10 p-2.5 rounded-xl font-mono text-xs text-white focus:outline-none focus:border-primary-500"
+                                />
+                             </div>
+                             <div>
+                                <span className="text-[10px] text-gray-400 uppercase font-bold pl-1 block mb-1">Fim Almoço</span>
+                                <input 
+                                  type="time" 
+                                  value={batchLunchEnd} 
+                                  onChange={e => setBatchLunchEnd(e.target.value)} 
+                                  className="w-full bg-black/40 border border-white/10 p-2.5 rounded-xl font-mono text-xs text-white focus:outline-none focus:border-primary-500"
+                                />
+                             </div>
+                          </div>
+                       )}
+                    </div>
+
+                    {/* Aviso de Auditoria */}
+                    <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-left">
+                       <p className="text-[11px] text-amber-400 leading-relaxed">
+                          Todos os <strong>{selectedDates.length} dias</strong> serão gravados com status <strong>"Concluído"</strong> e auditados no sistema com seu ID de usuário.
+                       </p>
+                    </div>
+
+                    <button 
+                      type="submit"
+                      disabled={isSavingBatch}
+                      className="w-full py-4 bg-primary-500 hover:bg-primary-600 disabled:opacity-50 text-white font-black uppercase tracking-wider rounded-2xl transition-all shadow-xl shadow-primary-500/20 text-xs flex items-center justify-center gap-2"
+                    >
+                      {isSavingBatch ? (
+                         <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Gravando registros...</span>
+                         </>
+                      ) : (
+                         <>
+                            <Check className="w-4 h-4" />
+                            <span>Aplicar para {selectedDates.length} Dias</span>
+                         </>
+                      )}
+                    </button>
                  </form>
               </div>
            </div>

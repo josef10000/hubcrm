@@ -209,6 +209,19 @@ export function Header({ currentPath, navigate }: HeaderProps) {
                     await store.reopenExpediente();
                   }
                 }
+              } else if (log.status === 'paused') {
+                const confirmed = await customConfirm({
+                  title: 'Retomar ou Encerrar Expediente',
+                  message: 'Seu expediente está em pausa/intervalo. Deseja retomar as atividades ou encerrar o dia de hoje?',
+                  confirmText: 'Retomar Expediente',
+                  cancelText: 'Encerrar o Dia',
+                  variant: 'info'
+                });
+                if (confirmed) {
+                  await store.resumeExpediente();
+                } else {
+                  await store.endExpediente();
+                }
               } else {
                 const confirmed = await customConfirm({
                   title: 'Encerrar Expediente',
@@ -222,30 +235,40 @@ export function Header({ currentPath, navigate }: HeaderProps) {
                 }
               }
             }}
-            className={`p-2.5 border rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0 flex items-center justify-center gap-1.5 ${
+            className={`px-3 py-2 border rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0 flex items-center justify-center gap-2 text-xs font-bold ${
               !store.todayLog
-                ? 'bg-gray-100 dark:bg-white/5 border-gray-200 dark:border-white/10 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
+                ? 'bg-primary-500/10 border-primary-500/30 text-primary-400 hover:bg-primary-500/20 shadow-sm shadow-primary-500/10'
                 : store.todayLog.status === 'active'
-                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/20'
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 shadow-sm shadow-emerald-500/10'
                 : store.todayLog.status === 'paused'
-                ? 'bg-amber-500/10 border-amber-500/30 text-amber-500 hover:bg-amber-500/20'
-                : 'bg-rose-500/10 border-rose-500/30 text-rose-500 hover:bg-rose-500/20'
+                ? 'bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20 shadow-sm shadow-amber-500/10'
+                : 'bg-rose-500/10 border-rose-500/30 text-rose-400 hover:bg-rose-500/20'
             }`}
             title={
               !store.todayLog
-                ? 'Iniciar Expediente (Entrada)'
+                ? 'Clique para Iniciar seu Expediente (Bater Entrada)'
                 : store.todayLog.status === 'active'
-                ? 'Expediente Ativo (Clique para encerrar)'
+                ? 'Expediente Ativo (Clique para pausar ou encerrar)'
                 : store.todayLog.status === 'paused'
-                ? 'Expediente em Intervalo (Clique para encerrar)'
+                ? 'Expediente em Intervalo (Clique para retomar ou encerrar)'
                 : `Expediente Concluído Hoje (Clique para reabrir como ${hasPermission('MANAGE_SETTINGS') ? 'PJ' : (userProfile?.contractType || 'PJ')})`
             }
           >
-            <Clock size={16} />
-            {store.todayLog && store.todayLog.status !== 'completed' && (
-              <span className={`w-1.5 h-1.5 rounded-full ${
-                store.todayLog.status === 'active' ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
-              }`} />
+            <Clock size={15} />
+            {!store.todayLog ? (
+              <span className="hidden sm:inline">Iniciar Expediente</span>
+            ) : store.todayLog.status === 'active' ? (
+              <div className="flex items-center gap-1.5 font-mono">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="hidden sm:inline">Ativo</span>
+              </div>
+            ) : store.todayLog.status === 'paused' ? (
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-amber-400" />
+                <span className="hidden sm:inline">Pausa</span>
+              </div>
+            ) : (
+              <span className="hidden sm:inline">Encerrado</span>
             )}
           </button>
         )}
