@@ -781,7 +781,7 @@ export default function FunnelArchitectEditorView() {
       conversionRate: blockMeta.defaultConversionRate || 10,
       status: 'idea',
       noteColor: 'yellow',
-      checklist: blockMeta.checklist.map((task, i) => ({
+      checklist: (blockMeta.checklist || []).map((task, i) => ({
         id: `chk-${Date.now()}-${i}`,
         text: task,
         done: false
