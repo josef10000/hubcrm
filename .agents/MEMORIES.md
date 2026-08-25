@@ -434,4 +434,7 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
     - Sanitização recursiva profunda de campos `undefined` em nós, conexões e molduras para prevenir exceções do Firestore SDK.
     - Gravação com `setDoc(docRef, updateData, { merge: true })` para resiliência de escrita.
     - Regra explícita `match /funnels/{funnelId}` com permissão `allow read, write: if isOwnerEmail() || belongsToOrg(orgId);`.
+  - **Estabilidade & Performance de Arraste (`FunnelArchitectEditorView.tsx`)**:
+    - Blindagem de `Number(offer.price || 0).toFixed(2)` e `Number(node.price || 0).toFixed(2)` evitando quebras de `ErrorBoundary`.
+    - Desacoplamento de listeners de mouse com `funnelRef` eliminando re-attachments constantes durante o arraste a 60fps.
 

@@ -190,6 +190,10 @@ export default function FunnelArchitectEditorView() {
   const [isSimulationActive, setIsSimulationActive] = useState(true);
 
   const canvasRef = useRef<HTMLDivElement>(null);
+  const funnelRef = useRef<FunnelBlueprint | null>(null);
+  useEffect(() => {
+    funnelRef.current = funnel;
+  }, [funnel]);
 
   // O nó selecionado principal (para o inspetor lateral)
   const selectedNodeId = selectedNodeIds.length === 1 ? selectedNodeIds[0] : null;
@@ -336,7 +340,7 @@ export default function FunnelArchitectEditorView() {
     }
   };
 
-  // Listener global de mouse para movimentação, seleção em área e arraste a 60fps
+  // Listener global de mouse para movimentação, seleção em área e arraste a 60fps fluido
   useEffect(() => {
     if (!isDraggingGroup && !isDraggingCanvas && !draggingFrameId && !resizingFrameId && !isSelectingArea) return;
 
@@ -356,8 +360,9 @@ export default function FunnelArchitectEditorView() {
           const minY = Math.min(selectionBox.startY, canvasY);
           const maxY = Math.max(selectionBox.startY, canvasY);
 
-          if (funnel) {
-            const boxedIds = funnel.nodes.filter(n => {
+          const currentFunnel = funnelRef.current;
+          if (currentFunnel) {
+            const boxedIds = currentFunnel.nodes.filter(n => {
               const w = n.subType === 'sticky_note' ? 256 : (n.subType === 'icp_persona' ? 240 : 224);
               const h = n.subType === 'sticky_note' ? 200 : 100;
               return n.x + w >= minX && n.x <= maxX && n.y + h >= minY && n.y <= maxY;
@@ -432,7 +437,7 @@ export default function FunnelArchitectEditorView() {
       window.removeEventListener('mousemove', handleWindowMouseMove);
       window.removeEventListener('mouseup', handleWindowMouseUp);
     };
-  }, [isDraggingGroup, isDraggingCanvas, draggingFrameId, resizingFrameId, isSelectingArea, selectionBox, dragStart, pan, zoom, draggingGroupOffsets, frameDragOffset, frameResizeStart, funnel]);
+  }, [isDraggingGroup, isDraggingCanvas, draggingFrameId, resizingFrameId, isSelectingArea, selectionBox, dragStart, pan, zoom, draggingGroupOffsets, frameDragOffset, frameResizeStart]);
 
   // ── 🔲 GESTÃO DE MOLDURAS / ÁREAS VISUAIS FLEXÍVEIS ──────────────────────
   const handleAddFrame = () => {
@@ -1690,9 +1695,9 @@ export default function FunnelArchitectEditorView() {
 
                     {/* Preço ou Conversão */}
                     <div className="flex items-center justify-between text-[11px] pt-1 border-t border-white/5">
-                      {node.type === 'offer' && node.price !== undefined ? (
+                      {node.type === 'offer' ? (
                         <span className="font-black text-emerald-400">
-                          R$ {node.price.toFixed(2)}
+                          R$ {Number(node.price || 0).toFixed(2)}
                         </span>
                       ) : (
                         <span className="text-gray-400 font-medium">
@@ -1953,7 +1958,7 @@ export default function FunnelArchitectEditorView() {
                               <option value="">Produto Customizado (Preço Manual)</option>
                               {offers.map(offer => (
                                 <option key={offer.id} value={offer.id}>
-                                  {offer.name} - R$ {offer.price.toFixed(2)}
+                                  {offer.name} - R$ {Number(offer.price || 0).toFixed(2)}
                                 </option>
                               ))}
                             </select>
