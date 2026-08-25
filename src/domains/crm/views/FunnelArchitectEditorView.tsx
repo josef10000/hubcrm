@@ -8,7 +8,9 @@ import {
   Pin, Video, Instagram, PlaySquare, Search, MessageCircle,
   Magnet, FileText, CreditCard, Gift, Package, Zap, Repeat,
   Crown, Mail, Send, Check, X, ExternalLink, Sliders, Tv,
-  ShoppingBag, Globe, Pencil
+  ShoppingBag, Globe, Pencil,
+  Calendar, PhoneCall, Briefcase, FileSignature, Receipt, Rocket, LifeBuoy,
+  Star, RefreshCcw, Clock, GitBranch, Smartphone, Mic, UserCheck, GraduationCap, Inbox
 } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
@@ -434,7 +436,9 @@ export default function FunnelArchitectEditorView() {
       Pin, Video, Instagram, PlaySquare, Search, MessageCircle,
       Magnet, FileText, CreditCard, Gift, Package, Zap, Repeat,
       Crown, Mail, Send, RefreshCw, Play, Tv, HelpCircle, Sparkles, CheckCircle2,
-      ShoppingBag, Globe
+      ShoppingBag, Globe, Pencil,
+      Calendar, PhoneCall, Briefcase, FileSignature, Receipt, Rocket, LifeBuoy,
+      Star, RefreshCcw, Clock, GitBranch, Smartphone, Mic, UserCheck, GraduationCap, Inbox
     };
     const IconComp = icons[iconName] || Layers;
     return <IconComp size={size} />;
@@ -602,11 +606,14 @@ export default function FunnelArchitectEditorView() {
             {(() => {
               const query = blockSearchQuery.trim().toLowerCase();
               const categories = [
-                { id: 'traffic', title: '🌐 Linhas de Tráfego', subTypes: ['pinterest', 'tiktok', 'instagram', 'youtube', 'google_seo', 'whatsapp'] },
-                { id: 'page', title: '📄 Páginas & Etapas', subTypes: ['blog_site', 'quiz_page', 'quiz_vsl_page', 'capture_page', 'vsl_page', 'sales_page', 'static_page', 'webinar_page', 'checkout', 'thank_you_page'] },
+                { id: 'traffic', title: '🌐 Linhas de Tráfego & Atração', subTypes: ['pinterest', 'tiktok', 'instagram', 'youtube', 'google_seo', 'whatsapp'] },
+                { id: 'page', title: '📄 Páginas & Etapas Web', subTypes: ['blog_site', 'quiz_page', 'quiz_vsl_page', 'capture_page', 'vsl_page', 'sales_page', 'static_page', 'webinar_page', 'checkout', 'thank_you_page'] },
                 { id: 'offer', title: '💰 Monetização & Ofertas Próprias', subTypes: ['lead_magnet', 'front_end', 'order_bump', 'upsell', 'downsell', 'subscription', 'high_ticket'] },
                 { id: 'affiliate', title: '🛒 Afiliação & Lojas Parceiras', subTypes: ['affiliate_amazon', 'affiliate_shopee', 'affiliate_mercadolivre', 'affiliate_product'] },
-                { id: 'automation', title: '🤖 Automações & Régua', subTypes: ['email_seq', 'whatsapp_auto', 'remarketing'] }
+                { id: 'automation', title: '🤖 E-mail & Automações Multicanal', subTypes: ['email_seq', 'email_broadcast', 'delay_timer', 'condition_branch', 'whatsapp_auto', 'sms_transactional', 'voice_bot', 'remarketing'] },
+                { id: 'b2b', title: '🏢 Vendas B2B & Negociação Corporativa', subTypes: ['b2b_meeting', 'b2b_qualification', 'b2b_proposal', 'contract_signing', 'corporate_invoice'] },
+                { id: 'cs', title: '⚙️ Pós-Venda, Sucesso do Cliente (CS) & Retenção', subTypes: ['client_onboarding', 'support_ticket', 'nps_survey', 'contract_renewal'] },
+                { id: 'hr', title: '👥 RH & Processos Internos', subTypes: ['hr_recruitment', 'team_training'] }
               ];
 
               const filteredCategories = categories.map(cat => {

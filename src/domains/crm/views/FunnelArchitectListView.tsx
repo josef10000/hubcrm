@@ -189,11 +189,11 @@ export default function FunnelArchitectListView() {
                 <GitFork className="w-6 h-6" />
               </div>
               <h1 className="text-2xl lg:text-3xl font-black text-white tracking-tight">
-                Arquiteto de Funis & Ecossistema
+                Funis & Orquestração de Processos
               </h1>
             </div>
-            <p className="text-sm text-gray-400 max-w-2xl">
-              Desenhe, simule e conecte todo o seu fluxo de tráfego orgânico/pago, páginas, order bumps, assinaturas e esteira de produtos em um quadro infinito com métricas reais.
+            <p className="text-sm text-gray-400 max-w-3xl">
+              Desenhe, simule e orquestre todo o seu ecossistema de vendas, réguas de e-mail, processos B2B corporativos, esteiras de pós-venda e operações em um quadro infinito com métricas reais.
             </p>
           </div>
 
@@ -222,7 +222,7 @@ export default function FunnelArchitectListView() {
             <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Buscar funil por nome..."
+              placeholder="Buscar por nome..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-black/40 border border-white/10 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition-colors"
@@ -231,8 +231,10 @@ export default function FunnelArchitectListView() {
 
           <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
             {[
-              { id: 'all', label: 'Todos os Funis' },
+              { id: 'all', label: 'Todos os Fluxos' },
               { id: 'perpetual', label: 'Perpétuo' },
+              { id: 'b2b', label: 'Vendas B2B' },
+              { id: 'cs', label: 'Pós-Venda CS' },
               { id: 'organic', label: 'Orgânico' },
               { id: 'launch', label: 'Lançamento' },
               { id: 'high_ticket', label: 'High-Ticket' }
@@ -382,10 +384,10 @@ export default function FunnelArchitectListView() {
                 <div>
                   <h3 className="text-xl font-black text-white flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-amber-400" />
-                    Galeria de Templates de Funil & Ecossistema
+                    Galeria de Templates de Funis & Orquestração
                   </h3>
                   <p className="text-xs text-gray-400">
-                    Escolha um modelo validado do mercado para clonar instantaneamente no seu quadro.
+                    Escolha um modelo validado de vendas B2C/B2B ou processos empresariais para clonar no seu quadro.
                   </p>
                 </div>
                 <button

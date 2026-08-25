@@ -24,7 +24,7 @@ export const navGroups = [
       { icon: Package, label: 'Produtos', path: '/products' },
       { icon: Target, label: 'Perfis ICP', path: '/icp' },
       { icon: FlaskConical, label: 'Laboratório de Ofertas', path: '/offers' },
-      { icon: GitFork, label: 'Funis & Ecossistema', path: '/funnels' },
+      { icon: GitFork, label: 'Funis & Orquestração', path: '/funnels' },
       { icon: Users, label: 'Hub Rewards', path: '/referrals' },
       { icon: Rocket, label: 'Hub de Crescimento', path: '/growth-hub', permission: 'MANAGE_CLIENTS' },
     ]

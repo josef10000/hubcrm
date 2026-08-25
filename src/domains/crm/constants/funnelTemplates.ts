@@ -648,6 +648,335 @@ export const FUNNEL_BLOCK_CATALOG: BlockMeta[] = [
       ],
       actionItems: ['Criar público personalizado no Gerenciador de Anúncios', 'Subir 2 criativos de prova social', 'Configurar exclusão de compradores']
     }
+  },
+  {
+    type: 'automation',
+    subType: 'email_broadcast',
+    name: 'E-mail Único / Broadcast',
+    categoryLabel: 'E-mail & Multicanal',
+    iconName: 'Inbox',
+    badgeColor: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
+    bgGradient: 'from-blue-500/20 to-sky-700/10',
+    defaultConversion: 5.0,
+    strategicGuide: {
+      title: 'Disparo de E-mail Único / Comunicado',
+      description: 'Envio pontual para toda a base ou lista segmentada com novidades, avisos ou ofertas relâmpago.',
+      goldenRules: [
+        'Assunto com alta taxa de abertura e sem palavras que ativem filtro de spam.',
+        'Um único objetivo e CTA bem definido no corpo do texto.',
+        'Segmentar por engajamento dos últimos 30 a 90 dias.'
+      ],
+      actionItems: ['Escrever assunto com pré-header', 'Testar links do corpo', 'Filtrar segmento ativo']
+    }
+  },
+  {
+    type: 'automation',
+    subType: 'delay_timer',
+    name: 'Delay / Temporizador de Espera',
+    categoryLabel: 'E-mail & Multicanal',
+    iconName: 'Clock',
+    badgeColor: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+    bgGradient: 'from-amber-500/20 to-yellow-700/10',
+    defaultConversion: 100.0,
+    strategicGuide: {
+      title: 'Controle de Tempo e Cadência no Fluxo',
+      description: 'Pausa a execução do fluxo por horas ou dias para respeitar o tempo de decisão do lead.',
+      goldenRules: [
+        'Dê espaço entre mensagens para não saturar o lead (1 a 3 dias entre e-mails).',
+        'Para WhatsApp, use pausas curtas (15 a 45 minutos) na recuperação de carrinho.',
+        'Evite disparos automáticos de madrugada (programe para horário comercial).'
+      ],
+      actionItems: ['Definir tempo de espera (dias/horas)', 'Ajustar janela de horário comercial', 'Conectar ao próximo nó']
+    }
+  },
+  {
+    type: 'automation',
+    subType: 'condition_branch',
+    name: 'Condicional / Decisão (Se/Então)',
+    categoryLabel: 'E-mail & Multicanal',
+    iconName: 'GitBranch',
+    badgeColor: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
+    bgGradient: 'from-indigo-500/20 to-violet-700/10',
+    defaultConversion: 50.0,
+    strategicGuide: {
+      title: 'Ramificação Inteligente por Comportamento',
+      description: 'Divide o fluxo em dois caminhos (Sim/Não) com base em ações do contato (abertura, clique, compra).',
+      goldenRules: [
+        'Exemplo 1: Se clicou na proposta ➡️ Notificar vendedor / Enviar WhatsApp.',
+        'Exemplo 2: Se não abriu o e-mail em 24h ➡️ Reenviar com novo assunto.',
+        'Evite condicionais em cascata muito complexas para manter a clareza.'
+      ],
+      actionItems: ['Definir critério de decisão', 'Conectar caminho positivo', 'Conectar caminho de fallback']
+    }
+  },
+  {
+    type: 'automation',
+    subType: 'sms_transactional',
+    name: 'SMS Transacional / Cobrança',
+    categoryLabel: 'E-mail & Multicanal',
+    iconName: 'Smartphone',
+    badgeColor: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30',
+    bgGradient: 'from-cyan-500/20 to-teal-700/10',
+    defaultConversion: 14.0,
+    strategicGuide: {
+      title: 'Disparo de SMS de Alta Urgência',
+      description: 'Mensagem de texto curta de até 160 caracteres com taxa de entrega instantânea no celular.',
+      goldenRules: [
+        'Ideal para códigos 2FA, aviso de Pix gerado e lembretes no dia do vencimento.',
+        'Use links curtos personalizados com UTMs de rastreio.',
+        'Identifique o nome da sua empresa no início da mensagem.'
+      ],
+      actionItems: ['Escrever texto de até 160 caracteres', 'Encurtar link de pagamento', 'Testar envio no celular']
+    }
+  },
+  {
+    type: 'automation',
+    subType: 'voice_bot',
+    name: 'Robô de Voz / Ligação Automatizada',
+    categoryLabel: 'E-mail & Multicanal',
+    iconName: 'Mic',
+    badgeColor: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
+    bgGradient: 'from-purple-500/20 to-fuchsia-700/10',
+    defaultConversion: 22.0,
+    strategicGuide: {
+      title: 'Confirmação e Cobrança por Voz',
+      description: 'Ligação telefônica automática com gravação profissional para confirmar presenças ou resgatar vendas.',
+      goldenRules: [
+        'Mensagem de áudio clara e objetiva com menos de 30 segundos.',
+        'Ofereça opção de interação (ex: "Disque 1 para confirmar sua presença").',
+        'Dispare no momento de maior disponibilidade do cliente.'
+      ],
+      actionItems: ['Gravar áudio profissional', 'Configurar árvore de resposta DTMF', 'Testar ligação de teste']
+    }
+  },
+
+  // ── 🏢 VENDAS B2B & NEGOCIAÇÃO CORPORATIVA ────────────────
+  {
+    type: 'b2b',
+    subType: 'b2b_meeting',
+    name: 'Agendamento de Reunião (Demo / Call)',
+    categoryLabel: 'Vendas B2B & Corporativo',
+    iconName: 'Calendar',
+    badgeColor: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
+    bgGradient: 'from-indigo-500/20 to-blue-700/10',
+    defaultConversion: 35.0,
+    strategicGuide: {
+      title: 'Agendamento de Demonstração Comercial',
+      description: 'Etapa onde o lead seleciona o melhor dia e horário na agenda do executivo de contas.',
+      goldenRules: [
+        'Envie confirmação imediata por e-mail e WhatsApp com link do Google Meet.',
+        'Dispare lembretes automáticos 24h e 1h antes da reunião.',
+        'Inclua perguntas pré-call para o executivo estudar o cliente antes da call.'
+      ],
+      actionItems: ['Conectar link da agenda Calendly/Meet', 'Configurar régua de lembretes', 'Definir duração padrão (30/45 min)']
+    }
+  },
+  {
+    type: 'b2b',
+    subType: 'b2b_qualification',
+    name: 'Qualificação SDR / Diagnóstico',
+    categoryLabel: 'Vendas B2B & Corporativo',
+    iconName: 'PhoneCall',
+    badgeColor: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+    bgGradient: 'from-emerald-500/20 to-teal-700/10',
+    defaultConversion: 40.0,
+    strategicGuide: {
+      title: 'Diagnóstico & Qualificação Comercial (SDR)',
+      description: 'Ligação de 10 a 15 minutos para entender orçamento, autoridade, necessidade e timing (BANT).',
+      goldenRules: [
+        'Faça perguntas abertas sobre as dores e gargalos atuais da empresa.',
+        'Valide se a pessoa que está na call é a tomadora de decisão.',
+        'Só passe para a demo executiva os leads que atenderem ao perfil ICP.'
+      ],
+      actionItems: ['Criar roteiro de perguntas BANT', 'Definir pontuação mínima de corte', 'Configurar repasse para o Closer']
+    }
+  },
+  {
+    type: 'b2b',
+    subType: 'b2b_proposal',
+    name: 'Envio de Proposta Comercial / Orçamento',
+    categoryLabel: 'Vendas B2B & Corporativo',
+    iconName: 'Briefcase',
+    badgeColor: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+    bgGradient: 'from-amber-500/20 to-orange-700/10',
+    defaultConversion: 45.0,
+    defaultPrice: 5000,
+    strategicGuide: {
+      title: 'Apresentação e Envio de Proposta B2B',
+      description: 'Envio formal do PDF de proposta com escopo, cronograma, entregáveis e investimento.',
+      goldenRules: [
+        'Apresente a proposta ao vivo em call antes de apenas enviar o arquivo.',
+        'Coloque prazo de validade de 5 a 7 dias para ancorar a condição negociada.',
+        'Destaque o ROI esperado e cases de clientes semelhantes.'
+      ],
+      actionItems: ['Montar modelo de proposta padrão', 'Definir opções de pacotes (Tier 1 / Tier 2)', 'Configurar tracking de visualização']
+    }
+  },
+  {
+    type: 'b2b',
+    subType: 'contract_signing',
+    name: 'Assinatura Eletrônica de Contrato',
+    categoryLabel: 'Vendas B2B & Corporativo',
+    iconName: 'FileSignature',
+    badgeColor: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30',
+    bgGradient: 'from-cyan-500/20 to-blue-700/10',
+    defaultConversion: 80.0,
+    strategicGuide: {
+      title: 'Fechamento Jurídico com Assinatura Digital',
+      description: 'Etapa de envio do contrato para assinatura eletrônica com validade jurídica (DocuSign/ZapSign).',
+      goldenRules: [
+        'Envie o link de assinatura para todos os signatários e testemunhas.',
+        'Ative lembrete automático diário até a assinatura completa.',
+        'Notifique o financeiro e o time de onboarding assim que assinado.'
+      ],
+      actionItems: ['Subir minuta padrão de contrato', 'Cadastrar dados dos signatários', 'Integrar webhook de contrato assinado']
+    }
+  },
+  {
+    type: 'b2b',
+    subType: 'corporate_invoice',
+    name: 'Faturamento PJ & Nota Fiscal (NF-e)',
+    categoryLabel: 'Vendas B2B & Corporativo',
+    iconName: 'Receipt',
+    badgeColor: 'bg-green-500/10 text-green-400 border-green-500/30',
+    bgGradient: 'from-green-500/20 to-emerald-700/10',
+    defaultConversion: 95.0,
+    defaultPrice: 10000,
+    strategicGuide: {
+      title: 'Emissão de Fatura Corporativa & NF-e',
+      description: 'Geração de boleto bancário corporativo a prazo (ex: 15/30/60 dias) e emissão de nota fiscal de serviço.',
+      goldenRules: [
+        'Confira os dados cadastrais (Razão Social, CNPJ, Inscrição Estadual/Municipal).',
+        'Envie a NF-e e o boleto diretamente para o e-mail do setor financeiro do cliente.',
+        'Régua de lembrete 3 dias antes do vencimento do boleto.'
+      ],
+      actionItems: ['Coletar dados de faturamento PJ', 'Emitir NF-e na prefeitura', 'Enviar boleto e fatura detalhada']
+    }
+  },
+
+  // ── ⚙️ PÓS-VENDA, SUCESSO DO CLIENTE (CS) & RETENÇÃO ───────
+  {
+    type: 'cs',
+    subType: 'client_onboarding',
+    name: 'Onboarding de Cliente / Kick-off',
+    categoryLabel: 'Pós-Venda & Sucesso (CS)',
+    iconName: 'Rocket',
+    badgeColor: 'bg-violet-500/10 text-violet-400 border-violet-500/30',
+    bgGradient: 'from-violet-500/20 to-purple-700/10',
+    defaultConversion: 90.0,
+    strategicGuide: {
+      title: 'Boas-Vindas & Alinhamento Inicial (Kick-off)',
+      description: 'Reunião com o gestor de contas para entrega de acessos, alinhamento de metas e cronograma de implementação.',
+      goldenRules: [
+        'Realize o kick-off nos primeiros 5 dias após a assinatura do contrato.',
+        'Entregue um checklist claro de primeiras tarefas para o cliente.',
+        'Estabeleça os canais de comunicação direta (Slack, WhatsApp VIP ou HubChat).'
+      ],
+      actionItems: ['Agendar reunião de kick-off', 'Liberar acessos e credenciais', 'Criar grupo de comunicação dedicado']
+    }
+  },
+  {
+    type: 'cs',
+    subType: 'support_ticket',
+    name: 'Abertura de Chamado / Helpdesk',
+    categoryLabel: 'Pós-Venda & Sucesso (CS)',
+    iconName: 'LifeBuoy',
+    badgeColor: 'bg-rose-500/10 text-rose-400 border-rose-500/30',
+    bgGradient: 'from-rose-500/20 to-pink-700/10',
+    defaultConversion: 100.0,
+    strategicGuide: {
+      title: 'Atendimento & Resolução de Dúvidas',
+      description: 'Centralização de solicitações técnicas ou operacionais do cliente com controle de SLA e prioridade.',
+      goldenRules: [
+        'Responda à primeira mensagem em menos de 15 minutos em horário útil.',
+        'Classifique a criticidade (Baixa, Média, Alta, Urgente).',
+        'Mantenha o cliente atualizado em cada etapa da resolução.'
+      ],
+      actionItems: ['Definir SLA de atendimento', 'Criar categorias de chamados', 'Treinar equipe de suporte']
+    }
+  },
+  {
+    type: 'cs',
+    subType: 'nps_survey',
+    name: 'Pesquisa de Satisfação NPS (0 a 10)',
+    categoryLabel: 'Pós-Venda & Sucesso (CS)',
+    iconName: 'Star',
+    badgeColor: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+    bgGradient: 'from-amber-500/20 to-yellow-700/10',
+    defaultConversion: 45.0,
+    strategicGuide: {
+      title: 'Medição Contínua de Satisfação (NPS)',
+      description: 'Disparo da pergunta padrão: "Em uma escala de 0 a 10, o quanto você recomendaria nossa empresa para um colega?".',
+      goldenRules: [
+        'Dispare aos 30 dias de uso e depois a cada trimestre.',
+        'Clientes Promotores (9-10): Peça depoimento ou indicação no Hub Rewards.',
+        'Clientes Detratores (0-6): Ligue imediatamente para entender e reverter a insatisfação.'
+      ],
+      actionItems: ['Configurar formulário de 1 clique', 'Automatizar alerta para notas menores que 7', 'Conectar promotores ao programa de indicações']
+    }
+  },
+  {
+    type: 'cs',
+    subType: 'contract_renewal',
+    name: 'Renovação de Contrato / Up-Sell',
+    categoryLabel: 'Pós-Venda & Sucesso (CS)',
+    iconName: 'RefreshCcw',
+    badgeColor: 'bg-teal-500/10 text-teal-400 border-teal-500/30',
+    bgGradient: 'from-teal-500/20 to-emerald-700/10',
+    defaultConversion: 75.0,
+    defaultPrice: 12000,
+    strategicGuide: {
+      title: 'Renovação Anual & Expansão de Contrato (Up-Sell)',
+      description: 'Etapa de apresentação dos resultados alcançados no período para renovação ou upgrade de plano.',
+      goldenRules: [
+        'Inicie as conversas de renovação 45 a 60 dias antes do término do contrato.',
+        'Apresente um relatório consolidado com o valor gerado (ROI e metas batidas).',
+        'Ofereça novos módulos ou suporte premium como oportunidade de expansão.'
+      ],
+      actionItems: ['Montar relatório executivo de resultados', 'Agendar call de revisão de contas', 'Enviar aditivo de renovação']
+    }
+  },
+
+  // ── 👥 RH & PROCESSOS INTERNOS ───────────────────────────
+  {
+    type: 'hr',
+    subType: 'hr_recruitment',
+    name: 'Triagem & Recrutamento de Talentos',
+    categoryLabel: 'RH & Processos Internos',
+    iconName: 'UserCheck',
+    badgeColor: 'bg-pink-500/10 text-pink-400 border-pink-500/30',
+    bgGradient: 'from-pink-500/20 to-rose-700/10',
+    defaultConversion: 25.0,
+    strategicGuide: {
+      title: 'Funil de Atração & Seleção de Candidatos',
+      description: 'Etapa de divulgação de vagas, recebimento de currículos e triagem dos melhores perfis.',
+      goldenRules: [
+        'Descrição da vaga clara com requisitos indispensáveis e diferenciais.',
+        'Formulário com perguntas de teste prático antes da primeira entrevista.',
+        'Feedback transparente para todos os candidatos em cada fase.'
+      ],
+      actionItems: ['Publicar página da vaga', 'Configurar formulário de inscrição', 'Criar scorecard de avaliação']
+    }
+  },
+  {
+    type: 'hr',
+    subType: 'team_training',
+    name: 'Treinamento & Capacitação de Equipe',
+    categoryLabel: 'RH & Processos Internos',
+    iconName: 'GraduationCap',
+    badgeColor: 'bg-sky-500/10 text-sky-400 border-sky-500/30',
+    bgGradient: 'from-sky-500/20 to-indigo-700/10',
+    defaultConversion: 85.0,
+    strategicGuide: {
+      title: 'Onboarding Interno & Treinamento de Colaboradores',
+      description: 'Trilha de vídeos, procedimentos operacionais padrão (POPs) e manuais para novos membros do time.',
+      goldenRules: [
+        'Divida o treinamento nos primeiros 15 e 30 dias com metas de aprendizagem.',
+        'Designe um padrinho/mentor na equipe para tirar dúvidas diárias.',
+        'Aplique um mini-quiz de fixação ao final de cada módulo crítico.'
+      ],
+      actionItems: ['Organizar trilha de vídeos e manuais', 'Atribuir padrinho ao novo colaborador', 'Agendar avaliação de 30 dias']
+    }
   }
 ];
 
@@ -1105,6 +1434,215 @@ export const MARKET_FUNNEL_TEMPLATES: FunnelTemplate[] = [
       { id: 'c-4-6', fromNodeId: 'node-4', toNodeId: 'node-6', style: 'solid' },
       { id: 'c-2-7', fromNodeId: 'node-2', toNodeId: 'node-7', style: 'dashed' },
       { id: 'c-7-4', fromNodeId: 'node-7', toNodeId: 'node-4', style: 'dashed' }
+    ]
+  },
+  {
+    id: 'template-b2b-enterprise-sales',
+    title: 'Orquestração Comercial B2B: Inbound ➡️ Demo ➡️ Proposta ➡️ Contrato & NF-e',
+    category: 'b2b',
+    categoryName: 'Vendas B2B & Consultivo',
+    badge: '🏢 B2B Enterprise (R$ 5.000 a R$ 50.000+)',
+    description: 'Fluxo completo de vendas corporativas: Captação Inbound, Qualificação SDR, Demo com Executivo, Envio de Proposta, Assinatura Eletrônica e Faturamento PJ.',
+    estimatedROI: 'Ticket Médio R$ 8.500 | Ciclo 14 dias',
+    nodes: [
+      {
+        id: 'b2b-1',
+        type: 'traffic',
+        subType: 'google_seo',
+        label: 'Google Ads / LinkedIn',
+        subtitle: 'Tráfego B2B Qualificado',
+        x: 50,
+        y: 200,
+        costPerClick: 3.50,
+        status: 'ready'
+      },
+      {
+        id: 'b2b-2',
+        type: 'page',
+        subType: 'capture_page',
+        label: 'Landing Page Corporativa',
+        subtitle: 'Apresentação da Solução B2B',
+        x: 350,
+        y: 200,
+        conversionRate: 18.0,
+        status: 'ready'
+      },
+      {
+        id: 'b2b-3',
+        type: 'b2b',
+        subType: 'b2b_meeting',
+        label: 'Agendamento de Call Demo',
+        subtitle: 'Booking no Calendário Meet',
+        x: 650,
+        y: 200,
+        conversionRate: 45.0,
+        status: 'ready'
+      },
+      {
+        id: 'b2b-4',
+        type: 'b2b',
+        subType: 'b2b_qualification',
+        label: 'Qualificação SDR (BANT)',
+        subtitle: 'Validação de Perfil & Orçamento',
+        x: 950,
+        y: 200,
+        conversionRate: 60.0,
+        status: 'ready'
+      },
+      {
+        id: 'b2b-5',
+        type: 'b2b',
+        subType: 'b2b_proposal',
+        label: 'Apresentação de Proposta (R$ 10k)',
+        subtitle: 'Proposta Comercial Personalizada',
+        x: 1250,
+        y: 200,
+        price: 10000,
+        conversionRate: 50.0,
+        status: 'ready'
+      },
+      {
+        id: 'b2b-6',
+        type: 'b2b',
+        subType: 'contract_signing',
+        label: 'Assinatura Digital (DocuSign)',
+        subtitle: 'Validação Jurídica de Contrato',
+        x: 1550,
+        y: 200,
+        conversionRate: 85.0,
+        status: 'ready'
+      },
+      {
+        id: 'b2b-7',
+        type: 'b2b',
+        subType: 'corporate_invoice',
+        label: 'Faturamento PJ & NF-e',
+        subtitle: 'Boleto Bancário Corporativo',
+        x: 1850,
+        y: 200,
+        price: 10000,
+        conversionRate: 98.0,
+        status: 'ready'
+      },
+      {
+        id: 'b2b-8',
+        type: 'cs',
+        subType: 'client_onboarding',
+        label: 'Onboarding & Kick-off',
+        subtitle: 'Reunião Inicial com Gestor de Contas',
+        x: 2150,
+        y: 200,
+        conversionRate: 100.0,
+        status: 'ready'
+      },
+      {
+        id: 'b2b-9',
+        type: 'automation',
+        subType: 'email_seq',
+        label: 'Régua de E-mails Educativos',
+        subtitle: 'Nutrição para Não-Qualificados',
+        x: 950,
+        y: 380,
+        conversionRate: 12.0,
+        status: 'ready'
+      }
+    ],
+    connections: [
+      { id: 'cb-1-2', fromNodeId: 'b2b-1', toNodeId: 'b2b-2', style: 'solid' },
+      { id: 'cb-2-3', fromNodeId: 'b2b-2', toNodeId: 'b2b-3', style: 'solid' },
+      { id: 'cb-3-4', fromNodeId: 'b2b-3', toNodeId: 'b2b-4', style: 'solid' },
+      { id: 'cb-4-5', fromNodeId: 'b2b-4', toNodeId: 'b2b-5', style: 'solid' },
+      { id: 'cb-5-6', fromNodeId: 'b2b-5', toNodeId: 'b2b-6', style: 'solid' },
+      { id: 'cb-6-7', fromNodeId: 'b2b-6', toNodeId: 'b2b-7', style: 'solid' },
+      { id: 'cb-7-8', fromNodeId: 'b2b-7', toNodeId: 'b2b-8', style: 'solid' },
+      { id: 'cb-4-9', fromNodeId: 'b2b-4', toNodeId: 'b2b-9', style: 'dashed' },
+      { id: 'cb-9-3', fromNodeId: 'b2b-9', toNodeId: 'b2b-3', style: 'dashed' }
+    ]
+  },
+  {
+    id: 'template-cs-retention-onboarding',
+    title: 'Esteira de Pós-Venda, Sucesso do Cliente (CS), NPS & Renovação',
+    category: 'cs',
+    categoryName: 'Pós-Venda & Sucesso do Cliente',
+    badge: '🔄 Retenção & LTV (Anti-Churn)',
+    description: 'Processo completo de pós-venda: Boas-vindas Kick-off, Atendimento Helpdesk, Pesquisa NPS aos 30 dias e Renovação Anual com Up-sell.',
+    estimatedROI: 'Redução de Churn em 40% | Expansão de LTV',
+    nodes: [
+      {
+        id: 'cs-1',
+        type: 'cs',
+        subType: 'client_onboarding',
+        label: 'Kick-off de Boas-Vindas',
+        subtitle: 'Liberação de Acessos & POPs',
+        x: 100,
+        y: 200,
+        conversionRate: 100.0,
+        status: 'ready'
+      },
+      {
+        id: 'cs-2',
+        type: 'automation',
+        subType: 'delay_timer',
+        label: 'Aguardar 30 Dias',
+        subtitle: 'Período de Maturação do Cliente',
+        x: 400,
+        y: 200,
+        conversionRate: 100.0,
+        status: 'ready'
+      },
+      {
+        id: 'cs-3',
+        type: 'cs',
+        subType: 'nps_survey',
+        label: 'Pesquisa NPS (0 a 10)',
+        subtitle: 'Diagnóstico de Satisfação',
+        x: 700,
+        y: 200,
+        conversionRate: 65.0,
+        status: 'ready'
+      },
+      {
+        id: 'cs-4',
+        type: 'automation',
+        subType: 'condition_branch',
+        label: 'Cliente Promotor? (NPS 9-10)',
+        subtitle: 'Decisão por Nota de Satisfação',
+        x: 1000,
+        y: 200,
+        conversionRate: 50.0,
+        status: 'ready'
+      },
+      {
+        id: 'cs-5',
+        type: 'cs',
+        subType: 'contract_renewal',
+        label: 'Renovação + Up-Sell (R$ 15k)',
+        subtitle: 'Expansão de Escopo & Módulos VIP',
+        x: 1350,
+        y: 100,
+        price: 15000,
+        conversionRate: 75.0,
+        status: 'ready'
+      },
+      {
+        id: 'cs-6',
+        type: 'cs',
+        subType: 'support_ticket',
+        label: 'Plano de Resgate & Suporte VIP',
+        subtitle: 'Reunião Imediata com Diretor de CS',
+        x: 1350,
+        y: 320,
+        conversionRate: 80.0,
+        status: 'ready'
+      }
+    ],
+    connections: [
+      { id: 'ccs-1-2', fromNodeId: 'cs-1', toNodeId: 'cs-2', style: 'solid' },
+      { id: 'ccs-2-3', fromNodeId: 'cs-2', toNodeId: 'cs-3', style: 'solid' },
+      { id: 'ccs-3-4', fromNodeId: 'cs-3', toNodeId: 'cs-4', style: 'solid' },
+      { id: 'ccs-4-5', fromNodeId: 'cs-4', toNodeId: 'cs-5', style: 'solid' },
+      { id: 'ccs-4-6', fromNodeId: 'cs-4', toNodeId: 'cs-6', style: 'dashed' },
+      { id: 'ccs-6-5', fromNodeId: 'cs-6', toNodeId: 'cs-5', style: 'dashed' }
     ]
   }
 ];

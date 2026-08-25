@@ -892,15 +892,15 @@ export interface OfferBlueprint {
   createdBy?: string;
 }
 
-// ── Arquiteto de Funis & Ecossistema ──────────────────────────────────────────
+// ── Funis & Orquestração de Processos ──────────────────────────────────────────
 
-export type FunnelCategory = 'perpetual' | 'launch' | 'organic' | 'high_ticket' | 'community' | 'custom';
+export type FunnelCategory = 'perpetual' | 'launch' | 'organic' | 'high_ticket' | 'community' | 'b2b' | 'cs' | 'custom';
 export type FunnelStatus = 'draft' | 'building' | 'active' | 'archived';
 
-export type FunnelNodeType = 'traffic' | 'page' | 'offer' | 'automation';
+export type FunnelNodeType = 'traffic' | 'page' | 'offer' | 'automation' | 'b2b' | 'cs' | 'hr';
 
 export type FunnelNodeSubType = 
-  // Tráfego
+  // Tráfego & Atração
   | 'pinterest' | 'tiktok' | 'instagram' | 'youtube' | 'google_seo' | 'whatsapp' | 'partners'
   // Páginas & Etapas Web
   | 'blog_site' | 'quiz_page' | 'quiz_vsl_page' | 'vsl_page' | 'sales_page' | 'capture_page' | 'static_page' | 'webinar_page' | 'advertorial' | 'checkout' | 'thank_you_page'
@@ -908,8 +908,14 @@ export type FunnelNodeSubType =
   | 'lead_magnet' | 'front_end' | 'order_bump' | 'upsell' | 'downsell' | 'subscription' | 'high_ticket'
   // Afiliação & Lojas Parceiras
   | 'affiliate_amazon' | 'affiliate_shopee' | 'affiliate_mercadolivre' | 'affiliate_product'
-  // Automações
-  | 'email_seq' | 'whatsapp_auto' | 'remarketing';
+  // E-mail & Automações Multicanal
+  | 'email_seq' | 'email_broadcast' | 'delay_timer' | 'condition_branch' | 'whatsapp_auto' | 'sms_transactional' | 'voice_bot' | 'remarketing'
+  // Vendas B2B & Negociação Corporativa
+  | 'b2b_meeting' | 'b2b_qualification' | 'b2b_proposal' | 'contract_signing' | 'corporate_invoice'
+  // Pós-Venda, Sucesso do Cliente (CS) & Retenção
+  | 'client_onboarding' | 'support_ticket' | 'nps_survey' | 'contract_renewal'
+  // RH & Processos Internos
+  | 'hr_recruitment' | 'team_training';
 
 export interface FunnelChecklistItem {
   id: string;

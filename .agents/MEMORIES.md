@@ -324,14 +324,22 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 
 ---
 
-## 23. Arquiteto de Funis & Ecossistema (Quadro Infinito & Simulador de Vendas)
-- **Data da Integração**: 24/08/2026
-- **Funcionalidade**: Módulo visual interativo no estilo Funnelytics / Miro para desenho, simulação e gerenciamento da jornada completa de vendas em um Quadro Infinito (Infinite Canvas).
+## 23. Funis & Orquestração de Processos (Quadro Infinito & Simulador Empresarial)
+- **Data da Integração**: 24/08/2026 - Atualizado em 25/08/2026
+- **Funcionalidade**: Módulo visual interativo no estilo Funnelytics / Miro para desenho, simulação e gerenciamento da jornada completa de vendas B2C/B2B, réguas de e-mail marketing, processos de vendas consultivas, pós-venda (CS) e RH em um Quadro Infinito (Infinite Canvas).
 - **Decisões Técnicas**:
   - **Estrutura Firestore**: Coleção `organizations/{orgId}/funnels`.
   - **Tipagem & Modelos (`shared/types.ts`)**:
-    - `FunnelNodeType`: `traffic`, `page`, `offer`, `automation`.
-    - `FunnelNodeSubType`: 29 subtipos especializados (Pinterest, TikTok, Instagram, YouTube, Google SEO, WhatsApp, Blog/Site de Conteúdo, Quiz Interativo, Quiz + VSL Híbrido, Páginas Estáticas/Pre-sell, Webnário/Masterclass, Páginas de Venda/VSL/Captura, Checkout Transparente, Order Bump, Upsell, Assinatura Recorrente, High-Ticket, Afiliados Amazon, Afiliados Shopee, Afiliados Mercado Livre, Infoprodutos Afiliados, E-mails e Remarketing).
+    - `FunnelNodeType`: `traffic`, `page`, `offer`, `automation`, `b2b`, `cs`, `hr`.
+    - `FunnelNodeSubType`: 45 subtipos especializados cobrindo:
+      - *Tráfego*: Pinterest, TikTok, Instagram, YouTube, Google SEO, WhatsApp, Parceiros.
+      - *Páginas & Etapas Web*: Blog/Site, Quiz, Quiz+VSL, VSL, Página de Vendas, Captura, Estática/Pre-sell, Webnário, Advertorial, Checkout Transparente, Obrigado.
+      - *Ofertas*: Lead Magnet, Front-End, Order Bump, Upsell, Downsell, Assinatura, High-Ticket.
+      - *Afiliados*: Amazon, Shopee, Mercado Livre, Infoproduto Parceiro.
+      - *E-mail & Multicanal*: Régua de E-mails, E-mail Broadcast, Delay/Temporizador de Espera, Decisão Condicional (Se/Então), WhatsApp Automático, SMS Transacional, Robô de Voz/Ligação, Remarketing.
+      - *Vendas B2B Corporativas*: Agendamento de Reunião/Demo, Qualificação SDR (BANT), Envio de Proposta Comercial, Assinatura Eletrônica de Contrato, Faturamento PJ & NF-e.
+      - *Pós-Venda, Sucesso do Cliente (CS) & Retenção*: Onboarding Kick-off, Abertura de Chamado/Helpdesk, Pesquisa NPS (0 a 10), Renovação de Contrato / Up-Sell.
+      - *RH & Processos Internos*: Triagem & Recrutamento de Talentos, Treinamento & Onboarding de Equipe.
     - `FunnelNode`: Posições no canvas (`x`, `y`), taxa de conversão esperada, preço (R$), CPC de tráfego, link de afiliado (`affiliateLink`), taxa de comissão (`commissionRate`), checklist de execução e notas.
     - `FunnelConnection`: Ligações curvas Bezier (SVG) dinâmicas com setas direcionais e estilos sólido, pontilhado e animado.
   - **Quadro Infinito (`FunnelArchitectEditorView.tsx`)**:
@@ -339,12 +347,11 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
     - **Arraste a 60fps & Linhas Sincronizadas**: Listener global de mouse com `requestAnimationFrame` garantindo que os blocos e as curvas SVG se movam colados em tempo real sem atraso ou desencaixe de linha.
     - **Edição com Lápis & Buffer de Rascunho (Draft)**: Cada bloco possui um botão de lápis (`Pencil`) que abre o inspetor lateral; alterações ficam em buffer rascunho com botões dedicados de **"Salvar Alterações"** e **"Cancelar"** (ou fechar/clicar fora para descartar sem alterar).
     - Grid Dark Slate com Glassmorphism e mini-controles de visualização.
-    - **Biblioteca de Blocos com Busca em Tempo Real**: Campo de pesquisa com filtro instantâneo por nome, categoria, palavras-chave e estratégias, com botão de limpar e estado vazio elegante.
-    - Gaveta lateral retrátil dividida em 5 categorias: Linhas de Tráfego, Páginas & Etapas, Ofertas Próprias, Afiliação & Lojas Parceiras e Automações.
+    - **Biblioteca de Blocos com Busca em Tempo Real**: Campo de pesquisa com filtro instantâneo por nome, categoria, palavras-chave e estratégias, organizado em 8 categorias ricas.
     - Inspetor lateral com 3 abas: Parâmetros (links de afiliado com botão de teste, vínculo opcional com ofertas do CRM e links de checkout), Checklist de Tarefas e Guia Tático Estratégico de Copy.
   - **Simulador de Tráfego & Gargalos de Venda**:
     - Algoritmo em tempo real que propaga o volume de visitantes iniciais pelos nós através das taxas de conversão, calculando Faturamento Projetado (incluindo comissões de afiliados), Custo de Tráfego, Lucro Líquido e ROAS.
     - Alerta visual de gargalo (*Bottleneck Alert*) em etapas com baixa conversão.
   - **Galeria de Templates de 1-Clique (`funnelTemplates.ts`)**:
-    - 6 modelos validados prontos: *Baixo Ticket + Bump + Assinatura*, *Orgânico Pinterest & TikTok ➡️ WhatsApp*, *Quiz Interativo + VSL Customizada*, *B2B High-Ticket*, *Lançamento 24h WhatsApp* e *Perpétuo SaaS*.
-  - **Navegação**: Rota `/funnels` e `/funnels/:id` adicionadas em `AppRouter.tsx` e item "Funis & Ecossistema" com ícone `GitFork` no menu Comercial do `Sidebar.tsx`.
+    - 8 modelos validados prontos: *Baixo Ticket + Bump + Assinatura*, *Orgânico Pinterest & TikTok ➡️ WhatsApp*, *Quiz Interativo + VSL Customizada*, *B2B High-Ticket*, *Lançamento 24h WhatsApp*, *Perpétuo SaaS*, *Orquestração Comercial B2B (Inbound ➡️ Demo ➡️ Proposta ➡️ Contrato & NF-e)* e *Esteira de Pós-Venda CS, NPS & Renovação*.
+  - **Navegação**: Rota `/funnels` e `/funnels/:id` adicionadas em `AppRouter.tsx` e item "Funis & Orquestração" com ícone `GitFork` no menu Comercial do `Sidebar.tsx`.
