@@ -451,3 +451,19 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Decisões Técnicas**:
   - `FunnelArchitectEditorView.tsx`: Substituição de `transition-all` por `transition-[border-color,box-shadow,background-color,opacity]` nos nós, permitindo atualização instantânea de `left` e `top` sem interferência da interpolação CSS do navegador.
   - `calculateConnectionPath`: Alturas dinâmicas baseadas no subtipo (`fromHeight / 2`, `toHeight / 2`) para alinhamento pixel-perfect dos conectores.
+
+---
+
+## 28. Funis & Arquitetura: Gavetas Retráteis Ativas & Gerenciador Completo de Tarefas/Checklist
+- **Data da Integração**: 25/08/2026
+- **Funcionalidades**:
+  1. **Gavetas Retráteis (Accordion) na Barra Lateral de Blocos**: Renderização interativa com toggle de estado `openCategories[catKey]`, setinha indicadora com rotação animada (`ChevronDown`), contador de blocos por tema e fechamento/abertura fluido.
+  2. **Gerenciador Completo de Tarefas/Checklist do Bloco**:
+     - Criação de novas tarefas com input e atalho de tecla `Enter`.
+     - Carregamento em 1-clique do checklist estratégico padrão do modelo quando vazio.
+     - Barra de progresso visual com porcentagem (`% Concluído`) e contador de tarefas concluídas.
+     - Checkbox interativo com texto riscado e botão de exclusão de tarefa individual.
+  3. **Resiliência do Rascunho de Edição (`nodeEditDraft`)**: `updateDraftField` inicializa automaticamente a partir do nó selecionado se o rascunho estiver nulo, prevenindo perda de interações na barra de inspeção.
+- **Decisões Técnicas**:
+  - `FunnelArchitectEditorView.tsx`: Funções `handleAddChecklistItem`, `handleToggleChecklistItem`, `handleDeleteChecklistItem` e `handleLoadTemplateChecklist` integradas com `FunnelChecklistItem` para persistência limpa no Firestore.
+

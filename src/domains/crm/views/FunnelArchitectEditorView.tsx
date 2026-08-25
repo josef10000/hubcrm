@@ -172,6 +172,7 @@ export default function FunnelArchitectEditorView() {
   };
 
   const [isInspectorOpen, setIsInspectorOpen] = useState(false);
+  const [newChecklistText, setNewChecklistText] = useState('');
   const [inspectorTab, setInspectorTab] = useState<'config' | 'guide' | 'checklist'>('config');
 
   // Modo Foco & Destaque de Trilha Inteligente
@@ -757,12 +758,48 @@ export default function FunnelArchitectEditorView() {
 
   const updateDraftField = (field: keyof FunnelNode, value: any) => {
     setNodeEditDraft(prev => {
-      if (!prev) return null;
+      const base = prev || funnel?.nodes.find(n => selectedNodeIds.includes(n.id));
+      if (!base) return null;
       return {
-        ...prev,
+        ...base,
         [field]: value
       };
     });
+  };
+
+  const handleAddChecklistItem = (activeNode: FunnelNode) => {
+    if (!newChecklistText.trim()) return;
+    const newItem: FunnelChecklistItem = {
+      id: `chk-${Date.now()}`,
+      text: newChecklistText.trim(),
+      done: false
+    };
+    const currentList = activeNode.checklist || [];
+    updateDraftField('checklist', [...currentList, newItem]);
+    setNewChecklistText('');
+  };
+
+  const handleToggleChecklistItem = (activeNode: FunnelNode, id: string, done: boolean) => {
+    const currentList = activeNode.checklist || [];
+    const updated = currentList.map(item => item.id === id ? { ...item, done } : item);
+    updateDraftField('checklist', updated);
+  };
+
+  const handleDeleteChecklistItem = (activeNode: FunnelNode, id: string) => {
+    const currentList = activeNode.checklist || [];
+    const updated = currentList.filter(item => item.id !== id);
+    updateDraftField('checklist', updated);
+  };
+
+  const handleLoadTemplateChecklist = (activeNodeMeta?: BlockMeta) => {
+    if (!activeNodeMeta?.checklist) return;
+    const templateItems: FunnelChecklistItem[] = activeNodeMeta.checklist.map((task, i) => ({
+      id: `chk-${Date.now()}-${i}`,
+      text: task,
+      done: false
+    }));
+    updateDraftField('checklist', templateItems);
+    toast.success('Checklist padrão carregado com sucesso!');
   };
 
   // ── ➕ ADICIONAR BLOCO DO CATÁLOGO ────────────────────────────────────────
@@ -1247,33 +1284,51 @@ export default function FunnelArchitectEditorView() {
                 hr: '👥 RH & Equipe'
               };
 
+                            const isOpen = openCategories[catKey] !== false;
+
               return (
-                <div key={catKey} className="space-y-1.5">
-                  <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-wider px-1">
-                    {categoryLabels[catKey] || catKey}
-                  </h4>
-                  <div className="grid grid-cols-1 gap-1.5">
-                    {blocks.map(block => (
-                      <button
-                        key={block.subType}
-                        onClick={() => handleAddBlock(block)}
-                        className="w-full p-2 rounded-xl bg-white/[0.02] hover:bg-white/[0.07] border border-white/5 hover:border-indigo-500/40 text-left transition-all group flex items-start gap-2.5"
-                      >
-                        <div className={`p-1.5 rounded-lg border shrink-0 ${block.badgeColor}`}>
-                          {renderNodeIcon(block.iconName, 14)}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <span className="text-xs font-bold text-gray-200 group-hover:text-white block truncate">
-                            {block.name}
-                          </span>
-                          <span className="text-[10px] text-gray-500 block truncate">
-                            {block.description}
-                          </span>
-                        </div>
-                        <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-indigo-400 mt-1 shrink-0" />
-                      </button>
-                    ))}
-                  </div>
+                <div key={catKey} className="rounded-xl border border-white/5 bg-white/[0.01] overflow-hidden transition-all">
+                  <button 
+                    onClick={() => toggleCategory(catKey)}
+                    className="w-full flex items-center justify-between p-2 px-2.5 hover:bg-white/[0.04] text-left transition-colors group cursor-pointer"
+                  >
+                    <span className="text-[11px] font-black text-gray-300 group-hover:text-white uppercase tracking-wider flex items-center gap-1.5 truncate">
+                      {categoryLabels[catKey] || catKey}
+                    </span>
+                    <div className="flex items-center gap-1.5 shrink-0 ml-1">
+                      <span className="text-[9px] font-bold text-gray-500 bg-white/5 px-1.5 py-0.5 rounded-md">
+                        {blocks.length}
+                      </span>
+                      <ChevronDown className={`w-3.5 h-3.5 text-gray-400 group-hover:text-white transition-transform duration-200 ${
+                        isOpen ? 'rotate-0' : '-rotate-90'
+                      }`} />
+                    </div>
+                  </button>
+
+                  {isOpen && (
+                    <div className="p-2 pt-0 space-y-1.5">
+                      {blocks.map(block => (
+                        <button
+                          key={block.subType}
+                          onClick={() => handleAddBlock(block)}
+                          className="w-full p-2 rounded-xl bg-white/[0.02] hover:bg-white/[0.07] border border-white/5 hover:border-indigo-500/40 text-left transition-colors group flex items-start gap-2.5"
+                        >
+                          <div className={`p-1.5 rounded-lg border shrink-0 ${block.badgeColor}`}>
+                            {renderNodeIcon(block.iconName, 14)}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <span className="text-xs font-bold text-gray-200 group-hover:text-white block truncate">
+                              {block.name}
+                            </span>
+                            <span className="text-[10px] text-gray-500 block truncate">
+                              {block.description}
+                            </span>
+                          </div>
+                          <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-indigo-400 mt-1 shrink-0" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -2005,21 +2060,104 @@ export default function FunnelArchitectEditorView() {
                 )}
 
                 {inspectorTab === 'checklist' && (
-                  <div className="space-y-2">
-                    {(activeNode.checklist || []).map((item) => (
-                      <div key={item.id} className="flex items-center gap-2 p-2 bg-white/5 rounded-xl text-xs text-gray-300">
-                        <input
-                          type="checkbox"
-                          checked={item.done}
-                          onChange={(e) => {
-                            const newChecklist = activeNode.checklist!.map(c => c.id === item.id ? { ...c, done: e.target.checked } : c);
-                            updateDraftField('checklist', newChecklist);
-                          }}
-                          className="accent-indigo-500"
-                        />
-                        <span>{item.text}</span>
-                      </div>
-                    ))}
+                  <div className="space-y-4">
+                    {/* Barra de Progresso do Checklist */}
+                    {(() => {
+                      const total = activeNode.checklist?.length || 0;
+                      const doneCount = activeNode.checklist?.filter(c => c.done).length || 0;
+                      const pct = total > 0 ? Math.round((doneCount / total) * 100) : 0;
+                      return (
+                        <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl space-y-2">
+                          <div className="flex items-center justify-between text-xs font-bold">
+                            <span className="text-gray-300">Progresso da Etapa</span>
+                            <span className="text-indigo-400">{doneCount}/{total} concluídas ({pct}%)</span>
+                          </div>
+                          <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-gradient-to-r from-indigo-500 to-emerald-400 transition-all duration-300"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Input de Adicionar Nova Tarefa */}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Adicionar tarefa desta etapa..."
+                        value={newChecklistText}
+                        onChange={(e) => setNewChecklistText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddChecklistItem(activeNode);
+                          }
+                        }}
+                        className="flex-1 px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
+                      />
+                      <button
+                        onClick={() => handleAddChecklistItem(activeNode)}
+                        disabled={!newChecklistText.trim()}
+                        className="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:hover:bg-indigo-600 text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-1 shrink-0"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Adicionar</span>
+                      </button>
+                    </div>
+
+                    {/* Lista de Tarefas */}
+                    <div className="space-y-1.5">
+                      {(activeNode.checklist || []).length === 0 ? (
+                        <div className="p-6 text-center rounded-2xl border border-dashed border-white/10 space-y-3 bg-white/[0.01]">
+                          <CheckCircle2 className="w-8 h-8 text-gray-600 mx-auto" />
+                          <div className="space-y-1">
+                            <p className="text-xs font-bold text-gray-300">Nenhuma tarefa cadastrada</p>
+                            <p className="text-[10px] text-gray-500">Crie tarefas customizadas acima ou carregue o modelo padrão.</p>
+                          </div>
+                          {activeNodeMeta?.checklist && activeNodeMeta.checklist.length > 0 && (
+                            <button
+                              onClick={() => handleLoadTemplateChecklist(activeNodeMeta)}
+                              className="px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 hover:text-white border border-indigo-500/30 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5"
+                            >
+                              <Sparkles className="w-3.5 h-3.5" />
+                              <span>Carregar Checklist Padrão ({activeNodeMeta.checklist.length} tarefas)</span>
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        (activeNode.checklist || []).map((item) => (
+                          <div 
+                            key={item.id} 
+                            className={`flex items-center justify-between p-2.5 rounded-xl border transition-all ${
+                              item.done 
+                                ? 'bg-emerald-500/5 border-emerald-500/20 text-gray-400' 
+                                : 'bg-white/[0.02] hover:bg-white/[0.05] border-white/5 text-gray-200'
+                            }`}
+                          >
+                            <label className="flex items-center gap-2.5 flex-1 min-w-0 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={item.done}
+                                onChange={(e) => handleToggleChecklistItem(activeNode, item.id, e.target.checked)}
+                                className="w-4 h-4 rounded border-white/20 bg-black/40 text-indigo-600 focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                              />
+                              <span className={`text-xs select-none truncate ${item.done ? 'line-through text-gray-500' : ''}`}>
+                                {item.text}
+                              </span>
+                            </label>
+                            <button
+                              onClick={() => handleDeleteChecklistItem(activeNode, item.id)}
+                              className="p-1 text-gray-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors ml-2 shrink-0"
+                              title="Excluir tarefa"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
                 )}
 
