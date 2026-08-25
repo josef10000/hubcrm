@@ -18,7 +18,7 @@ import {
   ShieldCheck,
   TrendingUp
 } from 'lucide-react';
-import { FUNNEL_TEMPLATES } from '@/domains/crm/constants/funnelTemplates';
+import { MARKET_FUNNEL_TEMPLATES } from '@/domains/crm/constants/funnelTemplates';
 
 interface EndpointHealth {
   id: string;
@@ -136,7 +136,7 @@ export default function StatusScreenView() {
   }, [endpoints.length]);
 
   // Funil Ativo Recomendado (Template Base de Referência)
-  const activeFunnel = FUNNEL_TEMPLATES[0];
+  const activeFunnel = MARKET_FUNNEL_TEMPLATES[0];
 
   const onlineCount = endpoints.filter(e => e.status === 'ONLINE').length;
   const avgLatency = endpoints.length > 0 

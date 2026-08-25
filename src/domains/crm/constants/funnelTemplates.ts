@@ -1688,3 +1688,5 @@ export const MARKET_FUNNEL_TEMPLATES: FunnelTemplate[] = [
     ]
   }
 ];
+
+export const FUNNEL_TEMPLATES = MARKET_FUNNEL_TEMPLATES;
