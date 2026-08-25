@@ -1088,23 +1088,37 @@ export default function FunnelArchitectEditorView() {
                     key={node.id}
                     onMouseDown={(e) => handleNodeMouseDown(e, node)}
                     style={{ left: `${node.x}px`, top: `${node.y}px` }}
-                    className={`absolute w-60 p-4 rounded-2xl pointer-events-auto cursor-pointer shadow-xl transition-transform border z-20 ${style.bg} ${style.border} ${
-                      isSelected ? 'ring-2 ring-indigo-500 scale-105 shadow-2xl' : 'hover:scale-[1.02]'
+                    className={`absolute w-64 p-4 rounded-2xl pointer-events-auto cursor-grab active:cursor-grabbing shadow-xl transition-transform border z-20 ${style.bg} ${style.border} ${
+                      isSelected ? 'ring-2 ring-indigo-500 scale-105 shadow-2xl' : 'hover:scale-[1.01]'
                     }`}
                   >
-                    {/* Alfinete no Topo */}
+                    {/* Alfinete no Topo e Cabeçalho */}
                     <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-black/10">
-                      <div className="flex items-center gap-1.5">
-                        <Pin className="w-3.5 h-3.5 text-black/60 rotate-45" />
-                        <span className="text-[10px] font-black uppercase tracking-wider text-black/70">
-                          {node.label || 'Post-it'}
-                        </span>
+                      <div className="flex items-center gap-1.5 flex-1 mr-2">
+                        <Pin className="w-3.5 h-3.5 text-black/60 rotate-45 shrink-0" />
+                        <input
+                          type="text"
+                          value={node.label || 'Post-it'}
+                          onChange={(e) => {
+                            const newLabel = e.target.value;
+                            setFunnel(prev => prev ? {
+                              ...prev,
+                              nodes: prev.nodes.map(n => n.id === node.id ? { ...n, label: newLabel } : n)
+                            } : null);
+                          }}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          className="bg-transparent text-[11px] font-black uppercase tracking-wider text-black/80 focus:outline-none focus:ring-1 focus:ring-black/30 rounded px-1 w-full"
+                          placeholder="Título do Post-it..."
+                        />
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 shrink-0">
                         <button
-                          onClick={(e) => { e.stopPropagation(); handleOpenNodeEditor(node); }}
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            handleOpenNodeEditor(node); 
+                          }}
                           className="p-1 rounded bg-black/10 hover:bg-black/20 text-black/70 transition-colors"
-                          title="Editar"
+                          title="Abrir Editor Lateral do Post-it"
                         >
                           <Pencil className="w-3 h-3" />
                         </button>
@@ -1121,27 +1135,43 @@ export default function FunnelArchitectEditorView() {
                       </div>
                     </div>
 
-                    {/* Texto da Nota */}
-                    <div className="text-xs font-semibold leading-relaxed whitespace-pre-wrap select-text min-h-12 line-clamp-6">
-                      {node.notes || 'Clique no lápis para escrever sua anotação estratégica, metas ou tarefas da equipe aqui...'}
-                    </div>
+                    {/* Texto da Nota Editável Diretamente no Canvas */}
+                    <textarea
+                      value={node.notes || ''}
+                      onChange={(e) => {
+                        const newNotes = e.target.value;
+                        setFunnel(prev => prev ? {
+                          ...prev,
+                          nodes: prev.nodes.map(n => n.id === node.id ? { ...n, notes: newNotes } : n)
+                        } : null);
+                      }}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      placeholder="Clique aqui e digite sua anotação estratégica, metas ou tarefas..."
+                      rows={5}
+                      className="w-full bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-black/20 rounded p-1 text-xs font-medium leading-relaxed resize-none text-black/90 placeholder:text-black/40 min-h-[90px] cursor-text"
+                    />
 
                     {/* Cores rápidas */}
-                    <div className="flex items-center gap-1.5 mt-3 pt-2 border-t border-black/10">
-                      {Object.keys(STICKY_COLORS).map(c => (
-                        <button
-                          key={c}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setFunnel(prev => prev ? {
-                              ...prev,
-                              nodes: prev.nodes.map(n => n.id === node.id ? { ...n, noteColor: c } : n)
-                            } : null);
-                          }}
-                          className={`w-3.5 h-3.5 rounded-full ${STICKY_COLORS[c].dot} border border-black/20 hover:scale-125 transition-transform`}
-                          title={STICKY_COLORS[c].title}
-                        />
-                      ))}
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-black/10">
+                      <div className="flex items-center gap-1.5">
+                        {Object.keys(STICKY_COLORS).map(c => (
+                          <button
+                            key={c}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setFunnel(prev => prev ? {
+                                ...prev,
+                                nodes: prev.nodes.map(n => n.id === node.id ? { ...n, noteColor: c } : n)
+                              } : null);
+                            }}
+                            className={`w-3.5 h-3.5 rounded-full ${STICKY_COLORS[c].dot} border border-black/20 hover:scale-125 transition-transform ${
+                              (node.noteColor || 'yellow') === c ? 'ring-2 ring-black/40 scale-110' : ''
+                            }`}
+                            title={STICKY_COLORS[c].title}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-[9px] text-black/50 font-bold uppercase">Post-it</span>
                     </div>
                   </div>
                 );
@@ -1431,318 +1461,346 @@ export default function FunnelArchitectEditorView() {
                 
                 {inspectorTab === 'config' && (
                   <>
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-bold text-gray-400 uppercase">Nome da Etapa</label>
-                      <input
-                        type="text"
-                        value={activeNode.label}
-                        onChange={(e) => updateDraftField('label', e.target.value)}
-                        className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
-                      />
-                    </div>
+                    {/* 📝 FORMULÁRIO DEDICADO PARA POST-IT / NOTA ADESIVA */}
+                    {activeNode.subType === 'sticky_note' ? (
+                      <div className="space-y-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-bold text-gray-400 uppercase">Título do Post-it</label>
+                          <input
+                            type="text"
+                            value={activeNode.label || ''}
+                            onChange={(e) => updateDraftField('label', e.target.value)}
+                            placeholder="Ex: Metas da Semana, Dores do Cliente, Avisos..."
+                            className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                          />
+                        </div>
 
-                    {/* Configuração de Perfil ICP */}
-                    {activeNode.subType === 'icp_persona' && (
-                      <div className="space-y-3 p-3.5 rounded-2xl bg-amber-500/5 border border-amber-500/20">
-                        <div className="flex items-center justify-between">
-                          <label className="text-[11px] font-bold text-amber-400 uppercase flex items-center gap-1.5">
-                            <Target className="w-3.5 h-3.5" />
-                            Perfil ICP do CRM
+                        <div className="space-y-2 p-3.5 rounded-2xl bg-yellow-500/5 border border-yellow-500/20">
+                          <label className="text-[11px] font-bold text-yellow-300 uppercase flex items-center gap-1.5">
+                            <StickyNote className="w-3.5 h-3.5" />
+                            Cor do Post-it
                           </label>
-                          <a
-                            href="/icp"
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-[10px] text-amber-400 hover:underline flex items-center gap-1"
-                          >
-                            Gerenciar ICPs <ExternalLink className="w-2.5 h-2.5" />
-                          </a>
-                        </div>
-
-                        <select
-                          value={activeNode.icpId || ''}
-                          onChange={(e) => {
-                            const chosenICP = icps.find(i => i.id === e.target.value);
-                            if (chosenICP) {
-                              updateDraftField('icpId', chosenICP.id);
-                              updateDraftField('label', chosenICP.name);
-                              updateDraftField('subtitle', `${chosenICP.targetType || 'B2B'} • ${chosenICP.niche || chosenICP.decisionMakerRole || 'Perfil ICP'}`);
-                              if (chosenICP.avgTicket) updateDraftField('price', chosenICP.avgTicket);
-                              if (chosenICP.painPoints?.length) updateDraftField('notes', `Dores: ${chosenICP.painPoints.slice(0, 2).join('; ')}`);
-                            } else {
-                              updateDraftField('icpId', undefined);
-                            }
-                          }}
-                          className="w-full px-3 py-2 bg-black/60 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500"
-                        >
-                          <option value="">Selecione um ICP cadastrado...</option>
-                          {icps.map(icp => (
-                            <option key={icp.id} value={icp.id}>
-                              {icp.name} ({icp.targetType || 'B2B'} - {icp.niche || icp.decisionMakerRole || 'Geral'})
-                            </option>
-                          ))}
-                        </select>
-
-                        {/* Detalhes do ICP Selecionado */}
-                        {(() => {
-                          const currentICP = icps.find(i => i.id === activeNode.icpId);
-                          if (!currentICP) return null;
-                          return (
-                            <div className="space-y-2 pt-2 border-t border-white/5 text-xs text-gray-300">
-                              <div className="flex items-center gap-2">
-                                <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-black uppercase">
-                                  {currentICP.targetType || 'B2B'}
-                                </span>
-                                <span className="text-[11px] text-gray-400">
-                                  Ticket Médio: <strong className="text-emerald-400">R$ {currentICP.avgTicket?.toLocaleString('pt-BR') || 'N/A'}</strong>
-                                </span>
-                              </div>
-
-                              {currentICP.painPoints && currentICP.painPoints.length > 0 && (
-                                <div>
-                                  <span className="text-[10px] text-gray-500 font-bold block uppercase">Dores Principais:</span>
-                                  <ul className="list-disc list-inside text-[11px] text-gray-400 space-y-0.5">
-                                    {currentICP.painPoints.slice(0, 3).map((p, idx) => (
-                                      <li key={idx} className="line-clamp-1">{p}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-
-                              {currentICP.objections && currentICP.objections.length > 0 && (
-                                <div>
-                                  <span className="text-[10px] text-gray-500 font-bold block uppercase">Objeções Comuns:</span>
-                                  <ul className="list-disc list-inside text-[11px] text-gray-400 space-y-0.5">
-                                    {currentICP.objections.slice(0, 2).map((obj, idx) => (
-                                      <li key={idx} className="line-clamp-1">{obj}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })()}
-                      </div>
-                    )}
-
-                    {/* Configuração de Post-it / Nota Adesiva */}
-                    {activeNode.subType === 'sticky_note' && (
-                      <div className="space-y-3 p-3.5 rounded-2xl bg-yellow-500/5 border border-yellow-500/20">
-                        <label className="text-[11px] font-bold text-yellow-300 uppercase flex items-center gap-1.5">
-                          <StickyNote className="w-3.5 h-3.5" />
-                          Cor do Post-it
-                        </label>
-                        <div className="flex items-center gap-2">
-                          {Object.entries(STICKY_COLORS).map(([colorKey, colorVal]) => (
-                            <button
-                              key={colorKey}
-                              type="button"
-                              onClick={() => updateDraftField('noteColor', colorKey)}
-                              className={`w-7 h-7 rounded-xl border-2 transition-transform ${colorVal.dot} ${
-                                (activeNode.noteColor || 'yellow') === colorKey ? 'scale-110 border-white shadow-lg' : 'border-transparent opacity-70 hover:opacity-100'
-                              }`}
-                              title={colorVal.title}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Se for Produto de Afiliado */}
-                    {activeNode.subType.startsWith('affiliate_') && (
-                      <div className="space-y-3 p-3.5 rounded-2xl bg-amber-500/5 border border-amber-500/20">
-                        <div className="flex items-center gap-2 text-amber-400">
-                          <ShoppingBag className="w-4 h-4" />
-                          <span className="text-xs font-bold uppercase">Configuração de Afiliado</span>
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase">Seu Link de Afiliado</label>
-                          <div className="flex gap-2">
-                            <input
-                              type="url"
-                              placeholder="https://shopee.com.br/... ou https://amzn.to/..."
-                              value={activeNode.affiliateLink || ''}
-                              onChange={(e) => updateDraftField('affiliateLink', e.target.value)}
-                              className="flex-1 px-3 py-1.5 bg-black/60 border border-white/10 rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-amber-500"
-                            />
-                            {activeNode.affiliateLink && (
-                              <a
-                                href={activeNode.affiliateLink}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="p-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-xl text-xs font-bold transition-colors flex items-center justify-center"
-                                title="Testar Link"
-                              >
-                                <ExternalLink className="w-3.5 h-3.5" />
-                              </a>
-                            )}
+                          <div className="flex items-center gap-2">
+                            {Object.entries(STICKY_COLORS).map(([colorKey, colorVal]) => (
+                              <button
+                                key={colorKey}
+                                type="button"
+                                onClick={() => updateDraftField('noteColor', colorKey)}
+                                className={`w-8 h-8 rounded-xl border-2 transition-transform ${colorVal.dot} ${
+                                  (activeNode.noteColor || 'yellow') === colorKey 
+                                    ? 'scale-110 border-white shadow-lg ring-2 ring-yellow-400/50' 
+                                    : 'border-transparent opacity-60 hover:opacity-100 hover:scale-105'
+                                }`}
+                                title={colorVal.title}
+                              />
+                            ))}
                           </div>
                         </div>
 
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-gray-400 uppercase">Comissão Estimada (%)</label>
-                          <input
-                            type="number"
-                            placeholder="Ex: 10 ou 50"
-                            value={activeNode.commissionRate || ''}
-                            onChange={(e) => updateDraftField('commissionRate', parseFloat(e.target.value) || 0)}
-                            className="w-full px-3 py-1.5 bg-black/60 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500"
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-bold text-gray-400 uppercase">Conteúdo do Post-it</label>
+                          <textarea
+                            rows={10}
+                            value={activeNode.notes || ''}
+                            onChange={(e) => updateDraftField('notes', e.target.value)}
+                            placeholder="Escreva sua anotação estratégica, metas, tarefas ou copies aqui..."
+                            className="w-full p-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 resize-none font-medium leading-relaxed"
                           />
                         </div>
                       </div>
-                    )}
-
-                    {/* Vínculo com Oferta Real do CRM (Apenas para ofertas próprias) */}
-                    {activeNode.type === 'offer' && !activeNode.subType.startsWith('affiliate_') && (
-                      <div className="space-y-2 p-3 rounded-2xl bg-emerald-500/5 border border-emerald-500/20">
-                        <div className="flex justify-between items-center">
-                          <label className="text-[11px] font-bold text-emerald-400 uppercase flex items-center gap-1.5">
-                            <DollarSign className="w-3.5 h-3.5" />
-                            Vincular Oferta do CRM (Opcional)
-                          </label>
-                          <span className="text-[9px] text-gray-500 font-medium">Livre ou Vinculado</span>
+                    ) : (
+                      <>
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-bold text-gray-400 uppercase">Nome da Etapa</label>
+                          <input
+                            type="text"
+                            value={activeNode.label}
+                            onChange={(e) => updateDraftField('label', e.target.value)}
+                            className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                          />
                         </div>
 
-                        <select
-                          value={activeNode.offerId || ''}
-                          onChange={(e) => {
-                            const chosenOffer = offers.find(o => o.id === e.target.value);
-                            if (chosenOffer) {
-                              updateDraftField('offerId', chosenOffer.id);
-                              updateDraftField('price', chosenOffer.price);
-                              updateDraftField('label', chosenOffer.name);
-                            } else {
-                              updateDraftField('offerId', undefined);
-                            }
-                          }}
-                          className="w-full px-3 py-2 bg-black/60 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
-                        >
-                          <option value="">Produto livre (digitar dados manualmente abaixo)</option>
-                          {offers.map(o => (
-                            <option key={o.id} value={o.id}>
-                              📦 {o.name} (R$ {o.price?.toFixed(2)})
-                            </option>
-                          ))}
-                        </select>
+                        {/* Configuração de Perfil ICP */}
+                        {activeNode.subType === 'icp_persona' && (
+                          <div className="space-y-3 p-3.5 rounded-2xl bg-amber-500/5 border border-amber-500/20">
+                            <div className="flex items-center justify-between">
+                              <label className="text-[11px] font-bold text-amber-400 uppercase flex items-center gap-1.5">
+                                <Target className="w-3.5 h-3.5" />
+                                Perfil ICP do CRM
+                              </label>
+                              <a
+                                href="/icp"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-[10px] text-amber-400 hover:underline flex items-center gap-1"
+                              >
+                                Gerenciar ICPs <ExternalLink className="w-2.5 h-2.5" />
+                              </a>
+                            </div>
 
-                        <p className="text-[10px] text-gray-400 leading-tight">
-                          💡 Você pode digitar o preço livremente abaixo sem precisar criar o produto antes no CRM.
-                        </p>
-
-                        {activeNode.offerId && (
-                          <a
-                            href={`${window.location.origin}/checkout/${orgId}?offerId=${activeNode.offerId}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-[10px] font-bold text-emerald-400 hover:underline flex items-center gap-1 pt-1"
-                          >
-                            <ExternalLink className="w-3 h-3" />
-                            Abrir Link do Checkout Transparente
-                          </a>
-                        )}
-                      </div>
-                    )}
-
-                    {/* URL Externa / Link da Página */}
-                    {(activeNode.type === 'page' || activeNode.type === 'traffic') && (
-                      <div className="space-y-1.5">
-                        <label className="text-[11px] font-bold text-gray-400 uppercase">Link / URL da Página</label>
-                        <div className="flex gap-2">
-                          <input
-                            type="url"
-                            placeholder="https://seusite.com.br/artigo-ou-pagina"
-                            value={activeNode.url || ''}
-                            onChange={(e) => updateDraftField('url', e.target.value)}
-                            className="flex-1 px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
-                          />
-                          {activeNode.url && (
-                            <a
-                              href={activeNode.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="p-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-xl flex items-center justify-center"
-                              title="Abrir URL"
+                            <select
+                              value={activeNode.icpId || ''}
+                              onChange={(e) => {
+                                const chosenICP = icps.find(i => i.id === e.target.value);
+                                if (chosenICP) {
+                                  updateDraftField('icpId', chosenICP.id);
+                                  updateDraftField('label', chosenICP.name);
+                                  updateDraftField('subtitle', `${chosenICP.targetType || 'B2B'} • ${chosenICP.niche || chosenICP.decisionMakerRole || 'Perfil ICP'}`);
+                                  if (chosenICP.avgTicket) updateDraftField('price', chosenICP.avgTicket);
+                                  if (chosenICP.painPoints?.length) updateDraftField('notes', `Dores: ${chosenICP.painPoints.slice(0, 2).join('; ')}`);
+                                } else {
+                                  updateDraftField('icpId', undefined);
+                                }
+                              }}
+                              className="w-full px-3 py-2 bg-black/60 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500"
                             >
-                              <ExternalLink className="w-3.5 h-3.5" />
-                            </a>
-                          )}
+                              <option value="">Selecione um ICP cadastrado...</option>
+                              {icps.map(icp => (
+                                <option key={icp.id} value={icp.id}>
+                                  {icp.name} ({icp.targetType || 'B2B'} - {icp.niche || icp.decisionMakerRole || 'Geral'})
+                                </option>
+                              ))}
+                            </select>
+
+                            {/* Detalhes do ICP Selecionado */}
+                            {(() => {
+                              const currentICP = icps.find(i => i.id === activeNode.icpId);
+                              if (!currentICP) return null;
+                              return (
+                                <div className="space-y-2 pt-2 border-t border-white/5 text-xs text-gray-300">
+                                  <div className="flex items-center gap-2">
+                                    <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-black uppercase">
+                                      {currentICP.targetType || 'B2B'}
+                                    </span>
+                                    <span className="text-[11px] text-gray-400">
+                                      Ticket Médio: <strong className="text-emerald-400">R$ {currentICP.avgTicket?.toLocaleString('pt-BR') || 'N/A'}</strong>
+                                    </span>
+                                  </div>
+
+                                  {currentICP.painPoints && currentICP.painPoints.length > 0 && (
+                                    <div>
+                                      <span className="text-[10px] text-gray-500 font-bold block uppercase">Dores Principais:</span>
+                                      <ul className="list-disc list-inside text-[11px] text-gray-400 space-y-0.5">
+                                        {currentICP.painPoints.slice(0, 3).map((p, idx) => (
+                                          <li key={idx} className="line-clamp-1">{p}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+
+                                  {currentICP.objections && currentICP.objections.length > 0 && (
+                                    <div>
+                                      <span className="text-[10px] text-gray-500 font-bold block uppercase">Objeções Comuns:</span>
+                                      <ul className="list-disc list-inside text-[11px] text-gray-400 space-y-0.5">
+                                        {currentICP.objections.slice(0, 2).map((obj, idx) => (
+                                          <li key={idx} className="line-clamp-1">{obj}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        )}
+
+                        {/* Se for Produto de Afiliado */}
+                        {activeNode.subType.startsWith('affiliate_') && (
+                          <div className="space-y-3 p-3.5 rounded-2xl bg-amber-500/5 border border-amber-500/20">
+                            <div className="flex items-center gap-2 text-amber-400">
+                              <ShoppingBag className="w-4 h-4" />
+                              <span className="text-xs font-bold uppercase">Configuração de Afiliado</span>
+                            </div>
+
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-bold text-gray-400 uppercase">Seu Link de Afiliado</label>
+                              <div className="flex gap-2">
+                                <input
+                                  type="url"
+                                  placeholder="https://shopee.com.br/... ou https://amzn.to/..."
+                                  value={activeNode.affiliateLink || ''}
+                                  onChange={(e) => updateDraftField('affiliateLink', e.target.value)}
+                                  className="flex-1 px-3 py-1.5 bg-black/60 border border-white/10 rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-amber-500"
+                                />
+                                {activeNode.affiliateLink && (
+                                  <a
+                                    href={activeNode.affiliateLink}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="p-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-xl text-xs font-bold transition-colors flex items-center justify-center"
+                                    title="Testar Link"
+                                  >
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-bold text-gray-400 uppercase">Comissão Estimada (%)</label>
+                              <input
+                                type="number"
+                                placeholder="Ex: 10 ou 50"
+                                value={activeNode.commissionRate || ''}
+                                onChange={(e) => updateDraftField('commissionRate', parseFloat(e.target.value) || 0)}
+                                className="w-full px-3 py-1.5 bg-black/60 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500"
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Vínculo com Oferta Real do CRM (Apenas para ofertas próprias) */}
+                        {activeNode.type === 'offer' && !activeNode.subType.startsWith('affiliate_') && (
+                          <div className="space-y-2 p-3 rounded-2xl bg-emerald-500/5 border border-emerald-500/20">
+                            <div className="flex justify-between items-center">
+                              <label className="text-[11px] font-bold text-emerald-400 uppercase flex items-center gap-1.5">
+                                <DollarSign className="w-3.5 h-3.5" />
+                                Vincular Oferta do CRM (Opcional)
+                              </label>
+                              <span className="text-[9px] text-gray-500 font-medium">Livre ou Vinculado</span>
+                            </div>
+
+                            <select
+                              value={activeNode.offerId || ''}
+                              onChange={(e) => {
+                                const chosenOffer = offers.find(o => o.id === e.target.value);
+                                if (chosenOffer) {
+                                  updateDraftField('offerId', chosenOffer.id);
+                                  updateDraftField('price', chosenOffer.price);
+                                  updateDraftField('label', chosenOffer.name);
+                                } else {
+                                  updateDraftField('offerId', undefined);
+                                }
+                              }}
+                              className="w-full px-3 py-2 bg-black/60 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+                            >
+                              <option value="">Produto livre (digitar dados manualmente abaixo)</option>
+                              {offers.map(o => (
+                                <option key={o.id} value={o.id}>
+                                  📦 {o.name} (R$ {o.price?.toFixed(2)})
+                                </option>
+                              ))}
+                            </select>
+
+                            <p className="text-[10px] text-gray-400 leading-tight">
+                              💡 Você pode digitar o preço livremente abaixo sem precisar criar o produto antes no CRM.
+                            </p>
+
+                            {activeNode.offerId && (
+                              <a
+                                href={`${window.location.origin}/checkout/${orgId}?offerId=${activeNode.offerId}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-[10px] font-bold text-emerald-400 hover:underline flex items-center gap-1 pt-1"
+                              >
+                                <ExternalLink className="w-3 h-3" />
+                                Abrir Link do Checkout Transparente
+                              </a>
+                            )}
+                          </div>
+                        )}
+
+                        {/* URL Externa / Link da Página */}
+                        {(activeNode.type === 'page' || activeNode.type === 'traffic') && (
+                          <div className="space-y-1.5">
+                            <label className="text-[11px] font-bold text-gray-400 uppercase">Link / URL da Página</label>
+                            <div className="flex gap-2">
+                              <input
+                                type="url"
+                                placeholder="https://seusite.com.br/artigo-ou-pagina"
+                                value={activeNode.url || ''}
+                                onChange={(e) => updateDraftField('url', e.target.value)}
+                                className="flex-1 px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
+                              />
+                              {activeNode.url && (
+                                <a
+                                  href={activeNode.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="p-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-xl flex items-center justify-center"
+                                  title="Abrir URL"
+                                >
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Preço ou CPC */}
+                        {activeNode.type === 'offer' && (
+                          <div className="space-y-1.5">
+                            <label className="text-[11px] font-bold text-gray-400 uppercase">
+                              {activeNode.subType.startsWith('affiliate_') ? 'Preço do Produto no Parceiro (R$)' : 'Preço do Produto (R$)'}
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={activeNode.price || 0}
+                              onChange={(e) => updateDraftField('price', parseFloat(e.target.value) || 0)}
+                              className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                            />
+                          </div>
+                        )}
+
+                        {activeNode.type === 'traffic' && (
+                          <div className="space-y-1.5">
+                            <label className="text-[11px] font-bold text-gray-400 uppercase">Custo Médio por Clique - CPC (R$)</label>
+                            <input
+                              type="number"
+                              step="0.10"
+                              value={activeNode.costPerClick || 0}
+                              onChange={(e) => updateDraftField('costPerClick', parseFloat(e.target.value) || 0)}
+                              className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                            />
+                          </div>
+                        )}
+
+                        {/* Taxa de Conversão Esperada */}
+                        <div className="space-y-1.5">
+                          <div className="flex justify-between items-center">
+                            <label className="text-[11px] font-bold text-gray-400 uppercase">Taxa de Conversão Esperada</label>
+                            <span className="text-xs font-bold text-indigo-400">{activeNode.conversionRate || 0}%</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0.5"
+                            max="100"
+                            step="0.5"
+                            value={activeNode.conversionRate || 0}
+                            onChange={(e) => updateDraftField('conversionRate', parseFloat(e.target.value))}
+                            className="w-full accent-indigo-500 cursor-pointer"
+                          />
                         </div>
-                      </div>
+
+                        {/* Status da Etapa */}
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-bold text-gray-400 uppercase">Status de Execução</label>
+                          <select
+                            value={activeNode.status || 'idea'}
+                            onChange={(e) => updateDraftField('status', e.target.value)}
+                            className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                          >
+                            <option value="idea">💡 Ideia / Planejamento</option>
+                            <option value="in_progress">🚧 Em Construção / Gravando</option>
+                            <option value="ready">✅ Pronto para Testar</option>
+                            <option value="live">🚀 No Ar / Rodando</option>
+                          </select>
+                        </div>
+
+                        {/* Notas & Links */}
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-bold text-gray-400 uppercase">Notas & Rascunho</label>
+                          <textarea
+                            rows={4}
+                            value={activeNode.notes || ''}
+                            onChange={(e) => updateDraftField('notes', e.target.value)}
+                            placeholder="Adicione referências, copies ou anotações desta etapa..."
+                            className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 resize-none"
+                          />
+                        </div>
+                      </>
                     )}
-
-                    {/* Preço ou CPC */}
-                    {activeNode.type === 'offer' && (
-                      <div className="space-y-1.5">
-                        <label className="text-[11px] font-bold text-gray-400 uppercase">
-                          {activeNode.subType.startsWith('affiliate_') ? 'Preço do Produto no Parceiro (R$)' : 'Preço do Produto (R$)'}
-                        </label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={activeNode.price || 0}
-                          onChange={(e) => updateDraftField('price', parseFloat(e.target.value) || 0)}
-                          className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
-                        />
-                      </div>
-                    )}
-
-                    {activeNode.type === 'traffic' && (
-                      <div className="space-y-1.5">
-                        <label className="text-[11px] font-bold text-gray-400 uppercase">Custo Médio por Clique - CPC (R$)</label>
-                        <input
-                          type="number"
-                          step="0.10"
-                          value={activeNode.costPerClick || 0}
-                          onChange={(e) => updateDraftField('costPerClick', parseFloat(e.target.value) || 0)}
-                          className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
-                        />
-                      </div>
-                    )}
-
-                    {/* Taxa de Conversão Esperada */}
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between items-center">
-                        <label className="text-[11px] font-bold text-gray-400 uppercase">Taxa de Conversão Esperada</label>
-                        <span className="text-xs font-bold text-indigo-400">{activeNode.conversionRate || 0}%</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="0.5"
-                        max="100"
-                        step="0.5"
-                        value={activeNode.conversionRate || 0}
-                        onChange={(e) => updateDraftField('conversionRate', parseFloat(e.target.value))}
-                        className="w-full accent-indigo-500 cursor-pointer"
-                      />
-                    </div>
-
-                    {/* Status da Etapa */}
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-bold text-gray-400 uppercase">Status de Execução</label>
-                      <select
-                        value={activeNode.status || 'idea'}
-                        onChange={(e) => updateDraftField('status', e.target.value)}
-                        className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
-                      >
-                        <option value="idea">💡 Ideia / Planejamento</option>
-                        <option value="in_progress">🚧 Em Construção / Gravando</option>
-                        <option value="ready">✅ Pronto para Testar</option>
-                        <option value="live">🚀 No Ar / Rodando</option>
-                      </select>
-                    </div>
-
-                    {/* Notas & Links */}
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-bold text-gray-400 uppercase">Notas & Rascunho</label>
-                      <textarea
-                        rows={4}
-                        value={activeNode.notes || ''}
-                        onChange={(e) => updateDraftField('notes', e.target.value)}
-                        placeholder="Adicione referências, copies ou anotações desta etapa..."
-                        className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 resize-none"
-                      />
-                    </div>
                   </>
                 )}
 
