@@ -979,6 +979,8 @@ export interface FunnelConnection {
   toNodeId: string;
   label?: string;
   style?: 'solid' | 'dashed' | 'animated';
+  intent?: 'conversion' | 'recovery' | 'loop' | 'upsell' | 'neutral';
+  color?: string;
 }
 
 export interface FunnelBlueprint {
@@ -987,6 +989,7 @@ export interface FunnelBlueprint {
   description?: string;
   category: FunnelCategory;
   status: FunnelStatus;
+  routingStyle?: 'bezier' | 'orthogonal';
   
   nodes: FunnelNode[];
   connections: FunnelConnection[];

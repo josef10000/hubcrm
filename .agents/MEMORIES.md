@@ -412,3 +412,25 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
     - Seleção múltipla com checkboxes individuais, master checkbox e botões de atalho rápido (*"Selecionar Faltantes"*, *"Selecionar Todos"*, *"Limpar"*).
     - Barra de ação flutuante e modal de preenchimento em lote com horários padrão (Entrada, Saída e Intervalo de Almoço de 1h) aplicando a múltiplos dias com 1 clique no Firestore (`time_logs`), calculando a duração líquida e registrando auditoria (`editedByAdmin: true`).
 
+---
+
+## 26. Funis & Orquestração: Seleção em Lote, Arraste em Grupo, Auto-Layout & Roteamento Ortogonal
+- **Data da Integração**: 25/08/2026
+- **Funcionalidades**:
+  1. Seleção em Lote & Área (Marquee Box Selection) via mouse ou `Shift + Drag`.
+  2. Arraste Sincronizado a 60fps de múltiplos blocos e exclusão em lote (`Delete`).
+  3. Barra Flutuante de Ação em Grupo com alinhamento, exclusão e criação automática de Moldura envolvente.
+  4. Destaque Inteligente de Trilha (Smart Dimming) reduzindo opacidade do ruído visual.
+  5. Alternador de Roteamento de Linhas: Curvas Bézier vs Ortogonal em Ângulo Reto (90°) com portas inteligentes de retorno.
+  6. Algoritmo de Auto-Organização Hierárquica em 1-Clique (⚡ Auto-Layout).
+- **Decisões Técnicas**:
+  - **Modelos (`shared/types.ts`)**:
+    - Campos `intent?: 'conversion' | 'recovery' | 'loop' | 'upsell' | 'neutral'` e `color?: string` na interface `FunnelConnection`.
+    - Campo `routingStyle?: 'bezier' | 'orthogonal'` persistido no `FunnelBlueprint`.
+  - **Multi-Seleção & Arraste (`FunnelArchitectEditorView.tsx`)**:
+    - Estado `selectedNodeIds: string[]` sincronizado com offsets individuais (`draggingGroupOffsets`) permitindo mover todo o grupo com precisão absoluta de coordenadas em `requestAnimationFrame`.
+    - Bounding box automático para transformar a seleção de blocos em uma `FunnelFrame` perfeitamente ajustada.
+  - **Roteamento & Inteligência de Portas**:
+    - Detecção automática de rotas de retorno (`fromNode.x >= toNode.x - 40`) roteando por fora dos blocos (topo/base) para eliminar cruzamentos indesejados.
+    - Algoritmo BFS em camadas ordenando nós de tráfego, páginas, ofertas e automações em colunas simétricas ($X$) com balanceamento de altura ($Y$).
+

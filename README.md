@@ -172,6 +172,16 @@ Integração e processamento seguro de cobranças sob a própria identidade visu
 *   **Suporte a Assinaturas e latest:** Lógica inteligente que resolve o pagamento mais recente de forma automática (`latest`) e extrai as faturas abertas de assinaturas (`sub_xxx`) de forma transparente.
 *   **Integração de Webhooks:** Totalmente compatível com os webhooks existentes que atualizam o status financeiro para `RECEIVED`, atualizam o Firestore e geram lançamentos contábeis.
 
+### 18. 🗺️ Funis & Orquestração de Processos (Quadro Infinito & Auto-Layout)
+Módulo visual interativo no estilo Funnelytics/Miro para planejamento e desenho de jornadas de vendas, réguas multicanais e esteiras comerciais:
+*   **Seleção em Lote & Área (Marquee Box Selection):** Seleção de múltiplos blocos desenhando um retângulo no canvas com o mouse ou via `Shift + Drag`.
+*   **Arraste Sincronizado a 60fps & Exclusão em Grupo:** Movimentação fluida de blocos selecionados em conjunto mantendo o espaçamento relativo, e exclusão em massa com `Delete`.
+*   **Barra Flutuante de Ações:** Painel de ação rápida para criar molduras automáticas em volta dos blocos selecionados, alinhar vertical/horizontalmente e gerenciar grupos.
+*   **Destaque Inteligente e Dimming (Modo Foco):** Ao passar o mouse ou selecionar um bloco, isola a trilha ativa e reduz a opacidade do ruído visual.
+*   **Roteamento Ortogonal (90° Grid) & Portas Inteligentes:** Alternador entre curvas Bézier e linhas ortogonais com portas de retorno (topo/base) para evitar cruzamento de cards.
+*   **⚡ Auto-Organização Hierárquica:** Algoritmo de auto-layout em camadas ordenando nós de tráfego, páginas, ofertas e automações com 1 clique.
+*   **Simulador de Tráfego e Gargalos:** Projeção em tempo real de visitantes, faturamento projetado, custo de tráfego (CPC) e ROAS.
+
 ---
 
 ## ⚖️ Comparativo de Regimes (CLT vs PJ)
