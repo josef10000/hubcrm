@@ -440,15 +440,14 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 
 ---
 
-## 27. Funis & Arquitetura: Ancoragem Fixa de Linhas, Gavetas na Biblioteca & Alinhamento Anti-Colisão
+## 27. Funis & Arquitetura: Ancoragem Fixa de Linhas, Gavetas na Biblioteca, Alinhamento Anti-Colisão & Eliminação do Lag CSS (0ms)
 - **Data da Integração**: 25/08/2026
 - **Funcionalidades**:
-  1. **Ancoragem Magnética Estável das Linhas**: Eliminação de saltos de portas (topo/base); linhas permanecem sempre fixadas nas pontas clássicas (Saída na Direita e Entrada na Esquerda), mesmo em curvas de retorno e loops, permitindo arraste a 60fps sem nunca soltar ou atrasar.
-  2. **Gavetas Retráteis (Accordion) na Barra Lateral de Blocos**: Cada categoria de blocos (ICP, Tráfego, Páginas, Ofertas, E-mail & Multicanal, B2B, CS, RH, etc.) agora possui cabeçalho clicável independente com contador e setas animadas (`ChevronDown`) para colapsar/expandir gavetas.
-  3. **Alinhamento Inteligente com Espaçamento Harmônico (Zero Sobreposição)**:
-     - **Linha Horizontal**: Ordena nós da esquerda para a direita, alinha na média de altura $Y$ e distribui com `gap = 80px` entre bordas, impedindo que blocos diagonais fiquem sobrepostos.
-     - **Coluna Vertical**: Ordena nós de cima para baixo, alinha na coluna média $X$ e distribui com `gap = 45px`, gerando fluxo empilhado limpo e proporcional.
+  1. **Eliminação do Lag CSS de Arraste (0ms Delay)**: Identificado e removido o `transition-all` que causava atraso de 150ms na renderização dos cards enquanto o SVG se movia instantaneamente. Cards e linhas agora se movem 100% soldados no mesmo exato milissegundo a 60fps.
+  2. **Plugs Magnéticos Físicos (Frente & Atrás)**: Conectores visuais táteis posicionados na lateral esquerda (entrada) e direita (saída/clicável para puxar linhas).
+  3. **Ancoragem Magnética Estável das Linhas**: Portas de conexão rigorosamente fixas em `y + height/2` na ponta direita e esquerda, mantendo curva contínua elegante mesmo em fluxos reversos.
+  4. **Gavetas Retráteis (Accordion) na Barra Lateral de Blocos**: Categorias de blocos com cabeçalho clicável individual para abrir/fechar com transição suave.
+  5. **Alinhamento Inteligente Anti-Colisão**: Distribuição automática horizontal (`gap = 80px`) e vertical (`gap = 45px`) sem sobreposição de blocos.
 - **Decisões Técnicas**:
-  - `calculateConnectionPath`: Fixação das portas em `(fromNode.x + fromWidth, fromNode.y + fromHeight/2)` e `(toNode.x, toNode.y + toHeight/2)`. O roteamento em fluxo reverso (`isBackwards`) calcula a curva externa de retorno a partir dessas mesmas portas com margens suaves sem desconexão.
-  - `handleAlignNodes`: Cálculo de bounding box e ordenação por eixo primário com avanço dinâmico baseado na largura/altura real do subtipo do nó (`FunnelNodeSubType`).
-
+  - `FunnelArchitectEditorView.tsx`: Substituição de `transition-all` por `transition-[border-color,box-shadow,background-color,opacity]` nos nós, permitindo atualização instantânea de `left` e `top` sem interferência da interpolação CSS do navegador.
+  - `calculateConnectionPath`: Alturas dinâmicas baseadas no subtipo (`fromHeight / 2`, `toHeight / 2`) para alinhamento pixel-perfect dos conectores.

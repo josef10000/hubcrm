@@ -970,11 +970,14 @@ export default function FunnelArchitectEditorView() {
     const fromWidth = fromNode.subType === 'sticky_note' ? 256 : fromNode.subType === 'icp_persona' ? 240 : 224;
     const toWidth = toNode.subType === 'sticky_note' ? 256 : toNode.subType === 'icp_persona' ? 240 : 224;
 
-    // Portas Fixas Estáveis: Saída sempre no centro da lateral direita, Entrada sempre no centro da lateral esquerda
+    const fromHeight = fromNode.subType === 'sticky_note' ? 200 : fromNode.subType === 'icp_persona' ? 120 : 90;
+    const toHeight = toNode.subType === 'sticky_note' ? 200 : toNode.subType === 'icp_persona' ? 120 : 90;
+
+    // Portas Fixas Estáveis: Saída sempre no centro vertical da lateral direita, Entrada sempre no centro vertical da lateral esquerda
     const startX = fromNode.x + fromWidth;
-    const startY = fromNode.y + (fromNode.subType === 'sticky_note' ? 90 : fromNode.subType === 'icp_persona' ? 60 : 45);
+    const startY = fromNode.y + fromHeight / 2;
     const endX = toNode.x;
-    const endY = toNode.y + (toNode.subType === 'sticky_note' ? 90 : toNode.subType === 'icp_persona' ? 60 : 45);
+    const endY = toNode.y + toHeight / 2;
 
     const isBackwards = startX >= endX - 20;
 
@@ -986,11 +989,11 @@ export default function FunnelArchitectEditorView() {
         const inX = endX - 30;
         return `M ${startX} ${startY} L ${outX} ${startY} L ${outX} ${dropY} L ${inX} ${dropY} L ${inX} ${endY} L ${endX} ${endY}`;
       } else {
-        const loopMargin = Math.max(60, Math.abs(startX - endX) * 0.35);
+        const loopMargin = Math.max(80, Math.abs(startX - endX) * 0.4);
         const controlX1 = startX + loopMargin;
         const controlX2 = endX - loopMargin;
-        const controlY1 = startY + (startY <= endY ? 70 : -70);
-        const controlY2 = endY + (startY <= endY ? -70 : 70);
+        const controlY1 = startY + (startY <= endY ? 80 : -80);
+        const controlY2 = endY + (startY <= endY ? -80 : 80);
         return `M ${startX} ${startY} C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${endX} ${endY}`;
       }
     } else {
@@ -1484,7 +1487,7 @@ export default function FunnelArchitectEditorView() {
                     onMouseLeave={() => setHoveredNodeId(null)}
                     onMouseDown={(e) => handleNodeMouseDown(e, node)}
                     style={{ left: `${node.x}px`, top: `${node.y}px` }}
-                    className={`absolute w-64 p-4 rounded-2xl pointer-events-auto cursor-grab active:cursor-grabbing shadow-xl transition-all border z-20 ${style.bg} ${style.border} ${
+                    className={`absolute w-64 p-4 rounded-2xl pointer-events-auto cursor-grab active:cursor-grabbing shadow-xl transition-[border-color,box-shadow,opacity] duration-150 border z-20 ${style.bg} ${style.border} ${
                       isSelected ? 'ring-4 ring-indigo-500 scale-105 shadow-2xl' : 'hover:scale-[1.01]'
                     } ${shouldDim ? 'opacity-25 hover:opacity-100' : 'opacity-100'}`}
                   >
@@ -1580,7 +1583,7 @@ export default function FunnelArchitectEditorView() {
                     onMouseLeave={() => setHoveredNodeId(null)}
                     onMouseDown={(e) => handleNodeMouseDown(e, node)}
                     style={{ left: `${node.x}px`, top: `${node.y}px` }}
-                    className={`absolute w-60 rounded-2xl pointer-events-auto cursor-pointer transition-all select-none backdrop-blur-2xl border z-20 ${
+                    className={`absolute w-60 rounded-2xl pointer-events-auto cursor-pointer transition-[border-color,box-shadow,background-color,opacity] duration-150 select-none backdrop-blur-2xl border z-20 ${
                       isSelected
                         ? 'border-amber-400 shadow-2xl shadow-amber-500/30 ring-4 ring-amber-500/40 bg-[#161209]'
                         : isConnectingSource
@@ -1650,7 +1653,7 @@ export default function FunnelArchitectEditorView() {
                     left: `${node.x}px`,
                     top: `${node.y}px`
                   }}
-                  className={`absolute w-56 rounded-2xl pointer-events-auto cursor-pointer transition-all select-none backdrop-blur-2xl border z-20 ${
+                  className={`absolute w-56 rounded-2xl pointer-events-auto cursor-pointer transition-[border-color,box-shadow,background-color,opacity] duration-150 select-none backdrop-blur-2xl border z-20 ${
                     isSelected
                       ? 'border-indigo-400 shadow-2xl shadow-indigo-500/40 ring-4 ring-indigo-500/50 bg-[#0c1427] scale-[1.02]'
                       : isConnectingSource
@@ -1658,6 +1661,16 @@ export default function FunnelArchitectEditorView() {
                       : 'border-white/10 hover:border-white/30 bg-[#090e1c]/90 shadow-xl'
                   } ${shouldDim ? 'opacity-25 hover:opacity-100' : 'opacity-100'}`}
                 >
+                  {/* Plug de Conexão de Entrada (Esquerda / Atrás) */}
+                  <div className="absolute -left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[#090e1c] border-2 border-indigo-400/80 shadow-md pointer-events-none z-30" />
+
+                  {/* Plug de Conexão de Saída (Direita / Frente) */}
+                  <div 
+                    onClick={(e) => { e.stopPropagation(); handleStartConnection(e, node.id); }}
+                    className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-indigo-500 hover:bg-indigo-400 hover:scale-125 border-2 border-white shadow-md cursor-pointer transition-transform z-30"
+                    title="Puxar conexão para o próximo bloco"
+                  />
+
                   {/* Badge de Gargalo */}
                   {isBottleneck && (
                     <div className="absolute -top-3 -right-2 px-2 py-0.5 rounded-full bg-rose-600 text-white text-[9px] font-black uppercase tracking-wider flex items-center gap-1 shadow-lg shadow-rose-600/50 animate-bounce">
