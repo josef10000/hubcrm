@@ -48,6 +48,12 @@ const TeamManagementView = lazy(() => import('@people/views/TeamManagementView')
 const PeopleView = lazy(() => import('@people/views/PeopleView'));
 const CanvasListView = lazy(() => import('@chat/views/CanvasListView'));
 const CanvasEditorView = lazy(() => import('@chat/views/CanvasEditorView'));
+
+// Multi-Screen / War Room Views
+const FinancialScreenView = lazy(() => import('@/domains/screens/views/FinancialScreenView'));
+const ClientsScreenView = lazy(() => import('@/domains/screens/views/ClientsScreenView'));
+const StatusScreenView = lazy(() => import('@/domains/screens/views/StatusScreenView'));
+const ScreenLauncherView = lazy(() => import('@/domains/screens/views/ScreenLauncherView'));
 const ReferralsView = lazy(() => import('@crm/components/ReferralsView'));
 const AuditDashboard = lazy(() => import('@domains/core/views/AuditDashboard'));
 const GrowthHubView = lazy(() => import('@/domains/crm/views/GrowthHubView'));
@@ -104,6 +110,11 @@ export function AppRouter() {
         <Route path="/invite/:id" element={<AcceptInviteView />} />
         <Route path="/p/asset/:orgId/:assetId" element={<AssetPublicView />} />
 
+        {/* Dedicated Standalone Multi-Screen / War Room Routes */}
+        <Route path="/screen/financial" element={<AuthGuard><FinancialScreenView /></AuthGuard>} />
+        <Route path="/screen/clients" element={<AuthGuard><ClientsScreenView /></AuthGuard>} />
+        <Route path="/screen/status" element={<AuthGuard><StatusScreenView /></AuthGuard>} />
+
         {/* Private Workspace Routes */}
         <Route path="/*" element={
           <AuthGuard>
@@ -130,6 +141,7 @@ export function AppRouter() {
                       <Route path="/offers/:id" element={<OfferLabEditorView />} />
                       <Route path="/funnels" element={<FunnelArchitectListView />} />
                       <Route path="/funnels/:id" element={<FunnelArchitectEditorView />} />
+                      <Route path="/screens" element={<ScreenLauncherView />} />
                       <Route path="/monitoring" element={<MonitoringView clients={clients} />} />
                       <Route path="/map" element={
                           <ClientMapView 

@@ -1,7 +1,7 @@
 import { 
   LayoutDashboard, Users, DollarSign, Target, Rocket, HeartHandshake, Settings, 
   Package, Megaphone, Calendar, MessageCircle, Globe, LayoutTemplate, Map as MapIcon, 
-  Layout, CreditCard, Shield, BarChart3, BookOpen, Bell, ShieldCheck, Zap, LayoutGrid, FlaskConical, GitFork
+  Layout, CreditCard, Shield, BarChart3, BookOpen, Bell, ShieldCheck, Zap, LayoutGrid, FlaskConical, GitFork, Tv
 } from 'lucide-react';
 
 export const navGroups = [
@@ -21,6 +21,7 @@ export const navGroups = [
     icon: Target,
     items: [
       { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
+      { icon: Tv, label: 'Sala de Comando (3 Telas)', path: '/screens' },
       { icon: Package, label: 'Produtos', path: '/products' },
       { icon: Target, label: 'Perfis ICP', path: '/icp' },
       { icon: FlaskConical, label: 'Laboratório de Ofertas', path: '/offers' },

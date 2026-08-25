@@ -358,3 +358,36 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
   - **Galeria de Templates de 1-Clique (`funnelTemplates.ts`)**:
     - 8 modelos validados prontos: *Baixo Ticket + Bump + Assinatura*, *Orgânico Pinterest & TikTok ➡️ WhatsApp*, *Quiz Interativo + VSL Customizada*, *B2B High-Ticket*, *Lançamento 24h WhatsApp*, *Perpétuo SaaS*, *Orquestração Comercial B2B (Inbound ➡️ Demo ➡️ Proposta ➡️ Contrato & NF-e)* e *Esteira de Pós-Venda CS, NPS & Renovação*.
   - **Navegação**: Rota `/funnels` e `/funnels/:id` adicionadas em `AppRouter.tsx` e item "Funis & Orquestração" com ícone `GitFork` no menu Comercial do `Sidebar.tsx`.
+
+---
+
+## 24. Sala de Comando Multi-Monitores (War Room / Multi-Screen Display)
+- **Data da Integração**: 25/08/2026
+- **Funcionalidade**: Sistema de visualização dedicada em tempo real para múltiplos monitores físicos e TVs (Modo Kiosk / TV Clean) para monitoramento contínuo sem barras de navegação pesadas.
+- **Decisões Técnicas**:
+  - **Rotas Standalone & Layout Kiosk (`ScreenLayout.tsx`)**:
+    - Fundo Dark Slate de alto contraste com ambient lights e grid sutil.
+    - Relógio digital em tempo real (HH:mm:ss) e data em português.
+    - Botões integrados de Fullscreen (F11 via HTML5 Fullscreen API) e áudio sintético nativo (🔊/🔇).
+    - Seletor rápido de alternância entre monitores (M1, M2, M3).
+  - **Efeitos Sonoros Nativos (`soundEffects.ts`)**:
+    - Síntese de áudio 100% nativa com a Web Audio API (`AudioContext`, osciladores e curvas de ganho exponenciais) sem dependência de arquivos externos ou assets remotos (som suave de moeda/caixa registradora para vendas confirmadas, pop para Pix gerado e alerta duplo para quedas de página).
+  - **Monitor 1: Sala Financeira & ASAAS Live (`FinancialScreenView.tsx` / `/screen/financial`)**:
+    - **Valor Gerado Hoje (R$)**: Soma de todos os Pix, Boletos e Cartões gerados no dia.
+    - **Valor Pago Hoje (R$)**: Faturamento líquido confirmado que entrou na conta.
+    - **Taxa de Conversão do Caixa (%)**: Indicador de eficiência `(Valor Pago / Valor Gerado) * 100`.
+    - **Pendente de Recuperação (R$)**: Dinheiro na mesa aguardando fechamento.
+    - **Meta Diária de Faturamento**: Barra de progresso com meta configurável diretamente no painel.
+    - **Conversão por Meio de Pagamento**: Pix (Gerados vs Pagos + % conversão), Cartão de Crédito (Aprovados vs Recusados) e Boletos.
+    - **Live Feed de Transações ASAAS**: Atualização em tempo real com efeito de pulso e som de caixa registradora ao aprovar pagamentos.
+    - **Gráfico de Vendas Horário (24h)**: Histograma de faturamento gerado e pago hora a hora (00h às 23h).
+  - **Monitor 2: Radar de Clientes & Recuperação ao Vivo (`ClientsScreenView.tsx` / `/screen/clients`)**:
+    - Novos Clientes Hoje com badge `Asaas Auto` quando gerados por webhook/checkout.
+    - Fila de Onboarding & Kick-off para o time operacional.
+    - **Fila de Recuperação Ativa de Pix/Boleto**: Lista de clientes com pagamentos pendentes com botão de 1-clique para abrir o WhatsApp Web (`https://wa.me/55...`) com mensagem persuasiva pronta.
+  - **Monitor 3: Status de Páginas, Checkouts & Funis (`StatusScreenView.tsx` / `/screen/status`)**:
+    - Radar de Uptime com medição de latência em milissegundos (ms) para checkouts transparentes (`/checkout/${orgId}`) e páginas de venda.
+    - Visualizador de jornada do funil de vendas ativo com taxas de passagem.
+  - **Central de Lançamento Multi-Monitores (`MultiScreenLauncherModal.tsx` & `ScreenLauncherView.tsx` / `/screens`)**:
+    - Botão "Lançar Todos os 3 Monitores" que abre 3 janelas pop-up limpas para distribuição instantânea nas 3 telas físicas do setup.
+    - Acesso direto via botão "Monitores" no cabeçalho global (`Header.tsx`), menu Comercial (`navigation.ts`) e Command Palette (`CommandPalette.tsx`).

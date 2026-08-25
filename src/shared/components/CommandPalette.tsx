@@ -30,7 +30,10 @@ import {
   Gamepad2, 
   ShoppingBag,
   LayoutTemplate,
-  Info
+  Info,
+  FlaskConical,
+  GitFork,
+  Tv
 } from 'lucide-react';
 
 interface CommandItem {
@@ -56,6 +59,7 @@ export function CommandPalette() {
   // Lista de destinos completa e detalhada baseada nas rotas internas
   const allDestinations: CommandItem[] = useMemo(() => [
     { name: 'Dashboard', description: 'Visão geral de negócios, metas e métricas principais', path: '/', shortcut: 'da', icon: LayoutDashboard },
+    { name: 'Sala de Comando (3 Monitores)', description: 'Visualização dedicada em tempo real para 3 telas / TVs', path: '/screens', shortcut: 'sc', icon: Tv },
     { name: 'Chat', description: 'Comunicação interna do time e mensagens de voz', path: '/chat', shortcut: 'ch', icon: MessageSquare },
     { name: 'Suporte', description: 'Central de chamados, tickets abertos e SLA', path: '/support', shortcut: 'su', icon: LifeBuoy },
     { name: 'Notificações', description: 'Alertas de sistema, aniversário e atualizações', path: '/notifications', shortcut: 'no', icon: Bell },

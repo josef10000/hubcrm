@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Search, Menu, X, Focus, Video, Clock, Shield } from 'lucide-react';
+import { Search, Menu, X, Focus, Video, Clock, Shield, Tv } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
 import { useUI } from '@/contexts/UIContext';
@@ -9,6 +9,7 @@ import { useCRMStore } from '@/store/useCRMStore';
 import { useDialog } from '@auth/contexts/DialogContext';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import MultiScreenLauncherModal from '@/domains/screens/components/MultiScreenLauncherModal';
 
 interface HeaderProps {
   currentPath: string;
@@ -33,6 +34,7 @@ export function Header({ currentPath, navigate }: HeaderProps) {
   const { hasPermission, hasAnyPermission } = usePermissions();
 
   const [newTicketsCount, setNewTicketsCount] = useState(0);
+  const [isScreensModalOpen, setIsScreensModalOpen] = useState(false);
 
   // Escutar se existem novos tickets de compliance para exibir notificação (badge) ao RH/Admin
   useEffect(() => {
@@ -269,6 +271,14 @@ export function Header({ currentPath, navigate }: HeaderProps) {
           </button>
         )}
         <button
+          onClick={() => setIsScreensModalOpen(true)}
+          className="p-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 hover:text-white rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0 flex items-center gap-1.5 shadow-lg shadow-indigo-500/10"
+          title="Sala de Comando Multi-Monitores (War Room)"
+        >
+          <Tv size={16} />
+          <span className="text-[10px] font-black uppercase tracking-wider hidden xl:inline">Monitores</span>
+        </button>
+        <button
           onClick={() => setIsRecorderOpen(true)}
           className="p-2.5 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0"
           title="Gravar Tela (Loom Nativo)"
@@ -303,6 +313,12 @@ export function Header({ currentPath, navigate }: HeaderProps) {
         )}
       </div>
     </header>
+
+    {/* Modal da Central de Lançamento de Monitores */}
+    <MultiScreenLauncherModal
+      isOpen={isScreensModalOpen}
+      onClose={() => setIsScreensModalOpen(false)}
+    />
   </>
   );
 }
