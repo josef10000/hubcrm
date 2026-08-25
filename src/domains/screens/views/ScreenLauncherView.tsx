@@ -137,6 +137,38 @@ export default function ScreenLauncherView() {
         </div>
       </div>
 
+      {/* ── META DIÁRIA DE FATURAMENTO ────────────────────────────────────── */}
+      <div className="p-5 rounded-3xl bg-[#0a1020]/80 border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 backdrop-blur-xl">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+            <DollarSign className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-xs font-black uppercase tracking-wider text-white">
+              Meta Diária de Faturamento (R$)
+            </h3>
+            <span className="text-[11px] text-gray-400">
+              Alimente o objetivo que será monitorado com a barra de progresso no Monitor 1 (Financeiro)
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <span className="text-xs font-mono font-bold text-gray-400">R$</span>
+          <input
+            type="number"
+            defaultValue={localStorage.getItem('hubcrm_daily_goal') || '5000'}
+            onChange={(e) => {
+              const val = parseFloat(e.target.value);
+              if (!isNaN(val) && val >= 0) {
+                localStorage.setItem('hubcrm_daily_goal', val.toString());
+              }
+            }}
+            className="w-36 px-3.5 py-2 bg-black/60 border border-white/20 rounded-xl text-xs font-mono font-bold text-white focus:outline-none focus:border-indigo-400"
+            placeholder="Ex: 5000"
+          />
+        </div>
+      </div>
+
       {/* ── GRADE DOS 3 MONITORES ────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {screens.map(screen => {

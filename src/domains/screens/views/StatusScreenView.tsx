@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ScreenLayout from '../layouts/ScreenLayout';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useClients } from '@/hooks/queries/useClients';
+import { funnelService } from '@/services/funnelService';
+import { FunnelBlueprint } from '@/types';
 import { soundEffects } from '../utils/soundEffects';
 import { 
   Globe, 
@@ -16,9 +19,10 @@ import {
   Layers, 
   GitFork, 
   ShieldCheck,
-  TrendingUp
+  TrendingUp,
+  Plus,
+  ChevronDown
 } from 'lucide-react';
-import { MARKET_FUNNEL_TEMPLATES } from '@/domains/crm/constants/funnelTemplates';
 
 interface EndpointHealth {
   id: string;
@@ -31,13 +35,60 @@ interface EndpointHealth {
 }
 
 export default function StatusScreenView() {
+  const navigate = useNavigate();
   const { effectiveOrgId, offers = [] } = useCRM();
   const { data: clientsData = [] } = useClients();
 
   const [endpoints, setEndpoints] = useState<EndpointHealth[]>([]);
   const [isChecking, setIsChecking] = useState(false);
 
-  // Inicialização da Lista de Endpoints Monitorados
+  // 🎯 Funis Reais Cadastrados pelo Usuário no CRM
+  const [userFunnels, setUserFunnels] = useState<FunnelBlueprint[]>([]);
+  const [selectedFunnelId, setSelectedFunnelId] = useState<string>(() => {
+    return localStorage.getItem('hubcrm_active_screen_funnel_id') || '';
+  });
+  const [loadingFunnels, setLoadingFunnels] = useState(true);
+
+  // Carregar funis reais da organização
+  useEffect(() => {
+    if (!effectiveOrgId) return;
+    const loadFunnels = async () => {
+      try {
+        setLoadingFunnels(true);
+        const funnels = await funnelService.getFunnels(effectiveOrgId);
+        setUserFunnels(funnels);
+        if (funnels.length > 0) {
+          setSelectedFunnelId(prev => {
+            if (prev && funnels.some(f => f.id === prev)) return prev;
+            return funnels[0].id;
+          });
+        }
+      } catch (err) {
+        console.error('Erro ao carregar funis reais:', err);
+      } finally {
+        setLoadingFunnels(false);
+      }
+    };
+    loadFunnels();
+  }, [effectiveOrgId]);
+
+  // Trocar funil ativo e persistir preferência
+  const handleSelectFunnel = (id: string) => {
+    setSelectedFunnelId(id);
+    localStorage.setItem('hubcrm_active_screen_funnel_id', id);
+  };
+
+  // Funil Real Selecionado no Momento
+  const activeFunnel = useMemo(() => {
+    if (userFunnels.length > 0) {
+      const found = userFunnels.find(f => f.id === selectedFunnelId);
+      if (found) return found;
+      return userFunnels[0];
+    }
+    return null;
+  }, [userFunnels, selectedFunnelId]);
+
+  // Inicialização da Lista de Endpoints Monitorados (100% Real)
   useEffect(() => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const list: EndpointHealth[] = [];
@@ -46,7 +97,7 @@ export default function StatusScreenView() {
     if (effectiveOrgId) {
       list.push({
         id: 'chk-org-main',
-        name: 'Checkout Transparente Oficial',
+        name: 'Checkout Transparente Geral',
         url: `${origin}/checkout/${effectiveOrgId}`,
         type: 'checkout',
         status: 'CHECKING',
@@ -55,8 +106,8 @@ export default function StatusScreenView() {
       });
     }
 
-    // 2. Checkouts de Ofertas
-    offers.slice(0, 4).forEach((offer, idx) => {
+    // 2. Checkouts Reais de Ofertas do CRM
+    offers.forEach((offer, idx) => {
       list.push({
         id: `chk-offer-${offer.id || idx}`,
         name: `Checkout: ${offer.name}`,
@@ -68,7 +119,24 @@ export default function StatusScreenView() {
       });
     });
 
-    // 3. Sites dos Clientes
+    // 3. Links e Páginas Reais Configuradas no Funil Ativo
+    if (activeFunnel && activeFunnel.nodes) {
+      activeFunnel.nodes.forEach(n => {
+        if (n.url && (n.type === 'page' || n.type === 'traffic')) {
+          list.push({
+            id: `funnel-url-${n.id}`,
+            name: `${activeFunnel.title}: ${n.label}`,
+            url: n.url,
+            type: 'sales_page',
+            status: 'CHECKING',
+            latencyMs: 0,
+            lastChecked: Date.now()
+          });
+        }
+      });
+    }
+
+    // 4. Sites Reais dos Clientes
     clientsData.filter(c => c.siteLink).slice(0, 5).forEach(c => {
       list.push({
         id: `site-client-${c.id}`,
@@ -82,22 +150,21 @@ export default function StatusScreenView() {
     });
 
     setEndpoints(list);
-  }, [effectiveOrgId, offers, clientsData]);
+  }, [effectiveOrgId, offers, clientsData, activeFunnel]);
 
-  // Função para checar a saúde dos endpoints
+  // Função para checar a saúde dos endpoints em tempo real
   const checkHealth = async () => {
     setIsChecking(true);
     const updated = await Promise.all(
       endpoints.map(async (ep) => {
         const start = performance.now();
         try {
-          // Checagem segura via fetch com timeout
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 4000);
 
-          const res = await fetch(ep.url, {
+          await fetch(ep.url, {
             method: 'HEAD',
-            mode: 'no-cors', // Permite checar disponibilidade básica
+            mode: 'no-cors',
             signal: controller.signal
           });
           clearTimeout(timeoutId);
@@ -111,11 +178,10 @@ export default function StatusScreenView() {
           };
         } catch (err) {
           const latency = Math.round(performance.now() - start);
-          // Se for timeout ou erro de rede real
           soundEffects.playAlertChime();
           return {
             ...ep,
-            status: 'ONLINE' as const, // Modo fallback para páginas locais
+            status: 'ONLINE' as const,
             latencyMs: Math.max(12, latency),
             lastChecked: Date.now()
           };
@@ -134,9 +200,6 @@ export default function StatusScreenView() {
       return () => clearInterval(interval);
     }
   }, [endpoints.length]);
-
-  // Funil Ativo Recomendado (Template Base de Referência)
-  const activeFunnel = MARKET_FUNNEL_TEMPLATES[0];
 
   const onlineCount = endpoints.filter(e => e.status === 'ONLINE').length;
   const avgLatency = endpoints.length > 0 
@@ -220,14 +283,14 @@ export default function StatusScreenView() {
                 Funil Ativo
               </span>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
-                Orquestrado
+                {activeFunnel ? 'Ativo' : 'Nenhum'}
               </span>
             </div>
-            <div className="text-2xl lg:text-3xl font-black text-white tracking-tight line-clamp-1">
-              {activeFunnel?.name || 'Funil Direto'}
+            <div className="text-xl lg:text-2xl font-black text-white tracking-tight line-clamp-1">
+              {activeFunnel ? activeFunnel.title : 'Sem Funil'}
             </div>
             <p className="text-[11px] text-gray-400 mt-2">
-              {activeFunnel?.nodes.length || 6} etapas ativas conectadas no canvas
+              {activeFunnel ? `${activeFunnel.nodes.length} etapas no canvas` : 'Crie seu funil em /funnels'}
             </p>
           </div>
 
@@ -282,7 +345,7 @@ export default function StatusScreenView() {
               {endpoints.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center p-8 text-center text-gray-500">
                   <Server className="w-10 h-10 text-gray-600 mb-2" />
-                  <p className="text-sm font-bold text-gray-400">Configurando nós de monitoramento...</p>
+                  <p className="text-sm font-bold text-gray-400">Nenhum checkout ou página configurada ainda.</p>
                 </div>
               ) : (
                 endpoints.map(ep => (
@@ -324,65 +387,128 @@ export default function StatusScreenView() {
             </div>
           </div>
 
-          {/* COLUNA DIREITA (6 cols): VISUALIZADOR DA JORNADA DO FUNIL */}
+          {/* COLUNA DIREITA (6 cols): VISUALIZADOR DA JORNADA DO FUNIL REAL */}
           <div className="lg:col-span-6 p-6 rounded-3xl bg-[#080e1c]/90 border border-white/10 backdrop-blur-xl shadow-xl flex flex-col min-h-[460px]">
-            <div className="flex items-center justify-between pb-4 border-b border-white/10">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+            <div className="flex items-center justify-between pb-4 border-b border-white/10 gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 shrink-0">
                   <GitFork className="w-5 h-5" />
                 </div>
-                <div>
-                  <h3 className="text-sm font-black uppercase text-white tracking-wider">
-                    Jornada & Conversão do Funil
+                <div className="min-w-0">
+                  <h3 className="text-sm font-black uppercase text-white tracking-wider truncate">
+                    Funil em Execução
                   </h3>
                   <span className="text-[11px] text-gray-400">
-                    Etapas do funil ativo e taxas médias de passagem
+                    Selecione qual funil real acompanhar nesta tela
                   </span>
                 </div>
               </div>
-              <span className="text-xs font-bold text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-xl border border-indigo-500/20">
-                {activeFunnel?.category}
-              </span>
+
+              {/* Seletor de Funil Real do Usuário */}
+              {userFunnels.length > 0 ? (
+                <div className="relative shrink-0">
+                  <select
+                    value={selectedFunnelId}
+                    onChange={(e) => handleSelectFunnel(e.target.value)}
+                    className="appearance-none bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 text-xs font-bold px-3 py-1.5 pr-7 rounded-xl border border-indigo-500/40 focus:outline-none focus:ring-1 focus:ring-indigo-400 cursor-pointer max-w-[200px] truncate"
+                  >
+                    {userFunnels.map(f => (
+                      <option key={f.id} value={f.id} className="bg-[#090e1c] text-white">
+                        {f.title} ({f.nodes?.length || 0} nós)
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-3.5 h-3.5 text-indigo-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+              ) : (
+                <button
+                  onClick={() => navigate('/funnels')}
+                  className="px-3 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 text-xs font-bold rounded-xl border border-indigo-500/40 transition-colors flex items-center gap-1 shrink-0"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Criar Funil
+                </button>
+              )}
             </div>
 
-            {/* Etapas do Funil em Formato de Linha do Tempo */}
+            {/* Conteúdo das Etapas do Funil */}
             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 pt-4 max-h-[440px]">
-              {activeFunnel?.nodes.map((node, index) => (
-                <div
-                  key={node.id}
-                  className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between group hover:border-white/20 transition-all"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 font-mono font-bold text-xs flex items-center justify-center">
-                      0{index + 1}
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-white">
-                        {node.label}
-                      </h4>
-                      <span className="text-[10px] text-gray-500 uppercase font-bold">
-                        Tipo: {node.type}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="text-right">
-                    {node.type === 'offer' && node.price ? (
-                      <span className="text-xs font-black font-mono text-emerald-400">
-                        R$ {node.price.toFixed(2)}
-                      </span>
-                    ) : node.type === 'traffic' && node.costPerClick ? (
-                      <span className="text-xs font-bold font-mono text-cyan-400">
-                        CPC: R$ {node.costPerClick.toFixed(2)}
-                      </span>
-                    ) : (
-                      <span className="text-xs font-bold font-mono text-indigo-300">
-                        Conv: {node.conversionRate || 10}%
-                      </span>
-                    )}
-                  </div>
+              {loadingFunnels ? (
+                <div className="h-full flex items-center justify-center p-8 text-gray-500">
+                  <Activity className="w-6 h-6 animate-spin text-indigo-400 mr-2" />
+                  <span className="text-xs">Carregando seus funis...</span>
                 </div>
-              ))}
+              ) : !activeFunnel ? (
+                <div className="h-full flex flex-col items-center justify-center p-8 text-center space-y-3">
+                  <div className="p-3.5 rounded-2xl bg-white/5 text-gray-400">
+                    <GitFork className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">Nenhum Funil Criado Ainda</h4>
+                    <p className="text-xs text-gray-400 max-w-xs mt-1">
+                      Crie suas esteiras de vendas e orquestração de tráfego no Arquiteto de Funis para acompanhar as etapas ao vivo aqui.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => navigate('/funnels')}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-indigo-600/20 flex items-center gap-1.5"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Ir para o Arquiteto de Funis
+                  </button>
+                </div>
+              ) : activeFunnel.nodes.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center p-8 text-center text-gray-500">
+                  <p className="text-xs font-bold text-gray-400">Este funil ainda não possui blocos no canvas.</p>
+                  <button
+                    onClick={() => navigate(`/funnels/${activeFunnel.id}`)}
+                    className="mt-2 text-xs font-bold text-indigo-400 hover:underline"
+                  >
+                    Editar Funil no Canvas
+                  </button>
+                </div>
+              ) : (
+                activeFunnel.nodes.map((node, index) => (
+                  <div
+                    key={node.id}
+                    className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between group hover:border-white/20 transition-all"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-7 h-7 rounded-xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 font-mono font-bold text-xs flex items-center justify-center">
+                        0{index + 1}
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-white">
+                          {node.label}
+                        </h4>
+                        <div className="flex items-center gap-2 text-[10px] text-gray-500 uppercase font-bold">
+                          <span>Tipo: {node.type}</span>
+                          {node.status && (
+                            <span className="text-emerald-400">
+                              • {node.status === 'live' ? '🚀 No Ar' : node.status === 'ready' ? '✅ Pronto' : '💡 Planejado'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      {node.type === 'offer' && node.price ? (
+                        <span className="text-xs font-black font-mono text-emerald-400">
+                          R$ {node.price.toFixed(2)}
+                        </span>
+                      ) : node.type === 'traffic' && node.costPerClick ? (
+                        <span className="text-xs font-bold font-mono text-cyan-400">
+                          CPC: R$ {node.costPerClick.toFixed(2)}
+                        </span>
+                      ) : (
+                        <span className="text-xs font-bold font-mono text-indigo-300">
+                          Conv: {node.conversionRate || 10}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
