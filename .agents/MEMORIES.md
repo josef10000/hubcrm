@@ -438,3 +438,17 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
     - Blindagem de `Number(offer.price || 0).toFixed(2)` e `Number(node.price || 0).toFixed(2)` evitando quebras de `ErrorBoundary`.
     - Desacoplamento de listeners de mouse com `funnelRef` eliminando re-attachments constantes durante o arraste a 60fps.
 
+---
+
+## 27. Funis & Arquitetura: Ancoragem Fixa de Linhas, Gavetas na Biblioteca & Alinhamento Anti-Colisão
+- **Data da Integração**: 25/08/2026
+- **Funcionalidades**:
+  1. **Ancoragem Magnética Estável das Linhas**: Eliminação de saltos de portas (topo/base); linhas permanecem sempre fixadas nas pontas clássicas (Saída na Direita e Entrada na Esquerda), mesmo em curvas de retorno e loops, permitindo arraste a 60fps sem nunca soltar ou atrasar.
+  2. **Gavetas Retráteis (Accordion) na Barra Lateral de Blocos**: Cada categoria de blocos (ICP, Tráfego, Páginas, Ofertas, E-mail & Multicanal, B2B, CS, RH, etc.) agora possui cabeçalho clicável independente com contador e setas animadas (`ChevronDown`) para colapsar/expandir gavetas.
+  3. **Alinhamento Inteligente com Espaçamento Harmônico (Zero Sobreposição)**:
+     - **Linha Horizontal**: Ordena nós da esquerda para a direita, alinha na média de altura $Y$ e distribui com `gap = 80px` entre bordas, impedindo que blocos diagonais fiquem sobrepostos.
+     - **Coluna Vertical**: Ordena nós de cima para baixo, alinha na coluna média $X$ e distribui com `gap = 45px`, gerando fluxo empilhado limpo e proporcional.
+- **Decisões Técnicas**:
+  - `calculateConnectionPath`: Fixação das portas em `(fromNode.x + fromWidth, fromNode.y + fromHeight/2)` e `(toNode.x, toNode.y + toHeight/2)`. O roteamento em fluxo reverso (`isBackwards`) calcula a curva externa de retorno a partir dessas mesmas portas com margens suaves sem desconexão.
+  - `handleAlignNodes`: Cálculo de bounding box e ordenação por eixo primário com avanço dinâmico baseado na largura/altura real do subtipo do nó (`FunnelNodeSubType`).
+

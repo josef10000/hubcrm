@@ -12,7 +12,7 @@ import {
   Calendar, PhoneCall, Briefcase, FileSignature, Receipt, Rocket, LifeBuoy,
   Star, RefreshCcw, Clock, GitBranch, Smartphone, Mic, UserCheck, GraduationCap, Inbox,
   Target, StickyNote, BoxSelect, Wand2, MousePointer, Workflow, Spline,
-  AlignLeft, ArrowLeftToLine, ArrowUpToLine, Focus
+  AlignLeft, ArrowLeftToLine, ArrowUpToLine, Focus, ChevronDown, ArrowRightLeft, ArrowUpDown
 } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
@@ -151,6 +151,26 @@ export default function FunnelArchitectEditorView() {
   const [nodeEditDraft, setNodeEditDraft] = useState<FunnelNode | null>(null);
   const [isLibraryOpen, setIsLibraryOpen] = useState(true);
   const [blockSearchQuery, setBlockSearchQuery] = useState('');
+  const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({
+    icp: true,
+    note: true,
+    traffic: true,
+    page: true,
+    offer: true,
+    affiliate: true,
+    automation: true,
+    b2b: true,
+    cs: true,
+    hr: true
+  });
+
+  const toggleCategory = (catKey: string) => {
+    setOpenCategories(prev => ({
+      ...prev,
+      [catKey]: prev[catKey] === undefined ? false : !prev[catKey]
+    }));
+  };
+
   const [isInspectorOpen, setIsInspectorOpen] = useState(false);
   const [inspectorTab, setInspectorTab] = useState<'config' | 'guide' | 'checklist'>('config');
 
@@ -663,8 +683,8 @@ export default function FunnelArchitectEditorView() {
 
     const minX = Math.min(...selectedNodes.map(n => n.x)) - 30;
     const minY = Math.min(...selectedNodes.map(n => n.y)) - 55;
-    const maxX = Math.max(...selectedNodes.map(n => n.x + 230)) + 30;
-    const maxY = Math.max(...selectedNodes.map(n => n.y + 110)) + 30;
+    const maxX = Math.max(...selectedNodes.map(n => n.x + (n.subType === 'sticky_note' ? 256 : 224))) + 30;
+    const maxY = Math.max(...selectedNodes.map(n => n.y + (n.subType === 'sticky_note' ? 200 : 90))) + 30;
 
     const newFrame: FunnelFrame = {
       id: `frame_${Date.now()}`,
@@ -684,25 +704,27 @@ export default function FunnelArchitectEditorView() {
     toast.success('📦 Moldura criada automaticamente ao redor dos blocos selecionados!');
   };
 
-  const handleAlignNodes = (type: 'left' | 'top') => {
+  const handleAlignNodes = (type: 'horizontal' | 'vertical' | 'left' | 'top') => {
     if (!funnel || selectedNodeIds.length < 2) return;
     const selectedNodes = funnel.nodes.filter(n => selectedNodeIds.includes(n.id));
-    
-    if (type === 'left') {
-      const minX = Math.min(...selectedNodes.map(n => n.x));
-      setFunnel(prev => prev ? {
-        ...prev,
-        nodes: prev.nodes.map(n => selectedNodeIds.includes(n.id) ? { ...n, x: minX } : n)
-      } : null);
-      toast.success('Blocos alinhados à esquerda!');
-    } else if (type === 'top') {
-      const minY = Math.min(...selectedNodes.map(n => n.y));
-      setFunnel(prev => prev ? {
-        ...prev,
-        nodes: prev.nodes.map(n => selectedNodeIds.includes(n.id) ? { ...n, y: minY } : n)
-      } : null);
-      toast.success('Blocos alinhados ao topo!');
-    }
+    if (selectedNodes.length < 2) return;
+
+    const isHoriz = type === 'horizontal' || type === 'top';
+    const sorted = [...selectedNodes].sort((a, b) => isHoriz ? a.x - b.x : a.y - b.y);
+    const avgCross = Math.round(sorted.reduce((acc, n) => acc + (isHoriz ? n.y : n.x), 0) / sorted.length);
+    let curPos = isHoriz ? sorted[0].x : sorted[0].y;
+    const coords: Record<string, { x: number; y: number }> = {};
+
+    sorted.forEach(n => {
+      const size = isHoriz 
+        ? (n.subType === 'sticky_note' ? 256 : (n.subType === 'icp_persona' ? 240 : 224)) 
+        : (n.subType === 'sticky_note' ? 200 : (n.subType === 'icp_persona' ? 120 : 90));
+      coords[n.id] = isHoriz ? { x: curPos, y: avgCross } : { x: avgCross, y: curPos };
+      curPos += size + (isHoriz ? 80 : 45);
+    });
+
+    setFunnel(prev => prev ? { ...prev, nodes: prev.nodes.map(n => coords[n.id] ? { ...n, ...coords[n.id] } : n) } : null);
+    toast.success(`Blocos organizados em ${isHoriz ? 'linha horizontal' : 'coluna vertical'} com espaçamento harmônico!`);
   };
 
   // ── 📝 EDIÇÃO DE NÓS (DRAFT BUFFER) ───────────────────────────────────────
@@ -943,55 +965,41 @@ export default function FunnelArchitectEditorView() {
     };
   }, [funnel, initialTrafficInput]);
 
-  // ── 📐 GERADOR DE CAMINHO DE CONEXÃO (BÉZIER & ORTOGONAL COM PORTAS INTELIGENTES) ──
+  // ── 📐 GERADOR DE CAMINHO DE CONEXÃO (PORTAS MAGNÉTICAS FIXAS LATERAL-A-LATERAL) ──
   const calculateConnectionPath = (fromNode: FunnelNode, toNode: FunnelNode, style: 'bezier' | 'orthogonal') => {
-    const isBackwards = fromNode.x >= toNode.x - 40;
     const fromWidth = fromNode.subType === 'sticky_note' ? 256 : fromNode.subType === 'icp_persona' ? 240 : 224;
     const toWidth = toNode.subType === 'sticky_note' ? 256 : toNode.subType === 'icp_persona' ? 240 : 224;
 
+    // Portas Fixas Estáveis: Saída sempre no centro da lateral direita, Entrada sempre no centro da lateral esquerda
+    const startX = fromNode.x + fromWidth;
+    const startY = fromNode.y + (fromNode.subType === 'sticky_note' ? 90 : fromNode.subType === 'icp_persona' ? 60 : 45);
+    const endX = toNode.x;
+    const endY = toNode.y + (toNode.subType === 'sticky_note' ? 90 : toNode.subType === 'icp_persona' ? 60 : 45);
+
+    const isBackwards = startX >= endX - 20;
+
     if (isBackwards) {
-      // Loop de retorno: Sai pelo topo ou base para não cruzar por cima dos cards!
-      if (fromNode.y <= toNode.y) {
-        // Sai por baixo do card de origem e entra por baixo do destino
-        const startX = fromNode.x + fromWidth / 2;
-        const startY = fromNode.y + 90;
-        const endX = toNode.x + toWidth / 2;
-        const endY = toNode.y + 90;
-
-        if (style === 'orthogonal') {
-          const dropY = Math.max(fromNode.y, toNode.y) + 130;
-          return `M ${startX} ${startY} L ${startX} ${dropY} L ${endX} ${dropY} L ${endX} ${endY}`;
-        } else {
-          const controlY = Math.max(fromNode.y, toNode.y) + 160;
-          return `M ${startX} ${startY} C ${startX} ${controlY}, ${endX} ${controlY}, ${endX} ${endY}`;
-        }
+      // Curva contínua de retorno elegante contornando os cards sem descolar das portas laterais
+      if (style === 'orthogonal') {
+        const dropY = startY <= endY ? Math.max(startY, endY) + 70 : Math.min(startY, endY) - 70;
+        const outX = startX + 30;
+        const inX = endX - 30;
+        return `M ${startX} ${startY} L ${outX} ${startY} L ${outX} ${dropY} L ${inX} ${dropY} L ${inX} ${endY} L ${endX} ${endY}`;
       } else {
-        // Sai por cima do card de origem e entra por cima do destino
-        const startX = fromNode.x + fromWidth / 2;
-        const startY = fromNode.y;
-        const endX = toNode.x + toWidth / 2;
-        const endY = toNode.y;
-
-        if (style === 'orthogonal') {
-          const topY = Math.min(fromNode.y, toNode.y) - 50;
-          return `M ${startX} ${startY} L ${startX} ${topY} L ${endX} ${topY} L ${endX} ${endY}`;
-        } else {
-          const controlY = Math.min(fromNode.y, toNode.y) - 80;
-          return `M ${startX} ${startY} C ${startX} ${controlY}, ${endX} ${controlY}, ${endX} ${endY}`;
-        }
+        const loopMargin = Math.max(60, Math.abs(startX - endX) * 0.35);
+        const controlX1 = startX + loopMargin;
+        const controlX2 = endX - loopMargin;
+        const controlY1 = startY + (startY <= endY ? 70 : -70);
+        const controlY2 = endY + (startY <= endY ? -70 : 70);
+        return `M ${startX} ${startY} C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${endX} ${endY}`;
       }
     } else {
-      // Fluxo normal da esquerda para a direita
-      const startX = fromNode.x + fromWidth;
-      const startY = fromNode.y + 45;
-      const endX = toNode.x;
-      const endY = toNode.y + 45;
-
+      // Fluxo normal contínuo da esquerda para a direita
       if (style === 'orthogonal') {
         const midX = (startX + endX) / 2;
         return `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`;
       } else {
-        const deltaX = Math.abs(endX - startX) * 0.5;
+        const deltaX = Math.max(40, (endX - startX) * 0.5);
         return `M ${startX} ${startY} C ${startX + deltaX} ${startY}, ${endX - deltaX} ${endY}, ${endX} ${endY}`;
       }
     }
@@ -1757,22 +1765,24 @@ export default function FunnelArchitectEditorView() {
                 <span>Criar Moldura</span>
               </button>
 
-              {/* Alinhar à Esquerda */}
+              {/* Alinhar em Linha Horizontal */}
               <button
-                onClick={() => handleAlignNodes('left')}
-                className="p-1.5 bg-white/5 hover:bg-white/15 text-gray-300 hover:text-white rounded-xl text-xs font-bold transition-colors"
-                title="Alinhar blocos à esquerda"
+                onClick={() => handleAlignNodes('horizontal')}
+                className="px-2.5 py-1.5 bg-white/5 hover:bg-white/15 text-gray-300 hover:text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
+                title="Alinhar em Linha Horizontal (com espaçamento harmônico sem sobreposição)"
               >
-                <ArrowLeftToLine className="w-4 h-4" />
+                <ArrowRightLeft className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Linha</span>
               </button>
 
-              {/* Alinhar ao Topo */}
+              {/* Alinhar em Coluna Vertical */}
               <button
-                onClick={() => handleAlignNodes('top')}
-                className="p-1.5 bg-white/5 hover:bg-white/15 text-gray-300 hover:text-white rounded-xl text-xs font-bold transition-colors"
-                title="Alinhar blocos ao topo"
+                onClick={() => handleAlignNodes('vertical')}
+                className="px-2.5 py-1.5 bg-white/5 hover:bg-white/15 text-gray-300 hover:text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
+                title="Alinhar em Coluna Vertical (com espaçamento harmônico sem sobreposição)"
               >
-                <ArrowUpToLine className="w-4 h-4" />
+                <ArrowUpDown className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Coluna</span>
               </button>
 
               <div className="w-px h-4 bg-white/10"></div>
