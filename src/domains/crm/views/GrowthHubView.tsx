@@ -748,14 +748,25 @@ export default function GrowthHubView() {
     }
   };
 
-  // Elementos estéticos de auxílio
-  const getCategoryClass = (cat: string) => {
-    switch (cat) {
-      case 'Vendas': return 'bg-amber-500/10 border-amber-500/20 text-amber-400';
-      case 'Finanças': return 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400';
-      case 'Marketing': return 'bg-purple-500/10 border-purple-500/20 text-purple-400';
-      case 'Gestão': return 'bg-blue-500/10 border-blue-500/20 text-blue-400';
-      default: return 'bg-gray-500/10 border-gray-500/20 text-gray-400';
+  const getAssetTypeIcon = (type: string) => {
+    switch (type) {
+      case 'video': return <Video className="w-3 h-3 text-red-400" />;
+      case 'script': return <FileCode className="w-3 h-3 text-purple-400" />;
+      case 'template': return <FileText className="w-3 h-3 text-amber-400" />;
+      case 'course': return <BookOpen className="w-3 h-3 text-emerald-400" />;
+      case 'image': return <ImageIcon className="w-3 h-3 text-blue-400" />;
+      default: return <LinkIcon className="w-3 h-3 text-cyan-400" />;
+    }
+  };
+
+  const getAssetTypeLabel = (type: string) => {
+    switch (type) {
+      case 'video': return 'Vídeo';
+      case 'script': return 'Script / Código';
+      case 'template': return 'Template';
+      case 'course': return 'Curso';
+      case 'image': return 'Imagem';
+      default: return 'Link / Recurso';
     }
   };
 

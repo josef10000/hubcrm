@@ -518,8 +518,8 @@ export default function FinancialScreenView() {
                         <div>
                           <h4 className="text-xs font-bold text-white flex items-center gap-2">
                             {tx.description || client?.name || 'Venda Checkout'}
-                            {client?.company && (
-                              <span className="text-[10px] text-gray-400 font-normal">({client.company})</span>
+                            {(client?.companyName || (client as any)?.company) && (
+                              <span className="text-[10px] text-gray-400 font-normal">({client?.companyName || (client as any)?.company})</span>
                             )}
                           </h4>
                           <div className="flex items-center gap-2 text-[10px] text-gray-400 mt-0.5">

@@ -44,7 +44,7 @@ export default function ClientsScreenView() {
 
   // Clientes em Onboarding
   const onboardingClients = useMemo(() => {
-    return clientsData.filter(c => c.status === 'Onboarding' || c.status === 'Novo' || !c.onboardingCompleted);
+    return clientsData.filter(c => (c.status as string) === 'Onboarding' || (c.status as string) === 'Novo' || !(c as any).onboardingCompleted);
   }, [clientsData]);
 
   // Fila de Recuperação Ativa (Transações Pendentes de Pix/Boleto nas últimas 24 horas)
@@ -65,7 +65,7 @@ export default function ClientsScreenView() {
 
   // Formatação de link de WhatsApp para recuperação
   const getWhatsAppRecoveryUrl = (client?: Client, tx?: Transaction) => {
-    const phone = client?.phone?.replace(/\D/g, '') || '';
+    const phone = (client?.whatsapp || (client as any)?.phone || '').replace(/\D/g, '');
     if (!phone) return null;
 
     const firstName = client?.name?.split(' ')[0] || 'Cliente';
@@ -250,10 +250,10 @@ export default function ClientsScreenView() {
                             )}
                           </div>
                           <div className="flex items-center gap-2 text-[10px] text-gray-400 mt-1">
-                            {client.company && (
+                            {(client.companyName || (client as any).company) && (
                               <span className="flex items-center gap-1">
                                 <Building2 className="w-3 h-3 text-gray-500" />
-                                {client.company}
+                                {client.companyName || (client as any).company}
                               </span>
                             )}
                             {client.plan && (
@@ -270,7 +270,7 @@ export default function ClientsScreenView() {
                         <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${
                           client.status === 'Ativo'
                             ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
-                            : client.status === 'Onboarding'
+                            : (client.status as string) === 'Onboarding'
                             ? 'bg-indigo-500/10 text-indigo-300 border-indigo-500/30'
                             : 'bg-white/10 text-gray-300 border-white/20'
                         }`}>

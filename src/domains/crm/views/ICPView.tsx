@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Target, Plus, Search, Briefcase, AlertCircle, Sparkles, Tag, Layers, Edit2, Trash2, BookOpen, Users, DollarSign, ArrowRight, Building2, UserCheck, User } from 'lucide-react';
 import { useICPs } from '../hooks/useICPs';
-import { useOffers } from '@/hooks/useOffers';
+import { useCRMStore } from '@/store/useCRMStore';
 import ICPModal from '../components/ICPModal';
 import ConfirmDeleteICPModal from '../components/ConfirmDeleteICPModal';
 import ICPDetailsModal from '../components/ICPDetailsModal';
@@ -9,7 +9,7 @@ import { ICP } from '@/types';
 
 export default function ICPView() {
   const { icps, isLoading, saveICP, deleteICP } = useICPs();
-  const { offers } = useOffers();
+  const offers = useCRMStore(state => state.offers) || [];
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingICP, setEditingICP] = useState<ICP | null>(null);
@@ -332,7 +332,7 @@ export default function ICPView() {
         <ICPModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          onSave={saveICP}
+          onSave={async (data) => { await saveICP(data); }}
           editingICP={editingICP}
           offers={offers}
         />

@@ -31,7 +31,7 @@ import InventorySection from '@people/components/InventorySection';
 import { EnergyScoreCard } from '@people/components/EnergyScoreCard';
 import ProfileContractsTab from './ProfileContractsTab';
 import { useCRMStore } from '@/store/useCRMStore';
-import { TimeLog, calculateNetDuration, getLocalDateString } from '@/store/slices/timeTrackingSlice';
+import { TimeLog, TimeLogPause, calculateNetDuration, getLocalDateString } from '@/store/slices/timeTrackingSlice';
 import { parseISO } from 'date-fns';
 import { PDIKanban } from '@people/components/PDIKanban';
 import { 
@@ -574,8 +574,8 @@ export default function ProfileView() {
         if (!prev) return null;
         return {
           ...prev,
-          ...formData,
-          pixKeyType: formData.pixKeyType === '' ? undefined : formData.pixKeyType
+          ...(formData as any),
+          pixKeyType: formData.pixKeyType === '' ? undefined : (formData.pixKeyType as any)
         };
       });
     } catch (error) {
@@ -740,7 +740,7 @@ export default function ProfileView() {
       setIsSavingBatch(true);
       const targetOrgId = currentUserProfile.orgId;
       const targetUserId = uid;
-      const targetUserName = profile?.name || currentUserProfile.displayName || 'Colaborador';
+      const targetUserName = profile?.displayName || currentUserProfile?.displayName || 'Colaborador';
       const targetUserPhoto = profile?.photoURL || currentUserProfile.photoURL || '';
 
       const [startH, startM] = batchStartTime.split(':').map(Number);
@@ -3087,7 +3087,7 @@ export default function ProfileView() {
                                             setEditingTimeLog({
                                               id: `${day.date}_${uid}`,
                                               userId: uid!,
-                                              userName: profile?.name || currentUserProfile?.displayName || 'Colaborador',
+                                              userName: profile?.displayName || currentUserProfile?.displayName || 'Colaborador',
                                               userPhoto: profile?.photoURL || currentUserProfile?.photoURL || '',
                                               date: day.date,
                                               startTime: defaultStart,

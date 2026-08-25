@@ -140,7 +140,7 @@ export default function StatusScreenView() {
     clientsData.filter(c => c.siteLink).slice(0, 5).forEach(c => {
       list.push({
         id: `site-client-${c.id}`,
-        name: `Site: ${c.name} (${c.company || 'Cliente'})`,
+        name: `Site: ${c.name} (${c.companyName || (c as any).company || 'Cliente'})`,
         url: c.siteLink!,
         type: 'site',
         status: 'CHECKING',

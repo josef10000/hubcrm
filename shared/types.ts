@@ -338,6 +338,11 @@ export interface Client {
   portalLinkedAt?: any;
   portalActivationCode?: string;
   brandAssets?: BrandAssets;
+  companyName?: string;
+  company?: string;
+  phone?: string;
+  isAvulso?: boolean;
+  onboardingCompleted?: boolean;
 }
 
 export interface BrandAssetLogo {

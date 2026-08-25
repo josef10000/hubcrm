@@ -7,7 +7,7 @@ import {
 import { useAuth } from '@auth/contexts/AuthContext';
 import { toast } from 'sonner';
 import { offerService } from '@/services/offerService';
-import { OfferBlueprint, ICP, Product } from '@/types';
+import { OfferBlueprint, ICP, Offer } from '@/types';
 import { db } from '@/lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 
@@ -23,7 +23,7 @@ export default function OfferLabEditorView() {
   
   // Data for selectors
   const [icps, setIcps] = useState<ICP[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Offer[]>([]);
 
   useEffect(() => {
     if (orgId && id) {
@@ -214,11 +214,15 @@ export default function OfferLabEditorView() {
               <div className="mt-4 space-y-4">
                 <div className="p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg border border-rose-100 dark:border-rose-800/30">
                   <h4 className="text-xs font-bold text-rose-700 dark:text-rose-400 mb-2 uppercase">Dores / Problemas</h4>
-                  <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{selectedICP.painPoints || 'Nenhuma dor cadastrada.'}</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                    {(Array.isArray(selectedICP.painPoints) ? selectedICP.painPoints.join(', ') : (selectedICP.painPoints as any)) || 'Nenhuma dor cadastrada.'}
+                  </p>
                 </div>
                 <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-100 dark:border-emerald-800/30">
                   <h4 className="text-xs font-bold text-emerald-700 dark:text-emerald-400 mb-2 uppercase">Desejos / Sonhos</h4>
-                  <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{selectedICP.goals || 'Nenhum desejo cadastrado.'}</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                    {(selectedICP as any).goals || (Array.isArray(selectedICP.desires) ? selectedICP.desires.join(', ') : (selectedICP.desires as any)) || 'Nenhum desejo cadastrado.'}
+                  </p>
                 </div>
               </div>
             )}
