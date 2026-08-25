@@ -12,7 +12,7 @@ import {
   Calendar, PhoneCall, Briefcase, FileSignature, Receipt, Rocket, LifeBuoy,
   Star, RefreshCcw, Clock, GitBranch, Smartphone, Mic, UserCheck, GraduationCap, Inbox,
   Target, StickyNote, BoxSelect, Wand2, MousePointer, Workflow, Spline,
-  AlignLeft, AlignTop, Focus
+  AlignLeft, ArrowLeftToLine, ArrowUpToLine, Focus
 } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
@@ -1758,7 +1758,7 @@ export default function FunnelArchitectEditorView() {
                 className="p-1.5 bg-white/5 hover:bg-white/15 text-gray-300 hover:text-white rounded-xl text-xs font-bold transition-colors"
                 title="Alinhar blocos à esquerda"
               >
-                <AlignLeft className="w-4 h-4" />
+                <ArrowLeftToLine className="w-4 h-4" />
               </button>
 
               {/* Alinhar ao Topo */}
@@ -1767,7 +1767,7 @@ export default function FunnelArchitectEditorView() {
                 className="p-1.5 bg-white/5 hover:bg-white/15 text-gray-300 hover:text-white rounded-xl text-xs font-bold transition-colors"
                 title="Alinhar blocos ao topo"
               >
-                <AlignTop className="w-4 h-4" />
+                <ArrowUpToLine className="w-4 h-4" />
               </button>
 
               <div className="w-px h-4 bg-white/10"></div>
