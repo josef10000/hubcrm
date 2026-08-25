@@ -90,6 +90,11 @@ service cloud.firestore {
         }
       }
 
+      // 🗺️ FUNIS & ARQUITETURA DE PROCESSOS
+      match /funnels/{funnelId} {
+        allow read, write: if isOwnerEmail() || belongsToOrg(orgId);
+      }
+
       // 🟢 HUB CHAT — Regras de Colaboração em Tempo Real
       match /chats/{chatId} {
         // Membros podem ler o chat e atualizar dados de denormalização (lastMessage, unreadCount, etc)

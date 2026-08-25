@@ -253,9 +253,9 @@ export default function FunnelArchitectEditorView() {
     try {
       await funnelService.updateFunnel(orgId, id, { ...funnel, routingStyle });
       toast.success('Funil salvo com sucesso!');
-    } catch (error) {
-      console.error('Erro ao salvar:', error);
-      toast.error('Erro ao salvar alterações.');
+    } catch (error: any) {
+      console.error('Erro ao salvar funil:', error);
+      toast.error(`Erro ao salvar funil: ${error?.message || 'Falha de comunicação'}`);
     } finally {
       setSaving(false);
     }

@@ -430,7 +430,8 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
   - **Multi-Seleção & Arraste (`FunnelArchitectEditorView.tsx`)**:
     - Estado `selectedNodeIds: string[]` sincronizado com offsets individuais (`draggingGroupOffsets`) permitindo mover todo o grupo com precisão absoluta de coordenadas em `requestAnimationFrame`.
     - Bounding box automático para transformar a seleção de blocos em uma `FunnelFrame` perfeitamente ajustada.
-  - **Roteamento & Inteligência de Portas**:
-    - Detecção automática de rotas de retorno (`fromNode.x >= toNode.x - 40`) roteando por fora dos blocos (topo/base) para eliminar cruzamentos indesejados.
-    - Algoritmo BFS em camadas ordenando nós de tráfego, páginas, ofertas e automações em colunas simétricas ($X$) com balanceamento de altura ($Y$).
+  - **Persistência Segura & Regras de Firestore (`funnelService.ts` & `firestore.rules`)**:
+    - Sanitização recursiva profunda de campos `undefined` em nós, conexões e molduras para prevenir exceções do Firestore SDK.
+    - Gravação com `setDoc(docRef, updateData, { merge: true })` para resiliência de escrita.
+    - Regra explícita `match /funnels/{funnelId}` com permissão `allow read, write: if isOwnerEmail() || belongsToOrg(orgId);`.
 

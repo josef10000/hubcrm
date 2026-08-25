@@ -4,7 +4,7 @@ import {
   getDocs,
   getDoc,
   addDoc,
-  updateDoc,
+  setDoc,
   deleteDoc,
   query,
   orderBy,
@@ -12,6 +12,29 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { FunnelBlueprint } from '@/types';
+
+/**
+ * Sanitiza recursivamente objetos e arrays, eliminando propriedades com valor undefined
+ * que são rejeitadas pelo SDK do Firebase Firestore.
+ */
+function sanitizeFirestoreData(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return null;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map((item) => sanitizeFirestoreData(item));
+  }
+  if (typeof obj === 'object' && !(obj instanceof Date)) {
+    const cleaned: Record<string, any> = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== undefined) {
+        cleaned[key] = sanitizeFirestoreData(value);
+      }
+    }
+    return cleaned;
+  }
+  return obj;
+}
 
 export const funnelService = {
   async getFunnels(orgId: string): Promise<FunnelBlueprint[]> {
@@ -67,8 +90,15 @@ export const funnelService = {
   async createFunnel(orgId: string, data: Omit<FunnelBlueprint, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     if (!orgId) throw new Error('orgId is required');
     try {
+      const sanitized = sanitizeFirestoreData(data);
+      if (sanitized) {
+        delete sanitized.id;
+        delete sanitized.createdAt;
+        delete sanitized.updatedAt;
+      }
+
       const docRef = await addDoc(collection(db, 'organizations', orgId, 'funnels'), {
-        ...data,
+        ...sanitized,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
@@ -83,21 +113,19 @@ export const funnelService = {
     if (!orgId || !funnelId) throw new Error('orgId and funnelId are required');
     try {
       const docRef = doc(db, 'organizations', orgId, 'funnels', funnelId);
+      const sanitized = sanitizeFirestoreData(data);
+      if (sanitized) {
+        delete sanitized.id;
+        delete sanitized.createdAt;
+        delete sanitized.updatedAt;
+      }
+
       const updateData: any = {
-        ...data,
+        ...sanitized,
         updatedAt: serverTimestamp(),
       };
 
-      delete updateData.id;
-      delete updateData.createdAt;
-
-      Object.keys(updateData).forEach((key) => {
-        if (updateData[key] === undefined) {
-          delete updateData[key];
-        }
-      });
-
-      await updateDoc(docRef, updateData);
+      await setDoc(docRef, updateData, { merge: true });
     } catch (error) {
       console.error('Error updating funnel:', error);
       throw error;
