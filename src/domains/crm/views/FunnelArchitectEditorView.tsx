@@ -13,7 +13,8 @@ import {
   Calendar, PhoneCall, Briefcase, FileSignature, Receipt, Rocket, LifeBuoy,
   Star, RefreshCcw, Clock, GitBranch, Smartphone, Mic, UserCheck, GraduationCap, Inbox,
   Target, StickyNote, BoxSelect, Wand2, MousePointer, Workflow, Spline,
-  AlignLeft, ArrowLeftToLine, ArrowUpToLine, Focus, ChevronDown, ArrowRightLeft, ArrowUpDown, Minimize2, Compass, Scan, Map, Hand
+  AlignLeft, ArrowLeftToLine, ArrowUpToLine, Focus, ChevronDown, ArrowRightLeft, ArrowUpDown, Minimize2, Compass, Scan, Map, Hand,
+  Copy, MessageSquare, Bot, MessageSquareCode, Layers3, Flame, Ticket, Share2, FileSpreadsheet, UserPlus, Tag
 } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
@@ -172,6 +173,12 @@ export default function FunnelArchitectEditorView() {
     hr: true
   });
 
+  // Clipboard (Copiar e Colar)
+  const [copiedNodesBuffer, setCopiedNodesBuffer] = useState<{
+    nodes: FunnelNode[];
+    connections: FunnelConnection[];
+  } | null>(null);
+
   const toggleCategory = (catKey: string) => {
     setOpenCategories(prev => ({
       ...prev,
@@ -329,6 +336,21 @@ export default function FunnelArchitectEditorView() {
         setIsInspectorOpen(false);
         setIsSelectingArea(false);
         setSelectionBox(null);
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'C')) {
+        if (selectedNodeIds.length > 0) {
+          e.preventDefault();
+          handleCopySelection();
+        }
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'v' || e.key === 'V')) {
+        if (copiedNodesBuffer && copiedNodesBuffer.nodes.length > 0) {
+          e.preventDefault();
+          handlePasteSelection();
+        }
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'd' || e.key === 'D')) {
+        if (selectedNodeIds.length > 0) {
+          e.preventDefault();
+          handleDuplicateSelection();
+        }
       } else if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A')) {
         e.preventDefault();
         if (funnel && funnel.nodes.length > 0) {
@@ -362,7 +384,7 @@ export default function FunnelArchitectEditorView() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [selectedNodeIds, selectedConnectionId, funnel, isFullscreen]);
+  }, [selectedNodeIds, selectedConnectionId, funnel, isFullscreen, copiedNodesBuffer, handleCopySelection, handlePasteSelection, handleDuplicateSelection]);
 
   // Modo Tela Cheia Imersivo (Zen Mode Híbrido CSS + Native)
   const toggleFullscreen = () => {
@@ -721,113 +743,301 @@ export default function FunnelArchitectEditorView() {
     setResizingFrameId(frame.id);
   };
 
-  // ── ⚡ AUTO-ORGANIZAÇÃO HIERÁRQUICA EM 1-CLIQUE ───────────────────────────
+  // ── ⚡ AUTO-ORGANIZAÇÃO SEMÂNTICA POR ESTÁGIOS DA JORNADA (SMART STAGE LAYOUT) ─
   const handleAutoLayout = () => {
     if (!funnel || funnel.nodes.length === 0) return;
 
     const nodes = [...funnel.nodes];
-    const connections = funnel.connections;
 
-    // 1. Mapeamento de entradas (inDegree) e conexões de saída (adjList)
-    const inDegree: Record<string, number> = {};
-    const adjList: Record<string, string[]> = {};
+    // Matriz de Estágios Naturais da Jornada do Funil (0 a 8)
+    const SUBTYPE_STAGE_MAP: Record<string, number> = {
+      // 0: Estratégia / Planejamento
+      icp_persona: 0,
+      sticky_note: 0,
+
+      // 1: Tráfego & Atração (Origens)
+      pinterest: 1,
+      tiktok: 1,
+      instagram: 1,
+      youtube: 1,
+      google_seo: 1,
+      meta_ads: 1,
+      influencer_partner: 1,
+      native_ads: 1,
+      partners: 1,
+
+      // 2: Consciência, Entrada & Captura de Leads
+      lead_magnet: 2,
+      capture_page: 2,
+      quiz_page: 2,
+      blog_site: 2,
+      static_page: 2,
+      advertorial: 2,
+      bridge_page: 2,
+
+      // 3: Nutrição, VSL & Aquecimento
+      email_seq: 3,
+      email_broadcast: 3,
+      vsl_page: 3,
+      quiz_vsl_page: 3,
+      webinar_page: 3,
+      whatsapp_group: 3,
+      whatsapp_bot: 3,
+      b2b_qualification: 3,
+
+      // 4: Apresentação & Negociação
+      sales_page: 4,
+      b2b_meeting: 4,
+      b2b_proposal: 4,
+      application_page: 4,
+      member_area: 4,
+
+      // 5: Fechamento & Conversão Direta (WhatsApp X1 / Checkout / Lojas)
+      whatsapp_x1: 5,
+      live_chat: 5,
+      checkout: 5,
+      front_end: 5,
+      tripwire_offer: 5,
+      bundle_offer: 5,
+      affiliate_amazon: 5,
+      affiliate_shopee: 5,
+      affiliate_mercadolivre: 5,
+      affiliate_product: 5,
+
+      // 6: Maximização de Ticket (Bumps / Upsells) & Recuperação
+      order_bump: 6,
+      upsell: 6,
+      downsell: 6,
+      upsell_page: 6,
+      remarketing: 6,
+      whatsapp_auto: 6,
+      sms_transactional: 6,
+      voice_bot: 6,
+      pix_recovery: 6,
+      tag_lead: 6,
+      delay_timer: 6,
+      condition_branch: 6,
+
+      // 7: Fechamento Corporativo & Assinatura Recorrente
+      contract_signing: 7,
+      corporate_invoice: 7,
+      subscription: 7,
+      high_ticket: 7,
+
+      // 8: Pós-Venda, Entrega & Retenção
+      thank_you_page: 8,
+      client_onboarding: 8,
+      team_training: 8,
+      support_ticket: 8,
+      nps_survey: 8,
+      referral_program: 8,
+      testimonial_request: 8,
+      contract_renewal: 8,
+      hr_recruitment: 8
+    };
+
+    const getNodeStage = (node: FunnelNode): number => {
+      if (SUBTYPE_STAGE_MAP[node.subType] !== undefined) {
+        return SUBTYPE_STAGE_MAP[node.subType];
+      }
+      switch (node.type) {
+        case 'icp':
+        case 'note':
+          return 0;
+        case 'traffic':
+          return 1;
+        case 'page':
+          return 4;
+        case 'offer':
+          return 5;
+        case 'automation':
+          return 6;
+        case 'b2b':
+          return 4;
+        case 'cs':
+        case 'hr':
+          return 8;
+        default:
+          return 3;
+      }
+    };
+
+    const journeyNodes = nodes.filter(n => n.subType !== 'sticky_note' && n.subType !== 'icp_persona');
+    const strategyNodes = nodes.filter(n => n.subType === 'icp_persona');
+    const stickyNotes = nodes.filter(n => n.subType === 'sticky_note');
+
+    // 1. Identificar quais estágios estão ativos na tela
+    const presentStages = Array.from(new Set(journeyNodes.map(n => getNodeStage(n)))).sort((a, b) => a - b);
     
-    nodes.forEach(n => {
-      inDegree[n.id] = 0;
-      adjList[n.id] = [];
+    // Mapear cada estágio para seu índice de coluna (0, 1, 2...)
+    const stageToColumnMap: Record<number, number> = {};
+    presentStages.forEach((stage, idx) => {
+      stageToColumnMap[stage] = idx;
     });
 
-    connections.forEach(c => {
-      if (adjList[c.fromNodeId]) {
-        adjList[c.fromNodeId].push(c.toNodeId);
-      }
-      if (inDegree[c.toNodeId] !== undefined) {
-        inDegree[c.toNodeId]++;
-      }
+    // 2. Agrupar os nós da jornada por estágio
+    const nodesByStage: Record<number, FunnelNode[]> = {};
+    journeyNodes.forEach(node => {
+      const st = getNodeStage(node);
+      if (!nodesByStage[st]) nodesByStage[st] = [];
+      nodesByStage[st].push(node);
     });
 
-    // 2. Determinação de camadas por busca em largura (BFS / Topological Layers)
-    const layers: Record<number, string[]> = {};
-    const nodeLayer: Record<string, number> = {};
-    const queue: { id: string; layer: number }[] = [];
-
-    // Nós raiz (entradas de tráfego ou sem pai)
-    const rootNodes = nodes.filter(n => (inDegree[n.id] === 0 || n.type === 'traffic') && n.subType !== 'sticky_note');
-
-    if (rootNodes.length === 0 && nodes.length > 0) {
-      const firstNonSticky = nodes.find(n => n.subType !== 'sticky_note') || nodes[0];
-      queue.push({ id: firstNonSticky.id, layer: 0 });
-      nodeLayer[firstNonSticky.id] = 0;
-    } else {
-      rootNodes.forEach(r => {
-        queue.push({ id: r.id, layer: 0 });
-        nodeLayer[r.id] = 0;
-      });
-    }
-
-    const visited = new Set<string>();
-
-    while (queue.length > 0) {
-      const { id, layer } = queue.shift()!;
-      if (visited.has(id)) continue;
-      visited.add(id);
-
-      if (!layers[layer]) layers[layer] = [];
-      if (!layers[layer].includes(id)) {
-        layers[layer].push(id);
-      }
-
-      const children = adjList[id] || [];
-      children.forEach(childId => {
-        const nextLayer = layer + 1;
-        if (nodeLayer[childId] === undefined || nodeLayer[childId] < nextLayer) {
-          nodeLayer[childId] = nextLayer;
-        }
-        queue.push({ id: childId, layer: nodeLayer[childId] });
-      });
-    }
-
-    // Nós isolados restantes
-    nodes.forEach(n => {
-      if (!visited.has(n.id) && n.subType !== 'sticky_note') {
-        const maxLayer = Math.max(0, ...Object.keys(layers).map(Number));
-        const targetLayer = maxLayer + 1;
-        if (!layers[targetLayer]) layers[targetLayer] = [];
-        layers[targetLayer].push(n.id);
-        nodeLayer[n.id] = targetLayer;
-      }
+    // Ordenar nós dentro do mesmo estágio preservando ordem vertical anterior
+    Object.keys(nodesByStage).forEach(stKey => {
+      const st = Number(stKey);
+      nodesByStage[st].sort((a, b) => (a.y || 0) - (b.y || 0));
     });
 
-    // 3. Posicionamento simétrico e espaçado
+    // 3. Parâmetros de grade espacial
     const COLUMN_WIDTH = 340;
-    const ROW_HEIGHT = 140;
-    const START_X = 80;
-    const START_Y = 120;
+    const ROW_HEIGHT = 145;
+    const START_X = 100;
+    const CENTER_Y = 280;
 
-    let stickyOffsetY = 0;
+    const nodePositions: Record<string, { x: number; y: number }> = {};
 
-    const newNodes = nodes.map(node => {
-      if (node.subType === 'sticky_note') {
-        const snX = START_X;
-        const snY = START_Y + 500 + stickyOffsetY;
-        stickyOffsetY += 220;
-        return { ...node, x: snX, y: snY };
-      }
+    // Posicionar nós da jornada em colunas progressivas da esquerda para a direita
+    presentStages.forEach(st => {
+      const colIndex = stageToColumnMap[st];
+      const stageList = nodesByStage[st] || [];
+      const colX = START_X + colIndex * COLUMN_WIDTH;
+      const totalH = (stageList.length - 1) * ROW_HEIGHT;
 
-      const layer = nodeLayer[node.id] ?? 0;
-      const nodesInLayer = layers[layer] || [node.id];
-      const indexInLayer = nodesInLayer.indexOf(node.id);
-
-      const x = START_X + layer * COLUMN_WIDTH;
-      const totalHeight = (nodesInLayer.length - 1) * ROW_HEIGHT;
-      const y = START_Y + (indexInLayer * ROW_HEIGHT) - (totalHeight / 2) + 180;
-
-      return { ...node, x, y };
+      stageList.forEach((node, nodeIdx) => {
+        const nodeY = Math.round(CENTER_Y + (nodeIdx * ROW_HEIGHT) - (totalH / 2));
+        nodePositions[node.id] = { x: colX, y: nodeY };
+      });
     });
 
-    setFunnel(prev => prev ? { ...prev, nodes: newNodes } : null);
-    toast.success('⚡ Fluxo auto-organizado em camadas harmoniosas!');
+    // Posicionar ICPs acima do funil
+    strategyNodes.forEach((icpNode, idx) => {
+      nodePositions[icpNode.id] = {
+        x: START_X + idx * 260,
+        y: 60
+      };
+    });
+
+    // Posicionar Post-its organizados abaixo do fluxo
+    const maxJourneyY = Math.max(CENTER_Y + 150, ...Object.values(nodePositions).map(p => p.y));
+    stickyNotes.forEach((stickyNode, idx) => {
+      nodePositions[stickyNode.id] = {
+        x: START_X + (idx % 3) * 270,
+        y: maxJourneyY + 180 + Math.floor(idx / 3) * 220
+      };
+    });
+
+    const updatedNodes = nodes.map(node => {
+      if (nodePositions[node.id]) {
+        return { ...node, x: nodePositions[node.id].x, y: nodePositions[node.id].y };
+      }
+      return node;
+    });
+
+    setFunnel(prev => prev ? { ...prev, nodes: updatedNodes } : null);
+    toast.success('⚡ Funil auto-organizado por estágios da jornada (Tráfego ➡️ Vendas ➡️ Fechamento ➡️ Pós-Venda)!');
   };
+
+  // ── 📋 CLIPBOARD & DUPLICAÇÃO DE BLOCOS (CTRL+C / CTRL+V / CTRL+D) ─────────
+  const handleCopySelection = useCallback(() => {
+    if (!funnel || selectedNodeIds.length === 0) {
+      toast.info('Selecione um ou mais blocos para copiar.');
+      return;
+    }
+    const nodesToCopy = funnel.nodes.filter(n => selectedNodeIds.includes(n.id));
+    const internalConnections = funnel.connections.filter(
+      c => selectedNodeIds.includes(c.fromNodeId) && selectedNodeIds.includes(c.toNodeId)
+    );
+    setCopiedNodesBuffer({ nodes: nodesToCopy, connections: internalConnections });
+    toast.info(`📋 ${nodesToCopy.length} ${nodesToCopy.length === 1 ? 'bloco copiado' : 'blocos copiados'}! Pressione Ctrl+V para colar.`);
+  }, [funnel, selectedNodeIds]);
+
+  const handlePasteSelection = useCallback((customOffset?: { x: number; y: number }) => {
+    if (!funnel || !copiedNodesBuffer || copiedNodesBuffer.nodes.length === 0) {
+      toast.info('Nenhum bloco copiado para colar.');
+      return;
+    }
+
+    const idMap: Record<string, string> = {};
+    const timestamp = Date.now();
+
+    copiedNodesBuffer.nodes.forEach((node, idx) => {
+      idMap[node.id] = `node_${timestamp}_${idx}_${Math.random().toString(36).substr(2, 5)}`;
+    });
+
+    const offsetX = customOffset?.x ?? 50;
+    const offsetY = customOffset?.y ?? 50;
+
+    const clonedNodes: FunnelNode[] = copiedNodesBuffer.nodes.map(n => ({
+      ...n,
+      id: idMap[n.id],
+      x: n.x + offsetX,
+      y: n.y + offsetY
+    }));
+
+    const clonedConnections: FunnelConnection[] = copiedNodesBuffer.connections.map((c, idx) => ({
+      ...c,
+      id: `conn_${timestamp}_${idx}_${Math.random().toString(36).substr(2, 5)}`,
+      fromNodeId: idMap[c.fromNodeId],
+      toNodeId: idMap[c.toNodeId]
+    }));
+
+    setFunnel(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        nodes: [...prev.nodes, ...clonedNodes],
+        connections: [...prev.connections, ...clonedConnections]
+      };
+    });
+
+    // Selecionar os novos nós colados para facilitar o arraste imediato
+    const newSelectedIds = Object.values(idMap);
+    setSelectedNodeIds(newSelectedIds);
+    toast.success(`📋 ${clonedNodes.length} ${clonedNodes.length === 1 ? 'bloco colado' : 'blocos colados'} com sucesso!`);
+  }, [funnel, copiedNodesBuffer]);
+
+  const handleDuplicateSelection = useCallback(() => {
+    if (!funnel || selectedNodeIds.length === 0) return;
+    const nodesToCopy = funnel.nodes.filter(n => selectedNodeIds.includes(n.id));
+    if (nodesToCopy.length === 0) return;
+
+    const internalConnections = funnel.connections.filter(
+      c => selectedNodeIds.includes(c.fromNodeId) && selectedNodeIds.includes(c.toNodeId)
+    );
+    const idMap: Record<string, string> = {};
+    const timestamp = Date.now();
+
+    nodesToCopy.forEach((node, idx) => {
+      idMap[node.id] = `node_${timestamp}_${idx}_${Math.random().toString(36).substr(2, 5)}`;
+    });
+
+    const clonedNodes: FunnelNode[] = nodesToCopy.map(n => ({
+      ...n,
+      id: idMap[n.id],
+      x: n.x + 50,
+      y: n.y + 50
+    }));
+
+    const clonedConnections: FunnelConnection[] = internalConnections.map((c, idx) => ({
+      ...c,
+      id: `conn_${timestamp}_${idx}_${Math.random().toString(36).substr(2, 5)}`,
+      fromNodeId: idMap[c.fromNodeId],
+      toNodeId: idMap[c.toNodeId]
+    }));
+
+    setFunnel(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        nodes: [...prev.nodes, ...clonedNodes],
+        connections: [...prev.connections, ...clonedConnections]
+      };
+    });
+
+    setSelectedNodeIds(Object.values(idMap));
+    toast.success(`✨ ${clonedNodes.length} ${clonedNodes.length === 1 ? 'bloco duplicado' : 'blocos duplicados'}!`);
+  }, [funnel, selectedNodeIds]);
 
   // ── 🔍 DESTAQUE INTELIGENTE DE TRILHA (SMART DIMMING) ────────────────────
   const activeFocusId = hoveredNodeId || (selectedNodeIds.length === 1 ? selectedNodeIds[0] : null);
@@ -1248,7 +1458,8 @@ export default function FunnelArchitectEditorView() {
       ShoppingBag, Globe, Pencil,
       Calendar, PhoneCall, Briefcase, FileSignature, Receipt, Rocket, LifeBuoy,
       Star, RefreshCcw, Clock, GitBranch, Smartphone, Mic, UserCheck, GraduationCap, Inbox,
-      Target, StickyNote, BoxSelect, Wand2, MousePointer, Workflow, Spline
+      Target, StickyNote, BoxSelect, Wand2, MousePointer, Workflow, Spline,
+      MessageSquare, Bot, MessageSquareCode, Layers3, Flame, Ticket, Share2, FileSpreadsheet, UserPlus, Tag, Copy, Users
     };
     const IconComp = icons[iconName] || Layers;
     return <IconComp size={size} />;
@@ -2033,6 +2244,26 @@ export default function FunnelArchitectEditorView() {
               >
                 <BoxSelect className="w-3.5 h-3.5 text-indigo-300" />
                 <span>Criar Moldura</span>
+              </button>
+
+              {/* Botão de Duplicar Seleção */}
+              <button
+                onClick={handleDuplicateSelection}
+                className="px-2.5 py-1.5 bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-200 hover:text-white border border-indigo-500/30 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+                title="Duplicar blocos selecionados (Ctrl+D)"
+              >
+                <Copy className="w-3.5 h-3.5 text-indigo-300" />
+                <span>Duplicar</span>
+              </button>
+
+              {/* Botão de Copiar Seleção */}
+              <button
+                onClick={handleCopySelection}
+                className="px-2.5 py-1.5 bg-white/5 hover:bg-white/15 text-gray-300 hover:text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
+                title="Copiar para a área de transferência (Ctrl+C)"
+              >
+                <Copy className="w-3.5 h-3.5 text-gray-400" />
+                <span>Copiar</span>
               </button>
 
               {/* Alinhar em Linha Horizontal */}

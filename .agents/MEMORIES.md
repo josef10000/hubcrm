@@ -504,3 +504,28 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Decisões Técnicas**:
   - `FunnelArchitectEditorView.tsx`: Funções `getNodeDimensions`, `handleMinimapPanTo`, `isDraggingMinimap` com listeners globais em `window` e estado `isHandMode`.
 
+---
+
+## 32. Funis & Inteligência: Novos Blocos de Vendas (WhatsApp X1, Chatbot IA, Meta Ads), Auto-Organização por Estágios & Copiar/Colar (Ctrl+C/V/D)
+- **Data da Integração**: 26/08/2026
+- **Funcionalidades**:
+  1. **Novos Blocos Especializados de Vendas & WhatsApp**:
+     - *WhatsApp & Atendimento*: `whatsapp_x1` (Atendimento Humano X1 / Closer), `whatsapp_bot` (Chatbot IA / Typebot), `whatsapp_group` (Grupo VIP de Lançamento / Ofertas), `live_chat` (Chat ao Vivo no Site).
+     - *Tráfego & Origens*: `meta_ads` (Meta Ads / Facebook & Instagram Ads), `influencer_partner` (Parcerias & Influenciadores), `native_ads` (Tráfego Nativo Taboola/Outbrain).
+     - *Páginas & Etapas Web*: `application_page` (Página de Aplicação / Formulário High Ticket), `upsell_page` (Página Dedicada de Upsell 1-Click OTO), `bridge_page` (Página Ponte / Link da Bio), `member_area` (Área de Membros / Portal do Aluno).
+     - *Ofertas & Monetização*: `tripwire_offer` (Oferta Tripwire / Ativação), `bundle_offer` (Combo / Kit Promocional).
+     - *Automação & CRM*: `tag_lead` (Adicionar Tag / Lead Scoring), `pix_recovery` (Recuperação Pix Imediata).
+     - *Pós-Venda & CS*: `referral_program` (Programa Indique e Ganhe), `testimonial_request` (Coleta de Prova Social).
+  2. **Auto-Organização Semântica por Estágios da Jornada (Smart Stage Layout)**:
+     - Algoritmo que classifica qualquer combinação de blocos na lousa em sua fase natural da jornada (0: Estratégia, 1: Tráfego, 2: Captura, 3: Nutrição/VSL, 4: Vendas/Demo, 5: Fechamento/WhatsApp X1/Checkout, 6: Bumps/Upsells/Recuperação, 7: Jurídico/Assinatura, 8: Pós-Venda/CS).
+     - Distribuição automática em colunas ordenadas horizontalmente da esquerda para a direita (`START_X + colIndex * 340`) e alinhamento vertical harmônico e simétrico para múltiplos blocos no mesmo estágio (`CENTER_Y + (nodeIdx * 145) - totalH/2`), sem exigir conexões manuais prévias.
+  3. **Sistema de Copiar & Colar e Duplicação (Ctrl+C / Ctrl+V / Ctrl+D & Barra Flutuante)**:
+     - Selecionar blocos (com seleção de área ou clique individual) e copiar para a área de transferência (`Ctrl + C`).
+     - Colar com `Ctrl + V` duplicando os blocos com deslocamento inteligente (+50px X/Y), novos IDs e recriação automática das conexões internas existentes entre os blocos clonados.
+     - Duplicação imediata com `Ctrl + D` ou botão "Duplicar" / "Copiar" na barra flutuante de seleção em grupo.
+- **Decisões Técnicas**:
+  - `shared/types.ts`: Atualização do union `FunnelNodeSubType`.
+  - `src/domains/crm/constants/funnelTemplates.ts`: Inclusão dos novos blocos no `FUNNEL_BLOCK_CATALOG` com guias estratégicos completos (`strategicGuide`), taxas de conversão e checklists.
+  - `FunnelArchitectEditorView.tsx`: Funções `handleAutoLayout` refeita com `SUBTYPE_STAGE_MAP`, `handleCopySelection`, `handlePasteSelection`, `handleDuplicateSelection` e listeners de teclado.
+
+

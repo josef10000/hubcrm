@@ -174,12 +174,14 @@ Integração e processamento seguro de cobranças sob a própria identidade visu
 
 ### 18. 🗺️ Funis & Orquestração de Processos (Quadro Infinito & Auto-Layout)
 Módulo visual interativo no estilo Funnelytics/Miro para planejamento e desenho de jornadas de vendas, réguas multicanais e esteiras comerciais:
+*   **Biblioteca Rica com 60+ Subtipos Especializados:** Suporte completo à realidade do mercado de vendas (WhatsApp X1 / Closer, Chatbot IA / Typebot, Grupo VIP de Lançamento, Webchat no Site, Meta Ads, Parcerias/Influenciadores, Tráfego Nativo, Páginas de Aplicação High-Ticket, Upsell 1-Click OTO, Área de Membros, Oferta Tripwire, Combo Promocional, Tag/Lead Scoring, Recuperação Pix Imediata e Programa Indique e Ganhe).
+*   **⚡ Auto-Organização Semântica por Estágios da Jornada (Smart Stage Layout):** Algoritmo inteligente que reconhece o papel de cada bloco e reordena a lousa automaticamente em colunas progressivas da esquerda para a direita (Tráfego ➡️ Consciência & Captura ➡️ Nutrição & VSL ➡️ Apresentação de Vendas ➡️ Fechamento/WhatsApp X1/Checkout ➡️ Bumps & Upsells ➡️ Pós-Venda & Retenção), mantendo alinhamento vertical simétrico e harmônico.
+*   **📋 Copiar, Colar & Duplicar (Ctrl+C / Ctrl+V / Ctrl+D):** Suporte nativo a cópia e colagem de blocos individuais ou seleções em lote na lousa, clonando com deslocamento suave e recriando conexões internas entre os blocos duplicados de forma automática.
 *   **Seleção em Lote & Área (Marquee Box Selection):** Seleção de múltiplos blocos desenhando um retângulo no canvas com o mouse ou via `Shift + Drag`.
 *   **Arraste Sincronizado a 60fps & Exclusão em Grupo:** Movimentação fluida de blocos selecionados em conjunto mantendo o espaçamento relativo, e exclusão em massa com `Delete`.
-*   **Barra Flutuante de Ações:** Painel de ação rápida para criar molduras automáticas em volta dos blocos selecionados, alinhar vertical/horizontalmente e gerenciar grupos.
+*   **Barra Flutuante de Ações:** Painel de ação rápida para duplicar, copiar, criar molduras automáticas em volta dos blocos selecionados, alinhar vertical/horizontalmente e gerenciar grupos.
 *   **Destaque Inteligente e Dimming (Modo Foco):** Ao passar o mouse ou selecionar um bloco, isola a trilha ativa e reduz a opacidade do ruído visual.
 *   **Roteamento Ortogonal (90° Grid) & Portas Inteligentes:** Alternador entre curvas Bézier e linhas ortogonais com portas de retorno (topo/base) para evitar cruzamento de cards.
-*   **⚡ Auto-Organização Hierárquica:** Algoritmo de auto-layout em camadas ordenando nós de tráfego, páginas, ofertas e automações com 1 clique.
 *   **Simulador de Tráfego e Gargalos:** Projeção em tempo real de visitantes, faturamento projetado, custo de tráfego (CPC) e ROAS.
 
 ---

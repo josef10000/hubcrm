@@ -910,19 +910,19 @@ export type FunnelNodeSubType =
   // Anotações & Post-its
   | 'sticky_note'
   // Tráfego & Atração
-  | 'pinterest' | 'tiktok' | 'instagram' | 'youtube' | 'google_seo' | 'whatsapp' | 'partners'
+  | 'pinterest' | 'tiktok' | 'instagram' | 'youtube' | 'google_seo' | 'whatsapp' | 'meta_ads' | 'influencer_partner' | 'native_ads' | 'partners'
   // Páginas & Etapas Web
-  | 'blog_site' | 'quiz_page' | 'quiz_vsl_page' | 'vsl_page' | 'sales_page' | 'capture_page' | 'static_page' | 'webinar_page' | 'advertorial' | 'checkout' | 'thank_you_page'
+  | 'blog_site' | 'quiz_page' | 'quiz_vsl_page' | 'vsl_page' | 'sales_page' | 'capture_page' | 'static_page' | 'webinar_page' | 'advertorial' | 'checkout' | 'thank_you_page' | 'application_page' | 'upsell_page' | 'bridge_page' | 'member_area'
   // Ofertas & Monetização Própria
-  | 'lead_magnet' | 'front_end' | 'order_bump' | 'upsell' | 'downsell' | 'subscription' | 'high_ticket'
+  | 'lead_magnet' | 'front_end' | 'order_bump' | 'upsell' | 'downsell' | 'subscription' | 'high_ticket' | 'tripwire_offer' | 'bundle_offer'
   // Afiliação & Lojas Parceiras
   | 'affiliate_amazon' | 'affiliate_shopee' | 'affiliate_mercadolivre' | 'affiliate_product'
-  // E-mail & Automações Multicanal
-  | 'email_seq' | 'email_broadcast' | 'delay_timer' | 'condition_branch' | 'whatsapp_auto' | 'sms_transactional' | 'voice_bot' | 'remarketing'
+  // E-mail, WhatsApp & Automações Multicanal
+  | 'email_seq' | 'email_broadcast' | 'delay_timer' | 'condition_branch' | 'whatsapp_auto' | 'whatsapp_x1' | 'whatsapp_bot' | 'whatsapp_group' | 'live_chat' | 'sms_transactional' | 'voice_bot' | 'remarketing' | 'tag_lead' | 'pix_recovery'
   // Vendas B2B & Negociação Corporativa
   | 'b2b_meeting' | 'b2b_qualification' | 'b2b_proposal' | 'contract_signing' | 'corporate_invoice'
   // Pós-Venda, Sucesso do Cliente (CS) & Retenção
-  | 'client_onboarding' | 'support_ticket' | 'nps_survey' | 'contract_renewal'
+  | 'client_onboarding' | 'support_ticket' | 'nps_survey' | 'contract_renewal' | 'referral_program' | 'testimonial_request'
   // RH & Processos Internos
   | 'hr_recruitment' | 'team_training';
 

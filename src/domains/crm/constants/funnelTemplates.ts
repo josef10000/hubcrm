@@ -147,6 +147,69 @@ export const FUNNEL_BLOCK_CATALOG: BlockMeta[] = [
       actionItems: ['Escrever copy do disparo', 'Preparar link rastreado com UTM', 'Criar mensagem de contagem regressiva']
     }
   },
+  {
+    type: 'traffic',
+    subType: 'meta_ads',
+    name: 'Meta Ads (Facebook / Instagram Ads)',
+    categoryLabel: 'Tráfego & Atração',
+    iconName: 'Flame',
+    badgeColor: 'bg-blue-600/10 text-blue-400 border-blue-500/30',
+    bgGradient: 'from-blue-600/20 to-indigo-700/10',
+    defaultConversion: 3.8,
+    defaultCostPerClick: 0.95,
+    strategicGuide: {
+      title: 'Tráfego Pago de Conversão Direta (Meta Ads)',
+      description: 'Campanhas de conversão no Feed, Stories e Reels segmentadas por interesses e públicos semelhantes (Lookalike).',
+      goldenRules: [
+        'Teste pelo menos 3 ganchos visuais e 2 copies para cada conjunto de anúncios.',
+        'Otimize para o evento mais profundo do funil com volume (ex: Compra ou Iniciar Checkout).',
+        'Mantenha a coerência visual entre o anúncio e a primeira dobra da página de destino.'
+      ],
+      actionItems: ['Configurar Pixel e CAPI (API de Conversões)', 'Subir 5 criativos validados no HubAds', 'Definir orçamento diário']
+    }
+  },
+  {
+    type: 'traffic',
+    subType: 'influencer_partner',
+    name: 'Parcerias & Influenciadores (Collabs)',
+    categoryLabel: 'Tráfego & Atração',
+    iconName: 'Users',
+    badgeColor: 'bg-violet-500/10 text-violet-400 border-violet-500/30',
+    bgGradient: 'from-violet-500/20 to-pink-700/10',
+    defaultConversion: 7.5,
+    defaultCostPerClick: 1.80,
+    strategicGuide: {
+      title: 'Tráfego de Autoridade Emprestada & Parcerias',
+      description: 'Divulgação através de influenciadores de nicho, publieditoriais e lives conjuntas com cupom exclusivo.',
+      goldenRules: [
+        'Exija métricas reais de visualizações de Stories e retenção de público antes de fechar.',
+        'Entregue um roteiro com os pontos obrigatórios e o cupom/link personalizado.',
+        'Combine sequências de 3 stories em formato de indicação genuína do dia a dia.'
+      ],
+      actionItems: ['Mapear 10 influenciadores de micro-nicho', 'Gerar cupom de desconto rastreável', 'Enviar briefing de gravação']
+    }
+  },
+  {
+    type: 'traffic',
+    subType: 'native_ads',
+    name: 'Tráfego Nativo (Taboola / Outbrain)',
+    categoryLabel: 'Tráfego & Atração',
+    iconName: 'Layers3',
+    badgeColor: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+    bgGradient: 'from-amber-500/20 to-orange-700/10',
+    defaultConversion: 2.2,
+    defaultCostPerClick: 0.35,
+    strategicGuide: {
+      title: 'Escala em Massa com Anúncios Nativos',
+      description: 'Anúncios integrados em grandes portais de notícias como recomendações de leitura, ideais para Advertorials.',
+      goldenRules: [
+        'Títulos estilo curiosidade jornalística ("Novo método surpreende especialistas...").',
+        'Imagens reais, não polidas e sem cara de publicidade comercial.',
+        'Direcione obrigatoriamente para um artigo advertorial ou página pre-sell antes da oferta.'
+      ],
+      actionItems: ['Criar 10 headlines de curiosidade', 'Selecionar imagens de estilo editorial', 'Configurar tracking no Taboola/Outbrain']
+    }
+  },
 
   // ── 📄 PÁGINAS & ETAPAS WEB ────────────────────────────────
   {
@@ -329,6 +392,86 @@ export const FUNNEL_BLOCK_CATALOG: BlockMeta[] = [
       actionItems: ['Gravar vídeo de boas-vindas', 'Adicionar link do grupo VIP', 'Verificar disparo de pixel']
     }
   },
+  {
+    type: 'page',
+    subType: 'application_page',
+    name: 'Página de Aplicação / Formulário (High-Ticket)',
+    categoryLabel: 'Páginas & Etapas',
+    iconName: 'FileSpreadsheet',
+    badgeColor: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+    bgGradient: 'from-amber-500/20 to-yellow-700/10',
+    defaultConversion: 18.0,
+    strategicGuide: {
+      title: 'Formulário de Aplicação & Qualificação',
+      description: 'Questionário detalhado para selecionar os melhores perfis para mentorias, consultorias e contratos High-Ticket.',
+      goldenRules: [
+        'Faça perguntas eliminatórias (ex: "Faturamento mensal atual", "Disponibilidade para investir").',
+        'Crie percepção de processo seletivo concorrido e exclusivo.',
+        'Redirecione quem for aprovado diretamente para a agenda de agendamento da call.'
+      ],
+      actionItems: ['Configurar 6 perguntas eliminatórias', 'Integrar respostas ao CRM', 'Configurar redirecionamento para agendamento']
+    }
+  },
+  {
+    type: 'page',
+    subType: 'upsell_page',
+    name: 'Página de Upsell 1-Click (OTO)',
+    categoryLabel: 'Páginas & Etapas',
+    iconName: 'Zap',
+    badgeColor: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+    bgGradient: 'from-emerald-500/20 to-teal-700/10',
+    defaultConversion: 16.0,
+    strategicGuide: {
+      title: 'Página Dedicada de Oferta Única (One-Time Offer)',
+      description: 'Apresentada imediatamente após a compra inicial para dobrar o LTV do cliente com 1 único clique.',
+      goldenRules: [
+        'Aviso no topo: "ATENÇÃO: Não feche esta página, seu pedido ainda está sendo finalizado...".',
+        'Vídeo curto de 90 segundos explicando a oferta de aceleração com super desconto.',
+        'Botão "Sim, Adicionar ao Meu Pedido por apenas R$ X" + Link "Não, obrigado".'
+      ],
+      actionItems: ['Gravar vídeo de oferta de 90 segundos', 'Configurar cobrança de 1 clique no Asaas', 'Adicionar link de recusa para downsell']
+    }
+  },
+  {
+    type: 'page',
+    subType: 'bridge_page',
+    name: 'Página Ponte / Link da Bio (Mobile)',
+    categoryLabel: 'Páginas & Etapas',
+    iconName: 'Share2',
+    badgeColor: 'bg-pink-500/10 text-pink-400 border-pink-500/30',
+    bgGradient: 'from-pink-500/20 to-purple-700/10',
+    defaultConversion: 32.0,
+    strategicGuide: {
+      title: 'Página Centralizadora de Links (Bio)',
+      description: 'Página mobile-first ultrarrápida estilo Linktree com botões para WhatsApp, Isca, Produtos e Agendamentos.',
+      goldenRules: [
+        'O link principal deve ter destaque visual e animação suave.',
+        'Fotos e logos em alta definição e botões fáceis de tocar no celular.',
+        'Instale pixel para mensurar cliques em cada botão da árvore de links.'
+      ],
+      actionItems: ['Cadastrar links das ofertas ativas', 'Adicionar botão direto do WhatsApp VIP', 'Testar carregamento mobile']
+    }
+  },
+  {
+    type: 'page',
+    subType: 'member_area',
+    name: 'Área de Membros / Portal do Aluno',
+    categoryLabel: 'Páginas & Etapas',
+    iconName: 'GraduationCap',
+    badgeColor: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
+    bgGradient: 'from-indigo-500/20 to-blue-800/10',
+    defaultConversion: 95.0,
+    strategicGuide: {
+      title: 'Ambiente de Entrega de Conteúdo & Comunidade',
+      description: 'Plataforma onde o aluno assiste às aulas, baixa materiais complementares e interage com a turma.',
+      goldenRules: [
+        'Organize os módulos com trilhas claras de progresso e barra de conclusão.',
+        'Insira botões de suporte e indicação de amigos dentro das aulas.',
+        'Destaque ofertas complementares (Upgrades de plano) na barra lateral.'
+      ],
+      actionItems: ['Organizar grade de módulos', 'Liberar acesso automático pós-compra', 'Inserir links de suporte']
+    }
+  },
 
   // ── 💰 MONETIZAÇÃO & OFERTAS ──────────────────────────────
   {
@@ -479,6 +622,48 @@ export const FUNNEL_BLOCK_CATALOG: BlockMeta[] = [
     }
   },
   {
+    type: 'offer',
+    subType: 'tripwire_offer',
+    name: 'Oferta Tripwire (Ativação de Baixo Custo)',
+    categoryLabel: 'Ofertas & Monetização',
+    iconName: 'Ticket',
+    badgeColor: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+    bgGradient: 'from-emerald-500/20 to-teal-700/10',
+    defaultPrice: 10.00,
+    defaultConversion: 12.0,
+    strategicGuide: {
+      title: 'Oferta Tripwire / Quebra de Fricção Financeira',
+      description: 'Produto de R$ 7 a R$ 19 oferecido logo após a isca digital para transformar leads gratuitos em compradores pagantes.',
+      goldenRules: [
+        'Deve ter valor percebido 10x maior que o preço cobrado.',
+        'Objetivo não é o lucro imediato, mas construir a lista de compradores.',
+        'Ative Order Bump e Upsell imediatamente após a aprovação.'
+      ],
+      actionItems: ['Criar produto de ativação rápida', 'Configurar oferta na página de obrigado da isca', 'Conectar ao checkout direto']
+    }
+  },
+  {
+    type: 'offer',
+    subType: 'bundle_offer',
+    name: 'Combo / Kit Promocional (Bundle)',
+    categoryLabel: 'Ofertas & Monetização',
+    iconName: 'Package',
+    badgeColor: 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/30',
+    bgGradient: 'from-fuchsia-500/20 to-purple-700/10',
+    defaultPrice: 147.00,
+    defaultConversion: 6.5,
+    strategicGuide: {
+      title: 'Pacote / Combo com Ancoragem de Valor',
+      description: 'Combinação de 2 a 4 produtos da sua esteira com desconto progressivo no checkout.',
+      goldenRules: [
+        'Mostre o preço individual de cada item somado vs o valor promocional do combo.',
+        'Exemplo: "Leve Produto A (R$ 97) + Produto B (R$ 97) por apenas R$ 147".',
+        'Gera sensação imediata de economia inteligente.'
+      ],
+      actionItems: ['Selecionar produtos do pacote', 'Cadastrar oferta do combo no CRM', 'Criar mockup 3D do kit']
+    }
+  },
+  {
     type: 'page',
     subType: 'blog_site',
     name: 'Blog / Site de Conteúdo & SEO',
@@ -626,6 +811,126 @@ export const FUNNEL_BLOCK_CATALOG: BlockMeta[] = [
         'Disparo ideal: 15 minutos após a tentativa de compra.'
       ],
       actionItems: ['Configurar webhook de recuperação', 'Escrever template humanizado', 'Testar envio no WhatsApp']
+    }
+  },
+  {
+    type: 'automation',
+    subType: 'whatsapp_x1',
+    name: 'Atendimento WhatsApp X1 (Closer / Vendas)',
+    categoryLabel: 'Automação & Régua',
+    iconName: 'MessageSquare',
+    badgeColor: 'bg-green-500/10 text-green-400 border-green-500/30',
+    bgGradient: 'from-green-500/20 to-emerald-700/10',
+    defaultConversion: 38.0,
+    strategicGuide: {
+      title: 'Atendimento Consultivo 1 a 1 no WhatsApp (X1)',
+      description: 'Negociação direta com o cliente para tirar dúvidas, quebrar objeções específicas e enviar link de checkout personalizado.',
+      goldenRules: [
+        'Responda em menos de 5 minutos com áudios curtos e acolhedores.',
+        'Faça perguntas para entender a real situação do cliente antes de mandar o link de compra.',
+        'Envie prints de resultados de outros clientes durante a conversa.'
+      ],
+      actionItems: ['Configurar script de fechamento X1', 'Cadastrar respostas rápidas no WhatsApp Business', 'Acompanhar taxa de conversão do atendente']
+    }
+  },
+  {
+    type: 'automation',
+    subType: 'whatsapp_bot',
+    name: 'Chatbot / Triagem Inteligente (Typebot / IA)',
+    categoryLabel: 'Automação & Régua',
+    iconName: 'Bot',
+    badgeColor: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30',
+    bgGradient: 'from-cyan-500/20 to-teal-700/10',
+    defaultConversion: 25.0,
+    strategicGuide: {
+      title: 'Atendimento Automatizado & Triagem de Leads',
+      description: 'Fluxo conversacional no WhatsApp com inteligência artificial para qualificar o lead, coletar dados e direcionar para o atendente ideal.',
+      goldenRules: [
+        'Primeira mensagem com botões de múltipla escolha para resposta em 1 toque.',
+        'Se o lead for de alto valor (High-Ticket), transfira imediatamente para um vendedor humano.',
+        'Salve as respostas do lead automaticamente no CRM.'
+      ],
+      actionItems: ['Montar fluxo de perguntas no Typebot/IA', 'Configurar tag de lead quente', 'Integrar webhook de transferência']
+    }
+  },
+  {
+    type: 'automation',
+    subType: 'whatsapp_group',
+    name: 'Grupo VIP WhatsApp / Comunidade',
+    categoryLabel: 'Automação & Régua',
+    iconName: 'Users',
+    badgeColor: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+    bgGradient: 'from-emerald-500/20 to-green-700/10',
+    defaultConversion: 22.0,
+    strategicGuide: {
+      title: 'Lançamento & Grupos VIP no WhatsApp',
+      description: 'Grupo fechado com administradores para criar grande expectativa, liberar aulas ao vivo e abrir o carrinho com bônus exclusivos.',
+      goldenRules: [
+        'Mantenha o grupo silenciado a maior parte do tempo para não gerar dispersão.',
+        'Abra o grupo em horários agendados (ex: "Plantão de Dúvidas de 1h").',
+        'Dispare contagem regressiva e ofertas com vagas limitadas.'
+      ],
+      actionItems: ['Criar link de redirecionador de grupos', 'Agendar cronograma de mensagens de aquecimento', 'Preparar cópia da abertura de carrinho']
+    }
+  },
+  {
+    type: 'automation',
+    subType: 'live_chat',
+    name: 'Chat ao Vivo no Site / Webchat',
+    categoryLabel: 'Automação & Régua',
+    iconName: 'MessageSquareCode',
+    badgeColor: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
+    bgGradient: 'from-blue-500/20 to-indigo-700/10',
+    defaultConversion: 28.0,
+    strategicGuide: {
+      title: 'Atendimento Flutuante no Checkout & Landing Page',
+      description: 'Widget de chat no canto inferior da página para tirar dúvidas de compradores indecisos antes de abandonarem o site.',
+      goldenRules: [
+        'Ative mensagem automática após 30 segundos na página de checkout ("Posso te ajudar com sua compra?").',
+        'Ofereça suporte direto no WhatsApp se o atendente estiver offline.',
+        'Tenha respostas prontas sobre garantia, formas de pagamento e acesso.'
+      ],
+      actionItems: ['Instalar widget no checkout e LP', 'Configurar horário de atendimento online', 'Cadastrar templates de suporte']
+    }
+  },
+  {
+    type: 'automation',
+    subType: 'tag_lead',
+    name: 'Tag / Pontuação de Lead (Lead Scoring)',
+    categoryLabel: 'Automação & Régua',
+    iconName: 'Tag',
+    badgeColor: 'bg-violet-500/10 text-violet-400 border-violet-500/30',
+    bgGradient: 'from-violet-500/20 to-purple-700/10',
+    defaultConversion: 100.0,
+    strategicGuide: {
+      title: 'Segmentação Comportamental & Tags no CRM',
+      description: 'Aplica etiquetas e pontuações no contato quando ele executa ações específicas no funil (baixou isca, visitou checkout, comprou).',
+      goldenRules: [
+        'Tags claras e padronizadas (ex: `STATUS_LEAD_QUENTE`, `ORIGEM_INSTAGRAM`, `COMPROU_PRODUTO_A`).',
+        'Use para filtrar e disparar campanhas hiper-segmentadas de remarketing.',
+        'Aumente o score do lead a cada nova interação de valor.'
+      ],
+      actionItems: ['Definir taxonomia de tags', 'Configurar gatilho de adição de tag', 'Conectar ao fluxo de automação']
+    }
+  },
+  {
+    type: 'automation',
+    subType: 'pix_recovery',
+    name: 'Recuperação Pix Imediata',
+    categoryLabel: 'Automação & Régua',
+    iconName: 'Zap',
+    badgeColor: 'bg-teal-500/10 text-teal-400 border-teal-500/30',
+    bgGradient: 'from-teal-500/20 to-emerald-700/10',
+    defaultConversion: 42.0,
+    strategicGuide: {
+      title: 'Resgate de Pix Gerado & Não Pago',
+      description: 'Ação rápida nos primeiros 5 a 10 minutos após o comprador gerar o QR Code Pix no checkout transparente.',
+      goldenRules: [
+        'Envie o código Copia e Cola limpo em mensagem separada para facilitar a cópia com 1 toque no celular.',
+        'Lembre que a chave expira em pouco tempo e a vaga pode ser liberada.',
+        'Pergunte se houve alguma instabilidade no aplicativo do banco.'
+      ],
+      actionItems: ['Configurar gatilho de Pix pendente', 'Personalizar mensagem com QR Code/Chave', 'Testar envio imediato']
     }
   },
   {
@@ -934,6 +1239,46 @@ export const FUNNEL_BLOCK_CATALOG: BlockMeta[] = [
         'Ofereça novos módulos ou suporte premium como oportunidade de expansão.'
       ],
       actionItems: ['Montar relatório executivo de resultados', 'Agendar call de revisão de contas', 'Enviar aditivo de renovação']
+    }
+  },
+  {
+    type: 'cs',
+    subType: 'referral_program',
+    name: 'Indique e Ganhe / Programa de Indicação',
+    categoryLabel: 'Pós-Venda & Sucesso (CS)',
+    iconName: 'UserPlus',
+    badgeColor: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+    bgGradient: 'from-emerald-500/20 to-teal-700/10',
+    defaultConversion: 20.0,
+    strategicGuide: {
+      title: 'Motor de Crescimento por Indicação (Member Get Member)',
+      description: 'Incentivo para clientes satisfeitos indicarem amigos e colegas em troca de descontos na mensalidade, bônus ou comissões.',
+      goldenRules: [
+        'Ative o convite de indicação logo após uma nota alta no NPS (9 ou 10).',
+        'Ofereça benefício para os dois lados (quem indica ganha desconto, o indicado ganha bônus).',
+        'Facilite o compartilhamento com botão direto "Enviar Convite no WhatsApp".'
+      ],
+      actionItems: ['Definir recompensa de indicação', 'Gerar link de convite exclusivo por cliente', 'Criar mensagem padrão de WhatsApp']
+    }
+  },
+  {
+    type: 'cs',
+    subType: 'testimonial_request',
+    name: 'Coleta de Depoimento / Prova Social',
+    categoryLabel: 'Pós-Venda & Sucesso (CS)',
+    iconName: 'Star',
+    badgeColor: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+    bgGradient: 'from-amber-500/20 to-yellow-700/10',
+    defaultConversion: 30.0,
+    strategicGuide: {
+      title: 'Coleta Estruturada de Prova Social em Vídeo/Texto',
+      description: 'Solicitação de depoimento e print de faturamento/resultado quando o cliente atinge sua primeira vitória ou marco.',
+      goldenRules: [
+        'Peça o depoimento no auge do entusiasmo do cliente (ex: primeira venda realizada ou projeto entregue).',
+        'Envie 3 perguntas simples de guia ("Como era antes?", "Qual resultado teve?", "O que diria para quem está em dúvida?").',
+        'Suba as fotos e vídeos coletados no construtor de checkouts do CRM.'
+      ],
+      actionItems: ['Montar formulário rápido de depoimento', 'Gravar vídeo de pedido com carinho', 'Adicionar depoimentos na página de checkout']
     }
   },
 
