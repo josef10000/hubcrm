@@ -899,8 +899,159 @@ export interface OfferBlueprint {
 
 // ── Funis & Orquestração de Processos ──────────────────────────────────────────
 
-export type FunnelCategory = 'perpetual' | 'launch' | 'organic' | 'high_ticket' | 'community' | 'b2b' | 'cs' | 'journey' | 'custom';
+export type FunnelCategory = 'perpetual' | 'launch' | 'organic' | 'high_ticket' | 'community' | 'b2b' | 'cs' | 'journey' | 'vsl_script' | 'sales_page' | 'quiz_funnel' | 'custom';
 export type FunnelStatus = 'draft' | 'building' | 'active' | 'archived';
+
+// ── 🎬 ESTÚDIO DE ARQUITETURA DE VSL (ROTEIROS & STORYLINE) ─────────────────────
+
+export type VSLBlockType = 
+  | 'hook_a' | 'hook_b' | 'hook_c'
+  | 'lead_empathy'
+  | 'enemy_myth'
+  | 'hero_story'
+  | 'unique_mechanism'
+  | 'epiphany_method'
+  | 'offer_pitch'
+  | 'bonus_stack'
+  | 'objection_crusher'
+  | 'price_anchor'
+  | 'guarantee_dual'
+  | 'urgency_cta';
+
+export interface VSLScriptBlock {
+  id: string;
+  type: VSLBlockType;
+  title: string;
+  notes?: string;
+  scriptText: string;
+  bulletPoints?: string[];
+  isPitchPoint?: boolean; // Ponto em que a oferta é revelada (botão de delay)
+  targetDurationSeconds?: number;
+  wordCount?: number;
+}
+
+export interface VSLBlueprintData {
+  targetWPM: number; // Padrão: 140 palavras por minuto
+  totalWords: number;
+  estimatedDurationSeconds: number;
+  pitchDelaySeconds: number;
+  blocks: VSLScriptBlock[];
+}
+
+// ── 📄 CONSTRUTOR MODULAR DE PÁGINAS & QUIZ INTERATIVO ─────────────────────────
+
+export type PageQuizSectionType = 
+  | 'hero_vsl'
+  | 'pain_mirror'
+  | 'authority_bio'
+  | 'mechanism_info'
+  | 'module_grid'
+  | 'social_proof_wall'
+  | 'bonus_cards'
+  | 'pricing_box'
+  | 'guarantee_seal'
+  | 'faq_accordion'
+  | 'quiz_question'
+  | 'quiz_diagnostic_loading'
+  | 'quiz_result_pitch'
+  | 'custom_html';
+
+export interface QuizOptionItem {
+  id: string;
+  label: string;
+  sublabel?: string;
+  iconName?: string;
+  imageUrl?: string;
+  score?: number;
+  nextSectionId?: string;
+}
+
+export interface TestimonialItem {
+  id: string;
+  name: string;
+  role?: string;
+  avatarUrl?: string;
+  quote: string;
+  rating?: number;
+  mediaType?: 'text' | 'image' | 'video';
+  mediaUrl?: string;
+}
+
+export interface FAQItem {
+  id: string;
+  question: string;
+  answer: string;
+}
+
+export interface PageQuizSection {
+  id: string;
+  type: PageQuizSectionType;
+  title: string;
+  subtitle?: string;
+  badge?: string;
+  
+  // Conteúdo de Mídia & Visual
+  headline?: string;
+  bodyText?: string;
+  videoUrl?: string;
+  videoDelaySeconds?: number;
+  imageUrl?: string;
+  buttonText?: string;
+  buttonLink?: string;
+  
+  // Elementos Estruturais
+  quizQuestion?: {
+    questionType: 'single_choice' | 'multi_choice' | 'image_choice' | 'scale_1_10';
+    options: QuizOptionItem[];
+  };
+  testimonials?: TestimonialItem[];
+  faqItems?: FAQItem[];
+  pricingData?: {
+    regularPrice?: number;
+    offerPrice: number;
+    installments?: string;
+    checkoutUrl?: string;
+    guaranteeDays?: number;
+    bonusList?: string[];
+  };
+}
+
+export interface PageQuizBlueprintData {
+  mode: 'sales_page' | 'quiz_funnel';
+  targetOfferId?: string;
+  themeColor?: string;
+  sections: PageQuizSection[];
+}
+
+export interface FunnelBlueprint {
+  id?: string;
+  title: string;
+  description?: string;
+  category: FunnelCategory;
+  status: FunnelStatus;
+  routingStyle?: 'bezier' | 'orthogonal';
+  
+  nodes: FunnelNode[];
+  connections: FunnelConnection[];
+  frames?: FunnelFrame[];
+
+  // Ativos de Conversão Específicos
+  vslData?: VSLBlueprintData;
+  pageQuizData?: PageQuizBlueprintData;
+  
+  // Simulador de Tráfego
+  metrics?: {
+    initialTraffic: number;
+    projectedRevenue: number;
+    projectedROI: number;
+    bottleneckNodeIds?: string[];
+  };
+  
+  orgId: string;
+  createdBy?: string;
+  createdAt?: any;
+  updatedAt?: any;
+}
 
 export type FunnelNodeType = 'traffic' | 'page' | 'offer' | 'automation' | 'b2b' | 'cs' | 'hr' | 'icp' | 'note' | 'journey';
 

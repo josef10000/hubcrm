@@ -2968,6 +2968,46 @@ export default function FunnelArchitectEditorView() {
                       </div>
                     )}
 
+                    {activeNode.subType === 'vsl_page' && (
+                      <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-2xl space-y-2">
+                        <label className="text-[11px] font-black text-rose-300 uppercase flex items-center gap-1.5">
+                          <Video size={14} /> Estúdio de Roteiro de VSL
+                        </label>
+                        <p className="text-[10px] text-gray-300">
+                          Estruture a narrativa persuasiva, minutagem WPM, hooks A/B e ponto de delay do botão.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => window.open(`/funnels`, '_blank')}
+                          className="w-full py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-md shadow-rose-600/20"
+                        >
+                          <span>Acessar Estúdio de VSL</span>
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+
+                    {(activeNode.subType === 'sales_page' || activeNode.subType === 'quiz_page') && (
+                      <div className="p-3 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl space-y-2">
+                        <label className="text-[11px] font-black text-indigo-300 uppercase flex items-center gap-1.5">
+                          <Layers size={14} /> {activeNode.subType === 'quiz_page' ? 'Construtor de Quiz Interativo' : 'Construtor de Página de Vendas'}
+                        </label>
+                        <p className="text-[10px] text-gray-300">
+                          {activeNode.subType === 'quiz_page' 
+                            ? 'Configure as perguntas, mini-VSLs, telas de análise e teste no simulador ao vivo.' 
+                            : 'Monte as dobras verticais, provas sociais, box de oferta e FAQ.'}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => window.open(`/funnels`, '_blank')}
+                          className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/20"
+                        >
+                          <span>{activeNode.subType === 'quiz_page' ? 'Acessar Construtor de Quiz' : 'Acessar Construtor de Página'}</span>
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+
                     {activeNode.subType === 'customer_emotion' && (
                       <div className="p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-2xl space-y-3">
                         <label className="text-[11px] font-black text-cyan-300 uppercase flex items-center gap-1.5">

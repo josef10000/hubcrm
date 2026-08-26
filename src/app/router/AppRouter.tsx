@@ -44,6 +44,8 @@ const OfferLabListView = lazy(() => import('@crm/views/OfferLabListView'));
 const OfferLabEditorView = lazy(() => import('@crm/views/OfferLabEditorView'));
 const FunnelArchitectListView = lazy(() => import('@crm/views/FunnelArchitectListView'));
 const FunnelArchitectEditorView = lazy(() => import('@crm/views/FunnelArchitectEditorView'));
+const VSLStudioEditorView = lazy(() => import('@crm/views/VSLStudioEditorView'));
+const PageQuizEditorView = lazy(() => import('@crm/views/PageQuizEditorView'));
 const TeamManagementView = lazy(() => import('@people/views/TeamManagementView'));
 const PeopleView = lazy(() => import('@people/views/PeopleView'));
 const CanvasListView = lazy(() => import('@chat/views/CanvasListView'));
@@ -140,6 +142,8 @@ export function AppRouter() {
                       <Route path="/offers" element={<OfferLabListView />} />
                       <Route path="/offers/:id" element={<OfferLabEditorView />} />
                       <Route path="/funnels" element={<FunnelArchitectListView />} />
+                      <Route path="/funnels/vsl/:id" element={<VSLStudioEditorView />} />
+                      <Route path="/funnels/page-quiz/:id" element={<PageQuizEditorView />} />
                       <Route path="/funnels/:id" element={<FunnelArchitectEditorView />} />
                       <Route path="/screens" element={<ScreenLauncherView />} />
                       <Route path="/monitoring" element={<MonitoringView clients={clients} />} />

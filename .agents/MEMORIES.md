@@ -590,6 +590,31 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
   - `src/domains/crm/constants/funnelTemplates.ts`: Inclusão dos 7 novos blocos de jornada no `FUNNEL_BLOCK_CATALOG` e novo template em `MARKET_FUNNEL_TEMPLATES`.
   - `FunnelArchitectEditorView.tsx`: Implementação do modal `previewSubFunnel`, renderizadores de cards personalizados, integração no `SUBTYPE_STAGE_MAP` e controle de inspetor.
 
+---
+
+## 36. Estúdio de Copywriting & Ativos de Conversão: VSL Storyline, Páginas de Venda em Dobras e Quiz com Simulador Interativo
+- **Data da Integração**: 26/08/2026
+- **Funcionalidades**:
+  1. **Estúdio de Arquitetura de VSL (`VSLStudioEditorView.tsx`)**:
+     - Timeline de blocos psicológicos para Video Sales Letters:
+       - Ganchos A/B/C (Quebra de Padrão, Controvérsia, Prova Visual), Lead de Empatia, Inimigo Comum, História do Fundo do Poço, Novo Mecanismo Único, Pitch de Revelação, Empilhamento de Bônus, Quebra Cirúrgica de Objeções (Tempo, Dinheiro, Nicho), Ancoragem de Preço, Garantia Blindada e Escassez/CTA.
+     - Calculadora de Ritmo & Minutagem WPM em tempo real (ex: 140 palavras/min).
+     - Marcador de Ponto de Delay do Botão (liberação exata do checkout no player).
+     - Exportação de roteiro de copy formatado em `.txt`.
+  2. **Construtor Modular de Páginas de Vendas & Quiz (`PageQuizEditorView.tsx`)**:
+     - *Modo Página de Vendas*: Montagem em dobras verticais (Hero com VSL e CTA, Espelho da Dor, Autoridade, Entregáveis, Provas Sociais, Box de Oferta, Garantia e FAQ).
+     - *Modo Quiz Interativo*: Passos de diagnóstico, mini-VSLs, provas sociais, tela de carregamento com cálculo psicológico e oferta recomendada.
+     - **Simulador Interativo Ao Vivo (Desktop & Mobile)**: Permite testar e avançar as perguntas do quiz na tela com animações e cálculo de progresso em tempo real.
+  3. **Integração de Rotas & Hub Central**:
+     - Filtros dedicados no cabeçalho de *Funis & Orquestração* (`🎬 Roteiros de VSL`, `📄 Páginas de Venda`, `🧠 Quizzes Interativos`).
+     - Menu dropdown de criação com 4 opções (`Funil/Jornada`, `VSL`, `Página`, `Quiz`).
+     - Links e atalhos rápidos no Inspetor do Canvas para blocos `vsl_page`, `sales_page` e `quiz_page`.
+- **Decisões Técnicas**:
+  - `shared/types.ts`: Adição dos tipos `VSLBlueprintData`, `VSLScriptBlock`, `PageQuizBlueprintData`, `PageQuizSection`.
+  - `src/domains/crm/constants/vslPageTemplates.ts`: Catálogo de 14 blocos de VSL e templates oficiais (`DEFAULT_VSL_BLOCKS`, `DEFAULT_SALES_PAGE_SECTIONS`, `DEFAULT_QUIZ_SECTIONS`).
+  - `src/app/router/AppRouter.tsx`: Rotas `/funnels/vsl/:id` e `/funnels/page-quiz/:id`.
+
+
 
 
 

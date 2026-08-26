@@ -3,13 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { 
   GitFork, Plus, Search, Sparkles, Trash2, ArrowRight, 
   Layers, CheckCircle2, DollarSign, Users, Eye, Play, 
-  Compass, ShieldCheck, Flame, Tag, Clock, Rocket
+  Compass, ShieldCheck, Flame, Tag, Clock, Rocket,
+  Video, FileText, ChevronDown, X
 } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useDialog } from '@auth/contexts/DialogContext';
 import { funnelService } from '@/services/funnelService';
 import { FunnelBlueprint, FunnelCategory } from '@/types';
 import { MARKET_FUNNEL_TEMPLATES, FunnelTemplate } from '../constants/funnelTemplates';
+import { DEFAULT_VSL_BLOCKS, DEFAULT_SALES_PAGE_SECTIONS, DEFAULT_QUIZ_SECTIONS } from '../constants/vslPageTemplates';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -20,6 +22,7 @@ export default function FunnelArchitectListView() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
   const [creating, setCreating] = useState(false);
 
   const navigate = useNavigate();
@@ -50,6 +53,7 @@ export default function FunnelArchitectListView() {
   const handleCreateBlankFunnel = async () => {
     if (!orgId) return;
     setCreating(true);
+    setIsCreateMenuOpen(false);
     try {
       const newId = await funnelService.createFunnel(orgId, {
         title: 'Novo Funil ' + new Date().toLocaleDateString('pt-BR'),
@@ -109,6 +113,99 @@ export default function FunnelArchitectListView() {
     } catch (error) {
       console.error('Erro ao criar funil em branco:', error);
       toast.error('Erro ao criar funil.');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleCreateVSL = async () => {
+    if (!orgId) return;
+    setCreating(true);
+    setIsCreateMenuOpen(false);
+    try {
+      const newId = await funnelService.createFunnel(orgId, {
+        title: 'Novo Roteiro de VSL ' + new Date().toLocaleDateString('pt-BR'),
+        description: 'Roteiro persuasivo com minutagem, ganchos e delay do botão.',
+        category: 'vsl_script',
+        status: 'building',
+        nodes: [],
+        connections: [],
+        vslData: {
+          targetWPM: 140,
+          totalWords: 500,
+          estimatedDurationSeconds: 215,
+          pitchDelaySeconds: 150,
+          blocks: DEFAULT_VSL_BLOCKS
+        },
+        orgId,
+        createdBy: user?.uid
+      });
+
+      toast.success('Estúdio de VSL criado com sucesso!');
+      navigate(`/funnels/vsl/${newId}`);
+    } catch (error) {
+      console.error('Erro ao criar VSL:', error);
+      toast.error('Erro ao criar VSL.');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleCreateSalesPage = async () => {
+    if (!orgId) return;
+    setCreating(true);
+    setIsCreateMenuOpen(false);
+    try {
+      const newId = await funnelService.createFunnel(orgId, {
+        title: 'Nova Página de Vendas ' + new Date().toLocaleDateString('pt-BR'),
+        description: 'Estrutura de dobras de alta conversão para oferta direta.',
+        category: 'sales_page',
+        status: 'building',
+        nodes: [],
+        connections: [],
+        pageQuizData: {
+          mode: 'sales_page',
+          sections: DEFAULT_SALES_PAGE_SECTIONS
+        },
+        orgId,
+        createdBy: user?.uid
+      });
+
+      toast.success('Página de Vendas criada com sucesso!');
+      navigate(`/funnels/page-quiz/${newId}`);
+    } catch (error) {
+      console.error('Erro ao criar Página:', error);
+      toast.error('Erro ao criar Página.');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleCreateQuiz = async () => {
+    if (!orgId) return;
+    setCreating(true);
+    setIsCreateMenuOpen(false);
+    try {
+      const newId = await funnelService.createFunnel(orgId, {
+        title: 'Novo Quiz Interativo ' + new Date().toLocaleDateString('pt-BR'),
+        description: 'Fluxo de diagnóstico com qualificação, mini-VSL e oferta.',
+        category: 'quiz_funnel',
+        status: 'building',
+        nodes: [],
+        connections: [],
+        pageQuizData: {
+          mode: 'quiz_funnel',
+          sections: DEFAULT_QUIZ_SECTIONS
+        },
+        orgId,
+        createdBy: user?.uid
+      });
+
+      toast.success('Quiz Interativo criado com sucesso!');
+      navigate(`/funnels/page-quiz/${newId}`);
+    } catch (error) {
+      console.error('Erro ao criar Quiz:', error);
+      toast.error('Erro ao criar Quiz.');
     } finally {
       setCreating(false);
     }
@@ -197,7 +294,7 @@ export default function FunnelArchitectListView() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 relative">
             <button
               onClick={() => setIsTemplateModalOpen(true)}
               className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white text-sm font-semibold rounded-xl border border-white/10 transition-all flex items-center gap-2 hover:border-indigo-500/50 shadow-sm"
@@ -205,14 +302,76 @@ export default function FunnelArchitectListView() {
               <Sparkles className="w-4 h-4 text-amber-400" />
               Templates de 1-Clique
             </button>
+
             <button
-              onClick={handleCreateBlankFunnel}
+              onClick={() => setIsCreateMenuOpen(prev => !prev)}
               disabled={creating}
               className="px-5 py-2.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:to-pink-600 text-white text-sm font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition-all flex items-center gap-2 disabled:opacity-50"
             >
               <Plus className="w-4 h-4" />
-              Criar Funil em Branco
+              <span>Criar Novo Ativo</span>
+              <ChevronDown className="w-3.5 h-3.5" />
             </button>
+
+            {/* Menu Dropdown de Criação */}
+            {isCreateMenuOpen && (
+              <div 
+                onClick={(e) => e.stopPropagation()}
+                className="absolute right-0 top-12 z-50 w-72 bg-[#090f24] border border-white/10 rounded-2xl shadow-2xl p-2 space-y-1 animate-in fade-in zoom-in-95 backdrop-blur-xl"
+              >
+                <button
+                  onClick={handleCreateBlankFunnel}
+                  className="w-full p-2.5 rounded-xl hover:bg-white/5 text-left transition-colors flex items-center gap-3 group"
+                >
+                  <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-colors">
+                    <GitFork className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-bold text-white">Funil / Jornada do Cliente</h5>
+                    <p className="text-[10px] text-gray-400">Canvas 2D de fluxos e etapas</p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={handleCreateVSL}
+                  className="w-full p-2.5 rounded-xl hover:bg-white/5 text-left transition-colors flex items-center gap-3 group"
+                >
+                  <div className="p-2 rounded-lg bg-rose-500/10 text-rose-400 group-hover:bg-rose-500 group-hover:text-white transition-colors">
+                    <Video className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-bold text-white">Roteiro de VSL</h5>
+                    <p className="text-[10px] text-gray-400">Linha do tempo & minutagem WPM</p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={handleCreateSalesPage}
+                  className="w-full p-2.5 rounded-xl hover:bg-white/5 text-left transition-colors flex items-center gap-3 group"
+                >
+                  <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-bold text-white">Página de Vendas</h5>
+                    <p className="text-[10px] text-gray-400">Wireframe de dobras verticais</p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={handleCreateQuiz}
+                  className="w-full p-2.5 rounded-xl hover:bg-white/5 text-left transition-colors flex items-center gap-3 group"
+                >
+                  <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-bold text-white">Quiz Interativo</h5>
+                    <p className="text-[10px] text-gray-400">Diagnóstico & simulador ao vivo</p>
+                  </div>
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -229,10 +388,13 @@ export default function FunnelArchitectListView() {
             />
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
+          <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 custom-scrollbar">
             {[
               { id: 'all', label: 'Todos os Fluxos' },
               { id: 'journey', label: '🧭 Jornada do Cliente' },
+              { id: 'vsl_script', label: '🎬 Roteiros de VSL' },
+              { id: 'sales_page', label: '📄 Páginas de Venda' },
+              { id: 'quiz_funnel', label: '🧠 Quizzes Interativos' },
               { id: 'perpetual', label: 'Perpétuo' },
               { id: 'b2b', label: 'Vendas B2B' },
               { id: 'cs', label: 'Pós-Venda CS' },
@@ -267,9 +429,9 @@ export default function FunnelArchitectListView() {
             <div className="w-16 h-16 bg-indigo-500/10 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-indigo-500/20 shadow-inner">
               <Compass className="w-8 h-8" />
             </div>
-            <h3 className="text-lg font-bold text-white mb-2">Nenhum funil encontrado</h3>
+            <h3 className="text-lg font-bold text-white mb-2">Nenhum ativo encontrado</h3>
             <p className="text-sm text-gray-400 mb-6">
-              Comece desenhando o seu ecossistema de vendas do zero ou escolha um dos nossos modelos validados do mercado.
+              Comece criando um novo funil, roteiro de VSL, página de vendas ou quiz interativo.
             </p>
             <div className="flex flex-wrap justify-center gap-3">
               <button
@@ -294,6 +456,9 @@ export default function FunnelArchitectListView() {
               const nodeCount = funnel.nodes?.length || 0;
               const offerNodes = funnel.nodes?.filter(n => n.type === 'offer') || [];
               const trafficNodes = funnel.nodes?.filter(n => n.type === 'traffic') || [];
+              const isVSL = funnel.category === 'vsl_script';
+              const isPageQuiz = funnel.category === 'sales_page' || funnel.category === 'quiz_funnel';
+
               const statusColors = {
                 draft: 'bg-gray-500/10 text-gray-400 border-gray-500/30',
                 building: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
@@ -315,7 +480,13 @@ export default function FunnelArchitectListView() {
                     if ((e.target as HTMLElement).closest('button')) {
                       return;
                     }
-                    navigate(`/funnels/${funnel.id}`);
+                    if (isVSL) {
+                      navigate(`/funnels/vsl/${funnel.id}`);
+                    } else if (isPageQuiz) {
+                      navigate(`/funnels/page-quiz/${funnel.id}`);
+                    } else {
+                      navigate(`/funnels/${funnel.id}`);
+                    }
                   }}
                   className="group cursor-pointer bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 hover:border-indigo-500/50 rounded-3xl p-6 transition-all duration-300 flex flex-col justify-between hover:shadow-2xl hover:shadow-indigo-500/10 relative overflow-hidden backdrop-blur-xl"
                 >
@@ -324,14 +495,31 @@ export default function FunnelArchitectListView() {
 
                   <div>
                     <div className="flex items-start justify-between gap-3 mb-4">
-                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${statusColors}`}>
-                        {statusLabels}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${statusColors}`}>
+                          {statusLabels}
+                        </span>
+                        {isVSL && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-300 border border-rose-500/30">
+                            🎬 VSL
+                          </span>
+                        )}
+                        {funnel.category === 'quiz_funnel' && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-300 border border-purple-500/30">
+                            🧠 Quiz
+                          </span>
+                        )}
+                        {funnel.category === 'sales_page' && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+                            📄 Página
+                          </span>
+                        )}
+                      </div>
                       <button
                         type="button"
                         onClick={(e) => handleDeleteFunnel(e, funnel)}
                         className="p-1.5 text-gray-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors relative z-10"
-                        title="Excluir funil"
+                        title="Excluir item"
                       >
                         <Trash2 className="w-4 h-4 pointer-events-none" />
                       </button>
@@ -344,21 +532,51 @@ export default function FunnelArchitectListView() {
                       {funnel.description || 'Sem descrição cadastrada.'}
                     </p>
 
-                    {/* Resumo dos Nós */}
-                    <div className="grid grid-cols-3 gap-2 p-3 bg-black/40 rounded-2xl border border-white/5 mb-6 text-center">
-                      <div>
-                        <span className="text-[10px] text-gray-500 block uppercase font-bold">Etapas</span>
-                        <span className="text-sm font-black text-white">{nodeCount}</span>
+                    {/* Resumo dos Nós ou Métricas */}
+                    {isVSL ? (
+                      <div className="grid grid-cols-2 gap-2 p-3 bg-black/40 rounded-2xl border border-white/5 mb-6 text-center">
+                        <div>
+                          <span className="text-[10px] text-gray-500 block uppercase font-bold">Blocos de Copy</span>
+                          <span className="text-sm font-black text-rose-400">{funnel.vslData?.blocks?.length || DEFAULT_VSL_BLOCKS.length}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-gray-500 block uppercase font-bold">Duração Estimada</span>
+                          <span className="text-sm font-black text-emerald-400">
+                            ~{Math.round((funnel.vslData?.estimatedDurationSeconds || 215) / 60)} min
+                          </span>
+                        </div>
                       </div>
-                      <div>
-                        <span className="text-[10px] text-gray-500 block uppercase font-bold">Canais</span>
-                        <span className="text-sm font-black text-cyan-400">{trafficNodes.length}</span>
+                    ) : isPageQuiz ? (
+                      <div className="grid grid-cols-2 gap-2 p-3 bg-black/40 rounded-2xl border border-white/5 mb-6 text-center">
+                        <div>
+                          <span className="text-[10px] text-gray-500 block uppercase font-bold">
+                            {funnel.category === 'quiz_funnel' ? 'Passos do Quiz' : 'Dobras da Página'}
+                          </span>
+                          <span className="text-sm font-black text-indigo-400">
+                            {funnel.pageQuizData?.sections?.length || 5}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-gray-500 block uppercase font-bold">Simulador</span>
+                          <span className="text-sm font-black text-purple-400">Interativo 📱</span>
+                        </div>
                       </div>
-                      <div>
-                        <span className="text-[10px] text-gray-500 block uppercase font-bold">Ofertas</span>
-                        <span className="text-sm font-black text-emerald-400">{offerNodes.length}</span>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-2 p-3 bg-black/40 rounded-2xl border border-white/5 mb-6 text-center">
+                        <div>
+                          <span className="text-[10px] text-gray-500 block uppercase font-bold">Etapas</span>
+                          <span className="text-sm font-black text-white">{nodeCount}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-gray-500 block uppercase font-bold">Canais</span>
+                          <span className="text-sm font-black text-cyan-400">{trafficNodes.length}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-gray-500 block uppercase font-bold">Ofertas</span>
+                          <span className="text-sm font-black text-emerald-400">{offerNodes.length}</span>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
 
                   <div className="flex items-center justify-between pt-4 border-t border-white/10 text-xs text-gray-400">
@@ -367,7 +585,7 @@ export default function FunnelArchitectListView() {
                       {funnel.updatedAt ? format(new Date(funnel.updatedAt), "dd 'de' MMM", { locale: ptBR }) : 'Recente'}
                     </span>
                     <span className="font-semibold text-indigo-400 group-hover:translate-x-1 transition-transform flex items-center gap-1">
-                      Abrir Quadro <ArrowRight className="w-3.5 h-3.5" />
+                      {isVSL ? 'Abrir VSL' : isPageQuiz ? 'Abrir Editor' : 'Abrir Quadro'} <ArrowRight className="w-3.5 h-3.5" />
                     </span>
                   </div>
                 </div>
