@@ -833,7 +833,7 @@ export default function FunnelArchitectEditorView() {
       };
     });
 
-    handleOpenNodeEditor(newNode);
+    setSelectedNodeIds([newNode.id]);
     toast.success(`Bloco "${blockMeta.name}" adicionado!`);
   };
 

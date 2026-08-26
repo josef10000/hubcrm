@@ -467,3 +467,13 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Decisões Técnicas**:
   - `FunnelArchitectEditorView.tsx`: Funções `handleAddChecklistItem`, `handleToggleChecklistItem`, `handleDeleteChecklistItem` e `handleLoadTemplateChecklist` integradas com `FunnelChecklistItem` para persistência limpa no Firestore.
 
+---
+
+## 29. Funis & UX: Abertura Exclusiva do Editor Lateral pelo Ícone do Lápis
+- **Data da Integração**: 26/08/2026
+- **Funcionalidades**:
+  1. **Inserção Limpa de Blocos no Canvas**: Ao adicionar novos blocos através da biblioteca lateral (`handleAddBlock`), o bloco é criado e selecionado na tela mantendo o painel de inspeção lateral fechado, sem poluir a visão do usuário.
+  2. **Gatilho Explícito de Edição**: A abertura da gaveta de edição (`isInspectorOpen`) passa a ser acionada única e exclusivamente ao clicar no botão de lápis (`<Pencil />`) dentro do card do bloco.
+- **Decisões Técnicas**:
+  - `FunnelArchitectEditorView.tsx`: Substituição de `handleOpenNodeEditor(newNode)` em `handleAddBlock` por `setSelectedNodeIds([newNode.id])`.
+
