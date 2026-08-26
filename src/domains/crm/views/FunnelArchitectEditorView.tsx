@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   ArrowLeft, ArrowRight, Save, Play, RefreshCw, Plus, Trash2, Link as LinkIcon, 
   Sparkles, CheckCircle2, AlertTriangle, HelpCircle, Layers, 
@@ -153,6 +153,8 @@ const getNodeDimensions = (subType?: string) => {
 
 export default function FunnelArchitectEditorView() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const isNew = searchParams.get('isNew') === 'true';
   const navigate = useNavigate();
   const { userProfile } = useAuth();
   const { offers, effectiveOrgId } = useCRM();
@@ -163,6 +165,11 @@ export default function FunnelArchitectEditorView() {
   const [funnel, setFunnel] = useState<FunnelBlueprint | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+
+  // Modal de Confirmação para Salvar Rascunho ao Sair
+  const [showExitModal, setShowExitModal] = useState(false);
+  const [discarding, setDiscarding] = useState(false);
 
   // Seleção e UI Múltipla
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
@@ -335,13 +342,14 @@ export default function FunnelArchitectEditorView() {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (funnel && !loading) {
+        setIsDirty(true);
         autoSave();
       }
     }, 2000);
     return () => clearTimeout(timer);
   }, [funnel, routingStyle]);
 
-  const handleManualSave = async () => {
+  const handleManualSave = async (andExit = false) => {
     if (!orgId || !id || !funnel) {
       toast.error('Dados incompletos para salvar.');
       return;
@@ -349,12 +357,37 @@ export default function FunnelArchitectEditorView() {
     setSaving(true);
     try {
       await funnelService.updateFunnel(orgId, id, { ...funnel, routingStyle });
+      setIsDirty(false);
       toast.success('Funil salvo com sucesso!');
+      if (andExit) navigate('/funnels');
     } catch (error: any) {
       console.error('Erro ao salvar funil:', error);
       toast.error(`Erro ao salvar funil: ${error?.message || 'Falha de comunicação'}`);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleBackNavigation = () => {
+    if (isDirty || isNew) {
+      setShowExitModal(true);
+    } else {
+      navigate('/funnels');
+    }
+  };
+
+  const handleDiscardAndExit = async () => {
+    setDiscarding(true);
+    try {
+      if (isNew && orgId && id) {
+        await funnelService.deleteFunnel(orgId, id);
+        toast.info('Rascunho descartado e não criado.');
+      }
+      navigate('/funnels');
+    } catch {
+      navigate('/funnels');
+    } finally {
+      setDiscarding(false);
     }
   };
 
@@ -1567,7 +1600,7 @@ export default function FunnelArchitectEditorView() {
         {/* Lado Esquerdo: Voltar, Título e Categoria */}
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate('/funnels')}
+            onClick={handleBackNavigation}
             className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
             title="Voltar para a lista de funis"
           >
@@ -3365,6 +3398,54 @@ export default function FunnelArchitectEditorView() {
                   className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-colors"
                 >
                   Fechar Raio-X
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── 💾 MODAL DE CONFIRMAÇÃO PARA SALVAR RASCUNHO AO SAIR ── */}
+        {showExitModal && (
+          <div
+            onClick={() => setShowExitModal(false)}
+            className="fixed inset-0 z-[999999] bg-black/85 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md bg-[#0b1024] border border-white/10 rounded-3xl shadow-2xl p-6 space-y-6 text-white text-center"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-amber-500/20 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto">
+                <AlertTriangle className="w-7 h-7" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-black">Deseja salvar o funil antes de sair?</h3>
+                <p className="text-xs text-gray-300 leading-relaxed">
+                  Você tem alterações neste funil. Se sair sem salvar, as modificações serão perdidas
+                  {isNew && ' e nenhum rascunho em branco ficará na sua lista'}.
+                </p>
+              </div>
+              <div className="space-y-2.5 pt-2">
+                <button
+                  onClick={() => handleManualSave(true)}
+                  disabled={saving}
+                  className="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>Salvar e Sair</span>
+                </button>
+                <button
+                  onClick={handleDiscardAndExit}
+                  disabled={discarding}
+                  className="w-full py-3.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>{isNew ? 'Descartar e Não Criar Rascunho' : 'Sair sem Salvar'}</span>
+                </button>
+                <button
+                  onClick={() => setShowExitModal(false)}
+                  className="w-full py-2.5 text-xs text-gray-400 hover:text-white transition-colors"
+                >
+                  Continuar Editando
                 </button>
               </div>
             </div>

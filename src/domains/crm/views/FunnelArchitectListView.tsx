@@ -109,7 +109,7 @@ export default function FunnelArchitectListView() {
       });
 
       toast.success('Funil criado com sucesso!');
-      navigate(`/funnels/${newId}`);
+      navigate(`/funnels/${newId}?isNew=true`);
     } catch (error) {
       console.error('Erro ao criar funil em branco:', error);
       toast.error('Erro ao criar funil.');
@@ -142,7 +142,7 @@ export default function FunnelArchitectListView() {
       });
 
       toast.success('Estúdio de VSL criado com sucesso!');
-      navigate(`/funnels/vsl/${newId}`);
+      navigate(`/funnels/vsl/${newId}?isNew=true`);
     } catch (error) {
       console.error('Erro ao criar VSL:', error);
       toast.error('Erro ao criar VSL.');
@@ -172,7 +172,7 @@ export default function FunnelArchitectListView() {
       });
 
       toast.success('Página de Vendas criada com sucesso!');
-      navigate(`/funnels/page-quiz/${newId}`);
+      navigate(`/funnels/page-quiz/${newId}?isNew=true`);
     } catch (error) {
       console.error('Erro ao criar Página:', error);
       toast.error('Erro ao criar Página.');
@@ -202,7 +202,7 @@ export default function FunnelArchitectListView() {
       });
 
       toast.success('Quiz Interativo criado com sucesso!');
-      navigate(`/funnels/page-quiz/${newId}`);
+      navigate(`/funnels/page-quiz/${newId}?isNew=true`);
     } catch (error) {
       console.error('Erro ao criar Quiz:', error);
       toast.error('Erro ao criar Quiz.');
