@@ -6,7 +6,9 @@ import {
   HelpCircle, MessageCircle, DollarSign, ShieldCheck, Video, 
   Image as ImageIcon, Layers, RefreshCw, X, ArrowRight, Star,
   Columns, LayoutGrid, AlignCenter, FileText, Check, Copy,
-  Quote, Zap, MoveUp, MoveDown, Pencil, Download, Code
+  Quote, Zap, MoveUp, MoveDown, Pencil, Download, Code,
+  Clock, Shield, CreditCard, Lock, CheckCheck, XCircle,
+  Maximize2, ExternalLink
 } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { funnelService } from '@/services/funnelService';
@@ -24,17 +26,22 @@ export default function PageQuizEditorView() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Modo de Operação (Página de Vendas vs Quiz)
+  // Modo Fixo derivado do Ativo (Página de Vendas vs Quiz)
   const [mode, setMode] = useState<'sales_page' | 'quiz_funnel'>('sales_page');
   const [sections, setSections] = useState<PageQuizSection[]>(DEFAULT_SALES_PAGE_SECTIONS);
   const [deviceView, setDeviceView] = useState<'desktop' | 'mobile'>('desktop');
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
 
+  // Simulador Online (Visualização Real da Página)
+  const [isOnlinePreviewOpen, setIsOnlinePreviewOpen] = useState(false);
+  const [onlinePreviewDevice, setOnlinePreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+
   // Simulador Interativo de Quiz
-  const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
-  const [simulatorStepIndex, setSimulatorStepIndex] = useState(0);
-  const [simulatorAnswers, setSimulatorAnswers] = useState<Record<string, string>>({});
-  const [simulatorLoadingProgress, setSimulatorLoadingProgress] = useState(0);
+  const [isQuizSimulatorOpen, setIsQuizSimulatorOpen] = useState(false);
+  const [quizSimulatorStepIndex, setQuizSimulatorStepIndex] = useState(0);
+  const [quizSimulatorAnswers, setQuizSimulatorAnswers] = useState<Record<string, string>>({});
+  const [quizSimulatorProgress, setQuizSimulatorProgress] = useState(0);
 
   useEffect(() => {
     if (orgId && id) {
@@ -79,41 +86,89 @@ export default function PageQuizEditorView() {
       type,
       layoutColumns: layout,
       title: type === 'quiz_question' ? `Passo ${sections.length + 1}: Pergunta` : `Dobra: Nova Seção`,
-      headline: layout === 'tsl_letter' ? 'Uma Carta Aberta Para Quem Quer Multiplicar Suas Vendas' : 'Título da Seção de Alta Conversão',
+      headline: 'Título da Seção de Alta Conversão',
       subtitle: 'Subtítulo explicativo com a promessa ou direcionamento do lead.',
-      badge: type === 'hero_vsl' ? '🔥 Oferta Especial' : '✨ Exclusivo',
-      ...(layout === '2_col_split' || layout === '2_col_reverse' ? {
-        bullets: [
-          'Vantagem 1: Implementação rápida sem precisar programar',
-          'Vantagem 2: Método testado e validado em centenas de operações',
-          'Vantagem 3: Suporte prioritário e atualizações semanais'
-        ],
-        videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        buttonText: 'QUERO COMEÇAR AGORA',
-        buttonLink: '#pricing'
+      badge: '✨ Destaque',
+      
+      // Defaults por tipo
+      ...(type === 'image_banner' ? {
+        headline: 'Visão Geral do Ecossistema e da Plataforma',
+        imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&auto=format&fit=crop&q=80',
+        imageCaption: 'Acesso instantâneo a todos os módulos, playbooks e robôs de automação'
       } : {}),
-      ...(layout === '3_col_grid' ? {
-        gridCards: [
-          { id: `c-1-${Date.now()}`, title: 'Módulo 1: Estratégia', description: 'Fundamentos essenciais para começar com o pé direito.', badge: 'Básico' },
-          { id: `c-2-${Date.now()}`, title: 'Módulo 2: Fechamento', description: 'Técnicas de persuasão para fechar vendas no WhatsApp.', badge: 'Prático' },
-          { id: `c-3-${Date.now()}`, title: 'Módulo 3: Escala', description: 'Como duplicar faturamento com equipe comercial.', badge: 'Avançado' }
+
+      ...(type === 'image_social_proof' ? {
+        layoutColumns: '3_col_grid',
+        headline: 'Resultados Reais dos Nossos Clientes no WhatsApp',
+        subtitle: 'Prints e notificações de vendas recebidas nas últimas 24 horas:',
+        imageGallery: [
+          { id: 'g-1', title: 'R$ 14.850 em 3 dias', imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&auto=format&fit=crop&q=80', caption: 'Recuperação de Pix no 1 a 1' },
+          { id: 'g-2', title: '24% de Conversão', imageUrl: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=600&auto=format&fit=crop&q=80', caption: 'Com áudios humanizados' },
+          { id: 'g-3', title: 'R$ 48.000 no Mês', imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&auto=format&fit=crop&q=80', caption: 'Operação High-Ticket' }
         ]
       } : {}),
-      ...(layout === 'tsl_letter' ? {
-        bodyText: 'Prezado empreendedor,\n\nSe você chegou até aqui, é porque sabe que o método tradicional de vendas não funciona mais. Durante os últimos 5 anos, nós desenvolvemos um protocolo secreto capaz de transformar desconhecidos em compradores fiéis em menos de 10 minutos de conversa.\n\nE hoje, eu decidi abrir essa caixa preta para você.'
+
+      ...(type === 'cta_button_block' ? {
+        headline: 'Comece Hoje Mesmo a Escalar Suas Vendas',
+        subtitle: 'Oferta especial por tempo limitado com acesso imediato e 7 dias de garantia.',
+        buttonText: 'QUERO GARANTIR MINHA VAGA COM DESCONTO',
+        buttonLink: '#pricing',
+        ctaData: {
+          subtext: '🔒 Compra 100% Segura • ⚡ Acesso Imediato • 🛡️ 7 Dias de Garantia',
+          urgencyTimer: '14:59'
+        }
       } : {}),
-      ...(type === 'hero_vsl' ? {
-        videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        buttonText: 'QUERO DESBLOQUEAR MEU ACESSO AGORA',
-        buttonLink: '#pricing'
+
+      ...(type === 'urgency_timer' ? {
+        headline: '🚨 ATENÇÃO: As condições especiais desta página encerram em breve!',
+        ctaData: { urgencyTimer: '14:59' }
       } : {}),
-      ...(type === 'quiz_question' ? {
-        quizQuestion: {
-          questionType: 'single_choice',
-          options: [
-            { id: `opt-1-${Date.now()}`, label: 'Opção 1: Quero aumentar minhas vendas', score: 10 },
-            { id: `opt-2-${Date.now()}`, label: 'Opção 2: Quero automatizar meu atendimento', score: 20 }
+
+      ...(type === 'comparison_table' ? {
+        headline: 'Por que o Nosso Método é Diferente de Tudo?',
+        comparisonData: {
+          competitorTitle: '❌ Mercado Tradicional',
+          competitorItems: [
+            'Empurra o lead para um checkout frio e sem suporte',
+            'Perde 80% das vendas nas objeções de "está caro"',
+            'Não possui esteira ativa de recuperação de Pix'
+          ],
+          ourTitle: '✅ Método com HubCRM',
+          ourItems: [
+            'Condução consultiva com gatilhos de micro-compromisso',
+            'Playbooks com scripts de áudios gravados que convertem na hora',
+            'Recuperação automática de pagamentos em menos de 10 minutos'
           ]
+        }
+      } : {}),
+
+      ...(type === 'quiz_image_choice' ? {
+        headline: 'Qual é o seu nicho de atuação principal?',
+        subtitle: 'Selecione a categoria que melhor representa o seu modelo de vendas:',
+        quizQuestion: {
+          questionType: 'image_choice',
+          options: [
+            { id: 'opt-img-1', label: 'Infoprodutos & Cursos', imageUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&auto=format&fit=crop&q=80', score: 10 },
+            { id: 'opt-img-2', label: 'Mentorias & Serviços High-Ticket', imageUrl: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=400&auto=format&fit=crop&q=80', score: 20 },
+            { id: 'opt-img-3', label: 'E-commerce & Produtos Físicos', imageUrl: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=400&auto=format&fit=crop&q=80', score: 30 }
+          ]
+        }
+      } : {}),
+
+      ...(type === 'quiz_mini_vsl' ? {
+        headline: 'Veja esta mensagem importante antes de continuar:',
+        subtitle: 'Assista a este vídeo rápido de 45 segundos para liberar o próximo passo:',
+        videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+      } : {}),
+
+      ...(type === 'quiz_lead_capture' ? {
+        headline: 'Para onde devemos enviar o seu Diagnóstico Personalizado?',
+        subtitle: 'Preencha seus dados abaixo para liberar o resultado completo:',
+        leadCaptureData: {
+          submitButtonText: 'VER MEU DIAGNÓSTICO COMPLETO',
+          requireName: true,
+          requirePhone: true,
+          requireEmail: true
         }
       } : {})
     };
@@ -125,7 +180,7 @@ export default function PageQuizEditorView() {
     } else {
       setSections(prev => [...prev, newSec]);
     }
-    toast.success('Bloco inserido na página!');
+    toast.success('Novo bloco inserido!');
   };
 
   const handleUpdateSection = (secId: string, updates: Partial<PageQuizSection>) => {
@@ -154,12 +209,12 @@ export default function PageQuizEditorView() {
     const newSections = [...sections];
     newSections.splice(index + 1, 0, cloned);
     setSections(newSections);
-    toast.success('Seção duplicada!');
+    toast.success('Dobra duplicada!');
   };
 
   const handleDeleteSection = (secId: string) => {
     if (sections.length <= 1) {
-      toast.error('A página deve ter pelo menos um bloco.');
+      toast.error('A página deve ter pelo menos uma dobra.');
       return;
     }
     setSections(prev => prev.filter(s => s.id !== secId));
@@ -188,61 +243,45 @@ export default function PageQuizEditorView() {
     }
   };
 
-  // Compilar Instruções Completas / Briefing Estruturado
+  // Compilador de Instruções Completas
   const generateInstructionsText = () => {
-    let doc = `# ESPECIFICAÇÃO TÉCNICA: ${blueprint?.title || 'Página de Alta Conversão'}\n`;
-    doc += `Tipo de Ativo: ${mode === 'quiz_funnel' ? 'Quiz Interativo com Diagnóstico' : 'Página de Vendas em Dobras'}\n`;
+    let doc = `# ESPECIFICAÇÃO TÉCNICA: ${blueprint?.title || 'Página de Vendas'}\n`;
+    doc += `Tipo de Ativo: ${mode === 'quiz_funnel' ? 'Quiz Interativo com Diagnóstico' : 'Página de Vendas de Alta Conversão'}\n`;
     doc += `Data: ${new Date().toLocaleDateString('pt-BR')}\n`;
-    doc += `Total de Seções / Dobras: ${sections.length}\n`;
-    doc += `\n=================================================================\n`;
-    doc += `ESTRUTURA COMPLETA DAS SEÇÕES:\n`;
-    doc += `=================================================================\n\n`;
+    doc += `Total de Dobras/Passos: ${sections.length}\n\n`;
 
     sections.forEach((sec, idx) => {
-      doc += `[SEÇÃO ${idx + 1}: ${sec.title.toUpperCase()}]\n`;
-      doc += `• Layout: ${sec.layoutColumns || '1 Coluna Central'}\n`;
+      doc += `[DOBRA ${idx + 1}: ${sec.title.toUpperCase()}]\n`;
+      doc += `• Tipo de Bloco: ${sec.type} (${sec.layoutColumns || '1_col_center'})\n`;
       if (sec.badge) doc += `• Tag/Badge: "${sec.badge}"\n`;
       if (sec.headline) doc += `• Headline: "${sec.headline}"\n`;
       if (sec.subtitle) doc += `• Subtítulo: "${sec.subtitle}"\n`;
-      if (sec.videoUrl) doc += `• Player VSL: URL ${sec.videoUrl} (Delay: ${sec.videoDelaySeconds || 0} segundos)\n`;
-      if (sec.imageUrl) doc += `• Imagem / Mockup: ${sec.imageUrl}\n`;
-      if (sec.bullets && sec.bullets.length > 0) {
-        doc += `• Lista de Benefícios:\n`;
+      if (sec.videoUrl) doc += `• Vídeo/VSL: ${sec.videoUrl} (Delay: ${sec.videoDelaySeconds || 0}s)\n`;
+      if (sec.imageUrl) doc += `• Imagem/Banner: ${sec.imageUrl}\n`;
+      if (sec.bullets) {
+        doc += `• Benefícios:\n`;
         sec.bullets.forEach(b => doc += `   - ${b}\n`);
       }
-      if (sec.gridCards && sec.gridCards.length > 0) {
-        doc += `• Cards em Grade (3 Colunas):\n`;
-        sec.gridCards.forEach(c => doc += `   - [${c.badge || 'Item'}] ${c.title}: ${c.description}\n`);
-      }
-      if (sec.testimonials && sec.testimonials.length > 0) {
-        doc += `• Provas Sociais / Depoimentos:\n`;
-        sec.testimonials.forEach(t => doc += `   - ${t.name} (${t.role}): "${t.quote}" (${t.rating || 5} estrelas)\n`);
+      if (sec.comparisonData) {
+        doc += `• Tabela Comparativa:\n`;
+        doc += `   ${sec.comparisonData.competitorTitle}:\n`;
+        sec.comparisonData.competitorItems.forEach(i => doc += `     ❌ ${i}\n`);
+        doc += `   ${sec.comparisonData.ourTitle}:\n`;
+        sec.comparisonData.ourItems.forEach(i => doc += `     ✅ ${i}\n`);
       }
       if (sec.pricingData) {
-        doc += `• Oferta & Preço:\n`;
-        doc += `   - Preço de Tabela: R$ ${sec.pricingData.regularPrice || 997}\n`;
-        doc += `   - Preço da Oferta: R$ ${sec.pricingData.offerPrice}\n`;
-        doc += `   - Parcelamento: ${sec.pricingData.installments}\n`;
-        doc += `   - Garantia: ${sec.pricingData.guaranteeDays || 7} dias\n`;
+        doc += `• Preço: De R$ ${sec.pricingData.regularPrice || 997} por ${sec.pricingData.installments || `R$ ${sec.pricingData.offerPrice}`}\n`;
         if (sec.pricingData.bonusList) {
-          doc += `   - Bônus Inclusos:\n`;
-          sec.pricingData.bonusList.forEach(b => doc += `      * ${b}\n`);
+          doc += `• Bônus:\n`;
+          sec.pricingData.bonusList.forEach(b => doc += `   + ${b}\n`);
         }
       }
-      if (sec.faqItems && sec.faqItems.length > 0) {
+      if (sec.faqItems) {
         doc += `• Perguntas Frequentes (FAQ):\n`;
         sec.faqItems.forEach(f => doc += `   - P: ${f.question}\n     R: ${f.answer}\n`);
       }
-      if (sec.quizQuestion) {
-        doc += `• Pergunta do Quiz: ${sec.headline}\n`;
-        doc += `   - Tipo: ${sec.quizQuestion.questionType}\n`;
-        sec.quizQuestion.options.forEach(o => doc += `   - Alternativa: ${o.label} (Score: ${o.score || 0})\n`);
-      }
-      if (sec.bodyText) {
-        doc += `• Texto de Copy / TSL:\n"${sec.bodyText}"\n`;
-      }
       if (sec.buttonText) {
-        doc += `• Botão de Chamada para Ação: "${sec.buttonText}" (Link: ${sec.buttonLink || '#pricing'})\n`;
+        doc += `• Botão CTA: "${sec.buttonText}" (Link: ${sec.buttonLink || '#pricing'})\n`;
       }
       doc += `\n-----------------------------------------------------------------\n\n`;
     });
@@ -253,7 +292,7 @@ export default function PageQuizEditorView() {
   const handleCopyInstructions = () => {
     const text = generateInstructionsText();
     navigator.clipboard.writeText(text);
-    toast.success('Instruções completas da página copiadas com sucesso!');
+    toast.success('Instruções completas copiadas!');
   };
 
   const handleDownloadInstructions = () => {
@@ -262,23 +301,20 @@ export default function PageQuizEditorView() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${blueprint?.title || 'Especificacao_Pagina'}.txt`;
+    link.download = `${blueprint?.title || 'Instrucoes_Pagina'}.txt`;
     link.click();
     toast.success('Arquivo de instruções exportado!');
   };
 
-  // Gerador Nativo de Código HTML + Tailwind Pronto
+  // Gerador de Código HTML Pronto
   const handleExportHTML = () => {
     let html = `<!DOCTYPE html>
 <html lang="pt-BR" class="scroll-smooth">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${blueprint?.title || 'Página de Vendas de Alta Conversão'}</title>
-  <!-- Tailwind CSS CDN -->
+  <title>${blueprint?.title || 'Página de Vendas'}</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Inter', sans-serif; }
@@ -286,131 +322,34 @@ export default function PageQuizEditorView() {
     @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
   </style>
 </head>
-<body class="bg-[#060a17] text-white min-h-screen antialiased selection:bg-indigo-500 selection:text-white">
-
-  <!-- CONTAINER PRINCIPAL -->
-  <main class="max-w-5xl mx-auto px-4 sm:px-6 py-12 space-y-16 lg:space-y-24">
+<body class="bg-[#060a17] text-white min-h-screen antialiased">
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 py-12 space-y-16">
 `;
 
     sections.forEach((sec, idx) => {
-      const layout = sec.layoutColumns || '1_col_center';
+      html += `    <!-- DOBRA ${idx + 1}: ${sec.title} -->\n`;
+      html += `    <section id="${sec.id}" class="py-8">\n`;
 
-      html += `\n    <!-- DOBRA ${idx + 1}: ${sec.title} -->\n`;
-      html += `    <section id="${sec.id}" class="relative py-8">\n`;
-
-      if (layout === '1_col_center') {
-        html += `      <div class="text-center max-w-3xl mx-auto space-y-6">\n`;
-        if (sec.badge) {
-          html += `        <span class="inline-block bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full">${sec.badge}</span>\n`;
-        }
-        if (sec.headline) {
-          html += `        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight tracking-tight">${sec.headline}</h1>\n`;
-        }
-        if (sec.subtitle) {
-          html += `        <p class="text-sm sm:text-base text-gray-300 max-w-2xl mx-auto">${sec.subtitle}</p>\n`;
-        }
-        if (sec.type === 'hero_vsl' || sec.videoUrl) {
-          html += `        <div class="aspect-video w-full bg-black rounded-3xl border border-white/10 shadow-2xl overflow-hidden flex items-center justify-center relative my-6">\n`;
-          html += `          <iframe class="w-full h-full" src="${sec.videoUrl}" title="Vídeo de Apresentação" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>\n`;
-          html += `        </div>\n`;
-        }
-        if (sec.type === 'pricing_box' && sec.pricingData) {
-          html += `        <div class="p-8 bg-gradient-to-b from-[#0e1738] to-[#080d21] border-2 border-emerald-500/40 rounded-3xl space-y-6 text-center my-8 shadow-2xl">\n`;
-          html += `          <span class="text-xs font-black uppercase text-emerald-400 bg-emerald-500/20 px-4 py-1.5 rounded-full border border-emerald-500/30">Condição Especial de Lançamento</span>\n`;
-          html += `          <div class="text-4xl sm:text-5xl font-black text-white">${sec.pricingData.installments || `R$ ${sec.pricingData.offerPrice}`}</div>\n`;
-          html += `          <p class="text-xs text-gray-400">ou R$ ${sec.pricingData.offerPrice} à vista no Pix</p>\n`;
-          if (sec.pricingData.bonusList) {
-            html += `          <div class="space-y-2.5 text-left text-xs sm:text-sm max-w-md mx-auto pt-4 border-t border-white/10">\n`;
-            sec.pricingData.bonusList.forEach(b => {
-              html += `            <div class="flex items-center gap-2 text-gray-200"><span class="text-emerald-400">✓</span> <span>${b}</span></div>\n`;
-            });
-            html += `          </div>\n`;
-          }
-          html += `        </div>\n`;
-        }
-        if (sec.type === 'faq_accordion' && sec.faqItems) {
-          html += `        <div class="space-y-3 text-left max-w-2xl mx-auto pt-6">\n`;
-          sec.faqItems.forEach((f, fIdx) => {
-            html += `          <details class="p-4 bg-white/[0.03] border border-white/10 rounded-2xl cursor-pointer group">\n`;
-            html += `            <summary class="text-sm font-bold text-white flex items-center justify-between list-none">${f.question} <span class="text-indigo-400 group-open:rotate-180 transition-transform">▼</span></summary>\n`;
-            html += `            <p class="text-xs text-gray-400 mt-2.5 leading-relaxed">${f.answer}</p>\n`;
-            html += `          </details>\n`;
-          });
-          html += `        </div>\n`;
-        }
-        if (sec.buttonText) {
-          html += `        <div class="pt-4">\n`;
-          html += `          <a href="${sec.buttonLink || '#pricing'}" class="pulse-cta inline-block px-10 py-5 bg-gradient-to-r from-emerald-500 via-teal-500 to-indigo-600 hover:opacity-95 text-white text-sm sm:text-base font-black uppercase tracking-wider rounded-2xl shadow-xl shadow-emerald-500/25 transition-transform hover:scale-105 text-center">${sec.buttonText}</a>\n`;
-          html += `        </div>\n`;
-        }
-        html += `      </div>\n`;
-      } else if (layout === '2_col_split' || layout === '2_col_reverse') {
-        html += `      <div class="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">\n`;
-        html += `        <div class="space-y-5">\n`;
-        if (sec.badge) html += `          <span class="inline-block text-xs font-black uppercase px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">${sec.badge}</span>\n`;
-        if (sec.headline) html += `          <h2 class="text-2xl sm:text-3xl font-black text-white leading-tight">${sec.headline}</h2>\n`;
-        if (sec.subtitle) html += `          <p class="text-sm text-gray-300">${sec.subtitle}</p>\n`;
-        if (sec.bullets) {
-          html += `          <div class="space-y-3 pt-2">\n`;
-          sec.bullets.forEach(b => {
-            html += `            <div class="flex items-start gap-3 text-xs sm:text-sm text-gray-200"><span class="text-indigo-400 font-bold">✓</span> <span>${b}</span></div>\n`;
-          });
-          html += `          </div>\n`;
-        }
-        if (sec.buttonText) {
-          html += `          <a href="${sec.buttonLink || '#pricing'}" class="inline-block px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-bold uppercase rounded-xl shadow-lg shadow-indigo-600/30 transition-all">${sec.buttonText}</a>\n`;
-        }
-        html += `        </div>\n`;
-        html += `        <div>\n`;
-        if (sec.videoUrl) {
-          html += `          <div class="aspect-video bg-black rounded-2xl border border-white/10 shadow-xl overflow-hidden"><iframe class="w-full h-full" src="${sec.videoUrl}"></iframe></div>\n`;
-        } else {
-          html += `          <img src="${sec.imageUrl || 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=600&auto=format&fit=crop&q=80'}" alt="Foto" class="rounded-2xl border border-white/10 shadow-xl w-full object-cover">\n`;
-        }
-        html += `        </div>\n`;
-        html += `      </div>\n`;
-      } else if (layout === '3_col_grid') {
-        html += `      <div class="space-y-8 text-center">\n`;
-        if (sec.badge) html += `        <span class="inline-block text-xs font-black uppercase px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">${sec.badge}</span>\n`;
+      if (sec.type === 'cta_button_block' || sec.type === 'pricing_box') {
+        html += `      <div class="text-center max-w-2xl mx-auto p-8 bg-gradient-to-b from-[#0e1738] to-[#080d21] border-2 border-emerald-500/40 rounded-3xl space-y-6 shadow-2xl">\n`;
         if (sec.headline) html += `        <h2 class="text-2xl sm:text-3xl font-black text-white">${sec.headline}</h2>\n`;
-        if (sec.subtitle) html += `        <p class="text-sm text-gray-300 max-w-xl mx-auto">${sec.subtitle}</p>\n`;
-        if (sec.gridCards) {
-          html += `        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left pt-4">\n`;
-          sec.gridCards.forEach(c => {
-            html += `          <div class="p-6 bg-white/[0.02] border border-white/10 rounded-2xl space-y-3 hover:border-indigo-500/40 transition-colors">\n`;
-            html += `            <span class="text-[10px] font-bold text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20">${c.badge || 'Módulo'}</span>\n`;
-            html += `            <h3 class="text-sm font-bold text-white">${c.title}</h3>\n`;
-            html += `            <p class="text-xs text-gray-400 leading-relaxed">${c.description}</p>\n`;
-            html += `          </div>\n`;
-          });
-          html += `        </div>\n`;
-        }
-        if (sec.testimonials) {
-          html += `        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left pt-4">\n`;
-          sec.testimonials.forEach(t => {
-            html += `          <div class="p-6 bg-white/[0.02] border border-white/10 rounded-2xl space-y-3">\n`;
-            html += `            <div class="text-amber-400 text-xs">★★★★★</div>\n`;
-            html += `            <p class="text-xs text-gray-300 italic leading-relaxed">"${t.quote}"</p>\n`;
-            html += `            <div class="pt-3 border-t border-white/5">\n`;
-            html += `              <h4 class="text-xs font-bold text-white">${t.name}</h4>\n`;
-            html += `              <span class="text-[10px] text-gray-500">${t.role || 'Cliente'}</span>\n`;
-            html += `            </div>\n`;
-            html += `          </div>\n`;
-          });
-          html += `        </div>\n`;
-        }
+        if (sec.pricingData) html += `        <div class="text-4xl font-black text-white">${sec.pricingData.installments || `R$ ${sec.pricingData.offerPrice}`}</div>\n`;
+        if (sec.buttonText) html += `        <a href="${sec.buttonLink || '#pricing'}" class="pulse-cta inline-block px-10 py-5 bg-gradient-to-r from-emerald-500 via-teal-500 to-indigo-600 text-white font-black text-base uppercase rounded-2xl shadow-xl shadow-emerald-500/30">${sec.buttonText}</a>\n`;
+        if (sec.ctaData?.subtext) html += `        <p class="text-xs text-gray-400">${sec.ctaData.subtext}</p>\n`;
         html += `      </div>\n`;
-      } else if (layout === 'tsl_letter') {
-        html += `      <div class="max-w-2xl mx-auto space-y-6 bg-white/[0.01] border border-amber-500/20 p-8 rounded-3xl">\n`;
-        if (sec.headline) html += `        <h2 class="text-xl sm:text-2xl font-black text-amber-300 text-center">${sec.headline}</h2>\n`;
-        if (sec.bodyText) html += `        <div class="text-sm text-gray-200 leading-relaxed whitespace-pre-line font-serif">${sec.bodyText}</div>\n`;
+      } else {
+        html += `      <div class="text-center max-w-3xl mx-auto space-y-4">\n`;
+        if (sec.badge) html += `        <span class="inline-block bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-black uppercase px-3 py-1 rounded-full">${sec.badge}</span>\n`;
+        if (sec.headline) html += `        <h2 class="text-3xl sm:text-4xl font-black text-white">${sec.headline}</h2>\n`;
+        if (sec.subtitle) html += `        <p class="text-sm text-gray-300">${sec.subtitle}</p>\n`;
+        if (sec.imageUrl) html += `        <img src="${sec.imageUrl}" alt="Imagem" class="rounded-2xl border border-white/10 shadow-xl mx-auto my-6">\n`;
         html += `      </div>\n`;
       }
 
       html += `    </section>\n`;
     });
 
-    html += `\n  </main>\n\n  <!-- RODAPÉ DE COMPLIANCE -->\n  <footer class="border-t border-white/10 py-10 text-center text-xs text-gray-500 space-y-2">\n    <p>© ${new Date().getFullYear()} ${blueprint?.title || 'Todos os direitos reservados.'}</p>\n    <p class="text-[10px] max-w-xl mx-auto">Este site não é afiliado ao Facebook ou a qualquer entidade do Meta. Todos os conteúdos são de responsabilidade exclusiva.</p>\n  </footer>\n\n</body>\n</html>`;
+    html += `  </main>\n  <footer class="border-t border-white/10 py-8 text-center text-xs text-gray-500"><p>© ${new Date().getFullYear()} ${blueprint?.title}. Todos os direitos reservados.</p></footer>\n</body>\n</html>`;
 
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -418,21 +357,21 @@ export default function PageQuizEditorView() {
     link.href = url;
     link.download = `${blueprint?.title || 'pagina-de-vendas'}.html`;
     link.click();
-    toast.success('Arquivo HTML pronto exportado com sucesso!');
+    toast.success('Página HTML exportada com sucesso!');
   };
 
   // Efeito do simulador de quiz
   useEffect(() => {
     let interval: any;
-    if (isSimulatorOpen && sections[simulatorStepIndex]?.type === 'quiz_diagnostic_loading') {
-      setSimulatorLoadingProgress(0);
+    if (isQuizSimulatorOpen && sections[quizSimulatorStepIndex]?.type === 'quiz_diagnostic_loading') {
+      setQuizSimulatorProgress(0);
       interval = setInterval(() => {
-        setSimulatorLoadingProgress(prev => {
+        setQuizSimulatorProgress(prev => {
           if (prev >= 100) {
             clearInterval(interval);
             setTimeout(() => {
-              if (simulatorStepIndex < sections.length - 1) {
-                setSimulatorStepIndex(prevStep => prevStep + 1);
+              if (quizSimulatorStepIndex < sections.length - 1) {
+                setQuizSimulatorStepIndex(prevStep => prevStep + 1);
               }
             }, 600);
             return 100;
@@ -442,7 +381,7 @@ export default function PageQuizEditorView() {
       }, 200);
     }
     return () => clearInterval(interval);
-  }, [isSimulatorOpen, simulatorStepIndex, sections]);
+  }, [isQuizSimulatorOpen, quizSimulatorStepIndex, sections]);
 
   if (loading) {
     return (
@@ -458,7 +397,7 @@ export default function PageQuizEditorView() {
   return (
     <div className="flex-1 flex flex-col h-full bg-[#050914] text-white overflow-hidden">
       
-      {/* ── CABEÇALHO DO ESTÚDIO VISUAL ──────────────────────────────────────── */}
+      {/* ── CABEÇALHO LIMPO (SEM BOTÃO DE ALTERNAR MODO) ────────────────────── */}
       <header className="h-16 bg-[#080e21]/95 border-b border-white/10 px-6 flex items-center justify-between z-30 shrink-0 backdrop-blur-xl">
         <div className="flex items-center gap-4">
           <button
@@ -471,12 +410,12 @@ export default function PageQuizEditorView() {
 
           <div>
             <div className="flex items-center gap-2">
-              <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border ${
+              <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full border ${
                 mode === 'quiz_funnel'
                   ? 'bg-purple-500/10 text-purple-300 border-purple-500/30'
                   : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
               }`}>
-                {mode === 'quiz_funnel' ? '🧠 Quiz Interativo' : '📄 Construtor de Páginas'}
+                {mode === 'quiz_funnel' ? '🧠 Construtor de Quiz' : '📄 Construtor de Páginas'}
               </span>
               <span className="text-xs text-gray-500">•</span>
               <input
@@ -491,27 +430,7 @@ export default function PageQuizEditorView() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Alternador de Modo Página vs Quiz */}
-          <div className="flex items-center bg-black/40 border border-white/10 p-1 rounded-xl text-xs">
-            <button
-              onClick={() => setMode('sales_page')}
-              className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
-                mode === 'sales_page' ? 'bg-emerald-600 text-white shadow-md' : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              Modo Página
-            </button>
-            <button
-              onClick={() => setMode('quiz_funnel')}
-              className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
-                mode === 'quiz_funnel' ? 'bg-purple-600 text-white shadow-md' : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              Modo Quiz
-            </button>
-          </div>
-
-          {/* Alternador de Dispositivo (Desktop vs Mobile) */}
+          {/* Alternador de Dispositivo no Canvas de Edição */}
           <div className="hidden sm:flex items-center bg-black/40 border border-white/10 p-1 rounded-xl text-xs">
             <button
               onClick={() => setDeviceView('desktop')}
@@ -535,11 +454,34 @@ export default function PageQuizEditorView() {
             </button>
           </div>
 
-          {/* Botões de Ação e Exportadores Nativos */}
+          {/* Botão de Simulação Online / Real */}
+          {mode === 'sales_page' ? (
+            <button
+              onClick={() => setIsOnlinePreviewOpen(true)}
+              className="px-3.5 py-2 bg-indigo-600/30 hover:bg-indigo-600 text-indigo-200 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-indigo-500/40 shadow-sm"
+              title="Simular página online completa sem barras de edição"
+            >
+              <Eye className="w-3.5 h-3.5 text-indigo-300" />
+              <span>Visualizar Online</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                setQuizSimulatorStepIndex(0);
+                setQuizSimulatorAnswers({});
+                setIsQuizSimulatorOpen(true);
+              }}
+              className="px-3.5 py-2 bg-purple-600/30 hover:bg-purple-600 text-purple-200 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-purple-500/40 shadow-sm"
+            >
+              <Play className="w-3.5 h-3.5 text-purple-300" />
+              <span>Simulador de Quiz</span>
+            </button>
+          )}
+
           <button
             onClick={handleCopyInstructions}
             className="px-3 py-2 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-white/10"
-            title="Copiar todas as instruções estruturadas"
+            title="Copiar todas as instruções formatadas"
           >
             <Copy className="w-3.5 h-3.5" />
             <span className="hidden lg:inline">Copiar Instruções</span>
@@ -549,24 +491,10 @@ export default function PageQuizEditorView() {
             <button
               onClick={handleExportHTML}
               className="px-3 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-emerald-500/40 shadow-sm"
-              title="Baixar arquivo HTML pronto da página com Tailwind"
+              title="Baixar arquivo HTML pronto"
             >
               <Download className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Baixar HTML</span>
-            </button>
-          )}
-
-          {mode === 'quiz_funnel' && (
-            <button
-              onClick={() => {
-                setSimulatorStepIndex(0);
-                setSimulatorAnswers({});
-                setIsSimulatorOpen(true);
-              }}
-              className="px-3.5 py-2 bg-indigo-600/30 hover:bg-indigo-600 text-indigo-200 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-indigo-500/40 shadow-sm"
-            >
-              <Play className="w-3.5 h-3.5 text-indigo-300" />
-              <span>Simulador</span>
             </button>
           )}
 
@@ -584,134 +512,278 @@ export default function PageQuizEditorView() {
       {/* ── CORPO PRINCIPAL: CANVAS VISUAL DA PÁGINA ────────────────────────── */}
       <div className="flex-1 flex overflow-hidden min-h-0">
         
-        {/* Barra Lateral Esquerda: Paleta de Blocos Rápidos */}
+        {/* Barra Lateral Esquerda: Catálogo Filtrado pelo Modo */}
         <div className="w-72 bg-[#080d1e] border-r border-white/10 p-4 flex flex-col gap-3 shrink-0 overflow-y-auto custom-scrollbar">
           <div>
             <h4 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              Blocos & Disposições
+              {mode === 'quiz_funnel' ? 'Passos do Quiz' : 'Blocos da Página'}
             </h4>
             <p className="text-[10px] text-gray-400 mt-0.5">
-              Clique para adicionar na página:
+              Clique para adicionar na estrutura:
             </p>
           </div>
 
           <div className="space-y-2">
-            <button
-              onClick={() => handleAddSection('hero_vsl', '1_col_center')}
-              className="w-full p-2.5 rounded-xl bg-white/[0.02] hover:bg-indigo-600/20 border border-white/5 hover:border-indigo-500/40 text-left transition-all group flex items-center justify-between"
-            >
-              <div>
-                <h5 className="text-xs font-bold text-gray-200 group-hover:text-white flex items-center gap-1.5">
-                  <AlignCenter className="w-3.5 h-3.5 text-indigo-400" />
-                  Hero VSL (1 Coluna)
-                </h5>
-                <p className="text-[10px] text-gray-400">Headline + Vídeo + Botão</p>
-              </div>
-              <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-white" />
-            </button>
+            {mode === 'sales_page' ? (
+              <>
+                {/* 1. Hero VSL */}
+                <button
+                  onClick={() => handleAddSection('hero_vsl', '1_col_center')}
+                  className="w-full p-2.5 rounded-xl bg-white/[0.02] hover:bg-indigo-600/20 border border-white/5 hover:border-indigo-500/40 text-left transition-all group flex items-center justify-between"
+                >
+                  <div>
+                    <h5 className="text-xs font-bold text-gray-200 group-hover:text-white flex items-center gap-1.5">
+                      <AlignCenter className="w-3.5 h-3.5 text-indigo-400" />
+                      Hero com VSL (1 Coluna)
+                    </h5>
+                    <p className="text-[10px] text-gray-400">Headline + Vídeo + Botão</p>
+                  </div>
+                  <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-white" />
+                </button>
 
-            <button
-              onClick={() => handleAddSection('pain_mirror', '2_col_split')}
-              className="w-full p-2.5 rounded-xl bg-white/[0.02] hover:bg-indigo-600/20 border border-white/5 hover:border-indigo-500/40 text-left transition-all group flex items-center justify-between"
-            >
-              <div>
-                <h5 className="text-xs font-bold text-gray-200 group-hover:text-white flex items-center gap-1.5">
-                  <Columns className="w-3.5 h-3.5 text-rose-400" />
-                  Split: Texto + VSL / Imagem
-                </h5>
-                <p className="text-[10px] text-gray-400">Copy na esq. + Vídeo na dir.</p>
-              </div>
-              <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-white" />
-            </button>
+                {/* 2. Split Texto + Imagem/Vídeo */}
+                <button
+                  onClick={() => handleAddSection('pain_mirror', '2_col_split')}
+                  className="w-full p-2.5 rounded-xl bg-white/[0.02] hover:bg-indigo-600/20 border border-white/5 hover:border-indigo-500/40 text-left transition-all group flex items-center justify-between"
+                >
+                  <div>
+                    <h5 className="text-xs font-bold text-gray-200 group-hover:text-white flex items-center gap-1.5">
+                      <Columns className="w-3.5 h-3.5 text-rose-400" />
+                      Split: Texto + Mídia (50/50)
+                    </h5>
+                    <p className="text-[10px] text-gray-400">Copy + Bullets na esq.</p>
+                  </div>
+                  <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-white" />
+                </button>
 
-            <button
-              onClick={() => handleAddSection('authority_bio', '2_col_reverse')}
-              className="w-full p-2.5 rounded-xl bg-white/[0.02] hover:bg-indigo-600/20 border border-white/5 hover:border-indigo-500/40 text-left transition-all group flex items-center justify-between"
-            >
-              <div>
-                <h5 className="text-xs font-bold text-gray-200 group-hover:text-white flex items-center gap-1.5">
-                  <Columns className="w-3.5 h-3.5 text-cyan-400" />
-                  Split: Imagem + Texto
-                </h5>
-                <p className="text-[10px] text-gray-400">Foto na esq. + Bullets na dir.</p>
-              </div>
-              <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-white" />
-            </button>
+                {/* 3. Banner / Mockup de Imagem */}
+                <button
+                  onClick={() => handleAddSection('image_banner', '1_col_center')}
+                  className="w-full p-2.5 rounded-xl bg-white/[0.02] hover:bg-indigo-600/20 border border-white/5 hover:border-indigo-500/40 text-left transition-all group flex items-center justify-between"
+                >
+                  <div>
+                    <h5 className="text-xs font-bold text-gray-200 group-hover:text-white flex items-center gap-1.5">
+                      <ImageIcon className="w-3.5 h-3.5 text-emerald-400" />
+                      Imagem / Banner Full-Width
+                    </h5>
+                    <p className="text-[10px] text-gray-400">Mockup ou foto do produto</p>
+                  </div>
+                  <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-white" />
+                </button>
 
-            <button
-              onClick={() => handleAddSection('module_grid', '3_col_grid')}
-              className="w-full p-2.5 rounded-xl bg-white/[0.02] hover:bg-indigo-600/20 border border-white/5 hover:border-indigo-500/40 text-left transition-all group flex items-center justify-between"
-            >
-              <div>
-                <h5 className="text-xs font-bold text-gray-200 group-hover:text-white flex items-center gap-1.5">
-                  <LayoutGrid className="w-3.5 h-3.5 text-purple-400" />
-                  Grade 3 Colunas (Cards)
-                </h5>
-                <p className="text-[10px] text-gray-400">3 Módulos ou Entregáveis</p>
-              </div>
-              <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-white" />
-            </button>
+                {/* 4. Mural de Prints / Provas Sociais com Imagens */}
+                <button
+                  onClick={() => handleAddSection('image_social_proof', '3_col_grid')}
+                  className="w-full p-2.5 rounded-xl bg-white/[0.02] hover:bg-indigo-600/20 border border-white/5 hover:border-indigo-500/40 text-left transition-all group flex items-center justify-between"
+                >
+                  <div>
+                    <h5 className="text-xs font-bold text-gray-200 group-hover:text-white flex items-center gap-1.5">
+                      <LayoutGrid className="w-3.5 h-3.5 text-cyan-400" />
+                      Mural de Prints & Provas
+                    </h5>
+                    <p className="text-[10px] text-gray-400">Grade de prints de WhatsApp</p>
+                  </div>
+                  <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-white" />
+                </button>
 
-            <button
-              onClick={() => handleAddSection('social_proof_wall', '3_col_grid')}
-              className="w-full p-2.5 rounded-xl bg-white/[0.02] hover:bg-indigo-600/20 border border-white/5 hover:border-indigo-500/40 text-left transition-all group flex items-center justify-between"
-            >
-              <div>
-                <h5 className="text-xs font-bold text-gray-200 group-hover:text-white flex items-center gap-1.5">
-                  <MessageCircle className="w-3.5 h-3.5 text-blue-400" />
-                  Depoimentos / Provas Sociais
-                </h5>
-                <p className="text-[10px] text-gray-400">Prints de WhatsApp & Relatos</p>
-              </div>
-              <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-white" />
-            </button>
+                {/* 5. Botão de CTA & Venda Imediata */}
+                <button
+                  onClick={() => handleAddSection('cta_button_block', '1_col_center')}
+                  className="w-full p-2.5 rounded-xl bg-white/[0.02] hover:bg-indigo-600/20 border border-white/5 hover:border-indigo-500/40 text-left transition-all group flex items-center justify-between"
+                >
+                  <div>
+                    <h5 className="text-xs font-bold text-gray-200 group-hover:text-white flex items-center gap-1.5">
+                      <Zap className="w-3.5 h-3.5 text-amber-400" />
+                      Botão de CTA & Oferta
+                    </h5>
+                    <p className="text-[10px] text-gray-400">Botão pulsante com selos</p>
+                  </div>
+                  <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-white" />
+                </button>
 
-            <button
-              onClick={() => handleAddSection('pricing_box', '1_col_center')}
-              className="w-full p-2.5 rounded-xl bg-white/[0.02] hover:bg-indigo-600/20 border border-white/5 hover:border-indigo-500/40 text-left transition-all group flex items-center justify-between"
-            >
-              <div>
-                <h5 className="text-xs font-bold text-gray-200 group-hover:text-white flex items-center gap-1.5">
-                  <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
-                  Box de Oferta & Checkout
-                </h5>
-                <p className="text-[10px] text-gray-400">Preço, parcelas e CTA</p>
-              </div>
-              <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-white" />
-            </button>
+                {/* 6. Barra de Urgência & Escassez */}
+                <button
+                  onClick={() => handleAddSection('urgency_timer', '1_col_center')}
+                  className="w-full p-2.5 rounded-xl bg-white/[0.02] hover:bg-indigo-600/20 border border-white/5 hover:border-indigo-500/40 text-left transition-all group flex items-center justify-between"
+                >
+                  <div>
+                    <h5 className="text-xs font-bold text-gray-200 group-hover:text-white flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-rose-400" />
+                      Barra de Escassez & Timer
+                    </h5>
+                    <p className="text-[10px] text-gray-400">Cronômetro de contagem</p>
+                  </div>
+                  <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-white" />
+                </button>
 
-            <button
-              onClick={() => handleAddSection('pain_mirror', 'tsl_letter')}
-              className="w-full p-2.5 rounded-xl bg-white/[0.02] hover:bg-indigo-600/20 border border-white/5 hover:border-indigo-500/40 text-left transition-all group flex items-center justify-between"
-            >
-              <div>
-                <h5 className="text-xs font-bold text-gray-200 group-hover:text-white flex items-center gap-1.5">
-                  <FileText className="w-3.5 h-3.5 text-amber-400" />
-                  Carta de Vendas (TSL)
-                </h5>
-                <p className="text-[10px] text-gray-400">Texto corrido persuasivo</p>
-              </div>
-              <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-white" />
-            </button>
+                {/* 7. Tabela Comparativa */}
+                <button
+                  onClick={() => handleAddSection('comparison_table', '1_col_center')}
+                  className="w-full p-2.5 rounded-xl bg-white/[0.02] hover:bg-indigo-600/20 border border-white/5 hover:border-indigo-500/40 text-left transition-all group flex items-center justify-between"
+                >
+                  <div>
+                    <h5 className="text-xs font-bold text-gray-200 group-hover:text-white flex items-center gap-1.5">
+                      <CheckCheck className="w-3.5 h-3.5 text-teal-400" />
+                      Tabela Comparativa
+                    </h5>
+                    <p className="text-[10px] text-gray-400">Nosso Método vs Outros</p>
+                  </div>
+                  <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-white" />
+                </button>
 
-            <button
-              onClick={() => handleAddSection('faq_accordion', '1_col_center')}
-              className="w-full p-2.5 rounded-xl bg-white/[0.02] hover:bg-indigo-600/20 border border-white/5 hover:border-indigo-500/40 text-left transition-all group flex items-center justify-between"
-            >
-              <div>
-                <h5 className="text-xs font-bold text-gray-200 group-hover:text-white flex items-center gap-1.5">
-                  <HelpCircle className="w-3.5 h-3.5 text-amber-300" />
-                  FAQ em Acordeão
-                </h5>
-                <p className="text-[10px] text-gray-400">Quebra de 8 objeções</p>
-              </div>
-              <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-white" />
-            </button>
+                {/* 8. Grade de Módulos (3 Colunas) */}
+                <button
+                  onClick={() => handleAddSection('module_grid', '3_col_grid')}
+                  className="w-full p-2.5 rounded-xl bg-white/[0.02] hover:bg-indigo-600/20 border border-white/5 hover:border-indigo-500/40 text-left transition-all group flex items-center justify-between"
+                >
+                  <div>
+                    <h5 className="text-xs font-bold text-gray-200 group-hover:text-white flex items-center gap-1.5">
+                      <LayoutGrid className="w-3.5 h-3.5 text-purple-400" />
+                      Grade de Módulos (3 Cards)
+                    </h5>
+                    <p className="text-[10px] text-gray-400">Entregáveis do treinamento</p>
+                  </div>
+                  <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-white" />
+                </button>
+
+                {/* 9. Box da Oferta & Checkout */}
+                <button
+                  onClick={() => handleAddSection('pricing_box', '1_col_center')}
+                  className="w-full p-2.5 rounded-xl bg-white/[0.02] hover:bg-indigo-600/20 border border-white/5 hover:border-indigo-500/40 text-left transition-all group flex items-center justify-between"
+                >
+                  <div>
+                    <h5 className="text-xs font-bold text-gray-200 group-hover:text-white flex items-center gap-1.5">
+                      <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
+                      Box de Oferta & Checkout
+                    </h5>
+                    <p className="text-[10px] text-gray-400">Preço, parcelas e bônus</p>
+                  </div>
+                  <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-white" />
+                </button>
+
+                {/* 10. Carta de Vendas (TSL) */}
+                <button
+                  onClick={() => handleAddSection('pain_mirror', 'tsl_letter')}
+                  className="w-full p-2.5 rounded-xl bg-white/[0.02] hover:bg-indigo-600/20 border border-white/5 hover:border-indigo-500/40 text-left transition-all group flex items-center justify-between"
+                >
+                  <div>
+                    <h5 className="text-xs font-bold text-gray-200 group-hover:text-white flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5 text-amber-400" />
+                      Carta de Vendas (TSL)
+                    </h5>
+                    <p className="text-[10px] text-gray-400">Texto corrido persuasivo</p>
+                  </div>
+                  <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-white" />
+                </button>
+
+                {/* 11. FAQ em Acordeão */}
+                <button
+                  onClick={() => handleAddSection('faq_accordion', '1_col_center')}
+                  className="w-full p-2.5 rounded-xl bg-white/[0.02] hover:bg-indigo-600/20 border border-white/5 hover:border-indigo-500/40 text-left transition-all group flex items-center justify-between"
+                >
+                  <div>
+                    <h5 className="text-xs font-bold text-gray-200 group-hover:text-white flex items-center gap-1.5">
+                      <HelpCircle className="w-3.5 h-3.5 text-amber-300" />
+                      FAQ em Acordeão
+                    </h5>
+                    <p className="text-[10px] text-gray-400">Perguntas frequentes</p>
+                  </div>
+                  <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-white" />
+                </button>
+              </>
+            ) : (
+              /* CATÁLOGO DE PASSOS DO QUIZ */
+              <>
+                <button
+                  onClick={() => handleAddSection('quiz_question', '1_col_center')}
+                  className="w-full p-2.5 rounded-xl bg-white/[0.02] hover:bg-purple-600/20 border border-white/5 hover:border-purple-500/40 text-left transition-all group flex items-center justify-between"
+                >
+                  <div>
+                    <h5 className="text-xs font-bold text-gray-200 group-hover:text-white flex items-center gap-1.5">
+                      <HelpCircle className="w-3.5 h-3.5 text-purple-400" />
+                      Pergunta de Escolha Simples
+                    </h5>
+                    <p className="text-[10px] text-gray-400">Opções com pontuação</p>
+                  </div>
+                  <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-white" />
+                </button>
+
+                <button
+                  onClick={() => handleAddSection('quiz_image_choice', '1_col_center')}
+                  className="w-full p-2.5 rounded-xl bg-white/[0.02] hover:bg-purple-600/20 border border-white/5 hover:border-purple-500/40 text-left transition-all group flex items-center justify-between"
+                >
+                  <div>
+                    <h5 className="text-xs font-bold text-gray-200 group-hover:text-white flex items-center gap-1.5">
+                      <ImageIcon className="w-3.5 h-3.5 text-cyan-400" />
+                      Cards Visuais com Imagem
+                    </h5>
+                    <p className="text-[10px] text-gray-400">Escolha com fotos/ícones</p>
+                  </div>
+                  <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-white" />
+                </button>
+
+                <button
+                  onClick={() => handleAddSection('quiz_mini_vsl', '1_col_center')}
+                  className="w-full p-2.5 rounded-xl bg-white/[0.02] hover:bg-purple-600/20 border border-white/5 hover:border-purple-500/40 text-left transition-all group flex items-center justify-between"
+                >
+                  <div>
+                    <h5 className="text-xs font-bold text-gray-200 group-hover:text-white flex items-center gap-1.5">
+                      <Video className="w-3.5 h-3.5 text-rose-400" />
+                      Mini-VSL de Transição
+                    </h5>
+                    <p className="text-[10px] text-gray-400">Vídeo curto de aquecimento</p>
+                  </div>
+                  <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-white" />
+                </button>
+
+                <button
+                  onClick={() => handleAddSection('quiz_lead_capture', '1_col_center')}
+                  className="w-full p-2.5 rounded-xl bg-white/[0.02] hover:bg-purple-600/20 border border-white/5 hover:border-purple-500/40 text-left transition-all group flex items-center justify-between"
+                >
+                  <div>
+                    <h5 className="text-xs font-bold text-gray-200 group-hover:text-white flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                      Captura de Lead (WhatsApp)
+                    </h5>
+                    <p className="text-[10px] text-gray-400">Nome e número antes do resultado</p>
+                  </div>
+                  <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-white" />
+                </button>
+
+                <button
+                  onClick={() => handleAddSection('quiz_diagnostic_loading', '1_col_center')}
+                  className="w-full p-2.5 rounded-xl bg-white/[0.02] hover:bg-purple-600/20 border border-white/5 hover:border-purple-500/40 text-left transition-all group flex items-center justify-between"
+                >
+                  <div>
+                    <h5 className="text-xs font-bold text-gray-200 group-hover:text-white flex items-center gap-1.5">
+                      <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
+                      Carregamento Psicológico
+                    </h5>
+                    <p className="text-[10px] text-gray-400">Barra de 0 a 100%</p>
+                  </div>
+                  <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-white" />
+                </button>
+
+                <button
+                  onClick={() => handleAddSection('pricing_box', '1_col_center')}
+                  className="w-full p-2.5 rounded-xl bg-white/[0.02] hover:bg-purple-600/20 border border-white/5 hover:border-purple-500/40 text-left transition-all group flex items-center justify-between"
+                >
+                  <div>
+                    <h5 className="text-xs font-bold text-gray-200 group-hover:text-white flex items-center gap-1.5">
+                      <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
+                      Resultado & Oferta Final
+                    </h5>
+                    <p className="text-[10px] text-gray-400">Pitch do produto recomendado</p>
+                  </div>
+                  <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-white" />
+                </button>
+              </>
+            )}
           </div>
         </div>
 
-        {/* ── ÁREA CENTRAL: WIREFRAME VISUAL DA PÁGINA COM SCROLL TOTAL ──────── */}
+        {/* ── ÁREA CENTRAL: WIREFRAME VISUAL COM SCROLL COMPLETO ─────────────── */}
         <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-4 lg:p-8 bg-[#040712] flex justify-center">
           
           <div 
@@ -728,11 +800,11 @@ export default function PageQuizEditorView() {
                 <span className="text-[11px] font-mono text-gray-500 ml-2">https://seusite.com.br/oferta</span>
               </div>
               <span className="text-[10px] font-bold text-gray-500">
-                {sections.length} dobras • {deviceView.toUpperCase()}
+                {sections.length} seções • {deviceView.toUpperCase()}
               </span>
             </div>
 
-            {/* Conteúdo Renderizado da Página de Vendas */}
+            {/* Conteúdo Renderizado da Página de Vendas / Quiz */}
             <div className="divide-y divide-white/5">
               {sections.map((sec, index) => {
                 const layout = sec.layoutColumns || '1_col_center';
@@ -748,53 +820,6 @@ export default function PageQuizEditorView() {
                   >
                     {/* Barra Flutuante de Ferramentas da Dobra */}
                     <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-20 flex items-center gap-1.5 bg-black/90 border border-white/10 p-1.5 rounded-xl shadow-xl backdrop-blur-md">
-                      {/* Seletor Rápido de Layout */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleUpdateSection(sec.id, { layoutColumns: '1_col_center' });
-                        }}
-                        className={`p-1.5 rounded-lg text-xs ${layout === '1_col_center' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'}`}
-                        title="1 Coluna Centralizada"
-                      >
-                        <AlignCenter className="w-3.5 h-3.5" />
-                      </button>
-
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleUpdateSection(sec.id, { layoutColumns: '2_col_split' });
-                        }}
-                        className={`p-1.5 rounded-lg text-xs ${layout === '2_col_split' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'}`}
-                        title="2 Colunas: Texto na Esquerda + Vídeo/Imagem na Direita"
-                      >
-                        <Columns className="w-3.5 h-3.5" />
-                      </button>
-
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleUpdateSection(sec.id, { layoutColumns: '3_col_grid' });
-                        }}
-                        className={`p-1.5 rounded-lg text-xs ${layout === '3_col_grid' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'}`}
-                        title="3 Colunas em Grade"
-                      >
-                        <LayoutGrid className="w-3.5 h-3.5" />
-                      </button>
-
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleUpdateSection(sec.id, { layoutColumns: 'tsl_letter' });
-                        }}
-                        className={`p-1.5 rounded-lg text-xs ${layout === 'tsl_letter' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'}`}
-                        title="Carta de Vendas TSL"
-                      >
-                        <FileText className="w-3.5 h-3.5" />
-                      </button>
-
-                      <span className="w-px h-4 bg-white/10" />
-
                       <button
                         onClick={(e) => { e.stopPropagation(); handleMoveSection(index, 'up'); }}
                         disabled={index === 0}
@@ -827,120 +852,220 @@ export default function PageQuizEditorView() {
                       </button>
                     </div>
 
-                    {/* ── RENDERIZAÇÃO DO LAYOUT SELECIONADO ── */}
+                    {/* ── 1. BLOCO: BANNER / IMAGEM FULL-WIDTH ── */}
+                    {sec.type === 'image_banner' && (
+                      <div className="space-y-4 text-center max-w-4xl mx-auto">
+                        <textarea
+                          rows={2}
+                          value={sec.headline || ''}
+                          onChange={(e) => handleUpdateSection(sec.id, { headline: e.target.value })}
+                          className="w-full bg-transparent font-black text-xl lg:text-2xl text-white text-center leading-tight focus:outline-none rounded p-1 resize-none"
+                        />
+                        <div className="rounded-2xl border border-white/10 overflow-hidden shadow-2xl bg-black/60 aspect-[16/9] max-h-96 flex items-center justify-center relative group/img">
+                          <img
+                            src={sec.imageUrl || 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&auto=format&fit=crop&q=80'}
+                            alt="Banner"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <input
+                          type="text"
+                          value={sec.imageCaption || ''}
+                          onChange={(e) => handleUpdateSection(sec.id, { imageCaption: e.target.value })}
+                          placeholder="Legenda da imagem..."
+                          className="w-full bg-transparent text-xs text-gray-400 text-center focus:outline-none"
+                        />
+                      </div>
+                    )}
 
-                    {/* 1. LAYOUT: 1 COLUNA CENTRALIZADO (HERO / VSL / PREÇO / FAQ) */}
-                    {layout === '1_col_center' && (
+                    {/* ── 2. BLOCO: MURAL DE PRINTS DE PROVA SOCIAL ── */}
+                    {sec.type === 'image_social_proof' && (
+                      <div className="space-y-6 text-center">
+                        <textarea
+                          rows={2}
+                          value={sec.headline || ''}
+                          onChange={(e) => handleUpdateSection(sec.id, { headline: e.target.value })}
+                          className="w-full bg-transparent font-black text-xl lg:text-2xl text-white text-center leading-tight focus:outline-none rounded p-1 resize-none"
+                        />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {sec.imageGallery?.map((item, gIdx) => (
+                            <div key={item.id} className="p-3 bg-black/40 border border-white/10 rounded-2xl space-y-2 text-left">
+                              <div className="aspect-[4/3] bg-black/60 rounded-xl overflow-hidden border border-white/5">
+                                <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
+                              </div>
+                              <input
+                                type="text"
+                                value={item.title}
+                                onChange={(e) => {
+                                  const updated = [...(sec.imageGallery || [])];
+                                  updated[gIdx] = { ...item, title: e.target.value };
+                                  handleUpdateSection(sec.id, { imageGallery: updated });
+                                }}
+                                className="w-full bg-transparent font-bold text-xs text-white focus:outline-none"
+                              />
+                              <p className="text-[10px] text-gray-400">{item.caption}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── 3. BLOCO: BOTÃO DEDICADO DE CTA & OFERTA ── */}
+                    {sec.type === 'cta_button_block' && (
+                      <div className="text-center max-w-2xl mx-auto space-y-5 p-6 bg-gradient-to-b from-[#0e1738] to-[#080d21] border border-emerald-500/40 rounded-3xl shadow-xl shadow-emerald-500/10">
+                        <textarea
+                          rows={2}
+                          value={sec.headline || ''}
+                          onChange={(e) => handleUpdateSection(sec.id, { headline: e.target.value })}
+                          className="w-full bg-transparent font-black text-xl lg:text-2xl text-white text-center leading-tight focus:outline-none rounded p-1 resize-none"
+                        />
+                        <input
+                          type="text"
+                          value={sec.buttonText || ''}
+                          onChange={(e) => handleUpdateSection(sec.id, { buttonText: e.target.value })}
+                          className="px-8 py-4 bg-gradient-to-r from-emerald-500 via-teal-500 to-indigo-600 text-white text-xs sm:text-sm font-black uppercase tracking-wider rounded-2xl shadow-xl shadow-emerald-500/25 text-center focus:outline-none cursor-pointer inline-block"
+                        />
+                        <div className="text-xs text-gray-300 flex items-center justify-center gap-2 pt-2 border-t border-white/10">
+                          <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>🔒 Compra 100% Segura • ⚡ Acesso Imediato • 🛡️ 7 Dias de Garantia</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── 4. BLOCO: BARRA DE ESCASSEZ & URGÊNCIA ── */}
+                    {sec.type === 'urgency_timer' && (
+                      <div className="p-4 bg-gradient-to-r from-rose-950/40 via-amber-950/40 to-rose-950/40 border border-rose-500/30 rounded-2xl flex flex-wrap items-center justify-between gap-4 text-center sm:text-left">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-xl bg-rose-500/20 text-rose-300">
+                            <Clock className="w-5 h-5 animate-pulse" />
+                          </div>
+                          <div>
+                            <input
+                              type="text"
+                              value={sec.headline || ''}
+                              onChange={(e) => handleUpdateSection(sec.id, { headline: e.target.value })}
+                              className="bg-transparent font-black text-xs sm:text-sm text-white focus:outline-none w-full"
+                            />
+                            <p className="text-[10px] text-gray-400">Esta condição especial não ficará disponível por muito tempo.</p>
+                          </div>
+                        </div>
+                        <div className="text-lg font-black text-amber-300 font-mono bg-black/60 px-4 py-1.5 rounded-xl border border-amber-500/30 mx-auto sm:mx-0">
+                          ⏱️ 14:59
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── 5. BLOCO: TABELA COMPARATIVA ── */}
+                    {sec.type === 'comparison_table' && sec.comparisonData && (
+                      <div className="space-y-6 text-center max-w-3xl mx-auto">
+                        <h3 className="text-xl lg:text-2xl font-black text-white">{sec.headline}</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                          {/* Concorrente */}
+                          <div className="p-5 bg-rose-950/20 border border-rose-500/30 rounded-2xl space-y-3">
+                            <h4 className="text-xs font-black uppercase text-rose-400 flex items-center gap-1.5">
+                              <XCircle className="w-4 h-4" />
+                              {sec.comparisonData.competitorTitle}
+                            </h4>
+                            <div className="space-y-2 text-xs text-gray-300">
+                              {sec.comparisonData.competitorItems.map((item, cIdx) => (
+                                <div key={cIdx} className="flex items-start gap-2">
+                                  <span className="text-rose-400 font-bold">✕</span>
+                                  <span>{item}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Nosso Método */}
+                          <div className="p-5 bg-emerald-950/20 border border-emerald-500/40 rounded-2xl space-y-3">
+                            <h4 className="text-xs font-black uppercase text-emerald-400 flex items-center gap-1.5">
+                              <CheckCircle2 className="w-4 h-4" />
+                              {sec.comparisonData.ourTitle}
+                            </h4>
+                            <div className="space-y-2 text-xs text-gray-200">
+                              {sec.comparisonData.ourItems.map((item, oIdx) => (
+                                <div key={oIdx} className="flex items-start gap-2">
+                                  <span className="text-emerald-400 font-bold">✓</span>
+                                  <span>{item}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── 6. BLOCOS DE QUIZ COM CARDS DE IMAGEM & VSL ── */}
+                    {sec.type === 'quiz_image_choice' && sec.quizQuestion && (
+                      <div className="space-y-6 text-center max-w-3xl mx-auto">
+                        <h3 className="text-xl font-black text-white">{sec.headline}</h3>
+                        <p className="text-xs text-gray-300">{sec.subtitle}</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left pt-2">
+                          {sec.quizQuestion.options.map(opt => (
+                            <div key={opt.id} className="p-3 bg-black/40 border border-white/10 rounded-2xl space-y-2 hover:border-purple-500/50 transition-all cursor-pointer">
+                              <div className="aspect-[4/3] bg-black/60 rounded-xl overflow-hidden">
+                                <img src={opt.imageUrl} alt={opt.label} className="w-full h-full object-cover" />
+                              </div>
+                              <span className="text-xs font-bold text-white block">{opt.label}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {sec.type === 'quiz_mini_vsl' && (
+                      <div className="space-y-4 text-center max-w-2xl mx-auto">
+                        <h3 className="text-lg font-black text-white">{sec.headline}</h3>
+                        <p className="text-xs text-gray-300">{sec.subtitle}</p>
+                        <div className="aspect-video bg-black rounded-2xl border border-white/10 flex items-center justify-center shadow-xl">
+                          <Play className="w-10 h-10 text-purple-400" />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── 7. LAYOUTS PADRÃO (1 COLUNA, 2 COLUNAS, 3 COLUNAS, TSL) ── */}
+                    {layout === '1_col_center' && sec.type === 'hero_vsl' && (
                       <div className="space-y-5 text-center max-w-3xl mx-auto">
                         {sec.badge && (
                           <input
                             type="text"
                             value={sec.badge}
                             onChange={(e) => handleUpdateSection(sec.id, { badge: e.target.value })}
-                            className="bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 text-[10px] font-black uppercase px-3 py-1 rounded-full text-center focus:outline-none focus:ring-1 focus:ring-indigo-400 inline-block"
+                            className="bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 text-[10px] font-black uppercase px-3 py-1 rounded-full text-center focus:outline-none inline-block"
                           />
                         )}
-
                         <textarea
                           rows={2}
                           value={sec.headline || ''}
                           onChange={(e) => handleUpdateSection(sec.id, { headline: e.target.value })}
-                          placeholder="Digite a Headline de Alta Conversão..."
-                          className="w-full bg-transparent font-black text-xl sm:text-2xl lg:text-3xl text-white text-center leading-tight focus:outline-none focus:ring-1 focus:ring-indigo-500/50 rounded-xl p-1 resize-none"
+                          className="w-full bg-transparent font-black text-xl sm:text-2xl lg:text-3xl text-white text-center leading-tight focus:outline-none rounded p-1 resize-none"
                         />
-
-                        {sec.subtitle && (
+                        <div className="aspect-video bg-black/80 rounded-2xl border border-white/10 flex flex-col items-center justify-center p-4 relative shadow-2xl my-4">
+                          <div className="w-16 h-16 rounded-2xl bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 flex items-center justify-center shadow-lg">
+                            <Play className="w-8 h-8 ml-1" />
+                          </div>
+                          <span className="text-[11px] text-gray-400 mt-2 font-bold">🎬 Player VSL (Delay aos {sec.videoDelaySeconds || 180}s)</span>
+                        </div>
+                        {sec.buttonText && (
                           <input
                             type="text"
-                            value={sec.subtitle || ''}
-                            onChange={(e) => handleUpdateSection(sec.id, { subtitle: e.target.value })}
-                            placeholder="Subtítulo da promessa..."
-                            className="w-full bg-transparent text-xs sm:text-sm text-gray-300 text-center focus:outline-none focus:ring-1 focus:ring-indigo-500/50 rounded-lg p-1"
+                            value={sec.buttonText}
+                            onChange={(e) => handleUpdateSection(sec.id, { buttonText: e.target.value })}
+                            className="px-8 py-4 bg-gradient-to-r from-emerald-500 via-teal-500 to-indigo-600 text-white text-xs sm:text-sm font-black uppercase rounded-2xl shadow-xl shadow-emerald-500/25 text-center focus:outline-none cursor-pointer inline-block"
                           />
-                        )}
-
-                        {/* Player de Vídeo Centralizado */}
-                        {(sec.type === 'hero_vsl' || sec.videoUrl) && (
-                          <div className="aspect-video bg-black/80 rounded-2xl border border-white/10 flex flex-col items-center justify-center p-4 relative group/video overflow-hidden shadow-2xl my-4">
-                            <div className="w-16 h-16 rounded-2xl bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 flex items-center justify-center shadow-lg group-hover/video:scale-110 transition-transform">
-                              <Play className="w-8 h-8 ml-1" />
-                            </div>
-                            <span className="text-[11px] text-gray-400 mt-2 font-bold">🎬 Player VSL (Delay aos {sec.videoDelaySeconds || 180}s)</span>
-                          </div>
-                        )}
-
-                        {/* Box de Preço e Oferta */}
-                        {sec.type === 'pricing_box' && sec.pricingData && (
-                          <div className="p-6 bg-gradient-to-b from-[#0e1738] to-[#080d21] border-2 border-emerald-500/40 rounded-3xl space-y-4 text-center my-6 shadow-2xl shadow-emerald-500/10">
-                            <span className="text-xs font-black uppercase text-emerald-400 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30">
-                              Condição Especial de Lançamento
-                            </span>
-                            <div className="text-3xl sm:text-4xl font-black text-white">
-                              {sec.pricingData.installments || `R$ ${sec.pricingData.offerPrice}`}
-                            </div>
-                            <p className="text-xs text-gray-400">ou R$ {sec.pricingData.offerPrice} à vista no Pix</p>
-                            
-                            <div className="space-y-2 text-left text-xs max-w-sm mx-auto pt-2 border-t border-white/10">
-                              {sec.pricingData.bonusList?.map((bonus, bIdx) => (
-                                <div key={bIdx} className="flex items-center gap-2 text-gray-300">
-                                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                                  <span>{bonus}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* FAQ em Acordeão */}
-                        {sec.type === 'faq_accordion' && (
-                          <div className="space-y-2 text-left max-w-2xl mx-auto pt-4">
-                            {sec.faqItems?.map((faq, fIdx) => (
-                              <div key={faq.id} className="p-3.5 bg-black/40 border border-white/10 rounded-xl space-y-1">
-                                <h5 className="text-xs font-bold text-white flex items-center justify-between">
-                                  <span>{faq.question}</span>
-                                  <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
-                                </h5>
-                                <p className="text-[11px] text-gray-400">{faq.answer}</p>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* Botão de Chamada para Ação */}
-                        {sec.buttonText && (
-                          <div className="pt-2">
-                            <input
-                              type="text"
-                              value={sec.buttonText}
-                              onChange={(e) => handleUpdateSection(sec.id, { buttonText: e.target.value })}
-                              className="px-8 py-4 bg-gradient-to-r from-emerald-500 via-teal-500 to-indigo-600 text-white text-xs sm:text-sm font-black uppercase tracking-wider rounded-2xl shadow-xl shadow-emerald-500/25 text-center focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer inline-block"
-                            />
-                          </div>
                         )}
                       </div>
                     )}
 
-                    {/* 2. LAYOUT: 2 COLUNAS (SPLIT 50/50 - TEXTO + VSL OU IMAGEM) */}
                     {(layout === '2_col_split' || layout === '2_col_reverse') && (
-                      <div className={`grid grid-cols-1 md:grid-cols-2 gap-8 items-center ${layout === '2_col_reverse' ? 'md:flex-row-reverse' : ''}`}>
-                        {/* Coluna de Texto & Bullets */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                         <div className="space-y-4">
-                          {sec.badge && (
-                            <span className="text-[10px] font-black uppercase px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/30">
-                              {sec.badge}
-                            </span>
-                          )}
                           <textarea
                             rows={2}
                             value={sec.headline || ''}
                             onChange={(e) => handleUpdateSection(sec.id, { headline: e.target.value })}
-                            placeholder="Headline do Bloco..."
-                            className="w-full bg-transparent font-black text-xl lg:text-2xl text-white leading-tight focus:outline-none focus:ring-1 focus:ring-indigo-500 rounded-xl p-1 resize-none"
+                            className="w-full bg-transparent font-black text-xl lg:text-2xl text-white leading-tight focus:outline-none rounded p-1 resize-none"
                           />
-                          {sec.subtitle && (
-                            <p className="text-xs text-gray-300">{sec.subtitle}</p>
-                          )}
-
                           {sec.bullets && (
                             <div className="space-y-2 pt-2">
                               {sec.bullets.map((bullet, bIdx) => (
@@ -954,134 +1079,24 @@ export default function PageQuizEditorView() {
                                       updated[bIdx] = e.target.value;
                                       handleUpdateSection(sec.id, { bullets: updated });
                                     }}
-                                    className="w-full bg-transparent focus:outline-none focus:ring-1 focus:ring-indigo-500/50 rounded"
+                                    className="w-full bg-transparent focus:outline-none rounded"
                                   />
                                 </div>
                               ))}
                             </div>
                           )}
-
-                          {sec.buttonText && (
-                            <button className="px-6 py-3 bg-indigo-600 text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-600/30">
-                              {sec.buttonText}
-                            </button>
-                          )}
                         </div>
-
-                        {/* Coluna de Mídia (Player de Vídeo ou Imagem) */}
                         <div>
                           {sec.videoUrl ? (
                             <div className="aspect-video bg-black/80 rounded-2xl border border-white/10 flex flex-col items-center justify-center p-4 shadow-xl">
                               <Play className="w-10 h-10 text-indigo-400 mb-2" />
-                              <span className="text-xs font-bold text-gray-300">🎬 VSL / Vídeo na Direita</span>
+                              <span className="text-xs font-bold text-gray-300">🎬 VSL na Direita</span>
                             </div>
                           ) : (
                             <div className="aspect-square max-h-80 bg-black/40 rounded-2xl border border-white/10 flex items-center justify-center overflow-hidden">
-                              <img
-                                src={sec.imageUrl || 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=600&auto=format&fit=crop&q=80'}
-                                alt="Mockup"
-                                className="w-full h-full object-cover"
-                              />
+                              <img src={sec.imageUrl || 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=600&auto=format&fit=crop&q=80'} alt="Mockup" className="w-full h-full object-cover" />
                             </div>
                           )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 3. LAYOUT: 3 COLUNAS EM GRADE (CARDS / MÓDULOS / DEPOIMENTOS) */}
-                    {layout === '3_col_grid' && (
-                      <div className="space-y-6 text-center">
-                        <div>
-                          {sec.badge && (
-                            <span className="text-[10px] font-black uppercase px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/30">
-                              {sec.badge}
-                            </span>
-                          )}
-                          <h3 className="text-xl lg:text-2xl font-black text-white mt-2">
-                            {sec.headline || 'Grade de Entregáveis / Provas'}
-                          </h3>
-                          {sec.subtitle && (
-                            <p className="text-xs text-gray-300 mt-1">{sec.subtitle}</p>
-                          )}
-                        </div>
-
-                        {/* Grade de 3 Cards de Conteúdo */}
-                        {sec.gridCards && (
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
-                            {sec.gridCards.map((card, cIdx) => (
-                              <div key={card.id} className="p-4 bg-black/40 border border-white/10 rounded-2xl space-y-2 hover:border-indigo-500/40 transition-colors">
-                                <span className="text-[9px] font-bold text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20">
-                                  {card.badge || `Card ${cIdx + 1}`}
-                                </span>
-                                <input
-                                  type="text"
-                                  value={card.title}
-                                  onChange={(e) => {
-                                    const updated = [...(sec.gridCards || [])];
-                                    updated[cIdx] = { ...card, title: e.target.value };
-                                    handleUpdateSection(sec.id, { gridCards: updated });
-                                  }}
-                                  className="w-full bg-transparent font-bold text-xs text-white focus:outline-none"
-                                />
-                                <textarea
-                                  rows={2}
-                                  value={card.description}
-                                  onChange={(e) => {
-                                    const updated = [...(sec.gridCards || [])];
-                                    updated[cIdx] = { ...card, description: e.target.value };
-                                    handleUpdateSection(sec.id, { gridCards: updated });
-                                  }}
-                                  className="w-full bg-transparent text-[11px] text-gray-400 focus:outline-none resize-none"
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* Grade de Depoimentos */}
-                        {sec.testimonials && (
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
-                            {sec.testimonials.map((test, tIdx) => (
-                              <div key={test.id} className="p-4 bg-black/40 border border-white/10 rounded-2xl space-y-2">
-                                <div className="flex items-center gap-1 text-amber-400">
-                                  {[...Array(5)].map((_, i) => (
-                                    <Star key={i} className="w-3 h-3 fill-amber-400" />
-                                  ))}
-                                </div>
-                                <p className="text-xs text-gray-300 italic">"{test.quote}"</p>
-                                <div className="pt-2 border-t border-white/5">
-                                  <h6 className="text-xs font-bold text-white">{test.name}</h6>
-                                  <span className="text-[10px] text-gray-500">{test.role}</span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* 4. LAYOUT: CARTA DE VENDAS (TSL - LONG FORM COPY) */}
-                    {layout === 'tsl_letter' && (
-                      <div className="max-w-2xl mx-auto space-y-5 bg-black/30 border border-amber-500/20 p-6 lg:p-8 rounded-3xl">
-                        <div className="border-b border-amber-500/20 pb-3 text-center">
-                          <span className="text-[10px] font-black uppercase text-amber-400 tracking-wider">
-                            📜 Carta de Vendas Especial
-                          </span>
-                          <h3 className="text-lg lg:text-xl font-black text-white mt-1">
-                            {sec.headline}
-                          </h3>
-                        </div>
-
-                        <textarea
-                          rows={8}
-                          value={sec.bodyText || ''}
-                          onChange={(e) => handleUpdateSection(sec.id, { bodyText: e.target.value })}
-                          className="w-full bg-transparent text-xs sm:text-sm text-gray-200 leading-relaxed focus:outline-none focus:ring-1 focus:ring-amber-500/50 rounded-xl p-2 resize-y font-serif custom-scrollbar"
-                          placeholder="Escreva a carta de vendas em texto corrido com gatilhos de copy..."
-                        />
-
-                        <div className="p-4 bg-amber-500/10 border-l-4 border-amber-400 rounded-r-xl text-xs text-amber-200">
-                          <strong>Importante:</strong> Esta carta de vendas simula a leitura do lead com ênfase nas palavras-chave e quebras de ceticismo.
                         </div>
                       </div>
                     )}
@@ -1089,7 +1104,7 @@ export default function PageQuizEditorView() {
                     {/* Inserir Bloco Entre Seções */}
                     <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 opacity-0 hover:opacity-100 transition-opacity z-10">
                       <button
-                        onClick={() => handleAddSection('hero_vsl', '2_col_split', index)}
+                        onClick={() => handleAddSection('cta_button_block', '1_col_center', index)}
                         className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-lg shadow-indigo-600/50"
                       >
                         <Plus className="w-3 h-3" />
@@ -1108,104 +1123,214 @@ export default function PageQuizEditorView() {
 
       </div>
 
+      {/* ── 🌐 MODAL DE SIMULAÇÃO DA PÁGINA ONLINE (100% LIMPA & REAL) ─────── */}
+      {isOnlinePreviewOpen && (
+        <div className="fixed inset-0 z-[99999] bg-black/90 backdrop-blur-xl flex flex-col text-white animate-in fade-in select-none">
+          {/* Barra de Controle do Simulador Online */}
+          <div className="p-3.5 bg-zinc-950 border-b border-zinc-800 flex items-center justify-between px-6 shrink-0">
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-black uppercase text-emerald-400 bg-emerald-500/20 px-2.5 py-1 rounded-full border border-emerald-500/30">
+                🌐 Visualização Online da Página
+              </span>
+              <span className="text-xs text-zinc-400 hidden sm:inline">
+                Simulação real sem ferramentas de edição
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="flex items-center bg-zinc-900 border border-zinc-800 p-1 rounded-xl text-xs">
+                <button
+                  onClick={() => setOnlinePreviewDevice('desktop')}
+                  className={`px-3 py-1 rounded-lg font-bold transition-all flex items-center gap-1.5 ${
+                    onlinePreviewDevice === 'desktop' ? 'bg-indigo-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  <Monitor className="w-3.5 h-3.5" />
+                  <span>Desktop</span>
+                </button>
+                <button
+                  onClick={() => setOnlinePreviewDevice('mobile')}
+                  className={`px-3 py-1 rounded-lg font-bold transition-all flex items-center gap-1.5 ${
+                    onlinePreviewDevice === 'mobile' ? 'bg-indigo-600 text-white shadow-md' : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  <Smartphone className="w-3.5 h-3.5" />
+                  <span>Mobile</span>
+                </button>
+              </div>
+
+              <button
+                onClick={() => setIsOnlinePreviewOpen(false)}
+                className="p-2 text-zinc-400 hover:text-white rounded-xl bg-zinc-900 hover:bg-zinc-800"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Área de Visualização com Scroll Limpo */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 lg:p-8 flex justify-center bg-[#050816]">
+            <div 
+              className={`transition-all duration-300 bg-[#060a17] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col h-fit mb-32 ${
+                onlinePreviewDevice === 'mobile' ? 'w-full max-w-[390px]' : 'w-full max-w-5xl'
+              }`}
+            >
+              {/* Renderização das Dobras */}
+              <div className="p-6 lg:p-12 space-y-16 lg:space-y-24">
+                {sections.map((sec, idx) => (
+                  <div key={sec.id} className="space-y-6">
+                    {/* Hero VSL */}
+                    {sec.type === 'hero_vsl' && (
+                      <div className="text-center max-w-3xl mx-auto space-y-6">
+                        {sec.badge && (
+                          <span className="inline-block bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-black uppercase px-3 py-1 rounded-full">{sec.badge}</span>
+                        )}
+                        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight">{sec.headline}</h1>
+                        <p className="text-sm sm:text-base text-gray-300">{sec.subtitle}</p>
+                        <div className="aspect-video bg-black rounded-3xl border border-white/10 shadow-2xl overflow-hidden flex items-center justify-center">
+                          <Play className="w-12 h-12 text-indigo-400 opacity-80" />
+                        </div>
+                        {sec.buttonText && (
+                          <button
+                            onClick={() => toast.success('Redirecionando para o Checkout Seguro...')}
+                            className="px-10 py-5 bg-gradient-to-r from-emerald-500 via-teal-500 to-indigo-600 text-white font-black text-sm sm:text-base uppercase rounded-2xl shadow-xl shadow-emerald-500/25 hover:scale-105 transition-transform cursor-pointer"
+                          >
+                            {sec.buttonText}
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Banner de Imagem */}
+                    {sec.type === 'image_banner' && (
+                      <div className="text-center space-y-4 max-w-4xl mx-auto">
+                        <h2 className="text-2xl sm:text-3xl font-black text-white">{sec.headline}</h2>
+                        <img src={sec.imageUrl} alt="Banner" className="rounded-3xl border border-white/10 shadow-2xl w-full" />
+                        {sec.imageCaption && <p className="text-xs text-gray-400">{sec.imageCaption}</p>}
+                      </div>
+                    )}
+
+                    {/* Mural de Prints */}
+                    {sec.type === 'image_social_proof' && (
+                      <div className="text-center space-y-6">
+                        <h2 className="text-2xl sm:text-3xl font-black text-white">{sec.headline}</h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                          {sec.imageGallery?.map(item => (
+                            <div key={item.id} className="p-4 bg-white/[0.02] border border-white/10 rounded-2xl space-y-2 text-left">
+                              <img src={item.imageUrl} alt={item.title} className="rounded-xl aspect-[4/3] object-cover w-full" />
+                              <h4 className="text-xs font-bold text-white">{item.title}</h4>
+                              <p className="text-[10px] text-gray-400">{item.caption}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Botão de CTA Dedicado */}
+                    {sec.type === 'cta_button_block' && (
+                      <div className="text-center max-w-2xl mx-auto p-8 bg-gradient-to-b from-[#0e1738] to-[#080d21] border-2 border-emerald-500/40 rounded-3xl space-y-6 shadow-2xl">
+                        <h2 className="text-2xl sm:text-3xl font-black text-white">{sec.headline}</h2>
+                        <p className="text-xs sm:text-sm text-gray-300">{sec.subtitle}</p>
+                        <button
+                          onClick={() => toast.success('Redirecionando para o Checkout Seguro...')}
+                          className="w-full sm:w-auto px-10 py-5 bg-gradient-to-r from-emerald-500 via-teal-500 to-indigo-600 text-white font-black text-sm sm:text-base uppercase rounded-2xl shadow-xl shadow-emerald-500/30 hover:scale-105 transition-transform"
+                        >
+                          {sec.buttonText}
+                        </button>
+                        <p className="text-xs text-gray-400">{sec.ctaData?.subtext}</p>
+                      </div>
+                    )}
+
+                    {/* Tabela Comparativa */}
+                    {sec.type === 'comparison_table' && sec.comparisonData && (
+                      <div className="max-w-3xl mx-auto space-y-6 text-center">
+                        <h2 className="text-2xl sm:text-3xl font-black text-white">{sec.headline}</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                          <div className="p-6 bg-rose-950/20 border border-rose-500/30 rounded-2xl space-y-3">
+                            <h4 className="text-xs font-black uppercase text-rose-400">{sec.comparisonData.competitorTitle}</h4>
+                            {sec.comparisonData.competitorItems.map((item, i) => (
+                              <div key={i} className="text-xs text-gray-300 flex items-start gap-2">
+                                <span className="text-rose-400">✕</span> <span>{item}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="p-6 bg-emerald-950/20 border border-emerald-500/40 rounded-2xl space-y-3">
+                            <h4 className="text-xs font-black uppercase text-emerald-400">{sec.comparisonData.ourTitle}</h4>
+                            {sec.comparisonData.ourItems.map((item, i) => (
+                              <div key={i} className="text-xs text-gray-200 flex items-start gap-2">
+                                <span className="text-emerald-400">✓</span> <span>{item}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── 📱 MODAL DO SIMULADOR DE QUIZ AO VIVO ───────────────────────────── */}
-      {isSimulatorOpen && (
+      {isQuizSimulatorOpen && (
         <div 
-          onClick={() => setIsSimulatorOpen(false)}
+          onClick={() => setIsQuizSimulatorOpen(false)}
           className="fixed inset-0 z-[99999] bg-black/85 backdrop-blur-lg flex items-center justify-center p-4 animate-in fade-in"
         >
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm h-[720px] bg-[#060a16] border border-indigo-500/40 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+            className="w-full max-w-sm h-[720px] bg-[#060a16] border border-purple-500/40 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
           >
-            {/* Topo do Simulador */}
             <div className="p-3.5 bg-black/80 border-b border-white/10 flex items-center justify-between shrink-0">
-              <span className="text-[10px] font-black uppercase bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-500/30">
-                Simulador Ao Vivo • Passo {simulatorStepIndex + 1}/{sections.length}
+              <span className="text-[10px] font-black uppercase bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full border border-purple-500/30">
+                Simulador Ao Vivo • Passo {quizSimulatorStepIndex + 1}/{sections.length}
               </span>
               <button
-                onClick={() => setIsSimulatorOpen(false)}
+                onClick={() => setIsQuizSimulatorOpen(false)}
                 className="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-white/10"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Tela Interativa do Quiz */}
             <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-gradient-to-b from-[#090f24] to-[#040711] flex flex-col justify-between">
               {(() => {
-                const currentSec = sections[simulatorStepIndex];
+                const currentSec = sections[quizSimulatorStepIndex];
                 if (!currentSec) return null;
 
                 return (
                   <div className="space-y-6 text-center animate-in fade-in slide-in-from-right-4">
                     <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
                       <div 
-                        className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-300"
-                        style={{ width: `${Math.round(((simulatorStepIndex + 1) / sections.length) * 100)}%` }}
+                        className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-300"
+                        style={{ width: `${Math.round(((quizSimulatorStepIndex + 1) / sections.length) * 100)}%` }}
                       />
                     </div>
 
                     <h3 className="text-base font-black text-white leading-snug">
                       {currentSec.headline || currentSec.title}
                     </h3>
-                    {currentSec.subtitle && (
-                      <p className="text-xs text-gray-300">{currentSec.subtitle}</p>
-                    )}
+                    {currentSec.subtitle && <p className="text-xs text-gray-300">{currentSec.subtitle}</p>}
 
-                    {currentSec.videoUrl && (
-                      <div className="aspect-video bg-black/60 rounded-2xl border border-white/10 flex items-center justify-center overflow-hidden my-4 shadow-xl">
-                        <Play className="w-10 h-10 text-indigo-400 opacity-80" />
-                      </div>
-                    )}
-
-                    {currentSec.type === 'quiz_diagnostic_loading' && (
-                      <div className="py-8 space-y-4 text-center">
-                        <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto" />
-                        <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden max-w-xs mx-auto">
-                          <div 
-                            className="h-full bg-gradient-to-r from-indigo-500 to-emerald-400 transition-all duration-200"
-                            style={{ width: `${simulatorLoadingProgress}%` }}
-                          />
-                        </div>
-                        <p className="text-xs text-emerald-300 font-bold">{simulatorLoadingProgress}% concluído</p>
-                      </div>
-                    )}
-
-                    {currentSec.quizQuestion && (
+                    {currentSec.quizQuestion?.options && (
                       <div className="space-y-2 text-left pt-2">
                         {currentSec.quizQuestion.options.map(opt => (
                           <button
                             key={opt.id}
                             onClick={() => {
-                              setSimulatorAnswers(prev => ({ ...prev, [currentSec.id]: opt.id }));
-                              if (simulatorStepIndex < sections.length - 1) {
-                                setSimulatorStepIndex(prev => prev + 1);
+                              setQuizSimulatorAnswers(prev => ({ ...prev, [currentSec.id]: opt.id }));
+                              if (quizSimulatorStepIndex < sections.length - 1) {
+                                setQuizSimulatorStepIndex(prev => prev + 1);
                               }
                             }}
-                            className="w-full p-3 rounded-xl bg-white/[0.04] hover:bg-indigo-600/30 border border-white/10 hover:border-indigo-500/50 text-white text-xs font-bold transition-all flex items-center justify-between group active:scale-[0.98]"
+                            className="w-full p-3 rounded-xl bg-white/[0.04] hover:bg-purple-600/30 border border-white/10 hover:border-purple-500/50 text-white text-xs font-bold transition-all flex items-center justify-between group"
                           >
                             <span>{opt.label}</span>
-                            <ArrowRight className="w-3.5 h-3.5 text-gray-500 group-hover:text-indigo-300 group-hover:translate-x-1 transition-all" />
+                            <ArrowRight className="w-3.5 h-3.5 text-gray-500 group-hover:text-purple-300" />
                           </button>
                         ))}
-                      </div>
-                    )}
-
-                    {currentSec.pricingData && (
-                      <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl space-y-3 text-center my-4">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded-full">
-                          Oferta Recomendada
-                        </span>
-                        <div className="text-2xl font-black text-white">
-                          {currentSec.pricingData.installments || `R$ ${currentSec.pricingData.offerPrice}`}
-                        </div>
-                        <button
-                          onClick={() => toast.success('Checkout acessado!')}
-                          className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-500/25"
-                        >
-                          QUERO COMEÇAR AGORA
-                        </button>
                       </div>
                     )}
                   </div>
@@ -1214,19 +1339,19 @@ export default function PageQuizEditorView() {
 
               <div className="flex items-center justify-between pt-4 border-t border-white/5">
                 <button
-                  onClick={() => setSimulatorStepIndex(prev => Math.max(0, prev - 1))}
-                  disabled={simulatorStepIndex === 0}
+                  onClick={() => setQuizSimulatorStepIndex(prev => Math.max(0, prev - 1))}
+                  disabled={quizSimulatorStepIndex === 0}
                   className="text-xs text-gray-400 hover:text-white disabled:opacity-20"
                 >
                   ← Voltar
                 </button>
                 <button
                   onClick={() => {
-                    if (simulatorStepIndex < sections.length - 1) {
-                      setSimulatorStepIndex(prev => prev + 1);
+                    if (quizSimulatorStepIndex < sections.length - 1) {
+                      setQuizSimulatorStepIndex(prev => prev + 1);
                     }
                   }}
-                  className="text-xs text-indigo-400 hover:text-indigo-300 font-bold"
+                  className="text-xs text-purple-400 hover:text-purple-300 font-bold"
                 >
                   Avançar →
                 </button>

@@ -648,8 +648,28 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
      - Botão `[ ⚡ Baixar HTML ]` que compila as seções da página de vendas em um arquivo autônomo `pagina-de-vendas.html` com CDN Tailwind CSS, player responsivo, script nativo de delay do botão de checkout e FAQ interativo em JS puro.
   3. **Teleprompter Nativo em Tela Cheia para Gravação de VSL**:
      - Modal em tela cheia com fundo preto e tipografia gigante, rolagem automática sincronizada com WPM, controle de velocidade (1x a 6x), ajuste de fonte e linha guia do olhar do locutor.
-  4. **Correção de Rolagem Suave do Canvas**:
-     - Ajuste na hierarquia flex (`min-h-0`, `overflow-y-auto` e margem inferior `mb-32`) permitindo rolagem vertical completa e desimpedida em todas as dobras em Desktop e Mobile.
+---
+
+## 39. Novos Blocos Visuais de Alta Conversão, Simulador Online em Tempo Real e Bloqueio de Modo
+- **Data da Integração**: 26/08/2026
+- **Funcionalidades**:
+  1. **Novos Blocos Especializados de Página de Vendas**:
+     - `image_banner`: Banner / Mockup centralizado em alta definição com legenda opcional.
+     - `image_social_proof`: Mural de Prints e Notificações de Vendas (WhatsApp / Gateways) em grade 3x3 ou 2x2.
+     - `cta_button_block`: Bloco dedicado de Botão de CTA pulsante com selos de segurança (100% Seguro, Acesso Imediato, 7 Dias de Garantia).
+     - `urgency_timer`: Barra de escassez e urgência com cronômetro regressivo destacado.
+     - `comparison_table`: Tabela comparativa direta (Mercado Tradicional ❌ vs Nosso Método ✅).
+  2. **Novos Passos do Quiz Interativo**:
+     - `quiz_image_choice`: Escolha visual com cards clicáveis contendo imagens e pontuação por nicho/perfil.
+     - `quiz_mini_vsl`: Passo com mini-VSL de transição para aquecimento do lead antes de perguntas-chave.
+     - `quiz_lead_capture`: Formulário de captura de dados (Nome + WhatsApp + E-mail) antes da revelação do resultado.
+  3. **Visualizador Online da Página (`[ 🌐 Visualizar Online ]`)**:
+     - Modal de tela cheia limpo (zero controles de edição) com alternador Desktop/Mobile que simula o site 100% publicado e interativo (vídeo funcional, FAQ expansível e teste de clique no CTA).
+  4. **Bloqueio de Modo Baseado no Ativo**:
+     - Remoção do alternador manual de modo no cabeçalho. O editor agora carrega o catálogo e layout específico (Página ou Quiz) selecionado no momento da criação ou abertura do ativo.
+- **Decisões Técnicas**:
+  - `shared/types.ts`: Atualização de `PageQuizSectionType` e inclusão das interfaces de suporte (`imageGallery`, `comparisonData`, `ctaData`, `leadCaptureData`).
+
 
 
 

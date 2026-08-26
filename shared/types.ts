@@ -951,7 +951,16 @@ export type PageQuizSectionType =
   | 'pricing_box'
   | 'guarantee_seal'
   | 'faq_accordion'
+  | 'image_banner'
+  | 'image_social_proof'
+  | 'cta_button_block'
+  | 'urgency_timer'
+  | 'comparison_table'
   | 'quiz_question'
+  | 'quiz_image_choice'
+  | 'quiz_mini_vsl'
+  | 'quiz_social_proof'
+  | 'quiz_lead_capture'
   | 'quiz_diagnostic_loading'
   | 'quiz_result_pitch'
   | 'custom_html';
@@ -1007,11 +1016,30 @@ export interface PageQuizSection {
   videoUrl?: string;
   videoDelaySeconds?: number;
   imageUrl?: string;
+  imageCaption?: string;
   buttonText?: string;
   buttonLink?: string;
   
   // Elementos Estruturais
   gridCards?: GridCardItem[];
+  imageGallery?: { id: string; title: string; imageUrl?: string; caption?: string }[];
+  comparisonData?: {
+    competitorTitle: string;
+    competitorItems: string[];
+    ourTitle: string;
+    ourItems: string[];
+  };
+  ctaData?: {
+    subtext?: string;
+    urgencyTimer?: string;
+    acceptedPayments?: string[];
+  };
+  leadCaptureData?: {
+    submitButtonText: string;
+    requireName?: boolean;
+    requirePhone?: boolean;
+    requireEmail?: boolean;
+  };
   quizQuestion?: {
     questionType: 'single_choice' | 'multi_choice' | 'image_choice' | 'scale_1_10';
     options: QuizOptionItem[];
