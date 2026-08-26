@@ -12,7 +12,7 @@ import {
   Calendar, PhoneCall, Briefcase, FileSignature, Receipt, Rocket, LifeBuoy,
   Star, RefreshCcw, Clock, GitBranch, Smartphone, Mic, UserCheck, GraduationCap, Inbox,
   Target, StickyNote, BoxSelect, Wand2, MousePointer, Workflow, Spline,
-  AlignLeft, ArrowLeftToLine, ArrowUpToLine, Focus, ChevronDown, ArrowRightLeft, ArrowUpDown
+  AlignLeft, ArrowLeftToLine, ArrowUpToLine, Focus, ChevronDown, ArrowRightLeft, ArrowUpDown, Minimize2, Compass, Scan, Map
 } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
@@ -209,6 +209,12 @@ export default function FunnelArchitectEditorView() {
   // Simulador de Tráfego
   const [initialTrafficInput, setInitialTrafficInput] = useState<number>(3000);
   const [isSimulationActive, setIsSimulationActive] = useState(true);
+
+  // Estados de Super Espaço & Navegação Avançada
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMinimapOpen, setIsMinimapOpen] = useState(false);
+  const [isSpacePressed, setIsSpacePressed] = useState(false);
+  const editorContainerRef = useRef<HTMLDivElement>(null);
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const funnelRef = useRef<FunnelBlueprint | null>(null);
@@ -1352,8 +1358,11 @@ export default function FunnelArchitectEditorView() {
           ref={canvasRef}
           onWheel={handleWheel}
           onMouseDown={handleMouseDown}
+          onDoubleClick={handleCanvasDoubleClick}
           className={`flex-1 h-full relative overflow-hidden bg-[#050914] select-none ${
-            canvasTool === 'select' ? 'cursor-crosshair' : (isDraggingCanvas ? 'cursor-grabbing' : 'cursor-grab')
+            isSpacePressed ? 'cursor-grab active:cursor-grabbing' : (
+              canvasTool === 'select' ? 'cursor-crosshair' : (isDraggingCanvas ? 'cursor-grabbing' : 'cursor-grab')
+            )
           }`}
           style={{
             backgroundImage: `
@@ -1876,32 +1885,204 @@ export default function FunnelArchitectEditorView() {
             </div>
           )}
 
-          {/* ── 🎛️ CONTROLES DE ZOOM NO CANTO INFERIOR DIREITO ────────────────────── */}
-          <div className="absolute right-6 bottom-6 z-20 flex items-center gap-1.5 bg-[#090e1c]/90 border border-white/10 p-1.5 rounded-2xl shadow-2xl backdrop-blur-xl">
+          {/* ── 🗺️ MINI-MAPA DE NAVEGAÇÃO RADAR RETRÁTIL ─────────────────────────── */}
+          {isMinimapOpen && funnel && (() => {
+            let minX = -400, minY = -400, maxX = 2400, maxY = 1800;
+            if (funnel.nodes.length > 0) {
+              minX = Math.min(...funnel.nodes.map(n => n.x)) - 150;
+              minY = Math.min(...funnel.nodes.map(n => n.y)) - 150;
+              maxX = Math.max(...funnel.nodes.map(n => n.x + 240)) + 150;
+              maxY = Math.max(...funnel.nodes.map(n => n.y + 120)) + 150;
+            }
+
+            const worldWidth = Math.max(1000, maxX - minX);
+            const worldHeight = Math.max(700, maxY - minY);
+
+            const mapWidth = 208;
+            const mapHeight = 128;
+            const scaleX = mapWidth / worldWidth;
+            const scaleY = mapHeight / worldHeight;
+            const scale = Math.min(scaleX, scaleY);
+
+            const rect = canvasRef.current?.getBoundingClientRect() || { width: window.innerWidth, height: window.innerHeight };
+            const vpX = (-pan.x / zoom - minX) * scale;
+            const vpY = (-pan.y / zoom - minY) * scale;
+            const vpW = Math.max(10, (rect.width / zoom) * scale);
+            const vpH = Math.max(10, (rect.height / zoom) * scale);
+
+            const handleMinimapClick = (e: React.MouseEvent<SVGSVGElement>) => {
+              const svgRect = e.currentTarget.getBoundingClientRect();
+              const clickX = e.clientX - svgRect.left;
+              const clickY = e.clientY - svgRect.top;
+
+              const targetWorldX = minX + clickX / scale;
+              const targetWorldY = minY + clickY / scale;
+
+              const newPanX = rect.width / 2 - targetWorldX * zoom;
+              const newPanY = rect.height / 2 - targetWorldY * zoom;
+
+              setPan({ x: Math.round(newPanX), y: Math.round(newPanY) });
+            };
+
+            return (
+              <div className="absolute right-6 bottom-20 z-30 w-56 bg-[#090e1c]/95 border border-white/15 rounded-2xl shadow-2xl backdrop-blur-2xl p-2.5 overflow-hidden">
+                <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-white/10 text-[10px] font-black uppercase tracking-wider text-gray-400">
+                  <div className="flex items-center gap-1.5 text-indigo-400">
+                    <Compass className="w-3.5 h-3.5" />
+                    <span>Radar do Funil</span>
+                  </div>
+                  <button 
+                    onClick={() => setIsMinimapOpen(false)}
+                    className="p-0.5 hover:text-white rounded hover:bg-white/10"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+
+                <div className="relative w-full h-32 bg-black/60 rounded-xl overflow-hidden border border-white/5 cursor-pointer">
+                  <svg 
+                    width={mapWidth} 
+                    height={mapHeight} 
+                    onClick={handleMinimapClick}
+                    className="w-full h-full"
+                  >
+                    {/* Molduras */}
+                    {(funnel.frames || []).map(f => (
+                      <rect
+                        key={f.id}
+                        x={(f.x - minX) * scale}
+                        y={(f.y - minY) * scale}
+                        width={Math.max(4, f.width * scale)}
+                        height={Math.max(4, f.height * scale)}
+                        fill="rgba(99, 102, 241, 0.1)"
+                        stroke="rgba(99, 102, 241, 0.3)"
+                        strokeWidth="1"
+                        rx="2"
+                      />
+                    ))}
+
+                    {/* Conexões */}
+                    {funnel.connections.map(c => {
+                      const fromN = funnel.nodes.find(n => n.id === c.fromNodeId);
+                      const toN = funnel.nodes.find(n => n.id === c.toNodeId);
+                      if (!fromN || !toN) return null;
+                      return (
+                        <line
+                          key={c.id}
+                          x1={(fromN.x + 100 - minX) * scale}
+                          y1={(fromN.y + 40 - minY) * scale}
+                          x2={(toN.x + 100 - minX) * scale}
+                          y2={(toN.y + 40 - minY) * scale}
+                          stroke="rgba(255, 255, 255, 0.2)"
+                          strokeWidth="1"
+                        />
+                      );
+                    })}
+
+                    {/* Nós */}
+                    {funnel.nodes.map(n => {
+                      const nodeColor = n.type === 'traffic' ? '#3b82f6' : (n.type === 'offer' ? '#10b981' : (n.type === 'page' ? '#6366f1' : '#f59e0b'));
+                      return (
+                        <rect
+                          key={n.id}
+                          x={(n.x - minX) * scale}
+                          y={(n.y - minY) * scale}
+                          width={Math.max(4, 200 * scale)}
+                          height={Math.max(3, 80 * scale)}
+                          fill={nodeColor}
+                          rx="1"
+                        />
+                      );
+                    })}
+
+                    {/* Viewport Box */}
+                    <rect
+                      x={Math.max(0, vpX)}
+                      y={Math.max(0, vpY)}
+                      width={Math.min(mapWidth, vpW)}
+                      height={Math.min(mapHeight, vpH)}
+                      fill="rgba(99, 102, 241, 0.15)"
+                      stroke="#60a5fa"
+                      strokeWidth="1.5"
+                      strokeDasharray="2,2"
+                      rx="3"
+                    />
+                  </svg>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* ── 🎛️ DOCK FLUTUANTE DE NAVEGAÇÃO ESPACIAL & SUPER ZOOM ────────────────────── */}
+          <div className="absolute right-6 bottom-6 z-20 flex items-center gap-1 bg-[#090e1c]/90 border border-white/10 p-1.5 rounded-2xl shadow-2xl backdrop-blur-xl">
+            {/* Zoom Out */}
             <button
-              onClick={() => setZoom(prev => Math.min(2.2, prev + 0.15))}
+              onClick={() => {
+                const newZoom = Math.max(0.1, Number((zoom - 0.15).toFixed(2)));
+                setZoom(newZoom);
+              }}
               className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
-              title="Zoom In"
-            >
-              <ZoomIn className="w-4 h-4" />
-            </button>
-            <span className="text-xs font-bold text-gray-400 px-1 min-w-10 text-center">
-              {Math.round(zoom * 100)}%
-            </span>
-            <button
-              onClick={() => setZoom(prev => Math.max(0.3, prev - 0.15))}
-              className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
-              title="Zoom Out"
+              title="Diminuir Zoom (10% mínimo)"
             >
               <ZoomOut className="w-4 h-4" />
             </button>
-            <div className="w-px h-4 bg-white/10 my-auto"></div>
+
+            {/* Porcentagem Atual */}
             <button
-              onClick={() => { setZoom(1); setPan({ x: 150, y: 100 }); }}
-              className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
-              title="Resetar Visualização"
+              onClick={() => { setZoom(1); }}
+              className="text-xs font-black text-indigo-400 hover:text-white px-2 py-1 hover:bg-white/10 rounded-lg min-w-14 text-center transition-colors"
+              title="Clique para voltar para 100%"
             >
-              <Maximize2 className="w-4 h-4" />
+              {Math.round(zoom * 100)}%
+            </button>
+
+            {/* Zoom In */}
+            <button
+              onClick={() => {
+                const newZoom = Math.min(3.0, Number((zoom + 0.15).toFixed(2)));
+                setZoom(newZoom);
+              }}
+              className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
+              title="Aumentar Zoom (300% máximo)"
+            >
+              <ZoomIn className="w-4 h-4" />
+            </button>
+
+            <div className="w-px h-4 bg-white/10 mx-0.5"></div>
+
+            {/* Botão Enquadrar Tudo no Canvas (Fit-to-Screen) */}
+            <button
+              onClick={handleFitToScreen}
+              className="p-2 text-gray-400 hover:text-indigo-300 hover:bg-indigo-600/20 rounded-xl transition-colors"
+              title="Enquadrar Todo o Funil na Tela (Shift + 1 / Duplo clique no fundo)"
+            >
+              <Scan className="w-4 h-4" />
+            </button>
+
+            {/* Botão Abrir Radar / Mini-Mapa */}
+            <button
+              onClick={() => setIsMinimapOpen(prev => !prev)}
+              className={`p-2 rounded-xl transition-colors ${
+                isMinimapOpen 
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/30' 
+                  : 'text-gray-400 hover:text-white hover:bg-white/10'
+              }`}
+              title="Alternar Mini-Mapa de Navegação Radar"
+            >
+              <Compass className="w-4 h-4" />
+            </button>
+
+            {/* Botão Modo Tela Cheia Imersivo */}
+            <button
+              onClick={toggleFullscreen}
+              className={`p-2 rounded-xl transition-colors ${
+                isFullscreen 
+                  ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' 
+                  : 'text-gray-400 hover:text-white hover:bg-white/10'
+              }`}
+              title="Modo Tela Cheia Imersivo (Tecla F)"
+            >
+              {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
             </button>
           </div>
 

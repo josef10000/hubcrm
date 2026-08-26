@@ -477,3 +477,18 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Decisões Técnicas**:
   - `FunnelArchitectEditorView.tsx`: Substituição de `handleOpenNodeEditor(newNode)` em `handleAddBlock` por `setSelectedNodeIds([newNode.id])`.
 
+---
+
+## 30. Funis & Espaço Infinito: Super Zoom (10%-300%), Zoom Centrado no Cursor, Enquadrar Tudo, Tela Cheia, Minimapa & Pan por Espaço
+- **Data da Integração**: 26/08/2026
+- **Funcionalidades**:
+  1. **Super Zoom Extremo (10% a 300%)**: Expansão do range de zoom de 0.1 a 3.0 para permitir visão macro de funis gigantes com 50+ etapas e micro-foco de alta resolução.
+  2. **Zoom Inteligente Centrado no Cursor**: Fórmula matemática que ancora as coordenadas mundiais do mouse (`worldX, worldY`) durante o scroll da rodinha, garantindo que o bloco apontado fique perfeitamente estático durante aproximação ou afastamento.
+  3. **Enquadrar Tudo no Canvas (Fit-to-Screen / `Shift + 1` / Duplo Clique)**: Algoritmo de Bounding Box que calcula as extremidades de todos os nós e molduras e centraliza o funil inteiro com margem de segurança de 100px.
+  4. **Modo Tela Cheia Imersivo (Zen Mode / Tecla `F`)**: Alternância nativa de fullscreen usando a API do navegador para entrega de 100% dos pixels ao canvas.
+  5. **Mini-Mapa Radar Retrátil**: Painel radar no canto inferior exibindo miniatura vetorial dos blocos, conexões, molduras e o retângulo de visão (viewport box) com suporte a teleporte por clique.
+  6. **Navegação Rápida com Barra de Espaço (`Spacebar Pan`)**: Pressionar e segurar a barra de espaço permite arrastar o canvas com botão esquerdo ou do meio a partir de qualquer ponto.
+  7. **Dock Flutuante de Ferramentas Espaciais**: Barra inferior translúcida com botões de zoom, reset 100%, enquadramento, radar e tela cheia.
+- **Decisões Técnicas**:
+  - `FunnelArchitectEditorView.tsx`: Funções `handleFitToScreen`, `handleWheel` vetorial, `toggleFullscreen`, `renderMinimap` e listeners de teclado (`keydown` / `keyup` para `Space`, `Shift+1`, `F`, `Ctrl+0`).
+
