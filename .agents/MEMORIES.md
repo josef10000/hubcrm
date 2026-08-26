@@ -614,6 +614,30 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
   - `src/domains/crm/constants/vslPageTemplates.ts`: Catálogo de 14 blocos de VSL e templates oficiais (`DEFAULT_VSL_BLOCKS`, `DEFAULT_SALES_PAGE_SECTIONS`, `DEFAULT_QUIZ_SECTIONS`).
   - `src/app/router/AppRouter.tsx`: Rotas `/funnels/vsl/:id` e `/funnels/page-quiz/:id`.
 
+---
+
+## 37. Construtor Visual de Wireframe de Páginas de Venda: Canvas em Tempo Real, Layouts em Colunas e Edição In-Place
+- **Data da Integração**: 26/08/2026
+- **Funcionalidades**:
+  1. **Quadro Central Visual com Scroll em Tempo Real (`PageQuizEditorView.tsx`)**:
+     - Substituição de formulários estáticos por uma visualização WYSIWYG / Wireframe realista da página de vendas com moldura de navegador e rolagem vertical suave.
+     - Alternador no topo entre visualização `🖥️ Desktop` (1200px lado a lado) e `📱 Mobile` (390px empilhado).
+  2. **Motor de Disposição & Layouts em Colunas**:
+     - Cada dobra possui uma barra flutuante de ferramentas rápidas para alternar entre 4 estilos de layout com 1 clique:
+       - `1 Coluna Central (1_col_center)`: Super-Headline, Player VSL centralizado, Box de Preço, FAQ e CTA.
+       - `2 Colunas Split 50/50 (2_col_split)`: Texto/Copy + Bullets na esquerda e Player VSL / Imagem na direita.
+       - `2 Colunas Invertido (2_col_reverse)`: Imagem/Mockup na esquerda e Bullets de autoridade na direita.
+       - `3 Colunas em Grade (3_col_grid)`: 3 Cards de Módulos/Entregáveis ou 3 Depoimentos de Prova Social com estrelas.
+       - `Carta de Vendas (tsl_letter)`: Long-form copy estilizada com caixa de alerta e tipografia editorial de alta conversão.
+  3. **Edição Direta In-Canvas & Inserção Dinâmica**:
+     - Edição de títulos, subtítulos, bullets, badges e preços diretamente no próprio elemento renderizado.
+     - Botão flutuante `[ + Inserir Bloco Aqui ]` entre quaisquer duas seções para encaixar novos blocos sem quebrar o fluxo.
+     - Ações de mover (Cima / Baixo), duplicar e excluir dobras com feedback instantâneo.
+- **Decisões Técnicas**:
+  - `shared/types.ts`: Extensão de `PageQuizSection` com `layoutColumns` (`'1_col_center' | '2_col_split' | '2_col_reverse' | '3_col_grid' | 'tsl_letter'`), `bullets` e `gridCards`.
+  - `src/domains/crm/constants/vslPageTemplates.ts`: Atualização das 8 dobras padrão do `DEFAULT_SALES_PAGE_SECTIONS` com layouts e cards ricos pré-configurados.
+
+
 
 
 

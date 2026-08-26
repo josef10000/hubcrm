@@ -325,6 +325,7 @@ export const DEFAULT_SALES_PAGE_SECTIONS: PageQuizSection[] = [
   {
     id: 'sec-1',
     type: 'hero_vsl',
+    layoutColumns: '1_col_center',
     title: 'Dobra 1: Hero Section com VSL & Promessa Principal',
     badge: '🔥 Dobra Principal (Above the Fold)',
     headline: 'Descubra Como Multiplicar as Vendas do Seu Negócio Digital no WhatsApp em Menos de 14 Dias',
@@ -337,38 +338,63 @@ export const DEFAULT_SALES_PAGE_SECTIONS: PageQuizSection[] = [
   {
     id: 'sec-2',
     type: 'pain_mirror',
+    layoutColumns: '2_col_split',
     title: 'Dobra 2: Espelho da Dor & Para Quem É / Não É',
-    headline: 'Você se identifica com alguma dessas situações?',
-    bodyText: '• Leads chamam no WhatsApp mas dizem que "está caro" e somem.\n• Você investe em anúncios mas não consegue recuperar carrinhos abandonados.\n• Falta um processo padronizado para os seus atendentes venderem todos os dias.',
+    headline: 'Você se identifica com alguma dessas situações diárias?',
+    subtitle: 'Se você sente que o seu esforço não se traduz em vendas, o problema não é você.',
+    bullets: [
+      'Leads chamam no WhatsApp mas dizem que "está caro" e somem.',
+      'Você investe em tráfego pago mas não recupera carrinhos abandonados.',
+      'Falta um processo padronizado para os atendentes fecharem vendas todos os dias.',
+      'Você depende 100% da sua presença para a operação faturar.'
+    ],
+    imageUrl: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=600&auto=format&fit=crop&q=80',
     badge: '🎯 Filtro de Qualificação'
   },
   {
     id: 'sec-3',
     type: 'authority_bio',
+    layoutColumns: '2_col_reverse',
     title: 'Dobra 3: Apresentação do Especialista & Autoridade',
     headline: 'Quem será o seu mentor nessa jornada?',
     bodyText: 'Com mais de 7 anos de experiência em Direct Response e mais de R$ 12 milhões faturados em infoprodutos e mentorias high-ticket, nós sintetizamos tudo o que realmente funciona em um playbook prático e sem enrolação.',
-    imageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80'
+    bullets: [
+      '+ R$ 12 Milhões faturados no digital',
+      '+ 4.500 alunos formados no Brasil e exterior',
+      'Método validado em mais de 35 nichos diferentes'
+    ],
+    imageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80'
   },
   {
     id: 'sec-4',
     type: 'module_grid',
-    title: 'Dobra 4: Grade de Entregáveis & O que Você Vai Receber',
-    headline: 'O que está incluído no seu treinamento completo:',
-    bodyText: '• Módulo 1: A Estratégia de Atração de Leads Qualificados\n• Módulo 2: O Roteiro de Fechamento no WhatsApp (Passo a Passo)\n• Módulo 3: Scripts Rápidos para Quebra de 12 Objeções\n• Módulo 4: Automação e Recuperação Ativa de Pix e Boletos',
+    layoutColumns: '3_col_grid',
+    title: 'Dobra 4: Grade de Entregáveis & Módulos',
+    headline: 'O que você vai receber acesso imediato:',
+    subtitle: 'Um arsenal completo e pronto para implementação no seu negócio:',
+    gridCards: [
+      { id: 'm-1', title: 'Módulo 1: Máquina de Atração', description: 'Como gerar fluxo diário de leads altamente qualificados com baixo CPA.', badge: 'Fase 1' },
+      { id: 'm-2', title: 'Módulo 2: Fechamento 1 a 1', description: 'Scripts de áudios gravados e condução de conversa com gatilhos de urgência.', badge: 'Fase 2' },
+      { id: 'm-3', title: 'Módulo 3: Quebra de 12 Objeções', description: 'Como contornar "tá caro", "vou falar com meu sócio" e "não tenho tempo".', badge: 'Fase 3' },
+      { id: 'm-4', title: 'Módulo 4: Recuperador Automático', description: 'Esteira de recuperação ativa de Pix, boleto e cartão recusado em 10 minutos.', badge: 'Fase 4' },
+      { id: 'm-5', title: 'Módulo 5: Roleta & Gestão de Closers', description: 'Distribuição equitativa de leads e metas para equipe comercial.', badge: 'Fase 5' },
+      { id: 'm-6', title: 'Módulo 6: Escala High-Ticket', description: 'Como transicionar produtos de R$ 297 para mentorias de R$ 3.000 a R$ 10.000.', badge: 'Fase 6' }
+    ],
     badge: '📦 Conteúdo Completo'
   },
   {
     id: 'sec-5',
     type: 'social_proof_wall',
+    layoutColumns: '3_col_grid',
     title: 'Dobra 5: Muro de Provas Sociais & Depoimentos Reais',
-    headline: 'Veja o que nossos alunos e clientes estão dizendo:',
+    headline: 'Veja os resultados de quem já aplicou o método:',
+    subtitle: 'Pessoas reais em diferentes nichos que transformaram suas operações:',
     testimonials: [
       {
         id: 't-1',
         name: 'Carlos Mendes',
         role: 'Produtor Digital',
-        quote: 'Em apenas 3 dias aplicando o script de áudio humanizado, recuperamos 18 Pix que estavam pendentes. Pagou o investimento 10 vezes.',
+        quote: 'Em apenas 3 dias aplicando o script de áudio humanizado, recuperamos 18 Pix pendentes. Pagou o treinamento 10 vezes.',
         rating: 5
       },
       {
@@ -377,14 +403,23 @@ export const DEFAULT_SALES_PAGE_SECTIONS: PageQuizSection[] = [
         role: 'Mentora High-Ticket',
         quote: 'A clareza do método é impressionante. Nossa taxa de conversão no WhatsApp subiu de 8% para 24% na primeira semana.',
         rating: 5
+      },
+      {
+        id: 't-3',
+        name: 'Lucas Antunes',
+        role: 'Gestor de Tráfego & Coprodutor',
+        quote: 'Nunca vi nada tão direto ao ponto. O playbook de quebra de objeções virou a bíblia dos nossos atendentes.',
+        rating: 5
       }
     ]
   },
   {
     id: 'sec-6',
     type: 'pricing_box',
+    layoutColumns: '1_col_center',
     title: 'Dobra 6: Box da Oferta Irresistível & Preço',
     headline: 'Garanta a Sua Vaga com Condição Especial de Lançamento',
+    subtitle: 'Acesso vitalício, atualizações inclusas e garantia total de 7 dias.',
     pricingData: {
       regularPrice: 997,
       offerPrice: 297,
@@ -392,16 +427,17 @@ export const DEFAULT_SALES_PAGE_SECTIONS: PageQuizSection[] = [
       checkoutUrl: 'https://pay.exemplo.com/checkout',
       guaranteeDays: 7,
       bonusList: [
-        'Acesso Vitalício à Plataforma',
+        'Acesso Vitalício à Plataforma e Aulas',
         'Pack de Áudios Gravados de Alta Conversão (Valor: R$ 297)',
         'Planilha de Gestão e Roleta de Leads (Valor: R$ 197)',
-        'Acesso à Comunidade VIP de Alunos'
+        'Acesso à Comunidade VIP de Networking'
       ]
     }
   },
   {
     id: 'sec-7',
     type: 'guarantee_seal',
+    layoutColumns: '1_col_center',
     title: 'Dobra 7: Garantia Blindada de 7 Dias',
     headline: 'Garantia Incondicional de 100% de Satisfação',
     bodyText: 'Você tem 7 dias completos para testar o método. Se por qualquer motivo você achar que não é para você, basta nos enviar um e-mail ou chamar no WhatsApp que devolveremos todo o seu investimento imediatamente.',
@@ -410,6 +446,7 @@ export const DEFAULT_SALES_PAGE_SECTIONS: PageQuizSection[] = [
   {
     id: 'sec-8',
     type: 'faq_accordion',
+    layoutColumns: '1_col_center',
     title: 'Dobra 8: FAQ - Perguntas Frequentes & Quebra de Dúvidas',
     headline: 'Ainda tem dúvidas? Veja as respostas mais comuns:',
     faqItems: [

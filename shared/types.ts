@@ -983,9 +983,19 @@ export interface FAQItem {
   answer: string;
 }
 
+export interface GridCardItem {
+  id: string;
+  title: string;
+  description: string;
+  badge?: string;
+  iconName?: string;
+  imageUrl?: string;
+}
+
 export interface PageQuizSection {
   id: string;
   type: PageQuizSectionType;
+  layoutColumns?: '1_col_center' | '2_col_split' | '2_col_reverse' | '3_col_grid' | 'tsl_letter';
   title: string;
   subtitle?: string;
   badge?: string;
@@ -993,6 +1003,7 @@ export interface PageQuizSection {
   // Conteúdo de Mídia & Visual
   headline?: string;
   bodyText?: string;
+  bullets?: string[];
   videoUrl?: string;
   videoDelaySeconds?: number;
   imageUrl?: string;
@@ -1000,6 +1011,7 @@ export interface PageQuizSection {
   buttonLink?: string;
   
   // Elementos Estruturais
+  gridCards?: GridCardItem[];
   quizQuestion?: {
     questionType: 'single_choice' | 'multi_choice' | 'image_choice' | 'scale_1_10';
     options: QuizOptionItem[];
