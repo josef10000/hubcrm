@@ -435,6 +435,16 @@ export default function FunnelArchitectEditorView() {
     };
   }, [isDraggingMinimap, handleMinimapPanTo]);
 
+  // ── 📍 CONVERSÃO DE COORDENADAS DE TELA PARA MUNDO DO CANVAS ────────────
+  const getCanvasCoordinates = useCallback((clientX: number, clientY: number) => {
+    if (!canvasRef.current) return { x: (clientX - pan.x) / zoom, y: (clientY - pan.y) / zoom };
+    const rect = canvasRef.current.getBoundingClientRect();
+    return {
+      x: (clientX - rect.left - pan.x) / zoom,
+      y: (clientY - rect.top - pan.y) / zoom
+    };
+  }, [pan.x, pan.y, zoom]);
+
   // ── 🖱️ CONTROLES DO CANVAS (SUPER ZOOM CENTRADO NO CURSOR & PAN) ─────────
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
@@ -460,10 +470,14 @@ export default function FunnelArchitectEditorView() {
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    // Apenas responde a cliques do botão esquerdo ou do meio
+    if (e.button !== 0 && e.button !== 1) return;
+
     // Se estiver no modo mãozinha, segurar espaço, clicar com botão do meio ou clicar no fundo do canvas
     if (isHandMode || isSpacePressed || e.button === 1 || e.target === canvasRef.current || (e.target as HTMLElement).classList.contains('canvas-background')) {
-      const canvasX = (e.clientX - pan.x) / zoom;
-      const canvasY = (e.clientY - pan.y) / zoom;
+      const coords = getCanvasCoordinates(e.clientX, e.clientY);
+      const canvasX = coords.x;
+      const canvasY = coords.y;
 
       if (!isHandMode && !isSpacePressed && e.button !== 1 && (e.shiftKey || canvasTool === 'select')) {
         // Iniciar Seleção por Retângulo (Marquee)
@@ -509,8 +523,9 @@ export default function FunnelArchitectEditorView() {
     const handleWindowMouseMove = (e: MouseEvent) => {
       cancelAnimationFrame(animFrameId);
       animFrameId = requestAnimationFrame(() => {
-        const canvasX = (e.clientX - pan.x) / zoom;
-        const canvasY = (e.clientY - pan.y) / zoom;
+        const coords = getCanvasCoordinates(e.clientX, e.clientY);
+        const canvasX = coords.x;
+        const canvasY = coords.y;
 
         if (isSelectingArea && selectionBox) {
           setSelectionBox(prev => prev ? { ...prev, currentX: canvasX, currentY: canvasY } : null);
@@ -524,7 +539,7 @@ export default function FunnelArchitectEditorView() {
           if (currentFunnel) {
             const boxedIds = currentFunnel.nodes.filter(n => {
               const w = n.subType === 'sticky_note' ? 256 : (n.subType === 'icp_persona' ? 240 : 224);
-              const h = n.subType === 'sticky_note' ? 200 : 100;
+              const h = n.subType === 'sticky_note' ? 200 : (n.subType === 'icp_persona' ? 140 : 100);
               return n.x + w >= minX && n.x <= maxX && n.y + h >= minY && n.y <= maxY;
             }).map(n => n.id);
 
@@ -597,16 +612,18 @@ export default function FunnelArchitectEditorView() {
       window.removeEventListener('mousemove', handleWindowMouseMove);
       window.removeEventListener('mouseup', handleWindowMouseUp);
     };
-  }, [isDraggingGroup, isDraggingCanvas, draggingFrameId, resizingFrameId, isSelectingArea, selectionBox, dragStart, pan, zoom, draggingGroupOffsets, frameDragOffset, frameResizeStart]);
+  }, [isDraggingGroup, isDraggingCanvas, draggingFrameId, resizingFrameId, isSelectingArea, selectionBox, dragStart, pan, zoom, draggingGroupOffsets, frameDragOffset, frameResizeStart, getCanvasCoordinates]);
 
   // ── 🔲 GESTÃO DE MOLDURAS / ÁREAS VISUAIS FLEXÍVEIS ──────────────────────
   const handleAddFrame = () => {
+    const canvasW = canvasRef.current?.clientWidth || 800;
+    const canvasH = canvasRef.current?.clientHeight || 600;
     const newFrame: FunnelFrame = {
       id: `frame_${Date.now()}`,
       title: 'Nova Área / Fase',
       color: 'indigo',
-      x: Math.round((-pan.x + 350) / zoom),
-      y: Math.round((-pan.y + 200) / zoom),
+      x: Math.round((-pan.x + canvasW / 2 - 260) / zoom),
+      y: Math.round((-pan.y + canvasH / 2 - 170) / zoom),
       width: 520,
       height: 340
     };
@@ -644,22 +661,20 @@ export default function FunnelArchitectEditorView() {
   const handleFrameMouseDown = (e: React.MouseEvent, frame: FunnelFrame) => {
     e.stopPropagation();
     if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).closest('button')) return;
-    const canvasX = (e.clientX - pan.x) / zoom;
-    const canvasY = (e.clientY - pan.y) / zoom;
+    const coords = getCanvasCoordinates(e.clientX, e.clientY);
     setFrameDragOffset({
-      x: canvasX - frame.x,
-      y: canvasY - frame.y
+      x: coords.x - frame.x,
+      y: coords.y - frame.y
     });
     setDraggingFrameId(frame.id);
   };
 
   const handleFrameResizeMouseDown = (e: React.MouseEvent, frame: FunnelFrame) => {
     e.stopPropagation();
-    const canvasX = (e.clientX - pan.x) / zoom;
-    const canvasY = (e.clientY - pan.y) / zoom;
+    const coords = getCanvasCoordinates(e.clientX, e.clientY);
     setFrameResizeStart({
-      x: canvasX,
-      y: canvasY,
+      x: coords.x,
+      y: coords.y,
       initialWidth: frame.width,
       initialHeight: frame.height
     });
@@ -1131,8 +1146,10 @@ export default function FunnelArchitectEditorView() {
 
   // ── ➕ ADICIONAR BLOCO DO CATÁLOGO ────────────────────────────────────────
   const handleAddBlock = (blockMeta: BlockMeta) => {
-    const canvasCenterX = Math.round((-pan.x + window.innerWidth / 2) / zoom);
-    const canvasCenterY = Math.round((-pan.y + window.innerHeight / 2) / zoom);
+    const canvasWidth = canvasRef.current?.clientWidth || window.innerWidth;
+    const canvasHeight = canvasRef.current?.clientHeight || window.innerHeight;
+    const canvasCenterX = Math.round((-pan.x + canvasWidth / 2) / zoom);
+    const canvasCenterY = Math.round((-pan.y + canvasHeight / 2) / zoom);
 
     const newNode: FunnelNode = {
       id: `node-${Date.now()}`,
@@ -1219,8 +1236,9 @@ export default function FunnelArchitectEditorView() {
       return;
     }
 
-    const canvasX = (e.clientX - pan.x) / zoom;
-    const canvasY = (e.clientY - pan.y) / zoom;
+    const coords = getCanvasCoordinates(e.clientX, e.clientY);
+    const canvasX = coords.x;
+    const canvasY = coords.y;
 
     if (e.shiftKey || e.ctrlKey || e.metaKey) {
       // Multi-seleção com clique
@@ -2435,21 +2453,38 @@ export default function FunnelArchitectEditorView() {
 
           {/* ── 🎛️ DOCK FLUTUANTE DE NAVEGAÇÃO ESPACIAL COM ÍCONES COMPLETOS ────────────────────── */}
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1.5 bg-[#090e1c]/95 border border-white/15 p-2 rounded-2xl shadow-2xl backdrop-blur-2xl ring-1 ring-white/10">
-            {/* Modo Seleção (Ponteiro) */}
+            {/* Modo Ponteiro */}
             <button
               onClick={() => {
                 setIsHandMode(false);
-                setCanvasTool('hand');
+                setCanvasTool('pan');
               }}
               className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                !isHandMode 
+                !isHandMode && canvasTool === 'pan'
                   ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/30' 
                   : 'text-gray-400 hover:text-white hover:bg-white/10'
               }`}
-              title="Modo Ponteiro: Selecionar e Mover Blocos"
+              title="Modo Ponteiro: Mover e Selecionar Blocos Individuais"
             >
               <MousePointer className="w-4 h-4" />
               <span className="hidden sm:inline">Ponteiro</span>
+            </button>
+
+            {/* Modo Seleção por Área (Marquee Box) */}
+            <button
+              onClick={() => {
+                setIsHandMode(false);
+                setCanvasTool('select');
+              }}
+              className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                !isHandMode && canvasTool === 'select'
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/30' 
+                  : 'text-gray-400 hover:text-white hover:bg-white/10'
+              }`}
+              title="Modo Seleção por Área: Arraste para selecionar múltiplos blocos (ou segure Shift)"
+            >
+              <BoxSelect className="w-4 h-4" />
+              <span className="hidden sm:inline">Selecionar Área</span>
             </button>
 
             {/* Modo Mãozinha (Arrastar Canvas) */}
@@ -2462,7 +2497,7 @@ export default function FunnelArchitectEditorView() {
                   ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/30' 
                   : 'text-gray-400 hover:text-white hover:bg-white/10'
               }`}
-              title="Modo Mãozinha: Clicar e Arrastar o Canvas Livremente"
+              title="Modo Mãozinha: Clicar e Arrastar o Canvas Livremente (ou segure Espaço)"
             >
               <Hand className="w-4 h-4" />
               <span className="hidden sm:inline">Arrastar</span>

@@ -528,4 +528,22 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
   - `src/domains/crm/constants/funnelTemplates.ts`: Inclusão dos novos blocos no `FUNNEL_BLOCK_CATALOG` com guias estratégicos completos (`strategicGuide`), taxas de conversão e checklists.
   - `FunnelArchitectEditorView.tsx`: Funções `handleAutoLayout` refeita com `SUBTYPE_STAGE_MAP`, `handleCopySelection`, `handlePasteSelection`, `handleDuplicateSelection` e posicionamento do `useEffect` de atalhos de teclado após todas as declarações de funções de ação, eliminando erros de Temporal Dead Zone (TDZ).
 
+---
+
+## 33. Funis & Precisão Espacial: Ancoragem Pixel-Perfect da Ferramenta de Seleção por Área & Modos de Dock
+- **Data da Integração**: 26/08/2026
+- **Funcionalidades**:
+  1. **Correção do Offset da Seleção por Área (Marquee Box)**:
+     - Identificado que o cálculo de coordenadas do mouse utilizava diretamente `(e.clientX - pan.x) / zoom` sem descontar o `boundingClientRect` do elemento canvas (`rect.left` = 288px da barra lateral e `rect.top` = 64px do cabeçalho).
+     - Criada a função unificada `getCanvasCoordinates(clientX, clientY)` que desconta rigorosamente os offsets do layout:
+       $$\text{worldX} = \frac{(e.\text{clientX} - \text{rect.left}) - \text{pan.x}}{\text{zoom}}, \quad \text{worldY} = \frac{(e.\text{clientY} - \text{rect.top}) - \text{pan.y}}{\text{zoom}}$$
+     - O retângulo de seleção agora nasce exatamente embaixo da ponta do cursor do mouse, com precisão sub-pixel em qualquer nível de zoom ou pan.
+  2. **Unificação de Coordenadas de Toda a Lousa**:
+     - Aplicado `getCanvasCoordinates` em todos os manipuladores de arraste: Seleção em Área, Arraste de Grupo de Nós, Criação e Redimensionamento de Molduras, Inserção Centralizada de Novos Blocos e Pan.
+  3. **Aprimoramento dos Modos de Interação no Dock Inferior**:
+     - Botões dedicados no dock para alternar entre Modo Ponteiro (`MousePointer`), Modo Seleção por Área (`BoxSelect`) e Modo Mãozinha (`Hand`).
+- **Decisões Técnicas**:
+  - `FunnelArchitectEditorView.tsx`: Implementado `getCanvasCoordinates` com `useCallback` e sincronizado nos listeners `handleMouseDown`, `handleWindowMouseMove`, `handleFrameMouseDown`, `handleFrameResizeMouseDown`, `handleNodeMouseDown` e `handleAddBlock`.
+
+
 
