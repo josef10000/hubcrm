@@ -492,3 +492,15 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Decisões Técnicas**:
   - `FunnelArchitectEditorView.tsx`: Funções `handleFitToScreen`, `handleWheel` vetorial, `toggleFullscreen`, `renderMinimap` e listeners de teclado (`keydown` / `keyup` para `Space`, `Shift+1`, `F`, `Ctrl+0`).
 
+---
+
+## 31. Funis & Navegação Visual: Enquadramento Preciso, Tela Cheia Híbrida, Mini-Mapa 100% Arrastável e Barra de Ferramentas com Ícones
+- **Data da Integração**: 26/08/2026
+- **Funcionalidades**:
+  1. **Correção do Enquadramento / Centralizar**: Definição da função `getNodeDimensions` para cálculo rigoroso do Bounding Box de todos os blocos e molduras, eliminando erros silenciosos e centralizando o funil inteiro na tela com margem de 120px e zoom ótimo.
+  2. **Modo Tela Cheia Híbrido Infalível**: Aplicação de classes CSS fixas (`fixed inset-0 z-[9999] w-screen h-screen`) combinada com `requestFullscreen`, garantindo expansão instantânea em 100% dos navegadores sem depender de permissões do sistema.
+  3. **Mini-Mapa 100% Arrastável em Tempo Real**: Suporte contínuo a clique e arraste com cálculo proporcional a 60fps, permitindo pilotar o canvas livremente arrastando o visor pelo radar.
+  4. **Barra de Ferramentas Completa com Ícones Visuais**: Botões dedicados para Ponteiro (`MousePointer`), Mãozinha de Arrastar (`Hand`), Centralizar (`Scan`), Zoom In/Out/100%, Radar (`Compass`) e Tela Cheia (`Maximize2`/`Minimize2`), eliminando a necessidade de atalhos ou ações complexas de teclado/mouse.
+- **Decisões Técnicas**:
+  - `FunnelArchitectEditorView.tsx`: Funções `getNodeDimensions`, `handleMinimapPanTo`, `isDraggingMinimap` com listeners globais em `window` e estado `isHandMode`.
+

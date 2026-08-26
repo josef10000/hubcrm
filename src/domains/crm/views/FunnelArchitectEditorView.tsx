@@ -12,7 +12,7 @@ import {
   Calendar, PhoneCall, Briefcase, FileSignature, Receipt, Rocket, LifeBuoy,
   Star, RefreshCcw, Clock, GitBranch, Smartphone, Mic, UserCheck, GraduationCap, Inbox,
   Target, StickyNote, BoxSelect, Wand2, MousePointer, Workflow, Spline,
-  AlignLeft, ArrowLeftToLine, ArrowUpToLine, Focus, ChevronDown, ArrowRightLeft, ArrowUpDown, Minimize2, Compass, Scan, Map
+  AlignLeft, ArrowLeftToLine, ArrowUpToLine, Focus, ChevronDown, ArrowRightLeft, ArrowUpDown, Minimize2, Compass, Scan, Map, Hand
 } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
@@ -132,6 +132,13 @@ const ROUTE_INTENTS: Record<string, { stroke: string; label: string; markerId: s
   neutral: { stroke: '#6366f1', label: 'Fluxo Principal', markerId: 'arrow-indigo', badge: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' }
 };
 
+// ── 📏 DIMENSÕES DOS BLOCOS DO FUNIL ─────────────────────────────────────────
+const getNodeDimensions = (subType?: string) => {
+  if (subType === 'sticky_note') return { width: 256, height: 200 };
+  if (subType === 'icp_persona') return { width: 240, height: 120 };
+  return { width: 224, height: 90 };
+};
+
 export default function FunnelArchitectEditorView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -214,6 +221,8 @@ export default function FunnelArchitectEditorView() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMinimapOpen, setIsMinimapOpen] = useState(false);
   const [isSpacePressed, setIsSpacePressed] = useState(false);
+  const [isDraggingMinimap, setIsDraggingMinimap] = useState(false);
+  const [isHandMode, setIsHandMode] = useState(false);
   const editorContainerRef = useRef<HTMLDivElement>(null);
 
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -307,6 +316,12 @@ export default function FunnelArchitectEditorView() {
           handleDeleteSelectedConnection();
         }
       } else if (e.key === 'Escape') {
+        if (isFullscreen) {
+          setIsFullscreen(false);
+          if (document.fullscreenElement) {
+            document.exitFullscreen?.().catch(() => {});
+          }
+        }
         setSelectedNodeIds([]);
         setSelectedConnectionId(null);
         setConnectingFromNodeId(null);
@@ -346,32 +361,41 @@ export default function FunnelArchitectEditorView() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [selectedNodeIds, selectedConnectionId, funnel]);
+  }, [selectedNodeIds, selectedConnectionId, funnel, isFullscreen]);
 
-  // Modo Tela Cheia Imersivo (Zen Mode)
+  // Modo Tela Cheia Imersivo (Zen Mode Híbrido CSS + Native)
   const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      editorContainerRef.current?.requestFullscreen?.().catch(() => {});
-      setIsFullscreen(true);
+    const nextState = !isFullscreen;
+    setIsFullscreen(nextState);
+    if (nextState) {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+      }
+      toast.success('Modo Tela Cheia ativado! Clique no ícone de restaurar para sair.');
     } else {
-      document.exitFullscreen?.().catch(() => {});
-      setIsFullscreen(false);
+      if (document.fullscreenElement) {
+        document.exitFullscreen?.().catch(() => {});
+      }
+      toast.info('Modo Tela Cheia desativado.');
     }
   };
 
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      if (!document.fullscreenElement && isFullscreen) {
+        setIsFullscreen(false);
+      }
     };
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
+  }, [isFullscreen]);
 
   // ── 📐 ENQUADRAR TUDO NO CANVAS (FIT TO SCREEN) ───────────────────────────
   const handleFitToScreen = () => {
     if (!funnel || funnel.nodes.length === 0 || !canvasRef.current) {
       setZoom(1);
       setPan({ x: 150, y: 100 });
+      toast.info('Visualização padrão aplicada.');
       return;
     }
 
@@ -392,14 +416,14 @@ export default function FunnelArchitectEditorView() {
     });
 
     const rect = canvasRef.current.getBoundingClientRect();
-    const padding = 100;
+    const padding = 120;
     const availableWidth = Math.max(200, rect.width - padding * 2);
     const availableHeight = Math.max(200, rect.height - padding * 2);
 
     const boundsWidth = Math.max(100, maxX - minX);
     const boundsHeight = Math.max(100, maxY - minY);
 
-    const targetZoom = Math.max(0.1, Math.min(1.5, Math.min(availableWidth / boundsWidth, availableHeight / boundsHeight)));
+    const targetZoom = Math.max(0.15, Math.min(1.2, Math.min(availableWidth / boundsWidth, availableHeight / boundsHeight)));
     
     const centerX = (minX + maxX) / 2;
     const centerY = (minY + maxY) / 2;
@@ -409,8 +433,61 @@ export default function FunnelArchitectEditorView() {
 
     setZoom(Number(targetZoom.toFixed(2)));
     setPan({ x: Math.round(newPanX), y: Math.round(newPanY) });
-    toast.success('Funil enquadrado na tela!');
+    toast.success('Funil centralizado e enquadrado na tela!');
   };
+
+  // ── 🗺️ NAVEGAÇÃO ARRASTÁVEL DO MINI-MAPA ──────────────────────────────────
+  const handleMinimapPanTo = useCallback((clientX: number, clientY: number, svgElement: SVGSVGElement) => {
+    if (!funnel) return;
+    let minX = -400, minY = -400, maxX = 2400, maxY = 1800;
+    if (funnel.nodes.length > 0) {
+      minX = Math.min(...funnel.nodes.map(n => n.x)) - 150;
+      minY = Math.min(...funnel.nodes.map(n => n.y)) - 150;
+      maxX = Math.max(...funnel.nodes.map(n => n.x + 240)) + 150;
+      maxY = Math.max(...funnel.nodes.map(n => n.y + 120)) + 150;
+    }
+
+    const worldWidth = Math.max(1000, maxX - minX);
+    const worldHeight = Math.max(700, maxY - minY);
+
+    const mapWidth = 208;
+    const mapHeight = 128;
+    const scaleX = mapWidth / worldWidth;
+    const scaleY = mapHeight / worldHeight;
+    const scale = Math.min(scaleX, scaleY);
+
+    const rect = canvasRef.current?.getBoundingClientRect() || { width: window.innerWidth, height: window.innerHeight };
+    const svgRect = svgElement.getBoundingClientRect();
+    const clickX = Math.max(0, Math.min(mapWidth, clientX - svgRect.left));
+    const clickY = Math.max(0, Math.min(mapHeight, clientY - svgRect.top));
+
+    const targetWorldX = minX + clickX / scale;
+    const targetWorldY = minY + clickY / scale;
+
+    const newPanX = rect.width / 2 - targetWorldX * zoom;
+    const newPanY = rect.height / 2 - targetWorldY * zoom;
+
+    setPan({ x: Math.round(newPanX), y: Math.round(newPanY) });
+  }, [funnel, zoom]);
+
+  useEffect(() => {
+    if (!isDraggingMinimap) return;
+    const handleMove = (e: MouseEvent) => {
+      const svg = document.getElementById('funnel-minimap-svg') as unknown as SVGSVGElement;
+      if (svg) {
+        handleMinimapPanTo(e.clientX, e.clientY, svg);
+      }
+    };
+    const handleUp = () => {
+      setIsDraggingMinimap(false);
+    };
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleUp);
+    };
+  }, [isDraggingMinimap, handleMinimapPanTo]);
 
   // ── 🖱️ CONTROLES DO CANVAS (SUPER ZOOM CENTRADO NO CURSOR & PAN) ─────────
   const handleWheel = (e: React.WheelEvent) => {
@@ -437,12 +514,12 @@ export default function FunnelArchitectEditorView() {
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    // Se segurar espaço, clicar com botão do meio ou clicar no fundo do canvas
-    if (isSpacePressed || e.button === 1 || e.target === canvasRef.current || (e.target as HTMLElement).classList.contains('canvas-background')) {
+    // Se estiver no modo mãozinha, segurar espaço, clicar com botão do meio ou clicar no fundo do canvas
+    if (isHandMode || isSpacePressed || e.button === 1 || e.target === canvasRef.current || (e.target as HTMLElement).classList.contains('canvas-background')) {
       const canvasX = (e.clientX - pan.x) / zoom;
       const canvasY = (e.clientY - pan.y) / zoom;
 
-      if (!isSpacePressed && e.button !== 1 && (e.shiftKey || canvasTool === 'select')) {
+      if (!isHandMode && !isSpacePressed && e.button !== 1 && (e.shiftKey || canvasTool === 'select')) {
         // Iniciar Seleção por Retângulo (Marquee)
         setIsSelectingArea(true);
         setSelectionBox({
@@ -459,7 +536,7 @@ export default function FunnelArchitectEditorView() {
         // Pan do Canvas
         setIsDraggingCanvas(true);
         setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
-        if (!isSpacePressed && !e.ctrlKey && !e.metaKey && e.button !== 1) {
+        if (!isHandMode && !isSpacePressed && !e.ctrlKey && !e.metaKey && e.button !== 1) {
           setSelectedNodeIds([]);
           setSelectedConnectionId(null);
           setConnectingFromNodeId(null);
@@ -1470,7 +1547,7 @@ export default function FunnelArchitectEditorView() {
           onMouseDown={handleMouseDown}
           onDoubleClick={handleCanvasDoubleClick}
           className={`flex-1 h-full relative overflow-hidden bg-[#050914] select-none ${
-            isSpacePressed ? 'cursor-grab active:cursor-grabbing' : (
+            (isHandMode || isSpacePressed) ? 'cursor-grab active:cursor-grabbing' : (
               canvasTool === 'select' ? 'cursor-crosshair' : (isDraggingCanvas ? 'cursor-grabbing' : 'cursor-grab')
             )
           }`}
@@ -1995,7 +2072,7 @@ export default function FunnelArchitectEditorView() {
             </div>
           )}
 
-          {/* ── 🗺️ MINI-MAPA DE NAVEGAÇÃO RADAR RETRÁTIL ─────────────────────────── */}
+          {/* ── 🗺️ MINI-MAPA DE NAVEGAÇÃO RADAR ARRASTÁVEL EM TEMPO REAL ─────────────────────────── */}
           {isMinimapOpen && funnel && (() => {
             let minX = -400, minY = -400, maxX = 2400, maxY = 1800;
             if (funnel.nodes.length > 0) {
@@ -2020,41 +2097,38 @@ export default function FunnelArchitectEditorView() {
             const vpW = Math.max(10, (rect.width / zoom) * scale);
             const vpH = Math.max(10, (rect.height / zoom) * scale);
 
-            const handleMinimapClick = (e: React.MouseEvent<SVGSVGElement>) => {
-              const svgRect = e.currentTarget.getBoundingClientRect();
-              const clickX = e.clientX - svgRect.left;
-              const clickY = e.clientY - svgRect.top;
-
-              const targetWorldX = minX + clickX / scale;
-              const targetWorldY = minY + clickY / scale;
-
-              const newPanX = rect.width / 2 - targetWorldX * zoom;
-              const newPanY = rect.height / 2 - targetWorldY * zoom;
-
-              setPan({ x: Math.round(newPanX), y: Math.round(newPanY) });
-            };
-
             return (
-              <div className="absolute right-6 bottom-20 z-30 w-56 bg-[#090e1c]/95 border border-white/15 rounded-2xl shadow-2xl backdrop-blur-2xl p-2.5 overflow-hidden">
+              <div className="absolute right-6 bottom-20 z-30 w-56 bg-[#090e1c]/95 border border-indigo-500/30 rounded-2xl shadow-2xl backdrop-blur-2xl p-2.5 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
                 <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-white/10 text-[10px] font-black uppercase tracking-wider text-gray-400">
                   <div className="flex items-center gap-1.5 text-indigo-400">
                     <Compass className="w-3.5 h-3.5" />
-                    <span>Radar do Funil</span>
+                    <span>Radar (Arraste para Mover)</span>
                   </div>
                   <button 
                     onClick={() => setIsMinimapOpen(false)}
                     className="p-0.5 hover:text-white rounded hover:bg-white/10"
+                    title="Fechar Radar"
                   >
                     <X className="w-3 h-3" />
                   </button>
                 </div>
 
-                <div className="relative w-full h-32 bg-black/60 rounded-xl overflow-hidden border border-white/5 cursor-pointer">
+                <div 
+                  className="relative w-full h-32 bg-black/80 rounded-xl overflow-hidden border border-white/10 cursor-grab active:cursor-grabbing select-none"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setIsDraggingMinimap(true);
+                    const svg = document.getElementById('funnel-minimap-svg') as unknown as SVGSVGElement;
+                    if (svg) {
+                      handleMinimapPanTo(e.clientX, e.clientY, svg);
+                    }
+                  }}
+                >
                   <svg 
+                    id="funnel-minimap-svg"
                     width={mapWidth} 
                     height={mapHeight} 
-                    onClick={handleMinimapClick}
-                    className="w-full h-full"
+                    className="w-full h-full pointer-events-none"
                   >
                     {/* Molduras */}
                     {(funnel.frames || []).map(f => (
@@ -2064,8 +2138,8 @@ export default function FunnelArchitectEditorView() {
                         y={(f.y - minY) * scale}
                         width={Math.max(4, f.width * scale)}
                         height={Math.max(4, f.height * scale)}
-                        fill="rgba(99, 102, 241, 0.1)"
-                        stroke="rgba(99, 102, 241, 0.3)"
+                        fill="rgba(99, 102, 241, 0.15)"
+                        stroke="rgba(99, 102, 241, 0.4)"
                         strokeWidth="1"
                         rx="2"
                       />
@@ -2083,7 +2157,7 @@ export default function FunnelArchitectEditorView() {
                           y1={(fromN.y + 40 - minY) * scale}
                           x2={(toN.x + 100 - minX) * scale}
                           y2={(toN.y + 40 - minY) * scale}
-                          stroke="rgba(255, 255, 255, 0.2)"
+                          stroke="rgba(255, 255, 255, 0.25)"
                           strokeWidth="1"
                         />
                       );
@@ -2105,16 +2179,15 @@ export default function FunnelArchitectEditorView() {
                       );
                     })}
 
-                    {/* Viewport Box */}
+                    {/* Viewport Box (Visor de Visualização Atual) */}
                     <rect
                       x={Math.max(0, vpX)}
                       y={Math.max(0, vpY)}
                       width={Math.min(mapWidth, vpW)}
                       height={Math.min(mapHeight, vpH)}
-                      fill="rgba(99, 102, 241, 0.15)"
+                      fill="rgba(99, 102, 241, 0.25)"
                       stroke="#60a5fa"
-                      strokeWidth="1.5"
-                      strokeDasharray="2,2"
+                      strokeWidth="2"
                       rx="3"
                     />
                   </svg>
@@ -2123,8 +2196,43 @@ export default function FunnelArchitectEditorView() {
             );
           })()}
 
-          {/* ── 🎛️ DOCK FLUTUANTE DE NAVEGAÇÃO ESPACIAL & SUPER ZOOM ────────────────────── */}
-          <div className="absolute right-6 bottom-6 z-20 flex items-center gap-1 bg-[#090e1c]/90 border border-white/10 p-1.5 rounded-2xl shadow-2xl backdrop-blur-xl">
+          {/* ── 🎛️ DOCK FLUTUANTE DE NAVEGAÇÃO ESPACIAL COM ÍCONES COMPLETOS ────────────────────── */}
+          <div className="absolute right-6 bottom-6 z-20 flex items-center gap-1.5 bg-[#090e1c]/95 border border-white/15 p-2 rounded-2xl shadow-2xl backdrop-blur-2xl">
+            {/* Modo Seleção (Ponteiro) */}
+            <button
+              onClick={() => {
+                setIsHandMode(false);
+                setCanvasTool('hand');
+              }}
+              className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                !isHandMode 
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/30' 
+                  : 'text-gray-400 hover:text-white hover:bg-white/10'
+              }`}
+              title="Modo Ponteiro: Selecionar e Mover Blocos"
+            >
+              <MousePointer className="w-4 h-4" />
+              <span className="hidden sm:inline">Ponteiro</span>
+            </button>
+
+            {/* Modo Mãozinha (Arrastar Canvas) */}
+            <button
+              onClick={() => {
+                setIsHandMode(true);
+              }}
+              className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                isHandMode 
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/30' 
+                  : 'text-gray-400 hover:text-white hover:bg-white/10'
+              }`}
+              title="Modo Mãozinha: Clicar e Arrastar o Canvas Livremente"
+            >
+              <Hand className="w-4 h-4" />
+              <span className="hidden sm:inline">Arrastar</span>
+            </button>
+
+            <div className="w-px h-5 bg-white/15 mx-0.5"></div>
+
             {/* Zoom Out */}
             <button
               onClick={() => {
@@ -2132,16 +2240,16 @@ export default function FunnelArchitectEditorView() {
                 setZoom(newZoom);
               }}
               className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
-              title="Diminuir Zoom (10% mínimo)"
+              title="Diminuir Zoom"
             >
               <ZoomOut className="w-4 h-4" />
             </button>
 
-            {/* Porcentagem Atual */}
+            {/* Reset 100% */}
             <button
               onClick={() => { setZoom(1); }}
-              className="text-xs font-black text-indigo-400 hover:text-white px-2 py-1 hover:bg-white/10 rounded-lg min-w-14 text-center transition-colors"
-              title="Clique para voltar para 100%"
+              className="text-xs font-black text-indigo-400 hover:text-white px-2 py-1 hover:bg-white/10 rounded-lg min-w-12 text-center transition-colors"
+              title="Voltar para 100%"
             >
               {Math.round(zoom * 100)}%
             </button>
@@ -2153,46 +2261,49 @@ export default function FunnelArchitectEditorView() {
                 setZoom(newZoom);
               }}
               className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
-              title="Aumentar Zoom (300% máximo)"
+              title="Aumentar Zoom"
             >
               <ZoomIn className="w-4 h-4" />
             </button>
 
-            <div className="w-px h-4 bg-white/10 mx-0.5"></div>
+            <div className="w-px h-5 bg-white/15 mx-0.5"></div>
 
-            {/* Botão Enquadrar Tudo no Canvas (Fit-to-Screen) */}
+            {/* Botão Enquadrar / Centralizar Funil na Tela */}
             <button
               onClick={handleFitToScreen}
-              className="p-2 text-gray-400 hover:text-indigo-300 hover:bg-indigo-600/20 rounded-xl transition-colors"
-              title="Enquadrar Todo o Funil na Tela (Shift + 1 / Duplo clique no fundo)"
+              className="px-2.5 py-1.5 bg-white/5 hover:bg-indigo-600/30 text-gray-300 hover:text-white border border-white/10 hover:border-indigo-500/40 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+              title="Centralizar e Enquadrar Todo o Funil na Tela"
             >
-              <Scan className="w-4 h-4" />
+              <Scan className="w-4 h-4 text-indigo-400" />
+              <span className="hidden sm:inline">Centralizar</span>
             </button>
 
-            {/* Botão Abrir Radar / Mini-Mapa */}
+            {/* Botão Abrir / Fechar Mini-Mapa Radar */}
             <button
               onClick={() => setIsMinimapOpen(prev => !prev)}
-              className={`p-2 rounded-xl transition-colors ${
+              className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                 isMinimapOpen 
                   ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/30' 
-                  : 'text-gray-400 hover:text-white hover:bg-white/10'
+                  : 'text-gray-400 hover:text-white hover:bg-white/10 border border-white/10'
               }`}
-              title="Alternar Mini-Mapa de Navegação Radar"
+              title="Abrir / Fechar Radar do Funil"
             >
               <Compass className="w-4 h-4" />
+              <span className="hidden sm:inline">Radar</span>
             </button>
 
             {/* Botão Modo Tela Cheia Imersivo */}
             <button
               onClick={toggleFullscreen}
-              className={`p-2 rounded-xl transition-colors ${
+              className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                 isFullscreen 
-                  ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30' 
-                  : 'text-gray-400 hover:text-white hover:bg-white/10'
+                  ? 'bg-purple-600 text-white shadow-md shadow-purple-500/30 ring-2 ring-purple-400/50' 
+                  : 'text-gray-400 hover:text-white hover:bg-white/10 border border-white/10'
               }`}
-              title="Modo Tela Cheia Imersivo (Tecla F)"
+              title="Alternar Modo Tela Cheia"
             >
               {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+              <span className="hidden sm:inline">{isFullscreen ? 'Restaurar' : 'Tela Cheia'}</span>
             </button>
           </div>
 
