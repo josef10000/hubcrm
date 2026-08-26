@@ -674,7 +674,23 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 
 
 
-
-
-
-
+## 40. Modal de Confirmação ao Sair e Correção Completa do Quiz Interativo
+- **Data da Integração**: 26/08/2026
+- **Funcionalidades**:
+  1. **Modal de Confirmação de Rascunho ao Sair (todos os editores)**:
+     - Ao clicar em `← Voltar` em qualquer editor (Funil Visual, VSL Studio, Página de Vendas, Quiz), o sistema verifica se há alterações (`isDirty`) ou se o ativo foi criado agora (`isNew` via query param `?isNew=true`).
+     - Se não há alterações: sai direto sem modal.
+     - Se há alterações ou é novo: abre modal com 3 opções: **Salvar e Sair**, **Descartar (deleta do Firestore se `isNew`)**, e **Continuar Editando**.
+     - Fluxo de criação atualizado em `FunnelArchitectListView.tsx`: todos os `navigate(url)` passaram a `navigate(url + '?isNew=true')` após criar no Firestore.
+  2. **Quiz Interativo — Correções e Funcionalidades Novas**:
+     - Editor completamente reescrito em `PageQuizEditorView.tsx` com edição inline de alternativas, campo de pontuação e botão de exclusão por alternativa.
+     - Botão **Adicionar Alternativa** por pergunta via `handleAddQuizOption`.
+     - **Simulador ao Vivo do Quiz**: Modal estilo celular com barra de progresso real, navegação entre passos (← / →), captura de lead com validação obrigatória de nome + WhatsApp antes de avançar, carregamento psicológico animado, resultado com CTA funcional.
+- **Arquivos Alterados**:
+  - `src/domains/crm/views/FunnelArchitectListView.tsx`: adicionado `?isNew=true` nas rotas de criação.
+  - `src/domains/crm/views/PageQuizEditorView.tsx`: reescrito com simulador ao vivo e edição completa de quiz.
+  - `src/domains/crm/views/VSLStudioEditorView.tsx`: adicionado `useSearchParams`, `isDirty`, modal de saída e `handleDiscardAndExit`.
+  - `src/domains/crm/views/FunnelArchitectEditorView.tsx`: adicionado `useSearchParams`, `isDirty`, `showExitModal`, `handleBackNavigation`, `handleDiscardAndExit`, modal de saída inserido antes do `createPortal`.
+- **Decisão Técnica de Descarte**:
+  - Quando `isNew === true` e o usuário escolhe descartar, chama `funnelService.deleteFunnel(orgId, id)` para remover o documento do Firestore e evitar rascunhos fantasmas na lista de fluxos.
+- **Commit**: `3a4f1a3` | Branch: `main`
