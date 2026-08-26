@@ -12,6 +12,7 @@ Plataforma corporativa de CRM de alta performance construída sob a arquitetura 
 5. [Stack Tecnológica](#%EF%B8%8F-stack-tecnol%C3%B3gica)
 6. [Configuração de Variáveis de Ambiente](#-configura%C3%A7%C3%A3o-de-vari%C3%A5veis-de-ambiente-env)
 7. [Como Rodar e Validar o Projeto](#-como-rodar-e-validar-o-projeto)
+8. [🚀 Roadmap: Direct Response & WhatsApp X1](./docs/ROADMAP_DIRECT_RESPONSE_WHATSAPP.md)
 
 ---
 

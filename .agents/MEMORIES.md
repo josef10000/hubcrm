@@ -545,5 +545,24 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Decisões Técnicas**:
   - `FunnelArchitectEditorView.tsx`: Implementado `getCanvasCoordinates` com `useCallback` e sincronizado nos listeners `handleMouseDown`, `handleWindowMouseMove`, `handleFrameMouseDown`, `handleFrameResizeMouseDown`, `handleNodeMouseDown` e `handleAddBlock`.
 
+---
+
+## 34. Estratégia Comercial & Arquitetura: Roadmap Oficial de Direct Response & Vendas Consultivas no WhatsApp (X1 / Closers)
+- **Data da Integração**: 26/08/2026
+- **Funcionalidades & Especificações**:
+  1. **Documento de Engenharia & Estratégia**: Criado `docs/ROADMAP_DIRECT_RESPONSE_WHATSAPP.md` mapeando a infraestrutura de VPS (Docker, Traefik SSL, Evolution API / Baileys, Redis) e os 8 pilares indispensáveis para operações de infoprodutos, perpétuo, lançamentos e high-ticket.
+  2. **Pilares Mapeados**:
+     - *Pilar 1 (WhatsApp CRM Inbox)*: Multiatendimento, gaveta 360° do lead com UTMs e histórico, disparo de áudios nativos push-to-talk e geração de Pix 1-clique.
+     - *Pilar 2 (Recovery Hub)*: Receptor de webhooks de plataformas digitais (Kiwify, Hotmart, Eduzz, Braip, Cakto, Asaas) com fila de urgência (Pix 0-10 min, cartão recusado e abandono).
+     - *Pilar 3 (Roleta de Leads)*: Distribuição Round-Robin equitativa com trava de SLA de primeiro contato.
+     - *Pilar 4 (Rastreamento & ROAS no WhatsApp)*: Links `wa.me` com tags de criativos e atribuição de receita por anúncio.
+     - *Pilar 5 (Playbook do Closer)*: Scripts de quebra de objeções, ancoragem de preço e provas sociais.
+     - *Pilar 6 (LTV & Back-end)*: Linha do tempo de compras e réguas de upsell pós-compra.
+     - *Pilar 7 (Leaderboard Comerciais)*: Ranking ao vivo de faturamento, FRT e comissões.
+     - *Pilar 8 (Follow-up Humanizado)*: Sequências com pausas randômicas e auto-cancelamento quando o lead responde.
+- **Decisões Técnicas**:
+  - Documentação centralizada em `docs/ROADMAP_DIRECT_RESPONSE_WHATSAPP.md` e referenciada no `README.md`.
+
+
 
 
