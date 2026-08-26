@@ -899,16 +899,18 @@ export interface OfferBlueprint {
 
 // ── Funis & Orquestração de Processos ──────────────────────────────────────────
 
-export type FunnelCategory = 'perpetual' | 'launch' | 'organic' | 'high_ticket' | 'community' | 'b2b' | 'cs' | 'custom';
+export type FunnelCategory = 'perpetual' | 'launch' | 'organic' | 'high_ticket' | 'community' | 'b2b' | 'cs' | 'journey' | 'custom';
 export type FunnelStatus = 'draft' | 'building' | 'active' | 'archived';
 
-export type FunnelNodeType = 'traffic' | 'page' | 'offer' | 'automation' | 'b2b' | 'cs' | 'hr' | 'icp' | 'note';
+export type FunnelNodeType = 'traffic' | 'page' | 'offer' | 'automation' | 'b2b' | 'cs' | 'hr' | 'icp' | 'note' | 'journey';
 
 export type FunnelNodeSubType = 
   // Inteligência & ICPs do CRM
   | 'icp_persona'
   // Anotações & Post-its
   | 'sticky_note'
+  // 🧭 Jornada do Cliente & Psicologia do Comprador
+  | 'linked_funnel' | 'pain_point' | 'hesitation_doubt' | 'aha_moment' | 'friction_risk' | 'delight_touch' | 'customer_emotion'
   // Tráfego & Atração
   | 'pinterest' | 'tiktok' | 'instagram' | 'youtube' | 'google_seo' | 'whatsapp' | 'meta_ads' | 'influencer_partner' | 'native_ads' | 'partners'
   // Páginas & Etapas Web
@@ -955,6 +957,12 @@ export interface FunnelNode {
   icpId?: string;            // Vínculo com Perfil ICP real do CRM
   noteColor?: string;        // Cor do Post-it ('yellow' | 'blue' | 'pink' | 'green' | 'purple')
   
+  // 🧭 Jornada do Cliente & Sub-Funil Vinculado
+  linkedFunnelId?: string;    // ID do Funil Operacional Vinculado (Sub-funil)
+  linkedFunnelTitle?: string; // Título em cache do funil vinculado
+  emotionLevel?: 'happy' | 'neutral' | 'frustrated' | 'delighted' | 'hesitant'; // Sentimento do cliente na etapa
+  touchpointOwner?: string;  // Responsável pelo ponto de contato (ex: "Closer", "Suporte", "Tráfego")
+
   // Estratégia e Negócio
   offerId?: string;          // Conexão com Produto/Oferta real do CRM (Opcional)
   creativeId?: string;       // Conexão com Criativo do HubAds

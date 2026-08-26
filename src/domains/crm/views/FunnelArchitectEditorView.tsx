@@ -14,7 +14,8 @@ import {
   Star, RefreshCcw, Clock, GitBranch, Smartphone, Mic, UserCheck, GraduationCap, Inbox,
   Target, StickyNote, BoxSelect, Wand2, MousePointer, Workflow, Spline,
   AlignLeft, ArrowLeftToLine, ArrowUpToLine, Focus, ChevronDown, ArrowRightLeft, ArrowUpDown, Minimize2, Compass, Scan, Map, Hand,
-  Copy, MessageSquare, Bot, MessageSquareCode, Layers3, Flame, Ticket, Share2, FileSpreadsheet, UserPlus, Tag
+  Copy, MessageSquare, Bot, MessageSquareCode, Layers3, Flame, Ticket, Share2, FileSpreadsheet, UserPlus, Tag,
+  GitFork, HeartHandshake, Smile, Frown, Meh, AlertOctagon
 } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
@@ -26,6 +27,15 @@ import {
 } from '@/types';
 import { FUNNEL_BLOCK_CATALOG, BlockMeta } from '../constants/funnelTemplates';
 import { toast } from 'sonner';
+
+// ── 🧭 MAPA DE EMOÇÕES DA JORNADA DO CLIENTE ──────────────────────────────────
+const EMOTION_MAP: Record<string, { label: string; emoji: string; badge: string }> = {
+  delighted: { label: 'Encantado / Fã', emoji: '🤩', badge: 'bg-purple-500/10 text-purple-300 border-purple-500/30' },
+  happy: { label: 'Confiante / Animado', emoji: '😄', badge: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30' },
+  neutral: { label: 'Neutro / Observando', emoji: '😐', badge: 'bg-gray-500/10 text-gray-300 border-gray-500/30' },
+  hesitant: { label: 'Inseguro / Com Dúvida', emoji: '🤔', badge: 'bg-amber-500/10 text-amber-300 border-amber-500/30' },
+  frustrated: { label: 'Frustrado / Risco Churn', emoji: '😡', badge: 'bg-rose-500/10 text-rose-300 border-rose-500/30' },
+};
 
 // ── 🎨 TEMAS VISUAIS DE MOLDURAS & POST-ITS ──────────────────────────────────
 const FRAME_COLORS: Record<string, { border: string; bg: string; text: string; header: string; activeDot: string; label: string }> = {
@@ -161,6 +171,7 @@ export default function FunnelArchitectEditorView() {
   const [isLibraryOpen, setIsLibraryOpen] = useState(true);
   const [blockSearchQuery, setBlockSearchQuery] = useState('');
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({
+    journey: true,
     icp: true,
     note: true,
     traffic: true,
@@ -172,6 +183,11 @@ export default function FunnelArchitectEditorView() {
     cs: true,
     hr: true
   });
+
+  // Sub-funis & Funis Vinculados
+  const [availableFunnels, setAvailableFunnels] = useState<FunnelBlueprint[]>([]);
+  const [previewSubFunnel, setPreviewSubFunnel] = useState<FunnelBlueprint | null>(null);
+  const [loadingSubFunnel, setLoadingSubFunnel] = useState(false);
 
   // Clipboard (Copiar e Colar)
   const [copiedNodesBuffer, setCopiedNodesBuffer] = useState<{
@@ -248,6 +264,16 @@ export default function FunnelArchitectEditorView() {
     }
   }, [orgId, id]);
 
+  const loadAvailableFunnels = async () => {
+    if (!orgId) return;
+    try {
+      const list = await funnelService.getFunnels(orgId);
+      setAvailableFunnels(list.filter(f => f.id !== id));
+    } catch (e) {
+      console.error('Erro ao carregar funis da organização:', e);
+    }
+  };
+
   const loadFunnel = async () => {
     if (!orgId || !id) return;
     setLoading(true);
@@ -265,11 +291,34 @@ export default function FunnelArchitectEditorView() {
         toast.error('Funil não encontrado.');
         navigate('/funnels');
       }
+      // Carregar outros funis para vinculação
+      loadAvailableFunnels();
     } catch (error) {
       console.error('Erro ao carregar funil:', error);
       toast.error('Erro ao carregar o funil.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleInspectSubFunnel = async (targetFunnelId?: string) => {
+    if (!orgId || !targetFunnelId) {
+      toast.info('Nenhum funil operacional vinculado a este bloco ainda. Selecione um no painel de configurações.');
+      return;
+    }
+    setLoadingSubFunnel(true);
+    try {
+      const data = await funnelService.getFunnel(orgId, targetFunnelId);
+      if (data) {
+        setPreviewSubFunnel(data);
+      } else {
+        toast.error('Sub-funil não encontrado.');
+      }
+    } catch (error) {
+      console.error('Erro ao buscar sub-funil:', error);
+      toast.error('Erro ao carregar o raio-x do sub-funil.');
+    } finally {
+      setLoadingSubFunnel(false);
     }
   };
 
@@ -771,7 +820,16 @@ export default function FunnelArchitectEditorView() {
       referral_program: 8,
       testimonial_request: 8,
       contract_renewal: 8,
-      hr_recruitment: 8
+      hr_recruitment: 8,
+
+      // 🧭 Jornada do Cliente (Experiência & Psicologia)
+      pain_point: 0,
+      customer_emotion: 0,
+      hesitation_doubt: 4,
+      linked_funnel: 4,
+      aha_moment: 8,
+      delight_touch: 8,
+      friction_risk: 8
     };
 
     const getNodeStage = (node: FunnelNode): number => {
@@ -779,6 +837,8 @@ export default function FunnelArchitectEditorView() {
         return SUBTYPE_STAGE_MAP[node.subType];
       }
       switch (node.type) {
+        case 'journey':
+          return 4;
         case 'icp':
         case 'note':
           return 0;
@@ -1400,7 +1460,8 @@ export default function FunnelArchitectEditorView() {
       Calendar, PhoneCall, Briefcase, FileSignature, Receipt, Rocket, LifeBuoy,
       Star, RefreshCcw, Clock, GitBranch, Smartphone, Mic, UserCheck, GraduationCap, Inbox,
       Target, StickyNote, BoxSelect, Wand2, MousePointer, Workflow, Spline,
-      MessageSquare, Bot, MessageSquareCode, Layers3, Flame, Ticket, Share2, FileSpreadsheet, UserPlus, Tag, Copy, Users
+      MessageSquare, Bot, MessageSquareCode, Layers3, Flame, Ticket, Share2, FileSpreadsheet, UserPlus, Tag, Copy, Users,
+      GitFork, HeartHandshake, Smile, Frown, Meh, AlertOctagon, Compass, Eye
     };
     const IconComp = icons[iconName] || Layers;
     return <IconComp size={size} />;
@@ -1688,18 +1749,20 @@ export default function FunnelArchitectEditorView() {
 
           {/* Lista de Blocos por Categoria */}
           <div className="flex-1 overflow-y-auto p-3 space-y-4 custom-scrollbar">
-            {['icp', 'note', 'traffic', 'page', 'offer', 'affiliate', 'automation', 'b2b', 'cs', 'hr'].map(catKey => {
+            {['journey', 'icp', 'note', 'traffic', 'page', 'offer', 'affiliate', 'automation', 'b2b', 'cs', 'hr'].map(catKey => {
               const blocks = FUNNEL_BLOCK_CATALOG.filter(b => {
                 const matchesCat = b.type === catKey || (catKey === 'affiliate' && b.subType.startsWith('affiliate_'));
+                const desc = b.strategicGuide?.description || '';
                 const matchesSearch = !blockSearchQuery || 
                   b.name.toLowerCase().includes(blockSearchQuery.toLowerCase()) ||
-                  b.description.toLowerCase().includes(blockSearchQuery.toLowerCase());
+                  desc.toLowerCase().includes(blockSearchQuery.toLowerCase());
                 return matchesCat && matchesSearch;
               });
 
               if (blocks.length === 0) return null;
 
               const categoryLabels: Record<string, string> = {
+                journey: '🧭 Jornada do Cliente (Psicologia & Sub-Funil)',
                 icp: '🎯 Perfil de Cliente Ideal (ICP)',
                 note: '📝 Anotações & Post-its',
                 traffic: '🚀 Tráfego & Atração',
@@ -2128,7 +2191,178 @@ export default function FunnelArchitectEditorView() {
                 );
               }
 
-              // 📦 RENDERIZAÇÃO PADRÃO DE BLOCOS (TRÁFEGO, PÁGINAS, OFERTAS, AUTOMAÇÕES, B2B, CS, RH)
+              // 🏷️ RENDERIZAÇÃO ESPECIAL DE SUB-FUNIL / FUNIL VINCULADO
+              if (node.subType === 'linked_funnel') {
+                const linkedTarget = availableFunnels.find(f => f.id === node.linkedFunnelId);
+                const stageCount = linkedTarget?.nodes?.length || 0;
+                return (
+                  <div
+                    key={node.id}
+                    onMouseEnter={() => setHoveredNodeId(node.id)}
+                    onMouseLeave={() => setHoveredNodeId(null)}
+                    onMouseDown={(e) => handleNodeMouseDown(e, node)}
+                    style={{ left: `${node.x}px`, top: `${node.y}px` }}
+                    className={`absolute w-64 rounded-2xl pointer-events-auto cursor-pointer transition-[border-color,box-shadow,background-color,opacity] duration-150 select-none backdrop-blur-2xl border z-20 ${
+                      isSelected
+                        ? 'border-indigo-400 shadow-2xl shadow-indigo-500/50 ring-4 ring-indigo-500/50 bg-[#0c1427] scale-[1.02]'
+                        : isConnectingSource
+                        ? 'border-amber-400 shadow-2xl shadow-amber-500/30 ring-2 ring-amber-500/40 bg-[#0c1427]'
+                        : 'border-indigo-500/30 hover:border-indigo-500/60 bg-[#0a0f24]/95 shadow-xl'
+                    } ${shouldDim ? 'opacity-25 hover:opacity-100' : 'opacity-100'}`}
+                  >
+                    {/* Plugs */}
+                    <div className="absolute -left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[#090e1c] border-2 border-indigo-400/80 shadow-md pointer-events-none z-30" />
+                    <div 
+                      onClick={(e) => { e.stopPropagation(); handleStartConnection(e, node.id); }}
+                      className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-indigo-500 hover:bg-indigo-400 hover:scale-125 border-2 border-white shadow-md cursor-pointer transition-transform z-30"
+                      title="Puxar conexão para o próximo bloco"
+                    />
+
+                    {/* Header */}
+                    <div className="p-3 border-b border-indigo-500/20 flex items-center justify-between bg-indigo-500/10">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                          <GitFork size={14} />
+                        </div>
+                        <span className="text-[10px] font-black text-indigo-300 uppercase tracking-wider">
+                          Sub-Funil Vinculado
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        {node.linkedFunnelId && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInspectSubFunnel(node.linkedFunnelId);
+                            }}
+                            className="p-1 rounded-md bg-indigo-600/30 hover:bg-indigo-600 text-indigo-200 hover:text-white transition-colors"
+                            title="Ver Raio-X do Funil"
+                          >
+                            <Eye className="w-3 h-3" />
+                          </button>
+                        )}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleOpenNodeEditor(node); }}
+                          className="p-1 rounded-md bg-white/5 hover:bg-indigo-600 text-gray-300 hover:text-white transition-colors"
+                          title="Configurar Sub-Funil"
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={(e) => handleStartConnection(e, node.id)}
+                          className={`p-1 rounded-md text-[10px] font-bold transition-colors ${
+                            isConnectingSource ? 'bg-amber-500 text-black' : 'bg-white/5 hover:bg-indigo-600 text-gray-300 hover:text-white'
+                          }`}
+                        >
+                          <ArrowRight className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Body */}
+                    <div className="p-3 space-y-2">
+                      <h4 className="text-xs font-black text-white line-clamp-1 flex items-center gap-1.5">
+                        <Workflow className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                        {linkedTarget ? linkedTarget.title : node.label}
+                      </h4>
+                      <p className="text-[11px] text-gray-400 line-clamp-1">
+                        {node.subtitle || (linkedTarget ? linkedTarget.description || 'Funil operacional detalhado' : 'Selecione um funil nas configurações')}
+                      </p>
+
+                      <div className="flex items-center justify-between text-[10px] pt-1.5 border-t border-indigo-500/10 font-bold">
+                        <span className="text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20">
+                          {stageCount > 0 ? `${stageCount} etapas mapeadas` : 'Funil não selecionado'}
+                        </span>
+                        {node.linkedFunnelId ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(`/crm/funnels/${node.linkedFunnelId}`, '_blank');
+                            }}
+                            className="text-gray-400 hover:text-indigo-300 flex items-center gap-1 hover:underline cursor-pointer"
+                            title="Abrir no editor em nova aba"
+                          >
+                            <span>Abrir</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // 🎭 RENDERIZAÇÃO ESPECIAL DE TERMÔMETRO EMOCIONAL
+              if (node.subType === 'customer_emotion') {
+                const emotionInfo = EMOTION_MAP[node.emotionLevel || 'happy'] || EMOTION_MAP.happy;
+                return (
+                  <div
+                    key={node.id}
+                    onMouseEnter={() => setHoveredNodeId(node.id)}
+                    onMouseLeave={() => setHoveredNodeId(null)}
+                    onMouseDown={(e) => handleNodeMouseDown(e, node)}
+                    style={{ left: `${node.x}px`, top: `${node.y}px` }}
+                    className={`absolute w-56 rounded-2xl pointer-events-auto cursor-pointer transition-[border-color,box-shadow,background-color,opacity] duration-150 select-none backdrop-blur-2xl border z-20 ${
+                      isSelected
+                        ? 'border-cyan-400 shadow-2xl shadow-cyan-500/40 ring-4 ring-cyan-500/50 bg-[#0c1427] scale-[1.02]'
+                        : isConnectingSource
+                        ? 'border-amber-400 shadow-2xl shadow-amber-500/30 ring-2 ring-amber-500/40 bg-[#0c1427]'
+                        : 'border-cyan-500/30 hover:border-cyan-500/60 bg-[#05121b]/95 shadow-xl'
+                    } ${shouldDim ? 'opacity-25 hover:opacity-100' : 'opacity-100'}`}
+                  >
+                    {/* Plugs */}
+                    <div className="absolute -left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[#090e1c] border-2 border-cyan-400/80 shadow-md pointer-events-none z-30" />
+                    <div 
+                      onClick={(e) => { e.stopPropagation(); handleStartConnection(e, node.id); }}
+                      className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-cyan-500 hover:bg-cyan-400 hover:scale-125 border-2 border-white shadow-md cursor-pointer transition-transform z-30"
+                      title="Puxar conexão para o próximo bloco"
+                    />
+
+                    {/* Header */}
+                    <div className="p-3 border-b border-cyan-500/20 flex items-center justify-between bg-cyan-500/10">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">{emotionInfo.emoji}</span>
+                        <span className="text-[10px] font-black text-cyan-300 uppercase tracking-wider">
+                          Sentimento
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleOpenNodeEditor(node); }}
+                          className="p-1 rounded-md bg-white/5 hover:bg-cyan-500 hover:text-black text-gray-300 transition-colors"
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={(e) => handleStartConnection(e, node.id)}
+                          className={`p-1 rounded-md text-[10px] font-bold transition-colors ${
+                            isConnectingSource ? 'bg-amber-500 text-black' : 'bg-white/5 hover:bg-cyan-500 hover:text-black text-gray-300'
+                          }`}
+                        >
+                          <ArrowRight className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Body */}
+                    <div className="p-3 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-white line-clamp-1">{node.label}</h4>
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${emotionInfo.badge}`}>
+                          {emotionInfo.label}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-gray-400 line-clamp-2">
+                        {node.subtitle || 'Estado emocional esperado do lead'}
+                      </p>
+                    </div>
+                  </div>
+                );
+              }
+
+              // 📦 RENDERIZAÇÃO PADRÃO DE BLOCOS (TRÁFEGO, PÁGINAS, OFERTAS, AUTOMAÇÕES, B2B, CS, RH, JORNADA)
               return (
                 <div
                   key={node.id}
@@ -2683,7 +2917,102 @@ export default function FunnelArchitectEditorView() {
                       </div>
                     )}
 
-                    {activeNode.subType !== 'sticky_note' && activeNode.subType !== 'icp_persona' && (
+                    {activeNode.subType === 'linked_funnel' && (
+                      <div className="p-3 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl space-y-3">
+                        <label className="text-[11px] font-black text-indigo-300 uppercase flex items-center gap-1.5">
+                          <GitFork size={14} /> Vincular Funil Operacional do CRM
+                        </label>
+                        <select
+                          value={activeNode.linkedFunnelId || ''}
+                          onChange={(e) => {
+                            const fId = e.target.value;
+                            const targetFunnel = availableFunnels.find(f => f.id === fId);
+                            setNodeEditDraft(prev => prev ? {
+                              ...prev,
+                              linkedFunnelId: fId,
+                              label: targetFunnel ? `Funil: ${targetFunnel.title}` : prev.label,
+                              linkedFunnelTitle: targetFunnel ? targetFunnel.title : '',
+                              subtitle: targetFunnel ? (targetFunnel.description || `${targetFunnel.nodes.length} etapas`) : prev.subtitle
+                            } : null);
+                          }}
+                          className="w-full px-3 py-2 bg-black/60 border border-indigo-500/30 rounded-xl text-xs text-indigo-200 focus:outline-none focus:border-indigo-400"
+                        >
+                          <option value="">-- Escolha um Funil do CRM --</option>
+                          {availableFunnels.map(f => (
+                            <option key={f.id} value={f.id}>
+                              {f.title} ({f.nodes?.length || 0} etapas - {f.category})
+                            </option>
+                          ))}
+                        </select>
+
+                        {activeNode.linkedFunnelId && (
+                          <div className="flex items-center gap-2 pt-1">
+                            <button
+                              type="button"
+                              onClick={() => handleInspectSubFunnel(activeNode.linkedFunnelId)}
+                              className="flex-1 px-3 py-2 bg-indigo-600/40 hover:bg-indigo-600 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>Raio-X do Funil</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => window.open(`/crm/funnels/${activeNode.linkedFunnelId}`, '_blank')}
+                              className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                              title="Abrir no editor em nova aba"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {activeNode.subType === 'customer_emotion' && (
+                      <div className="p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-2xl space-y-3">
+                        <label className="text-[11px] font-black text-cyan-300 uppercase flex items-center gap-1.5">
+                          <Smile size={14} /> Selecionar Sentimento do Cliente
+                        </label>
+                        <div className="grid grid-cols-1 gap-1.5">
+                          {Object.entries(EMOTION_MAP).map(([key, info]) => {
+                            const isSelectedEmotion = (activeNode.emotionLevel || 'happy') === key;
+                            return (
+                              <button
+                                key={key}
+                                type="button"
+                                onClick={() => updateDraftField('emotionLevel', key)}
+                                className={`flex items-center justify-between p-2 px-3 rounded-xl border text-xs font-bold transition-all ${
+                                  isSelectedEmotion 
+                                    ? 'bg-cyan-500/20 border-cyan-400 text-cyan-200 ring-2 ring-cyan-500/30' 
+                                    : 'bg-black/40 border-white/10 text-gray-400 hover:text-white hover:bg-white/5'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span className="text-base">{info.emoji}</span>
+                                  <span>{info.label}</span>
+                                </div>
+                                {isSelectedEmotion && <Check className="w-3.5 h-3.5 text-cyan-400" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {activeNode.type === 'journey' && (
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-gray-400 uppercase">Responsável pelo Ponto de Contato</label>
+                        <input
+                          type="text"
+                          value={activeNode.touchpointOwner || ''}
+                          onChange={(e) => updateDraftField('touchpointOwner', e.target.value)}
+                          placeholder="Ex: Closer WhatsApp, Suporte VIP, Tráfego, Automação"
+                          className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                    )}
+
+                    {activeNode.subType !== 'sticky_note' && activeNode.subType !== 'icp_persona' && activeNode.subType !== 'linked_funnel' && activeNode.subType !== 'customer_emotion' && (
                       <>
                         {activeNode.type === 'offer' && !activeNode.subType.startsWith('affiliate_') && (
                           <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl space-y-2">
@@ -2863,6 +3192,144 @@ export default function FunnelArchitectEditorView() {
             </div>
           );
         })()}
+
+        {/* ── 🔍 MODAL DE RAIO-X / PRÉVIA DO SUB-FUNIL VINCULADO ────────────── */}
+        {previewSubFunnel && (
+          <div 
+            onClick={() => setPreviewSubFunnel(null)}
+            className="fixed inset-0 z-[99999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 lg:p-8 animate-in fade-in"
+          >
+            <div 
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-4xl bg-[#090e1c] border border-indigo-500/40 rounded-3xl shadow-2xl shadow-indigo-950/80 overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95"
+            >
+              {/* Header do Modal */}
+              <div className="p-5 bg-gradient-to-r from-indigo-950/60 via-purple-950/40 to-black/60 border-b border-indigo-500/20 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-2xl bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                    <GitFork size={22} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                        Raio-X do Sub-Funil
+                      </span>
+                      <span className="text-[10px] font-bold text-gray-400 capitalize">
+                        Categoria: {previewSubFunnel.category}
+                      </span>
+                    </div>
+                    <h3 className="text-base font-black text-white mt-0.5">
+                      {previewSubFunnel.title}
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => window.open(`/crm/funnels/${previewSubFunnel.id}`, '_blank')}
+                    className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-lg shadow-indigo-600/30"
+                  >
+                    <span>Abrir Editor Completo</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setPreviewSubFunnel(null)}
+                    className="p-2 text-gray-400 hover:text-white rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Métricas Rápidas do Sub-funil */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-5 border-b border-white/5 bg-white/[0.01]">
+                <div className="p-3 bg-white/[0.02] border border-white/5 rounded-2xl">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase">Etapas Mapeadas</span>
+                  <p className="text-lg font-black text-white mt-0.5">{previewSubFunnel.nodes?.length || 0}</p>
+                </div>
+                <div className="p-3 bg-white/[0.02] border border-white/5 rounded-2xl">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase">Conexões Ativas</span>
+                  <p className="text-lg font-black text-indigo-400 mt-0.5">{previewSubFunnel.connections?.length || 0}</p>
+                </div>
+                <div className="p-3 bg-white/[0.02] border border-white/5 rounded-2xl">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase">Molduras / Fases</span>
+                  <p className="text-lg font-black text-purple-400 mt-0.5">{previewSubFunnel.frames?.length || 0}</p>
+                </div>
+                <div className="p-3 bg-white/[0.02] border border-white/5 rounded-2xl">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase">Tráfego Projetado</span>
+                  <p className="text-lg font-black text-emerald-400 mt-0.5">
+                    {previewSubFunnel.metrics?.initialTraffic ? `${previewSubFunnel.metrics.initialTraffic.toLocaleString()} leads` : 'Dinâmico'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Conteúdo: Lista de Etapas e Fluxo do Funil */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+                <h4 className="text-xs font-black text-gray-300 uppercase tracking-wider flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-indigo-400" />
+                  Estrutura de Etapas Operacionais
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {previewSubFunnel.nodes?.map((n, idx) => {
+                    const nodeMeta = FUNNEL_BLOCK_CATALOG.find(b => b.subType === n.subType);
+                    return (
+                      <div 
+                        key={n.id} 
+                        className="p-3.5 bg-black/40 border border-white/10 rounded-2xl space-y-2 hover:border-indigo-500/40 transition-colors"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black text-gray-500 bg-white/5 w-5 h-5 rounded-md flex items-center justify-center">
+                              {idx + 1}
+                            </span>
+                            <div className={`p-1 rounded-md border ${nodeMeta?.badgeColor || 'bg-white/5 text-white'}`}>
+                              {renderNodeIcon(nodeMeta?.iconName || 'Layers', 12)}
+                            </div>
+                          </div>
+                          <span className="text-[9px] font-bold uppercase text-gray-400">
+                            {n.type}
+                          </span>
+                        </div>
+
+                        <div>
+                          <h5 className="text-xs font-bold text-white line-clamp-1">{n.label}</h5>
+                          {n.subtitle && (
+                            <p className="text-[10px] text-gray-400 line-clamp-1 mt-0.5">{n.subtitle}</p>
+                          )}
+                        </div>
+
+                        {(n.price || n.conversionRate) && (
+                          <div className="flex items-center justify-between text-[10px] pt-1.5 border-t border-white/5">
+                            {n.price ? (
+                              <span className="text-emerald-400 font-bold">R$ {Number(n.price).toFixed(2)}</span>
+                            ) : <span />}
+                            {n.conversionRate ? (
+                              <span className="text-indigo-300 font-bold">Conv: {n.conversionRate}%</span>
+                            ) : <span />}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Footer do Modal */}
+              <div className="p-4 border-t border-white/10 bg-black/40 flex items-center justify-between">
+                <span className="text-xs text-gray-400">
+                  Visualizando estrutura interna sem alterar a lousa principal.
+                </span>
+                <button
+                  onClick={() => setPreviewSubFunnel(null)}
+                  className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-colors"
+                >
+                  Fechar Raio-X
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

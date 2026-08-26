@@ -1364,6 +1364,148 @@ export const FUNNEL_BLOCK_CATALOG: BlockMeta[] = [
       ],
       actionItems: ['Digitar o texto da anotação', 'Escolher a cor do post-it', 'Posicionar no quadro']
     }
+  },
+
+  // ── 🧭 JORNADA DO CLIENTE & EXPERIÊNCIA HUMANA ──────────────────────────────
+  {
+    type: 'journey',
+    subType: 'linked_funnel',
+    name: 'Funil Vinculado (Sub-Funil / Macro)',
+    categoryLabel: 'Jornada do Cliente',
+    iconName: 'GitFork',
+    badgeColor: 'bg-indigo-500/10 text-indigo-300 border-indigo-500/30',
+    bgGradient: 'from-indigo-600/25 to-blue-600/15',
+    defaultConversion: 15.0,
+    strategicGuide: {
+      title: 'Macro-Bloco de Funil Vinculado',
+      description: 'Conecta uma fase inteira da Jornada do Cliente a um Funil Operacional detalhado existente no CRM sem poluir o mapa.',
+      goldenRules: [
+        'Use para representar esteiras completas (ex: "Funil de Vendas X1 WhatsApp", "Funil de Isca Digital").',
+        'Vincule ao funil correspondente para exibir métricas consolidadas.',
+        'Permite drill-down em 1 clique para inspecionar os detalhes operacionais.'
+      ],
+      actionItems: ['Selecionar o funil operacional correspondente', 'Definir a meta da etapa na jornada', 'Configurar taxa de conversão estimada']
+    }
+  },
+  {
+    type: 'journey',
+    subType: 'pain_point',
+    name: 'Ponto de Dor / Problema Inicial',
+    categoryLabel: 'Jornada do Cliente',
+    iconName: 'Frown',
+    badgeColor: 'bg-rose-500/10 text-rose-300 border-rose-500/30',
+    bgGradient: 'from-rose-600/20 to-red-600/10',
+    defaultConversion: 100.0,
+    strategicGuide: {
+      title: 'Identificação do Ponto de Dor do Cliente',
+      description: 'Mapeia a frustração, urgência ou problema que o lead vive antes de encontrar sua solução.',
+      goldenRules: [
+        'Descreva a dor usando as palavras exatas do cliente (linguagem falada).',
+        'Identifique o gatilho emocional que fez o cliente buscar ajuda agora.',
+        'Conecte diretamente ao canal de atração ou anúncio que promete resolver essa dor.'
+      ],
+      actionItems: ['Escrever a fala da dor do cliente', 'Mapear a intensidade da dor', 'Conectar ao criativo ou página correspondente']
+    }
+  },
+  {
+    type: 'journey',
+    subType: 'hesitation_doubt',
+    name: 'Hesitação / Dúvida & Objeção',
+    categoryLabel: 'Jornada do Cliente',
+    iconName: 'AlertTriangle',
+    badgeColor: 'bg-amber-500/10 text-amber-300 border-amber-500/30',
+    bgGradient: 'from-amber-600/20 to-orange-600/10',
+    defaultConversion: 100.0,
+    strategicGuide: {
+      title: 'Mapeamento de Hesitações & Objeções Silenciosas',
+      description: 'Representa a dúvida que trava o cliente antes de passar o cartão ou enviar os dados no WhatsApp.',
+      goldenRules: [
+        'Mapeie as 3 maiores travas: Preço/Limite, Medo de não funcionar, Insegurança de suporte.',
+        'Crie uma resposta imediata na etapa seguinte (ex: áudio do closer, garantia estendida).',
+        'Monitore a taxa de abandono nessa fase da jornada.'
+      ],
+      actionItems: ['Identificar a objeção predominante', 'Vincular o argumento de quebra de objeção no Playbook', 'Adicionar prova social de apoio']
+    }
+  },
+  {
+    type: 'journey',
+    subType: 'aha_moment',
+    name: 'Momento Aha! (Ativação Rápida)',
+    categoryLabel: 'Jornada do Cliente',
+    iconName: 'Zap',
+    badgeColor: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30',
+    bgGradient: 'from-emerald-600/20 to-teal-600/10',
+    defaultConversion: 100.0,
+    strategicGuide: {
+      title: 'O Primeiro Momento de Grande Valor (Aha! Moment)',
+      description: 'O instante em que o novo cliente tem a primeira vitória rápida (Quick Win) e percebe que fez a escolha certa.',
+      goldenRules: [
+        'O Aha! Moment deve ocorrer nas primeiras 24 a 48 horas após a compra.',
+        'Elimine qualquer barreira de login, configuração difícil ou espera excessiva.',
+        'Comemore a vitória do cliente com mensagem de validação no WhatsApp.'
+      ],
+      actionItems: ['Definir a primeira entrega imediata', 'Configurar mensagem de boas-vindas VIP', 'Reduzir o Time to Value (TTV)']
+    }
+  },
+  {
+    type: 'journey',
+    subType: 'friction_risk',
+    name: 'Ponto de Fricção / Risco de Churn',
+    categoryLabel: 'Jornada do Cliente',
+    iconName: 'AlertOctagon',
+    badgeColor: 'bg-red-500/10 text-red-400 border-red-500/30',
+    bgGradient: 'from-red-600/25 to-rose-700/15',
+    defaultConversion: 100.0,
+    strategicGuide: {
+      title: 'Ponto de Risco & Alerta de Cancelamento',
+      description: 'Gargalo crítico onde clientes costumam travar, pedir suporte urgente ou solicitar reembolso/cancelamento.',
+      goldenRules: [
+        'Identifique o momento em que o engajamento costuma cair (ex: 5º dia pós-compra, renovação de plano).',
+        'Automatize uma intervenção proativa do CS ou do Closer antes do pedido de estorno.',
+        'Mantenha canal direto de resolução sem burocracia.'
+      ],
+      actionItems: ['Mapear o gatilho de risco', 'Criar plano de ação de retenção proativa', 'Treinar o suporte para resposta em menos de 5 minutos']
+    }
+  },
+  {
+    type: 'journey',
+    subType: 'delight_touch',
+    name: 'Toque de Encantamento (Delight)',
+    categoryLabel: 'Jornada do Cliente',
+    iconName: 'HeartHandshake',
+    badgeColor: 'bg-purple-500/10 text-purple-300 border-purple-500/30',
+    bgGradient: 'from-purple-600/20 to-pink-600/10',
+    defaultConversion: 100.0,
+    strategicGuide: {
+      title: 'Momento de Encantamento (Superando Expectativas)',
+      description: 'Ação estratégica que entrega muito mais do que foi prometido, transformando o comprador em um fã incondicional.',
+      goldenRules: [
+        'Entregue um bônus surpresa não anunciado no momento da compra.',
+        'Faça contato humanizado e genuíno sem intenção imediata de venda.',
+        'Clientes encantados têm taxa de retenção 3x maior e indicam amigos organicamente.'
+      ],
+      actionItems: ['Definir o presente ou surpresa de encantamento', 'Configurar disparo no momento certo da jornada', 'Acompanhar depoimentos espontâneos']
+    }
+  },
+  {
+    type: 'journey',
+    subType: 'customer_emotion',
+    name: 'Termômetro Emocional (Sentimento)',
+    categoryLabel: 'Jornada do Cliente',
+    iconName: 'Smile',
+    badgeColor: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30',
+    bgGradient: 'from-cyan-600/20 to-blue-600/10',
+    defaultConversion: 100.0,
+    strategicGuide: {
+      title: 'Monitor de Humor & Sentimento do Cliente',
+      description: 'Cartão visual que documenta o estado de espírito do cliente nesta fase da jornada (😄 Encantado, 😊 Confiante, 😐 Neutro, 🤔 Inseguro, 😡 Frustrado).',
+      goldenRules: [
+        'Acompanhe a curva emocional da jornada: deve começar na dor e terminar no encantamento.',
+        'Se o sentimento for negativo na fase de pós-venda, ative o protocolo de resgate imediato.',
+        'Use para alinhar a equipe de copy, tráfego e atendimento sobre o tom de voz correto.'
+      ],
+      actionItems: ['Selecionar o nível de sentimento', 'Documentar a expectativa do cliente', 'Ajustar o script de contato']
+    }
   }
 ];
 
@@ -2030,6 +2172,101 @@ export const MARKET_FUNNEL_TEMPLATES: FunnelTemplate[] = [
       { id: 'ccs-4-5', fromNodeId: 'cs-4', toNodeId: 'cs-5', style: 'solid' },
       { id: 'ccs-4-6', fromNodeId: 'cs-4', toNodeId: 'cs-6', style: 'dashed' },
       { id: 'ccs-6-5', fromNodeId: 'cs-6', toNodeId: 'cs-5', style: 'dashed' }
+    ]
+  },
+  {
+    id: 'template-customer-journey-full',
+    title: 'Jornada do Cliente: Do Lead Frio ao Fã & High-Ticket',
+    category: 'journey',
+    categoryName: 'Jornada do Cliente',
+    badge: '🧭 Experiência & LTV 360°',
+    description: 'Mapeamento estratégico da experiência do comprador: conecta pontos de dor, sub-funis operacionais de atração e vendas X1, momentos Aha!, alertas de risco de churn e encantamento para retenção e indicação.',
+    estimatedROI: '5.2x LTV',
+    nodes: [
+      {
+        id: 'j-1',
+        type: 'journey',
+        subType: 'pain_point',
+        label: 'Dor: "Não consigo escalar vendas"',
+        subtitle: 'Lead sobrecarregado e frustrado',
+        x: 80,
+        y: 180,
+        status: 'ready'
+      },
+      {
+        id: 'j-2',
+        type: 'journey',
+        subType: 'linked_funnel',
+        label: 'Funil: Atração & Isca Digital',
+        subtitle: 'Meta Ads + E-book Grátis + VSL',
+        x: 400,
+        y: 180,
+        conversionRate: 18.0,
+        status: 'ready'
+      },
+      {
+        id: 'j-3',
+        type: 'journey',
+        subType: 'hesitation_doubt',
+        label: 'Dúvida: "Será que serve pro meu nicho?"',
+        subtitle: 'Medo de comprar e não ter suporte',
+        x: 740,
+        y: 80,
+        status: 'ready'
+      },
+      {
+        id: 'j-4',
+        type: 'journey',
+        subType: 'linked_funnel',
+        label: 'Funil: Fechamento X1 WhatsApp',
+        subtitle: 'Closer Humano + Áudio + Pix 1-Clique',
+        x: 740,
+        y: 280,
+        conversionRate: 25.0,
+        price: 997,
+        status: 'ready'
+      },
+      {
+        id: 'j-5',
+        type: 'journey',
+        subType: 'aha_moment',
+        label: 'Aha! Moment: 1ª Vitória Rápida',
+        subtitle: 'Assistiu Aula 1 e aplicou template em 24h',
+        x: 1080,
+        y: 180,
+        status: 'ready'
+      },
+      {
+        id: 'j-6',
+        type: 'journey',
+        subType: 'delight_touch',
+        label: 'Encantamento: Presente Surpresa',
+        subtitle: 'Mensagem VIP do Fundador + Bônus Secreto',
+        x: 1420,
+        y: 80,
+        status: 'ready'
+      },
+      {
+        id: 'j-7',
+        type: 'journey',
+        subType: 'linked_funnel',
+        label: 'Funil: Up-Sell Mentoria High-Ticket',
+        subtitle: 'Aplicação Exclusiva (R$ 5.000)',
+        x: 1420,
+        y: 280,
+        conversionRate: 35.0,
+        price: 5000,
+        status: 'ready'
+      }
+    ],
+    connections: [
+      { id: 'cj-1-2', fromNodeId: 'j-1', toNodeId: 'j-2', style: 'solid', intent: 'conversion' },
+      { id: 'cj-2-3', fromNodeId: 'j-2', toNodeId: 'j-3', style: 'dashed', intent: 'neutral' },
+      { id: 'cj-2-4', fromNodeId: 'j-2', toNodeId: 'j-4', style: 'solid', intent: 'conversion' },
+      { id: 'cj-3-4', fromNodeId: 'j-3', toNodeId: 'j-4', style: 'solid', intent: 'recovery' },
+      { id: 'cj-4-5', fromNodeId: 'j-4', toNodeId: 'j-5', style: 'solid', intent: 'conversion' },
+      { id: 'cj-5-6', fromNodeId: 'j-5', toNodeId: 'j-6', style: 'solid', intent: 'upsell' },
+      { id: 'cj-5-7', fromNodeId: 'j-5', toNodeId: 'j-7', style: 'solid', intent: 'upsell' }
     ]
   }
 ];

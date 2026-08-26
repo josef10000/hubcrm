@@ -232,6 +232,7 @@ export default function FunnelArchitectListView() {
           <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
             {[
               { id: 'all', label: 'Todos os Fluxos' },
+              { id: 'journey', label: '🧭 Jornada do Cliente' },
               { id: 'perpetual', label: 'Perpétuo' },
               { id: 'b2b', label: 'Vendas B2B' },
               { id: 'cs', label: 'Pós-Venda CS' },

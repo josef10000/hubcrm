@@ -563,6 +563,34 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Decisões Técnicas**:
   - Documentação centralizada em `docs/ROADMAP_DIRECT_RESPONSE_WHATSAPP.md` e referenciada no `README.md`.
 
+---
+
+## 35. Funis & Jornada do Cliente: Mapeamento de Experiência, Sub-Funis Vinculados e Raio-X Interativo
+- **Data da Integração**: 26/08/2026
+- **Funcionalidades**:
+  1. **Expansão da Lousa para Jornada do Cliente (Customer Journey Mapping)**:
+     - Adicionada a categoria `journey` no editor com blocos focados na psicologia e experiência do comprador:
+       - `linked_funnel`: Macro-bloco de Sub-Funil Vinculado que conecta etapas da jornada a funis operacionais detalhados.
+       - `pain_point`: Ponto de Dor / Problema Inicial do lead.
+       - `hesitation_doubt`: Hesitação, Medo e Objeção Silenciosa.
+       - `aha_moment`: Momento 'Aha!' (Ativação Rápida e Quick Win).
+       - `friction_risk`: Ponto de Fricção e Alerta de Risco de Churn.
+       - `delight_touch`: Toque de Encantamento e Fidelização.
+       - `customer_emotion`: Termômetro Emocional do cliente (🤩 Encantado, 😄 Confiante, 😐 Neutro, 🤔 Inseguro, 😡 Frustrado).
+  2. **Arquitetura de Sub-Funis Vinculados & Modal Raio-X**:
+     - No card de `linked_funnel`, exibição de badge de etapas mapeadas, indicador de categoria e botões de ação:
+       - Botão *Raio-X* (`Eye`): Abre modal interativo de pré-visualização completa com métricas de receita, etapas, conexões e tráfego sem sair da tela da jornada.
+       - Botão *Abrir* (`ExternalLink`): Abre o funil em uma nova aba do navegador.
+     - Inspetor lateral com dropdown de seleção de todos os funis da organização (`availableFunnels`) e campos de sentimento e responsável pelo ponto de contato (`touchpointOwner`).
+  3. **Templates Oficiais & Filtros de Categoria**:
+     - Novo template pré-construído: *"Jornada do Cliente: Do Lead Frio ao Fã & High-Ticket"* (`template-customer-journey-full`).
+     - Adicionado filtro de categoria `🧭 Jornada do Cliente` em `FunnelArchitectListView.tsx`.
+- **Decisões Técnicas**:
+  - `shared/types.ts`: Atualização de `FunnelNodeType`, `FunnelCategory`, `FunnelNodeSubType` e propriedades `linkedFunnelId`, `linkedFunnelTitle`, `emotionLevel`, `touchpointOwner` em `FunnelNode`.
+  - `src/domains/crm/constants/funnelTemplates.ts`: Inclusão dos 7 novos blocos de jornada no `FUNNEL_BLOCK_CATALOG` e novo template em `MARKET_FUNNEL_TEMPLATES`.
+  - `FunnelArchitectEditorView.tsx`: Implementação do modal `previewSubFunnel`, renderizadores de cards personalizados, integração no `SUBTYPE_STAGE_MAP` e controle de inspetor.
+
+
 
 
 
