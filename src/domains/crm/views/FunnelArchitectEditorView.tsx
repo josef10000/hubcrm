@@ -292,12 +292,15 @@ export default function FunnelArchitectEditorView() {
     }
   };
 
-  // ── ⌨️ ATALHOS DE TECLADO (DELETE, ESCAPE, CTRL+A) ────────────────────────
+  // ── ⌨️ ATALHOS DE TECLADO & NAVEGAÇÃO ESPACIAL ──────────────────────────────
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'TEXTAREA') return;
 
-      if (e.key === 'Delete' || e.key === 'Backspace') {
+      if (e.code === 'Space' && !e.repeat) {
+        e.preventDefault();
+        setIsSpacePressed(true);
+      } else if (e.key === 'Delete' || e.key === 'Backspace') {
         if (selectedNodeIds.length > 0) {
           handleDeleteSelectedNodes();
         } else if (selectedConnectionId) {
@@ -316,29 +319,130 @@ export default function FunnelArchitectEditorView() {
           setSelectedNodeIds(funnel.nodes.map(n => n.id));
           toast.info(`${funnel.nodes.length} blocos selecionados.`);
         }
+      } else if ((e.ctrlKey || e.metaKey) && e.key === '0') {
+        e.preventDefault();
+        setZoom(1);
+        setPan({ x: 150, y: 100 });
+      } else if ((e.ctrlKey || e.metaKey || e.shiftKey) && (e.key === '1' || e.key === '!')) {
+        e.preventDefault();
+        handleFitToScreen();
+      } else if (e.key === 'f' || e.key === 'F') {
+        if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+          e.preventDefault();
+          toggleFullscreen();
+        }
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        setIsSpacePressed(false);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
   }, [selectedNodeIds, selectedConnectionId, funnel]);
 
-  // ── 🖱️ CONTROLES DO CANVAS (ZOOM & PAN & MARQUEE) ─────────────────────────
+  // Modo Tela Cheia Imersivo (Zen Mode)
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      editorContainerRef.current?.requestFullscreen?.().catch(() => {});
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen?.().catch(() => {});
+      setIsFullscreen(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  // ── 📐 ENQUADRAR TUDO NO CANVAS (FIT TO SCREEN) ───────────────────────────
+  const handleFitToScreen = () => {
+    if (!funnel || funnel.nodes.length === 0 || !canvasRef.current) {
+      setZoom(1);
+      setPan({ x: 150, y: 100 });
+      return;
+    }
+
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    funnel.nodes.forEach(n => {
+      const { width, height } = getNodeDimensions(n.subType);
+      minX = Math.min(minX, n.x);
+      minY = Math.min(minY, n.y);
+      maxX = Math.max(maxX, n.x + width);
+      maxY = Math.max(maxY, n.y + height);
+    });
+
+    (funnel.frames || []).forEach(f => {
+      minX = Math.min(minX, f.x);
+      minY = Math.min(minY, f.y);
+      maxX = Math.max(maxX, f.x + f.width);
+      maxY = Math.max(maxY, f.y + f.height);
+    });
+
+    const rect = canvasRef.current.getBoundingClientRect();
+    const padding = 100;
+    const availableWidth = Math.max(200, rect.width - padding * 2);
+    const availableHeight = Math.max(200, rect.height - padding * 2);
+
+    const boundsWidth = Math.max(100, maxX - minX);
+    const boundsHeight = Math.max(100, maxY - minY);
+
+    const targetZoom = Math.max(0.1, Math.min(1.5, Math.min(availableWidth / boundsWidth, availableHeight / boundsHeight)));
+    
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+
+    const newPanX = rect.width / 2 - centerX * targetZoom;
+    const newPanY = rect.height / 2 - centerY * targetZoom;
+
+    setZoom(Number(targetZoom.toFixed(2)));
+    setPan({ x: Math.round(newPanX), y: Math.round(newPanY) });
+    toast.success('Funil enquadrado na tela!');
+  };
+
+  // ── 🖱️ CONTROLES DO CANVAS (SUPER ZOOM CENTRADO NO CURSOR & PAN) ─────────
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
-    const zoomFactor = 1.08;
-    let newZoom = e.deltaY < 0 ? zoom * zoomFactor : zoom / zoomFactor;
-    newZoom = Math.max(0.3, Math.min(2.2, newZoom));
-    setZoom(newZoom);
+    if (!canvasRef.current) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    const zoomFactor = e.ctrlKey || e.metaKey ? 1.15 : 1.08;
+    const newZoom = Math.max(0.1, Math.min(3.0, e.deltaY < 0 ? zoom * zoomFactor : zoom / zoomFactor));
+
+    if (Math.abs(newZoom - zoom) < 0.001) return;
+
+    // Fórmula matemática de Ancoragem no Cursor (Figma / Miro)
+    const worldX = (mouseX - pan.x) / zoom;
+    const worldY = (mouseY - pan.y) / zoom;
+
+    const newPanX = mouseX - worldX * newZoom;
+    const newPanY = mouseY - worldY * newZoom;
+
+    setZoom(Number(newZoom.toFixed(2)));
+    setPan({ x: Math.round(newPanX), y: Math.round(newPanY) });
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    // Se clicar com botão do meio ou fundo da tela
-    if (e.button === 1 || e.target === canvasRef.current || (e.target as HTMLElement).classList.contains('canvas-background')) {
+    // Se segurar espaço, clicar com botão do meio ou clicar no fundo do canvas
+    if (isSpacePressed || e.button === 1 || e.target === canvasRef.current || (e.target as HTMLElement).classList.contains('canvas-background')) {
       const canvasX = (e.clientX - pan.x) / zoom;
       const canvasY = (e.clientY - pan.y) / zoom;
 
-      if (e.shiftKey || canvasTool === 'select') {
+      if (!isSpacePressed && e.button !== 1 && (e.shiftKey || canvasTool === 'select')) {
         // Iniciar Seleção por Retângulo (Marquee)
         setIsSelectingArea(true);
         setSelectionBox({
@@ -355,7 +459,7 @@ export default function FunnelArchitectEditorView() {
         // Pan do Canvas
         setIsDraggingCanvas(true);
         setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
-        if (!e.ctrlKey && !e.metaKey) {
+        if (!isSpacePressed && !e.ctrlKey && !e.metaKey && e.button !== 1) {
           setSelectedNodeIds([]);
           setSelectedConnectionId(null);
           setConnectingFromNodeId(null);
@@ -364,6 +468,12 @@ export default function FunnelArchitectEditorView() {
           }
         }
       }
+    }
+  };
+
+  const handleCanvasDoubleClick = (e: React.MouseEvent) => {
+    if (e.target === canvasRef.current || (e.target as HTMLElement).classList.contains('canvas-background')) {
+      handleFitToScreen();
     }
   };
 
