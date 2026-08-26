@@ -309,83 +309,6 @@ export default function FunnelArchitectEditorView() {
     }
   };
 
-  // ── ⌨️ ATALHOS DE TECLADO & NAVEGAÇÃO ESPACIAL ──────────────────────────────
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'TEXTAREA') return;
-
-      if (e.code === 'Space' && !e.repeat) {
-        e.preventDefault();
-        setIsSpacePressed(true);
-      } else if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (selectedNodeIds.length > 0) {
-          handleDeleteSelectedNodes();
-        } else if (selectedConnectionId) {
-          handleDeleteSelectedConnection();
-        }
-      } else if (e.key === 'Escape') {
-        if (isFullscreen) {
-          setIsFullscreen(false);
-          if (document.fullscreenElement) {
-            document.exitFullscreen?.().catch(() => {});
-          }
-        }
-        setSelectedNodeIds([]);
-        setSelectedConnectionId(null);
-        setConnectingFromNodeId(null);
-        setIsInspectorOpen(false);
-        setIsSelectingArea(false);
-        setSelectionBox(null);
-      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'C')) {
-        if (selectedNodeIds.length > 0) {
-          e.preventDefault();
-          handleCopySelection();
-        }
-      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'v' || e.key === 'V')) {
-        if (copiedNodesBuffer && copiedNodesBuffer.nodes.length > 0) {
-          e.preventDefault();
-          handlePasteSelection();
-        }
-      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'd' || e.key === 'D')) {
-        if (selectedNodeIds.length > 0) {
-          e.preventDefault();
-          handleDuplicateSelection();
-        }
-      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A')) {
-        e.preventDefault();
-        if (funnel && funnel.nodes.length > 0) {
-          setSelectedNodeIds(funnel.nodes.map(n => n.id));
-          toast.info(`${funnel.nodes.length} blocos selecionados.`);
-        }
-      } else if ((e.ctrlKey || e.metaKey) && e.key === '0') {
-        e.preventDefault();
-        setZoom(1);
-        setPan({ x: 150, y: 100 });
-      } else if ((e.ctrlKey || e.metaKey || e.shiftKey) && (e.key === '1' || e.key === '!')) {
-        e.preventDefault();
-        handleFitToScreen();
-      } else if (e.key === 'f' || e.key === 'F') {
-        if (!e.ctrlKey && !e.metaKey && !e.altKey) {
-          e.preventDefault();
-          toggleFullscreen();
-        }
-      }
-    };
-
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
-        setIsSpacePressed(false);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-    };
-  }, [selectedNodeIds, selectedConnectionId, funnel, isFullscreen, copiedNodesBuffer, handleCopySelection, handlePasteSelection, handleDuplicateSelection]);
-
   // Modo Tela Cheia Imersivo (Zen Mode Híbrido CSS + Native)
   const toggleFullscreen = () => {
     const nextState = !isFullscreen;
@@ -1464,6 +1387,83 @@ export default function FunnelArchitectEditorView() {
     const IconComp = icons[iconName] || Layers;
     return <IconComp size={size} />;
   };
+
+  // ── ⌨️ ATALHOS DE TECLADO & NAVEGAÇÃO ESPACIAL ──────────────────────────────
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'TEXTAREA') return;
+
+      if (e.code === 'Space' && !e.repeat) {
+        e.preventDefault();
+        setIsSpacePressed(true);
+      } else if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectedNodeIds.length > 0) {
+          handleDeleteSelectedNodes();
+        } else if (selectedConnectionId) {
+          handleDeleteSelectedConnection();
+        }
+      } else if (e.key === 'Escape') {
+        if (isFullscreen) {
+          setIsFullscreen(false);
+          if (document.fullscreenElement) {
+            document.exitFullscreen?.().catch(() => {});
+          }
+        }
+        setSelectedNodeIds([]);
+        setSelectedConnectionId(null);
+        setConnectingFromNodeId(null);
+        setIsInspectorOpen(false);
+        setIsSelectingArea(false);
+        setSelectionBox(null);
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'C')) {
+        if (selectedNodeIds.length > 0) {
+          e.preventDefault();
+          handleCopySelection();
+        }
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'v' || e.key === 'V')) {
+        if (copiedNodesBuffer && copiedNodesBuffer.nodes.length > 0) {
+          e.preventDefault();
+          handlePasteSelection();
+        }
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'd' || e.key === 'D')) {
+        if (selectedNodeIds.length > 0) {
+          e.preventDefault();
+          handleDuplicateSelection();
+        }
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A')) {
+        e.preventDefault();
+        if (funnel && funnel.nodes.length > 0) {
+          setSelectedNodeIds(funnel.nodes.map(n => n.id));
+          toast.info(`${funnel.nodes.length} blocos selecionados.`);
+        }
+      } else if ((e.ctrlKey || e.metaKey) && e.key === '0') {
+        e.preventDefault();
+        setZoom(1);
+        setPan({ x: 150, y: 100 });
+      } else if ((e.ctrlKey || e.metaKey || e.shiftKey) && (e.key === '1' || e.key === '!')) {
+        e.preventDefault();
+        handleFitToScreen();
+      } else if (e.key === 'f' || e.key === 'F') {
+        if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+          e.preventDefault();
+          toggleFullscreen();
+        }
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        setIsSpacePressed(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [selectedNodeIds, selectedConnectionId, funnel, isFullscreen, copiedNodesBuffer, handleCopySelection, handlePasteSelection, handleDuplicateSelection, handleDeleteSelectedNodes, handleDeleteSelectedConnection, handleFitToScreen, toggleFullscreen]);
 
   if (loading || !funnel) {
     return (
