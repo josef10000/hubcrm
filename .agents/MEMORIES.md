@@ -526,6 +526,6 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Decisões Técnicas**:
   - `shared/types.ts`: Atualização do union `FunnelNodeSubType`.
   - `src/domains/crm/constants/funnelTemplates.ts`: Inclusão dos novos blocos no `FUNNEL_BLOCK_CATALOG` com guias estratégicos completos (`strategicGuide`), taxas de conversão e checklists.
-  - `FunnelArchitectEditorView.tsx`: Funções `handleAutoLayout` refeita com `SUBTYPE_STAGE_MAP`, `handleCopySelection`, `handlePasteSelection`, `handleDuplicateSelection` e listeners de teclado.
+  - `FunnelArchitectEditorView.tsx`: Funções `handleAutoLayout` refeita com `SUBTYPE_STAGE_MAP`, `handleCopySelection`, `handlePasteSelection`, `handleDuplicateSelection` e posicionamento do `useEffect` de atalhos de teclado após todas as declarações de funções de ação, eliminando erros de Temporal Dead Zone (TDZ).
 
 
