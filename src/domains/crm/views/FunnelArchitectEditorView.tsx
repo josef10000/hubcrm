@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, ArrowRight, Save, Play, RefreshCw, Plus, Trash2, Link as LinkIcon, 
@@ -1262,8 +1263,13 @@ export default function FunnelArchitectEditorView() {
     );
   }
 
-  return (
-    <div className="flex-1 flex flex-col h-full bg-[#050914] text-white overflow-hidden select-none font-sans">
+  const editorContent = (
+    <div 
+      ref={editorContainerRef}
+      className={`flex flex-col bg-[#050914] text-white overflow-hidden select-none font-sans ${
+        isFullscreen ? 'fixed inset-0 z-[999999] w-screen h-screen' : 'flex-1 h-full'
+      }`}
+    >
       
       {/* ── BARRA SUPERIOR (HEADER & CONTROLES PRINCIPAIS) ────────────────────────── */}
       <div className="h-16 border-b border-white/10 bg-[#090e1c]/90 backdrop-blur-xl px-4 flex items-center justify-between z-30 shrink-0 shadow-lg">
@@ -2098,7 +2104,7 @@ export default function FunnelArchitectEditorView() {
             const vpH = Math.max(10, (rect.height / zoom) * scale);
 
             return (
-              <div className="absolute right-6 bottom-20 z-30 w-56 bg-[#090e1c]/95 border border-indigo-500/30 rounded-2xl shadow-2xl backdrop-blur-2xl p-2.5 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
+              <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-40 w-64 bg-[#090e1c]/95 border border-indigo-500/40 rounded-2xl shadow-2xl backdrop-blur-2xl p-2.5 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
                 <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-white/10 text-[10px] font-black uppercase tracking-wider text-gray-400">
                   <div className="flex items-center gap-1.5 text-indigo-400">
                     <Compass className="w-3.5 h-3.5" />
@@ -2197,7 +2203,7 @@ export default function FunnelArchitectEditorView() {
           })()}
 
           {/* ── 🎛️ DOCK FLUTUANTE DE NAVEGAÇÃO ESPACIAL COM ÍCONES COMPLETOS ────────────────────── */}
-          <div className="absolute right-6 bottom-6 z-20 flex items-center gap-1.5 bg-[#090e1c]/95 border border-white/15 p-2 rounded-2xl shadow-2xl backdrop-blur-2xl">
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1.5 bg-[#090e1c]/95 border border-white/15 p-2 rounded-2xl shadow-2xl backdrop-blur-2xl ring-1 ring-white/10">
             {/* Modo Seleção (Ponteiro) */}
             <button
               onClick={() => {
@@ -2595,4 +2601,6 @@ export default function FunnelArchitectEditorView() {
       </div>
     </div>
   );
+
+  return isFullscreen ? createPortal(editorContent, document.body) : editorContent;
 }
