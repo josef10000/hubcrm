@@ -637,6 +637,21 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
   - `shared/types.ts`: Extensão de `PageQuizSection` com `layoutColumns` (`'1_col_center' | '2_col_split' | '2_col_reverse' | '3_col_grid' | 'tsl_letter'`), `bullets` e `gridCards`.
   - `src/domains/crm/constants/vslPageTemplates.ts`: Atualização das 8 dobras padrão do `DEFAULT_SALES_PAGE_SECTIONS` com layouts e cards ricos pré-configurados.
 
+---
+
+## 38. Motor Nativo de Exportação, Compilador de Briefings e Teleprompter Integrado
+- **Data da Integração**: 26/08/2026
+- **Funcionalidades**:
+  1. **Compilador Nativo de Instruções & Briefing Estruturado (1-Clique)**:
+     - No editor de VSL (`VSLStudioEditorView.tsx`) e de Páginas/Quiz (`PageQuizEditorView.tsx`), geração local de documentos de especificação técnica completa em `.txt`/`.md` com cópia para a área de transferência (`navigator.clipboard`) e download de arquivo.
+  2. **Gerador Nativo de Código HTML + Tailwind Pronto para Publicação**:
+     - Botão `[ ⚡ Baixar HTML ]` que compila as seções da página de vendas em um arquivo autônomo `pagina-de-vendas.html` com CDN Tailwind CSS, player responsivo, script nativo de delay do botão de checkout e FAQ interativo em JS puro.
+  3. **Teleprompter Nativo em Tela Cheia para Gravação de VSL**:
+     - Modal em tela cheia com fundo preto e tipografia gigante, rolagem automática sincronizada com WPM, controle de velocidade (1x a 6x), ajuste de fonte e linha guia do olhar do locutor.
+  4. **Correção de Rolagem Suave do Canvas**:
+     - Ajuste na hierarquia flex (`min-h-0`, `overflow-y-auto` e margem inferior `mb-32`) permitindo rolagem vertical completa e desimpedida em todas as dobras em Desktop e Mobile.
+
+
 
 
 

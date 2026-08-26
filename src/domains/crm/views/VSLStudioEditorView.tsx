@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Save, Plus, Trash2, Clock, FileText, Sparkles, Copy, 
-  Download, Play, CheckCircle2, ChevronUp, ChevronDown, 
-  HelpCircle, Sliders, ExternalLink, Zap, AlertCircle
+  Download, Play, Pause, RotateCcw, CheckCircle2, ChevronUp, ChevronDown, 
+  HelpCircle, Sliders, ExternalLink, Zap, AlertCircle, Maximize2, X, Check
 } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { funnelService } from '@/services/funnelService';
@@ -24,7 +24,13 @@ export default function VSLStudioEditorView() {
   // Parâmetros de Copy & Minutagem
   const [targetWPM, setTargetWPM] = useState<number>(140);
   const [blocks, setBlocks] = useState<VSLScriptBlock[]>(DEFAULT_VSL_BLOCKS);
-  const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
+
+  // Teleprompter Integrado
+  const [isTeleprompterOpen, setIsTeleprompterOpen] = useState(false);
+  const [teleprompterPlaying, setTeleprompterPlaying] = useState(false);
+  const [teleprompterSpeed, setTeleprompterSpeed] = useState(2);
+  const [teleprompterFontSize, setTeleprompterFontSize] = useState(36);
+  const teleprompterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (orgId && id) {
@@ -168,12 +174,43 @@ export default function VSLStudioEditorView() {
     }
   };
 
-  const handleExportText = () => {
-    const content = blocks.map((b, idx) => {
-      const calc = calculatedBlocks[idx];
-      return `=========================================\n${b.title} [${formatSecondsToMinutes(calc.startTimeSeconds)} - ${formatSecondsToMinutes(calc.endTimeSeconds)}]\n=========================================\n\n${b.scriptText}\n\n`;
-    }).join('\n');
+  // Compilação das instruções / Briefing formatado
+  const generateInstructionsText = () => {
+    let doc = `# DOSSIÊ DE GRAVAÇÃO & ROTEIRO DE VSL: ${blueprint?.title || 'VSL de Alta Conversão'}\n`;
+    doc += `Data de Geração: ${new Date().toLocaleDateString('pt-BR')}\n`;
+    doc += `Duração Estimada: ${formatSecondsToMinutes(totalDurationSeconds)} (${totalWords} palavras a ${targetWPM} WPM)\n`;
+    if (pitchPointBlock) {
+      doc += `PONTO DE DELAY DO BOTÃO DE CHECKOUT: ${formatSecondsToMinutes(pitchPointBlock.startTimeSeconds)} (${pitchPointBlock.startTimeSeconds} segundos)\n`;
+    }
+    doc += `\n=================================================================\n`;
+    doc += `ESTRUTURA DA NARRATIVA PASSO A PASSO:\n`;
+    doc += `=================================================================\n\n`;
 
+    calculatedBlocks.forEach((b, idx) => {
+      doc += `--- [PARTE ${idx + 1}: ${b.title}] ---\n`;
+      doc += `⏰ Minutagem: ${formatSecondsToMinutes(b.startTimeSeconds)} até ${formatSecondsToMinutes(b.endTimeSeconds)} (~${b.wordCount} palavras)\n`;
+      if (b.isPitchPoint) {
+        doc += `🔥 [PONTO DO PITCH / LIBERAÇÃO DO BOTÃO NO PLAYER]\n`;
+      }
+      doc += `\nSCRIPT NARRADO:\n"${b.scriptText}"\n\n`;
+      if (b.bulletPoints && b.bulletPoints.length > 0) {
+        doc += `Argumentos-Chave:\n`;
+        b.bulletPoints.forEach(pt => doc += `  • ${pt}\n`);
+        doc += `\n`;
+      }
+    });
+
+    return doc;
+  };
+
+  const handleCopyInstructions = () => {
+    const text = generateInstructionsText();
+    navigator.clipboard.writeText(text);
+    toast.success('Instruções completas da VSL copiadas para a área de transferência!');
+  };
+
+  const handleExportText = () => {
+    const content = generateInstructionsText();
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -182,6 +219,22 @@ export default function VSLStudioEditorView() {
     link.click();
     toast.success('Roteiro exportado com sucesso!');
   };
+
+  // Efeito do Teleprompter
+  useEffect(() => {
+    let animationFrame: number;
+    const scrollTeleprompter = () => {
+      if (teleprompterPlaying && teleprompterRef.current) {
+        teleprompterRef.current.scrollTop += teleprompterSpeed;
+        animationFrame = requestAnimationFrame(scrollTeleprompter);
+      }
+    };
+
+    if (teleprompterPlaying) {
+      animationFrame = requestAnimationFrame(scrollTeleprompter);
+    }
+    return () => cancelAnimationFrame(animationFrame);
+  }, [teleprompterPlaying, teleprompterSpeed]);
 
   if (loading) {
     return (
@@ -227,7 +280,7 @@ export default function VSLStudioEditorView() {
 
         {/* Métricas e Controles de Minutagem */}
         <div className="flex items-center gap-3">
-          <div className="hidden md:flex items-center gap-3 bg-white/[0.03] border border-white/10 px-3 py-1.5 rounded-xl text-xs">
+          <div className="hidden lg:flex items-center gap-3 bg-white/[0.03] border border-white/10 px-3 py-1.5 rounded-xl text-xs">
             <div className="flex items-center gap-1.5 text-gray-300">
               <FileText className="w-3.5 h-3.5 text-indigo-400" />
               <span><strong>{totalWords}</strong> palavras</span>
@@ -235,14 +288,14 @@ export default function VSLStudioEditorView() {
             <span className="text-gray-600">|</span>
             <div className="flex items-center gap-1.5 text-gray-300">
               <Clock className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Duração Total: <strong className="text-emerald-300">{formatSecondsToMinutes(totalDurationSeconds)}</strong></span>
+              <span>Duração: <strong className="text-emerald-300">{formatSecondsToMinutes(totalDurationSeconds)}</strong></span>
             </div>
             {pitchPointBlock && (
               <>
                 <span className="text-gray-600">|</span>
                 <div className="flex items-center gap-1.5 text-amber-300">
                   <Zap className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Delay do Botão: <strong>{formatSecondsToMinutes(pitchPointBlock.startTimeSeconds)}</strong></span>
+                  <span>Delay: <strong>{formatSecondsToMinutes(pitchPointBlock.startTimeSeconds)}</strong></span>
                 </div>
               </>
             )}
@@ -250,20 +303,42 @@ export default function VSLStudioEditorView() {
 
           <div className="flex items-center gap-2">
             <button
+              onClick={() => {
+                setTeleprompterPlaying(false);
+                setIsTeleprompterOpen(true);
+              }}
+              className="px-3.5 py-2 bg-indigo-600/30 hover:bg-indigo-600 text-indigo-200 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-indigo-500/40 shadow-sm"
+              title="Abrir Teleprompter em tela cheia para gravar"
+            >
+              <Play className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Teleprompter</span>
+            </button>
+
+            <button
+              onClick={handleCopyInstructions}
+              className="px-3 py-2 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-white/10"
+              title="Copiar todas as instruções formatadas"
+            >
+              <Copy className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Copiar Instruções</span>
+            </button>
+
+            <button
               onClick={handleExportText}
               className="px-3 py-2 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-white/10"
-              title="Exportar roteiro completo em texto"
+              title="Exportar roteiro completo em arquivo .txt"
             >
               <Download className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Exportar</span>
+              <span className="hidden sm:inline">Baixar .TXT</span>
             </button>
+
             <button
               onClick={handleSave}
               disabled={saving}
               className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-500/25 flex items-center gap-1.5 disabled:opacity-50"
             >
               <Save className="w-3.5 h-3.5" />
-              <span>{saving ? 'Salvando...' : 'Salvar VSL'}</span>
+              <span>{saving ? 'Salvando...' : 'Salvar'}</span>
             </button>
           </div>
         </div>
@@ -444,6 +519,121 @@ export default function VSLStudioEditorView() {
         </div>
 
       </div>
+
+      {/* ── 📜 MODAL DE TELEPROMPTER NATIVO EM TELA CHEIA ─────────────────── */}
+      {isTeleprompterOpen && (
+        <div className="fixed inset-0 z-[99999] bg-black flex flex-col text-white animate-in fade-in select-none">
+          {/* Barra de Controle Superior do Teleprompter */}
+          <div className="p-4 bg-zinc-950 border-b border-zinc-800 flex items-center justify-between z-20 shrink-0">
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-black uppercase text-indigo-400 bg-indigo-500/20 px-2.5 py-1 rounded-full border border-indigo-500/30">
+                🎬 Teleprompter Ao Vivo
+              </span>
+              <span className="text-sm font-bold text-gray-300">
+                {formatSecondsToMinutes(totalDurationSeconds)} • {totalWords} palavras
+              </span>
+            </div>
+
+            <div className="flex items-center gap-4">
+              {/* Botão Play / Pause */}
+              <button
+                onClick={() => setTeleprompterPlaying(prev => !prev)}
+                className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all ${
+                  teleprompterPlaying 
+                    ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/30' 
+                    : 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
+                }`}
+              >
+                {teleprompterPlaying ? <Pause className="w-4 h-4 fill-black" /> : <Play className="w-4 h-4 fill-white" />}
+                <span>{teleprompterPlaying ? 'Pausar (Espaço)' : 'Iniciar Leitura'}</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setTeleprompterPlaying(false);
+                  if (teleprompterRef.current) teleprompterRef.current.scrollTop = 0;
+                }}
+                className="p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors"
+                title="Reiniciar do Início"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+
+              {/* Ajuste de Velocidade */}
+              <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-xl text-xs">
+                <span className="text-zinc-400">Velocidade:</span>
+                <input
+                  type="range"
+                  min={1}
+                  max={6}
+                  step={0.5}
+                  value={teleprompterSpeed}
+                  onChange={(e) => setTeleprompterSpeed(Number(e.target.value))}
+                  className="w-20 accent-indigo-500"
+                />
+                <span className="font-bold text-indigo-400">{teleprompterSpeed}x</span>
+              </div>
+
+              {/* Ajuste de Tamanho de Fonte */}
+              <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-xl text-xs">
+                <span className="text-zinc-400">Fonte:</span>
+                <button
+                  onClick={() => setTeleprompterFontSize(prev => Math.max(24, prev - 4))}
+                  className="px-2 py-0.5 bg-zinc-800 rounded font-bold hover:bg-zinc-700"
+                >
+                  -
+                </button>
+                <span className="font-bold text-white">{teleprompterFontSize}px</span>
+                <button
+                  onClick={() => setTeleprompterFontSize(prev => Math.min(64, prev + 4))}
+                  className="px-2 py-0.5 bg-zinc-800 rounded font-bold hover:bg-zinc-700"
+                >
+                  +
+                </button>
+              </div>
+
+              <button
+                onClick={() => {
+                  setTeleprompterPlaying(false);
+                  setIsTeleprompterOpen(false);
+                }}
+                className="p-2 text-zinc-400 hover:text-white rounded-xl bg-zinc-900 hover:bg-zinc-800"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Linha Guia do Olhar do Locutor */}
+          <div className="absolute top-1/3 left-0 right-0 h-px bg-indigo-500/30 z-10 pointer-events-none flex items-center justify-between px-4">
+            <span className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest bg-black px-2">Linha do Olhar</span>
+            <span className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest bg-black px-2">Fixe os Olhos Aqui</span>
+          </div>
+
+          {/* Área de Rolagem do Texto */}
+          <div 
+            ref={teleprompterRef}
+            className="flex-1 overflow-y-auto px-12 lg:px-32 py-40 custom-scrollbar text-center"
+            style={{ fontSize: `${teleprompterFontSize}px` }}
+          >
+            <div className="max-w-4xl mx-auto space-y-16">
+              {calculatedBlocks.map((block, idx) => (
+                <div key={block.id} className="space-y-4">
+                  <span className="text-xs font-black uppercase tracking-widest text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20 inline-block">
+                    Parte {idx + 1}: {block.title}
+                  </span>
+                  <p className="font-semibold text-zinc-100 leading-relaxed">
+                    {block.scriptText}
+                  </p>
+                </div>
+              ))}
+              <div className="py-40 text-sm text-zinc-500 font-bold uppercase">
+                [ Fim da Apresentação ]
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

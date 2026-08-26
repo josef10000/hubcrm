@@ -6,7 +6,7 @@ import {
   HelpCircle, MessageCircle, DollarSign, ShieldCheck, Video, 
   Image as ImageIcon, Layers, RefreshCw, X, ArrowRight, Star,
   Columns, LayoutGrid, AlignCenter, FileText, Check, Copy,
-  Quote, Zap, MoveUp, MoveDown, Pencil
+  Quote, Zap, MoveUp, MoveDown, Pencil, Download, Code
 } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { funnelService } from '@/services/funnelService';
@@ -29,7 +29,6 @@ export default function PageQuizEditorView() {
   const [sections, setSections] = useState<PageQuizSection[]>(DEFAULT_SALES_PAGE_SECTIONS);
   const [deviceView, setDeviceView] = useState<'desktop' | 'mobile'>('desktop');
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
-  const [insertAfterIndex, setInsertAfterIndex] = useState<number | null>(null);
 
   // Simulador Interativo de Quiz
   const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
@@ -126,7 +125,6 @@ export default function PageQuizEditorView() {
     } else {
       setSections(prev => [...prev, newSec]);
     }
-    setInsertAfterIndex(null);
     toast.success('Bloco inserido na página!');
   };
 
@@ -190,6 +188,239 @@ export default function PageQuizEditorView() {
     }
   };
 
+  // Compilar Instruções Completas / Briefing Estruturado
+  const generateInstructionsText = () => {
+    let doc = `# ESPECIFICAÇÃO TÉCNICA: ${blueprint?.title || 'Página de Alta Conversão'}\n`;
+    doc += `Tipo de Ativo: ${mode === 'quiz_funnel' ? 'Quiz Interativo com Diagnóstico' : 'Página de Vendas em Dobras'}\n`;
+    doc += `Data: ${new Date().toLocaleDateString('pt-BR')}\n`;
+    doc += `Total de Seções / Dobras: ${sections.length}\n`;
+    doc += `\n=================================================================\n`;
+    doc += `ESTRUTURA COMPLETA DAS SEÇÕES:\n`;
+    doc += `=================================================================\n\n`;
+
+    sections.forEach((sec, idx) => {
+      doc += `[SEÇÃO ${idx + 1}: ${sec.title.toUpperCase()}]\n`;
+      doc += `• Layout: ${sec.layoutColumns || '1 Coluna Central'}\n`;
+      if (sec.badge) doc += `• Tag/Badge: "${sec.badge}"\n`;
+      if (sec.headline) doc += `• Headline: "${sec.headline}"\n`;
+      if (sec.subtitle) doc += `• Subtítulo: "${sec.subtitle}"\n`;
+      if (sec.videoUrl) doc += `• Player VSL: URL ${sec.videoUrl} (Delay: ${sec.videoDelaySeconds || 0} segundos)\n`;
+      if (sec.imageUrl) doc += `• Imagem / Mockup: ${sec.imageUrl}\n`;
+      if (sec.bullets && sec.bullets.length > 0) {
+        doc += `• Lista de Benefícios:\n`;
+        sec.bullets.forEach(b => doc += `   - ${b}\n`);
+      }
+      if (sec.gridCards && sec.gridCards.length > 0) {
+        doc += `• Cards em Grade (3 Colunas):\n`;
+        sec.gridCards.forEach(c => doc += `   - [${c.badge || 'Item'}] ${c.title}: ${c.description}\n`);
+      }
+      if (sec.testimonials && sec.testimonials.length > 0) {
+        doc += `• Provas Sociais / Depoimentos:\n`;
+        sec.testimonials.forEach(t => doc += `   - ${t.name} (${t.role}): "${t.quote}" (${t.rating || 5} estrelas)\n`);
+      }
+      if (sec.pricingData) {
+        doc += `• Oferta & Preço:\n`;
+        doc += `   - Preço de Tabela: R$ ${sec.pricingData.regularPrice || 997}\n`;
+        doc += `   - Preço da Oferta: R$ ${sec.pricingData.offerPrice}\n`;
+        doc += `   - Parcelamento: ${sec.pricingData.installments}\n`;
+        doc += `   - Garantia: ${sec.pricingData.guaranteeDays || 7} dias\n`;
+        if (sec.pricingData.bonusList) {
+          doc += `   - Bônus Inclusos:\n`;
+          sec.pricingData.bonusList.forEach(b => doc += `      * ${b}\n`);
+        }
+      }
+      if (sec.faqItems && sec.faqItems.length > 0) {
+        doc += `• Perguntas Frequentes (FAQ):\n`;
+        sec.faqItems.forEach(f => doc += `   - P: ${f.question}\n     R: ${f.answer}\n`);
+      }
+      if (sec.quizQuestion) {
+        doc += `• Pergunta do Quiz: ${sec.headline}\n`;
+        doc += `   - Tipo: ${sec.quizQuestion.questionType}\n`;
+        sec.quizQuestion.options.forEach(o => doc += `   - Alternativa: ${o.label} (Score: ${o.score || 0})\n`);
+      }
+      if (sec.bodyText) {
+        doc += `• Texto de Copy / TSL:\n"${sec.bodyText}"\n`;
+      }
+      if (sec.buttonText) {
+        doc += `• Botão de Chamada para Ação: "${sec.buttonText}" (Link: ${sec.buttonLink || '#pricing'})\n`;
+      }
+      doc += `\n-----------------------------------------------------------------\n\n`;
+    });
+
+    return doc;
+  };
+
+  const handleCopyInstructions = () => {
+    const text = generateInstructionsText();
+    navigator.clipboard.writeText(text);
+    toast.success('Instruções completas da página copiadas com sucesso!');
+  };
+
+  const handleDownloadInstructions = () => {
+    const content = generateInstructionsText();
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${blueprint?.title || 'Especificacao_Pagina'}.txt`;
+    link.click();
+    toast.success('Arquivo de instruções exportado!');
+  };
+
+  // Gerador Nativo de Código HTML + Tailwind Pronto
+  const handleExportHTML = () => {
+    let html = `<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${blueprint?.title || 'Página de Vendas de Alta Conversão'}</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .pulse-cta { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+  </style>
+</head>
+<body class="bg-[#060a17] text-white min-h-screen antialiased selection:bg-indigo-500 selection:text-white">
+
+  <!-- CONTAINER PRINCIPAL -->
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 py-12 space-y-16 lg:space-y-24">
+`;
+
+    sections.forEach((sec, idx) => {
+      const layout = sec.layoutColumns || '1_col_center';
+
+      html += `\n    <!-- DOBRA ${idx + 1}: ${sec.title} -->\n`;
+      html += `    <section id="${sec.id}" class="relative py-8">\n`;
+
+      if (layout === '1_col_center') {
+        html += `      <div class="text-center max-w-3xl mx-auto space-y-6">\n`;
+        if (sec.badge) {
+          html += `        <span class="inline-block bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full">${sec.badge}</span>\n`;
+        }
+        if (sec.headline) {
+          html += `        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight tracking-tight">${sec.headline}</h1>\n`;
+        }
+        if (sec.subtitle) {
+          html += `        <p class="text-sm sm:text-base text-gray-300 max-w-2xl mx-auto">${sec.subtitle}</p>\n`;
+        }
+        if (sec.type === 'hero_vsl' || sec.videoUrl) {
+          html += `        <div class="aspect-video w-full bg-black rounded-3xl border border-white/10 shadow-2xl overflow-hidden flex items-center justify-center relative my-6">\n`;
+          html += `          <iframe class="w-full h-full" src="${sec.videoUrl}" title="Vídeo de Apresentação" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>\n`;
+          html += `        </div>\n`;
+        }
+        if (sec.type === 'pricing_box' && sec.pricingData) {
+          html += `        <div class="p-8 bg-gradient-to-b from-[#0e1738] to-[#080d21] border-2 border-emerald-500/40 rounded-3xl space-y-6 text-center my-8 shadow-2xl">\n`;
+          html += `          <span class="text-xs font-black uppercase text-emerald-400 bg-emerald-500/20 px-4 py-1.5 rounded-full border border-emerald-500/30">Condição Especial de Lançamento</span>\n`;
+          html += `          <div class="text-4xl sm:text-5xl font-black text-white">${sec.pricingData.installments || `R$ ${sec.pricingData.offerPrice}`}</div>\n`;
+          html += `          <p class="text-xs text-gray-400">ou R$ ${sec.pricingData.offerPrice} à vista no Pix</p>\n`;
+          if (sec.pricingData.bonusList) {
+            html += `          <div class="space-y-2.5 text-left text-xs sm:text-sm max-w-md mx-auto pt-4 border-t border-white/10">\n`;
+            sec.pricingData.bonusList.forEach(b => {
+              html += `            <div class="flex items-center gap-2 text-gray-200"><span class="text-emerald-400">✓</span> <span>${b}</span></div>\n`;
+            });
+            html += `          </div>\n`;
+          }
+          html += `        </div>\n`;
+        }
+        if (sec.type === 'faq_accordion' && sec.faqItems) {
+          html += `        <div class="space-y-3 text-left max-w-2xl mx-auto pt-6">\n`;
+          sec.faqItems.forEach((f, fIdx) => {
+            html += `          <details class="p-4 bg-white/[0.03] border border-white/10 rounded-2xl cursor-pointer group">\n`;
+            html += `            <summary class="text-sm font-bold text-white flex items-center justify-between list-none">${f.question} <span class="text-indigo-400 group-open:rotate-180 transition-transform">▼</span></summary>\n`;
+            html += `            <p class="text-xs text-gray-400 mt-2.5 leading-relaxed">${f.answer}</p>\n`;
+            html += `          </details>\n`;
+          });
+          html += `        </div>\n`;
+        }
+        if (sec.buttonText) {
+          html += `        <div class="pt-4">\n`;
+          html += `          <a href="${sec.buttonLink || '#pricing'}" class="pulse-cta inline-block px-10 py-5 bg-gradient-to-r from-emerald-500 via-teal-500 to-indigo-600 hover:opacity-95 text-white text-sm sm:text-base font-black uppercase tracking-wider rounded-2xl shadow-xl shadow-emerald-500/25 transition-transform hover:scale-105 text-center">${sec.buttonText}</a>\n`;
+          html += `        </div>\n`;
+        }
+        html += `      </div>\n`;
+      } else if (layout === '2_col_split' || layout === '2_col_reverse') {
+        html += `      <div class="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">\n`;
+        html += `        <div class="space-y-5">\n`;
+        if (sec.badge) html += `          <span class="inline-block text-xs font-black uppercase px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">${sec.badge}</span>\n`;
+        if (sec.headline) html += `          <h2 class="text-2xl sm:text-3xl font-black text-white leading-tight">${sec.headline}</h2>\n`;
+        if (sec.subtitle) html += `          <p class="text-sm text-gray-300">${sec.subtitle}</p>\n`;
+        if (sec.bullets) {
+          html += `          <div class="space-y-3 pt-2">\n`;
+          sec.bullets.forEach(b => {
+            html += `            <div class="flex items-start gap-3 text-xs sm:text-sm text-gray-200"><span class="text-indigo-400 font-bold">✓</span> <span>${b}</span></div>\n`;
+          });
+          html += `          </div>\n`;
+        }
+        if (sec.buttonText) {
+          html += `          <a href="${sec.buttonLink || '#pricing'}" class="inline-block px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-bold uppercase rounded-xl shadow-lg shadow-indigo-600/30 transition-all">${sec.buttonText}</a>\n`;
+        }
+        html += `        </div>\n`;
+        html += `        <div>\n`;
+        if (sec.videoUrl) {
+          html += `          <div class="aspect-video bg-black rounded-2xl border border-white/10 shadow-xl overflow-hidden"><iframe class="w-full h-full" src="${sec.videoUrl}"></iframe></div>\n`;
+        } else {
+          html += `          <img src="${sec.imageUrl || 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=600&auto=format&fit=crop&q=80'}" alt="Foto" class="rounded-2xl border border-white/10 shadow-xl w-full object-cover">\n`;
+        }
+        html += `        </div>\n`;
+        html += `      </div>\n`;
+      } else if (layout === '3_col_grid') {
+        html += `      <div class="space-y-8 text-center">\n`;
+        if (sec.badge) html += `        <span class="inline-block text-xs font-black uppercase px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">${sec.badge}</span>\n`;
+        if (sec.headline) html += `        <h2 class="text-2xl sm:text-3xl font-black text-white">${sec.headline}</h2>\n`;
+        if (sec.subtitle) html += `        <p class="text-sm text-gray-300 max-w-xl mx-auto">${sec.subtitle}</p>\n`;
+        if (sec.gridCards) {
+          html += `        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left pt-4">\n`;
+          sec.gridCards.forEach(c => {
+            html += `          <div class="p-6 bg-white/[0.02] border border-white/10 rounded-2xl space-y-3 hover:border-indigo-500/40 transition-colors">\n`;
+            html += `            <span class="text-[10px] font-bold text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20">${c.badge || 'Módulo'}</span>\n`;
+            html += `            <h3 class="text-sm font-bold text-white">${c.title}</h3>\n`;
+            html += `            <p class="text-xs text-gray-400 leading-relaxed">${c.description}</p>\n`;
+            html += `          </div>\n`;
+          });
+          html += `        </div>\n`;
+        }
+        if (sec.testimonials) {
+          html += `        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left pt-4">\n`;
+          sec.testimonials.forEach(t => {
+            html += `          <div class="p-6 bg-white/[0.02] border border-white/10 rounded-2xl space-y-3">\n`;
+            html += `            <div class="text-amber-400 text-xs">★★★★★</div>\n`;
+            html += `            <p class="text-xs text-gray-300 italic leading-relaxed">"${t.quote}"</p>\n`;
+            html += `            <div class="pt-3 border-t border-white/5">\n`;
+            html += `              <h4 class="text-xs font-bold text-white">${t.name}</h4>\n`;
+            html += `              <span class="text-[10px] text-gray-500">${t.role || 'Cliente'}</span>\n`;
+            html += `            </div>\n`;
+            html += `          </div>\n`;
+          });
+          html += `        </div>\n`;
+        }
+        html += `      </div>\n`;
+      } else if (layout === 'tsl_letter') {
+        html += `      <div class="max-w-2xl mx-auto space-y-6 bg-white/[0.01] border border-amber-500/20 p-8 rounded-3xl">\n`;
+        if (sec.headline) html += `        <h2 class="text-xl sm:text-2xl font-black text-amber-300 text-center">${sec.headline}</h2>\n`;
+        if (sec.bodyText) html += `        <div class="text-sm text-gray-200 leading-relaxed whitespace-pre-line font-serif">${sec.bodyText}</div>\n`;
+        html += `      </div>\n`;
+      }
+
+      html += `    </section>\n`;
+    });
+
+    html += `\n  </main>\n\n  <!-- RODAPÉ DE COMPLIANCE -->\n  <footer class="border-t border-white/10 py-10 text-center text-xs text-gray-500 space-y-2">\n    <p>© ${new Date().getFullYear()} ${blueprint?.title || 'Todos os direitos reservados.'}</p>\n    <p class="text-[10px] max-w-xl mx-auto">Este site não é afiliado ao Facebook ou a qualquer entidade do Meta. Todos os conteúdos são de responsabilidade exclusiva.</p>\n  </footer>\n\n</body>\n</html>`;
+
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${blueprint?.title || 'pagina-de-vendas'}.html`;
+    link.click();
+    toast.success('Arquivo HTML pronto exportado com sucesso!');
+  };
+
   // Efeito do simulador de quiz
   useEffect(() => {
     let interval: any;
@@ -233,6 +464,7 @@ export default function PageQuizEditorView() {
           <button
             onClick={() => navigate('/funnels')}
             className="p-2 text-gray-400 hover:text-white rounded-xl hover:bg-white/5 transition-colors"
+            title="Voltar para Fluxos"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -303,6 +535,27 @@ export default function PageQuizEditorView() {
             </button>
           </div>
 
+          {/* Botões de Ação e Exportadores Nativos */}
+          <button
+            onClick={handleCopyInstructions}
+            className="px-3 py-2 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-white/10"
+            title="Copiar todas as instruções estruturadas"
+          >
+            <Copy className="w-3.5 h-3.5" />
+            <span className="hidden lg:inline">Copiar Instruções</span>
+          </button>
+
+          {mode === 'sales_page' && (
+            <button
+              onClick={handleExportHTML}
+              className="px-3 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-emerald-500/40 shadow-sm"
+              title="Baixar arquivo HTML pronto da página com Tailwind"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Baixar HTML</span>
+            </button>
+          )}
+
           {mode === 'quiz_funnel' && (
             <button
               onClick={() => {
@@ -313,7 +566,7 @@ export default function PageQuizEditorView() {
               className="px-3.5 py-2 bg-indigo-600/30 hover:bg-indigo-600 text-indigo-200 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-indigo-500/40 shadow-sm"
             >
               <Play className="w-3.5 h-3.5 text-indigo-300" />
-              <span>Simulador de Quiz</span>
+              <span>Simulador</span>
             </button>
           )}
 
@@ -329,7 +582,7 @@ export default function PageQuizEditorView() {
       </header>
 
       {/* ── CORPO PRINCIPAL: CANVAS VISUAL DA PÁGINA ────────────────────────── */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden min-h-0">
         
         {/* Barra Lateral Esquerda: Paleta de Blocos Rápidos */}
         <div className="w-72 bg-[#080d1e] border-r border-white/10 p-4 flex flex-col gap-3 shrink-0 overflow-y-auto custom-scrollbar">
@@ -458,12 +711,12 @@ export default function PageQuizEditorView() {
           </div>
         </div>
 
-        {/* ── ÁREA CENTRAL: WIREFRAME VISUAL DA PÁGINA COM SCROLL ────────────── */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 lg:p-8 bg-[#040712] flex justify-center">
+        {/* ── ÁREA CENTRAL: WIREFRAME VISUAL DA PÁGINA COM SCROLL TOTAL ──────── */}
+        <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-4 lg:p-8 bg-[#040712] flex justify-center">
           
           <div 
-            className={`transition-all duration-300 bg-[#090e1f] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col ${
-              deviceView === 'mobile' ? 'w-full max-w-[390px] min-h-[750px]' : 'w-full max-w-5xl'
+            className={`transition-all duration-300 bg-[#090e1f] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col h-fit mb-32 ${
+              deviceView === 'mobile' ? 'w-full max-w-[390px] min-h-[750px]' : 'w-full max-w-5xl min-h-[600px]'
             }`}
           >
             {/* Top Bar da Janela Simulada */}
