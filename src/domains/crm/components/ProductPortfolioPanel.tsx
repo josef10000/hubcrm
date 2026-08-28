@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { BarChart3, ChevronRight, CircleDot, Flag, Pencil, Save, Target, X } from 'lucide-react';
+import { BarChart3, ChevronRight, CircleDot, Flag, Pencil, Save, Target, X, Users, Wallet, ShoppingCart } from 'lucide-react';
 import type { Offer } from '@/types';
+import { useTransactions } from '@/hooks/queries/useFinance';
+import { useClients } from '@/hooks/queries/useClients';
 
 type PortfolioOffer = Offer & {
   portfolioSegment?: 'B2B' | 'B2C' | 'OTHER';
@@ -31,12 +33,23 @@ export default function ProductPortfolioPanel({ offers, canManage, onSave }: Pro
   const [selectedId, setSelectedId] = useState<string | null>(offers[0]?.id || null);
   const [editing, setEditing] = useState(false);
   const selected = offers.find(o => o.id === selectedId) || offers[0];
+  const { data: transactionsData = [] } = useTransactions();
+  const { data: clientsData = [] } = useClients();
 
   const groups = useMemo(() => {
     const result: Record<Segment, PortfolioOffer[]> = { B2B: [], B2C: [], OTHER: [] };
     offers.forEach(offer => result[(offer.portfolioSegment || 'OTHER') as Segment].push(offer));
     return result;
   }, [offers]);
+
+  const productMetrics = useMemo(() => {
+    if (!selected) return { revenue: 0, sales: 0, clients: 0 };
+    const productTransactions = transactionsData.filter(tx => tx.offerId === selected.id && tx.type === 'INCOME' && tx.status === 'PAID');
+    const revenue = productTransactions.reduce((sum, tx) => sum + (tx.amount || 0), 0);
+    const clientIds = new Set(productTransactions.map(tx => tx.clientId).filter(Boolean));
+    const clients = clientsData.filter(client => client.offerId === selected.id || clientIds.has(client.id)).length;
+    return { revenue, sales: productTransactions.length, clients };
+  }, [selected, transactionsData, clientsData]);
 
   if (!offers.length) return null;
 
@@ -63,7 +76,7 @@ export default function ProductPortfolioPanel({ offers, canManage, onSave }: Pro
         <div>
           <div className="flex items-center gap-2 text-primary-400 mb-1"><BarChart3 size={18} /><span className="text-[10px] font-black uppercase tracking-[0.18em]">Visão estratégica</span></div>
           <h3 className="text-xl font-black text-gray-900 dark:text-white">Portfólio de Produtos</h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Uma visão simples de onde cada produto está e qual é o próximo marco.</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Onde cada produto está, o que entrega hoje e qual é o próximo marco.</p>
         </div>
         <div className="flex items-center gap-2 text-[11px] font-semibold text-gray-500 dark:text-gray-400"><span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-400" /> Produção</span><span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-400" /> Desenvolvimento</span><span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-sky-400" /> Validação</span></div>
       </div>
@@ -92,7 +105,12 @@ export default function ProductPortfolioPanel({ offers, canManage, onSave }: Pro
         {selected && <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
           {!editing ? <>
             <div className="flex items-start justify-between gap-3"><div><div className="flex items-center gap-2 mb-1"><span className={`h-2.5 w-2.5 rounded-full ${statusMeta[selectedStatus].dot}`} /><span className="text-[10px] font-black uppercase tracking-wider text-gray-500">{statusMeta[selectedStatus].label}</span></div><h4 className="text-lg font-black text-gray-900 dark:text-white">{selected.name}</h4><span className="inline-flex mt-2 px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-[10px] font-bold text-gray-500 dark:text-gray-400">{segmentLabel(selected.portfolioSegment as Segment)}</span></div>{canManage && <button onClick={() => setEditing(true)} className="p-2 rounded-xl border border-white/10 text-gray-500 hover:text-primary-400 hover:bg-white/5"><Pencil size={15} /></button>}</div>
-            <div className="mt-6"><div className="flex justify-between text-[11px] font-bold mb-2"><span className="text-gray-500">Progresso estratégico</span><span className="text-gray-800 dark:text-gray-200">{selected.portfolioProgress ?? 0}%</span></div><div className="h-2 rounded-full bg-black/20 overflow-hidden"><div className="h-full rounded-full bg-primary-500 transition-all" style={{ width: `${selected.portfolioProgress ?? 0}%` }} /></div></div>
+            <div className="grid grid-cols-3 gap-2 mt-5">
+              <div className="rounded-xl border border-white/10 bg-black/10 p-3"><Users size={14} className="text-cyan-400 mb-2" /><div className="text-lg font-black text-gray-900 dark:text-white">{productMetrics.clients}</div><div className="text-[9px] font-bold uppercase tracking-wider text-gray-500">Clientes</div></div>
+              <div className="rounded-xl border border-white/10 bg-black/10 p-3"><Wallet size={14} className="text-emerald-400 mb-2" /><div className="text-lg font-black text-gray-900 dark:text-white">R$ {productMetrics.revenue.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</div><div className="text-[9px] font-bold uppercase tracking-wider text-gray-500">Receita paga</div></div>
+              <div className="rounded-xl border border-white/10 bg-black/10 p-3"><ShoppingCart size={14} className="text-indigo-400 mb-2" /><div className="text-lg font-black text-gray-900 dark:text-white">{productMetrics.sales}</div><div className="text-[9px] font-bold uppercase tracking-wider text-gray-500">Vendas</div></div>
+            </div>
+            <div className="mt-5"><div className="flex justify-between text-[11px] font-bold mb-2"><span className="text-gray-500">Progresso estratégico</span><span className="text-gray-800 dark:text-gray-200">{selected.portfolioProgress ?? 0}%</span></div><div className="h-2 rounded-full bg-black/20 overflow-hidden"><div className="h-full rounded-full bg-primary-500 transition-all" style={{ width: `${selected.portfolioProgress ?? 0}%` }} /></div></div>
             <div className="mt-5 rounded-xl border border-white/10 bg-black/10 p-4"><div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-gray-500 mb-2"><Target size={13} /> Objetivo atual</div><p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">{selected.strategicObjective || 'Defina o objetivo estratégico deste produto.'}</p></div>
             <div className="mt-3 rounded-xl border border-white/10 bg-black/10 p-4"><div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-gray-500 mb-2"><Flag size={13} /> Próximo marco</div><p className="text-sm font-semibold text-gray-700 dark:text-gray-200">{selected.nextMilestone || 'Nenhum marco definido.'}</p></div>
           </> : <form onSubmit={save}>
