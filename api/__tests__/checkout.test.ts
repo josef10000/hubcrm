@@ -244,7 +244,7 @@ describe('Public Checkout Handler', () => {
           asaasCustomerId: 'cus_123',
           billingCycle: 'MONTHLY',
           onboardingCompleted: true,
-          convertedVia: 'Public Checkout',
+          convertedVia: 'Pagamento Transparente',
         })
       );
     });
