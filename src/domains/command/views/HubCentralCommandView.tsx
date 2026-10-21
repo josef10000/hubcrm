@@ -3,7 +3,6 @@ import {
   TrendingUp, 
   DollarSign, 
   Users, 
-  Target, 
   ArrowUpRight, 
   Sparkles,
   Bot,
@@ -14,16 +13,11 @@ import {
   Globe,
   SlidersHorizontal,
   Layers,
-  ShoppingBag,
-  FolderKanban,
-  FileText,
   Search,
   Bell,
   Sun,
-  Shield,
   Activity,
-  Cpu,
-  Inbox
+  FolderKanban
 } from 'lucide-react';
 import { InteractiveSalesGlobe } from '../components/InteractiveSalesGlobe';
 import { useNavigate } from 'react-router-dom';
@@ -37,23 +31,19 @@ export default function HubCentralCommandView() {
   const { userProfile } = useAuth();
 
   // 1. Dados Reais de Clientes e Vendas (Firestore)
-  const { data: clients = [], isLoading: isLoadingClients } = useClients();
+  const { data: clients = [] } = useClients();
 
   // 2. Dados Reais de Transações / Financeiro (Firestore)
-  const { data: transactions = [], isLoading: isLoadingTrans } = useTransactions();
+  const { data: transactions = [] } = useTransactions();
 
   // 3. Cálculos 100% Reais com base nos dados do banco
   const metrics = useMemo(() => {
     const clientsList = clients || [];
     const activeClients = clientsList.filter(c => c.status === 'Ativo' || c.paymentStatus === 'RECEIVED');
     
-    // Total de faturamento mensal recorrente real
     const totalMrr = activeClients.reduce((acc, c) => acc + getPlanPrice(c.plan, c.billingCycle, c), 0);
-    
-    // Ticket médio real
     const averageTicket = activeClients.length > 0 ? totalMrr / activeClients.length : 0;
 
-    // Transações reais
     const income = (transactions || [])
       .filter(t => t.type === 'income')
       .reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
@@ -168,13 +158,13 @@ export default function HubCentralCommandView() {
         </div>
       </header>
 
-      {/* 🚀 CORPO PRINCIPAL COM GLOBO E CARDS CONECTADOS AOS DADOS REAIS */}
+      {/* 🚀 CORPO PRINCIPAL COM GLOBO 3D REALISTA THREE.JS E PAINÉIS LATERAIS */}
       <div className="flex-1 p-6 grid grid-cols-12 gap-6 max-w-[1720px] mx-auto w-full items-start">
         
         {/* COLUNA ESQUERDA (3 COLS) — VENDAS REAIS & FINANCEIRO */}
         <div className="col-span-12 lg:col-span-3 space-y-5">
           
-          {/* Card: Vendas Confirmadas Reais */}
+          {/* Card: Receita Recorrente Real */}
           <div className="bg-[#081226]/80 backdrop-blur-xl border border-cyan-950/60 rounded-2xl p-5 shadow-[0_8px_32px_rgba(0,0,0,0.5)] relative overflow-hidden">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -299,12 +289,12 @@ export default function HubCentralCommandView() {
           </div>
         </div>
 
-        {/* COLUNA CENTRAL (6 COLS) — GLOBO 3D COM CLIENTES REAIS */}
-        <div className="col-span-12 lg:col-span-6 flex flex-col items-center justify-center relative min-h-[480px]">
+        {/* COLUNA CENTRAL (6 COLS) — GLOBO 3D REALISTA THREE.JS INTERATIVO */}
+        <div className="col-span-12 lg:col-span-6 flex flex-col items-center justify-center relative min-h-[540px]">
           <InteractiveSalesGlobe clients={clients} />
         </div>
 
-        {/* COLUNA DIREITA (3 COLS) — DAVINCI IA & STATUS */}
+        {/* COLUNA DIREITA (3 COLS) — DAVINCI IA & ATALHOS */}
         <div className="col-span-12 lg:col-span-3 space-y-5">
           
           {/* Card: Davinci & Agentes de IA */}
@@ -316,7 +306,7 @@ export default function HubCentralCommandView() {
                 </div>
                 <div>
                   <h3 className="text-xs font-semibold text-gray-300">Agentes de IA</h3>
-                  <span className="text-[10px] text-gray-500">Davinci • Orquestrador Principal</span>
+                  <span className="text-[10px] text-gray-500">Davinci • Orquestrador</span>
                 </div>
               </div>
               <div className="flex items-center gap-1.5">
@@ -332,8 +322,8 @@ export default function HubCentralCommandView() {
               </div>
               <p className="text-[11px] text-gray-300 leading-relaxed text-left">
                 {metrics.activeCount === 0 
-                  ? 'Central pronta. Você pode criar novas ofertas e funis nos laboratórios abaixo.'
-                  : `Monitorando ${metrics.activeCount} assinaturas ativas e o financeiro do seu negócio.`}
+                  ? 'Central pronta. Crie e valide novas ofertas no laboratório ao lado.'
+                  : `Monitorando ${metrics.activeCount} clientes ativos e o financeiro do seu negócio.`}
               </p>
             </div>
 
@@ -416,74 +406,7 @@ export default function HubCentralCommandView() {
           </div>
         </div>
 
-        {/* LINHA INFERIOR (12 COLS) — NAVEGAÇÃO POR DOMÍNIOS REAIS */}
-        <div className="col-span-12 space-y-3">
-          <div className="flex items-center justify-between px-1">
-            <div className="flex items-center gap-2 text-xs font-bold text-gray-300">
-              <Globe className="w-4 h-4 text-cyan-400" />
-              <span>Acesso Rápido aos Módulos</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            {[
-              { title: 'Vendas & Relatórios', icon: Globe, path: '/analytics' },
-              { title: 'HubAds & Criativos', icon: Target, path: '/hub-ads' },
-              { title: 'Biblioteca de Crescimento', icon: FileText, path: '/growth-hub' },
-              { title: 'Catálogo de Produtos', icon: ShoppingBag, path: '/products' },
-              { title: 'Gestão de Clientes', icon: Users, path: '/workspace' },
-              { title: 'Hub Canvas', icon: Layers, path: '/canvas' },
-            ].map((col, idx) => (
-              <div 
-                key={idx}
-                onClick={() => navigate(col.path)}
-                className="group relative bg-[#081226]/80 hover:bg-[#0c1c3c] border border-cyan-950/60 hover:border-cyan-500/40 rounded-xl p-3.5 transition-all duration-300 cursor-pointer shadow-md text-left"
-              >
-                <div className="w-7 h-7 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                  <col.icon className="w-4 h-4" />
-                </div>
-                <h4 className="text-xs font-bold text-white group-hover:text-cyan-300 transition-colors">{col.title}</h4>
-              </div>
-            ))}
-          </div>
-        </div>
-
       </div>
-
-      {/* 🧭 FOOTER & BARRA DE STATUS */}
-      <footer className="h-12 border-t border-cyan-950/60 bg-[#030816]/95 backdrop-blur-xl px-6 flex items-center justify-between text-[11px] text-gray-400 mt-auto sticky bottom-0 z-50">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
-            <span className="font-semibold text-gray-300">Sistema Conectado</span>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <Shield className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Segurança Ativa</span>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <Cpu className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Banco de Dados Online</span>
-          </div>
-        </div>
-
-        {/* Tabs de Navegação Operacional Rápida */}
-        <div className="hidden md:flex items-center gap-1 bg-[#040915] p-1 rounded-xl border border-cyan-950/60">
-          <button className="px-3 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 font-bold shadow-sm">Visão Executiva</button>
-          <button onClick={() => navigate('/analytics')} className="px-3 py-1 rounded-lg hover:text-white transition-colors cursor-pointer">Vendas</button>
-          <button onClick={() => navigate('/finance')} className="px-3 py-1 rounded-lg hover:text-white transition-colors cursor-pointer">Financeiro</button>
-          <button onClick={() => navigate('/funnels')} className="px-3 py-1 rounded-lg hover:text-white transition-colors cursor-pointer">Funis</button>
-          <button onClick={() => navigate('/growth-hub')} className="px-3 py-1 rounded-lg hover:text-white transition-colors cursor-pointer">Conteúdo</button>
-          <button onClick={() => navigate('/chat?mode=davinci')} className="px-3 py-1 rounded-lg hover:text-white transition-colors cursor-pointer">Agentes</button>
-          <button onClick={() => navigate('/monitoring')} className="px-3 py-1 rounded-lg hover:text-white transition-colors cursor-pointer">Infraestrutura</button>
-        </div>
-
-        <div>
-          <span>Hub Central v1.1 • Modo Solopreneur</span>
-        </div>
-      </footer>
 
     </div>
   );
