@@ -1,293 +1,408 @@
 import React, { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { Client } from '@/types';
+import { getPlanPrice } from '@/helpers';
+import {
+  createEarthShaderMaterial,
+  createInnerAtmosphereMaterial,
+  createOuterAtmosphereMaterial
+} from '../three/earthShaders';
+import {
+  buildCountryBordersGeometry,
+  calculateSubsolarPoint,
+  createEarthFallbackTexture,
+  latLonToVector3
+} from '../three/earthGeo';
 
 interface InteractiveSalesGlobeProps {
   clients?: Client[];
 }
 
+const TEXTURE_URLS = {
+  day: 'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg',
+  night: 'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-night.jpg',
+  bump: 'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-topology.png'
+};
+
+const EARTH_RADIUS = 1;
+const OUTER_ATMOSPHERE_RADIUS = 1.034;
+const INNER_ATMOSPHERE_RADIUS = 1.005;
+const AUTO_ROTATE_SPEED = 0.00075;
+
+const _localSunPos = new THREE.Vector3();
+
 export function InteractiveSalesGlobe({ clients = [] }: InteractiveSalesGlobeProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
-  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Computa métricas reais
-  const activeClients = (clients || []).filter(c => c.status === 'Ativo' || c.paymentStatus === 'RECEIVED');
-  const totalRevenue = activeClients.reduce((acc, c) => acc + (Number(c.customMonthlyPrice) || 0), 0);
+  // Computa métricas reais do Hub Central
+  const activeClients = (clients || []).filter(
+    c => c.status === 'Ativo' || c.paymentStatus === 'RECEIVED'
+  );
+  const totalRevenue = activeClients.reduce(
+    (acc, c) => acc + getPlanPrice(c.plan, c.billingCycle, c),
+    0
+  );
   const totalCount = activeClients.length;
 
   useEffect(() => {
     const container = mountRef.current;
     if (!container) return;
 
+    let disposed = false;
     const width = container.clientWidth || 640;
-    const height = container.clientHeight || 580;
+    const height = container.clientHeight || 540;
 
-    // 1. Scene, Camera, Renderer
+    // 1. Scene & Camera
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-    camera.position.z = 2.8;
+    const camera = new THREE.PerspectiveCamera(44, width / height, 0.1, 100);
+    camera.position.set(0, 0.18, 3.05);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    container.appendChild(renderer.domElement);
-
-    // 2. Luzes
-    const ambientLight = new THREE.AmbientLight(0x0f2b48, 1.2);
-    scene.add(ambientLight);
-
-    const dirLight1 = new THREE.DirectionalLight(0x38bdf8, 2.5);
-    dirLight1.position.set(5, 3, 5);
-    scene.add(dirLight1);
-
-    const dirLight2 = new THREE.DirectionalLight(0xf59e0b, 1.2);
-    dirLight2.position.set(-5, -2, -3);
-    scene.add(dirLight2);
-
-    // 3. Textura da Terra Realista Gerada Proceduralmente em Alta Definição
-    const canvasTexture = document.createElement('canvas');
-    canvasTexture.width = 2048;
-    canvasTexture.height = 1024;
-    const ctx = canvasTexture.getContext('2d');
-    if (ctx) {
-      // Oceano Profundo
-      const oceanGrad = ctx.createLinearGradient(0, 0, 0, 1024);
-      oceanGrad.addColorStop(0, '#030b18');
-      oceanGrad.addColorStop(0.5, '#051833');
-      oceanGrad.addColorStop(1, '#020617');
-      ctx.fillStyle = oceanGrad;
-      ctx.fillRect(0, 0, 2048, 1024);
-
-      // Linhas de Grade Globais Sutis
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.08)';
-      ctx.lineWidth = 1;
-      for (let y = 0; y <= 1024; y += 64) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(2048, y);
-        ctx.stroke();
-      }
-      for (let x = 0; x <= 2048; x += 64) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, 1024);
-        ctx.stroke();
-      }
-
-      // Desenho simplificado realista dos Continentes (América do Sul, Norte, Europa, África, Ásia)
-      ctx.fillStyle = '#0f3a63';
-      ctx.shadowColor = '#38bdf8';
-      ctx.shadowBlur = 10;
-
-      // América do Sul
-      ctx.beginPath();
-      ctx.moveTo(560, 520);
-      ctx.bezierCurveTo(620, 530, 680, 580, 660, 680);
-      ctx.bezierCurveTo(640, 780, 600, 880, 560, 920);
-      ctx.bezierCurveTo(530, 880, 520, 720, 500, 600);
-      ctx.closePath();
-      ctx.fill();
-
-      // América do Norte
-      ctx.beginPath();
-      ctx.moveTo(340, 200);
-      ctx.bezierCurveTo(460, 180, 560, 240, 520, 380);
-      ctx.bezierCurveTo(480, 460, 400, 480, 360, 440);
-      ctx.bezierCurveTo(300, 380, 260, 260, 340, 200);
-      ctx.closePath();
-      ctx.fill();
-
-      // Europa
-      ctx.beginPath();
-      ctx.moveTo(980, 240);
-      ctx.bezierCurveTo(1060, 220, 1140, 260, 1120, 340);
-      ctx.bezierCurveTo(1080, 380, 1000, 380, 960, 320);
-      ctx.closePath();
-      ctx.fill();
-
-      // África
-      ctx.beginPath();
-      ctx.moveTo(960, 400);
-      ctx.bezierCurveTo(1080, 400, 1140, 500, 1100, 650);
-      ctx.bezierCurveTo(1060, 780, 1000, 820, 960, 750);
-      ctx.bezierCurveTo(920, 650, 900, 500, 960, 400);
-      ctx.closePath();
-      ctx.fill();
-
-      // Luzes Noturnas nas Cidades (Pontos Dourados)
-      ctx.fillStyle = '#fef08a';
-      ctx.shadowColor = '#f59e0b';
-      ctx.shadowBlur = 4;
-      for (let i = 0; i < 280; i++) {
-        const px = Math.random() * 2048;
-        const py = Math.random() * 1024;
-        ctx.fillRect(px, py, 1.8, 1.8);
-      }
+    // 2. Renderer (transparent background to blend seamlessly into Hub Central)
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+        powerPreference: 'high-performance'
+      });
+    } catch {
+      setLoading(false);
+      return;
     }
 
-    const texture = new THREE.CanvasTexture(canvasTexture);
+    renderer.setClearColor(0x000000, 0);
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    container.appendChild(renderer.domElement);
 
-    // 4. Mesh da Terra
-    const globeGeo = new THREE.SphereGeometry(1, 64, 64);
-    const globeMat = new THREE.MeshPhongMaterial({
-      map: texture,
-      shininess: 35,
-      specular: new THREE.Color(0x38bdf8),
-    });
-    const globe = new THREE.Mesh(globeGeo, globeMat);
-    scene.add(globe);
+    const maxAniso = Math.min(renderer.capabilities.getMaxAnisotropy(), 16);
 
-    // 5. Atmosfera Brilhante
-    const atmosphereGeo = new THREE.SphereGeometry(1.08, 64, 64);
-    const atmosphereMat = new THREE.ShaderMaterial({
-      vertexShader: `
-        varying vec3 vNormal;
-        void main() {
-          vNormal = normalize(normalMatrix * normal);
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        varying vec3 vNormal;
-        void main() {
-          float intensity = pow(0.65 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.2);
-          gl_FragColor = vec4(0.22, 0.74, 0.97, 1.0) * intensity;
-        }
-      `,
-      blending: THREE.AdditiveBlending,
-      side: THREE.BackSide,
-      transparent: true,
-    });
-    const atmosphere = new THREE.Mesh(atmosphereGeo, atmosphereMat);
-    scene.add(atmosphere);
+    // 3. OrbitControls (smooth damping, drag & zoom)
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, -0.05, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.enablePan = false;
+    controls.minDistance = 1.65;
+    controls.maxDistance = 4.6;
+    controls.rotateSpeed = 0.55;
+    controls.zoomSpeed = 0.85;
+    controls.update();
 
-    // 6. Anel Orbital
-    const ringGeo = new THREE.RingGeometry(1.35, 1.36, 128);
-    const ringMat = new THREE.MeshBasicMaterial({
-      color: 0x38bdf8,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0.35,
-    });
-    const ring = new THREE.Mesh(ringGeo, ringMat);
-    ring.rotation.x = Math.PI / 2.3;
-    ring.rotation.y = 0.2;
-    scene.add(ring);
+    let isInteracting = false;
+    let resumeTimer: number | null = null;
 
-    // 7. Marcadores 3D Reais (Brasil Sede)
-    const markerGeo = new THREE.SphereGeometry(0.035, 16, 16);
-    const markerMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
-    const marker = new THREE.Mesh(markerGeo, markerMat);
-
-    // Coordenadas aproximadas do Brasil na esfera (-15 lat, -50 long)
-    const phi = (90 - (-14)) * (Math.PI / 180);
-    const theta = (-51 + 180) * (Math.PI / 180);
-    marker.position.x = -(1.02 * Math.sin(phi) * Math.cos(theta));
-    marker.position.y = 1.02 * Math.cos(phi);
-    marker.position.z = 1.02 * Math.sin(phi) * Math.sin(theta);
-    globe.add(marker);
-
-    // 8. Controles de Rotação por Mouse / Touch (Interativo!)
-    let isDragging = false;
-    let prevMouseX = 0;
-    let prevMouseY = 0;
-    let autoRotate = true;
-
-    const onMouseDown = (e: MouseEvent) => {
-      isDragging = true;
-      autoRotate = false;
-      prevMouseX = e.clientX;
-      prevMouseY = e.clientY;
-    };
-
-    const onMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-      const deltaX = e.clientX - prevMouseX;
-      const deltaY = e.clientY - prevMouseY;
-
-      globe.rotation.y += deltaX * 0.006;
-      globe.rotation.x += deltaY * 0.006;
-
-      prevMouseX = e.clientX;
-      prevMouseY = e.clientY;
-    };
-
-    const onMouseUp = () => {
-      isDragging = false;
-      setTimeout(() => { autoRotate = true; }, 3000); // Retoma rotação automática após soltar
-    };
-
-    const dom = renderer.domElement;
-    dom.addEventListener('mousedown', onMouseDown);
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-
-    // Suporte a Touch em Smartphones / Tablets
-    const onTouchStart = (e: TouchEvent) => {
-      if (e.touches.length === 1) {
-        isDragging = true;
-        autoRotate = false;
-        prevMouseX = e.touches[0].clientX;
-        prevMouseY = e.touches[0].clientY;
+    const onControlStart = () => {
+      isInteracting = true;
+      if (resumeTimer !== null) {
+        window.clearTimeout(resumeTimer);
+        resumeTimer = null;
       }
     };
 
-    const onTouchMove = (e: TouchEvent) => {
-      if (!isDragging || e.touches.length !== 1) return;
-      const deltaX = e.touches[0].clientX - prevMouseX;
-      const deltaY = e.touches[0].clientY - prevMouseY;
-
-      globe.rotation.y += deltaX * 0.008;
-      globe.rotation.x += deltaY * 0.008;
-
-      prevMouseX = e.touches[0].clientX;
-      prevMouseY = e.touches[0].clientY;
+    const onControlEnd = () => {
+      resumeTimer = window.setTimeout(() => {
+        isInteracting = false;
+      }, 2500);
     };
 
-    const onTouchEnd = () => {
-      isDragging = false;
-      setTimeout(() => { autoRotate = true; }, 3000);
+    controls.addEventListener('start', onControlStart);
+    controls.addEventListener('end', onControlEnd);
+
+    // 4. Earth Group (oriented initially toward Brazil / South America)
+    const earthGroup = new THREE.Group();
+    earthGroup.rotation.y = -0.7;
+    scene.add(earthGroup);
+
+    // 5. Subtle Sci-Fi Orbital Rings & Tactical Grid (matching planet aesthetic)
+    const futuristicGroup = new THREE.Group();
+    earthGroup.add(futuristicGroup);
+
+    const disposableGeometries: THREE.BufferGeometry[] = [];
+    const disposableMaterials: THREE.Material[] = [];
+    const disposableTextures: THREE.Texture[] = [];
+
+    const telemetryMat = new THREE.LineBasicMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.14
+    });
+    disposableMaterials.push(telemetryMat);
+
+    // Equator ring
+    const eqPts: THREE.Vector3[] = [];
+    const eqR = EARTH_RADIUS * 1.018;
+    for (let deg = 0; deg <= 360; deg += 3) {
+      const rad = (deg * Math.PI) / 180;
+      eqPts.push(new THREE.Vector3(Math.cos(rad) * eqR, 0, Math.sin(rad) * eqR));
+    }
+    const eqGeo = new THREE.BufferGeometry().setFromPoints(eqPts);
+    disposableGeometries.push(eqGeo);
+    futuristicGroup.add(new THREE.Line(eqGeo, telemetryMat));
+
+    // Inclined orbital ring
+    const orbitPts: THREE.Vector3[] = [];
+    const orbR = EARTH_RADIUS * 1.12;
+    for (let deg = 0; deg <= 360; deg += 3) {
+      const rad = (deg * Math.PI) / 180;
+      orbitPts.push(
+        new THREE.Vector3(
+          Math.cos(rad) * orbR,
+          Math.sin(rad) * orbR * 0.45,
+          Math.sin(rad) * orbR * 0.89
+        )
+      );
+    }
+    const orbitGeo = new THREE.BufferGeometry().setFromPoints(orbitPts);
+    const orbitMat = new THREE.LineBasicMaterial({
+      color: 0xfbbf24,
+      transparent: true,
+      opacity: 0.16
+    });
+    disposableGeometries.push(orbitGeo);
+    disposableMaterials.push(orbitMat);
+    futuristicGroup.add(new THREE.Line(orbitGeo, orbitMat));
+
+    // Faint coordinate grid
+    const gridMat = new THREE.LineBasicMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.05
+    });
+    disposableMaterials.push(gridMat);
+
+    for (let lat = -60; lat <= 60; lat += 30) {
+      if (lat === 0) continue;
+      const pts: THREE.Vector3[] = [];
+      const phi = (90 - lat) * (Math.PI / 180);
+      const r = EARTH_RADIUS * 1.0015;
+      for (let lon = -180; lon <= 180; lon += 6) {
+        const theta = (lon + 180) * (Math.PI / 180);
+        pts.push(
+          new THREE.Vector3(
+            -r * Math.sin(phi) * Math.cos(theta),
+            r * Math.cos(phi),
+            r * Math.sin(phi) * Math.sin(theta)
+          )
+        );
+      }
+      const gGeo = new THREE.BufferGeometry().setFromPoints(pts);
+      disposableGeometries.push(gGeo);
+      futuristicGroup.add(new THREE.Line(gGeo, gridMat));
+    }
+
+    for (let lon = -180; lon < 180; lon += 45) {
+      const pts: THREE.Vector3[] = [];
+      const r = EARTH_RADIUS * 1.0015;
+      const theta = (lon + 180) * (Math.PI / 180);
+      for (let lat = -80; lat <= 80; lat += 6) {
+        const phi = (90 - lat) * (Math.PI / 180);
+        pts.push(
+          new THREE.Vector3(
+            -r * Math.sin(phi) * Math.cos(theta),
+            r * Math.cos(phi),
+            r * Math.sin(phi) * Math.sin(theta)
+          )
+        );
+      }
+      const gGeo = new THREE.BufferGeometry().setFromPoints(pts);
+      disposableGeometries.push(gGeo);
+      futuristicGroup.add(new THREE.Line(gGeo, gridMat));
+    }
+
+    // 6. Subtle Country Borders Vector Layer
+    buildCountryBordersGeometry(EARTH_RADIUS * 1.0022)
+      .then(bordersGeo => {
+        if (disposed) {
+          bordersGeo.dispose();
+          return;
+        }
+        const bordersMat = new THREE.LineBasicMaterial({
+          color: 0x93c5fd,
+          transparent: true,
+          opacity: 0.16,
+          depthWrite: false
+        });
+        disposableGeometries.push(bordersGeo);
+        disposableMaterials.push(bordersMat);
+        earthGroup.add(new THREE.LineSegments(bordersGeo, bordersMat));
+      })
+      .catch(() => {
+        // Graceful skip if offline
+      });
+
+    // 7. Sleek HQ Marker on Brazil (Brasília / Centro Operacional)
+    const hqPos = latLonToVector3(-15.8267, -47.9218, EARTH_RADIUS + 0.007);
+    const markerGeo = new THREE.SphereGeometry(0.009, 16, 16);
+    const markerMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.95
+    });
+    const hqMarker = new THREE.Mesh(markerGeo, markerMat);
+    hqMarker.position.copy(hqPos);
+    earthGroup.add(hqMarker);
+
+    const markerRingGeo = new THREE.RingGeometry(0.013, 0.019, 32);
+    const markerRingMat = new THREE.MeshBasicMaterial({
+      color: 0xfcd34d,
+      transparent: true,
+      opacity: 0.45,
+      side: THREE.DoubleSide
+    });
+    const hqRing = new THREE.Mesh(markerRingGeo, markerRingMat);
+    hqRing.position.copy(hqPos);
+    hqRing.lookAt(new THREE.Vector3(0, 0, 0));
+    earthGroup.add(hqRing);
+
+    disposableGeometries.push(markerGeo, markerRingGeo);
+    disposableMaterials.push(markerMat, markerRingMat);
+
+    // 8. Load High-Resolution NASA Earth Textures & Custom Shaders
+    let earthMat: THREE.ShaderMaterial | null = null;
+    let outerAtmMat: THREE.ShaderMaterial | null = null;
+    let innerAtmMat: THREE.ShaderMaterial | null = null;
+
+    const textureLoader = new THREE.TextureLoader();
+    Promise.all([
+      textureLoader
+        .loadAsync(TEXTURE_URLS.day)
+        .catch(() => createEarthFallbackTexture('#1b4965', '#62b6cb')),
+      textureLoader
+        .loadAsync(TEXTURE_URLS.night)
+        .catch(() => createEarthFallbackTexture('#03071e', '#370617')),
+      textureLoader
+        .loadAsync(TEXTURE_URLS.bump)
+        .catch(() => createEarthFallbackTexture('#101010', '#909090'))
+    ]).then(([dayMap, nightMap, bumpMap]) => {
+      if (disposed) {
+        dayMap.dispose();
+        nightMap.dispose();
+        bumpMap.dispose();
+        return;
+      }
+
+      dayMap.colorSpace = THREE.SRGBColorSpace;
+      nightMap.colorSpace = THREE.SRGBColorSpace;
+      bumpMap.colorSpace = THREE.NoColorSpace;
+      [dayMap, nightMap, bumpMap].forEach(tex => {
+        tex.anisotropy = maxAniso;
+        disposableTextures.push(tex);
+      });
+
+      const earthGeo = new THREE.SphereGeometry(EARTH_RADIUS, 128, 128);
+      earthMat = createEarthShaderMaterial(dayMap, nightMap, bumpMap, true, 0);
+      const earthMesh = new THREE.Mesh(earthGeo, earthMat);
+      earthGroup.add(earthMesh);
+
+      const outerAtmGeo = new THREE.SphereGeometry(OUTER_ATMOSPHERE_RADIUS, 64, 64);
+      outerAtmMat = createOuterAtmosphereMaterial(0);
+      earthGroup.add(new THREE.Mesh(outerAtmGeo, outerAtmMat));
+
+      const innerAtmGeo = new THREE.SphereGeometry(INNER_ATMOSPHERE_RADIUS, 64, 64);
+      innerAtmMat = createInnerAtmosphereMaterial(0);
+      earthGroup.add(new THREE.Mesh(innerAtmGeo, innerAtmMat));
+
+      disposableGeometries.push(earthGeo, outerAtmGeo, innerAtmGeo);
+      disposableMaterials.push(earthMat, outerAtmMat, innerAtmMat);
+
+      renderer.compile(scene, camera);
+      setLoading(false);
+    });
+
+    // 9. Responsive Resize Handling
+    const handleResize = () => {
+      if (!container || disposed) return;
+      const w = container.clientWidth || 640;
+      const h = container.clientHeight || 540;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     };
 
-    dom.addEventListener('touchstart', onTouchStart);
-    window.addEventListener('touchmove', onTouchMove);
-    window.addEventListener('touchend', onTouchEnd);
+    const resizeObserver = new ResizeObserver(handleResize);
+    resizeObserver.observe(container);
 
-    // 9. Loop de Animação
-    let reqId: number;
+    // 10. Animation Loop
+    const clock = new THREE.Clock();
+    let frameId = 0;
+
     const animate = () => {
-      reqId = requestAnimationFrame(animate);
+      if (disposed) return;
+      frameId = requestAnimationFrame(animate);
 
-      if (autoRotate) {
-        globe.rotation.y += 0.0025;
+      const elapsed = clock.getElapsedTime();
+      controls.update();
+
+      if (!isInteracting) {
+        earthGroup.rotation.y += AUTO_ROTATE_SPEED;
+      }
+
+      // Subtle pulse on Brazil HQ marker
+      const pulse = 1 + Math.sin(elapsed * 2.5) * 0.14;
+      hqMarker.scale.setScalar(pulse);
+
+      // Real-time astronomical solar illumination
+      const subsolar = calculateSubsolarPoint(new Date());
+      latLonToVector3(subsolar.lat, subsolar.lon, 1.0, _localSunPos).normalize();
+
+      if (earthMat) {
+        earthMat.uniforms.sunDirectionLocal.value.copy(_localSunPos);
+      }
+      if (outerAtmMat) {
+        outerAtmMat.uniforms.sunDirectionLocal.value.copy(_localSunPos);
+      }
+      if (innerAtmMat) {
+        innerAtmMat.uniforms.sunDirectionLocal.value.copy(_localSunPos);
       }
 
       renderer.render(scene, camera);
     };
-    animate();
+
+    frameId = requestAnimationFrame(animate);
 
     return () => {
-      cancelAnimationFrame(reqId);
-      dom.removeEventListener('mousedown', onMouseDown);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-      dom.removeEventListener('touchstart', onTouchStart);
-      window.removeEventListener('touchmove', onTouchMove);
-      window.removeEventListener('touchend', onTouchEnd);
-      if (container.contains(dom)) {
-        container.removeChild(dom);
+      disposed = true;
+      cancelAnimationFrame(frameId);
+      if (resumeTimer !== null) {
+        window.clearTimeout(resumeTimer);
       }
+      resizeObserver.disconnect();
+      controls.removeEventListener('start', onControlStart);
+      controls.removeEventListener('end', onControlEnd);
+      controls.dispose();
+
+      disposableGeometries.forEach(g => g.dispose());
+      disposableMaterials.forEach(m => m.dispose());
+      disposableTextures.forEach(t => t.dispose());
+
       renderer.dispose();
+      if (container.contains(renderer.domElement)) {
+        container.removeChild(renderer.domElement);
+      }
     };
   }, []);
 
   return (
     <div className="relative w-full h-[540px] flex items-center justify-center select-none overflow-hidden group">
       {/* Container WebGL Three.js */}
-      <div 
-        ref={mountRef} 
-        className="w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing" 
+      <div
+        ref={mountRef}
+        className="w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing"
       />
+
+      {/* Spinner suave enquanto carrega as texturas em alta resolução */}
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-9 h-9 border-2 border-cyan-400/20 border-t-cyan-400 rounded-full animate-spin" />
+        </div>
+      )}
 
       {/* Dica de Interatividade Flutuante */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none opacity-60 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-cyan-500/20 text-[10px] text-cyan-300">
@@ -312,7 +427,9 @@ export function InteractiveSalesGlobe({ clients = [] }: InteractiveSalesGlobePro
             )}
           </div>
           <span className="text-[10px] text-gray-400">
-            {totalCount === 0 ? 'Nenhuma transação externa confirmada no momento' : 'Sincronizado em tempo real com Asaas e Firestore'}
+            {totalCount === 0
+              ? 'Nenhuma transação externa confirmada no momento'
+              : 'Sincronizado em tempo real com Asaas e Firestore'}
           </span>
         </div>
       </div>
