@@ -96,17 +96,12 @@ export function CommandPalette() {
     { id: 'cmd-projects', name: 'Projetos & Engenharia', description: 'Acompanhamento de projetos e templates personalizados', path: '/projects', shortcut: 'pj', icon: LayoutTemplate },
     { id: 'cmd-analytics', name: 'Analytics de Vendas', description: 'Métricas de conversão e relatórios avançados', path: '/analytics', shortcut: 'an', icon: LineChart, permission: 'VIEW_REPORTS' },
     { id: 'cmd-finance', name: 'Financeiro Estratégico', description: 'Snapshot diário de DRE, fluxo de caixa e BI', path: '/finance', shortcut: 'gf', icon: DollarSign, permission: 'MANAGE_FINANCE' },
-    { id: 'cmd-team', name: 'Minha Equipe', description: 'Controle de acessos, convites e organograma', path: '/team', shortcut: 'te', icon: Users, permission: 'MANAGE_TEAM' },
-    { id: 'cmd-people', name: 'Pessoas', description: 'Quadro Kanban de PDI e desenvolvimento de carreiras', path: '/people', shortcut: 'pe', icon: UserCheck, permission: 'MANAGE_TEAM' },
-    { id: 'cmd-admin', name: 'Administração', description: 'Configurações de infraestrutura e tokens', path: '/admin', shortcut: 'adm', icon: Settings, permission: 'MANAGE_SETTINGS' },
-    { id: 'cmd-canvas', name: 'Hub Canvas', description: 'Whiteboards interativos para brainstorming', path: '/canvas', shortcut: 'cv', icon: FolderGit2, permission: 'MANAGE_TEAM' },
-    { id: 'cmd-wiki', name: 'Wiki & Memória', description: 'Base de conhecimento e notas compartilhadas', path: '/wiki', shortcut: 'wi', icon: BookOpen },
+    { id: 'cmd-admin', name: 'Infraestrutura & APIs', description: 'Configurações de infraestrutura e tokens', path: '/admin', shortcut: 'adm', icon: Settings, permission: 'MANAGE_SETTINGS' },
+    { id: 'cmd-canvas', name: 'Hub Canvas', description: 'Whiteboards interativos para brainstorming', path: '/canvas', shortcut: 'cv', icon: FolderGit2 },
+    { id: 'cmd-wiki', name: 'Wiki & Memória', description: 'Base de conhecimento e segundo cérebro', path: '/wiki', shortcut: 'wi', icon: BookOpen },
     { id: 'cmd-settings', name: 'Configurações', description: 'Configurações gerais da conta e preferências', path: '/settings', shortcut: 'cf', icon: Settings },
     { id: 'cmd-profile', name: 'Meu Perfil', description: 'Edição de dados pessoais e visualização de avatar', path: `/profile/${userProfile?.uid || 'me'}`, shortcut: 'pf', icon: User },
-    { id: 'cmd-workspace', name: 'Hub Office (Workspace)', description: 'Anotador, gestão e metas de consistência', path: '/workspace', shortcut: 'wo', icon: Sparkles },
-    { id: 'cmd-arena', name: 'Hub Arena', description: 'Central de jogos corporativos', path: '/arena', shortcut: 'ar', icon: Gamepad2 },
-    { id: 'cmd-shop', name: 'Hub Shop', description: 'Loja de resgate de prêmios por Hub Coins', path: '/shop', shortcut: 'sh', icon: ShoppingBag },
-    { id: 'cmd-compliance', name: 'Auditoria & Logs', description: 'Logs de auditoria e conformidade de dados', path: '/compliance', shortcut: 'sg', icon: ShieldAlert, permission: 'MANAGE_SETTINGS' }
+    { id: 'cmd-workspace', name: 'Hub Office (Workspace)', description: 'Anotador, gestão e metas de consistência', path: '/workspace', shortcut: 'wo', icon: Sparkles }
   ], [userProfile?.uid]);
 
   // Filtra comandos e clientes reais baseado no termo pesquisado e nas permissões do usuário

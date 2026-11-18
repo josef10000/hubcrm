@@ -1,46 +1,39 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import Sidebar from '@shared/components/Sidebar';
-import { useUI } from '@/contexts/UIContext';
+import LiquidGlassDock from '@shared/components/LiquidGlassDock';
 import { Header } from './Header';
 import RadioPlayer from '@shared/components/RadioPlayer/RadioPlayer';
 
 /**
- * AppLayout define a estrutura básica de navegação e conteúdo.
+ * AppLayout define a estrutura full-width de comando com Dock Liquid Glass inferior.
  */
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
-  const { sidebarOpen, setSidebarOpen } = useUI();
   const navigate = useNavigate();
 
-  const isStandaloneChat = pathname === '/chat' && window.location.search.includes('standalone=true');
-  const isWiki = pathname === '/wiki';
-
-  // Ocultar sidebar em telas de foco ou modos específicos
-  const showSidebar = !isWiki && !isStandaloneChat;
+  const isStandaloneChat =
+    pathname === '/chat' && window.location.search.includes('standalone=true');
+  const isDashboard = pathname === '/';
 
   return (
     <>
-      {showSidebar && <Sidebar />}
+      <main className="flex-1 flex flex-col h-screen w-full overflow-hidden relative z-20">
+        {!isStandaloneChat && <Header currentPath={pathname} navigate={navigate} />}
 
-      <main className="flex-1 flex flex-col h-screen overflow-hidden relative z-20">
-        <Header currentPath={pathname} navigate={navigate} />
-        
-        <div className="flex-1 overflow-auto custom-scrollbar">
+        <div
+          className={`flex-1 overflow-auto custom-scrollbar ${
+            !isStandaloneChat && !isDashboard ? 'pb-24' : ''
+          }`}
+        >
           {children}
         </div>
       </main>
 
-      {/* Reprodutor de Rádio e Focus Station Global */}
-      <RadioPlayer />
+      {/* Dock Inferior Única Liquid Glass (Solopreneur + Squad IA) */}
+      {!isStandaloneChat && <LiquidGlassDock />}
 
-      {/* Mobile Overlay for Sidebar */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/60 z-20 md:hidden backdrop-blur-md" 
-          onClick={() => setSidebarOpen(false)}
-        ></div>
-      )}
+      {/* Reprodutor de Rádio e Focus Station Integrado à Dock */}
+      <RadioPlayer />
     </>
   );
 }

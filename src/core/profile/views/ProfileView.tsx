@@ -996,50 +996,6 @@ export default function ProfileView() {
                 ) : null;
               })()}
             </motion.div>
-
-            {/* Superior Imediato */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-primary-500/5 backdrop-blur-xl border border-primary-500/10 rounded-3xl p-6"
-            >
-              <h3 className="text-sm font-bold text-primary-500 uppercase tracking-widest mb-4 flex items-center">
-                <Shield className="mr-2" size={16} />
-                Superior Imediato
-              </h3>
-              {superior ? (
-                <div 
-                  onClick={() => navigate(`/profile/${superior.uid}`)}
-                  className="flex items-center space-x-3 p-3 bg-white/5 rounded-2xl border border-white/5 hover:border-primary-500/30 cursor-pointer transition-all group"
-                >
-                  <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-white/5 flex items-center justify-center text-sm font-bold text-gray-900 dark:text-white overflow-hidden">
-                    {superior.photoURL ? <img src={superior.photoURL} alt={superior.displayName} className="w-full h-full object-cover" /> : superior.displayName?.[0]}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-sm text-gray-900 dark:text-white group-hover:text-primary-500 transition-colors">{superior.displayName}</p>
-                    <p className="text-[10px] text-gray-500">{superior.jobTitle || (typeof superior.role === 'string' ? superior.role : superior.role?.name)}</p>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500 italic">Não vinculado.</p>
-              )}
-            </motion.div>
-
-            {/* Energy Score do Colaborador */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              <EnergyScoreCard userProfile={profile} />
-            </motion.div>
-
-            {/* Mood Tracker - Apenas para o próprio perfil */}
-            {isOwnProfile && (
-              <div className="mt-6">
-                <MoodTracker />
-              </div>
-            )}
           </div>
 
           {/* Right Column: Tabbed Content */}
@@ -1061,36 +1017,6 @@ export default function ProfileView() {
                   )}
                   <span className="relative z-10">Informações</span>
                 </motion.button>
-                <motion.button 
-                  whileTap={{ scale: 0.96 }}
-                  onClick={() => setActiveTab('availability')}
-                  className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'availability' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                >
-                  {activeTab === 'availability' && (
-                    <motion.div
-                      layoutId="activeProfileTab"
-                      className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
-                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                    />
-                  )}
-                  <span className="relative z-10">Disponibilidade</span>
-                </motion.button>
-                {(isOwnProfile || isManagement || isAdmin) && (
-                  <motion.button 
-                    whileTap={{ scale: 0.96 }}
-                    onClick={() => setActiveTab('pdi')}
-                    className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'pdi' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                  >
-                    {activeTab === 'pdi' && (
-                      <motion.div
-                        layoutId="activeProfileTab"
-                        className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
-                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                      />
-                    )}
-                    <span className="relative z-10">{isOwnProfile ? 'Meu PDI' : 'PDI'}</span>
-                  </motion.button>
-                )}
                 {(isOwnProfile || isManagement || isAdmin) && (
                   <motion.button 
                     whileTap={{ scale: 0.96 }}
@@ -1105,54 +1031,6 @@ export default function ProfileView() {
                       />
                     )}
                     <span className="relative z-10">Ativos</span>
-                  </motion.button>
-                )}
-                {(isOwnProfile || isManagement || isAdmin) && (
-                  <motion.button 
-                    whileTap={{ scale: 0.96 }}
-                    onClick={() => setActiveTab('feedbacks')}
-                    className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'feedbacks' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                  >
-                    {activeTab === 'feedbacks' && (
-                      <motion.div
-                        layoutId="activeProfileTab"
-                        className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
-                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                      />
-                    )}
-                    <span className="relative z-10">Mural</span>
-                  </motion.button>
-                )}
-                {(isOwnProfile || isManagement || isAdmin) && (
-                  <motion.button 
-                    whileTap={{ scale: 0.96 }}
-                    onClick={() => setActiveTab('history')}
-                    className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'history' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                  >
-                    {activeTab === 'history' && (
-                      <motion.div
-                        layoutId="activeProfileTab"
-                        className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
-                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                      />
-                    )}
-                    <span className="relative z-10">Carreira</span>
-                  </motion.button>
-                )}
-                {(isOwnProfile || isManagement || isAdmin) && (
-                  <motion.button 
-                    whileTap={{ scale: 0.96 }}
-                    onClick={() => setActiveTab('vacations')}
-                    className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'vacations' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                  >
-                    {activeTab === 'vacations' && (
-                      <motion.div
-                        layoutId="activeProfileTab"
-                        className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
-                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                      />
-                    )}
-                    <span className="relative z-10">Ausências</span>
                   </motion.button>
                 )}
                 {isOwnProfile && (
@@ -1176,38 +1054,6 @@ export default function ProfileView() {
                         </span>
                       )}
                     </span>
-                  </motion.button>
-                )}
-                {(isOwnProfile || isManagement || isAdmin) && (
-                  <motion.button 
-                    whileTap={{ scale: 0.96 }}
-                    onClick={() => setActiveTab('expediente')}
-                    className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'expediente' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                  >
-                    {activeTab === 'expediente' && (
-                      <motion.div
-                        layoutId="activeProfileTab"
-                        className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
-                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                      />
-                    )}
-                    <span className="relative z-10">Expediente</span>
-                  </motion.button>
-                )}
-                {(isOwnProfile || isManagement || isAdmin) && (
-                  <motion.button 
-                    whileTap={{ scale: 0.96 }}
-                    onClick={() => setActiveTab('contracts')}
-                    className={`relative shrink-0 whitespace-nowrap px-6 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${activeTab === 'contracts' ? 'text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-                  >
-                    {activeTab === 'contracts' && (
-                      <motion.div
-                        layoutId="activeProfileTab"
-                        className="absolute inset-0 bg-primary-500 rounded-2xl shadow-lg shadow-primary-500/20"
-                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                      />
-                    )}
-                    <span className="relative z-10">Documentos</span>
                   </motion.button>
                 )}
               </div>
@@ -1268,18 +1114,6 @@ export default function ProfileView() {
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Data de Contratação</label>
-                          <input 
-                            type="date" 
-                            value={formData.startDate}
-                            onChange={e => setFormData({...formData, startDate: e.target.value})}
-                            className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-500 outline-none"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
                           <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Instagram (@usuario)</label>
                           <input 
                             type="text" 
@@ -1288,19 +1122,19 @@ export default function ProfileView() {
                             className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-500 outline-none"
                           />
                         </div>
-                        <div>
-                          <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">LinkedIn (URL)</label>
-                          <input 
-                            type="text" 
-                            value={formData.linkedin}
-                            onChange={e => setFormData({...formData, linkedin: e.target.value})}
-                            className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-500 outline-none"
-                          />
-                        </div>
                       </div>
 
-                      {/* Sessão de Regime de Contratação e Jornada */}
-                      <div className="bg-white/5 border border-white/5 rounded-3xl p-6 space-y-6 text-left">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">LinkedIn (URL)</label>
+                        <input 
+                          type="text" 
+                          value={formData.linkedin}
+                          onChange={e => setFormData({...formData, linkedin: e.target.value})}
+                          className="w-full bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary-500 outline-none"
+                        />
+                      </div>
+
+                      {false && (<><div>
                         <div className="flex items-center justify-between border-b border-white/5 pb-4">
                           <h4 className="text-sm font-bold text-white uppercase tracking-wider">Regime de Contratação e Jornada</h4>
                           {!(isAdmin || isManagement) && (
@@ -1869,6 +1703,7 @@ export default function ProfileView() {
                           </div>
                         </div>
                       )}
+                      </>)}
 
                       <div className="flex justify-end gap-3 pt-4">
                         <button 
@@ -1890,10 +1725,10 @@ export default function ProfileView() {
                       <div>
                         <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center">
                           <Info className="mr-2" size={16} />
-                          Sobre o Colaborador
+                          Sobre
                         </h3>
                         <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                          {profile.bio || "Este colaborador ainda não preencheu sua biografia."}
+                          {profile.bio || "Adicione uma descrição ou manifesto do seu negócio clicando em Editar Perfil."}
                         </p>
                       </div>
 
@@ -1906,22 +1741,16 @@ export default function ProfileView() {
                           <div className="space-y-3">
                             <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                               <Briefcase size={16} className="mr-3 opacity-50" />
-                              <span>{profile.jobTitle || (typeof profile.role === 'string' ? profile.role : profile.role?.name)}</span>
+                              <span>{profile.jobTitle || 'Fundador • Hub Central'}</span>
                             </div>
                             <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                               <Globe size={16} className="mr-3 opacity-50" />
-                              <span>Membro desde {profile.createdAt ? (typeof profile.createdAt === 'number' ? new Date(profile.createdAt).toLocaleDateString() : (profile.createdAt as any).toDate?.()?.toLocaleDateString() || '—') : '—'}</span>
+                              <span>Ativo desde {profile.createdAt ? (typeof profile.createdAt === 'number' ? new Date(profile.createdAt).toLocaleDateString() : (profile.createdAt as any).toDate?.()?.toLocaleDateString() || '—') : '—'}</span>
                             </div>
                             {profile.birthDate && profile.birthDate.length >= 5 && (
                               <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                                 <Cake size={16} className="mr-3 opacity-50" />
                                 <span>Aniversário em: {new Date(profile.birthDate + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}</span>
-                              </div>
-                            )}
-                            {profile.startDate && profile.startDate.length >= 10 && (
-                              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                                <Calendar size={16} className="mr-3 opacity-50" />
-                                <span>Contratado em: {new Date(profile.startDate + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
                               </div>
                             )}
                           </div>
@@ -1945,415 +1774,6 @@ export default function ProfileView() {
                             )}
                           </div>
                         </div>
-                      </div>
-
-                      {/* Sessão de Regime & Jornada */}
-                      <div className="border-t border-gray-200 dark:border-white/5 pt-8">
-                        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 flex items-center">
-                          <Clock className="mr-2 animate-spin-slow" size={16} />
-                          Regime de Contratação & Jornada
-                        </h3>
-                        {(() => {
-                          const isProfileAdminOrRH = profile.role === 'admin' || profile.roleId === 'admin' || profile.permissions?.includes('MANAGE_SETTINGS') || profile.permissions?.includes('MANAGE_TEAM');
-                          const displayContract = isProfileAdminOrRH ? 'PJ' : (profile.contractType || 'PJ');
-
-                          return (
-                            <div className="bg-white/5 border border-white/5 rounded-3xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                              <div className="flex items-center space-x-4">
-                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border ${
-                                  displayContract === 'CLT'
-                                    ? 'bg-blue-500/10 border-blue-500/20 text-blue-500'
-                                    : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'
-                                }`}>
-                                  <span className="font-black text-sm">{displayContract}</span>
-                                </div>
-                                <div className="text-left">
-                                  <p className="font-semibold text-white">
-                                    {displayContract === 'CLT' ? 'Jornada Planejada (CLT)' : 'Prestador de Serviço Livre (PJ)'}
-                                  </p>
-                                  <p className="text-xs text-gray-500">
-                                    {displayContract === 'CLT' && profile.workSchedule
-                                      ? `Horário: ${profile.workSchedule.entryTime} às ${profile.workSchedule.exitTime}`
-                                      : 'Sem restrições de horários ou bloqueios de expediente.'}
-                                  </p>
-                                </div>
-                              </div>
-
-                              {displayContract === 'CLT' && profile.workSchedule && (
-                                <div className="flex gap-1 flex-wrap">
-                                  {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((dayChar, idx) => {
-                                    const isWorkDay = profile.workSchedule?.daysOfWeek.includes(idx);
-                                    return (
-                                      <span
-                                        key={idx}
-                                        className={`w-8 h-8 rounded-lg font-bold text-[10px] flex items-center justify-center border ${
-                                          isWorkDay
-                                            ? 'bg-primary-500/10 border-primary-500/30 text-primary-400'
-                                            : 'bg-white/5 border-white/5 text-gray-600'
-                                        }`}
-                                        title={['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][idx]}
-                                      >
-                                        {dayChar}
-                                      </span>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })()}
-                      </div>
-
-                      {/* Remuneração & Benefícios (Apenas para donos do perfil e admins/RH) */}
-                      {canViewFinancials && (
-                        <div className="border-t border-gray-200 dark:border-white/5 pt-8">
-                          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 flex items-center">
-                            <DollarSign className="mr-2 text-primary-500" size={16} />
-                            Remuneração & Benefícios (Confidencial)
-                          </h3>
-                          <div className="bg-white/5 border border-white/5 rounded-3xl p-6 space-y-6">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 text-left">
-                              <div>
-                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
-                                  Salário Base / Pró-labore
-                                </p>
-                                <p className="text-lg font-black text-white">
-                                  {profile.salary && profile.salary > 0 ? (
-                                    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(profile.salary)
-                                  ) : (
-                                    <span className="text-gray-500 text-sm font-semibold">R$ 0,00 (Sem Pró-labore)</span>
-                                  )}
-                                </p>
-                              </div>
-
-                              <div>
-                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
-                                  Plano de Saúde
-                                </p>
-                                <p className="text-lg font-bold text-white">
-                                  {profile.healthInsurance ? (
-                                    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(profile.healthInsurance)
-                                  ) : (
-                                    <span className="text-gray-500 text-sm font-semibold">Não possui</span>
-                                  )}
-                                </p>
-                              </div>
-
-                              <div>
-                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
-                                  Vale Refeição / Alimentação (VR/VA)
-                                </p>
-                                <p className="text-lg font-bold text-white">
-                                  {profile.mealVoucher ? (
-                                    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(profile.mealVoucher)
-                                  ) : (
-                                    <span className="text-gray-500 text-sm font-semibold">Não possui</span>
-                                  )}
-                                </p>
-                              </div>
-
-                              <div>
-                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
-                                  Vale Transporte (VT)
-                                </p>
-                                <p className="text-lg font-bold text-white">
-                                  {profile.transportVoucher ? (
-                                    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(profile.transportVoucher)
-                                  ) : (
-                                    <span className="text-gray-500 text-sm font-semibold">Não possui</span>
-                                  )}
-                                </p>
-                              </div>
-
-                              <div>
-                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
-                                  Auxílio Home Office
-                                </p>
-                                <p className="text-lg font-bold text-white">
-                                  {profile.homeOfficeAux ? (
-                                    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(profile.homeOfficeAux)
-                                  ) : (
-                                    <span className="text-gray-500 text-sm font-semibold">Não possui</span>
-                                  )}
-                                </p>
-                              </div>
-
-                              <div>
-                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
-                                  Custo Total Mensal Estimado
-                                </p>
-                                <p className="text-lg font-black text-primary-400">
-                                  {(() => {
-                                    const base = profile.salary || 0;
-                                    const benefits = (profile.healthInsurance || 0) + (profile.mealVoucher || 0) + (profile.transportVoucher || 0) + (profile.homeOfficeAux || 0);
-                                    
-                                    let total = base + benefits;
-                                    if (profile.contractType === 'CLT') {
-                                      // Provisões CLT: FGTS (8%), 13º (8.33%), Férias (11.11%), Multa FGTS (3.2%)
-                                      const provs = base * (0.08 + 0.0833 + 0.1111 + 0.032);
-                                      total += provs;
-                                    }
-                                    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total);
-                                  })()}
-                                </p>
-                              </div>
-                            </div>
-
-                            {/* Divisor */}
-                            <div className="border-t border-gray-200 dark:border-white/5 pt-6" />
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
-                              {/* Coluna 1: Dados Bancários / Pix */}
-                              <div>
-                                <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-3">
-                                  Dados de Recebimento
-                                </h4>
-                                <div className="space-y-3 bg-white/5 border border-white/5 rounded-2xl p-4">
-                                  {profile.pixKey ? (
-                                    <div>
-                                      <p className="text-[9px] font-bold text-gray-500 uppercase tracking-wider">Pix (Chave {profile.pixKeyType})</p>
-                                      <p className="text-sm font-semibold text-white select-all">{profile.pixKey}</p>
-                                    </div>
-                                  ) : (
-                                    <p className="text-xs text-amber-500 font-semibold flex items-center gap-1.5">
-                                      <AlertTriangle size={14} /> Sem chave Pix cadastrada
-                                    </p>
-                                  )}
-                                  
-                                  {profile.bankAccount && profile.bankAccount.bankCode && (
-                                    <div className="border-t border-white/5 pt-3">
-                                      <p className="text-[9px] font-bold text-gray-500 uppercase tracking-wider">Conta Bancária (TED)</p>
-                                      <p className="text-xs font-semibold text-white">
-                                        Banco {profile.bankAccount.bankCode} {profile.bankAccount.bankName && `- ${profile.bankAccount.bankName}`}
-                                      </p>
-                                      <p className="text-xs text-gray-400">
-                                        Ag: {profile.bankAccount.agency} | Cta: {profile.bankAccount.account}-{profile.bankAccount.accountDigit} ({profile.bankAccount.accountType === 'SAVINGS' ? 'Poupança' : 'Corrente'})
-                                      </p>
-                                      <p className="text-[10px] text-gray-400 mt-1">
-                                        Titular: {profile.bankAccount.holderName} ({profile.bankAccount.holderCpfCnpj})
-                                      </p>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Coluna 2: Descontos de Benefícios & Rescisão */}
-                              <div>
-                                <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-3">
-                                  Coparticipações & Descontos
-                                </h4>
-                                <div className="space-y-3 bg-white/5 border border-white/5 rounded-2xl p-4">
-                                  <div className="grid grid-cols-2 gap-2 text-xs">
-                                    <span className="text-gray-400">Copart. Saúde:</span>
-                                    <span className="font-semibold text-white text-right">
-                                      {profile.benefitDeductions?.healthInsuranceCopay 
-                                        ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(profile.benefitDeductions.healthInsuranceCopay)
-                                        : 'R$ 0,00'}
-                                    </span>
-                                    
-                                    <span className="text-gray-400">Desconto VR:</span>
-                                    <span className="font-semibold text-white text-right">
-                                      {profile.benefitDeductions?.mealVoucherDiscount 
-                                        ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(profile.benefitDeductions.mealVoucherDiscount)
-                                        : 'R$ 0,00'}
-                                    </span>
-
-                                    <span className="text-gray-400">Desconto VT:</span>
-                                    <span className="font-semibold text-white text-right">
-                                      {profile.benefitDeductions?.transportVoucherDiscount 
-                                        ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(profile.benefitDeductions.transportVoucherDiscount)
-                                        : 'R$ 0,00'}
-                                    </span>
-                                  </div>
-
-                                  {profile.resignationDetails && profile.resignationDetails.resignationDate && (
-                                    <div className="border-t border-rose-500/20 pt-3 text-xs bg-rose-500/5 rounded-xl p-2.5 border border-rose-500/10 mt-2">
-                                      <p className="font-bold text-rose-500 flex items-center gap-1.5">
-                                        <AlertTriangle size={14} /> Desligamento Agendado
-                                      </p>
-                                      <p className="text-gray-300 mt-1">
-                                        Data: {formatLocalDateStr(profile.resignationDetails.resignationDate)}
-                                      </p>
-                                      <p className="text-gray-400 text-[10px]">
-                                        Motivo: {
-                                          profile.resignationDetails.reason === 'dismissal_without_cause' ? 'Sem justa causa' :
-                                          profile.resignationDetails.reason === 'dismissal_with_cause' ? 'Com justa causa' :
-                                          profile.resignationDetails.reason === 'employee_resignation' ? 'Pedido de demissão' :
-                                          'Rescisão contratual PJ'
-                                        }
-                                      </p>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Card de Adiantamento Salarial */}
-                      {isOwnProfile && profile.salary && profile.salary > 0 && (
-                        <div className="border-t border-gray-200 dark:border-white/5 pt-8 mt-6">
-                          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 flex items-center">
-                            <Wallet className="mr-2 text-amber-500" size={16} />
-                            Portal de Adiantamento Salarial
-                          </h3>
-                          <div className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 border border-amber-500/20 rounded-3xl p-6 relative overflow-hidden">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-                              <div className="space-y-2 max-w-xl text-left">
-                                <h4 className="text-lg font-black text-white flex items-center gap-2">
-                                  Adiantamento Salarial Sem Custos
-                                </h4>
-                                <p className="text-xs text-gray-400 leading-relaxed">
-                                  Você pode solicitar um adiantamento Pix de até 30% do seu salário base de forma imediata. O valor será descontado integralmente no próximo fechamento da sua folha de pagamento.
-                                </p>
-                              </div>
-                              <div className="bg-black/30 border border-white/5 rounded-2xl p-4 min-w-[200px] text-center">
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Seu Limite (30%)</p>
-                                <p className="text-2xl font-black text-amber-400">
-                                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(profile.salary * 0.3)}
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="mt-6 border-t border-amber-500/10 pt-6">
-                              {activeAdvance ? (
-                                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex items-center justify-between gap-4 text-left">
-                                  <div>
-                                    <p className="text-sm font-bold text-emerald-400 flex items-center gap-1.5">
-                                      <CheckCircle2 size={16} /> Adiantamento Solicitado e Pago!
-                                    </p>
-                                    <p className="text-xs text-gray-300 mt-1">
-                                      Valor de <span className="font-semibold text-white">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(activeAdvance.amount)}</span> recebido em {format(new Date(activeAdvance.requestedAt), 'dd/MM/yyyy')} via Pix.
-                                    </p>
-                                    <p className="text-[10px] text-gray-500 mt-0.5">
-                                      ID Asaas: {activeAdvance.asaasTransferId} | Competência: {activeAdvance.month}
-                                    </p>
-                                  </div>
-                                  <span className="shrink-0 px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-[10px] font-black uppercase tracking-wider">
-                                    Compensação Pendente
-                                  </span>
-                                </div>
-                              ) : !profile.pixKey ? (
-                                <div className="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-4 text-left">
-                                  <p className="text-sm font-bold text-rose-400 flex items-center gap-1.5">
-                                    <AlertTriangle size={16} /> Chave Pix Necessária
-                                  </p>
-                                  <p className="text-xs text-gray-300 mt-1">
-                                    Você precisa cadastrar sua chave Pix nas configurações do perfil para solicitar o adiantamento salarial.
-                                  </p>
-                                </div>
-                              ) : (
-                                <div className="flex flex-col sm:flex-row items-center gap-4 text-left">
-                                  <div className="w-full sm:flex-1">
-                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Valor da Solicitação</label>
-                                    <div className="relative">
-                                      <span className="absolute left-4 top-3 text-sm text-gray-400 font-bold">R$</span>
-                                      <input
-                                        type="number"
-                                        min="1"
-                                        max={profile.salary * 0.3}
-                                        step="0.01"
-                                        defaultValue={(profile.salary * 0.3).toFixed(2)}
-                                        id="advanceAmountInput"
-                                        placeholder="0,00"
-                                        className="w-full bg-black/40 border border-amber-500/20 focus:border-amber-500/50 rounded-2xl pl-10 pr-4 py-3 text-sm font-semibold text-white outline-none focus:ring-1 focus:ring-amber-500"
-                                      />
-                                    </div>
-                                    <span className="text-[10px] text-gray-500 mt-1 block">Escolha qualquer valor até o limite de R$ {(profile.salary * 0.3).toFixed(2)}</span>
-                                  </div>
-                                  <button
-                                    onClick={async () => {
-                                      const inputEl = document.getElementById('advanceAmountInput') as HTMLInputElement;
-                                      const val = parseFloat(inputEl?.value) || 0;
-                                      if (val <= 0 || val > profile.salary * 0.3) {
-                                        toast.error('Valor solicitado inválido ou excede o limite permitido');
-                                        return;
-                                      }
-
-                                      const ok = await confirm({
-                                        title: 'Confirmar Adiantamento Salarial',
-                                        message: `Deseja solicitar o adiantamento salarial de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val)} via Pix? Este valor será descontado na sua próxima folha de pagamento.`,
-                                        confirmText: 'Sim, solicitar Pix',
-                                        variant: 'warning'
-                                      });
-                                      if (!ok) return;
-
-                                      setIsRequestingAdvance(true);
-                                      try {
-                                        const token = await user?.getIdToken();
-                                        const res = await fetch('/api/asaas_handler?action=request-advance', {
-                                          method: 'POST',
-                                          headers: {
-                                            'Authorization': `Bearer ${token}`,
-                                            'Content-Type': 'application/json'
-                                          },
-                                          body: JSON.stringify({ amount: val })
-                                        });
-
-                                        const data = await res.json();
-                                        if (!res.ok) throw new Error(data.error || 'Erro ao solicitar adiantamento');
-
-                                        toast.success('Adiantamento solicitado com sucesso! O Pix está sendo enviado.');
-                                      } catch (err: any) {
-                                        console.error(err);
-                                        toast.error(err.message || 'Erro ao solicitar adiantamento.');
-                                      } finally {
-                                        setIsRequestingAdvance(false);
-                                      }
-                                    }}
-                                    disabled={isRequestingAdvance}
-                                    className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-600 disabled:bg-amber-500/20 text-black font-black uppercase tracking-wider transition-all shadow-xl shadow-amber-500/20 active:scale-95 flex items-center justify-center gap-2 self-end shrink-0"
-                                  >
-                                    {isRequestingAdvance ? (
-                                      <>
-                                        <Loader2 size={16} className="animate-spin" /> Processando...
-                                      </>
-                                    ) : (
-                                      'Confirmar Pix'
-                                    )}
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Ausências Recentes - Adicionado para Visibilidade Dupla */}
-                      <div className="pt-8 border-t border-gray-100 dark:border-white/5">
-                        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 flex items-center">
-                          <Plane className="mr-2" size={16} />
-                          Últimas Ausências
-                        </h3>
-                        {Array.isArray(vacations) && vacations.filter(v => v && v.userId === uid).length > 0 ? (
-                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                           {vacations.filter(v => v && v.userId === uid)
-                              .sort((a, b) => b.createdAt - a.createdAt)
-                              .slice(0, 2)
-                              .map(v => (
-                                <div key={v.id} className="p-4 bg-white/50 dark:bg-black/20 border border-gray-100 dark:border-white/5 rounded-2xl flex items-center gap-3">
-                                  <div className={`p-2 rounded-xl ${
-                                    v.status === 'Aprovado' ? 'bg-emerald-500/10 text-emerald-500' :
-                                    v.status === 'Recusado' ? 'bg-rose-500/10 text-rose-500' :
-                                    'bg-amber-500/10 text-amber-500'
-                                  }`}>
-                                    {v.status === 'Aprovado' ? <CheckCircle2 size={16} /> : 
-                                     v.status === 'Recusado' ? <AlertTriangle size={16} /> : 
-                                     <Clock size={16} />}
-                                  </div>
-                                  <div>
-                                    <p className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider">{v.type}</p>
-                                    <p className="text-[10px] text-gray-500">{v.start} — {v.end}</p>
-                                  </div>
-                                </div>
-                              ))}
-                          </div>
-                        ) : (
-                          <div className="p-4 bg-white/50 dark:bg-black/20 border border-gray-100 dark:border-white/5 rounded-2xl">
-                             <p className="text-xs text-gray-500 italic">Nenhuma ausência registrada neste perfil.</p>
-                          </div>
-                        )}
                       </div>
                     </div>
                   )}

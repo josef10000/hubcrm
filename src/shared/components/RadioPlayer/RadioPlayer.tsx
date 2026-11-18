@@ -241,6 +241,8 @@ export default function RadioPlayer() {
   // EFEITO PARA MINIMIZAR AO CLICAR FORA (CLICK OUTSIDE)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('[data-dock-audio="true"]')) return;
       if (!isMinimized && containerRef.current && !containerRef.current.contains(event.target as Node)) {
         toggleMinimize();
       }
@@ -264,41 +266,18 @@ export default function RadioPlayer() {
     <>
       <audio ref={audioRef} onError={handleAudioError} preload="auto" />
 
-      {/* RENDERIZADOR DO WIDGET FLUTUANTE GLOBAL (DESIGN LIQUID GLASS) */}
+      {/* RENDERIZADOR DO WIDGET FLUTUANTE GLOBAL INTEGRADO À LIQUID GLASS DOCK */}
       <div 
         ref={containerRef}
-        className={`fixed bottom-6 right-6 z-50 transition-all duration-500 font-sans ${
+        className={`fixed bottom-20 left-1/2 -translate-x-1/2 z-[75] transition-all duration-300 font-sans ${
           isMinimized 
-            ? 'w-12 h-12 rounded-full cursor-pointer' 
-            : 'w-80 rounded-2xl'
+            ? 'w-0 h-0 opacity-0 pointer-events-none overflow-hidden' 
+            : 'w-[min(340px,calc(100vw-1.5rem))] rounded-3xl opacity-100 pointer-events-auto'
         }`}
       >
-        {/* ================= ESTADO MINIMIZADO (DYNAMIC ISLAND CIRCLE) ================= */}
-        <div 
-          onClick={toggleMinimize}
-          className={`w-full h-full rounded-full flex items-center justify-center border border-white/20 dark:border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] backdrop-blur-[20px] bg-slate-900/35 transition-all duration-500 hover:scale-105 active:scale-95 group ${
-            isMinimized 
-              ? 'opacity-100 scale-100 pointer-events-auto' 
-              : 'opacity-0 scale-95 pointer-events-none absolute inset-0'
-          } ${
-            isPlaying
-              ? 'border-emerald-500/30 text-emerald-400 animate-spin-slow shadow-[0_0_15px_rgba(16,185,129,0.25)]' 
-              : 'text-white/70 hover:bg-black/80 hover:text-white'
-          }`}
-          title="Abrir Central de Foco"
-        >
-          <Headphones className={`w-5 h-5 transition-transform duration-300 ${isPlaying ? 'scale-105' : 'group-hover:rotate-12'}`} />
-          {isPlaying && (
-            <span className="absolute top-0.5 right-0.5 flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-          )}
-        </div>
-
         {/* ================= ESTADO EXPANDIDO (WIDGET COMPLETO PREMIUM LIQUID GLASS) ================= */}
         <div 
-          className={`w-full bg-slate-950/40 border border-white/10 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] rounded-2xl p-4 flex flex-col gap-3.5 backdrop-blur-[24px] transition-all duration-500 origin-bottom-right ${
+          className={`w-full bg-slate-950/80 border border-white/20 shadow-[0_25px_60px_rgba(0,0,0,0.75)] rounded-3xl p-4 flex flex-col gap-3.5 backdrop-blur-[30px] saturate-[180%] transition-all duration-300 origin-bottom ${
             !isMinimized 
               ? 'opacity-100 scale-100 pointer-events-auto relative' 
               : 'opacity-0 scale-95 pointer-events-none absolute bottom-0 right-0 w-0 h-0 overflow-hidden'

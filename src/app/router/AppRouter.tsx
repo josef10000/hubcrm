@@ -8,7 +8,7 @@ import { useUI } from '@/contexts/UIContext';
 // Layouts & Shell
 import { AppLayout } from '../layouts/AppLayout';
 import { WorkspaceShell } from '../shell/WorkspaceShell';
-import { AuthGuard, PendingInviteGuard, ContractGuard } from './RouteGuards';
+import { AuthGuard, PendingInviteGuard } from './RouteGuards';
 
 // Eager Loaded Components (Core Views - Dashboard stays eager for instant load)
 import MorningFeedView from '@crm/views/MorningFeedView';
@@ -122,7 +122,6 @@ export function AppRouter() {
         <Route path="/*" element={
           <AuthGuard>
             <PendingInviteGuard>
-              <ContractGuard>
                 <WorkspaceShell isBirthday={isBirthday}>
                   <AppLayout>
                     <Routes>
@@ -189,7 +188,6 @@ export function AppRouter() {
                   </AppLayout>
                   <GlobalModals />
                 </WorkspaceShell>
-              </ContractGuard>
             </PendingInviteGuard>
           </AuthGuard>
         } />

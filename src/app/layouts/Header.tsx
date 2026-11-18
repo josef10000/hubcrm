@@ -1,14 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { toast } from 'sonner';
-import { Search, Menu, X, Focus, Video, Clock, Shield, Tv } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search, X, Focus, Video, Tv } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
-import { usePermissions } from '@auth/hooks/usePermissions';
 import { useUI } from '@/contexts/UIContext';
 import { useWeather } from '@/hooks/useWeather';
-import { useCRMStore } from '@/store/useCRMStore';
-import { useDialog } from '@auth/contexts/DialogContext';
-import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import MultiScreenLauncherModal from '@/domains/screens/components/MultiScreenLauncherModal';
 
 interface HeaderProps {
@@ -19,332 +13,208 @@ interface HeaderProps {
 export function Header({ currentPath, navigate }: HeaderProps) {
   const { userProfile } = useAuth();
   const { weather } = useWeather();
-  const { 
-    searchTerm, setSearchTerm, 
-    globalSearch, setGlobalSearch,
-    focusMode, setFocusMode,
-    setSidebarOpen,
-    isModalOpen, setIsModalOpen,
-    isRecorderOpen, setIsRecorderOpen,
-    filterStatus, sortBy, filterTagId
+  const {
+    globalSearch,
+    setGlobalSearch,
+    focusMode,
+    setFocusMode,
+    setIsRecorderOpen
   } = useUI();
-  
-  const store = useCRMStore();
-  const { confirm: customConfirm, alert: customAlert, prompt: customPrompt } = useDialog();
-  const { hasPermission, hasAnyPermission } = usePermissions();
 
-  const [newTicketsCount, setNewTicketsCount] = useState(0);
   const [isScreensModalOpen, setIsScreensModalOpen] = useState(false);
-
-  // Escutar se existem novos tickets de compliance para exibir notificação (badge) ao RH/Admin
-  useEffect(() => {
-    if (!userProfile?.orgId || !hasAnyPermission(['MANAGE_SETTINGS', 'MANAGE_TEAM'])) return;
-
-    const ref = collection(db, 'organizations', userProfile.orgId, 'compliance_tickets');
-    const q = query(ref, where('status', '==', 'new'));
-
-    const unsub = onSnapshot(q, (snap) => {
-      setNewTicketsCount(snap.size);
-    }, (err) => {
-      console.error('Erro ao buscar novos tickets:', err);
-    });
-
-    return () => unsub();
-  }, [userProfile?.orgId, hasAnyPermission]);
 
   const isWiki = currentPath === '/wiki';
   const isDashboard = currentPath === '/';
 
   const getPageTitle = () => {
-    switch(currentPath) {
-      case '/analytics': return 'Métricas';
-      case '/calendar': return 'Agenda Central';
-      case '/support': return 'Chamados';
+    switch (currentPath) {
+      case '/analytics': return 'Analytics de Vendas';
+      case '/calendar': return 'Agenda & Prazos';
+      case '/support': return 'Suporte & Tickets';
       case '/finance': return 'Financeiro Estratégico';
-      case '/billing': return 'Cobrança & Comissões';
-      case '/contracts': return 'Central de Contratos';
-      case '/onboarding-hub': return 'Onboarding Hub';
-      case '/projects': return 'Fábrica de Sites & Projetos';
+      case '/billing': return 'Cobrança & Asaas';
+      case '/contracts': return 'Contratos Digitais';
+      case '/onboarding-hub': return 'Onboarding de Clientes';
+      case '/projects': return 'Projetos & Sites';
       case '/settings': return 'Configurações';
-      case '/referrals': return 'Hub Rewards';
-      case '/products': return 'Produtos';
-      case '/icp': return 'Perfis ICP (Cliente Ideal)';
-      case '/monitoring': return 'Monitoramento';
-      case '/map': return 'Mapa de Clientes';
+      case '/referrals': return 'Programa de Indicações';
+      case '/products': return 'Catálogo de Produtos';
+      case '/icp': return 'Perfis de ICP';
+      case '/monitoring': return 'Automações & Uptime';
       case '/notifications': return 'Notificações';
-      case '/team': return 'Gestão de Equipe';
-      case '/people': return 'Pessoas & Cultura';
-      case '/wiki': return 'Wiki Hub';
+      case '/offers': return 'Laboratório de Ofertas';
+      case '/funnels': return 'Arquiteto de Funis';
+      case '/hub-ads': return 'HubAds & Criativos';
+      case '/growth-hub': return 'Galeria de Crescimento';
+      case '/workspace': return 'Hub Office';
+      case '/wiki': return 'Wiki & Memória';
       default: return null;
     }
   };
 
   const pageTitle = getPageTitle();
+  const firstName = userProfile?.displayName?.split(' ')[0] || 'José';
 
   return (
     <>
-      <header className="bg-black/20 backdrop-blur-2xl border-b border-gray-200 dark:border-white/10 px-6 py-4 flex items-center justify-between shrink-0 z-30 gap-4" role="banner">
-      <div className="flex items-center flex-1">
-        {isWiki ? (
-          <button
-            onClick={() => navigate('/')}
-            className="mr-6 p-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-2xl transition-all flex items-center gap-2 group shadow-xl"
-            aria-label="Sair da Wiki e voltar para o dashboard"
-          >
-            <X size={20} className="group-hover:rotate-90 transition-transform" aria-hidden="true" />
-            <span className="text-sm font-bold uppercase tracking-wider">Sair da Wiki</span>
-          </button>
-        ) : (
-          <button
-            className="md:hidden mr-4 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white"
-            onClick={() => setSidebarOpen(true)}
-            aria-label="Abrir menu lateral"
-          >
-            <Menu size={24} aria-hidden="true" />
-          </button>
-        )}
-
-        {!isWiki && (
-          <div 
-            onClick={() => navigate('/')}
-            className="flex items-center gap-3 mr-8 cursor-pointer group shrink-0"
-          >
-            <div className="hidden sm:flex items-baseline gap-1.5">
-              <h1 className="text-2xl font-black tracking-tighter text-white uppercase leading-none">Hub</h1>
-              <p className="text-2xl font-light text-primary-400 tracking-tight uppercase leading-none">Central</p>
-            </div>
-          </div>
-        )}
-
-        {isDashboard ? (
-          <div className="flex items-center gap-8 w-full flex-1">
-            <div className="flex items-center shrink-0 border-l border-white/10 pl-4 md:pl-8 gap-2 md:gap-4">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-0.5">
-                  {new Date().getHours() >= 5 && new Date().getHours() < 12 ? '☀️ Bom dia' : new Date().getHours() >= 12 && new Date().getHours() < 18 ? '🌤️ Boa tarde' : '🌙 Boa noite'}
-                </p>
-                <h2 className="text-sm font-bold text-white truncate max-w-[150px]">
-                  {userProfile?.displayName?.split(' ')[0] || 'Colaborador'}!
-                </h2>
-              </div>
-
-              {weather && (
-                <div className="flex items-center gap-2 bg-white/5 px-2 md:px-3 py-1 md:py-1.5 rounded-xl border border-white/5 animate-in fade-in slide-in-from-right-4">
-                  <img 
-                    src={`https://openweathermap.org/img/wn/${weather.icon}.png`} 
-                    alt={weather.description}
-                    className="w-8 h-8 object-contain"
-                  />
-                  <div className="flex flex-col">
-                    <span className="text-xs font-black text-white leading-none">{weather.temp}°C</span>
-                    <span className="text-[8px] font-bold text-gray-500 uppercase tracking-tighter leading-none mt-1">{weather.description}</span>
-                  </div>
-                </div>
-              )}
-            </div>
+      <header
+        className="bg-black/25 backdrop-blur-2xl border-b border-white/10 px-6 py-3 flex items-center justify-between shrink-0 z-30 gap-4"
+        role="banner"
+      >
+        <div className="flex items-center flex-1 min-w-0">
+          {isWiki && (
             <button
-              type="button"
-              onClick={() => window.dispatchEvent(new CustomEvent('hub:open-command-palette'))}
-              className="flex items-center justify-between w-full max-w-md bg-white/5 hover:bg-white/[0.08] border border-white/10 hover:border-cyan-500/40 text-gray-400 hover:text-gray-200 text-xs rounded-2xl px-4 py-2.5 transition-all shadow-inner cursor-pointer group"
-              aria-label="Abrir busca rápida de clientes e módulos"
+              onClick={() => navigate('/')}
+              className="mr-5 px-3.5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-2xl transition-all flex items-center gap-2 group shadow-xl cursor-pointer"
+              aria-label="Sair da Wiki e voltar para o Hub Central"
             >
-              <span className="flex items-center gap-2.5 truncate">
-                <Search size={15} className="text-gray-500 group-hover:text-cyan-400 transition-colors shrink-0" aria-hidden="true" />
-                <span className="truncate">Buscar clientes, módulos, funis...</span>
-              </span>
-              <kbd className="hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-black/40 border border-white/10 text-[10px] font-mono text-gray-400 shrink-0 ml-2">
-                Ctrl K
-              </kbd>
+              <X size={16} className="group-hover:rotate-90 transition-transform" aria-hidden="true" />
+              <span className="text-xs font-bold uppercase tracking-wider">Voltar</span>
             </button>
-          </div>
-        ) : pageTitle && (
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{pageTitle}</h2>
-        )}
-      </div>
+          )}
 
-      <div className="flex items-center gap-3">
-        {userProfile && (
-          <button
-            onClick={async () => {
-              if (store.loadingTimeLog) {
-                toast.info('Carregando informações do seu expediente. Por favor, aguarde...');
-                return;
-              }
-              const log = store.todayLog;
-              const isAdmin = hasPermission('MANAGE_SETTINGS');
-              const contractType = isAdmin ? 'PJ' : (userProfile?.contractType || 'PJ');
-
-              if (!log) {
-                await store.startExpediente(
-                  userProfile.uid,
-                  userProfile.displayName || 'Colaborador',
-                  userProfile.photoURL || ''
-                );
-              } else if (log.status === 'completed') {
-                const isCLT = contractType === 'CLT';
-                if (isCLT) {
-                  const overtimeInput = await customPrompt({
-                    title: 'Horas Extras Planejadas',
-                    message: 'Seu expediente regular já foi concluído hoje. Como CLT, informe o tempo planejado de hora extra (em minutos) para liberar o ponto:',
-                    placeholder: 'Ex: 60 (para 1 hora)',
-                    confirmText: 'Liberar Ponto',
-                    cancelText: 'Cancelar',
-                    variant: 'warning'
-                  });
-
-                  if (overtimeInput !== null) {
-                    const minutes = parseInt(overtimeInput.trim(), 10);
-                    if (!isNaN(minutes) && minutes > 0) {
-                      await store.reopenExpediente(minutes);
-                    } else {
-                      toast.error('Por favor, insira um valor numérico válido maior que 0.');
-                    }
-                  }
-                } else {
-                  const confirmed = await customConfirm({
-                    title: 'Reabrir Expediente (PJ)',
-                    message: 'Deseja realmente reabrir seu expediente de trabalho de hoje? As horas continuarão a ser contadas normalmente.',
-                    confirmText: 'Sim, Reabrir',
-                    cancelText: 'Cancelar',
-                    variant: 'success'
-                  });
-                  if (confirmed) {
-                    await store.reopenExpediente();
-                  }
-                }
-              } else if (log.status === 'paused') {
-                const confirmed = await customConfirm({
-                  title: 'Retomar ou Encerrar Expediente',
-                  message: 'Seu expediente está em pausa/intervalo. Deseja retomar as atividades ou encerrar o dia de hoje?',
-                  confirmText: 'Retomar Expediente',
-                  cancelText: 'Encerrar o Dia',
-                  variant: 'info'
-                });
-                if (confirmed) {
-                  await store.resumeExpediente();
-                } else {
-                  await store.endExpediente();
-                }
-              } else {
-                const confirmed = await customConfirm({
-                  title: 'Encerrar Expediente',
-                  message: 'Deseja realmente encerrar seu expediente de trabalho de hoje?',
-                  confirmText: 'Sim, Encerrar',
-                  cancelText: 'Continuar Trabalhando',
-                  variant: 'danger'
-                });
-                if (confirmed) {
-                  await store.endExpediente();
-                }
-              }
-            }}
-            className={`px-3 py-2 border rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0 flex items-center justify-center gap-2 text-xs font-bold ${
-              !store.todayLog
-                ? 'bg-primary-500/10 border-primary-500/30 text-primary-400 hover:bg-primary-500/20 shadow-sm shadow-primary-500/10'
-                : store.todayLog.status === 'active'
-                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 shadow-sm shadow-emerald-500/10'
-                : store.todayLog.status === 'paused'
-                ? 'bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20 shadow-sm shadow-amber-500/10'
-                : 'bg-rose-500/10 border-rose-500/30 text-rose-400 hover:bg-rose-500/20'
-            }`}
-            title={
-              !store.todayLog
-                ? 'Clique para Iniciar seu Expediente (Bater Entrada)'
-                : store.todayLog.status === 'active'
-                ? 'Expediente Ativo (Clique para pausar ou encerrar)'
-                : store.todayLog.status === 'paused'
-                ? 'Expediente em Intervalo (Clique para retomar ou encerrar)'
-                : `Expediente Concluído Hoje (Clique para reabrir como ${hasPermission('MANAGE_SETTINGS') ? 'PJ' : (userProfile?.contractType || 'PJ')})`
-            }
-          >
-            <Clock size={15} />
-            {!store.todayLog ? (
-              <span className="hidden sm:inline">Iniciar Expediente</span>
-            ) : store.todayLog.status === 'active' ? (
-              <div className="flex items-center gap-1.5 font-mono">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="hidden sm:inline">Ativo</span>
+          {!isWiki && (
+            <div
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2.5 mr-6 cursor-pointer group shrink-0"
+            >
+              <img
+                src="https://i.imgur.com/zCvL7xy.png"
+                alt="Hub Central"
+                className="h-7 w-auto group-hover:scale-105 transition-transform"
+              />
+              <div className="hidden sm:flex items-baseline gap-1.5">
+                <h1 className="text-xl font-black tracking-tighter text-white uppercase leading-none">
+                  Hub
+                </h1>
+                <p className="text-xl font-light text-cyan-400 tracking-tight uppercase leading-none">
+                  Central
+                </p>
               </div>
-            ) : store.todayLog.status === 'paused' ? (
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-amber-400" />
-                <span className="hidden sm:inline">Pausa</span>
-              </div>
-            ) : (
-              <span className="hidden sm:inline">Encerrado</span>
-            )}
-          </button>
-        )}
-        <button
-          onClick={() => navigate('/ouvidoria')}
-          className="p-2.5 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0"
-          title="Canal de Ouvidoria & Linha Ética"
-        >
-          <Shield size={16} />
-        </button>
-        {hasAnyPermission(['MANAGE_SETTINGS', 'MANAGE_TEAM']) && (
-          <button
-            onClick={() => navigate('/compliance-admin')}
-            className="p-2.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-500 rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0 flex items-center justify-center relative"
-            title="Painel de Ouvidoria (RH / Gestão)"
-          >
-            <Shield size={16} className="text-rose-500" />
-            {newTicketsCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-rose-600 text-white text-[9px] font-black rounded-full h-4 w-4 flex items-center justify-center border border-zinc-950 animate-bounce">
-                {newTicketsCount}
-              </span>
-            )}
-          </button>
-        )}
-        <button
-          onClick={() => setIsScreensModalOpen(true)}
-          className="p-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 hover:text-white rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0 flex items-center gap-1.5 shadow-lg shadow-indigo-500/10"
-          title="Sala de Comando Multi-Monitores (War Room)"
-        >
-          <Tv size={16} />
-          <span className="text-[10px] font-black uppercase tracking-wider hidden xl:inline">Monitores</span>
-        </button>
-        <button
-          onClick={() => setIsRecorderOpen(true)}
-          className="p-2.5 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0"
-          title="Gravar Tela (Loom Nativo)"
-        >
-          <Video size={16} />
-        </button>
-        {!isDashboard && (
-          <div className="hidden md:flex items-center w-52 lg:w-72 relative" role="search">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" aria-hidden="true" />
-            <input
-              type="text"
-              placeholder="Busca global..."
-              value={globalSearch}
-              onChange={e => setGlobalSearch(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 text-white text-xs rounded-xl pl-9 pr-3 py-2 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/50 transition-all placeholder-gray-600"
-              aria-label="Busca global"
-            />
-          </div>
-        )}
+            </div>
+          )}
 
-        {currentPath === '/chat' && (
+          {isDashboard ? (
+            <div className="flex items-center gap-6 w-full flex-1 min-w-0">
+              <div className="flex items-center shrink-0 border-l border-white/10 pl-4 md:pl-6 gap-3">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-0.5">
+                    {new Date().getHours() >= 5 && new Date().getHours() < 12
+                      ? '☀️ Bom dia'
+                      : new Date().getHours() >= 12 && new Date().getHours() < 18
+                      ? '🌤️ Boa tarde'
+                      : '🌙 Boa noite'}
+                  </p>
+                  <h2 className="text-sm font-bold text-white truncate max-w-[160px]">
+                    {firstName}!
+                  </h2>
+                </div>
+
+                {weather && (
+                  <div className="hidden md:flex items-center gap-2 bg-white/5 px-2.5 py-1 rounded-xl border border-white/5">
+                    <img
+                      src={`https://openweathermap.org/img/wn/${weather.icon}.png`}
+                      alt={weather.description}
+                      className="w-7 h-7 object-contain"
+                    />
+                    <div className="flex flex-col">
+                      <span className="text-xs font-black text-white leading-none">
+                        {weather.temp}°C
+                      </span>
+                      <span className="text-[8px] font-bold text-gray-500 uppercase tracking-tighter leading-none mt-1">
+                        {weather.description}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent('hub:open-command-palette'))}
+                className="flex items-center justify-between w-full max-w-md bg-white/5 hover:bg-white/[0.08] border border-white/10 hover:border-cyan-500/40 text-gray-400 hover:text-gray-200 text-xs rounded-2xl px-4 py-2 transition-all shadow-inner cursor-pointer group"
+                aria-label="Abrir busca rápida de clientes, agentes e módulos"
+              >
+                <span className="flex items-center gap-2.5 truncate">
+                  <Search
+                    size={15}
+                    className="text-gray-500 group-hover:text-cyan-400 transition-colors shrink-0"
+                    aria-hidden="true"
+                  />
+                  <span className="truncate">Buscar clientes, ofertas, agentes IA...</span>
+                </span>
+                <kbd className="hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-black/40 border border-white/10 text-[10px] font-mono text-gray-400 shrink-0 ml-2">
+                  Ctrl K
+                </kbd>
+              </button>
+            </div>
+          ) : (
+            pageTitle && (
+              <h2 className="text-base sm:text-lg font-bold text-white truncate border-l border-white/10 pl-5">
+                {pageTitle}
+              </h2>
+            )
+          )}
+        </div>
+
+        <div className="flex items-center gap-2.5 shrink-0">
+          {!isDashboard && (
+            <div className="hidden md:flex items-center w-52 lg:w-64 relative" role="search">
+              <Search
+                size={15}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
+                aria-hidden="true"
+              />
+              <input
+                type="text"
+                placeholder="Filtrar nesta tela..."
+                value={globalSearch}
+                onChange={e => setGlobalSearch(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 text-white text-xs rounded-xl pl-9 pr-3 py-2 focus:outline-none focus:border-cyan-500/50 transition-all placeholder-gray-500"
+                aria-label="Busca na tela"
+              />
+            </div>
+          )}
+
           <button
-            onClick={() => setFocusMode(!focusMode)}
-            className={`hidden md:flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all border ${focusMode
-              ? 'bg-primary-500/20 border-primary-500/50 text-primary-400'
-              : 'bg-white/5 border-white/10 text-gray-500 hover:text-white hover:bg-white/10'
+            onClick={() => setIsScreensModalOpen(true)}
+            className="px-3 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 hover:text-white rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0 flex items-center gap-1.5 shadow-lg shadow-indigo-500/10"
+            title="Sala de Comando Multi-Monitores (War Room)"
+          >
+            <Tv size={15} />
+            <span className="text-[10px] font-black uppercase tracking-wider hidden xl:inline">
+              War Room
+            </span>
+          </button>
+
+          <button
+            onClick={() => setIsRecorderOpen(true)}
+            className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 hover:text-white rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0"
+            title="Gravar Tela (Loom Nativo)"
+          >
+            <Video size={15} />
+          </button>
+
+          {currentPath === '/chat' && (
+            <button
+              onClick={() => setFocusMode(!focusMode)}
+              className={`hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                focusMode
+                  ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300'
+                  : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:bg-white/10'
               }`}
-          >
-            <Focus size={14} />
-            <span>{focusMode ? 'Foco ON' : 'Foco'}</span>
-          </button>
-        )}
-      </div>
-    </header>
+            >
+              <Focus size={14} />
+              <span>{focusMode ? 'Foco ON' : 'Foco'}</span>
+            </button>
+          )}
+        </div>
+      </header>
 
-    {/* Modal da Central de Lançamento de Monitores */}
-    <MultiScreenLauncherModal
-      isOpen={isScreensModalOpen}
-      onClose={() => setIsScreensModalOpen(false)}
-    />
-  </>
+      <MultiScreenLauncherModal
+        isOpen={isScreensModalOpen}
+        onClose={() => setIsScreensModalOpen(false)}
+      />
+    </>
   );
 }

@@ -694,3 +694,14 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Decisão Técnica de Descarte**:
   - Quando `isNew === true` e o usuário escolhe descartar, chama `funnelService.deleteFunnel(orgId, id)` para remover o documento do Firestore e evitar rascunhos fantasmas na lista de fluxos.
 - **Commit**: `3a4f1a3` | Branch: `main`
+
+
+---
+
+## 35. Reestruturação Solopreneur + IA: Dock Única Liquid Glass & Remoção de Elementos CLT
+- **Data da Integração**: 18/11/2026
+- **Funcionalidade**: Substituição da Sidebar lateral por uma Dock Inferior Única no estilo Liquid Glass (visionOS / macOS), remoção completa de interfaces CLT/RH corporativas e atualização do planeta 3D realista no Hub Central.
+- **Decisões Técnicas**:
+  - **Globo 3D Realista (`InteractiveSalesGlobe.tsx`, `earthShaders.ts`, `earthGeo.ts`)**: Substituído o canvas procedural antigo por shaders GLSL de alta fidelidade (relevo por normal mapping, luzes noturnas, reflexo especular oceânico, terminador astronômico real e dupla atmosfera Rayleigh + Fresnel) com `OrbitControls`.
+  - **Dock Única Liquid Glass (`LiquidGlassDock.tsx` e `AppLayout.tsx`)**: Removida a `Sidebar` esquerda, liberando 100% da largura horizontal do sistema. Integrados na mesma barra flutuante os Favoritos, os 6 Pilares Solopreneur (`Central de Comando`, `Squad de IA`, `Laboratórios`, `Clientes & Ofertas`, `Financeiro & RevOps`, `Segundo Cérebro`), Busca Rápida (`Ctrl+K`), `Hub Focus Station` (áudio integrado à dock sem bolinha flutuante avulsa) e Avatar com menu enxuto. Implementado auto-hide inteligente em editores de tela cheia (`/funnels/*`, `/canvas/*`, `/wiki`).
+  - **Limpeza Zero-CLT (`Header.tsx`, `navigation.ts`, `ProfileView.tsx`, `AppRouter.tsx`, `CommandPalette.tsx`, `WorkspaceShell.tsx`)**: Removidos os botões de Bater Ponto (`Iniciar Expediente`), lógica de horas extras CLT, escudos de Ouvidoria/RH, `ContractGuard` de colaboradores, `MatchInviteListener` da Arena, abas corporativas do perfil (`Superior Imediato`, `Regime CLT`, `VR/VA/VT`, `Adiantamento Salarial 30%`, `Ausências`, `PDI`, `Expediente`) e rotas secundárias de equipe legada.

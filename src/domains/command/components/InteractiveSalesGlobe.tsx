@@ -52,12 +52,12 @@ export function InteractiveSalesGlobe({ clients = [] }: InteractiveSalesGlobePro
 
     let disposed = false;
     const width = container.clientWidth || 640;
-    const height = container.clientHeight || 470;
+    const height = container.clientHeight || 430;
 
     // 1. Scene & Camera
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(44, width / height, 0.1, 100);
-    camera.position.set(0, 0.16, 3.18);
+    camera.position.set(0, 0.14, 3.22);
 
     // 2. Renderer (transparent background to blend seamlessly into Hub Central)
     let renderer: THREE.WebGLRenderer;
@@ -390,7 +390,7 @@ export function InteractiveSalesGlobe({ clients = [] }: InteractiveSalesGlobePro
   }, []);
 
   return (
-    <div className="relative w-full h-[440px] xl:h-[490px] flex items-center justify-center select-none overflow-hidden group">
+    <div className="relative w-full h-[405px] xl:h-[455px] flex items-center justify-center select-none overflow-hidden group">
       {/* Container WebGL Three.js */}
       <div
         ref={mountRef}

@@ -94,7 +94,7 @@ export default function HubCentralCommandView() {
   const firstName = userProfile?.displayName?.split(' ')[0] || 'Gestor';
 
   return (
-    <div className="min-h-full bg-[#020617] text-white flex flex-col font-sans select-none overflow-x-hidden px-5 pt-3 pb-16 lg:pb-6">
+    <div className="min-h-full bg-[#020617] text-white flex flex-col font-sans select-none overflow-x-hidden px-5 pt-3 pb-24">
       {/* BARRA COMPACTA DE MODOS RÁPIDOS (Sem duplicar o Header principal) */}
       <div className="max-w-[1720px] mx-auto w-full flex flex-wrap items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-2 flex-wrap">
@@ -301,8 +301,8 @@ export default function HubCentralCommandView() {
           <InteractiveSalesGlobe clients={clients} />
         </div>
 
-        {/* COLUNA DIREITA (3 COLS) — DAVINCI IA & ATALHOS (com recuo inferior p/ não colidir com o fone flutuante) */}
-        <div className="col-span-12 lg:col-span-3 space-y-4 lg:pb-10">
+        {/* COLUNA DIREITA (3 COLS) — DAVINCI IA & ATALHOS */}
+        <div className="col-span-12 lg:col-span-3 space-y-4">
           {/* Card: Davinci & Agentes de IA */}
           <div className="bg-[#081226]/85 backdrop-blur-xl border border-cyan-950/60 rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
             <div className="flex items-center justify-between mb-3">
