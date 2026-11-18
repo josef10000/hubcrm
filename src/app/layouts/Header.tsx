@@ -142,17 +142,20 @@ export function Header({ currentPath, navigate }: HeaderProps) {
                 </div>
               )}
             </div>
-            <div className="flex items-center w-full max-w-sm relative" role="search">
-              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" aria-hidden="true" />
-              <input
-                type="text"
-                placeholder="Buscar clientes..."
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 text-white text-xs rounded-2xl pl-11 pr-4 py-2.5 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/50 transition-all placeholder-gray-600 shadow-inner"
-                aria-label="Campo de busca de clientes"
-              />
-            </div>
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('hub:open-command-palette'))}
+              className="flex items-center justify-between w-full max-w-md bg-white/5 hover:bg-white/[0.08] border border-white/10 hover:border-cyan-500/40 text-gray-400 hover:text-gray-200 text-xs rounded-2xl px-4 py-2.5 transition-all shadow-inner cursor-pointer group"
+              aria-label="Abrir busca rápida de clientes e módulos"
+            >
+              <span className="flex items-center gap-2.5 truncate">
+                <Search size={15} className="text-gray-500 group-hover:text-cyan-400 transition-colors shrink-0" aria-hidden="true" />
+                <span className="truncate">Buscar clientes, módulos, funis...</span>
+              </span>
+              <kbd className="hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-black/40 border border-white/10 text-[10px] font-mono text-gray-400 shrink-0 ml-2">
+                Ctrl K
+              </kbd>
+            </button>
           </div>
         ) : pageTitle && (
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{pageTitle}</h2>

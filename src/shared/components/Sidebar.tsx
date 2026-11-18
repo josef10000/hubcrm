@@ -49,7 +49,14 @@ export const PremiumIcon = ({ iconName, size = 22, className = "" }: { iconName:
     'Zap': 'ph-lightning',
     'LayoutGrid': 'ph-grid-four',
     'FlaskConical': 'ph-flask',
-    'GitFork': 'ph-git-fork'
+    'GitFork': 'ph-git-fork',
+    'Tv': 'ph-television',
+    'Bot': 'ph-robot',
+    'Cpu': 'ph-cpu',
+    'FolderGit2': 'ph-git-branch',
+    'FolderKanban': 'ph-kanban',
+    'Layers': 'ph-stack',
+    'Activity': 'ph-pulse'
   };
 
   const phClass = mapping[iconName] || 'ph-question';
@@ -271,7 +278,7 @@ export default function Sidebar() {
                       transition={{ type: "spring", stiffness: 350, damping: 30 }}
                     />
                   )}
-                  <PremiumIcon iconName={group.icon.name || group.icon.displayName || 'Target'} />
+                  <PremiumIcon iconName={group.icon.displayName || group.icon.name || 'Target'} />
                   {group.totalBadges > 0 && (
                     <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-primary-500 rounded-full border-2 border-[#05070a] animate-pulse" />
                   )}

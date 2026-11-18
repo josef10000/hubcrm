@@ -52,12 +52,12 @@ export function InteractiveSalesGlobe({ clients = [] }: InteractiveSalesGlobePro
 
     let disposed = false;
     const width = container.clientWidth || 640;
-    const height = container.clientHeight || 540;
+    const height = container.clientHeight || 470;
 
     // 1. Scene & Camera
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(44, width / height, 0.1, 100);
-    camera.position.set(0, 0.18, 3.05);
+    camera.position.set(0, 0.16, 3.18);
 
     // 2. Renderer (transparent background to blend seamlessly into Hub Central)
     let renderer: THREE.WebGLRenderer;
@@ -390,7 +390,7 @@ export function InteractiveSalesGlobe({ clients = [] }: InteractiveSalesGlobePro
   }, []);
 
   return (
-    <div className="relative w-full h-[540px] flex items-center justify-center select-none overflow-hidden group">
+    <div className="relative w-full h-[440px] xl:h-[490px] flex items-center justify-center select-none overflow-hidden group">
       {/* Container WebGL Three.js */}
       <div
         ref={mountRef}
@@ -405,12 +405,12 @@ export function InteractiveSalesGlobe({ clients = [] }: InteractiveSalesGlobePro
       )}
 
       {/* Dica de Interatividade Flutuante */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none opacity-60 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-cyan-500/20 text-[10px] text-cyan-300">
-        🖱️ Arraste com o mouse para girar e explorar o globo
+      <div className="absolute top-2 left-1/2 -translate-x-1/2 pointer-events-none opacity-60 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-cyan-500/20 text-[10px] text-cyan-300 whitespace-nowrap">
+        🖱️ Arraste para girar • Scroll para zoom
       </div>
 
       {/* Card Flutuante com Métricas Reais do Banco de Dados */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-[#0b1329]/95 backdrop-blur-md border border-cyan-500/30 rounded-2xl px-5 py-2.5 shadow-[0_12px_32px_rgba(0,0,0,0.7)] flex items-center gap-4 z-10">
+      <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 bg-[#0b1329]/95 backdrop-blur-md border border-cyan-500/30 rounded-2xl px-4 py-2 shadow-[0_12px_32px_rgba(0,0,0,0.7)] flex items-center gap-3.5 z-10 whitespace-nowrap">
         <span className="text-2xl">🇧🇷</span>
         <div className="flex flex-col text-left">
           <span className="text-xs font-semibold text-gray-300">

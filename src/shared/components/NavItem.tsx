@@ -33,7 +33,7 @@ export default function NavItem({ icon: Icon, label, path, onClick, badge }: Nav
       >
         <div className="flex items-center space-x-3">
           <PremiumIcon 
-            iconName={Icon?.name || Icon?.displayName || 'Target'} 
+            iconName={Icon?.displayName || Icon?.name || 'Target'} 
             size={18} 
             className={isActive ? 'text-primary-400' : 'text-gray-500 group-hover/item:text-gray-300'} 
           />
