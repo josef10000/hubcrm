@@ -25,12 +25,16 @@ import { useClients } from '@/hooks/queries/useClients';
 import { useTransactions } from '@/hooks/queries/useFinance';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
+import { useUI } from '@/contexts/UIContext';
+import { getThemePalette } from '@shared/utils/themePalette';
 import { getPlanPrice } from '@/helpers';
 
 export default function HubCentralCommandView() {
   const navigate = useNavigate();
   const { userProfile, unreadAlertsCount = 0 } = useAuth();
   const { supportRequests = [] } = useCRM();
+  const { themeColor } = useUI();
+  const palette = getThemePalette(themeColor);
 
   // 1. Dados Reais de Clientes e Vendas (Firestore)
   const { data: clients = [] } = useClients();
@@ -91,15 +95,16 @@ export default function HubCentralCommandView() {
     };
   }, [clients, transactions, supportRequests]);
 
-  const firstName = userProfile?.displayName?.split(' ')[0] || 'Gestor';
+  const firstName = userProfile?.displayName?.split(' ')[0] || 'José';
 
   return (
-    <div className="min-h-full bg-[#020617] text-white flex flex-col font-sans select-none overflow-x-hidden px-5 pt-3 pb-24">
-      {/* BARRA COMPACTA DE MODOS RÁPIDOS (Sem duplicar o Header principal) */}
+    <div className="min-h-full bg-transparent text-white flex flex-col font-sans select-none overflow-x-hidden px-5 pt-3 pb-24 relative z-10">
+      {/* BARRA COMPACTA DE MODOS RÁPIDOS (Acompanha o tema ativo do sistema) */}
       <div className="max-w-[1720px] mx-auto w-full flex flex-wrap items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-2 flex-wrap">
           <button
-            className="px-3 py-1.5 rounded-xl bg-cyan-500/15 border border-cyan-500/35 text-cyan-300 text-xs font-semibold flex items-center gap-1.5 shadow-[0_0_12px_rgba(6,182,212,0.15)] cursor-pointer transition-all"
+            className="px-3 py-1.5 rounded-xl bg-primary-500/15 border border-primary-500/35 text-primary-400 text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-all"
+            style={{ boxShadow: `0 0 14px rgba(${palette.rgb}, 0.16)` }}
           >
             <Activity className="w-3.5 h-3.5" />
             Visão Executiva
@@ -107,38 +112,38 @@ export default function HubCentralCommandView() {
 
           <button
             onClick={() => navigate('/screens')}
-            className="px-3 py-1.5 rounded-xl bg-[#081226]/90 border border-cyan-950/80 text-gray-400 hover:text-white text-xs font-medium flex items-center gap-1.5 cursor-pointer hover:border-cyan-700/60 transition-all"
+            className="px-3 py-1.5 rounded-xl bg-black/40 backdrop-blur-md border border-white/10 text-gray-400 hover:text-white hover:border-primary-500/40 text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-all"
           >
-            <Tv className="w-3.5 h-3.5 text-indigo-400" />
+            <Tv className="w-3.5 h-3.5 text-primary-400" />
             Sala de Comando
           </button>
 
           <button
             onClick={() => navigate('/workspace')}
-            className="px-3 py-1.5 rounded-xl bg-[#081226]/90 border border-cyan-950/80 text-gray-400 hover:text-white text-xs font-medium flex items-center gap-1.5 cursor-pointer hover:border-cyan-700/60 transition-all"
+            className="px-3 py-1.5 rounded-xl bg-black/40 backdrop-blur-md border border-white/10 text-gray-400 hover:text-white hover:border-primary-500/40 text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-all"
           >
-            <FolderKanban className="w-3.5 h-3.5 text-cyan-400" />
+            <FolderKanban className="w-3.5 h-3.5 text-primary-400" />
             Hub Office
           </button>
 
           <button
             onClick={() => navigate('/growth-hub')}
-            className="px-3 py-1.5 rounded-xl bg-[#081226]/90 border border-cyan-950/80 text-gray-400 hover:text-white text-xs font-medium flex items-center gap-1.5 cursor-pointer hover:border-cyan-700/60 transition-all"
+            className="px-3 py-1.5 rounded-xl bg-black/40 backdrop-blur-md border border-white/10 text-gray-400 hover:text-white hover:border-primary-500/40 text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-all"
           >
-            <Layers className="w-3.5 h-3.5 text-amber-400" />
+            <Layers className="w-3.5 h-3.5 text-primary-400" />
             Galeria
           </button>
         </div>
 
         <button
           onClick={() => navigate('/notifications')}
-          className="px-3 py-1.5 rounded-xl bg-[#081226]/90 border border-cyan-950/80 hover:border-cyan-700/60 text-gray-400 hover:text-white text-xs font-medium flex items-center gap-2 cursor-pointer transition-all"
+          className="px-3 py-1.5 rounded-xl bg-black/40 backdrop-blur-md border border-white/10 hover:border-primary-500/40 text-gray-400 hover:text-white text-xs font-medium flex items-center gap-2 cursor-pointer transition-all"
           title="Central de Notificações"
         >
-          <Bell className="w-3.5 h-3.5 text-cyan-400" />
+          <Bell className="w-3.5 h-3.5 text-primary-400" />
           <span className="hidden sm:inline">Alertas</span>
           {unreadAlertsCount > 0 && (
-            <span className="px-1.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-bold">
+            <span className="px-1.5 py-0.5 rounded-full bg-primary-500/20 text-primary-300 text-[10px] font-bold">
               {unreadAlertsCount}
             </span>
           )}
@@ -152,19 +157,19 @@ export default function HubCentralCommandView() {
           {/* Card: Receita Recorrente Real */}
           <div
             onClick={() => navigate('/billing')}
-            className="bg-[#081226]/85 hover:bg-[#0a162e]/90 backdrop-blur-xl border border-cyan-950/60 hover:border-cyan-500/30 rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.5)] relative overflow-hidden transition-all cursor-pointer group"
+            className="bg-black/40 backdrop-blur-xl border border-white/10 hover:border-primary-500/40 rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.45)] relative overflow-hidden transition-all cursor-pointer group"
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
+                <div className="p-1.5 rounded-lg bg-primary-500/15 text-primary-400">
                   <TrendingUp className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-semibold text-gray-200">Receita Recorrente (MRR)</h3>
-                  <span className="text-[10px] text-gray-500">Dados reais da sua operação</span>
+                  <h3 className="text-xs font-semibold text-white">Receita Recorrente (MRR)</h3>
+                  <span className="text-[10px] text-gray-400">Dados reais da sua operação</span>
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-cyan-400 transition-colors" />
+              <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-primary-400 transition-colors" />
             </div>
 
             {/* Valor Principal Real */}
@@ -185,7 +190,7 @@ export default function HubCentralCommandView() {
                   <path
                     d="M0,18 Q15,12 25,14 T45,8 T60,2"
                     fill="none"
-                    stroke="#38bdf8"
+                    stroke="var(--primary-400)"
                     strokeWidth="2.5"
                   />
                 </svg>
@@ -199,8 +204,8 @@ export default function HubCentralCommandView() {
             </p>
 
             {/* Indicadores Reais */}
-            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-cyan-950/60">
-              <div className="bg-[#040915] p-2 rounded-xl border border-cyan-950/40 text-left">
+            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-white/10">
+              <div className="bg-white/5 p-2 rounded-xl border border-white/10 text-left">
                 <span className="text-[9px] text-gray-400 block mb-0.5">Ticket médio</span>
                 <span className="text-xs font-bold text-white block truncate">
                   {metrics.averageTicket.toLocaleString('pt-BR', {
@@ -210,12 +215,12 @@ export default function HubCentralCommandView() {
                 </span>
               </div>
 
-              <div className="bg-[#040915] p-2 rounded-xl border border-cyan-950/40 text-left">
+              <div className="bg-white/5 p-2 rounded-xl border border-white/10 text-left">
                 <span className="text-[9px] text-gray-400 block mb-0.5">Total Clientes</span>
                 <span className="text-xs font-bold text-white block">{metrics.totalClients}</span>
               </div>
 
-              <div className="bg-[#040915] p-2 rounded-xl border border-cyan-950/40 text-left">
+              <div className="bg-white/5 p-2 rounded-xl border border-white/10 text-left">
                 <span className="text-[9px] text-gray-400 block mb-0.5">Ativos</span>
                 <span className="text-xs font-bold text-emerald-400 block">{metrics.activeCount}</span>
               </div>
@@ -225,19 +230,19 @@ export default function HubCentralCommandView() {
           {/* Card: Fluxo de Caixa Real */}
           <div
             onClick={() => navigate('/finance')}
-            className="bg-[#081226]/85 hover:bg-[#0a162e]/90 backdrop-blur-xl border border-cyan-950/60 hover:border-cyan-500/30 rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-all cursor-pointer group"
+            className="bg-black/40 backdrop-blur-xl border border-white/10 hover:border-primary-500/40 rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.45)] transition-all cursor-pointer group"
           >
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
+                <div className="p-1.5 rounded-lg bg-primary-500/15 text-primary-400">
                   <DollarSign className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-semibold text-gray-200">Financeiro</h3>
-                  <span className="text-[10px] text-gray-500">Fluxo de caixa consolidado</span>
+                  <h3 className="text-xs font-semibold text-white">Financeiro</h3>
+                  <span className="text-[10px] text-gray-400">Fluxo de caixa consolidado</span>
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-cyan-400 transition-colors" />
+              <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-primary-400 transition-colors" />
             </div>
 
             <div className="flex items-center justify-between gap-4">
@@ -256,8 +261,8 @@ export default function HubCentralCommandView() {
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center text-xs pt-1.5 border-t border-cyan-950/60 gap-2">
-                  <span className="text-cyan-400 font-semibold">Saldo</span>
+                <div className="flex justify-between items-center text-xs pt-1.5 border-t border-white/10 gap-2">
+                  <span className="text-primary-400 font-semibold">Saldo</span>
                   <span className="font-extrabold text-white truncate">
                     {metrics.netEstimated.toLocaleString('pt-BR', {
                       style: 'currency',
@@ -271,14 +276,14 @@ export default function HubCentralCommandView() {
               <div className="relative w-16 h-16 flex items-center justify-center shrink-0">
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                   <path
-                    className="text-cyan-950/60"
+                    className="text-white/10"
                     strokeWidth="3.5"
                     stroke="currentColor"
                     fill="none"
                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                   />
                   <path
-                    className="text-cyan-400"
+                    className="text-primary-400"
                     strokeDasharray={`${metrics.margin}, 100`}
                     strokeWidth="3.5"
                     strokeLinecap="round"
@@ -304,15 +309,15 @@ export default function HubCentralCommandView() {
         {/* COLUNA DIREITA (3 COLS) — DAVINCI IA & ATALHOS */}
         <div className="col-span-12 lg:col-span-3 space-y-4">
           {/* Card: Davinci & Agentes de IA */}
-          <div className="bg-[#081226]/85 backdrop-blur-xl border border-cyan-950/60 rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+          <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.45)]">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400">
+                <div className="p-1.5 rounded-lg bg-primary-500/15 text-primary-400">
                   <Bot className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-semibold text-gray-200">Agentes de IA</h3>
-                  <span className="text-[10px] text-gray-500">Davinci • Orquestrador</span>
+                  <h3 className="text-xs font-semibold text-white">Agentes de IA</h3>
+                  <span className="text-[10px] text-gray-400">Davinci • Orquestrador</span>
                 </div>
               </div>
               <div className="flex items-center gap-1.5">
@@ -322,9 +327,12 @@ export default function HubCentralCommandView() {
             </div>
 
             {/* Balão Inteligente do Davinci com Radar Operacional Real */}
-            <div className="bg-[#040915] border border-cyan-950/80 rounded-xl p-3 mb-3 space-y-2">
+            <div className="bg-white/5 border border-white/10 rounded-xl p-3 mb-3 space-y-2">
               <div className="flex items-start gap-2.5">
-                <div className="w-8 h-8 rounded-full border border-cyan-500/30 bg-gradient-to-tr from-cyan-600 to-indigo-600 flex items-center justify-center text-cyan-200 shrink-0 shadow-[0_0_12px_rgba(6,182,212,0.3)]">
+                <div
+                  className="w-8 h-8 rounded-full border border-primary-500/35 bg-primary-500 flex items-center justify-center text-white shrink-0"
+                  style={{ boxShadow: `0 0 14px rgba(${palette.rgb}, 0.3)` }}
+                >
                   <Bot className="w-4 h-4" />
                 </div>
                 <p className="text-[11px] text-gray-300 leading-relaxed text-left">
@@ -337,11 +345,11 @@ export default function HubCentralCommandView() {
               </div>
 
               {(metrics.overdueCount > 0 || metrics.openTicketsCount > 0) && (
-                <div className="flex flex-wrap gap-1.5 pt-2 border-t border-cyan-950/50">
+                <div className="flex flex-wrap gap-1.5 pt-2 border-t border-white/10">
                   {metrics.overdueCount > 0 && (
                     <button
                       onClick={() => navigate('/billing')}
-                      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-rose-500/10 border border-rose-500/30 text-[10px] font-semibold text-rose-300 hover:bg-rose-500/20 transition cursor-pointer"
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-rose-500/10 border border-rose-500/30 text-[10px] font-semibold text-rose-400 hover:bg-rose-500/20 transition cursor-pointer"
                     >
                       <AlertCircle className="w-3 h-3" />
                       {metrics.overdueCount} pendência(s) financeira(s)
@@ -350,7 +358,7 @@ export default function HubCentralCommandView() {
                   {metrics.openTicketsCount > 0 && (
                     <button
                       onClick={() => navigate('/support')}
-                      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-[10px] font-semibold text-amber-300 hover:bg-amber-500/20 transition cursor-pointer"
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-[10px] font-semibold text-amber-400 hover:bg-amber-500/20 transition cursor-pointer"
                     >
                       <LifeBuoy className="w-3 h-3" />
                       {metrics.openTicketsCount} chamado(s) em aberto
@@ -364,85 +372,85 @@ export default function HubCentralCommandView() {
             <div className="grid grid-cols-2 gap-2 mb-3">
               <button
                 onClick={() => navigate('/offers')}
-                className="px-2.5 py-2 rounded-xl bg-[#0d1c3a] border border-cyan-900/40 text-[11px] font-semibold text-cyan-300 hover:bg-cyan-900/30 hover:border-cyan-500/40 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                className="px-2.5 py-2 rounded-xl bg-primary-500/15 hover:bg-primary-500/25 border border-primary-500/30 hover:border-primary-500/50 text-[11px] font-semibold text-primary-400 transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <Plus className="w-3.5 h-3.5 shrink-0" />
                 <span>Nova Oferta</span>
               </button>
               <button
                 onClick={() => navigate('/funnels')}
-                className="px-2.5 py-2 rounded-xl bg-[#0d1c3a] border border-cyan-900/40 text-[11px] font-semibold text-cyan-300 hover:bg-cyan-900/30 hover:border-cyan-500/40 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                className="px-2.5 py-2 rounded-xl bg-primary-500/15 hover:bg-primary-500/25 border border-primary-500/30 hover:border-primary-500/50 text-[11px] font-semibold text-primary-400 transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <GitFork className="w-3.5 h-3.5 shrink-0" />
                 <span>Ver Funis</span>
               </button>
               <button
                 onClick={() => navigate('/analytics')}
-                className="px-2.5 py-2 rounded-xl bg-[#040915] border border-cyan-950/60 text-[11px] font-medium text-gray-300 hover:text-white hover:border-cyan-800/60 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                className="px-2.5 py-2 rounded-xl bg-white/5 border border-white/10 hover:border-primary-500/35 text-[11px] font-medium text-gray-300 hover:text-white transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
-                <BarChart3 className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                <BarChart3 className="w-3.5 h-3.5 text-primary-400 shrink-0" />
                 <span>Analytics</span>
               </button>
               <button
                 onClick={() => navigate('/chat?mode=davinci')}
-                className="px-2.5 py-2 rounded-xl bg-[#040915] border border-cyan-950/60 text-[11px] font-medium text-gray-300 hover:text-white hover:border-cyan-800/60 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                className="px-2.5 py-2 rounded-xl bg-white/5 border border-white/10 hover:border-primary-500/35 text-[11px] font-medium text-gray-300 hover:text-white transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
-                <MessageSquare className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                <MessageSquare className="w-3.5 h-3.5 text-primary-400 shrink-0" />
                 <span>Chat Davinci</span>
               </button>
             </div>
 
-            <div className="flex items-center justify-end pt-2 border-t border-cyan-950/60 text-xs">
+            <div className="flex items-center justify-end pt-2 border-t border-white/10 text-xs">
               <button
                 onClick={() => navigate('/settings')}
                 className="text-gray-400 hover:text-white flex items-center gap-1 text-[11px] cursor-pointer transition-colors"
               >
                 <SlidersHorizontal className="w-3.5 h-3.5" />
-                Configurações
+                Configurações & Tema
               </button>
             </div>
           </div>
 
           {/* Card: Atalhos de Produção Operacional */}
-          <div className="bg-[#081226]/85 backdrop-blur-xl border border-cyan-950/60 rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+          <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.45)]">
             <div className="flex items-center justify-between mb-2.5">
               <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
+                <div className="p-1.5 rounded-lg bg-primary-500/15 text-primary-400">
                   <Rocket className="w-4 h-4" />
                 </div>
-                <h3 className="text-xs font-semibold text-gray-200">Laboratórios de Produção</h3>
+                <h3 className="text-xs font-semibold text-white">Laboratórios de Produção</h3>
               </div>
             </div>
 
             <div className="space-y-2">
               <button
                 onClick={() => navigate('/offers')}
-                className="w-full p-2.5 rounded-xl bg-[#040915]/70 hover:bg-[#071328] border border-cyan-950/40 hover:border-cyan-500/30 flex items-center justify-between transition-all cursor-pointer text-left group"
+                className="w-full p-2.5 rounded-xl bg-white/5 hover:bg-primary-500/10 border border-white/10 hover:border-primary-500/35 flex items-center justify-between transition-all cursor-pointer text-left group"
               >
-                <span className="text-xs font-medium text-gray-200 group-hover:text-white">
+                <span className="text-xs font-medium text-gray-300 group-hover:text-white">
                   Laboratório de Ofertas
                 </span>
-                <ChevronRight className="w-3.5 h-3.5 text-gray-500 group-hover:text-cyan-400 transition-colors" />
+                <ChevronRight className="w-3.5 h-3.5 text-gray-500 group-hover:text-primary-400 transition-colors" />
               </button>
 
               <button
                 onClick={() => navigate('/funnels')}
-                className="w-full p-2.5 rounded-xl bg-[#040915]/70 hover:bg-[#071328] border border-cyan-950/40 hover:border-cyan-500/30 flex items-center justify-between transition-all cursor-pointer text-left group"
+                className="w-full p-2.5 rounded-xl bg-white/5 hover:bg-primary-500/10 border border-white/10 hover:border-primary-500/35 flex items-center justify-between transition-all cursor-pointer text-left group"
               >
-                <span className="text-xs font-medium text-gray-200 group-hover:text-white">
+                <span className="text-xs font-medium text-gray-300 group-hover:text-white">
                   Arquiteto de Funis
                 </span>
-                <ChevronRight className="w-3.5 h-3.5 text-gray-500 group-hover:text-cyan-400 transition-colors" />
+                <ChevronRight className="w-3.5 h-3.5 text-gray-500 group-hover:text-primary-400 transition-colors" />
               </button>
 
               <button
                 onClick={() => navigate('/hub-ads')}
-                className="w-full p-2.5 rounded-xl bg-[#040915]/70 hover:bg-[#071328] border border-cyan-950/40 hover:border-cyan-500/30 flex items-center justify-between transition-all cursor-pointer text-left group"
+                className="w-full p-2.5 rounded-xl bg-white/5 hover:bg-primary-500/10 border border-white/10 hover:border-primary-500/35 flex items-center justify-between transition-all cursor-pointer text-left group"
               >
-                <span className="text-xs font-medium text-gray-200 group-hover:text-white">
+                <span className="text-xs font-medium text-gray-300 group-hover:text-white">
                   Criativos & HubAds
                 </span>
-                <ChevronRight className="w-3.5 h-3.5 text-gray-500 group-hover:text-cyan-400 transition-colors" />
+                <ChevronRight className="w-3.5 h-3.5 text-gray-500 group-hover:text-primary-400 transition-colors" />
               </button>
             </div>
           </div>

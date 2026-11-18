@@ -3,6 +3,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { Client } from '@/types';
 import { getPlanPrice } from '@/helpers';
+import { useUI } from '@/contexts/UIContext';
+import { getThemePalette } from '@shared/utils/themePalette';
 import {
   createEarthShaderMaterial,
   createInnerAtmosphereMaterial,
@@ -35,6 +37,20 @@ const _localSunPos = new THREE.Vector3();
 export function InteractiveSalesGlobe({ clients = [] }: InteractiveSalesGlobeProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const [loading, setLoading] = useState(true);
+  const { themeColor } = useUI();
+  const palette = getThemePalette(themeColor);
+
+  // Refs para atualização reativa de cores 3D ao trocar o tema do sistema
+  const themeMaterialsRef = useRef<{
+    telemetryMat?: THREE.LineBasicMaterial;
+    orbitMat?: THREE.LineBasicMaterial;
+    gridMat?: THREE.LineBasicMaterial;
+    bordersMat?: THREE.LineBasicMaterial;
+    markerMat?: THREE.MeshBasicMaterial;
+    markerRingMat?: THREE.MeshBasicMaterial;
+    outerAtmMat?: THREE.ShaderMaterial;
+    innerAtmMat?: THREE.ShaderMaterial;
+  }>({});
 
   // Computa métricas reais do Hub Central
   const activeClients = (clients || []).filter(
@@ -46,11 +62,26 @@ export function InteractiveSalesGlobe({ clients = [] }: InteractiveSalesGlobePro
   );
   const totalCount = activeClients.length;
 
+  // Sincroniza materiais 3D instantaneamente quando o usuário muda o tema do sistema
+  useEffect(() => {
+    const p = getThemePalette(themeColor);
+    const mats = themeMaterialsRef.current;
+    if (mats.telemetryMat) mats.telemetryMat.color.set(p.lightHex);
+    if (mats.orbitMat) mats.orbitMat.color.set(p.primaryHex);
+    if (mats.gridMat) mats.gridMat.color.set(p.primaryHex);
+    if (mats.bordersMat) mats.bordersMat.color.set(p.lightHex);
+    if (mats.markerMat) mats.markerMat.color.set(p.primaryHex);
+    if (mats.markerRingMat) mats.markerRingMat.color.set(p.lightHex);
+    if (mats.outerAtmMat) mats.outerAtmMat.uniforms.uAccentColor.value.set(p.lightHex);
+    if (mats.innerAtmMat) mats.innerAtmMat.uniforms.uAccentColor.value.set(p.primaryHex);
+  }, [themeColor]);
+
   useEffect(() => {
     const container = mountRef.current;
     if (!container) return;
 
     let disposed = false;
+    const initialPalette = getThemePalette(themeColor);
     const width = container.clientWidth || 640;
     const height = container.clientHeight || 430;
 
@@ -59,7 +90,7 @@ export function InteractiveSalesGlobe({ clients = [] }: InteractiveSalesGlobePro
     const camera = new THREE.PerspectiveCamera(44, width / height, 0.1, 100);
     camera.position.set(0, 0.14, 3.22);
 
-    // 2. Renderer (transparent background to blend seamlessly into Hub Central)
+    // 2. Renderer (transparent background to blend seamlessly into active system theme)
     let renderer: THREE.WebGLRenderer;
     try {
       renderer = new THREE.WebGLRenderer({
@@ -119,7 +150,7 @@ export function InteractiveSalesGlobe({ clients = [] }: InteractiveSalesGlobePro
     earthGroup.rotation.y = -0.7;
     scene.add(earthGroup);
 
-    // 5. Subtle Sci-Fi Orbital Rings & Tactical Grid (matching planet aesthetic)
+    // 5. Subtle Sci-Fi Orbital Rings & Tactical Grid (synced with system theme)
     const futuristicGroup = new THREE.Group();
     earthGroup.add(futuristicGroup);
 
@@ -128,11 +159,12 @@ export function InteractiveSalesGlobe({ clients = [] }: InteractiveSalesGlobePro
     const disposableTextures: THREE.Texture[] = [];
 
     const telemetryMat = new THREE.LineBasicMaterial({
-      color: 0x38bdf8,
+      color: new THREE.Color(initialPalette.lightHex),
       transparent: true,
-      opacity: 0.14
+      opacity: 0.16
     });
     disposableMaterials.push(telemetryMat);
+    themeMaterialsRef.current.telemetryMat = telemetryMat;
 
     // Equator ring
     const eqPts: THREE.Vector3[] = [];
@@ -160,21 +192,23 @@ export function InteractiveSalesGlobe({ clients = [] }: InteractiveSalesGlobePro
     }
     const orbitGeo = new THREE.BufferGeometry().setFromPoints(orbitPts);
     const orbitMat = new THREE.LineBasicMaterial({
-      color: 0xfbbf24,
+      color: new THREE.Color(initialPalette.primaryHex),
       transparent: true,
-      opacity: 0.16
+      opacity: 0.22
     });
     disposableGeometries.push(orbitGeo);
     disposableMaterials.push(orbitMat);
+    themeMaterialsRef.current.orbitMat = orbitMat;
     futuristicGroup.add(new THREE.Line(orbitGeo, orbitMat));
 
     // Faint coordinate grid
     const gridMat = new THREE.LineBasicMaterial({
-      color: 0x38bdf8,
+      color: new THREE.Color(initialPalette.primaryHex),
       transparent: true,
-      opacity: 0.05
+      opacity: 0.055
     });
     disposableMaterials.push(gridMat);
+    themeMaterialsRef.current.gridMat = gridMat;
 
     for (let lat = -60; lat <= 60; lat += 30) {
       if (lat === 0) continue;
@@ -222,14 +256,16 @@ export function InteractiveSalesGlobe({ clients = [] }: InteractiveSalesGlobePro
           bordersGeo.dispose();
           return;
         }
+        const currentPalette = getThemePalette(localStorage.getItem('hubcrm-theme') || themeColor);
         const bordersMat = new THREE.LineBasicMaterial({
-          color: 0x93c5fd,
+          color: new THREE.Color(currentPalette.lightHex),
           transparent: true,
           opacity: 0.16,
           depthWrite: false
         });
         disposableGeometries.push(bordersGeo);
         disposableMaterials.push(bordersMat);
+        themeMaterialsRef.current.bordersMat = bordersMat;
         earthGroup.add(new THREE.LineSegments(bordersGeo, bordersMat));
       })
       .catch(() => {
@@ -240,25 +276,27 @@ export function InteractiveSalesGlobe({ clients = [] }: InteractiveSalesGlobePro
     const hqPos = latLonToVector3(-15.8267, -47.9218, EARTH_RADIUS + 0.007);
     const markerGeo = new THREE.SphereGeometry(0.009, 16, 16);
     const markerMat = new THREE.MeshBasicMaterial({
-      color: 0x38bdf8,
+      color: new THREE.Color(initialPalette.primaryHex),
       transparent: true,
       opacity: 0.95
     });
     const hqMarker = new THREE.Mesh(markerGeo, markerMat);
     hqMarker.position.copy(hqPos);
     earthGroup.add(hqMarker);
+    themeMaterialsRef.current.markerMat = markerMat;
 
     const markerRingGeo = new THREE.RingGeometry(0.013, 0.019, 32);
     const markerRingMat = new THREE.MeshBasicMaterial({
-      color: 0xfcd34d,
+      color: new THREE.Color(initialPalette.lightHex),
       transparent: true,
-      opacity: 0.45,
+      opacity: 0.5,
       side: THREE.DoubleSide
     });
     const hqRing = new THREE.Mesh(markerRingGeo, markerRingMat);
     hqRing.position.copy(hqPos);
     hqRing.lookAt(new THREE.Vector3(0, 0, 0));
     earthGroup.add(hqRing);
+    themeMaterialsRef.current.markerRingMat = markerRingMat;
 
     disposableGeometries.push(markerGeo, markerRingGeo);
     disposableMaterials.push(markerMat, markerRingMat);
@@ -295,18 +333,22 @@ export function InteractiveSalesGlobe({ clients = [] }: InteractiveSalesGlobePro
         disposableTextures.push(tex);
       });
 
+      const currentPalette = getThemePalette(localStorage.getItem('hubcrm-theme') || themeColor);
+
       const earthGeo = new THREE.SphereGeometry(EARTH_RADIUS, 128, 128);
       earthMat = createEarthShaderMaterial(dayMap, nightMap, bumpMap, true, 0);
       const earthMesh = new THREE.Mesh(earthGeo, earthMat);
       earthGroup.add(earthMesh);
 
       const outerAtmGeo = new THREE.SphereGeometry(OUTER_ATMOSPHERE_RADIUS, 64, 64);
-      outerAtmMat = createOuterAtmosphereMaterial(0);
+      outerAtmMat = createOuterAtmosphereMaterial(0, currentPalette.lightHex);
       earthGroup.add(new THREE.Mesh(outerAtmGeo, outerAtmMat));
+      themeMaterialsRef.current.outerAtmMat = outerAtmMat;
 
       const innerAtmGeo = new THREE.SphereGeometry(INNER_ATMOSPHERE_RADIUS, 64, 64);
-      innerAtmMat = createInnerAtmosphereMaterial(0);
+      innerAtmMat = createInnerAtmosphereMaterial(0, currentPalette.primaryHex);
       earthGroup.add(new THREE.Mesh(innerAtmGeo, innerAtmMat));
+      themeMaterialsRef.current.innerAtmMat = innerAtmMat;
 
       disposableGeometries.push(earthGeo, outerAtmGeo, innerAtmGeo);
       disposableMaterials.push(earthMat, outerAtmMat, innerAtmMat);
@@ -319,7 +361,7 @@ export function InteractiveSalesGlobe({ clients = [] }: InteractiveSalesGlobePro
     const handleResize = () => {
       if (!container || disposed) return;
       const w = container.clientWidth || 640;
-      const h = container.clientHeight || 540;
+      const h = container.clientHeight || 430;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
@@ -369,6 +411,7 @@ export function InteractiveSalesGlobe({ clients = [] }: InteractiveSalesGlobePro
 
     return () => {
       disposed = true;
+      themeMaterialsRef.current = {};
       cancelAnimationFrame(frameId);
       if (resumeTimer !== null) {
         window.clearTimeout(resumeTimer);
@@ -391,26 +434,37 @@ export function InteractiveSalesGlobe({ clients = [] }: InteractiveSalesGlobePro
 
   return (
     <div className="relative w-full h-[405px] xl:h-[455px] flex items-center justify-center select-none overflow-hidden group">
+      {/* Halo ambiente suave na cor do tema ativo */}
+      <div
+        className="absolute w-72 h-72 rounded-full blur-[90px] opacity-20 pointer-events-none transition-colors duration-700"
+        style={{ backgroundColor: palette.primaryHex }}
+      />
+
       {/* Container WebGL Three.js */}
       <div
         ref={mountRef}
-        className="w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing"
+        className="w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing relative z-10"
       />
 
       {/* Spinner suave enquanto carrega as texturas em alta resolução */}
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-9 h-9 border-2 border-cyan-400/20 border-t-cyan-400 rounded-full animate-spin" />
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+          <div className="w-9 h-9 border-2 border-primary-500/20 border-t-primary-500 rounded-full animate-spin" />
         </div>
       )}
 
       {/* Dica de Interatividade Flutuante */}
-      <div className="absolute top-2 left-1/2 -translate-x-1/2 pointer-events-none opacity-60 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-cyan-500/20 text-[10px] text-cyan-300 whitespace-nowrap">
+      <div className="absolute top-2 left-1/2 -translate-x-1/2 pointer-events-none opacity-65 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 text-[10px] text-primary-300 whitespace-nowrap z-20">
         🖱️ Arraste para girar • Scroll para zoom
       </div>
 
-      {/* Card Flutuante com Métricas Reais do Banco de Dados */}
-      <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 bg-[#0b1329]/95 backdrop-blur-md border border-cyan-500/30 rounded-2xl px-4 py-2 shadow-[0_12px_32px_rgba(0,0,0,0.7)] flex items-center gap-3.5 z-10 whitespace-nowrap">
+      {/* Card Flutuante com Métricas Reais do Banco de Dados (Sincronizado com o Tema) */}
+      <div
+        className="absolute bottom-2.5 left-1/2 -translate-x-1/2 bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl px-4 py-2 shadow-[0_12px_32px_rgba(0,0,0,0.55)] flex items-center gap-3.5 z-20 whitespace-nowrap"
+        style={{
+          borderColor: `rgba(${palette.rgb}, 0.32)`
+        }}
+      >
         <span className="text-2xl">🇧🇷</span>
         <div className="flex flex-col text-left">
           <span className="text-xs font-semibold text-gray-300">

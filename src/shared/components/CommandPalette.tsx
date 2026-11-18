@@ -264,7 +264,7 @@ export function CommandPalette() {
       >
         {/* Input de Busca com auto-complete */}
         <div className="relative flex items-center px-4 py-3.5 border-b border-white/10">
-          <Search className="w-5 h-5 mr-3 text-cyan-400 shrink-0" />
+          <Search className="w-5 h-5 mr-3 text-primary-400 shrink-0" />
 
           {autocompleteSuggestion && (
             <div className="absolute left-[44px] pointer-events-none text-slate-600 font-medium select-none text-sm leading-5">
@@ -307,7 +307,7 @@ export function CommandPalette() {
                   key={cmd.id}
                   className={`flex items-center justify-between px-4 py-2.5 mx-2 rounded-xl cursor-pointer transition-colors ${
                     isSelected
-                      ? 'bg-cyan-500/10 text-white border border-cyan-500/20'
+                      ? 'bg-primary-500/15 text-white border border-primary-500/30'
                       : 'text-slate-400 hover:bg-white/5 hover:text-white border border-transparent'
                   }`}
                   onClick={() => {
@@ -321,7 +321,7 @@ export function CommandPalette() {
                   onMouseEnter={() => setSelectedIndex(idx)}
                 >
                   <div className="flex items-center min-w-0 mr-4">
-                    <div className={`p-1.5 rounded-lg mr-3 shrink-0 ${isSelected ? 'bg-cyan-500/20 text-cyan-300' : 'bg-slate-900/70'}`}>
+                    <div className={`p-1.5 rounded-lg mr-3 shrink-0 ${isSelected ? 'bg-primary-500/20 text-primary-400' : 'bg-slate-900/70'}`}>
                       <Icon className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">

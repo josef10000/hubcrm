@@ -87,7 +87,7 @@ export function Header({ currentPath, navigate }: HeaderProps) {
                 <h1 className="text-xl font-black tracking-tighter text-white uppercase leading-none">
                   Hub
                 </h1>
-                <p className="text-xl font-light text-cyan-400 tracking-tight uppercase leading-none">
+                <p className="text-xl font-light text-primary-400 tracking-tight uppercase leading-none">
                   Central
                 </p>
               </div>
@@ -132,13 +132,13 @@ export function Header({ currentPath, navigate }: HeaderProps) {
               <button
                 type="button"
                 onClick={() => window.dispatchEvent(new CustomEvent('hub:open-command-palette'))}
-                className="flex items-center justify-between w-full max-w-md bg-white/5 hover:bg-white/[0.08] border border-white/10 hover:border-cyan-500/40 text-gray-400 hover:text-gray-200 text-xs rounded-2xl px-4 py-2 transition-all shadow-inner cursor-pointer group"
+                className="flex items-center justify-between w-full max-w-md bg-white/5 hover:bg-white/[0.08] border border-white/10 hover:border-primary-500/40 text-gray-400 hover:text-gray-200 text-xs rounded-2xl px-4 py-2 transition-all shadow-inner cursor-pointer group"
                 aria-label="Abrir busca rápida de clientes, agentes e módulos"
               >
                 <span className="flex items-center gap-2.5 truncate">
                   <Search
                     size={15}
-                    className="text-gray-500 group-hover:text-cyan-400 transition-colors shrink-0"
+                    className="text-gray-500 group-hover:text-primary-400 transition-colors shrink-0"
                     aria-hidden="true"
                   />
                   <span className="truncate">Buscar clientes, ofertas, agentes IA...</span>

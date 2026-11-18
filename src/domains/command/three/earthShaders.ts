@@ -139,12 +139,16 @@ export function createEarthShaderMaterial(
   });
 }
 
-// Outer Rayleigh Atmospheric Scattering Halo (BackSide shell - crisp orbital blue)
-export function createOuterAtmosphereMaterial(initialTheme = 0): THREE.ShaderMaterial {
+// Outer Rayleigh Atmospheric Scattering Halo (BackSide shell - synced with system theme accent)
+export function createOuterAtmosphereMaterial(
+  initialTheme = 0,
+  accentHex = '#38bdf8'
+): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
     uniforms: {
       sunDirectionLocal: { value: new THREE.Vector3(1, 0, 0) },
-      uTheme: { value: initialTheme }
+      uTheme: { value: initialTheme },
+      uAccentColor: { value: new THREE.Color(accentHex) }
     },
     vertexShader: `
       varying vec3 vNormalLocal;
@@ -162,6 +166,7 @@ export function createOuterAtmosphereMaterial(initialTheme = 0): THREE.ShaderMat
     fragmentShader: `
       uniform vec3 sunDirectionLocal;
       uniform float uTheme;
+      uniform vec3 uAccentColor;
 
       varying vec3 vNormalLocal;
       varying vec3 vNormalView;
@@ -175,12 +180,12 @@ export function createOuterAtmosphereMaterial(initialTheme = 0): THREE.ShaderMat
         float dayLimb = smoothstep(-0.2, 0.35, sunAlign);
         float twilightTip = exp(-pow((sunAlign + 0.02) * 8.0, 2.0));
 
-        vec3 nightBlue = vec3(0.05, 0.18, 0.42);
-        vec3 dayBlue = vec3(0.24, 0.68, 1.0);
-        vec3 satAtm = mix(nightBlue, dayBlue, dayLimb) + vec3(0.35, 0.16, 0.05) * twilightTip * 0.22;
-        float satAlpha = fresnel * mix(0.16, 0.72, dayLimb);
+        vec3 nightTone = mix(vec3(0.05, 0.16, 0.36), uAccentColor * 0.42, 0.55);
+        vec3 dayTone = mix(vec3(0.24, 0.68, 1.0), uAccentColor, 0.52);
+        vec3 satAtm = mix(nightTone, dayTone, dayLimb) + vec3(0.35, 0.16, 0.05) * twilightTip * 0.22;
+        float satAlpha = fresnel * mix(0.18, 0.72, dayLimb);
 
-        vec3 execAtm = vec3(0.16, 0.56, 0.96);
+        vec3 execAtm = uAccentColor;
         float execAlpha = fresnel * 0.48;
 
         vec3 atmColor = mix(satAtm, execAtm, uTheme);
@@ -197,11 +202,15 @@ export function createOuterAtmosphereMaterial(initialTheme = 0): THREE.ShaderMat
 }
 
 // Inner Atmospheric Fresnel Rim (FrontSide shell hugging the visible limb)
-export function createInnerAtmosphereMaterial(initialTheme = 0): THREE.ShaderMaterial {
+export function createInnerAtmosphereMaterial(
+  initialTheme = 0,
+  accentHex = '#38bdf8'
+): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
     uniforms: {
       sunDirectionLocal: { value: new THREE.Vector3(1, 0, 0) },
-      uTheme: { value: initialTheme }
+      uTheme: { value: initialTheme },
+      uAccentColor: { value: new THREE.Color(accentHex) }
     },
     vertexShader: `
       varying vec3 vNormalLocal;
@@ -219,6 +228,7 @@ export function createInnerAtmosphereMaterial(initialTheme = 0): THREE.ShaderMat
     fragmentShader: `
       uniform vec3 sunDirectionLocal;
       uniform float uTheme;
+      uniform vec3 uAccentColor;
 
       varying vec3 vNormalLocal;
       varying vec3 vNormalView;
@@ -230,8 +240,8 @@ export function createInnerAtmosphereMaterial(initialTheme = 0): THREE.ShaderMat
 
         float sunAlign = dot(normalize(vNormalLocal), normalize(sunDirectionLocal));
         float dayLimb = smoothstep(-0.18, 0.35, sunAlign);
-        vec3 satRim = mix(vec3(0.06, 0.22, 0.48), vec3(0.28, 0.74, 1.0), dayLimb);
-        vec3 execRim = vec3(0.18, 0.68, 1.0);
+        vec3 satRim = mix(uAccentColor * 0.38, mix(vec3(0.28, 0.74, 1.0), uAccentColor, 0.55), dayLimb);
+        vec3 execRim = uAccentColor;
 
         vec3 col = mix(satRim, execRim, uTheme);
         float intensity = rim * mix(mix(0.16, 0.52, dayLimb), 0.38, uTheme);
