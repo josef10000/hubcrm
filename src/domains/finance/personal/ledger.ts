@@ -23,6 +23,10 @@ export interface CreditCardInput extends WalletAppearance {
   closingDay: number;
   dueDay: number;
   virtual?: boolean;
+  monthlyLimitCents?: number;
+  cashbackPercent?: number;
+  pointsPerDollar?: number;
+  rewardProgramName?: string;
 }
 
 export interface BankAccount extends BankAccountInput {
@@ -38,7 +42,18 @@ export interface CreditCard extends CreditCardInput {
 export type EntryKind = 'income' | 'expense' | 'transfer' | 'purchase' | 'cardCredit' | 'invoicePayment' | 'adjustment';
 export type EntryStatus = 'paid' | 'pending';
 
-export interface LedgerEntry {
+export interface EntryDetails {
+  category?: string;
+  tags?: string[];
+  warrantyUntil?: string;
+  reimbursement?: 'pending' | 'received';
+  taxDeductionCategory?: string;
+  foreignCurrency?: 'USD' | 'EUR' | 'GBP';
+  foreignAmountCents?: number;
+  exchangeRate?: number;
+}
+
+export interface LedgerEntry extends EntryDetails {
   id: string;
   kind: EntryKind;
   description: string;
@@ -53,10 +68,11 @@ export interface LedgerEntry {
   groupId?: string;
   installment?: number;
   installmentCount?: number;
-  category?: string;
+  recurrenceId?: string;
+  deletedAt?: string;
 }
 
-export interface EntryInput {
+export interface EntryInput extends EntryDetails {
   kind: Exclude<EntryKind, 'adjustment' | 'invoicePayment'>;
   description: string;
   date: string;
@@ -66,7 +82,37 @@ export interface EntryInput {
   targetBankAccountId?: string;
   cardId?: string;
   invoiceMonth?: string;
+  externalId?: string;
+}
+
+export type RecurrenceFrequency = 'weekly' | 'monthly' | 'yearly';
+export const TAX_DEDUCTION_CATEGORIES = ['Saúde', 'Educação', 'Previdência PGBL', 'Dependentes', 'Doações', 'Outros'] as const;
+
+export interface RecurringEntryInput {
+  type: 'recurring' | 'subscription';
+  frequency: RecurrenceFrequency;
+  kind: 'income' | 'expense' | 'purchase';
+  description: string;
+  amountCents: number;
+  startDate: string;
+  endDate?: string;
+  bankAccountId?: string;
+  cardId?: string;
   category?: string;
+  paused: boolean;
+}
+
+export interface RecurringEntry extends RecurringEntryInput {
+  id: string;
+}
+
+export interface AuditEvent {
+  id: string;
+  action: 'create' | 'edit' | 'status' | 'trash' | 'restore' | 'payInvoice' | 'reconcile' | 'saveRecurrence' | 'archiveRecurrence' | 'generate';
+  entity: 'entry' | 'invoice' | 'recurrence';
+  entityId: string;
+  label: string;
+  at: string;
 }
 
 export interface CardInvoice {
@@ -141,6 +187,25 @@ function dateInMonth(month: string, day: number) {
   return `${month}-${String(Math.min(day, lastDay)).padStart(2, '0')}`;
 }
 
+export function getRecurrenceDates(rule: RecurringEntryInput, month: string) {
+  assertMonth(month);
+  if (rule.paused || month < monthOf(rule.startDate) || (rule.endDate && month > monthOf(rule.endDate))) return [];
+  const startDay = Number(rule.startDate.slice(8));
+  const inRange = (date: string) => date >= rule.startDate && (!rule.endDate || date <= rule.endDate);
+
+  if (rule.frequency !== 'weekly') {
+    if (rule.frequency === 'yearly' && month.slice(5) !== rule.startDate.slice(5, 7)) return [];
+    const date = dateInMonth(month, startDay);
+    return inRange(date) ? [date] : [];
+  }
+
+  const epochDay = (date: string) => Date.parse(`${date}T00:00:00Z`) / 86_400_000;
+  const anchor = epochDay(rule.startDate);
+  const daysInMonth = Number(dateInMonth(month, 31).slice(8));
+  return Array.from({ length: daysInMonth }, (_, index) => dateInMonth(month, index + 1))
+    .filter(date => inRange(date) && (epochDay(date) - anchor) % 7 === 0);
+}
+
 export function assertDate(date: string) {
   const day = Number(date.slice(8));
   if (!datePattern.test(date) || Number(date.slice(0, 4)) < 1900 || dateInMonth(monthOf(date), day) !== date) {
@@ -173,7 +238,10 @@ export function splitInstallments(amountCents: number, installmentCount: number)
     throw new Error(`Informe entre 1 e ${MAX_INSTALLMENTS} parcelas.`);
   }
   if (amountCents < installmentCount) throw new Error('Cada parcela deve ter pelo menos R$ 0,01.');
+  return divideCents(amountCents, installmentCount);
+}
 
+function divideCents(amountCents: number, installmentCount: number) {
   const amount = Math.floor(amountCents / installmentCount);
   const remainder = amountCents % installmentCount;
   return Array.from({ length: installmentCount }, (_, index) => amount + Number(index < remainder));
@@ -181,13 +249,17 @@ export function splitInstallments(amountCents: number, installmentCount: number)
 
 export function getPurchaseInstallments(
   card: CreditCard,
-  entry: Pick<EntryInput, 'description' | 'date' | 'amountCents' | 'category'>,
+  entry: Pick<EntryInput, 'description' | 'date' | 'amountCents'> & EntryDetails,
   installmentCount: number,
   groupId: string,
 ): LedgerEntry[] {
   const firstMonth = getFirstInvoiceMonth(entry.date, card.closingDay, card.dueDay);
-  return splitInstallments(entry.amountCents, installmentCount).map((amountCents, index) => {
+  const installments = splitInstallments(entry.amountCents, installmentCount);
+  const { foreignCurrency, foreignAmountCents, exchangeRate, ...details } = getEntryDetails(entry);
+  const foreignInstallments = foreignAmountCents ? divideCents(foreignAmountCents, installmentCount) : [];
+  return installments.map((amountCents, index) => {
     const invoiceMonth = shiftMonth(firstMonth, index);
+    const foreignAmount = foreignInstallments[index];
     return {
       id: `${groupId}-${index + 1}`,
       kind: 'purchase',
@@ -200,7 +272,8 @@ export function getPurchaseInstallments(
       groupId,
       installment: index + 1,
       installmentCount,
-      ...(entry.category ? { category: entry.category } : {}),
+      ...details,
+      ...(foreignAmount ? { foreignCurrency, foreignAmountCents: foreignAmount, exchangeRate } : {}),
     };
   });
 }
@@ -213,7 +286,7 @@ export function getEntryMonth(entry: LedgerEntry) {
 
 export function getBankBalance(account: BankAccount, entries: LedgerEntry[], asOf?: string) {
   return entries.reduce((balance, entry) => {
-    if (entry.status === 'pending' || (asOf && entry.date > asOf)) return balance;
+    if (entry.deletedAt || entry.status === 'pending' || (asOf && entry.date > asOf)) return balance;
     if (entry.kind === 'transfer' && entry.targetBankAccountId === account.id) return balance + entry.amountCents;
     if (entry.bankAccountId !== account.id) return balance;
     switch (entry.kind) {
@@ -243,7 +316,7 @@ export function getMonthlySummary(month: string, entries: LedgerEntry[]) {
   let pendingExpenseCents = 0;
 
   for (const entry of entries) {
-    if (getEntryMonth(entry) !== month) continue;
+    if (entry.deletedAt || getEntryMonth(entry) !== month) continue;
     if (entry.kind === 'income') {
       incomeCents += entry.amountCents;
       if (entry.status === 'pending') pendingIncomeCents += entry.amountCents;
@@ -287,6 +360,15 @@ export function normalizeCard(input: CreditCardInput): CreditCardInput {
   assertCardDay(input.closingDay);
   assertCardDay(input.dueDay);
   if (input.lastDigits && !/^\d{4}$/.test(input.lastDigits)) throw new Error('Informe os quatro últimos dígitos do cartão.');
+  if (input.monthlyLimitCents !== undefined) assertCents(input.monthlyLimitCents, 0);
+  if (input.cashbackPercent !== undefined && (!Number.isFinite(input.cashbackPercent) || input.cashbackPercent < 0 || input.cashbackPercent > 100)) {
+    throw new Error('Informe um percentual de cashback entre 0 e 100.');
+  }
+  if (input.pointsPerDollar !== undefined && (!Number.isFinite(input.pointsPerDollar) || input.pointsPerDollar < 0 || input.pointsPerDollar > 1000)) {
+    throw new Error('Informe uma pontuação por dólar entre 0 e 1.000.');
+  }
+  const rewardProgramName = input.rewardProgramName?.trim();
+  if (rewardProgramName && rewardProgramName.length > 80) throw new Error('Informe um nome de programa com até 80 caracteres.');
   return {
     name: cleanName(input.name, 'o nome do cartão'),
     bank: input.bank.trim(),
@@ -297,6 +379,10 @@ export function normalizeCard(input: CreditCardInput): CreditCardInput {
     closingDay: input.closingDay,
     dueDay: input.dueDay,
     ...(input.virtual !== undefined ? { virtual: input.virtual } : {}),
+    ...(input.monthlyLimitCents !== undefined ? { monthlyLimitCents: input.monthlyLimitCents } : {}),
+    ...(input.cashbackPercent !== undefined ? { cashbackPercent: input.cashbackPercent } : {}),
+    ...(input.pointsPerDollar !== undefined ? { pointsPerDollar: input.pointsPerDollar } : {}),
+    ...(rewardProgramName ? { rewardProgramName } : {}),
     ...cleanAppearance(input),
   };
 }
@@ -305,7 +391,60 @@ export function normalizeEntry(input: EntryInput): EntryInput {
   assertCents(input.amountCents);
   assertDate(input.date);
   const description = cleanName(input.description, 'a descrição', 160);
+  if (input.warrantyUntil) assertDate(input.warrantyUntil);
+  if (input.reimbursement && input.kind !== 'expense' && input.kind !== 'purchase') {
+    throw new Error('Reembolsos só podem ser registrados em despesas ou compras.');
+  }
+  if (input.taxDeductionCategory && input.kind !== 'expense' && input.kind !== 'purchase') {
+    throw new Error('Deduções do IRPF só podem ser registradas em despesas ou compras.');
+  }
+  return { ...input, description, ...getEntryDetails(input) };
+}
+
+export function getEntryDetails(input: EntryDetails): EntryDetails {
   const category = input.category?.trim();
   if (category && category.length > 80) throw new Error('Informe uma categoria com até 80 caracteres.');
-  return { ...input, description, ...(category ? { category } : {}) };
+  const tags = [...new Set((input.tags ?? []).map(value => value.trim()).filter(Boolean))];
+  if (tags.length > 8 || tags.some(value => value.length > 32)) throw new Error('Informe até oito etiquetas com até 32 caracteres cada.');
+  if (input.taxDeductionCategory && !TAX_DEDUCTION_CATEGORIES.some(category => category === input.taxDeductionCategory)) {
+    throw new Error('Selecione uma categoria válida para a dedução do IRPF.');
+  }
+  const { foreignCurrency, foreignAmountCents, exchangeRate } = input;
+  const hasForeignAmount = foreignCurrency !== undefined || foreignAmountCents !== undefined || exchangeRate !== undefined;
+  if (hasForeignAmount) {
+    if (!['USD', 'EUR', 'GBP'].includes(foreignCurrency ?? '') || foreignAmountCents === undefined ||
+      exchangeRate === undefined || !Number.isFinite(exchangeRate) || exchangeRate <= 0 || exchangeRate > 100000) {
+      throw new Error('Informe a moeda, o valor original e uma taxa de câmbio positiva.');
+    }
+    assertCents(foreignAmountCents);
+  }
+  return {
+    ...(category ? { category } : {}),
+    ...(tags.length ? { tags } : {}),
+    ...(input.warrantyUntil ? { warrantyUntil: input.warrantyUntil } : {}),
+    ...(input.reimbursement ? { reimbursement: input.reimbursement } : {}),
+    ...(input.taxDeductionCategory ? { taxDeductionCategory: input.taxDeductionCategory } : {}),
+    ...(hasForeignAmount ? { foreignCurrency, foreignAmountCents, exchangeRate } : {}),
+  };
+}
+
+export function normalizeRecurrence(rule: RecurringEntryInput): RecurringEntryInput {
+  const { description, category } = normalizeEntry({ ...rule, date: rule.startDate });
+  if (rule.endDate) {
+    assertDate(rule.endDate);
+    if (rule.endDate < rule.startDate) throw new Error('A data de término precisa ser igual ou posterior ao início.');
+  }
+  if (rule.type === 'subscription' && rule.kind === 'income') throw new Error('Escolha uma saída para a assinatura.');
+  return {
+    type: rule.type,
+    frequency: rule.frequency,
+    kind: rule.kind,
+    description,
+    amountCents: rule.amountCents,
+    startDate: rule.startDate,
+    paused: rule.paused,
+    ...(category ? { category } : {}),
+    ...(rule.endDate ? { endDate: rule.endDate } : {}),
+    ...(rule.kind === 'purchase' ? { cardId: rule.cardId || '' } : { bankAccountId: rule.bankAccountId || '' }),
+  };
 }

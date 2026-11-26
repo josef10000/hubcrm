@@ -10,6 +10,7 @@ import {
   Globe,
   LayoutTemplate,
   CreditCard,
+  Wallet,
   Shield,
   BarChart3,
   BookOpen,
@@ -76,6 +77,7 @@ export const navGroups = [
     label: 'Financeiro & RevOps',
     icon: DollarSign,
     items: [
+      { icon: Wallet, label: 'Finanças Pessoais', path: '/personal-finance' },
       { icon: DollarSign, label: 'Financeiro Estratégico', path: '/finance', permission: 'MANAGE_FINANCE' },
       { icon: CreditCard, label: 'Cobrança & Asaas', path: '/billing', permission: 'MANAGE_FINANCE' },
       { icon: Shield, label: 'Contratos Digitais', path: '/contracts', permission: 'MANAGE_FINANCE' },

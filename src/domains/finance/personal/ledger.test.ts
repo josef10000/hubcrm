@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   getBankBalance, getEntryMonth, getFirstInvoiceMonth, getMonthlySummary, getPurchaseInstallments,
-  getUsedLimit, invoiceDueDate, parseMoney, splitInstallments,
-  type BankAccount, type CreditCard, type LedgerEntry,
+  getRecurrenceDates, getUsedLimit, invoiceDueDate, normalizeRecurrence, parseMoney, splitInstallments,
+  type BankAccount, type CreditCard, type LedgerEntry, type RecurringEntryInput,
 } from './ledger';
 
 const account: BankAccount = {
@@ -66,6 +66,17 @@ describe('ciclo do cartão', () => {
       ['compra-3', '2026-12-24', '2027-03', '2027-03-05', 333],
     ]);
   });
+
+  it('preserva os centavos da moeda original sem duplicá-los nas parcelas', () => {
+    const installments = getPurchaseInstallments(
+      card, {
+        description: 'Compra internacional', date: '2026-12-24', amountCents: 1552,
+        foreignCurrency: 'USD', foreignAmountCents: 251, exchangeRate: 6.18,
+      }, 3, 'internacional',
+    );
+    expect(installments.map(entry => entry.foreignAmountCents)).toEqual([84, 84, 83]);
+    expect(installments.every(entry => entry.foreignCurrency === 'USD' && entry.exchangeRate === 6.18)).toBe(true);
+  });
 });
 
 describe('saldos e extrato', () => {
@@ -110,5 +121,41 @@ describe('saldos e extrato', () => {
     expect(getMonthlySummary('2026-11', entries)).toEqual({
       incomeCents: 200, expenseCents: 100, netCents: 100, pendingIncomeCents: 200, pendingExpenseCents: 100,
     });
+  });
+
+  it('desconsidera lançamentos na lixeira em saldos e relatórios', () => {
+    const entry: LedgerEntry = {
+      id: 'trashed',
+      kind: 'expense',
+      description: 'Despesa excluída',
+      date: '2026-11-24',
+      amountCents: 1_000,
+      bankAccountId: account.id,
+      deletedAt: '2026-11-24T12:00:00Z',
+    };
+    expect(getBankBalance(account, [entry])).toBe(account.initialBalanceCents);
+    expect(getMonthlySummary('2026-11', [entry]).expenseCents).toBe(0);
+  });
+});
+
+describe('programação de recorrências', () => {
+  const rule: RecurringEntryInput = {
+    type: 'subscription', frequency: 'monthly', kind: 'expense', description: 'Assinatura',
+    amountCents: 5000, startDate: '2024-01-31', bankAccountId: account.id, paused: false,
+  };
+
+  it('ajusta dias ao mês sem mudar a data de referência', () => {
+    expect(getRecurrenceDates(rule, '2024-01')).toEqual(['2024-01-31']);
+    expect(getRecurrenceDates(rule, '2024-02')).toEqual(['2024-02-29']);
+    expect(getRecurrenceDates(rule, '2024-03')).toEqual(['2024-03-31']);
+    expect(getRecurrenceDates({ ...rule, frequency: 'yearly', startDate: '2024-02-29' }, '2025-02')).toEqual(['2025-02-28']);
+  });
+
+  it('mantém a cadência semanal, respeita o término e ignora regras pausadas', () => {
+    const weekly = { ...rule, frequency: 'weekly' as const, endDate: '2024-02-15' };
+    expect(getRecurrenceDates(weekly, '2024-02')).toEqual(['2024-02-07', '2024-02-14']);
+    expect(getRecurrenceDates(weekly, '2024-03')).toEqual([]);
+    expect(getRecurrenceDates({ ...weekly, paused: true }, '2024-02')).toEqual([]);
+    expect(() => normalizeRecurrence({ ...weekly, endDate: '2024-01-30' })).toThrow();
   });
 });

@@ -89,6 +89,18 @@ service cloud.firestore {
         return month is string && month.matches('^[0-9]{4}-[0-9]{2}$');
       }
 
+      function shortText(value, maximum) {
+        return value is string && value.size() <= maximum;
+      }
+
+      function validTimestamp(value) {
+        return value is string && value.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}T[^ ]+Z$');
+      }
+
+      function optionalDate(value) {
+        return value == '' || validDate(value);
+      }
+
       function validWalletStyle(data) {
         let color = data.get('color', '');
         return (color == '' || (color is string && color.matches('^#[0-9a-fA-F]{6}$'))) &&
@@ -122,7 +134,7 @@ service cloud.firestore {
         allow create, update: if ownsLedger() &&
           request.resource.data.keys().hasOnly([
             'name', 'bank', 'brand', 'lastDigits', 'bankAccountId', 'limitCents', 'closingDay', 'dueDay',
-            'archived', 'color', 'style', 'virtual'
+            'archived', 'color', 'style', 'virtual', 'monthlyLimitCents', 'cashbackPercent', 'pointsPerDollar', 'rewardProgramName'
           ]) &&
           validWalletItem(request.resource.data) &&
           request.resource.data.brand is string && request.resource.data.brand.size() <= 30 &&
@@ -130,18 +142,35 @@ service cloud.firestore {
           request.resource.data.lastDigits.matches('^([0-9]{4})?$') &&
           request.resource.data.bankAccountId is string && request.resource.data.get('virtual', false) is bool &&
           validMoney(request.resource.data.limitCents, 0) &&
+          validMoney(request.resource.data.get('monthlyLimitCents', 0), 0) &&
+          request.resource.data.get('cashbackPercent', 0) is number &&
+          request.resource.data.get('cashbackPercent', 0) >= 0 && request.resource.data.get('cashbackPercent', 0) <= 100 &&
+          request.resource.data.get('pointsPerDollar', 0) is number &&
+          request.resource.data.get('pointsPerDollar', 0) >= 0 && request.resource.data.get('pointsPerDollar', 0) <= 10000 &&
+          shortText(request.resource.data.get('rewardProgramName', ''), 80) &&
           validCardDay(request.resource.data.closingDay) && validCardDay(request.resource.data.dueDay);
       }
 
       match /entries/{entryId} {
         function validBasicEntry(data) {
           return data.description is string && data.description.size() > 0 && data.description.size() <= 160 &&
-                 validDate(data.date) && data.get('category', '') is string && data.get('category', '').size() <= 80;
+                 validDate(data.date) && shortText(data.get('category', ''), 80) &&
+                 data.get('tags', []) is list && data.get('tags', []).size() <= 8 &&
+                 optionalDate(data.get('warrantyUntil', '')) &&
+                 data.get('reimbursement', '') in ['', 'pending', 'received'] &&
+                 data.get('taxDeductionCategory', '') in ['', 'Saúde', 'Educação', 'Previdência PGBL', 'Dependentes', 'Doações', 'Outros'] &&
+                 shortText(data.get('recurrenceId', ''), 240) &&
+                 (data.get('deletedAt', '') == '' || validTimestamp(data.deletedAt)) &&
+                 (!data.keys().hasAny(['foreignCurrency', 'foreignAmountCents', 'exchangeRate']) ||
+                   (data.foreignCurrency in ['USD', 'EUR', 'GBP'] && validMoney(data.foreignAmountCents, 1) &&
+                    data.exchangeRate is number && data.exchangeRate > 0 && data.exchangeRate <= 100000));
         }
 
         function validBankEntry(data) {
           return data.keys().hasOnly([
-                   'kind', 'description', 'date', 'amountCents', 'status', 'bankAccountId', 'targetBankAccountId', 'category'
+                   'kind', 'description', 'date', 'amountCents', 'status', 'bankAccountId', 'targetBankAccountId', 'category',
+                   'recurrenceId', 'deletedAt', 'tags', 'warrantyUntil', 'reimbursement', 'taxDeductionCategory',
+                   'foreignCurrency', 'foreignAmountCents', 'exchangeRate'
                  ]) &&
                  data.bankAccountId is string &&
                  (data.kind != 'transfer' ||
@@ -154,13 +183,27 @@ service cloud.firestore {
         function validCardEntry(data) {
           return data.keys().hasOnly([
                    'kind', 'description', 'date', 'amountCents', 'cardId', 'invoiceMonth', 'invoiceDueDate',
-                   'groupId', 'installment', 'installmentCount', 'category'
+                   'groupId', 'installment', 'installmentCount', 'category', 'recurrenceId', 'deletedAt', 'tags', 'warrantyUntil',
+                   'reimbursement', 'taxDeductionCategory', 'foreignCurrency', 'foreignAmountCents', 'exchangeRate'
                  ]) &&
                  data.cardId is string && validMonth(data.invoiceMonth) && validDate(data.invoiceDueDate) &&
                  validMoney(data.amountCents, 1) &&
                  (data.kind == 'cardCredit' ||
                    (data.groupId is string && data.installment is int && data.installmentCount is int &&
                      data.installment >= 1 && data.installment <= data.installmentCount && data.installmentCount <= 60));
+        }
+
+        function invoiceIsOpenAfter(data) {
+          let invoiceId = data.cardId + '-' + data.invoiceMonth;
+          let path = /databases/$(database)/documents/personalFinance/$(userId)/invoices/$(invoiceId);
+          return !existsAfter(path) || !getAfter(path).data.keys().hasAny(['paidDate']);
+        }
+
+        function validCardEdit(before, after) {
+          return after.diff(before).affectedKeys().hasOnly([
+            'description', 'category', 'tags', 'warrantyUntil', 'reimbursement', 'taxDeductionCategory',
+            'foreignCurrency', 'foreignAmountCents', 'exchangeRate'
+          ]) || (invoiceIsOpenAfter(before) && invoiceIsOpenAfter(after));
         }
 
         function validInvoicePayment(data) {
@@ -182,9 +225,126 @@ service cloud.firestore {
           (request.resource.data.kind in ['purchase', 'cardCredit'] && validCardEntry(request.resource.data)) ||
           (request.resource.data.kind == 'invoicePayment' && validInvoicePayment(request.resource.data))
         );
-        allow update: if ownsLedger() && resource.data.kind in ['income', 'expense'] &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) &&
-          request.resource.data.status in ['paid', 'pending'];
+        allow update: if ownsLedger() && resource.data.kind == request.resource.data.kind &&
+          resource.data.get('recurrenceId', '') == request.resource.data.get('recurrenceId', '') &&
+          validBasicEntry(request.resource.data) && (
+            (resource.data.kind in ['income', 'expense', 'transfer', 'adjustment'] && validBankEntry(request.resource.data)) ||
+            (resource.data.kind in ['purchase', 'cardCredit'] && validCardEntry(request.resource.data) &&
+              validCardEdit(resource.data, request.resource.data) &&
+              resource.data.get('groupId', '') == request.resource.data.get('groupId', '') &&
+              resource.data.get('installment', 0) == request.resource.data.get('installment', 0) &&
+              resource.data.get('installmentCount', 0) == request.resource.data.get('installmentCount', 0))
+          );
+      }
+
+      match /recurrences/{recurrenceId} {
+        function validRecurrence(data) {
+          return data.keys().hasOnly([
+            'type', 'frequency', 'kind', 'description', 'amountCents', 'startDate', 'endDate',
+            'paused', 'category', 'bankAccountId', 'cardId'
+          ]) && data.type in ['recurring', 'subscription'] && data.frequency in ['weekly', 'monthly', 'yearly'] &&
+          data.kind in ['income', 'expense', 'purchase'] && data.paused is bool &&
+          validMoney(data.amountCents, 1) && shortText(data.description, 160) && data.description.size() > 0 &&
+          validDate(data.startDate) && optionalDate(data.get('endDate', '')) && shortText(data.get('category', ''), 80) &&
+          (data.kind == 'purchase' ? shortText(data.cardId, 240) && data.cardId.size() > 0 :
+            shortText(data.bankAccountId, 240) && data.bankAccountId.size() > 0);
+        }
+
+        allow read: if ownsLedger();
+        allow create, update: if ownsLedger() && validRecurrence(request.resource.data);
+      }
+
+      match /audit/{auditId} {
+        allow read: if ownsLedger();
+        allow create: if ownsLedger() && request.resource.data.keys().hasOnly(['action', 'entity', 'entityId', 'label', 'at']) &&
+          request.resource.data.action in ['create', 'edit', 'status', 'trash', 'restore', 'payInvoice', 'reconcile', 'saveRecurrence', 'archiveRecurrence', 'generate'] &&
+          request.resource.data.entity in ['entry', 'invoice', 'recurrence'] &&
+          shortText(request.resource.data.entityId, 240) && shortText(request.resource.data.label, 240) &&
+          validTimestamp(request.resource.data.at);
+      }
+
+      match /tools/{toolId} {
+        function validTool(data) {
+          return data.createdAt is int && data.createdAt >= 0 && (
+            (data.kind == 'rule' && data.keys().hasOnly(['kind', 'pattern', 'category', 'createdAt', 'matchMode', 'activityType']) &&
+             shortText(data.pattern, 120) && data.pattern.size() > 0 && shortText(data.category, 80) && data.category.size() > 0 &&
+             data.get('matchMode', 'contains') in ['contains', 'startsWith', 'exact'] &&
+             data.get('activityType', 'all') in ['all', 'income', 'expense']) ||
+            (data.kind == 'template' && data.keys().hasOnly(['kind', 'name', 'content', 'createdAt']) &&
+             shortText(data.name, 80) && data.name.size() > 0 && shortText(data.content, 2000) && data.content.size() > 0) ||
+            (data.kind == 'receipt' && data.keys().hasOnly(['kind', 'name', 'mime', 'dataUrl', 'createdAt', 'entryId']) &&
+             shortText(data.name, 150) && data.name.size() > 0 && data.mime in ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'] &&
+             shortText(data.dataUrl, 700000) && data.dataUrl.matches('^data:' + data.mime + ';base64,[A-Za-z0-9+/=]+$') &&
+             shortText(data.get('entryId', ''), 240))
+          );
+        }
+        allow read, delete: if ownsLedger();
+        allow create, update: if ownsLedger() && validTool(request.resource.data);
+      }
+
+      match /planning/{planId} {
+        function validPlan(data) {
+          return shortText(data.name, 80) && data.name.size() > 0 && (
+            (data.kind == 'budget' && data.keys().hasOnly(['kind', 'name', 'month', 'amountCents']) &&
+             validMonth(data.month) && validMoney(data.amountCents, 1)) ||
+            (data.kind == 'goal' && data.keys().hasOnly(['kind', 'name', 'amountCents', 'savedCents', 'date', 'emergency']) &&
+             validMoney(data.amountCents, 1) && validMoney(data.savedCents, 0) &&
+             optionalDate(data.get('date', '')) && data.get('emergency', false) is bool) ||
+            (data.kind == 'provision' && data.keys().hasOnly(['kind', 'name', 'amountCents', 'savedCents', 'date', 'paid']) &&
+             validMoney(data.amountCents, 1) && validMoney(data.savedCents, 0) && validDate(data.date) && data.paid is bool) ||
+            (data.kind == 'debt' && data.keys().hasOnly(['kind', 'name', 'amountCents', 'date', 'installments', 'paidInstallments', 'debtType']) &&
+             validMoney(data.amountCents, 1) && validDate(data.date) &&
+             data.installments is int && data.installments >= 1 && data.installments <= 600 && data.amountCents >= data.installments &&
+             data.paidInstallments is int && data.paidInstallments >= 0 && data.paidInstallments <= data.installments &&
+             data.debtType in ['loan', 'financing', 'student', 'other']) ||
+            (data.kind == 'envelope' && data.keys().hasOnly(['kind', 'name', 'percentBps', 'goalId']) &&
+             data.percentBps is int && data.percentBps > 0 && data.percentBps <= 10000 && shortText(data.get('goalId', ''), 500)) ||
+            (data.kind == 'wish' && data.keys().hasOnly(['kind', 'name', 'amountCents', 'createdAt', 'decision', 'note']) &&
+             validMoney(data.amountCents, 1) && data.createdAt is int && data.createdAt >= 0 &&
+             data.decision in ['waiting', 'bought', 'skipped'] && shortText(data.get('note', ''), 240)) ||
+            (data.kind == 'distribution' && data.keys().hasOnly(['kind', 'name', 'month', 'amountCents', 'allocatedCents', 'createdAt']) &&
+             planId == 'distribution-' + data.month && validMonth(data.month) && validMoney(data.amountCents, 1) &&
+             validMoney(data.allocatedCents, 0) && data.allocatedCents <= data.amountCents &&
+             data.createdAt is int && data.createdAt >= 0)
+          );
+        }
+        allow read: if ownsLedger();
+        allow create: if ownsLedger() && validPlan(request.resource.data);
+        allow update: if ownsLedger() && resource.data.kind == request.resource.data.kind &&
+          resource.data.kind != 'distribution' && validPlan(request.resource.data);
+        allow delete: if ownsLedger() && resource.data.kind != 'distribution';
+      }
+
+      match /assets/{assetId} {
+        function validAsset(data) {
+          return data.keys().hasOnly([
+            'name', 'kind', 'category', 'purchaseCents', 'currentCents', 'acquiredOn', 'note',
+            'maturityOn', 'issuer', 'dividendCents', 'dividendDay', 'maintenance'
+          ]) && shortText(data.name, 100) && data.name.size() > 0 && data.kind in ['investment', 'property', 'vehicle', 'other'] &&
+          shortText(data.category, 65) && validMoney(data.purchaseCents, 0) && validMoney(data.currentCents, 0) &&
+          validDate(data.acquiredOn) && shortText(data.note, 1200) && optionalDate(data.maturityOn) &&
+          shortText(data.issuer, 100) && validMoney(data.dividendCents, 0) &&
+          data.dividendDay is int && data.dividendDay >= 1 && data.dividendDay <= 31 &&
+          data.maintenance is list && data.maintenance.size() <= 250;
+        }
+        allow read, delete: if ownsLedger();
+        allow create, update: if ownsLedger() && validAsset(request.resource.data);
+      }
+
+      match /reportSettings/{settingsId} {
+        function validRate(rate, minimum, maximum) {
+          return rate is number && rate >= minimum && rate <= maximum;
+        }
+        allow read: if ownsLedger();
+        allow create, update: if ownsLedger() && settingsId == 'settings' &&
+          request.resource.data.keys().hasOnly([
+            'annualIpcaPercent', 'essentialExpenseCents', 'monthlyContributionCents', 'annualRealReturnPercent', 'withdrawalPercent'
+          ]) &&
+          validRate(request.resource.data.annualIpcaPercent, -20, 300) &&
+          validMoney(request.resource.data.essentialExpenseCents, 0) &&
+          validMoney(request.resource.data.monthlyContributionCents, 0) &&
+          validRate(request.resource.data.annualRealReturnPercent, -30, 40) &&
+          validRate(request.resource.data.withdrawalPercent, 1, 20);
       }
 
       match /invoices/{invoiceId} {
@@ -212,6 +372,169 @@ service cloud.firestore {
             marksPaid(request.resource.data)
           );
       }
+    }
+
+    // Finanças Pessoais: espaços compartilhados e convites endereçados pela conta autenticada.
+    function sharedSpace(spaceId) {
+      return get(/databases/$(database)/documents/personalFinanceSpaces/$(spaceId)).data;
+    }
+
+    function sharedSpaceAfter(spaceId) {
+      return getAfter(/databases/$(database)/documents/personalFinanceSpaces/$(spaceId)).data;
+    }
+
+    function sharedSpaceInvitation(spaceId, targetUid) {
+      let invitationId = spaceId + '_' + targetUid;
+      return /databases/$(database)/documents/personalFinanceSpaceInvitations/$(invitationId);
+    }
+
+    function spaceMoney(amount, minValue) {
+      return amount is int && amount >= minValue && amount <= 999999999999;
+    }
+
+    function spaceDate(date) {
+      return date is string && date.matches('^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$');
+    }
+
+    match /personalFinanceSpaces/{spaceId} {
+      function owner() {
+        return isAuthenticated() && sharedSpace(spaceId).ownerId == request.auth.uid;
+      }
+
+      function member() {
+        return isAuthenticated() && request.auth.uid in sharedSpace(spaceId).memberIds;
+      }
+
+      function isOpen() {
+        return sharedSpace(spaceId).get('archived', false) == false;
+      }
+
+      function canSubmit(data) {
+        return isAuthenticated() && data.get('archived', false) == false &&
+          (data.ownerId == request.auth.uid || data.memberRoles.get(request.auth.uid, '') == 'editor');
+      }
+
+      function validSettings(data) {
+        return data.keys().hasOnly([
+            'name', 'kind', 'budgetCents', 'approvalThresholdCents', 'startsOn', 'endsOn',
+            'ownerId', 'memberIds', 'memberRoles', 'archived'
+          ]) &&
+          data.name is string && data.name.size() > 0 && data.name.size() <= 80 &&
+          data.get('archived', false) is bool && data.kind in ['family', 'travel'] && spaceMoney(data.budgetCents, 0) &&
+          spaceMoney(data.approvalThresholdCents, 0) &&
+          ((data.kind == 'family' && data.startsOn == '' && data.endsOn == '') ||
+            (data.kind == 'travel' && spaceDate(data.startsOn) && spaceDate(data.endsOn) && data.startsOn <= data.endsOn)) &&
+          data.memberIds is list && data.memberIds.size() >= 1 && data.memberIds.size() <= 20 &&
+          data.memberRoles is map && data.memberIds.size() == data.memberRoles.size() &&
+          data.memberRoles.keys().toSet() == data.memberIds.toSet() &&
+          data.memberRoles.values().hasOnly(['owner', 'editor', 'viewer']) &&
+          data.memberRoles.values().removeAll(['owner']).size() + 1 == data.memberRoles.size() &&
+          data.memberRoles.get(data.ownerId, '') == 'owner';
+      }
+
+      function acceptsInvitation(data) {
+        let targetUid = request.auth.uid;
+        let invitation = sharedSpaceInvitation(spaceId, targetUid);
+        let previous = resource.data;
+        return previous.get('archived', false) == false && !(targetUid in previous.memberIds) && targetUid in data.memberIds &&
+          data.diff(previous).affectedKeys().hasOnly(['memberRoles', 'memberIds']) &&
+          data.memberIds.toSet().difference(previous.memberIds.toSet()).hasOnly([targetUid]) &&
+          data.memberIds.toSet().hasAll(previous.memberIds) &&
+          data.memberRoles.diff(previous.memberRoles).affectedKeys().hasOnly([targetUid]) &&
+          exists(invitation) && get(invitation).data.invitedUid == targetUid &&
+          get(invitation).data.inviterUid == previous.ownerId &&
+          get(invitation).data.role == data.memberRoles.get(targetUid, '') &&
+          !existsAfter(invitation);
+      }
+
+      allow read: if isAuthenticated() && request.auth.uid in resource.data.memberIds;
+      allow create: if isAuthenticated() && spaceId.matches('^[A-Za-z0-9]{20}$') &&
+        validSettings(request.resource.data) && request.resource.data.ownerId == request.auth.uid &&
+        request.resource.data.memberIds == [request.auth.uid] && request.resource.data.get('archived', false) == false;
+      allow update: if isAuthenticated() && validSettings(request.resource.data) &&
+        request.resource.data.ownerId == resource.data.ownerId &&
+        request.resource.data.kind == resource.data.kind &&
+        ((resource.data.ownerId == request.auth.uid &&
+          request.resource.data.memberIds.toSet().hasOnly(resource.data.memberIds)) ||
+          acceptsInvitation(request.resource.data));
+
+      match /participants/{participantId} {
+        function validParticipant(data) {
+          return data.keys().hasOnly(['name', 'linkedUid', 'active', 'dependent', 'incomeCents', 'allowanceCents']) &&
+            data.name is string && data.name.size() > 0 && data.name.size() <= 80 &&
+            data.linkedUid is string && (data.linkedUid == '' || data.linkedUid == participantId) &&
+            data.active is bool && data.dependent is bool &&
+            spaceMoney(data.incomeCents, 0) && spaceMoney(data.allowanceCents, 0) &&
+            (data.dependent || data.allowanceCents == 0);
+        }
+
+        allow read: if member();
+        allow create: if isAuthenticated() && sharedSpaceAfter(spaceId).ownerId == request.auth.uid &&
+          sharedSpaceAfter(spaceId).get('archived', false) == false && validParticipant(request.resource.data) &&
+          (request.resource.data.linkedUid == '' || request.resource.data.linkedUid in sharedSpaceAfter(spaceId).memberIds);
+        allow update: if owner() && isOpen() && validParticipant(request.resource.data) &&
+          request.resource.data.linkedUid == resource.data.linkedUid;
+      }
+
+      match /expenses/{expenseId} {
+        function validExpense(data) {
+          let space = sharedSpace(spaceId);
+          return data.keys().hasOnly([
+              'name', 'date', 'category', 'amountCents', 'paidBy', 'createdBy', 'allocations', 'split', 'status', 'source'
+            ]) &&
+            data.name is string && data.name.size() > 0 && data.name.size() <= 140 &&
+            data.category is string && data.category.size() <= 80 && spaceDate(data.date) &&
+            spaceMoney(data.amountCents, 1) && data.paidBy is string && data.paidBy.size() <= 128 &&
+            (data.paidBy in space.memberIds ||
+              exists(/databases/$(database)/documents/personalFinanceSpaces/$(spaceId)/participants/$(data.paidBy))) &&
+            data.createdBy == request.auth.uid && data.split in ['none', 'equal', 'income'] &&
+            data.allocations is map && data.allocations.size() >= 1 && data.allocations.size() <= 50 &&
+            data.source in ['manual', 'allowance', 'task'] &&
+            (data.source == 'manual' || (space.kind == 'family' && space.ownerId == request.auth.uid)) &&
+            ((space.approvalThresholdCents > 0 && data.amountCents >= space.approvalThresholdCents && data.status == 'pending') ||
+              ((space.approvalThresholdCents == 0 || data.amountCents < space.approvalThresholdCents) && data.status == 'approved'));
+        }
+
+        allow read: if member();
+        allow create: if canSubmit(sharedSpace(spaceId)) && validExpense(request.resource.data);
+        allow update: if owner() && isOpen() && resource.data.status == 'pending' &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) &&
+          request.resource.data.status in ['approved', 'rejected'];
+      }
+
+      match /tasks/{taskId} {
+        function validTask(data) {
+          return data.keys().hasOnly(['participantId', 'name', 'amountCents', 'state']) &&
+            data.participantId is string && data.name is string && data.name.size() > 0 &&
+            data.name.size() <= 120 && spaceMoney(data.amountCents, 1) && data.state == 'open' &&
+            get(/databases/$(database)/documents/personalFinanceSpaces/$(spaceId)/participants/$(data.participantId)).data.dependent == true;
+        }
+
+        allow read: if member();
+        allow create: if owner() && isOpen() && sharedSpace(spaceId).kind == 'family' && validTask(request.resource.data);
+        allow update: if owner() && isOpen() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['state']) &&
+          ((resource.data.state == 'open' && request.resource.data.state == 'done') ||
+           (resource.data.state == 'done' && request.resource.data.state == 'paid'));
+        allow delete: if owner() && isOpen() && resource.data.state != 'paid';
+      }
+    }
+
+    match /personalFinanceSpaceInvitations/{invitationId} {
+      function related(data) {
+        return isAuthenticated() && (request.auth.uid == data.inviterUid || request.auth.uid == data.invitedUid);
+      }
+
+      function validInvitation(data) {
+        let space = sharedSpace(data.spaceId);
+        return data.keys().hasOnly(['spaceId', 'spaceName', 'inviterUid', 'invitedUid', 'role']) &&
+          data.spaceId is string && data.invitedUid is string && data.invitedUid.matches('^[A-Za-z0-9_-]{1,128}$') &&
+          data.inviterUid == request.auth.uid && request.auth.uid == space.ownerId && space.get('archived', false) == false &&
+          data.spaceName == space.name && !(data.invitedUid in space.memberIds) &&
+          data.role in ['editor', 'viewer'] && invitationId == data.spaceId + '_' + data.invitedUid;
+      }
+
+      allow read, delete: if related(resource.data);
+      allow create, update: if isAuthenticated() && validInvitation(request.resource.data);
     }
 
     // Alertas do sistema (RBAC)

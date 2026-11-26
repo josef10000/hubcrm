@@ -724,3 +724,13 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Acesso**: rota autenticada `/personal-finance` pelo menu de perfil do Dock. Visão Geral, Extrato e Carteira 3D usam os componentes, as cores e o Firebase do Hub.
 - **Persistência**: `personalFinance/{uid}` tem subcoleções de contas, cartões, lançamentos e faturas. As regras permitem acesso apenas ao UID autenticado correspondente. Contas e cartões arquivados mantêm as referências do histórico. O cartão armazena somente os quatro últimos dígitos.
 - **Lançamentos**: valores em centavos. Parcelas e totais de fatura são gravados juntos em transação. O pagamento registra o débito na conta e a quitação da fatura na mesma transação, com identificador determinístico por fatura. Compras e créditos entram nas despesas pelo mês da fatura. Transferências, ajustes e pagamentos de fatura ficam fora do resultado mensal.
+
+---
+
+## 38. Agenda, Planejamento, Relatórios e Espaços em Finanças Pessoais
+
+- **Data da integração**: 26/11/2026.
+- **Apresentação**: as telas de finanças redefinem os tokens semânticos do Hub localmente. Os temas com fundo escuro usam painéis opacos e o Branco Elite usa superfícies claras. Carteira 3D, modo de bolso, ocultação de valores e PIN local funcionam dentro do mesmo módulo.
+- **Operações**: o extrato edita e restaura lançamentos. Recorrências e importações usam identificadores determinísticos. Faturas quitadas permitem correções descritivas. O registro de pagamento, a conciliação e os ajustes no saldo da fatura continuam transacionais.
+- **Complementos**: `personalFinance/{uid}` abriga recorrências, auditoria, planejamento, patrimônio, preferências de relatórios, regras e comprovantes. Backup pessoal usa o JSON como arquivo de origem, com prévia e resultado de restauração. Comprovantes ficam no mesmo Firestore e a extração de texto usa recursos locais do navegador.
+- **Compartilhamento**: `personalFinanceSpaces/{id}` guarda espaços de família e viagem. `personalFinanceSpaceInvitations` usa convites direcionados para contas do Hub, aceitação explícita e revogação. A carteira e o extrato pessoais seguem vinculados ao UID.

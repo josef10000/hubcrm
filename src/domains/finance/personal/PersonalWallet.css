@@ -1,12 +1,150 @@
+.personal-wallet {
+  --wallet-outline: color-mix(in srgb, var(--text-main) 14%, transparent);
+  --wallet-recess: color-mix(in srgb, var(--surface-elevated) 94%, var(--text-main));
+  display: grid;
+  align-items: start;
+  gap: 2rem;
+  color: var(--text-main);
+}
+
+.personal-wallet > section {
+  min-width: 0;
+}
+
+@media (min-width: 48rem) {
+  .personal-wallet[data-compact='true'] {
+    grid-template-columns: repeat(2, minmax(0, 30rem));
+    column-gap: 1.25rem;
+  }
+
+  .personal-wallet > details {
+    grid-column: 1 / -1;
+  }
+}
+
+.personal-wallet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+  gap: 1rem;
+}
+
+.personal-wallet-item,
+.personal-wallet-empty,
+.personal-wallet-archive,
+.personal-wallet-comparison {
+  border: 1px solid var(--wallet-outline);
+  border-radius: 1.25rem;
+  background: var(--surface-elevated);
+}
+
+.personal-wallet-item {
+  width: 100%;
+  max-width: 30rem;
+}
+
+.personal-wallet-empty {
+  color: var(--text-muted);
+}
+
+.personal-wallet-archive {
+  padding: .85rem 1rem;
+}
+
+.personal-wallet-comparison {
+  margin-bottom: .75rem;
+  border-radius: .9rem;
+}
+
+.personal-wallet-icon {
+  display: grid;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border-radius: .85rem;
+  background: color-mix(in srgb, var(--primary-500) 13%, var(--surface-elevated));
+  color: color-mix(in srgb, var(--primary-500) 64%, var(--text-main));
+}
+
+.personal-wallet-invoice {
+  display: grid;
+  justify-items: stretch;
+  gap: .45rem;
+  padding: .75rem .85rem;
+  border: 1px solid var(--wallet-outline);
+  border-radius: .85rem;
+  background: var(--wallet-recess);
+}
+
+.personal-wallet-amount {
+  overflow-wrap: anywhere;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.personal-wallet-label {
+  color: var(--text-muted);
+  font-size: .75rem;
+}
+
+.personal-wallet-status {
+  --status-tint: var(--primary-500);
+  justify-self: start;
+  border-radius: 9999px;
+  padding: .16rem .5rem;
+  font-size: .75rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--text-main) 68%, var(--status-tint));
+  background: color-mix(in srgb, var(--status-tint) 14%, var(--surface-elevated));
+}
+
+.personal-wallet-status[data-status='paid'] {
+  --status-tint: var(--color-success);
+}
+
+.personal-wallet-status[data-status='overdue'] {
+  --status-tint: var(--color-error);
+}
+
+.personal-wallet-usage {
+  height: .32rem;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: var(--wallet-outline);
+}
+
+.personal-wallet-usage > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary-500);
+}
+
+.personal-wallet-usage[data-high-usage='true'] > span {
+  background: var(--color-warning);
+}
+
+.personal-wallet-actions,
+.personal-wallet-rewards {
+  border-top: 1px solid var(--wallet-outline);
+  padding-top: .65rem;
+}
+
 .personal-instrument {
   position: relative;
   aspect-ratio: 1.586;
   min-height: 11rem;
-  max-height: 14rem;
+  max-height: 15rem;
   perspective: 900px;
-  --instrument-base: color-mix(in srgb, var(--instrument-accent) 42%, #111827);
-  --instrument-background: radial-gradient(ellipse at 90% 0%, rgb(255 255 255 / 18%), transparent 55%),
-    linear-gradient(145deg, var(--instrument-base), #111827 86%);
+  border-radius: 1rem;
+  --instrument-base: color-mix(in srgb, var(--instrument-accent) 35%, #101524);
+  --instrument-direction: 145deg;
+  --instrument-background: radial-gradient(ellipse at 85% 10%, rgb(255 255 255 / 12%), transparent 56%),
+    linear-gradient(var(--instrument-direction), var(--instrument-base), #101524 86%);
+}
+
+.personal-instrument[data-kind='credit'] {
+  --instrument-direction: 219deg;
 }
 
 .personal-instrument[data-finish='solid'] {
@@ -14,7 +152,7 @@
 }
 
 .personal-instrument[data-finish='metallic'] {
-  --instrument-background: linear-gradient(135deg, #111827, var(--instrument-base) 38%, #475569 51%, #172033 69%, #111827);
+  --instrument-background: linear-gradient(132deg, #111827, var(--instrument-base) 38%, #3e495d 52%, #172033 69%, #111827);
 }
 
 .personal-instrument[data-finish='brushed'] {
@@ -23,8 +161,8 @@
 }
 
 .personal-instrument[data-finish='glass'] {
-  --instrument-background: radial-gradient(ellipse at top right, rgb(255 255 255 / 22%), transparent 64%),
-    linear-gradient(135deg, color-mix(in srgb, var(--instrument-base) 92%, transparent), #111827);
+  --instrument-background: radial-gradient(ellipse at top right, rgb(255 255 255 / 14%), transparent 64%),
+    linear-gradient(135deg, var(--instrument-base), #111827);
 }
 
 .personal-instrument[data-finish='holographic'] {
@@ -47,18 +185,83 @@
 .personal-instrument-face {
   position: absolute;
   inset: 0;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   gap: .5rem;
   overflow: hidden;
-  padding: 1rem 1rem 2.35rem;
+  padding: .95rem 1rem 2.45rem;
   color: white;
   border: 1px solid rgb(255 255 255 / 22%);
   border-radius: 1rem;
   background: var(--instrument-background);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 10%), 0 8px 16px rgb(0 0 0 / 14%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 12%), 0 6px 16px rgb(0 0 0 / 24%);
+  -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
+}
+
+.personal-instrument-face::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  content: '';
+  pointer-events: none;
+}
+
+.personal-instrument[data-kind='bank'] .personal-instrument-face::before {
+  background: repeating-radial-gradient(ellipse at 102% 16%, transparent 0 14px, rgb(255 255 255 / 7%) 15px 16px, transparent 17px 30px);
+  mask-image: linear-gradient(90deg, transparent 31%, #000);
+}
+
+.personal-instrument[data-kind='credit'] .personal-instrument-face::before {
+  background: linear-gradient(132deg, transparent 52%, rgb(255 255 255 / 7%) 52% 60%, transparent 60% 63%, rgb(255 255 255 / 7%) 63% 72%, transparent 72%);
+}
+
+.personal-instrument-issuer {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: .45rem;
+  font-size: .8rem;
+  font-weight: 650;
+}
+
+.personal-instrument-brand {
+  max-width: 47%;
+  padding: .15rem .48rem;
+  border: 1px solid rgb(255 255 255 / 17%);
+  border-radius: .4rem;
+  background: rgb(0 0 0 / 23%);
+  font-size: .72rem;
+  font-weight: 650;
+}
+
+.personal-instrument-name {
+  overflow: hidden;
+  color: white;
+  font-size: 1.15rem;
+  font-weight: 650;
+  letter-spacing: -.025em;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.personal-instrument-caption {
+  display: block;
+  color: rgb(255 255 255 / 88%);
+  font-size: .75rem;
+  line-height: 1.3;
+}
+
+.personal-instrument-balance {
+  overflow-wrap: anywhere;
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -.035em;
+  line-height: 1.12;
+  font-variant-numeric: tabular-nums;
 }
 
 .personal-instrument-hint {
@@ -75,6 +278,16 @@
   color: white;
   font-size: .68rem;
   font-weight: 600;
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .personal-instrument:hover .personal-instrument-rotation {
+    transform: rotateX(3deg) translateZ(4px);
+  }
+
+  .personal-instrument[data-flipped='true']:hover .personal-instrument-rotation {
+    transform: rotateX(3deg) rotateY(180deg) translateZ(-4px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
