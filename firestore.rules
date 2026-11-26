@@ -71,6 +71,149 @@ service cloud.firestore {
       }
     }
 
+    // Finanças Pessoais: acesso exclusivo à identidade autenticada.
+    match /personalFinance/{userId} {
+      function ownsLedger() {
+        return isAuthenticated() && request.auth.uid == userId;
+      }
+
+      function validMoney(amount, minimum) {
+        return amount is int && amount >= minimum && amount <= 999999999999;
+      }
+
+      function validDate(date) {
+        return date is string && date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+      }
+
+      function validMonth(month) {
+        return month is string && month.matches('^[0-9]{4}-[0-9]{2}$');
+      }
+
+      function validWalletStyle(data) {
+        let color = data.get('color', '');
+        return (color == '' || (color is string && color.matches('^#[0-9a-fA-F]{6}$'))) &&
+               data.get('style', 'gradient') in ['solid', 'gradient', 'metallic', 'brushed', 'glass', 'holographic'];
+      }
+
+      function validWalletItem(data) {
+        return data.name is string && data.name.size() > 0 && data.name.size() <= 80 &&
+               data.bank is string && data.bank.size() <= 80 && data.archived is bool &&
+               validWalletStyle(data);
+      }
+
+      match /accounts/{accountId} {
+        allow read: if ownsLedger();
+        allow create, update: if ownsLedger() &&
+          request.resource.data.keys().hasOnly([
+            'name', 'bank', 'initialBalanceCents', 'archived', 'accountType', 'color', 'style', 'ledgerRevision'
+          ]) &&
+          validWalletItem(request.resource.data) &&
+          validMoney(request.resource.data.initialBalanceCents, -999999999999) &&
+          request.resource.data.ledgerRevision is int && request.resource.data.ledgerRevision >= 0 &&
+          request.resource.data.get('accountType', 'checking') in ['checking', 'digital', 'savings', 'salary', 'investment'];
+      }
+
+      match /cards/{cardId} {
+        function validCardDay(day) {
+          return day is int && day >= 1 && day <= 31;
+        }
+
+        allow read: if ownsLedger();
+        allow create, update: if ownsLedger() &&
+          request.resource.data.keys().hasOnly([
+            'name', 'bank', 'brand', 'lastDigits', 'bankAccountId', 'limitCents', 'closingDay', 'dueDay',
+            'archived', 'color', 'style', 'virtual'
+          ]) &&
+          validWalletItem(request.resource.data) &&
+          request.resource.data.brand is string && request.resource.data.brand.size() <= 30 &&
+          request.resource.data.lastDigits is string &&
+          request.resource.data.lastDigits.matches('^([0-9]{4})?$') &&
+          request.resource.data.bankAccountId is string && request.resource.data.get('virtual', false) is bool &&
+          validMoney(request.resource.data.limitCents, 0) &&
+          validCardDay(request.resource.data.closingDay) && validCardDay(request.resource.data.dueDay);
+      }
+
+      match /entries/{entryId} {
+        function validBasicEntry(data) {
+          return data.description is string && data.description.size() > 0 && data.description.size() <= 160 &&
+                 validDate(data.date) && data.get('category', '') is string && data.get('category', '').size() <= 80;
+        }
+
+        function validBankEntry(data) {
+          return data.keys().hasOnly([
+                   'kind', 'description', 'date', 'amountCents', 'status', 'bankAccountId', 'targetBankAccountId', 'category'
+                 ]) &&
+                 data.bankAccountId is string &&
+                 (data.kind != 'transfer' ||
+                   (data.targetBankAccountId is string && data.bankAccountId != data.targetBankAccountId)) &&
+                 ((data.kind in ['income', 'expense'] && data.status in ['paid', 'pending']) ||
+                   (data.kind in ['transfer', 'adjustment'] && data.status == 'paid')) &&
+                 validMoney(data.amountCents, data.kind == 'adjustment' ? -999999999999 : 1);
+        }
+
+        function validCardEntry(data) {
+          return data.keys().hasOnly([
+                   'kind', 'description', 'date', 'amountCents', 'cardId', 'invoiceMonth', 'invoiceDueDate',
+                   'groupId', 'installment', 'installmentCount', 'category'
+                 ]) &&
+                 data.cardId is string && validMonth(data.invoiceMonth) && validDate(data.invoiceDueDate) &&
+                 validMoney(data.amountCents, 1) &&
+                 (data.kind == 'cardCredit' ||
+                   (data.groupId is string && data.installment is int && data.installmentCount is int &&
+                     data.installment >= 1 && data.installment <= data.installmentCount && data.installmentCount <= 60));
+        }
+
+        function validInvoicePayment(data) {
+          let invoiceId = data.cardId + '-' + data.invoiceMonth;
+          let invoice = getAfter(/databases/$(database)/documents/personalFinance/$(userId)/invoices/$(invoiceId)).data;
+          return entryId == 'payment-' + invoiceId &&
+                 data.keys().hasOnly([
+                   'kind', 'description', 'date', 'amountCents', 'status', 'bankAccountId', 'cardId', 'invoiceMonth', 'invoiceDueDate'
+                 ]) &&
+                 data.status == 'paid' && validMoney(data.amountCents, 1) &&
+                 invoice.cardId == data.cardId && invoice.month == data.invoiceMonth && invoice.dueDate == data.invoiceDueDate &&
+                 invoice.totalCents == data.amountCents && invoice.paidDate == data.date &&
+                 invoice.paymentAccountId == data.bankAccountId;
+        }
+
+        allow read: if ownsLedger();
+        allow create: if ownsLedger() && validBasicEntry(request.resource.data) && (
+          (request.resource.data.kind in ['income', 'expense', 'transfer', 'adjustment'] && validBankEntry(request.resource.data)) ||
+          (request.resource.data.kind in ['purchase', 'cardCredit'] && validCardEntry(request.resource.data)) ||
+          (request.resource.data.kind == 'invoicePayment' && validInvoicePayment(request.resource.data))
+        );
+        allow update: if ownsLedger() && resource.data.kind in ['income', 'expense'] &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) &&
+          request.resource.data.status in ['paid', 'pending'];
+      }
+
+      match /invoices/{invoiceId} {
+        function validInvoice(data) {
+          return data.keys().hasOnly(['cardId', 'month', 'dueDate', 'totalCents', 'paidDate', 'paymentAccountId']) &&
+                 data.cardId is string && validMonth(data.month) && invoiceId == data.cardId + '-' + data.month &&
+                 validDate(data.dueDate) && validMoney(data.totalCents, 0);
+        }
+
+        function marksPaid(data) {
+          let paymentId = 'payment-' + invoiceId;
+          let payment = getAfter(/databases/$(database)/documents/personalFinance/$(userId)/entries/$(paymentId)).data;
+          return data.diff(resource.data).affectedKeys().hasOnly(['paidDate', 'paymentAccountId']) &&
+                 validDate(data.paidDate) && data.paymentAccountId is string &&
+                 payment.kind == 'invoicePayment' && payment.amountCents == data.totalCents &&
+                 payment.date == data.paidDate && payment.bankAccountId == data.paymentAccountId;
+        }
+
+        allow read: if ownsLedger();
+        allow create: if ownsLedger() && validInvoice(request.resource.data) &&
+          !request.resource.data.keys().hasAny(['paidDate', 'paymentAccountId']);
+        allow update: if ownsLedger() && validInvoice(request.resource.data) &&
+          !resource.data.keys().hasAny(['paidDate', 'paymentAccountId']) && (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalCents']) ||
+            marksPaid(request.resource.data)
+          );
+      }
+    }
+
     // Alertas do sistema (RBAC)
     match /system_alerts/{id} {
       allow read: if isAuthenticated() && (isOwnerEmail() || resource.data.orgId == getUserData().orgId);

@@ -6,6 +6,7 @@ import {
   Search,
   Headphones,
   User,
+  Wallet,
   Settings,
   Shield,
   LogOut,
@@ -440,6 +441,17 @@ export default function LiquidGlassDock() {
                   >
                     <User size={14} className="text-primary-400" />
                     <span>Meu Perfil</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setProfileMenuOpen(false);
+                      navigate('/personal-finance');
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-gray-300 hover:text-white hover:bg-white/10 transition cursor-pointer text-left"
+                  >
+                    <Wallet size={14} className="text-primary-400" />
+                    <span>Finanças Pessoais</span>
                   </button>
 
                   <button

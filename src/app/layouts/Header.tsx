@@ -32,6 +32,7 @@ export function Header({ currentPath, navigate }: HeaderProps) {
       case '/calendar': return 'Agenda & Prazos';
       case '/support': return 'Suporte & Tickets';
       case '/finance': return 'Financeiro Estratégico';
+      case '/personal-finance': return 'Finanças Pessoais';
       case '/billing': return 'Cobrança & Asaas';
       case '/contracts': return 'Contratos Digitais';
       case '/onboarding-hub': return 'Onboarding de Clientes';

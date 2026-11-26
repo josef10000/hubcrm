@@ -32,6 +32,7 @@ const MonitoringView = lazy(() => import('@crm/components/MonitoringView'));
 // Lazy Loaded Components (Heavier or specific views)
 const AnalyticsView = lazy(() => import('@crm/views/AnalyticsView'));
 const FinanceView = lazy(() => import('@finance/views/FinanceView'));
+const PersonalFinanceView = lazy(() => import('@finance/personal/PersonalFinanceView'));
 const BillingView = lazy(() => import('@finance/views/BillingView'));
 const AdministrativeView = lazy(() => import('@core/admin/views/AdministrativeView'));
 const MyWorkspaceView = lazy(() => import('@nexus/views/MyWorkspaceView'));
@@ -173,6 +174,7 @@ export function AppRouter() {
                       <Route path="/wiki" element={<WikiView />} />
                       <Route path="/settings" element={<SettingsView />} />
                       <Route path="/profile/:uid" element={<ProfileView />} />
+                      <Route path="/personal-finance" element={<PersonalFinanceView />} />
                       <Route path="/workspace" element={<MyWorkspaceView />} />
                       <Route path="/arena" element={<ArenaView />} />
                       <Route path="/shop" element={<HubShopView />} />

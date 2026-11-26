@@ -715,3 +715,12 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Decisões Técnicas**:
   - **Cápsula Persistente na Dock (`LiquidGlassDock.tsx`)**: Separado o container externo de vidro (`key="persistent-liquid-glass-tray"` com `layout` spring) do conteúdo interno (`AnimatePresence mode="popLayout"` com deslocamento horizontal direcional `x: slideDir * 18`). No hover fechado, exibe apenas ampliação macia + pílula de legenda estilo macOS; uma vez aberta por clique, deslizar pelos ícones vizinhos faz o morph sem desmontar o vidro e sem duplicar altura.
   - **Paleta Dinâmica e Shaders Reativos ao Tema (`themePalette.ts`, `earthShaders.ts`, `InteractiveSalesGlobe.tsx`, `HubCentralCommandView.tsx`)**: Removidos os fundos e bordas azuis fixos (`#020617`, `cyan-*`). A tela inicial agora é transparente sobre o `WorkspaceShell` (exibindo wallpapers, partículas de `ThemeEffects` e cores base de cada tema, incluindo `branco-elite`, `preto-absoluto`, `cyberpunk`, `forest`, `orange`, `purple`, etc.), enquanto os uniforms `uAccentColor` da atmosfera Rayleigh/Fresnel, anéis orbitais, fronteiras e marcador do Brasil atualizam em tempo real ao trocar `themeColor`.
+
+---
+
+## 37. Finanças Pessoais no Hub Central
+
+- **Data da integração**: 26/11/2026.
+- **Acesso**: rota autenticada `/personal-finance` pelo menu de perfil do Dock. Visão Geral, Extrato e Carteira 3D usam os componentes, as cores e o Firebase do Hub.
+- **Persistência**: `personalFinance/{uid}` tem subcoleções de contas, cartões, lançamentos e faturas. As regras permitem acesso apenas ao UID autenticado correspondente. Contas e cartões arquivados mantêm as referências do histórico. O cartão armazena somente os quatro últimos dígitos.
+- **Lançamentos**: valores em centavos. Parcelas e totais de fatura são gravados juntos em transação. O pagamento registra o débito na conta e a quitação da fatura na mesma transação, com identificador determinístico por fatura. Compras e créditos entram nas despesas pelo mês da fatura. Transferências, ajustes e pagamentos de fatura ficam fora do resultado mensal.
