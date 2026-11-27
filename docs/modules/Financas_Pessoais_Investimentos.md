@@ -10,7 +10,7 @@ As cotações são solicitadas pelo servidor à brapi.dev. Elas não são em tem
 
 - Configure `BRAPI_API_KEY` como variável de ambiente secreta no deploy do servidor; a chave nunca é enviada ao navegador.
 - O servidor registra as consultas em `marketQuoteUsage/{AAAA-MM}` por transação Firestore antes da chamada externa.
-- O teto global é 10.000 tentativas no mês, abaixo das 15.000 requisições/mês anunciadas pela brapi.dev para o plano gratuito. O contador inclui falhas e não reinicia por usuário.
+- O teto global é 4.000 tentativas por mês UTC, abaixo das 15.000 requisições/mês anunciadas pela brapi.dev para o plano gratuito. A margem também cobre um ciclo de até 31 dias que atravesse três meses UTC: no máximo 12.000 tentativas. O contador inclui falhas e não reinicia por usuário.
 - Quando o teto é alcançado, o servidor bloqueia novas consultas até o próximo mês. O cache compartilhado evita novas consultas para o mesmo ticker durante 30 minutos.
 
 ## Fonte

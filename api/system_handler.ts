@@ -44,9 +44,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-// Quotes are shared and cached globally. The hard monthly ceiling deliberately
-// uses only two thirds of brapi's advertised free allowance (15k requests).
-const MARKET_QUOTE_MONTHLY_LIMIT = 10_000;
+// Quotes are shared and cached globally. A 4k UTC-month limit leaves room for
+// a 31-day provider window to overlap three UTC-month buckets (12k < 15k).
+const MARKET_QUOTE_MONTHLY_LIMIT = 4_000;
 const MARKET_QUOTE_CACHE_MS = 30 * 60 * 1000;
 
 async function handleMarketQuote(req: VercelRequest, res: VercelResponse) {
