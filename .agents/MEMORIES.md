@@ -755,3 +755,11 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Canvas**: `tldraw` saiu de `manualChunks` para evitar que o chunk seja imposto como dependência da entrada. As telas de Canvas continuam lazy no `AppRouter`.
 - **Integração contínua**: o workflow de produção executa `npm ci`, `npm run lint` e `npm run build` antes do deploy.
 - **Histórico do funil**: o editor guarda snapshots nos salvamentos manuais e mostra as 20 versões recentes. Restaurar uma versão cria um snapshot da versão atual antes de gravar a escolhida. A subcoleção `funnels/{id}/versions` aceita leitura/criação por membros da organização e bloqueia alteração ou remoção.
+
+## 41. Carteira de Investimentos com Cotações Protegidas
+
+- **Data**: 27/11/2026.
+- **Integração**: Patrimônio aceita ticker B3, quantidade e custo médio por unidade, preservando o cadastro manual anterior. A carteira mostra valor da posição, variação diária e ganho total sobre o custo informado.
+- **Fonte e cache**: cotações usam brapi.dev no backend, nunca no navegador. Cache compartilhado no Firestore por ticker por 30 minutos; atualização iniciada pelo usuário. Cotação gratuita pode ter atraso aproximado de 30 minutos.
+- **Proteção de consumo**: transação Firestore global em `marketQuoteUsage/{AAAA-MM}` reserva cada tentativa antes do upstream; teto rígido de 10.000 tentativas/mês (vs. 15.000 da faixa gratuita divulgada), contando falhas e com bloqueio após atingir o teto.
+- **Configuração**: variável secreta `BRAPI_API_KEY` precisa existir no ambiente de deploy para chamadas externas. Guia em `docs/modules/Financas_Pessoais_Investimentos.md`. Regras de `personalFinance/{uid}/assets` permitem campos de cotação opcionais e validados.

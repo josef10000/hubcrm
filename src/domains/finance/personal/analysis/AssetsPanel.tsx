@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
-import { ArrowDownRight, ArrowUpRight, Banknote, CalendarClock, ChartNoAxesCombined, House, Plus, Wrench } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, Banknote, CalendarClock, ChartNoAxesCombined, House, Plus, RefreshCw, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Badge, Button } from '@shared/design-system';
@@ -7,6 +7,7 @@ import { getBankBalance, money, parseMoney, shiftMonth, today, type BankAccount,
 import { importDocumentId, type usePersonalFinance } from '../usePersonalFinance';
 import { assetKinds, type Asset, type Maintenance, type ReportSettings, type useAnalysisData } from './analysisData';
 import { monthDay, monthDayCount, monthName, numberForInput, percent, reportControl, reportHeading, reportPanel, shortDate, simulateIndependence } from './analysisUtils';
+import { authFetch } from '@/lib/authFetch';
 
 const kindLabel: Record<Asset['kind'], string> = { investment: 'Investimento', property: 'Imóvel', vehicle: 'Veículo', other: 'Outro bem' };
 
@@ -53,6 +54,10 @@ function AssetEditor({ asset, onSave, onClose }: {
         maturityOn: investment ? field('maturityOn') : '', issuer: investment ? field('issuer') : '',
         dividendCents: investment ? amount(data, 'dividendCents', 0) : 0,
         dividendDay: investment ? Number(field('dividendDay') || '1') : 1,
+        ...(investment && field('ticker') ? {
+          ticker: field('ticker').toUpperCase(), quantity: Number(field('quantity')),
+          averageCostCents: amount(data, 'averageCostCents', 0),
+        } : {}),
       }, asset?.id);
       toast.success(asset ? 'Bem atualizado.' : 'Bem cadastrado.');
       onClose();
@@ -76,6 +81,9 @@ function AssetEditor({ asset, onSave, onClose }: {
         <MoneyField name="purchaseCents" label="Valor de aquisição (R$)" cents={asset?.purchaseCents} />
         <MoneyField name="currentCents" label="Valor atual (R$)" cents={asset?.currentCents} />
         {investment && <>
+          <Field label="Ticker (B3)"><input name="ticker" className={reportControl} maxLength={12} defaultValue={asset?.ticker} placeholder="Ex.: PETR4, HGLG11" /></Field>
+          <Field label="Quantidade"><input name="quantity" type="number" min="0.000001" step="any" className={reportControl} defaultValue={asset?.quantity} placeholder="Ex.: 10" /></Field>
+          <MoneyField name="averageCostCents" label="Preço médio por unidade (R$)" cents={asset?.averageCostCents} required={false} />
           <Field label="Instituição ou emissor"><input name="issuer" className={reportControl} maxLength={100} defaultValue={asset?.issuer} /></Field>
           <Field label="Data de vencimento"><input name="maturityOn" type="date" className={reportControl} defaultValue={asset?.maturityOn} /></Field>
           <MoneyField name="dividendCents" label="Provento mensal estimado (R$)" cents={asset?.dividendCents} required={false} />
@@ -387,6 +395,31 @@ function NetWorth({ data, finance, month }: { data: Data; finance: ReturnType<ty
 export default function AssetsPanel({ data, finance, month }: { data: Data; finance: ReturnType<typeof usePersonalFinance>; month: string }) {
   const [editing, setEditing] = useState<Asset | null | undefined>(undefined);
   const [tab, setTab] = useState<'all' | 'investment' | 'property'>('all');
+  const [updatingQuotes, setUpdatingQuotes] = useState(false);
+  const quotedAssets = data.assets.filter(asset => asset.kind === 'investment' && asset.ticker && asset.quantity);
+  async function refreshQuotes() {
+    if (updatingQuotes || !quotedAssets.length) return;
+    setUpdatingQuotes(true);
+    let updated = 0;
+    try {
+      for (const asset of quotedAssets) {
+        const response = await authFetch(`/api/system_handler?action=market-quote&ticker=${encodeURIComponent(asset.ticker!)}`);
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || 'Não foi possível consultar as cotações.');
+        const { id, maintenance: _maintenance, ...savedAsset } = asset;
+        await data.saveAsset({
+          ...savedAsset, quotePriceCents: payload.priceCents, quoteChangePercent: payload.changePercent,
+          quoteUpdatedAt: payload.updatedAt, currentCents: Math.round(asset.quantity! * payload.priceCents),
+        }, id);
+        updated++;
+      }
+      toast.success(`${updated} ${updated === 1 ? 'cotação atualizada' : 'cotações atualizadas'}.`);
+    } catch (error) {
+      toast.error(message(error));
+    } finally {
+      setUpdatingQuotes(false);
+    }
+  }
   const invested = data.assets.filter(asset => asset.kind === 'investment').reduce((total, asset) => total + asset.currentCents, 0);
   const total = data.assets.reduce((sum, asset) => sum + asset.currentCents, 0);
   const shown = data.assets.filter(asset => tab === 'all' || (tab === 'investment' ? asset.kind === 'investment' : asset.kind !== 'investment'));
@@ -405,8 +438,11 @@ export default function AssetsPanel({ data, finance, month }: { data: Data; fina
       <section className={reportPanel + ' p-4 sm:p-6'}>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div><h2 className="text-lg font-semibold text-text-main">Patrimônio e investimentos</h2>
-            <p className="mt-1 text-sm text-text-muted">Bens e aplicações registrados, com os valores atualizados por você.</p></div>
-          <Button size="sm" className="gap-1.5" onClick={() => setEditing(null)}><Plus size={16} /> Adicionar patrimônio</Button>
+            <p className="mt-1 text-sm text-text-muted">Acompanhe seus bens e posições de investimento em um só lugar.</p></div>
+          <div className="flex flex-wrap gap-2">
+            {quotedAssets.length > 0 && <Button size="sm" variant="secondary" className="gap-1.5" disabled={updatingQuotes} onClick={refreshQuotes}><RefreshCw size={15} className={updatingQuotes ? 'animate-spin' : ''} /> Atualizar cotações</Button>}
+            <Button size="sm" className="gap-1.5" onClick={() => setEditing(null)}><Plus size={16} /> Adicionar patrimônio</Button>
+          </div>
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <div className="rounded-2xl border border-text-muted/15 bg-surface-bg p-4">
@@ -422,6 +458,25 @@ export default function AssetsPanel({ data, finance, month }: { data: Data; fina
         </div>
       </section>
       {editing !== undefined && <AssetEditor key={editing?.id ?? 'new'} asset={editing ?? undefined} onSave={data.saveAsset} onClose={() => setEditing(undefined)} />}
+      {quotedAssets.length > 0 && <section className={reportPanel + ' p-4 sm:p-5'}>
+        <div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className={reportHeading}>Carteira de investimentos</h3>
+          <p className="mt-1 text-xs text-text-muted">Cotações B3 com atraso da fonte gratuita; atualize manualmente quando quiser.</p></div>
+          <span className="text-xs text-text-muted">Cache de 30 min · limite mensal protegido</span></div>
+        <div className="mt-3 divide-y divide-text-muted/15">{quotedAssets.map(asset => {
+          const result = asset.quotePriceCents && asset.quantity ? Math.round(asset.quotePriceCents * asset.quantity) : undefined;
+          const dayGain = result && asset.quoteChangePercent !== undefined ? result * asset.quoteChangePercent / 100 : undefined;
+          const costBasis = asset.averageCostCents && asset.quantity ? Math.round(asset.averageCostCents * asset.quantity) : undefined;
+          const totalGain = result !== undefined && costBasis !== undefined ? result - costBasis : undefined;
+          const updatedAt = asset.quoteUpdatedAt ? new Date(asset.quoteUpdatedAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : 'Ainda sem cotação';
+          return <div className="grid gap-1 py-3 sm:grid-cols-[1fr_auto_auto] sm:items-center sm:gap-5" key={asset.id}>
+            <div><p className="font-medium text-text-main">{asset.ticker} <span className="font-normal text-text-muted">· {asset.name}</span></p><p className="text-xs text-text-muted">{asset.quantity} unidades · {updatedAt}</p></div>
+            <div className="text-sm text-text-main">{result === undefined ? 'Sem cotação' : <>{money(result)}{totalGain !== undefined && <p className={'text-xs ' + (totalGain >= 0 ? 'text-emerald-500' : 'text-rose-500')}>Total: {totalGain >= 0 ? '+' : ''}{money(totalGain)}</p>}</>}</div>
+            <div className={'text-sm font-medium tabular-nums ' + ((dayGain ?? 0) >= 0 ? 'text-emerald-500' : 'text-rose-500')}>
+              {asset.quoteChangePercent === undefined ? '—' : `${asset.quoteChangePercent >= 0 ? '+' : ''}${asset.quoteChangePercent.toFixed(2)}% · ${money(Math.round(dayGain ?? 0))}`}
+            </div>
+          </div>;
+        })}</div>
+      </section>}
       {data.assets.length > 0 && <div className="flex flex-wrap gap-1.5">
         {([['all', 'Todos'], ['investment', 'Investimentos'], ['property', 'Bens']] as const).map(([value, label]) =>
           <Button size="sm" key={value} variant={tab === value ? 'secondary' : 'ghost'} aria-pressed={tab === value} onClick={() => setTab(value)}>{label}</Button>)}

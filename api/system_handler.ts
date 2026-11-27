@@ -14,6 +14,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     switch (action) {
       case 'weather':
         return await handleWeather(req, res);
+      case 'market-quote':
+        return await handleMarketQuote(req, res);
       case 'uptime':
         return await monitorsHandler(req, res);
       case 'email':
@@ -40,6 +42,55 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       details: error.message 
     });
   }
+}
+
+// Quotes are shared and cached globally. The hard monthly ceiling deliberately
+// uses only two thirds of brapi's advertised free allowance (15k requests).
+const MARKET_QUOTE_MONTHLY_LIMIT = 10_000;
+const MARKET_QUOTE_CACHE_MS = 30 * 60 * 1000;
+
+async function handleMarketQuote(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'GET') return res.status(405).json({ error: 'Método não permitido.' });
+  const uid = await verifyAuth(req, res);
+  if (!uid) return;
+  const ticker = typeof req.query.ticker === 'string' ? req.query.ticker.trim().toUpperCase() : '';
+  if (!/^[A-Z0-9.]{1,12}$/.test(ticker)) return res.status(400).json({ error: 'Informe um ticker válido da B3.' });
+
+  const quoteRef = db.collection('marketQuoteCache').doc(ticker);
+  const currentTime = Date.now();
+  const cached = await quoteRef.get();
+  const cachedData = cached.data();
+  if (cachedData && typeof cachedData.updatedAtMs === 'number' && currentTime - cachedData.updatedAtMs < MARKET_QUOTE_CACHE_MS) {
+    return res.status(200).json({ priceCents: cachedData.priceCents, changePercent: cachedData.changePercent, updatedAt: new Date(cachedData.updatedAtMs).toISOString(), cached: true });
+  }
+  const apiKey = process.env.BRAPI_API_KEY;
+  if (!apiKey) return res.status(503).json({ error: 'A API de cotações ainda não está configurada. Adicione BRAPI_API_KEY nas variáveis de ambiente do servidor.' });
+
+  const month = new Date(currentTime).toISOString().slice(0, 7);
+  const usageRef = db.collection('marketQuoteUsage').doc(month);
+  const allowed = await db.runTransaction(async transaction => {
+    const snapshot = await transaction.get(usageRef);
+    const count = Number(snapshot.data()?.count ?? 0);
+    if (count >= MARKET_QUOTE_MONTHLY_LIMIT) return false;
+    transaction.set(usageRef, { count: count + 1, limit: MARKET_QUOTE_MONTHLY_LIMIT, month, updatedAtMs: currentTime });
+    return true;
+  });
+  if (!allowed) return res.status(429).json({ error: 'Limite mensal interno de cotações atingido. As consultas serão liberadas no próximo mês.' });
+
+  const upstream = await fetch(`https://brapi.dev/api/quote/${encodeURIComponent(ticker)}?range=1d&interval=1d`, {
+    headers: { Authorization: `Bearer ${apiKey}` }, timeout: 12_000,
+  } as any);
+  if (!upstream.ok) return res.status(upstream.status === 429 ? 429 : 502).json({ error: 'A fonte não retornou uma cotação. A tentativa foi contabilizada para proteger a cota mensal.' });
+  const body: any = await upstream.json();
+  const quote = Array.isArray(body?.results) ? body.results[0] : undefined;
+  const price = Number(quote?.regularMarketPrice);
+  const changePercent = Number(quote?.regularMarketChangePercent);
+  if (!quote || !Number.isFinite(price) || price < 0 || !Number.isFinite(changePercent)) {
+    return res.status(502).json({ error: 'A fonte retornou dados de cotação inválidos. A tentativa foi contabilizada para proteger a cota mensal.' });
+  }
+  const result = { priceCents: Math.round(price * 100), changePercent, updatedAt: new Date(currentTime).toISOString() };
+  await quoteRef.set({ ...result, updatedAtMs: currentTime, source: 'brapi' });
+  return res.status(200).json({ ...result, cached: false });
 }
 
 async function handleForceTask(req: VercelRequest, res: VercelResponse) {

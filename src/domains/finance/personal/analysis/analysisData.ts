@@ -26,6 +26,12 @@ export interface Asset {
   dividendCents: number;
   dividendDay: number;
   maintenance: Maintenance[];
+  ticker?: string;
+  quantity?: number;
+  averageCostCents?: number;
+  quotePriceCents?: number;
+  quoteChangePercent?: number;
+  quoteUpdatedAt?: string;
 }
 
 export interface ReportSettings {
@@ -78,11 +84,17 @@ function validMaintenance(value: unknown): value is Maintenance {
 
 export function validAsset(value: unknown): value is Omit<Asset, 'id'> {
   const row = object(value);
+  const validOptionalNumber = (key: string, min: number, max: number) => row?.[key] === undefined || rate(row[key], min, max);
+  const validOptionalMoney = (key: string) => row?.[key] === undefined || boolMoney(row[key]);
   return !!row && text(row.name, 100) && !!String(row.name).trim() && (assetKinds as readonly unknown[]).includes(row.kind) &&
     text(row.category, 65) && boolMoney(row.purchaseCents) && boolMoney(row.currentCents) &&
     date(row.acquiredOn) && date(row.maturityOn, true) && text(row.note, 1200) &&
     text(row.issuer, 100) && boolMoney(row.dividendCents) && day(row.dividendDay) &&
-    Array.isArray(row.maintenance) && row.maintenance.length <= 250 && row.maintenance.every(validMaintenance);
+    Array.isArray(row.maintenance) && row.maintenance.length <= 250 && row.maintenance.every(validMaintenance) &&
+    (row.ticker === undefined || (typeof row.ticker === 'string' && /^[A-Z0-9.]{1,12}$/.test(row.ticker))) &&
+    validOptionalNumber('quantity', 0.000001, 1_000_000_000) && validOptionalMoney('averageCostCents') &&
+    validOptionalMoney('quotePriceCents') && validOptionalNumber('quoteChangePercent', -100, 10000) &&
+    (row.quoteUpdatedAt === undefined || (typeof row.quoteUpdatedAt === 'string' && Number.isFinite(Date.parse(row.quoteUpdatedAt))));
 }
 
 function rate(value: unknown, minimum: number, maximum: number) {

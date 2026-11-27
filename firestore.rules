@@ -322,13 +322,20 @@ service cloud.firestore {
         function validAsset(data) {
           return data.keys().hasOnly([
             'name', 'kind', 'category', 'purchaseCents', 'currentCents', 'acquiredOn', 'note',
-            'maturityOn', 'issuer', 'dividendCents', 'dividendDay', 'maintenance'
+            'maturityOn', 'issuer', 'dividendCents', 'dividendDay', 'maintenance', 'ticker', 'quantity',
+            'averageCostCents', 'quotePriceCents', 'quoteChangePercent', 'quoteUpdatedAt'
           ]) && shortText(data.name, 100) && data.name.size() > 0 && data.kind in ['investment', 'property', 'vehicle', 'other'] &&
           shortText(data.category, 65) && validMoney(data.purchaseCents, 0) && validMoney(data.currentCents, 0) &&
           validDate(data.acquiredOn) && shortText(data.note, 1200) && optionalDate(data.maturityOn) &&
           shortText(data.issuer, 100) && validMoney(data.dividendCents, 0) &&
           data.dividendDay is int && data.dividendDay >= 1 && data.dividendDay <= 31 &&
-          data.maintenance is list && data.maintenance.size() <= 250;
+          data.maintenance is list && data.maintenance.size() <= 250 &&
+          (!('ticker' in data) || (data.ticker is string && data.ticker.matches('^[A-Z0-9.]{1,12}$'))) &&
+          (!('quantity' in data) || (data.quantity is number && data.quantity > 0 && data.quantity <= 1000000000)) &&
+          (!('averageCostCents' in data) || validMoney(data.averageCostCents, 0)) &&
+          (!('quotePriceCents' in data) || validMoney(data.quotePriceCents, 0)) &&
+          (!('quoteChangePercent' in data) || (data.quoteChangePercent is number && data.quoteChangePercent >= -100 && data.quoteChangePercent <= 10000)) &&
+          (!('quoteUpdatedAt' in data) || shortText(data.quoteUpdatedAt, 40));
         }
         allow read, delete: if ownsLedger();
         allow create, update: if ownsLedger() && validAsset(request.resource.data);
