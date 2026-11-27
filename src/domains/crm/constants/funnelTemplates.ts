@@ -10,6 +10,7 @@ export interface BlockMeta {
   bgGradient: string;
   defaultPrice?: number;
   defaultConversion: number; // %
+  checklist?: string[];
   defaultCostPerClick?: number;
   strategicGuide: {
     title: string;

@@ -41,7 +41,8 @@ import {
   setDoc,
   getDoc,
   getDocs,
-  where
+  where,
+  limit
 } from 'firebase/firestore';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
@@ -80,6 +81,7 @@ export default function GrowthHubView() {
 
   // Estados dos Artigos (Dicas & Insights)
   const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [postsPageSize, setPostsPageSize] = useState(50);
   const [postsLoading, setPostsLoading] = useState(true);
   const [searchTermPosts, setSearchTermPosts] = useState('');
   const [selectedCategoryFilterPosts, setSelectedCategoryFilterPosts] = useState<string>('all');
@@ -125,6 +127,13 @@ export default function GrowthHubView() {
   // Categorias únicas extraídas dos ativos para o filtro
   const categories = Array.from(new Set(assets.map(a => a.category).filter(Boolean)));
   const postCategories = ['Gestão', 'Vendas', 'Finanças', 'Marketing', 'Geral'];
+  const categoryClasses: Record<string, string> = {
+    Gestão: 'bg-blue-500/15 text-blue-600 border-blue-500/30 dark:text-blue-300',
+    Vendas: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30 dark:text-emerald-300',
+    Finanças: 'bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-300',
+    Marketing: 'bg-purple-500/15 text-purple-600 border-purple-500/30 dark:text-purple-300',
+    Geral: 'bg-gray-500/15 text-gray-600 border-gray-500/30 dark:text-gray-300',
+  };
 
   // Helper para formatar slug
   const slugify = (text: string) => {
@@ -173,7 +182,8 @@ export default function GrowthHubView() {
     setPostsLoading(true);
     const q = query(
       collection(db, 'blog_posts'),
-      orderBy('createdAt', 'desc')
+      orderBy('createdAt', 'desc'),
+      limit(postsPageSize)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -193,7 +203,7 @@ export default function GrowthHubView() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [postsPageSize]);
 
   // ────────────────────────────────────────────────────────────────────────────
   // Lógica dos Ativos de Sucesso (Aba 1)
@@ -1005,6 +1015,7 @@ export default function GrowthHubView() {
                 <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
               </div>
             ) : filteredPosts.length > 0 ? (
+              <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-300">
                 {filteredPosts.map((post) => (
                   <div 
@@ -1018,7 +1029,7 @@ export default function GrowthHubView() {
                         alt={post.title} 
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-                      <span className={`absolute top-3 left-3 px-2 py-0.5 border rounded-full text-[8px] font-black uppercase tracking-widest ${getCategoryClass(post.category)}`}>
+                      <span className={`absolute top-3 left-3 px-2 py-0.5 border rounded-full text-[8px] font-black uppercase tracking-widest ${categoryClasses[post.category] || categoryClasses.Geral}`}>
                         {post.category}
                       </span>
                     </div>
@@ -1090,6 +1101,8 @@ export default function GrowthHubView() {
                   </div>
                 ))}
               </div>
+              {posts.length === postsPageSize && <button type="button" onClick={() => setPostsPageSize(size => size + 50)} className="mx-auto mt-6 block rounded-xl border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 dark:border-white/15 dark:text-white dark:hover:bg-white/5">Carregar mais artigos</button>}
+              </>
             ) : (
               <div className="text-center py-20 bg-black/10 border border-gray-200 dark:border-white/10 rounded-3xl animate-in fade-in duration-300">
                 <p className="text-sm text-gray-500">Nenhum artigo dinâmico foi localizado no banco de dados.</p>

@@ -8,10 +8,17 @@ import {
   deleteDoc,
   query,
   orderBy,
+  limit,
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { FunnelBlueprint } from '@/types';
+
+export interface FunnelVersion {
+  id: string;
+  createdAt: Date;
+  snapshot: Partial<FunnelBlueprint>;
+}
 
 /**
  * Sanitiza recursivamente objetos e arrays, eliminando propriedades com valor undefined
@@ -37,6 +44,33 @@ function sanitizeFirestoreData(obj: any): any {
 }
 
 export const funnelService = {
+  async createFunnelVersion(orgId: string, funnelId: string, snapshot: FunnelBlueprint): Promise<void> {
+    const data = sanitizeFirestoreData(snapshot) as Record<string, unknown>;
+    delete data.id;
+    delete data.createdAt;
+    delete data.updatedAt;
+    await addDoc(collection(db, 'organizations', orgId, 'funnels', funnelId, 'versions'), {
+      snapshot: data,
+      createdAt: serverTimestamp(),
+    });
+  },
+
+  async getFunnelVersions(orgId: string, funnelId: string): Promise<FunnelVersion[]> {
+    const versions = await getDocs(query(
+      collection(db, 'organizations', orgId, 'funnels', funnelId, 'versions'),
+      orderBy('createdAt', 'desc'),
+      limit(20),
+    ));
+    return versions.docs.map(version => {
+      const data = version.data();
+      return {
+        id: version.id,
+        createdAt: data.createdAt?.toDate?.() || new Date(),
+        snapshot: data.snapshot as Partial<FunnelBlueprint>,
+      };
+    });
+  },
+
   async getFunnels(orgId: string): Promise<FunnelBlueprint[]> {
     if (!orgId) return [];
     try {

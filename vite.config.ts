@@ -37,7 +37,6 @@ export default defineConfig(({mode}) => {
             vendor: ['react', 'react-dom', 'react-router-dom'],
             firebase: ['firebase/app', 'firebase/firestore', 'firebase/auth', 'firebase/storage'],
             ui: ['lucide-react', 'motion', 'sonner'],
-            tldraw: ['tldraw'],
             charts: ['recharts'],
           },
         },

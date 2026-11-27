@@ -743,3 +743,15 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Nome**: a seção chama-se apenas Carteira em todas as mensagens e pontos de navegação.
 - **Identidade visual**: logos SVG oficiais de 13 instituições bancárias e quatro bandeiras de cartão foram trazidos do ZIP FamíliaFin para `public/logos`. Os registros persistem `bankPreset`; os cadastros e edições mostram a seleção de instituição, logo e acabamento, mantendo cores e estilos configuráveis dentro do tema do Hub.
 - **Exclusão segura**: contas/cartões podem ser excluídos quando não possuem relações financeiras. Lançamentos, faturas, recorrências, vínculos de cartão ou pagamentos impedem exclusão e orientam o usuário a arquivar. As exclusões possíveis geram registro de auditoria. Firestore restringe remoção ao UID dono.
+
+---
+
+## 40. Correções do CRM e Ganhos de Desempenho
+
+- **Data**: 27/11/2026.
+- **Tipagem**: depoimentos de ofertas e páginas de venda usam interfaces distintas (`OfferTestimonialItem` e `PageTestimonialItem`). O catálogo de blocos fornece checklist e conversão pelo `BlockMeta` existente e o editor usa o guia estratégico correspondente.
+- **Growth Hub**: artigos carregam 50 por vez com ação para mais 50; a lista de categorias possui cores com fallback para dados antigos.
+- **Globo**: `InteractiveSalesGlobe` pausa o ciclo de renderização quando sai da viewport ou quando a aba do navegador fica oculta.
+- **Canvas**: `tldraw` saiu de `manualChunks` para evitar que o chunk seja imposto como dependência da entrada. As telas de Canvas continuam lazy no `AppRouter`.
+- **Integração contínua**: o workflow de produção executa `npm ci`, `npm run lint` e `npm run build` antes do deploy.
+- **Histórico do funil**: o editor guarda snapshots nos salvamentos manuais e mostra as 20 versões recentes. Restaurar uma versão cria um snapshot da versão atual antes de gravar a escolhida. A subcoleção `funnels/{id}/versions` aceita leitura/criação por membros da organização e bloqueia alteração ou remoção.

@@ -4,7 +4,7 @@ import {
   ShieldCheck, Lock, CreditCard, QrCode, UserCheck, Plus, Trash2, 
   Eye, MessageSquare, Award, Zap, Target
 } from 'lucide-react';
-import { Offer, TestimonialItem, OrderBump } from '@/types';
+import { Offer, OfferTestimonialItem, OrderBump } from '@/types';
 import { uploadToR2 } from '@/lib/r2';
 import { toast } from 'sonner';
 import { useICPs } from '../hooks/useICPs';
@@ -135,7 +135,7 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
   };
 
   const handleAddTestimonial = () => {
-    const newTestimonial: TestimonialItem = {
+    const newTestimonial: OfferTestimonialItem = {
       id: `t_${Date.now()}`,
       name: 'Cliente Satisfeito',
       roleCompany: 'CEO / Empresário',
@@ -155,7 +155,7 @@ export default function OfferModal({ isOpen, onClose, onSave, onDelete, initialD
     }));
   };
 
-  const handleTestimonialChange = (id: string, field: keyof TestimonialItem, value: any) => {
+  const handleTestimonialChange = (id: string, field: keyof OfferTestimonialItem, value: any) => {
     setFormData(prev => ({
       ...prev,
       testimonials: (prev.testimonials || []).map(t => t.id === id ? { ...t, [field]: value } : t)

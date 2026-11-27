@@ -374,9 +374,21 @@ export function InteractiveSalesGlobe({ clients = [] }: InteractiveSalesGlobePro
     // 10. Animation Loop
     const clock = new THREE.Clock();
     let frameId = 0;
+    let isVisible = true;
+    const visibilityObserver = new IntersectionObserver(([entry]) => {
+      isVisible = entry.isIntersecting;
+      if (isVisible && frameId === 0) frameId = requestAnimationFrame(animate);
+    }, { threshold: 0.01 });
+    visibilityObserver.observe(container);
+    const handleDocumentVisibility = () => {
+      if (!document.hidden && isVisible && frameId === 0) frameId = requestAnimationFrame(animate);
+    };
+    document.addEventListener('visibilitychange', handleDocumentVisibility);
 
     const animate = () => {
+      frameId = 0;
       if (disposed) return;
+      if (!isVisible || document.hidden) return;
       frameId = requestAnimationFrame(animate);
 
       const elapsed = clock.getElapsedTime();
@@ -417,6 +429,8 @@ export function InteractiveSalesGlobe({ clients = [] }: InteractiveSalesGlobePro
         window.clearTimeout(resumeTimer);
       }
       resizeObserver.disconnect();
+      visibilityObserver.disconnect();
+      document.removeEventListener('visibilitychange', handleDocumentVisibility);
       controls.removeEventListener('start', onControlStart);
       controls.removeEventListener('end', onControlEnd);
       controls.dispose();

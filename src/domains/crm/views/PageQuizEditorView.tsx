@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { funnelService } from '@/services/funnelService';
-import { FunnelBlueprint, PageQuizSection, PageQuizSectionType, PageQuizBlueprintData, GridCardItem, TestimonialItem, FAQItem, QuizOptionItem } from '@/types';
+import { FunnelBlueprint, PageQuizSection, PageQuizSectionType, PageQuizBlueprintData, GridCardItem, PageTestimonialItem, FAQItem, QuizOptionItem } from '@/types';
 import { DEFAULT_SALES_PAGE_SECTIONS, DEFAULT_QUIZ_SECTIONS } from '../constants/vslPageTemplates';
 import { toast } from 'sonner';
 

@@ -562,6 +562,11 @@ service cloud.firestore {
       // 🗺️ FUNIS & ARQUITETURA DE PROCESSOS
       match /funnels/{funnelId} {
         allow read, write: if isOwnerEmail() || belongsToOrg(orgId);
+
+        match /versions/{versionId} {
+          allow read, create: if isOwnerEmail() || belongsToOrg(orgId);
+          allow update, delete: if false;
+        }
       }
 
       // 🟢 HUB CHAT — Regras de Colaboração em Tempo Real

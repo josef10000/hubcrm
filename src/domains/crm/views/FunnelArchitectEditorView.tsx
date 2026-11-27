@@ -15,12 +15,12 @@ import {
   Target, StickyNote, BoxSelect, Wand2, MousePointer, Workflow, Spline,
   AlignLeft, ArrowLeftToLine, ArrowUpToLine, Focus, ChevronDown, ArrowRightLeft, ArrowUpDown, Minimize2, Compass, Scan, Map, Hand,
   Copy, MessageSquare, Bot, MessageSquareCode, Layers3, Flame, Ticket, Share2, FileSpreadsheet, UserPlus, Tag,
-  GitFork, HeartHandshake, Smile, Frown, Meh, AlertOctagon
+  GitFork, HeartHandshake, Smile, Frown, Meh, AlertOctagon, History
 } from 'lucide-react';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useICPs } from '../hooks/useICPs';
-import { funnelService } from '@/services/funnelService';
+import { funnelService, type FunnelVersion } from '@/services/funnelService';
 import { 
   FunnelBlueprint, FunnelNode, FunnelConnection, FunnelFrame,
   FunnelNodeType, FunnelNodeSubType, FunnelChecklistItem 
@@ -166,6 +166,9 @@ export default function FunnelArchitectEditorView() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const [versions, setVersions] = useState<FunnelVersion[]>([]);
+  const [versionsOpen, setVersionsOpen] = useState(false);
+  const [versionsLoading, setVersionsLoading] = useState(false);
 
   // Modal de Confirmação para Salvar Rascunho ao Sair
   const [showExitModal, setShowExitModal] = useState(false);
@@ -356,13 +359,49 @@ export default function FunnelArchitectEditorView() {
     }
     setSaving(true);
     try {
-      await funnelService.updateFunnel(orgId, id, { ...funnel, routingStyle });
+      const snapshot = { ...funnel, routingStyle };
+      await funnelService.createFunnelVersion(orgId, id, snapshot);
+      await funnelService.updateFunnel(orgId, id, snapshot);
       setIsDirty(false);
       toast.success('Funil salvo com sucesso!');
       if (andExit) navigate('/funnels');
     } catch (error: any) {
       console.error('Erro ao salvar funil:', error);
       toast.error(`Erro ao salvar funil: ${error?.message || 'Falha de comunicação'}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleOpenVersions = async () => {
+    if (!orgId || !id) return;
+    setVersionsOpen(true);
+    setVersionsLoading(true);
+    try {
+      setVersions(await funnelService.getFunnelVersions(orgId, id));
+    } catch (error) {
+      console.error('Erro ao carregar versões do funil:', error);
+      toast.error('Não foi possível carregar o histórico do funil.');
+    } finally {
+      setVersionsLoading(false);
+    }
+  };
+
+  const handleRestoreVersion = async (version: FunnelVersion) => {
+    if (!orgId || !id || !funnel) return;
+    setSaving(true);
+    try {
+      await funnelService.createFunnelVersion(orgId, id, { ...funnel, routingStyle });
+      const restored = { ...version.snapshot, id, orgId } as FunnelBlueprint;
+      await funnelService.updateFunnel(orgId, id, { ...restored, routingStyle: restored.routingStyle || routingStyle });
+      setFunnel(restored);
+      if (restored.routingStyle) setRoutingStyle(restored.routingStyle);
+      setIsDirty(false);
+      setVersionsOpen(false);
+      toast.success('Versão restaurada. A versão atual foi guardada no histórico.');
+    } catch (error) {
+      console.error('Erro ao restaurar versão do funil:', error);
+      toast.error('Não foi possível restaurar essa versão.');
     } finally {
       setSaving(false);
     }
@@ -1249,13 +1288,13 @@ export default function FunnelArchitectEditorView() {
       type: blockMeta.type,
       subType: blockMeta.subType,
       label: blockMeta.name,
-      subtitle: blockMeta.description,
+      subtitle: blockMeta.strategicGuide.description,
       x: canvasCenterX + Math.floor(Math.random() * 60) - 30,
       y: canvasCenterY + Math.floor(Math.random() * 60) - 30,
-      conversionRate: blockMeta.defaultConversionRate || 10,
+      conversionRate: blockMeta.defaultConversion,
       status: 'idea',
       noteColor: 'yellow',
-      checklist: (blockMeta.checklist || []).map((task, i) => ({
+      checklist: (blockMeta.checklist || blockMeta.strategicGuide.actionItems).map((task, i) => ({
         id: `chk-${Date.now()}-${i}`,
         text: task,
         done: false
@@ -1732,7 +1771,16 @@ export default function FunnelArchitectEditorView() {
 
           {/* Botão de Salvar */}
           <button
-            onClick={handleManualSave}
+            type="button"
+            onClick={() => void handleOpenVersions()}
+            className="px-3 py-2 bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
+            title="Ver e restaurar versões salvas"
+          >
+            <History className="w-4 h-4" />
+            <span className="hidden sm:inline">Histórico</span>
+          </button>
+          <button
+            onClick={() => void handleManualSave()}
             disabled={saving}
             className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-500/20 flex items-center gap-2 disabled:opacity-50"
           >
@@ -1744,6 +1792,27 @@ export default function FunnelArchitectEditorView() {
       </div>
 
       {/* ── CORPO PRINCIPAL DO EDITOR ────────────────────────────────────────────── */}
+      {versionsOpen && (
+        <div className="fixed inset-0 z-[1000000] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm" onClick={() => setVersionsOpen(false)}>
+          <section role="dialog" aria-modal="true" aria-labelledby="funnel-version-title" className="w-full max-w-xl overflow-hidden rounded-2xl border border-indigo-400/30 bg-[#090e1c] text-white shadow-2xl" onClick={event => event.stopPropagation()}>
+            <header className="flex items-center justify-between border-b border-white/10 p-5">
+              <div><h2 id="funnel-version-title" className="text-lg font-bold">Histórico de versões</h2><p className="mt-1 text-xs text-gray-400">Até 20 salvamentos manuais recentes</p></div>
+              <button type="button" onClick={() => setVersionsOpen(false)} className="rounded-lg p-2 text-gray-400 hover:bg-white/10 hover:text-white" aria-label="Fechar histórico"><X size={18} /></button>
+            </header>
+            <div className="max-h-[60vh] space-y-2 overflow-y-auto p-4">
+              {versionsLoading ? <p className="py-8 text-center text-sm text-gray-400">Carregando versões…</p>
+                : versions.length === 0 ? <p className="py-8 text-center text-sm text-gray-400">Ainda não há versões salvas manualmente.</p>
+                  : versions.map(version => (
+                    <div key={version.id} className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                      <div><p className="text-sm font-semibold">{version.snapshot.title || 'Funil sem título'}</p><time className="mt-1 block text-xs text-gray-400">{new Intl.DateTimeFormat('pt-BR', { dateStyle: 'medium', timeStyle: 'short' }).format(version.createdAt)}</time><p className="mt-1 text-xs text-gray-500">{version.snapshot.nodes?.length || 0} blocos · {version.snapshot.connections?.length || 0} conexões</p></div>
+                      <button type="button" disabled={saving} onClick={() => void handleRestoreVersion(version)} className="shrink-0 rounded-lg bg-indigo-500/20 px-3 py-2 text-xs font-bold text-indigo-200 hover:bg-indigo-500/30 disabled:opacity-50">{saving ? 'Restaurando…' : 'Restaurar'}</button>
+                    </div>
+                  ))}
+            </div>
+          </section>
+        </div>
+      )}
+
       <div className="flex-1 flex overflow-hidden relative">
 
         {/* ── GAVETA ESQUERDA: BIBLIOTECA DE BLOCOS ───────────────────────────── */}
@@ -1845,7 +1914,7 @@ export default function FunnelArchitectEditorView() {
                               {block.name}
                             </span>
                             <span className="text-[10px] text-gray-500 block truncate">
-                              {block.description}
+                              {block.strategicGuide.description}
                             </span>
                           </div>
                           <Plus className="w-3.5 h-3.5 text-gray-500 group-hover:text-indigo-400 mt-1 shrink-0" />

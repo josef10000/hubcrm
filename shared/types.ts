@@ -540,7 +540,7 @@ export interface ICP {
   updatedAt?: number;
 }
 
-export interface TestimonialItem {
+export interface OfferTestimonialItem {
   id: string;
   name: string;
   roleCompany?: string;
@@ -569,7 +569,7 @@ export interface Offer {
   customContractText?: string;
   hasPortalAccess?: boolean;
   guaranteeText?: string;
-  testimonials?: TestimonialItem[];
+  testimonials?: OfferTestimonialItem[];
   orderBumps?: OrderBump[];
   icpId?: string;
   createdAt: number;
@@ -975,7 +975,7 @@ export interface QuizOptionItem {
   nextSectionId?: string;
 }
 
-export interface TestimonialItem {
+export interface PageTestimonialItem {
   id: string;
   name: string;
   role?: string;
@@ -1044,7 +1044,7 @@ export interface PageQuizSection {
     questionType: 'single_choice' | 'multi_choice' | 'image_choice' | 'scale_1_10';
     options: QuizOptionItem[];
   };
-  testimonials?: TestimonialItem[];
+  testimonials?: PageTestimonialItem[];
   faqItems?: FAQItem[];
   pricingData?: {
     regularPrice?: number;
