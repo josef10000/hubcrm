@@ -28,7 +28,7 @@ type Section = 'overview' | 'statement' | 'wallet' | 'calendar' | 'planning' | '
 const sections = [
   { id: 'overview', label: 'Visão geral', icon: LayoutDashboard },
   { id: 'statement', label: 'Extrato', icon: ReceiptText },
-  { id: 'wallet', label: 'Carteira 3D', icon: Wallet },
+  { id: 'wallet', label: 'Carteira', icon: Wallet },
   { id: 'calendar', label: 'Agenda', icon: CalendarDays },
   { id: 'planning', label: 'Planejamento', icon: PiggyBank },
   { id: 'reports', label: 'Relatórios', icon: LineChart },
@@ -489,6 +489,8 @@ function PersonalFinance({ uid }: { uid: string }) {
             onEditCard={card => setDialog({ type: 'card', card })}
             onArchiveAccount={account => setDialog({ type: 'archiveAccount', account })}
             onArchiveCard={card => setDialog({ type: 'archiveCard', card })}
+            onDeleteAccount={account => setDialog({ type: 'deleteAccount', account })}
+            onDeleteCard={card => setDialog({ type: 'deleteCard', card })}
             onRestoreAccount={account => void restore(() => finance.restoreAccount(account.id))}
             onRestoreCard={card => void restore(() => finance.restoreCard(card.id))}
             onReconcile={account => setDialog({ type: 'reconcile', account, balance: balances.get(account.id) ?? 0 })}

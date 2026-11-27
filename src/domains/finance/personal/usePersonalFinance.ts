@@ -196,6 +196,44 @@ export function usePersonalFinance(uid: string) {
     return ref.id;
   }
 
+  async function deleteAccount(id: string) {
+    const [directEntries, transfersIn, attachedCards, paidInvoices, recurrences] = await Promise.all([
+      getDocsFromServer(query(collectionRef(uid, 'entries'), where('bankAccountId', '==', id))),
+      getDocsFromServer(query(collectionRef(uid, 'entries'), where('targetBankAccountId', '==', id))),
+      getDocsFromServer(query(collectionRef(uid, 'cards'), where('bankAccountId', '==', id))),
+      getDocsFromServer(query(collectionRef(uid, 'invoices'), where('paymentAccountId', '==', id))),
+      getDocsFromServer(query(collectionRef(uid, 'recurrences'), where('bankAccountId', '==', id))),
+    ]);
+    if ([directEntries, transfersIn, attachedCards, paidInvoices, recurrences].some(result => !result.empty)) {
+      throw new Error('Esta conta tem histórico ou cartões vinculados. Arquive a conta para preservar os registros.');
+    }
+    await runTransaction(db, async transaction => {
+      const ref = accountRef(id);
+      const snapshot = await transaction.get(ref);
+      if (!snapshot.exists()) throw new Error('Esta conta não está disponível.');
+      transaction.delete(ref);
+      logAudit(transaction, 'delete', 'account', id, snapshot.get('name') || 'Conta');
+    });
+  }
+
+  async function deleteCard(id: string) {
+    const [entries, invoices, recurrences] = await Promise.all([
+      getDocsFromServer(query(collectionRef(uid, 'entries'), where('cardId', '==', id))),
+      getDocsFromServer(query(collectionRef(uid, 'invoices'), where('cardId', '==', id))),
+      getDocsFromServer(query(collectionRef(uid, 'recurrences'), where('cardId', '==', id))),
+    ]);
+    if ([entries, invoices, recurrences].some(result => !result.empty)) {
+      throw new Error('Este cartão tem faturas, lançamentos ou recorrências. Arquive o cartão para preservar o histórico.');
+    }
+    await runTransaction(db, async transaction => {
+      const ref = cardRef(id);
+      const snapshot = await transaction.get(ref);
+      if (!snapshot.exists()) throw new Error('Este cartão não está disponível.');
+      transaction.delete(ref);
+      logAudit(transaction, 'delete', 'card', id, snapshot.get('name') || 'Cartão');
+    });
+  }
+
   async function addBankEntry(input: EntryInput, importId?: string) {
     const source = accountRef(requiredId(input.bankAccountId, 'Selecione a conta do lançamento.'));
     const transfer = input.kind === 'transfer';
@@ -621,6 +659,8 @@ export function usePersonalFinance(uid: string) {
     error: Object.values(current.errors).find(Boolean) ?? null,
     saveAccount,
     saveCard,
+    deleteAccount,
+    deleteCard,
     archiveAccount: (id: string) => updateDoc(accountRef(id), { archived: true }),
     restoreAccount: (id: string) => updateDoc(accountRef(id), { archived: false }),
     archiveCard: (id: string) => updateDoc(cardRef(id), { archived: true }),

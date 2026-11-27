@@ -175,7 +175,7 @@ function ImportPanel({ uid, finance, rules, prefill }: { uid: string; finance: F
             <FilePicker label="Escolher extrato CSV ou OFX" accept=".csv,.ofx,.qfx,.tsv,text/csv" onFile={file => void handleFile(file)} disabled={busy || !target} />
           </div>
         </div>
-        {!target && <p className={`mt-3 ${muted}`}>Cadastre uma conta ou cartão ativo na Carteira 3D para importar.</p>}
+        {!target && <p className={`mt-3 ${muted}`}>Cadastre uma conta ou cartão ativo na Carteira para importar.</p>}
         <div className={`mt-4 grid gap-3 pt-4 ${line}`}>
           <Field label="Lançamento rápido por texto">
             <textarea rows={3} className={input} value={rawText} maxLength={16_000} disabled={busy || !target} onChange={event => setRawText(event.target.value)}
@@ -616,6 +616,7 @@ const actionLabels: Record<string, string> = {
   create: 'Criação', edit: 'Edição', status: 'Situação atualizada', trash: 'Enviado à lixeira', restore: 'Restaurado',
   payInvoice: 'Pagamento registrado', reconcile: 'Conciliação', saveRecurrence: 'Recorrência salva',
   archiveRecurrence: 'Recorrência pausada', generate: 'Lançamentos gerados',
+  delete: 'Item excluído',
 };
 
 function ActivityPanel({ finance }: { finance: Finance }) {

@@ -7,6 +7,7 @@ import {
 import { importDocumentId, type usePersonalFinance } from '../usePersonalFinance';
 import { validAsset, validReportSettings, reportDefaults } from '../analysis/analysisData';
 import { parsePlanItem } from '../planning/planningModel';
+import { bankPresets, inferBankPreset } from '../walletBranding';
 import { downloadData, parseImportDate } from './financeToolData';
 
 const backupCollections = ['accounts', 'cards', 'entries', 'invoices', 'recurrences', 'audit', 'tools', 'planning', 'assets', 'reportSettings'] as const;
@@ -27,8 +28,8 @@ export interface RestorePreview {
 const snapshotLimit = 5000;
 
 const exportKeys: Record<BackupCollection, readonly string[]> = {
-  accounts: ['name', 'bank', 'initialBalanceCents', 'archived', 'accountType', 'color', 'style'],
-  cards: ['name', 'bank', 'brand', 'lastDigits', 'bankAccountId', 'limitCents', 'closingDay', 'dueDay', 'archived', 'color',
+  accounts: ['name', 'bank', 'bankPreset', 'initialBalanceCents', 'archived', 'accountType', 'color', 'style'],
+  cards: ['name', 'bank', 'bankPreset', 'brand', 'lastDigits', 'bankAccountId', 'limitCents', 'closingDay', 'dueDay', 'archived', 'color',
     'style', 'virtual', 'monthlyLimitCents', 'cashbackPercent', 'pointsPerDollar', 'rewardProgramName'],
   entries: ['kind', 'description', 'date', 'amountCents', 'status', 'bankAccountId', 'targetBankAccountId', 'cardId', 'invoiceMonth',
     'invoiceDueDate', 'groupId', 'installment', 'installmentCount', 'category', 'tags', 'warrantyUntil', 'reimbursement',
@@ -123,11 +124,15 @@ export function readFinanceBackup(text: string): RestorePreview {
   const collections = mapObject(backup.collections);
   const records = Object.fromEntries(backupCollections.map(key => [key, safeArray(collections[key])])) as Records;
   if (legacy && !hub) {
-    records.accounts = safeArray(backup.bankAccounts).map(item => ({
-      ...item, bank: item.bankCode, initialBalanceCents: legacyAmount(item.initialBalance), style: item.cardStyle,
-    }));
+    records.accounts = safeArray(backup.bankAccounts).map(item => {
+      const preset = bankPresets.find(value => value.id === item.bankCode) || bankPresets.find(value => value.id === inferBankPreset(String(item.bankCode || item.name || '')))!;
+      return { ...item, bankPreset: preset.id, bank: String(item.bankName || preset.name), initialBalanceCents: legacyAmount(item.initialBalance), style: item.cardStyle };
+    });
     records.cards = safeArray(backup.creditCards).map(item => ({
-      ...item, bank: '', limitCents: legacyAmount(item.limit), bankAccountId: item.linkedBankId,
+      ...item,
+      bank: bankPresets.find(value => value.id === inferBankPreset(String(item.name || '')))?.name || '',
+      bankPreset: inferBankPreset(String(item.name || '')),
+      limitCents: legacyAmount(item.limit), bankAccountId: item.linkedBankId,
       style: item.cardStyle, virtual: item.isVirtual,
       ...(typeof item.monthlyLimit === 'number' ? { monthlyLimitCents: legacyAmount(item.monthlyLimit) } : {}),
     }));

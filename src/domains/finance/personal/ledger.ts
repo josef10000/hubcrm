@@ -1,5 +1,6 @@
 export type WalletStyle = 'solid' | 'gradient' | 'metallic' | 'brushed' | 'glass' | 'holographic';
 export type BankAccountType = 'checking' | 'digital' | 'savings' | 'salary' | 'investment';
+export type BankPresetId = 'nubank' | 'itau' | 'bradesco' | 'santander' | 'bb' | 'caixa' | 'inter' | 'c6' | 'btg' | 'xp' | 'mercadopago' | 'picpay' | 'sicredi' | 'custom';
 
 interface WalletAppearance {
   color?: string;
@@ -9,6 +10,7 @@ interface WalletAppearance {
 export interface BankAccountInput extends WalletAppearance {
   name: string;
   bank: string;
+  bankPreset?: BankPresetId;
   initialBalanceCents: number;
   accountType?: BankAccountType;
 }
@@ -16,6 +18,7 @@ export interface BankAccountInput extends WalletAppearance {
 export interface CreditCardInput extends WalletAppearance {
   name: string;
   bank: string;
+  bankPreset?: BankPresetId;
   brand: string;
   lastDigits: string;
   bankAccountId: string;
@@ -108,8 +111,8 @@ export interface RecurringEntry extends RecurringEntryInput {
 
 export interface AuditEvent {
   id: string;
-  action: 'create' | 'edit' | 'status' | 'trash' | 'restore' | 'payInvoice' | 'reconcile' | 'saveRecurrence' | 'archiveRecurrence' | 'generate';
-  entity: 'entry' | 'invoice' | 'recurrence';
+  action: 'create' | 'edit' | 'status' | 'trash' | 'restore' | 'payInvoice' | 'reconcile' | 'saveRecurrence' | 'archiveRecurrence' | 'generate' | 'delete';
+  entity: 'entry' | 'invoice' | 'recurrence' | 'account' | 'card';
   entityId: string;
   label: string;
   at: string;
@@ -132,6 +135,7 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', cu
 const monthPattern = /^\d{4}-(0[1-9]|1[0-2])$/;
 const datePattern = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 const styles: readonly WalletStyle[] = ['solid', 'gradient', 'metallic', 'brushed', 'glass', 'holographic'];
+const bankPresetIds: readonly BankPresetId[] = ['nubank', 'itau', 'bradesco', 'santander', 'bb', 'caixa', 'inter', 'c6', 'btg', 'xp', 'mercadopago', 'picpay', 'sicredi', 'custom'];
 const accountTypes: readonly BankAccountType[] = ['checking', 'digital', 'savings', 'salary', 'investment'];
 
 export function money(cents: number) {
@@ -345,10 +349,12 @@ function cleanAppearance({ color, style }: WalletAppearance) {
 
 export function normalizeAccount(input: BankAccountInput): BankAccountInput {
   assertCents(input.initialBalanceCents, -MAX_AMOUNT_CENTS);
+  if (input.bankPreset && !bankPresetIds.includes(input.bankPreset)) throw new Error('Escolha um banco válido.');
   if (input.accountType && !accountTypes.includes(input.accountType)) throw new Error('Escolha um tipo de conta válido.');
   return {
     name: cleanName(input.name, 'o nome da conta'),
     bank: input.bank.trim(),
+    ...(input.bankPreset ? { bankPreset: input.bankPreset } : {}),
     initialBalanceCents: input.initialBalanceCents,
     ...(input.accountType ? { accountType: input.accountType } : {}),
     ...cleanAppearance(input),
@@ -357,6 +363,7 @@ export function normalizeAccount(input: BankAccountInput): BankAccountInput {
 
 export function normalizeCard(input: CreditCardInput): CreditCardInput {
   assertCents(input.limitCents, 0);
+  if (input.bankPreset && !bankPresetIds.includes(input.bankPreset)) throw new Error('Escolha um banco válido.');
   assertCardDay(input.closingDay);
   assertCardDay(input.dueDay);
   if (input.lastDigits && !/^\d{4}$/.test(input.lastDigits)) throw new Error('Informe os quatro últimos dígitos do cartão.');
@@ -372,6 +379,7 @@ export function normalizeCard(input: CreditCardInput): CreditCardInput {
   return {
     name: cleanName(input.name, 'o nome do cartão'),
     bank: input.bank.trim(),
+    ...(input.bankPreset ? { bankPreset: input.bankPreset } : {}),
     brand: input.brand.trim(),
     lastDigits: input.lastDigits.trim(),
     bankAccountId: input.bankAccountId,

@@ -110,6 +110,7 @@ service cloud.firestore {
       function validWalletItem(data) {
         return data.name is string && data.name.size() > 0 && data.name.size() <= 80 &&
                data.bank is string && data.bank.size() <= 80 && data.archived is bool &&
+               data.get('bankPreset', 'custom') in ['nubank', 'itau', 'bradesco', 'santander', 'bb', 'caixa', 'inter', 'c6', 'btg', 'xp', 'mercadopago', 'picpay', 'sicredi', 'custom'] &&
                validWalletStyle(data);
       }
 
@@ -117,12 +118,13 @@ service cloud.firestore {
         allow read: if ownsLedger();
         allow create, update: if ownsLedger() &&
           request.resource.data.keys().hasOnly([
-            'name', 'bank', 'initialBalanceCents', 'archived', 'accountType', 'color', 'style', 'ledgerRevision'
+            'name', 'bank', 'bankPreset', 'initialBalanceCents', 'archived', 'accountType', 'color', 'style', 'ledgerRevision'
           ]) &&
           validWalletItem(request.resource.data) &&
           validMoney(request.resource.data.initialBalanceCents, -999999999999) &&
           request.resource.data.ledgerRevision is int && request.resource.data.ledgerRevision >= 0 &&
           request.resource.data.get('accountType', 'checking') in ['checking', 'digital', 'savings', 'salary', 'investment'];
+        allow delete: if ownsLedger();
       }
 
       match /cards/{cardId} {
@@ -134,7 +136,7 @@ service cloud.firestore {
         allow create, update: if ownsLedger() &&
           request.resource.data.keys().hasOnly([
             'name', 'bank', 'brand', 'lastDigits', 'bankAccountId', 'limitCents', 'closingDay', 'dueDay',
-            'archived', 'color', 'style', 'virtual', 'monthlyLimitCents', 'cashbackPercent', 'pointsPerDollar', 'rewardProgramName'
+            'archived', 'color', 'style', 'virtual', 'monthlyLimitCents', 'cashbackPercent', 'pointsPerDollar', 'rewardProgramName', 'bankPreset'
           ]) &&
           validWalletItem(request.resource.data) &&
           request.resource.data.brand is string && request.resource.data.brand.size() <= 30 &&
@@ -149,6 +151,7 @@ service cloud.firestore {
           request.resource.data.get('pointsPerDollar', 0) >= 0 && request.resource.data.get('pointsPerDollar', 0) <= 10000 &&
           shortText(request.resource.data.get('rewardProgramName', ''), 80) &&
           validCardDay(request.resource.data.closingDay) && validCardDay(request.resource.data.dueDay);
+        allow delete: if ownsLedger();
       }
 
       match /entries/{entryId} {
@@ -257,8 +260,8 @@ service cloud.firestore {
       match /audit/{auditId} {
         allow read: if ownsLedger();
         allow create: if ownsLedger() && request.resource.data.keys().hasOnly(['action', 'entity', 'entityId', 'label', 'at']) &&
-          request.resource.data.action in ['create', 'edit', 'status', 'trash', 'restore', 'payInvoice', 'reconcile', 'saveRecurrence', 'archiveRecurrence', 'generate'] &&
-          request.resource.data.entity in ['entry', 'invoice', 'recurrence'] &&
+          request.resource.data.action in ['create', 'edit', 'status', 'trash', 'restore', 'payInvoice', 'reconcile', 'saveRecurrence', 'archiveRecurrence', 'generate', 'delete'] &&
+          request.resource.data.entity in ['entry', 'invoice', 'recurrence', 'account', 'card'] &&
           shortText(request.resource.data.entityId, 240) && shortText(request.resource.data.label, 240) &&
           validTimestamp(request.resource.data.at);
       }

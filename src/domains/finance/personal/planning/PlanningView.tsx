@@ -284,7 +284,7 @@ function DebtSection({ debts, finance, month, actions, edit, runAction, busy }: 
         </Panel>
       </div>
 
-      <Panel icon={CreditCard} title="Compras parceladas no cartão" detail="A quitação acompanha o registro de pagamento das faturas na Carteira 3D.">
+      <Panel icon={CreditCard} title="Compras parceladas no cartão" detail="A quitação acompanha o registro de pagamento das faturas na Carteira.">
         {!cards.size ? <Empty>Compras com mais de uma parcela aparecerão aqui automaticamente.</Empty> : (
           <ul className="grid gap-3 lg:grid-cols-2">
             {[...cards.entries()].map(([id, item]) => {

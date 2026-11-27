@@ -7,6 +7,7 @@ import {
 } from './ledger';
 import type { usePersonalFinance } from './usePersonalFinance';
 import { categorize, useFinanceRules } from './tools/financeToolData';
+import { bankPresets, inferBankPreset } from './walletBranding';
 
 export type FinanceDialog =
   | { type: 'account'; account?: BankAccount }
@@ -17,7 +18,9 @@ export type FinanceDialog =
   | { type: 'credit'; card: CreditCard; month: string }
   | { type: 'reconcile'; account: BankAccount; balance: number }
   | { type: 'archiveAccount'; account: BankAccount }
-  | { type: 'archiveCard'; card: CreditCard };
+  | { type: 'archiveCard'; card: CreditCard }
+  | { type: 'deleteAccount'; account: BankAccount }
+  | { type: 'deleteCard'; card: CreditCard };
 
 type EntryKind = Extract<LedgerEntry['kind'], 'income' | 'expense' | 'transfer' | 'purchase'>;
 type Finance = ReturnType<typeof usePersonalFinance>;
@@ -81,6 +84,7 @@ function Appearance({ color, style }: { color?: string; style?: string }) {
       <Field label="Cor">
         <select name="color" className={control} defaultValue={color || ''}>
           <option value="">Tema do Hub</option>
+          {bankPresets.map(item => <option key={item.id} value={item.color}>{item.name}</option>)}
           <option value="#6d28d9">Roxo</option>
           <option value="#1d4ed8">Azul</option>
           <option value="#047857">Verde</option>
@@ -98,9 +102,37 @@ function Appearance({ color, style }: { color?: string; style?: string }) {
   );
 }
 
+function BankIdentity({ bank, bankPreset }: { bank?: string; bankPreset?: BankAccount['bankPreset'] }) {
+  const preset = bankPreset || inferBankPreset(bank || '');
+  const [selected, setSelected] = useState(preset);
+  const [bankName, setBankName] = useState(bank || '');
+  const logo = bankPresets.find(item => item.id === selected);
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      <Field label="Logo do banco">
+        <select name="bankPreset" className={control} value={selected} onChange={event => {
+          const value = event.target.value as NonNullable<BankAccount['bankPreset']>;
+          setSelected(value);
+          if (value !== 'custom') setBankName(bankPresets.find(item => item.id === value)?.name || bankName);
+        }}>
+          {bankPresets.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
+        </select>
+      </Field>
+      {logo && <span className="-mt-2 inline-flex items-center gap-2 text-xs text-text-muted sm:col-span-2">
+        {logo.id !== 'custom' && <img className="personal-wallet-brand-logo" src={`/logos/banks/${logo.id}.svg`} alt="" />}
+        Identidade visual {logo.name} · acabamento {logo.style}
+      </span>}
+      <Field label="Banco ou instituição">
+        <input name="bank" className={control} required maxLength={80} value={bankName} onChange={event => setBankName(event.target.value)} placeholder="Nome do banco" />
+      </Field>
+    </div>
+  );
+}
+
 function AccountFields({ account }: { account?: BankAccount }) {
   return (
     <>
+      <BankIdentity bank={account?.bank} bankPreset={account?.bankPreset} />
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Nome da conta">
           <input name="name" className={control} required maxLength={80} defaultValue={account?.name} placeholder="Conta do dia a dia" />
@@ -121,7 +153,8 @@ function AccountFields({ account }: { account?: BankAccount }) {
         </Field>
         <Amount label="Saldo inicial (R$)" cents={account?.initialBalanceCents ?? 0} />
       </div>
-      <Appearance color={account?.color} style={account?.style} />
+      <Appearance color={account?.color || bankPresets.find(item => item.id === (account?.bankPreset || inferBankPreset(account?.bank || '')))?.color}
+        style={account?.style || bankPresets.find(item => item.id === (account?.bankPreset || inferBankPreset(account?.bank || '')))?.style} />
     </>
   );
 }
@@ -133,9 +166,7 @@ function CardFields({ card, accounts }: { card?: CreditCard; accounts: BankAccou
         <Field label="Nome do cartão">
           <input name="name" className={control} required maxLength={80} defaultValue={card?.name} placeholder="Meu cartão" />
         </Field>
-        <Field label="Banco ou emissor">
-          <input name="bank" className={control} required maxLength={80} defaultValue={card?.bank} placeholder="Nome do banco" />
-        </Field>
+        <BankIdentity bank={card?.bank} bankPreset={card?.bankPreset} />
         <Field label="Bandeira">
           <select name="brand" className={control} defaultValue={card?.brand || 'other'}>
             <option value="other">Outra</option>
@@ -167,7 +198,8 @@ function CardFields({ card, accounts }: { card?: CreditCard; accounts: BankAccou
         </Field>
       </div>
       <AccountField accounts={accounts} label="Conta para pagamento" defaultValue={card?.bankAccountId} optional />
-      <Appearance color={card?.color} style={card?.style} />
+      <Appearance color={card?.color || bankPresets.find(item => item.id === (card?.bankPreset || inferBankPreset(card?.bank || '')))?.color}
+        style={card?.style || bankPresets.find(item => item.id === (card?.bankPreset || inferBankPreset(card?.bank || '')))?.style} />
       <details open={Boolean(card?.cashbackPercent || card?.pointsPerDollar || card?.rewardProgramName)}
         className="rounded-xl border border-text-muted/20 p-3">
         <summary className="cursor-pointer text-sm font-semibold">Cashback e pontos</summary>
@@ -290,6 +322,8 @@ function titleFor(dialog: FinanceDialog) {
     case 'reconcile': return 'Conciliar saldo';
     case 'archiveAccount': return 'Arquivar conta';
     case 'archiveCard': return 'Arquivar cartão';
+    case 'deleteAccount': return 'Excluir conta';
+    case 'deleteCard': return 'Excluir cartão';
   }
 }
 
@@ -307,6 +341,7 @@ export default function PersonalFinanceDialog({ uid, dialog, finance, onClose, o
   const accounts = finance.accounts.filter(account => !account.archived);
   const archiving = dialog.type === 'archiveCard' || dialog.type === 'archiveAccount';
   const deleting = dialog.type === 'trashEntry';
+  const deletingWalletItem = dialog.type === 'deleteAccount' || dialog.type === 'deleteCard';
   const creditInvoices = dialog.type === 'credit'
     ? finance.invoices.filter(invoice => invoice.cardId === dialog.card.id && !invoice.paidDate && invoice.totalCents > 0)
       .sort((a, b) => a.month.localeCompare(b.month))
@@ -343,14 +378,14 @@ export default function PersonalFinanceDialog({ uid, dialog, finance, onClose, o
       switch (dialog.type) {
         case 'account':
           await finance.saveAccount({
-            name: field('name'), bank: field('bank'), initialBalanceCents: amount(),
+            name: field('name'), bank: field('bank'), bankPreset: field('bankPreset') as BankAccount['bankPreset'], initialBalanceCents: amount(),
             accountType: field('accountType') as NonNullable<BankAccount['accountType']>,
             color: field('color'), style: style(),
           }, dialog.account?.id);
           break;
         case 'card':
           await finance.saveCard({
-            name: field('name'), bank: field('bank'), brand: field('brand'), lastDigits: field('lastDigits'),
+            name: field('name'), bank: field('bank'), bankPreset: field('bankPreset') as BankAccount['bankPreset'], brand: field('brand'), lastDigits: field('lastDigits'),
             bankAccountId, limitCents: amount(), closingDay: Number(field('closingDay')), dueDay: Number(field('dueDay')),
             color: field('color'), style: style(), virtual: data.has('virtual'),
             monthlyLimitCents: field('monthlyLimit') ? amount('monthlyLimit') : undefined,
@@ -409,8 +444,14 @@ export default function PersonalFinanceDialog({ uid, dialog, finance, onClose, o
         case 'archiveCard':
           await finance.archiveCard(dialog.card.id);
           break;
+        case 'deleteAccount':
+          await finance.deleteAccount(dialog.account.id);
+          break;
+        case 'deleteCard':
+          await finance.deleteCard(dialog.card.id);
+          break;
       }
-      onSuccess(archiving ? 'Item arquivado.' : deleting ? 'Lançamento movido para a lixeira.' : 'Alteração registrada.');
+      onSuccess(archiving ? 'Item arquivado.' : deleting ? 'Lançamento movido para a lixeira.' : deletingWalletItem ? 'Item excluído.' : 'Alteração registrada.');
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Não foi possível salvar. Tente novamente.');
     } finally {
@@ -478,12 +519,14 @@ export default function PersonalFinanceDialog({ uid, dialog, finance, onClose, o
           )}
           {dialog.type === 'archiveAccount' && <p className="text-sm text-text-muted">A conta {dialog.account.name} sairá da carteira ativa. O extrato mantém o histórico.</p>}
           {dialog.type === 'archiveCard' && <p className="text-sm text-text-muted">O cartão {dialog.card.name} sairá da carteira ativa. O extrato mantém o histórico.</p>}
+          {dialog.type === 'deleteAccount' && <p className="text-sm text-text-muted">A conta {dialog.account.name} será excluída permanentemente. Contas com lançamentos, cartões, recorrências ou pagamentos vinculados precisam ser arquivadas para preservar o histórico.</p>}
+          {dialog.type === 'deleteCard' && <p className="text-sm text-text-muted">O cartão {dialog.card.name} será excluído permanentemente. Cartões com compras, faturas ou recorrências precisam ser arquivados para preservar o histórico.</p>}
         </fieldset>
         {error && <p role="alert" className="rounded-xl bg-accent-error/10 p-3 text-sm text-accent-error">{error}</p>}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>Cancelar</Button>
-          <Button type="submit" variant={archiving || deleting ? 'danger' : 'primary'} disabled={busy || (dialog.type === 'credit' && creditInvoices.length === 0)}>
-            {busy ? 'Salvando…' : archiving ? 'Arquivar' : deleting ? 'Mover para lixeira' : 'Salvar'}
+          <Button type="submit" variant={archiving || deleting || deletingWalletItem ? 'danger' : 'primary'} disabled={busy || (dialog.type === 'credit' && creditInvoices.length === 0)}>
+            {busy ? 'Salvando…' : deletingWalletItem ? 'Excluir permanentemente' : archiving ? 'Arquivar' : deleting ? 'Mover para lixeira' : 'Salvar'}
           </Button>
         </div>
       </form>

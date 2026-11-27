@@ -237,6 +237,28 @@
   font-weight: 650;
 }
 
+.personal-wallet-brand-logo {
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: 0 0 auto;
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: .45rem;
+  padding: .18rem;
+  background: white;
+  object-fit: contain;
+}
+
+.personal-wallet-card-brand {
+  width: auto;
+  max-width: 3.6rem;
+  height: 1.55rem;
+  flex: 0 0 auto;
+  border-radius: .3rem;
+  padding: .18rem .32rem;
+  background: white;
+  object-fit: contain;
+}
+
 .personal-instrument-name {
   overflow: hidden;
   color: white;

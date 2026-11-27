@@ -97,7 +97,7 @@ export function CommandPalette() {
     { id: 'cmd-projects', name: 'Projetos & Engenharia', description: 'Acompanhamento de projetos e templates personalizados', path: '/projects', shortcut: 'pj', icon: LayoutTemplate },
     { id: 'cmd-analytics', name: 'Analytics de Vendas', description: 'Métricas de conversão e relatórios avançados', path: '/analytics', shortcut: 'an', icon: LineChart, permission: 'VIEW_REPORTS' },
     { id: 'cmd-finance', name: 'Financeiro Estratégico', description: 'Snapshot diário de DRE, fluxo de caixa e BI', path: '/finance', shortcut: 'gf', icon: DollarSign, permission: 'MANAGE_FINANCE' },
-    { id: 'cmd-personal-finance', name: 'Finanças Pessoais', description: 'Carteira 3D, orçamento, vencimentos e patrimônio', path: '/personal-finance', shortcut: 'fp', icon: Wallet },
+    { id: 'cmd-personal-finance', name: 'Finanças Pessoais', description: 'Carteira, orçamento, vencimentos e patrimônio', path: '/personal-finance', shortcut: 'fp', icon: Wallet },
     { id: 'cmd-admin', name: 'Infraestrutura & APIs', description: 'Configurações de infraestrutura e tokens', path: '/admin', shortcut: 'adm', icon: Settings, permission: 'MANAGE_SETTINGS' },
     { id: 'cmd-canvas', name: 'Hub Canvas', description: 'Whiteboards interativos para brainstorming', path: '/canvas', shortcut: 'cv', icon: FolderGit2 },
     { id: 'cmd-wiki', name: 'Wiki & Memória', description: 'Base de conhecimento e segundo cérebro', path: '/wiki', shortcut: 'wi', icon: BookOpen },

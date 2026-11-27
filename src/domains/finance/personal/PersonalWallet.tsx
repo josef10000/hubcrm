@@ -1,9 +1,10 @@
 import { useId, useState, type CSSProperties, type ReactNode } from 'react';
-import { Archive, CreditCard as CreditCardIcon, Landmark, Pencil, Plus, RotateCw, Scale } from 'lucide-react';
+import { Archive, CreditCard as CreditCardIcon, Landmark, Pencil, Plus, RotateCw, Scale, Trash2 } from 'lucide-react';
 import { Button, Card } from '@shared/design-system';
 import { getUsedLimit, money, today, type BankAccount, type CardInvoice, type CreditCard } from './ledger';
 import WalletCardComparison from './WalletCardComparison';
 import './PersonalWallet.css';
+import { bankLogoPath, cardBrandLogo, inferBankPreset } from './walletBranding';
 
 export interface PersonalWalletProps {
   accounts: BankAccount[];
@@ -19,6 +20,8 @@ export interface PersonalWalletProps {
   onEditCard: (card: CreditCard) => void;
   onArchiveAccount: (account: BankAccount) => void;
   onArchiveCard: (card: CreditCard) => void;
+  onDeleteAccount: (account: BankAccount) => void;
+  onDeleteCard: (card: CreditCard) => void;
   onRestoreAccount?: (account: BankAccount) => void;
   onRestoreCard?: (card: CreditCard) => void;
   onReconcile: (account: BankAccount) => void;
@@ -130,7 +133,7 @@ function InvoiceStatus({ invoice, currentDate }: { invoice?: CardInvoice; curren
 
 export default function PersonalWallet({
   accounts, cards, balances, invoices, selectedMonth, actionsDisabled = false, discreet = false,
-  onCreateAccount, onCreateCard, onEditAccount, onEditCard, onArchiveAccount, onArchiveCard,
+  onCreateAccount, onCreateCard, onEditAccount, onEditCard, onArchiveAccount, onArchiveCard, onDeleteAccount, onDeleteCard,
   onRestoreAccount, onRestoreCard, onReconcile, onPayInvoice, onCardCredit,
 }: PersonalWalletProps) {
   const activeAccounts = accounts.filter(account => !account.archived);
@@ -145,6 +148,7 @@ export default function PersonalWallet({
     const accountType = account.accountType ? accountTypes[account.accountType] : 'Conta bancária';
     const balanceLabel = amountLabel(balance);
     const initialBalanceLabel = amountLabel(account.initialBalanceCents);
+    const bankLogo = bankLogoPath(account.bankPreset || inferBankPreset(account.bank || ''));
 
     return (
       <Card key={`account-${account.id}`} className="personal-wallet-item flex min-w-0 flex-col gap-3 p-3">
@@ -156,7 +160,7 @@ export default function PersonalWallet({
           frontDescription={`Frente. ${account.bank || accountType}. ${discreet ? 'Saldo atual oculto.' : `Saldo atual de ${balanceLabel}.`}`}
           backDescription={`Verso. ${accountType}. ${discreet ? 'Saldo inicial oculto.' : `Saldo inicial de ${initialBalanceLabel}.`}`}
           front={<>
-            <span className="personal-instrument-issuer"><Landmark size={16} className="shrink-0" /><span className="truncate">{account.bank || accountType}</span></span>
+            <span className="personal-instrument-issuer">{bankLogo ? <img className="personal-wallet-brand-logo" src={bankLogo} alt="" /> : <Landmark size={16} className="shrink-0" />}<span className="truncate">{account.bank || accountType}</span></span>
             <span className="grid min-w-0 gap-1">
               <span className="personal-instrument-name">{account.name}</span>
               <span className="personal-instrument-caption">Saldo atual</span>
@@ -173,7 +177,10 @@ export default function PersonalWallet({
         />
         <div className="personal-wallet-actions flex flex-wrap gap-1.5" role="group" aria-label={`Ações da conta ${account.name}`}>
           {account.archived ? (
-            onRestoreAccount && <Button type="button" size="sm" variant="secondary" className={actionClass} disabled={actionsDisabled} onClick={() => onRestoreAccount(account)}>Reativar</Button>
+            <>
+              <Button type="button" size="sm" variant="ghost" className={actionClass} disabled={actionsDisabled} onClick={() => onEditAccount(account)}><Pencil size={14} aria-hidden="true" /> Editar</Button>
+              {onRestoreAccount && <Button type="button" size="sm" variant="secondary" className={actionClass} disabled={actionsDisabled} onClick={() => onRestoreAccount(account)}>Reativar</Button>}
+            </>
           ) : (
             <>
               <Button type="button" size="sm" variant="secondary" className={actionClass} disabled={actionsDisabled} onClick={() => onReconcile(account)}><Scale size={14} aria-hidden="true" /> Conciliar</Button>
@@ -181,6 +188,7 @@ export default function PersonalWallet({
               <Button type="button" size="sm" variant="ghost" className={actionClass} disabled={actionsDisabled} onClick={() => onArchiveAccount(account)}><Archive size={14} aria-hidden="true" /> Arquivar</Button>
             </>
           )}
+          <Button type="button" size="sm" variant="ghost" className={actionClass} disabled={actionsDisabled} onClick={() => onDeleteAccount(account)} aria-label={`Excluir conta ${account.name}`}><Trash2 size={14} aria-hidden="true" /> Excluir</Button>
         </div>
       </Card>
     );
@@ -195,6 +203,8 @@ export default function PersonalWallet({
     const linkedAccountLabel = linkedAccount ? `${linkedAccount.name}${linkedAccount.archived ? ' (arquivada)' : ''}` : 'Sem vínculo';
     const cardType = card.virtual ? 'Cartão virtual' : 'Cartão físico';
     const brand = cardBrands[card.brand] ?? card.brand;
+    const issuerLogo = bankLogoPath(card.bankPreset || inferBankPreset(card.bank || ''));
+    const brandLogo = cardBrandLogo(card.brand);
     const lastDigits = !discreet && /^\d{4}$/.test(card.lastDigits) ? card.lastDigits : '';
     const invoiceAmount = invoice?.totalCents ?? 0;
     const canPay = invoice && invoice.totalCents > 0 && !invoice.paidDate && activeAccounts.length > 0;
@@ -215,8 +225,8 @@ export default function PersonalWallet({
           backDescription={`Verso. Fecha no dia ${card.closingDay}. Vence no dia ${card.dueDay}. Conta vinculada: ${linkedAccountLabel}.`}
           front={<>
             <span className="flex items-center justify-between gap-2">
-              <span className="personal-instrument-issuer"><CreditCardIcon size={16} className="shrink-0" /><span className="truncate">{card.bank || 'Crédito'}</span></span>
-              {brand && <span className="personal-instrument-brand truncate">{brand}</span>}
+              <span className="personal-instrument-issuer">{issuerLogo ? <img className="personal-wallet-brand-logo" src={issuerLogo} alt="" /> : <CreditCardIcon size={16} className="shrink-0" />}<span className="truncate">{card.bank || 'Crédito'}</span></span>
+              {brandLogo ? <img className="personal-wallet-card-brand" src={brandLogo.src} alt={brandLogo.alt} /> : brand && <span className="personal-instrument-brand truncate">{brand}</span>}
             </span>
             <span className="grid min-w-0 gap-1">
               <span className="personal-instrument-name">{card.name}</span>
@@ -267,7 +277,10 @@ export default function PersonalWallet({
         <div className="personal-wallet-actions mt-auto flex flex-wrap gap-1.5" role="group" aria-label={`Ações do cartão ${card.name}`}>
           {canPay && <Button type="button" size="sm" className={actionClass} disabled={actionsDisabled} onClick={() => onPayInvoice(card, invoice)}>Registrar pagamento</Button>}
           {card.archived ? (
-            onRestoreCard && <Button type="button" size="sm" variant="secondary" className={actionClass} disabled={actionsDisabled} onClick={() => onRestoreCard(card)}>Reativar</Button>
+            <>
+              <Button type="button" size="sm" variant="ghost" className={actionClass} disabled={actionsDisabled} onClick={() => onEditCard(card)}><Pencil size={14} aria-hidden="true" /> Editar</Button>
+              {onRestoreCard && <Button type="button" size="sm" variant="secondary" className={actionClass} disabled={actionsDisabled} onClick={() => onRestoreCard(card)}>Reativar</Button>}
+            </>
           ) : (
             <>
               {canCredit && <Button type="button" size="sm" variant="secondary" className={actionClass} disabled={actionsDisabled} onClick={() => onCardCredit(card)}>Estorno ou cashback</Button>}
@@ -275,6 +288,7 @@ export default function PersonalWallet({
               <Button type="button" size="sm" variant="ghost" className={actionClass} disabled={actionsDisabled} onClick={() => onArchiveCard(card)}><Archive size={14} aria-hidden="true" /> Arquivar</Button>
             </>
           )}
+          <Button type="button" size="sm" variant="ghost" className={actionClass} disabled={actionsDisabled} onClick={() => onDeleteCard(card)} aria-label={`Excluir cartão ${card.name}`}><Trash2 size={14} aria-hidden="true" /> Excluir</Button>
         </div>
       </Card>
     );
