@@ -556,6 +556,12 @@ service cloud.firestore {
     match /organizations/{orgId} {
       allow read, write: if isOwnerEmail() || belongsToOrg(orgId);
 
+      // Configuração compartilhada do Hub Office (layout e cadastro dos agentes).
+      // Atividade real será escrita pelo serviço de agentes quando a VPS for conectada.
+      match /agent_office/{configId} {
+        allow read, write: if isOwnerEmail() || belongsToOrg(orgId);
+      }
+
       // Hub Canvas (agora dentro da organização)
       match /canvases/{canvasId} {
         allow read: if isOwnerEmail() || belongsToOrg(orgId);

@@ -852,3 +852,11 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **HubAds**: a tela tem duas coleções: Swipe File para referências externas/concorrentes e Anúncios da operação para criativos próprios. As métricas agregadas e o rastreamento do CRM são restritos aos anúncios próprios.
 - **Referências pesquisáveis**: cada registro pode guardar relação opcional com produto do catálogo, nome livre de produto afiliado, tipo de produto, nicho, perfil de público, mercado/região e URL original. Busca textual cobre metadados, tags, conteúdo e URL; filtros facetados por nicho, público, mercado e tipo são montados a partir dos registros da coleção.
 - **Hub Office**: em tela cheia, controles de operação, andar, grade e rotação ficam recolhidos; a faixa superior revela o menu ao aproximar o mouse, com botão acessível para alternar a visibilidade. O conteúdo do escritório segue ocupando a tela sem a barra obstruindo monitores.
+
+## 53. Convivência e configuração compartilhada do Hub Office
+
+- **Data**: 28/11/2026.
+- **Móveis e ambientes**: o catálogo oferece mesa de sinuca, pufes, bancada e geladeira; pisos criados pelo modelo “Convivência” recebem os móveis correspondentes. As salas de jogos, cozinha/copa e descanso podem ser criadas e editadas pelo usuário.
+- **Pausas**: na prévia temporária, personagens podem caminhar até salas de jogos, cozinha e descanso e mostrar atividades como sinuca, refeição e pausa. Se a operação não tiver uma área de convivência adequada, a atividade não é apresentada falsamente. O estado é apenas visual e será substituído por eventos reais dos agentes quando o runtime estiver conectado.
+- **Sincronização**: configuração do escritório (operações, andares, salas, móveis, agentes e temas) agora sincroniza em `organizations/{orgId}/agent_office/config`; estados da prévia e o feed local não são enviados. O `localStorage` é mantido como cópia local/fallback. A regra Firestore autoriza leitura e escrita a membros da organização.
+- **Estado de integração**: VPS, Telegram, voz e executores de agentes continuam desconectados; a interface identifica a atividade atual como demonstração temporária, sem apresentá-la como atividade real.
