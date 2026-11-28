@@ -1,68 +1,70 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { ArrowLeft, Bot, Check, CircleHelp, Maximize2, Minimize2, MessageCircle, Pause, Pencil, Play, Plus, Save, Sparkles, X } from 'lucide-react';
+import { ArrowLeft, Bot, Check, CircleHelp, Layers, Maximize2, Minimize2, MessageCircle, Pause, Pencil, Play, Plus, Save, Sparkles, Trash2, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '@auth/contexts/AuthContext';
+import { agentPose, HabblaudCharacter } from '../officeArt/HabblaudCharacter';
 import './AgentOfficeView.css';
 
 type AgentStatus = 'idle' | 'working' | 'review';
-type AgentZone = 'ops' | 'finance' | 'content' | 'development';
+
+interface OfficeArea {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  color: string;
+}
+
+interface OfficeFloor {
+  id: string;
+  name: string;
+  areas: OfficeArea[];
+}
 
 interface OfficeAgent {
   id: string;
   name: string;
   role: string;
   task: string;
-  zone: AgentZone;
+  floorId: string;
+  areaId: string;
   color: string;
   look: number;
   status: AgentStatus;
   update: string;
 }
 
-const STORAGE_VERSION = 1;
-const zones: Record<AgentZone, { label: string; x: number; y: number; accent: string }> = {
-  ops: { label: 'Operações', x: 22, y: 28, accent: '#67e8f9' },
-  finance: { label: 'Financeiro', x: 75, y: 29, accent: '#86efac' },
-  content: { label: 'Conteúdo', x: 24, y: 68, accent: '#f0abfc' },
-  development: { label: 'Desenvolvimento', x: 74, y: 68, accent: '#fcd34d' },
-};
+const STORAGE_VERSION = 2;
+const LEGACY_STORAGE_VERSION = 1;
+const MAIN_FLOOR_ID = 'floor-main';
+const starterAreas: OfficeArea[] = [
+  { id: 'ops', name: 'Operações', x: 22, y: 31, color: '#67c9c0' },
+  { id: 'finance', name: 'Financeiro', x: 75, y: 31, color: '#7dbb82' },
+  { id: 'content', name: 'Conteúdo', x: 24, y: 71, color: '#d48dc1' },
+  { id: 'development', name: 'Desenvolvimento', x: 74, y: 71, color: '#dfa950' },
+];
+const starterFloors: OfficeFloor[] = [{ id: MAIN_FLOOR_ID, name: 'Andar principal', areas: starterAreas }];
 
 const starterAgents: OfficeAgent[] = [
-  { id: 'ops', name: 'Nina', role: 'Operações', task: 'Organizar as prioridades da semana', zone: 'ops', color: '#45c5d8', look: 0, status: 'idle', update: 'Disponível para receber uma tarefa' },
-  { id: 'finance', name: 'Caio', role: 'Financeiro', task: 'Preparar o fechamento semanal', zone: 'finance', color: '#54bb82', look: 1, status: 'idle', update: 'Disponível para receber uma tarefa' },
-  { id: 'content', name: 'Lia', role: 'Conteúdo', task: 'Revisar o calendário de conteúdo', zone: 'content', color: '#cc83d8', look: 2, status: 'idle', update: 'Disponível para receber uma tarefa' },
-  { id: 'development', name: 'Theo', role: 'Desenvolvimento', task: 'Revisar uma melhoria do Hub', zone: 'development', color: '#d7a44c', look: 3, status: 'idle', update: 'Disponível para receber uma tarefa' },
+  { id: 'ops', name: 'Nina', role: 'Operações', task: 'Organizar as prioridades da semana', floorId: MAIN_FLOOR_ID, areaId: 'ops', color: '#45c5d8', look: 0, status: 'idle', update: 'Disponível para receber uma tarefa' },
+  { id: 'finance', name: 'Caio', role: 'Financeiro', task: 'Preparar o fechamento semanal', floorId: MAIN_FLOOR_ID, areaId: 'finance', color: '#54bb82', look: 1, status: 'idle', update: 'Disponível para receber uma tarefa' },
+  { id: 'content', name: 'Lia', role: 'Conteúdo', task: 'Revisar o calendário de conteúdo', floorId: MAIN_FLOOR_ID, areaId: 'content', color: '#cc83d8', look: 2, status: 'idle', update: 'Disponível para receber uma tarefa' },
+  { id: 'development', name: 'Theo', role: 'Desenvolvimento', task: 'Revisar uma melhoria do Hub', floorId: MAIN_FLOOR_ID, areaId: 'development', color: '#d7a44c', look: 3, status: 'idle', update: 'Disponível para receber uma tarefa' },
 ];
 
 const statusLabel: Record<AgentStatus, string> = { idle: 'Disponível', working: 'Trabalhando', review: 'Precisa da sua revisão' };
 const statusColor: Record<AgentStatus, string> = { idle: '#9ca3af', working: '#63c5da', review: '#f2bd64' };
 const furniture = '/assets/agent-office/furniture';
 
-function Sprite({ agent, working }: { agent: OfficeAgent; working: boolean }) {
-  const hair = ['#394454', '#674a36', '#704f7f', '#58462d'][agent.look % 4];
-  const skin = ['#efc5a0', '#bb805d', '#f0d0a6', '#9b624d'][agent.look % 4];
-  return <svg viewBox="0 0 48 56" className={working ? 'office-sprite office-sprite-working' : 'office-sprite'} shapeRendering="crispEdges" aria-hidden="true">
-    <ellipse cx="24" cy="51" rx="13" ry="3" fill="#172125" opacity=".22" />
-    <rect x="13" y="20" width="22" height="18" rx="4" fill={agent.color} />
-    <rect x="11" y="35" width="10" height="12" rx="3" fill="#334155" />
-    <rect x="27" y="35" width="10" height="12" rx="3" fill="#334155" />
-    <rect x="10" y="44" width="11" height="4" rx="2" fill="#263443" />
-    <rect x="27" y="44" width="11" height="4" rx="2" fill="#263443" />
-    <rect x="8" y="24" width="7" height="13" rx="3" fill={skin} />
-    <rect x="33" y="24" width="7" height="13" rx="3" fill={skin} />
-    <rect x="14" y="5" width="20" height="20" rx="8" fill={skin} />
-    <path d={agent.look % 2 ? 'M13 15V11a11 11 0 0 1 22 0v5h-4v-5H17v5z' : 'M13 16V11a11 11 0 0 1 22 0v3l-4-3-2 3-4-3-4 3-4-2z'} fill={hair} />
-    <rect x="18" y="15" width="2.5" height="2.5" rx=".5" fill="#24313b" />
-    <rect x="28" y="15" width="2.5" height="2.5" rx=".5" fill="#24313b" />
-    <path d="M21 20q3 2 6 0" fill="none" stroke="#a75249" strokeWidth="1.4" />
-    {working && <><rect x="32" y="2" width="12" height="10" rx="3" fill="#e8fbfd" /><path d="M35 5h6M35 8h4" stroke="#1d8ea2" strokeWidth="1.2" /></>}
-  </svg>;
+function Sprite({ agent, working, poseOverride }: { agent: OfficeAgent; working: boolean; poseOverride?: 'walk' }) {
+  const pose = poseOverride ?? (working ? 'type' : agentPose(agent.status));
+  return <HabblaudCharacter seed={agent.look} outfit={agent.color} pose={pose} className={working ? 'office-sprite-working' : ''} />;
 }
 
-function OfficeRoom({ agents, selectedId, simulation, onSelect, reviewIds }: {
-  agents: OfficeAgent[]; selectedId: string; simulation: boolean; onSelect: (agent: OfficeAgent) => void; reviewIds: Set<string>;
+function OfficeRoom({ agents, areas, selectedId, simulation, fullscreen, onSelect, onExitFullscreen, reviewIds }: {
+  agents: OfficeAgent[]; areas: OfficeArea[]; selectedId: string; simulation: boolean; fullscreen: boolean; onSelect: (agent: OfficeAgent) => void; onExitFullscreen: () => void; reviewIds: Set<string>;
 }) {
   const prefersReducedMotion = useReducedMotion();
   return <div className="office-room" aria-label="Mapa 2D do escritório">
@@ -77,19 +79,14 @@ function OfficeRoom({ agents, selectedId, simulation, onSelect, reviewIds }: {
     <div className="office-furniture office-coffee"><img src={`${furniture}/COFFEE_TABLE/COFFEE_TABLE.png`} alt="" /></div>
     <div className="office-plant office-plant-left"><img src={`${furniture}/LARGE_PLANT/LARGE_PLANT.png`} alt="" /></div>
     <div className="office-plant office-plant-right"><img src={`${furniture}/LARGE_PLANT/LARGE_PLANT.png`} alt="" /></div>
-    <div className="office-zone office-zone-ops"><span>01</span> Operações</div>
-    <div className="office-zone office-zone-finance"><span>02</span> Financeiro</div>
-    <div className="office-zone office-zone-content"><span>03</span> Conteúdo</div>
-    <div className="office-zone office-zone-development"><span>04</span> Desenvolvimento</div>
+    {areas.map((area, index) => <div key={area.id} className="office-zone" style={{ left: `${Math.max(3, area.x - 10)}%`, top: `${Math.max(16, area.y - 16)}%`, '--area-accent': area.color } as CSSProperties}><span>{String(index + 1).padStart(2, '0')}</span>{area.name}</div>)}
     <div className="office-divider office-divider-horizontal" /><div className="office-divider office-divider-vertical" />
     {agents.map((agent, index) => {
-      const base = zones[agent.zone];
+      const base = areas.find(area => area.id === agent.areaId) ?? areas[0] ?? { x: 50, y: 55, color: '#67c9c0' };
+      const inAreaIndex = agents.filter(item => item.areaId === agent.areaId).findIndex(item => item.id === agent.id);
       const spots = [
-        { x: base.x, y: base.y },
-        { x: Math.min(base.x + 7, 86), y: base.y + 1 },
-        { x: base.x, y: Math.min(base.y + 7, 79) },
-        { x: Math.min(base.x + 7, 86), y: Math.min(base.y + 7, 79) },
-      ];
+        { x: 0, y: 0 }, { x: 7, y: 3 }, { x: -7, y: 6 }, { x: 7, y: 9 }, { x: -7, y: 11 },
+      ][Math.max(0, inAreaIndex) % 5];
       const moving = simulation && agent.status === 'working';
       const wander = [
         { x: [0, 9, 18, 12, -3, 0], y: [0, -2, 1, 5, 2, 0] },
@@ -97,23 +94,27 @@ function OfficeRoom({ agents, selectedId, simulation, onSelect, reviewIds }: {
         { x: [0, 6, 14, 8, -5, 0], y: [0, 2, 5, -2, -4, 0] },
         { x: [0, -7, -16, -9, 3, 0], y: [0, -3, -1, 4, 3, 0] },
       ][index % 4];
-      return <button key={agent.id} type="button" className={`office-agent office-agent-${agent.zone} ${agent.id === selectedId ? 'is-selected' : ''}`} style={{ left: `${spots[index % 4].x}%`, top: `${spots[index % 4].y}%`, '--agent-accent': agent.color } as CSSProperties}
+      return <button key={agent.id} type="button" className={`office-agent ${agent.id === selectedId ? 'is-selected' : ''}`} style={{ left: `calc(${base.x}% + ${spots.x}px)`, top: `calc(${base.y}% + ${spots.y}px)`, '--agent-accent': agent.color } as CSSProperties}
         onClick={() => onSelect(agent)} aria-label={`${agent.name}, ${agent.role}, ${statusLabel[agent.status]}`}>
         <span className="office-desk"><img src={`${furniture}/DESK/DESK_FRONT.png`} alt=""/><img className={moving ? 'office-computer-on' : ''} src={`${furniture}/PC/PC_FRONT_ON_1.png`} alt="" /></span>
-        <motion.span className="office-walker" animate={moving && !prefersReducedMotion ? wander : { x: 0, y: 0 }} transition={moving && !prefersReducedMotion ? { duration: 8 + index, repeat: Infinity, ease: 'easeInOut' } : { duration: .6 }}><Sprite agent={agent} working={agent.status === 'working'} /></motion.span>
+        <motion.span className="office-walker" animate={moving && !prefersReducedMotion ? wander : { x: 0, y: 0 }} transition={moving && !prefersReducedMotion ? { duration: 8 + index, repeat: Infinity, ease: 'easeInOut' } : { duration: .6 }}><Sprite agent={agent} working={agent.status === 'working'} poseOverride={moving ? 'walk' : undefined} /></motion.span>
         <span className="office-agent-tag"><i style={{ background: statusColor[agent.status] }} />{agent.name}<small>{agent.role}</small></span>
         {reviewIds.has(agent.id) && <span className="office-review-dot">Revisar</span>}
       </button>;
     })}
     <div className="office-pixel-note"><Sparkles size={13} /> um espaço de trabalho para o que vem a seguir</div>
+    {fullscreen && <button type="button" className="office-exit-fullscreen" onClick={onExitFullscreen} aria-label="Sair da tela cheia"><Minimize2 size={18}/></button>}
   </div>;
 }
 
-function AgentEditor({ agent, onSave, onClose }: { agent?: OfficeAgent; onSave: (agent: OfficeAgent) => void; onClose: () => void }) {
+function AgentEditor({ agent, floors, defaultFloorId, onSave, onClose }: { agent?: OfficeAgent; floors: OfficeFloor[]; defaultFloorId: string; onSave: (agent: OfficeAgent) => void; onClose: () => void }) {
+  const [floorId, setFloorId] = useState(agent?.floorId ?? defaultFloorId);
+  const [areaId, setAreaId] = useState(agent?.areaId ?? floors.find(floor => floor.id === floorId)?.areas[0]?.id ?? '');
+  const floor = floors.find(item => item.id === floorId) ?? floors[0];
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    onSave({ ...(agent ?? starterAgents[0]), id: agent?.id ?? crypto.randomUUID(), name: String(form.get('name')).trim(), role: String(form.get('role')).trim(), task: String(form.get('task')).trim(), zone: String(form.get('zone')) as AgentZone, color: String(form.get('color')), look: agent?.look ?? Math.floor(Math.random() * 4), status: agent?.status ?? 'idle', update: agent?.update ?? 'Disponível para receber uma tarefa' });
+    onSave({ ...(agent ?? starterAgents[0]), id: agent?.id ?? crypto.randomUUID(), name: String(form.get('name')).trim(), role: String(form.get('role')).trim(), task: String(form.get('task')).trim(), floorId, areaId: String(form.get('areaId')), color: String(form.get('color')), look: agent?.look ?? Math.floor(Math.random() * 16), status: agent?.status ?? 'idle', update: agent?.update ?? 'Disponível para receber uma tarefa' });
     onClose();
   }
   return <div className="office-modal-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
@@ -122,10 +123,53 @@ function AgentEditor({ agent, onSave, onClose }: { agent?: OfficeAgent; onSave: 
       <label>Nome<input name="name" defaultValue={agent?.name} required maxLength={36} placeholder="Ex. Nina" /></label>
       <label>Especialidade<input name="role" defaultValue={agent?.role} required maxLength={48} placeholder="Ex. Pesquisa de mercado" /></label>
       <label>Tarefa de demonstração<input name="task" defaultValue={agent?.task} required maxLength={100} placeholder="O que este agente fará" /></label>
-      <div className="office-form-row"><label>Área<select name="zone" defaultValue={agent?.zone ?? 'ops'}>{Object.entries(zones).map(([key, zone]) => <option key={key} value={key}>{zone.label}</option>)}</select></label><label>Cor<input name="color" type="color" defaultValue={agent?.color ?? '#45c5d8'} /></label></div>
+      <label>Andar<select value={floor?.id ?? ''} onChange={event => { const nextId = event.target.value; setFloorId(nextId); setAreaId(floors.find(item => item.id === nextId)?.areas[0]?.id ?? ''); }} required>{floors.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+      <div className="office-form-row"><label>Área<select name="areaId" value={areaId} onChange={event => setAreaId(event.target.value)} required>{(floor?.areas ?? []).map(area => <option key={area.id} value={area.id}>{area.name}</option>)}</select></label><label>Cor<input name="color" type="color" defaultValue={agent?.color ?? '#45c5d8'} /></label></div>
       <p className="office-editor-note">Esta configuração fica salva neste navegador. A conexão com um executor real poderá preencher o status e as tarefas depois.</p>
       <div className="office-editor-actions"><button type="button" className="office-secondary" onClick={onClose}>Cancelar</button><button type="submit" className="office-primary"><Save size={16}/> Salvar agente</button></div>
     </form>
+  </div>;
+}
+
+function SpaceEditor({ floors, selectedFloorId, onSelectFloor, onAddFloor, onRenameFloor, onDeleteFloor, onAddArea, onUpdateArea, onDeleteArea, onClose }: {
+  floors: OfficeFloor[];
+  selectedFloorId: string;
+  onSelectFloor: (id: string) => void;
+  onAddFloor: () => void;
+  onRenameFloor: (id: string, name: string) => void;
+  onDeleteFloor: (id: string) => void;
+  onAddArea: (floorId: string, name: string) => void;
+  onUpdateArea: (floorId: string, areaId: string, values: Partial<OfficeArea>) => void;
+  onDeleteArea: (floorId: string, areaId: string) => void;
+  onClose: () => void;
+}) {
+  const floor = floors.find(item => item.id === selectedFloorId) ?? floors[0];
+  const [areaName, setAreaName] = useState('');
+  function addArea(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!floor || !areaName.trim()) return;
+    onAddArea(floor.id, areaName.trim());
+    setAreaName('');
+  }
+  return <div className="office-modal-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
+    <section className="office-space-editor" role="dialog" aria-modal="true" aria-labelledby="office-space-title">
+      <div className="office-editor-heading"><div><span className="office-kicker">PERSONALIZE SEU ESCRITÓRIO</span><h2 id="office-space-title">Andares e áreas</h2></div><button type="button" onClick={onClose} aria-label="Fechar"><X size={19}/></button></div>
+      <div className="office-floor-tabs">{floors.map(item => <button type="button" key={item.id} className={item.id === floor?.id ? 'is-active' : ''} onClick={() => onSelectFloor(item.id)}><Layers size={14}/>{item.name}</button>)}<button type="button" className="office-add-floor" onClick={onAddFloor}><Plus size={15}/> Novo andar</button></div>
+      {floor && <div className="office-space-content">
+        <label className="office-space-name">Nome do andar<input value={floor.name} onChange={event => onRenameFloor(floor.id, event.target.value)} maxLength={40} /></label>
+        <div className="office-space-list-heading"><div><h3>Áreas deste andar</h3><p>Organize as estações e ajuste onde cada área aparece no mapa.</p></div><button type="button" className="office-delete-space" disabled={floors.length <= 1} onClick={() => onDeleteFloor(floor.id)}><Trash2 size={14}/> Excluir andar</button></div>
+        <div className="office-area-editor-list">{floor.areas.map((area, index) => <div className="office-area-editor-row" key={area.id}>
+          <span className="office-area-number" style={{ '--area-accent': area.color } as CSSProperties}>{String(index + 1).padStart(2, '0')}</span>
+          <label className="office-area-name">Nome<input value={area.name} onChange={event => onUpdateArea(floor.id, area.id, { name: event.target.value })} maxLength={32}/></label>
+          <label className="office-area-coordinate">X<input type="number" min={12} max={88} value={area.x} onChange={event => onUpdateArea(floor.id, area.id, { x: Math.max(12, Math.min(88, Number(event.target.value))) })}/></label>
+          <label className="office-area-coordinate">Y<input type="number" min={25} max={75} value={area.y} onChange={event => onUpdateArea(floor.id, area.id, { y: Math.max(25, Math.min(75, Number(event.target.value))) })}/></label>
+          <label className="office-area-color" title="Cor da área"><input type="color" value={area.color} onChange={event => onUpdateArea(floor.id, area.id, { color: event.target.value })}/></label>
+          <button type="button" className="office-icon-button office-remove-area" disabled={floor.areas.length <= 1} onClick={() => onDeleteArea(floor.id, area.id)} aria-label={`Excluir área ${area.name}`}><Trash2 size={15}/></button>
+        </div>)}</div>
+        <form className="office-add-area-form" onSubmit={addArea}><input value={areaName} onChange={event => setAreaName(event.target.value)} maxLength={32} required placeholder="Nome da nova área"/><button type="submit" className="office-primary"><Plus size={15}/> Criar área</button></form>
+        <p className="office-editor-note">As mudanças ficam salvas neste navegador. Agentes já vinculados a uma área são movidos automaticamente quando ela é removida.</p>
+      </div>}
+    </section>
   </div>;
 }
 
@@ -134,10 +178,14 @@ export default function AgentOfficeView() {
   const { user } = useAuth();
   const pageRef = useRef<HTMLDivElement>(null);
   const storageKey = `hub-agent-office:v${STORAGE_VERSION}:${user?.uid ?? 'local'}`;
+  const legacyStorageKey = `hub-agent-office:v${LEGACY_STORAGE_VERSION}:${user?.uid ?? 'local'}`;
+  const [floors, setFloors] = useState<OfficeFloor[]>(starterFloors);
+  const [activeFloorId, setActiveFloorId] = useState(MAIN_FLOOR_ID);
   const [agents, setAgents] = useState<OfficeAgent[]>(starterAgents);
   const [loaded, setLoaded] = useState(false);
   const [selectedId, setSelectedId] = useState('ops');
   const [editingAgent, setEditingAgent] = useState<OfficeAgent | null | undefined>(undefined);
+  const [editingSpaces, setEditingSpaces] = useState(false);
   const [simulation, setSimulation] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [eventLog, setEventLog] = useState<string[]>(['O escritório está pronto para configurar os agentes.']);
@@ -147,16 +195,26 @@ export default function AgentOfficeView() {
     try {
       const saved = localStorage.getItem(storageKey);
       if (saved) {
-        const data = JSON.parse(saved);
-        if (Array.isArray(data) && data.every(agent => agent && typeof agent.id === 'string' && typeof agent.name === 'string')) setAgents(data.map(agent => ({ ...agent, status: 'idle', update: 'Disponível para receber uma tarefa' }))); 
+        const data = JSON.parse(saved) as { agents?: OfficeAgent[]; floors?: OfficeFloor[]; activeFloorId?: string };
+        if (Array.isArray(data.agents) && Array.isArray(data.floors) && data.floors.every(floor => typeof floor.id === 'string' && Array.isArray(floor.areas))) {
+          setFloors(data.floors);
+          setAgents(data.agents.map(agent => ({ ...agent, status: 'idle', update: 'Disponível para receber uma tarefa' })));
+          setActiveFloorId(data.floors.some(floor => floor.id === data.activeFloorId) ? data.activeFloorId! : data.floors[0]?.id ?? MAIN_FLOOR_ID);
+        }
+      } else {
+        const legacy = localStorage.getItem(legacyStorageKey);
+        if (legacy) {
+          const data = JSON.parse(legacy) as Array<OfficeAgent & { zone?: string }>;
+          if (Array.isArray(data)) setAgents(data.map(agent => ({ ...agent, floorId: MAIN_FLOOR_ID, areaId: agent.areaId ?? agent.zone ?? 'ops', status: 'idle', update: 'Disponível para receber uma tarefa' })));
+        }
       }
     } catch { /* Dados locais inválidos voltam à configuração inicial. */ }
     setLoaded(true);
-  }, [storageKey]);
+  }, [storageKey, legacyStorageKey]);
 
   useEffect(() => {
-    if (loaded) localStorage.setItem(storageKey, JSON.stringify(agents));
-  }, [agents, loaded, storageKey]);
+    if (loaded) localStorage.setItem(storageKey, JSON.stringify({ agents, floors, activeFloorId }));
+  }, [agents, floors, activeFloorId, loaded, storageKey]);
 
   useEffect(() => {
     if (!simulation) return;
@@ -180,9 +238,11 @@ export default function AgentOfficeView() {
     return () => document.removeEventListener('fullscreenchange', update);
   }, []);
 
-  const selected = useMemo(() => agents.find(agent => agent.id === selectedId) ?? agents[0], [agents, selectedId]);
-  const reviewAgents = agents.filter(agent => reviewIds.has(agent.id));
-  const workingCount = agents.filter(agent => agent.status === 'working').length;
+  const activeFloor = floors.find(floor => floor.id === activeFloorId) ?? floors[0];
+  const visibleAgents = agents.filter(agent => agent.floorId === activeFloor?.id);
+  const selected = useMemo(() => visibleAgents.find(agent => agent.id === selectedId) ?? visibleAgents[0], [visibleAgents, selectedId]);
+  const reviewAgents = visibleAgents.filter(agent => reviewIds.has(agent.id));
+  const workingCount = visibleAgents.filter(agent => agent.status === 'working').length;
 
   function toggleSimulation() {
     if (!simulation) {
@@ -208,8 +268,68 @@ export default function AgentOfficeView() {
 
   function saveAgent(agent: OfficeAgent) {
     setAgents(current => current.some(item => item.id === agent.id) ? current.map(item => item.id === agent.id ? agent : item) : [...current, agent]);
+    setActiveFloorId(agent.floorId);
     setSelectedId(agent.id);
     toast.success('Agente salvo neste navegador.');
+  }
+
+  function addFloor() {
+    const id = crypto.randomUUID();
+    const index = floors.length + 1;
+    const floor: OfficeFloor = { id, name: `Andar ${index}`, areas: [
+      { id: crypto.randomUUID(), name: 'Foco', x: 23, y: 35, color: '#67c9c0' },
+      { id: crypto.randomUUID(), name: 'Reuniões', x: 75, y: 35, color: '#7dbb82' },
+      { id: crypto.randomUUID(), name: 'Criação', x: 24, y: 73, color: '#d48dc1' },
+      { id: crypto.randomUUID(), name: 'Projetos', x: 74, y: 73, color: '#dfa950' },
+    ] };
+    setFloors(current => [...current, floor]);
+    setActiveFloorId(id);
+    setSelectedId('');
+    toast.success(`${floor.name} criado com quatro áreas editáveis.`);
+  }
+
+  function renameFloor(floorId: string, name: string) {
+    setFloors(current => current.map(floor => floor.id === floorId ? { ...floor, name } : floor));
+  }
+
+  function deleteFloor(floorId: string) {
+    if (floors.length <= 1) return;
+    const nextFloor = floors.find(floor => floor.id !== floorId);
+    if (!nextFloor) return;
+    const destinationAreaId = nextFloor.areas[0]?.id;
+    setFloors(current => current.filter(floor => floor.id !== floorId));
+    setAgents(current => current.map(agent => agent.floorId === floorId ? { ...agent, floorId: nextFloor.id, areaId: destinationAreaId ?? '' } : agent));
+    setActiveFloorId(nextFloor.id);
+    setSelectedId('');
+    toast.success('Andar excluído; os agentes foram movidos para o primeiro andar.');
+  }
+
+  function addArea(floorId: string, name: string) {
+    const floor = floors.find(item => item.id === floorId);
+    if (!floor) return;
+    const positions = [{ x: 49, y: 45 }, { x: 50, y: 68 }, { x: 34, y: 53 }, { x: 66, y: 53 }, { x: 50, y: 74 }];
+    const position = positions[floor.areas.length % positions.length];
+    const area: OfficeArea = { id: crypto.randomUUID(), name, ...position, color: ['#65c1bd', '#f0a96f', '#a695dc', '#df8eaa'][floor.areas.length % 4] };
+    setFloors(current => current.map(item => item.id === floorId ? { ...item, areas: [...item.areas, area] } : item));
+    toast.success(`Área “${name}” criada.`);
+  }
+
+  function updateArea(floorId: string, areaId: string, values: Partial<OfficeArea>) {
+    setFloors(current => current.map(floor => floor.id === floorId ? { ...floor, areas: floor.areas.map(area => area.id === areaId ? { ...area, ...values } : area) } : floor));
+  }
+
+  function deleteArea(floorId: string, areaId: string) {
+    const floor = floors.find(item => item.id === floorId);
+    const destinationArea = floor?.areas.find(area => area.id !== areaId);
+    if (!floor || !destinationArea || floor.areas.length <= 1) return;
+    setFloors(current => current.map(item => item.id === floorId ? { ...item, areas: item.areas.filter(area => area.id !== areaId) } : item));
+    setAgents(current => current.map(agent => agent.floorId === floorId && agent.areaId === areaId ? { ...agent, areaId: destinationArea.id } : agent));
+    toast.success(`Agentes movidos para “${destinationArea.name}”; área excluída.`);
+  }
+
+  function selectFloor(floorId: string) {
+    setActiveFloorId(floorId);
+    setSelectedId(agents.find(agent => agent.floorId === floorId)?.id ?? '');
   }
 
   function completeReview(agentId: string) {
@@ -234,9 +354,9 @@ export default function AgentOfficeView() {
     </header>
     <div className="agent-office-body">
       <section className="agent-office-map-column">
-        <div className="agent-office-map-title"><div><p className="office-kicker">SALA PRINCIPAL <span>·</span> {agents.length} estações</p><h2>Seu time, em um só lugar</h2></div><button className="office-edit-layout" type="button" onClick={() => setEditingAgent(selected ?? null)} disabled={!selected}><Pencil size={15}/> Editar selecionado</button></div>
-        <OfficeRoom agents={agents} selectedId={selectedId} simulation={simulation} reviewIds={reviewIds} onSelect={agent => setSelectedId(agent.id)}/>
-        <div className="agent-office-map-footer"><span><i className="office-dot office-dot-working"/> {workingCount} trabalhando</span><span><i className="office-dot office-dot-review"/> {reviewAgents.length} para revisar</span><span className="office-map-credit">Móveis e pisos: Pixel Agents, licença MIT</span></div>
+        <div className="agent-office-map-title"><div><p className="office-kicker">{activeFloor?.name ?? 'Escritório'} <span>·</span> {visibleAgents.length} estações</p><h2>Seu time, em um só lugar</h2></div><div className="office-map-actions"><label className="office-floor-select-label"><Layers size={15}/><select value={activeFloor?.id ?? ''} onChange={event => selectFloor(event.target.value)} aria-label="Selecionar andar">{floors.map(floor => <option key={floor.id} value={floor.id}>{floor.name}</option>)}</select></label><button className="office-edit-layout" type="button" onClick={() => setEditingSpaces(true)}><Pencil size={15}/> Personalizar espaços</button><button className="office-edit-layout" type="button" onClick={() => setEditingAgent(null)}><Plus size={15}/> Novo agente</button></div></div>
+        <OfficeRoom agents={visibleAgents} areas={activeFloor?.areas ?? []} selectedId={selected?.id ?? ''} simulation={simulation} fullscreen={fullscreen} onExitFullscreen={toggleFullscreen} reviewIds={reviewIds} onSelect={agent => setSelectedId(agent.id)}/>
+        <div className="agent-office-map-footer"><span><i className="office-dot office-dot-working"/> {workingCount} trabalhando</span><span><i className="office-dot office-dot-review"/> {reviewAgents.length} para revisar</span><span className="office-map-credit">Personagens: Habblaud · móveis: Pixel Agents (MIT)</span></div>
       </section>
       <aside className="agent-office-sidebar">
         <section className="office-side-card office-selected-card">
@@ -248,11 +368,12 @@ export default function AgentOfficeView() {
           </> : <p className="office-empty-note">Adicione seu primeiro agente para começar.</p>}
         </section>
         <section className="office-side-card office-team-card"><div className="office-side-heading"><div><span className="office-kicker">SEU ESPAÇO</span><h2>Estações</h2></div><button className="office-icon-button" type="button" aria-label="Adicionar agente" onClick={() => setEditingAgent(null)}><Plus size={17}/></button></div>
-          <div className="office-agent-list">{agents.map(agent => <button type="button" key={agent.id} className={`office-agent-row ${selectedId === agent.id ? 'is-selected' : ''}`} onClick={() => setSelectedId(agent.id)}><span className="office-row-avatar" style={{ '--agent-accent': agent.color } as CSSProperties}><Sprite agent={agent} working={false}/></span><span className="office-row-copy"><strong>{agent.name}</strong><small>{zones[agent.zone].label} · {agent.role}</small></span><i className="office-row-status" style={{ backgroundColor: statusColor[agent.status] }}/><span className="office-row-edit" role="button" aria-label={`Editar ${agent.name}`} onClick={event => { event.stopPropagation(); setEditingAgent(agent); }}><Pencil size={14}/></span></button>)}</div>
+          <div className="office-agent-list">{agents.map(agent => <button type="button" key={agent.id} className={`office-agent-row ${selected?.id === agent.id ? 'is-selected' : ''}`} onClick={() => { setActiveFloorId(agent.floorId); setSelectedId(agent.id); }}><span className="office-row-avatar" style={{ '--agent-accent': agent.color } as CSSProperties}><Sprite agent={agent} working={false}/></span><span className="office-row-copy"><strong>{agent.name}</strong><small>{floors.find(floor => floor.id === agent.floorId)?.name ?? 'Andar'} · {floors.find(floor => floor.id === agent.floorId)?.areas.find(area => area.id === agent.areaId)?.name ?? 'Área'} · {agent.role}</small></span><i className="office-row-status" style={{ backgroundColor: statusColor[agent.status] }}/><span className="office-row-edit" role="button" aria-label={`Editar ${agent.name}`} onClick={event => { event.stopPropagation(); setEditingAgent(agent); }}><Pencil size={14}/></span></button>)}</div>
         </section>
         <section className="office-side-card office-activity-card"><div className="office-side-heading"><div><span className="office-kicker">ACOMPANHAMENTO</span><h2>Atividade recente</h2></div><span className="office-log-indicator"><i/></span></div><div className="office-activity-list">{eventLog.map((entry,index) => <p key={`${entry}-${index}`}><i/>{entry}</p>)}</div><div className="office-connection-note"><span className="office-connection-icon"><Sparkles size={15}/></span><span><strong>Modo demonstrativo</strong><small>A VPS e os agentes ainda não estão conectados.</small></span></div></section>
       </aside>
     </div>
-    <AnimatePresence>{editingAgent !== undefined && <motion.div key="agent-editor" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><AgentEditor agent={editingAgent ?? undefined} onSave={saveAgent} onClose={() => setEditingAgent(undefined)}/></motion.div>}</AnimatePresence>
+    <AnimatePresence>{editingAgent !== undefined && <motion.div key="agent-editor" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><AgentEditor agent={editingAgent ?? undefined} floors={floors} defaultFloorId={activeFloor?.id ?? MAIN_FLOOR_ID} onSave={saveAgent} onClose={() => setEditingAgent(undefined)}/></motion.div>}</AnimatePresence>
+    <AnimatePresence>{editingSpaces && <motion.div key="space-editor" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><SpaceEditor floors={floors} selectedFloorId={activeFloor?.id ?? MAIN_FLOOR_ID} onSelectFloor={selectFloor} onAddFloor={addFloor} onRenameFloor={renameFloor} onDeleteFloor={deleteFloor} onAddArea={addArea} onUpdateArea={updateArea} onDeleteArea={deleteArea} onClose={() => setEditingSpaces(false)}/></motion.div>}</AnimatePresence>
   </div>;
 }

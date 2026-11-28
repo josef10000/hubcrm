@@ -791,3 +791,10 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Movimento**: a estação ficou fixa; Framer Motion anima apenas o wrapper do personagem em uma rota curta ao redor da mesa, sem deslocar móveis, botões ou rótulos. `useReducedMotion` desliga a caminhada para quem prefere menos animação.
 - **Sala**: substituída a textura de piso cinza por tábuas quentes em CSS; parede de pôr do sol, luz de janela, luminárias, tapetes, estante, quadro branco e plantas dão cor e movimento ambiental. Itens estáticos seguem sem colisão ou deslocamento.
 - **Pesquisa de assets**: confirmei o pack Pixel Office de 2dPig como CC0 e o pack de móveis de Antea com atribuição; não foi preciso adicionar esses arquivos, porque o acervo Pixel Agents/MIT existente já fornece móveis usados pela cena. O catálogo oficial de tilesheets do Gather está livre para download, mas essa página não esclarece os termos de redistribuição; nenhum asset Gather foi copiado.
+
+## 46. Sprites Habblaud e Espaços Personalizáveis no Hub Office
+
+- **Data**: 28/11/2026.
+- **Personagens**: renderizador procedural pixel art adaptado do Habblaud (`marmottajr/habblaud`, revisão `faa1a012b5fbf632c66dc6801c5383e53a542406`), sob MIT. O Hub monta aparências distintas localmente, com tons de pele, cabelo, roupa e acessórios, e anima poses de espera, caminhada, digitação e mão levantada. Licença e origem em `src/domains/nexus/officeArt/`.
+- **Andares e áreas**: versão de armazenamento local foi elevada a v2, com migração dos dados v1. Cada andar guarda áreas nomeadas, coloridas e posicionadas por coordenadas. É possível criar/renomear/excluir andares e áreas; agentes são movidos para um destino válido se o seu espaço for excluído.
+- **Tela cheia**: oculta o cabeçalho, controles, título, rodapé e barra lateral; o mapa ocupa a tela toda. Mantém apenas um botão discreto para sair, além do Escape do navegador.
