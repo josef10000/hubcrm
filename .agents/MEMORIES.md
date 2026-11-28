@@ -817,3 +817,12 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Natal e sazonalidade**: calendário anual ativável, prévia “Ver tema agora” até a meia-noite, fios de luzes coloridas, detalhes em vermelho/branco, piso e tapetes festivos. Desativar o tema sazonal remove o visual e a prévia imediatamente.
 - **Metas**: a comemoração guarda o ID da meta que a iniciou. Desativar ou remover a meta encerra sua comemoração; dados antigos são normalizados na abertura para limpar celebrações vinculadas a metas inativas.
 - **Reuniões**: assentos de cadeira aparecem em torno da mesa para os participantes. Os sprites caminham até lugares distintos e adotam a pose sentada ao chegar, sem levar móveis junto.
+
+## 49. Salas de operação e monitoramento do Hub Office
+
+- **Data**: 28/11/2026.
+- **Salas por operação**: tipos “Operação de produto”, “Sala de nicho” e “Sala de blog/canal” disponíveis no editor de espaços. Criar uma sala ou andar cria personagens locais distintos; migração v5 preenche espaços antigos sem equipe.
+- **Simulação**: começa ativa por padrão após carregar o Office. Em intervalos mais longos, agentes alternam trabalho, pausa e revisão e caminham para outras salas do mesmo andar; posições em trânsito são temporárias e não alteram o posto salvo.
+- **Movimento**: percursos visuais maiores ao redor das mesas e transição entre espaços. Móveis continuam fixos enquanto sprites caminham.
+- **Monitoramento**: tela cheia tem três modos: foco em uma sala, grade de todas as salas do prédio com acesso por clique, e alternância automática de sala a cada 12 segundos. A simulação pode ser pausada ou retomada na barra de tela cheia.
+- **Limite atual**: os tipos de sala e personagens são preparados manualmente no Hub Office. Criação de produtos, nichos ou blogs em outros módulos ainda não sincroniza salas automaticamente; o Office segue local e simulado, sem VPS, métricas ou agentes reais.

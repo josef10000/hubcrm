@@ -116,6 +116,32 @@
 .office-fullscreen-button,.office-primary { border-color: rgba(89, 197, 206, .3); color: #e8ffff; background: linear-gradient(140deg, #237984, #235a6b); }
 .office-fullscreen-button:hover,.office-primary:hover { background: linear-gradient(140deg, #2b8e99, #296a7c); }
 .office-fullscreen-button { min-width: 145px; }
+.office-all-rooms-button { color:#c6f5f0; border-color:rgba(93,190,174,.22); }
+
+.office-fullscreen-toolbar { position:fixed;z-index:150;top:12px;left:50%;display:flex;max-width:calc(100vw - 28px);align-items:center;justify-content:space-between;gap:12px;padding:7px;border:1px solid rgba(220,238,241,.17);border-radius:15px;background:rgba(11,20,29,.78);box-shadow:0 12px 36px rgba(0,0,0,.25);backdrop-filter:blur(14px);transform:translateX(-50%); }
+.office-fullscreen-toolbar > div { display:flex;align-items:center;gap:5px; }
+.office-fullscreen-toolbar button { display:inline-flex;min-height:34px;align-items:center;justify-content:center;gap:7px;padding:0 11px;border:1px solid transparent;border-radius:10px;color:#c8d5df;background:transparent;font:inherit;font-size:11px;font-weight:650;white-space:nowrap;cursor:pointer; }
+.office-fullscreen-toolbar button:hover,.office-fullscreen-toolbar button.is-active { border-color:rgba(117,219,208,.26);color:#effffb;background:rgba(79,178,166,.18); }
+.office-fullscreen-toolbar .office-live-badge { min-height:33px;padding:0 9px;font-size:10px; }
+.office-fullscreen-toolbar .office-fullscreen-exit { margin-left:5px;border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.06); }
+.office-room-board { width:100%;height:100vh;overflow:auto;padding:76px clamp(16px,3vw,46px) 30px; }
+.office-room-board > header { display:flex;align-items:end;justify-content:space-between;gap:18px;max-width:1720px;margin:0 auto 22px; }
+.office-room-board > header h2 { margin:0;color:#f4f7fa;font-size:clamp(23px,3vw,38px);letter-spacing:-.045em; }
+.office-room-board > header > span { padding:8px 12px;border:1px solid rgba(202,222,232,.12);border-radius:999px;color:#a9bbc7;background:rgba(255,255,255,.04);font-size:11px; }
+.office-room-board-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:16px;max-width:1720px;margin:0 auto; }
+.office-room-tile { position:relative;display:flex;min-height:245px;flex-direction:column;align-items:flex-start;overflow:hidden;padding:19px;border:1px solid color-mix(in srgb,var(--area-accent) 35%,rgba(210,229,239,.11));border-radius:19px;color:#eff5f7;background:radial-gradient(ellipse at 50% 115%,color-mix(in srgb,var(--area-accent) 25%,transparent),transparent 57%),linear-gradient(145deg,rgba(33,51,62,.94),rgba(13,22,32,.97));box-shadow:0 14px 38px rgba(0,0,0,.2),inset 0 1px rgba(255,255,255,.06);text-align:left;cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .2s; }
+.office-room-tile:hover,.office-room-tile.is-focused { transform:translateY(-3px);border-color:color-mix(in srgb,var(--area-accent) 74%,white);box-shadow:0 18px 42px rgba(0,0,0,.26),0 0 0 2px color-mix(in srgb,var(--area-accent) 20%,transparent); }
+.office-room-tile::before { position:absolute;right:-35px;bottom:12px;width:170px;height:96px;border:1px solid color-mix(in srgb,var(--area-accent) 24%,transparent);border-radius:50% 50% 10px 10px;background:color-mix(in srgb,var(--area-accent) 9%,transparent);content:'';transform:rotate(-9deg); }
+.office-room-tile-top { z-index:1;display:flex;width:100%;align-items:center;justify-content:space-between;gap:10px;color:#a8bac5;font-size:10px; }
+.office-room-tile-top small { overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.office-room-tile-top i { padding:5px 8px;border-radius:999px;color:#d4e2e8;background:rgba(255,255,255,.07);font-size:9px;font-style:normal; }
+.office-room-tile > strong { z-index:1;margin-top:15px;font-size:clamp(17px,1.7vw,23px);letter-spacing:-.035em; }
+.office-room-tile-kind { z-index:1;margin-top:5px;color:color-mix(in srgb,var(--area-accent) 72%,white);font-size:10px;font-weight:700; }
+.office-room-tile-people { z-index:1;display:flex;min-height:94px;align-items:end;gap:8px;margin-top:auto;padding:14px 0 2px; }
+.office-room-tile-people > span { display:grid;width:51px;height:66px;place-items:end center;border:1px solid color-mix(in srgb,var(--agent-accent) 36%,transparent);border-radius:14px 14px 8px 8px;background:color-mix(in srgb,var(--agent-accent) 12%,rgba(255,255,255,.04)); }
+.office-room-tile-people .office-habblaud-sprite { width:36px;height:54px; }
+.office-room-tile-people em { padding:0 0 5px;color:#8999a3;font-size:10px;font-style:normal; }
+.office-room-tile-action { z-index:1;display:flex;align-items:center;gap:6px;margin-top:11px;color:#cbd7dd;font-size:10px; }
 
 .agent-office-body {
   display: grid;
@@ -367,9 +393,22 @@
 
 .agent-office-fullscreen .agent-office-header,.agent-office-fullscreen .agent-office-sidebar,.agent-office-fullscreen .agent-office-map-title,.agent-office-fullscreen .agent-office-map-footer { display:none; }
 .agent-office-fullscreen .agent-office-body { display:block;width:100%;height:100vh;margin:0; }
+.agent-office-fullscreen .agent-office-map-column { height:100%; }
 .agent-office-fullscreen .agent-office-map-column { width:100%;height:100%; }
 .agent-office-fullscreen .office-room { width:100%;height:100vh;min-height:0;aspect-ratio:auto;border:0;border-radius:0;box-shadow:none; }
 .agent-office-fullscreen .office-pixel-note { display:none; }
+
+@media (max-width: 720px) {
+  .office-fullscreen-toolbar { top:8px;left:8px;right:8px;max-width:none;overflow-x:auto;transform:none; }
+  .office-fullscreen-toolbar > div { flex:none; }
+  .office-fullscreen-toolbar .office-live-badge { display:none; }
+  .office-fullscreen-toolbar button { padding:0 8px;font-size:10px; }
+  .office-fullscreen-toolbar .office-fullscreen-exit { margin-left:auto; }
+  .office-room-board { padding:67px 14px 20px; }
+  .office-room-board > header { align-items:start;flex-direction:column;margin-bottom:14px; }
+  .office-room-board-grid { grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:11px; }
+  .office-room-tile { min-height:208px;padding:15px;border-radius:15px; }
+}
 
 @media (min-width: 1600px) {
   .agent-office-body { grid-template-columns:minmax(0,1fr) 370px;gap:23px; }
