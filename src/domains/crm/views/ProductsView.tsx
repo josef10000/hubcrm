@@ -1,9 +1,21 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Package, Edit2, Trash2, Plus, RefreshCw, Link as LinkIcon, Copy } from 'lucide-react';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useAuth } from '@auth/contexts/AuthContext';
 import { usePermissions } from '@auth/hooks/usePermissions';
 import { toast } from 'sonner';
+import { collection, doc, limit, onSnapshot, orderBy, query, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+
+interface ProductOrder {
+  id: string;
+  offerId?: string;
+  amount?: number;
+  status?: string;
+  fulfillmentStatus?: string;
+  createdAt?: number;
+  attribution?: { utmSource?: string; utmCampaign?: string };
+}
 
 export default function ProductsView() {
   const { userProfile } = useAuth();
@@ -17,6 +29,16 @@ export default function ProductsView() {
     setIsDeleteOfferConfirmOpen, 
     restoreDefaultOffers 
   } = useCRM();
+  const [orders, setOrders] = useState<ProductOrder[]>([]);
+
+  useEffect(() => {
+    if (!effectiveOrgId) { setOrders([]); return; }
+    return onSnapshot(query(collection(db, 'organizations', effectiveOrgId, 'orders'), orderBy('createdAt', 'desc'), limit(200)), snapshot => {
+      setOrders(snapshot.docs.map(item => ({ ...item.data(), id: item.id } as ProductOrder)));
+    }, error => {
+      console.error('[ProductsView] Não foi possível carregar os pedidos recentes.', error);
+    });
+  }, [effectiveOrgId]);
 
   const canManageProducts = hasPermission('MANAGE_SETTINGS');
 
@@ -24,6 +46,21 @@ export default function ProductsView() {
     const url = `${window.location.origin}/checkout/${effectiveOrgId}?offerId=${offerId}`;
     navigator.clipboard.writeText(url);
     toast.success(`Link do checkout de "${offerName}" copiado!`);
+  };
+
+  const markOrderDelivered = async (order: ProductOrder) => {
+    if (!effectiveOrgId) return;
+    try {
+      await updateDoc(doc(db, 'organizations', effectiveOrgId, 'orders', order.id), {
+        fulfillmentStatus: 'delivered',
+        deliveredAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      toast.success('Entrega registrada no pedido.');
+    } catch (error) {
+      console.error('[ProductsView] Não foi possível atualizar a entrega.', error);
+      toast.error('Não foi possível registrar a entrega.');
+    }
   };
 
   return (
@@ -44,6 +81,12 @@ export default function ProductsView() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {offers.map((offer) => (
+                (() => {
+                  const productOrders = orders.filter(order => order.offerId === offer.id);
+                  const paidOrders = productOrders.filter(order => order.status === 'paid');
+                  const paidTotal = paidOrders.reduce((sum, order) => sum + (Number(order.amount) || 0), 0);
+                  const sources = new Set(paidOrders.map(order => order.attribution?.utmSource).filter(Boolean));
+                  return (
                 <div key={offer.id} className="bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 rounded-2xl p-5 flex flex-col justify-between hover:border-primary-500/50 transition-colors">
                   <div>
                     <div className="flex justify-between items-start mb-2">
@@ -58,6 +101,21 @@ export default function ProductsView() {
                       </div>
                     </div>
                     <div className="space-y-1 mb-4">
+                      <div className="mb-3 grid grid-cols-3 gap-2 rounded-xl bg-primary-500/5 p-3">
+                        <div><p className="text-[10px] text-gray-500">Pedidos pagos*</p><p className="text-sm font-bold text-gray-900 dark:text-white">{paidOrders.length}</p></div>
+                        <div><p className="text-[10px] text-gray-500">Valor bruto*</p><p className="text-sm font-bold text-gray-900 dark:text-white">R$ {paidTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p></div>
+                        <div><p className="text-[10px] text-gray-500">Origens identificadas*</p><p className="text-sm font-bold text-gray-900 dark:text-white">{sources.size}</p></div>
+                      </div>
+                      {productOrders.slice(0, 2).map(order => (
+                        <div key={order.id} className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-gray-200/70 p-2 dark:border-white/10">
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium text-gray-800 dark:text-gray-200">{order.status === 'paid' ? 'Pago' : order.status === 'overdue' ? 'Vencido' : 'Pendente'} · R$ {(Number(order.amount) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                            <p className="truncate text-[10px] text-gray-500">Origem: {order.attribution?.utmSource || 'Não identificada'}{order.attribution?.utmCampaign ? ` · ${order.attribution.utmCampaign}` : ''}</p>
+                          </div>
+                          {order.status === 'paid' && order.fulfillmentStatus !== 'delivered' && <button type="button" onClick={() => void markOrderDelivered(order)} className="shrink-0 rounded-md bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">Registrar entrega</button>}
+                          {order.fulfillmentStatus === 'delivered' && <span className="shrink-0 text-[10px] text-emerald-600 dark:text-emerald-400">Entregue</span>}
+                        </div>
+                      ))}
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         <span className="font-medium">Tipo:</span> {offer.type === 'SUBSCRIPTION' ? 'Assinatura' : 'Pagamento Único'}
                       </p>
@@ -126,8 +184,11 @@ export default function ProductsView() {
                     </div>
                   )}
                 </div>
+                  );
+                })()
               ))}
             </div>
+            <p className="mt-3 text-[10px] text-gray-500">* Indicadores dos últimos 200 pedidos recebidos. Valor bruto de pedidos pagos, antes das taxas do meio de pagamento.</p>
 
             {canManageProducts && (
               <div className="flex mt-6 gap-3">

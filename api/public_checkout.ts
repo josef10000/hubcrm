@@ -25,6 +25,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Dados do cliente incompletos' });
     }
 
+    const rawAttribution = req.body.attribution && typeof req.body.attribution === 'object' ? req.body.attribution : {};
+    const attribution = Object.fromEntries(['utmSource', 'utmMedium', 'utmCampaign', 'utmContent', 'utmTerm', 'fbclid', 'gclid', 'referrer', 'landingPage'].map(key => {
+      const value = rawAttribution[key];
+      return [key, typeof value === 'string' ? value.trim().slice(0, key === 'referrer' || key === 'landingPage' ? 500 : 180) : ''];
+    }));
+
     // 1. Fetch Offer from Firestore
     const offerDoc = await db.collection('organizations').doc(orgId).collection('offers').doc(clientData.offerId).get();
     
@@ -86,6 +92,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 4. Create Charge in Asaas
     let checkoutUrl = '';
     let currentPaymentId = '';
+    let currentSubscriptionId = '';
     let pixData: any = null;
     let boletoData: any = null;
     let paymentStatusResult = 'PENDING';
@@ -103,6 +110,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         description: `Assinatura: ${offer.name}${bumpsDescriptionText}`,
         observations: `Referência: ${offer.id}`
       });
+      currentSubscriptionId = subscription.id || '';
 
       const payments = await asaasRequest(`/subscriptions/${subscription.id}/payments`, "GET");
       if (payments.data && payments.data.length > 0) {
@@ -220,11 +228,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       createdAt: Date.now(),
       lastUpdate: Date.now(),
       convertedVia: 'Pagamento Transparente',
+      attribution,
       billingCycle: clientData.billingCycle || 'MONTHLY',
       invoiceUrl: checkoutUrl,
       currentPaymentId: currentPaymentId || '',
+      currentSubscriptionId,
       nextDueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0]
     });
+
+    const orderId = currentPaymentId || clientRef.id;
+    const orderStatus = ['RECEIVED', 'CONFIRMED', 'PAID'].includes(String(paymentStatusResult).toUpperCase()) ? 'paid' : 'pending';
+    await db.collection('organizations').doc(orgId).collection('orders').doc(orderId).set({
+      id: orderId,
+      paymentId: currentPaymentId || '',
+      clientId: clientRef.id,
+      clientName: clientData.name,
+      clientEmail: clientData.email,
+      offerId: offer.id,
+      productName: offer.name,
+      amount: total,
+      status: orderStatus,
+      fulfillmentStatus: 'needs_review',
+      paymentMethod: billingType,
+      bumpNames: selectedBumpNames,
+      attribution,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }, { merge: true });
 
     // 6. Send Email Automation
     try {

@@ -58,8 +58,21 @@ export async function handlePaymentReceived(doc: any, clientData: any, paymentDa
       status: 'PAID',
       clientId: doc.id,
       paymentId: paymentData.id,
-      categoryName: 'Assinatura'
+      offerId: clientData.offerId,
+      attribution: clientData.attribution || {},
+      categoryName: paymentData.subscription ? 'Assinatura' : 'Venda de produto'
     });
+
+    await db.collection(`organizations/${orgId}/orders`).doc(String(paymentData.id)).set({
+      paymentId: paymentData.id,
+      clientId: doc.id,
+      offerId: clientData.offerId || '',
+      productName: clientData.plan || 'Produto digital',
+      status: 'paid',
+      paidAt: Date.now(),
+      updatedAt: Date.now(),
+      attribution: clientData.attribution || {},
+    }, { merge: true });
   }
 
   // --- ENVIO DE E-MAIL ---

@@ -21,9 +21,21 @@ export async function handlePaymentOverdue(doc: any, clientData: any, paymentDat
 
   await doc.ref.update(updates);
 
+  const orgId = doc.ref.parent.parent?.id;
+  if (orgId && paymentData.id) {
+    await db.collection(`organizations/${orgId}/orders`).doc(String(paymentData.id)).set({
+      paymentId: paymentData.id,
+      clientId: doc.id,
+      offerId: clientData.offerId || '',
+      productName: clientData.plan || 'Produto digital',
+      status: 'overdue',
+      updatedAt: Date.now(),
+      attribution: clientData.attribution || {},
+    }, { merge: true });
+  }
+
   // --- DUNNING: TICKET DE SUPORTE AUTOMÁTICO ---
   try {
-    const orgId = doc.ref.parent.parent?.id;
     if (orgId) {
       const ticketRef = db.collection(`organizations/${orgId}/supportRequests`).doc();
       await ticketRef.set({

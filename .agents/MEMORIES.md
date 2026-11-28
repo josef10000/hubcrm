@@ -874,3 +874,11 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Data**: 28/11/2026.
 - **Fila diária**: a Visão Executiva expõe atalhos para cobranças pendentes/vencidas, tickets abertos/em análise e clientes em “Em Desenvolvimento” há mais de 20 dias. O prazo segue o critério da tela de Projetos. Os cards usam as coleções existentes e levam diretamente às áreas de resolução.
 - **Modo solo**: a paleta de comandos oculta Onboarding, Contratos e Perfil de colaborador enquanto o modo solo estiver ativo, alinhada aos guardas de rota existentes. Os atalhos reaparecem ao selecionar o modo equipe.
+
+## 56. Atribuição e acompanhamento de pedidos no checkout
+
+- **Checkout**: lê os parâmetros UTM, `fbclid`, `gclid`, referenciador e página inicial da URL, limita o tamanho dos valores e registra os dados no cadastro do comprador e no pedido.
+- **Pedidos**: vendas do checkout criam registros em `organizations/{orgId}/orders/{paymentId}` com produto, comprador, valor, forma de pagamento, origem e estado de pagamento. O webhook atualiza o estado ao confirmar ou vencer a cobrança. `fulfillmentStatus` inicia em `needs_review`, para que acesso/entrega não sejam alegados antes de existir configuração para o produto.
+- **Financeiro**: cada lançamento liquidado inclui oferta e atribuição e usa uma categoria de venda ou assinatura. O webhook procura o cadastro por ID de pagamento/assinatura antes do identificador do cliente Asaas, reduzindo associação incorreta quando o comprador tem mais de um cadastro.
+- **Produtos**: a lista acompanha até 200 pedidos recentes e resume quantidade paga, valor bruto e origens UTM identificadas por produto. Esse total não é líquido de taxas e não representa todo o histórico quando houver mais de 200 pedidos.
+- **Entrega**: os dois pedidos recentes por oferta podem ser marcados manualmente como entregues. O catálogo não presume que existe uma entrega automática nem que um portal foi provisionado.

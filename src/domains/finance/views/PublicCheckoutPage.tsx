@@ -223,6 +223,17 @@ export default function PublicCheckoutPage() {
             cpfCnpj: clientData.cpfCnpj,
             billingCycle: clientData.billingCycle
           },
+          attribution: {
+            utmSource: searchParams.get('utm_source') || '',
+            utmMedium: searchParams.get('utm_medium') || '',
+            utmCampaign: searchParams.get('utm_campaign') || '',
+            utmContent: searchParams.get('utm_content') || '',
+            utmTerm: searchParams.get('utm_term') || '',
+            fbclid: searchParams.get('fbclid') || '',
+            gclid: searchParams.get('gclid') || '',
+            referrer: document.referrer || '',
+            landingPage: window.location.pathname,
+          },
           selectedBumpIds,
           paymentMethod,
           creditCard: paymentMethod === 'CREDIT_CARD' ? {

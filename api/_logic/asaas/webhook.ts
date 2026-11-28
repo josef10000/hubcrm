@@ -69,14 +69,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // --- BUSCA CLIENTE ---
-    const snapshot = await db.collectionGroup('clients').where('asaasCustomerId', '==', asaasCustomerId).limit(1).get();
-    if (snapshot.empty) {
+    let clientDoc: FirebaseFirestore.QueryDocumentSnapshot | undefined;
+    if (paymentData?.id) {
+      const paymentClient = await db.collectionGroup('clients').where('currentPaymentId', '==', paymentData.id).limit(1).get();
+      clientDoc = paymentClient.docs[0];
+    }
+    if (!clientDoc && paymentData?.subscription) {
+      const subscriptionClient = await db.collectionGroup('clients').where('currentSubscriptionId', '==', paymentData.subscription).limit(1).get();
+      clientDoc = subscriptionClient.docs[0];
+    }
+    if (!clientDoc) {
+      const customerClient = await db.collectionGroup('clients').where('asaasCustomerId', '==', asaasCustomerId).limit(1).get();
+      clientDoc = customerClient.docs[0];
+    }
+    if (!clientDoc) {
       console.warn(`[ASAAS WEBHOOK] Cliente não encontrado para asaasCustomerId=${asaasCustomerId}`);
       await markCompleted();
       return res.status(200).json({ received: true });
     }
 
-    const doc = snapshot.docs[0];
+    const doc = clientDoc;
     const clientData = doc.data();
 
     // --- DISPATCHER DE EVENTOS ---
