@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings, LogOut, Image as ImageIcon, Volume2, Crown } from 'lucide-react';
+import { Settings, LogOut, Image as ImageIcon, Volume2, Crown, Users, UserRound } from 'lucide-react';
 import { useCRM } from '@crm/contexts/CRMContext';
 import { useUI } from '@/contexts/UIContext';
 import { useAuth } from '@auth/contexts/AuthContext';
@@ -7,6 +7,9 @@ import { auth, db } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { SaveButton } from '@/shared/components/SaveButton';
+import { useOperatingMode } from '@/hooks/useOperatingMode';
+import { usePermissions } from '@auth/hooks/usePermissions';
+import { toast } from 'sonner';
 
 export default function SettingsView() {
   const { themeColor, setThemeColor } = useUI();
@@ -17,6 +20,8 @@ export default function SettingsView() {
   } = useCRM();
 
   const { userProfile, user } = useAuth();
+  const { mode } = useOperatingMode();
+  const { hasPermission } = usePermissions();
   
   const [wallpaperUrl, setWallpaperUrl] = useState(userProfile?.wallpaperUrl || '');
   const [soundTheme, setSoundTheme] = useState(userProfile?.soundTheme || 'none');
@@ -55,6 +60,33 @@ export default function SettingsView() {
     <div className="flex-1 overflow-y-auto p-6 bg-transparent custom-scrollbar relative z-10">
       <div className="max-w-3xl mx-auto">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">Configurações</h2>
+
+        {hasPermission('MANAGE_SETTINGS') && <div className="bg-black/40 backdrop-blur-xl border border-primary-500/20 rounded-3xl p-8 shadow-lg mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Modo de operação</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">Ajusta os recursos de equipe para a rotina atual. Seus dados e registros existentes são preservados.</p>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {([
+              { id: 'solo', label: 'Operação solo', detail: 'Oculta RH, ponto e folha; mantém finanças e vendas.', icon: UserRound },
+              { id: 'team', label: 'Com equipe', detail: 'Reativa gestão de pessoas, presença e folha.', icon: Users },
+            ] as const).map(option => {
+              const Icon = option.icon;
+              const selected = mode === option.id;
+              return <button key={option.id} type="button" onClick={async () => {
+                if (!effectiveOrgId) return;
+                try {
+                  await setDoc(doc(db, 'organizations', effectiveOrgId, 'settings', 'preferences'), { operatingMode: option.id }, { merge: true });
+                  toast.success(option.id === 'solo' ? 'Modo de operação solo ativado.' : 'Recursos de equipe reativados.');
+                } catch (error) {
+                  console.error('Erro ao alterar modo de operação:', error);
+                  toast.error('Não foi possível salvar o modo de operação.');
+                }
+              }} className={`text-left rounded-2xl border p-4 transition-all ${selected ? 'border-primary-500 bg-primary-500/10' : 'border-white/10 hover:border-white/25'}`}>
+                <span className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white"><Icon size={17} className="text-primary-400" />{option.label}{selected && <span className="ml-auto text-[10px] uppercase tracking-wider text-primary-400">Ativo</span>}</span>
+                <span className="block mt-2 text-xs text-gray-500 dark:text-gray-400">{option.detail}</span>
+              </button>;
+            })}
+          </div>
+        </div>}
 
         {/* --- Personalização do Perfil (Privado do Usuário) --- */}
         <div className="bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-lg mb-8 relative overflow-hidden group">

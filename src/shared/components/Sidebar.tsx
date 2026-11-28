@@ -13,10 +13,10 @@ import AvatarFrame, { getCleanPhotoURL } from './AvatarFrame';
 import ProfileHoverCard from './ProfileHoverCard';
 import { navGroups } from '@/constants/navigation';
 import { usePresence } from '@/hooks/usePresence';
-import { useCRMStore } from '@/store/useCRMStore';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { toast } from 'sonner';
+import { useOperatingMode } from '@/hooks/useOperatingMode';
 
 
 // Mapeador de Ícones Premium (Phosphor Duotone)
@@ -83,18 +83,12 @@ export default function Sidebar() {
   const location = useLocation();
   const { user, userProfile, unreadAlertsCount, isBirthday } = useAuth();
   const { sidebarOpen, setSidebarOpen, pinnedItems } = useUI();
-  const { supportRequests = [], wikiArticles = [], pendingVacationsCount = 0 } = useCRM();
+  const { supportRequests = [], wikiArticles = [] } = useCRM();
   const { hasPermission } = usePermissions();
   const { totalUnread: chatUnreadCount } = useGlobalChatAlerts();
+  const { isSolo } = useOperatingMode();
   
-  const todayLog = useCRMStore(state => state.todayLog);
-  const expedienteStatus = todayLog?.status === 'active' 
-    ? 'active' 
-    : todayLog?.status === 'paused' 
-      ? 'paused' 
-      : 'none';
-  
-  const { manualSetStatus } = usePresence();
+  const { manualSetStatus } = usePresence(!isSolo);
 
   const isRouteActive = (itemPath: string) => {
     const currentPath = location.pathname;
@@ -177,22 +171,21 @@ export default function Sidebar() {
     if (path === '/support') return openTicketCount;
     if (path === '/chat') return chatUnreadCount > 0 ? chatUnreadCount : undefined;
     if (path === '/wiki') return newWikiCount > 0 ? newWikiCount : undefined;
-    if (path === '/people') return pendingVacationsCount > 0 ? pendingVacationsCount : undefined;
     return undefined;
   };
 
   const pinnedNavItems = useMemo(() => {
-    const allItems = navGroups.flatMap(g => g.items);
+    const allItems = navGroups.flatMap(g => g.items).filter(item => !isSolo || !['/onboarding-hub', '/contracts'].includes(item.path));
     return allItems.filter(item => pinnedItems.includes(item.path));
-  }, [pinnedItems]);
+  }, [pinnedItems, isSolo]);
 
   const visibleGroups = useMemo(() => {
     return navGroups.map(group => ({
       ...group,
-      items: group.items.filter(item => !item.permission || hasPermission(item.permission as any)),
+      items: group.items.filter(item => (!isSolo || !['/onboarding-hub', '/contracts'].includes(item.path)) && (!item.permission || hasPermission(item.permission as any))),
       totalBadges: group.items.reduce((acc, item) => acc + (getBadgeForPath(item.path) || 0), 0)
     })).filter(g => g.items.length > 0);
-  }, [hasPermission, openTicketCount, chatUnreadCount, newWikiCount, pendingVacationsCount]);
+  }, [hasPermission, openTicketCount, chatUnreadCount, newWikiCount, isSolo]);
 
   const activeGroupData = useMemo(() => {
     if (activeGroupId === 'favorites') return { label: 'Favoritos', items: pinnedNavItems };
@@ -293,7 +286,7 @@ export default function Sidebar() {
           </div>
 
           <div ref={avatarMenuRef} className="relative z-10 mt-auto flex flex-col items-center gap-4">
-            {userProfile?.uid && userProfile?.orgId ? (
+            {userProfile?.uid && userProfile?.orgId && !isSolo ? (
               <ProfileHoverCard userId={userProfile.uid} orgId={userProfile.orgId} disabled={statusMenuOpen}>
                 <div 
                   onClick={() => setStatusMenuOpen(!statusMenuOpen)}
@@ -308,9 +301,9 @@ export default function Sidebar() {
                       )}
                     </div>
                   </AvatarFrame>
-                  <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#05070a] shadow-lg transition-colors duration-300 ${
+                  {!isSolo && <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#05070a] shadow-lg transition-colors duration-300 ${
                     getStatusColor(userProfile?.presenceStatus || 'offline')
-                  }`} />
+                  }`} />}
                 </div>
               </ProfileHoverCard>
             ) : (
@@ -327,9 +320,9 @@ export default function Sidebar() {
                       )}
                     </div>
                   </AvatarFrame>
-                <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#05070a] shadow-lg transition-colors duration-300 ${
+                {!isSolo && <span className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#05070a] shadow-lg transition-colors duration-300 ${
                   getStatusColor(userProfile?.presenceStatus || 'offline')
-                }`} />
+                }`} />}
               </div>
             )}
 
@@ -356,16 +349,16 @@ export default function Sidebar() {
                       </div>
                       <div className="flex-1 min-w-0 text-left">
                         <p className="text-xs font-bold text-white truncate">{userProfile?.displayName}</p>
-                        <p className="text-[10px] text-gray-400 font-mono truncate">
+                        {!isSolo && <p className="text-[10px] text-gray-400 font-mono truncate">
                           {statuses.find(s => s.id === (userProfile?.presenceStatus || 'offline'))?.label || 'Offline'}
-                        </p>
+                        </p>}
                       </div>
                     </div>
 
-                    <div className="w-full h-[1px] bg-white/10" />
+                    {!isSolo && <div className="w-full h-[1px] bg-white/10" />}
 
                     {/* Lista de Status Rápidos */}
-                    <div className="flex flex-col gap-1">
+                    {!isSolo && <div className="flex flex-col gap-1">
                       {statuses.map((status) => {
                         const isActive = userProfile?.presenceStatus === status.id || (!userProfile?.presenceStatus && status.id === 'offline');
                         return (
@@ -388,7 +381,7 @@ export default function Sidebar() {
                           </button>
                         );
                       })}
-                    </div>
+                    </div>}
 
                     <div className="w-full h-[1px] bg-white/10" />
 
@@ -397,7 +390,7 @@ export default function Sidebar() {
                       <button
                         onClick={() => {
                           setStatusMenuOpen(false);
-                          navigate(`/profile/${user?.uid || userProfile?.uid}`);
+                          navigate(isSolo ? '/settings' : `/profile/${user?.uid || userProfile?.uid}`);
                         }}
                         className="w-full flex items-center gap-3 px-3 py-2 text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all border border-transparent text-left"
                       >

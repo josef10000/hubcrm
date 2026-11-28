@@ -6,7 +6,7 @@ import { useCRMStore } from '@/store/useCRMStore';
 import { getLocalDateString } from '@/store/slices/timeTrackingSlice';
 import { toast } from 'sonner';
 
-export function usePresence() {
+export function usePresence(enabled = true) {
   const { userProfile } = useAuth();
   const store = useCRMStore();
   const effectiveOrgId = useCRMStore(state => state.effectiveOrgId);
@@ -97,7 +97,7 @@ export function usePresence() {
   };
 
   useEffect(() => {
-    if (!userProfile?.uid || !effectiveOrgId) return;
+    if (!enabled || !userProfile?.uid || !effectiveOrgId) return;
 
     // Assina em tempo real o log de hoje para mantê-lo sincronizado no Zustand
     const unsubLog = store.loadTodayLog(userProfile.uid);
@@ -178,7 +178,7 @@ export function usePresence() {
       clearInterval(overtimeCheckInterval);
       unsubLog();
     };
-  }, [userProfile?.uid, effectiveOrgId]);
+  }, [enabled, userProfile?.uid, effectiveOrgId]);
 
   return { updateStatus, manualSetStatus };
 }

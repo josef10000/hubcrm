@@ -62,12 +62,25 @@ export default function HubCentralCommandView() {
       t => String(t.status || '').toUpperCase() !== 'CANCELLED'
     );
 
-    const income = validTransactions
-      .filter(t => String(t.type || '').toUpperCase() === 'INCOME')
+    const today = new Date();
+    const paidIncome = validTransactions.filter(t =>
+      String(t.type || '').toUpperCase() === 'INCOME' &&
+      String(t.status || '').toUpperCase() === 'PAID'
+    );
+    const monthIncome = paidIncome.filter(t => {
+      const date = new Date(t.paymentDate || t.date);
+      return date.getFullYear() === today.getFullYear() && date.getMonth() === today.getMonth();
+    });
+    const todayIncome = paidIncome.filter(t => {
+      const date = new Date(t.paymentDate || t.date);
+      return date.getFullYear() === today.getFullYear() && date.getMonth() === today.getMonth() && date.getDate() === today.getDate();
+    });
+
+    const income = paidIncome
       .reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
 
     const expense = validTransactions
-      .filter(t => String(t.type || '').toUpperCase() === 'EXPENSE')
+      .filter(t => String(t.type || '').toUpperCase() === 'EXPENSE' && String(t.status || '').toUpperCase() === 'PAID')
       .reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
 
     const overdueTransactions = validTransactions.filter(
@@ -89,6 +102,9 @@ export default function HubCentralCommandView() {
       mrr: totalMrr,
       averageTicket,
       income,
+      monthIncome: monthIncome.reduce((sum, t) => sum + (Number(t.amount) || 0), 0),
+      todayIncome: todayIncome.reduce((sum, t) => sum + (Number(t.amount) || 0), 0),
+      monthIncomeCount: monthIncome.length,
       expense,
       netEstimated,
       margin: Math.max(0, Math.min(100, margin))
@@ -154,9 +170,9 @@ export default function HubCentralCommandView() {
       <div className="flex-1 grid grid-cols-12 gap-5 max-w-[1720px] mx-auto w-full items-center">
         {/* COLUNA ESQUERDA (3 COLS) — VENDAS REAIS & FINANCEIRO */}
         <div className="col-span-12 lg:col-span-3 space-y-4">
-          {/* Card: Receita Recorrente Real */}
+          {/* Card: Vendas digitais registradas no financeiro */}
           <div
-            onClick={() => navigate('/billing')}
+            onClick={() => navigate('/finance')}
             className="bg-black/40 backdrop-blur-xl border border-white/10 hover:border-primary-500/40 rounded-2xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.45)] relative overflow-hidden transition-all cursor-pointer group"
           >
             <div className="flex items-center justify-between mb-2">
@@ -165,8 +181,8 @@ export default function HubCentralCommandView() {
                   <TrendingUp className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-semibold text-white">Receita Recorrente (MRR)</h3>
-                  <span className="text-[10px] text-gray-400">Dados reais da sua operação</span>
+                  <h3 className="text-xs font-semibold text-white">Receitas pagas no mês</h3>
+                  <span className="text-[10px] text-gray-400">Lançamentos liquidados no financeiro</span>
                 </div>
               </div>
               <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-primary-400 transition-colors" />
@@ -176,11 +192,11 @@ export default function HubCentralCommandView() {
             <div className="flex items-baseline justify-between mt-2.5 mb-1">
               <div className="flex items-baseline gap-2">
                 <span className="text-2xl font-black text-white tracking-tight">
-                  {metrics.mrr.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  {metrics.monthIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </span>
-                {metrics.activeCount > 0 && (
+                {metrics.monthIncomeCount > 0 && (
                   <span className="text-xs font-bold text-emerald-400 flex items-center">
-                    <ArrowUpRight className="w-3 h-3" /> Ativo
+                    <ArrowUpRight className="w-3 h-3" /> {metrics.monthIncomeCount} lançamentos
                   </span>
                 )}
               </div>
@@ -198,17 +214,15 @@ export default function HubCentralCommandView() {
             </div>
 
             <p className="text-[11px] text-gray-400 mb-3">
-              {metrics.activeCount > 0 && metrics.mrr === 0
-                ? `${metrics.activeCount} clientes ativos (sem plano mensal definido)`
-                : `${metrics.activeCount} assinaturas / clientes ativos`}
+              {metrics.todayIncome.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} registrado hoje
             </p>
 
             {/* Indicadores Reais */}
             <div className="grid grid-cols-3 gap-2 pt-3 border-t border-white/10">
               <div className="bg-white/5 p-2 rounded-xl border border-white/10 text-left">
-                <span className="text-[9px] text-gray-400 block mb-0.5">Ticket médio</span>
+                <span className="text-[9px] text-gray-400 block mb-0.5">Valor médio</span>
                 <span className="text-xs font-bold text-white block truncate">
-                  {metrics.averageTicket.toLocaleString('pt-BR', {
+                  {(metrics.monthIncomeCount ? metrics.monthIncome / metrics.monthIncomeCount : 0).toLocaleString('pt-BR', {
                     style: 'currency',
                     currency: 'BRL'
                   })}
@@ -216,13 +230,13 @@ export default function HubCentralCommandView() {
               </div>
 
               <div className="bg-white/5 p-2 rounded-xl border border-white/10 text-left">
-                <span className="text-[9px] text-gray-400 block mb-0.5">Total Clientes</span>
-                <span className="text-xs font-bold text-white block">{metrics.totalClients}</span>
+                <span className="text-[9px] text-gray-400 block mb-0.5">Recebimentos</span>
+                <span className="text-xs font-bold text-white block">{metrics.monthIncomeCount}</span>
               </div>
 
               <div className="bg-white/5 p-2 rounded-xl border border-white/10 text-left">
-                <span className="text-[9px] text-gray-400 block mb-0.5">Ativos</span>
-                <span className="text-xs font-bold text-emerald-400 block">{metrics.activeCount}</span>
+                <span className="text-[9px] text-gray-400 block mb-0.5">Pagas hoje</span>
+                <span className="text-xs font-bold text-emerald-400 block">{metrics.todayIncome ? 'Sim' : '—'}</span>
               </div>
             </div>
           </div>

@@ -836,3 +836,12 @@ Este arquivo armazena o histórico consolidado de decisões, integrações de AP
 - **Metas automáticas**: metas de vendas usam o número real de cobranças pagas; metas de resultado usam faturamento pago menos despesas registradas no dia. Comemorações podem durar até meia-noite (padrão), 2, 6, 12 ou 24 horas, com brilho festivo, dourado ou confetes; cada meta só dispara uma vez ao dia. O botão de prévia continua disponível.
 - **Atividade e personagens**: até 40 eventos recentes persistem junto à configuração local. A simulação descreve tarefa/status no cartão do personagem, conta etapas demonstrativas aprovadas e mantém revisão como alerta visual. VPS e executores reais permanecem desconectados.
 - **Tela cheia**: a rotação dos andares agora aceita ordem aleatória ou sequencial e troca a cada 8, 12 ou 20 segundos.
+
+## 51. Modo solo para operação de produtos digitais
+
+- **Data**: 28/11/2026.
+- **Preferência organizacional**: `organizations/{orgId}/settings/preferences.operatingMode` aceita `solo` ou `team`. Ausente, inválido ou indisponível assume `solo`. A configuração fica em Configurações e exige `MANAGE_SETTINGS`.
+- **Modo solo**: desliga a gravação automática de presença e ponto, esconde navegação/acesso a RH, equipe, perfil funcional, contratos/onboarding B2B, folha e métricas SaaS. Pesquisas eNPS globais deixam de ser montadas. A opção `Com equipe` reativa essas rotinas.
+- **Histórico**: nenhuma coleção ou documento de perfil, ponto, folha, contrato ou RH é excluída. O modo afeta exibição e automações da interface; volta a expor os recursos ao mudar para equipe.
+- **Financeiro real**: resumo e DRE passam a considerar receitas e despesas com status `PAID`; DRE usa `paymentDate || date`. A DRE não infere folha de perfis nem projeta impostos estimados; taxas de gateway registradas e demais transações reais permanecem. Painéis de folha continuam disponíveis apenas no modo equipe.
+- **Foco de produto**: painel executivo prioriza receitas pagas do mês e do dia; no financeiro solo, o resumo troca análise de margem por cliente pelo resultado global. Recursos comerciais B2B continuam no código e reaparecem no modo equipe.

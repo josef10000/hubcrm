@@ -7,9 +7,11 @@ import OfferModal from '@crm/components/OfferModal';
 import ConfirmationModal from '@shared/components/ConfirmationModal';
 import EmployeeSurveyModal from '@shared/components/EmployeeSurveyModal';
 import { ScreenRecorderWidget } from './ScreenRecorderWidget';
+import { useOperatingMode } from '@/hooks/useOperatingMode';
 
 export function GlobalModals() {
   const { user } = useAuth();
+  const { isSolo } = useOperatingMode();
   const { isModalOpen, setIsModalOpen } = useUI();
   const { 
     isOfferModalOpen, setIsOfferModalOpen,
@@ -61,7 +63,7 @@ export function GlobalModals() {
         confirmText="Excluir"
         cancelText="Cancelar"
       />
-      <EmployeeSurveyModal />
+      {!isSolo && <EmployeeSurveyModal />}
       <ScreenRecorderWidget />
     </>
   );

@@ -18,6 +18,7 @@ import ROIAnalysis from '@finance/components/ROIAnalysis';
 import PayrollPanel from '../components/PayrollPanel';
 import ConciliationPanel from '../components/ConciliationPanel';
 import { usePermissions } from '@auth/hooks/usePermissions';
+import { useOperatingMode } from '@/hooks/useOperatingMode';
 
 export default function FinanceView() {
   const { user } = useAuth();
@@ -47,6 +48,7 @@ export default function FinanceView() {
   // Removing manual store subscriptions for finance data
 
   const { hasPermission } = usePermissions();
+  const { isSolo } = useOperatingMode();
 
   if (!hasPermission('MANAGE_FINANCE')) {
     return (
@@ -60,12 +62,10 @@ export default function FinanceView() {
     );
   }
 
-  const totalMRR = (clients || []).filter(c => c.status === 'Ativo' || c.status === 'Inadimplente').reduce((acc, c) => {
-    return acc + getPlanPrice(c.plan, c.billingCycle, c);
-  }, 0);
+  const totalIncome = (transactions || []).filter(t => t.type === 'INCOME' && String(t.status || '').toUpperCase() === 'PAID').reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
   
-  const totalExpenses = (transactions || []).filter(t => t.type === 'EXPENSE').reduce((acc, t) => acc + t.amount, 0);
-  const netProfit = totalMRR - totalExpenses;
+  const totalExpenses = (transactions || []).filter(t => t.type === 'EXPENSE' && String(t.status || '').toUpperCase() === 'PAID').reduce((acc, t) => acc + t.amount, 0);
+  const netProfit = totalIncome - totalExpenses;
   
   // Computar quantidade de despesas pendentes de conciliação (categoria "A Categorizar")
   const pendingConciliationCount = (transactions || []).filter(
@@ -75,7 +75,7 @@ export default function FinanceView() {
   // --- CÁLCULO DE RATEIO DE CUSTOS FIXOS (CSP) ---
   const activeClientsCount = (clients || []).filter(c => c.status === 'Ativo').length;
   const infraExpenses = (transactions || []).filter(t => 
-    t.type === 'EXPENSE' && 
+    t.type === 'EXPENSE' && String(t.status || '').toUpperCase() === 'PAID' &&
     (t.categoryName === 'Infraestrutura' || t.categoryName === 'Infraestrutura / Hospedagem')
   ).reduce((acc, t) => acc + t.amount, 0);
   
@@ -111,7 +111,7 @@ export default function FinanceView() {
         const currentMonth = new Date().getMonth();
         const monthlySpent = (transactions || []).filter(t => 
           t.categoryId === selectedCat.id && 
-          t.type === 'EXPENSE' &&
+          t.type === 'EXPENSE' && String(t.status || '').toUpperCase() === 'PAID' &&
           new Date(t.date).getFullYear() === currentYear &&
           new Date(t.date).getMonth() === currentMonth
         ).reduce((acc, t) => acc + t.amount, 0);
@@ -204,20 +204,20 @@ export default function FinanceView() {
             <PieChart size={18} />
             ROI por Oferta
           </button>
-          <button
+          {!isSolo && <button
             onClick={() => setActiveTab('saas')}
             className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'saas' ? 'bg-primary-500 text-gray-900 shadow-lg shadow-primary-500/20' : 'bg-black/40 text-gray-400 hover:bg-black/20'}`}
           >
             <Activity size={18} />
-            Métricas SaaS
-          </button>
-          <button
+            Métricas de Recorrência
+          </button>}
+          {!isSolo && <button
             onClick={() => setActiveTab('payroll')}
             className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'payroll' ? 'bg-primary-500 text-gray-900 shadow-lg shadow-primary-500/20' : 'bg-black/40 text-gray-500 dark:text-gray-400 hover:bg-black/20'}`}
           >
             <DollarSign size={18} />
             Folha de Pagamento
-          </button>
+          </button>}
           <button
             onClick={() => setActiveTab('conciliation')}
             className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'conciliation' ? 'bg-primary-500 text-gray-900 shadow-lg shadow-primary-500/20' : 'bg-black/40 text-gray-500 dark:text-gray-400 hover:bg-black/20'}`}
@@ -237,10 +237,10 @@ export default function FinanceView() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
             <div className="bg-black/40 backdrop-blur-xl border border-white/10 p-6 rounded-3xl shadow-lg">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-gray-500 dark:text-gray-400 font-medium">Receita (MRR)</h3>
+                <h3 className="text-gray-500 dark:text-gray-400 font-medium">Receitas registradas</h3>
                 <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg"><TrendingUp size={20} /></div>
               </div>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">R$ {totalMRR.toFixed(2).replace('.', ',')}</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">R$ {totalIncome.toFixed(2).replace('.', ',')}</p>
             </div>
             
             <div className="bg-black/40 backdrop-blur-xl border border-white/10 p-6 rounded-3xl shadow-lg">
@@ -311,12 +311,14 @@ export default function FinanceView() {
             <div className="lg:col-span-2">
               <div className="bg-black/40 backdrop-blur-xl border border-white/10 p-6 rounded-3xl shadow-lg h-full">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Custos e Margem Real (BI)</h3>
-                  <div className="px-3 py-1 bg-primary-500/10 border border-primary-500/20 rounded-lg text-[10px] text-primary-400">
-                    CSP Unitário: R$ {cspUnitario.toFixed(2)}
-                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{isSolo ? 'Desempenho da operação' : 'Custos e Margem Real (BI)'}</h3>
+                  {!isSolo && <div className="px-3 py-1 bg-primary-500/10 border border-primary-500/20 rounded-lg text-[10px] text-primary-400">CSP Unitário: R$ {cspUnitario.toFixed(2)}</div>}
                 </div>
-                <div className="overflow-x-auto">
+                {isSolo ? <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="rounded-2xl bg-emerald-500/5 border border-emerald-500/10 p-5"><p className="text-xs text-gray-400 mb-2">Receitas registradas</p><p className="text-xl font-bold text-emerald-400">R$ {totalIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p><p className="mt-2 text-[11px] text-gray-500">Baseado nas entradas registradas como pagas no financeiro.</p></div>
+                  <div className="rounded-2xl bg-rose-500/5 border border-rose-500/10 p-5"><p className="text-xs text-gray-400 mb-2">Despesas registradas</p><p className="text-xl font-bold text-rose-400">R$ {totalExpenses.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p><p className="mt-2 text-[11px] text-gray-500">Inclui despesas lançadas no caixa; folha não é estimada a partir de perfis.</p></div>
+                  <div className="sm:col-span-2 rounded-2xl bg-white/5 border border-white/10 p-5"><p className="text-sm font-medium text-gray-200">Acompanhe o resultado por produto e campanha</p><p className="text-xs text-gray-500 mt-1">Use ROI por Oferta e Analytics de Vendas para comparar as vendas e os canais da operação.</p></div>
+                </div> : <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="border-b border-white/10 text-gray-500 dark:text-gray-400 text-sm">
@@ -361,7 +363,7 @@ export default function FinanceView() {
                       })}
                     </tbody>
                   </table>
-                </div>
+                </div>}
               </div>
             </div>
           </div>
@@ -383,7 +385,7 @@ export default function FinanceView() {
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <ROIAnalysis />
           </div>
-        ) : activeTab === 'saas' ? (
+        ) : !isSolo && activeTab === 'saas' ? (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-black/40 backdrop-blur-xl border border-white/10 p-6 rounded-3xl shadow-lg">
@@ -468,7 +470,7 @@ export default function FinanceView() {
               </div>
             </div>
           </div>
-        ) : activeTab === 'payroll' ? (
+        ) : !isSolo && activeTab === 'payroll' ? (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <PayrollPanel />
           </div>

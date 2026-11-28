@@ -76,12 +76,18 @@ const AcceptInviteView = lazy(() => import('@auth/views/AcceptInviteView'));
 const AssetPublicView = lazy(() => import('@people/views/AssetPublicView'));
 import { GlobalModals } from '../shell/GlobalModals';
 import { useAppTitle } from './useAppTitle';
+import { useOperatingMode } from '@/hooks/useOperatingMode';
+
+function OperatingModeLoading() {
+  return <div className="flex-1 min-h-40 flex items-center justify-center text-xs text-gray-500">Carregando configuração da organização…</div>;
+}
 
 export function AppRouter() {
   const { user, userProfile, isBirthday } = useAuth();
   const { clients, setEditingClient } = useCRM();
   const { isModalOpen, setIsModalOpen, setFocusMode } = useUI();
   const { hasPermission } = usePermissions();
+  const { isSolo, ready: operatingModeReady } = useOperatingMode();
   const location = useLocation();
 
   // Gerencia o título dinâmico da aba (notificações)
@@ -157,16 +163,16 @@ export function AppRouter() {
                           />
                       } />
                       <Route path="/billing" element={<BillingView />} />
-                      <Route path="/onboarding-hub" element={<OnboardingHubView />} />
-                      <Route path="/contracts" element={<ContractsView />} />
+                      <Route path="/onboarding-hub" element={!operatingModeReady ? <OperatingModeLoading /> : !isSolo ? <OnboardingHubView /> : <Navigate to="/" />} />
+                      <Route path="/contracts" element={!operatingModeReady ? <OperatingModeLoading /> : !isSolo ? <ContractsView /> : <Navigate to="/" />} />
                       <Route path="/projects" element={<ProjectsView />} />
 
                       {/* Permission Based Routes */}
                       <Route path="/growth-hub" element={hasPermission('MANAGE_CLIENTS') ? <GrowthHubView /> : <Navigate to="/" />} />
                       <Route path="/analytics" element={hasPermission('VIEW_REPORTS') ? <AnalyticsView /> : <Navigate to="/" />} />
                       <Route path="/finance" element={hasPermission('MANAGE_FINANCE') ? <FinanceView /> : <Navigate to="/" />} />
-                      <Route path="/team" element={hasPermission('MANAGE_TEAM') ? <TeamManagementView /> : <Navigate to="/" />} />
-                      <Route path="/people" element={hasPermission('MANAGE_TEAM') ? <PeopleView /> : <Navigate to="/" />} />
+                      <Route path="/team" element={!operatingModeReady ? <OperatingModeLoading /> : !isSolo && hasPermission('MANAGE_TEAM') ? <TeamManagementView /> : <Navigate to="/" />} />
+                      <Route path="/people" element={!operatingModeReady ? <OperatingModeLoading /> : !isSolo && hasPermission('MANAGE_TEAM') ? <PeopleView /> : <Navigate to="/" />} />
                       <Route path="/admin" element={hasPermission('MANAGE_SETTINGS') ? <AdministrativeView /> : <Navigate to="/" />} />
                       <Route path="/canvas" element={hasPermission('MANAGE_TEAM') || hasPermission('MANAGE_SETTINGS') ? <CanvasListView /> : <Navigate to="/" />} />
                       <Route path="/canvas/:id" element={hasPermission('MANAGE_TEAM') || hasPermission('MANAGE_SETTINGS') ? <CanvasEditorView /> : <Navigate to="/" />} />
@@ -174,7 +180,7 @@ export function AppRouter() {
                       {/* General Workspace Routes */}
                       <Route path="/wiki" element={<WikiView />} />
                       <Route path="/settings" element={<SettingsView />} />
-                      <Route path="/profile/:uid" element={<ProfileView />} />
+                      <Route path="/profile/:uid" element={!operatingModeReady ? <OperatingModeLoading /> : !isSolo ? <ProfileView /> : <Navigate to="/settings" />} />
                       <Route path="/personal-finance" element={<PersonalFinanceView />} />
                       <Route path="/workspace" element={<MyWorkspaceView />} />
                       <Route path="/workspace/office" element={<AgentOfficeView />} />

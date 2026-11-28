@@ -3,6 +3,7 @@ import { useAuth } from '@auth/contexts/AuthContext';
 import ThemeEffects from '@shared/components/ThemeEffects';
 import BirthdayCelebration from '@shared/components/BirthdayCelebration';
 import { usePresence } from '@/hooks/usePresence';
+import { useOperatingMode } from '@/hooks/useOperatingMode';
 import GlobalCallListener from '@/domains/chat/components/webrtc/GlobalCallListener';
 import { CallOverlay } from '@/domains/chat/components/webrtc/CallOverlay';
 import { CommandPalette } from '@shared/components/CommandPalette';
@@ -18,9 +19,7 @@ interface WorkspaceShellProps {
  */
 export function WorkspaceShell({ children, isBirthday }: WorkspaceShellProps) {
   const { user, userProfile } = useAuth();
-  
-  // Ativa o rastreamento de presença global
-  usePresence();
+  const { isSolo } = useOperatingMode();
 
   return (
     <div className="flex h-screen bg-[#030712] font-sans overflow-hidden text-gray-900 dark:text-gray-100 relative">
@@ -44,6 +43,8 @@ export function WorkspaceShell({ children, isBirthday }: WorkspaceShellProps) {
       {/* Application Content Area */}
       {children}
 
+      {!isSolo && <PresenceLifecycle />}
+
       {/* WebRTC Call Handling Infrastructure */}
       <GlobalCallListener />
       <CallOverlay />
@@ -52,4 +53,9 @@ export function WorkspaceShell({ children, isBirthday }: WorkspaceShellProps) {
       <CommandPalette />
     </div>
   );
+}
+
+function PresenceLifecycle() {
+  usePresence();
+  return null;
 }
