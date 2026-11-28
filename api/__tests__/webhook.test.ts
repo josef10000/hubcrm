@@ -189,24 +189,57 @@ describe('Asaas Webhook Handler', () => {
 
   // ──────── Idempotência ────────
   describe('Idempotência (Anti-Duplicidade)', () => {
-    it('deve ignorar um webhook já processado anteriormente', async () => {
-      // Pre-populate the event as already processed
-      transactionImpl = async (fn: Function) => {
-        const t = {
-          get: vi.fn().mockResolvedValue({ exists: true }),
-          set: vi.fn(),
-        };
-        return fn(t);
-      };
+    it.each([
+      ['concluído', () => ({ status: 'completed' })],
+      ['concluído no formato anterior', () => ({ processedAt: '2026-11-28T12:00:00.000Z' })],
+      ['em processamento com bloqueio ativo', () => ({ status: 'processing', startedAtMs: Date.now() })],
+    ] as const)('não processa novamente um evento %s', async (_status, storedEvent) => {
+      const reserveEvent = vi.fn();
+      const client = createMockDocRef({ email: 'test@example.com' });
+      collectionGroupResult = createClientQueryResult([client]);
+      transactionImpl = async (fn: Function) => fn({
+        get: vi.fn().mockResolvedValue({ exists: true, data: storedEvent }),
+        set: reserveEvent,
+      });
 
       const req = createReq({
-        body: { event: 'PAYMENT_RECEIVED', id: 'evt-duplicate' },
+        body: {
+          event: 'PAYMENT_RECEIVED',
+          id: 'evt-duplicate',
+          payment: { customer: 'cus-1', id: 'pay-1', value: 25 },
+        },
       });
       const res = createRes();
       await handler(req, res);
 
       expect(res.statusCode).toBe(200);
-      expect(res.body.duplicate).toBe(true);
+      expect(res.body).toEqual({ received: true, duplicate: true });
+      expect(reserveEvent).not.toHaveBeenCalled();
+      expect(collectionGroupResult.where).not.toHaveBeenCalled();
+      expect(client.ref.update).not.toHaveBeenCalled();
+      expect(sendPagamentoRecebidoEmail).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['bloqueio expirado', () => ({ status: 'processing', startedAtMs: Date.now() - 6 * 60 * 1000 })],
+      ['falha anterior', () => ({ status: 'failed' })],
+    ] as const)('permite retomar um evento com %s', async (_status, storedEvent) => {
+      const reserveEvent = vi.fn();
+      transactionImpl = async (fn: Function) => fn({
+        get: vi.fn().mockResolvedValue({ exists: true, data: storedEvent }),
+        set: reserveEvent,
+      });
+
+      const res = createRes();
+      await handler(createReq({ body: { event: 'CUSTOMER_CREATED', id: 'evt-retry' } }), res);
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.duplicate).toBeUndefined();
+      expect(reserveEvent).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'evt-retry' }),
+        expect.objectContaining({ status: 'processing', event: 'CUSTOMER_CREATED' }),
+      );
+      expect(webhookEventsStore['evt-retry']).toBe(true);
     });
 
     it('deve processar um event ID novo', async () => {
